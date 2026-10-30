@@ -39,7 +39,9 @@ import { getPref } from '../uiPrefs.js';
 import { KINGS_GAMBIT_KEY } from '../features.js';
 import { modSetting } from '../modSettings.js';
 import { revenantHeld } from '../revenant/revenant.js';
-import { starfallRuns } from '../../net/starfall/starfallLaw.js';   // STAR8: the Witches' Festival's stars falling
+import { starfallRuns, STAR_LIFE_MS, STAR_GRACE_MS } from '../../net/starfall/starfallLaw.js';   // STAR8: the Witches' Festival's stars falling
+import { Symbol as QuestSymbol } from '../quest/symbol.js';
+import { ladderDoneNow } from '../arena/arenaLadder.js';   // QUEST-AUDIT IV C2: a climb over has no bout to win   // QUEST-AUDIT IV C1: a step's deed, by the task the machine files
 
 /** AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: WHAT A STEP'S DEED NEEDS, read where the game reads it - Loot rarity's own
  *  switch (a socket, a reforge refuse 'off' without it), The King's Gambit's (no table offers the game), the sea's
@@ -53,7 +55,14 @@ export const NEED_CHECKS = Object.freeze({
   kingsGambit: () => !!getPref(KINGS_GAMBIT_KEY),
   naval: () => getPref('naval') !== false && (() => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } })(),
   renown: () => !revenantHeld(),
+  arenaLadder: () => !ladderDoneNow(),
   starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),
+});
+
+/** QUEST-AUDIT IV C1: a need a running step keeps a while past its end - the last star lands before the Festival's close
+ *  and may be held until it fades, so the step that counts it is not set aside under it. */
+export const NEED_TAILS = Object.freeze({
+  starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs - STAR_LIFE_MS - STAR_GRACE_MS),
 });
 
 /** The game seconds a line waits between one step's end and the next step's start - an hour of the character's time,
@@ -183,12 +192,20 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
    * what (rows, waitingWords). A quest the player set aside is the player's: never reclaimed here.
    */
   function keepSeason(l, rec, q) {
-    if (unmetNeeds(l, rec.step, probe).length) {
+    if (needsNow(l, rec, q).length) {
       if (q.shelvedAt == null && machine.shelveQuest?.(q.uid)?.ok) rec.aside = true;
       return;
     }
     if (!rec.aside || (q.shelvedAt != null && !machine.reclaimQuest?.(q.uid)?.ok)) return;
     rec.aside = false;
+  }
+
+  /** The needs of a begun line's step that do not hold now - none once its running quest has done the step's deed
+   *  (QUEST-AUDIT IV C1: QLTF01's star held, the Festival may close; the coven is a walk). */
+  function needsNow(l, rec, q = runningStep(l.steps[rec.step]?.quest ?? '')) {
+    const deed = l.steps[rec.step]?.deed;
+    if (deed && q?.getTask?.(new QuestSymbol(deed))?.getTriggerValue?.()) return [];
+    return unmetNeeds(l, rec.step, probe).filter((n) => !(q && NEED_TAILS[n]?.(nowMs())));
   }
 
   function startStep(l, rec) {
@@ -217,7 +234,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
     // UI-7: a line begun continues where it can - never "Opens" again
     if (o.online && !online()) return t('ql.line.continuesOnline', 'Continues online.');
     if (o.account && !registered()) return t('ql.line.continuesAccount', 'Continues with a registered account.');
-    if (unmetNeeds(l, rec.step, probe).length) return opensWords({ ...l, opens: {} }, probe, rec.step);
+    if (needsNow(l, rec).length) return opensWords({ ...l, opens: {} }, probe, rec.step);
     return rec.stalled ? t('ql.line.stalled', 'Its next step could not begin here: it will be offered again.') : null;
   }
 
@@ -419,7 +436,10 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
           const said = rec?.claims?.[i];
           // UI-19: `refused` the service's refusal of this step's claim (its error word), while the claim waits
           const refused = pending.find((c) => c.line === l.id && c.step === i && c.refused)?.refused ?? null;
-          return { quest: s.quest, title: s.title(), state, witnessed: !!witnessOf(l, i), seen: said === 'witnessed', unseen: state === 'done' && !!witnessOf(l, i) && said !== 'witnessed', outcome: rec?.outcomes?.[i]?.text ?? null, refused };
+          // QUEST-AUDIT IV D2: `waits` a step the service pays by another's deeds (a title, a key - the line before it
+          // witnessed whole) and has not paid yet: its line's title is not earned yet either
+          const waits = state === 'done' && !witnessOf(l, i) && qlStepClaimed(l.id, i) && said !== 'witnessed';
+          return { quest: s.quest, title: s.title(), state, witnessed: !!witnessOf(l, i), seen: said === 'witnessed', unseen: state === 'done' && !!witnessOf(l, i) && said !== 'witnessed', waits, outcome: rec?.outcomes?.[i]?.text ?? null, refused };
         });
         // UI-7: a failed step offered again (`retry`), a step's quest set aside in the journal (`shelved`)
         const state = offered ? 'offered' : rec.done ? 'done' : running ? 'running' : shelved && !aside ? 'shelved' : rec.retry ? 'retry' : 'waiting';

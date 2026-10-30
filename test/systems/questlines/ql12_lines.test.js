@@ -469,10 +469,10 @@ test('QL1/QL12 an outcome settles at the end its script names: a failure clock\'
 // ═══ AUDIT QUESTLINES (LINES, ACTS-2): the runner's gates, its stalls and its order ═══
 
 test('AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: a step whose deed needs a switch that is off, or the Renown a revenant comes at, waits and says so - never started to fail every day; each need is one the runner can read (mutants: the needs unread; the line begun regardless; the Renown)', () => {
-  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['kingsGambit', 'lootRarity', 'naval', 'renown', 'starfall']);   // PIN MOVED (STAR8): the Starfall running
+  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['arenaLadder', 'kingsGambit', 'lootRarity', 'naval', 'renown', 'starfall']);   // PIN MOVED (STAR8): the Starfall running; PIN MOVED (QUEST-AUDIT IV C2): the Arena's ladder
   for (const l of QL_LINES) for (const s of l.steps) for (const n of s.needs ?? []) assert.ok(n in NEED_CHECKS, `${s.quest} needs ${n}`);
   assert.deepEqual(QL_LINES.flatMap((l) => l.steps.filter((s) => s.needs).map((s) => `${s.quest}:${s.needs.join('+')}`)),
-    ['QLTF01:starfall', 'QLTF03:starfall', 'QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIW02:renown']);   // PIN MOVED (STAR8): the Festival line's star steps
+    ['QLOC02:naval', 'QLOC03:naval', 'QLTF01:starfall', 'QLTF03:starfall', 'QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIA01:arenaLadder', 'QLIA02:arenaLadder', 'QLIW02:renown']);   // PIN MOVED (STAR8): the Festival line's star steps; PIN MOVED (QUEST-AUDIT IV B1): the Old Coil's sea steps
   // Loot rarity off: the Smith's Secrets is not on offer - never taken to fail; PIN MOVED (QL-OFFERED): a line its gate
   // shuts is no row (UI-Calm's law - nothing drawn that cannot be taken), and its take is refused
   setPref(LOOT_RARITY_KEY, false);

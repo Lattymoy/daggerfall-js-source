@@ -52,6 +52,7 @@ import { cannotRemoveItemText } from '../createItem.js';
 import { entityMaxEncumbrance } from '../../combat/formulas.js';
 import { makeItemPermanent } from '../quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
 import { getBool } from '../settings/settings.js';   // GUI/CanDropQuestItems
+import { isStartQuestName } from '../starts/starts.js';   // QUEST-AUDIT IV A5: a start's commission stays
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
 import { localizedText, formatText, t } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; QUEST-AUDIT III: the port's own
 import { REMAINS_LIST } from '../legacy/heirloom.js';   // AUDIT LEGACY II H4: a remains' list, open
@@ -227,6 +228,9 @@ export function questTransferRefused(item, { fromLocal, toWagon = false, getQues
   // (machine.js reclaimQuest). NEVER TO A COUNTER (`trade`): a shop would buy an item reclaiming hands back again; and
   // never one the quest made permanent - that one outlives the quest, and a second copy would too.
   if (!trade && fromLocal && quest?.shelvedAt != null && questItem && !questItem.madePermanent) return false;
+  // QUEST-AUDIT IV A5: a start's commission never leaves the pack, whatever Drop Quest Items says - its quest is the one
+  // way into the main quest, and nothing hands a lost one back
+  if (fromLocal && isStartQuestName(quest?.questName) && questItem?.symbol?.name === 'commission') return true;
   // "Player cannot drop most quest items unless enabled" (:1486-1494).
   // GUI/CanDropQuestItems ships False in both codebases.
   if (!getBool('GUI', 'CanDropQuestItems')) {

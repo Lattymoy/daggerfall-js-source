@@ -1742,7 +1742,7 @@
   "src/systems/quest/item.js": 33,
   "src/systems/quest/localizedQuest.js": 4,
   "src/systems/quest/machine.js": 409,
-  "src/systems/quest/mainSpine.js": 36,
+  "src/systems/quest/mainSpine.js": 35,
   "src/systems/quest/markerCuration.js": 17,
   "src/systems/quest/message.js": 17,
   "src/systems/quest/noAsksAgain.js": 48,

@@ -76,7 +76,7 @@ Message:  1030
 <ce>                           %pcf?"
 
 Message:  1031
-The Mages Guild. Write to Ysolde Marnhel.
+Write to Ysolde Marnhel.
 
 Message:  1032
 No one. Burn the chart.

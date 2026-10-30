@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-QL-SCRIPTS-M11-QLBD05-keepers-of-the-Covenant",
     "file": "src/systems/questlines/quests/QLBD05.txt",
-    "old": "To the Order of the Hour. Let",
-    "new": "To the Order of the Hour, keepers of the Covenant. Let",
+    "old": "To the Order of the Hour.\n",
+    "new": "To the Order of the Hour, keepers of the Covenant.\n",
     "tests": [
       "test/systems/questlines/ql12_lines.test.js"
     ]

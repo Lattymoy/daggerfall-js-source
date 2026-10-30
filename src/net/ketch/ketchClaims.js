@@ -23,9 +23,12 @@ import { readKetchReceipt } from './ketchReceipt.js';
 import { noteAct } from '../../systems/questlines/qlActs.js';   // the questline's act: the Warden felled, counted once
 import { t } from '../../systems/textManager.js';
 
-/** The device's Ketch receipts not yet settled with the account service: `[{ r, cid, a? }]` - the receipt, its claim id,
- *  and whether its act was said. */
+/** The device's Ketch receipts not yet settled with the account service: `[{ r, cid, a?, ch? }]` - the receipt, its claim
+ *  id, whether its act was said, and the character standing when it came. */
 export const KT_CLAIMS_KEY = 'kt.ketchClaims';
+/** QUEST-AUDIT IV C4: the Warden's acts owed characters not standing when their share was answered - `[{ ch }]`. */
+export const KT_ACTS_KEY = 'kt.ketchActs';
+const KT_ACTS_MAX = 16;
 /** A claim id - sixteen hex digits, the service's KT_CID_RE. */
 export const KT_CID_RE = /^[0-9a-f]{16}$/;
 const mintCid = () => { const b = new Uint8Array(8); globalThis.crypto.getRandomValues(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
@@ -60,11 +63,11 @@ export function ketchRecordText(rec) {
  *   claim: (receipt: string, cid: string) => Promise<any>,
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void }|null,
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void, me?: () => (string|null),
- *   paid?: (claims: any, answer: any) => void, cid?: () => string,
+ *   paid?: (claims: any, answer: any) => void, cid?: () => string, who?: () => (string|null),
  * }} deps `claim` net/accountClient.js accountKetch's - `{ ok, data }` or `{ ok: false, error, why? }`, never a throw; `nowS`
- *   the relay's clock (null unheard); `me` the signed-in account; `paid` the hold's share answered - its spoils to roll
+ *   the relay's clock (null unheard); `me` the signed-in account; `paid` the hold's share answered; `who` the character here
  */
-export function createKetchClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, me = () => null, paid = () => {}, cid = mintCid }) {
+export function createKetchClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, me = () => null, paid = () => {}, cid = mintCid, who = () => null }) {
   let busy = false, again = false, lastAt = -Infinity;
   let lastMe, meAt = -Infinity;
   const settled = new Set();
@@ -78,6 +81,22 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((e) => entry(e));
   }
   const keep = (list) => { memory = list; try { store?.set(KT_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
+  // QUEST-AUDIT IV C4: the act is the character's that fought - one switched to before the answer is owed it, as a star's is
+  let owedMemory = [];
+  function owed() {
+    let v;
+    try { v = store ? store.get(KT_ACTS_KEY) : undefined; } catch { v = undefined; }
+    return (Array.isArray(v) ? v : v === undefined ? owedMemory : []).filter((o) => o && typeof o.ch === 'string' && o.ch);
+  }
+  const keepOwed = (list) => { owedMemory = list; try { store?.set(KT_ACTS_KEY, list); } catch { /* memory holds it */ } };
+  const owe = (e) => { if (!e.ch || e.ch === who()) noteAct('warden-felled'); else keepOwed([...owed(), { ch: e.ch }].slice(-KT_ACTS_MAX)); };
+  function payOwed() {
+    const ch = who(), list = owed(), i = ch ? list.findIndex((o) => o.ch === ch) : -1;
+    if (i < 0) return false;
+    keepOwed(list.filter((_, j) => j !== i));
+    noteAct('warden-felled');
+    return true;
+  }
 
   async function flush() {
     if (busy) { again = true; return 0; }
@@ -96,7 +115,7 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
         const d = answer?.ok ? answer.data ?? {} : null;
         if (d?.recorded === true) { n++; if (Number.isSafeInteger(d.sailed)) say(KT_CLAIM_TEXT.recorded(d.sailed)); }
         if (d && d.share === true) {
-          if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }   // the act once, kept before it is said
+          if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); owe(e); }   // the act once, kept before it is said
           try { paid(c, d); } catch (err) { console.warn('[kt] spoils', err?.message ?? err); }
         } else if (d && d.why === 'taken') say(KT_CLAIM_TEXT.taken);
         if (ketchClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k.r !== r)); }
@@ -106,15 +125,16 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
     return n;
   }
   return {
-    /** A receipt the ship handed this socket: kept (one a voyage and account) and offered at once. Answers whether kept. */
-    add(r) {
+    /** A receipt the ship handed this socket: kept (one a voyage and account) with the character standing here, and
+     *  offered at once. Answers whether kept. */
+    add(r, character = who()) {
       const c = live(r);
       if (!c || settled.has(r)) return false;
       const list = kept();
       if (!list.some((k) => { const o = readKetchReceipt(k.r); return k.r === r || (o?.d === c.d && o?.s === c.s && o?.o === c.o); })) {
         const theirs = list.filter((k) => readKetchReceipt(k.r)?.s === c.s);
         const drop = theirs.length >= KT_CLAIMS_MAX ? theirs[0] : null;
-        keep([...list.filter((k) => k !== drop), { r, cid: cid() }].slice(-KT_CLAIMS_ALL_MAX));
+        keep([...list.filter((k) => k !== drop), { r, cid: cid(), ...(typeof character === 'string' && character ? { ch: character } : {}) }].slice(-KT_CLAIMS_ALL_MAX));
       }
       void flush();
       return true;
@@ -126,6 +146,7 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
       const t = nowMs(), due = t - lastAt >= KT_CLAIM_RETRY_MS;
       if (!due && t - meAt < KT_ME_POLL_MS) return false;
       meAt = t;
+      payOwed();   // QUEST-AUDIT IV C4: an act owed the character standing now
       const mine = me(), signedIn = mine !== lastMe;
       lastMe = mine;
       if (!signedIn && !due) return false;
@@ -135,5 +156,7 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
     },
     flush,
     kept,
+    /** The acts owed characters not standing, for the tests. */
+    owed,
   };
 }

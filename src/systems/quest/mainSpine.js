@@ -41,10 +41,11 @@
 //     (nothing says it ran), and its royal letters come again.
 // The story's own record (storyStarted) is the guard for a save from before the record: a backbone that ended ended
 // the main quest, and a main quest ends only past the courts' first quests.
+import { isStartQuestName, MAIN_QUEST_OPENER } from '../starts/starts.js';   // QUEST-AUDIT IV A1: a start begins the Curse, not the opener
 
 /** The backbone, and the quest that starts it. */
 export const SPINE = 'S0000999';
-export const SPINE_OPENER = '_BRISIEN';
+export const SPINE_OPENER = MAIN_QUEST_OPENER;
 /** The Curse of Daggerfall, started beside the opener in every game born in the port (AUDIT FB1026d II A1). */
 export const SPINE_CURSE = 'S0000977';
 /** Quest ticks between the checks. */
@@ -52,22 +53,24 @@ export const SPINE_CHECK_TICKS = 30;
 
 const named = (q, name) => String(q?.questName ?? '').toUpperCase() === name;
 
-/** Whether the opener has run its backbone start: its StartQuest of S0000999 done. @param {any} quest */
-function openerStartedSpine(quest) {
+/** Whether `quest` has run its `start quest` of `name`: the StartQuest done. @param {any} quest @param {string} name */
+function ranStartOf(quest, name) {
   for (const task of quest?.tasks?.values?.() ?? []) {
     for (const a of task.actions ?? []) {
       if (a?.constructor?.typeName !== 'StartQuest' || !a.isComplete) continue;
-      if (String(a.questName ?? '').toUpperCase() === SPINE || a.questIndex1 === 999) return true;
+      if (String(a.questName ?? '').toUpperCase() === name || (name === SPINE && a.questIndex1 === 999)) return true;
     }
   }
   return false;
 }
+const openerStartedSpine = (quest) => ranStartOf(quest, SPINE);
 
 /** The record as a load finds it: the saved one, and what the saved table (`names`, the quests' file names) says of it -
  *  the opener, or the Curse begun beside it (AUDIT FB1026d II A1). @param {any} saved @param {string[]} names */
 export function spineRecord(saved, names) {
   const has = (n) => names.some((x) => String(x ?? '').toUpperCase() === n);
-  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };
+  const curse = has(SPINE_CURSE) && !names.some((x) => isStartQuestName(x));   // QUEST-AUDIT IV A1: beside a start, not the opener
+  return { opened: saved?.opened === true || has(SPINE_OPENER) || curse, ran: saved?.ran === true || has(SPINE) };
 }
 
 /**
@@ -79,5 +82,19 @@ export function spineOwed(m) {
   if (m.spine.ran || m.storyStarted.size > 0) return false;
   if (m.questsToInvoke.some((q) => named(q, SPINE))) return false;
   for (const q of m.quests.values()) if (named(q, SPINE_OPENER)) return openerStartedSpine(q);
+  for (const q of m.quests.values()) if (isStartQuestName(q?.questName)) return false;   // QUEST-AUDIT IV A1: the opener not begun yet
   return m.spine.opened;
+}
+
+/**
+ * QUEST-AUDIT IV A4: whether a start handed its commission in (its `start quest _BRISIEN` done) while no opener stands or
+ * waits - the opener's parse failed (the world's faction records still away) and StartQuest swallowed it, as it did the
+ * backbone's. The start ends in that tick and the opener begins nowhere else, so it is started again at each check. An
+ * opener that began outlives the start's tombstone week (her letter alone is a week off), so its absence is the proof.
+ * @param {{ quests: Map<any, any>, questsToInvoke: any[] }} m
+ */
+export function openerOwed(m) {
+  if ([...m.quests.values(), ...m.questsToInvoke].some((q) => named(q, SPINE_OPENER))) return false;
+  for (const q of m.quests.values()) if (isStartQuestName(q?.questName) && ranStartOf(q, SPINE_OPENER)) return true;
+  return false;
 }

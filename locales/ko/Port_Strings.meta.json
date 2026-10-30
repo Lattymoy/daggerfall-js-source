@@ -35070,8 +35070,8 @@
   "by": "claude-in-session"
  },
  "ql.journal.stepWitnessedTitle": {
-  "en": "ebbb8c12d6e5",
-  "tr": "2be5730dd847",
+  "en": "f6f701cf9ee8",
+  "tr": "fc085d621f6c",
   "by": "claude-in-session"
  },
  "ql.journal.take": {
@@ -35307,6 +35307,11 @@
  "ql.line.introTables.lead": {
   "en": "0aa647f1798a",
   "tr": "4ef7a75d05b8",
+  "by": "claude-in-session"
+ },
+ "ql.line.needs.arenaLadder": {
+  "en": "0a7c47f9b03d",
+  "tr": "1eee957e2e6c",
   "by": "claude-in-session"
  },
  "ql.line.needs.kingsGambit": {

@@ -121,7 +121,7 @@ test('QL12 a questline\'s page: what a questline is, its story and giver, its st
   // AUDIT QUESTLINES UI-12 (PIN MOVED): a hover explained "witnessed" - no press, no pad; the page says it once
   assert.equal(text(rows[2].querySelector('.px-qobj-tag')), 'needs a witness', 'a step still to do needs one');
   // PIN MOVED (AUDIT QUESTLINES VOICE-QL): the places by name, a sentence of its own - never "an endgame place" (Voice.md rule 3)
-  assert.match(text(box), /A witnessed step is done in a Dagon.s Breach, an Elite Breach.s Redoubts, the Abyss Dungeon.s Shattered Hour, against the Sea Serpent or at a fallen star\. The account service checks it against that place.s own record before it pays\./);   // PIN MOVED (STAR8): and a fallen star
+  assert.match(text(box), /Witnessed steps happen in a Dagon.s Breach, an Elite Breach.s Redoubts, the Abyss.s Shattered Hour, against the Sea Serpent, aboard the Sky-Ketch or at a fallen star\. The account service checks that place.s record before it pays\./);   // PIN MOVED (STAR8): and a fallen star; PIN MOVED (QUEST-AUDIT IV D3): and the Sky-Ketch
   assert.equal(text(box.querySelector('.px-qline-said')), 'Ysolde told you how.', 'a done step says how it ended');
   assert.match(text(box), /Finish it to earn the title Doorwarden/);
   const done = qlLineDetail(doc, { ...line, state: 'done', opens: null, outcome: 'The embers went to the Guild.' }, { titleText: () => 'Doorwarden' });

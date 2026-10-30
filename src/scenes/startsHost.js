@@ -177,10 +177,19 @@ export function createStartsHost(host) {
    *  it (storyLegacy) and is left alone. Answers true: the game's start is the save's now (world.js _questStarted). */
   function restored() {
     const m = machine?.();
-    const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0
-      || [...(m.quests?.values?.() ?? [])].some((q) => isStartQuestName(q?.questName) || String(q?.questName ?? '').toUpperCase() === MAIN_QUEST_OPENER);
+    const begun = !m || m.storyLegacy || storyBegun(m);
     if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);
     return true;
+  }
+
+  /** QUEST-AUDIT IV A2, A3: the story has a trace past the story's record - storyStarted leaves out the protected quests, so
+   *  the Curse and the backbone, and the spine's record, say a story begun too (the start and the opener ended and gone
+   *  a week later, before the courts' first quest); and a classic import's globals say its own game began. */
+  function storyBegun(m) {
+    if ((m.storyStarted?.size ?? 0) > 0 || (m.storyEnded?.size ?? 0) > 0 || m.spine?.opened || m.spine?.ran) return true;
+    const begun = new Set([MAIN_QUEST_OPENER, ...gameStartQuests(), 'S0000999'].map((n) => n.toUpperCase()));
+    if ([...(m.quests?.values?.() ?? []), ...(m.questsToInvoke ?? [])].some((q) => isStartQuestName(q?.questName) || begun.has(String(q?.questName ?? '').toUpperCase()))) return true;
+    return [...(m.globalVars?.values?.() ?? [])].some(Boolean);
   }
 
   return {

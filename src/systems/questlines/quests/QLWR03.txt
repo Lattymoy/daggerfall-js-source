@@ -42,7 +42,7 @@ Message:  1011
 <ce>                       Corvane Tull, Battlemage
 
 Message:  1012
-<ce>       The same boy in the same oversized robe. "From the
+<ce>       A boy in an oversized Guild robe. "From the
 <ce>       Battlemage," he says, and adds, unasked: "He has
 <ce>                not slept since you left."
 

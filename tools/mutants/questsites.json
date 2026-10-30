@@ -83,7 +83,7 @@
   {
     "name": "R25-found-not-kept",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "    for (const row of found.get(r)?.values() ?? []) add(row);",
+    "old": "    for (const row of found.get(r)?.values() ?? []) if (!ids.has(row.mapId)) { ids.add(row.mapId); rows.push(row); }\n",
     "new": "",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "R25-names-miss-unasked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "  get(name) { return super.has(name) ? super.get(name) : this.miss(name); }",
+    "old": "  get(name) { return this.miss(name) ?? super.get(name); }",
     "new": "  get(name) { return super.get(name); }",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"

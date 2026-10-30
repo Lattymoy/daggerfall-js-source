@@ -98,7 +98,7 @@ Message:  1030
 <ce>              "Well? Is it mine, or is it yours?"
 
 Message:  1031
-Unwind a length to sell, and give her the rest
+Sell some, give her the rest
 
 Message:  1032
 Give it to her whole

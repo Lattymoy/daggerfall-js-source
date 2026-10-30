@@ -20,8 +20,8 @@
  {
   "name": "STAR8-the-first-step-any-night",
   "file": "src/systems/questlines/qlLines.js",
-  "old": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },",
-  "new": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods') },",
+  "old": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'], deed: '_held_' },",
+  "new": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), deed: '_held_' },",
   "tests": [
    "test/systems/questlines/star8_frostfall.test.js"
   ]
@@ -222,8 +222,8 @@
  {
   "name": "STAR8-the-fallen-star-unnamed",
   "file": "src/ui/questlines/qlJournal.js",
-  "old": "the Abyss Dungeon’s Shattered Hour, against the Sea Serpent or at a fallen star.",
-  "new": "the Abyss Dungeon’s Shattered Hour or against the Sea Serpent.",
+  "old": "the Abyss’s Shattered Hour, against the Sea Serpent, aboard the Sky-Ketch or at a fallen star.",
+  "new": "the Abyss’s Shattered Hour, against the Sea Serpent or aboard the Sky-Ketch.",
   "tests": [
    "test/ui/questlines/ql2_journal.test.js"
   ]

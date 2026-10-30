@@ -76,10 +76,10 @@ Message:  1030
 <ce>        Well? Keep it, or let the Order seal it?"
 
 Message:  1031
-Keep it. A key is meant to be turned.
+Keep it. A key is for turning.
 
 Message:  1032
-Give it to the Order of the Hour, to be sealed away.
+Give it to the Order to seal.
 
 Message:  1040
 <ce>       The priest of the Hour says nothing at all, and

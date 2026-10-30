@@ -75,10 +75,10 @@ Message:  1030
 <ce>        What do I tell the Empire, %pcf?"
 
 Message:  1031
-The truth. The keys were given, and why.
+The truth: they were given.
 
 Message:  1032
-The mercy he asks for. Let the keys have been taken.
+His mercy: they were taken.
 
 Message:  1040
 <ce>             Corvane nods slowly, and dips his pen.

@@ -128,6 +128,7 @@ _paid_ task:
 	when _clicked_ and _fed_
 	say 1013
 	get item _thunder_
+	make _thunder_ permanent
 	give pc _gold_
 	end quest
 

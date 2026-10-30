@@ -32,10 +32,10 @@ import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
 import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTLINES LINES-3: the Renown a revenant comes at, in the window's words
 
 /**
- * @typedef {{ quest: string, title: () => string, needs?: ReadonlyArray<LineNeed> }} LineStep
+ * @typedef {{ quest: string, title: () => string, needs?: ReadonlyArray<LineNeed>, deed?: string }} LineStep
  *   `needs` what the step's deed cannot be done without (AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6): the step waits,
- *   saying so, until each holds - never started to fail every day
- * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'|'starfall'} LineNeed
+ *   saying so, until each holds. `deed` that deed's task (QUEST-AUDIT IV C1): set, the step needs nothing more
+ * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'|'starfall'|'arenaLadder'} LineNeed
  *   `lootRarity` Loot rarity on (a socket, a reforge); `kingsGambit` The King's Gambit on (its table); `naval` Naval
  *   Combat on (the sea's own deeds); `renown` the Renown a revenant comes at (revenant.js REVENANT_MIN_RENOWN, online);
  *   `starfall` (STAR8) the Starfall running - the Witches' Festival's days (net/festivalLaw.js, through
@@ -133,8 +133,8 @@ export const QL_LINES = Object.freeze([
     opens: { level: 8, online: true, account: true },
     steps: [
       { quest: 'QLOC01', title: () => t('ql.step.QLOC01', 'The Sailors’ Tale') },
-      { quest: 'QLOC02', title: () => t('ql.step.QLOC02', 'The Packet Lanes') },
-      { quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin') },
+      { quest: 'QLOC02', title: () => t('ql.step.QLOC02', 'The Packet Lanes'), needs: ['naval'] },   // QUEST-AUDIT IV B1: a berth and the Serpent are the sea's
+      { quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), needs: ['naval'] },
     ],
   }),
   line({
@@ -144,7 +144,7 @@ export const QL_LINES = Object.freeze([
     giver: () => t('ql.line.thirteenthFrostfall.giver', 'Morwen, a Wyrd Sister of Glenmoril'),   // AUDIT STAR8 T1: of the Festival's Glenmoril Wyrd
     opens: { level: 6, online: true, account: true, event: 'starfall' },
     steps: [
-      { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },
+      { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'], deed: '_held_' },   // QUEST-AUDIT IV C1: the walk to the coven needs no Festival
       { quest: 'QLTF02', title: () => t('ql.step.QLTF02', 'The Coven on the Bluff') },
       { quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars'), needs: ['starfall'] },
       { quest: 'QLTF04', title: () => t('ql.step.QLTF04', 'What the Thread Is Worth') },
@@ -214,10 +214,10 @@ export const QL_LINES = Object.freeze([
     title: () => t('ql.line.introArena', 'The Herald’s Call'),
     lead: () => t('ql.line.introArena.lead', 'The Arena’s Herald is calling for new blood, and pays the first purse in advance of glory.'),
     giver: () => t('ql.line.introArena.giver', 'the Arena’s Herald'),
-    opens: { level: 6, online: true },
+    opens: { level: 6, online: true, account: true },   // QUEST-AUDIT IV C2: the ladder online is a registered account's
     steps: [
-      { quest: 'QLIA01', title: () => t('ql.step.QLIA01', 'First Blood') },
-      { quest: 'QLIA02', title: () => t('ql.step.QLIA02', 'A Name in the Sand') },
+      { quest: 'QLIA01', title: () => t('ql.step.QLIA01', 'First Blood'), needs: ['arenaLadder'] },
+      { quest: 'QLIA02', title: () => t('ql.step.QLIA02', 'A Name in the Sand'), needs: ['arenaLadder'] },
     ],
   }),
   line({
@@ -294,6 +294,7 @@ const NEED_WORDS = Object.freeze({
   naval: () => t('ql.line.needs.naval', 'with Naval Combat on'),
   renown: () => t('ql.line.needs.renown', 'at Renown {n}', { n: REVENANT_MIN_RENOWN }),
   starfall: () => t('ql.line.needs.starfall', 'during the Witches’ Festival'),   // STAR8
+  arenaLadder: () => t('ql.line.needs.arenaLadder', 'while the Arena’s ladder has a bout for you'),   // QUEST-AUDIT IV C2
 });
 
 /**

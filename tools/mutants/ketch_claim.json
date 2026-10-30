@@ -164,8 +164,8 @@
   {
     "name": "KTA-the-act-said-only-at-recorded",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
-    "new": "if (d.recorded === true) noteAct('warden-felled');",
+    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); owe(e); }",
+    "new": "if (d.recorded === true) owe(e);",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "KTA-the-act-said-at-every-share",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
-    "new": "noteAct('warden-felled');",
+    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); owe(e); }",
+    "new": "owe(e);",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]

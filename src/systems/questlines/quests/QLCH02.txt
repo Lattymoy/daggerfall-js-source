@@ -71,6 +71,11 @@ Message:  1020
 <ce>        keep it safe until we decide what it is for.
 <ce>        That decision is not mine alone."
 
+Message:  1050
+<ce>       Ysolde Marnhel waited at _hall_ for the
+<ce>      Weir Key, then gave up waiting. The Guild
+<ce>             has closed the matter.
+
 -- Symbols used in the QRC file:
 --
 --               %qdt occurs 2 times.
@@ -90,6 +95,7 @@ Place _hall_ remote magery
 Place _lair_ remote dungeon
 
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
 
 Foe _lieutenant_ is Nightblade
 Foe _bound_ is Fire_daedra
@@ -112,6 +118,8 @@ _slain_ task:
 	killed 1 _lieutenant_ saying 1013
 
 _haskey_ task:
+	stop timer _wait_
+	start timer _meet_
 	say 1016
 	log 1011 step 1
 
@@ -123,4 +131,8 @@ _handed_ task:
 
 _wait_ task:
 	say 1003
+	end quest
+
+_meet_ task:
+	say 1050
 	end quest

@@ -11,7 +11,8 @@
 // the character's from the moment they are rolled, until one is taken - the gold a running quest has paid (REWARD-3: its
 // end settles it), and the questlines begun (QL12-QL16: its line runner's records, qlLineRunner.js - QL-OFFERED: each one
 // the player took).
-import { startStamp, isStamped, observe, readObjectives, outcomeOf, outcomeNow, fallbackOutcome, questTierOf } from './qlLaw.js';
+import { startStamp, isStamped, observe, readObjectives, outcomeOf, outcomeNow, fallbackOutcome, questTierOf, questlinesOn } from './qlLaw.js';
+import { lineStepOf } from './qlLines.js';   // QUEST-AUDIT IV D1: a line's step is the layer's, whatever the switch says at its start
 import { sheetFor } from './qlSheets.js';
 import { scaleGold, goldFactor, goldStillOwed, rewardTier, payProfileOf, rollRewardChoice, rewardSeed, standingMovesOf } from './qlRewards.js';
 import { isGoldPieces } from '../inventory.js';
@@ -105,7 +106,9 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
   const layer = {
     /** machine deps.questlinesStamp: a fresh state with the quest's tier while the switch is on, else null. */
     stamp(quest) {
-      const st = startStamp();
+      // QUEST-AUDIT IV D1: a line's step is stamped whatever the switch says when it starts - the line was taken with it
+      // on, and an unstamped step heard no act and moved no line (taken in a pause, the switch then turned off)
+      const st = startStamp(questlinesOn() || lineStepOf(quest?.questName) != null);
       if (!st) return null;
       const meta = questLists?.findQuestMeta?.(quest?.questName) ?? null;
       // QL2: the Tutorials' Questlines page, at the first quest that shows objectives - AUDIT QUESTLINES UI-13: one the
@@ -128,6 +131,8 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
     look() {
       const news = [];
       for (const quest of machine.quests.values()) {
+        // QUEST-AUDIT IV D1: a line's step a save kept unstamped is stamped now, so its acts count from here
+        if (quest.ql == null && !quest.questComplete && !quest.questTombstoned && lineStepOf(quest.questName)) quest.ql = layer.stamp(quest);
         if (!isStamped(quest) || quest.questTombstoned) continue;
         const sheet = sheetFor(quest.questName);
         if (!sheet) continue;
@@ -213,7 +218,8 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
      * x1.25) on the merchant's walk home: its gold stood at x1.00 in either order.
      */
     ending(quest) {
-      if (!isStamped(quest) || quest.ql.moved) return null;
+      if (!isStamped(quest)) { if (lineStepOf(quest?.questName)) runner.ended(quest, null); return null; }   // QUEST-AUDIT IV D1: its line moves all the same
+      if (quest.ql.moved) return null;
       const sheet = sheetFor(quest.questName);
       if (!sheet) return null;
       observe(quest, sheet, probe, { settle: true, ending: true });

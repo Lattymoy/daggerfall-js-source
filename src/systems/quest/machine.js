@@ -292,7 +292,7 @@
 
 import { Parser } from './parser.js';
 import { globalVarsTable } from './tables.js';   // STORY-AGAIN (AUDIT QA3): a step's globals, by name
-import { spineOwed, spineRecord, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js';   // MAIN-SPINE: the main quest's backbone kept
+import { spineOwed, spineRecord, openerOwed, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js';   // MAIN-SPINE: the main quest's backbone kept
 import { defaultActionTemplates, heldPromptPlaces } from './actions.js';   // AUDIT QA3 A1: a box up here, asked in the envelope
 import { receivedState, mergeSharedState, freshState, QL_STAMP } from '../questlines/qlState.js';   // QL1: a shared copy's questline state (decision 7); AUDIT QUESTLINES BRANCH-14: a restart's stamp
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
@@ -762,6 +762,9 @@ export class QuestMachine {
 
   /** Schedule by quest name through the data seam. */
   scheduleQuestByName(questName, factionId = 0, opts = {}) {
+    // QUEST-AUDIT IV A1: the backbone is one - a second `start quest 999 999` (an opener begun after a backbone a load
+    // already kept, in a save that law mistook) would send every royal letter twice
+    if (questNameIn([SPINE], questName) && [...this.quests.values(), ...this.questsToInvoke].some((q) => questNameIn([SPINE], q.questName) && !q.questTombstoned)) return null;
     const lines = this.deps.getQuestSourceLines?.(questName);
     if (!lines) { console.warn(`[quest] no source for quest ${questName}`); return null; }
     // CRUX1 (2026-09-22): UNDER ParseQuest's CATCH, as the lists arm is
@@ -1805,7 +1808,7 @@ export class QuestMachine {
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {
     this.beat++;   // AUDIT STAR8 S1 (questFoeStands)
-    if (this.beat % SPINE_CHECK_TICKS === 0) this.keepSpine();   // MAIN-SPINE: before the invoke loop, so a start lands this tick
+    if (this.beat % SPINE_CHECK_TICKS === 0) { this.keepOpener(); this.keepSpine(); }   // MAIN-SPINE: before the invoke loop, so a start lands this tick
     // Invoke scheduled quests (QuestMachine.cs StartQuest:719-725):
     // Start, then the talk-topic registration, then the live table.
     // The questor-behaviour relink that follows in C# is scene work
@@ -1868,6 +1871,14 @@ export class QuestMachine {
     this.spineTries = (this.spineTries ?? 0) + 1;
     if (quest && !this.spineSaid) { this.spineSaid = true; console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - scheduled (try ${this.spineTries})`); }   // AUDIT FB1026d II A3: scheduled - its start is the invoke loop's - and said once
     else if (this.spineTries === 1) console.warn(`[quest] ${SPINE} (the main quest's backbone) is owed and did not start (${why}) - asked again every ${SPINE_CHECK_TICKS} quest ticks`);
+    return !!quest;
+  }
+
+  /** QUEST-AUDIT IV A4: a start's hand-off whose opener did not parse has the opener started again (mainSpine.js openerOwed). */
+  keepOpener() {
+    if (!openerOwed(this)) return false;
+    const quest = this.scheduleQuestByName(SPINE_OPENER);
+    if (quest) console.warn(`[quest] ${SPINE_OPENER} (the main quest's opener) was owed after a start's hand-off - scheduled`);
     return !!quest;
   }
 

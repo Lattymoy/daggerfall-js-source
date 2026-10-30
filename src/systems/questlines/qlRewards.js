@@ -170,11 +170,12 @@ export function rollRewardChoice({ seed, level, tier, entity = null, named = nul
     }
     return null;
   };
-  // REWARD-5: the named card from its base, through the same fit (a metal the class may not wear is drawn again)
+  // REWARD-5: the named card from its base, through the same fit (a metal the class may not wear is drawn again).
+  // QUEST-AUDIT IV B5: but not the skill's - the ending hands over that blade, so a class that may wield it is offered it
   const drawNamed = () => {
     for (let n = 0; n < TRIES; n++) {
       const item = baseOf(named.kind, base, lv, rolls);
-      if (fitsPlayer(item, named.kind, entity, skills)) return item;
+      if (fitsPlayer(item, named.kind, entity, [...WEAPON_SKILLS])) return item;
     }
     return null;
   };

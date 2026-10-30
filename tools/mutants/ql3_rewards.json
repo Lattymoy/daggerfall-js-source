@@ -74,7 +74,7 @@
   {
     "name": "AUDIT-QL-REWARD-5-named-card-unfitted",
     "file": "src/systems/questlines/qlRewards.js",
-    "old": "      const item = baseOf(named.kind, base, lv, rolls);\n      if (fitsPlayer(item, named.kind, entity, skills)) return item;",
+    "old": "      const item = baseOf(named.kind, base, lv, rolls);\n      if (fitsPlayer(item, named.kind, entity, [...WEAPON_SKILLS])) return item;",
     "new": "      const item = baseOf(named.kind, base, lv, rolls);\n      if (item) return item;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "AUDIT-QL-LAW-6-moved-guard-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (!isStamped(quest) || quest.ql.moved) return null;",
-    "new": "      if (!isStamped(quest)) return null;",
+    "old": "      if (quest.ql.moved) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/questlines/ql1_layer.test.js",
       "test/systems/questlines/ql3_rewards.test.js"

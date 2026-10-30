@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-STARTS-W5-a-begun-story-healed",
     "file": "src/scenes/startsHost.js",
-    "old": "const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0",
-    "new": "const begun = !m || m.storyLegacy",
+    "old": "const begun = !m || m.storyLegacy || storyBegun(m);",
+    "new": "const begun = !m || m.storyLegacy;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

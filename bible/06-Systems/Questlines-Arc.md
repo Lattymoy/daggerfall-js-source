@@ -677,6 +677,10 @@ the Witches' Festival."; a step the player set aside stays theirs). Canon: the W
 Frostfall, the Glenmoril Witches, the Sisters of the Bluff, the Order of Arkay. The port's own: the fallen stars and the
 covens' thread. The whole of it is `11-Multiplayer/Starfall.md` section 7.
 
+QUEST-AUDIT IV C1 (`01-Overview/audits/Quest-Audit-IV.md`): a step whose seasonal deed is done is never set aside -
+QLTF01's `deed: '_held_'`, since the walk to the coven needs no Festival - and a running step keeps the Festival's need
+while the last star landed before the close still lives (`NEED_TAILS`).
+
 | Step | What the player does | Witness |
 |---|---|---|
 | QLTF01 Music in the Woods | Morwen's letter from a Wyrd Sister at a tavern's door (`ql act wyrd-met 1` - her window opened), or her raven's note if a star is held first; hold a fallen star (`ql act star-held 1`); reach the Glenmoril Coven | star |

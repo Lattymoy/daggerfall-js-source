@@ -250,7 +250,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
       for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));
       for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow({ ...l, tableKey: tableKeyAt(l.px, l.py) }));
     }
-    for (const row of found.get(r)?.values() ?? []) add(row);
+    // QUEST-AUDIT IV A9: a held site's row joins by its id - a nearer lair of its name does not shut it out
+    for (const row of found.get(r)?.values() ?? []) if (!ids.has(row.mapId)) { ids.add(row.mapId); rows.push(row); }
     const region = regionOf(r, rows);
     tables.set(r, { key, region });
     return region;
@@ -270,6 +271,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     for (const sd of heldSites()) {
       const p = sd?.worldPixel;
       if (sd?.regionIndex !== r || sd.locationName !== name || !p) continue;
+      const held = tables.get(r)?.region, had = held?.mapIdLookup.get(sd.mapId >>> 0);
+      if (had != null && held.mapTable[had]?.name === name) return had;   // QUEST-AUDIT IV A9: its own row, already joined
       const loc = questView(standAt(p.x, p.y));
       if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;
       const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0, tableKey: loc.mapTableData?.key });
@@ -315,13 +318,14 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
   };
 }
 
-/** A province's name lookup (DFRegion.MapNameLookup): its rows' names, and a name it misses asked of `miss` (the held
- *  sites) - `has` the rows' alone. */
+/** A province's name lookup (DFRegion.MapNameLookup): a site a quest holds by its name first (`miss`), then its rows'
+ *  names - `has` the rows' alone. QUEST-AUDIT IV A9: the table is the questor's nearest, so from another pixel a name
+ *  can be another lair's - and the quest's site was read as it, its markers and its reveal the wrong dungeon's. */
 class HeldNames extends Map {
   /** @param {(name: string) => number|undefined} miss */
   constructor(miss) { super(); this.miss = miss; }
   /** @param {string} name */
-  get(name) { return super.has(name) ? super.get(name) : this.miss(name); }
+  get(name) { return this.miss(name) ?? super.get(name); }
 }
 
 /** Every site details a quest machine's quests hold (their Places'). @param {any} machine */

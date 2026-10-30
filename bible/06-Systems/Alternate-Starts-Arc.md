@@ -473,3 +473,12 @@ has every finding, its fix and its pin): 51 reported, 45 defects. What the secti
   names in Latin (U7).
 
 `test/systems/starts/auditstarts.test.js` (24 tests), `tools/mutants/auditstarts.json` (61 records).
+
+## 14. QUEST-AUDIT IV (2026-10-30)
+
+`01-Overview/audits/Quest-Audit-IV.md` A1-A6. MAIN-SPINE read the Curse on a saved table as the opener's trace, and a
+start begins the Curse beside itself: every save while a start ran recorded the opener begun, and a load started the
+backbone before the seal was broken, then `_BRISIEN` a second. A start on the table now owes no backbone, and one backbone
+runs at a time. W5's `restored()` now reads a story begun by the Curse, the backbone, the spine's record, an ended step
+or a classic game's globals. A hand-off whose `_BRISIEN` did not parse starts it again at the backbone's check. The
+commission never leaves the pack, and the Imperial start's wake is true at the prison's door.

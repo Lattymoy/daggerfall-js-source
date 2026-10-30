@@ -52,7 +52,7 @@
   {
     "name": "MAIN-SPINE-II-curse-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),",
+    "old": "opened: saved?.opened === true || has(SPINE_OPENER) || curse,",
     "new": "opened: saved?.opened === true || has(SPINE_OPENER),",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"

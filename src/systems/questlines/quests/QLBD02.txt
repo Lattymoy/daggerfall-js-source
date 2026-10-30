@@ -44,8 +44,8 @@ Message:  1011
 <ce>                              Ysolde Marnhel
 
 Message:  1012
-<ce>         The Mages Guild's courier finds you again, and
-<ce>           again says only one thing: "From the Master
+<ce>         A courier of the Mages Guild finds you, and
+<ce>          says only one thing: "From the Master
 <ce>               Conjurer." Then the courier is gone.
 
 Message:  1013
@@ -73,10 +73,10 @@ Message:  1020
 <ce>                clasp would give at a touch.
 
 Message:  1021
-Open it. Read what the faithful read.
+Open it and read it.
 
 Message:  1022
-Leave it shut. It is Ysolde's to open.
+Leave it shut for Ysolde.
 
 Message:  1023
 <ce>       The pages are thin as skin, and the ink is not
@@ -130,6 +130,11 @@ Message:  1027
 <ce>        whole. That counts for something in Wayrest,
 <ce>        and for more than something with me."
 
+Message:  1050
+<ce>       Ysolde Marnhel waited at _hall_ for the
+<ce>      rite-book, then gave up waiting. The Guild
+<ce>             has closed the matter.
+
 -- Symbols used in the QRC file:
 --
 --               %pcf occurs 1 time.
@@ -153,6 +158,7 @@ Place _coven_ remote dungeon
 
 Clock _courier_ 01:00 03:00
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
 
 Foe _summoner_ is Sorcerer
 Foe _faithful_ is Mage
@@ -181,6 +187,8 @@ _slain_ task:
 	killed 1 _summoner_ saying 1013
 
 _hasbook_ task:
+	stop timer _wait_
+	start timer _meet_
 	ask 1020 choices 1021 _readit_ 1022 _keptshut_
 
 variable _readit_
@@ -214,4 +222,8 @@ _paidshut_ task:
 
 _wait_ task:
 	say 1003
+	end quest
+
+_meet_ task:
+	say 1050
 	end quest

@@ -77,7 +77,7 @@ Message:  1030
 <ce>                  "Which will it be, captain?"
 
 Message:  1031
-Pour the blood into the sea for Satakal
+Pour the blood into the sea
 
 Message:  1032
 Keep the scale
@@ -97,6 +97,11 @@ Message:  1034
 <ce>         "Wear it where the sailors can see it. Let them
 <ce>          know the Old Coil was slain, and by whom."
 
+Message:  1050
+<ce>       Hamid al-Rasheen waited at _inn_ for word of
+<ce>        the serpent, then sailed with the season.
+<ce>          The lanes will tell him what you did.
+
 QBN:
 Item _letter_ letter used 1011
 Item _gold_ gold range 300 to 600
@@ -106,6 +111,7 @@ Place _inn_ remote tavern
 
 Clock _courier_ 01:00 03:00
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	ql name _hamid_ Hamid_al-Rasheen
@@ -120,6 +126,11 @@ _courier_ task:
 _slain_ task:
 	ql act serpent-slain 1
 	log 1015 step 1
+	start timer _meet_
+
+_late_ task:
+	when _courier_ and _slain_
+	stop timer _wait_
 
 _qgclicked_ task:
 	clicked npc _hamid_
@@ -153,4 +164,8 @@ _kept_ task:
 
 _wait_ task:
 	say 1003
+	end quest
+
+_meet_ task:
+	say 1050
 	end quest

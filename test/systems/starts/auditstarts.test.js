@@ -446,7 +446,7 @@ test('AUDIT STARTS W5 a save from before the story began - no start, no curse, n
   let m = machine();
   assert.equal(startsHost({ machine: m }).restored(), true);
   assert.deepEqual(m.begun, ['S0000977', HAND_START_QUEST], 'the commission in hand, the curse beside it');
-  for (const o of [{ storyStarted: new Set(['S0000977']) }, { storyLegacy: true }, { quests: new Map([[1, { questName: '_STARTSK' }]]) }, { quests: new Map([[1, { questName: '_BRISIEN' }]]) }]) {
+  for (const o of [{ storyStarted: new Set(['S0000004']) }, { storyLegacy: true }, { quests: new Map([[1, { questName: '_STARTSK' }]]) }, { quests: new Map([[1, { questName: '_BRISIEN' }]]) }]) {
     m = machine(o);
     assert.equal(startsHost({ machine: m }).restored(), true);
     assert.deepEqual(m.begun, [], `left alone: ${JSON.stringify(Object.keys(o))}`);

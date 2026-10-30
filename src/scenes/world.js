@@ -1122,6 +1122,7 @@ import { gameMaps, gamePlaces } from '../net/staffPlaces.js';   // STAFF-EVENT: 
 import { staffFollowOnPage, relinkGame } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow; STAFF-HIDE-TOGGLE: and the panel's relink
 import { createStaffViewHost } from './staffViewHost.js';   // STAFF-VIEW1: the staff tags, Shift+M and a tag's follow
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
+import { questView } from './quest/questProvinceSites.js';   // QUEST-AUDIT IV A8: a capital slice under its quest name
 import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public or an instance, at the door (bible/11-Multiplayer/Instances.md)
 // TESTBUILD: every player may use the staff's /god (/godmode), /fly, /heal, /tp - god mode also lifts the zone's travel law and makes map journeys instant
 const TEST_GODMODE = false;
@@ -12613,7 +12614,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     notebook: () => questBridge?.notebook ?? null,
     // ...and the sheet's LOGBOOK button opens the same journal the HUD
     // key does, so it gets the same find-place seam (THE FOUR HOSTS).
-    currentLocationName: () => _questLoc()?.name ?? '',
+    currentLocationName: () => _questName(),
     canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     gotoPlace: (place) => toggleTravelMap(place),
   });
@@ -12735,7 +12736,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // them - the dungeon context and the standalone town page have no
       // map to be sent to and leave gotoPlace unset, which is the same
       // nothing a CanFindPlace miss produces.
-      currentLocationName: () => _questLoc()?.name ?? '',
+      currentLocationName: () => _questName(),
       canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
       gotoPlace: (place) => toggleTravelMap(place),
       // GUIDE2: the ENHANCED chronicle's way there - offered only where the map can open. This builder is the
@@ -16501,7 +16502,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     journalClean: () => questBridge?.journalClean ?? null,   // JOURNAL-CLEAN: the Quests tab's remove / clear archive / hide / unhide (scenes/quest/questBridge.js journalClean)
     // GUIDE2: the Quests tab's WHERE and its way there - HandleQuestClicks' two world questions (the same two the
     // logbook is handed, makeJournalWindow) and the door itself: this bag is the street's, where the map opens.
-    currentLocationName: () => _questLoc()?.name ?? '',
+    currentLocationName: () => _questName(),
     canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     showQuestPlace: (find) => showQuestPlace(find),
   });
@@ -17940,6 +17941,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return _ohGpsLoc.loc;
   };
+  /** QUEST-AUDIT IV A8: the place's name as the quest layer reads it - a capital's slice under its quest name (questView). */
+  const _questName = () => questView(_questLoc())?.name ?? '';
   /** ARENA1: a door's location and its exit group. The arena's 43600 stair is the undercroft's door - its own record
    *  (world/arena/arenaCity.js undercroftLocation, one per city record) and its own group, so the way home out of the castle
    *  never lands at the stair and the undercroft's never at the castle's doors. */
@@ -18240,7 +18243,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     getAllActiveQuestIds: activeQuestIds,
     currentRegionIndex: () => _questRegionIndex(),
     currentRegionName: () => questWorld.currentRegionName(),
-    currentLocationName: () => _questLoc()?.name ?? '',
+    currentLocationName: () => _questName(),
     currentMapId: () => _questLoc()?.mapTableData?.mapId ?? 0,
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     isPlayerInsideBuilding: () => (modes?.mode ?? 'exterior') === 'interior',
@@ -18605,7 +18608,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE4: the two questions the quest lens asks of a target (GUIDE2's gates, the pause bag's own answers) - is the
     // place on the player's map, and which place does the player stand in - so the HUD's quest card can say "(you are
     // here)" and name only what the map holds.
-    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
+    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questName() },   // AUDIT GUIDE O3: every tick, so through the host's memo
     // TK-ii: the topic/dialog seams land in the tree (TalkManager's
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
@@ -28722,7 +28725,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // and which town is the player in - delegated into the interior's pause and the dungeon's journal the same way.
     // The way there is not delegated: the map opens on the street alone.
     questCanFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
-    questLocationName: () => _questLoc()?.name ?? '',
+    questLocationName: () => _questName(),
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // TR5: the interior hosts dismount through the world host, which
     // owns the motor, the animator and the mount's art together.

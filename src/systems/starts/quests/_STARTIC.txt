@@ -42,10 +42,9 @@ Message:  1012
  bound there.
 
 Message:  1020
-<ce>        You wake on the floor of a cell, its
-<ce>        door standing open. A note is pinned
-<ce>       to the wall beside it, signed with the
-<ce>                sigil of the Blades:
+<ce>       Someone unlocked your cell before dawn
+<ce>        and left a note in your hand, signed
+<ce>             with the sigil of the Blades:
 <ce>
 <ce>      "Your orders from the Emperor lie at the
 <ce>      heart of this prison. The way to them is

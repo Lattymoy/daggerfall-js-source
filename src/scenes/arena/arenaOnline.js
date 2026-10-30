@@ -42,7 +42,7 @@ import { exhibitionFor, exhibitionBoutId, EXHIBITION_KEPT_HOURS } from '../../ne
 import { arenaBoutSeed } from '../../net/arena/arenaBrain.js';
 import { createArenaClaims, arenaClaimVerdict } from '../../net/arena/arenaClaims.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
-import { nextLadderBout } from '../../systems/arena/arenaLadder.js';
+import { nextLadderBout, noteLadderDone } from '../../systems/arena/arenaLadder.js';   // QUEST-AUDIT IV C2: the climb's end, for the Herald's Call
 import { accountRefusalText } from '../../net/accountClient.js';
 import { readArenaReceipt } from '../../net/arena/arenaReceipt.js';   // ARENA4b: whose bout a claim's answer was, for its held purse
 import { BOUT_PHASES } from '../../systems/arena/arenaBout.js';   // AUDIT PRE-MERGE 1003 O3: an exhibition heard fought
@@ -213,7 +213,7 @@ export function createArenaOnline(deps) {
     if (!force && now() - Math.max(boardAt, boardTriedAt) < BOARD_STALE_MS) return null;   // ARENA4b: a failed ask waits too
     boardAsking = true;
     boardTriedAt = now();
-    boardWait = Promise.resolve().then(() => deps.account.board()).then((r) => { if (r?.ok && r.data) { board = r.data; boardAt = now(); } }, () => {})
+    boardWait = Promise.resolve().then(() => deps.account.board()).then((r) => { if (r?.ok && r.data) { board = r.data; boardAt = now(); noteLadderDone(board.me?.ladder); } }, () => {})
       .finally(() => { boardAsking = false; if (boardAgain) { boardAgain = false; askBoard(true); } })
       .then(() => board);
     return boardWait;
@@ -233,7 +233,7 @@ export function createArenaOnline(deps) {
     const c = readArenaReceipt(r);
     if (!c || c.a !== 'l') return;
     const d = a?.ok ? a.data : null;
-    if (d?.ladder && board?.me) board = { ...board, me: { ...board.me, ladder: d.ladder } };
+    if (d?.ladder && board?.me) { board = { ...board, me: { ...board.me, ladder: d.ladder } }; noteLadderDone(d.ladder); }
     let won = null;
     if (d?.recorded === true) won = d.won === true && d.repeat !== true;   // AUDIT ARENA-LADDER 2: a step won again pays no purse
     else if (d?.why === 'claimed') won = c.r === 1;   // kept before: the receipt's own result (a ladder receipt's r 1 is a win)

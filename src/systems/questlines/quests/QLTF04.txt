@@ -70,7 +70,7 @@ Message:  1032
 Sell it to the Mages Guild
 
 Message:  1033
-Take it to the priests of Arkay
+Take it to Arkay's priests
 
 Message:  1034
 <ce>         Morwen drops the spindle into the coven's fire.

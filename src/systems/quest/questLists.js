@@ -51,6 +51,8 @@ export const MEMBERSHIP_STATUS = Object.freeze({
 export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);
 
 const INIT_AT_GAME_START = 'InitAtGameStart';
+/** QUEST-AUDIT IV A7: how many of a pool's quests a questor's draw tries before it has no work (selectQuest). */
+export const SELECT_TRIES = 4;
 
 /** QuestListsManager.RegisterQuestList (:138-147): a mod's list by name,
  *  false when the name is in use; LoadQuestLists reads every registered
@@ -236,13 +238,17 @@ export class QuestListsManager {
   }
 
   /** SelectQuest (:391-408): Random.Range over the pool; a compile
-   *  failure logs and answers null rather than throwing. */
+   *  failure logs and answers null rather than throwing. QUEST-AUDIT IV A7 (a departure, Ledger A): a quest that will not
+   *  set up here (online in Cyrodiil every lair is sealed, so no `remote dungeon` stands) is set aside and another drawn,
+   *  SELECT_TRIES at most - DFU's one roll answered "no work" while the pool held work that would stand. */
   selectQuest(pool, factionId) {
-    if (pool && pool.length > 0) {
-      const roll = this.deps.rolls ?? Math.random;
-      const questData = pool[Math.floor(roll() * pool.length)];
+    const left = [...(pool ?? [])];
+    const roll = this.deps.rolls ?? Math.random;
+    for (let tries = 0; left.length > 0 && tries < SELECT_TRIES; tries++) {
+      const [questData] = left.splice(Math.floor(roll() * left.length), 1);
       try {
-        return this.loadQuest(questData, factionId);
+        const quest = this.loadQuest(questData, factionId);
+        if (quest) return quest;
       } catch (e) {
         console.warn(`[quest] Exception for quest ${questData.name} during quest compile: ${e?.message ?? e}`);
       }

@@ -72,8 +72,8 @@ Message:  1014
 Message:  1015
 <ce>         "Every power in the Bay will want to know what
 <ce>          stands in that hall. The Order will not choose
-<ce>          for you. Which of them will you tell what you
-<ce>          find there?"
+<ce>          for you. Which of them will you tell what
+<ce>          stands there?"
 
 Message:  1016
 Prior Anselm Vey is at _temple_. He has not slept since the bells went wrong.
@@ -163,6 +163,11 @@ Message:  1045
 <ce>          month is out. The Blades pay poorly and
 <ce>          remember well. So does the Order of the Hour."
 
+Message:  1050
+<ce>        Prior Anselm Vey waited at _temple_ to hear
+<ce>        what you saw in the Hour, then went back to
+<ce>           his Order. He will not ask you again.
+
 QBN:
 Item _letter_ letter used 1011
 Item _gold_ gold range 500 to 900
@@ -172,6 +177,7 @@ Place _temple_ remote temple
 
 Clock _courier_ 01:00 03:00
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	ql name _prior_ Prior_Anselm_Vey
@@ -185,6 +191,7 @@ _courier_ task:
 
 _met_ task:
 	clicked npc _prior_
+	start task _qgclicked_
 	say 1013
 	say 1014
 	ask 1015 choices 1030 _toDaggerfall_ 1031 _toSentinel_ 1032 _toWayrest_ 1033 _another_
@@ -201,17 +208,25 @@ variable _toBlades_
 
 _chosen_ task:
 	when _toDaggerfall_ or _toSentinel_ or _toWayrest_ or _toOrsinium_ or _toUnderking_ or _toBlades_
+
+_road_ task:
+	when _chosen_ and not _broken_
 	log 1020 step 1
 
 _broken_ task:
 	ql act hour-broken 1
 	log 1021 step 2
+	start timer _meet_
+
+_late_ task:
+	when _courier_ and _broken_
+	stop timer _wait_
 
 _qgclicked_ task:
 	clicked npc _prior_
 
 _clearclick_ task:
-	when _qgclicked_ and not _chosen_
+	when _qgclicked_ and not _chosen_ and not _broken_
 	clear _qgclicked_ _clearclick_
 
 _notyet_ task:
@@ -263,4 +278,8 @@ _toldBlades_ task:
 
 _wait_ task:
 	say 1003
+	end quest
+
+_meet_ task:
+	say 1050
 	end quest
