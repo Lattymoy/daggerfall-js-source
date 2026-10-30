@@ -15096,6 +15096,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // Awaiting here costs nothing once it has resolved and is the
       // difference between reading a save and destroying one.
       if (!spellsByIndex) await _magicRegistries.catch(() => null);
+      await townTalk.ensureFactions?.();   // QUEST-AUDIT IV START-3: FACTION.TXT too - the boot reads it unawaited, and a quest's Person restores against it (a cold restore dropped the quest)
       // AUDIT 68 X3-transition-build-race: a door build still in flight
       // belongs to the game being replaced - abandon it and WAIT for it
       // to unwind (its context freed, any seams it borrowed handed back)
@@ -18986,14 +18987,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // log every journal face reads - the pause window's Quests tab and the chronicle, above ground and below (the dungeon
   // context reads this same bridge) - as side quests with their clock; abandoning one is ui's word through
   // systems/bounty/bountyJournal.js
-  {
-    const baseQuestLog = questBridge.questLog.bind(questBridge);
-    questBridge.questLog = (o) => {   // AUDIT FB1022d E8: the lens's `{ windows: false }` reaches the walk (questBridge.js)
-      const log = baseQuestLog(o);
-      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere()), ...(legacyHost?.questLogEntries() ?? [])];   // LEGACY4: and the death quests   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
-      return extra.length ? { ...log, active: [...(log?.active ?? []), ...extra] } : log;
-    };
-  }
+  questBridge.addQuestRows(() => [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere()), ...(legacyHost?.questLogEntries() ?? [])]);   // LEGACY4: and the death quests   // RVN7c: and each hunt - a lair heard of, the way there from where I stand   // QUEST-AUDIT IV JOURNAL-2: the bridge's own walk
   createRaidHost({   // HOST-SPLIT: src/scenes/raidHost.js
     _foeInTownRect, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, cam, cityGuards, collider,
     enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel, state,

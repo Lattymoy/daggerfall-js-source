@@ -84,6 +84,8 @@ export function renderHeader(h) {
 
 const NOTHING = Object.freeze({ formatting: 'nothing', text: '' });
 const NEWLINE = Object.freeze({ formatting: 'newline', text: '' });
+/** Is `i` an entry of `list`? QUEST-AUDIT IV JOURNAL-1: a move or a removal past it changes nothing, as C#'s List throws. */
+const at = (list, i) => Number.isInteger(i) && i >= 0 && i < list.length;
 
 export class PlayerNotebook {
   constructor(deps = {}) {
@@ -104,11 +106,12 @@ export class PlayerNotebook {
 
   getNotes() { return [...this.notes]; }
   getNote(index) { return index < this.notes.length ? this.notes[index] : null; }
-  removeNote(index) { this.notes.splice(index, 1); }
+  removeNote(index) { if (at(this.notes, index)) this.notes.splice(index, 1); }
 
   /** MoveNote (:64-72): remove-then-insert, the index correcting DOWN
    *  when the destination sat past the source. */
   moveNote(srcIdx, destIdx) {
+    if (!at(this.notes, srcIdx) || !(destIdx >= 0)) return;   // QUEST-AUDIT IV JOURNAL-1: C#'s List throws and changes nothing
     const item = this.notes[srcIdx];
     this.notes.splice(srcIdx, 1);
     if (destIdx > srcIdx) destIdx--;
@@ -174,7 +177,7 @@ export class PlayerNotebook {
 
   getFinishedQuests() { return [...this.finishedQuests]; }
   getFinishedQuest(index) { return index < this.finishedQuests.length ? this.finishedQuests[index] : null; }
-  removeFinishedQuest(index) { this.finishedQuests.splice(index, 1); }
+  removeFinishedQuest(index) { if (at(this.finishedQuests, index)) this.finishedQuests.splice(index, 1); }
 
   /** JOURNAL-CLEAN: the archive emptied in one stroke - the enhanced journal's "Clear archive". The notes and the
    *  hidden list are not the archive's, and stay. */
@@ -208,6 +211,7 @@ export class PlayerNotebook {
   }
 
   moveFinishedQuest(srcIdx, destIdx) {
+    if (!at(this.finishedQuests, srcIdx) || !(destIdx >= 0)) return;   // QUEST-AUDIT IV JOURNAL-1: as MoveNote
     const item = this.finishedQuests[srcIdx];
     this.finishedQuests.splice(srcIdx, 1);
     if (destIdx > srcIdx) destIdx--;

@@ -516,9 +516,11 @@ export class QuestJournalWindow {
 
   /** EnterNote (:507-526) - the NOTEBOOK only (:509); finished
    *  quests move and remove but never take a note. The negative
-   *  index decode is :511's. */
+   *  index decode is :511's. QUEST-AUDIT IV JOURNAL-1: elsewhere the
+   *  gap's pick is let go - DFU's return left it armed, and the next
+   *  click moved entry -1 (C#'s List throws; ours emptied an entry). */
   enterNote(index) {
-    if (this.mode !== 'notebook') return true;
+    if (this.mode !== 'notebook') { this.selectedEntry = null; return true; }
     this.selectedEntry = -index + this.currentMessageIndex;
     // NOTE-KEYS: the one DaggerfallInputMessageBox (CM3) - the prompt above the entry line in one parchment box, the
     // box as wide as WidthOverride (:521) whatever the note's length. Escape closes it and the pick clears with it.

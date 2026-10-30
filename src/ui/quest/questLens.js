@@ -175,8 +175,10 @@ export function quietText(quest, text, key = null) {
   }
 }
 
-/** The quiet read through the journal's line law. */
+/** The quiet read through the journal's line law. QUEST-AUDIT IV JOURNAL-2: a host's entry (a bounty's, a hunt's, a
+ *  Legacy death quest's) is its tokens already - it was read as nothing, so no face could follow the row. */
 export function quietLines(message) {
+  if (Array.isArray(message)) return journalLines(message);
   const tokens = quietTokens(message);
   return tokens ? journalLines(tokens) : null;
 }
@@ -347,6 +349,7 @@ export function targetWords(target) {
  *  and the moment it was written. A step logged again - a new message,
  *  or the same one at a new time - is a new entry. */
 function entryKey(row, step, message) {
+  if (Array.isArray(message)) return `${row?.id}|t${journalLines(message).join('\n')}`;   // QUEST-AUDIT IV JOURNAL-2: a host's entry is its words (a bounty's kills)
   return step ? `${row?.id}|${step.stepID}|${step.messageID}|${step.time}` : `${row?.id}|m${message?.id}`;
 }
 

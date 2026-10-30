@@ -558,10 +558,11 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   // PIN MOVED (QUEST-AUDIT III NAMED-TIMER): the lifted questLog reads the lens's clocksNamed too
   // PIN MOVED (RPT1026-QUESTS ABANDON-ALWAYS): and machine.js's holdsQuestorDoor - a quest with no entry that holds its
   // questor's door is a row (these fixtures hold none, so the rows below stand)
-  const questLog = new Function('machine', 'notebook', 'clockCounts', 'questlines', 'quietText', 'questlinesOn', 'ladderRows', 'clocksNamed', 'holdsQuestorDoor',   // DEAD-CLOCK: whether a clock's end changes anything; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
+  // PIN MOVED (QUEST-AUDIT IV JOURNAL-2): and the host's rows (none here) and the one hidden prune
+  const questLog = new Function('machine', 'notebook', 'clockCounts', 'questlines', 'quietText', 'questlinesOn', 'ladderRows', 'clocksNamed', 'holdsQuestorDoor', 'hostRows', 'pruneHidden',   // DEAD-CLOCK: whether a clock's end changes anything; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
     `const isShelved = (q) => q?.shelvedAt != null;   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart
     const o = { ${body} }; return o.questLog();`);
-  const layerOff = [{ rowOf: () => null, lineRows: () => [] }, (_q, text) => text, () => false, () => [], () => new Set(), holdsQuestorDoor];   // these entries name no clock: the tightest stands
+  const layerOff = [{ rowOf: () => null, lineRows: () => [] }, (_q, text) => text, () => false, () => [], () => new Set(), holdsQuestorDoor, [], () => {}];   // these entries name no clock: the tightest stands
 
   const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost], [9, paid], [10, lost]]) };
   const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true, ...layerOff);

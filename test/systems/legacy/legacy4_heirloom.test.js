@@ -17,6 +17,7 @@ import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { KEEPSAKE_TEMPLATE } from '../../../src/systems/livingWorld/keepsake.js';
 import { setItemFields, mintCondition } from '../../../src/systems/item/itemTemplates.js';
 import { computeEntityMods, entityModsOf, weaponDamageMods } from '../../../src/systems/entityMods.js';
+import { questRail } from '../../../src/ui/quest/questRail.js';   // QUEST-AUDIT IV JOURNAL-7: the journal's own reader
 
 /** A seeded roll, for a piece the ladder grades. */
 const lcg = (seed) => { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
@@ -174,8 +175,11 @@ test('LEGACY4: a Bloodline death leaves the remains where the fallen fell - thei
   const q = host.questLogEntries();
   assert.equal(q[0].id, `${LEGACY_QUEST_PREFIX}r1`);
   assert.equal(q[0].name, 'The Bones of Ysolde Hlaalu');
-  assert.match(q[0].messages[0].join(' '), /fell at Castle Daggerfall, Daggerfall, deep inside/);
-  assert.match(q[0].messages[0].join(' '), /the Vampire Ancient/);
+  // QUEST-AUDIT IV JOURNAL-7, PIN MOVED: read as the journal reads it - the rail (plain strings drew no entry)
+  const shown = questRail({ active: q }).active[0];
+  assert.equal(shown?.id, `${LEGACY_QUEST_PREFIX}r1`, 'on the journal\'s rail');
+  assert.match(shown.entries[0].join(' '), /fell at Castle Daggerfall, Daggerfall, deep inside/);
+  assert.match(shown.entries[0].join(' '), /the Vampire Ancient/);
   assert.deepEqual(host.mapMarks().map((m) => [m.cx, m.cy, m.place]), [[40.5, 60.5, true]]);
 });
 
@@ -210,7 +214,7 @@ test('LEGACY4 + AUDIT LEGACY H1/H4/H6/H8: found, taken, laid to rest - the list 
   r.items.splice(0, 1); e.wagonItems.push(bones);
   host.tick();
   assert.equal(r.state, 'taken');
-  assert.match(host.questLogEntries()[0].messages[0][0], /You carry the remains/);
+  assert.match(questRail({ active: host.questLogEntries() }).active[0].entries[0][0], /You carry the remains/);   // QUEST-AUDIT IV JOURNAL-7: as the rail reads it
   assert.deepEqual(host.mapMarks(), [], 'no ring once carried');
   // sold or dropped: the bones are no longer carried - they lie again where the fallen fell, never stranded (H4)
   e.wagonItems = [];

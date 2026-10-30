@@ -151,5 +151,7 @@ test('AUDIT JOURNAL-CLEAN F3: a hidden id whose quest no longer runs is dropped 
   assert.equal(nb.pruneHiddenQuests(['9', '12']), 1);
   assert.deepEqual(nb.getHiddenQuests(), ['9']);
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '../src/scenes/quest/questBridge.js'), 'utf8');
-  assert.equal((src.match(/notebook\?\.pruneHiddenQuests\?\.\(/g) ?? []).length, 2, 'the walk and the load both prune');
+  // QUEST-AUDIT IV JOURNAL-2, PIN MOVED: one prune, its host rows the walk's - called by the walk and by the load
+  assert.match(src, /const pruneHidden = \(host = null\) => notebook\.pruneHiddenQuests\(/);
+  assert.deepEqual(src.match(/\bpruneHidden\((?:host\.map\(\(r\) => r\.id\))?\);/g), ['pruneHidden(host.map((r) => r.id));', 'pruneHidden();'], 'the walk and the load both prune');
 });

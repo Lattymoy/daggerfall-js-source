@@ -47,8 +47,9 @@ export const MEMBERSHIP_STATUS = Object.freeze({
  *  home for the chronicle's rail (ui/quest/questRail.js) and the share gates
  *  (systems/quest/questShare.js), which kept two copies "in step". START1:
  *  and a start's quest (systems/starts/starts.js), the story's prologue -
- *  its commission is the character's own, never a party's. */
-export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);
+ *  its commission is the character's own, never a party's. QUEST-AUDIT IV
+ *  JOURNAL-3: never the guilds' S00005xx series (machine.js isMainStoryQuest). */
+export const isMainQuestName = (questName) => (/^S0000/.test(questName ?? '') && !/^S00005\d\d$/i.test(questName)) || questName === '_BRISIEN' || isStartQuestName(questName);
 
 const INIT_AT_GAME_START = 'InitAtGameStart';
 

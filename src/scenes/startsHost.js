@@ -17,7 +17,7 @@
 //
 // THE WRIT (PASSAGE, bible/03-World/Passage.md "The writ"): a start's commission, opened, carries the Crown's writ of
 // passage to the city of Daggerfall - a friendly master at any harbour sails its bearer there for nothing (`writ`).
-import { BAY_START, HAND_START_QUEST, MAIN_QUEST_OPENER, STARTS, carriesWrit, isStartQuestName, startByKey, startSiteId } from '../systems/starts/starts.js';
+import { BAY_START, HAND_START_QUEST, STARTS, carriesWrit, startByKey, startSiteId } from '../systems/starts/starts.js';
 import { gameStartQuests } from './quest/questBridge.js';   // AUDIT STARTS W5: a story never begun, begun at its load
 import { Symbol as QuestSymbol } from '../systems/quest/symbol.js';   // AUDIT STARTS Q1: a task by the name the machine files it under
 import { getBool } from '../systems/settings/settings.js';
@@ -171,15 +171,13 @@ export function createStartsHost(host) {
 
   /** AUDIT STARTS W5: a load restored the machine (world.js, its two load doors). A character saved before their story
    *  began - a save in the seconds a start waits on the land's trace and the world, or a page closed then - holds no
-   *  story at all: no start, no _BRISIEN, nothing of the main story ever begun (quest/machine.js storyStarted: a new
-   *  character's curse is among it from the first tick). Loaded, it is handed the commission (the curse beside it, as
-   *  every new game's), never left without a way into the story. A save from before the story was kept says nothing of
-   *  it (storyLegacy) and is left alone. Answers true: the game's start is the save's now (world.js _questStarted). */
+   *  story at all (quest/machine.js storyBegun). Loaded, it is handed the commission (the curse beside it, as every new
+   *  game's), never left without a way into the story. QUEST-AUDIT IV START-2: the Curse and the backbone count - a week
+   *  past Brisienna they are all a table holds, and a load handed a second commission. Answers true (world.js
+   *  _questStarted). */
   function restored() {
     const m = machine?.();
-    const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0
-      || [...(m.quests?.values?.() ?? [])].some((q) => isStartQuestName(q?.questName) || String(q?.questName ?? '').toUpperCase() === MAIN_QUEST_OPENER);
-    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);
+    if (m && !m.storyBegun()) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);
     return true;
   }
 

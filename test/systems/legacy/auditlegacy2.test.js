@@ -28,6 +28,7 @@ import { setItemFields, mintCondition } from '../../../src/systems/item/itemTemp
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { synthTown } from '../../lwTown.mjs';
 import { mintKeepsake } from '../../../src/systems/livingWorld/keepsake.js';
+import { questRail } from '../../../src/ui/quest/questRail.js';   // QUEST-AUDIT IV JOURNAL-7: the journal's own reader
 
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const mem = () => { const m = new Map(); return { map: m, get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
@@ -407,7 +408,7 @@ test('AUDIT LEGACY II H5/P6: a list is claimed by the member who changes it - op
   load(w, w.saved.get('c-sib2'), person('c-sib2', `${sib.given} ${sib.surname}`));
   const log = w.host.questLogEntries();
   assert.equal(log.length, 1);
-  assert.match(log[0].messages[0][0], new RegExp(`${heir.given} .* has taken up the search`));
+  assert.match(questRail({ active: log }).active[0].entries[0][0], new RegExp(`${heir.given} .* has taken up the search`));   // QUEST-AUDIT IV JOURNAL-7: as the rail reads it
   assert.deepEqual(w.host.mapMarks(), [], 'no ring for a search that is another\'s');
   // P6: laid to rest, a row keeps no lists
   assert.match(rd('src/scenes/legacyHost.js'), /r\.restedAt = deps\.now\(\);\n[^\n]*\n[^\n]*\n\s*r\.items = \[\];\n\s*delete r\.first;/);

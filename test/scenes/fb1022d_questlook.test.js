@@ -7,21 +7,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createQuestBridge } from '../../src/scenes/quest/questBridge.js';
+import { loadTables, questSource } from '../qlSources.mjs';
 
 const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 
-test('AUDIT FB1022d E8: world.js\'s quest log wrapper hands the lens\'s `{ windows: false }` to the walk, and lays its rows on either walk (mutants: the argument dropped)', () => {
-  const m = /\n( +)questBridge\.questLog = [\s\S]*?\n\1\};/.exec(world);
-  assert.ok(m, 'the wrapper');
-  const wrap = new Function('questBridge', 'baseQuestLog', 'bountyHost', 'revenantHuntEntries', 'rumorHere', 'legacyHost', m[0]);
-  const asked = [];
-  const bridge = {};
-  const base = (o) => { asked.push(o); return { active: [{ id: 'q1' }], lines: o?.windows === false ? [] : ['a line'] }; };
-  wrap(bridge, base, { questLogEntries: () => [{ id: 'bounty' }] }, () => [{ id: 'hunt' }], () => null, { questLogEntries: () => [] });
+test('AUDIT FB1022d E8 (QUEST-AUDIT IV JOURNAL-2, PIN MOVED: the host\'s rows ride the bridge\'s own walk through addQuestRows - no wrapper stands between the lens and it): the lens\'s `{ windows: false }` walks no window rows, and the bounties and the hunts lie on either walk (mutants: the argument dropped; the rows off a walk)', () => {
+  assert.match(world, /questBridge\.addQuestRows\(\(\) => \[/, 'the world host lays its rows through the seam');
+  assert.doesNotMatch(world, /questBridge\.questLog = /, 'no wrapper');
+  loadTables();
+  const bridge = createQuestBridge({ data: { readListTable: () => null, getQuestSourceLines: (n) => questSource(n) }, classicSeconds: () => 0, skySeconds: () => 0, worldSeconds: () => 0 }, { label: 'e8' });
+  bridge.addQuestRows(() => [{ id: 'bounty:1', name: 'Bounty', messages: [[{ formatting: 'text', text: 'Slain: 0 of 5.' }]] }, { id: 'hunt:1', name: 'Hunt', messages: [[{ formatting: 'text', text: 'Orc.' }]] }]);
   const look = bridge.questLog({ windows: false });
-  assert.deepEqual(asked, [{ windows: false }], 'the look\'s word reaches the walk');
   assert.deepEqual(look.lines, [], 'no window rows walked');
-  assert.deepEqual(look.active.map((q) => q.id), ['q1', 'bounty', 'hunt'], 'the bounties and the hunts laid on it still');
-  const windows = bridge.questLog();
-  assert.deepEqual(windows.lines, ['a line'], 'the windows\' walk has them');
+  assert.deepEqual(look.active.map((q) => q.id), ['bounty:1', 'hunt:1'], 'the bounties and the hunts laid on it');
+  assert.deepEqual(bridge.questLog().active.map((q) => q.id), ['bounty:1', 'hunt:1'], 'and on the windows\' walk');
 });

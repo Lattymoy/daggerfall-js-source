@@ -154,7 +154,7 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
   assert.match(cr, /deps\.notebook\(\)\.removeNote\(e\.index\);/);
   const nb = read('src/systems/notebook.js');
   assert.match(nb, /addNote\(str, index = -1\) \{/);
-  assert.match(nb, /removeNote\(index\) \{ this\.notes\.splice\(index, 1\); \}/);
+  assert.match(nb, /removeNote\(index\) \{ if \(at\(this\.notes, index\)\) this\.notes\.splice\(index, 1\); \}/);   // PIN MOVED (QUEST-AUDIT IV JOURNAL-1): an index outside the list removes nothing
   // Both arms appear only when there IS a notebook - a host may open
   // this before one exists, and a control that cannot act is the
   // drawn-door bug.

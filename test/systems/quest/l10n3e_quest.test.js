@@ -190,7 +190,7 @@ test('L10N3e quest: %vcn falls back to the last Person\'s faction name as the la
   const vampire = personOf(quest, '_vamp_', { faction: FACTIONS.get(150), displayName: 'Jean Dupont' });
   const show = () => { quest.lastResourceReferenced = vampire; return getContextValue('%vcn', quest, quest.hooks); };
   const { en, fr } = inFrench({ Internal_Factions: [['150', 'Clan factice']] }, show);
-  assert.equal(en, 'The Vraseth');
+  assert.equal(en, 'Vraseth');   // PIN MOVED (QUEST-AUDIT IV CORE-5): bare of its article, as %kno
   assert.equal(fr, 'Clan factice');
 });
 

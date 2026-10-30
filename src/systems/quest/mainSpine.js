@@ -24,11 +24,11 @@
 // owed its backbone when its opener began - and, while the opener stands, has run its `start quest` - and no backbone
 // has begun or stands (running, ended, or scheduled), and no step of the story has begun.
 //
-// THE CURSE IS THE OPENER'S TRACE (AUDIT FB1026d II A1). A save from before the record whose opener has failed, ended and
-// been removed (some two months of played game time, Brisienna never met - a failed opener files nothing in the journal
-// - or met and its journal entry cleared) keeps no trace of the opener. It keeps the Curse: every game born in the port
-// starts S0000977 beside _BRISIEN (scenes/quest/questBridge.js GAME_START_QUESTS), nothing else starts it (the retired
-// _TUTOR__ did), and it stands until the curse is lifted, long past the courts' first quests (storyStarted then).
+// THE CURSE IS THE OPENER'S TRACE (AUDIT FB1026d II A1) ONCE NO START STANDS (QUEST-AUDIT IV START-1). A save from
+// before the record whose opener failed, ended and was removed keeps no trace of it, but keeps the Curse: every port
+// birth starts S0000977, nothing else does, and it stands until the curse is lifted. Since START1 a birth starts it
+// beside a start (questBridge.js gameStartQuests), whose hand-off begins _BRISIEN - so while a start stands the opener
+// has not begun, whatever an older record says (a reload mid-start began the backbone, and _BRISIEN a second one).
 //
 // THE EXCEPTIONS, named (AUDIT FB1026d A1/A2/A5/E2, II A2):
 //   - A CLASSIC IMPORT IS OWED NOTHING. It starts no quests (world.js classicLoadBoot - the port's own departure), so it
@@ -41,6 +41,8 @@
 //     (nothing says it ran), and its royal letters come again.
 // The story's own record (storyStarted) is the guard for a save from before the record: a backbone that ended ended
 // the main quest, and a main quest ends only past the courts' first quests.
+
+import { isStartQuestName } from '../starts/starts.js';   // QUEST-AUDIT IV START-1: a start standing, the opener still to come
 
 /** The backbone, and the quest that starts it. */
 export const SPINE = 'S0000999';
@@ -63,11 +65,13 @@ function openerStartedSpine(quest) {
   return false;
 }
 
-/** The record as a load finds it: the saved one, and what the saved table (`names`, the quests' file names) says of it -
- *  the opener, or the Curse begun beside it (AUDIT FB1026d II A1). @param {any} saved @param {string[]} names */
-export function spineRecord(saved, names) {
-  const has = (n) => names.some((x) => String(x ?? '').toUpperCase() === n);
-  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };
+/** The record as a load finds it: the saved one, and what the saved table (`quests`, their names and ends) says of it -
+ *  the opener, or the Curse begun beside it (AUDIT FB1026d II A1) - none of it while a start stands (START-1).
+ *  @param {any} saved @param {any[]} quests */
+export function spineRecord(saved, quests) {
+  const has = (n) => quests.some((q) => String(q?.questName ?? '').toUpperCase() === n);
+  const starting = quests.some((q) => isStartQuestName(q?.questName) && !q?.questComplete && !q?.questTombstoned);
+  return { opened: !starting && (saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE)), ran: saved?.ran === true || has(SPINE) };
 }
 
 /**

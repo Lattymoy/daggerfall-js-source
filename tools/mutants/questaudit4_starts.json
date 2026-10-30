@@ -1,0 +1,59 @@
+[
+  {
+    "name": "QA4-START1-the-standing-start-unread",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "return { opened: !starting && (saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE)), ran:",
+    "new": "return { opened: (saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE)), ran:",
+    "tests": [
+      "test/systems/starts/questaudit4_starts.test.js"
+    ]
+  },
+  {
+    "name": "QA4-START1-an-ended-start-still-standing",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "isStartQuestName(q?.questName) && !q?.questComplete && !q?.questTombstoned);",
+    "new": "isStartQuestName(q?.questName));",
+    "tests": [
+      "test/systems/starts/questaudit4_starts.test.js",
+      "test/systems/quest/fb1026d_mainspine.test.js"
+    ]
+  },
+  {
+    "name": "QA4-START2-the-world-quests-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "return this.storyStarted.size > 0 || [...this.quests.values()].some(isProtectedQuest);",
+    "new": "return this.storyStarted.size > 0;",
+    "tests": [
+      "test/systems/starts/questaudit4_starts.test.js",
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "QA4-START2-the-story-steps-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "return this.storyStarted.size > 0 || [...this.quests.values()].some(isProtectedQuest);",
+    "new": "return [...this.quests.values()].some(isProtectedQuest);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "QA4-START2-the-healing-dropped",
+    "file": "src/scenes/startsHost.js",
+    "old": "if (m && !m.storyBegun()) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);",
+    "new": "",
+    "tests": [
+      "test/systems/starts/questaudit4_starts.test.js",
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "QA4-START3-the-cold-restore",
+    "file": "src/scenes/world.js",
+    "old": "      await townTalk.ensureFactions?.();   // QUEST-AUDIT IV START-3",
+    "new": "      // QUEST-AUDIT IV START-3",
+    "tests": [
+      "test/systems/starts/questaudit4_starts.test.js"
+    ]
+  }
+]

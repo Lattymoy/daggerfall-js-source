@@ -1247,7 +1247,7 @@ export class QuestMachine {
     // serializer gives a missing member.
     if (data.globalVars) this.globalVars = new Map(data.globalVars);
     // MAIN-SPINE: the record as saved, and what the saved table says - a backbone that will not rebuild below ran all the same
-    this.spine = spineRecord(data.spine, (data.quests ?? []).map((q) => q?.questName));
+    this.spine = spineRecord(data.spine, data.quests ?? []);
     const clocks = this._questClocks();   // TIME3
     for (const questData of data.quests ?? []) {
       try {
@@ -1256,9 +1256,9 @@ export class QuestMachine {
         // QUEST-AUDIT III END-GRACE (FIELD BUGS 2026-09-28's "a copy saved inside EndQuest's two ticks of grace never ends
         // on reload"): the envelope carries no ticksToEnd, and EndQuest never re-arms - a save taken while the reward's
         // window held the tick loaded a quest that ran for ever, its questor refusing all work. An `end quest` that has
-        // run (its action complete, the quest not) enters its grace again
-        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;
-        localizeDisplayName(quest);   // L10N5: the save holds the quest's own name; the language names it again
+        // run (its action complete, the quest not) enters its grace again - QUEST-AUDIT IV CORE-2: the grace it had left, an
+        // older envelope (none written) the whole of it
+        if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;
         if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
         this.quests.set(quest.uid, quest);
       } catch (e) {
@@ -1274,8 +1274,7 @@ export class QuestMachine {
     for (const questData of Array.isArray(data.toInvoke) ? data.toInvoke : []) {
       try {
         const quest = new Quest({ ...clocks, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });
-        quest.restoreSaveData(questData, this._saveResolvers());
-        localizeDisplayName(quest);
+        quest.restoreSaveData(questData, this._saveResolvers());   // QUEST-AUDIT IV CORE-4: named in the language there
         if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);
       } catch (e) {
         console.warn(`[quest] Failed to load scheduled quest '${questData?.questName ?? ''}': ${e?.message ?? e}`);
@@ -1876,9 +1875,16 @@ export class QuestMachine {
     if ((entries ?? []).some((e) => e?.kind === 'quest' && questNameIn([SPINE_OPENER], String(e.quest ?? '')))) this.spine.opened = true;
   }
 
+  /** QUEST-AUDIT IV START-2: has this game's story begun - a quest of the world's own on the table (PROTECTED_QUESTS:
+   *  the Curse and the backbone stand long past the rest), or a step of the story? A character saved before any began
+   *  holds none (scenes/startsHost.js restored). The Curse is never a story step (storyStarted). */
+  storyBegun() {
+    return this.storyStarted.size > 0 || [...this.quests.values()].some(isProtectedQuest);
+  }
+
   /** MAIN-SPINE: the record as the save writes it - the machine's, and its table's word, as a load reads it (spineRecord). */
   _spineData() {
-    const spine = spineRecord(this.spine, [...this.quests.values()].map((q) => q.questName));
+    const spine = spineRecord(this.spine, [...this.quests.values()]);
     return spine.opened || spine.ran ? { spine } : {};
   }
 
