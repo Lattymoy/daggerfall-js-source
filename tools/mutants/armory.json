@@ -607,36 +607,8 @@
   {
     "name": "WOLF-KIT-the-bands-inside-the-wolfs-arms",
     "file": "src/render/armoryPass.js",
-    "old": "const a = pose.arm > 0 ? pose.arm : 1,",
-    "new": "const a = 1,",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
-    "name": "WOLF-KIT-no-claws",
-    "file": "src/render/armoryPass.js",
-    "old": "claw = full && pose.claw > 0 ? pose.claw : 0,",
-    "new": "claw = 0,",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
-    "name": "WOLF-KIT-claws-left-on-a-person",
-    "file": "src/render/armoryPose.js",
-    "old": "out.scale = k; out.back = 0; out.arm = 1; out.claw = 0;",
-    "new": "out.scale = k; out.back = 0; out.arm = 1;",
-    "tests": [
-      "test/render/armory.test.js",
-      "test/ui/profileslots.test.js"
-    ]
-  },
-  {
-    "name": "WOLF-KIT-claws-left-on-a-sprite",
-    "file": "src/render/armoryPose.js",
-    "old": "out.back = 0; out.arm = 1; out.claw = 0; out.hock = false;\n",
-    "new": "out.back = 0; out.arm = 1; out.hock = false;\n",
+    "old": "const a = pose.arm > 0 ? pose.arm : 1;",
+    "new": "const a = 1;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -680,8 +652,26 @@
   {
     "name": "WOLF-KIT-the-sprites-wolf-a-mirror",
     "file": "src/render/armoryPose.js",
-    "old": "R: Object.freeze({ sh: [15, 57], el: [21, 48], wa: [27, 38], kn: [14, 21], ft: [17, 6] }),",
-    "new": "R: Object.freeze({ sh: [13, 58], el: [19, 47], wa: [24, 36], kn: [8, 22], ft: [10, 15] }),",
+    "old": "R: Object.freeze({ sh: [14, 56], el: [19, 48], wa: [24, 41], kn: [13, 22], ft: [16, 9] }),",
+    "new": "R: Object.freeze({ sh: [12, 57], el: [17, 48], wa: [21, 40], kn: [6, 24], ft: [12, 15] }),",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-left-on-a-person",
+    "file": "src/render/armoryPose.js",
+    "old": "out.scale = k; out.back = 0; out.arm = 1; out.hock = false; out.dx.fill(0);",
+    "new": "out.scale = k; out.back = 0; out.dx.fill(0);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-left-on-a-sprite",
+    "file": "src/render/armoryPose.js",
+    "old": "out.back = 0; out.arm = 1; out.hock = false;\n",
+    "new": "out.back = 0;\n",
     "tests": [
       "test/render/armory.test.js"
     ]

@@ -348,31 +348,30 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
   assert.equal(+(front.A[2] - back.A[2]).toFixed(3), ARMORY_BEAST_CHEST.back, 'the sigil\'s back piece behind the wolf\'s back, not inside it');
   assert.equal(+(bones['bip01 spine2'][1] - wolf.pts[POSE_AT.chest + 1]).toFixed(3), 0, 'a person\'s chest at the spine\'s height');
   assert.equal(+(bones['bip01 spine2'][1] - wolfBack.pts[POSE_AT.chest + 1]).toFixed(3), ARMORY_BEAST_CHEST.down, 'the wolf\'s down off its shoulders, mid-chest');
-  // the arms: wider round the wolf's, and down its claws
+  // the arms: wider round the wolf's, stopped at the wrist
   const arms = (/** @type {string} */ key, /** @type {any} */ pose) => armoryDraws(key, { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 0);
   for (const key of ['ashbound', 'eternalarmlets']) {
     const p = arms(key, person), w = arms(key, wolfBack);
-    assert.equal(w.length, p.length + 2, `${key}: a claw's ring a hand`);
+    assert.equal(w.length, p.length, `${key}: nothing past the wrist`);
     assert.ok(Math.abs(w[0].r[0] / p[0].r[0] - ARMORY_BEAST_FIT * ARMORY_BEAST_ARM.arm) < 1e-6, `${key}: as wide as the wolf's arm`);
   }
-  assert.deepEqual([person.arm, person.claw, wolfBack.arm, wolfBack.claw], [1, 0, ARMORY_BEAST_ARM.arm, ARMORY_BEAST_ARM.claw]);
+  assert.deepEqual([person.arm, wolfBack.arm], [1, ARMORY_BEAST_ARM.arm]);
   // the greaves on the wolf's shank, from the hock down to its toes - a person's from the ankle up to the knee
   const legs = (/** @type {any} */ pose) => armoryDraws('eternalgreaves', { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 0);
   const [pl] = legs(person), [wl] = legs(wolfBack);
   assert.ok(pl.B[1] > pl.A[1] + 0.1, 'a person\'s up the shin');
   assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
   assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
-  poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.claw, wolfBack.back], [1, 0, 0], 'the rest pose a person\'s - no claws left on it');
-  // the classic sprite's lycanthrope: its own picture's limbs (BEAST_ROWS), forearms and claws worn
+  poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'the rest pose a person\'s - nothing of the wolf left on it');
+  // the classic sprite's lycanthrope: its own picture's limbs (BEAST_ROWS), forearms worn
   const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
-  assert.deepEqual([lyc.card, lyc.limbs, lyc.arm], [true, 'full', ARMORY_BEAST_ARM.arm], 'a beast\'s picture measured to the claws');
-  assert.ok(lyc.claw > 0);
+  assert.deepEqual([lyc.card, lyc.limbs, lyc.arm], [true, 'full', ARMORY_BEAST_ARM.arm], 'a beast\'s picture measured to the wrist');
   assert.equal(+lyc.pts[POSE_AT.waR].toFixed(4), +(BEAST_ROWS.R.wa[0] * 0.029).toFixed(4), 'its hands flung out as its picture draws them');
   assert.ok(lyc.pts[POSE_AT.ftL + 1] > lyc.pts[POSE_AT.ftR + 1], 'its left leg drawn up, its right planted - no side the other\'s mirror');
   assert.equal(+lyc.pts[POSE_AT.knL + 1].toFixed(4), +(0.1 + BEAST_ROWS.L.kn[1] * 0.029).toFixed(4), 'its knees where its picture bends them');
-  assert.equal(arms('ashbound', lyc).length, 6, 'shoulder to claws on the sprite\'s wolf, both arms');
-  poseFromFigure({ base: 0, mpp: 0.02, marks: null }, lyc); assert.deepEqual([lyc.limbs, lyc.arm, lyc.claw], ['upper', 1, 0], 'turned back, a person\'s picture');
-  poseFromBones(bones, wolfBack, true); poseFromFigure({ base: 0, mpp: 0.02, marks: null }, wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.claw, wolfBack.back], [1, 0, 0], 'nor on a sprite\'s');
+  assert.equal(arms('ashbound', lyc).length, 4, 'shoulder to wrist on the sprite\'s wolf, both arms');
+  poseFromFigure({ base: 0, mpp: 0.02, marks: null }, lyc); assert.deepEqual([lyc.limbs, lyc.arm], ['upper', 1], 'turned back, a person\'s picture');
+  poseFromBones(bones, wolfBack, true); poseFromFigure({ base: 0, mpp: 0.02, marks: null }, wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'nor on a sprite\'s');
 });
 
 test('ARMORY a weapon piece\'s own stage: a longsword of Daggerfall\'s pixels, point up, laid at whole pixels a cell; its outline the classic hand\'s shaders, the field baked once and the band drawn over the blade each frame; a weapon piece alone takes it, any other kit the figure\'s (mutants: the field baked every frame; the band drawn under the blade; a kit with a body piece on the blade\'s stage)', () => {

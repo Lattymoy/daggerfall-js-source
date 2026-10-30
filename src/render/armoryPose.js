@@ -40,10 +40,9 @@ export const ARMORY_BEAST_FIT = 1.35;
  *  forward of the spine, 0.12), `down` m under the spine's bone, and its back this far behind the face (`back`, m - the
  *  chest's back piece; a person's the pass's own). */
 export const ARMORY_BEAST_CHEST = Object.freeze({ face: 0.08, back: 0.55, down: 0.1 });
-/** WOLF-KIT (mob: "they clip through on the arms", "where is claws?"): the wolf's arms thicker again than its fit - a
- *  band's rings `arm` times wider round them - and its hands' claws, `claw` m past the wrist along the forearm: the arm
- *  pieces burn on down them, as the weapon glow does on the claws. */
-export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.25, claw: 0.2 });
+/** WOLF-KIT (mob: "they clip through on the arms"): the wolf's arms thicker again than its fit - a band's rings `arm`
+ *  times wider round them. They stop at the wrist (mob: "the wrist stick out to far"): the claws wear the weapon glow. */
+export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.25 });
 
 /** THE SPRITE'S POINTS BY THE PIXEL - a sprite figure's rows over the frame's foot (EOTB_FIGURE's own for the shoulder,
  *  neck and head; the rest measured off the sets' idle frames - 112364, 112365, 112370, 112372 front and back) and how
@@ -53,7 +52,7 @@ const SPRITE_ROWS_CHEST = SPRITE_ROWS.chest, SPRITE_ROWS_PELVIS = SPRITE_ROWS.pe
 
 /** A fresh pose - its points the rest pose's; `dx` each point's offset along a sprite card's right (m), 0 on a rig. */
 export function newPose() {
-  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, back: 0, arm: 1, claw: 0, hock: false };
+  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, back: 0, arm: 1, hock: false };
 }
 
 /** THE ROWS a picture's marks are read at, in the sets' pixels over the frame's foot (EOTB_FIGURE's and SPRITE_ROWS'). */
@@ -226,7 +225,7 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out, 
   hang('hipL', bones['bip01 l thigh'], 'pelvis', pv); hang('hipR', bones['bip01 r thigh'], 'pelvis', pv);
   hang('knL', bones['bip01 l calf'], 'pelvis', pv); hang('knR', bones['bip01 r calf'], 'pelvis', pv);
   hang('ftL', bones['bip01 l foot'], 'pelvis', pv); hang('ftR', bones['bip01 r foot'], 'pelvis', pv);
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = beast ? ARMORY_BEAST_CHEST.back : 0; out.arm = beast ? ARMORY_BEAST_ARM.arm : 1; out.claw = beast ? ARMORY_BEAST_ARM.claw : 0; out.hock = beast; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = beast ? ARMORY_BEAST_CHEST.back : 0; out.arm = beast ? ARMORY_BEAST_ARM.arm : 1; out.hock = beast; out.dx.fill(0);
   return true;
 }
 
@@ -278,7 +277,7 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
       out.dx[POSE_AT[`kn${S}`] / 3] = off(legs.knee[i]); out.dx[POSE_AT[`ft${S}`] / 3] = off(legs.ankle[i]);
     });
   }
-  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.claw = 0; out.hock = false;
+  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.hock = false;
   if (fig.beast === true) beastLimbs(fig.mpp * art, fig.base, pts, out);
   return true;
 }
@@ -289,11 +288,11 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
  *  like the sets' rows, and no side the other's mirror. Its chest and pelvis on its axis. */
 export const BEAST_ROWS = Object.freeze({
   chest: 50, pelvis: 30,
-  L: Object.freeze({ sh: [-13, 58], el: [-19, 47], wa: [-24, 36], kn: [-8, 22], ft: [-10, 15] }),
-  R: Object.freeze({ sh: [15, 57], el: [21, 48], wa: [27, 38], kn: [14, 21], ft: [17, 6] }),
+  L: Object.freeze({ sh: [-12, 57], el: [-17, 48], wa: [-21, 40], kn: [-6, 24], ft: [-12, 15] }),
+  R: Object.freeze({ sh: [14, 56], el: [19, 48], wa: [24, 41], kn: [13, 22], ft: [16, 9] }),
 });
 /** A beast's sprite pose written over a figure's (`px` its metres a picture's pixel, `base` the frame's foot): BEAST_ROWS,
- *  every limb measured so the forearms' pieces and the claws are worn too, the bands as wide as the wolf's arms. */
+ *  every limb measured so the forearms' pieces are worn too, the bands as wide as the wolf's arms. */
 function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @type {Float32Array} */ pts, /** @type {any} */ out) {
   const B = BEAST_ROWS, at = (/** @type {number} */ r) => base + r * px;
   set(pts, 'chest', [0, at(B.chest), 0.12]); set(pts, 'pelvis', [0, at(B.pelvis), 0]);
@@ -302,7 +301,7 @@ function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @t
     out.dx[POSE_AT[`sh${S}`] / 3] = out.dx[POSE_AT[`el${S}`] / 3] = out.dx[POSE_AT[`wa${S}`] / 3] = out.dx[POSE_AT.chest / 3];
     out.dx[POSE_AT[`kn${S}`] / 3] = out.dx[POSE_AT[`ft${S}`] / 3] = out.dx[POSE_AT.pelvis / 3];
   }
-  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm; out.claw = ARMORY_BEAST_ARM.claw * 0.6;
+  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm;
 }
 
 /** THE REST POSE written into `out`, pressed down to `crouch` (the body's height over its standing height, 1 standing)
@@ -310,7 +309,7 @@ function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @t
 export function poseAtRest(/** @type {any} */ out, crouch = 1, mounted = false) {
   const k = Number.isFinite(crouch) ? Math.max(0.4, Math.min(1, crouch)) : 1, lift = mounted ? AURA_SADDLE_M : 0;
   for (let i = 0; i < REST_POINTS.length; i += 3) { out.pts[i] = REST_POINTS[i]; out.pts[i + 1] = REST_POINTS[i + 1] * k + lift; out.pts[i + 2] = REST_POINTS[i + 2]; }
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = 0; out.arm = 1; out.claw = 0; out.hock = false; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = 0; out.arm = 1; out.hock = false; out.dx.fill(0);
   return out;
 }
 

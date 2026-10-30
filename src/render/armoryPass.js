@@ -41,7 +41,7 @@ export const ARMORY_HEAD = Object.freeze({
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
 /** WOLF-KIT (2026-10-30, mob: "the feet chest and arm and hand cosmetic ... on werewolf form", "like the weapon glow on
- *  claws"): the slots still worn turned beast - the chest, the arms to the claws and the legs, fitted to the wolf
+ *  claws"): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
  *  (armoryPose.js ARMORY_BEAST_FIT). The head's crown and halo stay off the wolf's muzzle, and its weapon piece is the
  *  claws' own glow already (systems/weaponGlow.js fistGlow). */
 export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);
@@ -485,20 +485,17 @@ export function armoryDraws(key, w, eye, near, right = null) {
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const side of ['L', 'R']) {
       const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`);
-      // WOLF-KIT: the wolf's arms wider (`a`), and its claws past the wrist (`tip`) - the pieces burn on down them
-      const a = pose.arm > 0 ? pose.arm : 1, claw = full && pose.claw > 0 ? pose.claw : 0, tip = claw ? add(wa, unit(sub(wa, el)), claw) : wa;
+      const a = pose.arm > 0 ? pose.arm : 1;   // WOLF-KIT: the wolf's arms wider
       if (key === 'ashbound') {
         tube(0, sh, el, 0.065 * a, 0.056 * a);
         if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);
-        if (claw) tube(0, wa, tip, 0.046 * a, 0.03 * a);
-        cards(1, 8, sh, full ? tip : el, UP, [0.06 * s * a, 0]);
+        cards(1, 8, sh, full ? wa : el, UP, [0.06 * s * a, 0]);
       } else {
         // a band's flames rise off it: each tube runs from its lower edge up the arm
         const d = unit(sub(el, sh)), mid = mix(sh, el, 0.45);
         tube(0, add(mid, d, 0.03 * s), add(mid, d, -0.08 * s), 0.062 * a, 0.066 * a);
         cards(1, 8, add(mid, d, 0.03 * s), add(mid, d, -0.03 * s), d, [0.07 * s * a, 0], 0, 1, speed);
         if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056 * a, 0.06 * a); }
-        if (claw) { const dc = unit(sub(tip, wa)), knuckle = mix(wa, tip, 0.45); tube(0, add(knuckle, dc, 0.02 * s), add(knuckle, dc, -0.04 * s), 0.05 * a, 0.054 * a); cards(1, 6, knuckle, tip, dc, [0.05 * s * a, 0], 0, 1, speed); }
       }
     }
   } else if (key === 'cinderstride' || key === 'eternalgreaves') {
