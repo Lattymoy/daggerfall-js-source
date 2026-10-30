@@ -53,7 +53,7 @@ import { installThunderlockSounds, SFX as TL_SFX } from '../../systems/thunderlo
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
 // already mounts - so wiring it here wires all four at once.
-import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilename, readiedHandsFrame, castReleaseS } from '../fpsSpellCasting.js';   // RSH1: the readied hands; RPT1026-MISC CAST-PACE: the spell's moment
+import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilename, readiedHandsFrame, castReleaseS, castEndS } from '../fpsSpellCasting.js';   // RSH1: the readied hands; RPT1026-MISC CAST-PACE: the spell's moment; MW-SHOT-PACE: the hands' end
 import { createClimbHands, climbLens } from '../climbHands.js';   // CLIMB-HANDS: the classic lane's hands on the wall; II: the lens they are pinned through
 import { fieldOfView } from '../../ui/viewSettings.js';   // CLIMB-HANDS II: the world's own field of view, the hands' lens
 // MW-D8: the classic sprite is still the DEFAULT and still the fallback,
@@ -1703,7 +1703,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // CAST-SPEED: ONE RATE FOR BOTH LANES, read once as the cast starts - the live Speed and the castSpeed loot line
       // (systems/castSpeed.js): the classic frames step at CAST_FRAME_PERIOD over it, the arm's spellcast group plays at it
       const rate = castRate(entity);
-      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate)) && (fpArm.active() || fpArm.thirdActive());
+      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate)) && (fpArm.active() || fpArm.thirdActive());
       // MW-CAST1: the Morrowind hands on screen cast the spell - it leaves on their "<type> release", or when they stop
       // casting without one (fpsSpellCasting's hold, and its ceiling); the classic lane's frame 5 is untouched
       // RPT1026-MISC CAST-PACE: an arm paced to the spell's moment (its release key brought to the classic frame 5) lets it
