@@ -334,6 +334,17 @@ test('a bow picture held: the grip the limb\'s gap, the string its axis, drawn f
   assert.ok(Math.abs(h.gx - 39) <= 1.5 && h.gy > 10, `grip ${h.gx},${h.gy}`);
   assert.ok(Math.abs(h.ux) > 0.99 && h.reach >= 38, `the string along x, reach ${h.reach}`);
   assert.equal(h.long, h.ux > 0 ? -1 : 1, 'the left limb is the whole one');
+  // a short bow's limb is thick and nearly straight, more px on one line than its string: the string is still the axis
+  const W = 80, H = 24, colors = new Uint8Array(W * H * 4);
+  for (let x = 0; x < 80; x++) if (x < 30 || x > 49) colors.set([40, 40, 40, 255], (2 * W + x) * 4);   // the string, row 2
+  for (let x = 0; x < 80; x++) {
+    if (x >= 36 && x <= 42) continue;   // the hand's gap
+    const y0 = x < 8 || x > 71 ? 12 : 16;   // the limb: straight but for its tips
+    for (let dy = 0; dy < 5; dy++) colors.set([...RED, 255], ((y0 + dy) * W + x) * 4);
+  }
+  const t = heldBow({ width: W, height: H, colors });
+  assert.ok(t && Math.abs(t.gx - 39) <= 1.5 && t.gy > 12, `grip on the limb ${t?.gx},${t?.gy}`);
+  assert.ok(t.ry > 0.9, 'the back is away from the string, toward the limb');
 });
 
 test('the held picture is drawn on the frame\'s line from the fist; a bow from its longer limb both ways', { skip: !PNG && 'no pngjs' }, async () => {

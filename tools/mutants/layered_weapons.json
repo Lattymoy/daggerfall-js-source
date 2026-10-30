@@ -398,5 +398,15 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the doll's long bow, completed, taller than the loose's bow it turns into"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-limb-as-string",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (lineIsThick(img, ax)) ax = weaponPictureAxis(offLine(img, ax)) ?? ax;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the short bow's thick limb read as its string: the bow held backwards"
   }
 ]

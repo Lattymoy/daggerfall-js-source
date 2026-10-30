@@ -237,6 +237,26 @@ export function heldPicture(img) {
   return { img, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1 };
 }
 
+/** Does the axis's line run through a band wider than a string: as many px 1.5 to 4 px off it as on it? */
+function lineIsThick(img, ax) {
+  const lx = ax.mx + ax.rho * ax.nx, ly = ax.my + ax.rho * ax.ny;
+  let on = 0, near = 0;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.colors[(y * img.width + x) * 4 + 3] <= 127) continue;
+    const r = Math.abs((x - lx) * ax.rx + (y - ly) * ax.ry);
+    if (r <= 1.5) on++; else if (r <= 4) near++;
+  }
+  return near >= on * 0.6;
+}
+/** The picture with the axis's band (4 px either side) cleared. */
+function offLine(img, ax) {
+  const lx = ax.mx + ax.rho * ax.nx, ly = ax.my + ax.rho * ax.ny, colors = Uint8Array.from(img.colors);
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (Math.abs((x - lx) * ax.rx + (y - ly) * ax.ry) <= 4) colors[(y * img.width + x) * 4 + 3] = 0;
+  }
+  return { width: img.width, height: img.height, colors };
+}
+
 /**
  * A bow picture held: the string is its long axis; the grip is the gap in the limb (the doll's hand), `g` on the limb,
  * `u` along the string, `r` from the string toward the limb (the bow's back), the longer limb's way (`long`) and reach.
@@ -244,8 +264,10 @@ export function heldPicture(img) {
  * @param {{width:number,height:number,colors:ArrayLike<number>}} img
  */
 export function heldBow(img) {
-  const ax = weaponPictureAxis(img);
+  let ax = weaponPictureAxis(img);
   if (!ax) return null;
+  // the string is a line a pixel wide; a short bow's thick limb can hold more pixels on one line than its string does
+  if (lineIsThick(img, ax)) ax = weaponPictureAxis(offLine(img, ax)) ?? ax;
   const lx = ax.mx + ax.rho * ax.nx, ly = ax.my + ax.rho * ax.ny, n = Math.ceil(ax.s1 - ax.s0) + 1;
   const limb = new Float64Array(n).fill(NaN);   // the limb's across at each step along, NaN where none
   let side = 0;

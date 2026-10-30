@@ -155,13 +155,12 @@ in centimetres (the hammer's grip to head is 70), supersampled, shaded from the 
 strips' metal ramps (silver, elven and dwarven their own). Daggerfall Unity draws no third-person weapon for the
 player. The Hand Wraps are bare hands. A weapon wearing a look is drawn as the look.
 
-**The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright and leant 12 degrees
-forward, its back turned 22.5 degrees from the facing toward that hand's side, so no view sees it edge on; the string
-is toward the body. It is the paper doll's bow (`heldBow`): the string its axis, the gap in the limb its grip, drawn
-from its longer limb both ways, since the doll's picture cuts the lower limb short. The fist closes over the grip. The
-side views hide that hand behind the body, so there the bow is in the near hand (`BOW_NEAR`), as Daggerfall's side views
-hold a weapon. Tip to tip it is the loose's own bow (`BOW_PX`, the short bow three quarters), so the shot does not change
-its size. The loose plays the strips' own bow as drawn.
+**The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright, leant 12 degrees
+forward, its back turned 22.5 degrees from the facing toward that hand's side so no view sees it edge on, the string
+toward the body. It is the paper doll's bow (`heldBow`): the string its axis (the thin line, not a short bow's thick
+limb), the gap in the limb its grip, drawn from its longer limb both ways, since the doll cuts the lower limb short. The fist closes over the grip. The side views hide that hand behind the body, so there the bow is
+in the near hand (`BOW_NEAR`), as Daggerfall's side views hold a weapon. Tip to tip it is the loose's own bow
+(`BOW_PX`, the short bow three quarters), so the shot keeps its size.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
@@ -175,7 +174,7 @@ at the camera draws the weapon short. Each outfit's helmet and legs draw the ham
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
-`tools/mutants/layered_weapons.json` (40 mutants, all dead); the peer-art pins moved to the new codes
+`tools/mutants/layered_weapons.json` (41 mutants, all dead); the peer-art pins moved to the new codes
 (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
