@@ -1,14 +1,18 @@
 # FIELD BUGS 2026-10-30c - the Aura Armory across a sprite's card (ARMORY-MIRROR)
 
 Two reports from the owner, of the Aura Armory (`04-Characters/Aura-Armory.md`) on an Eye of the Beholder sprite: "New
-guild arm band isnt correct on the sprite" and "Head aura doesnt allign on the sprite". Read on `b92fd38e1` with the
-freeware's data (`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no cosmetic pieces. The pins are
+guild arm band isnt correct on the sprite" and "Head aura doesnt allign on the sprite". Then, of the fixes as they
+landed: "Arm band still has issues", "Guild patch is still wrong", "Still wrong on one of the angles", and "Dont worry
+about the skin system. Only worry about the layered system". Read on `b92fd38e1` with the freeware's data
+(`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no cosmetic pieces. The pins are
 `test/render/armorymirror.test.js` and `test/render/armory.test.js` (HOST-SPLIT, its pins moved), the mutants
-`tools/mutants/armorymirror.json` (8, all dead). The probe `tools/armorySpriteProbe.mjs`: 5 of 67 before, 67 of 67 after.
+`tools/mutants/armorymirror.json` (16, all dead). The probe `tools/armorySpriteProbe.mjs`, on Layered Gearing: 10 of 257
+before (none of the armlet's), 293 of 293 after, and 93 of 93 close up.
 
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | "New guild arm band isnt correct on the sprite" | Every sprite piece stood mirrored across the card; a side view put the band on the right arm, a three-quarter back view on the back | ARMORY-MIRROR 1, 2 |
+| 3 | "Guild patch is still wrong", "Still wrong on one of the angles" | The patch stood half a guessed arm in from the arm's edge, on the strap and the shoulder's shadow, wider than the arm; a side view's on the body's middle | ARMORY-MIRROR 3 |
 | 2 | "Head aura doesnt allign on the sprite" | The same mirror: the crown and the halo stood beside the head | ARMORY-MIRROR 1 |
 
 ## 1. The card's right (ARMORY-MIRROR 1)
@@ -39,15 +43,28 @@ three-quarter back picture (mirrored) hides the left arm behind the torso in eve
 back's or the cape's, so the band stood on the back. The three-quarter front picture shows both arms, so it keeps them.
 
 FIXED TOO. `armletSide` answers none there (`ARMLET_HIDDEN_SIN`, the eighth's edge off straight behind), and nothing is
-drawn, as from the right side.
+drawn. A side view with the right side to the eye draws none either: the far arm's glow showed past the body's back.
 
-## 3. How it is checked
+## 3. The patch on the painted arm (ARMORY-MIRROR 3)
 
-`tools/armorySpriteProbe.mjs` draws the sprite through the renderer's own billboard under the game's lens, from all
-eight views, on a skin (112364) and on Layered Gearing (male, leather). It measures each piece against the picture's
-marks: the crown and the halo over the head, the armlet on the left upper arm (hidden where the body covers that arm),
-the Ember Heart on the chest seen square on, and the Eternal Greaves between the knees and feet.
+FOUND. The arm reader stands an arm's points half an arm (`ARM_PX.half`, 3.5 px) in from its outer edge, and the patch
+stood a third of the way down. A painted upper arm is 3 to 7 px, and at that row it is often behind a strap or in the
+shoulder's shadow, joined to the body's silhouette. So the patch stood on the strap and the armpit, wider than the arm.
+A side view has no arms read, so its patch stood on the body's middle; its near arm is painted at the body's back edge.
 
-Three measures allow for the pieces' own design. The halo is read by its ring's ends, since its comet and its spark run
-round the ring. The heart is read square on only: its point stands 0.1 m forward of the body's axis. A side view's
-greaves are held to 7 px, as its knees and feet stand 2 cm either side of the card.
+FIXED. The reader also finds the arm's band (`ARM_BAND`): from a third of the way down, the first row where the arm's
+own run stands clear of the body, its middle and its width. The patch stands there, its band and crest that wide. A side
+view's patch stands half an arm in from the body's back edge, brought toward the eye along its line of sight, so it
+stays on the painted arm from any distance. The arm reader's own points are unchanged.
+
+## 4. How it is checked
+
+`tools/armorySpriteProbe.mjs` draws Layered Gearing as the world composes it (`eotbSprite.js` spriteFor, decodeSprite,
+flipRows), through the renderer's own billboard under the game's lens, from all eight views: male and female, leather,
+chain and plate chests, and a cloak. It measures each piece against the picture's marks: the crown and the halo over
+the head, the armlet on the left upper arm and no wider than it (hidden where the body covers that arm), the Ember Heart
+on the chest seen square on, and the Eternal Greaves between the knees and feet. `CLOSE=1` draws it at 1.2 m.
+
+Three measures allow for the pieces' own design, in the picture's pixels. The halo is read by its ring's ends, since its
+comet and its spark run round the ring. The heart is read square on only: its point stands 0.1 m forward of the body's
+axis. A side view's greaves are held to 3 px, as its knees and feet stand 2 cm either side of the card.

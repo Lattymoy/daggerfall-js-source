@@ -38,26 +38,8 @@
   {
     "name": "ARMORY-MIRROR-a-side-view-read-as-the-picture",
     "file": "src/render/armoryPass.js",
-    "old": "  if (!pose?.card || pose.armsTurned) return 'L';",
-    "new": "  if (!pose?.card) return 'L';",
-    "tests": [
-      "test/render/armorymirror.test.js"
-    ]
-  },
-  {
-    "name": "ARMORY-MIRROR-the-hidden-arm-drawn",
-    "file": "src/render/armoryPass.js",
-    "old": "  if (ahead < 0 && right > ARMLET_HIDDEN_SIN) return null;\n",
+    "old": "  if (pose.armsTurned) return 'L';\n",
     "new": "",
-    "tests": [
-      "test/render/armorymirror.test.js"
-    ]
-  },
-  {
-    "name": "ARMORY-MIRROR-the-near-arm-hidden",
-    "file": "src/render/armoryPass.js",
-    "old": "  if (ahead < 0 && right > ARMLET_HIDDEN_SIN) return null;",
-    "new": "  if (ahead < 0 && right < -ARMLET_HIDDEN_SIN) return null;",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -67,6 +49,96 @@
     "file": "src/render/armoryPose.js",
     "old": "  out.armsTurned = !arms;",
     "new": "  out.armsTurned = false;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-hidden-arm-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (right > ARMLET_HIDDEN_SIN && (ahead < 0 || (pose.armsTurned && ahead < ARMLET_HIDDEN_SIN))) return null;",
+    "new": "",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-near-arm-hidden",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (right > ARMLET_HIDDEN_SIN && (ahead < 0 ||",
+    "new": "  if (right < -ARMLET_HIDDEN_SIN && (ahead < 0 ||",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-right-side-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "(ahead < 0 || (pose.armsTurned && ahead < ARMLET_HIDDEN_SIN))",
+    "new": "(ahead < 0)",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-at-the-merged-shoulder",
+    "file": "src/render/armoryPose.js",
+    "old": "      if (!run || out(s > 0 ? run[0] : run[1]) <= 0 || run[1] - run[0] + 1 > ARM_BAND.max * A) continue;",
+    "new": "      if (!run || run[1] - run[0] + 1 > 99 * A) continue;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-by-its-far-end",
+    "file": "src/render/armoryPose.js",
+    "old": "band = { row: r / A, c: (run[0] + run[1]) / 2 - mid,",
+    "new": "band = { row: r / A, c: (s > 0 ? run[1] : run[0]) - mid,",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-a-side-views-edges-unread",
+    "file": "src/render/armoryPose.js",
+    "old": "flank = arms ? null : flankAt(flankRow);",
+    "new": "flank = null;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "const band = pose.card ? pose.bands?.[side] : null,",
+    "new": "const band = null,",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-bands-width-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "k = band ? band.w / (2 * A.r * s) : 1;",
+    "new": "k = 1;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-back-edge-the-front",
+    "file": "src/render/armoryPass.js",
+    "old": "const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? flank.hi : flank.lo,",
+    "new": "const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? flank.lo : flank.hi,",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-eyes-line-lost",
+    "file": "src/render/armoryPass.js",
+    "old": "      mid = add(card, toEye, depth);",
+    "new": "      mid = [card[0], card[1], card[2] + (mid[2] - at[2])];",
     "tests": [
       "test/render/armorymirror.test.js"
     ]

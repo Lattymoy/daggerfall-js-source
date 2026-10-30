@@ -117,6 +117,11 @@ feet are the two leg runs nearest the body, a robe split at its quarters, a staf
 traced up from the neck. On a side view the near arm lies over the body with no edge to read, so its arm pieces keep
 the sets' rows, turned with the body.
 
+**The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30c.md`). Each arm's band is read too: from a
+third of the way down, the first row where the arm stands clear of the body, and its width there. The Insignia
+Armlet's patch is worn on it, as wide. A side view's patch stands half an arm in from the body's back edge, where the
+pictures paint its near arm.
+
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
@@ -234,8 +239,8 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
 - `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
   skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
-- `tools/armorySpriteProbe.mjs` - a sprite through the renderer's own billboard under the world's mirrored lens, eight
-  views: each piece on the part its picture paints (ARMORY-MIRROR). `test/render/armorymirror.test.js` pins the card's
+- `tools/armorySpriteProbe.mjs` - Layered Gearing through the renderer's own billboard under the world's mirrored lens,
+  eight views, eight bodies: each piece on the part its picture paints (ARMORY-MIRROR). `test/render/armorymirror.test.js` pins the card's
   right and a side view's armlet; `tools/mutants/armorymirror.json` mutates them.
 - `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
