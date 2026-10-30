@@ -30,16 +30,6 @@
     "note": "Mac, 2026-10-30 (#feature-feedback): a swing's backs not read at the press"
   },
   {
-    "name": "TECH-BACKSTAB-flight-from-press",
-    "file": "src/combat/techniques.js",
-    "old": "use, backs: backsAt(target.point) };",
-    "new": "use, backs: backsAt(from) };",
-    "tests": [
-      "test/systems/tech1_runner.test.js"
-    ],
-    "note": "Mac, 2026-10-30 (#feature-feedback): a flight's backs read from where it left, not where it lands"
-  },
-  {
     "name": "TECH-BACKSTAB-landing-drops",
     "file": "src/combat/techniques.js",
     "old": "{ target: a.foe, use: a.use, backs: a.backs }",
@@ -62,8 +52,8 @@
   {
     "name": "TECH-CANCEL-gate-kept",
     "file": "src/combat/techniques.js",
-    "old": "  if (!ctx.ready) return true;\n",
-    "new": "  if (!ctx.ready || pw.machine?.state !== 'Idle') return true;\n",
+    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true;",
+    "new": "  if (!ctx.ready || machineGunBusy(pw.machine) || pw.machine?.state !== 'Idle') return true;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -72,8 +62,8 @@
   {
     "name": "TECH-CANCEL-cooldown-kept",
     "file": "src/characters/weaponStates.js",
-    "old": "  m.cooldownUntil = m.now;\n  return true;",
-    "new": "  return true;",
+    "old": "  m.cooldownUntil = m.now;\n  return was;",
+    "new": "  return was;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -82,8 +72,8 @@
   {
     "name": "TECH-CANCEL-cut-at-rest",
     "file": "src/characters/weaponStates.js",
-    "old": "  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return false;",
-    "new": "  if (false) return false;",
+    "old": "  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -142,7 +132,7 @@
   {
     "name": "TECH-KEY2-rig-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      tc.held2 = !!actionDown?.(SIGNATURE_ACTION);",
+    "old": "      tc.held2 = !!actionDown?.(SIGNATURE_ACTION) || touchHeld(SIGNATURE_ACTION);",
     "new": "      tc.held2 = false;",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
@@ -182,8 +172,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F2-cut-skipped",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (was) machineCut(this.machine);\n",
-    "new": "",
+    "old": "    const was = machineCut(this.machine);\n",
+    "new": "    const was = null;\n",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/scenes/tech1_hosts.test.js"
@@ -193,12 +183,62 @@
   {
     "name": "TECH-CANCEL-gun-reload-waived",
     "file": "src/characters/weaponStates.js",
-    "old": "  if (m.ranged && !m.isBow) return false;",
-    "new": "  if (false) return false;",
+    "old": "  if (m.ranged && !m.isBow) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/combat/gun/pistolport_audit.test.js"
     ],
     "note": "TECH-CANCEL: a gun's reload waived by a technique - an extra shot past the reload"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F1-flight-from-landing",
+    "file": "src/combat/techniques.js",
+    "old": "  const backs = backsAt(from), foe = target.foe;",
+    "new": "  const backs = backsAt(target.point), foe = target.foe;",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F1: a flight's backs read from its landing - a Lunge through a foe facing me backstabs it"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F1-behind-dropped",
+    "file": "src/combat/techniques.js",
+    "old": "backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "new": "backs };",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F1: a Shadowstep landing behind its foe takes it from the front"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F2-gun-gate-dropped",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true;",
+    "new": "  if (!ctx.ready) return true;",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F2: a gun mid-reload starts an aim that fails silent at its release"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F3-launch-uncut",
+    "file": "src/combat/techniques.js",
+    "old": "  ctx.cutSwing?.();   // AUDIT TECH-FEEDBACK II F3",
+    "new": "  // AUDIT TECH-FEEDBACK II F3",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F3: the swing in flight lands its hit mid-air beside the landing's"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F3-rig-door",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "        cutSwing: () => { if (playerWeapon.cutSwing()) fpArm.cutAttack?.(); },",
+    "new": "        cutSwing: () => {},",
+    "tests": [
+      "test/scenes/tech1_hosts.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F3: the rig hands no cut"
   }
 ]

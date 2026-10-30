@@ -298,6 +298,38 @@ test('AUDIT TECH-FEEDBACK F4 VENDOR-HOUSES a read that failed: the market not op
   _resetVendorHousesForTests();
 });
 
+test('AUDIT TECH-FEEDBACK II F4/F5 VENDOR-HOUSES: a read that throws or rejects is a failure (asked again soon, its marks kept); a load forgets every read; nothing is marked while the market is shut (mutants: a rejection a success; a throw a shut market; the load remembered; the shut market marked)', async () => {
+  _resetVendorHousesForTests();
+  let mode = 'ok', open = true;
+  const asked = [];
+  registerVendorHouseReader((region) => {
+    asked.push(region);
+    if (mode === 'throw') throw new Error('boom');
+    if (mode === 'reject') return Promise.reject(new Error('net'));
+    return { ok: true, data: { rows: [{ map: 77, buildingKey: 5 }] } };
+  }, { open: () => open });
+  ensureVendorHouses(17, 1000, 1);
+  await settle();
+  assert.ok(isVendorHouse(77, 5));
+  for (const [m, at] of [['reject', 1200], ['throw', 1200 + VENDOR_HOUSES_RETRY_S]]) {
+    mode = m;
+    ensureVendorHouses(17, at, 1);
+    await settle();
+    assert.ok(isVendorHouse(77, 5), `${m}: what was read stands`);
+  }
+  mode = 'ok';
+  ensureVendorHouses(17, 1200 + 2 * VENDOR_HOUSES_RETRY_S, 1);
+  await settle();
+  assert.equal(asked.length, 4, 'each failure asked again after VENDOR_HOUSES_RETRY_S');
+  open = false;
+  assert.ok(!isVendorHouse(77, 5), 'the market shut: nothing marked');
+  open = true;
+  const v = vendorHousesVersion();
+  ensureVendorHouses(66, 5000, 2);   // a load: another character, another door's law
+  assert.ok(!isVendorHouse(77, 5) && vendorHousesVersion() > v, 'a load forgets every read');
+  _resetVendorHousesForTests();
+});
+
 test('VENDOR-HOUSES the mark: a trader\'s house carries `vendor` through the rows and the sheet and is filled blue with a parchment door; my own stays red (mutants: the flag dropped at a read; the blue fill lost; a trader\'s house in my red)', () => {
   const buildings = [house(1, 0, 0, 30, 30), house(2, 1, 0, 60, 10), house(3, 1, 1, 10, 50)];
   const reg = new Map([[1, { owner: 'Mac', own: true }], [2, { owner: 'Gryphoth', own: false, vendor: true }], [3, { owner: 'Trader waypoint - Eve', own: false, vendor: true, waypoint: true }]]);
@@ -323,5 +355,5 @@ test('VENDOR-HOUSES the mark: a trader\'s house carries `vendor` through the row
 });
 
 test('VENDOR-HOUSES the wiring: the vendor host registers the directory\'s read, the market\'s gate on it', () => {
-  assert.match(src('src/scenes/vendorHost.js'), /registerVendorHouseReader\(\(region\) => \(vendorMarketOpen\(\) \? vendorReachable\(region\) : null\)\);/);
+  assert.match(src('src/scenes/vendorHost.js'), /registerVendorHouseReader\(\(region\) => \(vendorMarketOpen\(\) \? vendorReachable\(region\) : null\), \{ open: vendorMarketOpen \}\);/);   // PIN MOVED (AUDIT TECH-FEEDBACK II F5)
 });

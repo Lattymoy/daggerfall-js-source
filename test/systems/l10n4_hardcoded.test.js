@@ -785,7 +785,7 @@ const HARDCODED = {
   'src/ui/techniqueGlyph.js': 2,
   'src/ui/temperatureCard.js': 8,
   'src/ui/textFont.js': 4,
-  'src/ui/touch/touchButtons.js': 10,
+  'src/ui/touch/touchButtons.js': 11,   // TECH-KEY2: +1, the Martial technique's corner button, beside the technique's
   'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,

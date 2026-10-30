@@ -8,6 +8,15 @@
 
 Newest first.
 
+**2026-10-30 - AUDIT TECH-FEEDBACK II.** Mac: *"Audit this"*, again, of the pass and its first audit. One review of the
+branch, each finding read against the code: eight reported, seven fixed, one kept. Paid: a flight's backs were read from
+its landing, so a Lunge through a foe facing me backstabbed it (F1); a gun mid-reload started an aim that failed silent
+(F2); a leap pressed mid-swing kept the swing, whose hit landed mid-air beside the landing's (F3); a rejected or thrown
+vendor read waited two minutes or cleared every mark (F4), and a load or a shut market kept the blue (F5); the touch
+corner had no Martial technique (F6 - back, read by the rig); the cut's busy test was written twice (F8). Kept: F7,
+the card's key word - the same law, read once a render. 14 mutants, all dead.
+Record: `05-Combat/Weapon-Techniques.md`, `10-UI/Enhanced-Maps-Arc.md`.
+
 **2026-10-30 - AUDIT TECH-FEEDBACK.** Mac: *"Audit this"*, of the same day's #feature-feedback pass. One review of the
 branch, each finding read against the code: eight reported, seven fixed, one refuted. Paid: a bow resting drawn was cut
 to frame 0 (F1); a cut made before the strike could begin lost the swing for nothing (F2), and the Morrowind arm was cut

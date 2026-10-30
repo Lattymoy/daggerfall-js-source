@@ -15414,9 +15414,9 @@
   "tr": "6033d19f489c",
   "by": "claude-in-session"
  },
- "growth.spec.useTechniqueOwn": {
-  "en": "0bb82f12f4e7",
-  "tr": "75fd1f2fe20a",
+ "growth.spec.useTechniqueBoth": {
+  "en": "f91674506bb7",
+  "tr": "d462949cded2",
   "by": "claude-in-session"
  },
  "growth.spec.weapon.archery": {

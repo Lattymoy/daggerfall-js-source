@@ -633,9 +633,10 @@ test('TECH-CANCEL ("independent of your regular attack cooldown / animation canc
   assert.equal(T.techniqueWait('whirlwind'), 10);
   // the attack's cooldown (a bow's reload): waived by the cut
   const m = { state: 'Idle', now: 5, cooldownUntil: 7, frame: 0, ticks: 0, acc: 0, hold: 0, animIndex: 0, damageDone: false };
-  assert.equal(machineCut(m), true);
+  const was = machineCut(m);
+  assert.equal(was.cooldownUntil, 7, 'the machine as it was, to put back');
   assert.equal(m.cooldownUntil, 5);
-  assert.equal(machineCut(m), false, 'nothing left to cut');
+  assert.equal(machineCut(m), null, 'nothing left to cut');
   const busy = { state: 'StrikeDown', now: 1, cooldownUntil: 0, frame: 3, ticks: 2, acc: 0.01, hold: 1, animIndex: 1, damageDone: true };
   machineCut(busy);
   assert.deepEqual([busy.state, busy.frame, busy.ticks, busy.hold, busy.damageDone], ['Idle', 0, 0, 0, false]);
@@ -651,7 +652,7 @@ test('TECH-CANCEL ("independent of your regular attack cooldown / animation canc
   assert.equal(drawing.frame, 0, 'BowDrawback on: the bow rests at 0');
   // a gun (ranged, no bow - the Thunderlock) keeps its reload: a technique waits for it (AUDIT PISTOL-PORT C1)
   const gun = { ...bow, isBow: false, ranged: true, cooldownUntil: 9 };
-  assert.equal(machineCut(gun), false);
+  assert.equal(machineCut(gun), null);
   assert.equal(gun.cooldownUntil, 9);
   // AUDIT TECH-FEEDBACK F2: a strike that still cannot begin (a gun's reload, a pair's other hand) puts the swing back
   const p2 = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
@@ -661,4 +662,41 @@ test('TECH-CANCEL ("independent of your regular attack cooldown / animation canc
   p2._attack = () => false;
   assert.equal(p2.techniqueStrike('StrikeLeft'), false);
   assert.deepEqual({ ...p2.machine }, before, 'the swing in flight, untouched');
+});
+
+test('AUDIT TECH-FEEDBACK II: a Lunge through a foe facing me is no backstab (F1); a gun mid-reload holds the key, silent, and starts no aim (F2); a leap\'s launch cuts the swing in flight, so its hit never lands mid-air (F3) (mutants: the flight read from its landing; the gun\'s gate dropped; the launch uncut)', () => {
+  // F1: the lane runs through a foe that looks at me - its back is to the lane's end, never to me
+  reset();
+  const facing = foeAt(0, 2.5, { ai: { feet: [0, 0, 2.5], height: 1.8, yaw: Math.PI } });
+  setPlayerDoor({ foes: () => [facing] });
+  const lpw = weaponOf(piece(() => createWeapon(116, 1), 'lunge', 10));
+  const motor = () => ({ grounded: true, techniqueLaunch() { this.grounded = false; return true; } });
+  const m1 = motor();
+  const r1 = rig({ pw: lpw, entity: player(), door: { motor: () => m1 }, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: 0, feet: [0, 0, 0] } });
+  T.stepTechnique(1 / 60, r1.ctx(true)); T.stepTechnique(1 / 60, r1.ctx(false));
+  for (let i = 0; i < 90 && !r1.log.started.length; i++) T.stepTechnique(1 / 60, r1.ctx(false));
+  assert.deepEqual(r1.log.started, ['StrikeDown'], 'the lunge struck');
+  assert.ok(!lpw.techniqueBlow.backs?.has(facing), 'it faced me when I pressed: no backstab');
+  // F2: a gun's machine mid-reload refuses the key as busy hands - no aim drawn, nothing said
+  reset();
+  const gpw = weaponOf(piece(() => createWeapon(130, 1), 'pierce', 10));
+  Object.assign(gpw.machine, { ranged: true, isBow: false, now: 5, cooldownUntil: 7 });
+  const me = player(); me.items.push(arrows(9));
+  const g = rig({ pw: gpw, entity: me, door: { fireArrow() {} } });
+  T.stepTechnique(1 / 60, g.ctx(true));
+  assert.deepEqual([T.techniqueState().aiming, g.log.said.length], [false, 0]);
+  // F3: a leap pressed mid-swing - the swing is cut at the launch (the rig's cutSwing), so the machine is free mid-air
+  reset();
+  const foe = foeAt(0, 6);
+  setPlayerDoor({ foes: () => [foe] });
+  const spw = weaponOf(piece(() => createWeapon(120, 1), 'leap', 10));
+  assert.ok(spw.clickAttack(() => 0.5)); spw.update(1 / 60);
+  assert.notEqual(spw.machine.state, 'Idle');
+  const m3 = motor();
+  const s = rig({ pw: spw, entity: player(), door: { motor: () => m3 }, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: -0.15, feet: [0, 0, 0] } });
+  T.stepTechnique(1 / 60, s.ctx(true, { cutSwing: () => spw.cutSwing() }));
+  T.stepTechnique(1 / 60, s.ctx(false, { cutSwing: () => spw.cutSwing() }));
+  assert.equal(T.techniqueState().act, 'flight');
+  assert.equal(spw.machine.state, 'Idle', 'the plain swing cut as the body left the ground');
+  setPlayerDoor(null);
 });

@@ -112,7 +112,7 @@
   {
     "name": "VENDOR-HOUSES-unregistered",
     "file": "src/scenes/vendorHost.js",
-    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null));",
+    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), { open: vendorMarketOpen });",
     "new": "  registerVendorHouseReader(null);",
     "tests": [
       "test/ui/town/town_marks.test.js"
@@ -168,5 +168,45 @@
       "test/ui/town/town_marks.test.js"
     ],
     "note": "AUDIT TECH-FEEDBACK F8: the waypoint's house says trader twice"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F4-rejection-a-success",
+    "file": "src/systems/vendorHouses.js",
+    "old": "() => { if (_regions.get(region) === entry) entry.failed = true; }",
+    "new": "() => {}",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F4: a rejected read waits the whole read"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F4-throw-a-shut-market",
+    "file": "src/systems/vendorHouses.js",
+    "old": "catch (e) { asked = Promise.reject(e); }",
+    "new": "catch { asked = null; }",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F4: a read that throws clears every mark"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F5-load-remembered",
+    "file": "src/systems/vendorHouses.js",
+    "old": "if (_loads != null && _regions.size) { _regions.clear(); _version++; }",
+    "new": "if (false) { _regions.clear(); _version++; }",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F5: another character's traders stay blue"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F5-shut-market-marked",
+    "file": "src/systems/vendorHouses.js",
+    "old": "  if (!_open()) return false;\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F5: a shut market's traders stay blue"
   }
 ]

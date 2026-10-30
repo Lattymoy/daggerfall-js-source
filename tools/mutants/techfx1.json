@@ -137,8 +137,8 @@
   {
     "name": "TECHFX1-the-leap-release-uncued",
     "file": "src/combat/techniques.js",
-    "old": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use, backs: backsAt(target.point) };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
-    "new": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use, backs: backsAt(target.point) };\n",
+    "old": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
+    "new": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "TECHFX1-the-run-start-forgotten",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use, backs: backsAt(target.point) };",
-    "new": ", use, backs: backsAt(target.point) };",
+    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "new": ", use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "TECHFX1-AUDIT-the-run-start-aliased",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use, backs: backsAt(target.point) };",
-    "new": ", from, use, backs: backsAt(target.point) };",
+    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "new": ", from, use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"

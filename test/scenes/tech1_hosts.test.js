@@ -46,7 +46,13 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   const gesture = rig.indexOf('? playerWeapon.gesture(_dx, _dy, _held, dt');
   assert.ok(step > 0 && gesture > step, 'the technique first: a click\'s strike and a technique\'s are one machine');
   // PIN MOVED (AUDIT TECH-FX): the context is filled in place each frame (tc.<field> = ...), not made anew
-  assert.match(rig, /tc\.held = !!actionDown\?\.\(TECHNIQUE_ACTION\);\n\s*tc\.held2 = !!actionDown\?\.\(SIGNATURE_ACTION\);/);   // PIN MOVED (TECH-KEY2)
+  // PIN MOVED (TECH-KEY2; AUDIT TECH-FEEDBACK II F6: or its touch button - the action ships with no key)
+  assert.match(rig, /tc\.held = !!actionDown\?\.\(TECHNIQUE_ACTION\);\n\s*tc\.held2 = !!actionDown\?\.\(SIGNATURE_ACTION\) \|\| touchHeld\(SIGNATURE_ACTION\);/);
+  assert.match(rig, /cutSwing: \(\) => \{ if \(playerWeapon\.cutSwing\(\)\) fpArm\.cutAttack\?\.\(\); \},/, 'AUDIT TECH-FEEDBACK II F3: a flight\'s launch cuts the swing and the arm');
+  const touch = read('src/ui/touch/touch.js');
+  assert.match(touch, /\(\) => \{ slotHeld\.set\(b, downAction\(action\.id\)\); setTouchHeld\(action\.id, true\); \}, \(\) => \{ const c = slotHeld\.get\(b\) \?\? null; slotHeld\.delete\(b\); upCode\(c, liveNeeds\(\)\); setTouchHeld\(action\.id, false\); \}/, 'F6: a hold button holds its action');
+  assert.match(touch, /upCode\(c, liveNeeds\(\)\); \}   \/\/ nothing stays down under a button that is going\n\s*clearTouchHeld\(\);/, 'F6: and lets it go with the corner');
+  assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'SignatureTechnique'), { id: 'SignatureTechnique', label: 'Martial technique (hold to aim)', glyph: 'Path', kind: 'hold', w: 60 });
   assert.match(rig, /tc\.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow\?\.pos && !!camNow\?\.feet;/, 'AUDIT TECH1: and no plain shot\'s hit held for the arm');
   assert.match(rig, /tc\.paralyzed = !!paralyzed;/, 'AUDIT TECH1: a held body\'s clock stops');
   assert.match(rig, /tc\.blocked = !!technique\?\.blocked\?\.\(\);/, 'AUDIT TECH1: a window holds the key');
@@ -60,7 +66,7 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the machine's attack through _attack, which starts it the same
   // way and names the strike's hand - a technique's always the lead's, never a flurry's
   // PIN MOVED (TECH-CANCEL): the swing in flight cut first, put back if the strike cannot begin
-  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*const was = [^\n]*\n\s*if \(was\) machineCut\(this\.machine\);\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{ if \(was\) Object\.assign\(this\.machine, was\); return false; \}/);
+  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*const was = machineCut\(this\.machine\);\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{ if \(was\) Object\.assign\(this\.machine, was\); return false; \}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's

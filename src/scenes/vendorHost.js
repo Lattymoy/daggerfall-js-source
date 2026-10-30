@@ -100,7 +100,7 @@ export function createVendorHost(host) {
     return { ...r, data: { ...r.data, rows } };
   };
   const vendorMarketOpen = () => !!marketBook && profBook?.state.open === true && marksBook?.state?.open !== false;
-  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null));   // VENDOR-HOUSES: the houses the town map inks blue
+  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), { open: vendorMarketOpen });   // VENDOR-HOUSES: the houses the town map inks blue
   /** The board's Vendors tab: the region's traders, read fresh. */
   const vendorBoardHost = (region) => ({
     mode: 'board', region, regionName: REGION_NAMES[region] ?? 'the region',

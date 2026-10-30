@@ -43,7 +43,7 @@ import { playerDoor } from '../systems/playerDoor.js';
 import { GRAVITY } from '../player/motor.js';
 import { rayHit } from '../player/groundRay.js';   // AUDIT TECH1's march - the mesh ray and the terrain (AUDIT GROUND-BOLT moved it to a leaf)
 import { restoresSoFar } from '../systems/save/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
-import { blowSchedule } from '../characters/weaponStates.js';
+import { blowSchedule, machineGunBusy } from '../characters/weaponStates.js';
 import { ARROW_FLIGHT_SPEED } from '../systems/spellcast.js';   // BAL-ARCHERY: a volley's shafts fly at the arrow's speed, the one constant (spellcast.js)
 import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
 import { playerBody, bodyRadius, tellTechniqueUsed, registerTechniqueBackstab } from './technique/techniqueBlow.js';
@@ -302,9 +302,8 @@ export function volleyPoints(centre, radius, n, turn = 0) {
   return out;
 }
 
-/** TECH-BACKSTAB: the foes whose back is to `at` as a technique is committed - my feet for a swing, where I land for a
- *  leap or a dash (a Shadowstep landing behind its foe takes it from behind). Their blows are a backstab's chance however
- *  they turn before the hit (techniqueBlow.js techniqueBackstab). Never a player's body; null for none. */
+/** TECH-BACKSTAB: the foes whose back is to `at` - my feet - as a technique is committed. Their blows are a backstab's
+ *  chance however they turn before the hit (techniqueBlow.js techniqueBackstab). Never a player's body; null for none. */
 export function backsAt(at, foes = playerDoor()?.foes?.() ?? []) {
   if (!vec3(at)) return null;
   let out = null;
@@ -501,7 +500,7 @@ export function refusal(hand, ctx, key = 1) {
   if (_s.act) return true;   // one at a time
   // TECH-CANCEL: a swing in flight and the attack's cooldown (a bow's recovery with it) no longer hold the key - the rig's
   // startSwing cuts them; the hands' own gate (a spell, a climb, an equip pause, a shot still loosing) still does
-  if (!ctx.ready) return true;
+  if (!ctx.ready || machineGunBusy(pw.machine)) return true;   // AUDIT TECH-FEEDBACK II F2: a gun's shot and reload still hold it
   const left = techniqueWait(hand.id);
   if (left > 0) return notReadyText(hand.tech?.en ?? techniqueName(hand), Math.ceil(left));   // AUDIT MARTIAL L4 N1: an English line names a signature in English
   // AUDIT TECH1: the price AND the blow's own drain after it - a technique never spends the last of a body (exhaustion
@@ -566,11 +565,15 @@ function execute(hand, ctx, target) {
   const apex = target.apex ?? (t.mech === 'leap' ? t.apex : DASH_APEX);   // AUDIT TECH1: the apex that fits the room (aimFor)
   const fl = launchTo(from, target.point, apex);
   if (!m.techniqueLaunch?.(fl.dir, fl.along, fl.up)) { say(CANNOT_LEAP_TEXT); return; }
+  ctx.cutSwing?.();   // AUDIT TECH-FEEDBACK II F3: the swing in flight is cut at the launch - its hit never lands mid-air
   pay(hand, ctx, use);
   const lane = t.aim === 'lane' && target.lane ? { from: target.lane.from, dir: target.lane.dir, len: target.lane.len, halfW: target.lane.halfW } : null;
   // TECH-FX: `from` - where the leap or the dash began (a Lunge's trail runs from it)
-  // TECH-BACKSTAB: the backs read at the press, from where the body lands
-  _s.act = { kind: 'flight', hand, target, pw, t: 0, time: fl.time, struck: false, lane, foe: target.foe ?? null, from: [from[0], from[1], from[2]], use, backs: backsAt(target.point) };
+  // TECH-BACKSTAB: the backs read at the press from my feet - and a dash that lands behind its foe (a Shadowstep) takes
+  // that foe from behind (AUDIT TECH-FEEDBACK II F1: read from the landing, a Lunge through a foe facing me backstabbed it)
+  const backs = backsAt(from), foe = target.foe;
+  const behind = t.aim === 'foe' && foe?.ai?.feet && !playerBody(foe) && isBackFacing(foe.ai.yaw ?? 0, foe.ai.feet, target.point);
+  _s.act = { kind: 'flight', hand, target, pw, t: 0, time: fl.time, struck: false, lane, foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };
   cue(hand, 'release', ctx);   // TECH-FX
 }
 

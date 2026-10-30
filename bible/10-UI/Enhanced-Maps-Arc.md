@@ -739,11 +739,13 @@ make them a different color like the Player's own houses are red. Make a marked 
 AUDIT TECH-FEEDBACK (2026-10-30, `01-Overview/Audit-Log.md`): a read that failed is asked again after
 `VENDOR_HOUSES_RETRY_S` (15 s); a shut market marks nothing; a read unanswered after `VENDOR_HOUSES_HUNG_S` (30 s) is
 let go and its late answer ignored. The homes' version is a number again (the sheet asks it a frame). The waypoint's
-house is told by a flag, and "- trader" is the text core's (`town.home.trader`).
+house is told by a flag, and "- trader" is the text core's (`town.home.trader`). AUDIT TECH-FEEDBACK II: a read that
+throws or rejects is a failure too; a load (another character, another door's law) forgets every read; nothing is
+marked while the market is shut (`registerVendorHouseReader`'s `open`).
 
 Code: `systems/vendorHouses.js`, `ui/town/townMapMarks.js`, `ui/town/townSheet.js`, `ui/ink/inkTown.js`
 (`paintHomeMark`), `scenes/exteriorAutomapToggle.js`, `scenes/vendorHost.js`. Pins: `test/ui/town/town_marks.test.js`
-(VENDOR-HOUSES, 4). Mutants: `tools/mutants/vendorhouses.json` (17, all dead).
+(VENDOR-HOUSES, 5). Mutants: `tools/mutants/vendorhouses.json` (21, all dead).
 
 ## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
 
