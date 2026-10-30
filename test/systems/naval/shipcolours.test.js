@@ -291,5 +291,5 @@ test('SHIP-COLOURS the world: one renderer built in every skin (a shader that fa
   assert.match(WORLD, /if \(shipFlagPass && shipFlagPass\.draw\([^\n]*\n[^\n]*\n\s+wind: Math\.min\(1, wd\.strength01 \* wd\.gust\),/, 'the weather\'s own wind, as the banners\'');
   assert.match(WORLD, /guildArms: \(\) => guildBook\?\.guild\?\.heraldry \?\? null,   \/\/ SHIP-COLOURS: "fly my guild's arms"/);
   const peers = rd('src/scenes/comeSailAway/comeSailAwayPeers.js');
-  assert.match(peers, /for \(let i = 0; i < list\.length; i\+\+\) if \(list\[i\]\?\.boat && words\[i\]\?\.flag\) out\.push\(\{ boat: list\[i\]\.boat, flag: words\[i\]\.flag \}\);/);
+  assert.match(peers, /for \(let i = 0; i < list\.length; i\+\+\)\n\s*if \(list\[i\]\?\.boat && words\[i\]\?\.flag\) out\.push\(\{ boat: list\[i\]\.boat, flag: words\[i\]\.flag \}\);/);
 });

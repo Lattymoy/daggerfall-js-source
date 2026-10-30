@@ -2,8 +2,8 @@
   {
     "name": "HULL-PASS-II-owner-unread",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "    if (b === deck || (whose && whose(b) === whose(deck))) continue;",
-    "new": "    if (b === deck) continue;",
+    "old": "      if (b === deck || (whose && whose(b) === whose(deck))) continue;",
+    "new": "      if (b === deck) continue;",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HULL-PASS-II-pool-unread",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null;",
-    "new": "const P = b && feet ? hullPlan(b, geometry) : null;",
+    "old": "    const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null;",
+    "new": "    const P = b && feet ? hullPlan(b, geometry) : null;",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],

@@ -222,8 +222,8 @@
   {
     "name": "SLP-day-glass-whole",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "cutGlass(looked, glow), { opaque: true, cutout: true }));",
-    "new": "looked, { opaque: true }));",
+    "old": "          day.set(src, put(port, record, code, 'd', cutGlass(looked, glow), { opaque: true, cutout: true }));",
+    "new": "          day.set(src, put(port, record, code, 'd', looked, { opaque: true }));",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "SLP-night-dark",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "night.set(src, put(port, record, code, 'n', looked, { opaque: true }, glow));",
-    "new": "night.set(src, put(port, record, code, 'n', looked, { opaque: true }));",
+    "old": "          night.set(src, put(port, record, code, 'n', looked, { opaque: true }, glow));",
+    "new": "          night.set(src, put(port, record, code, 'n', looked, { opaque: true }));",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "SLP-sail-never",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "    if (sail) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
-    "new": "    if (false) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
+    "old": "    if (sail) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "SLP-join-host-over",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "if (!j) { j = new Map([...base, ...own]); by.set(own, j); ownOf.set(j, own); }",
-    "new": "if (!j) { j = new Map([...own, ...base]); by.set(own, j); ownOf.set(j, own); }",
+    "old": "      j = new Map([...base, ...own]);",
+    "new": "      j = new Map([...own, ...base]);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "SLP-join-uncached",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "if (!j) { j = new Map([...base, ...own]); by.set(own, j); ownOf.set(j, own); }",
-    "new": "if (!j) { j = new Map([...base, ...own]); ownOf.set(j, own); }",
+    "old": "      by.set(own, j);\n      ownOf.set(j, own);",
+    "new": "      ownOf.set(j, own);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "SLPOOL-unpainted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));",
-    "new": "const paint = drawRemap;",
+    "old": "      const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code)); // SHIP-LIVERY: her paint over the host's remap; GUILD-SHOP: her sails' arms",
+    "new": "      const paint = drawRemap; // SHIP-LIVERY: her paint over the host's remap; GUILD-SHOP: her sails' arms",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "SLPOOL-peer-by-ledger",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;\n",
-    "new": "",
+    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;\n    const rec = liveryOf?.(boat) ?? null;",
+    "new": "    const rec = liveryOf?.(boat) ?? null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "SLPOOL-mine-unmarked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    boats.push(boat); mineBoats.add(boat);",
-    "new": "    boats.push(boat);",
+    "old": "    boats.push(boat);\n    mineBoats.add(boat); // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
+    "new": "    boats.push(boat); // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "DPPOOL-mine-unfitted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); ",
-    "new": "",
+    "old": "      fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps);\n      fitBoats(peerBoats, (b) => b.fittings, _fitDeps);",
+    "new": "      fitBoats(peerBoats, (b) => b.fittings, _fitDeps);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "DPPOOL-peer-unfitted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": " fitBoats(peerBoats, (b) => b.fittings, _fitDeps);",
-    "new": "",
+    "old": "      fitBoats(peerBoats, (b) => b.fittings, _fitDeps);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "DFH-old-kept",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "  if (old) old.setParent(null);\n",
-    "new": "",
+    "old": "  if (old) old.setParent(null);\n  if (!list.length) return true;",
+    "new": "  if (!list.length) return true;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -465,7 +465,7 @@
   {
     "name": "DFH-loading-fitted",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    if (!b) { all = false; continue; }",
+    "old": "    if (!b) {\n      all = false;\n      continue;\n    }",
     "new": "    if (!b) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -474,8 +474,8 @@
   {
     "name": "DFH-off-deck-stood",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    if (!Number.isFinite(y)) continue;\n",
-    "new": "",
+    "old": "    if (!Number.isFinite(y)) continue;\n    const node = new PrefabNode(`Fitting-${f.m}`, {",
+    "new": "    const node = new PrefabNode(`Fitting-${f.m}`, {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "DFH-foot-unlifted",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
-    "new": "-(b.min[0] + b.max[0]) / 2, 0, -(b.min[2] + b.max[2]) / 2];",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, 0, -(b.min[2] + b.max[2]) / 2];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -492,8 +492,8 @@
   {
     "name": "DFH-uncentred-x",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
-    "new": "0, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [0, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "DFH-uncentred-z",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
-    "new": "-(b.min[0] + b.max[0]) / 2, -b.min[1], 0];",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], 0];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "DFH-unturned",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "rotation: quatAngleAxis(yawDegrees(f.yaw), UP) }",
-    "new": "rotation: [0, 0, 0, 1] }",
+    "old": "    const node = new PrefabNode(`Fitting-${f.m}`, {\n      position: [f.x, y, f.z],\n      rotation: quatAngleAxis(yawDegrees(f.yaw), UP),\n    }).setParent(root);",
+    "new": "    const node = new PrefabNode(`Fitting-${f.m}`, { position: [f.x, y, f.z], rotation: [0, 0, 0, 1] }).setParent(root);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -519,8 +519,8 @@
   {
     "name": "DFH-height-zero",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "{ position: [f.x, y, f.z],",
-    "new": "{ position: [f.x, 0, f.z],",
+    "old": "      position: [f.x, y, f.z],",
+    "new": "      position: [f.x, 0, f.z],",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "DFH-restood-always",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    if (boat._fitted === key) continue;\n",
-    "new": "",
+    "old": "    if (boat._fitted === key) continue;\n    let loaded = 0;",
+    "new": "    let loaded = 0;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "DFH-never-loaded",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    for (const f of list) { load(f.m); if (ctx.modelBounds?.(f.m)) loaded++; }",
-    "new": "    for (const f of list) { if (ctx.modelBounds?.(f.m)) loaded++; }",
+    "old": "      load(f.m);\n      if (ctx.modelBounds?.(f.m)) loaded++;",
+    "new": "      if (ctx.modelBounds?.(f.m)) loaded++;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -546,8 +546,8 @@
   {
     "name": "DFH-unbaked-stood",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    if (list.length && !deck) continue;   // her deck not baked yet: the next frame\n",
-    "new": "",
+    "old": "    if (list.length && !deck) continue; // her deck not baked yet: the next frame\n    boat._fitStage = stage;",
+    "new": "    boat._fitStage = stage;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -825,8 +825,8 @@
   {
     "name": "PEERS-livery-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      s.boat.livery = flownLivery(owner, w.livery);   // SHIP-LIVERY",
-    "new": "      // SHIP-LIVERY",
+    "old": "      s.boat.livery = flownLivery(owner, w.livery); // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)",
+    "new": "      // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -834,8 +834,8 @@
   {
     "name": "PEERS-fittings-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      s.boat.fittings = w.fittings ?? [];   // DECK-PROPS",
-    "new": "      // DECK-PROPS",
+    "old": "      s.boat.fittings = w.fittings ?? []; // DECK-PROPS: and her fittings (the pool stands them in her tree)",
+    "new": "      // DECK-PROPS: and her fittings (the pool stands them in her tree)",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1203,8 +1203,8 @@
   {
     "name": "DFH-stage-ignored",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    if (boat._fitStage === stage) continue;   // nothing more loaded since she was last stood\n",
-    "new": "",
+    "old": "    if (boat._fitStage === stage) continue; // nothing more loaded since she was last stood\n    const deck = list.length ? deckOf(boat.hull) : null;",
+    "new": "    const deck = list.length ? deckOf(boat.hull) : null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1212,8 +1212,8 @@
   {
     "name": "DFH-cleared-never",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "      if (boat._fitted == null || boat._fitted === '') { boat._fitted = ''; continue; }   // none to fit, none stood",
-    "new": "      boat._fitted = ''; continue;",
+    "old": "      if (boat._fitted == null || boat._fitted === '') {\n        boat._fitted = '';\n        continue;\n      } // none to fit, none stood",
+    "new": "      boat._fitted = '';\n      continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

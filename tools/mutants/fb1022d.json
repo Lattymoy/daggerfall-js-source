@@ -194,8 +194,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-ease-under-way",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = false ? glideToward",
+    "old": "    const position =\n      !jumped && ledWay > 0\n        ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay)\n        : easeToward(shown, target, dt, undefined, snap);",
+    "new": "    const position = false\n      ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay)\n      : easeToward(shown, target, dt, undefined, snap);",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-share-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "(CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d",
-    "new": "(CSA_PEER_CATCH_MPS + way) * d",
+    "old": "    off > 1e-9\n      ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off\n      : 0;",
+    "new": "    off > 1e-9 ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + way) * d) / off : 0;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-bound-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off",
-    "new": "(off * (1 - Math.exp(-CSA_PEER_CATCH * d))) / off",
+    "old": "  const take =\n    off > 1e-9\n      ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off\n      : 0;",
+    "new": "  const take = off > 1e-9 ? (off * (1 - Math.exp(-CSA_PEER_CATCH * d))) / off : 0;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -378,8 +378,8 @@
   {
     "name": "FB1022D-AUDIT-C1-snap-by-the-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const ledWay = Math.max(speed, s.ledWay ?? 0);",
-    "new": "const ledWay = speed;",
+    "old": "    const ledWay = Math.max(speed, s.ledWay ?? 0);",
+    "new": "    const ledWay = speed;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "FB1022D-AUDIT-C1-led-way-never-settles",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "ledWay: settled ? speed : ledWay }",
-    "new": "ledWay }",
+    "old": "    return { position, rotation, jumped, way, ledWay: settled ? speed : ledWay };",
+    "new": "    return { position, rotation, jumped, way, ledWay };",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -397,8 +397,8 @@
   {
     "name": "FB1022D-AUDIT-C1-pairing-by-the-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "had[j].ledWay ?? 0), 0, 0]) ** 2) continue;",
-    "new": "0), 0, 0]) ** 2) continue;",
+    "old": "            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2",
+    "new": "            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), 0), 0, 0]) ** 2",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "FB1022D-AUDIT-C2-led-straight",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const led = v ? wayOver(v, turn, lead) : null;",
-    "new": "const led = v ? wayOver(v, 0, lead) : null;",
+    "old": "    const led = v ? wayOver(v, turn, lead) : null; // AUDIT FB1022d C2: along the turn's arc",
+    "new": "    const led = v ? wayOver(v, 0, lead) : null; // AUDIT FB1022d C2: along the turn's arc",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "FB1022D-AUDIT-C2-arc-turned-the-wrong-way",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "  const om = (turn * Math.PI) / 180;\n",
-    "new": "  const om = (-turn * Math.PI) / 180;\n",
+    "old": "  const om = (turn * Math.PI) / 180;",
+    "new": "  const om = (-turn * Math.PI) / 180;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "FB1022D-AUDIT-C5-under-way-never-snaps",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = ledWay > 0 && shown ? glideToward",
+    "old": "      !jumped && ledWay > 0",
+    "new": "      ledWay > 0 && shown",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "FB1022D-AUDIT-C5-slow-boat-eased",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = !jumped && ledWay > 3 ? glideToward",
+    "old": "      !jumped && ledWay > 0",
+    "new": "      !jumped && ledWay > 3",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]

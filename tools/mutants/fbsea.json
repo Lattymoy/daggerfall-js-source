@@ -38,8 +38,8 @@
   {
     "name": "FBSEA-1-the-whole-height",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8) / 2;",
-    "new": "l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8);",
+    "old": "  l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8) / 2; // the feet, half a height under the pinned transform",
+    "new": "  l[1] -= Number.isFinite(height) && height > 0 ? height : 1.8; // the feet, half a height under the pinned transform",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]

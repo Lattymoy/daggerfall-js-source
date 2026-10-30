@@ -56,8 +56,8 @@
   {
     "name": "PEER-DECK-a-landing-alone-boards-the-old-door",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (on(s.boat, me)) { board(s.boat); break; }",
-    "new": "if (me.ground(s.boat) == null && deckUnder(s.boat, feet, me.height)) { board(s.boat); break; }",
+    "old": "          if (on(s.boat, me)) {",
+    "new": "          if (me.ground(s.boat) == null && deckUnder(s.boat, feet, me.height)) {",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PEER-DECK-standing-alone-boards-the-landing-lost",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (on(s.boat, me)) { board(s.boat); break; }",
-    "new": "if (me.ground(s.boat) === 'boat') { board(s.boat); break; }",
+    "old": "          if (on(s.boat, me)) {",
+    "new": "          if (me.ground(s.boat) === 'boat') {",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js",
       "test/systems/csa_together.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "PEER-DECK-a-boat-past-her-reach-asked",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (!s?.boat?.GameObject?.activeSelf || !near(s.boat, feet)) continue;",
-    "new": "if (!s?.boat?.GameObject?.activeSelf) continue;",
+    "old": "          if (!s?.boat?.GameObject?.activeSelf || !near(s.boat, feet)) continue;",
+    "new": "          if (!s?.boat?.GameObject?.activeSelf) continue;",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js",
       "test/systems/csa_together.test.js"

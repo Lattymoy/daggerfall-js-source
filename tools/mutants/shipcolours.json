@@ -362,8 +362,8 @@
   {
     "name": "SC-peers-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        for (let i = 0; i < list.length; i++) if (list[i]?.boat && words[i]?.flag) out.push({ boat: list[i].boat, flag: words[i].flag });",
-    "new": "",
+    "old": "        for (let i = 0; i < list.length; i++)\n          if (list[i]?.boat && words[i]?.flag) out.push({ boat: list[i].boat, flag: words[i].flag });\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

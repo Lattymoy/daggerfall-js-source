@@ -177,8 +177,8 @@
   {
     "name": "AUDIT-SHIPS-A7-the-ease-fixed",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const snap = peerSnapM([ledWay, 0, 0]);",
-    "new": "const snap = CSA_PEER_SNAP_M;",
+    "old": "    const snap = peerSnapM([ledWay, 0, 0]); // AUDIT SHIPS A7: by her way",
+    "new": "    const snap = CSA_PEER_SNAP_M; // AUDIT SHIPS A7: by her way",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT-SHIPS-A7-a-passenger-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "> peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2) continue;",
-    "new": "> CSA_PEER_SNAP_M * CSA_PEER_SNAP_M) continue;",
+    "old": "          dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) >\n            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2",
+    "new": "          dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) > CSA_PEER_SNAP_M * CSA_PEER_SNAP_M",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

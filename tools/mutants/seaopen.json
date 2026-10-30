@@ -1121,8 +1121,8 @@
   {
     "name": "VEIL-the-skip-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "r.slot === slot && !skip?.(id)) n++;",
-    "new": "r.slot === slot) n++;",
+    "old": "    for (const [id, r] of riders) if (r.owner === owner && r.slot === slot && !skip?.(id)) n++;",
+    "new": "    for (const [id, r] of riders) if (r.owner === owner && r.slot === slot) n++;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]

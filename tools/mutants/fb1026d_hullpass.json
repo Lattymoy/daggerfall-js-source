@@ -12,8 +12,8 @@
   {
     "name": "HULL-PASS-my-own-dropped-with-hers",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "return hits.filter((h) => !h.root || !peers.some((b) => b.GameObject === h.root));",
-    "new": "return hits.filter((h) => !h.root);",
+    "old": "    return hits.filter((h) => !h.root || !peers.some((b) => b.GameObject === h.root));",
+    "new": "    return hits.filter((h) => !h.root);",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HULL-PASS-my-own-through-hers-standing",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "  const mine = new Set(pool?.boats ?? []), hulls = [...mine, ...(pool?.peerBoats ?? [])];",
-    "new": "  const mine = new Set(pool?.boats ?? []), hulls = [...(pool?.peerBoats ?? [])];",
+    "old": "    hulls = [...mine, ...(pool?.peerBoats ?? [])];",
+    "new": "    hulls = [...(pool?.peerBoats ?? [])];",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HULL-PASS-latch-dropped",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "deck !== _latch.deck ? new Set() : new Set([..._latch.passing].filter((b) => over.has(b)));",
-    "new": "new Set();",
+    "old": "  const passing = !peerHullsMeet()\n    ? over\n    : deck !== _latch.deck\n      ? new Set()\n      : new Set([..._latch.passing].filter((b) => over.has(b)));",
+    "new": "  const passing = !peerHullsMeet() ? over : new Set();",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "HULL-PASS-latch-never-let-go",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "new Set([..._latch.passing].filter((b) => over.has(b)));",
-    "new": "new Set([..._latch.passing]);",
+    "old": "  const passing = !peerHullsMeet()\n    ? over\n    : deck !== _latch.deck\n      ? new Set()\n      : new Set([..._latch.passing].filter((b) => over.has(b)));",
+    "new": "  const passing = !peerHullsMeet() ? over : deck !== _latch.deck ? new Set() : new Set([..._latch.passing]);",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],

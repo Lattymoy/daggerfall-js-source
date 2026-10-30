@@ -729,8 +729,8 @@
   {
     "name": "NAV1O-helm-boat-unsaid",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "hull: s.hull, yaw, boat: s.boat });",
-    "new": "hull: s.hull, yaw });",
+    "old": "          out.push({\n            id: owner,\n            pos: s.shown,\n            vel,\n            speed: Math.hypot(vel[0], vel[2]),\n            hull: s.hull,\n            yaw,\n            boat: s.boat,\n          }); // AUDIT NAV1 (online): her hull, for the shots",
+    "new": "          out.push({ id: owner, pos: s.shown, vel, speed: Math.hypot(vel[0], vel[2]), hull: s.hull, yaw }); // AUDIT NAV1 (online): her hull, for the shots",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]

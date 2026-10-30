@@ -84,6 +84,8 @@
 /src/scenes/*
 !/src/scenes/arena/
 /src/scenes/arena/*/
+!/src/scenes/comeSailAway/
+/src/scenes/comeSailAway/*/
 !/src/scenes/delve/
 /src/scenes/delve/*/
 !/src/scenes/starfall/

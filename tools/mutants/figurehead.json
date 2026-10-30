@@ -164,8 +164,8 @@
   {
     "name": "SF-stem-whole-ship",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "aftMost = build.bowZ - STEM_SHARE * (build.bowZ - build.aftZ);",
-    "new": "aftMost = build.aftZ - 10;",
+    "old": "    aftMost = build.bowZ - STEM_SHARE * (build.bowZ - build.aftZ);",
+    "new": "    aftMost = build.aftZ - 10;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SF-stem-unrefined",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (miss != null) for (let k = 0; k < 8; k++)",
-    "new": "if (miss != null) for (let k = 0; k < 0; k++)",
+    "old": "    for (let k = 0; k < 8; k++) {",
+    "new": "    for (let k = 0; k < 0; k++) {",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SF-no-ropes",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "return edge > 0 && area2 / edge < ROPE_M;",
-    "new": "return false;",
+    "old": "  return edge > 0 && area2 / edge < ROPE_M;",
+    "new": "  return false;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SF-root-anywhere",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "root[i] = B[i * 6 + 2] < FIGURE_ROOT_Z ? 1 : 0;",
-    "new": "root[i] = 1;",
+    "old": "    root[i] = B[i * 6 + 2] < FIGURE_ROOT_Z ? 1 : 0;",
+    "new": "    root[i] = 1;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SF-root-none",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (U.stamp[i] === mark || (planking && U.root[i])) continue;",
-    "new": "if (U.stamp[i] === mark) continue;",
+    "old": "          if (U.stamp[i] === mark || (planking && U.root[i])) continue;",
+    "new": "          if (U.stamp[i] === mark) continue;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SF-water",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (lo[1] < FIGURE_WATER) return false;",
-    "new": "if (lo[1] < -100) return false;",
+    "old": "    if (lo[1] < FIGURE_WATER) return false;",
+    "new": "    if (lo[1] < -100) return false;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SF-sizes-smaller",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "export const FIGURE_SIZES = Object.freeze([1, 0.9,",
-    "new": "export const FIGURE_SIZES = Object.freeze([0.9,",
+    "old": "export const FIGURE_SIZES = Object.freeze([1, 0.9, 0.8, 0.7, 0.6, 0.5]);",
+    "new": "export const FIGURE_SIZES = Object.freeze([0.9, 0.8, 0.7, 0.6, 0.5]);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SF-others-unread",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "for (const planking of [false, true]) {",
-    "new": "for (const planking of [true]) {",
+    "old": "    for (const planking of [false, true]) {",
+    "new": "    for (const planking of [true]) {",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SF-lean-back",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "return new Float32Array([s, 0, 0, 0, 0, c, n, 0, 0, -n, c, 0,",
-    "new": "return new Float32Array([s, 0, 0, 0, 0, c, -n, 0, 0, n, c, 0,",
+    "old": "  return new Float32Array([s, 0, 0, 0, 0, c, n, 0, 0, -n, c, 0, at[0], at[1], at[2], 1]);",
+    "new": "  return new Float32Array([s, 0, 0, 0, 0, c, -n, 0, 0, n, c, 0, at[0], at[1], at[2], 1]);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SF-mesh-every-time",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (!had) meshes.set(key, (had =",
-    "new": "if (true) meshes.set(key, (had =",
+    "old": "      if (!had) meshes.set(key, (had = { mesh: r.createMesh(paintedCarving(id, paint | 0)), seen: draws }));",
+    "new": "      if (true) meshes.set(key, (had = { mesh: r.createMesh(paintedCarving(id, paint | 0)), seen: draws }));",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SF-art-every-time",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (!art) { art = [];",
-    "new": "if (true) { art = [];",
+    "old": "      if (!art) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SF-sweep-late",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (draws - c.seen > FIGURE_IDLE_DRAWS) {",
-    "new": "if (draws - c.seen > FIGURE_IDLE_DRAWS * 2) {",
+    "old": "        if (draws - c.seen > FIGURE_IDLE_DRAWS) {",
+    "new": "        if (draws - c.seen > FIGURE_IDLE_DRAWS * 2) {",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SF-art-kept",
     "file": "src/scenes/comeSailAway/shipFigurehead.js",
-    "old": "if (art && !meshes.size) {",
-    "new": "if (art && meshes.size < 0) {",
+    "old": "      if (art && !meshes.size) {",
+    "new": "      if (art && meshes.size < 0) {",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CP-sea-carved",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "peerBoats.includes(boat) ? boat.figurehead : 0)",
-    "new": "boat.figurehead)",
+    "old": "  const carvingOf = (boat) =>\n    figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : peerBoats.includes(boat) ? boat.figurehead : 0);",
+    "new": "  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : boat.figurehead);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CP-frame-swapped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM",
-    "new": "multiply(carved.matrix, frame ?? worldOf(boat.MeshObject), boat._figureM",
+    "old": "          multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, (boat._figureM ??= new Float32Array(16))),",
+    "new": "          multiply(carved.matrix, frame ?? worldOf(boat.MeshObject), (boat._figureM ??= new Float32Array(16))),",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "CP-paint-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "carvingPaint(boat.hull, liveryCodeOf(boat))",
-    "new": "carvingPaint(boat.hull, 0)",
+    "old": "          ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat)))",
+    "new": "          ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, 0))",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CP-hidden-drawn",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(",
-    "new": "const carved = boat.MeshObject?.activeSelf ? figureheads.drawFor(",
+    "old": "      const carved =\n        boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf\n          ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat)))\n          : null; // FIGUREHEAD: her carving, in her trim paint",
+    "new": "      const carved = boat.MeshObject?.activeSelf\n        ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat)))\n        : null; // FIGUREHEAD: her carving, in her trim paint",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "CP-mine-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) :",
-    "new": "figureheadOfCode(mineBoats.has(boat) ? 0 :",
+    "old": "    figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : peerBoats.includes(boat) ? boat.figurehead : 0);",
+    "new": "    figureheadOfCode(mineBoats.has(boat) ? 0 : peerBoats.includes(boat) ? boat.figurehead : 0);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "PE-word-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      s.boat.figurehead = w.figurehead ?? 0;",
-    "new": "      s.boat.figurehead = 0;",
+    "old": "      s.boat.figurehead = w.figurehead ?? 0; // FIGUREHEAD: and her carving at her stem",
+    "new": "      s.boat.figurehead = 0; // FIGUREHEAD: and her carving at her stem",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

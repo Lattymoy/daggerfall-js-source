@@ -212,8 +212,8 @@
   {
     "name": "DFLOOK-the-night-remap-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
-    "new": "    if (cityLights) void nightRemapOf;",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "new": "    if (cityLights) void nightRemapOf; // THE STERN WINDOWS LIT: her glass whole and glowing",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "DFLOOK-worn-by-day",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
-    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap);",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "DFLOOK-a-new-remap-each-night",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  if (!m) { m = new Map([...NIGHT_REMAP, ...texRemap]); _nightRemaps.set(texRemap, m); }",
-    "new": "  { m = new Map([...NIGHT_REMAP, ...texRemap]); _nightRemaps.set(texRemap, m); }",
+    "old": "  let m = _nightRemaps.get(texRemap);\n  if (!m) {",
+    "new": "  let m = _nightRemaps.get(texRemap);\n  {",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "DFLOOK-the-twin's-glow-unuploaded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night,",
-    "new": "    if (!(lit || glow)) renderer?.uploadEmissionTexture?.(archive, night,",
+    "old": "    if (lit || glow)",
+    "new": "    if (!(lit || glow))",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js",
       "test/world/ships/auditgalleon2_prefab.test.js"

@@ -403,5 +403,5 @@ test('LIVING CREW THE WORLD by source: the crews stepped before the people are d
   assert.match(WORLD, /seed = _crewSeed\(boat\.peerKey \?\? ''\);/);
   assert.match(WORLD, /crewOf: \(boat, n, opts\) => navalCrew\.takeByBoat\(boat, n, opts\),\n\s+landing: \(boat, feet\) => navalDeckLanding\(boat, feet\),\n\s+railSpots: \(boat, toward, n\) => navalRailSpots\(boat, toward, n\),/);
   assert.match(WORLD, /allied: side === 'ally', team: side === 'ally' \? null : team, \.\.\.\(gender \? \{ gender \} : \{\}\) \}\)/, 'a crewman stood as himself');
-  assert.match(readFileSync(new URL('../../../src/scenes/comeSailAway/comeSailAwayPeers.js', import.meta.url), 'utf8'), /if \(boat\) \{ boat\.peerKey = `\$\{owner\}:\$\{i\}`;/);
+  assert.match(readFileSync(new URL('../../../src/scenes/comeSailAway/comeSailAwayPeers.js', import.meta.url), 'utf8'), /if \(boat\) \{\n\s*boat\.peerKey = `\$\{owner\}:\$\{i\}`;/);
 });

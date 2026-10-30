@@ -713,8 +713,8 @@
   {
     "name": "AUDITCW-A2-ship-mine-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "if (on != null && r.owner === on) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id, r] of riders) if (on != null && r.owner === on) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "AUDITCW-A2-ship-owner-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "const out = on != null ? [on] : [];",
-    "new": "const out = [];",
+    "old": "      const out = on != null ? [on] : [];",
+    "new": "      const out = [];",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "AUDITCW-A2-ship-riders-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "if (r.owner === me) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id, r] of riders) if (r.owner === me) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "AUDITCW-A2-ship-third-boat",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "for (const [id] of riders) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id] of riders) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]

@@ -726,7 +726,7 @@
     "name": "STUDIO1-night-lit-by-the-paint",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    const lit = decodedTexture(archive, night, 0, 'Emission');",
-    "new": "    const lit = null; void decodedTexture;",
+    "new": "    const lit = null;\n    void decodedTexture;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

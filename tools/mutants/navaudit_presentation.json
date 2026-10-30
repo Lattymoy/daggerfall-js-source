@@ -418,8 +418,8 @@
   {
     "name": "NAVP-graft-none",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    graftColours(boat);\n",
-    "new": "",
+    "old": "    graftColours(boat);\n    seaBoats.push(boat);",
+    "new": "    seaBoats.push(boat);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "NAVP-graft-donor-lost",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "models.prefab(FIRST_HULL_MODEL_ID + FLAG_DONOR_HULL)",
-    "new": "models.prefab(FIRST_HULL_MODEL_ID + 4)",
+    "old": "    const donor = find(models.prefab(FIRST_HULL_MODEL_ID + FLAG_DONOR_HULL));",
+    "new": "    const donor = find(models.prefab(FIRST_HULL_MODEL_ID + 4));",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "NAVP-graft-on-deck",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (!truck || wb.max[1] > truck.at[1]) truck =",
-    "new": "      if (!truck) truck =",
+    "old": "      if (!truck || wb.max[1] > truck.at[1]) truck = { node, at: [wb.center[0], wb.max[1], wb.center[2]] };",
+    "new": "      if (!truck) truck = { node, at: [wb.center[0], wb.max[1], wb.center[2]] };",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]

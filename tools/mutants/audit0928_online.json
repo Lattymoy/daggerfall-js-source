@@ -30,8 +30,8 @@
   {
     "name": "A0928-O1-build-uncontained",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { fail(owner, e); }",
-    "new": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { throw e; }",
+    "old": "        if (boat) boat.figurehead = w.figurehead ?? 0; // FIGUREHEAD: her carving, from her first word\n      } catch (e) {\n        fail(owner, e);\n      }",
+    "new": "        if (boat) boat.figurehead = w.figurehead ?? 0; // FIGUREHEAD: her carving, from her first word\n      } catch (e) {\n        throw e;\n      }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -39,7 +39,7 @@
   {
     "name": "A0928-O1-redress-uncontained",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      try { realign(owner, l); } catch (e) { fail(owner, e); }",
+    "old": "      try {\n        realign(owner, l);\n      } catch (e) {\n        fail(owner, e);\n      }",
     "new": "      realign(owner, l);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "A0928-O3-built-in-the-handler",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: true, age: 0 });\n    return true;",
-    "new": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: false, age: 0 });\n    realign(owner, live.get(owner)); buildOne();\n    return true;",
+    "old": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: true, age: 0 });",
+    "new": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: false, age: 0 });\n    realign(owner, live.get(owner));\n    buildOne();",
     "tests": [
       "test/scenes/audit0928_online.test.js",
       "test/systems/comeSailAway/csa_online.test.js"
@@ -68,7 +68,7 @@
     "name": "A0928-O3-two-builds-a-frame",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    buildOne();\n    for (const [owner, l] of [...live]) {",
-    "new": "    buildOne(); buildOne();\n    for (const [owner, l] of [...live]) {",
+    "new": "    buildOne();\n    buildOne();\n    for (const [owner, l] of [...live]) {",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "A0928-O3-bucket-reset-by-a-refused-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    if (!r) { live.delete(owner); drop(owner); return raw == null; }",
-    "new": "    if (!r) { live.delete(owner); drop(owner); buckets.delete(owner); return raw == null; }",
+    "old": "      return raw == null;",
+    "new": "      buckets.delete(owner);\n      return raw == null;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "A0928-O3-bucket-forgotten-owing",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      if (b.tokens >= CSA_PEER_BUILD_BURST && !live.has(owner)) buckets.delete(owner);",
-    "new": "      if (!live.has(owner)) buckets.delete(owner);",
+    "old": "      if (b.tokens >= CSA_PEER_BUILD_BURST && !live.has(owner)) buckets.delete(owner); // owes nothing: a newcomer's own",
+    "new": "      if (!live.has(owner)) buckets.delete(owner); // owes nothing: a newcomer's own",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "A0928-O3-refill-fast",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "b.tokens + ms / CSA_PEER_BUILD_REFILL_MS);",
-    "new": "b.tokens + ms / 100);",
+    "old": "      b.tokens = Math.min(CSA_PEER_BUILD_BURST, b.tokens + ms / CSA_PEER_BUILD_REFILL_MS);",
+    "new": "      b.tokens = Math.min(CSA_PEER_BUILD_BURST, b.tokens + ms / 100);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "A0928-O3-reuse-by-slot-alone",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "if (had[j].hull !== l.boats[i].hull) continue;",
-    "new": "if (had[j].hull !== l.boats[i].hull || had[j].slot !== i) continue;",
+    "old": "        if (had[j].hull !== l.boats[i].hull) continue;",
+    "new": "        if (had[j].hull !== l.boats[i].hull || had[j].slot !== i) continue;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "A0928-O4-flats-plain",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        b.conceal = boat.conceal ?? null;",
-    "new": "        b.conceal = null;",
+    "old": "        b.conceal = boat.conceal ?? null; // AUDIT PRE-MERGE 0928 O4: a concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
+    "new": "        b.conceal = null; // AUDIT PRE-MERGE 0928 O4: a concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "A0928-R5-walk-allocates",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    else { multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m); r.pver = p.ver; }",
-    "new": "    else { r.m = multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls)); r.pver = p.ver; }",
+    "old": "      multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m);",
+    "new": "      r.m = multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls));",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "A0928-R5-draw-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };",
-    "new": "return walkBoat(boat, -1); };",
+    "old": "    return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1);",
+    "new": "    return walkBoat(boat, -1);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "A0928-R5-redress-stale",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again",
-    "new": "",
+    "old": "    walks.delete(boat); // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "A0928-R5-origin-stale",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: moved - walked again",
-    "new": "",
+    "old": "      walks.delete(boat); // AUDIT PRE-MERGE 0928 R5: moved - walked again\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "A0928-R5-flat-scale-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const s = n.lossyScaleOf(m, _flatScale);",
-    "new": "const s = n.lossyScale;",
+    "old": "          const s = n.lossyScaleOf(m, _flatScale);",
+    "new": "          const s = n.lossyScale;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "A0928-R6-flats-dynamic",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "{ w, h }, [[0, 0, 0]]);   // AUDIT PRE-MERGE 0928 R6",
-    "new": "{ w, h }, [[0, 0, 0]], { dynamic: true });   // AUDIT PRE-MERGE 0928 R6",
+    "old": "          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]]); // AUDIT PRE-MERGE 0928 R6: its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame",
+    "new": "          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]], {\n            dynamic: true,\n          }); // AUDIT PRE-MERGE 0928 R6: its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

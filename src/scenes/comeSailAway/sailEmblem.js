@@ -11,7 +11,8 @@ import { armsKey } from '../../net/guild/guildArmsBook.js';
 export const SAIL_EMBLEM_PX = 64;
 
 /** A pair of arms' emblem's key: its arms, and whether its logo has loaded (the emblem is drawn again when it does). */
-export const sailEmblemKey = (/** @type {any} */ arms) => `${armsKey(arms)}|${arms?.logo && logoImage(arms.logo) ? 1 : 0}`;
+export const sailEmblemKey = (/** @type {any} */ arms) =>
+  `${armsKey(arms)}|${arms?.logo && logoImage(arms.logo) ? 1 : 0}`;
 
 /** The emblem for `arms`: `{ width, height, data }` (RGBA, top-down), or null. */
 export function sailEmblemOf(/** @type {any} */ arms) {
@@ -20,7 +21,8 @@ export function sailEmblemOf(/** @type {any} */ arms) {
   const c = doc?.createElement?.('canvas');
   const ctx = c?.getContext?.('2d');
   if (!ctx) return null;
-  c.width = SAIL_EMBLEM_PX; c.height = SAIL_EMBLEM_PX;
+  c.width = SAIL_EMBLEM_PX;
+  c.height = SAIL_EMBLEM_PX;
   if (!drawArms(ctx, arms, 0, 0, SAIL_EMBLEM_PX, logoImage(arms.logo))) return null;
   const img = ctx.getImageData(0, 0, SAIL_EMBLEM_PX, SAIL_EMBLEM_PX);
   return { width: img.width, height: img.height, data: img.data };

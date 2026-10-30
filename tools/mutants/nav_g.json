@@ -83,8 +83,8 @@
   {
     "name": "NAV-G-the-way-never-read",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    s.vel = next.way;",
-    "new": "    s.vel = null;",
+    "old": "    s.vel = next.way; // NAV-H: her way over the water as her word says it - what a captain at sea leads his guns by (scenes/naval/navalHost.js contacts); C7: the pose's own",
+    "new": "    s.vel = null; // NAV-H: her way over the water as her word says it - what a captain at sea leads his guns by (scenes/naval/navalHost.js contacts); C7: the pose's own",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
