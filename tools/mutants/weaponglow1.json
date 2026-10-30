@@ -106,8 +106,8 @@
   {
     "name": "WEAPON-GLOW1-diverse-weapons-asks-the-magic-set",
     "file": "src/combat/diverseWeapons/diverseWeapons.js",
-    "old": "return moddedWeaponFilename(item, enchanted) || classic;",
-    "new": "return moddedWeaponFilename(item) || classic;",
+    "old": "  return moddedWeaponFilename(item, enchanted) || classic; // WEAPON-GLOW1: `enchanted` false - an element shown swings the plain sheet; undefined is the item's own",
+    "new": "  return moddedWeaponFilename(item) || classic; // WEAPON-GLOW1: `enchanted` false - an element shown swings the plain sheet; undefined is the item's own",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]

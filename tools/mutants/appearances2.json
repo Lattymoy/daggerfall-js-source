@@ -138,7 +138,7 @@
     "name": "APPEARANCES2-diverse-weapons-copy-read-as-the-artifact",
     "file": "src/combat/diverseWeapons/diverseWeapons.js",
     "old": "const isArtifact = (item) => !isLookCopy(item) && (item?.artifact === true || hasArtifactEffect(item));",
-    "new": "const isArtifact = (item) => (item?.artifact === true || hasArtifactEffect(item));",
+    "new": "const isArtifact = (item) => item?.artifact === true || hasArtifactEffect(item);",
     "tests": [
       "test/ui/appearances2_render.test.js"
     ]

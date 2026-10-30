@@ -337,7 +337,7 @@ test('DWHD1 crunch: a non-CRN stream is refused; formats 28/29 are known to the 
   assert.equal(F.DXT1Crunched, 28); assert.equal(F.DXT5Crunched, 29);
   assert.ok(!hasOwnDoor('dfmod/diverse weapons hd - handhelds i.dfmod') && !hasOwnDoor('dfmod/diverse weapons hd - inventory.dfmod'));
   assert.ok(hasOwnDoor('dfmod/diverse weapons.dfmod'), 'RealAKP\'s own bundle stays with its door');
-  assert.match(src('combat/diverseWeapons/diverseWeaponsAssets.js'), /&& !\/\\bhd\\b\/i\.test\(name\.slice\(name\.lastIndexOf\('\/'\) \+ 1\)\);/, 'and that door no longer opens the HD ones to read their GUID');
+  assert.match(src('combat/diverseWeapons/diverseWeaponsAssets.js'), /&&\n\s*!\/\\bhd\\b\/i\.test\(name\.slice\(name\.lastIndexOf\('\/'\) \+ 1\)\);/, 'and that door no longer opens the HD ones to read their GUID');
 });
 
 // The crunch decoder was checked block for block against texture2ddecoder's unpack_unity_crunch on 122 of Diverse

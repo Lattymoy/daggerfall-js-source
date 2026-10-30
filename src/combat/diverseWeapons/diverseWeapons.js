@@ -40,7 +40,7 @@ import { WEAPONS } from '../../characters/weapons.js';
 import { isEnchanted } from '../../systems/inventory.js';
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from '../../systems/artifactEffects.js';
 import { ENCHANTMENT_TYPES } from '../../systems/enchantments.js';
-import { isLookCopy } from '../../net/appearanceLaw.js';   // APPEARANCES-II: a piece drawn in a look is no artifact
+import { isLookCopy } from '../../net/appearanceLaw.js'; // APPEARANCES-II: a piece drawn in a look is no artifact
 
 /** FPSWeapon.moddedWeaponHUDAnimsEnabled (FPSWeapon.cs:97) - a static
  *  false until a mod sets it; Diverse Weapons' Start sets it true. The
@@ -68,15 +68,17 @@ export const moddedWeaponHUDAnimsEnabled = () => modSetting('diverse-weapons', '
  * a lookup, so a staff enchanted first with something else stays what
  * DFU makes it.
  */
-export function moddedWeaponFilename(weapon, enchanted = isEnchanted(weapon)) {   // WEAPON-GLOW1: `enchanted` false asks the plain sheet (combat/fpsWeapon.js plainWeaponType)
+export function moddedWeaponFilename(weapon, enchanted = isEnchanted(weapon)) {
+  // WEAPON-GLOW1: `enchanted` false asks the plain sheet (combat/fpsWeapon.js plainWeaponType)
   if (!weapon) return '';
   const W = WEAPONS;
   if (enchanted) {
     if (isArtifact(weapon)) {
       switch (weapon.templateIndex) {
-        case W.Dagger: return 'MEHRUNESRAZOR.CIF';
+        case W.Dagger:
+          return 'MEHRUNESRAZOR.CIF';
         case W.Staff:
-          for (const e of (Array.isArray(weapon.enchantments) ? weapon.enchantments : [])) {
+          for (const e of Array.isArray(weapon.enchantments) ? weapon.enchantments : []) {
             if (e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect) {
               if (e.param === ARTIFACTS.Wabbajack) return 'WABBAJACK.CIF';
             } else {
@@ -84,58 +86,104 @@ export function moddedWeaponFilename(weapon, enchanted = isEnchanted(weapon)) { 
             }
           }
           return '';
-        case W.Katana: return 'EBONYBLADE.CIF';
-        case W.Claymore: return 'CHRYSAMERE.CIF';
-        case W.Mace: return 'MACEOFMOLAGBAL.CIF';
-        case W.Warhammer: return 'VOLENDRUNG.CIF';
-        case W.Long_Bow: return 'AURIELSBOW.CIF';
-        default: return '';
+        case W.Katana:
+          return 'EBONYBLADE.CIF';
+        case W.Claymore:
+          return 'CHRYSAMERE.CIF';
+        case W.Mace:
+          return 'MACEOFMOLAGBAL.CIF';
+        case W.Warhammer:
+          return 'VOLENDRUNG.CIF';
+        case W.Long_Bow:
+          return 'AURIELSBOW.CIF';
+        default:
+          return '';
       }
     }
     switch (weapon.templateIndex) {
-      case W.Dagger: return 'DAGGERMAGIC.CIF';
-      case W.Tanto: return 'TANTOMAGIC.CIF';
-      case W.Staff: return 'STAFFMAGIC.CIF';
-      case W.Shortsword: return 'SHORTSWORDMAGIC.CIF';
-      case W.Wakazashi: return 'WAKAZASHIMAGIC.CIF';
-      case W.Broadsword: return 'BROADSWORDMAGIC.CIF';
-      case W.Saber: return 'SABERMAGIC.CIF';
-      case W.Longsword: return 'LONGSWORDMAGIC.CIF';
-      case W.Katana: return 'KATANAMAGIC.CIF';
-      case W.Claymore: return 'CLAYMOREMAGIC.CIF';
-      case W.Dai_Katana: return 'DAIKATANAMAGIC.CIF';
-      case W.Mace: return 'MACEMAGIC.CIF';
-      case W.Flail: return 'FLAILMAGIC.CIF';
-      case W.Warhammer: return 'WARHAMMERMAGIC.CIF';
-      case W.Battle_Axe: return 'BATTLEAXEMAGIC.CIF';
-      case W.War_Axe: return 'WARAXEMAGIC.CIF';
-      case W.Short_Bow: return 'SHORTBOWMAGIC.CIF';
-      case W.Long_Bow: return 'LONGBOWMAGIC.CIF';
-      case W.Arrow: return 'ARROWMAGIC.CIF';
-      default: return '';
+      case W.Dagger:
+        return 'DAGGERMAGIC.CIF';
+      case W.Tanto:
+        return 'TANTOMAGIC.CIF';
+      case W.Staff:
+        return 'STAFFMAGIC.CIF';
+      case W.Shortsword:
+        return 'SHORTSWORDMAGIC.CIF';
+      case W.Wakazashi:
+        return 'WAKAZASHIMAGIC.CIF';
+      case W.Broadsword:
+        return 'BROADSWORDMAGIC.CIF';
+      case W.Saber:
+        return 'SABERMAGIC.CIF';
+      case W.Longsword:
+        return 'LONGSWORDMAGIC.CIF';
+      case W.Katana:
+        return 'KATANAMAGIC.CIF';
+      case W.Claymore:
+        return 'CLAYMOREMAGIC.CIF';
+      case W.Dai_Katana:
+        return 'DAIKATANAMAGIC.CIF';
+      case W.Mace:
+        return 'MACEMAGIC.CIF';
+      case W.Flail:
+        return 'FLAILMAGIC.CIF';
+      case W.Warhammer:
+        return 'WARHAMMERMAGIC.CIF';
+      case W.Battle_Axe:
+        return 'BATTLEAXEMAGIC.CIF';
+      case W.War_Axe:
+        return 'WARAXEMAGIC.CIF';
+      case W.Short_Bow:
+        return 'SHORTBOWMAGIC.CIF';
+      case W.Long_Bow:
+        return 'LONGBOWMAGIC.CIF';
+      case W.Arrow:
+        return 'ARROWMAGIC.CIF';
+      default:
+        return '';
     }
   }
   switch (weapon.templateIndex) {
-    case W.Dagger: return 'DAGGER.CIF';
-    case W.Tanto: return 'TANTO.CIF';
-    case W.Staff: return 'STAFF.CIF';
-    case W.Shortsword: return 'SHORTSWORD.CIF';
-    case W.Wakazashi: return 'WAKAZASHI.CIF';
-    case W.Broadsword: return 'BROADSWORD.CIF';
-    case W.Saber: return 'SABER.CIF';
-    case W.Longsword: return 'LONGSWORD.CIF';
-    case W.Katana: return 'KATANA.CIF';
-    case W.Claymore: return 'CLAYMORE.CIF';
-    case W.Dai_Katana: return 'DAIKATANA.CIF';
-    case W.Mace: return 'MACE.CIF';
-    case W.Flail: return 'FLAIL.CIF';
-    case W.Warhammer: return 'WARHAMMER.CIF';
-    case W.Battle_Axe: return 'BATTLEAXE.CIF';
-    case W.War_Axe: return 'WARAXE.CIF';
-    case W.Short_Bow: return 'SHORTBOW.CIF';
-    case W.Long_Bow: return 'LONGBOW.CIF';
-    case W.Arrow: return 'ARROW.CIF';
-    default: return '';
+    case W.Dagger:
+      return 'DAGGER.CIF';
+    case W.Tanto:
+      return 'TANTO.CIF';
+    case W.Staff:
+      return 'STAFF.CIF';
+    case W.Shortsword:
+      return 'SHORTSWORD.CIF';
+    case W.Wakazashi:
+      return 'WAKAZASHI.CIF';
+    case W.Broadsword:
+      return 'BROADSWORD.CIF';
+    case W.Saber:
+      return 'SABER.CIF';
+    case W.Longsword:
+      return 'LONGSWORD.CIF';
+    case W.Katana:
+      return 'KATANA.CIF';
+    case W.Claymore:
+      return 'CLAYMORE.CIF';
+    case W.Dai_Katana:
+      return 'DAIKATANA.CIF';
+    case W.Mace:
+      return 'MACE.CIF';
+    case W.Flail:
+      return 'FLAIL.CIF';
+    case W.Warhammer:
+      return 'WARHAMMER.CIF';
+    case W.Battle_Axe:
+      return 'BATTLEAXE.CIF';
+    case W.War_Axe:
+      return 'WARAXE.CIF';
+    case W.Short_Bow:
+      return 'SHORTBOW.CIF';
+    case W.Long_Bow:
+      return 'LONGBOW.CIF';
+    case W.Arrow:
+      return 'ARROW.CIF';
+    default:
+      return '';
   }
 }
 
@@ -163,7 +211,7 @@ const isArtifact = (item) => !isLookCopy(item) && (item?.artifact === true || ha
  */
 export function atlasFileName(item, classic, enabled = moddedWeaponHUDAnimsEnabled(), enchanted = undefined) {
   if (!enabled || !item) return classic;
-  return moddedWeaponFilename(item, enchanted) || classic;   // WEAPON-GLOW1: `enchanted` false - an element shown swings the plain sheet; undefined is the item's own
+  return moddedWeaponFilename(item, enchanted) || classic; // WEAPON-GLOW1: `enchanted` false - an element shown swings the plain sheet; undefined is the item's own
 }
 
 /**
@@ -204,21 +252,55 @@ export function customTextureNames(file, record, frame, metalName, doubleScale) 
  * 142, recoil on every condition. A pin holds this against the JSON.
  */
 export const DIVERSE_WEAPONS_WIDGET_PRESET = Object.freeze({
-  Modules: { Swings: 'True', Ambidexterity: 'True', Offset: 'True', Bob: 'True', Inertia: 'True', Step: 'True', DoubleScaleTextures: 'True', TrueTextureSize: 'True', Recoil: 'True' },
-  Swings: { Speed: '1', Windup: '1', Recovery: '0', VanillaAlignmentOverride: 'True', VanillaRecoveryOverride: 'False', NoDaggerMirroredStrikes: 'True' },
+  Modules: {
+    Swings: 'True',
+    Ambidexterity: 'True',
+    Offset: 'True',
+    Bob: 'True',
+    Inertia: 'True',
+    Step: 'True',
+    DoubleScaleTextures: 'True',
+    TrueTextureSize: 'True',
+    Recoil: 'True',
+  },
+  Swings: {
+    Speed: '1',
+    Windup: '1',
+    Recovery: '0',
+    VanillaAlignmentOverride: 'True',
+    VanillaRecoveryOverride: 'False',
+    NoDaggerMirroredStrikes: 'True',
+  },
   Offset: { Speed: '1' },
-  Bob: { Length: '142', Offset: '0', SizeX: '1', SizeY: '1', SpeedMove: '1', SpeedState: '1', Shape: '0', BobWhileIdle: 'True' },
+  Bob: {
+    Length: '142',
+    Offset: '0',
+    SizeX: '1',
+    SizeY: '1',
+    SpeedMove: '1',
+    SpeedState: '1',
+    Shape: '0',
+    BobWhileIdle: 'True',
+  },
   Step: { Length: '1', Condition: '0' },
   Inertia: { Scale: '1', Speed: '1', ForwardDepth: '1', ForwardSpeed: '1' },
   TrueTextureSize: { TextureScaleFactor: '1' },
-  Recoil: { Condition: '0', Chance: '100', PlayEntityMissEffects: 'True', DetectEnvironment: 'True', PlayEnvironmentMissEffects: 'True', MissEffectPlacement: '0' },
+  Recoil: {
+    Condition: '0',
+    Chance: '100',
+    PlayEntityMissEffects: 'True',
+    DetectEnvironment: 'True',
+    PlayEnvironmentMissEffects: 'True',
+    MissEffectPlacement: '0',
+  },
   Miscellaneous: { MirrorBows: 'False' },
 });
 
 /** The preset as the store speaks it - `Section.Key`, coerced by
  *  Weapon Widget's declared kinds. Computed once. */
 let _flat = null;
-export const diverseWeaponsWidgetPreset = () => (_flat ??= flattenModPreset('weapon-widget', DIVERSE_WEAPONS_WIDGET_PRESET));
+export const diverseWeaponsWidgetPreset = () =>
+  (_flat ??= flattenModPreset('weapon-widget', DIVERSE_WEAPONS_WIDGET_PRESET));
 
 /** True when the preset is laid over Weapon Widget's settings: the
  *  mod on, and its preset switch on. */
