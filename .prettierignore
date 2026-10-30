@@ -150,6 +150,10 @@
 /src/ui/collections/*/
 !/src/ui/guild/
 /src/ui/guild/*/
+!/src/ui/intro/
+/src/ui/intro/*
+!/src/ui/intro/set/
+/src/ui/intro/set/*/
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/levelUp/
