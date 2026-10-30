@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, bowFastCut, BOW_FAST, BOW_FAST_WITHIN, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
+import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, bowFastCut, RELAY_BOW_FAST, BOW_FAST_WITHIN, payFatigue, runPaid, healCredit, spendCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
 import { HEALTH_SHARE_WHOLE, takeHealthReport, PVP_HEALTH_MAX } from '../../src/net/siege/refereeHealthShare.js';
 import { newWildRef, wildZone, wildBlow, wildCarry, wildCarryOf, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT, newFighter } from '../../src/net/siege/siegeRef.js';
@@ -122,7 +122,7 @@ test('BOW-RATE: an arrow comes no sooner than the fastest honest bow (its loose,
 });
 
 test('BOW-FAST: the relay cuts a judged shaft landing within a second of the last by a fifth a stack, four at most, at least 1 kept; a second apart takes none (mutants: no stacks; the stacks unbounded)', () => {
-  assert.deepEqual(BOW_FAST, { cut: 20, most: 4, within: 1 });
+  assert.deepEqual(RELAY_BOW_FAST, { cut: 20, most: 4, within: 1 });
   const f = newFighter(10, 0);
   const cuts = [0, 300, 600, 900, 1200, 1500].map((t) => bowFastCut(f, 100, 1000 + t));
   assert.deepEqual(cuts, [100, 80, 60, 40, 20, 20]);
@@ -207,3 +207,20 @@ test('PVP-VITALS THE WIRE AND THE CLIENT: a report carries magicka, fatigue and 
   assert.match(relay, /!\(await this\._wildCastPaid\(a, target\[1\], m\.data, now\)\)/, 'a flagged caster\'s gift is paid for');
   assert.match(relay, /sourced: pool\.flagged === true, cl: a\.cl \?\? null/);
 });
+
+test('PVP-KIT-REGEN THE RELAY: a declared Regenerate costs the bar\'s 10% and banks health credit for its minute at the kit\'s top share a second - none before, none after (mutants: the price Cure\'s; the rounds uncounted; the minute unended)', () => {
+  const st = zone();
+  const a = st.fighters.get('acct-a');
+  vitalsReport(a.f, { mp: VITAL_WHOLE, fp: VITAL_WHOLE }, 10_000, { flagged: true });
+  const before = healCredit(a.f, 10_000);
+  vitalsReport(a.f, { mp: VITAL_WHOLE, fp: VITAL_WHOLE, use: [DECLARE.kit + KIT_ORDER.indexOf('regen')] }, 10_000, { flagged: true });
+  assert.equal(vitalsOf(a.f, 10_000).mp, VITAL_WHOLE - (KIT_COSTS.regen * VITAL_WHOLE) / 100, 'the bar\'s price');
+  assert.equal(KIT_COSTS.regen, KIT_SPELLS.regen.cost);
+  const after2 = healCredit(a.f, 12_000);
+  assert.ok(after2 - before >= (2 * PVP_VITALS.regenKit * a.f.max) / 100 - 1, 'two seconds of rounds banked');
+  spendAll(a.f, 12_000);
+  healCredit(a.f, 200_000);
+  spendAll(a.f, 200_000);
+  assert.ok(healCredit(a.f, 205_000) <= a.f.max * PVP_VITALS.regenBank + 1, 'past its minute, only the slow regen');
+});
+function spendAll(f, now) { spendCredit(f, healCredit(f, now), now); }

@@ -11,20 +11,21 @@ export const VITAL_WHOLE = 10_000;
 
 /** The PvP bar's price list, per cent of maximum magicka (systems/wild/pvpKit.js KIT_SPELLS' `cost`, pinned equal), by the
  *  kit's order (KIT_IDS). The relay charges these, never plate's surcharge on them. */
-export const KIT_COSTS = Object.freeze({ damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, cure: 5, jump: 6, speed: 6, resurrect: 25 });
+export const KIT_COSTS = Object.freeze({ damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, regen: 10, jump: 6, speed: 6, resurrect: 25 });
 export const KIT_ORDER = Object.freeze(Object.keys(KIT_COSTS));
 /** An ally cast frame's first effect type to its cheapest kit price (Fortify and Speed share 9: the cheaper is charged). */
-export const KIT_COST_BY_TYPE = Object.freeze({ 10: KIT_COSTS.heal, 35: KIT_COSTS.shield, 8: KIT_COSTS.resist, 21: KIT_COSTS.reflect, 20: KIT_COSTS.absorb, 9: KIT_COSTS.speed, 3: KIT_COSTS.cure, 27: KIT_COSTS.jump });
+export const KIT_COST_BY_TYPE = Object.freeze({ 10: KIT_COSTS.heal, 35: KIT_COSTS.shield, 8: KIT_COSTS.resist, 21: KIT_COSTS.reflect, 20: KIT_COSTS.absorb, 9: KIT_COSTS.speed, 18: KIT_COSTS.regen, 27: KIT_COSTS.jump });
 
 /** The numbers (parts of the whole unless named): health and magicka regen a second (gear and powers, with room); the
  *  potion clock (combat/pvpPotions.js, pinned equal); a magicka and a fatigue potion; a paid buff's minute (pvpKit.js);
  *  the kit heal's share at Restoration 100 and 300; a swing (hostCombat's 8 over the largest honest bar, 260 x 64) and a
  *  second's run past the fastest walk (`walkMps`, DFU's GetWalkSpeed at Speed 200); one cast's area window; the most
- *  health credit held, the most regen banks, and how long a paid heal's credit waits (a potion is no store of health). */
+ *  health credit held, the most regen banks, and how long a paid heal's credit waits (a potion is no store of health);
+ *  PVP-KIT-REGEN's most a second, per cent of health (the kit's top share, a round taken as a second at the shortest). */
 export const PVP_VITALS = Object.freeze({
   hpRegen: 10, mpRegen: 5, potionMs: 15_000, mpPotion: 6_000, fpPotion: 5_000, buffMs: 60_000,
   healLo: 25, healHi: 35, swing: 5, runPerS: 80, walkMps: 8.9, castMs: 1_500, creditMax: 1, regenBank: 0.05, creditMs: 5_000,
-  shaftMs: 250, shaftBurst: 2, swingMs: 450,
+  shaftMs: 250, shaftBurst: 2, swingMs: 450, regenKit: 4,
 });
 
 /** BOW-RATE: `shaftMs` is the closest two honest arrows come - the bow's loose at no reload, four ticks
@@ -35,7 +36,7 @@ export const PVP_VITALS = Object.freeze({
 /** BOW-FAST: a shaft landing within `within` seconds of the shooter's last takes a stack, at most `most`, and each takes
  *  `cut` per cent off it, at least 1 kept (combat/bowBloom.js BOW_FAST, pinned equal). The relay counts it for a shaft it
  *  judges, so a game cannot leave the cut off. */
-export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
+export const RELAY_BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
 /** BOW-KINDS: a bow's own window by its template (bowBloom.js BOW_KINDS, pinned equal) - the Short Bow quicker, the Long slower. */
 export const BOW_FAST_WITHIN = Object.freeze({ 129: 0.75, 130: 1.25 });
 
@@ -55,21 +56,23 @@ export function healthCapAt(cl, cap = 3000) {
 export const potionHealAt = (cl) => 5 + 19 * (Number.isSafeInteger(cl) && cl >= 1 ? cl : 45);
 
 /**
- * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, castC: number, castAt: number, castTo: string[], shafts: number, shaftAt: number, fastK: number, fastAt: number, swings: Record<string, [number, number]> }} Vitals
+ * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, regenTo: number, castC: number, castAt: number, castTo: string[], shafts: number, shaftAt: number, fastK: number, fastAt: number, swings: Record<string, [number, number]> }} Vitals
  */
 /** A fighter's ledgers - made unheard (full until the game's word anchors them). @param {any} f @param {number} now @returns {Vitals} */
 export function vitalsOf(f, now) {
-  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, fastK: 0, fastAt: -Infinity, swings: {} };
+  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, regenTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, fastK: 0, fastAt: -Infinity, swings: {} };
   return f.vitals;
 }
 /** The regen since the ledgers last moved: magicka, and health credit (to `creditMax` of the whole). */
 function accrue(f, v, now) {
-  const s = Math.max(0, now - v.at) / 1000;
+  const s = Math.max(0, now - v.at) / 1000, from = v.at;
   v.at = now;
   v.mp = Math.min(VITAL_WHOLE, v.mp + s * PVP_VITALS.mpRegen);
   const bank = f.max * PVP_VITALS.regenBank;
   if (now - (v.creditAt ?? -Infinity) > PVP_VITALS.creditMs) v.credit = Math.min(v.credit, bank);   // a paid heal's credit not taken in time
   if (v.credit < bank) v.credit = Math.min(bank, v.credit + (s * PVP_VITALS.hpRegen * f.max) / VITAL_WHOLE);
+  const rs = Math.max(0, Math.min(now, v.regenTo ?? 0) - from) / 1000;   // PVP-KIT-REGEN: a paid Regenerate's rounds
+  if (rs > 0) { v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100); v.creditAt = now; }
 }
 const share = (n) => Math.max(0, Math.min(VITAL_WHOLE, Math.round(Number(n))));
 /** A kit price in parts. */
@@ -105,10 +108,10 @@ export function shaftPaid(f, now) {
 /** BOW-FAST: a judged shaft's claim `d` landing now from the bow of template `w`, after its stacks. */
 export function bowFastCut(f, d, now, w = null) {
   const v = vitalsOf(f, now);
-  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? BOW_FAST.within;
-  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;
+  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? RELAY_BOW_FAST.within;
+  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;
   v.fastAt = now;
-  return v.fastK > 0 && d > 0 ? Math.max(1, Math.round((d * (100 - BOW_FAST.cut * v.fastK)) / 100)) : d;
+  return v.fastK > 0 && d > 0 ? Math.max(1, Math.round((d * (100 - RELAY_BOW_FAST.cut * v.fastK)) / 100)) : d;
 }
 /** SWING-RATE: a melee blow on `to` now - false where it comes sooner than the quickest swing allows (two may bunch). */
 export function swingPaid(f, to, now) {
@@ -141,6 +144,7 @@ export function kitLanded(t, id, now, { hp = null, resto = 0 } = {}) {
   if (id === 'heal') creditHeal(t, Math.min(t.max * PVP_VITALS.healHi / 100, hp ?? (t.max * kitHealShare(resto)) / 100), now);
   else if (id === 'shield') v.shieldTo = now + PVP_VITALS.buffMs;
   else if (id === 'absorb') v.absorbTo = now + PVP_VITALS.buffMs;
+  else if (id === 'regen') { accrue(t, v, now); v.regenTo = now + PVP_VITALS.buffMs; }   // PVP-KIT-REGEN
 }
 
 /**
