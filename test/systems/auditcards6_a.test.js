@@ -44,12 +44,13 @@ import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's 
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
 import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
 import { bossClockS } from '../../src/systems/bossTraits.js';
+import { freshSave } from '../realmSeat.mjs';   // BIRTH-SKILL: the real first-save shape
 const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const packsIn = (list) => (list ?? []).filter(isPackRecord).reduce((s, it) => s + (it.stackCount ?? 1), 0);
 const customsRow = (level) => ({ origin_id: 'offline-id', summary: JSON.stringify({ level }) });
-const born = () => { const e = { level: 1, goldPieces: 100, items: [] }; giveBinderAtChargen(e); return e; };
+const born = () => { const e = freshSave(); giveBinderAtChargen(e); return e; };
 /** Math.random answering `v` for the length of `fn` (the death handler's draw is the module's own Math.random). */
 const withRandom = (v, fn) => { const r = Math.random; Math.random = () => v; try { return fn(); } finally { Math.random = r; } };
 
