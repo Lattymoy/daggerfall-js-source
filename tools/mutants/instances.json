@@ -127,8 +127,8 @@
   {
     "name": "INSTANCES-HOLD-PUBLIC",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (!isHold && !publicLast) rows.push({ kind: 'public' });",
-    "new": "  if (!publicLast) rows.push({ kind: 'public' });",
+    "old": "  const noPublic = isHold || startPublicShut({ startLair, questHere, relaid });",
+    "new": "  const noPublic = startPublicShut({ startLair, questHere, relaid });",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

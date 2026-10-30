@@ -1,0 +1,245 @@
+[
+  {
+    "name": "WALL-SHAFT-swept-ignored",
+    "file": "src/ai/cover.js",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
+    "new": "  if (false) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "WALL-SHAFT-the-farther-taken",
+    "file": "src/ai/cover.js",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
+    "new": "  if (swept) return coverStep(Math.max(cov, wall), Infinity, reach, radius, stepLen);",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "WALL-SHAFT-flightStop-drops-swept",
+    "file": "src/scenes/hostMagic.js",
+    "old": "collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
+    "new": "collider.raycast(pos, unit, reach), reach, radius, stepLen);",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "WALL-SHAFT-dungeon-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);",
+    "new": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "WALL-SHAFT-street-unwired",
+    "file": "src/combat/arrowFlight.js",
+    "old": "step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), !!m.fromPlayer) : null;",
+    "new": "step * Math.hypot(m.dir[0], m.dir[1], m.dir[2])) : null;",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-public-offered",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const noPublic = isHold || startPublicShut({ startLair, questHere, relaid });",
+    "new": "  const noPublic = isHold;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-any-start-lair",
+    "file": "src/systems/instancePlaces.js",
+    "old": "!!(startLair && questHere && relaid);",
+    "new": "!!startLair;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-door-unasked",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "    const startLair = !!deps.startLair?.(site.mapId);",
+    "new": "    const startLair = false;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-public-warned",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site);",
+    "new": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-found-still-counted",
+    "file": "src/scenes/startsHost.js",
+    "old": "      if (sd && lairIs(sd) && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "      if (sd && lairIs(sd)) return true;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-any-map-id",
+    "file": "src/scenes/startsHost.js",
+    "old": "    return Number.isFinite(mapId) && commissionIn((sd) => (Number(sd.mapId) >>> 0) === (mapId >>> 0));",
+    "new": "    return Number.isFinite(mapId) && commissionIn(() => true);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    startLair: (mapId) => starts.lairOpen(mapId),",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-the-six-hour-wait",
+    "file": "src/systems/enchantments.js",
+    "old": "      concealBack(entity, item);   // WORN-CONCEAL\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-every-ended-pin",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;",
+    "new": "    if (a.heldItem !== item || !a.ended) continue;",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-a-round-later",
+    "file": "src/systems/enchantments.js",
+    "old": "export const WORN_CONCEAL_BACK_ROUNDS = 2;",
+    "new": "export const WORN_CONCEAL_BACK_ROUNDS = 3;",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-at-once",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }",
+    "new": "    { a.ended = false; delete a.endedRounds; }",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WALL-SHAFT-W1-no-sight-check",
+    "file": "src/systems/spellcast.js",
+    "old": "  return d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d);",
+    "new": "  return d <= radius + bodyRadius;",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WALL-SHAFT-W1-to-the-hit-surface",
+    "file": "src/systems/spellcast.js",
+    "old": "[feet[0], qy, feet[2]], d);",
+    "new": "[feet[0], qy, feet[2]], d - bodyRadius);",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WALL-SHAFT-W1-start-carries-nothing",
+    "file": "src/systems/spellcast.js",
+    "old": "  return Object.assign([pos[0], pos[1], pos[2]], collider?.raycast ? { collider } : {});",
+    "new": "  return Object.assign([pos[0], pos[1], pos[2]], {});",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WALL-SHAFT-W1-dungeon-bare-start",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const _from = m.fromPlayer ? sweepFrom(m.pos, collider) : null;",
+    "new": "      const _from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WALL-SHAFT-W1-street-bare-start",
+    "file": "src/combat/arrowFlight.js",
+    "old": "      const from = m.fromPlayer ? sweepFrom(m.pos, c) : null;",
+    "new": "      const from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
+    "tests": [
+      "test/combat/wallshaft.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-START-INSTANCE-S1-whole-room-shut",
+    "file": "src/systems/instancePlaces.js",
+    "old": "!!(startLair && questHere && relaid);",
+    "new": "!!(startLair && questHere);",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-START-INSTANCE-S2-silent",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      if (startShut(site)) deps.say?.(INSTANCE_TEXT.questHere());",
+    "new": "",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-START-INSTANCE-S3-recall-public",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "    if (recorded != null && !(recorded.ins == null && startShut(site))) {",
+    "new": "    if (recorded != null) {",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-START-INSTANCE-S3-recall-instance-overridden",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "    if (recorded != null && !(recorded.ins == null && startShut(site))) {",
+    "new": "    if (recorded != null && !startShut(site)) {",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WORN-CONCEAL-C2-counted-from-the-first-blow",
+    "file": "src/systems/concealment.js",
+    "old": "  for (const a of list) if (a.heldItem && a.ended && NORMAL_POWER_CONCEALMENTS.includes(a.kind)) a.endedRounds = 0;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WORN-CONCEAL-C1-a-reroll",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }",
+    "new": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { _fx.removeItemPinnedEffects?.(entity, item); doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity }); item.timeEffectsLastRerolled = (item.timeEffectsLastRerolled ?? 0) + 1; return; }",
+    "tests": [
+      "test/systems/fb1030g_wornconceal.test.js"
+    ]
+  }
+]

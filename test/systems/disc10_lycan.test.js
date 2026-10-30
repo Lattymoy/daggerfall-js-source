@@ -386,30 +386,53 @@ test('DISC10-E L4: a level gained under the urge adds its hit points to the RAW 
   assert.ok(q.rawMaxHealth > 100, `the virtue lane too: ${q.rawMaxHealth}`);
 });
 
-test('DISC10-E L3, WERE-LOOT: the beast loots the lot with its window shut - quick loot on or off, a press asking for the window too', async () => {
-  const { quickLootTake, foldQuickLoot, resetQuickLoot, quickLootArm } = await import('../../src/systems/quickLoot.js');
+test('DISC10-E L3, WERE-LOOT, WERE-PICK: the beast loots with its window shut - one row on a press (the lit one, else the first), the lot on P or with quick loot off (mutants: every press the lot; the beast takes nothing; no first row)', async () => {
+  const { quickLootTake, foldQuickLoot, resetQuickLoot, quickLootArm, quickLootWheel } = await import('../../src/systems/quickLoot.js');
   const { hoverLines } = await import('../../src/systems/worldHover.js');
   const { setPref, PREF_DEFAULTS } = await import('../../src/systems/uiPrefs.js');
+  const pile = () => [{ name: 'Longsword', group: 'Weapons', templateIndex: 121 }, { name: 'Dagger', group: 'Weapons', templateIndex: 113 }, { name: 'Mace', group: 'Weapons', templateIndex: 124 }];
+  const frameOf = (items) => () => { const { shown, rest, empty } = hoverLines(items); return { key: 'pile:1', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty }; };
+  const names = (list) => list.map((i) => i.name);
   try {
-    for (const on of [true, false]) {
-      setPref('quickLoot', on); resetQuickLoot();
-      const items = [{ name: 'Longsword', group: 'Weapons', templateIndex: 121 }, { name: 'Dagger', group: 'Weapons', templateIndex: 113 }];
-      const frame = () => { const { shown, rest, empty } = hoverLines(items); return { key: 'pile:1', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty }; };
-      const p = werewolf();
-      morphSelf(p, { force: true, nowMinutes: NOW });
-      foldQuickLoot(frame());
-      if (on) quickLootArm('QuickLootOpen');   // a press asking for the window takes too
-      assert.ok(quickLootTake('pile:1', { items: () => items }, p, () => {}), `quick loot ${on ? 'on' : 'off'}: taken`);
-      assert.equal(items.length, 0, 'the pile is empty');
-      assert.equal(p.items.length, 2);
-      // in the flesh with quick loot off, the window's as ever (the control)
-      if (!on) {
-        morphSelf(p, { nowMinutes: NOW + 2 * MINUTES_PER_DAY });
-        items.push({ name: 'Mace', group: 'Weapons', templateIndex: 124 });
-        foldQuickLoot(frame());
-        assert.equal(quickLootTake('pile:1', { items: () => items }, p, () => {}), null);
-      }
-    }
+    setPref('quickLoot', true); resetQuickLoot();
+    const items = pile(), frame = frameOf(items);
+    const p = werewolf();
+    morphSelf(p, { force: true, nowMinutes: NOW });
+    foldQuickLoot(frame());
+    assert.ok(quickLootTake('pile:1', { items: () => items }, p, () => {}), 'a press: taken');
+    assert.deepEqual(names(p.items), ['Longsword'], 'the lit row alone');
+    assert.deepEqual(names(items), ['Dagger', 'Mace']);
+    foldQuickLoot(frame()); quickLootWheel(1); foldQuickLoot(frame());   // the wheel lights the next row
+    quickLootArm('QuickLootOpen');   // a press asking for the window takes the lit row
+    assert.ok(quickLootTake('pile:1', { items: () => items }, p, () => {}));
+    assert.deepEqual(names(p.items), ['Longsword', 'Mace'], 'the row the wheel lit');
+    items.push({ name: 'Staff', group: 'Weapons', templateIndex: 128 });
+    foldQuickLoot(frame());
+    quickLootArm('QuickLootAll');
+    assert.ok(quickLootTake('pile:1', { items: () => items }, p, () => {}));
+    assert.equal(items.length, 0, 'P: the lot');
+    // AUDIT WERE-PICK P1: no row lit on the pressed pile - a touch screen draws no plaque, a search find or a vault has no
+    // frame yet - takes the plaque's first row, never the lot
+    const touch = pile();
+    foldQuickLoot(null);
+    assert.ok(quickLootTake('pile:2', { items: () => touch }, p, () => {}));
+    assert.deepEqual(names(touch), ['Dagger', 'Mace'], 'nothing lit: one row, the first');
+    foldQuickLoot(frame());   // lit on pile:1, pressed on pile:2
+    assert.ok(quickLootTake('pile:2', { items: () => touch }, p, () => {}));
+    assert.deepEqual(names(touch), ['Mace'], 'another pile lit: still one row of the pressed one');
+
+    setPref('quickLoot', false); resetQuickLoot();
+    const off = pile(), frameOff = frameOf(off);
+    const q = werewolf();
+    morphSelf(q, { force: true, nowMinutes: NOW });
+    foldQuickLoot(frameOff());
+    assert.ok(quickLootTake('pile:1', { items: () => off }, q, () => {}), 'quick loot off: taken');
+    assert.equal(off.length, 0, 'no row lit: the lot');
+    // in the flesh with quick loot off, the window's as ever (the control)
+    morphSelf(q, { nowMinutes: NOW + 2 * MINUTES_PER_DAY });
+    off.push({ name: 'Mace', group: 'Weapons', templateIndex: 124 });
+    foldQuickLoot(frameOff());
+    assert.equal(quickLootTake('pile:1', { items: () => off }, q, () => {}), null);
   } finally { resetQuickLoot(); setPref('quickLoot', PREF_DEFAULTS.quickLoot); }
 });
 

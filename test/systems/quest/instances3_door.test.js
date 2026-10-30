@@ -12,7 +12,7 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { Place, SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { relayQuestOnline, repairActiveQuests, questElsewhereLine } from '../../../src/systems/quest/questRepair.js';
-import { questsAtSite, openerQuestOf, questMountsHere, questDungeonWhole, partnerInstances, instanceOffer, questInstanceEpoch } from '../../../src/systems/instancePlaces.js';
+import { questsAtSite, openerQuestOf, questMountsHere, questDungeonWhole, partnerInstances, instanceOffer, questInstanceEpoch, startPublicShut } from '../../../src/systems/instancePlaces.js';
 import { createInstanceDoor, INSTANCE_TEXT, dungeonSite, buildingSite, siteBase } from '../../../src/scenes/instanceDoor.js';
 import { instanceRoomOf, instanceWord, INSTANCE_DOOR_WORD } from '../../../src/net/instanceRoom.js';
 import { wdunRoomKey } from '../../../src/net/wire.js';
@@ -351,6 +351,56 @@ test('QUEST-FIRST (FIELD BUGS 2026-10-26, runa: "The Masoleum of Darkivaron ... 
   assert.deepEqual(whole.shown[0].win.options.map((o) => o.code === 'Escape' ? 'esc' : o.label), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.mine()}`, 'esc']);
   whole.shown[0].win.input('Escape');
   await pend;
+});
+
+test('START-INSTANCE (FIELD BUGS 2026-10-30g, #bug-reports: "The emperor\'s commission ... quest item doesn\'t spawn in the dungeon for me"): a province start\'s dungeon, its commission still in it, offers no Public row - that room is laid smaller and stands none of it; with no party there is no popup, and the door enters my instance (mutants: Public offered; the Hold\'s rule lost)', async () => {
+  const partners = [{ name: 'Ann', acct: 'a1', owner: '0123456789abcdef', epoch: '89abcdef' }];
+  const kinds = (o) => instanceOffer({ online: true, instanceOk: true, ...o })?.map((r) => r.kind) ?? null;
+  assert.equal(kinds({ questHere: true, relaid: true, startLair: true }), null, 'my instance alone: no choice to make');
+  assert.deepEqual(kinds({ questHere: true, relaid: true, startLair: true, partners }), ['join', 'mine']);
+  assert.deepEqual(kinds({ questHere: true, startLair: true, partners }), ['public', 'join', 'mine'], 'AUDIT S1: a public room laid whole stands the commission - Public kept, first');
+  assert.equal(startPublicShut({ startLair: true, questHere: true, relaid: true }), true);
+  assert.deepEqual([[false, true, true], [true, false, true], [true, true, false]].map(([startLair, questHere, relaid]) => startPublicShut({ startLair, questHere, relaid })), [false, false, false]);
+  assert.deepEqual(kinds({ relaid: true, startLair: true, partners }), ['public', 'join'], 'no quest of mine here: as ever');
+  assert.deepEqual(kinds({ isHold: true, questHere: true, relaid: true }), ['mine'], 'HOLD-ONCE unchanged');
+  // the page half: Summerset's Laboratory of Silinaire, its public room laid small online
+  const SILINAIRE = {
+    name: 'The Laboratory of Silinaire', hasDungeon: true, mapTableData: { mapId: 873265279 },
+    dungeon: { blocks: [['N0000084', 0, 0], ['W0000009', 0, -1], ['N0000051', 1, 0], ['B0000006', -1, 0], ['B0000014', 0, 1], ['B0000013', 0, -2], ['B0000013', -1, -1], ['B0000009', 1, -1], ['B0000001', 2, 0], ['B0000014', 1, 1]]
+      .map(([n, x, z], i) => ({ blockName: `${n}.RDB`, x, z, isStartingBlock: i === 0 })) },
+  };
+  const m = new QuestMachine();
+  const q = questAt(m, { siteType: SITE_TYPES.Dungeon, mapId: SILINAIRE.mapTableData.mapId });
+  const shown = [];
+  const asked = [], said = [];
+  const d = createInstanceDoor({
+    online: () => true, instanceOk: () => true, account: () => 'acct-alice', character: () => 'char_alice', members: () => [],
+    questMachine: () => m, openOverlay: (win) => { shown.push(win); return true; }, say: (l) => said.push(l), wild: () => false,
+    startLair: (mapId) => { asked.push(mapId); return mapId === SILINAIRE.mapTableData.mapId; },
+  });
+  const site = d.dungeonSite(SILINAIRE);
+  assert.equal(site.relaid, true, 'online its public room is laid smaller');
+  assert.deepEqual(await d.choose(site), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true }, 'straight into my instance, whole');
+  assert.equal(shown.length, 0, 'no popup');
+  assert.deepEqual(said, [INSTANCE_TEXT.questHere()], 'AUDIT S2: and the line says why');
+  assert.ok(asked.every((id) => id === SILINAIRE.mapTableData.mapId));
+  // AUDIT S3: a Recall anchored in the public room (`recorded`, no instance) goes in by the quest while that room is shut
+  assert.deepEqual(await d.entryFor(site, {}), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true });
+  assert.deepEqual(await d.entryFor(site, { whole: false }), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true });
+  const annRoom = { owner: ANN, epoch: '89abcdef' };
+  assert.notDeepEqual(await d.entryFor(site, { ins: instanceWord(annRoom) }), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true }, 'an anchor in an instance keeps its own law');
+  // with a party member inside: their room and mine, and no word of a Public row that is not offered
+  const withAnn = createInstanceDoor({
+    online: () => true, instanceOk: () => true, account: () => 'acct-alice', character: () => 'char_alice', questMachine: () => m,
+    members: () => [{ acct: 'acct-ann1', name: 'Ann', online: true, p: { in: 1, ins: instanceRoomOf(siteBase(site), { owner: ANN, epoch: '89abcdef' }) } }],
+    openOverlay: (win) => { shown.push(win); return true; }, say: () => {}, wild: () => false, startLair: () => true,
+  });
+  const pending = withAnn.choose(site);
+  await until(() => shown.length === 1);
+  assert.deepEqual(shown[0].options.map((o) => o.label), ['1 - ' + INSTANCE_TEXT.join('Ann'), '2 - ' + INSTANCE_TEXT.mine(), 'Esc - ' + INSTANCE_TEXT.leave()]);
+  assert.deepEqual(shown[0].lines, ['The Laboratory of Silinaire', INSTANCE_TEXT.line()]);
+  shown[0].input('Escape');
+  assert.equal(await pending, null);
 });
 
 test('INSTANCES the door\'s other words: atDoor - Leave spends the press, a row enters; refused - an instance\'s door shut on this page, said once a room; poseWord - inside, the room the relay joined; questElsewhere - once a build', async () => {

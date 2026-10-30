@@ -328,7 +328,7 @@ test('GROUND-BOLT: both exterior hosts hand the engine liveCollider, and both fl
     assert.ok(s.includes("collider: liveCollider(() => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider)),"), `${f}: the engine's collider carries the ground`);
     assert.ok(!s.includes('collider: { raycast: (o, d, m) => ((modes?.mode'), `${f}: the mesh-only proxy is gone`);
   }
-  for (const f of ['scenes/hostMagic.js', 'scenes/dungeonContext.js']) {
-    assert.equal((src(f).match(/const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len\);/g) ?? []).length, 1, `${f}: the one flight law (AUDIT C6)`);
+  for (const [f, swept] of [['scenes/hostMagic.js', ''], ['scenes/dungeonContext.js', ', !!m.fromPlayer']]) {   // WALL-SHAFT: the dungeon's player shafts are swept
+    assert.equal(src(f).split(`const _cs = flightStop(collider, m.pos, _unit, reach, step * _len${swept});`).length - 1, 1, `${f}: the one flight law (AUDIT C6)`);
   }
 });
