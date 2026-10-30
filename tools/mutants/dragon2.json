@@ -22,12 +22,12 @@
   {
     "name": "DRAGON2-the-stay-unbounded",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "const t = dragonTimes(o.w); return nowMs >= t.landAt && nowMs < t.leaveAt; };",
-    "new": "const t = dragonTimes(o.w); return nowMs >= t.landAt; };",
+    "old": "const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt; };",
+    "new": "const t = dragonTimes(o); return nowMs >= t.landAt; };",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
   },
   {
     "name": "DRAGON2-the-site-day-a-gates",
