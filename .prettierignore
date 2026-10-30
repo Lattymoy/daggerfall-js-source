@@ -46,6 +46,8 @@
 /src/world/lands/*/
 !/src/world/peaks/
 /src/world/peaks/*/
+!/src/world/starfall/
+/src/world/starfall/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
