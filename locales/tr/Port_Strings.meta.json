@@ -5269,6 +5269,21 @@
   "tr": "7601b532ccf8",
   "by": "claude-in-session"
  },
+ "sea.cross.homeRow": {
+  "en": "d138c9ff8a76",
+  "tr": "913a8a6ca06d",
+  "by": "claude-in-session"
+ },
+ "sea.cross.landfall": {
+  "en": "d0992f50ef01",
+  "tr": "29df9eab516a",
+  "by": "claude-in-session"
+ },
+ "sea.cross.openSea": {
+  "en": "a08cbe63d371",
+  "tr": "b134938a2b6c",
+  "by": "claude-in-session"
+ },
  "sea.exchange.band": {
   "en": "80c476366bce",
   "tr": "da11f95f21ac",
@@ -5937,6 +5952,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "3a98944b1bc0",
+  "by": "claude-in-session"
+ },
+ "town.panel.new": {
+  "en": "c06b33d8318f",
+  "tr": "22f4dd6de583",
   "by": "claude-in-session"
  },
  "travel.held.foes": {

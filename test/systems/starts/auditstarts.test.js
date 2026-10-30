@@ -574,13 +574,26 @@ const VOYAGE = { start: 'sea', goal: 'land', voyage: true, again: false };
 const VOYAGE_CELLS_MAX = 450000;   // measured 392,822 and 393,363 (the two floods and the lanes): some twenty frames at PLAN_FRAME_CELLS
 /** A ladder that says it was climbed. */
 const ladder = (rungs = [6, 20, 60]) => { const seen = { climbed: false }; return { seen, margins: { [Symbol.iterator]: () => { seen.climbed = true; return rungs[Symbol.iterator](); } } }; };
+/** The 8-connected pixels a -> b (Bresenham), a first. */
+const lineOf = (a, b) => {
+  const out = [a]; let { x, y } = a;
+  const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y), sx = a.x < b.x ? 1 : -1, sy = a.y < b.y ? 1 : -1;
+  let err = dx - dy;
+  while (x !== b.x || y !== b.y) { const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } out.push({ x, y }); }
+  return out;
+};
+// PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29g): a sailed step is a straight run over open water now - each pixel of its
+// line a boat's step - and every other step one pixel
 const stepsSailed = (plan, isWater) => {
   for (let i = 1; i < plan.pixels.length; i++) {
     const a = plan.pixels[i - 1], b = plan.pixels[i];
-    assert.equal(Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)), 1, 'one pixel a step');
-    if (plan.kinds[i - 1] !== 'sea') continue;
-    assert.ok(isWater(b.x, b.y), 'sailed on water');
-    assert.ok(a.x === b.x || a.y === b.y || isWater(b.x, a.y) || isWater(a.x, b.y), `never through a corner of the land (${a.x},${a.y} -> ${b.x},${b.y})`);
+    if (plan.kinds[i - 1] !== 'sea') { assert.equal(Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)), 1, 'one pixel a step'); continue; }
+    const line = lineOf(a, b);
+    for (let k = 1; k < line.length; k++) {
+      const p = line[k - 1], q = line[k];
+      assert.ok(isWater(q.x, q.y), 'sailed on water');
+      assert.ok(p.x === q.x || p.y === q.y || isWater(q.x, p.y) || isWater(p.x, q.y), `never through a corner of the land (${p.x},${p.y} -> ${q.x},${q.y})`);
+    }
   }
 };
 

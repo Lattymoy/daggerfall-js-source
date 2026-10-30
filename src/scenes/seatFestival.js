@@ -15,9 +15,9 @@
 //     Indoors, each building keeps its own.
 //   THE BANNERS: more of the holder's banners on the seat banners' own
 //     cloth (scenes/seatBanners.js, render/bannerPass.js) - two beside
-//     each tavern's door, and a pennant over each board BOUNTY1 took for
-//     its hunts (the rumour boards carry the seat's already), at most
-//     FESTIVAL_BANNERS_MAX, measured where the pixel is built.
+//     each tavern's door, at most FESTIVAL_BANNERS_MAX, measured where
+//     the pixel is built (NOTICE-PANEL: the bounty boards' pennants went
+//     with the boards).
 //   THE LANTERNS: one hung before every banner the town flies (its seat
 //     anchors and the Festival's), in the street's own lantern pool
 //     (world/city/cityLights.js fillLanternPool) - lit with the town's lamps
@@ -28,7 +28,6 @@
 // account service, so no Festival rules there.
 // ═══════════════════════════════════════════════════════════════════
 import { hallBannerAnchors, BANNER_REFRESH_MS } from './hallBanners.js';
-import { boardPennantAnchor } from './seatBanners.js';
 import { festivalRules } from '../net/townSeatLaw.js';
 import { MUSIC_ENV } from '../systems/song/songManager.js';
 
@@ -40,19 +39,14 @@ export const FESTIVAL_LANTERN_OUT_M = 0.6;
 
 /**
  * A FESTIVAL'S BANNERS' ANCHORS, in order: two beside each tavern's door (`tavernKeys` its building keys, `frames` the
- * pixel's building frames - scenes/world.js `homeFrames`), then a pennant over each board BOUNTY1 took (`bounty` the
- * boards' indices), at most FESTIVAL_BANNERS_MAX. Pure.
+ * pixel's building frames - scenes/world.js `homeFrames`), at most FESTIVAL_BANNERS_MAX. Pure.
  */
-export function festivalBannerAnchors({ frames = null, tavernKeys = [], boards = [], bounty = new Set() } = {}) {
+export function festivalBannerAnchors({ frames = null, tavernKeys = [] } = {}) {
   const out = [];
   for (const k of tavernKeys) {
     const two = hallBannerAnchors(frames?.get?.(k));
     if (two && out.length + 2 <= FESTIVAL_BANNERS_MAX) out.push(...two);
   }
-  boards.forEach((b, i) => {
-    const a = bounty.has(i) ? boardPennantAnchor(b) : null;
-    if (a && out.length < FESTIVAL_BANNERS_MAX) out.push(a);
-  });
   return out;
 }
 

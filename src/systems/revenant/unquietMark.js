@@ -52,8 +52,13 @@ export function markUnquiet(entity) {
   entity.unquiet = _force ?? unquietId(entity._voiceId);
   return entity.unquiet;
 }
-/** Does this foe carry the mark? Never one of the open zone's (`wildFoe`, `wildGiant`) or the sand's (`bout`). */
-export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;
+/** AN EVENT'S OWN FOE NEVER RISES (STAR-MASTER-FLED, Field-Bugs-2026-10-29g): the Starfall's master, a staff event's
+ *  boss, a rite's faithful - each stamped `eventFoe` at its stand, before its promotion draws (exteriorFoes.js spawnFoe).
+ *  Its fall is its event's. The one rule the mark's gate, isUnquiet and revenantCandidate read (foeTitle.js its copy). */
+export const isEventFoe = (entity) => entity?.eventFoe === true;
+/** Does this foe carry the mark? Never one of the open zone's (`wildFoe`, `wildGiant`) or the sand's (`bout`), nor an
+ *  event's own (isEventFoe). */
+export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);
 /** Tests only: every draw answers `v` (true, false), or the id's own again (null) - a real pool's foe marked at will. */
 let _force = null;
 export function _forceUnquietForTests(v = null) { _force = v == null ? null : !!v; }

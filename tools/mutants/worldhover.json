@@ -66,8 +66,8 @@
   {
     "name": "WORLD-HOVER-corpse-prefix-stops-itemising",
     "file": "src/systems/worldHover.js",
-    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:']);",
-    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:']);",
+    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);",
+    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -714,15 +714,6 @@
     "file": "src/systems/worldTooltips.js",
     "old": "  return itemLongName(item, { differentiatePlantIngredients: false, getQuest }) || null;",
     "new": "  return itemLongName(item, { getQuest }) || null;",
-    "tests": [
-      "test/systems/worldhover.test.js"
-    ]
-  },
-  {
-    "name": "WORLD-HOVER-the-board-reaches-as-far-as-the-ray",
-    "file": "src/scenes/worldModes.js",
-    "old": "key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));",
-    "new": "key: `board:${i}`, aabb, distance: RAY_DISTANCE }));",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

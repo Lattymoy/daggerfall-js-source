@@ -3,17 +3,19 @@
 // bible/03-World/Eltheric-Ocean.md ETHER-CROSSING) - THE CROSSING: when it is offered, what it asks, what it takes. Pure: the
 // world host (scenes/world.js) asks it of the helm's pixel and sails the voyage.
 //
-// OFFERED at a helm, under way or not, with no enemy near and no other player aboard: OUT on the open Abecean - the
-// crossing waters (world/ethericSea.js crossingWaters: west of CROSS_X, CROSS_LAND_PX pixels and more from any land) -
-// and HOME in the Veil. Once a way is asked and refused it is not asked again until the ship has left those waters
-// (`createCrossingGate`): a captain who said no is not nagged at every swell.
+// OFFERED at a helm, under way or not, with no enemy near and no other player aboard: OUT in the crossing waters on
+// every row (world/ethericSea.js crossingWaters: west of CROSS_X, CROSS_LAND_PX pixels from land and CROSS_SEA_PX from
+// the sea the world sails, `createCrossSea`) - and HOME in the Veil. Refused, a way is not asked again until the ship
+// has left its waters (`createCrossingGate`); waters a journey sails into are its own, asked only where it arrives.
 //
 // THE VOYAGE takes CROSS_DAYS (the clock's, as a journey's), and carries the captain, the ship at whose helm they stand,
 // her crew and her hold: out to the open water off Veilhaven's quay, her bow on it; home to the Bay's waters the last
 // crossing out set sail from (the ledger's), or the open Abecean off the Bay's mouth.
 
-import { crossingWaters, inVeil, inEtherLaw, landfall, HOME_WATERS, ETHER_WORD, ETHER_SEA_NAME, CROSS_LAND_PX } from '../../world/ethericSea.js';
+import { crossingWaters, inVeil, inEtherLaw, landfall, HOME_WATERS, ETHER_WORD, ETHER_SEA_NAME, CROSS_LAND_PX, CROSS_SEA_PX } from '../../world/ethericSea.js';
+import { NATIVE_PIXEL } from '../seaRaiders.js';   // SEA-ROWS: a lane's way is in native units
 import { t } from '../textManager.js';   // ETHER-WILD: the open sea's warning, in the player's language (L10N4)
+import { inBay } from '../../world/tamriel/tamrielFrame.js';   // AUDIT FB1029g SEA F9: the words name the Bay only in it
 
 /** The voyage, either way (days). */
 export const CROSS_DAYS = 3;
@@ -41,25 +43,72 @@ export function createCrossLand(seaPixel, reach = CROSS_LAND_PX) {
     return d;
   };
 }
-/** The way a helm's waters offer: 'out' (the crossing waters), 'home' (the Veil), or null. `landPx` the pixel's distance
- *  to the nearest land (the host's). */
-export function crossingWayAt(px, py, landPx) {
+/** How long one check of the sailed sea may walk lanes' ways no check has asked for (ms) - one at the least. */
+export const CROSS_WALK_MS = 4;
+/**
+ * THE SEA THE WORLD SAILS (SEA-ROWS): a map pixel's distance (pixels, from its middle) to the nearest lane's way or the
+ * serpent's ring, Infinity past `reach` - `lanes()` the world's lanes' book (scenes/naval/worldLanes.js), `site()` the
+ * day's serpent site or null. Null (not measured) until the book is `settled` and every lane whose bound holds the pixel
+ * (`near`, padded by the reach) has its way: a way walked cold is the lanes' own search, so a check walks CROSS_WALK_MS
+ * of them and the next the rest. The last pixel's answer kept. Answers `(px, py) => distance | null`.
+ */
+export function createCrossSea(lanes, site, reach = CROSS_SEA_PX, now = () => performance.now()) {
+  const walked = new WeakSet();
+  let at = null;
+  return (px, py) => {
+    const book = lanes(), s = site() ?? null;
+    if (!book?.settled()) return null;
+    const list = book.all();
+    if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;
+    const x = px + 0.5, y = py + 0.5, here = { x: px, y: py }, t0 = now();
+    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity, whole = true, fresh = 0;
+    for (const lane of list) {
+      if (!book.near(lane, here, reach + 1)) continue;
+      if (!walked.has(lane)) { if (fresh++ && now() - t0 > CROSS_WALK_MS) { whole = false; continue; } walked.add(lane); }
+      const pts = book.way(lane)?.pts ?? [];
+      for (let i = 1; i < pts.length; i++) d = Math.min(d, segmentPx(x, y, pts[i - 1], pts[i]));
+    }
+    if (!whole) return null;
+    at = { px, py, s, list, d: d > reach ? Infinity : d };
+    return at.d;
+  };
+}
+/** A point's distance (map pixels; y south, a pixel's middle at +0.5) to a way's leg between two native points. */
+function segmentPx(x, y, a, b) {
+  const ax = a.x / NATIVE_PIXEL, ay = 500 - a.z / NATIVE_PIXEL, dx = b.x / NATIVE_PIXEL - ax, dy = 500 - b.z / NATIVE_PIXEL - ay;
+  const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) : 0;
+  return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+}
+/** The way a helm's waters offer: 'out' (the crossing waters), 'home' (the Veil), or null - undefined while the sea
+ *  they lie in is not yet measured (no word: the gate keeps what it knew). `landPx` the pixel's distance to the nearest
+ *  land, `seaPx` to the sea the world sails, or its measure (createCrossSea's) - asked only where the land allows. */
+export function crossingWayAt(px, py, landPx, seaPx) {
   if (inVeil(px, py)) return 'home';
-  if (crossingWaters(px, py, landPx)) return 'out';
-  return null;
+  if (!crossingWaters(px, py, landPx, Infinity)) return null;
+  const sea = typeof seaPx === 'function' ? seaPx(px, py) : seaPx;
+  if (sea === null) return undefined;
+  return crossingWaters(px, py, landPx, sea) ? 'out' : null;
 }
 
-/** THE GATE: `offer(way)` answers whether to ask now - a way not asked since the ship came into its waters; `asked(way)`
- *  remembers it asked until the waters are left (`offer(null)` - or another way's waters - forgets it). AUDIT CAPTAIN'S
- *  SEA H13: the doc named a `refused`; X1: the host marks it asked only when the box shows. */
+/** THE GATE: `offer(way, journey)` answers whether to ask now - a way not asked since the ship came into its waters;
+ *  `asked(way)` remembers it asked until the waters are left (`offer(null)` - or another way's waters - forgets it).
+ *  X1: the host marks it asked only when the box shows; `refused(way)` whether a refusal is said - once in its waters.
+ *  SEA-ROWS: told the waters at every check (undefined, unmeasured: nothing); `journey` is Travel Options, null when off.
+ *  Waters she comes into under way are the journey's, marked asked; when its `arrived` count moves there, she is asked. */
 export function createCrossingGate() {
-  let asked = null;
+  let asked = null, ours = false, said = null, arrivals = null;
   return {
-    offer(way) {
-      if (way !== asked) asked = null;
+    offer(way, journey = null) {
+      if (way === undefined) return false;
+      const under = !!journey?.isTravelActive, n = journey?.arrived ?? 0;
+      if (way !== said) said = null;
+      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }   // left them, or a journey arrived in them
+      arrivals = n;
+      if (under && way && asked == null) { asked = way; ours = true; }
       return !!way && asked == null;
     },
-    asked(way) { asked = way ?? null; },
+    asked(way) { asked = way ?? null; ours = false; },
+    refused(way) { if (said === way) return false; said = way; return true; },
     get pending() { return asked; },
   };
 }
@@ -84,19 +133,23 @@ export function questionRows(text, width = ROW_CHARS) {
 }
 /** The widest row of the question's own (its first lines' measure). */
 export const ROW_CHARS = 56;
+/** AUDIT FB1029g SEA F9: whether the words may name the Bay - `at` (the helm's waters out, the landfall's home) is on the
+ *  Bay's own map. The crossing is asked west of Sumurset too, and the way home lands where it set out. */
+const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);
 /** The question, in rows (ui/yesNoBox.js). ETHER-WILD (2026-10-21): `pvp` - online, where the open sea past Veilhaven's
- *  peace is an open PvP zone (systems/wild/etherWild.js) - says so before the way out is taken. */
-export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}) {
+ *  peace is an open PvP zone (systems/wild/etherWild.js) - says so before the way out is taken. `at`: SEA F9's. */
+export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}, at = null) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
+    ? [`The ${bayAt(at) ? 'Abecean' : t('sea.cross.openSea', 'open sea')} runs empty to every horizon, and the stars`, 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
       ...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn', 'Past Veilhaven\'s peace the open sea is an open PvP zone. Other players may attack you there.'))] : [])]
-    : ['Ahead the Veil thins, and through it, faint as a memory,', 'lie the gray waters of the Iliac Bay.', '', `Set a course for home? (${time})`];
+    : ['Ahead the Veil thins, and through it, faint as a memory,', bayAt(at) ? 'lie the gray waters of the Iliac Bay.' : t('sea.cross.homeRow', 'lie the gray waters you set out from.'), '', `Set a course for home? (${time})`];
 }
-/** What the screen says at the landfall. */
-export const crossingWords = (way) => (way === 'out'
+/** What the screen says at the landfall (`at`, SEA F9's: where she comes out). */
+export const crossingWords = (way, at = null) => (way === 'out'
   ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
-  : 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.');
+  : bayAt(at) ? 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.'
+    : t('sea.cross.landfall', 'The Veil closes astern, and the air smells of salt and tar again. You are back in the waters you set out from.'));
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({

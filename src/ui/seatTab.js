@@ -11,7 +11,7 @@
 // guild this week; its own week here against the 2,000 cap); an Officer's or the guildmaster's pledge buttons, in the
 // Muster; and the guildmaster's Tribute, with its room.
 //
-// A seat is run from its town's board, in person - that is the point of a physical board: the war has a place.
+// A seat is run from its town's board, in person (the town panel's, NOTICE-PANEL): the war has a place.
 //
 // BOARD-UI (2026-10-06, Mac: "Enhance the guild war tab of the board for better organization, instruction and
 // readability"): the same parts, each on its own panel under its own name, in the order a reader asks them - the

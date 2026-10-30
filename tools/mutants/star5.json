@@ -480,7 +480,7 @@
  {
   "name": "AUDIT-STARFALL-C4-never-again",
   "file": "src/scenes/starfall/starfallHost.js",
-  "old": "    if (L.p === P_MASTER && S.masterStood && !S.master && now() - S.standAt >= STAR_RESTAND_MS) S.masterStood = false;\n",
+  "old": "    if (L.p === P_MASTER && S.masterStood && !S.master && masterLost(S)) S.masterStood = false;\n",
   "new": "",
   "tests": [
    "test/scenes/starfall/star5_host.test.js"
@@ -489,8 +489,8 @@
  {
   "name": "AUDIT-STARFALL-C4-again-over-one",
   "file": "src/scenes/starfall/starfallHost.js",
-  "old": "if (L.p === P_MASTER && S.masterStood && !S.master && now()",
-  "new": "if (L.p === P_MASTER && S.masterStood && now()",
+  "old": "if (L.p === P_MASTER && S.masterStood && !S.master && masterLost(S))",
+  "new": "if (L.p === P_MASTER && S.masterStood && masterLost(S))",
   "tests": [
    "test/scenes/starfall/star5_host.test.js"
   ]

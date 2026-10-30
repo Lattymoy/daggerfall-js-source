@@ -492,9 +492,9 @@
   },
   {
     "name": "AUDIT-SCALE-LANED-street-stamp-slow",
-    "file": "src/scenes/world.js",
-    "old": "stampAt - _noticeTown.at >= 1000",
-    "new": "stampAt - _noticeTown.at >= 5000",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "const STAMP_MS = 1000;",
+    "new": "const STAMP_MS = 5000;",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -560,6 +560,8 @@
     "tests": [
       "test/net/auditscale.test.js"
     ],
+    "equivalent": true,
+    "why": "EQUIVALENT since 0186_world_books.sql (AUDIT FB1029g): it creates idx_guild_contracts_open_due and idx_guild_contracts_unreturned again, so a database built from the migrations has them without 0091's",
     "note": "the contracts' minute walking the table"
   },
   {
@@ -570,6 +572,8 @@
     "tests": [
       "test/net/auditscale.test.js"
     ],
+    "equivalent": true,
+    "why": "EQUIVALENT since 0186_world_books.sql (AUDIT FB1029g): it creates idx_market_bids_auction again, so a database built from the migrations has it without 0091's",
     "note": "an old auction's prune walking every bid"
   },
   {
@@ -737,9 +741,9 @@
   },
   {
     "name": "AUDIT-SCALE-B7-stamp-by-dt",
-    "file": "src/scenes/world.js",
-    "old": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000))",
-    "new": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000 * Math.max(1, 0.1 / Math.max(dt, 1e-6) / 10)))",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "const now = host.now ?? (() => performance.now());",
+    "new": "const now = host.now ?? (() => 0);",
     "tests": [
       "test/net/scale4c.test.js"
     ],

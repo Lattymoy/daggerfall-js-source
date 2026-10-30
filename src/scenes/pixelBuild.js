@@ -16,11 +16,11 @@ import { boxNearPath, pointNearPath, UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR, wodP
 import { buildingKeysOfType, castleEntranceOf, siegeFieldOf } from '../systems/siegeField.js';
 import { buildingSummaries } from '../world/buildingSummaries.js';
 import { buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';
-import { BULLETIN_BOARD_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
+import { CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
 import { carveLefay, isLefayTown, lefayExitOf, lefaySpotOf } from '../world/lefayMonument.js';
 import { carveYards } from '../world/merchantYards/merchantYardSites.js';
 import { carveCapitalWalks } from '../world/capitalWalks.js';   // FB1029 BRIDGE-ENDS
-import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
+import { CityNavigation } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
 import { coverProxies, coverProxy, FELLED, isCoverFlat } from '../ai/cover.js';
@@ -47,7 +47,7 @@ import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { gothwayNorthSpots, isGothwayGarden } from '../systems/gothwayBoards.js';
+import { questBoardIndices } from '../systems/bounty/bountyBoard.js';   // BOUNTY1: which boards' places are the bounty half - the siege field's Market is a rumour board's
 import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, walkGroundAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';   // FLORA-GROUND: walkGroundAt, the ground's one law
 import { hasPort } from '../systems/travel/travelPorts.js';
 import { portIdOf } from '../world/worldWide/worldPorts.js';   // WW3: a port's one number
@@ -132,7 +132,7 @@ const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : nu
 export function createPixelBuild(host) {
   const {
     MILL_SAIL_PAD, TERRAIN_INDICES, TERRAIN_INDICES_LOD, _building, _dwRubble, _dwRubbleCarry, _groundBefore,
-    _livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks, boardSplitOf,
+    _livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks,
     breather, buildingDoors, built, chapterSheet, climates3x3, collider, cpuModels, deepWaters, destroyPixel,
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, jungle, labGrass, landform, livingArmOf, livingAshore,
@@ -447,7 +447,7 @@ export function createPixelBuild(host) {
     const pixelSprings = []; // SURV3: the mod's water sources - fountains and wells (212: 0, 2, 8, 9; 85: 0), the dry fountain (212: 3), the troughs (41220-41222) - pixel-local {pos, dry}
     const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
     const pixelStandFlats = [];   // STAND-FLAT / STAND-HORSE: the town horses and the people no StaticNPC holds, pixel-local - a batch each
-    const pixelBoards = [];   // the block's BULLETIN BOARDS (model 41739), pixel-local boxes
+    const pixelBoards = [];   // where the blocks' BULLETIN BOARDS (model 41739) would stand, pixel-local boxes - NOTICE-PANEL: none stands
     const pixelGraves = [];   // SEARCH1: a Graveyard location's headstones (systems/searchables.js isTombstoneModel), pixel-local boxes
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
@@ -591,12 +591,16 @@ export function createPixelBuild(host) {
           if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
           const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());   // AUDIT PRE-MERGE 1003 W6: a model built here breathes with the pixel (the colosseum's seal)
           if (!gpu) continue;
-          const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
-          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
           const local = multiply(originMatrix, placed.matrix);
-          if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
+          // NOTICE-PANEL (scenes/townPanelHost.js): a town's board (RMBLayout's standalone 41739) does not stand - the town
+          // panel under the compass is its press. Its place is kept, the very box a drawn model's is (AUDIT FB1029g R1: one
+          // reckoning, so the siege field's Market every machine lays never drifts from where a board stood)
+          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }
+          const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
+          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
+          if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           unionBox(box);
           const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
           if (climateFree) entry.texRemap = NO_CLIMATE_REMAP;   // ARENA1: drawn by its own table (an empty one - never the pixel's)
@@ -645,14 +649,6 @@ export function createPixelBuild(host) {
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
           if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,
             { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin; SIGN-PASS: a sign's board met by every ray, by no body
-          // THE BULLETIN BOARDS. RMBLayout stands model 41739
-          // STANDALONE rather than combining it (:857, :935) for the
-          // sole purpose of hanging DaggerfallBulletinBoard off it
-          // (:966-970), which is the component PlayerActivate's ray
-          // looks for (:393-398). This port has no components, so the
-          // pixel keeps the boards it stood - pixel-local, like its
-          // NPCs and lights - and the activation ray reads that list.
-          if (isBulletinBoard(placed.modelIdNum)) pixelBoards.push({ box, local });   // SEAT1a: and its matrix - a seat's pennant faces as the board does
           if (dfLocation?.mapTableData?.locationType === LOCATION_TYPES.Graveyard && isTombstoneModel(placed.modelIdNum)) pixelGraves.push({ box, n: pixelGraves.length });   // SEARCH1: numbered in the build's own order - the same stone, the same key, every visit
           // AUDIT 64 F14: ...and the CITY GATES, stood standalone for
           // exactly the same reason (RMBLayout.cs:857) so
@@ -811,38 +807,6 @@ export function createPixelBuild(host) {
       // its dungeon-entrance door, the location frame), clear of World of Daggerfall's camp on or off
       if (isLefayTown(dfLocation)) lefaySpot = lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit: lefayExitOf(dungeonEntranceLanding(lefayExitDoors), locLocal) });
       if (isLefayTown(dfLocation) && !lefaySpot) console.warn('[lefay] no open ground for the monument outside Privateer\'s Hold');   // AUDIT FIVE-ASKS B8: never silent
-      // GOTHWAY-BOARDS (systems/gothwayBoards.js): Gothway Garden - the first town out of Privateer's Hold - stands two
-      // bounty boards at its north entrance, for a new character to find its first work as they walk in. Stood
-      // as the blocks stand theirs (the same model, drawn, merged and solid), kept with the town's own boards and counted a
-      // bounty board always (boardSplitOf).
-      if (isGothwayGarden(dfLocation.name)) {
-        const gpuB = await getGpuMesh(BULLETIN_BOARD_MODEL_ID, () => breather.breathe());
-        const cpuB = cpuModels.get(BULLETIN_BOARD_MODEL_ID);
-        if (gpuB && cpuB) {
-          await remapSubMeshes(gpuB.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);
-          // GOTHWAY-NORTH: at the north entrance, either side of the road from Privateer's Hold - the road read off the
-          // town's own walk grid (its people's cells), the boards a few paces inside the border, facing north
-          const navB = new CityNavigation(loc.width, loc.height);
-          for (const b of loc.blocks) {
-            const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
-            navB.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
-          }
-          const spots = gothwayNorthSpots((gx, gy) => navB.weightAt(gx, gy), navB.width, navB.height, NAV_CELL) ?? [];
-          for (const sp of spots) {
-            // GOTHWAY-LIFT (the owner: "the boards are in the ground"): the board's mesh is centred on its origin, so it
-            // is stood with its FOOT on the town's ground - lifted by its own box's floor
-            const lift = -archAabb(BULLETIN_BOARD_MODEL_ID, cpuB.positions)[1] + 0.02;
-            const local = trs(locLocal[0] + sp.x, locLocal[1] + lift, locLocal[2] + sp.z, 0, sp.yawDeg, 0);
-            const box = transformedAabb(archAabb(BULLETIN_BOARD_MODEL_ID, cpuB.positions), local);
-            unionBox(box);
-            const entry = { gpu: gpuB, local, _box: box, _order: BULLETIN_BOARD_MODEL_ID };
-            models.push(entry);
-            if (cpuB.normals && cpuB.uvs) { addStatic(cpuB, local, false); entry._batched = true; }
-            late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // PERF-COL2: riding the floating origin
-            pixelBoards.push({ box, local, extra: true });
-          }
-        }
-      }
 
       // URBANIZER U3 (world/urban/townFabricModel.js): the town's own fabric - its main streets' setts and pavements, its side
       // streets' cobbles, its yards' fences and walls, its dead ends' walls, its woodpiles - one model at its origin, merged
@@ -1457,22 +1421,20 @@ export function createPixelBuild(host) {
     // awaited between it and built.set - a sweep during the build has
     // cleared it, so a stale roll never stands in the new world.
     const dwResult = dwNear ? await dwNear.catch(() => null) : undefined;   // DW-B: before the carry, which nothing may await past (AUDIT BRANCH (WoD) m4)
-    // SEAT1a (Seats-Arc 3.4): a seat town's banner anchors - its palace's door, its gates, its rumour boards - measured
-    // where it is built (scenes/seatBanners.js); hung while the seats are open to this account
-    // (BOUNTY1's split of the boards through its one memo, AUDIT 28 H8 - and kept on the pixel as `_boardSplit`, so it is
-    // never worked out again; null off a seat, and the memo asks it then)
-    const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId(townSeats, dfLocation.mapTableData?.mapId) ? boardSplitOf({ boards: pixelBoards }) : null;
+    // SEAT1a (Seats-Arc 3.4): a seat town's banner anchors - its palace's door, its gates - measured where it is built
+    // (scenes/seatBanners.js); hung while the seats are open to this account. BOUNTY1's split of the boards' places: the
+    // siege field's Market, and null off a seat - the palace keys, the banners and the Festival read it as the seat's word
+    const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId(townSeats, dfLocation.mapTableData?.mapId) ? questBoardIndices(pixelBoards) : null;
     const seatPalaceKeys = pixelBoardSplit ? palaceKeysOf(locBlocks, makeBuildingKey) : [];
     const seatTier = dfLocation ? seatAtMapId(townSeats, dfLocation.mapTableData?.mapId)?.tier ?? 'palace' : 'palace';
     const castleGate = seatTier === 'crown' ? castleEntranceOf(pixelDungeonDoors) : null;   // CASTLE-GATE: a crown city's castle entrance
     const seatAnchors = pixelBoardSplit ? seatBannerAnchors({
       frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,
-      gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit,
-      centre: townCentreOf(pixelHomeFrames),
+      gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), centre: townCentreOf(pixelHomeFrames),
     }) : null;
-    // FESTIVAL-STAGE (Seats-Arc 7.6): a Festival's more banners - its taverns' doors, the bounty boards - and a lantern
+    // FESTIVAL-STAGE (Seats-Arc 7.6): a Festival's more banners - its taverns' doors - and a lantern
     // before every banner the town flies, measured here; hung and lit while a Festival rules (scenes/seatFestival.js)
-    const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern), boards: pixelBoards, bounty: pixelBoardSplit }) : null;
+    const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern) }) : null;
     const festivalLanterns = festivalAnchors ? festivalLanternsOf([...(seatAnchors ?? []), ...festivalAnchors]) : null;
     // CHAP7b (Chapters-Arc 8): the town's guild halls and temples, by their guild - a chapter's patron's banners hang at them.
     // AUDIT CHAP5 C5: online alone (the sheet's) - offline no banner hangs, and the buildings' names are drawn for nothing
@@ -1505,7 +1467,7 @@ export function createPixelBuild(host) {
       homeTown, homeKeys: pixelHomeKeys, buildingKeys: pixelBuildingKeys,   // HOME-LOOK: the homes drawn on their own, and every building's key
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
-      seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
+      seatAnchors, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
       witchHomes: witchDress?.homes ?? null, witchFloor,   // WITCH1: each home's Hearth Offering spot, and the street they stand on (scenes/witchesHost.js)
       chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
@@ -1534,7 +1496,6 @@ export function createPixelBuild(host) {
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       standFlats,   // STAND-FLAT / STAND-HORSE: the town horses and the people no StaticNPC holds, a batch each (in `batches`), pixel-local
       npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
-      boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       graves: pixelGraves,   // SEARCH1: a graveyard's headstones, pixel-local boxes
       cityGates: pixelGates,   // AUDIT 64 F14: DaggerfallCityGate's placements (446/447), ticked each frame
       buildings: pixelBuildings,   // AUDIT 64 F11: RMBLayout's StaticBuildings, pixel-local boxes

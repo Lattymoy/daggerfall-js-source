@@ -271,7 +271,7 @@ test('REVENANT-HEIR (Discord, 2026-10-07: "I got them to Elite Level V and I tho
   pool.applyHit('bob-0002', { k: 'world:3,12', i: rev.seq, dmg: 9999, kind: 'melee' });
   assert.equal(rev.dead, false, 'a party member\'s last blow does not kill it');
   assert.ok(rev.yielded, 'it kneels, its fate mine');
-  assert.match(read('src/scenes/dungeonContext.js'), /if \(heirOf && !f\.dead\) \{ const h = f\.entity\?\.revenant\?\.id \? null : \(heirOf\(f\) \?\? null\); f\._heir = h; if \(h\) r\.e = h; \}/, 'underground, my lair\'s stand goes with me too');
+  assert.match(read('src/scenes/dungeonContext.js'), /if \(heirOf && !f\.dead\) \{ const h = f\.entity\?\.revenant\?\.id \|\| f\._delve \? null : \(heirOf\(f\) \?\? null\); f\._heir = h; if \(h\) r\.e = h; \}/, 'underground, my lair\'s stand goes with me too');   // PIN MOVED (DELVE II DLV3): and an encounter's foe, whose machine the dungeon's room names (scenes/delve/delveHost.js)
 });
 
 // ── the wire, the activation, the hosts ────────────────────────────────────────────────────────────────────────

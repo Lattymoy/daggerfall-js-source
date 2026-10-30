@@ -182,8 +182,8 @@
   {
     "name": "SCALE4c-frame-reads-again",
     "file": "src/scenes/world.js",
-    "old": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }",
-    "new": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; if (town) noticeBook.read(town.mapId); }",
+    "old": "heartbeatPart(() => townPanel.boardTown(FRAME_LIVE_MS)));",
+    "new": "heartbeatPart(() => { const id = townPanel.boardTown(FRAME_LIVE_MS); if (id != null) noticeBook.read(id); return id; }));",
     "tests": [
       "test/net/scale4c.test.js"
     ],

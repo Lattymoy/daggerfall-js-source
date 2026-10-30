@@ -133,7 +133,9 @@ test('AUDIT WORLD-EVENTS L1-4 THE PAGES, by source: the Spire\'s witness begins 
   assert.match(kt, /registerPlayerDamageMod\('kt-down', \(_e, d\) => \(down \? 0 : d\)\);\n\s*registerPlayerHold\('kt-down', \(\) => !!down\);/);
   assert.match(read('src/scenes/worldModes.js'), /const paralyzed = staffFrozen\(\) \|\| playerHeld\(\) \|\|/);
   const on = read('src/net/online.js');
-  assert.match(on, /const out = \{ \.\.\.pose, \.\.\.\(dn \? \{ x: dn\[0\], y: dn\[1\], z: dn\[2\], mv: 0, dd: 1 \} : \{\}\),/, 'my pose speaks my body where it lies');
+  // PIN MOVED (DELVE II DLV3): the pose frame's body has one home, _poseOut - sendPose's and _poseCurrent's
+  assert.match(on, /return \{ \.\.\.pose, \.\.\.\(dn \? \{ x: dn\[0\], y: dn\[1\], z: dn\[2\], mv: 0, dd: 1 \} : \{\}\),/, 'my pose speaks my body where it lies');
+  assert.match(on, /const out = this\._poseOut\(pose\);/, 'and sendPose says it so');
   const rw = read('src/net/raiseWord.js');
   assert.match(rw, /if \(isEgRoom\(room\)\) return !!online\.sendEg\?\.\('rz', \{ to \}\);\n\s*if \(isKetchRoom\(room\)\) return !!online\.sendKetch\?\.\('rz', \{ to \}\);/);
 });

@@ -212,7 +212,7 @@ test('GRANT4 THE BUILDING\'S POOL AND THE DUNGEON\'S OWN LANE ARE WIRED: world.j
   assert.match(W, /\n\s+grants,\s+\/\/ GRANT4: the building's own stands/);
   assert.match(W, /grants: \(\) => \(online \? grants : null\),/);
   assert.match(M, /grants: \(\) => host\.grants\?\.\(\) \?\? null,/);
-  assert.match(D, /const ask = bout \? null : grants\?\.\(\)\?\.memberFor\(grantKindOf\(\{ allied, questBehaviour: questSpawn, revenant, loose: true \}\)\) \?\? null/);
+  assert.match(D, /const ask = bout \? null : grants\?\.\(\)\?\.memberFor\(grantKindOf\(\{ allied, questBehaviour: questSpawn, revenant, delve, loose: true \}\)\) \?\? null/);
   assert.match(D, /if \(ask && !gm && grants\?\.\(\)\?\.enforcing\(\)\) return null;\n\s+const f = await buildFoeAt\(e, false\);/);
   assert.match(D, /if \(seeded && f\._grant && !f\._grant\._dead\) r\.gr = \[f\._grant\.g, f\._grantI\];/);
   assert.match(D, /\.\.\.\(gs\.length \? \{ gs \} : \{\}\)/);

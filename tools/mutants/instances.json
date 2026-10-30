@@ -43,8 +43,8 @@
   {
     "name": "INSTANCES-NOT-A-WORLD-ROOM",
     "file": "src/net/wire.js",
-    "old": "(?:\\\\.[ms]|${INSTANCE_TAG_SOURCE})?|interior",
-    "new": "(?:\\\\.[ms])?|interior",
+    "old": "(?:(?:\\\\.[ms])?(?:\\\\.c[1-9]\\\\d{0,2})?|${INSTANCE_TAG_SOURCE})|interior",
+    "new": "(?:(?:\\\\.[ms])?(?:\\\\.c[1-9]\\\\d{0,2})?)|interior",
     "tests": [
       "test/net/instances1.test.js",
       "test/net/instances2_relay.test.js"
@@ -238,7 +238,7 @@
   {
     "name": "INSTANCES-MOUNT-UNGATED",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: builtDungeonSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so\n",
+    "old": "      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: dungeonRoomSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so\n",
     "new": "",
     "tests": [
       "test/systems/quest/instances3_door.test.js"

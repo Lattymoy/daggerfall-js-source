@@ -518,7 +518,7 @@ test('WB9c the seams, by source: the relay judges an `xhit` by applyCrystalHit a
   assert.match(dc, /if \(f\.crystal != null\) return bossSight\(eye, inViewFn, f\);/);
   assert.match(dc, /for \(const cr of gateCrystalBodies\(\)\) \{ cr\._backFacing = false; live\.push\(cr\); \}/);
   assert.match(dc, /if \(foe\.crystal != null\) \{ hitEnemy = true; swingOnCrystal\(foe, damage\); continue; \}/);
-  assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => \{ damage \+= takeOwed\(cr\.entity\); return sdRemnant \? sdRemnant\.heartHit\(\{ c: cr\.crystal, d: damage, r \}\) : !!opts\.onCrystalHit\?\.\(\{ c: cr\.crystal, d: damage, r \}\); \};/);   // PIN MOVED (SD8c): a Heart's of the Reset in the Hour; PIN MOVED (FIELD BUGS 2026-10-12g OPEN-HAND): and the follow-up the blow owes
+  assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => \{ damage \+= takeOwed\(cr\.entity\); return isDelveCrystal\(cr\.crystal\) \? delve\.hit\(cr\.crystal, damage, r\) : sdRemnant \? sdRemnant\.heartHit\(\{ c: cr\.crystal, d: damage, r \}\) : !!opts\.onCrystalHit\?\.\(\{ c: cr\.crystal, d: damage, r \}\); \};/);   // PIN MOVED (DELVE II DLV4): a dungeon encounter's piece, to its host; PIN MOVED (SD8c): a Heart's of the Reset in the Hour; PIN MOVED (FIELD BUGS 2026-10-12g OPEN-HAND): and the follow-up the blow owes
   // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the crystal's spell door left the context for
   // scenes/gate/standInSpell.js, wired with the crystals and their door; its claim goes out as a spell
   assert.match(dc, /createStandInSpell\(\{[^]*?crystals: gateCrystalBodies,[^]*?landOnCrystal,/);

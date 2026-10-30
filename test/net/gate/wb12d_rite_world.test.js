@@ -1102,7 +1102,7 @@ test('WB12d the world host by source: the host made beside the gate on the camps
   assert.match(deps, /omen: \(\) => gateOmen\.nearCurrent\(\),/);   // PIN MOVED (WW2): the nearest gate's - its circle stands where the player is
   assert.match(deps, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null,/);
   assert.match(deps, /online: \(\) => !!online\?\.riteOk,/);
-  assert.match(deps, /return exteriorFoes\.spawnFoe\(career, \[x, y, z\], \{ yaw, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \}, site, transient \}\);/);
+  assert.match(deps, /return exteriorFoes\.spawnFoe\(career, \[x, y, z\], \{ \.\.\.o, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \} \}\);/);   // PIN MOVED (STAR-MASTER-FLED): the rite's options whole - its yaw, site, transient and `eventFoe`
   assert.match(deps, /drop: \(site\) => exteriorFoes\.dropSiteFoes\(site\),/);
   assert.match(deps, /remove: \(f\) => exteriorFoes\.removeFoe\(f\),/);
   assert.match(deps, /reclaim: \(site\) => exteriorFoes\.reclaimSite\(site\),/);
