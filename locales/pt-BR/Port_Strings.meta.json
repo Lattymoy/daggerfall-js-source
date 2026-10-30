@@ -15744,6 +15744,16 @@
   "tr": "9cfc300905f6",
   "by": "claude-in-session"
  },
+ "growth.swap.askTrade": {
+  "en": "1bbcedae9751",
+  "tr": "5d1cc009e91b",
+  "by": "claude-in-session"
+ },
+ "growth.swap.askTradeGroup": {
+  "en": "086c0637b089",
+  "tr": "61f980d65b0d",
+  "by": "claude-in-session"
+ },
  "growth.swap.btn": {
   "en": "653d05e50fe5",
   "tr": "671e9b315c3a",
@@ -15769,9 +15779,34 @@
   "tr": "eafab0435157",
   "by": "claude-in-session"
  },
+ "growth.swap.inGroup": {
+  "en": "496fd2d367e5",
+  "tr": "496fd2d367e5",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.major": {
+  "en": "8a52ed17c589",
+  "tr": "35a34c2218ea",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.minor": {
+  "en": "100b45547163",
+  "tr": "364d51fd7f89",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.primary": {
+  "en": "a9a96ec01949",
+  "tr": "464e65017a41",
+  "by": "claude-in-session"
+ },
  "growth.swap.lead": {
   "en": "bfe1e1c66c0c",
   "tr": "07898a98e599",
+  "by": "claude-in-session"
+ },
+ "growth.swap.leadTrade": {
+  "en": "497642a8a554",
+  "tr": "b782e03d0807",
   "by": "claude-in-session"
  },
  "growth.swap.lockOff": {
@@ -15787,6 +15822,11 @@
  "growth.swap.noSlots": {
   "en": "87be34e1619e",
   "tr": "0abe32c16a98",
+  "by": "claude-in-session"
+ },
+ "growth.swap.noSlotsOut": {
+  "en": "94d1034727da",
+  "tr": "cd0acca297fa",
   "by": "claude-in-session"
  },
  "growth.swap.out": {
@@ -17287,6 +17327,11 @@
  "input.action.professions": {
   "en": "17158d478b21",
   "tr": "9b77a75fffb2",
+  "by": "claude-in-session"
+ },
+ "input.action.pvpFlag": {
+  "en": "1452b34a6cd2",
+  "tr": "c30c45e84996",
   "by": "claude-in-session"
  },
  "instance.door.castle": {
@@ -34384,14 +34429,19 @@
   "tr": "2b636dbfb68a",
   "by": "claude-in-session"
  },
+ "pvp.flag.noKey": {
+  "en": "31eb2159f79d",
+  "tr": "09662f051565",
+  "by": "claude-in-session"
+ },
  "pvp.flag.off": {
   "en": "4fc64767da48",
   "tr": "9fba4676e51f",
   "by": "claude-in-session"
  },
  "pvp.flag.offTitle": {
-  "en": "9644167313cd",
-  "tr": "6eb99450ab8c",
+  "en": "401f5d098ff9",
+  "tr": "cfbacf50b106",
   "by": "claude-in-session"
  },
  "pvp.flag.on": {
@@ -34400,8 +34450,8 @@
   "by": "claude-in-session"
  },
  "pvp.flag.onTitle": {
-  "en": "ab2d677be3ee",
-  "tr": "02552eddacef",
+  "en": "e34a21eef0e1",
+  "tr": "dc01e4b4187f",
   "by": "claude-in-session"
  },
  "pvp.flag.villain": {
@@ -40515,8 +40565,13 @@
   "by": "claude-in-session"
  },
  "skillswap.refuse.in": {
-  "en": "effed572fbaa",
-  "tr": "d4b1e2584415",
+  "en": "e4a7c34be270",
+  "tr": "c7096113c13d",
+  "by": "claude-in-session"
+ },
+ "skillswap.refuse.inMastered": {
+  "en": "ee39e3d7142f",
+  "tr": "01184b80e365",
   "by": "claude-in-session"
  },
  "skillswap.refuse.mastered": {
@@ -40527,6 +40582,11 @@
  "skillswap.refuse.out": {
   "en": "3c53f6010767",
   "tr": "5450b551f12d",
+  "by": "claude-in-session"
+ },
+ "skillswap.trade.done": {
+  "en": "3a52b3c3917d",
+  "tr": "5ee5f950366c",
   "by": "claude-in-session"
  },
  "skin.layered.about": {
