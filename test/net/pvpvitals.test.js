@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, bowFastCut, BOW_FAST, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
+import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, bowFastCut, BOW_FAST, BOW_FAST_WITHIN, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
 import { HEALTH_SHARE_WHOLE, takeHealthReport, PVP_HEALTH_MAX } from '../../src/net/siege/refereeHealthShare.js';
 import { newWildRef, wildZone, wildBlow, wildCarry, wildCarryOf, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT, newFighter } from '../../src/net/siege/siegeRef.js';
@@ -128,6 +128,10 @@ test('BOW-FAST: the relay cuts a judged shaft landing within a second of the las
   assert.deepEqual(cuts, [100, 80, 60, 40, 20, 20]);
   assert.equal(bowFastCut(f, 100, 2500 + 1000), 100, 'a second apart');
   assert.equal(bowFastCut(f, 1, 3600), 1, 'at least 1 kept');
+  assert.deepEqual(BOW_FAST_WITHIN, { 129: 0.75, 130: 1.25 });
+  const s = newFighter(10, 0), l = newFighter(10, 0);
+  assert.deepEqual([bowFastCut(s, 100, 1000, 129), bowFastCut(s, 100, 1800, 129)], [100, 100], 'a Short Bow rests sooner');
+  assert.deepEqual([bowFastCut(l, 100, 1000, 130), bowFastCut(l, 100, 2200, 130)], [100, 80], 'a Long Bow later');
 });
 
 test('SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, two may bunch; a Cleave lands on each player in its arc (mutants: no bucket; one bucket for all targets)', () => {

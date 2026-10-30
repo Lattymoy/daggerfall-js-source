@@ -454,7 +454,9 @@ resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: D
 BOW-RATE: an arrow comes no sooner than the fastest honest bow, its four-tick loose with no reload, so 0.25 s. Two may
 arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now)"`).
 The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
+
 SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
 0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
-BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within a second of the last, four at most
-(`pvpVitals.js:"export function bowFastCut(f, d, now) {"`). The game sends that claim uncut, so it cannot skip the cut.
+
+BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
+(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut.

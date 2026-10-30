@@ -103,7 +103,7 @@
   {
     "name": "BOW-FAST-no-stacks",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < BOW_FAST.within * 1000 ?",
+    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ?",
     "new": "  v.fastK = false ?",
     "tests": [
       "test/net/pvpvitals.test.js"
@@ -119,5 +119,15 @@
       "test/net/pvpvitals.test.js"
     ],
     "note": "A fifth arrow would be cut to the floor of 1."
+  },
+  {
+    "name": "BOW-KINDS-window-unread",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? BOW_FAST.within;",
+    "new": "  const within = BOW_FAST.within;",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A Long Bow's quick shots would escape their cut."
   }
 ]

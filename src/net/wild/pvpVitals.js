@@ -36,6 +36,8 @@ export const PVP_VITALS = Object.freeze({
  *  `cut` per cent off it, at least 1 kept (combat/bowBloom.js BOW_FAST, pinned equal). The relay counts it for a shaft it
  *  judges, so a game cannot leave the cut off. */
 export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
+/** BOW-KINDS: a bow's own window by its template (bowBloom.js BOW_KINDS, pinned equal) - the Short Bow quicker, the Long slower. */
+export const BOW_FAST_WITHIN = Object.freeze({ 129: 0.75, 130: 1.25 });
 
 /** Declarations a report may carry (`u`): a potion drunk (health, magicka, other), or a kit spell cast on myself (10 + its
  *  place in KIT_ORDER). */
@@ -100,10 +102,11 @@ export function shaftPaid(f, now) {
   v.shafts -= 1;
   return true;
 }
-/** BOW-FAST: a judged shaft's claim `d` landing now, after its stacks. */
-export function bowFastCut(f, d, now) {
+/** BOW-FAST: a judged shaft's claim `d` landing now from the bow of template `w`, after its stacks. */
+export function bowFastCut(f, d, now, w = null) {
   const v = vitalsOf(f, now);
-  v.fastK = now - (v.fastAt ?? -Infinity) < BOW_FAST.within * 1000 ? Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;
+  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? BOW_FAST.within;
+  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;
   v.fastAt = now;
   return v.fastK > 0 && d > 0 ? Math.max(1, Math.round((d * (100 - BOW_FAST.cut * v.fastK)) / 100)) : d;
 }
