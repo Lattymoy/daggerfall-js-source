@@ -89,6 +89,7 @@ export function weaponElement(item, { ladder = lootRarityOn() } = {}) {
 function specOf(item, arcane, on, ladder) {
   if (!item || !(on ?? weaponGlowOn())) return null;
   if (item.glowSet) { const set = glowFromWord(item.glowSet); if (set) return set; }   // GLOW-SET: law 9, a staff's pick, first
+  if (isHandWraps(item)) return fistGlow(undefined, true);   // WRAPS-AURA (mob: "wraps are glowing without the aura on"): wraps glow by the weapon aura alone
   if (isGilded(item) && (ladder ?? lootRarityOn())) return glowSpec('gilded', GILDED_LEVEL);   // GILDED-GLOW: law 8, first
   const i = elementIndex(item, ladder ?? lootRarityOn());
   if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));
@@ -206,7 +207,8 @@ const SPEC_BY_WORD = new Map(Object.values(SPEC_TABLE).flatMap((row) => row.filt
 /** THE CLASSIC HAND'S ASK: the outline its sprite wears (law 8's crimson, an element or law 7's piece - its enchanted
  *  look is its WEAPO1xx sheet), or null. When this answers, the rig swings the PLAIN sheet (combat/fpsWeapon.js
  *  plainWeaponType): an outline round a sheet painted with the blue glow says two things at once.
- *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps take law 5's arcane outline here too.
+ *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps took law 5's arcane outline here too - until
+ *  WRAPS-AURA, which lights wraps by the weapon aura alone (specOf).
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */
 export const spriteGlow = (item, opts) => specOf(item, isHandWraps(item), opts?.on, opts?.ladder);
 

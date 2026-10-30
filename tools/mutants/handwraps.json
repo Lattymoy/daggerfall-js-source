@@ -210,14 +210,14 @@
     "note": "the Stats page reads a 0-0 weapon"
   },
   {
-    "name": "HANDWRAPS-no-arcane",
+    "name": "WRAPS-AURA-dropped",
     "file": "src/systems/weaponGlow.js",
-    "old": "export const spriteGlow = (item, opts) => specOf(item, isHandWraps(item), opts?.on, opts?.ladder);",
-    "new": "export const spriteGlow = (item, opts) => specOf(item, false, opts?.on, opts?.ladder);",
+    "old": "  if (isHandWraps(item)) return fistGlow(undefined, true);",
+    "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
-    "note": "enchanted wraps show nothing on the classic fists"
+    "note": "enchanted wraps glow with no weapon aura"
   },
   {
     "name": "HANDWRAPS-arcane-everywhere",
