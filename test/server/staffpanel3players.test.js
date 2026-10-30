@@ -469,7 +469,9 @@ test('STAFF-PANEL3-PLAYERS: the lists a rename refuses are every role and title 
   const copies = [...sql.matchAll(/^UPDATE (\w+) SET (\w+) = 'SanguinePanguine' WHERE lower/gm)].map((m) => [m[1], m[2]]);
   // STAFF-PANEL3-PLAYERS FIX: a character's name (renown_tracks), an account's id (closed_by) and a guild's (fealty, pacts)
   const NO_HANDLE = ['renown_tracks.name', 'guild_writs.closed_by', 'guild_contracts.closed_by', 'guild_fealty.offered_by', 'guild_fealty.broken_by', 'guild_pacts.offered_by'];
-  assert.deepEqual([...NAME_COPIES].map((c) => c.slice(0, 2).join('.')).sort(), copies.map((c) => c.join('.')).filter((c) => !NO_HANDLE.includes(c)).sort());
+  // GUILD-REQUESTS (0199, after 0134): a request keeps the asker's handle as a member's row does
+  const SINCE = ['guild_requests.name'];
+  assert.deepEqual([...NAME_COPIES].map((c) => c.slice(0, 2).join('.')).sort(), [...copies.map((c) => c.join('.')).filter((c) => !NO_HANDLE.includes(c)), ...SINCE].sort());
 });
 
 test('STAFF-PANEL3-PLAYERS FIX: A HANDLE RENAMED WRITES ITS OWN COPIES ALONE - never another account\'s row that reads like the old handle, a guild\'s hall named like it, or a character\'s renown track (mutants: each scope; the renown track a copy again)', async () => {
