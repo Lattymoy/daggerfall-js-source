@@ -73,7 +73,7 @@ window draws each piece on its own stage, as the shop does (`src/ui/brokerWindow
 Daggerfall Unity has no such sale; this is the WB9g Broker's law, extended.
 
 **The shop.** The Eternal pieces are wares of the kind `armory`, a section of their own in the window
-(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256) gives all five, and each piece is $6
+(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256; AURUM-ONLY, 2,000 Aurum) gives all five, and each piece is $6 (600 Aurum)
 alone. A ware already had is not sold again (`shopOwns`): a piece the set gave, or the set once the five singles are held.
 Each is on sale while `SHOP_ON_SALE` names it.
 

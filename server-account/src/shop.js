@@ -4,8 +4,7 @@
 // SHOP'S SIDE OF THE SERVICE. What a ware is lives in src/net/shopLaw.js; this file sells one. Stripe takes the money on
 // its own hosted page, so no card number ever reaches this service, and Stripe's signed word on a payment is the one
 // thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch. AURUM-ONLY (2026-10-30): money
-// buys the Aurum packs alone; every other ware is bought with Aurum (aurum.js buyWare). An order older than that for
-// another ware is still fulfilled, refunded and taken back as it always was.
+// buys the Aurum packs alone (aurum.js buyWare sells the rest); an older order still lands and goes back as before.
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
 import {
   SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch,

@@ -34,10 +34,11 @@ in the shop weighed before it ships and timed to its launch window; and sales tr
 | Consumable Bundles | Not built: every consumable in the game is power (section 11) |
 
 **Nothing over $30** (the owner, 2026-10-29: *"the most expensive anything should be is $30"*). The table quotes the
-sheet's prices. Ours keep its three tiers and are about half of them, none over `SHOP_PRICE_CAP` (`src/net/shopLaw.js`):
-a kill effect $4.99 to $14.99, a portal skin $7.99 to $19.99, a mount look $9.99 to $24.99, a name visual $3.99 to
-$9.99, a bundle $19.99 to $29.99 and an Aurum pack $4.99 to $29.99. `test/server/shop_service.test.js` holds every ware
-to the cap.
+sheet's prices. Ours keep its three tiers and are about half of them. **AURUM-ONLY** (the owner, 2026-10-30: *"nothing
+should cost money money anymore"*): every ware is bought with Aurum at $1 = 100 Aurum, to the whole dollar, and money
+buys the Aurum packs alone (`06-Systems/Aurum.md` sections 4 and 5). So a kill effect is 500 to 1,500 Aurum, a portal
+skin 800 to 2,000, a mount look 1,000 to 2,500, a name visual 400 to 1,000, a bundle 2,000 to 3,000, and an Aurum pack
+$4.99 to $29.99. `test/server/shop_service.test.js` holds every ware to the cap, `SHOP_AURUM_CAP` and `SHOP_PRICE_CAP`.
 
 **Cosmetic, always.** The shop's own line is "Every item is cosmetic. It gives no power in the game." and the Terms of
 Service section 9 is "No pay-to-win rights". Renown is power (it raises health and magicka a level), so the sheet's EXP
@@ -46,10 +47,10 @@ Boosters were built as Pass Boosters, which sped the pass's track alone; PASS-PA
 
 ## 3. The catalogue (`src/net/shopLaw.js`)
 
-The window's sections, in order: the Folios (the pass), the Daily Wares (AURUM: the day's wares sold for Aurum, while
-Aurum is open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and
-glyphs), Auras, Aura Armory, Bundles and Aurum (its four packs). The Folios sell nothing for money: their pages are
-bought with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's
+The window's sections, in order: the Folios (the pass), the Daily Deals (AURUM-ONLY: the day's five wares a quarter off,
+while Aurum is open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and
+glyphs), Profile Icons, Auras, Aura Armory, Bundles and Aurum (its four packs, the only thing sold for money). Every ware
+and the Folios' pages are bought with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's
 three columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
@@ -59,11 +60,11 @@ happened. Every later ware is held by its id in `players.shop_held`, space-separ
 
 **A ware that gives others.** A bundle and the Eternal Set each give a list of wares. Holding one holds everything it
 gives, read at every ask. A ware is not sold again once it, or everything it gives, is held. Its price for an account is
-its price times the share of its worth not yet held, never under Stripe's fifty cents: a Daedric Champion bought by
-someone who holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same law, a departure
-from ARMORY's full $20 for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
+its price times the share of its worth not yet held, never under 50 Aurum: a Daedric Champion bought by someone who
+holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same law, a departure from ARMORY's
+full price for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
 
-**What a payment covers** (AUDIT-STOREFRONT S1). An order keeps its **credit** - what of its ware the account held at
+**What a payment covers** (AUDIT-STOREFRONT S1; since AURUM-ONLY, an order made before the switch). An order keeps its **credit** - what of its ware the account held at
 checkout, which its price took off (`shopCreditOf`). It covers the rest (`orderCovers`). A payment taken back - a refund,
 a dispute - takes off what it alone covered: its ware, and each ware a giver still held would give that no other paid
 order covers. Those are marked `-<id>` in `shop_held` (`shopLostOf`), so the giver no longer gives them; a payment that
@@ -185,13 +186,13 @@ dye and its beat, is drawn by the viewer's "Others' effects" choice, as its kill
 
 | Bundle | Price | Gives | Worth alone |
 | --- | --- | --- | --- |
-| Daedric Champion | $27.99 | the Daedric Dominion aura, the Daedric Pyre, Eternal Champion, the Oblivion Sigil | $42.96 |
-| Portal Master | $19.99 | the Daedric Stone, the Daedric Dominion aura, the Gate Sigil | $30.97 |
-| Lord of Oblivion | $29.99 | the Daedric Warhorse, the Daedric Stone, the Daedric Dominion aura, the Daedric Pyre | $67.96 |
+| Daedric Champion | 2,800 Aurum | the Daedric Dominion aura, the Daedric Pyre, Eternal Champion, the Oblivion Sigil | 4,300 Aurum |
+| Portal Master | 2,000 Aurum | the Daedric Stone, the Daedric Dominion aura, the Gate Sigil | 3,100 Aurum |
+| Lord of Oblivion | 3,000 Aurum | the Daedric Warhorse, the Daedric Stone, the Daedric Dominion aura, the Daedric Pyre | 6,800 Aurum |
 
 Each costs well under its worth (section 2's cap, AUDIT-STOREFRONT II). The sheet's Seasonal Collector was built and
 then retired with the money passes (PASS-PANELS); its Brass Crown is on the premium track. The sheet's Lord of Oblivion
-priced a Standard mount; its mount is the Exclusive Daedric Warhorse, and the cap holds it at $29.99.
+priced a Standard mount; its mount is the Exclusive Daedric Warhorse, and the cap holds it at 3,000 Aurum.
 
 ## 9. The window
 

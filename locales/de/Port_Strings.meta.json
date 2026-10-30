@@ -859,11 +859,6 @@
   "tr": "aba1694db6bb",
   "by": "claude-in-session"
  },
- "account.refusal.aurumClosed": {
-  "en": "b4c7bc3fa026",
-  "tr": "96178a70c3ea",
-  "by": "claude-in-session"
- },
  "account.refusal.aurumGuest": {
   "en": "d88abd49a869",
   "tr": "eec36072ff0c",
@@ -874,14 +869,24 @@
   "tr": "2026c00e4a85",
   "by": "claude-in-session"
  },
+ "account.refusal.aurumPrice": {
+  "en": "cec7bccdf59f",
+  "tr": "f1b751618a0a",
+  "by": "claude-in-session"
+ },
+ "account.refusal.aurumSale": {
+  "en": "7da42088d665",
+  "tr": "fc24b3cf5699",
+  "by": "claude-in-session"
+ },
  "account.refusal.aurumShort": {
   "en": "950305ad506a",
   "tr": "26e0671d70ca",
   "by": "claude-in-session"
  },
- "account.refusal.aurumToday": {
-  "en": "5191ddb4227e",
-  "tr": "07372ea9effd",
+ "account.refusal.aurumShut": {
+  "en": "8611595953a6",
+  "tr": "aff464535824",
   "by": "claude-in-session"
  },
  "account.refusal.aurumWare": {
@@ -9334,9 +9339,9 @@
   "tr": "ee2641d15657",
   "by": "claude-in-session"
  },
- "coll.how.bundle": {
-  "en": "77cfe6da1720",
-  "tr": "9fea6d65e69f",
+ "coll.how.bundleAurum": {
+  "en": "4361b4522a37",
+  "tr": "d5ccac0d736d",
   "by": "claude-in-session"
  },
  "coll.how.champion": {
@@ -9362,11 +9367,6 @@
  "coll.how.crowned": {
   "en": "0ea6949dfbe8",
   "tr": "2c602018675c",
-  "by": "claude-in-session"
- },
- "coll.how.daily": {
-  "en": "f11a65212be0",
-  "tr": "afc5b7961fa3",
   "by": "claude-in-session"
  },
  "coll.how.developer": {
@@ -9539,19 +9539,19 @@
   "tr": "9fcaef04fa64",
   "by": "claude-in-session"
  },
- "coll.how.shop": {
-  "en": "f1b1c526cb50",
-  "tr": "04886cbcba10",
+ "coll.how.shopAurum": {
+  "en": "270dc221f8fd",
+  "tr": "e673ac45d288",
   "by": "claude-in-session"
  },
- "coll.how.shopOrDaily": {
-  "en": "9f304a87b16a",
-  "tr": "03d3f806f738",
+ "coll.how.shopDeal": {
+  "en": "b8925fe1c7e3",
+  "tr": "332a7707a37a",
   "by": "claude-in-session"
  },
- "coll.how.shopPiece": {
-  "en": "ab3993d64af9",
-  "tr": "5c0021e8e036",
+ "coll.how.shopPieceAurum": {
+  "en": "b51411258fda",
+  "tr": "fbb226319440",
   "by": "claude-in-session"
  },
  "coll.how.soulcake": {
@@ -41039,9 +41039,9 @@
   "tr": "07469fa71a4b",
   "by": "claude-in-session"
  },
- "shop.aurum.lineFolios": {
-  "en": "74b127664b33",
-  "tr": "206c435c04b8",
+ "shop.aurum.lineAll": {
+  "en": "a788a437c346",
+  "tr": "e3e3191ece6d",
   "by": "claude-in-session"
  },
  "shop.aurum.rules": {
@@ -41064,9 +41064,9 @@
   "tr": "1aba0ab8fd44",
   "by": "claude-in-session"
  },
- "shop.bundle.worth": {
-  "en": "c83af4f393f7",
-  "tr": "60f6024260ae",
+ "shop.bundle.worthAurum": {
+  "en": "bf84eac7815f",
+  "tr": "9899fa364be9",
   "by": "claude-in-session"
  },
  "shop.buy": {
@@ -41154,8 +41154,8 @@
   "tr": "42c7e502e9fa",
   "by": "claude-in-session"
  },
- "shop.cat.daily": {
-  "en": "8f409251fa32",
+ "shop.cat.deals": {
+  "en": "d541e5c255de",
   "tr": "1edeed2823c3",
   "by": "claude-in-session"
  },
@@ -41234,16 +41234,6 @@
   "tr": "4a7d5f154dbb",
   "by": "claude-in-session"
  },
- "shop.daily.gone": {
-  "en": "bf0a89162df4",
-  "tr": "729999f439ec",
-  "by": "claude-in-session"
- },
- "shop.daily.line": {
-  "en": "79d504fbbd12",
-  "tr": "e093c1e42ed2",
-  "by": "claude-in-session"
- },
  "shop.daily.priceLabel": {
   "en": "63690dec55d3",
   "tr": "63690dec55d3",
@@ -41254,11 +41244,6 @@
   "tr": "2a322e323b06",
   "by": "claude-in-session"
  },
- "shop.daily.title": {
-  "en": "7a807f991858",
-  "tr": "5557afeb8916",
-  "by": "claude-in-session"
- },
  "shop.daily.turnsH": {
   "en": "2e9b038a693b",
   "tr": "cf8c2547b224",
@@ -41267,6 +41252,16 @@
  "shop.daily.turnsM": {
   "en": "766c2a0f1fdc",
   "tr": "d9fad33d3b8e",
+  "by": "claude-in-session"
+ },
+ "shop.deals.line": {
+  "en": "d3940286c4b7",
+  "tr": "cea40fee39a5",
+  "by": "claude-in-session"
+ },
+ "shop.deals.title": {
+  "en": "64386239cff6",
+  "tr": "5557afeb8916",
   "by": "claude-in-session"
  },
  "shop.deed.done": {
@@ -41374,9 +41369,9 @@
   "tr": "4b79ba2709ca",
   "by": "claude-in-session"
  },
- "shop.look.aurumFolios": {
-  "en": "8a8248cf38ef",
-  "tr": "fe3cb9a17dbf",
+ "shop.look.aurumAll": {
+  "en": "33aa109e33bd",
+  "tr": "3e2a44b0c028",
   "by": "claude-in-session"
  },
  "shop.look.azurastar": {
@@ -41782,6 +41777,11 @@
  "shop.tag.account": {
   "en": "e6ddf5b83c99",
   "tr": "f2285791bc94",
+  "by": "claude-in-session"
+ },
+ "shop.tag.deal": {
+  "en": "c5d56538464d",
+  "tr": "47edbe689800",
   "by": "claude-in-session"
  },
  "shop.tag.featured": {

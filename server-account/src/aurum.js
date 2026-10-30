@@ -91,13 +91,11 @@ export async function aurumCardOf({ db, nowS }, player, env) {
 }
 
 /**
- * A WARE BOUGHT FOR AURUM (AURUM-ONLY: every ware but a pack): `body.ware` sold now or among the day's deals, not held,
- * for its price for this row (aurumPriceAt) - and, when the page says what it showed (`body.price`), that price, so a deal
- * turned at midnight or a giver's share moved is told before it is spent. In ONE TRANSACTION: the ledger's line written
- * only while the balance (its packs and lines as they stand then) covers the price, and the ware put on the row only
- * while the row is the one read. A row moved meanwhile (a grant, a refund) is read again, three times. `{ ok, ware, spent,
- * row }` - `row` the account's whole row after, for the wardrobe - or `{ error }`: aurum-guest, -closed, -ware, -sale (not
- * sold now), -price (with `price`), -held, -short (with `balance`), -busy.
+ * A WARE BOUGHT FOR AURUM (AURUM-ONLY: any but a pack), sold now or a deal today, at this row's price (aurumPriceAt) -
+ * and at `body.price`, the page's, when it says one: a price moved since is told, never spent. ONE TRANSACTION: the line
+ * written only while the balance covers the price, the ware put on the row only while the row is the one read; a row
+ * moved meanwhile is read again, three times. `{ ok, ware, spent, row }` or `{ error }`: aurum-guest, -closed, -ware,
+ * -sale, -price (with `price`), -held, -short (with `balance`), -busy.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
 export async function buyWare({ db, nowS }, player, body, env) {

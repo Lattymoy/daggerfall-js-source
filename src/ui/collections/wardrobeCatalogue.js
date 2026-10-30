@@ -165,7 +165,7 @@ const S1 = Object.freeze({ season: 's1' });
 /** GUILD-SHOP: a guild shop ware's way - its silver price, a member's own (net/guild/guildShopLaw.js). */
 const guildWare = (/** @type {string} */ key) => () => t('coll.how.guildShop', 'Buy it on the Shop page of the Guild window for {price} of your own silver. It shows your guild\'s arms.', { price: marksText(guildWareOf(key)?.price ?? 0) });
 /** ARMORY: an Eternal piece's words of how - alone at its price, or with the four others in the Eternal Set. */
-const shopPiece = (/** @type {string} */ id) => () => t('coll.how.shopPieceAurum', 'Buy it from the shop, the gem on the pause screen, for {aurum, number} Aurum, or with the other four in The Eternal Set for {set, number} Aurum.', { aurum: shopWareById(id)?.price ?? 0, set: shopWareById('armory:eternalset')?.price ?? 0 });
+const shopPiece = (/** @type {string} */ id) => () => t('coll.how.shopPieceAurum', 'Buy it from the shop, the gem on the pause screen, for {aurum, number} Aurum. The Eternal Set gives it with the other four for {set, number} Aurum.', { aurum: shopWareById(id)?.price ?? 0, set: shopWareById('armory:eternalset')?.price ?? 0 });
 const patron = (/** @type {string} */ tier) => () => t('coll.how.patron', 'Support DFO Online on Patreon at the {tier} tier, then link Patreon from your profile - or be granted it by name.', { tier: TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (tier)] });
 /** Apostle: a Patreon tier's title no pledge maps yet (server-account/wrangler.toml PATREON_TIERS), held by name alone. */
 const apostle = () => t('coll.how.apostle', 'A Patreon reward with no tier to pledge yet - for now it is granted by name.');

@@ -6,6 +6,9 @@
 > A, SHOP).
 > STOREFRONT (2026-10-29) rebuilt the catalogue, the window and the purchase path on this one - tiers, wares held by
 > id, bundles priced against what is held, the featured carousel: `06-Systems/Storefront.md`. This page stays SHOP's record.
+> AURUM-ONLY (2026-10-30, the owner: "nothing should cost money money anymore"): every ware, the pre-alpha nine with them,
+> is bought with Aurum at $1 = 100 Aurum, and money buys the Aurum packs alone (`06-Systems/Aurum.md` sections 4 and 5).
+> An order paid before the switch is still granted, refunded and taken back as this page says.
 
 ## 1. What was asked
 

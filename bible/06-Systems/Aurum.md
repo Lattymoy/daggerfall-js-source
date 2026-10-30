@@ -1,4 +1,4 @@
-# Aurum and the daily wares (AURUM)
+# Aurum, every ware and the daily deals (AURUM)
 
 > Design page and record (2026-10-29). Where the page and the code disagree, the code's headers and the pins are what
 > runs. Not a DFU member: Daggerfall Unity has no accounts, no shop and no currency outside the game (Port-Ledger
@@ -14,6 +14,11 @@ detail"*. "The past" is read as the pass - the Battle Pass.
 PASS-PANELS, the owner, 2026-10-30: *"a free panel track and a premium panel track using our new currency to both unlock
 tracks and buy the items"*, earned by *"Deeds and world finds"* and *"Also Aurum caches"*. So the pass's tracks are
 bought with Aurum, and the pass no longer gives it (`Battle-Pass.md` section 3).
+
+AURUM-ONLY, the owner, 2026-10-30: *"So nothing should cost money money anymore. Aurem should now be the main way to buy
+all items. Aurem purchase itself should be the only thing."* Asked, the owner chose $1 = 100 Aurum and daily deals at a
+quarter off. So every ware in the shop is bought with Aurum, and money buys the packs alone (sections 4 and 5). With
+it: *"ensure the aurem caches are balanced"* (section 3a, Balance).
 
 ## 2. The currency
 
@@ -31,7 +36,7 @@ line is keyed by its account, kind and ref, so none is written twice:
 | `challenge` | `<season>:<challenge>` | the challenge's Aurum, once |
 | `deed` | `<deed>:<week>` | the week's deed, once |
 | `cache` | the cache's id | a cache's Aurum |
-| `buy` | the daily ware | its price, negative |
+| `buy` | the ware bought | its price, negative |
 | `track` | `<season>:premium` | the premium track's price, negative |
 | `panel` | `<season>:<item>` | the item's price, negative |
 
@@ -64,7 +69,7 @@ week's 120 Aurum a player can earn is held by the same checks those claims are.
 The owner, asked whether "world finds" meant deeds alone or "also Aurum caches placed in the world (dungeon chests,
 points of interest) that a player picks up, each one server-checked and under a daily cap": *"Also Aurum caches"*.
 
-**Where they stand.** Each UTC day one dungeon in five holds an Aurum coffer, the same dungeons for every player: a
+**Where they stand.** Each UTC day one dungeon in four holds an Aurum coffer, the same dungeons for every player: a
 hash of the day and the dungeon's key (`src/net/aurumCacheLaw.js` aurumCacheHolds). The key is the professions'
 (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map id of a lair, a ruin, a spawned dungeon
 or an abyss past the Bay, so every theatre has its caches. A made level (the Burning Court, the Shattered Hour, the
@@ -80,21 +85,29 @@ pile (AUDIT-STOREFRONT III lane D, measured on the freeware over the Bay and eve
 **Found and opened.** In a cache dungeon the HUD says "An Aurum coffer is hidden in this dungeon today." The coffer is
 an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`, a billboard as
 Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the service, and on a
-yes the coffer stands open and empty and the HUD says "+15 Aurum". A refusal says why. A coffer the account emptied
+yes the coffer stands open and empty and the HUD says "+25 Aurum". A refusal says why. A coffer the account emptied
 stands open for it on every visit that day; the device keeps a note, and the service's answer is what counts. The note
 also keeps a UTC day the account claimed its third cache: no shut coffer stands for it again that day. A coffer pressed
 after its id has expired (stood before one midnight, pressed after the next) is taken away.
 
 **The claim.** `/v1/aurum/cache` `{ id }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
 `<day>:d<dungeon>`, checked by the law alone: in its one spelling, a place that holds a cache that day, of today or
-yesterday (a coffer found just before midnight). One statement writes a ledger line of 15 Aurum, kind `cache` and ref
+yesterday (a coffer found just before midnight). One statement writes a ledger line of 25 Aurum, kind `cache` and ref
 the id, only while the account has claimed fewer than three today; the line's key makes a second claim of one id
-write nothing. So the caches pay an account 45 Aurum a day at most. The balance needs nothing new: it sums the ledger.
+write nothing. So the caches pay an account 75 Aurum a day at most. The balance needs nothing new: it sums the ledger.
 It refuses a guest, a closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's caches spent, and it is
 a progression claim (`progress.js`): asked of the seated realm character, as the Maul's day is.
 
 **What the service cannot see.** It holds no map, so a forged id of a real-shaped dungeon that holds a cache that day
-is taken. The day's bound is what holds: no account earns more than 45 Aurum a day from caches, forged or found.
+is taken. The day's bound is what holds: no account earns more than 75 Aurum a day from caches, forged or found.
+
+**Balance** (AURUM-CACHES BALANCE, 2026-10-30). At 15 Aurum in one dungeon in five, a dungeon visit was worth 3 Aurum
+on average - a tenth of the finds a run gives - and a regular player (four dungeons a day) earned 9% of a week from
+caches; the day's three were rarely reached. With every ware now in Aurum the caches are 25 Aurum in one dungeon in
+four, three a day: a cache is worth two and a half quests' finds, a regular day finds about one, and a dungeon visit is
+worth about 6 Aurum. The caches' day, 75 at most, stays under the finds' own 100, so deeds stay the first way Aurum is
+earned. Modelled for a casual, a regular and a dedicated player, caches are now 16%, 16% and 24% of their week.
+`test/net/aurum_cache_law.test.js` holds the ratios, not only the numbers.
 
 **The four hosts.** `dungeonContext.js` stands the coffer at the end of its build, and its takeLoot presses it; the loot
 arms of `worldModes.js`'s dungeon ladder and the standalone `dungeon.js` carry the `aurum:` key there, as DELVE II's
@@ -105,19 +118,23 @@ another slice. Not a DFU member (Port-Ledger section A, AURUM-CACHES).
 
 ## 4. Bought
 
-Four packs, sold through Stripe like every ware (`src/net/shopLaw.js`, kind `aurum`): 500 for $4.99, 1,100 for $9.99,
+Four packs, the only thing sold for money (AURUM-ONLY; `src/net/shopLaw.js`, kind `aurum`, through Stripe): 500 for $4.99, 1,100 for $9.99,
 2,400 for $19.99 and 3,900 for $29.99 - 10, 20 and 30 more in a hundred than the smallest pack's rate
 (`aurumLaw.js` aurumBonusOf). A pack is never held: bought again, it gives again. Its order keeps its Aurum from its
 checkout, so a refund, a dispute and a dispute won move the balance with the order. A pack is sold only while
 `AURUM_OPEN` is `on`; `dev` opens Aurum to the developers alone, and `off` closes it.
 
-## 5. Spent: the daily wares
+## 5. Spent: every ware, and the daily deals
 
-Each UTC day the shop sells five wares for Aurum: two effects (a kill effect, a portal skin or a mount look), one name
-visual and two profile icons, drawn from `AURUM_DAILY` (nine effects, three titles, eight icons). The effects and titles
-are sold for money too; the eight icons are sold for Aurum alone. A season's items never come round: its tracks are how
-those are had. Prices run from 200 Aurum (an icon) to 2,200 (the Daedric Warhorse): a ware sold for money too costs a
-little under its price at the smallest pack's rate, so no daily ware is dearer than the shop's $30 cap.
+**Every ware** in the shop is bought with Aurum (AURUM-ONLY): its price is its old dollar price at $1 = 100 Aurum, to the
+whole dollar - 200 Aurum (an icon or the Origin glyph) to 3,000 (the Lord of Oblivion bundle), so none passes the $30 cap
+(`shopLaw.js` SHOP_AURUM_CAP). A bigger pack's bonus makes every ware cheaper bought in bulk. A bundle costs its Aurum
+less the share of it already held, never under 50. The packs are bought with money alone, and never with Aurum.
+
+**The daily deals.** Each UTC day five wares are a quarter off (`aurumLaw.js` AURUM_DEAL): two effects (a kill effect, a
+portal skin or a mount look), one name visual and two profile icons, drawn from `AURUM_DAILY` (nine effects, three titles,
+eight icons). A deal costs three quarters of the ware's price, 150 Aurum to 1,875 (the Daedric Warhorse). A season's items
+never come round: its tracks are how those are had.
 
 **The rotation** (`aurumLaw.js` aurumDailyOf) is decided the same on every machine from 1 October 2026: in each slot,
 the wares longest unseen come first, each nudged by a hash of the day so the same pairs do not come round together. Over
@@ -130,16 +147,19 @@ short of wares hands its count to the next, so a day still shows five (no title 
 wares for two places must show one twice running: a tie goes to the ware on the shorter run, so each shows two days and
 rests one, in turn. Before, one effect won every tie by its id and showed fourteen days running.
 
-**A buy** (`/v1/aurum/buy`, `server-account/src/aurum.js` buyDaily) is one D1 batch: the ledger's line written only
-while the balance - the packs and lines as they stand then - covers the price, and the ware put on
-the row only while the row is the one read. A row moved meanwhile is read again, three times. It refuses a guest, a
-closed Aurum, a ware not among the day's, one held and a short balance, each with its own word.
+**A buy** (`/v1/aurum/buy`, `server-account/src/aurum.js` buyWare) takes any ware but a pack: one sold now, or among the
+day's deals at its deal price. The page sends the price it showed, and a price that moved since (a deal turned at
+midnight, a bundle's share) is refused with the new one (`aurum-price`) before anything is spent. It is one D1 batch: the
+ledger's line written only while the balance - the packs and lines as they stand then - covers the price, and the ware
+put on the row only while the row is the one read. A row moved meanwhile is read again, three times. It refuses a guest,
+a closed Aurum, a pack, a ware not sold now, one held and a short balance, each with its own word.
 
 ## 6. The window
 
-The shop's head carries the balance beside the title, a coin and a number, while Aurum is open to the account. The
-**Daily Wares** section stands after the Folios (the pass): when the wares turn, the week's deeds - each its Aurum or done -
-and a panel for each ware with its price in Aurum. Buy is pressed twice: the first press arms it and says the price
+The shop's head carries the balance beside the title, a coin and a number, while Aurum is open to the account. Every
+ware's panel shows its price in Aurum (a deal's or a bundle's share with the full price struck beside it). The **Daily
+Deals** section stands after the Folios (the pass): when the deals turn, the week's deeds - each its Aurum or done - and a
+panel for each deal, tagged "Today's deal". Buy is pressed twice: the first press arms it and says the price
 again, the second buys, and left alone for six seconds it goes back to Buy. Short of the price, the panel says how much
 more is needed and offers **Get Aurum**, which opens the **Aurum** section: the balance, what Aurum is for and what it
 never is, and the four packs.
@@ -147,7 +167,7 @@ never is, and the four packs.
 ## 7. The profile icons
 
 No icon draws a figure (`test/ui/storefront_badges.test.js` holds the art to it). The festival's four and the season's
-three were drawn again as things and places; the daily wares bring eight more - Dagon's Breach, the Aurbis, an Elder
+three were drawn again as things and places; the shop brings eight more - Dagon's Breach, the Aurbis, an Elder
 Scroll, Azura's Star, Red Mountain, an hourglass, a black-red rose and the White-Gold Tower - each in its bezel
 (`src/ui/icons/dailyIconArt.js`). Six of the eight move: fire turns, spheres orbit, script lights line by line, ash
 rises, and the hourglass turns over when its last grain falls. Each is drawn still for less motion
@@ -161,9 +181,9 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 ## 9. Not built, and why
 
 - **Giving or trading Aurum.** Never: a currency that moves between players is a market, and a market is power.
-- **Aurum for the bundles.** Not asked; they stay money's. Aurum buys the daily wares and the pass's tracks.
+- **Aurum for the bundles.** Built with AURUM-ONLY: a bundle is bought with Aurum, as every ware is.
 - **The pass's spending in the staff demand.** The ledger keeps it (`track` and `panel` lines); the demand reads the
-  shop's wares and the daily wares alone.
+  shop's wares alone.
 - **The Terms of Service.** They do not name Aurum yet. They are the owner's legal text, so this arc leaves them as
   they are and says so here: a line on a currency with no cash value is the owner's to add.
 - **A daily ware held already.** Not offered: the panel says Owned and offers Wear.

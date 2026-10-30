@@ -1049,7 +1049,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-slidein { animation: sh-slidein 280ms steps(4); }
 @keyframes sh-slidein { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 /* A BUNDLE: its pieces laid out on its stage, each in its own picture, and what it gives listed */
-.px-shopwin .sh-bundlemark { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #ffd27a; }
+.px-shopwin .sh-bundlemark { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #ffd27a; padding-top: 10px; }   /* VISUAL PASS: clear of the stage's frame over a four-item list */
 .px-shopwin .sh-bundleart { list-style: none; margin: 0; padding: 2px 12px 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 440px; box-sizing: border-box; }
 .px-shopwin .sh-bundle-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .px-shopwin .sh-bpiece { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; padding: 10px 6px 9px; text-align: center; min-width: 0;
