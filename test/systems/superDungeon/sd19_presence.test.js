@@ -202,7 +202,7 @@ test('SD19 THE WORDS: its marks said with its find - its Ending, its signature a
   h3.frame();
   assert.deepEqual(s3.lines, [], 'its place not yet known');
   const H = read('src/scenes/superDungeon/sdHost.js');
-  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{ hourSaidS = rec\.s; say\(sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| '', region: province \? '' : regionName\(rec\.r\) \|\| '', province \}\)\); \}/, 'with no Hollow: the region\'s');   // PIN MOVED (WW5): a province lane's in its province   // AUDIT SD III (T19, PIN MOVED): said as a region
+  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{\n\s*hourSaidS = rec\.s;\n\s*say\(\n\s*sdHourLine\(\{\n\s*name: hh\?\.loc\?\.name,\n\s*near: hh\?\.site\?\.cityName \|\| '',\n\s*region: province \? '' : regionName\(rec\.r\) \|\| '',\n\s*province,\n\s*\}\),\n\s*\);\n\s*\}/, 'with no Hollow: the region\'s');   // PIN MOVED (WW5): a province lane's in its province   // AUDIT SD III (T19, PIN MOVED): said as a region
 });
 
 test('SD19 THE NEXT ONE\'S RISE: once a Hollow is gone - beaten, collapsed or faded - the Timers count the next slot\'s not-before, never where; none once it may rise', () => {

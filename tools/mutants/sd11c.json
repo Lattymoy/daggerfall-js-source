@@ -12,8 +12,8 @@
   {
     "name": "SD11c-L1F2-latched-on-the-refusal",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };",
-    "new": "const ask = (s, key) => { castOut(key); castOutS = s; castOutAt = t; };",
+    "old": "      if (castOut(key) !== false) {\n        castOutS = s;\n        castOutAt = t;\n      }",
+    "new": "      castOut(key);\n      castOutS = s;\n      castOutAt = t;",
     "tests": [
       "test/systems/sd11c_page.test.js",
       "test/systems/superDungeon/sd2d_castout.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SD11c-L1F2-asked-twice-a-frame",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (!asked && at != null && rec && ",
-    "new": "    if (at != null && rec && ",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "SD11c-L1F3-judged-before-the-hub-spoke",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "at != null && rec && !(rec.s === at && sdStands(phase))",
-    "new": "at != null && !(rec && rec.s === at && sdStands(phase))",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && !(rec && rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -79,8 +79,8 @@
   {
     "name": "SD11c-L1F3-cast-out-of-a-standing-Hollow",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "!(rec.s === at && sdStands(phase))",
-    "new": "!(rec.s === at && false)",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && rec && !(rec.s === at && false) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "SD11c-G13-a-fallen-Echo-strikes",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "if (E.h > 0 && E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
-    "new": "if (E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "old": "    if (E.h > 0 && E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "new": "    if (E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "SD11c-G13-no-Hollow-the-line-waits",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
-    "new": "if (!h && t - o.at < SD_LINE_WAIT_MS) return;",
+    "old": "      if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
+    "new": "      if (!h && t - o.at < SD_LINE_WAIT_MS) return;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -548,8 +548,8 @@
     "name": "SD11c-G13-no-Hollow-no-region",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
-    "new": "const near = h?.site?.cityName || '', region = province ? '' : '';",
+    "old": "        region = province ? '' : regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
+    "new": "        region = province ? '' : ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

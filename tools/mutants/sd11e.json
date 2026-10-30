@@ -58,8 +58,8 @@
   {
     "name": "SD11E-F3-the-page-closed-from-the-word",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "return live(s) && !s.fell && !sdHourOver(s, now) && now >= s.op",
-    "new": "return live(s) && !s.fell && !s.ended && now >= s.op",
+    "old": "  return live(s) && !s.fell && !sdHourOver(s, now) && now >= s.op && s.ph !== 2 && now >= s.ou; // AUDIT SD II (L4 F3): its End by the clock",
+    "new": "  return live(s) && !s.fell && !s.ended && now >= s.op && s.ph !== 2 && now >= s.ou; // AUDIT SD II (L4 F3): its End by the clock",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "SD11E-F3-no-body-from-the-word",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "if (!L?.joined() || s.fell || sdHourOver(s, t) || s.ph === 2) return null;",
-    "new": "if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;",
+    "old": "      if (!L?.joined() || s.fell || sdHourOver(s, t) || s.ph === 2) return null;",
+    "new": "      if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD11E-F10-no-beam-as-it-gathers",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "        out.push(shapeOf(TELEGRAPH_KIND.lane, { ...common, origin, end: [atk.x + Math.sin(a0) * A.len, atk.z + Math.cos(a0) * A.len], halfW: A.width / 2 }));\n",
-    "new": "",
+    "old": "        out.push(\n          shapeOf(TELEGRAPH_KIND.lane, {\n            ...common,\n            origin,\n            end: [atk.x + Math.sin(a0) * A.len, atk.z + Math.cos(a0) * A.len],\n            halfW: A.width / 2,\n          }),\n        );\n        break;",
+    "new": "        break;",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js",
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "SD11E-F10-the-beam-at-its-far-edge",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "const a0 = handAngleAt(atk, atk.at);",
-    "new": "const a0 = handAngleAt(atk, atk.at + A.active);",
+    "old": "        const a0 = handAngleAt(atk, atk.at);",
+    "new": "        const a0 = handAngleAt(atk, atk.at + A.active);",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]

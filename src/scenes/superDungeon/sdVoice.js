@@ -35,7 +35,10 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds, covered = 
   let standing = null;
   /** @type {{ text: string, rank: number, at: number, key: string|null }[]} */
   const waiting = [];
-  const put = (text, rank, t, key) => { show(text, seconds(text)); standing = { text, rank, until: t + seconds(text) * 1000, key }; };
+  const put = (text, rank, t, key) => {
+    show(text, seconds(text));
+    standing = { text, rank, until: t + seconds(text) * 1000, key };
+  };
   /** AUDIT SD IV (T2): A LINE CUT IS SAID AGAIN - back at the head of its rank, to be read whole, its wait begun anew: the
    *  way home's rising cut the collapse's first readout (its count, and where the way home is) 0.5 s into its 3.7, and
    *  a no-spoils note was cut the frame it was said - each lost for good. Not a thread's line its newer word replaced. */
@@ -51,18 +54,27 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds, covered = 
    *  and the turns' and notes' waits stand still with the label; a readout's moment passes in real time. */
   let coveredAt = null;
   function pump(t) {
-    if (covered()) { coveredAt ??= t; return; }
+    if (covered()) {
+      coveredAt ??= t;
+      return;
+    }
     if (coveredAt !== null) {
       if (standing) standing.until += t - coveredAt;
       for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);
       coveredAt = null;
-      if (standing && waiting.length && waiting[0].rank < standing.rank) { back(standing, t); standing = null; }   // said under it, more urgent
+      if (standing && waiting.length && waiting[0].rank < standing.rank) {
+        back(standing, t);
+        standing = null;
+      } // said under it, more urgent
     }
     if (standing && t < standing.until) return;
     standing = null;
     while (waiting.length) {
       const w = waiting.shift();
-      if (t - w.at <= SD_VOICE_WAIT_MS[w.rank]) { put(w.text, w.rank, t, w.key); return; }
+      if (t - w.at <= SD_VOICE_WAIT_MS[w.rank]) {
+        put(w.text, w.rank, t, w.key);
+        return;
+      }
     }
   }
   return {
@@ -75,14 +87,20 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds, covered = 
       const t = now();
       pump(t);
       if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {
-        if (k !== null) { const j = waiting.findIndex((w) => w.key === k); if (j >= 0) waiting.splice(j, 1); }
+        if (k !== null) {
+          const j = waiting.findIndex((w) => w.key === k);
+          if (j >= 0) waiting.splice(j, 1);
+        }
         if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);
         put(text, r, t, k);
         return;
       }
       if (k !== null) {
         const j = waiting.findIndex((w) => w.key === k);
-        if (j >= 0 && waiting[j].rank === r) { waiting[j] = { text, rank: r, at: t, key: k }; return; }   // its place, the newer word
+        if (j >= 0 && waiting[j].rank === r) {
+          waiting[j] = { text, rank: r, at: t, key: k };
+          return;
+        } // its place, the newer word
         if (j >= 0) waiting.splice(j, 1);
       }
       if (waiting.some((w) => w.text === text)) return;
@@ -91,13 +109,19 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds, covered = 
       waiting.splice(i, 0, { text, rank: r, at: t, key: k });
     },
     /** One frame: the next line waiting, once the one standing has stood its time. */
-    frame() { pump(now()); },
+    frame() {
+      pump(now());
+    },
     /** Nothing more to say: what waits is let go; what stands, stands. */
-    clear() { waiting.length = 0; },
+    clear() {
+      waiting.length = 0;
+    },
     /** The Hour left: what waits for it - its readouts and the floor's notes (a collapse I am out of) - is let go, and its
      *  turns still come in their order: AUDIT SD III (H5) - the way out's own words waited behind a turn still standing
      *  ("The way home carries you out of the Hour" behind "The way home stands open.") and were let go unread. */
-    leave() { for (let i = waiting.length - 1; i >= 0; i--) if (waiting[i].rank !== SD_VOICE_RANK.turn) waiting.splice(i, 1); },
+    leave() {
+      for (let i = waiting.length - 1; i >= 0; i--) if (waiting[i].rank !== SD_VOICE_RANK.turn) waiting.splice(i, 1);
+    },
     /** What waits, for the tests. */
     waiting: () => waiting.map((w) => w.text),
   };

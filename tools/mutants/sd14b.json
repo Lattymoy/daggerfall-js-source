@@ -2,8 +2,8 @@
   {
     "name": "SD14b-the-gears-never-stood",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "          engine.setBed3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT,",
-    "new": "          engine.setBed3d(SD_AIR_GEARS.loop, null, SD_AIR_GEARS_AT,",
+    "old": "          engine.setBed3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT, {",
+    "new": "          engine.setBed3d(SD_AIR_GEARS.loop, null, SD_AIR_GEARS_AT, {",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD14b-one-left-looping",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "        engine.setBed3d(SD_AIR_HUM.loop, null, null);\n",
-    "new": "",
+    "old": "        engine.setBed3d(SD_AIR_HUM.loop, null, null);\n        engine.setBed3d(SD_AIR_GEARS.loop, null, null);",
+    "new": "        engine.setBed3d(SD_AIR_GEARS.loop, null, null);",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD14b-the-old-air-left",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "  _heard?.stop();\n  /** The four made sounds",
-    "new": "  /** The four made sounds",
+    "old": "  _heard?.stop();\n  /** The four made sounds, registered once the archive is read and a context stands (asked again until then). */",
+    "new": "  /** The four made sounds, registered once the archive is read and a context stands (asked again until then). */",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD14b-no-tock",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "    addVoice(out, rate, clunk, srcRate, { ratio: SD_WORKS_TICK[1], offset: seconds / 2, gain: 0.8, wrap: true });\n",
-    "new": "",
+    "old": "    addVoice(out, rate, clunk, srcRate, { ratio: SD_WORKS_TICK[1], offset: seconds / 2, gain: 0.8, wrap: true });\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD14b-a-kind-never-sounding",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "  moan: Object.freeze({ slot: 30, chance: 0.4,",
-    "new": "  moan: Object.freeze({ slot: 30, chance: 0,",
+    "old": "    chance: 0.4,",
+    "new": "    chance: 0,",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD14b-every-slot-sounding",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "      if (h(0) >= E.chance) continue;\n",
-    "new": "",
+    "old": "      if (h(0) >= E.chance) continue;\n      const t = base + h(1) * (E.slot - 2);",
+    "new": "      const t = base + h(1) * (E.slot - 2);",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD14b-the-period-not-whole",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "  const n = Math.round(SD_SKY_PERIOD / slotS), out = [];",
-    "new": "  const n = Math.round(SD_SKY_PERIOD / slotS) + 1, out = [];",
+    "old": "  const n = Math.round(SD_SKY_PERIOD / slotS),",
+    "new": "  const n = Math.round(SD_SKY_PERIOD / slotS) + 1,",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD14b-events-at-the-ear",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume,",
-    "new": "engine.play3d(e.clip, ear, e.volume,",
+    "old": "              engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, {\n                refDistance: THUNDER_SOURCE_M,\n                pitch: e.pitch,\n                far: SD_AIR_FAR,\n              });",
+    "new": "              engine.play3d(e.clip, ear, e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: SD_AIR_FAR });",
     "tests": [
       "test/scenes/sd14b_air.test.js"
     ]

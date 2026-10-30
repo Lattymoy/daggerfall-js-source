@@ -245,8 +245,8 @@
   {
     "name": "SD19-host-marks-unsaid",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }",
-    "new": "}",
+    "old": "        const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s });\n        if (m) say(m);\n      } // SD19: and its marks",
+    "new": "      } // SD19: and its marks",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD19-host-hour-while-risen",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (phase === 'found' && rec && hourSaidS !== rec.s &&",
-    "new": "    if ((phase === 'found' || phase === 'risen') && rec && hourSaidS !== rec.s &&",
+    "old": "      phase === 'found' &&",
+    "new": "      (phase === 'found' || phase === 'risen') &&",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD19-host-hour-any-time",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {",
-    "new": "rec.until > t) {",
+    "old": "    if (\n      phase === 'found' &&\n      rec &&\n      hourSaidS !== rec.s &&\n      Number.isFinite(rec.until) &&\n      rec.until > t &&\n      rec.until - t <= SD_HOUR_LEFT_MS\n    ) {",
+    "new": "    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t) {",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD19-host-hour-every-frame",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "{ hourSaidS = rec.s; say(sdHourLine(",
-    "new": "{ say(sdHourLine(",
+    "old": "        hourSaidS = rec.s;\n        say(",
+    "new": "        say(",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD19-host-hour-unplaced",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s;",
-    "new": "      { hourSaidS = rec.s;",
+    "old": "      if (hh || (memo && memo.s === rec.s && memo.none)) {",
+    "new": "      {",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]

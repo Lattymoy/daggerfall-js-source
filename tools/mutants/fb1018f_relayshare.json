@@ -172,8 +172,8 @@
   {
     "name": "RELAY-SHARE-the-Remnant-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "SD_REMNANT_NAMES.remnant, () => { const { s } = read(); return wordShare(s.h, s.m); });",
-    "new": "SD_REMNANT_NAMES.remnant);",
+    "old": "  const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant, () => {\n    const { s } = read();\n    return wordShare(s.h, s.m);\n  });",
+    "new": "  const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant);",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "RELAY-SHARE-the-Echoes-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "}, e, () => { const E = read().s.ec?.[e]; return wordShare(E?.h, E?.m); }));",
-    "new": "}, e));",
+    "old": "  const echoIns = [0, 1].map((e) =>\n    hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e, () => {\n      const E = read().s.ec?.[e];\n      return wordShare(E?.h, E?.m);\n    }),\n  );",
+    "new": "  const echoIns = [0, 1].map((e) => hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e));",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "RELAY-SHARE-the-Hearts-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c, () => { const { s } = read(); return wordShare(s.cx?.c?.[c]?.[2], s.cx?.m); });",
-    "new": "crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c);",
+    "old": "    const h = crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c, () => {\n      const { s } = read();\n      return wordShare(s.cx?.c?.[c]?.[2], s.cx?.m);\n    });",
+    "new": "    const h = crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c);",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

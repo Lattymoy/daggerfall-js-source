@@ -164,8 +164,8 @@
   {
     "name": "SD9E-spewed-at-the-fall",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "&& t >= s.fell.at + SD_SPEW_AT_MS) {",
-    "new": "&& t >= s.fell.at) {",
+    "old": "      if (s?.fell && here != null && spewedFi !== s.fi && t >= s.fell.at + SD_SPEW_AT_MS) {",
+    "new": "      if (s?.fell && here != null && spewedFi !== s.fi && t >= s.fell.at) {",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD9E-spewed-twice",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          spewedFi = s.fi;\n",
-    "new": "",
+    "old": "          spewedFi = s.fi;\n          const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);",
+    "new": "          const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD9E-the-level-unbounded",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          const lv = spoilsLevel(level(), c.l);",
-    "new": "          const lv = level();",
+    "old": "          const lv = spoilsLevel(level(), c.l); // AUDIT WBX S2: never past the level the fight admitted",
+    "new": "          const lv = level(); // AUDIT WBX S2: never past the level the fight admitted",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD9E-the-gates-roll",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": ", keep: SD_SPOILS_KEEP, roll: () => sdSpoilsList(c.c, lv) })",
-    "new": ", keep: SD_SPOILS_KEEP })",
+    "old": "          if (\n            pool.spew({\n              day: sdSpoilsDay(c.d),\n              seed: c.c,\n              level: lv,\n              at,\n              bearing,\n              acct: c.s,\n              keep: SD_SPOILS_KEEP,\n              roll: () => sdSpoilsList(c.c, lv),\n            })\n          )",
+    "new": "          if (pool.spew({ day: sdSpoilsDay(c.d), seed: c.c, level: lv, at, bearing, acct: c.s, keep: SD_SPOILS_KEEP }))",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD9E-off-the-floor",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "acct: c.s, keep: SD_SPOILS_KEEP,",
-    "new": "acct: c.s, keep: null,",
+    "old": "              keep: SD_SPOILS_KEEP,",
+    "new": "              keep: null,",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD9E-the-rim",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "r: SD_ARENA.r - SD_SPEW_RIM_M,",
-    "new": "r: SD_ARENA.r + 12,",
+    "old": "  r: SD_ARENA.r - SD_SPEW_RIM_M,",
+    "new": "  r: SD_ARENA.r + 12,",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD9E-from-its-height-unsunk",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink)",
-    "new": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST)",
+    "old": "            Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink),",
+    "new": "            Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST),",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD9E-bearing-away",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "Math.atan2(f[0] - at[0], f[2] - at[2])",
-    "new": "Math.atan2(at[0] - f[0], at[2] - f[2])",
+    "old": "          const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : pose.yw;",
+    "new": "          const bearing = f ? Math.atan2(at[0] - f[0], at[2] - f[2]) : pose.yw;",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD9E-said-at-once",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "&& t >= s.fell.at + SD_RECEIPT_WAIT_MS &&",
-    "new": "&& t >= s.fell.at &&",
+    "old": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {",
+    "new": "        } else if (saidFi !== s.fi && t >= s.fell.at && link.counted?.()) {",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD9E-said-to-a-watcher",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": " && link.counted?.()) {",
-    "new": ") {",
+    "old": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {",
+    "new": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS) {",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD9E-said-twice",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          saidFi = s.fi;\n",
-    "new": "",
+    "old": "          saidFi = s.fi;\n          say(SD_SPOILS_TEXT.none);",
+    "new": "          say(SD_SPOILS_TEXT.none);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD9E-pool-never-flown",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "      pool.frame();\n",
-    "new": "",
+    "old": "      pool.frame();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

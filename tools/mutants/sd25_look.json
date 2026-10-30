@@ -256,8 +256,8 @@
   {
     "name": "SD25-the-ring-forward",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "rift.ring0 = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6)",
-    "new": "rift.ring0 = L.tickHz > 0 ? ((tolls - 1) + jolt) * (Math.PI / 6)",
+    "old": "    rift.ring0 = L.tickHz > 0 ? -(tolls - 1 + jolt) * (Math.PI / 6) * rift.turn : rift.ring0;",
+    "new": "    rift.ring0 = L.tickHz > 0 ? (tolls - 1 + jolt) * (Math.PI / 6) * rift.turn : rift.ring0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "SD25-the-beat-never-quickening",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "const h0 = SD_HEART_LIGHT.hz[0], h1 = SD_HEART_LIGHT.hz[1], T =",
-    "new": "const h0 = SD_HEART_LIGHT.hz[0], h1 = h0, T =",
+    "old": "    h1 = SD_HEART_LIGHT.hz[1],",
+    "new": "    h1 = h0,",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "SD25-the-flare-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "!(s.su > t)) ? H.flare : 1;",
-    "new": "!(s.su > t)) ? 1 : 1;",
+    "old": "          ? H.flare",
+    "new": "          ? 1",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "SD25-the-Endings-light-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;",
-    "new": "const heartColor = MANTELLA_LIGHT;",
+    "old": "  const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;",
+    "new": "  const heartColor = MANTELLA_LIGHT;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -681,8 +681,8 @@
   {
     "name": "SD25-the-way-home-halves-never-swinging",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches)); }",
-    "new": "a = 0; }",
+    "old": "        a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches));",
+    "new": "        a = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "SD25-the-way-home-keystone-never-dropping",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      else lift = A.drop * (1 - stage(k, A.key));",
-    "new": "      else lift = 0;",
+    "old": "      } else lift = A.drop * (1 - stage(k, A.key));",
+    "new": "      } else lift = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "SD25-the-way-home-hand-before-its-clock",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1];",
-    "new": "      ret.hand.hidden = false;",
+    "old": "      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1]; // SD-LOOK S6: with its clock, once it lands",
+    "new": "      ret.hand.hidden = false; // SD-LOOK S6: with its clock, once it lands",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -708,8 +708,8 @@
   {
     "name": "SD25-the-way-home-at-the-hollows-size",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "scale ?? (rift?.hollow ? SD_HOME_SCALE : 1)",
-    "new": "scale ?? 1",
+    "old": "        ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS),",
+    "new": "        ...standRet(at, yaw, scale ?? 1, ago < SD_HOME_RISE_MS),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -717,8 +717,8 @@
   {
     "name": "SD25-the-way-home-pressed-at-the-old-size",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "(SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale)",
-    "new": "SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h)",
+    "old": "        aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale),",
+    "new": "        aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -762,8 +762,8 @@
   {
     "name": "SD25-the-way-home-column-unlit",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column",
-    "new": "SD_RIFT_LIGHT.ret",
+    "old": "        tint(_ml.color, SD_LIGHT.moon, up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column);",
+    "new": "        tint(_ml.color, SD_LIGHT.moon, SD_RIFT_LIGHT.ret);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "SD25-the-plate-never-alight",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return",
-    "new": "if (key === SD_RETURN_KEY && ret) { return",
+    "old": "        ret.hoverAt = now();\n        return { title: retTitle, subs: [retTo] };",
+    "new": "        return { title: retTitle, subs: [retTo] };",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "SD25-the-plate-alight-always",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null",
-    "new": "PLATE_LIT",
+    "old": "      ret.plate.texRemap = t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null;",
+    "new": "      ret.plate.texRemap = PLATE_LIT;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "SD25-the-plate-cast",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "plate: standMesh(buildReturnPlate(), true)",
-    "new": "plate: standMesh(buildReturnPlate(), false)",
+    "old": "      plate: standMesh(buildReturnPlate(), true),",
+    "new": "      plate: standMesh(buildReturnPlate(), false),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "SD25-the-plate-shown-while-it-assembles",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "ret.plate.hidden = !!ret.parts && k < 1;",
-    "new": "ret.plate.hidden = false;",
+    "old": "      ret.plate.hidden = !!ret.parts && k < 1;",
+    "new": "      ret.plate.hidden = false;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "SD25-the-exhale-ring-still",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;",
-    "new": "rift.n[N_RING] = rift.ring0;",
+    "old": "    rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;",
+    "new": "    rift.n[N_RING] = rift.ring0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "SD25-the-exhale-unheard",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      if (kind === 'exhale') rift.exhaleAt = t;\n",
-    "new": "",
+    "old": "      if (kind === 'exhale') rift.exhaleAt = t;\n    },",
+    "new": "    },",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]

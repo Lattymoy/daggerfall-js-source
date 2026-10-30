@@ -2,8 +2,8 @@
   {
     "name": "SD2b-the-welcome-announced",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (first) return;",
-    "new": "",
+    "old": "    if (first) return; // the welcome's record: what happened while I was away is no news",
+    "new": "    // the welcome's record: what happened while I was away is no news",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SD2b-the-ground-pulled",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "      if (!inside(stood.loc)) { unstand(stood.key); stood = null; }",
-    "new": "      if (true) { unstand(stood.key); stood = null; }",
+    "old": "      if (!inside(stood.loc)) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SD2b-found-from-afar",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "<= SD_FOUND_NEAR_M) {",
-    "new": "<= SD_FOUND_NEAR_M * 10) {",
+    "old": "      if (d && f && Math.hypot(f[0] - d[0], f[2] - d[2]) <= SD_FOUND_NEAR_M) {",
+    "new": "      if (d && f && Math.hypot(f[0] - d[0], f[2] - d[2]) <= SD_FOUND_NEAR_M * 10) {",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SD2b-never-again",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "(foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)",
-    "new": "(foundSentS !== stood.s)",
+    "old": "    if (\n      phase === 'risen' &&\n      stood &&\n      stood.s === rec?.s &&\n      (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)\n    ) {",
+    "new": "    if (phase === 'risen' && stood && stood.s === rec?.s && foundSentS !== stood.s) {",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SD2b-again-at-once",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "t - foundSentAt >= SD_FOUND_RESEND_MS)",
-    "new": "t - foundSentAt >= 0)",
+    "old": "    if (\n      phase === 'risen' &&\n      stood &&\n      stood.s === rec?.s &&\n      (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)\n    ) {",
+    "new": "    if (phase === 'risen' && stood && stood.s === rec?.s && (foundSentS !== stood.s || t - foundSentAt >= 0)) {",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SD2b-after-the-find",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (phase === 'risen' && stood",
-    "new": "    if (phase !== 'gone' && stood",
+    "old": "      phase === 'risen' &&",
+    "new": "      phase !== 'gone' &&",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SD2b-another-slots-find",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "&& stood && stood.s === rec?.s && (",
-    "new": "&& stood && (",
+    "old": "    if (\n      phase === 'risen' &&\n      stood &&\n      stood.s === rec?.s &&\n      (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)\n    ) {",
+    "new": "    if (phase === 'risen' && stood && (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)) {",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SD2b-a-line-said-twice",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell')))",
-    "new": "if (rec.ph === 'found')",
+    "old": "    if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell')))\n      owed.push({ kind: 'found', rec, at: t });",
+    "new": "    if (rec.ph === 'found') owed.push({ kind: 'found', rec, at: t });",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SD2b-the-fading-after-a-kill",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was",
-    "new": "if (rec.ph === 'gone' && rec.foundAt != null && was",
+    "old": "    if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone')",
+    "new": "    if (rec.ph === 'gone' && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone')",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SD2b-a-line-lost",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
-    "new": "if (!h) return;",
+    "old": "      if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
+    "new": "      if (!h) return;",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SD2b-an-older-word-kept",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (rec && w.s < rec.s) return;   // an older slot's word: the hub moved on\n",
-    "new": "",
+    "old": "    if (rec && w.s < rec.s) return; // an older slot's word: the hub moved on\n    const was = rec;",
+    "new": "    const was = rec;",
     "tests": [
       "test/systems/superDungeon/sd2b_world.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "SD11f-the-way-home-walked-into",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "const inRet = !!ret && !ret.pressed && inSdPortal(",
-    "new": "const inRet = !!ret && inSdPortal(",
+    "old": "      const inRet = !!ret && !ret.pressed && inSdPortal(feet, ret.at, SD_RETURN_REACH_M, SD_RETURN_SIZE.h); // AUDIT SD II (L6 F9): the way home pressed alone",
+    "new": "      const inRet = !!ret && inSdPortal(feet, ret.at, SD_RETURN_REACH_M, SD_RETURN_SIZE.h); // AUDIT SD II (L6 F9): the way home pressed alone",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD11f-every-return-pressed-alone",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: false, up: true };",
-    "new": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: true, up: true };",
+    "old": "      if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: false, up: true };",
+    "new": "      if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: true, up: true };",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD11f-never-risen",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "    ret.lift = done ? 0 : -SD_RETURN_SIZE.h * 0.7 * (1 - stage(k, A.jambs));",
-    "new": "    ret.lift = 0;",
+    "old": "    ret.lift = done ? 0 : -SD_RETURN_SIZE.h * 0.7 * (1 - stage(k, A.jambs)); // the jambs' (its foot, as far as it has risen)",
+    "new": "    ret.lift = 0; // the jambs' (its foot, as far as it has risen)",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD11f-the-rise-left-halfway",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "k = k0 < 0 ? 0 : k0 > 1 ? 1 : k0, n = ret.n;",
-    "new": "k = k0 < 0 ? 0 : k0, n = ret.n;",
+    "old": "      k = k0 < 0 ? 0 : k0 > 1 ? 1 : k0,",
+    "new": "      k = k0 < 0 ? 0 : k0,",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD11f-no-toll",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);\n",
-    "new": "",
+    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);\n      api.frame(null);",
+    "new": "      api.frame(null);",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD11f-tolled-to-a-late-page",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(",
-    "new": "      if (true) tollRiftBell(",
+    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);",
+    "new": "      if (true) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD11f-no-count-on-the-plaque",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "subs: n ? [to, n] : [to] }; }",
-    "new": "subs: [to] }; }",
+    "old": "        return { title: typeof riftTitle === 'function' ? riftTitle() : riftTitle, subs: n ? [to, n] : [to] };",
+    "new": "        return { title: typeof riftTitle === 'function' ? riftTitle() : riftTitle, subs: [to] };",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ],

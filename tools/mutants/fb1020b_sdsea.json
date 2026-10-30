@@ -32,8 +32,8 @@
   {
     "name": "SD-SEA-no-fallback",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (!near.length && r.r >= 0) { at = { ...r, r: -1 }; near = cities(-1); }\n",
-    "new": "",
+    "old": "    if (!near.length && r.r >= 0) {\n      at = { ...r, r: -1 };\n      near = cities(-1);\n    }\n    const site = findSite(at, sc, near, ground); // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law",
+    "new": "    const site = findSite(at, sc, near, ground); // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law",
     "tests": [
       "test/net/superDungeon/fb1020b_sdsea.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SD-SEA-fallback-without-the-roll",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "{ at = { ...r, r: -1 }; near = cities(-1); }",
-    "new": "{ near = cities(-1); }",
+    "old": "      at = { ...r, r: -1 };\n      near = cities(-1);",
+    "new": "      near = cities(-1);",
     "tests": [
       "test/net/superDungeon/fb1020b_sdsea.test.js"
     ],

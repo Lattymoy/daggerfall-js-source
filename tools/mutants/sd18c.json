@@ -65,8 +65,8 @@
   {
     "name": "SD18C-the-scene-unlit",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "buildRemnantParts(metal, ending).map(make));",
-    "new": "buildRemnantParts(metal).map(make));",
+    "old": "      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal, ending).map(make));",
+    "new": "      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal).map(make));",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]

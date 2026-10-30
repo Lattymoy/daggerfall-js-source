@@ -38,8 +38,8 @@
   {
     "name": "SD26-T2-a-cut-line-lost",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n",
-    "new": "",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n        put(text, r, t, k);",
+    "new": "        put(text, r, t, k);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD26-T2-a-line-nearly-read-again",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some",
-    "new": "    if (waiting.some",
+    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some((x) => x.text === w.text)) return;",
+    "new": "    if (waiting.some((x) => x.text === w.text)) return;",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD26-T2-the-threads-word-back",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
-    "new": "if (standing && r < standing.rank) back(standing, t);",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
+    "new": "        if (standing && r < standing.rank) back(standing, t);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD26-T3-the-window-unread",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "    if (covered()) { coveredAt ??= t; return; }",
-    "new": "    if (false) { coveredAt ??= t; return; }",
+    "old": "    if (covered()) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD26-T3-the-standing-clock-run-on",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (standing) standing.until += t - coveredAt;\n",
-    "new": "",
+    "old": "      if (standing) standing.until += t - coveredAt;\n      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
+    "new": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD26-T3-the-turns-waits-aged",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);\n",
-    "new": "",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);\n      coveredAt = null;",
+    "new": "      coveredAt = null;",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD26-T3-a-readout-kept-past-its-moment",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at +=",
-    "new": "      for (const w of waiting) if (true) w.at +=",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
+    "new": "      for (const w of waiting) if (true) w.at += t - Math.max(coveredAt, w.at);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD26-T3-the-turn-under-it-queued",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (standing && waiting.length && waiting[0].rank < standing.rank) { back(standing, t); standing = null; }",
-    "new": "      void 0;",
+    "old": "      if (standing && waiting.length && waiting[0].rank < standing.rank) {\n        back(standing, t);\n        standing = null;\n      } // said under it, more urgent",
+    "new": "      void 0; // said under it, more urgent",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD26-T3-a-line-written-under-it",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (coveredAt === null && (!standing ||",
-    "new": "      if ((!standing ||",
+    "old": "      if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "      if (!standing || r < standing.rank || (k !== null && standing.key === k)) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -264,8 +264,8 @@
     "name": "SD26-T7-the-hour-before-the-find",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "    sayOwed(t);\n    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }\n    }\n",
-    "new": "    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }\n    }\n    sayOwed(t);\n",
+    "old": "    sayOwed(t);\n    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (\n      phase === 'found' &&\n      rec &&\n      hourSaidS !== rec.s &&\n      Number.isFinite(rec.until) &&\n      rec.until > t &&\n      rec.until - t <= SD_HOUR_LEFT_MS\n    ) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) {\n        hourSaidS = rec.s;\n        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );\n      }\n    }",
+    "new": "    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (\n      phase === 'found' &&\n      rec &&\n      hourSaidS !== rec.s &&\n      Number.isFinite(rec.until) &&\n      rec.until > t &&\n      rec.until - t <= SD_HOUR_LEFT_MS\n    ) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) {\n        hourSaidS = rec.s;\n        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );\n      }\n    }\n    sayOwed(t);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SD26-T8-the-turn-offered-after-the-concord",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "ok ? SD_HALL_TEXT.held : st[2] === 'f'",
-    "new": "st[2] === 'f'",
+    "old": "            ok ? SD_HALL_TEXT.held : st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back,",
+    "new": "            st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back,",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]

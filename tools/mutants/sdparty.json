@@ -52,8 +52,8 @@
   {
     "name": "SD-PARTY-kept-in-another-party",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": " && (kept.p ?? null) === party &&",
-    "new": " &&",
+    "old": "    (kept.p ?? null) === party &&\n    typeof kept.o === 'string' &&",
+    "new": "    typeof kept.o === 'string' &&",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "SD-SOLO-alone-in-my-own",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "return sdPubOwner(n) ?? me;",
-    "new": "return me;",
+    "old": "        return sdPubOwner(n) ?? me; // SD-SOLO: the shared Hour, or alone my own",
+    "new": "        return me; // SD-SOLO: the shared Hour, or alone my own",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "SD-SOLO-the-count-unsaid",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "{ n: Math.max(1, Math.min(SD_PUB_SEATS, n | 0)), max: SD_PUB_SEATS }",
-    "new": "{ n: SD_PUB_SEATS, max: SD_PUB_SEATS }",
+    "old": "  return t('sd.copy.shared', '{n} of {max} players are in this shared Hour.', {\n    n: Math.max(1, Math.min(SD_PUB_SEATS, n | 0)),\n    max: SD_PUB_SEATS,\n  });",
+    "new": "  return t('sd.copy.shared', '{n} of {max} players are in this shared Hour.', { n: SD_PUB_SEATS, max: SD_PUB_SEATS });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"

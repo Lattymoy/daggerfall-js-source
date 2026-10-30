@@ -16,7 +16,17 @@
 //     chains still (their draws stood at rest and never swung).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_HANG_ISLANDS, SD_HANG_STAGES, sdHangIslandsOf, buildHangModel, buildChainModel, buildFarIslandsModel, chainSwing, chainMatrix, farIslandsMatrix } from '../../world/superDungeon/sdIslandModel.js';
+import {
+  SD_HANG_ISLANDS,
+  SD_HANG_STAGES,
+  sdHangIslandsOf,
+  buildHangModel,
+  buildChainModel,
+  buildFarIslandsModel,
+  chainSwing,
+  chainMatrix,
+  farIslandsMatrix,
+} from '../../world/superDungeon/sdIslandModel.js';
 import { SD_WORKS, SD_HANG_NOW, buildWorksGear, worksMatrix } from '../../world/superDungeon/sdWorksModel.js';
 import { sdTick } from '../../world/superDungeon/sdLook.js';
 import { sdSkyClock, SD_SKY_PERIOD } from '../../render/superDungeon/sdSky.js';
@@ -34,15 +44,31 @@ export const SD_FAR_TURNS = -1;
  * whose checkpoints hang as the steps' islands (net/eliteGates/egSpanLaw.js courseOf's record - the Hour's by default).
  * @param {{ renderer?: any, clock?: () => number, lite?: boolean, course?: any }} deps
  */
-export function createSdHang({ renderer = null, clock = () => performance.now() / 1000, lite = isTouchDevice(), course = SD_COURSE } = {}) {
+export function createSdHang({
+  renderer = null,
+  clock = () => performance.now() / 1000,
+  lite = isTouchDevice(),
+  course = SD_COURSE,
+} = {}) {
   const islands = course === SD_COURSE ? SD_HANG_ISLANDS : sdHangIslandsOf(course);
   /** Every draw stood, in the order stood: `{ gpu, object: { matrix }, noShadow, stage, texRemap }` - and the moving ones. */
-  const draws = [], chains = [], works = [];
-  let far = null, stood = false;
-  const meshes = [], now = new Float64Array(3);   // the frame's moment (SD_HANG_NOW), kept
+  const draws = [],
+    chains = [],
+    works = [];
+  let far = null,
+    stood = false;
+  const meshes = [],
+    now = new Float64Array(3); // the frame's moment (SD_HANG_NOW), kept
   const make = (model) => {
     if (!renderer?.createMesh) return null;
-    try { const m = renderer.createMesh(model); meshes.push(m); return m; } catch (e) { console.warn('[sd] the hang would not build', e?.message ?? e); return null; }
+    try {
+      const m = renderer.createMesh(model);
+      meshes.push(m);
+      return m;
+    } catch (e) {
+      console.warn('[sd] the hang would not build', e?.message ?? e);
+      return null;
+    }
   };
   const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: true, stage, texRemap: null });
   return {
@@ -60,11 +86,14 @@ export function createSdHang({ renderer = null, clock = () => performance.now() 
         if (!gpu) continue;
         const d = drawOf(gpu, isl.stage);
         draws.push(d);
-        if (!lite) chains.push({ d, axle });   // the phones' chains hang still
+        if (!lite) chains.push({ d, axle }); // the phones' chains hang still
       }
       if (!lite) {
         const gpu = make(buildFarIslandsModel());
-        if (gpu) { far = drawOf(gpu, 'sky'); draws.push(far); }
+        if (gpu) {
+          far = drawOf(gpu, 'sky');
+          draws.push(far);
+        }
       }
       for (const g of SD_WORKS) {
         if (lite && !g.lite) continue;
@@ -92,8 +121,19 @@ export function createSdHang({ renderer = null, clock = () => performance.now() 
     draws: () => draws,
     /** Free every mesh (the dungeon's teardown - EVERY ALLOCATION HAS AN OWNER). */
     clear() {
-      for (const m of meshes) { try { renderer?.destroyMesh?.(m); } catch { /* gone */ } }
-      meshes.length = 0; draws.length = 0; chains.length = 0; works.length = 0; far = null; stood = false;
+      for (const m of meshes) {
+        try {
+          renderer?.destroyMesh?.(m);
+        } catch {
+          /* gone */
+        }
+      }
+      meshes.length = 0;
+      draws.length = 0;
+      chains.length = 0;
+      works.length = 0;
+      far = null;
+      stood = false;
     },
   };
 }

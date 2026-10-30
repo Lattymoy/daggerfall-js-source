@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-TW-III-P1-one-key-every-lane",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "return lane ? `${SD_COPY_KEY}.${lane}` : SD_COPY_KEY;",
-    "new": "return SD_COPY_KEY;",
+    "old": "  return lane ? `${SD_COPY_KEY}.${lane}` : SD_COPY_KEY;",
+    "new": "  return SD_COPY_KEY;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_iii.test.js"
     ],

@@ -254,8 +254,8 @@
   {
     "name": "SD20E-T15-the-hollows-door",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "to: 'To the Abyss Dungeon\\'s door',",
-    "new": "to: 'To the Hollow\\'s door',",
+    "old": "  to: \"To the Abyss Dungeon's door\", // AUDIT SD III (T15): the player's word for it - \"the Hollow's door\"",
+    "new": "  to: \"To the Hollow's door\", // AUDIT SD III (T15): the player's word for it - \"the Hollow's door\"",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD20E-T15-the-collapse-the-hollows",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`",
-    "new": "The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`",
+    "old": "  return first ? `The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`;",
+    "new": "  return first ? `The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD20E-T15-the-fade-closes",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "'The Abyss Dungeon fades'",
-    "new": "'The Hollow closes'",
+    "old": "  `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;",
+    "new": "  `${hour ? 'The Hour closes' : 'The Hollow closes'} in ${countdownText(left)}.`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -365,8 +365,8 @@
     "name": "SD20E-T19-the-host-unregioned",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province }",
-    "new": "near: hh?.site?.cityName || '', province }",
+    "old": "        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );",
+    "new": "        say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', province }));",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

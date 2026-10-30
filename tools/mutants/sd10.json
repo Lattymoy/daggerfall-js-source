@@ -38,8 +38,8 @@
   {
     "name": "SD10-the-way-home-unsaid",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "`The Hour collapses in ${t}. The way home opens where the Remnant fell.`",
-    "new": "`The Hour collapses in ${t}.`",
+    "old": "  if (hour)\n    return first\n      ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.`\n      : `The Hour collapses in ${t}.`;",
+    "new": "  if (hour) return first ? `The Hour collapses in ${t}.` : `The Hour collapses in ${t}.`;",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD10-the-hours-words-in-the-hollow",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "  if (hour) return first ?",
-    "new": "  if (true) return first ?",
+    "old": "  if (hour)",
+    "new": "  if (true)",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD10-never-told",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; warn(sdCollapseLine(left, { hour: inHour(), first })); }",
-    "new": "      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; }",
+    "old": "        warn(sdCollapseLine(left, { hour: inHour(), first }));\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD10-told-outside",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "&& rec.fellAt != null && inside(stood.loc)) {",
-    "new": "&& rec.fellAt != null) {",
+    "old": "    if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {",
+    "new": "    if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null) {",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD10-told-every-frame",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "warned = { s: rec.s, at: due };",
-    "new": "warned = { s: rec.s, at: Infinity };",
+    "old": "        warned = { s: rec.s, at: due };",
+    "new": "        warned = { s: rec.s, at: Infinity };",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD10-the-returns-words-in-the-hour",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: retTitle, subs: [retTo] }; }",
-    "new": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] }; }",
+    "old": "        return { title: retTitle, subs: [retTo] };",
+    "new": "        return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD10-carried-off-where-it-rises",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n      wasRet = null;\n",
-    "new": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n",
+    "old": "      };\n      wasRet = null;\n      retarget();",
+    "new": "      };\n      retarget();",
     "tests": [
       "test/scenes/sd10_collapse.test.js"
     ],

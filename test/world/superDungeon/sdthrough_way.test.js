@@ -290,7 +290,7 @@ test('SD-THROUGH the hosts by source: the dungeon host makes the Way Through for
   assert.match(M, /if \(key\.startsWith\('sdrift:'\)/, 'its key rides the Rift\'s arm');
   assert.match(M, /superRiftLook: \(s\) => host\.superRiftLook\?\.\(s\) \?\? null,/, 'the look forwarded (B4)');
   const T = read('src/scenes/superDungeon/sdThrough.js');
-  assert.match(T, /createSdEnd\(\{ renderer, audio, now, onRift: onStep, riftKey: SD_THROUGH_KEY, riftTitle: \(\) => SD_THROUGH_TEXT\.title, riftTo: \(\) => SD_THROUGH_TEXT\.to, riftCount: \(\) => word\(\)\?\.count \?\? null, look, clock, walkIn: false, riftYields: true \}\);/);
+  assert.match(T, /createSdEnd\(\{\n\s*renderer,\n\s*audio,\n\s*now,\n\s*onRift: onStep,\n\s*riftKey: SD_THROUGH_KEY,\n\s*riftTitle: \(\) => SD_THROUGH_TEXT\.title,\n\s*riftTo: \(\) => SD_THROUGH_TEXT\.to,\n\s*riftCount: \(\) => word\(\)\?\.count \?\? null,\n\s*look,\n\s*clock,\n\s*walkIn: false,\n\s*riftYields: true,\n\s*\}\);/);
 });
 
 // ── on the freeware's own Hollows ──────────────────────────────────────────────────────

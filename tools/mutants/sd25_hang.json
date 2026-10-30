@@ -101,8 +101,8 @@
   {
     "name": "SD25-HANG-the-swing-smooth",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "now[SD_HANG_NOW.swing] = chainSwing(now[SD_HANG_NOW.ticks]);",
-    "new": "now[SD_HANG_NOW.swing] = chainSwing(t);",
+    "old": "      now[SD_HANG_NOW.swing] = chainSwing(now[SD_HANG_NOW.ticks]);",
+    "new": "      now[SD_HANG_NOW.swing] = chainSwing(t);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD25-HANG-a-draw-casting",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: true,",
-    "new": "const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: false,",
+    "old": "  const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: true, stage, texRemap: null });",
+    "new": "  const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: false, stage, texRemap: null });",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD25-HANG-the-phones-chains-swung",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "if (!lite) chains.push({ d, axle });",
-    "new": "chains.push({ d, axle });",
+    "old": "        if (!lite) chains.push({ d, axle }); // the phones' chains hang still",
+    "new": "        chains.push({ d, axle }); // the phones' chains hang still",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD25-HANG-the-phones-far-islands",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "      if (!lite) {\n        const gpu = make(buildFarIslandsModel());",
-    "new": "      if (true) {\n        const gpu = make(buildFarIslandsModel());",
+    "old": "      if (!lite) {",
+    "new": "      if (true) {",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD25-HANG-the-phones-four-gears",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "if (lite && !g.lite) continue;",
-    "new": "if (false) continue;",
+    "old": "        if (lite && !g.lite) continue;",
+    "new": "        if (false) continue;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD25-HANG-a-mesh-kept-at-clear",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "try { renderer?.destroyMesh?.(m); } catch",
-    "new": "try { void m; } catch",
+    "old": "          renderer?.destroyMesh?.(m);",
+    "new": "          void m;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD25-HANG-stood-twice",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "      if (stood) return;\n",
-    "new": "      if (stood && false) return;\n",
+    "old": "      if (stood) return;",
+    "new": "      if (stood && false) return;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD25-HANG-a-fresh-matrix-a-frame",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "for (let k = 0; k < chains.length; k++) chainMatrix(chains[k].axle, now, chains[k].d.object.matrix);",
-    "new": "for (let k = 0; k < chains.length; k++) chains[k].d.object.matrix = chainMatrix(chains[k].axle, now, new Float32Array(16));",
+    "old": "      for (let k = 0; k < chains.length; k++) chainMatrix(chains[k].axle, now, chains[k].d.object.matrix);",
+    "new": "      for (let k = 0; k < chains.length; k++)\n        chains[k].d.object.matrix = chainMatrix(chains[k].axle, now, new Float32Array(16));",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]

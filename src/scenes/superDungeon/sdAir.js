@@ -35,15 +35,41 @@ import { SD_ARENA, SD_ORRERY, SD_REALM_ORIGIN, realmToDungeon } from '../../net/
 import { spanAt } from '../../world/superDungeon/sdSteps.js';
 
 /** DAGGER.SND's own: the Orrery's clunk (Parry6), the gears' grind, the ship's bell. */
-const CLUNK = 433, GRIND = 68, BELL = 107;
+const CLUNK = 433,
+  GRIND = 68,
+  BELL = 107;
 /** THE BEDS: each bed's name on the engine, its made sound's key, its level; the made void and gears out of `voice`
  *  (DAGGER.SND) at `pitch`; the wind breathes `breathTurns` times a period (whole, so the clock can wrap) between
  *  (1 - depth) and its full gain. AUDIT SD III (A9): the works ducked to `duck` of its level on the Beat's span, where
  *  the Beat's own tick is the time a jump is taken by. */
-export const SD_AIR_VOID = Object.freeze({ loop: 'sdair:void', clip: 'sd:void', voice: SOUND.AmbientWindMoanDeep, volume: 0.26, pitch: 0.55, breathTurns: 24, depth: 0.4 });
+export const SD_AIR_VOID = Object.freeze({
+  loop: 'sdair:void',
+  clip: 'sd:void',
+  voice: SOUND.AmbientWindMoanDeep,
+  volume: 0.26,
+  pitch: 0.55,
+  breathTurns: 24,
+  depth: 0.4,
+});
 export const SD_AIR_WORKS = Object.freeze({ loop: 'sdair:works', clip: 'sd:works', volume: 0.2, duck: 0.25 });
-export const SD_AIR_HUM = Object.freeze({ loop: 'sdair:hum', clip: 'sd:hum', volume: 0.7, refDistance: 8, maxDistance: 50, distanceModel: 'linear' });
-export const SD_AIR_GEARS = Object.freeze({ loop: 'sdair:gears', clip: 'sd:gears', voice: GRIND, volume: 0.5, pitch: 0.55, refDistance: 12, maxDistance: 70, distanceModel: 'linear' });
+export const SD_AIR_HUM = Object.freeze({
+  loop: 'sdair:hum',
+  clip: 'sd:hum',
+  volume: 0.7,
+  refDistance: 8,
+  maxDistance: 50,
+  distanceModel: 'linear',
+});
+export const SD_AIR_GEARS = Object.freeze({
+  loop: 'sdair:gears',
+  clip: 'sd:gears',
+  voice: GRIND,
+  volume: 0.5,
+  pitch: 0.55,
+  refDistance: 12,
+  maxDistance: 70,
+  distanceModel: 'linear',
+});
 /** Where the hum and the gears stand: over the Orrery's centre, under the arena's. */
 export const SD_AIR_HUM_AT = Object.freeze(realmToDungeon(SD_ORRERY.x, 3, SD_ORRERY.z));
 export const SD_AIR_GEARS_AT = Object.freeze(realmToDungeon(SD_ARENA.x, -1, SD_ARENA.z));
@@ -52,7 +78,14 @@ export const SD_AIR_GEARS_AT = Object.freeze(realmToDungeon(SD_ARENA.x, -1, SD_A
 export const SD_AIR_EVENTS = Object.freeze({
   toll: Object.freeze({ slot: 24, chance: 0.5, clip: BELL, volume: [0.25, 0.45], pitch: [0.38, 0.5], lift: 20 }),
   gear: Object.freeze({ slot: 12, chance: 0.45, clip: CLUNK, volume: [0.2, 0.35], pitch: [0.55, 0.85], lift: -25 }),
-  moan: Object.freeze({ slot: 30, chance: 0.4, clip: SOUND.AmbientWindMoanDeep, volume: [0.2, 0.35], pitch: [0.45, 0.6], lift: -15 }),
+  moan: Object.freeze({
+    slot: 30,
+    chance: 0.4,
+    clip: SOUND.AmbientWindMoanDeep,
+    volume: [0.2, 0.35],
+    pitch: [0.45, 0.6],
+    lift: -15,
+  }),
   grind: Object.freeze({ slot: 36, chance: 0.5, clip: GRIND, volume: [0.15, 0.3], pitch: [0.3, 0.42], lift: 35 }),
 });
 /** The made sounds' rate, lengths (s) and levels (RMS) - the void's and the gears' long, and none a multiple of another,
@@ -62,14 +95,21 @@ export const SD_WORKS_SECONDS = 2;
 export const SD_HUM_SECONDS = 8;
 export const SD_VOID_SECONDS = 23;
 export const SD_GEARS_SECONDS = 13;
-const WORKS_RMS = 0.05, HUM_RMS = 0.06;
+const WORKS_RMS = 0.05,
+  HUM_RMS = 0.06;
 /** AUDIT SD III (A9): the works' tick and tock (the clunk's ratio) - under the Beat's (scenes/superDungeon/sdSteps.js, 1.6) and apart
  *  from the hall's turns (1, 0.85 and 1.25): the same clunk at the Beat's own pitch, a second apart where the Beat's
  *  half beat is 1.8, was a third clock over the one a jump is timed by. */
 export const SD_WORKS_TICK = Object.freeze([0.8, 0.6]);
 
 /** A small seeded hash, [0, 1). */
-const hash01 = (n) => { let x = Math.imul((n | 0) ^ 0x51ed270b, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+const hash01 = (n) => {
+  let x = Math.imul((n | 0) ^ 0x51ed270b, 0x85ebca6b);
+  x ^= x >>> 13;
+  x = Math.imul(x, 0xc2b2ae35);
+  x ^= x >>> 16;
+  return (x >>> 0) / 4294967296;
+};
 /** @param {number[]} r @param {number} u */
 const span = (r, u) => r[0] + (r[1] - r[0]) * u;
 
@@ -79,7 +119,11 @@ const span = (r, u) => r[0] + (r[1] - r[0]) * u;
  * @param {Float32Array | null | undefined} clunk
  * @param {Float32Array | null | undefined} grind
  */
-export function buildHourWorks(clunk, grind, { srcRate = SND_RATE, rate = SD_AIR_RATE, seconds = SD_WORKS_SECONDS } = {}) {
+export function buildHourWorks(
+  clunk,
+  grind,
+  { srcRate = SND_RATE, rate = SD_AIR_RATE, seconds = SD_WORKS_SECONDS } = {},
+) {
   const out = new Float32Array(Math.round(rate * seconds));
   if (clunk?.length) {
     addVoice(out, rate, clunk, srcRate, { ratio: SD_WORKS_TICK[0], offset: 0, gain: 1, wrap: true });
@@ -103,7 +147,7 @@ export function buildOrreryHum(bell, { srcRate = SND_RATE, rate = SD_AIR_RATE, s
     addVoice(out, rate, bell, srcRate, { ratio: 0.5, offset: seconds * 0.64, gain: 0.4, wrap: true });
   }
   lowpassLoop(out, rate, 700);
-  for (let i = 0; i < out.length; i++) out[i] *= 1 - 0.25 * (0.5 - 0.5 * Math.cos((2 * Math.PI * 2 * i) / out.length));   // two swells a loop, its end meeting its start
+  for (let i = 0; i < out.length; i++) out[i] *= 1 - 0.25 * (0.5 - 0.5 * Math.cos((2 * Math.PI * 2 * i) / out.length)); // two swells a loop, its end meeting its start
   return level(out, HUM_RMS);
 }
 
@@ -115,8 +159,16 @@ export function layBed(voice, { srcRate, rate, seconds, n, pitch, spread, seed, 
   const out = new Float32Array(Math.round(rate * seconds));
   if (!voice?.length) return out;
   for (let i = 0; i < n; i++) {
-    const ratio = pitch * (1 + spread * (hash01(seed + i * 7) * 2 - 1)), len = voice.length / srcRate / ratio;
-    addVoice(out, rate, voice, srcRate, { ratio, offset: ((i + hash01(seed + i * 7 + 3)) / n) * seconds, gain: 0.6 + 0.4 * hash01(seed + i * 7 + 5), wrap: true, fadeIn: len * fade, fadeOut: len * fade });
+    const ratio = pitch * (1 + spread * (hash01(seed + i * 7) * 2 - 1)),
+      len = voice.length / srcRate / ratio;
+    addVoice(out, rate, voice, srcRate, {
+      ratio,
+      offset: ((i + hash01(seed + i * 7 + 3)) / n) * seconds,
+      gain: 0.6 + 0.4 * hash01(seed + i * 7 + 5),
+      wrap: true,
+      fadeIn: len * fade,
+      fadeOut: len * fade,
+    });
   }
   lowpassLoop(out, rate, hz);
   return level(out, rms(voice));
@@ -127,20 +179,40 @@ export function layBed(voice, { srcRate, rate, seconds, n, pitch, spread, seed, 
  * @param {Float32Array | null | undefined} moan
  */
 export function buildVoidWind(moan, { srcRate = SND_RATE, rate = SD_AIR_RATE, seconds = SD_VOID_SECONDS } = {}) {
-  return layBed(moan, { srcRate, rate, seconds, n: 12, pitch: SD_AIR_VOID.pitch, spread: 0.12, seed: 0x766f6964, hz: 900 });
+  return layBed(moan, {
+    srcRate,
+    rate,
+    seconds,
+    n: 12,
+    pitch: SD_AIR_VOID.pitch,
+    spread: 0.12,
+    seed: 0x766f6964,
+    hz: 900,
+  });
 }
 /**
  * AUDIT SD III (A3): THE ARENA'S GEARS - the grind laid over itself the same way round SD_GEARS_SECONDS, low. Pure.
  * @param {Float32Array | null | undefined} grind
  */
 export function buildArenaGears(grind, { srcRate = SND_RATE, rate = SD_AIR_RATE, seconds = SD_GEARS_SECONDS } = {}) {
-  return layBed(grind, { srcRate, rate, seconds, n: 9, pitch: SD_AIR_GEARS.pitch, spread: 0.08, seed: 0x67656172, hz: 1400 });
+  return layBed(grind, {
+    srcRate,
+    rate,
+    seconds,
+    n: 9,
+    pitch: SD_AIR_GEARS.pitch,
+    spread: 0.08,
+    seed: 0x67656172,
+    hz: 1400,
+  });
 }
 
 /** The slots of `slotS` whose event could land in (from, to] on the unwrapped clock, each `[start, index in the period]`. */
 function slotsOver(from, to, slotS) {
-  const n = Math.round(SD_SKY_PERIOD / slotS), out = [];
-  for (let k = Math.floor((from - slotS) / slotS); k <= Math.floor(to / slotS); k++) out.push([k * slotS, ((k % n) + n) % n]);
+  const n = Math.round(SD_SKY_PERIOD / slotS),
+    out = [];
+  for (let k = Math.floor((from - slotS) / slotS); k <= Math.floor(to / slotS); k++)
+    out.push([k * slotS, ((k % n) + n) % n]);
   return out;
 }
 
@@ -159,7 +231,15 @@ export function sdAirEvents(from, to) {
       if (h(0) >= E.chance) continue;
       const t = base + h(1) * (E.slot - 2);
       if (!(t > from && t <= to)) continue;
-      out.push({ t, kind, clip: E.clip, volume: span(E.volume, h(2)), pitch: span(E.pitch, h(3)), az: (h(4) * 2 - 1) * Math.PI, lift: E.lift });
+      out.push({
+        t,
+        kind,
+        clip: E.clip,
+        volume: span(E.volume, h(2)),
+        pitch: span(E.pitch, h(3)),
+        az: (h(4) * 2 - 1) * Math.PI,
+        lift: E.lift,
+      });
     }
   }
   return out.sort((a, b) => a.t - b.t);
@@ -167,7 +247,11 @@ export function sdAirEvents(from, to) {
 
 /** The void's wind at `seconds`: breathing between (1 - depth) and its full level, whole over the period. Pure. */
 export function sdAirWindGain(seconds) {
-  const u = ((((seconds % SD_SKY_PERIOD) + SD_SKY_PERIOD) % SD_SKY_PERIOD) / SD_SKY_PERIOD) * SD_AIR_VOID.breathTurns * 2 * Math.PI;
+  const u =
+    ((((seconds % SD_SKY_PERIOD) + SD_SKY_PERIOD) % SD_SKY_PERIOD) / SD_SKY_PERIOD) *
+    SD_AIR_VOID.breathTurns *
+    2 *
+    Math.PI;
   return SD_AIR_VOID.volume * (1 - SD_AIR_VOID.depth * (0.5 - 0.5 * Math.sin(u)));
 }
 
@@ -186,7 +270,10 @@ const periodEvents = () => (_period ??= Object.freeze(sdAirEvents(0, SD_SKY_PERI
  * the listener in the dungeon's frame); `stop()` on every other frame - silent, and nothing left looping.
  */
 export function createSdAir(engine = defaultAudio) {
-  let last = null, on = false, made = false, duck = 1;
+  let last = null,
+    on = false,
+    made = false,
+    duck = 1;
   /** AUDIT SD III (A11): the made sounds' samples, built once the archive is read - the build is never asked again, only
    *  the registration (with no context to make them on, the works and the hum were built anew every frame, 2.2 ms) */
   let built = null;
@@ -196,18 +283,30 @@ export function createSdAir(engine = defaultAudio) {
     if (made || !engine?.registerSamples || !engine?.samplesOf) return made;
     try {
       if (!built) {
-        const clunk = engine.samplesOf(CLUNK), bell = engine.samplesOf(BELL), grind = engine.samplesOf(GRIND), moan = engine.samplesOf(SD_AIR_VOID.voice);
+        const clunk = engine.samplesOf(CLUNK),
+          bell = engine.samplesOf(BELL),
+          grind = engine.samplesOf(GRIND),
+          moan = engine.samplesOf(SD_AIR_VOID.voice);
         if (!clunk || !bell || !grind || !moan) return false;
-        built = [[SD_AIR_WORKS.clip, buildHourWorks(clunk, grind)], [SD_AIR_HUM.clip, buildOrreryHum(bell)], [SD_AIR_VOID.clip, buildVoidWind(moan)], [SD_AIR_GEARS.clip, buildArenaGears(grind)]];
+        built = [
+          [SD_AIR_WORKS.clip, buildHourWorks(clunk, grind)],
+          [SD_AIR_HUM.clip, buildOrreryHum(bell)],
+          [SD_AIR_VOID.clip, buildVoidWind(moan)],
+          [SD_AIR_GEARS.clip, buildArenaGears(grind)],
+        ];
       }
       made = true;
       for (const [key, samples] of built) made = made && !!engine.registerSamples(key, samples, SD_AIR_RATE);
       if (made) built = null;
-    } catch { made = false; }
+    } catch {
+      made = false;
+    }
     return made;
   };
-  return _heard = {
-    get on() { return on; },
+  return (_heard = {
+    get on() {
+      return on;
+    },
     frame(seconds, ear) {
       if (!Number.isFinite(seconds) || !Array.isArray(ear) || ear.length !== 3) return;
       try {
@@ -217,20 +316,40 @@ export function createSdAir(engine = defaultAudio) {
           duck += ((spanAt(ear[2] - SD_REALM_ORIGIN[2]) === 1 ? SD_AIR_WORKS.duck : 1) - duck) * Math.min(1, dt * 3);
           engine.setBed(SD_AIR_VOID.loop, SD_AIR_VOID.clip, { volume: sdAirWindGain(seconds) });
           engine.setBed(SD_AIR_WORKS.loop, SD_AIR_WORKS.clip, { volume: SD_AIR_WORKS.volume * duck });
-          engine.setBed3d(SD_AIR_HUM.loop, SD_AIR_HUM.clip, SD_AIR_HUM_AT, { volume: SD_AIR_HUM.volume, refDistance: SD_AIR_HUM.refDistance, maxDistance: SD_AIR_HUM.maxDistance, distanceModel: SD_AIR_HUM.distanceModel });
-          engine.setBed3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT, { volume: SD_AIR_GEARS.volume, refDistance: SD_AIR_GEARS.refDistance, maxDistance: SD_AIR_GEARS.maxDistance, distanceModel: SD_AIR_GEARS.distanceModel });
+          engine.setBed3d(SD_AIR_HUM.loop, SD_AIR_HUM.clip, SD_AIR_HUM_AT, {
+            volume: SD_AIR_HUM.volume,
+            refDistance: SD_AIR_HUM.refDistance,
+            maxDistance: SD_AIR_HUM.maxDistance,
+            distanceModel: SD_AIR_HUM.distanceModel,
+          });
+          engine.setBed3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT, {
+            volume: SD_AIR_GEARS.volume,
+            refDistance: SD_AIR_GEARS.refDistance,
+            maxDistance: SD_AIR_GEARS.maxDistance,
+            distanceModel: SD_AIR_GEARS.distanceModel,
+          });
         }
         on = true;
         if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {
           // AUDIT SD V (P3): the events in (last, seconds] off the period's list - this period's, and the next's past its
           // turn (the backlog is shorter than the period: none twice)
-          const E = periodEvents(), P = SD_SKY_PERIOD, from = last - Math.floor(last / P) * P, to = from + (seconds - last);
+          const E = periodEvents(),
+            P = SD_SKY_PERIOD,
+            from = last - Math.floor(last / P) * P,
+            to = from + (seconds - last);
           for (let i = 0; i < E.length; i++) {
             const e = E[i];
-            if ((e.t > from && e.t <= to) || (e.t + P > from && e.t + P <= to)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: SD_AIR_FAR });
+            if ((e.t > from && e.t <= to) || (e.t + P > from && e.t + P <= to))
+              engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, {
+                refDistance: THUNDER_SOURCE_M,
+                pitch: e.pitch,
+                far: SD_AIR_FAR,
+              });
           }
         }
-      } catch { /* a sound is never the fight */ }
+      } catch {
+        /* a sound is never the fight */
+      }
       last = seconds;
     },
     stop() {
@@ -243,8 +362,10 @@ export function createSdAir(engine = defaultAudio) {
         engine.setBed(SD_AIR_WORKS.loop, null);
         engine.setBed3d(SD_AIR_HUM.loop, null, null);
         engine.setBed3d(SD_AIR_GEARS.loop, null, null);
-        engine.fadeFar?.(SD_AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them
-      } catch { /* nothing left to stop */ }
+        engine.fadeFar?.(SD_AIR_FAR); // AUDIT SD IV (A5): and its events still sounding, with them
+      } catch {
+        /* nothing left to stop */
+      }
     },
-  };
+  });
 }

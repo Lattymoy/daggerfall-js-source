@@ -147,8 +147,8 @@
   {
     "name": "SD20A-F4-every-page-judged",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "if (alive && link.counted()) {",
-    "new": "if (alive) {",
+    "old": "      if (alive && link.counted()) {",
+    "new": "      if (alive) {",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD20A-F8-the-rig-never-over",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "feetOver = ry >= SD_PILLAR_OVER_Y;",
-    "new": "feetOver = false;",
+    "old": "        feetOver = ry >= SD_PILLAR_OVER_Y;",
+    "new": "        feetOver = false;",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]

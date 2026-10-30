@@ -21,7 +21,7 @@
     "name": "SD26-F33-the-sweeps-cube",
     "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "    if (rift) out.push(riftPress(rift, riftKey, riftYields));",
-    "new": "    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });",
+    "new": "    if (rift)\n      out.push({\n        key: SD_RIFT_KEY,\n        aabb: boxOf(rift.at, rift.size / 2, rift.size),\n        distance: RAY_DISTANCE,\n        reach: DEFAULT_ACTIVATION_DISTANCE,\n      });",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "SD26-F33-the-box-unturned",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "obb: { m: Float64Array.from(b), box:",
-    "new": "obb: { m: Float64Array.from([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, b[12], b[13], b[14], 1]), box:",
+    "old": "    obb: { m: Float64Array.from(b), box: [-R, 0, -D, R, top, D] },",
+    "new": "    obb: {\n      m: Float64Array.from([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, b[12], b[13], b[14], 1]),\n      box: [-R, 0, -D, R, top, D],\n    },",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SD26-F33-the-world-box-unturned",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "const hx = Math.abs(b[0]) * R + Math.abs(b[8]) * D, hz = Math.abs(b[2]) * R + Math.abs(b[10]) * D;",
-    "new": "const hx = R, hz = D;",
+    "old": "  const hx = Math.abs(b[0]) * R + Math.abs(b[8]) * D,\n    hz = Math.abs(b[2]) * R + Math.abs(b[10]) * D;",
+    "new": "  const hx = R,\n    hz = D;",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "SD26-F33-a-surface-it-has-not",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": " noSurface: true, distance: RAY_DISTANCE,",
-    "new": " distance: RAY_DISTANCE,",
+    "old": "    noSurface: true,\n    distance: RAY_DISTANCE,",
+    "new": "    distance: RAY_DISTANCE,",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -211,8 +211,8 @@
     "name": "SD26-F37-the-hosts-ground-unhanded",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "findSite(at, sc, near, ground)",
-    "new": "findSite(at, sc, near)",
+    "old": "    const site = findSite(at, sc, near, ground); // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law",
+    "new": "    const site = findSite(at, sc, near); // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]

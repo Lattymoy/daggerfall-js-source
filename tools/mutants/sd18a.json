@@ -328,8 +328,8 @@
   {
     "name": "SD18A-the-card-at-fifteen",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');",
-    "new": "show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
+    "old": "        if (s.ph === 2) show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');",
+    "new": "        if (s.ph === 2) show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "SD18A-the-read-the-tables",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "    const S = blowShape(atk) ?? A, w = atkWindup(atk, A, s.ph,",
-    "new": "    const S = A, w = atkWindup(atk, A, s.ph,",
+    "old": "    const S = blowShape(atk) ?? A,",
+    "new": "    const S = A,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "SD18A-the-floor-the-tables",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "  const S = blowShape(atk);   // SD18a: the blow its frame says - its Hollow's marks\n",
-    "new": "  const S = A;\n",
+    "old": "  const S = blowShape(atk); // SD18a: the blow its frame says - its Hollow's marks",
+    "new": "  const S = A;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "SD18A-the-tide-unturned",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "    const S = blowShape(a);   // SD18a: the Turning Tide's wider, longer sweep\n",
-    "new": "    const S = A;\n",
+    "old": "    const S = blowShape(a); // SD18a: the Turning Tide's wider, longer sweep",
+    "new": "    const S = A;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]

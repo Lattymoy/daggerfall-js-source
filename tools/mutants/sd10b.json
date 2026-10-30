@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SD-C2-the-marks-kept",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
-    "new": "{ marksFi = s.fi; pools = []; inFire = false; }",
+    "old": "        marks.clear();\n        pools = [];",
+    "new": "        pools = [];",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SD-C2-the-brass-kept",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
-    "new": "{ marksFi = s.fi; marks.clear(); inFire = false; }",
+    "old": "        pools = [];\n        inFire = false;",
+    "new": "        inFire = false;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-SD-C3-the-falls-number-kept",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
-    "new": "      marksFi = 0; endSaid = 0;",
+    "old": "      fellFi = 0;\n      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "new": "      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-SD-C3-the-ends-number-kept",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
-    "new": "      marksFi = 0; fellFi = 0;",
+    "old": "      fellFi = 0;\n      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "new": "      fellFi = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-SD-C5-the-long-way-out",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px",
-    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px",
+    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);",
+    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-SD-C5-the-spew-from-inside",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);",
-    "new": "const [px, pz] = [pose.x, pose.z];",
+    "old": "          const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3); // AUDIT SD: never out of a pillar's inside",
+    "new": "          const [px, pz] = [pose.x, pose.z]; // AUDIT SD: never out of a pillar's inside",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "    mine.push(d);\n    draws?.push(d);",
-    "new": "    mine.push(d);",
+    "old": "    draws?.push(d);\n    return d;",
+    "new": "    return d;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-SD-C6-the-way-home-unlisted",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      draws = dynamicDraws ?? draws ?? [];\n      const ago",
-    "new": "      const ago",
+    "old": "      draws = dynamicDraws ?? draws ?? [];\n      const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;",
+    "new": "      const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-SD-C6-a-gone-one-listed",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null;",
-    "new": "ret = null;",
+    "old": "      dropMesh(ret.arch);\n      dropMesh(ret.hand);\n      dropMesh(ret.plate);\n      for (const d of ret.parts ?? NONE) dropMesh(d);\n      ret = null;",
+    "new": "      ret = null;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-SD-C6-the-list-past-the-clear",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      for (const d of [...mine]) dropMesh(d);\n",
-    "new": "",
+    "old": "      for (const d of [...mine]) dropMesh(d);\n      rift = null;",
+    "new": "      rift = null;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-SD-C6-a-hand-drawn-at-its-start",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "{ shown[i] = want[i]; if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix); }",
-    "new": "{ shown[i] = want[i]; }",
+    "old": "        if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix);\n      } // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)",
+    "new": "      } // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-SD-C6-a-matrix-every-frame",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "        if (d === 0) continue;",
-    "new": "",
+    "old": "        if (d === 0) continue; // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing",
+    "new": "        // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-SD-C7-the-mark-unmade",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "    if (blow) setBossStruck();\n",
-    "new": "",
+    "old": "    if (blow) setBossStruck();\n    const dmg = strikeDamage(pct, e.maxHealth, base);",
+    "new": "    const dmg = strikeDamage(pct, e.maxHealth, base);",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-SD-C7-the-reset-marked-as-the-bodys",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
-    "new": "land(A.name, h.pct, h.base, b !== SD_BODY.hour, h.el ?? null);",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, b !== SD_BODY.hour, h.el ?? null);",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-SD-C7-an-echos-unmarked",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
-    "new": "land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant, h.el ?? null);",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant, h.el ?? null);",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]

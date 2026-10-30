@@ -101,8 +101,8 @@
   {
     "name": "SD18B-the-wake-the-table's",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "show('wake', s.op, sdWakeText(s.mk));",
-    "new": "show('wake', s.op, SD_BEAT_TEXT.wake);",
+    "old": "      if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, sdWakeText(s.mk));",
+    "new": "      if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, SD_BEAT_TEXT.wake);",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD18B-the-ground-plain",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "ground: (el && SD_ELEMENT_GROUND[el]) || SD_BURNING_GROUND,",
-    "new": "ground: SD_BURNING_GROUND,",
+    "old": "    ground: (el && SD_ELEMENT_GROUND[el]) || SD_BURNING_GROUND,",
+    "new": "    ground: SD_BURNING_GROUND,",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD18B-untinted",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "    color: sdTint(A.key, S.el), style:",
-    "new": "    color: SD_BLOW_COLOR[A.key], style:",
+    "old": "    color: sdTint(A.key, S.el),",
+    "new": "    color: SD_BLOW_COLOR[A.key],",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD18B-the-tint-whole",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "  if (!c) { c = Object.freeze(base.map((v, i) => v + (E[i] - v) * SD_TINT_LEAN)); _tints.set(k, c); }",
-    "new": "  if (!c) { c = E; _tints.set(k, c); }",
+    "old": "    c = Object.freeze(base.map((v, i) => v + (E[i] - v) * SD_TINT_LEAN));",
+    "new": "    c = E;",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD18B-the-pool-fire",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "color: SD_ELEMENT_COLOR[g[0].el] ?? SD_POOL_COLOR, style: SD_ELEMENT_STYLE[g[0].el] ?? TELEGRAPH_STYLE.fire,",
-    "new": "color: SD_POOL_COLOR, style: TELEGRAPH_STYLE.fire,",
+    "old": "        color: SD_ELEMENT_COLOR[g[0].el] ?? SD_POOL_COLOR,\n        style: SD_ELEMENT_STYLE[g[0].el] ?? TELEGRAPH_STYLE.fire,",
+    "new": "        color: SD_POOL_COLOR,\n        style: TELEGRAPH_STYLE.fire,",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD18B-the-arc-forty-eight",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "const tabs = o?.fray ?? SD_FRAY_MAX,",
-    "new": "const tabs = SD_FRAY_MAX,",
+    "old": "  const tabs = o?.fray ?? SD_FRAY_MAX,",
+    "new": "  const tabs = SD_FRAY_MAX,",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]

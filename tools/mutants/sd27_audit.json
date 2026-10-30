@@ -38,8 +38,8 @@
   {
     "name": "SD27-S2-the-way-back-revealed",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "if (!rift.hollow && !rift.revealed && eye &&",
-    "new": "if (!rift.revealed && eye &&",
+    "old": "    if (!rift.hollow && !rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {",
+    "new": "    if (!rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD27-L2-the-bridge-walkable-before-drawn",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "get bridgeLaid() { return ok && laid; },",
-    "new": "get bridgeLaid() { return ok; },",
+    "old": "      return ok && laid;",
+    "new": "      return ok;",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD27-P1-the-look-made-a-frame",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      const out = _look;\n",
-    "new": "      const out = { window: null, floor: null, bay: null };\n",
+    "old": "      const out = _look;",
+    "new": "      const out = { window: null, floor: null, bay: null };",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SD27-P1-the-halos-let-go",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      let n = 0;   // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one\n",
-    "new": "      let n = 0; _halos.length = 0;\n",
+    "old": "      let n = 0; // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one",
+    "new": "      let n = 0;\n      _halos.length = 0;",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SD27-P3-the-air-asked-a-frame",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "const E = periodEvents(), P = SD_SKY_PERIOD,",
-    "new": "const E = sdAirEvents(0, SD_SKY_PERIOD), P = SD_SKY_PERIOD,",
+    "old": "          const E = periodEvents(),",
+    "new": "          const E = sdAirEvents(0, SD_SKY_PERIOD),",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]

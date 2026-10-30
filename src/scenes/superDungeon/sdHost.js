@@ -15,11 +15,27 @@
 // next frame finds them outside and takes it down.
 //
 // Pure but for its seams, which the world host hands in (scenes/world.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M, SD_FOUND_RESEND_MS, SD_COLLAPSE_MS } from '../../net/superDungeon/sdLaw.js';
-import { countdownText } from '../../net/gate/gateLaw.js';   // SD10: the collapse's countdown, the gate's own words
+import {
+  sdPhase,
+  sdStands,
+  sdFoundLine,
+  sdFellLine,
+  sdFadeLine,
+  SD_FOUND_NEAR_M,
+  SD_FOUND_RESEND_MS,
+  SD_COLLAPSE_MS,
+} from '../../net/superDungeon/sdLaw.js';
+import { countdownText } from '../../net/gate/gateLaw.js'; // SD10: the collapse's countdown, the gate's own words
 import { findSdSite, pickSdTemplate, sdHollowLocation } from '../../systems/superDungeon/sdSite.js';
 import { worldRoom } from '../../net/wire.js';
-import { sdMapMark, sdOmenLight, sdRumor, sdMarksLine, sdHourLine, SD_HOUR_LEFT_MS } from '../../systems/superDungeon/sdOmen.js';   // SD2c: the Hollow seen and heard of; SD19: its marks and its last hour said
+import {
+  sdMapMark,
+  sdOmenLight,
+  sdRumor,
+  sdMarksLine,
+  sdHourLine,
+  SD_HOUR_LEFT_MS,
+} from '../../systems/superDungeon/sdOmen.js'; // SD2c: the Hollow seen and heard of; SD19: its marks and its last hour said
 
 /** A line the scan has not been able to place yet is said with the region's name after this long, never lost. */
 export const SD_LINE_WAIT_MS = 30_000;
@@ -44,7 +60,10 @@ export function sdCollapseDue(left, said = Infinity) {
  *  SD III (T15): outside the Hour the player's word for the place, as everywhere else it is named - the Abyss Dungeon. */
 export function sdCollapseLine(left, { hour = false, first = false } = {}) {
   const t = countdownText(left);
-  if (hour) return first ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.` : `The Hour collapses in ${t}.`;
+  if (hour)
+    return first
+      ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.`
+      : `The Hour collapses in ${t}.`;
   return first ? `The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`;
 }
 /** AUDIT SD II (L6 F5): THE FADE'S READOUTS - a Hollow unbeaten closes at its `until` and casts out whoever stands in it
@@ -60,7 +79,8 @@ export function sdFadeDue(left, said = Infinity) {
 }
 /** Its words. Pure. AUDIT SD III (T15): the Abyss Dungeon FADES, as its ring, its banner and its note say it does (it
  *  "closed" here alone) - and the Hour inside it closes as it goes. */
-export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;
+export const sdFadeReadout = (left, { hour = false } = {}) =>
+  `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;
 
 /** @typedef {import('../../net/wire.js').SdRecord} SdRecord */
 
@@ -97,7 +117,30 @@ export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hou
  *   next frame; `standing` the slot of the Hollow or Hour I stand in, or null. AUDIT SD IV (F37): `ground` whether a pixel's
  *   plateau is dry (the spawns' own SPAWN-SHORE test)
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null, ground = () => true, findSite = findSdSite, province = '', rescan = false }) {
+export function createSdHost({
+  now,
+  scan,
+  warmScan = () => {},
+  cities,
+  templates,
+  where,
+  stand,
+  unstand,
+  inside,
+  door,
+  feet,
+  sendFound,
+  say,
+  regionName = () => '',
+  castOut = () => {},
+  warn = () => {},
+  inHour = () => false,
+  standing = () => null,
+  ground = () => true,
+  findSite = findSdSite,
+  province = '',
+  rescan = false,
+}) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -108,14 +151,17 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   let stood = null;
   /** The lines owed until the Hollow's place is known (its city's name): `{ kind, rec, at }`. */
   const owed = [];
-  let foundSentAt = -Infinity, foundSentS = 0;
+  let foundSentAt = -Infinity,
+    foundSentS = 0;
   /** SD2d: the slot whose Hollow this player was cast out of, and when - AUDIT SD III (H4): once a STAY, not once a slot.
    *  Asked again while I still stand there SD_CAST_OUT_AGAIN_MS on (the exit asked is taken a frame later, and a death in
    *  that frame - a lethal landing - drops it: raised where I lay, I stood in an ended Hollow no frame cast me out of),
    *  and forgotten as I stand nowhere it could cast me out of (back in by its door while it is still listed). */
-  let castOutS = 0, castOutAt = -Infinity;
+  let castOutS = 0,
+    castOutAt = -Infinity;
   /** SD10: the collapse's last readout said - its slot and its mark. AUDIT SD II (L6 F5): and the fade's. */
-  let warned = { s: 0, at: Infinity }, fadeWarned = { s: 0, at: Infinity };
+  let warned = { s: 0, at: Infinity },
+    fadeWarned = { s: 0, at: Infinity };
   /** SD19: the slot whose last hour has been said (once a slot). */
   let hourSaidS = 0;
 
@@ -124,17 +170,29 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     if (!r || !r.s) return null;
     if (memo && memo.s === r.s && !rescan) return memo.none ? null : memo;
     const sc = scan();
-    if (rescan && memo && memo.s === r.s && memo.sc === sc) return memo.none ? null : memo;   // WW5: the same ground, the same Hollow
-    if (!sc) { if (rescan && memo && memo.s === r.s && !memo.none) return memo; warmScan(); return null; }   // WW5: what stands stands while its ground is made again
+    if (rescan && memo && memo.s === r.s && memo.sc === sc) return memo.none ? null : memo; // WW5: the same ground, the same Hollow
+    if (!sc) {
+      if (rescan && memo && memo.s === r.s && !memo.none) return memo;
+      warmScan();
+      return null;
+    } // WW5: what stands stands while its ground is made again
     // SD-SEA (FIELD BUGS 2026-10-20b): a region with no town to rise by - a relay before SD-SEA raised one where a crowd
     // stood at sea (net/superDungeon/sdLaw.js SD_TOWNLESS_REGIONS) - rises by the Bay's great cities, as one whose census
     // counted nobody does: the same city and pixel on every client, where it stood by none
-    let at = r, near = cities(r.r);
-    if (!near.length && r.r >= 0) { at = { ...r, r: -1 }; near = cities(-1); }
-    const site = findSite(at, sc, near, ground);   // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law
+    let at = r,
+      near = cities(r.r);
+    if (!near.length && r.r >= 0) {
+      at = { ...r, r: -1 };
+      near = cities(-1);
+    }
+    const site = findSite(at, sc, near, ground); // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law
     const template = site ? pickSdTemplate(r.s, templates()) : null;
     const loc = site && template ? sdHollowLocation(r, site, template, where(site.px, site.py)) : null;
-    if (!loc) { memo = { s: r.s, none: true, sc }; console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`); return null; }
+    if (!loc) {
+      memo = { s: r.s, none: true, sc };
+      console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`);
+      return null;
+    }
     memo = { s: r.s, site, loc, key: `${site.px},${site.py}`, sc };
     return memo;
   }
@@ -142,17 +200,19 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   /** A record the hub said: kept when it is this slot's or a later one's; a move after the first word owes its line. */
   function heard(w) {
     if (!w || !Number.isSafeInteger(w.s) || w.s < 1) return;
-    if (rec && w.s < rec.s) return;   // an older slot's word: the hub moved on
+    if (rec && w.s < rec.s) return; // an older slot's word: the hub moved on
     const was = rec;
     rec = { ...w };
-    delete /** @type {any} */ (rec).k;
+    delete (/** @type {any} */ (rec).k);
     const first = !heardAny;
     heardAny = true;
-    if (first) return;   // the welcome's record: what happened while I was away is no news
+    if (first) return; // the welcome's record: what happened while I was away is no news
     const t = now();
-    if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell'))) owed.push({ kind: 'found', rec, at: t });
+    if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell')))
+      owed.push({ kind: 'found', rec, at: t });
     if (rec.ph === 'fell' && !(was && was.s === rec.s && was.ph === 'fell')) owed.push({ kind: 'fell', rec, at: t });
-    if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone') owed.push({ kind: 'fade', rec, at: t });   // AUDIT SD II (L6): a FOUND Hollow's fade - one never found was news to nobody
+    if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone')
+      owed.push({ kind: 'fade', rec, at: t }); // AUDIT SD II (L6): a FOUND Hollow's fade - one never found was news to nobody
   }
 
   /** The lines owed, said once the Hollow's place is known - or, past SD_LINE_WAIT_MS, with the region's name. */
@@ -162,9 +222,14 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       const h = hollowOf(o.rec);
       if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;
       owed.shift();
-      const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';   // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province
+      const near = h?.site?.cityName || '',
+        region = province ? '' : regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province
       const name = h?.loc?.name || 'an Abyss Dungeon';
-      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
+      if (o.kind === 'found') {
+        say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province }));
+        const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s });
+        if (m) say(m);
+      } // SD19: and its marks
       else if (o.kind === 'fell') say(sdFellLine({ top: o.rec.top || 'Someone', n: o.rec.n ?? 1, name }));
       else say(sdFadeLine({ name }));
     }
@@ -179,47 +244,101 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     // then they are cast out before its door, once (SD2d); the next frame finds them outside
     let asked = false;
     const again = (s) => castOutS !== s || t - castOutAt >= SD_CAST_OUT_AGAIN_MS;
-    const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };
-    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {   // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)
-      if (!inside(stood.loc)) { unstand(stood.key); stood = null; }
+    const ask = (s, key) => {
+      if (castOut(key) !== false) {
+        castOutS = s;
+        castOutAt = t;
+      }
+    };
+    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {
+      // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)
+      if (!inside(stood.loc)) {
+        unstand(stood.key);
+        stood = null;
+      }
       // AUDIT SD II (L1 F2): latched once it ACTED - a player dead at the end and raised where they lay (a Resurrect) was
       // latched as cast out, and stood in an ended Hollow or Hour for good
-      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }
+      else if (again(stood.s)) {
+        asked = true;
+        ask(stood.s, stood.key);
+      }
     }
     // AUDIT SD II (L1 F3): THE END JUDGED WHERE I STAND, too - a step under the veil (into the Hour, or back into its
     // Hollow: a whole dungeon's build) could finish after the end had taken the Hollow down, and land me in a Hollow or an
     // Hour no frame would ever cast me out of. Judged once the hub has said its record (a page that has heard nothing
     // knows no end)
     const at = standing();
-    if (at == null && !(stood && inside(stood.loc))) castOutS = 0;   // AUDIT SD III (H4): the stay over
+    if (at == null && !(stood && inside(stood.loc))) castOutS = 0; // AUDIT SD III (H4): the stay over
     if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);
-    if (h && !stood) { stand(h.key, h.loc); stood = { s: h.s, key: h.key, loc: h.loc }; }
+    if (h && !stood) {
+      stand(h.key, h.loc);
+      stood = { s: h.s, key: h.key, loc: h.loc };
+    }
     // SD10: THE COLLAPSE'S READOUTS - to whoever stands in it (the Hollow, or its Hour) while it collapses
     if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {
       const left = rec.fellAt + SD_COLLAPSE_MS - t;
       const due = sdCollapseDue(left, warned.s === rec.s ? warned.at : Infinity);
-      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; warn(sdCollapseLine(left, { hour: inHour(), first })); }
+      if (due != null) {
+        const first = warned.s !== rec.s;
+        warned = { s: rec.s, at: due };
+        warn(sdCollapseLine(left, { hour: inHour(), first }));
+      }
     }
     // AUDIT SD II (L6 F5): THE FADE'S READOUTS - to whoever stands in a Hollow (or its Hour) its time is running out on
-    if ((phase === 'risen' || phase === 'found') && stood && stood.s === rec?.s && Number.isFinite(rec.until) && inside(stood.loc)) {
+    if (
+      (phase === 'risen' || phase === 'found') &&
+      stood &&
+      stood.s === rec?.s &&
+      Number.isFinite(rec.until) &&
+      inside(stood.loc)
+    ) {
       const left = rec.until - t;
       const due = sdFadeDue(left, fadeWarned.s === rec.s ? fadeWarned.at : Infinity);
-      if (due != null) { fadeWarned = { s: rec.s, at: due }; warn(sdFadeReadout(left, { hour: inHour() })); }
+      if (due != null) {
+        fadeWarned = { s: rec.s, at: due };
+        warn(sdFadeReadout(left, { hour: inHour() }));
+      }
     }
     // the find: at its door, while the record says risen - again every SD_FOUND_RESEND_MS until the hub's word moves it
-    if (phase === 'risen' && stood && stood.s === rec?.s && (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)) {
-      const d = door(stood.key), f = feet();
+    if (
+      phase === 'risen' &&
+      stood &&
+      stood.s === rec?.s &&
+      (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)
+    ) {
+      const d = door(stood.key),
+        f = feet();
       if (d && f && Math.hypot(f[0] - d[0], f[2] - d[2]) <= SD_FOUND_NEAR_M) {
         const [px, py] = stood.key.split(',').map(Number);
-        if (sendFound({ s: stood.s, px, py }, worldRoom(px, py))) { foundSentAt = t; foundSentS = stood.s; }
+        if (sendFound({ s: stood.s, px, py }, worldRoom(px, py))) {
+          foundSentAt = t;
+          foundSentS = stood.s;
+        }
       }
     }
     // AUDIT SD IV (T7): the find owed first - a Hollow found in its last hour faded in chat before it was found
     sayOwed(t);
     // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
-    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
+    if (
+      phase === 'found' &&
+      rec &&
+      hourSaidS !== rec.s &&
+      Number.isFinite(rec.until) &&
+      rec.until > t &&
+      rec.until - t <= SD_HOUR_LEFT_MS
+    ) {
       const hh = hollowOf(rec);
-      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }
+      if (hh || (memo && memo.s === rec.s && memo.none)) {
+        hourSaidS = rec.s;
+        say(
+          sdHourLine({
+            name: hh?.loc?.name,
+            near: hh?.site?.cityName || '',
+            region: province ? '' : regionName(rec.r) || '',
+            province,
+          }),
+        );
+      }
     }
   }
 
@@ -244,6 +363,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       return light > 0 ? { hollow: h, light } : null;
     },
     /** SD2c: "Any news?" asked at `here` (my map pixel) - the taverns' word of the Hollow in its city, or null (sdRumor). */
-    rumor: (here, session, o) => sdRumor(rec, stood && memo && memo.s === stood.s ? memo : null, now(), here, session, o),
+    rumor: (here, session, o) =>
+      sdRumor(rec, stood && memo && memo.s === stood.s ? memo : null, now(), here, session, o),
   };
 }

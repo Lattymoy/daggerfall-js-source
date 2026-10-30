@@ -227,8 +227,8 @@
   {
     "name": "SD8C-never-warded",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "      return { feet: arenaToDungeon(p.x, p.z), yaw: p.yw, height: SD_REM.h, radius: SD_REM.r, warded: !remnantOpenAt(s, t),",
-    "new": "      return { feet: arenaToDungeon(p.x, p.z), yaw: p.yw, height: SD_REM.h, radius: SD_REM.r, warded: false,",
+    "old": "        warded: !remnantOpenAt(s, t),",
+    "new": "        warded: false,",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD8C-each-blow-its-own-number",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "    if (!blowMet.size || blowMet.has(who)) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
-    "new": "    { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "old": "    if (!blowMet.size || blowMet.has(who)) {",
+    "new": "    {",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD8C-one-number-for-all",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "    if (!blowMet.size || blowMet.has(who)) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
-    "new": "    if (!blowMet.size) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "old": "    if (!blowMet.size || blowMet.has(who)) {",
+    "new": "    if (!blowMet.size) {",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD8C-a-frame-not-ending-the-blow",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "      if (blowMet.size) blowMet.clear();   // a frame ends my blow",
-    "new": "      // a frame ends my blow",
+    "old": "      if (blowMet.size) blowMet.clear(); // a frame ends my blow (AUDIT SD II, L2 F9: an empty Set's clear makes it a new table)",
+    "new": "      // a frame ends my blow (AUDIT SD II, L2 F9: an empty Set's clear makes it a new table)",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "SD8C-no-kneel",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "  const kneel = now < s.su ? SD_KNEEL_M * Math.max(0, Math.min(1, (now - (s.su - SD_STUN_MS)) / SD_KNEEL_EASE_MS, (s.su - now) / SD_KNEEL_EASE_MS)) : 0;",
+    "old": "  const kneel =\n    now < s.su\n      ? SD_KNEEL_M *\n        Math.max(0, Math.min(1, (now - (s.su - SD_STUN_MS)) / SD_KNEEL_EASE_MS, (s.su - now) / SD_KNEEL_EASE_MS))\n      : 0;",
     "new": "  const kneel = 0;",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "SD8C-drawn-outside-time",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, false);   // outside time",
-    "new": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, true);   // outside time",
+    "old": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, false); // outside time",
+    "new": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, true); // outside time",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD8C-an-echo-unscaled",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE);",
-    "new": "turn(echoPose(s, e, t, _echoPose), 1 + e, dt), 1);",
+    "old": "        place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE);",
+    "new": "        place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), 1);",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]

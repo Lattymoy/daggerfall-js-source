@@ -294,8 +294,8 @@
   {
     "name": "ORRERY-HANDS-turner-never-kept",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "      lastBy[w.i] = typeof w.by === 'string' ? w.by : '';",
-    "new": "      lastBy[w.i] = '';",
+    "old": "      lastBy[w.i] = typeof w.by === 'string' ? w.by : ''; // RPT1026-EVENTS ORRERY-HANDS: whose hand it was",
+    "new": "      lastBy[w.i] = ''; // RPT1026-EVENTS ORRERY-HANDS: whose hand it was",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "ORRERY-HANDS-hover-unnamed",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : [])",
-    "new": "...([])",
+    "old": "            ...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : []),",
+    "new": "            ...[],",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
