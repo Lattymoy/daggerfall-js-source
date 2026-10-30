@@ -55,20 +55,23 @@ const fetchBytes = async (url) => {
 };
 let _fetch = fetchBytes;
 let _decode = decodePng;
-const defaultWorker = () => new Worker(new URL('./vanillaEnhancedDecodeWorker.js', import.meta.url), { type: 'module' });
+const defaultWorker = () =>
+  new Worker(new URL('./vanillaEnhancedDecodeWorker.js', import.meta.url), { type: 'module' });
 let _makeWorker = defaultWorker;
 /** Test seam: this thread's fetch and decode (node has neither a server nor createImageBitmap), and the decode worker -
  *  none when a fetch or decode is handed in and no worker is, a fake one when it is. */
 export function _setVePackIoForTests({ fetch = null, decode = null, worker = null } = {}) {
-  _fetch = fetch ?? fetchBytes; _decode = decode ?? decodePng;
+  _fetch = fetch ?? fetchBytes;
+  _decode = decode ?? decodePng;
   _makeWorker = worker ?? (fetch || decode ? null : defaultWorker);
   _workers = null;
 }
 
 // ---- AUDIT VE P1: THE DECODE, OFF THE MAIN THREAD -------------------------------------------------------------------
-const DECODE_WORKERS = 2;   // as the attached mods' bundle pool (formats/unity/unityBundlePool.js)
-let _workers = null;        // [{ w, pending }] once made; false when this page cannot have them
-let _nextAsk = 1, _turn = 0;
+const DECODE_WORKERS = 2; // as the attached mods' bundle pool (formats/unity/unityBundlePool.js)
+let _workers = null; // [{ w, pending }] once made; false when this page cannot have them
+let _nextAsk = 1,
+  _turn = 0;
 function decodeWorkers() {
   if (_workers !== null) return _workers;
   if (!_makeWorker || (_makeWorker === defaultWorker && typeof Worker === 'undefined')) return false;
@@ -87,22 +90,34 @@ function decodeWorkers() {
       // unsupported, and nothing is sent to it again - an ask after the error must not wait on it for ever
       lane.w.onerror = (e) => {
         lane.dead = true;
-        for (const p of lane.pending.values()) p.reject(Object.assign(new Error(e?.message ?? 'decode worker failed'), { unsupported: true }));
+        for (const p of lane.pending.values())
+          p.reject(Object.assign(new Error(e?.message ?? 'decode worker failed'), { unsupported: true }));
         lane.pending.clear();
       };
       return lane;
     });
-  } catch { _workers = false; }
+  } catch {
+    _workers = false;
+  }
   return _workers;
 }
-const askWorker = (lanes, url, maxSize) => new Promise((resolve, reject) => {
-  const live = lanes.filter((l) => !l.dead);
-  if (!live.length) { reject(Object.assign(new Error('no decode worker is alive'), { unsupported: true })); return; }
-  const lane = live[_turn++ % live.length];
-  const id = _nextAsk++;
-  lane.pending.set(id, { resolve, reject });
-  try { lane.w.postMessage({ id, url, maxSize }); } catch (e) { lane.pending.delete(id); reject(Object.assign(e, { unsupported: true })); }
-});
+const askWorker = (lanes, url, maxSize) =>
+  new Promise((resolve, reject) => {
+    const live = lanes.filter((l) => !l.dead);
+    if (!live.length) {
+      reject(Object.assign(new Error('no decode worker is alive'), { unsupported: true }));
+      return;
+    }
+    const lane = live[_turn++ % live.length];
+    const id = _nextAsk++;
+    lane.pending.set(id, { resolve, reject });
+    try {
+      lane.w.postMessage({ id, url, maxSize });
+    } catch (e) {
+      lane.pending.delete(id);
+      reject(Object.assign(e, { unsupported: true }));
+    }
+  });
 /** One shipped file as top-down RGBA, fitted to `maxSize` as a mip chain would be: a worker's decode where the page has
  *  one, else this thread's - and this thread's for good once a worker says it cannot. ALIKR1: `root` is the pack's. */
 async function decodeShipped(path, maxSize = Infinity, root = pack.Root) {
@@ -111,13 +126,22 @@ async function decodeShipped(path, maxSize = Infinity, root = pack.Root) {
 /** FIRST-VISIT: any served PNG by its URL, top-down RGBA and whole, decoded as the pack's files are - in a decode worker
  *  where the page has one (the weapon rig's body sprites: 200 ms of a warm launch's boot on this thread). A relative URL
  *  is the page's, not the worker's. */
-export const decodeServedPng = (url) => decodeAt(new URL(url, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href, Infinity);
+export const decodeServedPng = (url) =>
+  decodeAt(new URL(url, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href, Infinity);
 async function decodeAt(url, maxSize) {
   const lanes = decodeWorkers();
   if (lanes) {
-    try { return await askWorker(lanes, url, maxSize); } catch (e) {
+    try {
+      return await askWorker(lanes, url, maxSize);
+    } catch (e) {
       if (!e?.unsupported) throw e;
-      for (const l of lanes) { try { l.w.terminate(); } catch { /* gone */ } }
+      for (const l of lanes) {
+        try {
+          l.w.terminate();
+        } catch {
+          /* gone */
+        }
+      }
       _workers = false;
     }
   }
@@ -128,15 +152,20 @@ async function decodeAt(url, maxSize) {
 
 /** The served URL of a file under the pack's root (`base/302_0-0.png`). ALIKR1: `packRoot` - another shipped pack's
  *  root under the served art (`art/sands-of-the-alikr`). */
-export const vePackUrl = (path, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/', packRoot = pack.Root) =>
-  new URL(`${packRoot}/${path.split('/').map(encodeURIComponent).join('/')}`, root).href;
+export const vePackUrl = (
+  path,
+  root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/',
+  packRoot = pack.Root,
+) => new URL(`${packRoot}/${path.split('/').map(encodeURIComponent).join('/')}`, root).href;
 
 /** A shipped mod's client, in unityBundleClient's shape: `rgba(name, { maxSize })` a texture, top-down RGBA at the
  *  texture detail; `layers(name)` an array's slices, top-down, whole; `close()`. ALIKR1: `mod.root`, a pack's own root
  *  (Vanilla Enhanced's mods name none). */
 export function vePackClient(mod) {
   const root = mod.root ?? pack.Root;
-  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]));
+  const files = new Map(
+    mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]),
+  );
   const picture = (path) => decodeShipped(path, Infinity, root);
   return {
     async rgba(name, { maxSize = Infinity } = {}) {
@@ -151,8 +180,17 @@ export function vePackClient(mod) {
       // is null, said once - the ground stands the classic record there (dfmodTextures.js groundLayers), not the climate
       const out = new Array(paths.length);
       let next = 0;
-      const one = (i) => picture(paths[i]).catch((e) => { console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e); return null; });
-      const lane = async () => { while (next < paths.length) { const i = next++; out[i] = await one(i); } };
+      const one = (i) =>
+        picture(paths[i]).catch((e) => {
+          console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e);
+          return null;
+        });
+      const lane = async () => {
+        while (next < paths.length) {
+          const i = next++;
+          out[i] = await one(i);
+        }
+      };
       await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, paths.length) }, lane));
       return out;
     },
@@ -162,10 +200,16 @@ export function vePackClient(mod) {
 
 /** ALIKR1 / SNOWFALL1: the environment packs - each `{ key, dir, index, root }`, on by default (Mac: "These should be
  *  on by default"). */
-export const ENVIRONMENT_PACK_MODS = Object.freeze([sandsPack, snowfallPack].flatMap((p) => p.Mods.map((m) => Object.freeze({ ...m, root: p.Root }))));
+export const ENVIRONMENT_PACK_MODS = Object.freeze(
+  [sandsPack, snowfallPack].flatMap((p) => p.Mods.map((m) => Object.freeze({ ...m, root: p.Root }))),
+);
 const SHIPPED = Object.freeze([
-  ...VE_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: ON_BY_DEFAULT.has(m.dir) })),
-  ...ENVIRONMENT_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: true })),
+  ...VE_PACK_MODS.map((m) =>
+    Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: ON_BY_DEFAULT.has(m.dir) }),
+  ),
+  ...ENVIRONMENT_PACK_MODS.map((m) =>
+    Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: true }),
+  ),
 ]);
 /** Put the shipped mods in the texture-mod door. Idempotent (the same list each time), and cheap: a registration is
  *  names - the boot seam calls it before the attached mods register, and the menus before they read the door, so a

@@ -64,8 +64,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/auditve.test.js"
     ],
-    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);\n}",
-    "new": "  return img;\n}"
+    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);",
+    "new": "  return img;"
   },
   {
     "name": "VE4-every-slice-fetched-at-once",
@@ -73,8 +73,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "Math.min(PRELOAD_CONCURRENCY, paths.length)",
-    "new": "paths.length"
+    "old": "      await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, paths.length) }, lane));",
+    "new": "      await Promise.all(Array.from({ length: paths.length }, lane));"
   },
   {
     "name": "VE4-fit-not-a-mip",
@@ -92,7 +92,7 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]));",
+    "old": "  const files = new Map(\n    mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]),\n  );",
     "new": "  const files = new Map(mod.index.textures.map(([name]) => [name, `base/${name}.png`]));"
   },
   {
@@ -102,8 +102,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "...veAddons().filter((m) => keep.has(m.key)).map((m) => m.key)",
-    "new": "...veAddons().map((m) => m.key)"
+    "old": "  setDfmodEnabled(\n    [\n      ...(base ? [base.key] : []),\n      ...veAddons()\n        .filter((m) => keep.has(m.key))\n        .map((m) => m.key),\n    ],\n    true,\n  );",
+    "new": "  setDfmodEnabled([...(base ? [base.key] : []), ...veAddons().map((m) => m.key)], true);"
   },
   {
     "name": "VE4-base-not-switched-on",
@@ -112,8 +112,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  setDfmodEnabled([...(base ? [base.key] : []), ...veAddons()",
-    "new": "  setDfmodEnabled([...veAddons()"
+    "old": "      ...(base ? [base.key] : []),\n      ...veAddons()",
+    "new": "      ...veAddons()"
   },
   {
     "name": "VE4-pick-not-kept",
@@ -121,8 +121,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  setPref(VE_ADDONS_PREF, [...keep].sort());\n",
-    "new": ""
+    "old": "  setPref(VE_ADDONS_PREF, [...keep].sort());\n  return setDfmodEnabled(key, on);",
+    "new": "  return setDfmodEnabled(key, on);"
   },
   {
     "name": "VE4-classic-forgets-the-addons",
@@ -131,8 +131,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  if (veWorn()) setPref(VE_ADDONS_PREF, veAddons().filter((m) => m.enabled).map((m) => m.key).sort());\n",
-    "new": ""
+    "old": "  if (veWorn())\n    setPref(\n      VE_ADDONS_PREF,\n      veAddons()\n        .filter((m) => m.enabled)\n        .map((m) => m.key)\n        .sort(),\n    );\n  setDfmodEnabled(",
+    "new": "  setDfmodEnabled("
   },
   {
     "name": "VE4-pack-not-in-the-door-before-a-boot",
@@ -141,7 +141,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "const doorMods = () => { installVanillaEnhancedPack(); return attachedDfmods(); };",
+    "old": "const doorMods = () => {\n  installVanillaEnhancedPack();\n  return attachedDfmods();\n};",
     "new": "const doorMods = () => attachedDfmods();"
   },
   {

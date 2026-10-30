@@ -16,12 +16,12 @@
 //
 // Nothing here touches the DOM.
 import { attachedDfmods, setDfmodEnabled } from '../dfmodTextures.js';
-import { installVanillaEnhancedPack } from './vanillaEnhancedPack.js';   // VE4
+import { installVanillaEnhancedPack } from './vanillaEnhancedPack.js'; // VE4
 import { textureReplacementCount, textureReplacementEnabled } from '../textureReplacement.js';
-import { isIilMod } from '../improvedInteriorLighting.js';   // the lighting mod rides the same store and is no texture mod
+import { isIilMod } from '../improvedInteriorLighting.js'; // the lighting mod rides the same store and is no texture mod
 import { setValue, saveSettings } from '../settings/settings.js';
 import { getPref, setPref } from '../uiPrefs.js';
-import { optionPath } from '../../ui/settings/settingsMap.js';   // ORG2: the packs card named where the map puts it
+import { optionPath } from '../../ui/settings/settingsMap.js'; // ORG2: the packs card named where the map puts it
 
 /** The Base's Mod.FileName - the name its add-ons depend on. */
 export const VE_BASE = 'vanilla enhanced - base';
@@ -38,7 +38,10 @@ export const isVeBase = (m) => !!m && (m.fileName === VE_BASE || m.guid === VE_B
 export const isVeFamily = (m) => isVeBase(m) || (m?.deps ?? []).includes(VE_BASE);
 /** The door's mods, the shipped pack in it (VE4: put there on the first ask - a card opened before any host has
  *  booted reads it too). */
-const doorMods = () => { installVanillaEnhancedPack(); return attachedDfmods(); };
+const doorMods = () => {
+  installVanillaEnhancedPack();
+  return attachedDfmods();
+};
 /** Every registered texture mod - the packs card's list: every .dfmod, attached or shipped, but the lighting mod. */
 export const textureMods = () => doorMods().filter((m) => !isIilMod(m));
 /** The registered Base - the shipped one, or the player's own copy over it - or null. */
@@ -50,41 +53,69 @@ export const veAddons = () => textureMods().filter((m) => isVeFamily(m) && !isVe
 export const veWorn = () => textureReplacementEnabled() && veBase()?.enabled === true;
 /** Daggerfall's own textures are what is drawn: Replace Game Artwork is off, or no texture mod is on and no loose
  *  texture pack is attached (that one has no switch - the packs card removes it). */
-export const classicTexturesWorn = () => !textureReplacementEnabled() || (!textureMods().some((m) => m.enabled) && textureReplacementCount() === 0);
+export const classicTexturesWorn = () =>
+  !textureReplacementEnabled() || (!textureMods().some((m) => m.enabled) && textureReplacementCount() === 0);
 
-const keptAddons = () => { const v = getPref(VE_ADDONS_PREF); return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : []; };
+const keptAddons = () => {
+  const v = getPref(VE_ADDONS_PREF);
+  return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : [];
+};
 /** AUDIT VE R10: a loose texture pack - a folder of pictures, not a mod - is drawn: behind Replace Game Artwork, with no
  *  switch of its own (the packs card removes it). Classic switches mods off and could not wear Classic past it: the
  *  card stood on Custom saying "a mix of texture mods is switched on" with every mod off, its Use doing nothing seen. */
 export const looseTexturesWorn = () => textureReplacementEnabled() && textureReplacementCount() > 0;
 /** AUDIT VE R10: why Classic cannot be worn by a switch now - a loose texture pack is attached - or null. */
-export const classicBlocked = () => (looseTexturesWorn()
-  ? `A loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}) to use Classic.`
-  : null);
+export const classicBlocked = () =>
+  looseTexturesWorn()
+    ? `A loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}) to use Classic.`
+    : null;
 /** AUDIT VE R10: the Custom note's words - a loose pack alone is not a mix of texture mods. */
-export const customTextureNote = () => (looseTexturesWorn() && !textureMods().some((m) => m.enabled)
-  ? `Custom: a loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}).`
-  : `Custom: a mix of texture mods is switched on. The Replacement packs card (${optionPath('card:packs')}) lists them.`);
+export const customTextureNote = () =>
+  looseTexturesWorn() && !textureMods().some((m) => m.enabled)
+    ? `Custom: a loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}).`
+    : `Custom: a mix of texture mods is switched on. The Replacement packs card (${optionPath('card:packs')}) lists them.`;
 
 /** Wear Vanilla Enhanced: the Base switched on with the add-ons it was last worn with, and Replace Game Artwork with
  *  them (the switch every texture pack stands behind - DFU's Enhancements/AssetInjection). Other texture mods are left
  *  as they are. */
 export function wearVanillaEnhanced() {
-  if (!textureReplacementEnabled()) { setValue('Enhancements', 'AssetInjection', 'True'); saveSettings(); }
+  if (!textureReplacementEnabled()) {
+    setValue('Enhancements', 'AssetInjection', 'True');
+    saveSettings();
+  }
   const keep = new Set(keptAddons());
   const base = veBase();
-  setDfmodEnabled([...(base ? [base.key] : []), ...veAddons().filter((m) => keep.has(m.key)).map((m) => m.key)], true);
+  setDfmodEnabled(
+    [
+      ...(base ? [base.key] : []),
+      ...veAddons()
+        .filter((m) => keep.has(m.key))
+        .map((m) => m.key),
+    ],
+    true,
+  );
 }
 /** VE4: an add-on switched on or off from the card - and kept as the choice Vanilla Enhanced is worn with. */
 export function setVeAddon(key, on) {
   const keep = new Set(keptAddons());
-  if (on) keep.add(key); else keep.delete(key);
+  if (on) keep.add(key);
+  else keep.delete(key);
   setPref(VE_ADDONS_PREF, [...keep].sort());
   return setDfmodEnabled(key, on);
 }
 /** Wear Daggerfall's own textures: every texture mod switched off, kept registered. Vanilla Enhanced's add-ons that
  *  were on are remembered for the next time it is worn (VE4). */
 export function wearClassicTextures() {
-  if (veWorn()) setPref(VE_ADDONS_PREF, veAddons().filter((m) => m.enabled).map((m) => m.key).sort());
-  setDfmodEnabled(textureMods().map((m) => m.key), false);
+  if (veWorn())
+    setPref(
+      VE_ADDONS_PREF,
+      veAddons()
+        .filter((m) => m.enabled)
+        .map((m) => m.key)
+        .sort(),
+    );
+  setDfmodEnabled(
+    textureMods().map((m) => m.key),
+    false,
+  );
 }

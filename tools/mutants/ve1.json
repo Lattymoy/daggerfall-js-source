@@ -257,8 +257,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  if (!textureReplacementEnabled()) { setValue('Enhancements', 'AssetInjection', 'True'); saveSettings(); }",
-    "new": "  if (!textureReplacementEnabled()) { saveSettings(); }"
+    "old": "    setValue('Enhancements', 'AssetInjection', 'True');\n    saveSettings();",
+    "new": "    saveSettings();"
   },
   {
     "name": "VE3-loose-pack-read-as-classic",
@@ -266,8 +266,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "(!textureMods().some((m) => m.enabled) && textureReplacementCount() === 0)",
-    "new": "(!textureMods().some((m) => m.enabled))"
+    "old": "export const classicTexturesWorn = () =>\n  !textureReplacementEnabled() || (!textureMods().some((m) => m.enabled) && textureReplacementCount() === 0);",
+    "new": "export const classicTexturesWorn = () => !textureReplacementEnabled() || !textureMods().some((m) => m.enabled);"
   },
   {
     "name": "VE3-worn-without-being-on",

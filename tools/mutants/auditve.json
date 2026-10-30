@@ -60,8 +60,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  if (lanes) {\n    try { return await askWorker(lanes, url, maxSize); } catch (e) {",
-    "new": "  if (false) {\n    try { return await askWorker(lanes, url, maxSize); } catch (e) {"
+    "old": "  if (lanes) {",
+    "new": "  if (false) {"
   },
   {
     "name": "AUDITVE-unsupported-not-falling-back",
@@ -69,8 +69,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      if (!e?.unsupported) throw e;\n",
-    "new": "      throw e;\n"
+    "old": "      if (!e?.unsupported) throw e;",
+    "new": "      throw e;"
   },
   {
     "name": "AUDITVE-dead-worker-asked",
@@ -78,8 +78,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  const live = lanes.filter((l) => !l.dead);",
-    "new": "  const live = lanes;"
+    "old": "    const live = lanes.filter((l) => !l.dead);",
+    "new": "    const live = lanes;"
   },
   {
     "name": "AUDITVE-fallback-not-fitted",
@@ -88,8 +88,8 @@
       "test/systems/auditve.test.js",
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);\n}",
-    "new": "  return img;\n}"
+    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);",
+    "new": "  return img;"
   },
   {
     "name": "AUDITVE-worker-no-fit",
@@ -364,8 +364,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "export const classicBlocked = () => (looseTexturesWorn()",
-    "new": "export const classicBlocked = () => (false"
+    "old": "export const classicBlocked = () =>\n  looseTexturesWorn()",
+    "new": "export const classicBlocked = () =>\n  false"
   },
   {
     "name": "AUDITVE-R10-note-says-mods",
@@ -374,8 +374,8 @@
       "test/systems/auditve.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "export const customTextureNote = () => (looseTexturesWorn() && !textureMods().some((m) => m.enabled)",
-    "new": "export const customTextureNote = () => (false"
+    "old": "  looseTexturesWorn() && !textureMods().some((m) => m.enabled)",
+    "new": "  false"
   },
   {
     "name": "AUDITVE-R11-rule-at-the-boot-alone",
@@ -392,7 +392,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      const one = (i) => picture(paths[i]).catch((e) => { console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e); return null; });",
+    "old": "      const one = (i) =>\n        picture(paths[i]).catch((e) => {\n          console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e);\n          return null;\n        });",
     "new": "      const one = (i) => picture(paths[i]);"
   },
   {
