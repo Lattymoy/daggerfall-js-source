@@ -29,8 +29,8 @@
   {
     "name": "MWT2-emissiveAt-reads-the-material-for-an-Emission-mesh-so-the-flame-takes-the-blacked-out-diffuse",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
-    "new": "  if (false) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
+    "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {",
+    "new": "  if (false) {",
     "tests": [
       "test/formats/morrowind/mwnifmesh.test.js"
     ]

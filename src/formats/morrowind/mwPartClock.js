@@ -35,7 +35,11 @@ import { sampleKeyGroup } from './mwKeys.js';
 import { controllerTime, PARTICLE_FLAG_AUTOPLAY } from './mwParticles.js';
 import { activeControllers, timingOf } from './mwVfx.js';
 
-const REST_IDENTITY = Object.freeze({ rotation: Object.freeze([1, 0, 0, 0, 1, 0, 0, 0, 1]), translation: Object.freeze([0, 0, 0]), scale: 1 });
+const REST_IDENTITY = Object.freeze({
+  rotation: Object.freeze([1, 0, 0, 0, 1, 0, 0, 0, 1]),
+  translation: Object.freeze([0, 0, 0]),
+  scale: 1,
+});
 
 /** Nif::NiNode::AnimFlag_AutoPlay - the same bit the particle systems read (nifloader.cpp setupController). */
 export const ANIM_FLAG_AUTOPLAY = PARTICLE_FLAG_AUTOPLAY;
@@ -61,14 +65,23 @@ export function partClockOf(nif) {
       if (c.type === 'NiKeyframeController' && !tracks.has(rec)) {
         const track = trackFromController(nif, c);
         if (track) tracks.set(rec, { ...track, timing: timingOf(c) });
-      } else if (c.type === 'NiGeomMorpherController' && !morphs.has(rec) && GEOMETRY_TYPES.has(rec.type) && !(rec.skin >= 0)) {
+      } else if (
+        c.type === 'NiGeomMorpherController' &&
+        !morphs.has(rec) &&
+        GEOMETRY_TYPES.has(rec.type) &&
+        !(rec.skin >= 0)
+      ) {
         const md = deref(nif, c.data);
         const shapeData = deref(nif, rec.data);
         const list = md?.morphs ?? [];
         // handleMorphGeometry's two refusals: no morphs, or a base that is not this shape's; and the controller's own
         // (`mKeyFrames.size() <= 1`): a base alone moves nothing
         if (list.length > 1 && shapeData?.vertices && list[0].vectors.length === shapeData.vertices.length) {
-          morphs.set(rec, { base: list[0].vectors, targets: list.slice(1).map((m) => ({ vectors: m.vectors, keys: m.keys })), timing: timingOf(c) });
+          morphs.set(rec, {
+            base: list[0].vectors,
+            targets: list.slice(1).map((m) => ({ vectors: m.vectors, keys: m.keys })),
+            timing: timingOf(c),
+          });
         }
       }
     }
@@ -80,7 +93,11 @@ export function partClockOf(nif) {
 
 /** A record's local transform at `value` on its clock: its keyframe track over its rest. */
 function localAt(pc, rec, value) {
-  const rest = { rotation: rec.rotation ?? REST_IDENTITY.rotation, translation: rec.translation ?? REST_IDENTITY.translation, scale: rec.scale ?? 1 };
+  const rest = {
+    rotation: rec.rotation ?? REST_IDENTITY.rotation,
+    translation: rec.translation ?? REST_IDENTITY.translation,
+    scale: rec.scale ?? 1,
+  };
   const track = pc.tracks.get(rec);
   if (!track) return rest;
   const s = sampleTrack(track, controllerTime(track.timing, value));
@@ -137,13 +154,17 @@ export function posePartBatch(nif, batch, value, out, outNormals = null, frameTi
   const verts = morphedAt(pc, batch.ref, t) ?? batch.local;
   for (let i = 0; i + 2 < verts.length && i + 2 < out.length; i += 3) {
     const [x, y, z] = mat33Apply(w.rotation, verts[i] * w.scale, verts[i + 1] * w.scale, verts[i + 2] * w.scale);
-    out[i] = x + w.translation[0]; out[i + 1] = y + w.translation[1]; out[i + 2] = z + w.translation[2];
+    out[i] = x + w.translation[0];
+    out[i + 1] = y + w.translation[1];
+    out[i + 2] = z + w.translation[2];
   }
   if (outNormals && batch.localNormals) {
     const n = batch.localNormals;
     for (let i = 0; i + 2 < n.length && i + 2 < outNormals.length; i += 3) {
       const [x, y, z] = mat33Apply(w.rotation, n[i], n[i + 1], n[i + 2]);
-      outNormals[i] = x; outNormals[i + 1] = y; outNormals[i + 2] = z;
+      outNormals[i] = x;
+      outNormals[i + 1] = y;
+      outNormals[i + 2] = z;
     }
   }
   return true;

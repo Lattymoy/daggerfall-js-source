@@ -29,8 +29,8 @@
   {
     "name": "WEREWOLF1-robe-reserves-dropped",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      for (const part of RESERVES[piece.reserve] ?? []) claim(part, prio, null);\n",
-    "new": "\n",
+    "old": "      for (const part of RESERVES[piece.reserve] ?? []) claim(part, prio, null);",
+    "new": "",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WEREWOLF1-garment-pool-left-open",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "!c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)",
-    "new": "!c.enchanted && c.model)",
+    "old": "    .filter((c) => c.type === row.type && !c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)",
+    "new": "    .filter((c) => c.type === row.type && !c.enchanted && c.model)",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]

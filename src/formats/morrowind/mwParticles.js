@@ -68,7 +68,11 @@ export const FORCE_TYPE = Object.freeze({ Wind: 0, Point: 1 });
 /** GravityAffector's own constant (particle.cpp:316): "const float magic = 1.6f". */
 export const GRAVITY_MAGIC = 1.6;
 
-const IDENTITY_T = Object.freeze({ rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), translation: [0, 0, 0], scale: 1 });
+const IDENTITY_T = Object.freeze({
+  rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]),
+  translation: [0, 0, 0],
+  scale: 1,
+});
 
 // ---- affine helpers: {a: row-major 3x3, t: [3]} is the shape the rig's
 // own placement uses (mwFirstPerson.js placeAtBone, applyPre) ----------------
@@ -79,12 +83,19 @@ export { affineOfTransform, AFFINE_IDENTITY, affineMul, affineApply, affineRotat
 /** The inverse of an affine whose 3x3 is a rotation times a uniform scale. */
 export function affineInverse(m) {
   const a = m.a;
-  const det = a[0] * (a[4] * a[8] - a[5] * a[7]) - a[1] * (a[3] * a[8] - a[5] * a[6]) + a[2] * (a[3] * a[7] - a[4] * a[6]);
+  const det =
+    a[0] * (a[4] * a[8] - a[5] * a[7]) - a[1] * (a[3] * a[8] - a[5] * a[6]) + a[2] * (a[3] * a[7] - a[4] * a[6]);
   const d = det !== 0 ? 1 / det : 0;
   const inv = new Float32Array([
-    (a[4] * a[8] - a[5] * a[7]) * d, (a[2] * a[7] - a[1] * a[8]) * d, (a[1] * a[5] - a[2] * a[4]) * d,
-    (a[5] * a[6] - a[3] * a[8]) * d, (a[0] * a[8] - a[2] * a[6]) * d, (a[2] * a[3] - a[0] * a[5]) * d,
-    (a[3] * a[7] - a[4] * a[6]) * d, (a[1] * a[6] - a[0] * a[7]) * d, (a[0] * a[4] - a[1] * a[3]) * d,
+    (a[4] * a[8] - a[5] * a[7]) * d,
+    (a[2] * a[7] - a[1] * a[8]) * d,
+    (a[1] * a[5] - a[2] * a[4]) * d,
+    (a[5] * a[6] - a[3] * a[8]) * d,
+    (a[0] * a[8] - a[2] * a[6]) * d,
+    (a[2] * a[3] - a[0] * a[5]) * d,
+    (a[3] * a[7] - a[4] * a[6]) * d,
+    (a[1] * a[6] - a[0] * a[7]) * d,
+    (a[0] * a[4] - a[1] * a[3]) * d,
   ]);
   const [tx, ty, tz] = mat33Apply(inv, m.t[0], m.t[1], m.t[2]);
   return { a: inv, t: [-tx, -ty, -tz] };
@@ -147,7 +158,11 @@ function particleController(nif, rec) {
     seen.add(ref);
     const c = deref(nif, ref);
     if (!c) break;
-    if ((c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') && (c.flags & CONTROLLER_FLAG_ACTIVE)) found = c;
+    if (
+      (c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') &&
+      c.flags & CONTROLLER_FLAG_ACTIVE
+    )
+      found = c;
     ref = c.next;
   }
   return found;
@@ -176,35 +191,69 @@ export function particleSystemOf(nif, bundle) {
   const ctrl = particleController(nif, rec);
   if (!ctrl) return null;
   const data = rec.data >= 0 ? deref(nif, rec.data) : null;
-  const material = resolveMaterial(nif, props, true);   // "hasVertexColors = true" (:1531): the particle colour IS the vertex colour
+  const material = resolveMaterial(nif, props, true); // "hasVertexColors = true" (:1531): the particle colour IS the vertex colour
   const modifiers = [];
   for (const m of modifierChain(nif, ctrl.particleModifier)) {
     switch (m.type) {
-      case 'NiParticleGrowFade': modifiers.push({ type: 'growFade', grow: m.grow, fade: m.fade }); break;
+      case 'NiParticleGrowFade':
+        modifiers.push({ type: 'growFade', grow: m.grow, fade: m.fade });
+        break;
       case 'NiGravity':
-        modifiers.push({ type: 'gravity', decay: m.decay, force: m.force, fieldType: m.fieldType, position: [...m.position], direction: [...m.direction] });
+        modifiers.push({
+          type: 'gravity',
+          decay: m.decay,
+          force: m.force,
+          fieldType: m.fieldType,
+          position: [...m.position],
+          direction: [...m.direction],
+        });
         break;
       case 'NiParticleColorModifier': {
         const cd = m.colorData >= 0 ? deref(nif, m.colorData) : null;
-        if (cd && cd.data && cd.data.keys && cd.data.keys.length) modifiers.push({ type: 'color', keys: cd.data.keys.map((k) => ({ time: k.time, value: [...k.value], inTan: k.inTan ? [...k.inTan] : null, outTan: k.outTan ? [...k.outTan] : null, tbc: k.tbc ? [...k.tbc] : null })), interpolation: cd.data.type });   // AUDIT 68 S11-colorkey-tbc: a TCB key's tension/continuity/bias ride along
+        if (cd && cd.data && cd.data.keys && cd.data.keys.length)
+          modifiers.push({
+            type: 'color',
+            keys: cd.data.keys.map((k) => ({
+              time: k.time,
+              value: [...k.value],
+              inTan: k.inTan ? [...k.inTan] : null,
+              outTan: k.outTan ? [...k.outTan] : null,
+              tbc: k.tbc ? [...k.tbc] : null,
+            })),
+            interpolation: cd.data.type,
+          }); // AUDIT 68 S11-colorkey-tbc: a TCB key's tension/continuity/bias ride along
         break;
       }
-      case 'NiParticleRotation': break;   // "unused" (nifloader.cpp:1283-1286)
-      case 'NiParticleBomb': modifiers.push({ type: 'bomb', unsupported: true }); break;
-      default: break;
+      case 'NiParticleRotation':
+        break; // "unused" (nifloader.cpp:1283-1286)
+      case 'NiParticleBomb':
+        modifiers.push({ type: 'bomb', unsupported: true });
+        break;
+      default:
+        break;
     }
   }
   const colliders = [];
   for (const c of modifierChain(nif, ctrl.particleCollider)) {
     if (c.type === 'NiPlanarCollider') {
-      colliders.push({ type: 'planar', bounce: c.bounce, height: c.height, width: c.width, position: [...c.position], xVector: [...c.xVector], yVector: [...c.yVector], normal: [...c.plane.normal], constant: c.plane.constant });
+      colliders.push({
+        type: 'planar',
+        bounce: c.bounce,
+        height: c.height,
+        width: c.width,
+        position: [...c.position],
+        xVector: [...c.xVector],
+        yVector: [...c.yVector],
+        normal: [...c.plane.normal],
+        constant: c.plane.constant,
+      });
     } else if (c.type === 'NiSphericalCollider') {
       colliders.push({ type: 'spherical', bounce: c.bounce, radius: c.radius, position: [...c.position] });
     }
   }
   const emitterRef = ctrl.emitter;
   const emitterWorld = emitterRef >= 0 ? nodeWorldTransform(nif, emitterRef) : null;
-  const numParticles = data && data.numParticles ? data.numParticles : (ctrl.particles ? ctrl.particles.length : 0);
+  const numParticles = data && data.numParticles ? data.numParticles : ctrl.particles ? ctrl.particles.length : 0;
   return {
     kind: 'particles',
     name: rec.name || '',
@@ -216,27 +265,54 @@ export function particleSystemOf(nif, bundle) {
     autoPlay: (animFlags & PARTICLE_FLAG_AUTOPLAY) !== 0,
     controller: {
       type: ctrl.type,
-      flags: ctrl.flags, frequency: ctrl.frequency, phase: ctrl.phase, startTime: ctrl.startTime, stopTime: ctrl.stopTime,
+      flags: ctrl.flags,
+      frequency: ctrl.frequency,
+      phase: ctrl.phase,
+      startTime: ctrl.startTime,
+      stopTime: ctrl.stopTime,
       extrapolation: ctrl.flags & 0x6,
-      speed: ctrl.speed, speedVariation: ctrl.speedVariation,
-      declination: ctrl.declination, declinationVariation: ctrl.declinationVariation,
-      planarAngle: ctrl.planarAngle, planarAngleVariation: ctrl.planarAngleVariation,
-      initialColor: [...ctrl.initialColor], initialSize: ctrl.initialSize,
-      emitStart: ctrl.emitStartTime, emitStop: ctrl.emitStopTime,
-      birthRate: ctrl.birthRate, lifetime: ctrl.lifetime, lifetimeVariation: ctrl.lifetimeVariation,
+      speed: ctrl.speed,
+      speedVariation: ctrl.speedVariation,
+      declination: ctrl.declination,
+      declinationVariation: ctrl.declinationVariation,
+      planarAngle: ctrl.planarAngle,
+      planarAngleVariation: ctrl.planarAngleVariation,
+      initialColor: [...ctrl.initialColor],
+      initialSize: ctrl.initialSize,
+      emitStart: ctrl.emitStartTime,
+      emitStop: ctrl.emitStopTime,
+      birthRate: ctrl.birthRate,
+      lifetime: ctrl.lifetime,
+      lifetimeVariation: ctrl.lifetimeVariation,
       emitFlags: ctrl.useBirthRate | 0,
       emitterDimensions: [...ctrl.emitterDimensions],
-      bspFlags: ctrl.type === 'NiBSPArrayController' ? (ctrl.flags & (BSP_AT_NODE | BSP_AT_VERTEX)) : 0,
-      particles: (ctrl.particles ?? []).map((p) => ({ velocity: [...p.velocity], age: p.age, lifeSpan: p.lifeSpan, code: p.code })),
+      bspFlags: ctrl.type === 'NiBSPArrayController' ? ctrl.flags & (BSP_AT_NODE | BSP_AT_VERTEX) : 0,
+      particles: (ctrl.particles ?? []).map((p) => ({
+        velocity: [...p.velocity],
+        age: p.age,
+        lifeSpan: p.lifeSpan,
+        code: p.code,
+      })),
     },
-    emitter: emitterWorld ? { ref: emitterRef, world: { rotation: Float32Array.from(emitterWorld.rotation), translation: [...emitterWorld.translation], scale: emitterWorld.scale } } : null,
-    data: data ? {
-      numParticles,
-      numActive: data.numActive | 0,
-      vertices: data.vertices ? Float32Array.from(data.vertices) : null,
-      sizes: data.sizes ? Float32Array.from(data.sizes) : null,
-      radius: data.particleRadius ?? 0,
-    } : { numParticles, numActive: 0, vertices: null, sizes: null, radius: 0 },
+    emitter: emitterWorld
+      ? {
+          ref: emitterRef,
+          world: {
+            rotation: Float32Array.from(emitterWorld.rotation),
+            translation: [...emitterWorld.translation],
+            scale: emitterWorld.scale,
+          },
+        }
+      : null,
+    data: data
+      ? {
+          numParticles,
+          numActive: data.numActive | 0,
+          vertices: data.vertices ? Float32Array.from(data.vertices) : null,
+          sizes: data.sizes ? Float32Array.from(data.sizes) : null,
+          radius: data.particleRadius ?? 0,
+        }
+      : { numParticles, numActive: 0, vertices: null, sizes: null, radius: 0 },
     modifiers,
     colliders,
     material,
@@ -274,10 +350,10 @@ export function controllerTime(c, value) {
       if (delta <= 0) return c.startTime;
       const cycles = (time - c.startTime) / delta;
       const remainder = (cycles - Math.floor(cycles)) * delta;
-      return (Math.abs(Math.floor(cycles)) % 2) === 0 ? c.startTime + remainder : c.stopTime - remainder;
+      return Math.abs(Math.floor(cycles)) % 2 === 0 ? c.startTime + remainder : c.stopTime - remainder;
     }
     default:
-      return Math.min(c.stopTime, Math.max(c.startTime, time));   // Constant: clamped to the window
+      return Math.min(c.stopTime, Math.max(c.startTime, time)); // Constant: clamped to the window
   }
 }
 
@@ -299,9 +375,12 @@ export function interpColorKey(keys, time, interpolation = 1) {
  *  the vertical angle first and about Z by the horizontal angle after. */
 export function shootDirection(hdir, vdir) {
   // R_y(vdir) on (0,0,1): (sin v, 0, cos v)
-  const x1 = Math.sin(vdir), y1 = 0, z1 = Math.cos(vdir);
+  const x1 = Math.sin(vdir),
+    y1 = 0,
+    z1 = Math.cos(vdir);
   // R_z(hdir) on that
-  const ch = Math.cos(hdir), sh = Math.sin(hdir);
+  const ch = Math.cos(hdir),
+    sh = Math.sin(hdir);
   return [x1 * ch - y1 * sh, x1 * sh + y1 * ch, z1];
 }
 
@@ -312,16 +391,21 @@ export function shootDirection(hdir, vdir) {
 export function createParticleSystem(desc, { rolls = Math.random } = {}) {
   const c = desc.controller;
   const quota = Math.max(0, desc.data.numParticles | 0);
-  const particles = [];   // { pos, vel, age, life, size, color:[r,g,b], alpha }
-  let carry = 0;   // ConstantRateCounter's `_carryOver`
-  let frozen = !desc.autoPlay;   // `if (!(animflags & AutoPlay)) partsys->setFrozen(true)` (:1511-1514)
+  const particles = []; // { pos, vel, age, life, size, color:[r,g,b], alpha }
+  let carry = 0; // ConstantRateCounter's `_carryOver`
+  let frozen = !desc.autoPlay; // `if (!(animflags & AutoPlay)) partsys->setFrozen(true)` (:1511-1514)
   let enabled = true;
-  const unsupported = desc.controller.bspFlags & BSP_AT_VERTEX ? 'NiBSPArrayController emits at a target’s vertices, which this port does not draw' : null;
+  const unsupported =
+    desc.controller.bspFlags & BSP_AT_VERTEX
+      ? 'NiBSPArrayController emits at a target’s vertices, which this port does not draw'
+      : null;
 
   // handleParticleEmitter (:1365-1406): the RATE, then the shooter's terms
   const noAutoAdjust = (c.emitFlags & EMIT_FLAG_NO_AUTO_ADJUST) !== 0;
-  const rate = noAutoAdjust ? c.birthRate
-    : (c.lifetime === 0 && c.lifetimeVariation === 0) ? 0
+  const rate = noAutoAdjust
+    ? c.birthRate
+    : c.lifetime === 0 && c.lifetimeVariation === 0
+      ? 0
       : c.particles.length / (c.lifetime + c.lifetimeVariation / 2);
   const minSpeed = c.speed - c.speedVariation * 0.5;
   const maxSpeed = c.speed + c.speedVariation * 0.5;
@@ -348,8 +432,12 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
       particles.push({
         pos: [d.vertices[p.code * 3], d.vertices[p.code * 3 + 1], d.vertices[p.code * 3 + 2]],
         vel: [p.velocity[0], p.velocity[1], p.velocity[2]],
-        age: Math.max(0, p.age), life: p.lifeSpan, size,
-        color: [c.initialColor[0], c.initialColor[1], c.initialColor[2]], colorA: c.initialColor[3], alpha: 1,
+        age: Math.max(0, p.age),
+        life: p.lifeSpan,
+        size,
+        color: [c.initialColor[0], c.initialColor[1], c.initialColor[2]],
+        colorA: c.initialColor[3],
+        alpha: 1,
       });
     }
   }
@@ -363,7 +451,10 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
     const v = dt * rate;
     let n = Math.trunc(v);
     carry += v - n;
-    if (carry > 1) { n++; carry -= 1; }
+    if (carry > 1) {
+      n++;
+      carry -= 1;
+    }
     return Math.max(0, n);
   }
 
@@ -390,13 +481,21 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
       // osgParticle::BoxPlacer: uniform inside the half-dimensions
       const p = {
         pos: [(2 * rolls() - 1) * hdim[0], (2 * rolls() - 1) * hdim[1], (2 * rolls() - 1) * hdim[2]],
-        vel: [0, 0, 0], age: 0, life: 0, size: c.initialSize,
-        color: [c.initialColor[0], c.initialColor[1], c.initialColor[2]], colorA: c.initialColor[3], alpha: 1,
+        vel: [0, 0, 0],
+        age: 0,
+        life: 0,
+        size: c.initialSize,
+        color: [c.initialColor[0], c.initialColor[1], c.initialColor[2]],
+        colorA: c.initialColor[3],
+        alpha: 1,
       };
       shoot(p);
       p.pos = affineApply(eToPs, p.pos[0], p.pos[1], p.pos[2]);
       p.vel = affineRotate(eToPs, p.vel[0], p.vel[1], p.vel[2]);
-      if (frame) { p.pos = affineApply(frame, p.pos[0], p.pos[1], p.pos[2]); p.vel = affineRotate(frame, p.vel[0], p.vel[1], p.vel[2]); }
+      if (frame) {
+        p.pos = affineApply(frame, p.pos[0], p.pos[1], p.pos[2]);
+        p.vel = affineRotate(frame, p.vel[0], p.vel[1], p.vel[2]);
+      }
       particles.push(p);
       made++;
     }
@@ -418,11 +517,14 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
       if (colour) {
         // ParticleColorAffector::operate (:269-279): the key's rgb as the colour, its a as the alpha
         const k = interpColorKey(colour.keys, p.age / p.life, colour.interpolation);
-        p.color = [k[0], k[1], k[2]]; p.colorA = 1; p.alpha = k[3];
+        p.color = [k[0], k[1], k[2]];
+        p.colorA = 1;
+        p.alpha = k[3];
       }
       for (const g of gravities) {
         // GravityAffector::operate (:314-346), relative frame: position and direction as authored
-        const pos = g.position, dir = normalize(g.direction);
+        const pos = g.position,
+          dir = normalize(g.direction);
         // the particle's position in the PARTICLE NODE's space, which is where the field is authored
         const q = inv ? affineApply(inv, p.pos[0], p.pos[1], p.pos[2]) : p.pos;
         if (g.fieldType === FORCE_TYPE.Wind) {
@@ -433,7 +535,9 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
           }
           const k = g.force * dt * decay * GRAVITY_MAGIC;
           const w = frame ? affineRotate(frame, dir[0], dir[1], dir[2]) : dir;
-          p.vel[0] += w[0] * k; p.vel[1] += w[1] * k; p.vel[2] += w[2] * k;
+          p.vel[0] += w[0] * k;
+          p.vel[1] += w[1] * k;
+          p.vel[2] += w[2] * k;
         } else {
           const diff = [pos[0] - q[0], pos[1] - q[1], pos[2] - q[2]];
           const len = Math.hypot(diff[0], diff[1], diff[2]);
@@ -441,7 +545,9 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
           const n = len > 0 ? [diff[0] / len, diff[1] / len, diff[2] / len] : [0, 0, 0];
           const k = g.force * dt * decay * GRAVITY_MAGIC;
           const w = frame ? affineRotate(frame, n[0], n[1], n[2]) : n;
-          p.vel[0] += w[0] * k; p.vel[1] += w[1] * k; p.vel[2] += w[2] * k;
+          p.vel[0] += w[0] * k;
+          p.vel[1] += w[1] * k;
+          p.vel[2] += w[2] * k;
         }
       }
       for (const col of desc.colliders) {
@@ -460,20 +566,37 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
       const p = particles[i];
       const x = p.life > 0 ? p.age / p.life : 0;
       p.age += dt;
-      if (x > 1) { particles.splice(i, 1); continue; }
-      p.pos[0] += p.vel[0] * dt; p.pos[1] += p.vel[1] * dt; p.pos[2] += p.vel[2] * dt;
+      if (x > 1) {
+        particles.splice(i, 1);
+        continue;
+      }
+      p.pos[0] += p.vel[0] * dt;
+      p.pos[1] += p.vel[1] * dt;
+      p.pos[2] += p.vel[2] * dt;
     }
   }
 
   return {
     desc,
     unsupported,
-    get particles() { return particles; },
-    get quota() { return quota; },
-    get rate() { return rate; },
-    get emitterToPs() { return emitterToPs; },
-    get frozen() { return frozen; },
-    get enabled() { return enabled; },
+    get particles() {
+      return particles;
+    },
+    get quota() {
+      return quota;
+    },
+    get rate() {
+      return rate;
+    },
+    get emitterToPs() {
+      return emitterToPs;
+    },
+    get frozen() {
+      return frozen;
+    },
+    get enabled() {
+      return enabled;
+    },
     /**
      * One frame. `clock` is the controller's INPUT - the animation clock
      * the part's controllers ride (the lower body's, per the reference's
@@ -483,10 +606,13 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
      * space the caller keeps world particles in; null keeps them local.
      */
     update(dt, clock = null, frame = null, emitterFrame = null) {
-      if (clock === null || clock === undefined) { frozen = true; return; }
+      if (clock === null || clock === undefined) {
+        frozen = true;
+        return;
+      }
       const t = controllerTime(c, clock);
       frozen = false;
-      enabled = t >= c.emitStart && t < c.emitStop;   // ParticleSystemController (nifosg/controller.cpp:594-604)
+      enabled = t >= c.emitStart && t < c.emitStop; // ParticleSystemController (nifosg/controller.cpp:594-604)
       if (unsupported) return;
       // MW-SPELLFX1: `emitterFrame` is the emitter's frame in the particle node's space THIS frame (orthonormalised, as
       // :548 takes it) - an effect mesh keyframes the node its emitter rides; null is the file's own, as the torch's
@@ -498,7 +624,12 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
      *  centre, half-extent (`xAxis * currentSize`), colour, and the alpha
      *  the colour's own a is multiplied by. */
     quads() {
-      return particles.map((p) => ({ pos: [p.pos[0], p.pos[1], p.pos[2]], size: p.size, color: p.color, alpha: p.colorA * p.alpha }));
+      return particles.map((p) => ({
+        pos: [p.pos[0], p.pos[1], p.pos[2]],
+        size: p.size,
+        color: p.color,
+        alpha: p.colorA * p.alpha,
+      }));
     },
   };
 }
@@ -548,7 +679,11 @@ export function sphericalCollide(col, pos, vel, dt) {
   const contact = [pos[0] + vel[0] * k, pos[1] + vel[1] * k, pos[2] + vel[2] * k];
   const n = normalize([contact[0] - col.position[0], contact[1] - col.position[1], contact[2] - col.position[2]]);
   const dot = vel[0] * n[0] + vel[1] * n[1] + vel[2] * n[2];
-  return [(vel[0] - n[0] * 2 * dot) * col.bounce, (vel[1] - n[1] * 2 * dot) * col.bounce, (vel[2] - n[2] * 2 * dot) * col.bounce];
+  return [
+    (vel[0] - n[0] * 2 * dot) * col.bounce,
+    (vel[1] - n[1] * 2 * dot) * col.bounce,
+    (vel[2] - n[2] * 2 * dot) * col.bounce,
+  ];
 }
 
 // ---- the quad stream the renderer draws ------------------------------------
@@ -565,8 +700,12 @@ export const PARTICLE_FLOATS = 12;
  *  picture's TOP is v = 0 here: the top corners take v 0, the bottom
  *  corners v 1, and the flame stands the way it was painted. */
 export const PARTICLE_CORNERS = Object.freeze([
-  [-1, -1, 0, 1], [1, -1, 1, 1], [1, 1, 1, 0],
-  [-1, -1, 0, 1], [1, 1, 1, 0], [-1, 1, 0, 0],
+  [-1, -1, 0, 1],
+  [1, -1, 1, 1],
+  [1, 1, 1, 0],
+  [-1, -1, 0, 1],
+  [1, 1, 1, 0],
+  [-1, 1, 0, 0],
 ]);
 
 /**
@@ -583,10 +722,17 @@ export function packParticleQuads(quads, out = null, { place = null, sizeScale =
     const p = place ? place(q.pos[0], q.pos[1], q.pos[2]) : q.pos;
     const size = q.size * sizeScale;
     for (const [cx, cy, u, v] of PARTICLE_CORNERS) {
-      buf[o++] = p[0]; buf[o++] = p[1]; buf[o++] = p[2];
-      buf[o++] = cx; buf[o++] = cy;
-      buf[o++] = u; buf[o++] = v;
-      buf[o++] = q.color[0]; buf[o++] = q.color[1]; buf[o++] = q.color[2]; buf[o++] = q.alpha;
+      buf[o++] = p[0];
+      buf[o++] = p[1];
+      buf[o++] = p[2];
+      buf[o++] = cx;
+      buf[o++] = cy;
+      buf[o++] = u;
+      buf[o++] = v;
+      buf[o++] = q.color[0];
+      buf[o++] = q.color[1];
+      buf[o++] = q.color[2];
+      buf[o++] = q.alpha;
       buf[o++] = size;
     }
   }
@@ -601,14 +747,19 @@ export function particleDrawState(material) {
   const m = material ?? {};
   return {
     blend: !!m.alphaBlend,
-    srcBlend: m.srcBlend ?? 6, dstBlend: m.dstBlend ?? 7,
+    srcBlend: m.srcBlend ?? 6,
+    dstBlend: m.dstBlend ?? 7,
     alphaCut: m.alphaTest ? (m.alphaThreshold || 0) / 255 : 0,
-    depthTest: m.depthTest !== false, depthWrite: m.depthWrite !== false,
-    textureFile: m.textureFile ?? null, clampMode: m.clampMode ?? 3,
+    depthTest: m.depthTest !== false,
+    depthWrite: m.depthWrite !== false,
+    textureFile: m.textureFile ?? null,
+    clampMode: m.clampMode ?? 3,
     // the particle colour substitutes for the material channel the vertex
     // colour mode names (rule 63); LightMode_Emissive's arm leaves ONLY the
     // emission, which is the flame's whole point - it does not care what
     // the room is lit by
-    emissive: m.vertexColorMode === VERTEX_COLOR_MODE.Emission || (m.emissive && (m.emissive[0] > 0 || m.emissive[1] > 0 || m.emissive[2] > 0)),
+    emissive:
+      m.vertexColorMode === VERTEX_COLOR_MODE.Emission ||
+      (m.emissive && (m.emissive[0] > 0 || m.emissive[1] > 0 || m.emissive[2] > 0)),
   };
 }

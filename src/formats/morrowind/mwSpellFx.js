@@ -31,14 +31,60 @@ import { SKILLS } from '../../systems/skills.js';
 
 /** Morrowind's magic effect indices (loadmgef.cpp sMagicEffectIds, in index order) - the ones the mapping names. */
 export const MW_EFFECT = Object.freeze({
-  WaterBreathing: 0, WaterWalking: 2, Shield: 3, Feather: 8, Jump: 9, Levitate: 10, SlowFall: 11, Lock: 12, Open: 13,
-  FireDamage: 14, ShockDamage: 15, FrostDamage: 16, DrainAttribute: 17, DamageHealth: 23, DamageMagicka: 24,
-  DamageFatigue: 25, Poison: 27, DisintegrateWeapon: 37, Invisibility: 39, Chameleon: 40, Light: 41, Charm: 44,
-  Paralyze: 45, Silence: 46, Sound: 48, CalmHumanoid: 49, CalmCreature: 50, Dispel: 57, Soultrap: 58, Mark: 60, Recall: 61,
-  DetectAnimal: 64, DetectEnchantment: 65, DetectKey: 66, SpellAbsorption: 67, Reflect: 68, CureCommonDisease: 69,
-  CurePoison: 72, CureParalyzation: 73, RestoreAttribute: 74, RestoreHealth: 75, RestoreFatigue: 77,
-  FortifyAttribute: 79, AbsorbAttribute: 85, AbsorbHealth: 86, AbsorbFatigue: 88, ResistFire: 90, ResistFrost: 91,
-  ResistShock: 92, ResistMagicka: 93, ResistPoison: 97, ResistParalysis: 99, TurnUndead: 101, BoundDagger: 120,
+  WaterBreathing: 0,
+  WaterWalking: 2,
+  Shield: 3,
+  Feather: 8,
+  Jump: 9,
+  Levitate: 10,
+  SlowFall: 11,
+  Lock: 12,
+  Open: 13,
+  FireDamage: 14,
+  ShockDamage: 15,
+  FrostDamage: 16,
+  DrainAttribute: 17,
+  DamageHealth: 23,
+  DamageMagicka: 24,
+  DamageFatigue: 25,
+  Poison: 27,
+  DisintegrateWeapon: 37,
+  Invisibility: 39,
+  Chameleon: 40,
+  Light: 41,
+  Charm: 44,
+  Paralyze: 45,
+  Silence: 46,
+  Sound: 48,
+  CalmHumanoid: 49,
+  CalmCreature: 50,
+  Dispel: 57,
+  Soultrap: 58,
+  Mark: 60,
+  Recall: 61,
+  DetectAnimal: 64,
+  DetectEnchantment: 65,
+  DetectKey: 66,
+  SpellAbsorption: 67,
+  Reflect: 68,
+  CureCommonDisease: 69,
+  CurePoison: 72,
+  CureParalyzation: 73,
+  RestoreAttribute: 74,
+  RestoreHealth: 75,
+  RestoreFatigue: 77,
+  FortifyAttribute: 79,
+  AbsorbAttribute: 85,
+  AbsorbHealth: 86,
+  AbsorbFatigue: 88,
+  ResistFire: 90,
+  ResistFrost: 91,
+  ResistShock: 92,
+  ResistMagicka: 93,
+  ResistPoison: 97,
+  ResistParalysis: 99,
+  TurnUndead: 101,
+  BoundDagger: 120,
 });
 const E = MW_EFFECT;
 
@@ -53,39 +99,76 @@ const ELEMENTAL = new Set([1, 4, 5, 7, 11]);
  *  drawn as. A family keyed `type,*` takes every subtype. */
 const DF_TO_MW = Object.freeze({
   '0,*': E.Paralyze,
-  '1,0': E.DamageHealth, '1,1': E.DamageFatigue, '1,2': E.DamageMagicka,   // continuous damage
-  '2,*': E.BoundDagger,   // Create Item: a conjured thing
-  '3,0': E.CureCommonDisease, '3,1': E.CurePoison, '3,2': E.CureParalyzation,
-  '4,0': E.DamageHealth, '4,1': E.DamageFatigue, '4,2': E.DamageMagicka,
+  '1,0': E.DamageHealth,
+  '1,1': E.DamageFatigue,
+  '1,2': E.DamageMagicka, // continuous damage
+  '2,*': E.BoundDagger, // Create Item: a conjured thing
+  '3,0': E.CureCommonDisease,
+  '3,1': E.CurePoison,
+  '3,2': E.CureParalyzation,
+  '4,0': E.DamageHealth,
+  '4,1': E.DamageFatigue,
+  '4,2': E.DamageMagicka,
   '5,*': E.DisintegrateWeapon,
-  '6,0': E.Dispel, '6,1': E.TurnUndead, '6,2': E.Dispel,
+  '6,0': E.Dispel,
+  '6,1': E.TurnUndead,
+  '6,2': E.Dispel,
   '7,*': E.DrainAttribute,
-  '8,0': E.ResistFire, '8,1': E.ResistFrost, '8,2': E.ResistPoison, '8,3': E.ResistShock, '8,4': E.ResistMagicka,
+  '8,0': E.ResistFire,
+  '8,1': E.ResistFrost,
+  '8,2': E.ResistPoison,
+  '8,3': E.ResistShock,
+  '8,4': E.ResistMagicka,
   '9,*': E.FortifyAttribute,
-  '10,8': E.RestoreHealth, '10,9': E.RestoreFatigue, '10,*': E.RestoreAttribute,
-  '11,8': E.AbsorbHealth, '11,9': E.AbsorbFatigue, '11,*': E.AbsorbAttribute,   // Transfer
-  '12,*': E.Soultrap, '13,*': E.Invisibility, '14,*': E.Levitate, '15,*': E.Light, '16,*': E.Lock, '17,*': E.Open,
-  '18,*': E.RestoreHealth,   // Regenerate
-  '19,*': E.Silence, '20,*': E.SpellAbsorption, '21,*': E.Reflect, '22,*': E.ResistMagicka,
-  '23,*': E.Chameleon, '24,*': E.Chameleon,   // Chameleon, Shadow
-  '25,*': E.SlowFall, '26,*': E.ResistParalysis, '27,*': E.Jump, '28,*': E.Feather,   // Slowfall, Free Action, Jumping, Climbing
-  '30,*': E.WaterBreathing, '31,*': E.WaterWalking,
-  '33,2': E.CalmHumanoid, '33,*': E.CalmCreature,   // Pacify
-  '34,*': E.Charm, '35,*': E.Shield,
-  '39,0': E.DetectEnchantment, '39,1': E.DetectAnimal, '39,2': E.DetectKey,
-  '40,*': E.DetectEnchantment,   // Identify
-  '43,*': E.Recall,   // Teleport
-  '44,*': E.Sound,   // Comprehend Languages
-  '45,*': E.RestoreHealth,   // RESURRECT1: the port's own Resurrect
-  '46,*': E.Mark,   // PARTY-MAP: the port's own Shared Cartography
+  '10,8': E.RestoreHealth,
+  '10,9': E.RestoreFatigue,
+  '10,*': E.RestoreAttribute,
+  '11,8': E.AbsorbHealth,
+  '11,9': E.AbsorbFatigue,
+  '11,*': E.AbsorbAttribute, // Transfer
+  '12,*': E.Soultrap,
+  '13,*': E.Invisibility,
+  '14,*': E.Levitate,
+  '15,*': E.Light,
+  '16,*': E.Lock,
+  '17,*': E.Open,
+  '18,*': E.RestoreHealth, // Regenerate
+  '19,*': E.Silence,
+  '20,*': E.SpellAbsorption,
+  '21,*': E.Reflect,
+  '22,*': E.ResistMagicka,
+  '23,*': E.Chameleon,
+  '24,*': E.Chameleon, // Chameleon, Shadow
+  '25,*': E.SlowFall,
+  '26,*': E.ResistParalysis,
+  '27,*': E.Jump,
+  '28,*': E.Feather, // Slowfall, Free Action, Jumping, Climbing
+  '30,*': E.WaterBreathing,
+  '31,*': E.WaterWalking,
+  '33,2': E.CalmHumanoid,
+  '33,*': E.CalmCreature, // Pacify
+  '34,*': E.Charm,
+  '35,*': E.Shield,
+  '39,0': E.DetectEnchantment,
+  '39,1': E.DetectAnimal,
+  '39,2': E.DetectKey,
+  '40,*': E.DetectEnchantment, // Identify
+  '43,*': E.Recall, // Teleport
+  '44,*': E.Sound, // Comprehend Languages
+  '45,*': E.RestoreHealth, // RESURRECT1: the port's own Resurrect
+  '46,*': E.Mark, // PARTY-MAP: the port's own Shared Cartography
 });
 
 /** A family the table has no row for: its school's plainest member, by Daggerfall's skill (skills.js SKILLS) -
  *  Destruction's harm, Restoration's heal, Illusion's light, Alteration's shield, Thaumaturgy's and Mysticism's
  *  dispel. */
 const SCHOOL_FALLBACK = Object.freeze({
-  [SKILLS.Destruction]: E.DamageHealth, [SKILLS.Restoration]: E.RestoreHealth, [SKILLS.Illusion]: E.Light,
-  [SKILLS.Alteration]: E.Shield, [SKILLS.Thaumaturgy]: E.Dispel, [SKILLS.Mysticism]: E.Dispel,
+  [SKILLS.Destruction]: E.DamageHealth,
+  [SKILLS.Restoration]: E.RestoreHealth,
+  [SKILLS.Illusion]: E.Light,
+  [SKILLS.Alteration]: E.Shield,
+  [SKILLS.Thaumaturgy]: E.Dispel,
+  [SKILLS.Mysticism]: E.Dispel,
 });
 
 /** The Morrowind effect a Daggerfall effect is drawn as - `school` the effect's Daggerfall skill, for a family the table
@@ -107,7 +190,13 @@ export function mwEffectsOfSpell(sp, schoolOf = () => SKILLS.Destruction) {
 }
 
 /** OpenMW's own stand-ins where an effect names no visual, and the hands' glow (ids, lowercased as the store keys them). */
-export const VFX_DEFAULT = Object.freeze({ cast: 'vfx_defaultcast', bolt: 'vfx_defaultbolt', hit: 'vfx_defaulthit', area: 'vfx_defaultarea', hands: 'vfx_hands' });
+export const VFX_DEFAULT = Object.freeze({
+  cast: 'vfx_defaultcast',
+  bolt: 'vfx_defaultbolt',
+  hit: 'vfx_defaulthit',
+  area: 'vfx_defaultarea',
+  hands: 'vfx_hands',
+});
 /** MGEF flags (loadmgef.hpp): NegativeLight inverts the colour; ContinuousVfx loops the hit visual. */
 export const MGEF_FLAG = Object.freeze({ ContinuousVfx: 0x20, NegativeLight: 0x800 });
 
@@ -120,14 +209,16 @@ export function mgefColour(mgef) {
 /** A Daggerfall area's radius (metres) as Morrowind's area (feet) - the reference spawns its area visual at twice
  *  that (explodeSpell :80-81). 21.33 units to the foot (Constants::UnitsPerFoot), `unitsPerMetre` to the metre. */
 export const MW_UNITS_PER_FOOT = 64 / 3;
-export const areaVisualScale = (radiusMetres, unitsPerMetre) => 2 * (radiusMetres * unitsPerMetre) / MW_UNITS_PER_FOOT;
+export const areaVisualScale = (radiusMetres, unitsPerMetre) =>
+  (2 * (radiusMetres * unitsPerMetre)) / MW_UNITS_PER_FOOT;
 
 /** Animation::addEffect's sizing for an actor that is not a person (animation.cpp :1742-1757): a body `height` tall and
  *  `radius` round (metres) is max(x, y, z / 2) / 64 of its bounds in Morrowind units, applied as a scale only when it
  *  passes 1, and the effect is lifted - or sunk - off a 128-unit body by `offset` units, times that ratio as the
  *  reference sets it. A person's effect is neither (`isNpc`); a flier's lift is not carried. */
 export function actorFxTransform(height, radius, unitsPerMetre) {
-  const z = height * unitsPerMetre, xy = 2 * radius * unitsPerMetre;
+  const z = height * unitsPerMetre,
+    xy = 2 * radius * unitsPerMetre;
   const ratio = Math.max(xy, xy, z / 2) / 64;
   let offset = 0;
   if (z < 128) offset = z - 128;
@@ -151,7 +242,13 @@ export function spellFxPlan(sp, mgefs, modelOf, { schoolOf } = {}) {
   };
   const unique = (list) => {
     const seen = new Set();
-    return list.filter((v) => { if (!v) return false; const k = `${v.model}|${v.texture ?? ''}`; if (seen.has(k)) return false; seen.add(k); return true; });
+    return list.filter((v) => {
+      if (!v) return false;
+      const k = `${v.model}|${v.texture ?? ''}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   };
   const ranged = sp?.rangeType === 2 || sp?.rangeType === 4;
   let bolt = null;
@@ -161,7 +258,7 @@ export function spellFxPlan(sp, mgefs, modelOf, { schoolOf } = {}) {
       const colours = effects.map(mgefColour);
       bolt = {
         ...first,
-        texture: effects.length === 1 ? effects[0]?.particle || null : null,   // one projectile effect: the first effect's texture
+        texture: effects.length === 1 ? effects[0]?.particle || null : null, // one projectile effect: the first effect's texture
         colour: [0, 1, 2].map((k) => colours.reduce((a, c) => a + c[k], 0) / colours.length),
       };
     }
@@ -171,7 +268,9 @@ export function spellFxPlan(sp, mgefs, modelOf, { schoolOf } = {}) {
   return {
     effects: ids,
     // the casting visuals: one per model (playSpellCastingEffects' `addedEffects`)
-    cast: effects.map((m) => visual(m, 'cast')).filter((v, i, all) => v && all.findIndex((w) => w && w.model === v.model) === i),
+    cast: effects
+      .map((m) => visual(m, 'cast'))
+      .filter((v, i, all) => v && all.findIndex((w) => w && w.model === v.model) === i),
     bolt,
     hit: unique(effects.map((m) => visual(m, 'hit'))),
     area: unique(effects.map((m) => visual(m, 'area'))),
@@ -186,12 +285,17 @@ export function boltAttitude(dir) {
   const d = [dir[0] / l, dir[1] / l, dir[2] / l];
   const yaw = Math.atan2(d[0], d[1]);
   const pitch = -Math.asin(Math.max(-1, Math.min(1, d[2])));
-  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const cy = Math.cos(yaw),
+    sy = Math.sin(yaw),
+    cp = Math.cos(pitch),
+    sp = Math.sin(pitch);
   // Rz(-yaw) * Rx(-pitch)
   const rz = [cy, sy, 0, -sy, cy, 0, 0, 0, 1];
   const rx = [1, 0, 0, 0, cp, sp, 0, -sp, cp];
   const o = new Float32Array(9);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = rz[r * 3] * rx[c] + rz[r * 3 + 1] * rx[3 + c] + rz[r * 3 + 2] * rx[6 + c];
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++)
+      o[r * 3 + c] = rz[r * 3] * rx[c] + rz[r * 3 + 1] * rx[3 + c] + rz[r * 3 + 2] * rx[6 + c];
   return o;
 }
 
@@ -199,7 +303,8 @@ export function boltAttitude(dir) {
  *  simulation clock. Column-vector 3x3 for `seconds`. */
 export const BOLT_SPIN_PER_S = Math.PI * 2;
 export function boltSpin(seconds) {
-  const a = -seconds * BOLT_SPIN_PER_S;   // about -Y: Ry(-angle)
-  const c = Math.cos(a), s = Math.sin(a);
+  const a = -seconds * BOLT_SPIN_PER_S; // about -Y: Ry(-angle)
+  const c = Math.cos(a),
+    s = Math.sin(a);
   return Float32Array.from([c, 0, s, 0, 1, 0, -s, 0, c]);
 }

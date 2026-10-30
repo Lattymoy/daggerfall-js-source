@@ -431,8 +431,8 @@
   {
     "name": "APPEARANCES-the-mw-map-reads-the-piece",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    const item = drawnPiece(piece);",
-    "new": "    const item = piece;",
+    "old": "    const item = drawnPiece(piece); // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look dresses the body as the look - the player's and every peer's",
+    "new": "    const item = piece; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look dresses the body as the look - the player's and every peer's",
     "tests": [
       "test/ui/appearances_render.test.js",
       "test/net/appearances_wire.test.js"

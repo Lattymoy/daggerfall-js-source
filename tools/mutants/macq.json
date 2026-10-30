@@ -11,7 +11,7 @@
   {
     "name": "MACQ-the-BSParticleNode-flags-are-not-carried-down",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0;   // MAC-Q: nifloader.cpp:786-787",
+    "old": "    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0; // MAC-Q: nifloader.cpp:786-787",
     "new": "",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "MACQ-the-source-and-destination-blend-swap",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "        out.srcBlend = (prop.flags >> 1) & 0xF;   // MAC-Q: sourceBlendMode()\n        out.dstBlend = (prop.flags >> 5) & 0xF;   // MAC-Q: destinationBlendMode()",
-    "new": "        out.srcBlend = (prop.flags >> 5) & 0xF;\n        out.dstBlend = (prop.flags >> 1) & 0xF;",
+    "old": "        out.srcBlend = (prop.flags >> 1) & 0xf; // MAC-Q: sourceBlendMode()\n        out.dstBlend = (prop.flags >> 5) & 0xf; // MAC-Q: destinationBlendMode()",
+    "new": "        out.srcBlend = (prop.flags >> 5) & 0xf;\n        out.dstBlend = (prop.flags >> 1) & 0xf;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "MACQ-an-inactive-controller-still-makes-a-system",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "    if ((c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') && (c.flags & CONTROLLER_FLAG_ACTIVE)) found = c;",
+    "old": "    if (\n      (c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') &&\n      c.flags & CONTROLLER_FLAG_ACTIVE\n    )\n      found = c;",
     "new": "    if (c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') found = c;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "MACQ-NoAutoAdjust-is-ignored",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "  const rate = noAutoAdjust ? c.birthRate",
-    "new": "  const rate = false ? c.birthRate",
+    "old": "  const rate = noAutoAdjust",
+    "new": "  const rate = false",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "MACQ-the-counter-drops-its-remainder",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "    carry += v - n;\n    if (carry > 1) { n++; carry -= 1; }",
+    "old": "    carry += v - n;\n    if (carry > 1) {\n      n++;\n      carry -= 1;\n    }",
     "new": "",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "MACQ-a-particle-dies-on-the-step-it-reaches-its-life",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "      if (x > 1) { particles.splice(i, 1); continue; }",
-    "new": "      if (x >= 1) { particles.splice(i, 1); continue; }",
+    "old": "      if (x > 1) {",
+    "new": "      if (x >= 1) {",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MACQ-grow-fade-grows-off-the-particles-own-size-not-the-default",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "        let size = c.initialSize;\n        if (p.age < growFade.grow && growFade.grow !== 0) size *= p.age / growFade.grow;",
-    "new": "        let size = p.size;\n        if (p.age < growFade.grow && growFade.grow !== 0) size *= p.age / growFade.grow;",
+    "old": "        let size = c.initialSize;",
+    "new": "        let size = p.size;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MACQ-the-colour-keys-alpha-lands-in-the-colour-and-the-pin-reads-the-alpha",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "        p.color = [k[0], k[1], k[2]]; p.colorA = 1; p.alpha = k[3];",
-    "new": "        p.color = [k[0], k[1], k[2]]; p.colorA = k[3]; p.alpha = 1;",
+    "old": "        p.colorA = 1;\n        p.alpha = k[3];",
+    "new": "        p.colorA = k[3];\n        p.alpha = 1;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "MACQ-the-emit-window-is-open-ended",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "      enabled = t >= c.emitStart && t < c.emitStop;   // ParticleSystemController (nifosg/controller.cpp:594-604)",
+    "old": "      enabled = t >= c.emitStart && t < c.emitStop; // ParticleSystemController (nifosg/controller.cpp:594-604)",
     "new": "      enabled = t >= c.emitStart;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "MACQ-no-clock-is-not-frozen",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "      if (clock === null || clock === undefined) { frozen = true; return; }",
-    "new": "      if (clock === null || clock === undefined) { frozen = true; }",
+    "old": "        return;\n      }",
+    "new": "      }",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "MACQ-emitterToPs-is-the-emitter-into-the-file-not-into-the-node",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "    ? affineOrthoNormalize(affineMul(affineInverse(psWorld), affineOfTransform(desc.emitter.world)))",
-    "new": "    ? affineOrthoNormalize(affineOfTransform(desc.emitter.world))",
+    "old": "  const emitterToPs = desc.emitter\n    ? affineOrthoNormalize(affineMul(affineInverse(psWorld), affineOfTransform(desc.emitter.world)))\n    : AFFINE_IDENTITY;",
+    "new": "  const emitterToPs = desc.emitter ? affineOrthoNormalize(affineOfTransform(desc.emitter.world)) : AFFINE_IDENTITY;",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]
@@ -238,7 +238,7 @@
   {
     "name": "MACQ-bindPart-drops-the-sink",
     "file": "src/formats/morrowind/mwCharacter.js",
-    "old": "  for (const bundle of sink) {\n    const d = particleSystemOf(partNif, bundle);\n    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 }));   // MWNPC9: the node it hangs under\n  }",
+    "old": "  for (const bundle of sink) {\n    const d = particleSystemOf(partNif, bundle);\n    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 })); // MWNPC9: the node it hangs under\n  }",
     "new": "",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "MACQ-the-picture-is-upside-down",
     "file": "src/formats/morrowind/mwParticles.js",
-    "old": "  [-1, -1, 0, 1], [1, -1, 1, 1], [1, 1, 1, 0],\n  [-1, -1, 0, 1], [1, 1, 1, 0], [-1, 1, 0, 0],",
-    "new": "  [-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1],\n  [-1, -1, 0, 0], [1, 1, 1, 1], [-1, 1, 0, 1],",
+    "old": "  [-1, -1, 0, 1],\n  [1, -1, 1, 1],\n  [1, 1, 1, 0],\n  [-1, -1, 0, 1],\n  [1, 1, 1, 0],\n  [-1, 1, 0, 0],",
+    "new": "  [-1, -1, 0, 0],\n  [1, -1, 1, 0],\n  [1, 1, 1, 1],\n  [-1, -1, 0, 0],\n  [1, 1, 1, 1],\n  [-1, 1, 0, 1],",
     "tests": [
       "test/formats/morrowind/macq_flame.test.js"
     ]

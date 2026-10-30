@@ -29,8 +29,8 @@
   {
     "name": "AUDITMWNPC-A2-part-clock-always",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      if (t === p._clockAt) continue;\n",
-    "new": "",
+    "old": "      if (t === p._clockAt) continue;\n      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);",
+    "new": "      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);",
     "tests": [
       "test/formats/morrowind/mwnpc_mainmerge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITMWNPC-A3-creature-skinned-normals-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      positions: new Float32Array(batch.positions.length), indices: batch.indices, normals: posedNormals(batch) });",
-    "new": "      positions: new Float32Array(batch.positions.length), indices: batch.indices });",
+    "old": "      normals: posedNormals(batch),\n    });",
+    "new": "    });",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITMWNPC-A3-creature-rigid-normals-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null, normals });",
-    "new": "      sourceNormals: null, normals });",
+    "old": "      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null,",
+    "new": "      sourceNormals: null,",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]

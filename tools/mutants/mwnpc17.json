@@ -74,8 +74,8 @@
   {
     "name": "MWNPC17-blind-pick-ignored",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (picking) return { record: pool[pick % pool.length], row,",
-    "new": "  if (false) return { record: pool[pick % pool.length], row,",
+    "old": "  }\n  if (picking)",
+    "new": "  }\n  if (false)",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWNPC17-composer-drops-the-pick",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "colourOf, tier: piece.tier ?? null, pick: piece.pick ?? null });   // MWNPC17",
-    "new": "colourOf });   // MWNPC17",
+    "old": "      const res = mwClothingRecord(clothes, name, {\n        dye: piece.dye ?? null,\n        colourOf,\n        tier: piece.tier ?? null,\n        pick: piece.pick ?? null,\n      }); // MWNPC17: a person's rung and pick (characters/wardrobe.js)",
+    "new": "      const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf }); // MWNPC17: a person's rung and pick (characters/wardrobe.js)",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MWNPC17-band-ignored",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      while (k > 1 && near[k - 1].d > band) k--;",
-    "new": "",
+    "old": "      while (k > 1 && near[k - 1].d > band) k--; // AUDIT MWNPC16-18 C F2: the dye's colour, not merely the nearest few",
+    "new": "      // AUDIT MWNPC16-18 C F2: the dye's colour, not merely the nearest few",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]

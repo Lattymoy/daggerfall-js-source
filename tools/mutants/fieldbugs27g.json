@@ -173,8 +173,8 @@
   {
     "name": "MW-ASSIGN-mod-weapon-none",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
-    "new": "  return MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
+    "old": "  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None; // MW-ASSIGN: a mod's weapon of a classic shape",
+    "new": "  return MW_WEAPON_TYPE.None; // MW-ASSIGN: a mod's weapon of a classic shape",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MW-ASSIGN-mod-armour-rowless",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  const row = armorRowOf(templateIndex);   // MW-ASSIGN: a mod's piece by the classic row of its shape",
-    "new": "  const row = DF_ARMOR_ROWS[templateIndex];   // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "old": "  const row = armorRowOf(templateIndex); // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "new": "  const row = DF_ARMOR_ROWS[templateIndex]; // MW-ASSIGN: a mod's piece by the classic row of its shape",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MW-ASSIGN-mod-armour-unworn",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {   // MW-ASSIGN: a mod's pieces are worn too",
-    "new": "    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {   // MW-ASSIGN: a mod's pieces are worn too",
+    "old": "    if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {",
+    "new": "    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MW-ASSIGN-vambrace-side",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['left'] }),",
-    "new": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['right'] }),",
+    "old": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['left'] }), // Left Vambrace",
+    "new": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['right'] }), // Left Vambrace",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]

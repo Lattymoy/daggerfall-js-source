@@ -137,8 +137,8 @@
   {
     "name": "NUDEFLATS-mw-weld-ignores-setting",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (!args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (!args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "NUDEFLATS-mw-weld-men-too",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "NUDEFLATS-mw-weld-under-cover",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || !args.female || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || !args.female || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]

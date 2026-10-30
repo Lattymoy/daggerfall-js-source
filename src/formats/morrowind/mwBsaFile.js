@@ -48,7 +48,7 @@ export class MwBsaFile {
     this._bytes = bytes;
     this._blob = null;
     this._loaded = new Map();
-    this._loading = new Map();   // AUDIT MW-TEXTHREAD F5: the reads in flight, by key
+    this._loading = new Map(); // AUDIT MW-TEXTHREAD F5: the reads in flight, by key
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     if (bytes.byteLength < 12) throw new Error('MwBsaFile: too small to be a BSA');
     const { dirSize, fileCount } = MwBsaFile._header(view);
@@ -90,12 +90,16 @@ export class MwBsaFile {
     a._blob = blob;
     a._loaded = new Map();
     a._loading = new Map();
-    a._readDirectory(dirBytes, new DataView(dirBytes.buffer, dirBytes.byteOffset, dirBytes.byteLength), dirSize, fileCount);
+    a._readDirectory(
+      dirBytes,
+      new DataView(dirBytes.buffer, dirBytes.byteOffset, dirBytes.byteLength),
+      dirSize,
+      fileCount,
+    );
     return a;
   }
 
   _readDirectory(bytes, view, dirSize, fileCount) {
-
     const nameTableStart = 12 + 8 * fileCount + 4 * fileCount;
     const nameBufSize = dirSize - 12 * fileCount;
     this._dataStart = 12 + dirSize + 8 * fileCount;
@@ -195,11 +199,17 @@ export class MwBsaFile {
     if (start + entry.size > this._blob.size) {
       throw new Error(`MwBsaFile: entry overruns archive: ${path}`);
     }
-    const read = this._blob.slice(start, start + entry.size).arrayBuffer().then((buf) => {
-      const bytes = new Uint8Array(buf);
-      this._loaded.set(key, bytes);
-      return bytes;
-    }).finally(() => { this._loading.delete(key); });   // a failed read is not kept: the next ask reads again
+    const read = this._blob
+      .slice(start, start + entry.size)
+      .arrayBuffer()
+      .then((buf) => {
+        const bytes = new Uint8Array(buf);
+        this._loaded.set(key, bytes);
+        return bytes;
+      })
+      .finally(() => {
+        this._loading.delete(key);
+      }); // a failed read is not kept: the next ask reads again
     this._loading.set(key, read);
     return read;
   }

@@ -124,9 +124,7 @@ export function trackFromController(nif, ctrl) {
  */
 export function extractTracks(nif) {
   const tracks = new Map();
-  const helper = nif.roots.map((r) => deref(nif, r)).find(
-    (r) => r && r.type === 'NiSequenceStreamHelper',
-  );
+  const helper = nif.roots.map((r) => deref(nif, r)).find((r) => r && r.type === 'NiSequenceStreamHelper');
   if (helper) {
     // Extra chain: [text keys] then one NiStringExtraData per controller.
     const names = [];
@@ -183,12 +181,7 @@ function slerp(a, b, u) {
   const s = Math.sin(theta);
   const wa = Math.sin((1 - u) * theta) / s;
   const wb = Math.sin(u * theta) / s;
-  return [
-    wa * a[0] + wb * bw[0],
-    wa * a[1] + wb * bw[1],
-    wa * a[2] + wb * bw[2],
-    wa * a[3] + wb * bw[3],
-  ];
+  return [wa * a[0] + wb * bw[0], wa * a[1] + wb * bw[1], wa * a[2] + wb * bw[2], wa * a[3] + wb * bw[3]];
 }
 
 function axisQuat(axis, angle) {
@@ -386,12 +379,18 @@ export function animVelocity(keys, track, group) {
   let stoptime = null;
   for (let i = keys.length - 1; i >= 0; i--) {
     const t = keys[i].text;
-    if (t === `${g}: start` || t === `${g}: loop start`) { starttime = keys[i].time; break; }
+    if (t === `${g}: start` || t === `${g}: loop start`) {
+      starttime = keys[i].time;
+      break;
+    }
   }
   for (let i = keys.length - 1; i >= 0; i--) {
     const t = keys[i].text;
     if (t === `${g}: stop`) stoptime = keys[i].time;
-    else if (t === `${g}: loop stop`) { stoptime = keys[i].time; break; }
+    else if (t === `${g}: loop stop`) {
+      stoptime = keys[i].time;
+      break;
+    }
   }
   if (starttime == null || stoptime == null || !(stoptime > starttime)) return 0;
   // The accum root's TRANSLATION channel alone - getTranslation() is
@@ -418,16 +417,49 @@ export function animVelocity(keys, track, group) {
  * mesh viewer rides this and fpArm does not.
  */
 export const LOOPING_ANIMATIONS = Object.freeze([
-  'walkforward', 'walkback', 'walkleft', 'walkright',
-  'swimwalkforward', 'swimwalkback', 'swimwalkleft', 'swimwalkright',
-  'runforward', 'runback', 'runleft', 'runright',
-  'swimrunforward', 'swimrunback', 'swimrunleft', 'swimrunright',
-  'sneakforward', 'sneakback', 'sneakleft', 'sneakright',
-  'turnleft', 'turnright', 'swimturnleft', 'swimturnright',
-  'spellturnleft', 'spellturnright', 'torch',
-  'idle', 'idle2', 'idle3', 'idle4', 'idle5', 'idle6', 'idle7',
-  'idle8', 'idle9', 'idlesneak', 'idlestorm', 'idleswim', 'jump',
-  'inventoryhandtohand', 'inventoryweapononehand', 'inventoryweapontwohand',
+  'walkforward',
+  'walkback',
+  'walkleft',
+  'walkright',
+  'swimwalkforward',
+  'swimwalkback',
+  'swimwalkleft',
+  'swimwalkright',
+  'runforward',
+  'runback',
+  'runleft',
+  'runright',
+  'swimrunforward',
+  'swimrunback',
+  'swimrunleft',
+  'swimrunright',
+  'sneakforward',
+  'sneakback',
+  'sneakleft',
+  'sneakright',
+  'turnleft',
+  'turnright',
+  'swimturnleft',
+  'swimturnright',
+  'spellturnleft',
+  'spellturnright',
+  'torch',
+  'idle',
+  'idle2',
+  'idle3',
+  'idle4',
+  'idle5',
+  'idle6',
+  'idle7',
+  'idle8',
+  'idle9',
+  'idlesneak',
+  'idlestorm',
+  'idleswim',
+  'jump',
+  'inventoryhandtohand',
+  'inventoryweapononehand',
+  'inventoryweapontwohand',
   'inventoryweapontwowide',
 ]);
 const LOOPING_SET = new Set(LOOPING_ANIMATIONS);
@@ -512,8 +544,12 @@ const equalsParts = (s, ...parts) => s === parts.join('');
  */
 export function resetClip(keys, group, opts = {}) {
   const {
-    loopFallback = false, startPoint = 0,
-    loopCount = Infinity, loopingEnabled = true, start = 'start', stop = 'stop',
+    loopFallback = false,
+    startPoint = 0,
+    loopCount = Infinity,
+    loopingEnabled = true,
+    start = 'start',
+    stop = 'stop',
   } = opts;
   const g = asciiLower(String(group ?? ''));
   const list = keys ?? [];
@@ -525,18 +561,25 @@ export function resetClip(keys, group, opts = {}) {
   let groupend = -1;
   for (let i = list.length - 1; i >= 0; i--) {
     if (list[i].text.startsWith(g) && list[i].text.slice(g.length, g.length + 2) === ': ') {
-      groupend = i; break;
+      groupend = i;
+      break;
     }
   }
   if (groupend < 0) return { ok: false, reason: `no key of group "${g}" - the file names no such animation` };
 
   let startAt = -1;
   for (let i = groupend; i >= 0; i--) {
-    if (equalsParts(list[i].text, g, ': ', start)) { startAt = i; break; }
+    if (equalsParts(list[i].text, g, ': ', start)) {
+      startAt = i;
+      break;
+    }
   }
   if (startAt < 0 && start === 'loop start') {
     for (let i = groupend; i >= 0; i--) {
-      if (equalsParts(list[i].text, g, ': start')) { startAt = i; break; }
+      if (equalsParts(list[i].text, g, ': start')) {
+        startAt = i;
+        break;
+      }
     }
   }
   if (startAt < 0) return { ok: false, reason: `group "${g}" has no "${g}: ${start}" key` };
@@ -547,7 +590,10 @@ export function resetClip(keys, group, opts = {}) {
   const checkLength = g.length + 2 + stop.length;
   let stopAt = -1;
   for (let i = groupend; i >= 0; i--) {
-    if (equalsParts(list[i].text.slice(0, checkLength), g, ': ', stop)) { stopAt = i; break; }
+    if (equalsParts(list[i].text.slice(0, checkLength), g, ': ', stop)) {
+      stopAt = i;
+      break;
+    }
   }
   if (stopAt < 0) return { ok: false, reason: `group "${g}" has no "${g}: ${stop}" key` };
 
@@ -602,8 +648,7 @@ function lowerBound(keys, time) {
  *  loopStopTime of rule 49's default makes the first one unsatisfiable,
  *  which is how a clip with no "loop stop" key plays exactly once. */
 export function shouldLoop(state) {
-  return !!state && state.time >= state.loopStopTime
-    && state.loopingEnabled && state.loopCount > 0;
+  return !!state && state.time >= state.loopStopTime && state.loopingEnabled && state.loopCount > 0;
 }
 
 /**

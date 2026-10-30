@@ -82,7 +82,7 @@
   {
     "name": "MWFOLK1-the-outfit-never-added",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (outfitAdd) adds.push(outfitAdd);   // MW-FOLK1",
+    "old": "  if (outfitAdd) adds.push(outfitAdd); // MW-FOLK1",
     "new": "",
     "tests": [
       "test/tooling/mwfolk1.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "MWFOLK1-the-second-outfit-drawn",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      if (outfitAdd) { notes.push(`outfit ${o.id}: ${t('body.outfit.second', 'a second outfit - the first ({first}) is the one drawn', { first: outfitAdd.recordId })}`); continue; }",
+    "old": "      if (outfitAdd) {\n        notes.push(\n          `outfit ${o.id}: ${t('body.outfit.second', 'a second outfit - the first ({first}) is the one drawn', { first: outfitAdd.recordId })}`,\n        );\n        continue;\n      }",
     "new": "",
     "tests": [
       "test/tooling/mwfolk1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "MWFOLK1-hidden-in-the-first-person",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      for (const h of o.hides) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, outfitAdd);",
-    "new": "      for (const h of o.hides) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);",
+    "old": "          outfitAdd,\n        );",
+    "new": "        );",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "MWFOLK1-a-shirt-under-the-dress",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || !args.female || worn.shadows.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || !args.female || worn.shadows.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "MWFOLK1-AUDIT-outfit-composed-last",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (piece.kind === 'outfit') return 0;",
-    "new": "  if (piece.kind === 'outfit') return 11;",
+    "old": "  if (piece.kind === 'outfit') return 0; // MW-FOLK1: a whole outfit, first as a robe is",
+    "new": "  if (piece.kind === 'outfit') return 11; // MW-FOLK1: a whole outfit, first as a robe is",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

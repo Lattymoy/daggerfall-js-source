@@ -62,20 +62,42 @@
 
 import { deref } from './mwNifFile.js';
 import {
-  resolveMaterial, skipGeometryName, stripsToTriangles, hasMarkerFlag, selectedChild,
-  ANIM_FLAG_NODES, NODE_TYPES, GEOMETRY_TYPES, PARTICLE_TYPES, VERTEX_COLOR_MODE,
+  resolveMaterial,
+  skipGeometryName,
+  stripsToTriangles,
+  hasMarkerFlag,
+  selectedChild,
+  ANIM_FLAG_NODES,
+  NODE_TYPES,
+  GEOMETRY_TYPES,
+  PARTICLE_TYPES,
+  VERTEX_COLOR_MODE,
 } from './mwNifMesh.js';
 import { quatToMat33 } from './mwSkin.js';
 import { affineOfTransform, affineMul, affineApply, affineRotate, AFFINE_IDENTITY } from './mwAffine.js';
 import { sampleKeyGroup } from './mwKeys.js';
 import { trackFromController, sampleTrack } from './mwAnim.js';
 import {
-  particleSystemsOf, createParticleSystem, controllerTime, packParticleQuads, particleDrawState, affineInverse,
-  affineScale, affineOrthoNormalize, PARTICLE_FLOATS, CONTROLLER_FLAG_ACTIVE,
+  particleSystemsOf,
+  createParticleSystem,
+  controllerTime,
+  packParticleQuads,
+  particleDrawState,
+  affineInverse,
+  affineScale,
+  affineOrthoNormalize,
+  PARTICLE_FLOATS,
+  CONTROLLER_FLAG_ACTIVE,
 } from './mwParticles.js';
 
 /** NiTimeController's clock terms, as controllerTime takes them (the extrapolation bits unshifted, EXTRAPOLATION). */
-export const timingOf = (c) => ({ frequency: c.frequency, phase: c.phase, startTime: c.startTime, stopTime: c.stopTime, extrapolation: c.flags & 0x6 });
+export const timingOf = (c) => ({
+  frequency: c.frequency,
+  phase: c.phase,
+  startTime: c.startTime,
+  stopTime: c.stopTime,
+  extrapolation: c.flags & 0x6,
+});
 
 /** Every ACTIVE controller on a record's chain (the reference makes no other), in chain order. MW-BOW1: exported - a
  *  part's own clock (formats/morrowind/mwPartClock.js) reads the same chain. */
@@ -95,7 +117,12 @@ export function activeControllers(nif, rec) {
 /** NiMaterialColorController's target (nif/controller.cpp: `(mFlags >> 4) & 3` in a 4.0.0.2 file). */
 export const COLOR_TARGET = Object.freeze({ Ambient: 0, Diffuse: 1, Specular: 2, Emissive: 3 });
 /** NiBillboardNode's modes (nif/node.hpp), read off a 4.0.0.2 node's flags as `(flags >> 5) & 3`. */
-export const BILLBOARD_MODE = Object.freeze({ AlwaysFaceCamera: 0, RotateAboutUp: 1, RigidFaceCamera: 2, AlwaysFaceCenter: 3 });
+export const BILLBOARD_MODE = Object.freeze({
+  AlwaysFaceCamera: 0,
+  RotateAboutUp: 1,
+  RigidFaceCamera: 2,
+  AlwaysFaceCenter: 3,
+});
 /** overrideTexture's wrap: CLAMP_TO_EDGE on both axes - NiTexturingProperty's clamp mode 0. */
 export const OVERRIDE_CLAMP_MODE = 0;
 
@@ -103,20 +130,34 @@ export const OVERRIDE_CLAMP_MODE = 0;
  *  nearest NiTexturingProperty's flipbook (a nearer property of the kind replaces the farther, controllers and all). */
 function propertyControllers(nif, chain, grow) {
   const last = (type) => {
-    for (let i = chain.length - 1; i >= 0; i--) { const r = deref(nif, chain[i]); if (r?.type === type) return r; }
+    for (let i = chain.length - 1; i >= 0; i--) {
+      const r = deref(nif, chain[i]);
+      if (r?.type === type) return r;
+    }
     return null;
   };
   const out = { alpha: null, color: null, flip: null };
   for (const c of activeControllers(nif, last('NiMaterialProperty'))) {
     const d = deref(nif, c.data);
-    if (c.type === 'NiAlphaController' && d?.data) { out.alpha = { group: d.data, timing: timingOf(c) }; grow(c); }
-    else if (c.type === 'NiMaterialColorController' && d?.data) { out.color = { group: d.data, target: (c.flags >> 4) & 3, timing: timingOf(c) }; grow(c); }
+    if (c.type === 'NiAlphaController' && d?.data) {
+      out.alpha = { group: d.data, timing: timingOf(c) };
+      grow(c);
+    } else if (c.type === 'NiMaterialColorController' && d?.data) {
+      out.color = { group: d.data, target: (c.flags >> 4) & 3, timing: timingOf(c) };
+      grow(c);
+    }
   }
   for (const c of activeControllers(nif, last('NiTexturingProperty'))) {
     if (c.type !== 'NiFlipController') continue;
     // handleTextureControllers skips an empty source; a source with no external name keeps its slot and draws the base
-    const files = (c.sources ?? []).filter((s) => s >= 0).map((s) => deref(nif, s)).map((s) => (s && s.external && s.fileName ? s.fileName : null));
-    if (files.length) { out.flip = { files, delta: c.delta, timing: timingOf(c) }; grow(c); }
+    const files = (c.sources ?? [])
+      .filter((s) => s >= 0)
+      .map((s) => deref(nif, s))
+      .map((s) => (s && s.external && s.fileName ? s.fileName : null));
+    if (files.length) {
+      out.flip = { files, delta: c.delta, timing: timingOf(c) };
+      grow(c);
+    }
   }
   return out;
 }
@@ -132,9 +173,11 @@ function propertyControllers(nif, chain, grow) {
 export function vfxOf(nif) {
   const nodes = new Map();
   const shapes = [];
-  const particleChains = new Map();   // particle geometry ref -> { chain, override }
+  const particleChains = new Map(); // particle geometry ref -> { chain, override }
   let length = 0;
-  const grow = (c) => { if (Number.isFinite(c?.stopTime)) length = Math.max(length, c.stopTime); };
+  const grow = (c) => {
+    if (Number.isFinite(c?.stopTime)) length = Math.max(length, c.stopTime);
+  };
   const rootRec = deref(nif, nif.roots.find((r) => r >= 0) ?? -1);
   // :527-533 - the ROOT's first NiTexturingProperty: what an effect's particle texture replaces
   const rootTex = (rootRec?.properties ?? []).find((p) => deref(nif, p)?.type === 'NiTexturingProperty') ?? -1;
@@ -143,8 +186,8 @@ export function vfxOf(nif) {
   const visit = (ref, parent, chain, animFlags, overridden, skipMeshes, isRoot) => {
     const rec = deref(nif, ref);
     if (!rec) return;
-    if (!isRoot && String(rec.name || '').toLowerCase() === 'bounding box') return;   // rule 58 (1)
-    if (rec.type === 'RootCollisionNode') return;   // rule 58 (2): hidden, its meshes skipped - nothing of it draws
+    if (!isRoot && String(rec.name || '').toLowerCase() === 'bounding box') return; // rule 58 (1)
+    if (rec.type === 'RootCollisionNode') return; // rule 58 (2): hidden, its meshes skipped - nothing of it draws
     const isNode = NODE_TYPES.has(rec.type);
     const isShape = GEOMETRY_TYPES.has(rec.type);
     const isParticles = PARTICLE_TYPES.has(rec.type);
@@ -159,15 +202,26 @@ export function vfxOf(nif) {
     const hidden = (rec.flags & 1) !== 0;
     const hasVis = controllers.some((c) => c.type === 'NiVisController');
     const entry = {
-      ref, parent, name: rec.name || '',
-      rest: { rotation: Float32Array.from(rec.rotation ?? [1, 0, 0, 0, 1, 0, 0, 0, 1]), translation: [...(rec.translation ?? [0, 0, 0])], scale: rec.scale ?? 1 },
+      ref,
+      parent,
+      name: rec.name || '',
+      rest: {
+        rotation: Float32Array.from(rec.rotation ?? [1, 0, 0, 0, 1, 0, 0, 0, 1]),
+        translation: [...(rec.translation ?? [0, 0, 0])],
+        scale: rec.scale ?? 1,
+      },
       billboard: rec.type === 'NiBillboardNode' ? (rec.flags >> 5) & 3 : null,
-      hidden, track: null, vis: null,
+      hidden,
+      track: null,
+      vis: null,
     };
     for (const c of controllers) {
       if (c.type === 'NiKeyframeController') {
         const track = trackFromController(nif, c);
-        if (track) { entry.track = { ...track, timing: timingOf(c) }; grow(c); }
+        if (track) {
+          entry.track = { ...track, timing: timingOf(c) };
+          grow(c);
+        }
       } else if (c.type === 'NiVisController') {
         const data = deref(nif, c.data);
         entry.vis = { keys: data?.keys ?? [], timing: timingOf(c) };
@@ -178,23 +232,26 @@ export function vfxOf(nif) {
     // :826-843 - a hidden node with no visibility controller skips every mesh beneath it
     const skip = skipMeshes || (hidden && !hasVis);
     if (isParticles) {
-      if (!skip && !skipGeometryName(rec.name, hasMarkers)) particleChains.set(ref, { chain: nextChain, override: marked });
+      if (!skip && !skipGeometryName(rec.name, hasMarkers))
+        particleChains.set(ref, { chain: nextChain, override: marked });
       return;
     }
     if (isNode) {
       const only = selectedChild(rec);
       const kids = only !== null ? [rec.children?.[only]] : (rec.children ?? []);
-      for (const child of kids) if (child !== undefined && child >= 0) visit(child, ref, nextChain, flags, marked, skip, false);
+      for (const child of kids)
+        if (child !== undefined && child >= 0) visit(child, ref, nextChain, flags, marked, skip, false);
       return;
     }
-    if (skip || rec.skin >= 0 || skipGeometryName(rec.name, hasMarkers)) return;   // a skinned shape is no effect's
+    if (skip || rec.skin >= 0 || skipGeometryName(rec.name, hasMarkers)) return; // a skinned shape is no effect's
     const data = deref(nif, rec.data);
     if (!data || !data.vertices) return;
     const indices = rec.type === 'NiTriStrips' ? stripsToTriangles(data) : Uint16Array.from(data.triangles ?? []);
     if (!indices.length) return;
     const props = nextChain.map((p) => deref(nif, p)).filter(Boolean);
     const shape = {
-      ref, name: rec.name || '',
+      ref,
+      name: rec.name || '',
       positions: Float32Array.from(data.vertices),
       uvs: data.uvSets?.length ? Float32Array.from(data.uvSets[0]) : null,
       colors: data.colors ? Float32Array.from(data.colors) : null,
@@ -207,7 +264,10 @@ export function vfxOf(nif) {
     for (const c of controllers) {
       if (c.type !== 'NiUVController') continue;
       const d = deref(nif, c.data);
-      if (d?.groups) { shape.uv = { groups: d.groups, timing: timingOf(c) }; grow(c); }
+      if (d?.groups) {
+        shape.uv = { groups: d.groups, timing: timingOf(c) };
+        grow(c);
+      }
     }
     shapes.push(shape);
   };
@@ -217,12 +277,21 @@ export function vfxOf(nif) {
   // roots that are scene objects (a .kf's NiSequence root has no transform to compose)
   const particles = [];
   const sceneRoots = nif.roots.filter((r) => r >= 0 && deref(nif, r)?.rotation);
-  for (const desc of particleSystemsOf(sceneRoots.length === nif.roots.length ? nif : { ...nif, roots: sceneRoots }, { includeHidden: true })) {
+  for (const desc of particleSystemsOf(sceneRoots.length === nif.roots.length ? nif : { ...nif, roots: sceneRoots }, {
+    includeHidden: true,
+  })) {
     const own = particleChains.get(desc.ref);
-    if (!own) continue;   // under a hidden node with no visibility controller, or skipped by name: never drawn
+    if (!own) continue; // under a hidden node with no visibility controller, or skipped by name: never drawn
     grow(desc.controller);
     const { alpha, flip } = propertyControllers(nif, own.chain, grow);
-    particles.push({ desc, node: desc.ref, emitter: desc.emitter ? desc.emitter.ref : null, alpha, flip, override: own.override });
+    particles.push({
+      desc,
+      node: desc.ref,
+      emitter: desc.emitter ? desc.emitter.ref : null,
+      alpha,
+      flip,
+      override: own.override,
+    });
   }
   return { nodes, shapes, particles, length };
 }
@@ -230,8 +299,13 @@ export function vfxOf(nif) {
 /** VisController::calculate - the key at or before the time (upper_bound, then one back); no keys is visible. */
 export function visAt(keys, time) {
   if (!keys || !keys.length) return true;
-  let lo = 0; let hi = keys.length;
-  while (lo < hi) { const mid = (lo + hi) >>> 1; if (time < keys[mid].time) hi = mid; else lo = mid + 1; }
+  let lo = 0;
+  let hi = keys.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (time < keys[mid].time) hi = mid;
+    else lo = mid + 1;
+  }
   return !!keys[Math.max(0, lo - 1)].value;
 }
 
@@ -259,21 +333,36 @@ export function shapeVertexColour(material, colors, i, alphaUniform = 1) {
   const vc = colors ? [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2], colors[i * 4 + 3]] : null;
   const mode = material.vertexColorMode;
   const emissive = vc && mode === VERTEX_COLOR_MODE.Emission ? vc : material.emissive;
-  const ambient = vc && (mode === VERTEX_COLOR_MODE.AmbientAndDiffuse || mode === VERTEX_COLOR_MODE.Ambient) ? vc : material.ambient;
-  const diffuseA = vc && (mode === VERTEX_COLOR_MODE.AmbientAndDiffuse || mode === VERTEX_COLOR_MODE.Diffuse) ? vc[3] : material.alpha;
-  return [clamp01(emissive[0] + ambient[0]), clamp01(emissive[1] + ambient[1]), clamp01(emissive[2] + ambient[2]), clamp01(diffuseA * alphaUniform)];
+  const ambient =
+    vc && (mode === VERTEX_COLOR_MODE.AmbientAndDiffuse || mode === VERTEX_COLOR_MODE.Ambient) ? vc : material.ambient;
+  const diffuseA =
+    vc && (mode === VERTEX_COLOR_MODE.AmbientAndDiffuse || mode === VERTEX_COLOR_MODE.Diffuse) ? vc[3] : material.alpha;
+  return [
+    clamp01(emissive[0] + ambient[0]),
+    clamp01(emissive[1] + ambient[1]),
+    clamp01(emissive[2] + ambient[2]),
+    clamp01(diffuseA * alphaUniform),
+  ];
 }
 
 // ---- 3x3 helpers, row-major, column vectors (mwAffine's convention) --------
 const m3mul = (a, b) => {
   const o = new Float32Array(9);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++) o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
   return o;
 };
 /** The transpose applied - the inverse of a rotation. */
-const m3tApply = (a, v) => [a[0] * v[0] + a[3] * v[1] + a[6] * v[2], a[1] * v[0] + a[4] * v[1] + a[7] * v[2], a[2] * v[0] + a[5] * v[1] + a[8] * v[2]];
+const m3tApply = (a, v) => [
+  a[0] * v[0] + a[3] * v[1] + a[6] * v[2],
+  a[1] * v[0] + a[4] * v[1] + a[7] * v[2],
+  a[2] * v[0] + a[5] * v[1] + a[8] * v[2],
+];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return l > 0 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0]; };
+const norm = (v) => {
+  const l = Math.hypot(v[0], v[1], v[2]);
+  return l > 0 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0];
+};
 /** A 3x3 whose columns are the three vectors - an osg row matrix `set(r0, r1, r2)` read as a column-vector map. */
 const fromColumns = (a, b, c) => Float32Array.from([a[0], b[0], c[0], a[1], b[1], c[1], a[2], b[2], c[2]]);
 
@@ -289,7 +378,11 @@ export function billboardRotation(mode, base, translation, eye, look, up) {
   if (mode === BILLBOARD_MODE.RotateAboutUp) {
     const d = m3tApply(base, [eye[0] - translation[0], eye[1] - translation[1], eye[2] - translation[2]]);
     const n = Math.hypot(d[0], d[2]);
-    if (n > 1e-12) { const x = d[0] / n, z = d[2] / n; mat = fromColumns([z, 0, -x], [0, 1, 0], [x, 0, z]); }
+    if (n > 1e-12) {
+      const x = d[0] / n,
+        z = d[2] / n;
+      mat = fromColumns([z, 0, -x], [0, 1, 0], [x, 0, z]);
+    }
   } else {
     // AlwaysFaceCamera, RigidFaceCamera - and the two "center" modes, which the reference builds with the DEFAULT mode,
     // RigidFaceCamera (rule 60)
@@ -300,11 +393,17 @@ export function billboardRotation(mode, base, translation, eye, look, up) {
     if (mode === BILLBOARD_MODE.AlwaysFaceCamera) {
       const n = Math.sqrt(relUp[1] * relUp[1] + relRight[1] * relRight[1]);
       if (n > 1e-6) {
-        const cos = relUp[1] / n, sin = -relRight[1] / n;
+        const cos = relUp[1] / n,
+          sin = -relRight[1] / n;
         mat = fromColumns(
-          [-relRight[0] * cos - relUp[0] * sin, -relRight[1] * cos - relUp[1] * sin, -relRight[2] * cos - relUp[2] * sin],
+          [
+            -relRight[0] * cos - relUp[0] * sin,
+            -relRight[1] * cos - relUp[1] * sin,
+            -relRight[2] * cos - relUp[2] * sin,
+          ],
           [relUp[0] * cos - relRight[0] * sin, relUp[1] * cos - relRight[1] * sin, relUp[2] * cos - relRight[2] * sin],
-          [-relForward[0], -relForward[1], -relForward[2]]);
+          [-relForward[0], -relForward[1], -relForward[2]],
+        );
       }
     } else {
       mat = fromColumns(relRight, relUp, relForward);
@@ -348,37 +447,52 @@ export function createVfx(desc, { textureOverride = null, rolls = Math.random, l
   const partBufs = desc.particles.map(() => null);
   const worldOf = new Map();
   const visibleOf = new Map();
-  const order = [...desc.nodes.keys()];   // the walk met parents first
+  const order = [...desc.nodes.keys()]; // the walk met parents first
 
   function pose(eyeLocal) {
-    worldOf.clear(); visibleOf.clear();
+    worldOf.clear();
+    visibleOf.clear();
     for (const ref of order) {
       const node = desc.nodes.get(ref);
       const parentW = node.parent >= 0 ? (worldOf.get(node.parent) ?? AFFINE_IDENTITY) : AFFINE_IDENTITY;
       const p = localParts(node, time);
       let rotation = p.rotation;
       if (node.billboard !== null && eyeLocal) {
-        const inv = affineInverse(parentW);   // the cull stack's eye, look and up, in the PARENT's space
+        const inv = affineInverse(parentW); // the cull stack's eye, look and up, in the PARENT's space
         const eye = affineApply(inv, eyeLocal.position[0], eyeLocal.position[1], eyeLocal.position[2]);
-        rotation = billboardRotation(node.billboard, p.rotation, p.translation, eye, turn(inv, eyeLocal.look), turn(inv, eyeLocal.up));
+        rotation = billboardRotation(
+          node.billboard,
+          p.rotation,
+          p.translation,
+          eye,
+          turn(inv, eyeLocal.look),
+          turn(inv, eyeLocal.up),
+        );
       }
       worldOf.set(ref, affineMul(parentW, affineOfTransform({ rotation, translation: p.translation, scale: p.scale })));
       // rule 57: the hidden flag hides, and a visibility controller overrides it every frame
       const vis = node.vis ? visAt(node.vis.keys, controllerTime(node.vis.timing, time)) : !node.hidden;
-      visibleOf.set(ref, vis && (node.parent >= 0 ? visibleOf.get(node.parent) ?? true : true));
+      visibleOf.set(ref, vis && (node.parent >= 0 ? (visibleOf.get(node.parent) ?? true) : true));
     }
   }
 
   function textureOf(item, base) {
     if (item.override && textureOverride) return textureOverride;
-    if (item.flip) return item.flip.files[flipIndex(controllerTime(item.flip.timing, time), item.flip.delta, item.flip.files.length)] ?? base;
+    if (item.flip)
+      return (
+        item.flip.files[flipIndex(controllerTime(item.flip.timing, time), item.flip.delta, item.flip.files.length)] ??
+        base
+      );
     return base;
   }
   function drawStateOf(item, material) {
     const s = particleDrawState(material);
-    return item.override && textureOverride ? { ...s, textureFile: textureOverride, clampMode: OVERRIDE_CLAMP_MODE } : s;
+    return item.override && textureOverride
+      ? { ...s, textureFile: textureOverride, clampMode: OVERRIDE_CLAMP_MODE }
+      : s;
   }
-  const alphaOf = (item) => (item.alpha ? sampleKeyGroup(item.alpha.group, 1, controllerTime(item.alpha.timing, time)) ?? 1 : 1);
+  const alphaOf = (item) =>
+    item.alpha ? (sampleKeyGroup(item.alpha.group, 1, controllerTime(item.alpha.timing, time)) ?? 1) : 1;
 
   function packShape(i, shape, m) {
     let material = shape.material;
@@ -392,7 +506,12 @@ export function createVfx(desc, { textureOverride = null, rolls = Math.random, l
     if (shape.uv && shape.uvs) {
       const t = controllerTime(shape.uv.timing, time);
       const g = shape.uv.groups;
-      uvT = { uTrans: sampleKeyGroup(g[0], 1, t) ?? 0, vTrans: sampleKeyGroup(g[1], 1, t) ?? 0, uScale: sampleKeyGroup(g[2], 1, t) ?? 1, vScale: sampleKeyGroup(g[3], 1, t) ?? 1 };
+      uvT = {
+        uTrans: sampleKeyGroup(g[0], 1, t) ?? 0,
+        vTrans: sampleKeyGroup(g[1], 1, t) ?? 0,
+        uScale: sampleKeyGroup(g[2], 1, t) ?? 1,
+        vScale: sampleKeyGroup(g[3], 1, t) ?? 1,
+      };
     }
     const n = shape.indices.length;
     const need = n * PARTICLE_FLOATS;
@@ -402,66 +521,109 @@ export function createVfx(desc, { textureOverride = null, rolls = Math.random, l
     for (let k = 0; k < n; k++) {
       const v = shape.indices[k];
       const p = affineApply(m, shape.positions[v * 3], shape.positions[v * 3 + 1], shape.positions[v * 3 + 2]);
-      let u = shape.uvs ? shape.uvs[v * 2] : 0; let w = shape.uvs ? shape.uvs[v * 2 + 1] : 0;
+      let u = shape.uvs ? shape.uvs[v * 2] : 0;
+      let w = shape.uvs ? shape.uvs[v * 2 + 1] : 0;
       if (uvT) [u, w] = uvAt(u, w, uvT);
       const c = shapeVertexColour(material, shape.colors, v, alpha);
-      buf[o++] = p[0]; buf[o++] = p[1]; buf[o++] = p[2];
-      buf[o++] = 0; buf[o++] = 0;
-      buf[o++] = u; buf[o++] = w;
-      buf[o++] = c[0]; buf[o++] = c[1]; buf[o++] = c[2]; buf[o++] = c[3];
+      buf[o++] = p[0];
+      buf[o++] = p[1];
+      buf[o++] = p[2];
+      buf[o++] = 0;
+      buf[o++] = 0;
+      buf[o++] = u;
+      buf[o++] = w;
+      buf[o++] = c[0];
+      buf[o++] = c[1];
+      buf[o++] = c[2];
+      buf[o++] = c[3];
       buf[o++] = 0;
     }
-    return { key: `shape:${i}`, packed: buf, count: n, drawState: drawStateOf(shape, shape.material), texture: textureOf(shape, shape.material.textureFile) };
+    return {
+      key: `shape:${i}`,
+      packed: buf,
+      count: n,
+      drawState: drawStateOf(shape, shape.material),
+      texture: textureOf(shape, shape.material.textureFile),
+    };
   }
 
   return {
     desc,
-    get time() { return time; },
-    get done() { return finished; },
+    get time() {
+      return time;
+    },
+    get done() {
+      return finished;
+    },
     /** The particle systems, for a pin. */
-    get systems() { return sims; },
+    get systems() {
+      return sims;
+    },
     update(dt, { place = null, view = null, eye = null } = {}) {
       if (finished) return { time, done: true, streams: [] };
       time += dt;
       if (time >= desc.length) {
-        if (loop && desc.length > 0) time -= desc.length * Math.floor(time / desc.length);   // UpdateVfxCallback: the remainder carried
-        else { finished = true; return { time, done: true, streams: [] }; }   // "Hide effect immediately"
+        if (loop && desc.length > 0)
+          time -= desc.length * Math.floor(time / desc.length); // UpdateVfxCallback: the remainder carried
+        else {
+          finished = true;
+          return { time, done: true, streams: [] };
+        } // "Hide effect immediately"
       }
       const placeA = place ?? AFFINE_IDENTITY;
       const viewA = view ?? AFFINE_IDENTITY;
-      const out = affineMul(viewA, placeA);   // the effect's space -> the caller's
+      const out = affineMul(viewA, placeA); // the effect's space -> the caller's
       let eyeLocal = null;
       if (eye) {
         const inv = affineInverse(out);
-        eyeLocal = { position: affineApply(inv, eye.position[0], eye.position[1], eye.position[2]), look: turn(inv, eye.look), up: turn(inv, eye.up) };
+        eyeLocal = {
+          position: affineApply(inv, eye.position[0], eye.position[1], eye.position[2]),
+          look: turn(inv, eye.look),
+          up: turn(inv, eye.up),
+        };
       }
       pose(eyeLocal);
       const streams = [];
       desc.shapes.forEach((shape, i) => {
-        if (visibleOf.get(shape.ref) ?? true) streams.push(packShape(i, shape, affineMul(out, worldOf.get(shape.ref) ?? AFFINE_IDENTITY)));
+        if (visibleOf.get(shape.ref) ?? true)
+          streams.push(packShape(i, shape, affineMul(out, worldOf.get(shape.ref) ?? AFFINE_IDENTITY)));
       });
       desc.particles.forEach((p, i) => {
         const sim = sims[i];
         const ps = worldOf.get(p.node) ?? affineOfTransform(p.desc.world);
-        const em = p.emitter !== null ? worldOf.get(p.emitter) ?? null : null;
+        const em = p.emitter !== null ? (worldOf.get(p.emitter) ?? null) : null;
         let packed;
         if (p.desc.localSpace) {
           // RELATIVE: kept in the node's space and carried with it; sized in the file's units through the placement
           sim.update(dt, time, null, em ? affineMul(affineInverse(ps), em) : null);
           const m = affineMul(out, ps);
-          packed = packParticleQuads(sim.quads(), partBufs[i], { place: (x, y, z) => affineApply(m, x, y, z), sizeScale: affineScale(m) });
+          packed = packParticleQuads(sim.quads(), partBufs[i], {
+            place: (x, y, z) => affineApply(m, x, y, z),
+            sizeScale: affineScale(m),
+          });
         } else {
           // ABSOLUTE: kept in the Morrowind world, emitted through the emitter's orthonormalised world frame
           const frame = affineOrthoNormalize(affineMul(placeA, ps));
           const emW = em ? affineOrthoNormalize(affineMul(placeA, em)) : null;
           sim.update(dt, time, frame, emW ? affineMul(affineInverse(frame), emW) : null);
-          packed = packParticleQuads(sim.quads(), partBufs[i], { place: (x, y, z) => affineApply(viewA, x, y, z), sizeScale: affineScale(viewA) });
+          packed = packParticleQuads(sim.quads(), partBufs[i], {
+            place: (x, y, z) => affineApply(viewA, x, y, z),
+            sizeScale: affineScale(viewA),
+          });
         }
         partBufs[i] = packed.packed;
         if (!(visibleOf.get(p.node) ?? true) || !packed.count) return;
         const alpha = alphaOf(p);
-        if (alpha !== 1) for (let k = 10; k < packed.count * PARTICLE_FLOATS; k += PARTICLE_FLOATS) packed.packed[k] = clamp01(packed.packed[k] * alpha);
-        streams.push({ key: `particles:${i}`, packed: packed.packed, count: packed.count, drawState: drawStateOf(p, p.desc.material), texture: textureOf(p, p.desc.material?.textureFile ?? null) });
+        if (alpha !== 1)
+          for (let k = 10; k < packed.count * PARTICLE_FLOATS; k += PARTICLE_FLOATS)
+            packed.packed[k] = clamp01(packed.packed[k] * alpha);
+        streams.push({
+          key: `particles:${i}`,
+          packed: packed.packed,
+          count: packed.count,
+          drawState: drawStateOf(p, p.desc.material),
+          texture: textureOf(p, p.desc.material?.textureFile ?? null),
+        });
       });
       return { time, done: false, streams };
     },
@@ -471,9 +633,17 @@ export function createVfx(desc, { textureOverride = null, rolls = Math.random, l
 /** Every texture an effect can ask for - its shapes', their flipbooks', its particles' - for a preload. */
 export function vfxTextures(desc) {
   const out = new Set();
-  const add = (f) => { if (f) out.add(f); };
-  for (const s of desc.shapes) { add(s.material.textureFile); for (const f of s.flip?.files ?? []) add(f); }
-  for (const p of desc.particles) { add(p.desc.material?.textureFile); for (const f of p.flip?.files ?? []) add(f); }
+  const add = (f) => {
+    if (f) out.add(f);
+  };
+  for (const s of desc.shapes) {
+    add(s.material.textureFile);
+    for (const f of s.flip?.files ?? []) add(f);
+  }
+  for (const p of desc.particles) {
+    add(p.desc.material?.textureFile);
+    for (const f of p.flip?.files ?? []) add(f);
+  }
   return [...out];
 }
 

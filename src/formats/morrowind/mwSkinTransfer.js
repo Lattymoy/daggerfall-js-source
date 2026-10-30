@@ -49,8 +49,19 @@ export function sourceSkin(batch, { attachRef = null, mirrored = false, boneOffs
     ...batch,
     skinned: true,
     skin: {
-      skeletonRoot: GRAPH_ROOT, rootBone: GRAPH_ROOT, transform: IDENT_TRANSFORM, shapeTransform: null,
-      bones: [{ ref: attachRef, name: '', invBind: { a, t }, indices: Array.from({ length: n }, (_, i) => i), weights: new Array(n).fill(1) }],
+      skeletonRoot: GRAPH_ROOT,
+      rootBone: GRAPH_ROOT,
+      transform: IDENT_TRANSFORM,
+      shapeTransform: null,
+      bones: [
+        {
+          ref: attachRef,
+          name: '',
+          invBind: { a, t },
+          indices: Array.from({ length: n }, (_, i) => i),
+          weights: new Array(n).fill(1),
+        },
+      ],
     },
   };
 }
@@ -94,13 +105,23 @@ function influencesOf(skin, n) {
 
 function invert33(m) {
   const [a, b, c, d, e, f, g, h, i] = m;
-  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const A = e * i - f * h,
+    B = -(d * i - f * g),
+    C = d * h - e * g;
   const det = a * A + b * B + c * C;
   if (!(Math.abs(det) > 1e-12)) return null;
   const k = 1 / det;
-  return [A * k, -(b * i - c * h) * k, (b * f - c * e) * k,
-    B * k, (a * i - c * g) * k, -(a * f - c * d) * k,
-    C * k, -(a * h - b * g) * k, (a * e - b * d) * k];
+  return [
+    A * k,
+    -(b * i - c * h) * k,
+    (b * f - c * e) * k,
+    B * k,
+    (a * i - c * g) * k,
+    -(a * f - c * d) * k,
+    C * k,
+    -(a * h - b * g) * k,
+    (a * e - b * d) * k,
+  ];
 }
 
 /**
@@ -111,11 +132,21 @@ function invert33(m) {
  */
 function measureAffines(src, js, { skeleton, pose, mats, skinBatch }) {
   const infl = src.infl;
-  const bones = src.batch.skin.bones.map((b) => ({ ref: b.ref, name: b.name, invBind: b.invBind, indices: [], weights: [] }));
+  const bones = src.batch.skin.bones.map((b) => ({
+    ref: b.ref,
+    name: b.name,
+    invBind: b.invBind,
+    indices: [],
+    weights: [],
+  }));
   const positions = new Float32Array(js.length * 12);
   js.forEach((j, q) => {
     positions.set([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1], q * 12);
-    for (const [bi, w] of infl[j]) for (let c = 0; c < 4; c++) { bones[bi].indices.push(q * 4 + c); bones[bi].weights.push(w); }
+    for (const [bi, w] of infl[j])
+      for (let c = 0; c < 4; c++) {
+        bones[bi].indices.push(q * 4 + c);
+        bones[bi].weights.push(w);
+      }
   });
   const probe = { skin: { ...src.batch.skin, bones }, positions, normals: null };
   const out = new Float32Array(positions.length);
@@ -153,18 +184,45 @@ export function transferSkin(garment, sources, ctx) {
   const gn = G.length / 3;
   const nearestIn = (s, v) => {
     const { p, n } = src[s];
-    const x = G[v * 3], y = G[v * 3 + 1], z = G[v * 3 + 2];
-    let best = -1; let bd = Infinity;
+    const x = G[v * 3],
+      y = G[v * 3 + 1],
+      z = G[v * 3 + 2];
+    let best = -1;
+    let bd = Infinity;
     for (let j = 0; j < n; j++) {
-      const dx = p[j * 3] - x, dy = p[j * 3 + 1] - y, dz = p[j * 3 + 2] - z;
+      const dx = p[j * 3] - x,
+        dy = p[j * 3 + 1] - y,
+        dz = p[j * 3 + 2] - z;
       const d = dx * dx + dy * dy + dz * dz;
-      if (d < bd) { bd = d; best = j; }
+      if (d < bd) {
+        bd = d;
+        best = j;
+      }
     }
     return { j: best, d: bd };
   };
   const cache = new Map();
-  const nearest = (s, v) => { const k = s * gn + v; let r = cache.get(k); if (!r) { r = nearestIn(s, v); cache.set(k, r); } return r; };
-  const overall = (v) => { let bs = 0; let bd = Infinity; for (let s = 0; s < src.length; s++) { const r = nearest(s, v); if (r.d < bd) { bd = r.d; bs = s; } } return bs; };
+  const nearest = (s, v) => {
+    const k = s * gn + v;
+    let r = cache.get(k);
+    if (!r) {
+      r = nearestIn(s, v);
+      cache.set(k, r);
+    }
+    return r;
+  };
+  const overall = (v) => {
+    let bs = 0;
+    let bd = Infinity;
+    for (let s = 0; s < src.length; s++) {
+      const r = nearest(s, v);
+      if (r.d < bd) {
+        bd = r.d;
+        bs = s;
+      }
+    }
+    return bs;
+  };
 
   const subs = src.map(() => ({ map: new Map(), verts: [], indices: [] }));
   const I = garment.indices;
@@ -175,7 +233,11 @@ export function transferSkin(garment, sources, ctx) {
     const sub = subs[s];
     for (const v of tri) {
       let at = sub.map.get(v);
-      if (at === undefined) { at = sub.verts.length; sub.map.set(v, at); sub.verts.push({ v, j: nearest(s, v).j }); }
+      if (at === undefined) {
+        at = sub.verts.length;
+        sub.map.set(v, at);
+        sub.verts.push({ v, j: nearest(s, v).j });
+      }
       sub.indices.push(at);
     }
   }
@@ -186,7 +248,13 @@ export function transferSkin(garment, sources, ctx) {
     const { batch, infl } = src[s];
     const js = [...new Set(sub.verts.map((x) => x.j))];
     const aff = measureAffines(src[s], js, ctx);
-    const bones = batch.skin.bones.map((b) => ({ ref: b.ref, name: b.name, invBind: b.invBind, indices: [], weights: [] }));
+    const bones = batch.skin.bones.map((b) => ({
+      ref: b.ref,
+      name: b.name,
+      invBind: b.invBind,
+      indices: [],
+      weights: [],
+    }));
     const positions = new Float32Array(sub.verts.length * 3);
     const uvs = garment.uvs ? new Float32Array(sub.verts.length * 2) : null;
     // MW-SMOOTH: the garment's own normals, solved as its positions are - skinBatch turns a normal by the blended 3x3
@@ -196,7 +264,9 @@ export function transferSkin(garment, sources, ctx) {
     sub.verts.forEach(({ v, j }, k) => {
       const m = aff.get(j);
       const inv = invert33(m.a);
-      const gx = G[v * 3] - m.t[0], gy = G[v * 3 + 1] - m.t[1], gz = G[v * 3 + 2] - m.t[2];
+      const gx = G[v * 3] - m.t[0],
+        gy = G[v * 3 + 1] - m.t[1],
+        gz = G[v * 3 + 2] - m.t[2];
       if (inv) {
         positions[k * 3] = inv[0] * gx + inv[1] * gy + inv[2] * gz;
         positions[k * 3 + 1] = inv[3] * gx + inv[4] * gy + inv[5] * gz;
@@ -205,20 +275,35 @@ export function transferSkin(garment, sources, ctx) {
         positions.set([G[v * 3], G[v * 3 + 1], G[v * 3 + 2]], k * 3);
       }
       if (normals) {
-        const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2];
+        const nx = N[v * 3],
+          ny = N[v * 3 + 1],
+          nz = N[v * 3 + 2];
         const ox = inv ? inv[0] * nx + inv[1] * ny + inv[2] * nz : nx;
         const oy = inv ? inv[3] * nx + inv[4] * ny + inv[5] * nz : ny;
         const oz = inv ? inv[6] * nx + inv[7] * ny + inv[8] * nz : nz;
         const len = Math.hypot(ox, oy, oz) || 1;
-        normals[k * 3] = ox / len; normals[k * 3 + 1] = oy / len; normals[k * 3 + 2] = oz / len;
+        normals[k * 3] = ox / len;
+        normals[k * 3 + 1] = oy / len;
+        normals[k * 3 + 2] = oz / len;
       }
-      for (const [bi, w] of infl[j]) { bones[bi].indices.push(k); bones[bi].weights.push(w); }
-      if (uvs) { uvs[k * 2] = garment.uvs[v * 2]; uvs[k * 2 + 1] = garment.uvs[v * 2 + 1]; }
+      for (const [bi, w] of infl[j]) {
+        bones[bi].indices.push(k);
+        bones[bi].weights.push(w);
+      }
+      if (uvs) {
+        uvs[k * 2] = garment.uvs[v * 2];
+        uvs[k * 2 + 1] = garment.uvs[v * 2 + 1];
+      }
     });
     out.push({
-      name: garment.name || '', skinned: true,
+      name: garment.name || '',
+      skinned: true,
       skin: { ...batch.skin, bones: bones.filter((b) => b.indices.length) },
-      positions, normals, uvs, colors: null, material: garment.material ?? null,
+      positions,
+      normals,
+      uvs,
+      colors: null,
+      material: garment.material ?? null,
       indices: Uint16Array.from(sub.indices),
     });
   });

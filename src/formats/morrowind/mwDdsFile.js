@@ -54,13 +54,17 @@ function decodeBlock(view, off, fourCC, out, bx, by, width, height) {
     pal.push([(r0 + r1) >> 1, (g0 + g1) >> 1, (b0 + b1) >> 1, 255], [0, 0, 0, 0]);
   } else {
     pal.push(
-      [(2 * r0 + r1 + 1) / 3 | 0, (2 * g0 + g1 + 1) / 3 | 0, (2 * b0 + b1 + 1) / 3 | 0, 255],
-      [(r0 + 2 * r1 + 1) / 3 | 0, (g0 + 2 * g1 + 1) / 3 | 0, (b0 + 2 * b1 + 1) / 3 | 0, 255],
+      [((2 * r0 + r1 + 1) / 3) | 0, ((2 * g0 + g1 + 1) / 3) | 0, ((2 * b0 + b1 + 1) / 3) | 0, 255],
+      [((r0 + 2 * r1 + 1) / 3) | 0, ((g0 + 2 * g1 + 1) / 3) | 0, ((b0 + 2 * b1 + 1) / 3) | 0, 255],
     );
   }
 
   // DXT5 interpolated alpha setup.
-  let a0 = 0, a1 = 0, aPal = null, aBitsLo = 0, aBitsHi = 0;
+  let a0 = 0,
+    a1 = 0,
+    aPal = null,
+    aBitsLo = 0,
+    aBitsHi = 0;
   if (fourCC === FOURCC_DXT5) {
     a0 = view.getUint8(off);
     a1 = view.getUint8(off + 1);
@@ -68,9 +72,9 @@ function decodeBlock(view, off, fourCC, out, bx, by, width, height) {
     aBitsHi = view.getUint8(off + 5) | (view.getUint8(off + 6) << 8) | (view.getUint8(off + 7) << 16);
     aPal = [a0, a1];
     if (a0 > a1) {
-      for (let i = 1; i <= 6; i++) aPal.push(((7 - i) * a0 + i * a1 + 3) / 7 | 0);
+      for (let i = 1; i <= 6; i++) aPal.push((((7 - i) * a0 + i * a1 + 3) / 7) | 0);
     } else {
-      for (let i = 1; i <= 4; i++) aPal.push(((5 - i) * a0 + i * a1 + 2) / 5 | 0);
+      for (let i = 1; i <= 4; i++) aPal.push((((5 - i) * a0 + i * a1 + 2) / 5) | 0);
       aPal.push(0, 255);
     }
   }

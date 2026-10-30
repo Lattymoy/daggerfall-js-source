@@ -274,8 +274,8 @@
   {
     "name": "AUDITMWNPC2-G1-weights-kept",
     "file": "src/formats/morrowind/mwGpuSkin.js",
-    "old": "          for (let s = 0; s < fill[v]; s++) infW[v * SKIN_MAX_INFLUENCES + s] = 0;\n",
-    "new": "",
+    "old": "          for (let s = 0; s < fill[v]; s++) infW[v * SKIN_MAX_INFLUENCES + s] = 0;\n          collapse = true;",
+    "new": "          collapse = true;",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]

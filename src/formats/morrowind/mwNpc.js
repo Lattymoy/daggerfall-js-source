@@ -171,12 +171,17 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
  */
 export function mwRaceId(dfRace) {
   if (!dfRace) return null;
-  return String(dfRace).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return String(dfRace)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toLowerCase();
 }
 
 /** The inverse spelling: 'dark elf' -> 'DarkElf', for the port's own
  *  race tables (MW-D35 reads the classic portrait archive by race key). */
 export function dfRaceKeyOf(mwRace) {
   if (!mwRace) return null;
-  return String(mwRace).split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+  return String(mwRace)
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('');
 }

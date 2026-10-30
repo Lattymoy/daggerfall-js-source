@@ -2,8 +2,8 @@
   {
     "name": "MWHEADS2-every-breton-man-wears-them",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  const own = ownAsked ? ownFacePools(race, female) : null;",
-    "new": "  const own = ownFacePools(race, female);",
+    "old": "  const own = ownAsked ? ownFacePools(race, female) : null; // MW-HEADS2: the port's own heads are a player's alone - asked for",
+    "new": "  const own = ownFacePools(race, female); // MW-HEADS2: the port's own heads are a player's alone - asked for",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MWHEADS2-the-player-in-the-data's",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });\n",
-    "new": "  const pools = facePools(parts, race, female, { has, own: false });\n",
+    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });",
+    "new": "  const pools = facePools(parts, race, female, { has, own: false });",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "MWHEADS2-the-match-reads-the-back",
     "file": "src/formats/morrowind/mwFaceMatch.js",
-    "old": "        const fy = (maxY - g.positions[i + 1]) / spanY;",
-    "new": "        const fy = (g.positions[i + 1] - minY) / spanY;",
+    "old": "        const fy = (maxY - g.positions[i + 1]) / spanY; // 1 = the front of the face (MW-HEADS2: on -Y)",
+    "new": "        const fy = (g.positions[i + 1] - minY) / spanY; // 1 = the front of the face (MW-HEADS2: on -Y)",
     "tests": [
       "test/formats/morrowind/fparm.test.js"
     ],

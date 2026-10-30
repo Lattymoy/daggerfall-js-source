@@ -24,7 +24,9 @@ import { decodeDds } from './mwDdsFile.js';
  *  or the lookups miss - VFS::Manager::exists is a plain hash lookup with
  *  no case-insensitive compare at query time (vfs/manager.cpp:64-72). */
 export function normalizeVfsPath(path) {
-  let out = String(path ?? '').replace(/\\/g, '/').toLowerCase();
+  let out = String(path ?? '')
+    .replace(/\\/g, '/')
+    .toLowerCase();
   out = out.replace(/\/{2,}/g, '/');
   if (out.startsWith('/')) out = out.slice(1);
   return out;
@@ -153,8 +155,8 @@ export const GL_CLAMP_TO_EDGE = 0x812f;
 export function wrapModes(clampMode) {
   const c = clampMode | 0;
   return {
-    wrapS: (c & 2) ? GL_REPEAT : GL_CLAMP_TO_EDGE,
-    wrapT: (c & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE,
+    wrapS: c & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE,
+    wrapT: c & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE,
   };
 }
 
@@ -228,7 +230,6 @@ export function correctActorModelPath(resPath, exists) {
 // reader. The port fed every ladder answer to decodeDds, so a texture
 // the archives DO carry rendered as the magenta warning.
 
-
 /** TGA (types 1-3 and their RLE forms 9-11; 8/15/16/24/32 bpp), to the
  *  same {width, height, mips:[{width,height,rgba}]} shape decodeDds
  *  answers. Bottom-up unless descriptor bit 5 sets top-origin. */
@@ -257,25 +258,31 @@ export function decodeTga(bytes) {
   const bpp = (depth + 7) >> 3;
   const rgba = new Uint8Array(width * height * 4);
   const putBgr = (o, src, at, nb) => {
-    if (nb === 1) { rgba[o] = rgba[o + 1] = rgba[o + 2] = src[at]; rgba[o + 3] = 255; return; }
-    if (nb === 2) {
-      const px = src[at] | (src[at + 1] << 8);   // ARRRRRGG GGGBBBBB
-      rgba[o] = ((px >> 10) & 31) * 255 / 31;
-      rgba[o + 1] = ((px >> 5) & 31) * 255 / 31;
-      rgba[o + 2] = (px & 31) * 255 / 31;
+    if (nb === 1) {
+      rgba[o] = rgba[o + 1] = rgba[o + 2] = src[at];
       rgba[o + 3] = 255;
       return;
     }
-    rgba[o] = src[at + 2]; rgba[o + 1] = src[at + 1]; rgba[o + 2] = src[at];
+    if (nb === 2) {
+      const px = src[at] | (src[at + 1] << 8); // ARRRRRGG GGGBBBBB
+      rgba[o] = (((px >> 10) & 31) * 255) / 31;
+      rgba[o + 1] = (((px >> 5) & 31) * 255) / 31;
+      rgba[o + 2] = ((px & 31) * 255) / 31;
+      rgba[o + 3] = 255;
+      return;
+    }
+    rgba[o] = src[at + 2];
+    rgba[o + 1] = src[at + 1];
+    rgba[o + 2] = src[at];
     rgba[o + 3] = nb === 4 ? src[at + 3] : 255;
   };
   const putPixel = (i, src, at) => {
     const x = i % width;
     const yRow = (i / width) | 0;
-    const y = (descriptor & 0x20) ? yRow : height - 1 - yRow;   // bit 5: top origin
+    const y = descriptor & 0x20 ? yRow : height - 1 - yRow; // bit 5: top origin
     const o = (y * width + x) * 4;
     if (baseType === 1) {
-      const idx = (bpp === 2 ? (src[at] | (src[at + 1] << 8)) : src[at]) - mapStart;
+      const idx = (bpp === 2 ? src[at] | (src[at + 1] << 8) : src[at]) - mapStart;
       putBgr(o, palette, idx * mapBpp, mapBpp);
     } else if (baseType === 3) {
       // AUDIT 68 S11-v-tga-grey16: greyscale is grey (+ its alpha byte at
@@ -296,7 +303,10 @@ export function decodeTga(bytes) {
         for (let k = 0; k < n && i < count; k++) putPixel(i++, bytes, off);
         off += bpp;
       } else {
-        for (let k = 0; k < n && i < count; k++) { putPixel(i++, bytes, off); off += bpp; }
+        for (let k = 0; k < n && i < count; k++) {
+          putPixel(i++, bytes, off);
+          off += bpp;
+        }
       }
     }
   }
@@ -321,18 +331,23 @@ export function decodeBmp(bytes) {
     throw new Error('decodeBmp: unsupported BMP format');
   }
   const palOff = 14 + headerSize;
-  const stride = ((width * bpp + 31) >> 5) << 2;   // rows pad to 4 bytes
+  const stride = ((width * bpp + 31) >> 5) << 2; // rows pad to 4 bytes
   const rgba = new Uint8Array(width * height * 4);
   for (let row = 0; row < height; row++) {
-    const y = rawH > 0 ? height - 1 - row : row;   // positive height: bottom-up
+    const y = rawH > 0 ? height - 1 - row : row; // positive height: bottom-up
     for (let x = 0; x < width; x++) {
       const o = (y * width + x) * 4;
       if (bpp === 8) {
-        const p = palOff + bytes[dataOff + row * stride + x] * 4;   // BGRA quads
-        rgba[o] = bytes[p + 2]; rgba[o + 1] = bytes[p + 1]; rgba[o + 2] = bytes[p]; rgba[o + 3] = 255;
+        const p = palOff + bytes[dataOff + row * stride + x] * 4; // BGRA quads
+        rgba[o] = bytes[p + 2];
+        rgba[o + 1] = bytes[p + 1];
+        rgba[o + 2] = bytes[p];
+        rgba[o + 3] = 255;
       } else {
         const at = dataOff + row * stride + x * (bpp >> 3);
-        rgba[o] = bytes[at + 2]; rgba[o + 1] = bytes[at + 1]; rgba[o + 2] = bytes[at];
+        rgba[o] = bytes[at + 2];
+        rgba[o + 1] = bytes[at + 1];
+        rgba[o + 2] = bytes[at];
         rgba[o + 3] = bpp === 32 ? bytes[at + 3] : 255;
       }
     }
@@ -347,8 +362,8 @@ export function decodeTextureImage(path, bytes, { levels = Infinity } = {}) {
   const p = String(path || '');
   const dot = p.lastIndexOf('.');
   let ext = dot >= 0 ? p.slice(dot + 1).toLowerCase() : '';
-  if (ext === 'targa') ext = 'tga';   // "Non-standard, but Morrowind supports this"
-  if (ext === 'dds') return decodeDds(bytes, { levels });   // MW-LOAD: tga/bmp carry one level anyway
+  if (ext === 'targa') ext = 'tga'; // "Non-standard, but Morrowind supports this"
+  if (ext === 'dds') return decodeDds(bytes, { levels }); // MW-LOAD: tga/bmp carry one level anyway
   if (ext === 'tga') return decodeTga(bytes);
   if (ext === 'bmp') return decodeBmp(bytes);
   throw new Error(`no decoder for ".${ext}"`);

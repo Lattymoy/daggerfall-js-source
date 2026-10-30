@@ -49,8 +49,11 @@ export const TEXTURE_IDLE_MS = 5000;
 
 /** The escape hatch, read once per pool (the ?terrainthread=off shape). */
 export function textureThreadDisabled(search = globalThis.location?.search) {
-  try { return /[?&]texturethread=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]texturethread=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** The one place the worker URL is spelled. Split out so tests can
@@ -74,13 +77,16 @@ export function texturePoolSize(cores = globalThis.navigator?.hardwareConcurrenc
  * died (or whose factory throws) decodes here from then on.
  */
 export function createTexturePool({ workerFactory = null, size = texturePoolSize(), idleMs = TEXTURE_IDLE_MS } = {}) {
-  const factory = workerFactory
-    ?? ((textureThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
+  const factory =
+    workerFactory ?? (textureThreadDisabled() || typeof Worker === 'undefined' ? null : defaultWorkerFactory);
   const here = (path, bytes, levels) => {
-    try { return Promise.resolve(decodeTextureImage(path, bytes, levels == null ? undefined : { levels })); }
-    catch (e) { return Promise.reject(Object.assign(e instanceof Error ? e : new Error(String(e)), { decoderError: true })); }
+    try {
+      return Promise.resolve(decodeTextureImage(path, bytes, levels == null ? undefined : { levels }));
+    } catch (e) {
+      return Promise.reject(Object.assign(e instanceof Error ? e : new Error(String(e)), { decoderError: true }));
+    }
   };
-  const slots = [];   // { w, jobs: Map<id, {path, bytes, levels, resolve, reject}> }
+  const slots = []; // { w, jobs: Map<id, {path, bytes, levels, resolve, reject}> }
   let dead = !factory;
   let opened = 0;
   let nextId = 1;
@@ -90,7 +96,12 @@ export function createTexturePool({ workerFactory = null, size = texturePoolSize
   // (wake), and a worker with a job in hand is never among them. A retired worker is not a dead one: `opened` gives
   // its place back, so the next decode opens it again (pick).
   let idle = null;
-  const wake = () => { if (idle !== null) { clearTimeout(idle); idle = null; } };
+  const wake = () => {
+    if (idle !== null) {
+      clearTimeout(idle);
+      idle = null;
+    }
+  };
   const rest = () => {
     if (idle !== null || !slots.length || slots.some((s) => s.jobs.size > 0)) return;
     idle = setTimeout(() => {
@@ -98,23 +109,37 @@ export function createTexturePool({ workerFactory = null, size = texturePoolSize
       for (const s of slots.filter((x) => x.jobs.size === 0)) {
         slots.splice(slots.indexOf(s), 1);
         opened--;
-        try { s.w.terminate?.(); } catch { /* already gone */ }
+        try {
+          s.w.terminate?.();
+        } catch {
+          /* already gone */
+        }
       }
       stats.workers = slots.length;
     }, idleMs);
-    idle.unref?.();   // node: an idle pool never holds the process open
+    idle.unref?.(); // node: an idle pool never holds the process open
   };
 
   const drop = (slot, why) => {
     const i = slots.indexOf(slot);
-    if (i < 0) return;   // once: onerror and a failed post both reach here
+    if (i < 0) return; // once: onerror and a failed post both reach here
     slots.splice(i, 1);
     stats.workers = slots.length;
-    try { slot.w.terminate?.(); } catch { /* already gone */ }
+    try {
+      slot.w.terminate?.();
+    } catch {
+      /* already gone */
+    }
     // the jobs it held go back to this thread - the caller's bytes are still whole
-    for (const j of slot.jobs.values()) { stats.onThread++; here(j.path, j.bytes, j.levels).then(j.resolve, j.reject); }
+    for (const j of slot.jobs.values()) {
+      stats.onThread++;
+      here(j.path, j.bytes, j.levels).then(j.resolve, j.reject);
+    }
     slot.jobs.clear();
-    if (!slots.length && opened >= size) { dead = true; console.warn('[mw textures] workers unavailable; decoding on the main thread -', why); }
+    if (!slots.length && opened >= size) {
+      dead = true;
+      console.warn('[mw textures] workers unavailable; decoding on the main thread -', why);
+    }
     rest();
   };
   const open = () => {
@@ -136,8 +161,15 @@ export function createTexturePool({ workerFactory = null, size = texturePoolSize
       stats.workers = slots.length;
       return slot;
     } catch (e) {
-      try { slot.w?.terminate?.(); } catch { /* never spawned */ }
-      if (!slots.length) { dead = true; console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }
+      try {
+        slot.w?.terminate?.();
+      } catch {
+        /* never spawned */
+      }
+      if (!slots.length) {
+        dead = true;
+        console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e);
+      }
       return null;
     }
   };
@@ -154,19 +186,38 @@ export function createTexturePool({ workerFactory = null, size = texturePoolSize
     /** @returns {Promise<{width:number, height:number, mips:{width:number, height:number, rgba:Uint8Array}[]}>} */
     decode(path, bytes, { levels = null } = {}) {
       const slot = dead ? null : pick();
-      if (!slot) { stats.onThread++; return here(path, bytes, levels); }
+      if (!slot) {
+        stats.onThread++;
+        return here(path, bytes, levels);
+      }
       wake();
       return new Promise((resolve, reject) => {
         const id = nextId++;
         slot.jobs.set(id, { path, bytes, levels, resolve, reject });
         // a COPY: the caller's bytes are the fallback's if this never answers
         const copy = bytes.slice();
-        try { slot.w.postMessage({ t: 'decode', id, path, bytes: copy, levels }, [copy.buffer]); stats.offThread++; }
-        catch (e) { drop(slot, e?.message ?? 'mw texture worker refused a job'); }
+        try {
+          slot.w.postMessage({ t: 'decode', id, path, bytes: copy, levels }, [copy.buffer]);
+          stats.offThread++;
+        } catch (e) {
+          drop(slot, e?.message ?? 'mw texture worker refused a job');
+        }
       });
     },
     /** Close every worker; later decodes run on this thread. */
-    close() { dead = true; wake(); for (const s of [...slots]) { slots.splice(slots.indexOf(s), 1); try { s.w.terminate?.(); } catch { /* gone */ } for (const j of s.jobs.values()) here(j.path, j.bytes, j.levels).then(j.resolve, j.reject); } },
+    close() {
+      dead = true;
+      wake();
+      for (const s of [...slots]) {
+        slots.splice(slots.indexOf(s), 1);
+        try {
+          s.w.terminate?.();
+        } catch {
+          /* gone */
+        }
+        for (const j of s.jobs.values()) here(j.path, j.bytes, j.levels).then(j.resolve, j.reject);
+      }
+    },
   };
 }
 
@@ -177,5 +228,15 @@ export function decodeTextureOffThread(path, bytes, opts) {
   return _pool.decode(path, bytes, opts);
 }
 /** Test seams: drop the page's pool (the next decode opens a fresh one), or stand one in its place. */
-export function _resetTexturePool() { try { _pool?.close(); } catch { /* gone */ } _pool = null; }
-export function _useTexturePool(pool) { _resetTexturePool(); _pool = pool; }
+export function _resetTexturePool() {
+  try {
+    _pool?.close();
+  } catch {
+    /* gone */
+  }
+  _pool = null;
+}
+export function _useTexturePool(pool) {
+  _resetTexturePool();
+  _pool = pool;
+}

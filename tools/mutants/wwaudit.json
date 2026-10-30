@@ -302,8 +302,8 @@
   {
     "name": "WWAUDIT-C2-version-left",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 6;",
-    "new": "export const ARM_RECORDS_VERSION = 2;",
+    "old": "export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
+    "new": "export const ARM_RECORDS_VERSION = 2; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "WWAUDIT-C4-a-man-in-a-cnam",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    const body = (female && ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
-    "new": "    const body = (ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
+    "old": "    const body = (female && ref.female ? pick(ref.female) : null) ?? pick(ref.male);",
+    "new": "    const body = (ref.female ? pick(ref.female) : null) ?? pick(ref.male);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
