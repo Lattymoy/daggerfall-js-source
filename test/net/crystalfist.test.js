@@ -199,7 +199,7 @@ test('CRYSTAL-FIST grant: CRYSTAL_FIST_HANDLES names Flylighter, and the list gr
   assert.equal(auraRefusal('resonance', fl, off), 'not-held');
   assert.deepEqual(titlesHeld({ ...fl, handle: null }, ENV), [], 'a guest holds none');
   assert.deepEqual(aurasHeld({ ...fl, handle: null }, ENV), []);
-  for (const h of ['Dutchess', 'Satranath', 'Sureme', 'GA00250', 'SirMcMobdon', 'Flylighte', 'Flylighters']) {
+  for (const h of ['Dutchess', 'Satranath', 'Sureme', 'GA00250', 'Flylighte', 'Flylighters']) {   // ADMIN-ALL (PIN MOVED): an Admin is out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), ENV).includes('crystalfist'), `${h} does not hold it`);
     assert.ok(!aurasHeld(row(h), ENV).includes('resonance'), `nor the resonance: ${h}`);
     assert.equal(auraRefusal('resonance', row(h), ENV), 'not-held');

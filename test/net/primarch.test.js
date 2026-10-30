@@ -205,7 +205,7 @@ test('PRIMARCH grant: PRIMARCH_HANDLES names GA00250, and the list grants the ti
   assert.deepEqual(aurasHeld({ ...ga, handle: null }, ENV), []);
   assert.deepEqual(aurasHeld(row('Sureme'), ENV), ['oblivionward'], 'Sureme holds the ward and not the radiance');
   assert.equal(auraRefusal('radiance', row('Sureme'), ENV), 'not-held');
-  for (const h of ['Diggleborf', 'SirMcMobdon', 'Dutchess', 'SquidKamer', 'GA0025', 'GA002500', 'GA00251']) {
+  for (const h of ['Diggleborf', 'Dutchess', 'SquidKamer', 'GA0025', 'GA002500', 'GA00251']) {   // ADMIN-ALL (PIN MOVED): the Admins are out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), ENV).includes('primarch'), `${h} does not hold it`);
     assert.ok(!aurasHeld(row(h), ENV).includes('radiance'), `nor the radiance: ${h}`);
     assert.equal(auraRefusal('radiance', row(h), ENV), 'not-held');

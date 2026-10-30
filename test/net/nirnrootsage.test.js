@@ -207,7 +207,7 @@ test('NIRNROOT-SAGE grant: NIRNROOT_SAGE_HANDLES names Blob-Marley, and the list
   assert.equal(auraRefusal('sagesmoke', bm, off), 'not-held');
   assert.deepEqual(titlesHeld({ ...bm, handle: null }, ENV), [], 'a guest holds none');
   assert.deepEqual(aurasHeld({ ...bm, handle: null }, ENV), []);
-  for (const h of ['SylviaBun', 'Flylighter', 'Sureme', 'GA00250', 'SirMcMobdon', 'Nirnroot', 'BlobMarley', 'Blob-Marley2', 'Blob Marley']) {
+  for (const h of ['SylviaBun', 'Flylighter', 'Sureme', 'GA00250', 'Nirnroot', 'BlobMarley', 'Blob-Marley2', 'Blob Marley']) {   // ADMIN-ALL (PIN MOVED): the Admins are out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), ENV).includes('nirnrootsage'), `${h} does not hold it`);
     assert.ok(!aurasHeld(row(h), ENV).includes('sagesmoke'), `nor the smoke: ${h}`);
     assert.equal(auraRefusal('sagesmoke', row(h), ENV), 'not-held');

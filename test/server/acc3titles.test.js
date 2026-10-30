@@ -127,8 +127,8 @@ test('ACC3: a developer is a handle in CONFIG, so taking the handle off takes th
   assert.deepEqual([...developerHandles(env)], ['mack', 'someone_else'], 'trimmed and case-folded - handle_lc is what uniqueness is really on');
   const dev = { handle: 'MacK', registered_at: FOUNDER_UNTIL + 1, created_at: FOUNDER_UNTIL + 1 };   // FOUNDER3: first played after the cutoff, so no Founder beside the Developer
   assert.ok(isDeveloper(dev, env));
-  assert.deepEqual(titlesHeld(dev, env), ['developer']);
-  assert.deepEqual(glyphsOf(dev, env, NOW), ['dev'], 'the glyph rides the same list as the title - one grant, two faces');
+  assert.deepEqual(titlesHeld(dev, env).slice(0, 1), ['developer']);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
+  assert.deepEqual(glyphsOf(dev, env, NOW).slice(0, 1), ['dev'], 'the glyph rides the same list as the title - one grant, two faces');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js)
 
   // THE REMOVAL IS THE POINT. Nothing is written anywhere, so dropping
   // the handle from the config is the whole of revoking it.
@@ -145,7 +145,7 @@ test('ACC3: a developer is a handle in CONFIG, so taking the handle off takes th
 test('ACC3: HOLDING IS NOT WEARING - a stored title stops being worn the moment the grant behind it lapses', () => {
   const env = { DEVELOPER_HANDLES: 'mack' };
   const dev = { handle: 'mack', registered_at: FOUNDER_UNTIL - 1, created_at: 0, title: 'developer' };
-  assert.deepEqual(titlesHeld(dev, env), ['founder', 'developer'], 'both, in the order they are offered');
+  assert.deepEqual(titlesHeld(dev, env).slice(0, 2), ['founder', 'developer'], 'both, in the order they are offered');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
   assert.equal(titleWorn(dev, env), 'developer');
 
   // OFF THE LIST, AND THE COLUMN STILL SAYS `developer`. Nothing
@@ -250,7 +250,7 @@ test('ACC3: /v1/account carries the wardrobe, and /v1/account/title equips one o
   const me = await account('mack');
 
   const seen = (await call('GET', '/v1/account', undefined, me.secret)).body;
-  assert.deepEqual(seen.wardrobe.titles, ['founder', 'developer']);
+  assert.deepEqual(seen.wardrobe.titles.slice(0, 2), ['founder', 'developer']);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
   assert.equal(seen.wardrobe.title, null, 'nothing is worn until it is equipped - null is a perfectly good answer and is what every existing row gets');
   assert.ok(seen.wardrobe.glyphs.includes('dev'));
   assert.equal('title' in seen.account, false, 'the wardrobe is its own field: an account view is the ROW, a wardrobe is the row read against config and a clock');
@@ -258,7 +258,7 @@ test('ACC3: /v1/account carries the wardrobe, and /v1/account/title equips one o
   const on = await call('POST', '/v1/account/title', { title: 'developer' }, me.secret);
   assert.equal(on.status, 200);
   assert.equal(on.body.title, 'developer');
-  assert.deepEqual(on.body.titles, ['founder', 'developer'], 'the answer describes the row AFTER the write, so nothing has to re-read');
+  assert.deepEqual(on.body.titles.slice(0, 2), ['founder', 'developer'], 'the answer describes the row AFTER the write, so nothing has to re-read');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js)
 
   const again = (await call('GET', '/v1/account', undefined, me.secret)).body;
   assert.equal(again.wardrobe.title, 'developer', 'and it stuck - the WORN title is the one thing that is stored, because it is the only thing that is a choice');
