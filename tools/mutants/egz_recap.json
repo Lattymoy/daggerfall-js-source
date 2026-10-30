@@ -434,8 +434,8 @@
   {
     "name": "EGZ-recap-the-share-of-ones-own",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "share: ds.size ? chartShare(t?.[1] ?? 0, dealt) : null",
-    "new": "share: ds.size ? chartShare(t?.[1] ?? 0, t?.[1] ?? 0) : null",
+    "old": "        share: ds.size ? chartShare(t?.[1] ?? 0, dealt) : null,",
+    "new": "        share: ds.size ? chartShare(t?.[1] ?? 0, t?.[1] ?? 0) : null,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZ-recap-the-healing-unsaid",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "healed: ds.size ? t?.[2] ?? 0 : null };",
-    "new": "healed: ds.size ? 0 : null };",
+    "old": "        healed: ds.size ? (t?.[2] ?? 0) : null,",
+    "new": "        healed: ds.size ? 0 : null,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZ-recap-the-share-unsaid-in-the-line",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "+ (m.share != null && words.share ?",
-    "new": "+ (m.share == null && words.share ?",
+    "old": "  (m.share != null && words.share",
+    "new": "  (m.share == null && words.share",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZ-recap-healing-said-always",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "${m.healed > 0 && words.healed ?",
-    "new": "${words.healed ?",
+    "old": "    ? ` - ${words.share(m.share)}${m.healed > 0 && words.healed ? `, ${words.healed(chartNumber(m.healed))}` : ''}`",
+    "new": "    ? ` - ${words.share(m.share)}${words.healed ? `, ${words.healed(chartNumber(m.healed))}` : ''}`",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGZ-rank-eleven-an-st",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "t >= 11 && t <= 13 ? 'th'",
-    "new": "t >= 12 && t <= 13 ? 'th'",
+    "old": "  return `${k}${t >= 11 && t <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][k % 10] ?? 'th')}`;",
+    "new": "  return `${k}${t >= 12 && t <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][k % 10] ?? 'th')}`;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EGZ-rank-the-suffixes-off-by-one",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "['th', 'st', 'nd', 'rd'][k % 10]",
-    "new": "['st', 'nd', 'rd', 'th'][k % 10]",
+    "old": "  return `${k}${t >= 11 && t <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][k % 10] ?? 'th')}`;",
+    "new": "  return `${k}${t >= 11 && t <= 13 ? 'th' : (['st', 'nd', 'rd', 'th'][k % 10] ?? 'th')}`;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-board-a-bracket-unknown-said",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (board.k === 'descent' && EG_PRES_TEXT.boardBrackets[board.br]) return",
-    "new": "if (board.k === 'descent') return",
+    "old": "  if (board.k === 'descent' && EG_PRES_TEXT.boardBrackets[board.br])",
+    "new": "  if (board.k === 'descent')",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -497,7 +497,7 @@
   {
     "name": "EGZ-board-the-depths-unsaid",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (board.k === 'depths') return EG_PRES_TEXT.boardDepths(egRankText(board.rank));",
+    "old": "  if (board.k === 'depths') return EG_PRES_TEXT.boardDepths(egRankText(board.rank));",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-board-rank-nothing-said",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (!board || !Number.isSafeInteger(board.rank) || board.rank < 1) return '';",
-    "new": "if (!board || !Number.isSafeInteger(board.rank)) return '';",
+    "old": "  if (!board || !Number.isSafeInteger(board.rank) || board.rank < 1) return '';",
+    "new": "  if (!board || !Number.isSafeInteger(board.rank)) return '';",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-board-kept-on-every-run",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  while (i >= 0 && list[i]?.b !== b) i--;\n",
-    "new": "",
+    "old": "  while (i >= 0 && list[i]?.b !== b) i--;\n  if (i < 0 || !line || list[i].board === line) return list;",
+    "new": "  if (i < 0 || !line || list[i].board === line) return list;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-board-never-kept",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  list[i] = { ...list[i], board: line };\n",
-    "new": "",
+    "old": "  list[i] = { ...list[i], board: line };\n  try {",
+    "new": "  try {",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-chart-healed-column-always",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "...(healed ? { hl } : {})",
-    "new": "hl",
+    "old": "    dm: C.dm.map(([sub, l, d, x, h, b, f, hl]) => ({ n: nameOf(sub), l, d, x, h, b, f, ...(healed ? { hl } : {}) })),",
+    "new": "    dm: C.dm.map(([sub, l, d, x, h, b, f, hl]) => ({ n: nameOf(sub), l, d, x, h, b, f, hl })),",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGZ-chart-names-unread",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "({ n: nameOf(sub), l, d,",
-    "new": "({ n: sub, l, d,",
+    "old": "    dm: C.dm.map(([sub, l, d, x, h, b, f, hl]) => ({ n: nameOf(sub), l, d, x, h, b, f, ...(healed ? { hl } : {}) })),",
+    "new": "    dm: C.dm.map(([sub, l, d, x, h, b, f, hl]) => ({ n: sub, l, d, x, h, b, f, ...(healed ? { hl } : {}) })),",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-recap-a-board-line-never-redraws",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (recap && (k.title !== recap.title || k.why !== recap.why || k.board !== (recap.board ?? ''))) return false;",
-    "new": "if (recap && (k.title !== recap.title || k.why !== recap.why)) return false;",
+    "old": "  if (recap && (k.title !== recap.title || k.why !== recap.why || k.board !== (recap.board ?? ''))) return false;",
+    "new": "  if (recap && (k.title !== recap.title || k.why !== recap.why)) return false;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-first-the-device-over-the-account",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "(Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0));",
-    "new": "(device | 0) | (shown | 0));",
+    "old": "export const egFirstOver = (device, account, shown = 0) =>\n  (Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0);",
+    "new": "export const egFirstOver = (device, account, shown = 0) => device | 0 | (shown | 0);",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-first-the-shown-forgotten",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "account : 0) | (device | 0) | (shown | 0));",
-    "new": "account : 0) | (device | 0) | 0);",
+    "old": "  (Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0);",
+    "new": "  (Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-chart-the-twins-singular",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "${plural ? 'have' : 'has'}",
-    "new": "${'has'}",
+    "old": "  chartSub: (name, n, plural) =>\n    `${name} ${plural ? 'have' : 'has'} fallen - ${n === 1 ? 'one alone' : `a company of ${n}`}`,",
+    "new": "  chartSub: (name, n, plural) => `${name} ${'has'} fallen - ${n === 1 ? 'one alone' : `a company of ${n}`}`,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]

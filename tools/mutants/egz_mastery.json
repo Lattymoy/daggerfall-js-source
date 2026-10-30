@@ -929,8 +929,8 @@
   {
     "name": "EGZS-markynaz-any-champion",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "if (spec?.champ !== 'markynaz') return '';",
-    "new": "if (!spec?.champ) return '';",
+    "old": "  if (spec?.champ !== 'markynaz') return '';",
+    "new": "  if (!spec?.champ) return '';",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -939,8 +939,8 @@
   {
     "name": "EGZS-markynaz-ranks-unread",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": ".map(([id, rank]) => [EG_DECREES[id]?.key, rank]).filter(([k]) => k));",
-    "new": ".map(([id]) => [EG_DECREES[id]?.key, 0]).filter(([k]) => k));",
+    "old": "  const D = Object.fromEntries((E?.dc ?? []).map(([id, rank]) => [EG_DECREES[id]?.key, rank]).filter(([k]) => k));",
+    "new": "  const D = Object.fromEntries((E?.dc ?? []).map(([id]) => [EG_DECREES[id]?.key, 0]).filter(([k]) => k));",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -949,8 +949,8 @@
   {
     "name": "EGZS-markynaz-hall-unread",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "const key = egMarkynazDecree(D, E.h)",
-    "new": "const key = egMarkynazDecree(D, 0)",
+    "old": "  const key = egMarkynazDecree(D, E.h),",
+    "new": "  const key = egMarkynazDecree(D, 0),",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -959,8 +959,8 @@
   {
     "name": "EGZS-markynaz-node-unwritten",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "for (const k of ['kicker', 'main', 'sub', 'lays', 'twist', 'dec', 'band'])",
-    "new": "for (const k of ['kicker', 'main', 'sub', 'twist', 'dec', 'band'])",
+    "old": "    for (const k of ['kicker', 'main', 'sub', 'lays', 'twist', 'dec', 'band']) cardP[k].textContent = m[k] ?? '';",
+    "new": "    for (const k of ['kicker', 'main', 'sub', 'twist', 'dec', 'band']) cardP[k].textContent = m[k] ?? '';",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -969,8 +969,8 @@
   {
     "name": "EGZS-markynaz-unsaid",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "${card.lays ? ` ${card.lays}.` : ''}",
-    "new": "",
+    "old": "export const egArrivalLive = (card) => `${card.main}. ${card.sub}${card.lays ? ` ${card.lays}.` : ''}`;",
+    "new": "export const egArrivalLive = (card) => `${card.main}. ${card.sub}`;",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -989,8 +989,8 @@
   {
     "name": "EGZS-offer-fallen",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": ".filter(([m]) => m?.in && m.alive && !m.home)",
-    "new": ".filter(([m]) => m?.in && !m.home)",
+    "old": "    .filter(([m]) => m?.in && m.alive && !m.home)",
+    "new": "    .filter(([m]) => m?.in && !m.home)",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],
@@ -999,8 +999,8 @@
   {
     "name": "EGZS-offer-unsaid",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "...egCardText(c, run?.vs ?? []), accord: accord(c),",
-    "new": "...egCardText(c, run?.vs ?? []), accord: '',",
+    "old": "          accord: accord(c),",
+    "new": "          accord: '',",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],
@@ -1010,8 +1010,8 @@
   {
     "name": "EGZS-offer-undrawn",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "      if (c.accord) b.append(",
-    "new": "      if (false) b.append(",
+    "old": "      if (c.accord) b.append(egEl(doc, 'span', 'eg-k-tline eg-accord', c.accord)); // EG-ZS: the Accord it takes",
+    "new": "      if (false) b.append(egEl(doc, 'span', 'eg-k-tline eg-accord', c.accord)); // EG-ZS: the Accord it takes",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],
@@ -1020,8 +1020,8 @@
   {
     "name": "EGZS-offer-words",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "takesAccord: (name, vestige) => `Takes an Accord with ${name}'s ${vestige}.`,",
-    "new": "takesAccord: (name, vestige) => `Takes an Accord with ${vestige}.`,",
+    "old": "  takesAccord: (name, vestige) => `Takes an Accord with ${name}'s ${vestige}.`,",
+    "new": "  takesAccord: (name, vestige) => `Takes an Accord with ${vestige}.`,",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],
@@ -1030,8 +1030,8 @@
   {
     "name": "EGZS-decree-words",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "champDecree: (title, decree) => `${title}: ${decree}`,",
-    "new": "champDecree: (title, decree) => `${decree}`,",
+    "old": "  champDecree: (title, decree) => `${title}: ${decree}`,",
+    "new": "  champDecree: (title, decree) => `${decree}`,",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],

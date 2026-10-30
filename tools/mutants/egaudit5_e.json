@@ -564,8 +564,8 @@
   {
     "name": "EGA5E-panel-rebuilt-every-frame",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  const same = panel && panelSame(panelKey, model, recap, focus, touch);",
-    "new": "  const same = false;",
+    "old": "  const same = panel && panelSame(panelKey, model, recap, focus, touch); // AUDIT EG V (c, L7-9): the touch words its own redraw",
+    "new": "  const same = false; // AUDIT EG V (c, L7-9): the touch words its own redraw",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "EGA5E-panel-card-words-unread",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": " || x.line !== y.line ||",
-    "new": " ||",
+    "old": "        x.line !== y.line ||\n        x.completes !== y.completes ||",
+    "new": "        x.completes !== y.completes ||",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "EGA5E-panel-focus-unread",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  if (!k || k.focus !== focus || k.touch !== touch || !k.recap",
-    "new": "  if (!k || k.touch !== touch || !k.recap",
+    "old": "  if (!k || k.focus !== focus || k.touch !== touch || !k.recap !== !recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
+    "new": "  if (!k || k.touch !== touch || !k.recap !== !recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -601,8 +601,8 @@
   {
     "name": "EGA5E-panel-recap-object",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "k.touch !== touch || !k.recap !== !recap)",
-    "new": "k.touch !== touch || k.recap !== recap)",
+    "old": "  if (!k || k.focus !== focus || k.touch !== touch || !k.recap !== !recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
+    "new": "  if (!k || k.focus !== focus || k.touch !== touch || k.recap !== recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "EGA5E-panel-word-open-unseen",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (as[k][2] > now) return true;",
-    "new": "if (as[k][2] > now) return false;",
+    "old": "  if (as) for (let k = 0; k < as.length; k++) if (as[k][2] > now) return true;",
+    "new": "  if (as) for (let k = 0; k < as.length; k++) if (as[k][2] > now) return false;",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js",
       "test/net/eliteGates/egaudit3_pres.test.js",
@@ -828,8 +828,8 @@
   {
     "name": "EGA5E-panel-touch-unread",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "|| k.touch !== touch ||",
-    "new": "||",
+    "old": "  if (!k || k.focus !== focus || k.touch !== touch || !k.recap !== !recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
+    "new": "  if (!k || k.focus !== focus || !k.recap !== !recap) return false; // a recap's words, never its object (a new one each Reliquary opened)",
     "why": "the merge of C and E: a panel drawn for the pad stands on a touch frame (its note and its close button are the touch's own)",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"

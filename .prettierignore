@@ -156,6 +156,8 @@
 /src/ui/card/*/
 !/src/ui/collections/
 /src/ui/collections/*/
+!/src/ui/eliteGates/
+/src/ui/eliteGates/*/
 !/src/ui/guild/
 /src/ui/guild/*/
 !/src/ui/intro/

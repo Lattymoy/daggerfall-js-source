@@ -656,8 +656,8 @@
   {
     "name": "EGZR-castback-words-fixed",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "words: (n, t) => t ?? EG_PRES_TEXT.castBack,",
-    "new": "words: () => EG_PRES_TEXT.castBack,",
+    "old": "    words: (n, t) => t ?? EG_PRES_TEXT.castBack,",
+    "new": "    words: () => EG_PRES_TEXT.castBack,",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

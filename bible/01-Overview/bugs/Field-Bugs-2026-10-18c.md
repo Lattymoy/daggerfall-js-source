@@ -35,7 +35,7 @@ cleared it. The EG-F pin passed over it because its fake list stayed open when p
 picker does not have.
 
 CHANGED: a word row picked closes what is left of the list and asks the main list again
-(`egStartWindow.js:"if (r.kind !== 'start') { shut(); showMain(); return; }"`) - the same close-then-ask the Wager's
+(`egStartWindow.js:"if (r.kind !== 'start')"`) - the same close-then-ask the Wager's
 toggles already make. Nothing is chosen or cancelled; Escape is still the cancel. The rows, their order and the picker
 are unchanged. AUDIT STAKE-ROW (L1-3, L3-2): DFU's ListBox can disable a row (`ListItem.Enabled` - a click will not
 select it, the arrows step over it, UseSelectedItem refuses it), its own way to show a row that is not a choice; the

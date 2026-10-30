@@ -737,8 +737,8 @@
   {
     "name": "EGECO2-window-clock-no-hours",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "return h ? `${h}:${two(m)}:${two(x)}` : `${m}:${two(x)}`;",
-    "new": "return `${m}:${two(x)}`;",
+    "old": "  return h ? `${h}:${two(m)}:${two(x)}` : `${m}:${two(x)}`;",
+    "new": "  return `${m}:${two(x)}`;",
     "tests": [
       "test/net/eliteGates/egeco_board.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "EGECO2-window-flame-unread",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "${r.flame ? ` - ${EG_BOARD_TEXT.unfallen}` : ''}",
-    "new": "${''}",
+    "old": "      return `${r.rank}. ${who} - Hall ${r.h}${band} - ${egBoardClock(r.t)}${r.flame ? ` - ${EG_BOARD_TEXT.unfallen}` : ''}${!short && r.pr ? ` - ${r.pr}` : ''}${you(r)}`;",
+    "new": "      return `${r.rank}. ${who} - Hall ${r.h}${band} - ${egBoardClock(r.t)}${''}${!short && r.pr ? ` - ${r.pr}` : ''}${you(r)}`;",
     "tests": [
       "test/net/eliteGates/egeco_board.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "EGECO2-window-short-count",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "`${names[0]} +${names.length - 1}`",
-    "new": "`${names[0]} +${names.length}`",
+    "old": "      const who = short && names.length > 1 ? `${names[0]} +${names.length - 1}` : names.join(', ');",
+    "new": "      const who = short && names.length > 1 ? `${names[0]} +${names.length}` : names.join(', ');",
     "tests": [
       "test/net/eliteGates/egeco_board.test.js"
     ]
@@ -764,8 +764,8 @@
   {
     "name": "EGECO2-window-old-left-in-the-slot",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "    if (prev) closeWindow?.(prev);\n",
-    "new": "",
+    "old": "    if (prev) closeWindow?.(prev);\n    if (!open) return;",
+    "new": "    if (!open) return;",
     "tests": [
       "test/net/eliteGates/egeco_board.test.js"
     ]
@@ -782,8 +782,8 @@
   {
     "name": "EGECO2-window-tabs-never-back",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "onPick: () => showTabs(), onCancel: () => showTabs() }));",
-    "new": "onPick: () => showTabs(), onCancel: close }));",
+    "old": "        onCancel: () => showTabs(),",
+    "new": "        onCancel: close,",
     "tests": [
       "test/net/eliteGates/egeco_board.test.js"
     ]

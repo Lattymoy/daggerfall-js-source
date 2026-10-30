@@ -771,7 +771,7 @@ NOT CHANGED (recorded as found):
 - THE EXISTING COPIES (saddle, helm, held map, wild map, pace steppers, enhanced dialog and port) keep their own lines.
   Each holds the rule, and their pins and mutants quote them. Moving them onto the helper is churn with no change to a
   player.
-- THE ELITE SPIRE'S FOLD AND TOUCH BUTTONS are a phone's (`egSpireHud.js:".eg-fold:empty { display: none; }"` on a desk).
+- THE ELITE SPIRE'S FOLD AND TOUCH BUTTONS are a phone's (`egSpireHud.js:".eg-fold:empty {"` on a desk).
 - THE CLASSIC-START WIZARD in the standalone `?dungeon` bench: a Tab from the page no longer walks into the enhanced
   wizard (a Tab from one of its controls still does). In `?world` and `?exterior` the wizard stands in townTalk's slot,
   which already took every Tab under it. That predates this fix, and the wizard's own note wants the walk.

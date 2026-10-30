@@ -84,8 +84,8 @@
   {
     "name": "EGA5A1-nx-this-lord",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  const c = egCircleOfHall(E.h) + 1, key = egBossOf(E.seed, c)",
-    "new": "  const c = egCircleOfHall(E.h), key = egBossOf(E.seed, c)",
+    "old": "  const c = egCircleOfHall(E.h) + 1,",
+    "new": "  const c = egCircleOfHall(E.h),",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "EGA5A1-nx-second-lord",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "${two ? ` - and ${card(two)}` : ''}",
-    "new": "",
+    "old": "  return [\n    dec.length ? `The next circle bears: ${dec.join(', ')}.` : '',\n    `The next Court: ${card(key)}${two ? ` - and ${card(two)}` : ''}.`,\n  ]",
+    "new": "  return [dec.length ? `The next circle bears: ${dec.join(', ')}.` : '', `The next Court: ${card(key)}.`]",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "EGA5A1-nx-classic-hud",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "dec: E.sg === 'rest' ? egNextCircleText(E) : dec.length",
-    "new": "dec: dec.length",
+    "old": "      dec: E.sg === 'rest' ? egNextCircleText(E) : dec.length ? `Decrees: ${dec.join(', ')}` : '',",
+    "new": "      dec: dec.length ? `Decrees: ${dec.join(', ')}` : '',",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "EGA5A1-nx-spire-hud",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(",
-    "new": "E.sg === 'rest' ? egRestLine(E, run, restP) : '', egBridgeLine(",
+    "old": "      : [\n          stageLine(E, now),\n          E.sg === 'rest' ? egRestLine(E, run, restP) : '',\n          egNextCircleText(E),\n          egBridgeLine(E, now, bridge && !watching),\n        ]",
+    "new": "      : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egBridgeLine(E, now, bridge && !watching)]",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -186,8 +186,8 @@
   {
     "name": "EGA5A1-twist-card",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',",
-    "new": "    twist: spec.twist ? EG_TWIST_LINES[spec.twist] ?? '' : '',",
+    "old": "    twist: egTwistShown(spec, E.dc) ? (EG_TWIST_LINES[spec.twist] ?? '') : '',",
+    "new": "    twist: spec.twist ? (EG_TWIST_LINES[spec.twist] ?? '') : '',",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "EGA5A1-twist-classic",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "egTwistShown(spec, E.dc) ? EG_TWIST_NAMES[spec.twist] : ''",
-    "new": "spec?.twist ? EG_TWIST_NAMES[spec.twist] : ''",
+    "old": "            : egTwistShown(spec, E.dc)",
+    "new": "            : spec?.twist",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],

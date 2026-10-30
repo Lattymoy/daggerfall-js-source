@@ -454,8 +454,8 @@
   {
     "name": "EGA3C-ask-gone-silent",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!box.done) { box.done = true; onGone(); }",
-    "new": "if (!box.done) { box.done = true; }",
+    "old": "        onGone();\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "EGA3C-ask-gone-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!box.done) { box.done = true; onGone(); }",
-    "new": "if (!box.done) { onGone(); }",
+    "old": "        box.done = true;\n        onGone();",
+    "new": "        onGone();",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "EGA3C-ask-gone-unwired",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "() => { if (!done) showMain(); }, cancel);",
-    "new": "() => { if (!done) showMain(); });",
+    "old": "      },\n      cancel,\n    );",
+    "new": "      },\n    );",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]

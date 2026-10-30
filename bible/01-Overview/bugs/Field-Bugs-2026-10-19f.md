@@ -653,7 +653,7 @@ THE FIX.
   (`egFight.js:"    if (!said && !(F.pg.left > 0)) return;"`).
 - THE WORDS NAME BOTH WAYS. The objective is *Silence each caster: stand on its plate, or slay it.* and the line is
   *Casters left: 3. Hold a plate 3 s or slay its caster*, its seconds `EG_SILENCE_MS`'s. Both are said in the player's language through the catalog
-  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText = (spec) =>"`,
+  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText"`,
   which the tracker's line, the Spire HUD's chip and the arrival card all read. It is the first objective said in the
   player's language; the rest stay the law's English. The English catalog was regenerated (`tools/l10nExtract.mjs`), the
   thirteen finished languages were drafted in-session (`tools/l10nInSession.mjs`, recorded as the machine's), and the

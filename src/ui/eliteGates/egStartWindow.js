@@ -28,13 +28,19 @@
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { EG_TEXT, EG_BANDS, EG_DECREES, egBandOfHall, egStartHall } from '../../net/eliteGates/egLaw.js';
 import { egMayStart, egWagerOf, egWagerTakes, EG_WAGER_MAX } from '../../net/eliteGates/egStartLaw.js';
-import { EG_BOARD_TEXT } from './egBoardWindow.js';   // EG-ZM: the boards' own name for their row
+import { EG_BOARD_TEXT } from './egBoardWindow.js'; // EG-ZM: the boards' own name for their row
 
 /** The tick and the cross a member's mark is drawn with (DFU's small font has both). */
 export const EG_START_TICK = '+';
 export const EG_START_CROSS = 'x';
 /** A decree family's words in the Wager's list. */
-export const EG_WAGER_FAMILY_WORDS = Object.freeze({ blows: 'the blows', legion: 'the legion', ground: 'the ground', covenant: 'the Covenant', lord: 'the lord' });
+export const EG_WAGER_FAMILY_WORDS = Object.freeze({
+  blows: 'the blows',
+  legion: 'the legion',
+  ground: 'the ground',
+  covenant: 'the Covenant',
+  lord: 'the lord',
+});
 
 /** A start's name: *Hall 1*, or *Redoubt 12 - the Shade Perilous* - the band its first hall stands in (net/eliteGates/egLaw.js
  *  egStartHall's hall). Pure. */
@@ -44,7 +50,8 @@ export function egStartName(ew) {
   return EG_TEXT.startRedoubt(ew, band.replace(/^The /, 'the '));
 }
 /** Several names as a line says them: "Mara", "Mara and Ann", "Mara, Ann and Tor". */
-export const egNamesText = (names) => (names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+export const egNamesText = (names) =>
+  names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 
 /**
  * THE WINDOW'S ROWS: `[{ kind, label, ew?, missing? }]` - the stake ('info'), the quest warning ('info'), each start the
@@ -54,7 +61,16 @@ export const egNamesText = (names) => (names.length <= 1 ? names.join('') : `${n
  * @param {{ keys: number, me: string, members: { sub: string, name: string }[], starts: Record<string, number[]|null>, rehearsal?: boolean,
  *   questDue?: boolean, wager?: number[], board?: boolean }} o
  */
-export function egStartRows({ keys, me, members, starts, rehearsal = false, questDue = false, wager = [], board = false }) {
+export function egStartRows({
+  keys,
+  me,
+  members,
+  starts,
+  rehearsal = false,
+  questDue = false,
+  wager = [],
+  board = false,
+}) {
   const rows = [];
   const party = members?.length ? members : [{ sub: me, name: '' }];
   rows.push({ kind: 'info', label: keys > 0 ? EG_TEXT.stake(keys) : EG_TEXT.noKeys });
@@ -64,9 +80,22 @@ export function egStartRows({ keys, me, members, starts, rehearsal = false, ques
     for (const ew of mine.includes(0) ? mine : [...mine, 0]) {
       const can = party.map((m) => Array.isArray(starts?.[m.sub]) && egMayStart(starts[m.sub], ew));
       const marks = party.length > 1 ? ` [${can.map((c) => (c ? EG_START_TICK : EG_START_CROSS)).join('')}]` : '';
-      rows.push({ kind: 'start', label: `${egStartName(ew)}${marks}`, ew, missing: party.filter((_, i) => !can[i]).map((m) => m.name || 'a companion') });
+      rows.push({
+        kind: 'start',
+        label: `${egStartName(ew)}${marks}`,
+        ew,
+        missing: party.filter((_, i) => !can[i]).map((m) => m.name || 'a companion'),
+      });
     }
-    rows.push({ kind: 'wager', label: EG_TEXT.wager(wager.map((id) => EG_DECREES[id]?.name).filter(Boolean).join(', ')) });
+    rows.push({
+      kind: 'wager',
+      label: EG_TEXT.wager(
+        wager
+          .map((id) => EG_DECREES[id]?.name)
+          .filter(Boolean)
+          .join(', '),
+      ),
+    });
   }
   if (rehearsal) rows.push({ kind: 'rehearse', label: EG_TEXT.rehearsal });
   if (board) rows.push({ kind: 'board', label: EG_BOARD_TEXT.title });
@@ -76,7 +105,14 @@ export function egStartRows({ keys, me, members, starts, rehearsal = false, ques
 /** THE WAGER'S ROWS: every decree, a mark on the held, its family's words; then Done. Pure. */
 export function egWagerRows(wager = []) {
   const held = new Set(wager);
-  return [...EG_DECREES.map((d) => ({ kind: 'decree', id: d.id, label: `${held.has(d.id) ? '* ' : ''}${d.name} - ${EG_WAGER_FAMILY_WORDS[d.fam] ?? d.fam}` })), { kind: 'done', label: EG_TEXT.wagerDone }];
+  return [
+    ...EG_DECREES.map((d) => ({
+      kind: 'decree',
+      id: d.id,
+      label: `${held.has(d.id) ? '* ' : ''}${d.name} - ${EG_WAGER_FAMILY_WORDS[d.fam] ?? d.fam}`,
+    })),
+    { kind: 'done', label: EG_TEXT.wagerDone },
+  ];
 }
 
 /**
@@ -101,7 +137,13 @@ export function egStartAsk(show, makeBox) {
   return (lines, onYes, onNo, onGone = () => {}) => {
     const box = makeBox({ rows: lines, onYes, onNo });
     const dispose = typeof box.dispose === 'function' ? box.dispose.bind(box) : () => {};
-    box.dispose = () => { dispose(); if (!box.done) { box.done = true; onGone(); } };
+    box.dispose = () => {
+      dispose();
+      if (!box.done) {
+        box.done = true;
+        onGone();
+      }
+    };
     show(box);
   };
 }
@@ -121,17 +163,28 @@ export function egStartAsk(show, makeBox) {
 export function egStartListDoors({ ready, makeList, slot }) {
   return {
     openList(labels, onPick, onCancel) {
-      if (!ready()) { Promise.resolve().then(onCancel); return null; }   // no list to ask with: nothing staked
+      if (!ready()) {
+        Promise.resolve().then(onCancel);
+        return null;
+      } // no list to ask with: nothing staked
       const top = slot.top();
       if (top?.done) slot.close(top);
       const win = makeList(labels, onPick, onCancel);
       const dispose = typeof win.dispose === 'function' ? win.dispose.bind(win) : () => {};
-      win.dispose = () => { dispose(); if (!win.done) { win.done = true; onCancel(); } };
+      win.dispose = () => {
+        dispose();
+        if (!win.done) {
+          win.done = true;
+          onCancel();
+        }
+      };
       if (slot.mount(win)) return win;
       Promise.resolve().then(onCancel);
       return null;
     },
-    closeList(win) { if (win) slot.close(win); },
+    closeList(win) {
+      if (win) slot.close(win);
+    },
   };
 }
 
@@ -152,10 +205,21 @@ export function egStartListDoors({ ready, makeList, slot }) {
 export function openEgStartWindow(o) {
   // EG-PLUS: on Enhanced Plus the host hands the start window's own doors (ui/eliteGates/egStartPanel.js egStartPanelDoors) and
   // the window is a breach window of its own; the list stands where it cannot open (no page to draw on)
-  if (o.panel) { const p = o.panel.open(o); if (p) return p; }
-  let wager = [], handle = null, view = 'main', done = false, rows = [];
+  if (o.panel) {
+    const p = o.panel.open(o);
+    if (p) return p;
+  }
+  let wager = [],
+    handle = null,
+    view = 'main',
+    done = false,
+    rows = [];
   const say = o.say ?? (() => {});
-  const shut = () => { const h = handle; handle = null; if (h) o.closeList(h); };   // the slot emptied first
+  const shut = () => {
+    const h = handle;
+    handle = null;
+    if (h) o.closeList(h);
+  }; // the slot emptied first
   function choose(c) {
     if (done) return;
     done = true;
@@ -165,35 +229,86 @@ export function openEgStartWindow(o) {
   function showMain() {
     view = 'main';
     rows = egStartRows({ ...o, wager, board: typeof o.board === 'function' });
-    handle = o.openList(rows.map((r) => r.label), pickMain, cancel);
+    handle = o.openList(
+      rows.map((r) => r.label),
+      pickMain,
+      cancel,
+    );
   }
   function showWager() {
     view = 'wager';
     rows = egWagerRows(wager);
-    handle = o.openList(rows.map((r) => r.label), pickWager, () => { shut(); if (!done) showMain(); });
+    handle = o.openList(
+      rows.map((r) => r.label),
+      pickWager,
+      () => {
+        shut();
+        if (!done) showMain();
+      },
+    );
   }
-  function cancel() { if (done) return; done = true; shut(); o.onCancel?.(); }
+  function cancel() {
+    if (done) return;
+    done = true;
+    shut();
+    o.onCancel?.();
+  }
   function pickMain(i) {
     const r = rows[i];
     if (done || !r) return;
-    if (r.kind === 'rehearse') { choose({ ew: 0, wg: [], rh: true }); return; }
-    if (r.kind === 'wager') { shut(); showWager(); return; }
-    if (r.kind === 'board') { shut(); let back = false; const again = () => { if (!back && !done) { back = true; showMain(); } }; if (!o.board(again)) again(); return; }   // EG-ZM: the boards, and back
+    if (r.kind === 'rehearse') {
+      choose({ ew: 0, wg: [], rh: true });
+      return;
+    }
+    if (r.kind === 'wager') {
+      shut();
+      showWager();
+      return;
+    }
+    if (r.kind === 'board') {
+      shut();
+      let back = false;
+      const again = () => {
+        if (!back && !done) {
+          back = true;
+          showMain();
+        }
+      };
+      if (!o.board(again)) again();
+      return;
+    } // EG-ZM: the boards, and back
     // the stake, the keyless line and the warning are words, not choices - but the port's picker closed itself on the pick
     // (ui/listPicker.js _pick; DFU's DaggerfallListPickerWindow leaves the close to its owner), so the list is asked again
     // (FIELD BUGS 2026-10-18c STAKE-ROW: a bare return left no window and the key answering "already asks" until the
     // screen let go)
-    if (r.kind !== 'start') { shut(); showMain(); return; }
-    if (!r.missing.length) { choose({ ew: r.ew, wg: [...wager], rh: false }); return; }
+    if (r.kind !== 'start') {
+      shut();
+      showMain();
+      return;
+    }
+    if (!r.missing.length) {
+      choose({ ew: r.ew, wg: [...wager], rh: false });
+      return;
+    }
     // asked once: going on without the members who cannot make this start
     shut();
-    o.ask([EG_TEXT.without(egNamesText(r.missing))], () => choose({ ew: r.ew, wg: [...wager], rh: false }), () => { if (!done) showMain(); }, cancel);
+    o.ask(
+      [EG_TEXT.without(egNamesText(r.missing))],
+      () => choose({ ew: r.ew, wg: [...wager], rh: false }),
+      () => {
+        if (!done) showMain();
+      },
+      cancel,
+    );
   }
   function pickWager(i) {
     const r = rows[i];
     if (done || !r) return;
     shut();
-    if (r.kind === 'done') { showMain(); return; }
+    if (r.kind === 'done') {
+      showMain();
+      return;
+    }
     const t = egWagerToggle(wager, r.id);
     wager = t.wager;
     if (t.why) say(t.why);
@@ -201,7 +316,12 @@ export function openEgStartWindow(o) {
   }
   showMain();
   return {
-    close() { if (!done) { done = true; shut(); } },
+    close() {
+      if (!done) {
+        done = true;
+        shut();
+      }
+    },
     state: () => ({ view, wager: [...wager], done, rows: rows.map((r) => r.label) }),
   };
 }

@@ -21,7 +21,7 @@
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { EG_ABSENT_TRIAL_MS } from '../../net/eliteGates/egLaw.js';
 import { EG_PRES_TEXT } from './egBeats.js';
-import { t } from '../../systems/textManager.js';   // AUDIT EG V (c): the words this audit adds, in the player's language
+import { t } from '../../systems/textManager.js'; // AUDIT EG V (c): the words this audit adds, in the player's language
 
 /** The numerals (section 6.1 - the company's own, I to VIII). */
 export const EG_NUMERALS = Object.freeze(['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']);
@@ -45,7 +45,8 @@ export function egAbsentStep(prev, E, me, present, now) {
   const out = new Map();
   for (const c of E?.co ?? []) {
     const [sub, , , alive, home, inn, wit, forsaken] = c;
-    if (sub === me || alive !== 1 || home === 1 || inn !== 1 || wit === 1 || forsaken === 1 || present.has(sub)) continue;
+    if (sub === me || alive !== 1 || home === 1 || inn !== 1 || wit === 1 || forsaken === 1 || present.has(sub))
+      continue;
     out.set(sub, prev.get(sub) ?? now);
   }
   return out;
@@ -54,11 +55,15 @@ export function egAbsentStep(prev, E, me, present, now) {
 /** Which road a place in a hall stands on at its fork: 0 the High Road, 1 the Low Road, null neither (pure). */
 export function egRoadOf(spec, x, y, z) {
   if (!spec?.fork) return null;
-  let best = null, bd = EG_ROAD_NEAR_M;
+  let best = null,
+    bd = EG_ROAD_NEAR_M;
   for (const s of [...(spec.steps ?? []), ...(spec.islands ?? [])]) {
     if (s.road !== 0 && s.road !== 1) continue;
     const d = Math.hypot(x - s.x, z - s.z) + Math.abs(y - (s.y ?? 0)) * 0.5;
-    if (d < bd) { bd = d; best = s.road; }
+    if (d < bd) {
+      bd = d;
+      best = s.road;
+    }
   }
   return best;
 }
@@ -76,24 +81,46 @@ export function egPartyRows(E, now, { absent = new Map(), roads = new Map() } = 
   const trial = E.sg === 'trial';
   for (const c of E.co ?? []) {
     const [sub, name, n, alive, home, , wit, forsaken, falls, recall] = c;
-    const state = forsaken === 1 ? 'forsaken' : home === 1 ? 'home' : wit === 1 ? 'witness' : alive !== 1 ? 'fallen' : 'alive';
+    const state =
+      forsaken === 1 ? 'forsaken' : home === 1 ? 'home' : wit === 1 ? 'witness' : alive !== 1 ? 'fallen' : 'alive';
     // AUDIT EG V (c, L7-4 = L3-16; section 6.1 - "counted from the trial's wake"): the ring drains from the later of the silence
     // and the hall's wake (`hw`), as the relay counts (net/eliteGates/egBrain.js: `now - Math.max(m.seenAt, B.hw)`) - a silence begun
     // on the stair, at a rest or in an earlier hall is a fresh 180 s at the wake
     const since0 = trial && state === 'alive' ? absent.get(sub) : undefined;
     const since = since0 != null ? Math.max(since0, E.hw > 0 ? E.hw : since0) : undefined;
     const left = since != null ? Math.max(0, EG_ABSENT_TRIAL_MS - Math.max(0, now - since)) : 0;
-    const road = split ? roads.get(sub) ?? null : null;
-    const sigils = [...new Set((E.fight?.mk ?? []).filter((m) => m[0] === sub && m[2] > now && EG_ROW_SIGILS[m[1]]).map((m) => m[1]))];
-    const memento = (E.mm ?? []).some((q) => q[0] === sub), carries = (E.mm ?? []).some((q) => q[4] === sub);
+    const road = split ? (roads.get(sub) ?? null) : null;
+    const sigils = [
+      ...new Set((E.fight?.mk ?? []).filter((m) => m[0] === sub && m[2] > now && EG_ROW_SIGILS[m[1]]).map((m) => m[1])),
+    ];
+    const memento = (E.mm ?? []).some((q) => q[0] === sub),
+      carries = (E.mm ?? []).some((q) => q[4] === sub);
     const row = {
-      n, numeral: EG_NUMERALS[n] ?? String(n), state, recall: recall === 1, cracked: recall !== 1 && state === 'alive', memento, carries,
+      n,
+      numeral: EG_NUMERALS[n] ?? String(n),
+      state,
+      recall: recall === 1,
+      cracked: recall !== 1 && state === 'alive',
+      memento,
+      carries,
       absent: since != null ? { left, frac: Math.round((left / EG_ABSENT_TRIAL_MS) * 1000) / 1000 } : null,
       road: road === 0 ? EG_PRES_TEXT.highRoad : road === 1 ? EG_PRES_TEXT.lowRoad : '',
-      sigils: sigils.map((k) => EG_ROW_SIGILS[k]), sigilKeys: sigils, label: '',
-      falls: Number.isSafeInteger(falls) && falls > 0 ? falls : 0,   // AUDIT EG V (c, L7-16; the PR's "health, falls and recall"): the room's count
+      sigils: sigils.map((k) => EG_ROW_SIGILS[k]),
+      sigilKeys: sigils,
+      label: '',
+      falls: Number.isSafeInteger(falls) && falls > 0 ? falls : 0, // AUDIT EG V (c, L7-16; the PR's "health, falls and recall"): the room's count
     };
-    row.label = [`${row.numeral} ${name}`, state === 'alive' ? '' : state, row.falls ? egFallsText(row.falls) : '', row.cracked ? EG_PRES_TEXT.recallSpent : '', row.absent ? EG_PRES_TEXT.absent(Math.ceil(left / 1000)) : '', row.road, ...row.sigils].filter(Boolean).join(', ');
+    row.label = [
+      `${row.numeral} ${name}`,
+      state === 'alive' ? '' : state,
+      row.falls ? egFallsText(row.falls) : '',
+      row.cracked ? EG_PRES_TEXT.recallSpent : '',
+      row.absent ? EG_PRES_TEXT.absent(Math.ceil(left / 1000)) : '',
+      row.road,
+      ...row.sigils,
+    ]
+      .filter(Boolean)
+      .join(', ');
     rows.set(sub, row);
   }
   return rows;
@@ -109,9 +136,31 @@ export function egPartyRows(E, now, { absent = new Map(), roads = new Map() } = 
 export function egPartyDeco(rows, { tap = null } = {}) {
   const out = new Map();
   for (const [sub, r] of rows) {
-    const cls = [r.state === 'witness' || r.state === 'fallen' ? 'eg-wit' : '', r.state === 'home' ? 'eg-home' : '', r.state === 'forsaken' ? 'eg-forsaken' : '', r.cracked ? 'eg-spent' : '', r.absent ? 'eg-absent' : '', tap?.has?.(sub) ? 'eg-tap' : ''].filter(Boolean).join(' ');   // AUDIT EG V (c, L7-7): a row a witness may tap to watch
-    const marks = [r.state === 'witness' ? EG_ROW_MARKS.witness : '', r.state === 'home' ? EG_ROW_MARKS.home : '', r.memento || r.carries ? EG_ROW_MARKS.memento : '', EG_ROW_MARKS.fall.repeat(r.falls ?? 0), ...r.sigilKeys.map((k) => EG_ROW_MARKS[k])].join('');   // AUDIT EG V (c, L7-16): a dagger a fall
-    out.set(sub, { num: r.numeral, cls, mark: marks, title: r.label, ring: r.absent ? r.absent.frac : null, where: r.road || null });
+    const cls = [
+      r.state === 'witness' || r.state === 'fallen' ? 'eg-wit' : '',
+      r.state === 'home' ? 'eg-home' : '',
+      r.state === 'forsaken' ? 'eg-forsaken' : '',
+      r.cracked ? 'eg-spent' : '',
+      r.absent ? 'eg-absent' : '',
+      tap?.has?.(sub) ? 'eg-tap' : '',
+    ]
+      .filter(Boolean)
+      .join(' '); // AUDIT EG V (c, L7-7): a row a witness may tap to watch
+    const marks = [
+      r.state === 'witness' ? EG_ROW_MARKS.witness : '',
+      r.state === 'home' ? EG_ROW_MARKS.home : '',
+      r.memento || r.carries ? EG_ROW_MARKS.memento : '',
+      EG_ROW_MARKS.fall.repeat(r.falls ?? 0),
+      ...r.sigilKeys.map((k) => EG_ROW_MARKS[k]),
+    ].join(''); // AUDIT EG V (c, L7-16): a dagger a fall
+    out.set(sub, {
+      num: r.numeral,
+      cls,
+      mark: marks,
+      title: r.label,
+      ring: r.absent ? r.absent.frac : null,
+      where: r.road || null,
+    });
   }
   return out;
 }

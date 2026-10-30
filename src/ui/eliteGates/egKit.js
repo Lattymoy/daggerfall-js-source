@@ -139,7 +139,7 @@ export function dressEgKit(doc = globalThis.document) {
     return true;
   };
   lay(EG_CHROME_STYLE_ID, EG_CHROME_CSS);
-  if (doc.head) injectEnhancedFonts(doc);   // AUDIT NAV1's law: on the classic skin nothing else asked for the face
+  if (doc.head) injectEnhancedFonts(doc); // AUDIT NAV1's law: on the classic skin nothing else asked for the face
   if (isEnhancedPlus()) return false;
   return lay(EG_KIT_STYLE_ID, egKitCss());
 }

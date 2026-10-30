@@ -374,8 +374,8 @@
   {
     "name": "EGLOOK-fill-unclamped",
     "file": "src/ui/eliteGates/egAccess.js",
-    "old": "Math.min(EG_FILL_MAX, Math.max(EG_FILL_MIN, n))",
-    "new": "n",
+    "old": "  return Number.isFinite(n) ? Math.min(EG_FILL_MAX, Math.max(EG_FILL_MIN, n)) : EG_FILL_MAX;",
+    "new": "  return Number.isFinite(n) ? n : EG_FILL_MAX;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/net/eliteGates/egpres_hud.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "EGLOOK-lab-deutan-safe-like-edge",
     "file": "src/ui/eliteGates/egAccess.js",
-    "old": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([1.0, 0.86, 0.2])",
-    "new": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([0.6, 0.34, 0.95])",
+    "old": "    safety: Object.freeze([1.0, 0.86, 0.2]),",
+    "new": "    safety: Object.freeze([0.6, 0.34, 0.95]),",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/net/eliteGates/egpres_hud.test.js"

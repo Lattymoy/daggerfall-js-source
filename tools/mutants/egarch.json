@@ -569,8 +569,8 @@
   {
     "name": "EGF-the-ticks-off-the-opener-s-starts",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const can = party.map((m) => Array.isArray(starts?.[m.sub]) && egMayStart(starts[m.sub], ew));",
-    "new": "const can = party.map(() => Array.isArray(starts?.[me]) && egMayStart(starts[me], ew));",
+    "old": "      const can = party.map((m) => Array.isArray(starts?.[m.sub]) && egMayStart(starts[m.sub], ew));",
+    "new": "      const can = party.map(() => Array.isArray(starts?.[me]) && egMayStart(starts[me], ew));",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGF-the-question-never-asked",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (!r.missing.length) { choose({ ew: r.ew, wg: [...wager], rh: false }); return; }",
-    "new": "    choose({ ew: r.ew, wg: [...wager], rh: false }); return;",
+    "old": "    if (!r.missing.length) {\n      choose({ ew: r.ew, wg: [...wager], rh: false });\n      return;\n    }",
+    "new": "    choose({ ew: r.ew, wg: [...wager], rh: false });\n    return;",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGF-chosen-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "  function choose(c) {\n    if (done) return;",
-    "new": "  function choose(c) {",
+    "old": "  function choose(c) {\n    if (done) return;\n    done = true;",
+    "new": "  function choose(c) {\n    done = true;",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]

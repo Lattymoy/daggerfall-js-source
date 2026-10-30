@@ -52,8 +52,8 @@
   {
     "name": "ORRERY-SIGHT-riddles-unread",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\\n')",
-    "new": "''",
+    "old": "    riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\\n') : '', // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to",
+    "new": "    riddles: E.sg === 'trial' && !watching ? '' : '', // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],

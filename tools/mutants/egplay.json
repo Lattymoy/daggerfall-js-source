@@ -111,8 +111,8 @@
   {
     "name": "EGPLAY-the-count-never-red",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": ": shown < EG_HUD_LOW_MS ? 'low' :",
-    "new": ": shown < 0 ? 'low' :",
+    "old": "            : shown < EG_HUD_LOW_MS",
+    "new": "            : shown < 0",
     "tests": [
       "test/net/eliteGates/egplay_client.test.js"
     ]

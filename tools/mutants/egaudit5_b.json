@@ -632,8 +632,8 @@
   {
     "name": "AUDIT EG V L1-22: a fallen lord's bar",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0).slice(0, EG_LORD_BARS_MAX)",
-    "new": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0).slice(0, EG_LORD_BARS_MAX)",
+    "old": "    .filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0)",
+    "new": "    .filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0)",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "AUDIT EG V L1-22: one bar alone",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "{ lord: bars[0], lord2: bars[1] ?? null }",
-    "new": "{ lord: bars[0], lord2: null }",
+    "old": "  return bars[0]?.court ? { lord: bars[0], lord2: bars[1] ?? null } : { lord: null, lord2: null };",
+    "new": "  return bars[0]?.court ? { lord: bars[0], lord2: null } : { lord: null, lord2: null };",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]

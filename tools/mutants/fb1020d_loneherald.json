@@ -182,8 +182,8 @@
   {
     "name": "FB1020D-hud-called-after-wake",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
-    "new": "const co = E.co;",
+    "old": "    const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
+    "new": "    const co = E.co;",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "FB1020D-hud-entrants-before-wake",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
-    "new": "const co = E.co.filter((c) => c[5] === 1);",
+    "old": "    const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
+    "new": "    const co = E.co.filter((c) => c[5] === 1);",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "FB1020D-hud-rows-called",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "egCompanyRows({ ...E, co })",
-    "new": "egCompanyRows(E)",
+    "old": "      company: n > 1 ? `${standing} of ${n} standing\\n${egCompanyRows({ ...E, co })}` : '',",
+    "new": "      company: n > 1 ? `${standing} of ${n} standing\\n${egCompanyRows(E)}` : '',",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],

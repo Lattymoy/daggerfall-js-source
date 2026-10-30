@@ -799,8 +799,8 @@
   {
     "name": "EGA3-count-stake-odds-once",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "1 - EG_RELIQUARY_PANOPLY_X / egPanoplyIn(w)",
-    "new": "1 - 1 / egPanoplyIn(w)",
+    "old": "  const none = ws.reduce((p, w) => p * Math.max(0, 1 - EG_RELIQUARY_PANOPLY_X / egPanoplyIn(w)), 1);",
+    "new": "  const none = ws.reduce((p, w) => p * Math.max(0, 1 - 1 / egPanoplyIn(w)), 1);",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "EGA3-count-stake-valk-uncounted",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "valk ? `${valk} Valkynaz` : ''",
-    "new": "''",
+    "old": "    valk ? `${valk} Valkynaz` : '',",
+    "new": "    '',",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "EGA3-count-stake-likely-never",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "k >= 2 ? `a Panoply piece about 1 in ${k}` : 'a Panoply piece likely'",
-    "new": "`a Panoply piece about 1 in ${k}`",
+    "old": "    k >= 2 ? `a Panoply piece about 1 in ${k}` : 'a Panoply piece likely',",
+    "new": "    `a Panoply piece about 1 in ${k}`,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "EGA3-count-stake-unshown",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub",
-    "new": "sub",
+    "old": "      sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
+    "new": "      sub: witLine ? '' : sub,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -835,8 +835,8 @@
   {
     "name": "EGA3-count-stake-any-stage",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "E.sg === 'rest' && run?.rw?.length ?",
-    "new": "run?.rw?.length ?",
+    "old": "      sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
+    "new": "      sub: witLine ? '' : run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -844,8 +844,8 @@
   {
     "name": "EGA3-count-recap-old-ends",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "opened: EG_OPEN_ENDS.includes(why) ? run?.rel ?? 0 : 0",
-    "new": "opened: why === 'home' || why === 'last' ? run?.rel ?? 0 : 0",
+    "old": "    opened: EG_OPEN_ENDS.includes(why) ? (run?.rel ?? 0) : 0,",
+    "new": "    opened: why === 'home' || why === 'last' ? (run?.rel ?? 0) : 0,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]

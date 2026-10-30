@@ -587,8 +587,8 @@
   {
     "name": "EGZ-hud-marks-none",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "const marks = me ? egSigilsOf(E.fight?.mk ?? [], me, now) : [];",
-    "new": "const marks = [];",
+    "old": "  const marks = me ? egSigilsOf(E.fight?.mk ?? [], me, now) : []; // EG-ZG: sigils, never a line of text",
+    "new": "  const marks = []; // EG-ZG: sigils, never a line of text",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "EGZ-hud-eclipse-chip-none",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now)) : '',",
-    "new": "? '' : '',",
+    "old": "    eclipse:\n      E.sg === 'trial' || E.sg === 'closing'\n        ? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now))\n        : '', // EG-PERFECT: and a lord's own (Seyth's)   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)",
+    "new": "    eclipse: E.sg === 'trial' || E.sg === 'closing' ? '' : '', // EG-PERFECT: and a lord's own (Seyth's)   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "EGZ-hud-sigil-row-kept",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "  for (const [k, row] of sigRows) if (!seen.has(k)) { row.remove?.(); sigRows.delete(k); }\n",
-    "new": "",
+    "old": "  for (const [k, row] of sigRows)\n    if (!seen.has(k)) {\n      row.remove?.();\n      sigRows.delete(k);\n    }\n}",
+    "new": "}",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGZ-hud-gem-no-seconds",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "${s.sigil === 'gem' ? `<b>${s.secs | 0}</b>` : ''}",
-    "new": "",
+    "old": "  return `<span class=\"eg-sig eg-sig-${s.sigil}\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"${d}\" fill=\"currentColor\" fill-rule=\"evenodd\" stroke=\"${s.rim ? rgbCss(s.rim) : '#140606'}\" stroke-width=\"${s.rim ? 1.8 : 1.2}\"/></svg>${s.sigil === 'gem' ? `<b>${s.secs | 0}</b>` : ''}</span>`;",
+    "new": "  return `<span class=\"eg-sig eg-sig-${s.sigil}\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"${d}\" fill=\"currentColor\" fill-rule=\"evenodd\" stroke=\"${s.rim ? rgbCss(s.rim) : '#140606'}\" stroke-width=\"${s.rim ? 1.8 : 1.2}\"/></svg></span>`;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]

@@ -447,7 +447,7 @@ test('AUDIT EG V L7-10 THE SPIRE\'S ACCESSIBILITY ROWS IN THE PLAYER\'S LANGUAGE
   const body = M.slice(M.indexOf('function spireAccessRows() {'), M.indexOf('  return [motion, palette, fill];'));
   assert.doesNotMatch(body, /prefRow\('reducedMotion', '/);
   for (const k of ['menu.spire.motion.name', 'menu.spire.motion.note', 'menu.spire.palette.name', 'menu.spire.palette.note', 'menu.spire.fill.name', 'menu.spire.fill.note']) assert.ok(body.includes(`t('${k}', `), k);
-  assert.match(rd('src/ui/eliteGates/egAccess.js'), /get name\(\) \{ return t\('menu\.spire\.palette\.contrast', 'High contrast'\); \}/);
+  assert.match(rd('src/ui/eliteGates/egAccess.js'), /get name\(\) \{\n\s*return t\('menu\.spire\.palette\.contrast', 'High contrast'\);\n\s*\}/);
   assert.equal(EG_DANGER_PALETTES.tritan.name, 'Tritan');
   const en = rd('locales/en/Port_Strings.csv');
   for (const lang of ['bg', 'cs', 'da', 'de', 'es', 'fr', 'id', 'it', 'ko', 'nb', 'pt-BR', 'ro', 'ru']) {

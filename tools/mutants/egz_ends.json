@@ -341,8 +341,8 @@
   {
     "name": "EGZM-list-left-in-the-slot",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (r.kind === 'board') { shut(); let back = false;",
-    "new": "    if (r.kind === 'board') { let back = false;",
+    "old": "      shut();\n      let back = false;",
+    "new": "      let back = false;",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "EGZM-window-never-back",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => {};",
+    "old": "      const again = () => {\n        if (!back && !done) {\n          back = true;\n          showMain();\n        }\n      };",
+    "new": "      const again = () => {};",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "EGZM-window-back-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => { if (!done) { back = true; showMain(); } };",
+    "old": "        if (!back && !done) {",
+    "new": "        if (!done) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "EGZM-window-back-after-its-end",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => { if (!back) { back = true; showMain(); } };",
+    "old": "        if (!back && !done) {",
+    "new": "        if (!back) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "EGZM-none-opened-never-back",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!o.board(again)) again(); return; }",
-    "new": "o.board(again); return; }",
+    "old": "      if (!o.board(again)) again();",
+    "new": "      o.board(again);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "EGZM-two-boards-standing",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "    standing?.close();\n    standing = open(",
-    "new": "    standing = open(",
+    "old": "    standing?.close();\n    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "EGZM-done-window-holds-the-slot",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "const top = slot.top(); if (top?.done) slot.close(top); return !!slot.mount(w);",
-    "new": "return !!slot.mount(w);",
+    "old": "    const top = slot.top();\n    if (top?.done) slot.close(top);\n    return !!slot.mount(w);",
+    "new": "    return !!slot.mount(w);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "EGZM-live-window-thrown-out",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "const top = slot.top(); if (top?.done) slot.close(top);",
-    "new": "const top = slot.top(); if (top) slot.close(top);",
+    "old": "    if (top?.done) slot.close(top);",
+    "new": "    if (top) slot.close(top);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "EGZM-close-untold",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "onClosed: () => onClosed?.() });",
-    "new": "onClosed: () => {} });",
+    "old": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => {} });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "EGZM-door-mount-ignored",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "    standing = open({ mountWindow, closeWindow: slot.close,",
-    "new": "    standing = open({ closeWindow: slot.close,",
+    "old": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ closeWindow: slot.close, onClosed: () => onClosed?.() });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]

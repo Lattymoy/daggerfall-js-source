@@ -152,8 +152,8 @@
   {
     "name": "GAUNTLET-PLATES-old-line",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', { n: pg.left ?? 0, s: EG_SILENCE_MS / 1000 })",
-    "new": "`Casters left: ${pg.left ?? 0}`",
+    "old": "  if (pg.obj === 'gauntlet')\n    return t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', {\n      n: pg.left ?? 0,\n      s: EG_SILENCE_MS / 1000,\n    }); // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the two ways a Caster is silenced named - its plate held, or its death (GAUNTLET-SLAIN)",
+    "new": "  if (pg.obj === 'gauntlet') return `Casters left: ${pg.left ?? 0}`; // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the two ways a Caster is silenced named - its plate held, or its death (GAUNTLET-SLAIN)",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "GAUNTLET-PLATES-line-seconds",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "s: EG_SILENCE_MS / 1000 }",
-    "new": "s: EG_SILENCE_MS / 100 }",
+    "old": "      s: EG_SILENCE_MS / 1000,",
+    "new": "      s: EG_SILENCE_MS / 100,",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -172,7 +172,7 @@
   {
     "name": "GAUNTLET-PLATES-objective-unrouted",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "export const egObjectiveText = (spec) => (spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\") : egObjectiveOf(spec));",
+    "old": "export const egObjectiveText = (spec) =>\n  spec?.variant === 'gauntlet'\n    ? t('eg.objective.gauntlet', 'Silence each caster: stand on its plate, or slay it.')\n    : egObjectiveOf(spec);",
     "new": "export const egObjectiveText = (spec) => egObjectiveOf(spec);",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "GAUNTLET-PLATES-tracker-law-english",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "      const obj = egObjectiveText(spec), prog",
-    "new": "      const obj = egObjectiveOf(spec), prog",
+    "old": "      const obj = egObjectiveText(spec),",
+    "new": "      const obj = egObjectiveOf(spec),",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "GAUNTLET-PLATES-spire-chip-law-english",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : ''",
-    "new": "objective: E.sg === 'trial' && !watching ? spec.objective : ''",
+    "old": "    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '',",
+    "new": "    objective: E.sg === 'trial' && !watching ? spec.objective : '',",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "GAUNTLET-PLATES-screen-old-words",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\")",
-    "new": "t('eg.objective.gauntlet', 'Silence the casters.')",
+    "old": "  spec?.variant === 'gauntlet'\n    ? t('eg.objective.gauntlet', 'Silence each caster: stand on its plate, or slay it.')\n    : egObjectiveOf(spec);",
+    "new": "  spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', 'Silence the casters.') : egObjectiveOf(spec);",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],

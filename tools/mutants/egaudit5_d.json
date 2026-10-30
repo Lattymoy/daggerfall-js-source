@@ -547,8 +547,8 @@
   {
     "name": "EG5D-L8-9-the-decrees-unnamed",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "return names.length ? ` - ${EG_TEXT.wager(names.join(', '))}` : r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
-    "new": "return r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "old": "      return names.length ? ` - ${EG_TEXT.wager(names.join(', '))}` : r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "new": "      return r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"

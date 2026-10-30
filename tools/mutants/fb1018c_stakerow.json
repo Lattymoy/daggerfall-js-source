@@ -2,7 +2,7 @@
   {
     "name": "STAKE-ROW-a-word-row-strands-the-window",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
+    "old": "    if (r.kind !== 'start') {\n      shut();\n      showMain();\n      return;\n    }",
     "new": "    if (r.kind !== 'start') return;",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "STAKE-ROW-the-list-asked-over-the-dead-one",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
-    "new": "    if (r.kind !== 'start') { showMain(); return; }",
+    "old": "      shut();\n      showMain();",
+    "new": "      showMain();",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js",
       "test/net/eliteGates/egarch_client.test.js"
@@ -24,8 +24,8 @@
   {
     "name": "STAKE-ROW-the-word-row-cancels",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
-    "new": "    if (r.kind !== 'start') { cancel(); return; }",
+    "old": "      shut();\n      showMain();",
+    "new": "      cancel();",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js",
       "test/net/eliteGates/egarch_client.test.js"
@@ -35,8 +35,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L1-1-no-give-up",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "      if (top?.done) slot.close(top);\n",
-    "new": "",
+    "old": "      if (top?.done) slot.close(top);\n      const win = makeList(labels, onPick, onCancel);",
+    "new": "      const win = makeList(labels, onPick, onCancel);",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
@@ -45,8 +45,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L1-U1-no-leave-guard",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "      win.dispose = () => { dispose(); if (!win.done) { win.done = true; onCancel(); } };",
-    "new": "      win.dispose = () => { dispose(); };",
+    "old": "        if (!win.done) {\n          win.done = true;\n          onCancel();\n        }\n      };",
+    "new": "      };",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
@@ -55,8 +55,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L1-U1-leave-guard-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "      win.dispose = () => { dispose(); if (!win.done) { win.done = true; onCancel(); } };",
-    "new": "      win.dispose = () => { dispose(); if (!win.done) { onCancel(); } };",
+    "old": "          win.done = true;\n          onCancel();",
+    "new": "          onCancel();",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L2-3-refused-mount-unsaid",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "      if (slot.mount(win)) return win;\n      Promise.resolve().then(onCancel);\n",
-    "new": "      if (slot.mount(win)) return win;\n",
+    "old": "      Promise.resolve().then(onCancel);\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L2-3-no-list-unsaid",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "      if (!ready()) { Promise.resolve().then(onCancel); return null; }",
-    "new": "      if (!ready()) { return null; }",
+    "old": "        Promise.resolve().then(onCancel);\n        return null;",
+    "new": "        return null;",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L2-5-cancel-unguarded",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "  function cancel() { if (done) return; done = true; shut(); o.onCancel?.(); }",
-    "new": "  function cancel() { done = true; shut(); o.onCancel?.(); }",
+    "old": "  function cancel() {\n    if (done) return;\n    done = true;",
+    "new": "  function cancel() {\n    done = true;",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],
