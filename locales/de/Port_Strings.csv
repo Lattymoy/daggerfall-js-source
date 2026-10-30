@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"In deinem Zuhause wartet Miete darauf, eingesammelt
 account.refusal.homeTaken,"Dieses Zuhause gehört jetzt jemand anderem."
 account.refusal.homeTenants,"Jemand mietet ein Zimmer in deinem Zuhause. Es kann erst verkauft oder gelöscht werden, wenn seine Tage abgelaufen sind."
 account.refusal.homeTowns,"Diese Stadt wurde nicht so geladen, wie andere Spieler sie sehen. Lade das Spiel neu, um ein Zuhause zu kaufen."
+account.refusal.homeUnlisted,"Dieses Haus steht nicht zum Verkauf."
 account.refusal.homeUpdate,"Dieses Spiel ist veraltet. Lade es neu, um ein Zuhause zu kaufen."
 account.refusal.homesNeedAccount,"Ein Zuhause zu besitzen erfordert einen Benutzernamen und ein Passwort. Gib diesem Konto beides, dann kannst du eines kaufen."
 account.refusal.huntCharacter,"Dieser Charakter hat keinen Jägerrang."

@@ -66,9 +66,10 @@ test('F2 the service: the clock starts at nothing, ticks once a UTC day off the 
   const s = await standService({ PROFESSIONS_OPEN: 'on' });
   const raw = s.env.DB._raw, db = s.env.DB;
   const day = () => Math.floor(now / 86_400);
-  assert.ok(MINUTE_JOBS.some(([n]) => n === 'region-clock'));
+  assert.match(String(MINUTE_JOBS.find(([n]) => n === 'town-shares')?.[1]), /tickRegionClock\(ctx\.db, ctx\.nowS\)/, 'ticked with the shares');
   assert.equal(await tickRegionClock(db, now), 0, 'started');
-  assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM region_clock').get().n, 71);
+  assert.equal(raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick, day(), 'started today; a region with no row at nothing');
+  assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM region_clock').get().n, 0);
   raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)').run(3_000_207, 207, 212, 17, 5, now, 9_000_001, 1500, -400, 64, -1_000_001, now);
   raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)').run(3_000_207, day(), 'watch', 30, 3_000_207, day(), 'trade', 10, 9_000_001, day(), 'raid', 1);
   now += 86_400;

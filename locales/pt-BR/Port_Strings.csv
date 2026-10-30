@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"Há aluguel esperando para ser recolhido no seu lar
 account.refusal.homeTaken,"Outra pessoa é dona deste lar agora."
 account.refusal.homeTenants,"Alguém está alugando um quarto no seu lar. Ele não pode ser vendido nem excluído até os dias do inquilino acabarem."
 account.refusal.homeTowns,"Esta cidade não carregou como os outros jogadores a veem. Recarregue o jogo para comprar um lar."
+account.refusal.homeUnlisted,"Essa casa não está à venda."
 account.refusal.homeUpdate,"Este jogo está desatualizado. Recarregue-o para comprar um lar."
 account.refusal.homesNeedAccount,"Ter um lar exige nome de usuário e senha. Dê um a esta conta e você poderá comprar um."
 account.refusal.huntCharacter,"Esse personagem não tem posto de caçador."

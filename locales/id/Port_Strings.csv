@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"Ada uang sewa yang menunggu untuk diambil di rumahm
 account.refusal.homeTaken,"Orang lain sekarang memiliki rumah ini."
 account.refusal.homeTenants,"Seseorang menyewa kamar di rumahmu. Rumah tidak bisa dijual atau dihapus sampai masa sewanya habis."
 account.refusal.homeTowns,"Kota ini tidak dimuat seperti yang dilihat pemain lain. Muat ulang permainan untuk membeli rumah."
+account.refusal.homeUnlisted,"Rumah itu tidak dijual."
 account.refusal.homeUpdate,"Permainan ini sudah usang. Muat ulang untuk membeli rumah."
 account.refusal.homesNeedAccount,"Memiliki rumah memerlukan nama pengguna dan kata sandi. Berikan itu pada akun ini dan kamu bisa membeli rumah."
 account.refusal.huntCharacter,"Karakter itu tidak punya peringkat pemburu."

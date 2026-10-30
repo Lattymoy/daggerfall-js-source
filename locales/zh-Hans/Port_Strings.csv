@@ -13,6 +13,7 @@ account.refusal.escrowWait,"那件物品仍在为击杀者保管。它很快会�
 account.refusal.fallenFrozen,"该玩家已被管理员扣留，无法从其身上拿走任何东西。"
 account.refusal.foe,"现在在开放区域被敌人杀死不会掉落任何东西。游戏可能需要更新。"
 account.refusal.frozen,"你的账号已被管理员冻结。你仍可以在 Staff 标签页中与管理员交谈。"
+account.refusal.homeUnlisted,"那座房子不出售。"
 account.refusal.lineageInUse,"仍有在世的角色在玩这个家族。"
 account.refusal.marketSellerFrozen,"该卖家的商品目前暂被冻结。"
 account.refusal.noEscrow,"那件物品并非为这个角色保管。"

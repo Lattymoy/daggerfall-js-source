@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"Hay alquiler esperando a cobrarse en tu hogar. Cób
 account.refusal.homeTaken,"Ahora este hogar es de otra persona."
 account.refusal.homeTenants,"Alguien alquila una habitación en tu hogar. No se puede vender ni borrar hasta que se acaben sus días."
 account.refusal.homeTowns,"Este pueblo no se ha cargado como lo ven los demás jugadores. Recarga el juego para comprar un hogar."
+account.refusal.homeUnlisted,"Esa casa no está en venta."
 account.refusal.homeUpdate,"Este juego está desactualizado. Recárgalo para comprar un hogar."
 account.refusal.homesNeedAccount,"Tener un hogar requiere nombre de usuario y contraseña. Dale uno a esta cuenta y podrás comprar uno."
 account.refusal.huntCharacter,"Ese personaje no tiene rango de cazador."

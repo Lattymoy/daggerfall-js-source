@@ -323,6 +323,7 @@ account.refusal.homeRentDue,"Kodissasi odottaa vuokra noudettavaksi. Nouda se en
 account.refusal.homeTaken,"Joku muu omistaa nyt tämän kodin."
 account.refusal.homeTenants,"Joku vuokraa huonetta kodissasi. Sitä ei voi myydä tai poistaa ennen kuin hänen päivänsä loppuvat."
 account.refusal.homeTowns,"Tämä kaupunki ei latautunut sellaisena kuin muut pelaajat sen näkevät. Lataa peli uudelleen ostaaksesi kodin."
+account.refusal.homeUnlisted,"Tämä talo ei ole myynnissä."
 account.refusal.homeUpdate,"Tämä peli on vanhentunut. Lataa se uudelleen ostaaksesi kodin."
 account.refusal.homesNeedAccount,"Kodin omistaminen vaatii käyttäjänimen ja salasanan. Anna tälle tilille sellaiset, niin voit ostaa kodin."
 account.refusal.inboxFull,"Hänen postilaatikkonsa on täynnä, kunnes hän heittää kirjeitä pois."

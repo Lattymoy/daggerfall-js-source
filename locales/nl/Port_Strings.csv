@@ -323,6 +323,7 @@ account.refusal.homeRentDue,"Er wacht huur om te worden opgehaald bij je huis. H
 account.refusal.homeTaken,"Iemand anders bezit dit huis nu."
 account.refusal.homeTenants,"Iemand huurt een kamer in je huis. Het kan niet worden verkocht of verwijderd tot zijn dagen om zijn."
 account.refusal.homeTowns,"Deze stad is niet geladen zoals andere spelers haar zien. Laad het spel opnieuw om een huis te kopen."
+account.refusal.homeUnlisted,"Dat huis is niet te koop."
 account.refusal.homeUpdate,"Dit spel is verouderd. Laad het opnieuw om een huis te kopen."
 account.refusal.homesNeedAccount,"Een huis bezitten vereist een gebruikersnaam en een wachtwoord. Geef dit account die, dan kun je er een kopen."
 account.refusal.inboxFull,"Hun brievenbus is vol tot ze wat brieven weggooien."

@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"Ve tvém domově čeká nájem k vybrání. Nejdř�
 account.refusal.homeTaken,"Tento domov teď vlastní někdo jiný."
 account.refusal.homeTenants,"Někdo si ve tvém domově pronajímá pokoj. Nelze ho prodat ani smazat, dokud mu neuplynou dny."
 account.refusal.homeTowns,"Toto město se nenačetlo tak, jak ho vidí ostatní hráči. Pro koupi domova hru znovu načti."
+account.refusal.homeUnlisted,"Tento dům není na prodej."
 account.refusal.homeUpdate,"Tato hra je zastaralá. Pro koupi domova ji znovu načti."
 account.refusal.homesNeedAccount,"Vlastnictví domova vyžaduje uživatelské jméno a heslo. Dej je tomuto účtu a můžeš si domov koupit."
 account.refusal.huntCharacter,"Tato postava nemá loveckou hodnost."

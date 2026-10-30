@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"La casa ta așteaptă chiria să fie încasată. Î
 account.refusal.homeTaken,"Altcineva deține acum această casă."
 account.refusal.homeTenants,"Cineva închiriază o cameră în casa ta. Nu poate fi vândută sau ștearsă până nu i se termină zilele."
 account.refusal.homeTowns,"Acest oraș nu s-a încărcat așa cum îl văd ceilalți jucători. Reîncarcă jocul ca să cumperi o casă."
+account.refusal.homeUnlisted,"Această casă nu este de vânzare."
 account.refusal.homeUpdate,"Acest joc nu este actualizat. Reîncarcă-l ca să cumperi o casă."
 account.refusal.homesNeedAccount,"O casă cere un nume de utilizator și o parolă. Dă-i acestui cont unul și poți cumpăra o casă."
 account.refusal.huntCharacter,"Personajul acela nu are rang de vânător."

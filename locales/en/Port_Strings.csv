@@ -401,6 +401,7 @@ account.refusal.homeRentDue,"Rent is waiting to be collected at your home. Colle
 account.refusal.homeTaken,"Somebody else owns this home now."
 account.refusal.homeTenants,"Somebody is renting a room in your home. It cannot be sold or deleted until their days run out."
 account.refusal.homeTowns,"This town did not load the way other players see it. Reload the game to buy a home."
+account.refusal.homeUnlisted,"That house is not for sale."
 account.refusal.homeUpdate,"This game is out of date. Reload it to buy a home."
 account.refusal.homesNeedAccount,"Owning a home needs a username and a password. Give this account one and you can buy one."
 account.refusal.huntCharacter,"That character keeps no hunter's rank."

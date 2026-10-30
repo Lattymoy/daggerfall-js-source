@@ -31,7 +31,7 @@ import { verifyWatchReceipt, WATCH_RECEIPT_TTL_S } from '../../src/net/watchRece
 import { isDeveloper } from './titles.js';   // AUDIT TOWN-ECON 2 SVC-1: a false town struck, the registry audited - a developer's
 import { RAID_KEY_RE } from '../../src/net/raid/raidLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { regionsProsperity } from './regionClock.js';   // FOUNDATION F2: the regions' prosperity, answered with the shares
+import { regionsProsperity, _resetRegionClockForTests } from './regionClock.js';   // FOUNDATION F2: the regions' prosperity, answered with the shares
 import {
   TOWN_ECON_CAPS, TOWN_ECON_DAYS, TOWN_ECON_KEPT_S, TOWN_ECON_SHARE_LEAST, TOWN_WATCH_CLAIM_MAX, TOWN_WITNESS_KIND,
   TOWN_WITNESS_HOUR, TOWN_SEA_REACH_PX, townReportOf, townReportText, parseTownReport, townActivity, townPlayersShare, townShareShown,
@@ -299,7 +299,7 @@ let _kept = null;
 /** The clock's last keeping of the shares in this isolate (keepTownShares) - a fresh row asks the database nothing. */
 let _keptAt = -Infinity;
 /** Tests stand a fresh service; the isolate's kept answer goes with the old one. */
-export const _resetTownEconForTests = () => { _kept = null; _keptAt = -Infinity; };
+export const _resetTownEconForTests = () => { _kept = null; _keptAt = -Infinity; _resetRegionClockForTests(); };   // FOUNDATION F2: and the regions' clock's day
 /** AUDIT TOWN-ECON 2 SVC-3: how long an isolate holds the kept answer before it reads the kept row again. */
 export const TOWN_ECON_ISOLATE_S = 60;
 
