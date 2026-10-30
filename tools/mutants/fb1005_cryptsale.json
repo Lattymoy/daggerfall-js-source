@@ -42,8 +42,8 @@
   {
     "name": "CRYPTSALE-law-unknown-empty",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
-    "new": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
+    "old": "  sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "new": "  sub?.interior?.made === true || (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

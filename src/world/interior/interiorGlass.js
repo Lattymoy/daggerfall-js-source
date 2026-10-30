@@ -25,11 +25,16 @@ import { BUILDING_INTERIOR_SETS } from '../climateSwaps.js';
 export const GLASS_INDEX = 0xff;
 /** GLASS-ALL: the palette indices a window wall's glass is painted in - the blue run (96-109), a castle's arched
  *  opening (86) and its slit (216), a hole in a mud wall (222, 223). Read off every building set's window record. */
-export const GLASS_RAMP = Object.freeze([96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 86, 216, 222, 223]);
+export const GLASS_RAMP = Object.freeze([
+  96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 86, 216, 222, 223,
+]);
 const RAMP = new Set(GLASS_RAMP);
 /** GLASS-ALL: the window wall and the wall it is the twin of, in every building set but these. */
 export const INTERIOR_WINDOW = Object.freeze({ record: 2, twin: 1 });
-const WINDOW_EXCEPTIONS = new Map([[11, null], [111, Object.freeze({ record: 1, twin: 0 })]]);
+const WINDOW_EXCEPTIONS = new Map([
+  [11, null],
+  [111, Object.freeze({ record: 1, twin: 0 })],
+]);
 /** The climate bases an interior is laid out in (ClimateSwaps.ApplyClimate: climateBase + set, no winter or rain for
  *  an interior) - 2xx is never a building's, and TEXTURE.237/.240 are the paperdoll's clothes. */
 const INTERIOR_BASES = new Set([0, 1, 3, 4]);
@@ -44,7 +49,13 @@ export const GLASS_MIN_TEXELS = 24;
 
 /** A building interior's texture archive, in a climate an interior is laid out in. */
 export function isInteriorGlassArchive(archive) {
-  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && BUILDING_INTERIOR_SETS.has(archive % 100);
+  return (
+    Number.isInteger(archive) &&
+    archive >= 0 &&
+    archive < 500 &&
+    INTERIOR_BASES.has(Math.trunc(archive / 100)) &&
+    BUILDING_INTERIOR_SETS.has(archive % 100)
+  );
 }
 
 /** The archive's window wall and its twin, or null (not a building set, or a set with no window). */
@@ -70,21 +81,30 @@ export function glassTexelCount(mask) {
  * @param {{ width: number, height: number, data: Uint8Array } | null} twin
  */
 export function windowGlassTexels(win, twin) {
-  const W = win.width, H = win.height, d = win.data, n = W * H;
+  const W = win.width,
+    H = win.height,
+    d = win.data,
+    n = W * H;
   const paired = !!twin && twin.width === W && twin.height === H;
   const fresh = new Uint8Array(n);
   if (paired) for (let i = 0; i < n; i++) fresh[i] = d[i] !== twin.data[i] ? 1 : 0;
   const R = GLASS_DENSE_RADIUS;
   const dense = (x, y) => {
-    let k = 0, f = 0;
-    for (let Y = Math.max(0, y - R); Y <= Math.min(H - 1, y + R); Y++) for (let X = Math.max(0, x - R); X <= Math.min(W - 1, x + R); X++) { k++; f += fresh[Y * W + X]; }
+    let k = 0,
+      f = 0;
+    for (let Y = Math.max(0, y - R); Y <= Math.min(H - 1, y + R); Y++)
+      for (let X = Math.max(0, x - R); X <= Math.min(W - 1, x + R); X++) {
+        k++;
+        f += fresh[Y * W + X];
+      }
     return f >= GLASS_DENSE_SHARE * k;
   };
   const cand = new Uint8Array(n);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x;
-    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;
-  }
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;
+    }
   return paneTexels(cand, W, H);
 }
 
@@ -94,36 +114,52 @@ export function windowGlassTexels(win, twin) {
 export function paneTexels(cand, W, H) {
   const n = W * H;
   const core = new Uint8Array(n);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (!cand[y * W + x]) continue;
-    let k = 0;
-    for (let Y = Math.max(0, y - 1); Y <= Math.min(H - 1, y + 1); Y++) for (let X = Math.max(0, x - 1); X <= Math.min(W - 1, x + 1); X++) if ((X !== x || Y !== y) && cand[Y * W + X]) k++;
-    core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;
-  }
-  const comp = new Int32Array(n).fill(-1), kept = [];
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!cand[y * W + x]) continue;
+      let k = 0;
+      for (let Y = Math.max(0, y - 1); Y <= Math.min(H - 1, y + 1); Y++)
+        for (let X = Math.max(0, x - 1); X <= Math.min(W - 1, x + 1); X++)
+          if ((X !== x || Y !== y) && cand[Y * W + X]) k++;
+      core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;
+    }
+  const comp = new Int32Array(n).fill(-1),
+    kept = [];
   for (let i0 = 0; i0 < n; i0++) {
     if (!core[i0] || comp[i0] >= 0) continue;
-    const id = kept.length, stack = [i0];
+    const id = kept.length,
+      stack = [i0];
     let size = 0;
     comp[i0] = id;
     while (stack.length) {
-      const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
+      const i = /** @type {number} */ (stack.pop()),
+        x = i % W,
+        y = (i - x) / W;
       size++;
-      for (let Y = Math.max(0, y - GLASS_BRIDGE); Y <= Math.min(H - 1, y + GLASS_BRIDGE); Y++) for (let X = Math.max(0, x - GLASS_BRIDGE); X <= Math.min(W - 1, x + GLASS_BRIDGE); X++) {
-        const j = Y * W + X;
-        if (core[j] && comp[j] < 0) { comp[j] = id; stack.push(j); }
-      }
+      for (let Y = Math.max(0, y - GLASS_BRIDGE); Y <= Math.min(H - 1, y + GLASS_BRIDGE); Y++)
+        for (let X = Math.max(0, x - GLASS_BRIDGE); X <= Math.min(W - 1, x + GLASS_BRIDGE); X++) {
+          const j = Y * W + X;
+          if (core[j] && comp[j] < 0) {
+            comp[j] = id;
+            stack.push(j);
+          }
+        }
     }
     kept.push(size >= GLASS_MIN_TEXELS);
   }
   const out = new Uint8Array(n);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (!cand[y * W + x]) continue;
-    for (let Y = Math.max(0, y - 1); Y <= Math.min(H - 1, y + 1) && !out[y * W + x]; Y++) for (let X = Math.max(0, x - 1); X <= Math.min(W - 1, x + 1); X++) {
-      const j = Y * W + X;
-      if (core[j] && kept[comp[j]]) { out[y * W + x] = 1; break; }
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!cand[y * W + x]) continue;
+      for (let Y = Math.max(0, y - 1); Y <= Math.min(H - 1, y + 1) && !out[y * W + x]; Y++)
+        for (let X = Math.max(0, x - 1); X <= Math.min(W - 1, x + 1); X++) {
+          const j = Y * W + X;
+          if (core[j] && kept[comp[j]]) {
+            out[y * W + x] = 1;
+            break;
+          }
+        }
     }
-  }
   return out;
 }
 
@@ -138,21 +174,31 @@ export function interiorGlassMask(archive, record, bitmap, bitmapOf) {
   const { width, height } = bitmap;
   const colors = new Uint8ClampedArray(width * height * 4);
   let n = 0;
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    if (!glass[y * width + x]) continue;
-    n++;
-    const o = ((height - 1 - y) * width + x) * 4;
-    colors[o] = 255; colors[o + 1] = 255; colors[o + 2] = 255; colors[o + 3] = 255;
-  }
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      if (!glass[y * width + x]) continue;
+      n++;
+      const o = ((height - 1 - y) * width + x) * 4;
+      colors[o] = 255;
+      colors[o + 1] = 255;
+      colors[o + 2] = 255;
+      colors[o + 3] = 255;
+    }
   return n ? { colors, width, height } : null;
 }
 
 /** A cutout picture's holes as a glass mask (white where alpha is under a half) - for a context that would rather
  *  declare glass than cut it (renderer.uploadGlassMask). */
 export function glassMaskFromAlpha(color32) {
-  const src = color32.colors, out = new Uint8ClampedArray(src.length);
+  const src = color32.colors,
+    out = new Uint8ClampedArray(src.length);
   for (let i = 0; i < src.length; i += 4) {
-    if (src[i + 3] < 128) { out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = 255; }
+    if (src[i + 3] < 128) {
+      out[i] = 255;
+      out[i + 1] = 255;
+      out[i + 2] = 255;
+      out[i + 3] = 255;
+    }
   }
   return { colors: out, width: color32.width, height: color32.height };
 }

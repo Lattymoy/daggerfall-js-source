@@ -146,7 +146,7 @@
   {
     "name": "SETS-M2-unreadable-forgotten",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    if (!items) { if (unreadable && interiorLootTarget(ctx, canon)) { seen.add(canon); unreadable.add(canon); } continue; }",
+    "old": "    if (!items) {\n      if (unreadable && interiorLootTarget(ctx, canon)) {\n        seen.add(canon);\n        unreadable.add(canon);\n      }\n      continue;\n    }",
     "new": "    if (!items) continue;",
     "tests": [
       "test/systems/auditsetsonline.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "SETS-M2-never-cleared",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    unreadable?.delete(canon);\n",
-    "new": "",
+    "old": "    unreadable?.delete(canon);\n    if (canon === openKey) {",
+    "new": "    if (canon === openKey) {",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SETS-M2-building-claims-over-it",
     "file": "src/world/interior/interiorShared.js",
-    "old": "  if (bag.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
-    "new": "",
+    "old": "  if (bag.unreadable?.has(canon)) return false; // AUDIT SETS M2: never over a word this build cannot read\n  if (claim && bag.seen.has(canon)) return false;",
+    "new": "  if (claim && bag.seen.has(canon)) return false;",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]

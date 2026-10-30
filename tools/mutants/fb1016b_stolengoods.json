@@ -422,8 +422,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-kept",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    for (const it of items) clearStolen(it);\n",
-    "new": "",
+    "old": "    for (const it of items) clearStolen(it);\n    seen.add(canon);",
+    "new": "    seen.add(canon);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-said",
     "file": "src/world/interior/interiorShared.js",
-    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
-    "new": "r: peerHanded(t.items).map((it) => ({ ...it })),",
+    "old": "      r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
+    "new": "      r: peerHanded(t.items).map((it) => ({ ...it })),",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

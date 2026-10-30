@@ -556,8 +556,8 @@
   {
     "name": "GLASS-ALL-dungeon-set-taken",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && BUILDING_INTERIOR_SETS.has(archive % 100);",
-    "new": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22);",
+    "old": "    BUILDING_INTERIOR_SETS.has(archive % 100)",
+    "new": "    (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -574,7 +574,7 @@
   {
     "name": "GLASS-ALL-the-castle-exception-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "const WINDOW_EXCEPTIONS = new Map([[11, null], [111, Object.freeze({ record: 1, twin: 0 })]]);",
+    "old": "const WINDOW_EXCEPTIONS = new Map([\n  [11, null],\n  [111, Object.freeze({ record: 1, twin: 0 })],\n]);",
     "new": "const WINDOW_EXCEPTIONS = new Map([[11, null]]);",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -601,8 +601,8 @@
   {
     "name": "GLASS-ALL-the-ramp-unread",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "GLASS-ALL-the-index-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -646,8 +646,8 @@
   {
     "name": "GLASS-ALL-the-edges-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
-    "new": "    core[y * W + x] = k >= 8 ? 1 : 0;",
+    "old": "      core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
+    "new": "      core[y * W + x] = k >= 8 ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -655,8 +655,8 @@
   {
     "name": "GLASS-ALL-rows-unflipped",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    const o = ((height - 1 - y) * width + x) * 4;",
-    "new": "    const o = (y * width + x) * 4;",
+    "old": "      const o = ((height - 1 - y) * width + x) * 4;",
+    "new": "      const o = (y * width + x) * 4;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

@@ -38,7 +38,7 @@ where 65,535 lands today.
 THE CHANGE:
 
 - The room modules MARK the list they compose (`roomCarriedList.js` markRoomCarried) - the dungeon's at
-  `roomLootHost.js:"markRoomCarried(list);"`, a cupboard's at `interiorRoomLoot.js:"markRoomCarried(t.items);"`. That
+  `roomLootHost.js:"markRoomCarried(list);"`, a cupboard's at `interiorRoomLoot.js:"markRoomCarried(t.items)"`. That
   list alone is read for puts (a list some load replaced is not, and carries no mark). A leaf module: the planner reaches
   it without the room modules, whose import graph reaches back to the windows.
 - `planDropGold` asks whether the remote list is marked (`shared`, by default `isRoomCarried(remote)`) and clamps the

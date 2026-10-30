@@ -2,7 +2,7 @@
   {
     "name": "MACBUG1-the-mill-is-a-trap-again",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "  if (doors.length === 0) {\n    const enter = markers.find((m) => m.type === INTERIOR_MARKER.ENTER)\n      ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);\n    if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));\n  }",
+    "old": "  if (doors.length === 0) {\n    const enter =\n      markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);\n    if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));\n  }\n",
     "new": "",
     "tests": [
       "test/world/windmillinterior.test.js"

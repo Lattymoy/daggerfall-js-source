@@ -35,12 +35,12 @@
 // they are pure layout data, position-only.
 
 import { ROTATION_DIVISOR } from '../../formats/blocksFile.js';
-import { aliasTurnOf } from '../customModels.js';   // BED-TURN: a mod's piece drawn on a classic mesh that faces another way
-import { GLOBAL_SCALE, DOOR_TYPE } from '../meshReader.js';   // MAC-BUG1: a synthesised exit is a BUILDING door like any other
+import { aliasTurnOf } from '../customModels.js'; // BED-TURN: a mod's piece drawn on a classic mesh that faces another way
+import { GLOBAL_SCALE, DOOR_TYPE } from '../meshReader.js'; // MAC-BUG1: a synthesised exit is a BUILDING door like any other
 import { EDITOR_FLATS_ARCHIVE } from '../rmbFlats.js';
 import { getStaticDoors } from '../staticDoors.js';
 import { trs } from '../mat4.js';
-import { modelScaleVector } from '../rmbLayout.js';   // WD1: RMBLayout.GetModelScaleVector
+import { modelScaleVector } from '../rmbLayout.js'; // WD1: RMBLayout.GetModelScaleVector
 
 // DaggerfallInterior.cs:31 `const int propModelType = 3;`. Read here
 // for the prop bottom-Y rule (:420) and carried on every placement,
@@ -88,11 +88,11 @@ export const INTERIOR_MARKER = {
 // model 31000 is filtered. DFU's comments name the blocks; kept here.
 const BAD_MODEL_ID = 31000;
 const BAD_INTERIOR_MODEL_RECORDS = new Map([
-  [51, [1]],              // ARMRGL01.RMB
-  [84, [8, 9, 10, 11]],   // GENRGM00.RMB
-  [88, [2, 3, 4]],        // GENRGL01.RMB
-  [96, [2, 5, 6]],        // TVRNGL04.RMB
-  [106, [1]],             // FIGHGL00.RMB
+  [51, [1]], // ARMRGL01.RMB
+  [84, [8, 9, 10, 11]], // GENRGM00.RMB
+  [88, [2, 3, 4]], // GENRGL01.RMB
+  [96, [2, 5, 6]], // TVRNGL04.RMB
+  [106, [1]], // FIGHGL00.RMB
   [154, [0, 1, 2]],
   [155, [0, 1, 2, 3]],
   [156, [0, 1]],
@@ -113,8 +113,8 @@ const BAD_INTERIOR_MODEL_RECORDS = new Map([
   [601, [6, 7]],
   [680, [7, 8]],
   [697, [0, 1, 2, 3]],
-  [1195, [1]],            // ARMRBL01.RMB
-  [1278, [1, 2, 3, 4]],   // CUSTGA05.RMB
+  [1195, [1]], // ARMRBL01.RMB
+  [1278, [1, 2, 3, 4]], // CUSTGA05.RMB
 ]);
 
 /** FIELD BUGS 2026-10-25 BAD-CELL: where the misplaced 31000 stands in Daggerfall's own data - the same record
@@ -131,7 +131,8 @@ const BAD_MODEL_SPOT = Object.freeze({ xPos: 192, yPos: -192, zPos: 64 });
  */
 export function isBadInteriorModel(blockIndex, recordIndex, obj) {
   if (obj.modelIdNum !== BAD_MODEL_ID) return false;
-  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos) return false;
+  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos)
+    return false;
   const records = BAD_INTERIOR_MODEL_RECORDS.get(blockIndex);
   return records !== undefined && records.includes(recordIndex);
 }
@@ -151,7 +152,8 @@ function lowestY(model) {
  *  :719-730). FIELD BUGS 2026-10-05 CRYPT-SALE: the one law the layout refuses by and the house market asks of a door.
  *  A subrecord with no interior header at all is not known to be empty. IC-INTERIORS: a MADE interior (interiorCast) is
  *  laid from Daggerfall's kit - it holds its models before they are made. */
-export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;
+export const hasInteriorModels = (sub) =>
+  sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;
 /** IC-INTERIORS (bible/03-World/Arena-Provinces.md IC-INTERIORS): THE RECORD A BUILDING'S CAST IS READ FROM. A MADE
  *  interior (world/imperialFabricBuildings.js fabricBuildingInterior - an Imperial City building's own, laid from
  *  Daggerfall's kit) makes its records when one is first read, and names the Daggerfall record its people and its markers
@@ -223,7 +225,9 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     // RMBLayout.GetModelScaleVector (DaggerfallInterior.cs:444): classic
     // data never sets a scale (identity); a world-data JSON record may (WD1).
     const matrix = trs(
-      px, py, pz,
+      px,
+      py,
+      pz,
       -obj.xRotation / ROTATION_DIVISOR,
       -(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,
       -obj.zRotation / ROTATION_DIVISOR,
@@ -249,7 +253,14 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
       markers.push({ type: obj.textureRecord, x, y, z });
       continue;
     }
-    flats.push({ archive: obj.textureArchive, record: obj.textureRecord, x, y, z, ...(obj.hang === true ? { hang: true } : {}) });   // WAGONS2: a flat the port's own block hangs from a ceiling (systems/caravanRoom.js) - no RMB record carries the field
+    flats.push({
+      archive: obj.textureArchive,
+      record: obj.textureRecord,
+      x,
+      y,
+      z,
+      ...(obj.hang === true ? { hang: true } : {}),
+    }); // WAGONS2: a flat the port's own block hangs from a ceiling (systems/caravanRoom.js) - no RMB record carries the field
   }
 
   // AddActionDoors. Placed closed; openRotation is for the Player arc.
@@ -312,8 +323,8 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
   // by a byte; and an interior with neither a door nor an enter marker
   // gets nothing, because there is nowhere honest to put it.
   if (doors.length === 0) {
-    const enter = markers.find((m) => m.type === INTERIOR_MARKER.ENTER)
-      ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);
+    const enter =
+      markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);
     if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));
   }
 
@@ -338,7 +349,7 @@ function exitDoorAt(marker, blockIndex, recordIndex) {
     blockIndex,
     recordIndex,
     doorIndex: 0,
-    synthesised: true,   // MAC-BUG1: this one is the port's, not the model's
+    synthesised: true, // MAC-BUG1: this one is the port's, not the model's
     centre: { x: marker.x, y: marker.y, z: marker.z },
     normal: { x: 0, y: 0, z: 1 },
     size: { x: SYNTHESISED_DOOR_SIZE.x, y: SYNTHESISED_DOOR_SIZE.y, z: SYNTHESISED_DOOR_SIZE.z },

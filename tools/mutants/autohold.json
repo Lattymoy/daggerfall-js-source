@@ -202,8 +202,8 @@
   {
     "name": "AUTOHOLD-the-shelf-lands-mine",
     "file": "src/world/interior/interiorShared.js",
-    "old": "  const keys = new Set([...(carried.keys ?? []), ...(stowed ? carried.stowed ?? [] : [])]);",
-    "new": "  const keys = new Set([...(stowed ? carried.stowed ?? [] : [])]);",
+    "old": "  const keys = new Set([...(carried.keys ?? []), ...(stowed ? (carried.stowed ?? []) : [])]);",
+    "new": "  const keys = new Set([...(stowed ? (carried.stowed ?? []) : [])]);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUTOHOLD-the-shelf-lands-twice",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    if (keys.has(k)) return false;\n    keys.add(k);\n",
-    "new": "    if (keys.has(k)) return false;\n",
+    "old": "    keys.add(k);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUTOHOLD-the-memory-unhanded",
     "file": "src/world/interior/interiorShared.js",
-    "old": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
-    "new": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, room, from: null });",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "new": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-stowed-everywhere",
     "file": "src/world/interior/interiorShared.js",
-    "old": "{ stowed: canon.startsWith('shelf:') }",
-    "new": "{ stowed: true }",
+    "old": "    const lands = withoutCarried(items, carried, { stowed: canon.startsWith('shelf:') });",
+    "new": "    const lands = withoutCarried(items, carried, { stowed: true });",
     "tests": [
       "test/server/autohold.test.js"
     ]

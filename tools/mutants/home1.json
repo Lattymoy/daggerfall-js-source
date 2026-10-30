@@ -339,8 +339,8 @@
   {
     "name": "HOME1-the-bag-forgets-home",
     "file": "src/world/interior/interiorShared.js",
-    "old": "owned: !!owned, home: !!home,",
-    "new": "owned: !!owned, home: false,",
+    "old": "    home: !!home,",
+    "new": "    home: false,",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -350,8 +350,8 @@
   {
     "name": "HOME1-a-homes-memory-names-its-cupboards",
     "file": "src/world/interior/interiorShared.js",
-    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),",
-    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig, { room }),",
+    "old": "      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
+    "new": "      loot: interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -362,8 +362,8 @@
     "name": "HOME1-a-peers-word-lands-on-the-chest",
     "file": "src/world/interior/interiorShared.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the memory's landing hands on `carried`",
-    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
-    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -373,8 +373,8 @@
   {
     "name": "HOME1-a-refused-act-names-a-cupboard",
     "file": "src/world/interior/interiorShared.js",
-    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });",
-    "new": "const l = interiorLootRecords(ctx, keys, tooBig, { room });",
+    "old": "  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
+    "new": "  const l = interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",

@@ -210,6 +210,8 @@
 /src/world/card/*/
 !/src/world/deepWater/
 /src/world/deepWater/*/
+!/src/world/interior/
+/src/world/interior/*/
 !/src/world/jungle/
 /src/world/jungle/*/
 !/src/world/ketch/

@@ -53,8 +53,8 @@
   {
     "name": "BED-TURN-unturned",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "-(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,",
-    "new": "-obj.yRotation / ROTATION_DIVISOR,",
+    "old": "      -(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,",
+    "new": "      -obj.yRotation / ROTATION_DIVISOR,",
     "tests": [
       "test/scenes/builtin_mods.test.js"
     ],

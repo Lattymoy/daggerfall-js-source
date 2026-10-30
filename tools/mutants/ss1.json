@@ -232,8 +232,8 @@
   {
     "name": "SS3-a-buildings-container-lands-a-bound-piece",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    const items = peerHanded(validLootList(rec.r));",
-    "new": "    const items = validLootList(rec.r);",
+    "old": "    const items = peerHanded(validLootList(rec.r)); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
+    "new": "    const items = validLootList(rec.r); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

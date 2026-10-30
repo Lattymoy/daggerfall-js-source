@@ -69,8 +69,8 @@
   {
     "name": "AUDIT-OL-C1-a-lost-roll-lifts-any-take",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "now - t.at <= cross)",
-    "new": "true)",
+    "old": "        if (t.mint !== mint && now - t.at <= cross) {",
+    "new": "        if (t.mint !== mint && true) {",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "AUDIT-OL-C3-the-lost-rolls-puts-never-home",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      for (const g of cup.gave) if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id)) givePiece(entity, g.item, pieceCount(g.item));",
-    "new": "",
+    "old": "      for (const g of cup.gave)\n        if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id))\n          givePiece(entity, g.item, pieceCount(g.item)); // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)",
+    "new": "      // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT-OL-C3-the-seats-put-unrecorded",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      else gaveIn(cup, piece, mintOf(st), put.id);\n",
-    "new": "",
+    "old": "      else gaveIn(cup, piece, mintOf(st), put.id);\n      return;",
+    "new": "      return;",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-OL-C3-a-taken-put-home-as-well",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "now - g.at <= cross && was?.ids?.includes(g.id)) givePiece(",
-    "new": "now - g.at <= cross) givePiece(",
+    "old": "        if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id))\n          givePiece(entity, g.item, pieceCount(g.item)); // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)",
+    "new": "        if (g.mint !== mint && now - g.at <= cross) givePiece(entity, g.item, pieceCount(g.item)); // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDIT-OL-C2-puts-go-with-their-putter",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }",
-    "new": "",
+    "old": "      for (const [id, p] of [...puts])\n        if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) {\n          puts.delete(id);\n          givePiece(entity, p.item, pieceCount(p.item));\n        }\n    },",
+    "new": "    },",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-OL-C2-every-put-home-at-the-leave",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) {",
-    "new": "if (true) {",
+    "old": "        if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) {",
+    "new": "        if (true) {",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-OL-D5-the-seat-grants-a-given-up-cupboard-claim",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "!('it' in cl) && Number.isFinite(cl.tm) && now - cl.tm >= CLAIM_KEEP_MS / 2 ? { ...cl, stale: true } : cl, admit)",
-    "new": "cl, admit)",
+    "old": "    const verdicts = claims.map((cl) => [\n      cl.id,\n      judgeRoomClaim(\n        st,\n        st.base.items.length,\n        st.base.full,\n        !('it' in cl) && Number.isFinite(cl.tm) && now - cl.tm >= CLAIM_KEEP_MS / 2 ? { ...cl, stale: true } : cl,\n        admit,\n      ),\n    ]); // AUDIT OUTDOOR-LOOT D5: a take claim old enough that its claimer may have given it up (CLAIM_KEEP_MS) is refused - granted, its piece left the room for nobody",
+    "new": "    const verdicts = claims.map((cl) => [cl.id, judgeRoomClaim(st, st.base.items.length, st.base.full, cl, admit)]); // AUDIT OUTDOOR-LOOT D5: a take claim old enough that its claimer may have given it up (CLAIM_KEEP_MS) is refused - granted, its piece left the room for nobody",
     "tests": [
       "test/net/containerloot_edges.test.js"
     ]

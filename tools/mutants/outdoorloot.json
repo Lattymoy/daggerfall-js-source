@@ -210,8 +210,8 @@
   {
     "name": "OUTDOOR-LOOT-cupboard-take-all-said-in-one-word",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) {\n      out.push(dayOf(claimWord(",
-    "new": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX * 100) {\n      out.push(dayOf(claimWord(",
+    "old": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) {",
+    "new": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX * 100) {",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "OUTDOOR-LOOT-cupboard-verdicts-pushed-out-of-a-word",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "for (let i = 0; i < verdicts.length; i += ROOM_ANSWERS_KEPT) out.push(word(verdicts.slice(i, i + ROOM_ANSWERS_KEPT)));",
-    "new": "out.push(word(verdicts.slice(-ROOM_ANSWERS_KEPT)));",
+    "old": "    for (let i = 0; i < verdicts.length; i += ROOM_ANSWERS_KEPT)\n      out.push(word(verdicts.slice(i, i + ROOM_ANSWERS_KEPT)));",
+    "new": "    out.push(word(verdicts.slice(-ROOM_ANSWERS_KEPT)));",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "OUTDOOR-LOOT-seat-says-its-verdicts-on-the-frame",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (mine && (verdicts.length || birth)) say(cup, { verdicts, base: birth });",
-    "new": "if (mine && birth) say(cup, { verdicts, base: birth });",
+    "old": "    if (mine && (verdicts.length || birth)) say(cup, { verdicts, base: birth });",
+    "new": "    if (mine && birth) say(cup, { verdicts, base: birth });",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "OUTDOOR-LOOT-no-seat-known-is-another-seat",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "const isSeat = () => { const s = net.seat(); return s == null || s === net.selfId(); };",
-    "new": "const isSeat = () => { const s = net.seat(); return s === net.selfId(); };",
+    "old": "    return s == null || s === net.selfId();",
+    "new": "    return s === net.selfId();",
     "tests": [
       "test/net/containerloot.test.js",
       "test/net/containerloot_protocol.test.js",
@@ -248,8 +248,8 @@
   {
     "name": "OUTDOOR-LOOT-first-open-tie-broken-by-the-local-clock",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "const wall = () => net.wallNow() ?? 0;",
-    "new": "const wall = () => Date.now();",
+    "old": "  const wall = () => net.wallNow() ?? 0;",
+    "new": "  const wall = () => Date.now();",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "OUTDOOR-LOOT-cupboard-claim-dropped-at-the-door",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      ledger.keep(() => true, now);\n",
-    "new": "",
+    "old": "      ledger.keep(() => true, now);\n      // AUDIT OUTDOOR-LOOT C2: a put the seat refused, or never answered in ROOM_CLAIM_TIMEOUT_MS of saying it again (an older seat",
+    "new": "      // AUDIT OUTDOOR-LOOT C2: a put the seat refused, or never answered in ROOM_CLAIM_TIMEOUT_MS of saying it again (an older seat",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "OUTDOOR-LOOT-take-from-a-lost-roll-keeps-the-piece",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (cup.composed.base !== st.base) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); return; }",
-    "new": "if (cup.composed.base !== st.base) { net.say(ROOM_TAKEN_TEXT); return; }",
+    "old": "      liftPiece(entity, obj, k);\n      net.say(ROOM_TAKEN_TEXT);",
+    "new": "      net.say(ROOM_TAKEN_TEXT);",
     "tests": [
       "test/net/containerloot.test.js",
       "test/net/containerloot_protocol.test.js",
@@ -277,8 +277,8 @@
   {
     "name": "OUTDOOR-LOOT-older-build-second-word-resurrects",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (from == null || !prev || !isSeat()) return 1;",
-    "new": "if (from == null || !isSeat()) return 1;",
+    "old": "    if (from == null || !prev || !isSeat()) return 1; // the memory's and a peer's first word are baselines; the seat's next word carries the change",
+    "new": "    if (from == null || !isSeat()) return 1; // the memory's and a peer's first word are baselines; the seat's next word carries the change",
     "tests": [
       "test/net/outdoorloot_pins.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "OUTDOOR-LOOT-yesterdays-word-beats-todays",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (cup.st && cup.st.terms.g > Math.floor(rec.d)) return 1;",
-    "new": "void 0;",
+    "old": "    if (cup.st && cup.st.terms.g > Math.floor(rec.d)) return 1; // A3: yesterday's word never beats today's",
+    "new": "    void 0; // A3: yesterday's word never beats today's",
     "tests": [
       "test/net/outdoorloot_pins.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "OUTDOOR-LOOT-cupboard-unborn-flag-is-belt-and-braces",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "unborn(canon) { return !cups.get(canon)?.st; },",
-    "new": "unborn(canon) { return false; },",
+    "old": "      return !cups.get(canon)?.st;",
+    "new": "      return false;",
     "tests": [
       "test/net/containerloot.test.js",
       "test/net/containerloot_protocol.test.js",
