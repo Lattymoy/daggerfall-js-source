@@ -865,3 +865,12 @@ and the day's serpent, handed to `systems/naval/etherCrossing.js` createCrossSea
 its reset and its two marks) went into the gate it belongs with (`createCrossingGate` `refused`). `bootWorld` 35,231 ->
 35,230 logical lines on the merged host, and the ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it).
 
+
+## SHIP-BOARD - the ship's board out of bootWorld (CLEANUP, 2026-10-30)
+
+`boardOrDisembark`, one member of 81 lines with no writes, went out verbatim by `tools/hostMove.mjs` to
+`scenes/shipBoardHost.js` `createShipBoard`: fifteen names by value, `veilRefused` live, `boardOrDisembark` returned
+(the mount rig's `onShip` and `shipTransportMode` call it from closures run after construction). The host drops three
+imports. `bootWorld` 35,158 -> 35,140 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`, its
+mutant re-aimed under it). The tool re-aimed eight records; the two pins that lift the board's text and run it hand it
+a `host` (`audit68_worldjs.test.js`, `audit_etherow.test.js` - PIN MOVED). Nine re-aimed records, all dead.

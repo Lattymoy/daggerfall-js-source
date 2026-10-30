@@ -612,7 +612,7 @@ import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.j
 import { createUseMagicItemWindow, noItemToActivateText } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
-import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
+import { REPOSITION, isOnShip } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
 import { createDragonViewHost, dragonAuraLift } from './dragonViewHost.js';   // DRAGON-POV: my dragon in third person
 import { setDragonSaddleCovered } from '../player/dragonSaddle.js';   // DRAGON-POV: the saddle under a panel
 import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
@@ -1264,6 +1264,7 @@ import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
 import { createHarbourHost } from './harbourHost.js';   // HOST-SPLIT
 import { createPoiEditorMount } from './poiEditorMount.js';   // HOST-SPLIT
 import { createTravelFareDeps } from './travelFareHost.js';   // HOST-SPLIT
+import { createShipBoard } from './shipBoardHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -13663,87 +13664,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     } finally { _teleporting = wasMoving; hudFade.fadeHUDFromBlack(); }
     return true;
   }
-  async function boardOrDisembark() {
-    if (worldMoveBusy()) return;   // AUDIT 68 S22
-    if (await enterLinkedBankCabin()) return;
-    const here = playerTravelPixel();
-    const t = shipTransition(playerEntity, {
-      boardShipPosition: playerEntity.boardShipPosition ?? null,
-      mapPixel: here,
-      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, ...RECORD_GROUND_STAMP }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
-    });
-    if (!t) return;
-    // AUDIT ETHER-OW C2-3 (AUDIT CAPTAIN'S SEA P6's law): NO BOARDING ACROSS THE VEIL - "Your Ship" is the Bay's (its two
-    // pixels in region 31), and the board is a teleport: from past the Veil the transport's Ship row and Warm Ashes' raid
-    // carried a captain over and home again without the crossing, the boat left behind. Leaving the ship always goes
-    // back where it was boarded (`boardShipPosition`), whichever side that is
-    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;
-    // TR-AUDIT F-F1: READ the reposition rather than infer it from
-    // `restore`. StreamingWorld's RandomStartMarker is
-    // PositionPlayerToLocation, which puts you at a random SIDE of the
-    // location at that pixel and falls back to the terrain origin only
-    // when the pixel has none (:1437-1447).
-    //
-    // MEASURED, 2026-09-03, against the owner's real MAPS.BSA: the two
-    // ship pixels are NOT open sea. Map pixel (2,2) carries region 31
-    // ("High Rock sea coast") location index 1, "Your Ship", mapId
-    // 1050578, LocationTypes.HomeYourShips (14), 1x1, block
-    // SHIPAA00.RMB; map pixel (5,5) carries region 31 index 2, "Your
-    // Ship", mapId 2102157, block SHIPAA01.RMB - and those two mapIds
-    // are systems/banking.js SHIP_INTERIOR_MAP_IDS exactly. Nothing
-    // else in the 62 regions stands on either pixel.
-    //
-    // So the fallback never runs and this arrival is an ORDINARY
-    // location arrival: `reposition` rides into the teleport core, the
-    // core runs the location arm once the destination pixel is built,
-    // and HomeYourShips' own two booleans (useNearestStartMarker true,
-    // grounded false - :1462-1464) put the player on the deck at a
-    // random side of the ship's block rather than at a terrain origin
-    // dropped to sea level. The pin is tr4_ship.test.js's data gate.
-    // AUDIT 68 S22: the height is stood in the arrival's frame (compensation[1] survives state.init); a memory
-    // written raw, before the flag, cannot be recovered and is GROUNDED.
-    const legacy = t.reposition === REPOSITION.None && !t.restore.compensationFree;
-    const localPos = t.reposition === REPOSITION.None ? (shipRestorePos(t.restore, state.compensation[1]) ?? t.restore.pos) : null;
-    // A10 - THE SCENE CACHE ROUND THE TELEPORT (:382-388, :393-398).
-    // BOTH arms of the ship do the same three things in the same
-    // order: CacheScene(world.SceneName) with SceneName still naming
-    // the pixel you are LEAVING, the teleport, then
-    // RestoreCachedScene(world.SceneName) with SceneName now naming
-    // the pixel you have ARRIVED at. DFU's own comment says why the
-    // pair is safe here - "ship is special case, cache will not be
-    // cleared" - and the port already carries that half at the
-    // map-pixel seam below (the to/from-ship exception on
-    // clearSceneCache).
-    //
-    // Without it the port DECIDED but never CACHED: _teleportToPixel
-    // destroys every built pixel and collectPixel takes the loose
-    // piles with it, so a chest dropped on the dock was gone the
-    // moment you boarded and gone again when you came back. The pair
-    // makes the two pixels a hand-off - the departure's piles wait in
-    // the cache until the return, and the ship's own deck likewise.
-    //
-    // The port's exterior scene state is the loose piles, carried as
-    // DFU carries them: LootContainerData_v1 entries with
-    // LootContainerTypes.DroppedLoot (:558-566). NATIVE coordinates,
-    // because a pile that came back in local ones would land wherever
-    // the floating origin happened to be.
-    hudFade.smashHUDToBlack();   // WA1: UpdateMode's ship arm opens black (TransportManager.cs:364) - and the quest machine holds while it fades back (QuestMachine.Update)
-    cacheExteriorScene(here);
-    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });
-    // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
-    // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
-    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
-      const c = state.compensation[1];
-      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale), t.restore.groundFrame) + c;   // BAY-LEFT-GROUND: by its frame's law
-      if (walkMode) player.spawn(localPos[0], y, localPos[2]);
-      cam.pos = [localPos[0], y + (walkMode ? 0 : 40), localPos[2]];
-    }
-    restoreExteriorScene(t.go);
-    if (t.restore) cam.yaw = t.restore.yaw;
-    playerEntity.boardShipPosition = t.boardShipPosition;
-    setTransportModeHere(t.mode);
-    hudFade.fadeHUDFromBlack();   // WA1: ...and closes on FadeHUDFromBlack (:401), the arrival awaited, as teleportTo's is
-  }
+  const { boardOrDisembark } = createShipBoard({   // HOST-SPLIT: src/scenes/shipBoardHost.js
+    _teleportToPixel, cacheExteriorScene, cam, enterLinkedBankCabin, groundFrameHeight, landform, player,
+    playerTravelPixel, restandHeight, restoreExteriorScene, scaleOf, setTransportModeHere, state, walkMode,
+    worldMoveBusy,
+    get veilRefused() { return veilRefused; },
+  });
 
   // ---- A10 - THE RECALL ANCHOR, ACROSS CONTEXTS.
   //

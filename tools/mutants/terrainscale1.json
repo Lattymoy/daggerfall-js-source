@@ -523,7 +523,7 @@
   },
   {
     "name": "TS1-ship-unstamped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP },",
     "new": "yaw: cam.yaw },",
     "tests": [
@@ -533,7 +533,7 @@
   },
   {
     "name": "TS1-ship-deck-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "      if (walkMode) player.spawn(localPos[0], y, localPos[2]);",
     "new": "      if (walkMode) player.spawn(localPos[0], localPos[1], localPos[2]);",
     "tests": [

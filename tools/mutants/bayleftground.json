@@ -741,7 +741,7 @@
   },
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-reader-blind",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "scaleOf(t.restore.terrainScale), t.restore.groundFrame)",
     "new": "scaleOf(t.restore.terrainScale))",
     "tests": [
@@ -786,7 +786,7 @@
   },
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-unstamped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP }",
     "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
     "tests": [

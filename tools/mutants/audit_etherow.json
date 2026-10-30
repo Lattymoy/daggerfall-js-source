@@ -162,9 +162,9 @@
   },
   {
     "name": "AEOW-C2-3-board-across",
-    "file": "src/scenes/world.js",
-    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
-    "new": "    if (!playerEntity.boardShipPosition && veilRefused(null) && false) return;",
+    "file": "src/scenes/shipBoardHost.js",
+    "old": "    if (!playerEntity.boardShipPosition && host.veilRefused(t.go)) return;",
+    "new": "    if (!playerEntity.boardShipPosition && host.veilRefused(null) && false) return;",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],
@@ -172,9 +172,9 @@
   },
   {
     "name": "AEOW-C2-3-leave-refused",
-    "file": "src/scenes/world.js",
-    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
-    "new": "    if (veilRefused(t.go)) return;",
+    "file": "src/scenes/shipBoardHost.js",
+    "old": "    if (!playerEntity.boardShipPosition && host.veilRefused(t.go)) return;",
+    "new": "    if (host.veilRefused(t.go)) return;",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],
