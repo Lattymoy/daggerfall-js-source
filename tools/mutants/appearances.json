@@ -604,8 +604,8 @@
   {
     "name": "APPEARANCES-the-fee-unsaid",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "el('span', 'broker-price', WARDROBE_WORDS.fee(fee)), press);",
-    "new": "el('span', 'broker-price', ''), press);",
+    "old": "      row.append(\n        tryPress(item, look, frameOf(lookStub(look), name), name),\n        el('span', 'broker-price', WARDROBE_WORDS.fee(fee)),\n        press,\n      );",
+    "new": "      row.append(tryPress(item, look, frameOf(lookStub(look), name), name), el('span', 'broker-price', ''), press);",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "APPEARANCES-a-refused-press-wears",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "        if (why) refusePress(press, wardrobeRefusal(why), refused);",
-    "new": "",
+    "old": "        if (why) refusePress(press, wardrobeRefusal(why), refused); // MENU-ORDER: a refused press says why, pressed",
+    "new": "        // MENU-ORDER: a refused press says why, pressed",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "APPEARANCES-the-own-look-not-offered",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "worn ? WARDROBE_WORDS.wear() : WARDROBE_WORDS.worn());",
-    "new": "WARDROBE_WORDS.worn());",
+    "old": "    const ownPress = el(\n      'button',\n      'act broker-buy wardrobe-press',\n      worn ? WARDROBE_WORDS.wear() : WARDROBE_WORDS.worn(),\n    );",
+    "new": "    const ownPress = el('button', 'act broker-buy wardrobe-press', WARDROBE_WORDS.worn());",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]

@@ -6,7 +6,7 @@
 // On either skin: a shop's popup row opens it (scenes/wardrobeCounter.js). A page with no document answers null.
 import { mountEnhancedChunk } from '../enhanced/enhancedChunk.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The overlay standing now, or null. */
 let _open = /** @type {any} */ (null);
@@ -26,7 +26,7 @@ export function closeWardrobeDoor() {
  * @returns {any} the overlay, or null with no document
  */
 export function createWardrobeOverlay(deps) {
-  noteFirstUse('shops');   // TUT1: the counter is a shop's
+  noteFirstUse('shops'); // TUT1: the counter is a shop's
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
@@ -42,28 +42,53 @@ export function createWardrobeOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.();
   };
   unregister = registerOverlay(close);
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* the window is a fixed div over the canvas; pointers never get here */ },
-    wheel() { /* its list scrolls itself */ },
-    hover() { /* its own :hover */ },
-    tick() { /* a press repaints it */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the window is a fixed div over the canvas; pointers never get here */
+    },
+    wheel() {
+      /* its list scrolls itself */
+    },
+    hover() {
+      /* its own :hover */
+    },
+    tick() {
+      /* a press repaints it */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./wardrobeWindow.js'),
-    mount: ({ mountWardrobeWindow }) => { view = mountWardrobeWindow(host, { ...deps, onExit: close }); },
-    alive: () => !fired, host, onDismiss: () => { close(); }, label: 'wardrobe',
+    mount: ({ mountWardrobeWindow }) => {
+      view = mountWardrobeWindow(host, { ...deps, onExit: close });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close();
+    },
+    label: 'wardrobe',
   });
   return overlay;
 }
