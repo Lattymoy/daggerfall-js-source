@@ -277,6 +277,12 @@ reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function p
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
+PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's slot, the classic Regenerate at
+2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
+(`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
+rise, so PVP-HEAL's window caps it with every other heal. A saved Cure slot loads as Regenerate
+(`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
+
 PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
 maximum magicka (`pvpKit.js:"resurrect: Object.freeze({ cost: 25, icon: 10 }),"`). It is the shop's own Resurrection,
 by touch (`pvpKit.js:"case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];"`), with no 15 m gift: it goes

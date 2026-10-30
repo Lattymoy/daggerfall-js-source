@@ -32,7 +32,7 @@ const sinks = { hurt: quiet, heal: quiet, drainFatigue: quiet, restoreFatigue: q
 test('PVP-KIT THE LAW: eight slots, 15 m, a minute, skill 100 to 300; the costs and the scaling the owner approved (mutants: a cost; a scale end; the clamp; the reach)', () => {
   assert.deepEqual(PVP_KIT, { slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });
   assert.deepEqual(Object.fromEntries(KIT_IDS.map((id) => [id, KIT_SPELLS[id].cost])),
-    { damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, cure: 5, jump: 6, speed: 6, resurrect: 25 });
+    { damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, regen: 10, jump: 6, speed: 6, resurrect: 25 });
   const ends = (id) => [kitScale(id, 100), kitScale(id, 300)];
   assert.deepEqual(ends('heal'), [25, 35]);
   assert.deepEqual(ends('shield'), [10, 25]);
@@ -40,12 +40,13 @@ test('PVP-KIT THE LAW: eight slots, 15 m, a minute, skill 100 to 300; the costs 
   assert.deepEqual(ends('reflect'), [10, 30]);
   assert.deepEqual(ends('absorb'), [10, 30]);
   assert.deepEqual(ends('fortify'), [5, 20]);
+  assert.deepEqual(ends('regen'), [2, 4]);
   assert.equal(kitScale('resist', 200), 60, 'straight between');
   assert.equal(kitScale('resist', 40), 30, 'held at the low end');
   assert.equal(kitScale('resist', 900), 90, 'held at the high end');
-  assert.equal(kitScale('cure', 300), 0, 'Cure does not scale');
+  assert.equal(kitScale('jump', 300), 0, 'Jump does not scale');
   assert.equal(kitCost('shield', 400), 60);
-  assert.equal(kitCost('cure', 10), 1, 'never under 1');
+  assert.equal(kitCost('jump', 10), 1, 'never under 1');
   assert.equal(KIT_ELEMENTS.length, 5);
 });
 
@@ -77,7 +78,13 @@ test('PVP-KIT THE SPELLS: Damage is the classic Fireball at Area at Range in the
   const fort = kitSpell({ id: 'fortify', pick: 3 }, at);
   assert.deepEqual([fort.effects[0].type, fort.effects[0].subType, rollMagnitude(fort.effects[0], 30)], [9, 3, 20]);
   assert.deepEqual(kitSpell({ id: 'speed' }, at).effects.map((e) => [e.type, e.subType]), [[9, 6]]);
-  assert.deepEqual(kitSpell({ id: 'cure' }, at).effects.map((e) => [e.type, e.subType, e.chanceBase]), [[3, 0, 100], [3, 1, 100], [3, 2, 100]]);
+  const regen = kitSpell({ id: 'regen' }, at);
+  assert.deepEqual([regen.rangeType, regen.pvpReach, regen.effects[0].type, regen.effects[0].subType & 0xff], [0, 15, 18, 255], 'PVP-KIT-REGEN: the classic Regenerate, a gift');
+  assert.equal(rollMagnitude(regen.effects[0], 30), 40, '4% of 1,000 a round at skill 300');
+  assert.equal(rollDuration(regen.effects[0], 30), PVP_KIT.rounds, 'a minute');
+  assert.equal(kitSchool('regen'), SKILLS.Restoration);
+  assert.deepEqual(kitSlotOf({ id: 'cure', icon: 49 }), { id: 'regen', pick: null, icon: 1 }, 'a saved Cure is Regenerate, its old default icon the new one');
+  assert.equal(kitSlotOf({ id: 'cure', icon: 7 }).icon, 7, 'a chosen icon kept');
   assert.deepEqual(kitSpell({ id: 'jump' }, at).effects.map((e) => e.type), [27]);
   assert.deepEqual(kitSpell({ id: 'reflect' }, at).effects.map((e) => [e.type, e.chanceBase]), [[21, 30]]);
   assert.deepEqual(kitSpell({ id: 'absorb' }, at).effects.map((e) => [e.type, e.chanceBase]), [[20, 30]]);

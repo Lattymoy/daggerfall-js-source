@@ -34,7 +34,7 @@ export const KIT_SPELLS = Object.freeze({
   reflect: Object.freeze({ cost: 12, scale: Object.freeze([10, 30]), icon: 9 }),
   absorb: Object.freeze({ cost: 12, scale: Object.freeze([10, 30]), icon: 25 }),
   fortify: Object.freeze({ cost: 10, pick: 'attribute', scale: Object.freeze([5, 20]), icon: 45 }),
-  cure: Object.freeze({ cost: 5, icon: 49 }),
+  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),   // PVP-KIT-REGEN: in Cure's place, the classic Troll's Blood's icon
   jump: Object.freeze({ cost: 6, icon: 12 }),
   speed: Object.freeze({ cost: 6, scale: Object.freeze([5, 20]), icon: 25 }),
   resurrect: Object.freeze({ cost: 25, icon: 10 }),   // PVP-KIT-REZ: the shop's Resurrection, its icon
@@ -42,13 +42,14 @@ export const KIT_SPELLS = Object.freeze({
 export const KIT_IDS = Object.freeze(Object.keys(KIT_SPELLS));
 const NAMES = Object.freeze({ damage: () => t('pvp.kit.damage', 'Damage'), heal: () => t('pvp.kit.heal', 'Heal'), shield: () => t('pvp.kit.shield', 'Shield'),
   resist: () => t('pvp.kit.resist', 'Resist'), reflect: () => t('pvp.kit.reflect', 'Reflect'), absorb: () => t('pvp.kit.absorb', 'Absorb'),
-  fortify: () => t('pvp.kit.fortify', 'Fortify'), cure: () => t('pvp.kit.cure', 'Cure'), jump: () => t('pvp.kit.jump', 'Jump'), speed: () => t('pvp.kit.speed', 'Speed'),
+  fortify: () => t('pvp.kit.fortify', 'Fortify'), regen: () => t('pvp.kit.regen', 'Regenerate'), jump: () => t('pvp.kit.jump', 'Jump'), speed: () => t('pvp.kit.speed', 'Speed'),
   resurrect: () => t('pvp.kit.resurrect', 'Resurrect') });
 /** The spell's word on the bar. */
 export const kitBaseName = (id) => (NAMES[id] ?? NAMES.damage)();
 
 /** A slot as saved: the spell, its pick (an element or an attribute), its icon (0..68). Anything else is the default. */
 export function kitSlotOf(raw, i = 0) {
+  if (raw?.id === 'cure') raw = { ...raw, id: 'regen', icon: raw.icon === 49 ? KIT_SPELLS.regen.icon : raw.icon };   // PVP-KIT-REGEN: a saved Cure is Regenerate
   const def = KIT_DEFAULT_BAR[i % KIT_DEFAULT_BAR.length];
   const id = KIT_IDS.includes(raw?.id) ? raw.id : def.id;
   const kind = KIT_SPELLS[id].pick;
@@ -61,7 +62,7 @@ export function kitSlotOf(raw, i = 0) {
 export const KIT_DEFAULT_BAR = Object.freeze([
   { id: 'damage', pick: 0, icon: 2 }, { id: 'heal', pick: null, icon: 3 }, { id: 'shield', pick: null, icon: 47 },
   { id: 'resist', pick: 0, icon: 1 }, { id: 'reflect', pick: null, icon: 9 }, { id: 'absorb', pick: null, icon: 25 },
-  { id: 'fortify', pick: 0, icon: 45 }, { id: 'cure', pick: null, icon: 49 },
+  { id: 'fortify', pick: 0, icon: 45 }, { id: 'regen', pick: null, icon: 1 },
 ].map((s) => Object.freeze(s)));
 /** A whole saved bar, eight slots. */
 export const kitBarOf = (raw) => Array.from({ length: PVP_KIT.slots }, (_, i) => kitSlotOf(Array.isArray(raw) ? raw[i] : null, i));
@@ -101,7 +102,7 @@ const buff = (type, subType, chance = 0, mag = NONE) => ({ type, subType, durati
 const FIREBALL = Object.freeze({ type: 4, subType: 0, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 1, chanceMod: 1, chancePerLevel: 1,
   magnitudeBaseLow: 1, magnitudeBaseHigh: 1, magnitudeLevelBase: 1, magnitudeLevelHigh: 7, magnitudePerLevel: 1 });
 
-/** The classic effects a cast of `id` lands: a heal and a shield a share of `maxHealth`, the rest their own numbers. */
+/** The classic effects a cast of `id` lands: a heal, a shield and a regen a share of `maxHealth`, the rest their own numbers. */
 export function kitEffects(id, pick, { skill = 0, level = 1, maxHealth = 0 } = {}) {
   const n = kitScale(id, skill);
   switch (id) {
@@ -113,7 +114,7 @@ export function kitEffects(id, pick, { skill = 0, level = 1, maxHealth = 0 } = {
     case 'absorb': return [buff(20, -1, Math.round(n))];
     case 'fortify': return [buff(9, pick, 0, kitMagnitude(n, level))];
     case 'speed': return [buff(9, 6, 0, kitMagnitude(n, level))];
-    case 'cure': return [0, 1, 2].map((sub) => buff(3, sub, 100));
+    case 'regen': return [buff(18, -1, 0, kitMagnitude((n / 100) * maxHealth, level))];   // PVP-KIT-REGEN: a share of health each round
     case 'jump': return [buff(27, -1)];
     case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];   // PVP-KIT-REZ: the game's own Resurrect (45,255)
     default: return [];
@@ -125,8 +126,8 @@ export const kitSchool = (id, pick = 0) => effectSchool(kitEffects(id, pick ?? 0
 
 /**
  * THE SPELL A SLOT CASTS: a classic record the cast engine readies. `skill` the governing school's live value, `level`
- * the level it lands at (an ally's frame clamps it - systems/allyCast.js allyCastFrame), `maxHealth` the health a heal or a
- * shield is a share of, `maxMagicka` the caster's. Damage flies as Area at Range; Resurrect is the shop's own, by touch at
+ * the level it lands at (an ally's frame clamps it - systems/allyCast.js allyCastFrame), `maxHealth` the health a heal, a
+ * shield or a regen is a share of, `maxMagicka` the caster's. Damage flies as Area at Range; Resurrect is the shop's own, by touch at
  * a fallen party member's body within RESURRECT_REACH (scenes/hostMagic.js fallenInReach); every other spell is CasterOnly,
  * given to the party member under the crosshair within PVP_KIT.reachM (`pvpReach`, scenes/hostMagic.js), else to me.
  */
