@@ -3699,6 +3699,26 @@
   "tr": "907b5546cb7b",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "d2cfaa2aaba1",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "919ef81010bd",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "27811ebffa2c",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "f56b4008d9a1",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "c32fd61ccb35",
@@ -3727,6 +3747,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "cadcf2de0147",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "c5d9d8018396",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "06af1314acb2",
   "by": "claude-in-session"
  },
  "net.update.saving": {

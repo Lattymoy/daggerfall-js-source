@@ -5,7 +5,9 @@
 // A death screen or a duel holds the reload (at most UPDATE_HOLD_MAX_MS), so no corpse or duel health is saved.
 import { t } from '../systems/textManager.js';
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';
-import { buildUpdateText } from '../net/updateNotice.js';
+import { buildUpdateText, buildUpdateSeen, fetchLiveBuildTag } from '../net/updateNotice.js';
+import { BUILD_TAG } from '../buildTag.js';
+import { forceShellUpdates } from '../systems/shellUpdates.js';
 
 /** The warning before the screen, the screen before the reload, and the longest a death or duel may hold it, ms. */
 export const UPDATE_WARN_MS = 60_000;
@@ -24,6 +26,15 @@ export const updateBodyText = () => t('net.update.body', 'Your character is save
 export const updateSavingText = () => t('net.update.saving', 'Saving your character');
 export const updateReloadingText = () => t('net.update.reloading', 'Reloading the game');
 export const updateButtonText = () => t('net.update.button', 'Reload Now');
+// UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update"): the
+// desktop app plays its own copy, so a reload there loads the same version again. In the app the run is started by the
+// app's own update (systems/shellUpdates.js forceShellUpdates) and ends with the app restarting onto it; the words say so.
+export const updateAppNoticeText = () => t('net.update.appBuild', 'A new version of the game is ready. Your character will be saved and the app restarted in one minute.');
+export const updateAppBannerText = (clock) => t('net.update.appBanner', 'A new version is ready. The app restarts in {clock}', { clock });
+export const updateAppHoldText = () => t('net.update.appHold', 'A new version is ready. The app restarts when this fight or death screen ends.');
+export const updateAppBodyText = () => t('net.update.appBody', 'Your character is saved. The app closes, updates and opens again by itself.');
+export const updateRestartingText = () => t('net.update.restarting', 'Restarting the app');
+export const updateRestartButtonText = () => t('net.update.restartButton', 'Restart Now');
 
 /** m:ss for a count of ms, rounded up so the clock never reads 0:00 while time is left. */
 export const countdownOf = (ms) => {
@@ -56,9 +67,10 @@ const BUTTON_CSS = 'justify-self:center;padding:7px 18px;background:#2b241d;colo
 let _run = null;
 
 /**
- * Start the forced update. False when one is already running.
+ * Start the forced update. False when one is already running. `app`: the desktop app's own update - its words, and
+ * `reload` is the app's restart.
  * @param {{ notice?: (text: string) => void, save?: () => unknown, busy?: () => boolean,
- *   reload?: () => void, doc?: any, win?: any, now?: () => number }} [opts]
+ *   reload?: () => void, app?: boolean, doc?: any, win?: any, now?: () => number }} [opts]
  */
 export function startForcedUpdate(opts = {}) {
   if (_run) return false;
@@ -68,7 +80,8 @@ export function startForcedUpdate(opts = {}) {
   const busy = () => { try { return !!opts.busy?.(); } catch { return false; } };
   const run = { startedAt: now(), holdSince: /** @type {number|null} */ (null), screenAt: /** @type {number|null} */ (null), banner: null, veil: null, steps: null, count: null, button: null, timer: null, done: false };
   _run = run;
-  try { opts.notice?.(buildUpdateText()); } catch { /* no chat yet: the banner says it */ }
+  const app = !!opts.app;
+  try { opts.notice?.(app ? updateAppNoticeText() : buildUpdateText()); } catch { /* no chat yet: the banner says it */ }
   const block = (e) => { if (run.veil && e.target !== run.button) { e.stopImmediatePropagation(); e.preventDefault(); } };
   const go = () => {
     if (run.done) return;
@@ -87,13 +100,14 @@ export function startForcedUpdate(opts = {}) {
     const title = el('h2', 'margin:0;color:#d9a94e;font:bold 19px Georgia,serif;letter-spacing:.04em;', updateTitleText());
     const steps = el('div', 'display:grid;gap:4px;text-align:left;font:13px monospace;');
     const saving = el('div', 'color:#d9a94e;', `● ${updateSavingText()}`);
-    const reloading = el('div', 'color:#b3a58f;', `○ ${updateReloadingText()}`);
+    const leavingText = app ? updateRestartingText() : updateReloadingText();
+    const reloading = el('div', 'color:#b3a58f;', `○ ${leavingText}`);
     steps.append(saving, reloading);
     const count = el('div', 'font:22px monospace;color:#d9a94e;', countdownOf(UPDATE_SCREEN_MS));
-    const button = el('button', BUTTON_CSS, updateButtonText());
+    const button = el('button', BUTTON_CSS, app ? updateRestartButtonText() : updateButtonText());
     button.type = 'button';
     button.addEventListener('click', go);
-    card.append(title, el('p', 'margin:0;', updateBodyText()), steps, count, button);
+    card.append(title, el('p', 'margin:0;', app ? updateAppBodyText() : updateBodyText()), steps, count, button);
     veil.append(card);
     doc.body?.append?.(veil);
     Object.assign(run, { veil, steps: { saving, reloading }, count, button });
@@ -102,7 +116,7 @@ export function startForcedUpdate(opts = {}) {
     try { opts.save?.(); } catch (err) { console.warn('[update] the save before the reload threw:', err); }
     saving.textContent = `✓ ${updateSavingText()}`;
     saving.style.color = '#7fb37a';
-    reloading.textContent = `● ${updateReloadingText()}`;
+    reloading.textContent = `● ${leavingText}`;
     reloading.style.color = '#d9a94e';
     button.focus?.();
   };
@@ -123,11 +137,25 @@ export function startForcedUpdate(opts = {}) {
       run.banner.style.cssText = BANNER_CSS + `z-index:${UPDATE_Z};`;
       doc.body?.append?.(run.banner);
     }
-    run.banner.textContent = phase === 'hold' ? updateHoldText() : updateBannerText(countdownOf(UPDATE_WARN_MS - (at - run.startedAt)));
+    const clock = countdownOf(UPDATE_WARN_MS - (at - run.startedAt));
+    run.banner.textContent = phase === 'hold' ? (app ? updateAppHoldText() : updateHoldText()) : (app ? updateAppBannerText(clock) : updateBannerText(clock));
   };
   tick();
   run.timer = win.setInterval?.(tick, UPDATE_TICK_MS);
   return true;
+}
+
+/**
+ * The host's build poll (scenes/world.js buildPoll). In a browser: the site's page, against THIS bundle's tag - a new
+ * build starts the run. UPDATE-RESTART: in the desktop app that page is the app's own copy, so the app's own update
+ * starts it, and the app restarting onto it ends it (systems/shellUpdates.js forceShellUpdates).
+ * @param {{ notice?: (text: string) => void, save?: () => unknown, busy?: () => boolean }} opts
+ * @param {any} [shell]  globalThis.daggerShell
+ */
+export function pollForUpdate(opts, shell = globalThis.daggerShell) {
+  forceShellUpdates(shell, () => startForcedUpdate({ ...opts, app: true, reload: () => shell.restartForUpdate() }));
+  // `fetchLiveBuildTag` swallows its own throws; the second handler is the belt for a rejection it cannot see
+  return fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate(opts), () => {});
 }
 
 /** Whether this page is counting down to a reload. */
