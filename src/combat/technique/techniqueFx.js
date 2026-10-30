@@ -33,15 +33,27 @@ const N = FX_K.length;
 const _sv = new Float64Array(N * 2);
 let _live = false;
 /** Below these, a spring has settled and is put to rest exactly. */
-const REST_X = 1e-5, REST_V = 1e-4;
+const REST_X = 1e-5,
+  REST_V = 1e-4;
 
 /** THE OUTPUTS, filled in place - the shape player/climb/climbFeel.js applyClimbView reads (`pitch`, `roll`, `eye`), and the
  *  field of view's kick in degrees; the hands' dip in screen heights (`y`, down). A class each, never a literal: a
  *  literal's shape is shared with every `{ x, y }` and `{ pitch, roll, ... }` the game makes, and one of those holding
  *  anything but a number turns the field general - then each write here boxed its number (32 bytes a frame in flight,
  *  test/systems/techfx1.test.js). A class's shape is its own, its number fields only ever numbers, written in place. */
-class TechView { constructor() { this.pitch = 0; this.roll = 0; this.eye = [0, 0, 0]; this.fov = 0; } }
-class TechHands { constructor() { this.y = 0; } }
+class TechView {
+  constructor() {
+    this.pitch = 0;
+    this.roll = 0;
+    this.eye = [0, 0, 0];
+    this.fov = 0;
+  }
+}
+class TechHands {
+  constructor() {
+    this.y = 0;
+  }
+}
 const VIEW = new TechView();
 const HANDS = new TechHands();
 
@@ -73,11 +85,25 @@ export const TECH_FX = f({
   }),
   leap: f({
     release: f({ cam: f({ fov: 7, pitch: -1 }), sound: f(['SwingLowPitch', 0.9, 0.8]) }),
-    hit: f({ cam: f({ pitch: -3, eye: -0.12, fov: -4 }), hands: f({ y: 0.08 }), shake: 2.6, burst: 'land', r: 2.5, sound: f(['FallHard', 0.9, 0.85]) }),
+    hit: f({
+      cam: f({ pitch: -3, eye: -0.12, fov: -4 }),
+      hands: f({ y: 0.08 }),
+      shake: 2.6,
+      burst: 'land',
+      r: 2.5,
+      sound: f(['FallHard', 0.9, 0.85]),
+    }),
   }),
   kick: f({
     release: f({ cam: f({ fov: 6, pitch: -0.8 }), sound: f(['SwingLowPitch', 0.8, 0.95]) }),
-    hit: f({ cam: f({ pitch: -2.2, eye: -0.09 }), hands: f({ y: 0.06 }), shake: 1.8, burst: 'land', r: 2, sound: f(['FallHard', 0.75, 1.05]) }),
+    hit: f({
+      cam: f({ pitch: -2.2, eye: -0.09 }),
+      hands: f({ y: 0.06 }),
+      shake: 1.8,
+      burst: 'land',
+      r: 2,
+      sound: f(['FallHard', 0.75, 1.05]),
+    }),
   }),
   whirlwind: f({
     release: f({ cam: f({ roll: -3 }), sound: f(['SwingMediumPitch', 1, 0.75]) }),
@@ -85,7 +111,14 @@ export const TECH_FX = f({
   }),
   slam: f({
     release: f({ cam: f({ pitch: 2 }), sound: f(['SwingLowPitch', 1, 0.7]) }),
-    hit: f({ cam: f({ pitch: -3.5, eye: -0.14, fov: -3 }), hands: f({ y: 0.11 }), shake: 3.2, burst: 'shock', r: 3.5, sound: f(['FallHard', 1, 0.7]) }),
+    hit: f({
+      cam: f({ pitch: -3.5, eye: -0.14, fov: -3 }),
+      hands: f({ y: 0.11 }),
+      shake: 3.2,
+      burst: 'shock',
+      r: 3.5,
+      sound: f(['FallHard', 1, 0.7]),
+    }),
   }),
   crush: f({
     release: f({ cam: f({ pitch: 1.2 }), sound: f(['SwingLowPitch', 0.9, 0.85]) }),
@@ -138,8 +171,13 @@ function kick(ch, peak) {
  */
 export function kickFx(c, hands, m = 1) {
   if (!(m > 0)) return;
-  if (c) { kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m); kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m); kick(FX_CH.eye, (c.eye ?? 0) * m); kick(FX_CH.fov, (c.fov ?? 0) * m); }
-  if (hands?.y > 0) kick(FX_CH.hands, hands.y * m);   // a dip only (FX_CH)
+  if (c) {
+    kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m);
+    kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m);
+    kick(FX_CH.eye, (c.eye ?? 0) * m);
+    kick(FX_CH.fov, (c.fov ?? 0) * m);
+  }
+  if (hands?.y > 0) kick(FX_CH.hands, hands.y * m); // a dip only (FX_CH)
 }
 
 /**
@@ -155,7 +193,7 @@ export function techniqueCue(id, moment, door = null, place = null) {
   if (!row) return false;
   const m = techniqueMotion();
   if (m > 0) {
-    kickFx(row.cam, row.hands, m);   // GATHER-FEEL II: the springs' one door
+    kickFx(row.cam, row.hands, m); // GATHER-FEEL II: the springs' one door
     if (row.shake) door?.shake?.(row.shake * m);
   }
   if (row.burst && place?.at) door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);
@@ -172,15 +210,26 @@ export function stepTechniqueFx(dt) {
   if (!_live || !(dt > 0)) return;
   let any = false;
   for (let i = 0; i < N; i++) {
-    const x = _sv[i * 2], v = _sv[i * 2 + 1];
+    const x = _sv[i * 2],
+      v = _sv[i * 2 + 1];
     if (x === 0 && v === 0) continue;
-    const k = FX_K[i], e = Math.exp(-k * dt), b = v + k * x;
-    let x1 = (x + b * dt) * e, v1 = (v - k * b * dt) * e;
-    if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) { x1 = 0; v1 = 0; } else any = true;
-    _sv[i * 2] = x1; _sv[i * 2 + 1] = v1;
+    const k = FX_K[i],
+      e = Math.exp(-k * dt),
+      b = v + k * x;
+    let x1 = (x + b * dt) * e,
+      v1 = (v - k * b * dt) * e;
+    if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) {
+      x1 = 0;
+      v1 = 0;
+    } else any = true;
+    _sv[i * 2] = x1;
+    _sv[i * 2 + 1] = v1;
   }
   _live = any;
-  VIEW.pitch = _sv[FX_CH.pitch * 2]; VIEW.roll = _sv[FX_CH.roll * 2]; VIEW.eye[1] = _sv[FX_CH.eye * 2]; VIEW.fov = _sv[FX_CH.fov * 2];
+  VIEW.pitch = _sv[FX_CH.pitch * 2];
+  VIEW.roll = _sv[FX_CH.roll * 2];
+  VIEW.eye[1] = _sv[FX_CH.eye * 2];
+  VIEW.fov = _sv[FX_CH.fov * 2];
   HANDS.y = _sv[FX_CH.hands * 2];
 }
 
@@ -196,6 +245,9 @@ export const techniqueFxLive = () => _live;
 export function resetTechniqueFx() {
   _sv.fill(0);
   _live = false;
-  VIEW.pitch = 0; VIEW.roll = 0; VIEW.eye[1] = 0; VIEW.fov = 0;
+  VIEW.pitch = 0;
+  VIEW.roll = 0;
+  VIEW.eye[1] = 0;
+  VIEW.fov = 0;
   HANDS.y = 0;
 }

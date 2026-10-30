@@ -2,8 +2,8 @@
   {
     "name": "TECH1-the-gun-a-bow",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  if (isGunTemplate(item.templateIndex)) return 'thunderlock';   // PISTOLET: the guns' family - the Pistolet takes the Thunderlock's Piercing Shot, never a volley\n",
-    "new": "",
+    "old": "  if (isGunTemplate(item.templateIndex)) return 'thunderlock'; // PISTOLET: the guns' family - the Pistolet takes the Thunderlock's Piercing Shot, never a volley\n  // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that",
+    "new": "  // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TECH1-any-armour-a-fist",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;",
-    "new": "return 'handToHand';",
+    "old": "  if (item.group === 'Armor') return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;",
+    "new": "  if (item.group === 'Armor') return 'handToHand';",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "TECH1-a-band-moved",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "rare: Object.freeze([15, 30])",
-    "new": "rare: Object.freeze([15, 31])",
+    "old": "  rare: Object.freeze([15, 30]),",
+    "new": "  rare: Object.freeze([15, 31]),",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "TECH1-a-chance-moved",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "rare: 300, legendary: 450",
-    "new": "rare: 301, legendary: 450",
+    "old": "export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 300, legendary: 450 });",
+    "new": "export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 301, legendary: 450 });",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "TECH1-the-card-off-the-value",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  const m = techniqueMult(t.base, value);\n",
-    "new": "  const m = t.base;\n",
+    "old": "  const m = techniqueMult(t.base, value);",
+    "new": "  const m = t.base;",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "TECH1-a-duel-struck",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "(foe.rival != null || foe.duel === true)",
-    "new": "(foe.rival != null)",
+    "old": "export const playerBody = (foe) => !!foe && (foe.rival != null || foe.duel === true);",
+    "new": "export const playerBody = (foe) => !!foe && foe.rival != null;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "TECH1-the-lane-any-width",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;",
-    "new": "return along >= -0.5 && along <= L.len + r;",
+    "old": "    return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;",
+    "new": "    return along >= -0.5 && along <= L.len + r;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "TECH1-the-arc-all-round",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "return cos >= Math.cos(/** @type {number} */ (blow.arc));",
-    "new": "return true;",
+    "old": "  return cos >= Math.cos(/** @type {number} */ (blow.arc));",
+    "new": "  return true;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "TECH1-the-level-unread",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;",
-    "new": "const level = (y) => true;",
+    "old": "  const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;",
+    "new": "  const level = (y) => true;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "TECH1-through-the-wall",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "if (!blow || !sight?.losClear) return false;",
-    "new": "if (!blow) return false;",
+    "old": "  if (!blow || !sight?.losClear) return false;",
+    "new": "  if (!blow) return false;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "TECH1-the-wounded-share",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  if (blow?.wounded > 0) m +=",
-    "new": "  if (false) m +=",
+    "old": "  if (blow?.wounded > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));",
+    "new": "  if (false) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -280,8 +280,8 @@
   {
     "name": "TECH1-a-miss-lands",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "(damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage)",
-    "new": "Math.max(1, Math.round(damage * mult))",
+    "old": "export const scaleBlowDamage = (damage, mult) => (damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage);",
+    "new": "export const scaleBlowDamage = (damage, mult) => Math.max(1, Math.round(damage * mult));",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "TECH1-AUDIT-the-target-unread",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  if (blow.target && foe !== blow.target) return false;\n",
-    "new": "",
+    "old": "  if (blow.target && foe !== blow.target) return false;\n  const arc = blow.target ? 'all' : blow.arc;",
+    "new": "  const arc = blow.target ? 'all' : blow.arc;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -940,8 +940,8 @@
   {
     "name": "TECH1-AUDIT-the-volley-too-quick",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "delay: 0.55, spread: 1.35 }),",
-    "new": "delay: 0.55, spread: 0.85 }),",
+    "old": "    spread: 1.35,",
+    "new": "    spread: 0.85,",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -949,7 +949,7 @@
   {
     "name": "TECH1-AUDIT-the-rri-family-switched",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  const skill = weaponSkillUsed(item.templateIndex) ?? (rri?.group === 'Weapons' && rri.weaponSkillUsed ? SKILLS[rri.weaponSkillUsed] : null);",
+    "old": "  const skill =\n    weaponSkillUsed(item.templateIndex) ??\n    (rri?.group === 'Weapons' && rri.weaponSkillUsed ? SKILLS[rri.weaponSkillUsed] : null);",
     "new": "  const skill = weaponSkillUsed(item.templateIndex);",
     "tests": [
       "test/systems/tech1_roster.test.js"
@@ -967,8 +967,8 @@
   {
     "name": "TECH1-AUDIT-the-big-body-thin",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS);",
-    "new": "TECH_BODY_RADIUS);",
+    "old": "export const bodyRadius = (foe) =>\n  Number.isFinite(foe?.radius) ? foe.radius : Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS;",
+    "new": "export const bodyRadius = (foe) => (Number.isFinite(foe?.radius) ? foe.radius : TECH_BODY_RADIUS);",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -976,8 +976,8 @@
   {
     "name": "TECH1-AUDIT-a-sure-blow",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "      case 'crush': return `One heavy blow, ${pct(m)}, +${t.toHit} to hit`;",
-    "new": "      case 'crush': return `One sure blow, ${pct(m)}`;",
+    "old": "        return `One heavy blow, ${pct(m)}, +${t.toHit} to hit`; // AUDIT TECH1: never 'sure' - a miss is still a miss (law 1)",
+    "new": "        return `One sure blow, ${pct(m)}`; // AUDIT TECH1: never 'sure' - a miss is still a miss (law 1)",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]

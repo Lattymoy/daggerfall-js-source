@@ -2,8 +2,8 @@
   {
     "name": "TECHFX1-a-moment-dropped",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "    shaft: f({ burst: 'shaft' }),\n",
-    "new": "",
+    "old": "    shaft: f({ burst: 'shaft' }),\n    close: f({ burst: 'close', shake: 0.5 }),",
+    "new": "    close: f({ burst: 'close', shake: 0.5 }),",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TECHFX1-a-sound-misnamed",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "sound: f(['FallHard', 1, 0.7])",
-    "new": "sound: f(['FallHarder', 1, 0.7])",
+    "old": "      sound: f(['FallHard', 1, 0.7]),",
+    "new": "      sound: f(['FallHarder', 1, 0.7]),",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TECHFX1-the-kick-without-e",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "_sv[ch * 2 + 1] += peak * FX_K[ch] * Math.E;",
-    "new": "_sv[ch * 2 + 1] += peak * FX_K[ch];",
+    "old": "  _sv[ch * 2 + 1] += peak * FX_K[ch] * Math.E;",
+    "new": "  _sv[ch * 2 + 1] += peak * FX_K[ch];",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TECHFX1-the-closed-form-sign",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "v1 = (v - k * b * dt) * e;",
-    "new": "v1 = (v + k * b * dt) * e;",
+    "old": "      v1 = (v - k * b * dt) * e;",
+    "new": "      v1 = (v + k * b * dt) * e;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TECHFX1-no-rest-snap",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) { x1 = 0; v1 = 0; } else any = true;",
-    "new": "any = true;",
+    "old": "    if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) {\n      x1 = 0;\n      v1 = 0;\n    } else any = true;",
+    "new": "    any = true;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TECHFX1-the-step-a-fixed-sixtieth",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "const k = FX_K[i], e = Math.exp(-k * dt), b = v + k * x;",
-    "new": "dt = 1 / 60; const k = FX_K[i], e = Math.exp(-k * dt), b = v + k * x;",
+    "old": "    const k = FX_K[i],",
+    "new": "    dt = 1 / 60;\n    const k = FX_K[i],",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TECHFX1-degrees-unconverted",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m);",
-    "new": "kick(FX_CH.pitch, (c.pitch ?? 0) * m);",
+    "old": "    kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m);",
+    "new": "    kick(FX_CH.pitch, (c.pitch ?? 0) * m);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TECHFX1-the-motion-unread",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "  const m = techniqueMotion();\n",
-    "new": "  const m = 1;\n",
+    "old": "  const m = techniqueMotion();",
+    "new": "  const m = 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TECHFX1-the-motion-unclamped",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
-    "new": "return Number.isFinite(v) ? v : 1;",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return Number.isFinite(v) ? v : 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TECHFX1-the-shake-unscaled",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "door?.shake?.(row.shake * m);",
-    "new": "door?.shake?.(row.shake);",
+    "old": "    if (row.shake) door?.shake?.(row.shake * m);",
+    "new": "    if (row.shake) door?.shake?.(row.shake);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TECHFX1-the-burst-scaled",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (row.burst && place?.at) door",
-    "new": "if (row.burst && place?.at && m === 1) door",
+    "old": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
+    "new": "  if (row.burst && place?.at && m === 1)\n    door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TECHFX1-the-ring-radius-unread",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "row.r != null ? { ...place, r: row.r } : place",
-    "new": "place",
+    "old": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
+    "new": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, place);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TECHFX1-the-sound-ungated",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (row.sound && enhancedSoundsOn()) {",
-    "new": "if (row.sound) {",
+    "old": "  if (row.sound && enhancedSoundsOn()) {",
+    "new": "  if (row.sound) {",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "TECHFX1-AUDIT-the-roll-unmirrored",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m);",
-    "new": "kick(FX_CH.roll, (c.roll ?? 0) * DEG * m);",
+    "old": "    kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m);",
+    "new": "    kick(FX_CH.roll, (c.roll ?? 0) * DEG * m);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"

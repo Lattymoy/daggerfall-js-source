@@ -10,6 +10,8 @@
 /src/combat/*
 !/src/combat/gun/
 /src/combat/gun/*/
+!/src/combat/technique/
+/src/combat/technique/*/
 !/src/formats/
 /src/formats/*
 !/src/formats/save/

@@ -18,7 +18,7 @@
 //   single   the nearest foe it reaches alone
 //   feet     where the strike is made from, in the host's frame; `yaw` the look's
 
-import { healthShare } from '../healthShare.js';   // AUDIT FB1018f L3-5: Headsman's Chop reads a body's share by the one law
+import { healthShare } from '../healthShare.js'; // AUDIT FB1018f L3-5: Headsman's Chop reads a body's share by the one law
 
 /** A foe's capsule (the DaggerfallEnemy prefab's controller radius) when its record states none. */
 export const TECH_BODY_RADIUS = 0.45;
@@ -29,7 +29,8 @@ export const TECH_POINT_BLANK = 0.6;
 
 /** A body's radius (AUDIT TECH1): its record's own, or a big body's on its AI (the court's boss, a crystal, one of his
  *  host - dungeonContext.js's stand-ins keep it there), else a foe's capsule. */
-export const bodyRadius = (foe) => (Number.isFinite(foe?.radius) ? foe.radius : Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS);
+export const bodyRadius = (foe) =>
+  Number.isFinite(foe?.radius) ? foe.radius : Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS;
 
 /** A body that is a player's - a duel's, a siege's or the open zone's (marked `duel` - world.js duelArrowTargets), or an
  *  arena rival's stand-in (`rival` - dungeonContext.js arenaRivalBody). A technique never meets one (TECH law 3): it is
@@ -49,7 +50,9 @@ export function blowReaches(blow, foe, sight) {
   const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;
   if (blow.lane) {
     if (!f || !level(f[1])) return false;
-    const L = blow.lane, rx = f[0] - L.from[0], rz = f[2] - L.from[1];
+    const L = blow.lane,
+      rx = f[0] - L.from[0],
+      rz = f[2] - L.from[1];
     const along = rx * L.dir[0] + rz * L.dir[1];
     const across = Math.abs(rx * L.dir[1] - rz * L.dir[0]);
     return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;
@@ -60,7 +63,9 @@ export function blowReaches(blow, foe, sight) {
   const arc = blow.target ? 'all' : blow.arc;
   if (arc === 'view') return !!sight.inView && sight.dist <= blow.reach;
   if (!f || !blow.feet) return sight.dist <= blow.reach;
-  const dx = f[0] - blow.feet[0], dz = f[2] - blow.feet[2], d = Math.hypot(dx, dz);
+  const dx = f[0] - blow.feet[0],
+    dz = f[2] - blow.feet[2],
+    d = Math.hypot(dx, dz);
   // the capsule's edge within reach on the level - or, a big body (the court's boss), its surface by the host's own sight
   if (!((d - r <= blow.reach && level(f[1])) || sight.dist <= blow.reach)) return false;
   if (arc === 'all' || d < TECH_POINT_BLANK) return true;
@@ -84,9 +89,12 @@ export const scaleBlowDamage = (damage, mult) => (damage > 0 ? Math.max(1, Math.
 // foes whose back was to me when I committed it (techniques.js backsAt) - each a backstab's chance however it turns
 // before the hit. The chance is the hosts' own (hostCombat.js backstabChanceOf), registered so this leaf imports no host.
 let _backstab = null;
-export function registerTechniqueBackstab(fn) { _backstab = typeof fn === 'function' ? fn : null; }
+export function registerTechniqueBackstab(fn) {
+  _backstab = typeof fn === 'function' ? fn : null;
+}
 /** The backstab chance a technique's blow gives `foe`: 0 unless the blow marked its back. */
-export const techniqueBackstab = (blow, player, foe) => (_backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0);
+export const techniqueBackstab = (blow, player, foe) =>
+  _backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0;
 
 // MARTIAL3 (bible/05-Combat/Martial-Specialisations.md section 6): A TECHNIQUE'S BLOW LANDED - NAMED listeners
 // `fn({ blow, foe, damage })`, told by the two resolutions every host shares, once for each foe a technique's blow reached
@@ -104,7 +112,13 @@ export function registerTechniqueLandedListener(name, fn) {
 /** A technique's blow reached `foe` for `damage` - every listener told. */
 export function tellTechniqueLanded(blow, foe, damage) {
   if (!blow || _landed.length === 0) return;
-  for (let i = 0; i < _landed.length; i++) { try { _landed[i][1]({ blow, foe, damage }); } catch { /* a listener is not the blow's problem */ } }
+  for (let i = 0; i < _landed.length; i++) {
+    try {
+      _landed[i][1]({ blow, foe, damage });
+    } catch {
+      /* a listener is not the blow's problem */
+    }
+  }
 }
 
 // AUDIT MARTIAL (L1 L3, L1 L7): A TECHNIQUE WENT - NAMED listeners `fn({ id, use, entity })`, told once a press, as its
@@ -121,5 +135,11 @@ export function registerTechniqueUsedListener(name, fn) {
 /** Technique `id` went, its price paid by `entity` - every listener told. */
 export function tellTechniqueUsed(id, use, entity) {
   if (_used.length === 0) return;
-  for (let i = 0; i < _used.length; i++) { try { _used[i][1]({ id, use, entity }); } catch { /* a listener is not the press's problem */ } }
+  for (let i = 0; i < _used.length; i++) {
+    try {
+      _used[i][1]({ id, use, entity });
+    } catch {
+      /* a listener is not the press's problem */
+    }
+  }
 }

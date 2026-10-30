@@ -12,8 +12,8 @@
   {
     "name": "TECH-BACKSTAB-leaf-blind",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "(_backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0)",
-    "new": "(_backstab && false ? _backstab(player, foe) : 0)",
+    "old": "export const techniqueBackstab = (blow, player, foe) =>\n  _backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0;",
+    "new": "export const techniqueBackstab = (blow, player, foe) => (_backstab && false ? _backstab(player, foe) : 0);",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],

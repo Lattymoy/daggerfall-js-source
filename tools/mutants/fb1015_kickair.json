@@ -2,8 +2,8 @@
   {
     "name": "KICK-AIR-the-mark-dropped-from-the-kick",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "toHit: 20, airborne: true }),",
-    "new": "toHit: 20 }),",
+    "old": "    airborne: true,\n  }), // KICK-AIR: from the air too",
+    "new": "  }), // KICK-AIR: from the air too",
     "tests": [
       "test/systems/fb1015_kickair.test.js"
     ]
