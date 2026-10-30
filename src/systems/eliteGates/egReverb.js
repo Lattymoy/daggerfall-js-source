@@ -29,7 +29,8 @@ export const EG_REVERB_HYST_M = 1;
 export const EG_REVERB_OWNER = 'eg:spire';
 
 /** A fragment's law name as the engine's preset - null for one the engine has no preset of. Pure. */
-export const egReverbPreset = (name) => (typeof name === 'string' ? EG_REVERB_PRESETS[name.toLowerCase()] ?? null : null);
+export const egReverbPreset = (name) =>
+  typeof name === 'string' ? (EG_REVERB_PRESETS[name.toLowerCase()] ?? null) : null;
 
 /**
  * A HALL'S REVERB, PLANNED (pure): `{ base, zones, second }` - `base` the hall's own space (EG_REVERB_OPEN), `zones` each
@@ -43,9 +44,18 @@ export function egHallReverb(spec) {
   for (const f of spec?.frags ?? []) {
     const preset = egReverbPreset(f.reverb);
     if (!preset) continue;
-    const cave = f.cls === 'passage' ? (spec.caves ?? []).find((q) => Math.abs(q.x - f.x) < 0.5 && q.z0 <= f.z0 + 0.5 && q.z1 >= f.z1 - 0.5) : null;
-    const hero = f.hero ? (spec.heroes ?? []).find((q) => q.f === spec.frags.indexOf(f)) : null;   // EG-HERO-LAY: a hero's reach across, its box's
-    const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : f.cls === 'chamber' ? (f.z1 - f.z0) / 2 : 6;
+    const cave =
+      f.cls === 'passage'
+        ? (spec.caves ?? []).find((q) => Math.abs(q.x - f.x) < 0.5 && q.z0 <= f.z0 + 0.5 && q.z1 >= f.z1 - 0.5)
+        : null;
+    const hero = f.hero ? (spec.heroes ?? []).find((q) => q.f === spec.frags.indexOf(f)) : null; // EG-HERO-LAY: a hero's reach across, its box's
+    const half = hero
+      ? Math.max(f.x - hero.box[0], hero.box[3] - f.x)
+      : cave
+        ? cave.halfW
+        : f.cls === 'chamber'
+          ? (f.z1 - f.z0) / 2
+          : 6;
     zones.push({ x: f.x, half, z0: f.z0, z1: f.z1, preset });
   }
   const second = zones.find((q) => q.preset !== EG_REVERB_OPEN)?.preset ?? null;
@@ -74,7 +84,12 @@ export function egReverbZoneAt(zones, x, z, cur = -1, hyst = EG_REVERB_HYST_M) {
  * @param {{ audio?: any }} deps
  */
 export function createEgReverb({ audio = null } = {}) {
-  let held = false, key = '', plan = null, cur = -1, fades = 0, builds = 0;
+  let held = false,
+    key = '',
+    plan = null,
+    cur = -1,
+    fades = 0,
+    builds = 0;
   const api = {
     hold() {
       if (held) return true;
@@ -83,11 +98,17 @@ export function createEgReverb({ audio = null } = {}) {
     },
     hall(k, spec) {
       if (!held || !spec || k === key) return false;
-      key = k; plan = egHallReverb(spec); cur = -1;
+      key = k;
+      plan = egHallReverb(spec);
+      cur = -1;
       builds++;
       let made = true;
-      try { made = audio?.reverbZone?.(plan.base, plan.second) !== false; } catch { made = false; }
-      if (!made) key = '';   // no context yet (no gesture has woken the engine): asked again next frame
+      try {
+        made = audio?.reverbZone?.(plan.base, plan.second) !== false;
+      } catch {
+        made = false;
+      }
+      if (!made) key = ''; // no context yet (no gesture has woken the engine): asked again next frame
       return made;
     },
     at(x, z) {
@@ -96,16 +117,36 @@ export function createEgReverb({ audio = null } = {}) {
       if (i === cur) return false;
       cur = i;
       fades++;
-      try { audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, EG_REVERB_FADE_S); } catch { /* a sound is never the breach */ }
+      try {
+        audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, EG_REVERB_FADE_S);
+      } catch {
+        /* a sound is never the breach */
+      }
       return true;
     },
     release() {
       const was = held;
-      if (held) { try { audio?.releaseReverb?.(EG_REVERB_OWNER); } catch { /* gone */ } }
-      held = false; key = ''; plan = null; cur = -1;
+      if (held) {
+        try {
+          audio?.releaseReverb?.(EG_REVERB_OWNER);
+        } catch {
+          /* gone */
+        }
+      }
+      held = false;
+      key = '';
+      plan = null;
+      cur = -1;
       return was;
     },
-    state: () => ({ held, key, zone: cur, preset: plan ? (cur < 0 ? plan.base : plan.zones[cur].preset) : null, fades, builds }),
+    state: () => ({
+      held,
+      key,
+      zone: cur,
+      preset: plan ? (cur < 0 ? plan.base : plan.zones[cur].preset) : null,
+      fades,
+      builds,
+    }),
   };
   return api;
 }

@@ -549,8 +549,8 @@
   {
     "name": "EGLOOK-mix-critical-culled",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "if (k >= per && !b.critical) continue;",
-    "new": "if (k >= per) continue;",
+    "old": "    if (k >= per && !b.critical) continue;",
+    "new": "    if (k >= per) continue;",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "EGLOOK-mix-adds-every-blow",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "(kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs)",
-    "new": "(kind === 'add')",
+    "old": "  kind === 'lord' || kind === 'check' || (kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs);",
+    "new": "  kind === 'lord' || kind === 'check' || kind === 'add';",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "EGLOOK-mix-no-duck",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000)",
-    "new": "music?.duck?.(0, EG_MIX.duckMs / 1000)",
+    "old": "        music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000);",
+    "new": "        music?.duck?.(0, EG_MIX.duckMs / 1000);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -576,8 +576,8 @@
   {
     "name": "EGLOOK-mix-peers-full",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "peerVolume: (v) => v * egDbGain(EG_MIX.peerDb),",
-    "new": "peerVolume: (v) => v,",
+    "old": "    peerVolume: (v) => v * egDbGain(EG_MIX.peerDb),",
+    "new": "    peerVolume: (v) => v,",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "EGLOOK-score-count-early",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "p.countLeft <= SPIRE_COUNT_WARN_MS && (fight",
-    "new": "p.countLeft <= SPIRE_COUNT_WARN_MS * 2 && (fight",
+    "old": "      p.countLeft <= SPIRE_COUNT_WARN_MS &&",
+    "new": "      p.countLeft <= SPIRE_COUNT_WARN_MS * 2 &&",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -630,8 +630,8 @@
   {
     "name": "EGLOOK-score-valk-anywhere",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "valk: fight && p.kind === 'court' && !!p.valk,",
-    "new": "valk: fight && !!p.valk,",
+    "old": "    valk: fight && p.kind === 'court' && !!p.valk,",
+    "new": "    valk: fight && !!p.valk,",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -639,8 +639,8 @@
   {
     "name": "EGLOOK-score-end-forever",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "(place.sinceEnd ?? 0) < SPIRE_END_MS ? SPIRE_SONGS.end : SPIRE_SCORE_SILENCE",
-    "new": "SPIRE_SONGS.end",
+    "old": "  if (key === 'end') return (place.sinceEnd ?? 0) < SPIRE_END_MS ? SPIRE_SONGS.end : SPIRE_SCORE_SILENCE; // AUDIT EG V (c, L7-13): a fall's end is its own SPIRE_END_MS (spireScoreKey), `sinceEnd` 0 with no end standing",
+    "new": "  if (key === 'end') return SPIRE_SONGS.end; // AUDIT EG V (c, L7-13): a fall's end is its own SPIRE_END_MS (spireScoreKey), `sinceEnd` 0 with no end standing",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -648,8 +648,8 @@
   {
     "name": "EGLOOK-score-one-order",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "return orders[(seed >>> 0) % 6];",
-    "new": "return orders[0];",
+    "old": "  return orders[(seed >>> 0) % 6];",
+    "new": "  return orders[0];",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "EGLOOK-score-lord-unhastened",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "line(w, k, motif, 'brass', 112 + phase * 2,",
-    "new": "line(w, k, motif, 'brass', 112,",
+    "old": "        line(w, k, motif, 'brass', 112 + phase * 2, String(motif[0][0][0]).endsWith('2') ? 1 : 0);",
+    "new": "        line(w, k, motif, 'brass', 112, String(motif[0][0][0]).endsWith('2') ? 1 : 0);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -666,8 +666,8 @@
   {
     "name": "EGLOOK-score-reregisters",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (k !== ctxKey) { ctxKey = k;",
-    "new": "if (true) { ctxKey = k;",
+    "old": "      if (k !== ctxKey) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "EGLOOK-score-end-from-the-cue",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (view.place.end && endAt === null) endAt = t + SCORE_STING_LEAD_MS;",
-    "new": "if (view.place.end && endAt === null) endAt = t;",
+    "old": "      if (view.place.end && endAt === null) endAt = t + SCORE_STING_LEAD_MS; // from when it sounds (AUDIT WBX W3's law)",
+    "new": "      if (view.place.end && endAt === null) endAt = t; // from when it sounds (AUDIT WBX W3's law)",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]

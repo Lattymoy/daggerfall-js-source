@@ -62,7 +62,7 @@ FOUND, on the code. The account's count (`players.eg_keys`) is the balance. The 
 (`egClient.js:"    if (restackWeirKeys(entity.items, n)) saved();"`). That happens at sign-in and every
 `EG_KEYS_EVERY_MS`, ten minutes (`egClient.js:"      if (Date.now() - keysAt >= EG_KEYS_EVERY_MS) askKeys();"`), and
 on every preflight, open and claim answer. A pack that holds no face is given a fresh stack
-(`weirKey.js:"  if (want > 0) items.push(weirKeys(want));"`). But a face could leave the pack. The row was `bound` and not
+(`weirKey.js:"if (want > 0) items.push"`). But a face could leave the pack. The row was `bound` and not
 `packOnly`, and a bound piece goes to the player's wagon and storage
 (`itemBound.js:"export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);"` - a home's chest, a ship's hold and a
 companion's pack are all the pack's `storage`). So a key stowed in the wagon disappeared from the pack. At the next ask
@@ -75,7 +75,7 @@ all along, and the rust took the faces it never counted. The same thing happened
 allowed to go.
 
 THE FIX - THE FACE IS THE PACK'S ALONE. The row is pack-only
-(`weirKeyRow.js:"  packOnly: true,   // KEY-FACE: the face never leaves the pack"`), the Wallet's and the Card Binder's
+(`weirKeyRow.js:"packOnly: true, //"`), the Wallet's and the Card Binder's
 law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly = "`). Every door that already reads it
 now keeps the face in the pack:
 - both skins' put to the wagon, to storage, to a container, to the ground and to a reward tray, and the enhanced pack's
@@ -91,7 +91,7 @@ counters' Sell and the keyed shelf, the realm market (`marketLaw.js` `boundRecor
 melt and the junk sweep. The rest never take one: the repairer takes a damaged piece and nothing wears a key; the court
 takes stolen pieces; letters carry words alone; an heirloom is a worn weapon or armour. Several lists hold faces from
 before the fix: the wagon, a storage piece, a chest, a ship's hold, a companion's pack, a room's own things, or a body
-the find threw one on (`egFind.js:"  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);"`) that the player never took up. Such
+the find threw one on (`egFind.js:"if (Array.isArray(entity?.items))"`) that the player never took up. Such
 a save loads with every face out of the pack folded away
 (`save.js:"const strayKeys = foldStrayWeirKeys("`). The fold runs beside the load's item repairs, over every list the
 save holds but the pack (the one walk, `savedItemLists`) and over each scene's `decorOwn` (one item a piece, no list).

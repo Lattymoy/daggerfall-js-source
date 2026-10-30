@@ -542,8 +542,8 @@
   {
     "name": "EGZ-beat-never-ducks",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1); played = true; } } catch { /* a sound is never the breach */ }\n      mix.critical();",
-    "new": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1); played = true; } } catch { /* a sound is never the breach */ }",
+    "old": "      mix.critical();\n      return played;",
+    "new": "      return played;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-beat-pitch-lost",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);",
-    "new": "audio.playOneShot(S.rec, 1, 1);",
+    "old": "          audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);",
+    "new": "          audio.playOneShot(S.rec, 1, 1);",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-beat-unguarded",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "      if (!S || !Number.isInteger(S.rec)) return false;\n      let played",
-    "new": "      if (!S) return false;\n      let played",
+    "old": "      if (!S || !Number.isInteger(S.rec)) return false;",
+    "new": "      if (!S) return false;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

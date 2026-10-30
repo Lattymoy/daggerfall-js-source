@@ -274,5 +274,5 @@ test('EG-ZR IMMOVABLE\'S PUSH HALF (section 15: "pushes do nothing until you mov
     assert.equal(S.client.footing(), 0.65, 'still on the arrival plate - no fight floor: Iron Footing alone');
   } finally { S.done(); }
   const K = readFileSync(new URL('../../../src/systems/eliteGates/spireKit.js', import.meta.url), 'utf8');
-  assert.match(K, /export function spireFooting\(\) \{\s*try \{ const v = Number\(_footing\?\.\(\) \?\? 0\); return Number\.isFinite\(v\) \? Math\.max\(0, Math\.min\(1, v\)\) : 0; \}/, 'the spans read the whole of it');
+  assert.match(K, /export function spireFooting\(\) \{\n\s*try \{\n\s*const v = Number\(_footing\?\.\(\) \?\? 0\);\n\s*return Number\.isFinite\(v\) \? Math\.max\(0, Math\.min\(1, v\)\) : 0;\n\s*\}/, 'the spans read the whole of it');
 });

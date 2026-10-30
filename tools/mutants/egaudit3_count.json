@@ -610,8 +610,8 @@
   {
     "name": "EGA3-count-roll-one-seed",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w,",
-    "new": "ws.map((w, i) => rollPass(egReliquarySeed(seed, 0), lv, w,",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, 0), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "EGA3-count-roll-depth-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "rollPass(egReliquarySeed(seed, i), lv, w, { panoply",
-    "new": "rollPass(egReliquarySeed(seed, i), lv, 1, { panoply",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, 1, { panoply: egReliquaryPanoply(seed, w, i) })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "EGA3-count-roll-stream-crossed",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w)",
-    "new": "egPanoplyDraw(seed >>> 0, i) * egPanoplyIn(w)",
+    "old": "  egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;",
+    "new": "  egPanoplyDraw(seed >>> 0, i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "EGA3-count-roll-panoply-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "{ panoply: egReliquaryPanoply(seed, w, i) }",
-    "new": "{ panoply: false }",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: false })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -664,8 +664,8 @@
   {
     "name": "EGA3-count-grant-answer-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "const rl = (Array.isArray(d?.rl) ? d.rl : [])",
-    "new": "const rl = (Array.isArray(c?.rl) ? c.rl : [])",
+    "old": "  const rl = (Array.isArray(d?.rl) ? d.rl : [])",
+    "new": "  const rl = (Array.isArray(c?.rl) ? c.rl : [])",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -673,8 +673,8 @@
   {
     "name": "EGA3-count-grant-seed-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "roll: () => egReliquaryList(seed, level, rl)",
-    "new": "roll: () => egReliquaryList(0, level, rl)",
+    "old": "    roll: () => egReliquaryList(seed, level, rl),",
+    "new": "    roll: () => egReliquaryList(0, level, rl),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "EGA3-count-grant-any-kind",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;",
-    "new": "if (!Number.isSafeInteger(c?.c) || typeof c.b !== 'string') return null;",
+    "old": "  if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;",
+    "new": "  if (!Number.isSafeInteger(c?.c) || typeof c.b !== 'string') return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "EGA3-count-grant-text",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "text: EG_SPOILS_TEXT.opened(rl.length), n: rl.length",
-    "new": "text: EG_SPOILS_TEXT.opened(1), n: rl.length",
+    "old": "    text: EG_SPOILS_TEXT.opened(rl.length),",
+    "new": "    text: EG_SPOILS_TEXT.opened(1),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]

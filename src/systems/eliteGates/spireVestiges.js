@@ -37,13 +37,13 @@
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { egVOf, EG_SECOND_WIND_UNDER, EG_MOMENTUM_STEP } from '../../net/eliteGates/egVestige.js';
-import { egResonance, EG_WEAVE_N } from '../../net/eliteGates/egVestige.js';   // EG-ZS: Spellweave's resonance and its fourth spell
-import { registerSpellFreeCast } from '../spellcost.js';   // EG-ZS: Spellweave's free cast
-import { registerPlayerCastListener } from '../playerCasts.js';   // EG-ZS: my casts, told as they leave the hands
-import { isDamageHealthEffect } from '../spellcast.js';   // EG-ZS: a damage spell (Damage Health, its continuous twin)
+import { egResonance, EG_WEAVE_N } from '../../net/eliteGates/egVestige.js'; // EG-ZS: Spellweave's resonance and its fourth spell
+import { registerSpellFreeCast } from '../spellcost.js'; // EG-ZS: Spellweave's free cast
+import { registerPlayerCastListener } from '../playerCasts.js'; // EG-ZS: my casts, told as they leave the hands
+import { isDamageHealthEffect } from '../spellcast.js'; // EG-ZS: a damage spell (Damage Health, its continuous twin)
 import { HIT_KINDS } from '../../net/gate/gateBrain.js';
 import { registerEntityFold, computeEntityMods, newMods, EMPTY_MODS } from '../entityMods.js';
-import { RESIST_ELEMENTS } from '../loot/lootRarity.js';   // the five elements the resistance channel names (EG15's Bearing reads them too)
+import { RESIST_ELEMENTS } from '../loot/lootRarity.js'; // the five elements the resistance channel names (EG15's Bearing reads them too)
 import { registerSpellCostMod } from '../spellcost.js';
 import { registerPlayerHurtListener, registerShieldSoakMod } from '../../characters/playerEntity.js';
 import { registerRunSpeedMod } from '../../player/motor.js';
@@ -56,14 +56,17 @@ export const SPIRE_VESTIGES = 'spire-vestiges';
 /** @type {{ entity: any, vs: number[][], mast: number, b: string, h: number, ls?: boolean } | null} the holder this frame */
 let _held = null;
 /** AUDIT EG III (lane4 #10): the holder handed in last, and the entity - the same again is the same holder, made once */
-let _from = null, _fromEntity = null;
+let _from = null,
+  _fromEntity = null;
 /** AUDIT EG III (lane1 #5) - LONG STEP (section 17.2: "your crumbles wait +0.5 s for one span (private, as crumbles are)"):
  *  the half second more, while the breach's client says it holds (the holder's `ls`). */
 export const EG_LONG_STEP_S = 0.5;
 /** Spellbane's value the fold last answered (a change folds the entity again); the breach's hall Second Wind was spent in */
-let _bane = 0, _wind = '';
+let _bane = 0,
+  _wind = '';
 /** EG-ZS: the door Rallying Cry last refreshed Second Wind at (`b:h:dn`); my damage spells cast while Spellweave was mine */
-let _cried = '', _woven = 0;
+let _cried = '',
+  _woven = 0;
 /** AUDIT EG III: what the holder's doors did since the breach client last asked (`{ k, t }` - a key of ui/eliteGates/egBeats.js EG_BEATS) */
 const _news = [];
 
@@ -80,18 +83,35 @@ const heldV = (key, entity = _held?.entity) => (_held && entity === _held.entity
  * @param {any} entity @param {{ vs: number[][], mast: number, b: string, h: number, dn?: number, cry?: boolean, ls?: boolean } | null} holder
  */
 export function spireHolderStep(entity, holder) {
-  if (holder !== _from || entity !== _fromEntity) { _from = holder; _fromEntity = entity; _held = holder && entity ? { entity, vs: holder.vs ?? [], mast: holder.mast ?? -1, b: holder.b ?? '', h: holder.h | 0, ...(holder.ls === true ? { ls: true } : {}) } : null; }
-  if (!_held) _news.length = 0;   // AUDIT EG III: nothing held, nothing to say
+  if (holder !== _from || entity !== _fromEntity) {
+    _from = holder;
+    _fromEntity = entity;
+    _held =
+      holder && entity
+        ? {
+            entity,
+            vs: holder.vs ?? [],
+            mast: holder.mast ?? -1,
+            b: holder.b ?? '',
+            h: holder.h | 0,
+            ...(holder.ls === true ? { ls: true } : {}),
+          }
+        : null;
+  }
+  if (!_held) _news.length = 0; // AUDIT EG III: nothing held, nothing to say
   if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {
     _cried = `${_held.b}:${_held.h}:${holder.dn}`;
-    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' });   // AUDIT EG III: a wind spent in this hall given back, said
+    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' }); // AUDIT EG III: a wind spent in this hall given back, said
     _wind = '';
   }
   if (!entity) return;
   const skin = heldV('stoneskin', entity);
   setSpireHp(entity, skin ? Math.round(spireBodyMax(entity) * skin) : 0);
   const bane = heldV('spellbane', entity);
-  if (bane !== _bane) { _bane = bane; computeEntityMods(entity); }
+  if (bane !== _bane) {
+    _bane = bane;
+    computeEntityMods(entity);
+  }
 }
 /** AUDIT EG IV (lane10 #14; section 15) - RALLYING CRY AT A COURT'S PHASE TURN: the room's word (`eheal` `cry` - net/eliteGates/egBrain.js
  *  rallyingCry) gives back a Second Wind spent in this hall, said as the door's refresh says it. Answers whether one was given
@@ -136,7 +156,10 @@ function baneFold(entity) {
   return m;
 }
 /** BATTLEMAGE'S FOCUS: my cast's spell points less its share (the cost door rounds, and never under 1). */
-const focusCost = (entity, sp) => { const v = heldV('focus', entity); return v ? sp * (1 - v) : sp; };
+const focusCost = (entity, sp) => {
+  const v = heldV('focus', entity);
+  return v ? sp * (1 - v) : sp;
+};
 /** SHIELDWEAVER: a point of my own Shield's pool soaks 1 + its share - a Shield I cast on myself (a mate's gift, ALLY-CAST's,
  *  lands with no caster and is no self-cast). */
 const weaverSoak = (entity, a) => (a?.bundleSelfCast ? 1 + heldV('shieldweaver', entity) : 1);
@@ -145,13 +168,15 @@ const fleetRun = () => 1 + heldV('fleetfoot');
 /** SECOND WIND: a hurt that takes me under EG_SECOND_WIND_UNDER of my maximum heals its share of it - once a hall of the
  *  breach, never on a killing blow a death save turned aside (`saved`). */
 function secondWind(entity, { before, after, saved = false }) {
-  const v = heldV('secondwind', entity), max = entity?.maxHealth;
+  const v = heldV('secondwind', entity),
+    max = entity?.maxHealth;
   if (!v || saved || !(after > 0) || !(max > 0)) return;
-  const line = max * EG_SECOND_WIND_UNDER, hall = `${_held?.b}:${_held?.h}`;
+  const line = max * EG_SECOND_WIND_UNDER,
+    hall = `${_held?.b}:${_held?.h}`;
   if (!(before >= line && after < line) || _wind === hall) return;
   _wind = hall;
   const healed = healMine(entity, max * v);
-  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 });   // AUDIT EG III: said as Shed Skin says its heal
+  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 }); // AUDIT EG III: said as Shed Skin says its heal
 }
 
 /** EG-ZS - SPELLWEAVE (Arcana's capstone: "every fourth damage spell costs nothing"): a damage spell is one with a Damage Health
@@ -161,11 +186,15 @@ function secondWind(entity, { before, after, saved = false }) {
 const damageSpell = (spell) => Array.isArray(spell?.effects) && spell.effects.some(isDamageHealthEffect);
 const weaves = (entity) => !!_held && entity === _held.entity && egResonance(_held.vs).includes('arcana');
 let _weaveB = '';
-const weaveFree = (entity, spell) => weaves(entity) && damageSpell(spell) && _weaveB === _held?.b && _woven % EG_WEAVE_N === EG_WEAVE_N - 1;
+const weaveFree = (entity, spell) =>
+  weaves(entity) && damageSpell(spell) && _weaveB === _held?.b && _woven % EG_WEAVE_N === EG_WEAVE_N - 1;
 function weaveCast(entity, spell) {
   if (!weaves(entity) || !damageSpell(spell)) return;
-  if (_weaveB !== _held?.b) { _weaveB = _held?.b ?? ''; _woven = 0; }
-  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' });   // AUDIT EG III: the free one left the hands
+  if (_weaveB !== _held?.b) {
+    _weaveB = _held?.b ?? '';
+    _woven = 0;
+  }
+  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' }); // AUDIT EG III: the free one left the hands
   _woven++;
 }
 /** AUDIT EG III: is my next damage spell Spellweave's free one (its chip) - the price door's own reading of a damage spell (a
@@ -180,8 +209,18 @@ registerSpellCostMod(SPIRE_VESTIGES, focusCost);
 registerShieldSoakMod(SPIRE_VESTIGES, weaverSoak);
 registerRunSpeedMod(SPIRE_VESTIGES, fleetRun);
 registerPlayerHurtListener(SPIRE_VESTIGES, secondWind);
-registerSpellFreeCast(SPIRE_VESTIGES, weaveFree);   // EG-ZS
-registerPlayerCastListener(SPIRE_VESTIGES, weaveCast);   // EG-ZS
+registerSpellFreeCast(SPIRE_VESTIGES, weaveFree); // EG-ZS
+registerPlayerCastListener(SPIRE_VESTIGES, weaveCast); // EG-ZS
 
 /** Tests only: nothing held, nothing spent. */
-export function _resetSpireVestigesForTests() { _held = null; _from = null; _fromEntity = null; _bane = 0; _wind = ''; _cried = ''; _woven = 0; _weaveB = ''; _news.length = 0; }
+export function _resetSpireVestigesForTests() {
+  _held = null;
+  _from = null;
+  _fromEntity = null;
+  _bane = 0;
+  _wind = '';
+  _cried = '';
+  _woven = 0;
+  _weaveB = '';
+  _news.length = 0;
+}

@@ -443,8 +443,8 @@
   {
     "name": "EGECO3-owner-asks-a-joiners-kill",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "(by == null || by === selfId() ? find(entity, room) : Promise.resolve(false))",
-    "new": "find(entity, room)",
+    "old": "  const death = (entity, by = null, room = false) =>\n    by == null || by === selfId() ? find(entity, room) : Promise.resolve(false);",
+    "new": "  const death = (entity, by = null, room = false) => find(entity, room);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGECO3-a-body-asked-twice",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;",
-    "new": "if (!egFindAsks(entity, tier, online())) return false;",
+    "old": "    if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;",
+    "new": "    if (!egFindAsks(entity, tier, online())) return false;",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGECO3-a-plain-foe-asked",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier)",
-    "new": "online === true && DUNGEON_TIERS.includes(tier)",
+    "old": "  online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
+    "new": "  online === true && DUNGEON_TIERS.includes(tier);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGECO3-the-key-not-thrown",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
-    "new": "",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n    say(EG_FIND_TEXT.found);",
+    "new": "    say(EG_FIND_TEXT.found);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGECO3-offline-asked",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "online === true && entity?.eliteFoe === true",
-    "new": "entity?.eliteFoe === true",
+    "old": "  online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
+    "new": "  entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGECO3-PL-room-raise-answered",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "{ if (opts.room) return; death(entity, opts.by ?? null)",
-    "new": "{ death(entity, opts.by ?? null)",
+    "old": "    if (opts.room) return;\n    death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e));",
+    "new": "    death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e));",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "EGECO3-PL-key-on-the-copy",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
-    "new": "    throwKey(here() !== at?.visit ? null : entity, d.keys);\n",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);",
+    "new": "    throwKey(here() !== at?.visit ? null : entity, d.keys);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "EGECO3-PL-kill-not-a-room",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "_registered?.death(entity, by, true) ??",
-    "new": "_registered?.death(entity, by) ??",
+    "old": "  _registered?.death(entity, by, true) ?? Promise.resolve(false);",
+    "new": "  _registered?.death(entity, by) ?? Promise.resolve(false);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "EGECO3-PL-joiner-room-lost",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "_registered?.struck(entity, room) ??",
-    "new": "_registered?.struck(entity) ??",
+    "old": "  _registered?.struck(entity, room) ?? Promise.resolve(false);",
+    "new": "  _registered?.struck(entity) ?? Promise.resolve(false);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGECO3-PL-pack-short",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);",
-    "new": "  throwWeirKeyFace(Array.isArray(entity?.items) ? entity.items : []);",
+    "old": "  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items); // PARTY-LOOT: no body (a room's) - the pack holds the whole balance",
+    "new": "  throwWeirKeyFace(Array.isArray(entity?.items) ? entity.items : []); // PARTY-LOOT: no body (a room's) - the pack holds the whole balance",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]

@@ -30,7 +30,7 @@
 // PURE OF THE HOSTS: `registerEgFind` takes its doors as arguments, so it runs without world.js. Not a DFU member: DFU has
 // no Weir Key and no online. Ledger A (ELITE-GATES).
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
-import { restackWeirKeys, throwWeirKeyFace, setWeirKeyFacesHere } from './weirKey.js';   // RPT1026-CLIENT: the face thrown is kept as lying
+import { restackWeirKeys, throwWeirKeyFace, setWeirKeyFacesHere } from './weirKey.js'; // RPT1026-CLIENT: the face thrown is kept as lying
 import { DUNGEON_TIERS, dungeonTier } from '../dungeon/dungeonTier.js';
 
 /** The death handler's name (corpseMarker.js registerEnemyDeathHandler). */
@@ -39,7 +39,8 @@ export const EG_FIND_HANDLER = 'eg-find';
 export const EG_FIND_TEXT = Object.freeze({ found: 'A Weir Key falls from the body.' });
 
 /** Whether a death is a find's to ask: an elite foe, in a dungeon of a tier, online. */
-export const egFindAsks = (/** @type {any} */ entity, /** @type {any} */ tier, /** @type {any} */ online) => online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);
+export const egFindAsks = (/** @type {any} */ entity, /** @type {any} */ tier, /** @type {any} */ online) =>
+  online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);
 
 /**
  * THE THROW: one Weir Key onto the body's items (as dropFoeCard puts a card there) and the pack restacked to the balance
@@ -48,7 +49,7 @@ export const egFindAsks = (/** @type {any} */ entity, /** @type {any} */ tier, /
  * @param {any} entity the fallen foe @param {any[]} pack the player's items @param {number} keys the account's balance
  */
 export function egFindThrow(entity, pack, keys) {
-  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);   // PARTY-LOOT: no body (a room's) - the pack holds the whole balance
+  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items); // PARTY-LOOT: no body (a room's) - the pack holds the whole balance
   restackWeirKeys(pack, keys);
 }
 
@@ -56,17 +57,21 @@ export function egFindThrow(entity, pack, keys) {
  *  dungeon, its tier and the VISIT, the dungeon's context the world's modes build new at every entry (worldModes.js
  *  `dungeonCtx`), which the faces thrown in it are kept against (weirKey.js setWeirKeyFacesHere); null anywhere else.
  *  @param {string|undefined|null} mode the world's mode @param {any} modes the world's modes */
-export const egFindPlace = (mode, modes) => (mode === 'dungeon' && modes?.dungeonLocation
-  ? { tier: dungeonTier(modes.dungeonLocation), visit: modes.dungeonCtx ?? modes.dungeonLocation } : null);
+export const egFindPlace = (mode, modes) =>
+  mode === 'dungeon' && modes?.dungeonLocation
+    ? { tier: dungeonTier(modes.dungeonLocation), visit: modes.dungeonCtx ?? modes.dungeonLocation }
+    : null;
 
 /** The registered find (registerEgFind's), for the joiner's door the dungeon host reads (egFindStruck). */
 let _registered = null;
 /** THE JOINER'S DOOR (scenes/dungeonContext.js, where the owner's record names me the striker): ask for this body's find -
  *  `room` a room's body (PARTY-LOOT), whose key goes to the pack. */
-export const egFindStruck = (/** @type {any} */ entity, room = false) => _registered?.struck(entity, room) ?? Promise.resolve(false);
+export const egFindStruck = (/** @type {any} */ entity, room = false) =>
+  _registered?.struck(entity, room) ?? Promise.resolve(false);
 /** PARTY-LOOT: THE KILL OF A ROOM'S BODY (scenes/dungeonContext.js, where a room's body raises no death of its own): the
  *  owner's half for it (`by` the striker the host names), its key to the pack. */
-export const egFindKill = (/** @type {any} */ entity, /** @type {string|null} */ by = null) => _registered?.death(entity, by, true) ?? Promise.resolve(false);
+export const egFindKill = (/** @type {any} */ entity, /** @type {string|null} */ by = null) =>
+  _registered?.death(entity, by, true) ?? Promise.resolve(false);
 /**
  * THE FIND, REGISTERED: a death handler for the owner's kills (`opts.by` the striker the host names - its `_killedBy`) and
  * the joiner's door (`struck`). `ask(tier)` is the service's call (accountEg's `find` - `{ ok, data: { found, keys,
@@ -76,21 +81,38 @@ export const egFindKill = (/** @type {any} */ entity, /** @type {string|null} */
  * handler's), `struck(entity)` the joiner's, each a promise of whether a key was found.
  * @param {{ ask: (tier: string) => Promise<any>, placeNow?: () => ({ tier: string|null, visit: unknown }|null), tierNow?: () => string|null, selfId: () => string|null, online: () => boolean, say?: (line: string) => void, throwKey: (entity: any, keys: number) => void }} doors
  */
-export function registerEgFind({ ask, placeNow = undefined, tierNow = undefined, selfId, online, say = () => {}, throwKey }) {
+export function registerEgFind({
+  ask,
+  placeNow = undefined,
+  tierNow = undefined,
+  selfId,
+  online,
+  say = () => {},
+  throwKey,
+}) {
   const asked = new WeakSet();
   /** AUDIT RPT1026 K1: where the player stands - the place door's answer, or the tier door's as one long visit */
-  const where = () => { if (placeNow) return placeNow(); const tier = tierNow?.() ?? null; return tier == null ? null : { tier, visit: true }; };
+  const where = () => {
+    if (placeNow) return placeNow();
+    const tier = tierNow?.() ?? null;
+    return tier == null ? null : { tier, visit: true };
+  };
   // RPT1026-CLIENT: the faces thrown lie on this dungeon's bodies - out of it, they are folded off them (weirKey.js weirKeysLying);
   // AUDIT RPT1026 K1: and out of this VISIT - the next dungeon, or this one built again, holds none of its bodies
   const here = () => where()?.visit ?? null;
   setWeirKeyFacesHere(here);
   /** @param {any} entity @param {boolean} [room] a room's body - its key to the pack (PARTY-LOOT) */
   async function find(entity, room = false) {
-    const at = where(), tier = at?.tier ?? null;
+    const at = where(),
+      tier = at?.tier ?? null;
     if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;
     asked.add(entity);
     let a = null;
-    try { a = await ask(/** @type {string} */ (tier)); } catch { return false; }
+    try {
+      a = await ask(/** @type {string} */ (tier));
+    } catch {
+      return false;
+    }
     const d = a?.ok ? a.data : null;
     if (d?.found !== true || !Number.isSafeInteger(d.keys)) return false;
     // AUDIT RPT1026 K1: an answer that lands in another visit finds the body gone with the one it was asked in - its key
@@ -100,9 +122,23 @@ export function registerEgFind({ ask, placeNow = undefined, tierNow = undefined,
     return true;
   }
   /** @param {any} entity @param {string|null} [by] @param {boolean} [room] */
-  const death = (entity, by = null, room = false) => (by == null || by === selfId() ? find(entity, room) : Promise.resolve(false));
-  registerEnemyDeathHandler(EG_FIND_HANDLER, (/** @type {any} */ entity, /** @type {any} */ opts = {}) => { if (opts.room) return; death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e)); });   // PARTY-LOOT: the room's base is no kill
-  const reg = { death, struck: (/** @type {any} */ entity, room = false) => find(entity, room), dispose: () => { registerEnemyDeathHandler(EG_FIND_HANDLER, null); if (_registered === reg) { _registered = null; setWeirKeyFacesHere(null); } } };
+  const death = (entity, by = null, room = false) =>
+    by == null || by === selfId() ? find(entity, room) : Promise.resolve(false);
+  registerEnemyDeathHandler(EG_FIND_HANDLER, (/** @type {any} */ entity, /** @type {any} */ opts = {}) => {
+    if (opts.room) return;
+    death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e));
+  }); // PARTY-LOOT: the room's base is no kill
+  const reg = {
+    death,
+    struck: (/** @type {any} */ entity, room = false) => find(entity, room),
+    dispose: () => {
+      registerEnemyDeathHandler(EG_FIND_HANDLER, null);
+      if (_registered === reg) {
+        _registered = null;
+        setWeirKeyFacesHere(null);
+      }
+    },
+  };
   _registered = reg;
   return reg;
 }

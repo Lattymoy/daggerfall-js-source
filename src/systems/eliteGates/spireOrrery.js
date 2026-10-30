@@ -34,7 +34,10 @@ export function spireOrreryOf(seed, spec) {
   return orreryOf((egSeed(seed, EG_ORRERY_SALT + spec.h) % 2147483646) + 1, egOrreryTurns(spec.c));
 }
 /** A stone's name as a title says it - stone `j` is SD_STONES[j], the wire's order (*The Underking*). Pure. */
-export const spireStoneName = (j) => { const n = SD_STONES[j]?.name ?? ''; return n.charAt(0).toUpperCase() + n.slice(1); };
+export const spireStoneName = (j) => {
+  const n = SD_STONES[j]?.name ?? '';
+  return n.charAt(0).toUpperCase() + n.slice(1);
+};
 /** The words over a stone: its name and the hour its hand stands at, 1 to 12 (*Wayrest - 4*). Pure. */
 export const spireStoneWords = (j, h) => `${spireStoneName(j)} - ${sdHourShown(h)}`;
 /** The six riddles, one a line, in the plaques' order (the Hour's Ledger Plaques). Pure. */

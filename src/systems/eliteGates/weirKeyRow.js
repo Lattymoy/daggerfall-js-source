@@ -15,6 +15,12 @@ export const WEIR_KEY_TEMPLATE = 575;
  *  stowed in the wagon or the player's own storage was never seen - the pack was given a new one, and the stowed ones,
  *  carried back, all turned to rust at the next answer. The law reads no `packOnly`. */
 export const WEIR_KEY_LAW_ROW = Object.freeze({
-  index: WEIR_KEY_TEMPLATE, baseWeight: 0.25, hitPoints: 1000, basePrice: 500, rarity: 20, bound: true, stackable: true,
-  packOnly: true,   // KEY-FACE: the face never leaves the pack
+  index: WEIR_KEY_TEMPLATE,
+  baseWeight: 0.25,
+  hitPoints: 1000,
+  basePrice: 500,
+  rarity: 20,
+  bound: true,
+  stackable: true,
+  packOnly: true, // KEY-FACE: the face never leaves the pack
 });

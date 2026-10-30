@@ -34,11 +34,17 @@ import { spoilsBase, magicOrBetter, sigilStone, SPOILS_SOURCE } from '../gate/ga
 import { applyRarity, lastPass, socketPass, weaponSocketPass, techniquePass } from '../loot/lootRarity.js';
 import { bossGems } from '../gems.js';
 import { bossCardRoll } from '../bossCards.js';
-import { mintPanoplyPiece } from '../aetheric.js';   // EG15: THE BATTLEMAGE'S PANOPLY's nine records - which piece, one draw
+import { mintPanoplyPiece } from '../aetheric.js'; // EG15: THE BATTLEMAGE'S PANOPLY's nine records - which piece, one draw
 import { egLordArm } from './egLordArms.js';
 import { RANDOM_TREASURE_ICONS } from '../loot/loot.js';
-import { egSpoilsPasses, egPassSeed, egPanoplyHit, egLegendaryShare, EG_LORD_ARM_IN } from '../../net/eliteGates/egPay.js';
-import { egPanoplyDraw, egPanoplyIn } from '../../net/eliteGates/egPay.js';   // AUDIT EG III: a Reliquary's Panoply, twice the chance
+import {
+  egSpoilsPasses,
+  egPassSeed,
+  egPanoplyHit,
+  egLegendaryShare,
+  EG_LORD_ARM_IN,
+} from '../../net/eliteGates/egPay.js';
+import { egPanoplyDraw, egPanoplyIn } from '../../net/eliteGates/egPay.js'; // AUDIT EG III: a Reliquary's Panoply, twice the chance
 
 /** Gold a level of the earner's at Redoubt 1, before the seed's variation (0.8 to 1.2 of it). */
 export const EG_SPOILS_GOLD_PER_LEVEL = 200;
@@ -54,9 +60,13 @@ export const EG_SPOILS_TEXT = Object.freeze({
   spilled: "The Redoubt's spoils spill from the beacon.",
   gathered: "The Redoubt's spoils are in your pack.",
   granted: (w) => `Your spoils from Redoubt ${w} are in your pack.`,
-  goldOnly: (w) => `You already took Redoubt ${w} this week. You get its gold, and each of its Reliquaries gives 20 lumen.`,
-  opened: (n) => (n === 1 ? 'Your Reliquary opens: its spoils are in your pack.' : `Your ${n} Reliquaries open: their spoils are in your pack.`),   // AUDIT EG III
-  guest: 'Add a username to keep the Spire\'s spoils. Its gold is yours.',
+  goldOnly: (w) =>
+    `You already took Redoubt ${w} this week. You get its gold, and each of its Reliquaries gives 20 lumen.`,
+  opened: (n) =>
+    n === 1
+      ? 'Your Reliquary opens: its spoils are in your pack.'
+      : `Your ${n} Reliquaries open: their spoils are in your pack.`, // AUDIT EG III
+  guest: "Add a username to keep the Spire's spoils. Its gold is yours.",
   recovered: "The Spire's spoils are in your pack.",
 });
 /** A Redoubt's receipt as the pool keys it spent: its breach and its number. */
@@ -74,7 +84,10 @@ function graded(item, tier, rolls) {
   return { item, tier: item.rarity ?? tier };
 }
 /** The gold of Redoubt `w` at level `lv`, before the seed's variation. Pure. */
-export const egSpoilsGold = (lv, w) => EG_SPOILS_GOLD_PER_LEVEL * Math.max(1, lv) * Math.min(EG_SPOILS_GOLD_MAX, 1 + EG_SPOILS_GOLD_STEP * (Math.max(1, w | 0) - 1));
+export const egSpoilsGold = (lv, w) =>
+  EG_SPOILS_GOLD_PER_LEVEL *
+  Math.max(1, lv) *
+  Math.min(EG_SPOILS_GOLD_MAX, 1 + EG_SPOILS_GOLD_STEP * (Math.max(1, w | 0) - 1));
 
 /**
  * ONE PASS of a Redoubt's spoils: `{ gold, pieces: [{ item, tier }], card, gems }`. `o.panoply` whether its Panoply piece
@@ -91,16 +104,31 @@ function rollPass(seed, lv, w, o) {
   for (let i = 0; i < more; i++) pieces.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls, SPOILS_SOURCE), rolls));
   // THE BATTLEMAGE'S PANOPLY: whether, by its own stream (or the service's pity); which, one draw always taken
   const which = rolls();
-  if (o.panoply) { const p = mintPanoplyPiece(() => which); if (p) pieces.push({ item: p, tier: p.rarity }); }
+  if (o.panoply) {
+    const p = mintPanoplyPiece(() => which);
+    if (p) pieces.push({ item: p, tier: p.rarity });
+  }
   // THE LORD'S NAMED LEGENDARY: one draw always; its making's draws when it comes
   const named = rolls() * EG_LORD_ARM_IN < 1 && o.lord ? egLordArm(o.lord, lv, rolls) : null;
   if (named) pieces.push({ item: named, tier: named.rarity });
-  lastPass(pieces.map((p) => p.item), rolls);
+  lastPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   const card = o.lord ? bossCardRoll(o.lord, rolls) : null;
-  socketPass(pieces.map((p) => p.item), rolls);
-  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  socketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  weaponSocketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   const gems = bossGems('gate', rolls);
-  techniquePass(pieces.map((p) => p.item), rolls);
+  techniquePass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   return { gold, pieces, card, gems };
 }
 
@@ -115,8 +143,14 @@ export function rollEgSpoils(seed, level, w, { lord = '', pity = [], goldOnly = 
   const lv = Math.max(1, Math.floor(Number(level) || 1));
   const passes = [];
   for (let p = 0; p < egSpoilsPasses(w); p++) {
-    if (goldOnly) { const r = seededRng(egPassSeed(seed, p)); passes.push({ gold: Math.round(egSpoilsGold(lv, w) * (0.8 + 0.4 * r())), pieces: [], card: null, gems: [] }); continue; }
-    passes.push(rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }));
+    if (goldOnly) {
+      const r = seededRng(egPassSeed(seed, p));
+      passes.push({ gold: Math.round(egSpoilsGold(lv, w) * (0.8 + 0.4 * r())), pieces: [], card: null, gems: [] });
+      continue;
+    }
+    passes.push(
+      rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }),
+    );
   }
   return passes;
 }
@@ -135,10 +169,12 @@ export const EG_EMBERS_MAX = 2001;
  *  them"): A PAID REDOUBT'S DEADLANDS EMBERS - one stack of the gate's currency (systems/gate/gateSpoils.js sigilStone, minted as
  *  the gate's and the serpent's: no roll taken), as many as the claim paid (`embers`, the row's `stones`), or null. The
  *  service wrote them to the purse and no pack ever held them, so the Broker - who takes them from the pack - could not. */
-export const egEmberStack = (n) => (Number.isSafeInteger(n) && n > 0 ? Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) }) : null);
+export const egEmberStack = (n) =>
+  Number.isSafeInteger(n) && n > 0 ? Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) }) : null;
 /** AUDIT EG V (lane8 L8-5): the seed a claimed receipt's spoils roll on - the account service's answer's (`seed`), its
  *  receipt's own (`c`) only where the service kept no row (a guest's gold). Pure. */
-export const egSpoilsSeedOf = (c, d) => (Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0);
+export const egSpoilsSeedOf = (c, d) =>
+  Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0;
 /** Passes as the pool throws them, each piece dressed in the treasure flat `seed`'s own stream chooses - AUDIT EG V: the
  *  embers' stack last, its flat drawn after every other (the gate's glow - scenes/spoilsPool.js SIGIL_TIER, 'artifact',
  *  as systems/serpent/serpentSpoils.js says it). Pure. */
@@ -167,7 +203,8 @@ export const EG_RELIQUARIES_MAX = 64;
 export const egReliquarySeed = (seed, i) => egPassSeed(seed >>> 0, 16 + i);
 /** Whether Reliquary `i` of an end, at Redoubt `w`'s depth, holds a Panoply piece: its own stream off its seed at
  *  EG_RELIQUARY_PANOPLY_X times the Redoubt's odds (net/eliteGates/egPay.js egPanoplyIn). Pure. */
-export const egReliquaryPanoply = (seed, w, i) => egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;
+export const egReliquaryPanoply = (seed, w, i) =>
+  egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;
 /** The pool's key for an end's Reliquaries - once a breach and account (scenes/spoilsPool.js spentKey adds the account). */
 export const egReliquaryDay = (b) => `eg:${b}:rl`;
 /**
@@ -178,8 +215,13 @@ export const egReliquaryDay = (b) => `eg:${b}:rl`;
  */
 export function egReliquaryList(seed, level, rl) {
   const lv = Math.max(1, Math.floor(Number(level) || 1));
-  const ws = (Array.isArray(rl) ? rl : []).filter((w) => Number.isSafeInteger(w) && w >= 1).slice(0, EG_RELIQUARIES_MAX);
-  return dressed(egReliquarySeed(seed, 0xffff), ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })));
+  const ws = (Array.isArray(rl) ? rl : [])
+    .filter((w) => Number.isSafeInteger(w) && w >= 1)
+    .slice(0, EG_RELIQUARIES_MAX);
+  return dressed(
+    egReliquarySeed(seed, 0xffff),
+    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),
+  );
 }
 /**
  * WHAT AN END'S CLAIM OPENS (scenes/world.js egSpoilsPaid): `c` the end receipt's claims (`q` 'x'), `d` the account service's
@@ -189,8 +231,15 @@ export function egReliquaryList(seed, level, rl) {
  */
 export function egReliquaryGrant(c, d, level) {
   if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;
-  const rl = (Array.isArray(d?.rl) ? d.rl : []).filter((w) => Number.isSafeInteger(w) && w >= 1).slice(0, EG_RELIQUARIES_MAX);
+  const rl = (Array.isArray(d?.rl) ? d.rl : [])
+    .filter((w) => Number.isSafeInteger(w) && w >= 1)
+    .slice(0, EG_RELIQUARIES_MAX);
   if (!rl.length) return null;
-  const seed = egSpoilsSeedOf(c, d);   // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own
-  return { day: egReliquaryDay(c.b), roll: () => egReliquaryList(seed, level, rl), text: EG_SPOILS_TEXT.opened(rl.length), n: rl.length };
+  const seed = egSpoilsSeedOf(c, d); // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own
+  return {
+    day: egReliquaryDay(c.b),
+    roll: () => egReliquaryList(seed, level, rl),
+    text: EG_SPOILS_TEXT.opened(rl.length),
+    n: rl.length,
+  };
 }

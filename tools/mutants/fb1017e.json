@@ -12,8 +12,8 @@
   {
     "name": "ORRERY-SIGHT-turns-range",
     "file": "src/systems/eliteGates/spireOrrery.js",
-    "old": "+ 1, egOrreryTurns(spec.c));",
-    "new": "+ 1);",
+    "old": "  return orreryOf((egSeed(seed, EG_ORRERY_SALT + spec.h) % 2147483646) + 1, egOrreryTurns(spec.c));",
+    "new": "  return orreryOf((egSeed(seed, EG_ORRERY_SALT + spec.h) % 2147483646) + 1);",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],

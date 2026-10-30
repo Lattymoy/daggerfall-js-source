@@ -673,8 +673,8 @@
   {
     "name": "EGA4L-client-cry-wind-kept",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  if (spent) _news.push({ k: 'rallyingCry' });\n  _wind = '';",
-    "new": "  if (spent) _news.push({ k: 'rallyingCry' });",
+    "old": "  _wind = '';\n  return spent;",
+    "new": "  return spent;",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],

@@ -369,7 +369,7 @@ real relay instance, so the key is a service-side balance and the item is its fa
   restacked (AUDIT EG IV).
 - It is bound to the account, never traded, and never lost to a death.
 - **The face is the pack's alone** (FIELD BUGS 2026-10-19f KEY-FACE). The restack reads the pack and nothing else
-  (`weirKey.js:"  const held = items.filter(isWeirKey);"`), so a face anywhere else is a key it cannot see. The row was
+  (`weirKey.js:"const held = items.filter"`), so a face anywhere else is a key it cannot see. The row was
   bound and not pack-only, and a bound piece goes to the wagon and the player's own storage (`itemBound.js`
   `BOUND_KEEPS`): a face stowed there left the pack showing none, the next answer gave it a new one, and the stowed ones,
   carried back, showed keys the account never held - every one of them rust at the next use (a player's private report:

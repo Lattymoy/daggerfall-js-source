@@ -305,8 +305,8 @@
   {
     "name": "EGA3P-news-wind-unsaid",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 });",
-    "new": "",
+    "old": "  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 }); // AUDIT EG III: said as Shed Skin says its heal",
+    "new": "  // AUDIT EG III: said as Shed Skin says its heal",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "EGA3P-news-weave-early",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' });",
-    "new": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 2) _news.push({ k: 'spellweave' });",
+    "old": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' }); // AUDIT EG III: the free one left the hands",
+    "new": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 2) _news.push({ k: 'spellweave' }); // AUDIT EG III: the free one left the hands",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "EGA3P-news-cry-unspent",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' });",
-    "new": "    _news.push({ k: 'rallyingCry' });",
+    "old": "    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' }); // AUDIT EG III: a wind spent in this hall given back, said",
+    "new": "    _news.push({ k: 'rallyingCry' }); // AUDIT EG III: a wind spent in this hall given back, said",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "EGA3P-news-kept",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  if (!_held) _news.length = 0;   // AUDIT EG III: nothing held, nothing to say\n",
-    "new": "",
+    "old": "  if (!_held) _news.length = 0; // AUDIT EG III: nothing held, nothing to say\n  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],

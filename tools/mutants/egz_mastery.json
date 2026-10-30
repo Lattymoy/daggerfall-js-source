@@ -759,8 +759,8 @@
   {
     "name": "EGZS-weave-number",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "_woven % EG_WEAVE_N === EG_WEAVE_N - 1;",
-    "new": "_woven % EG_WEAVE_N === 0;",
+    "old": "  weaves(entity) && damageSpell(spell) && _weaveB === _held?.b && _woven % EG_WEAVE_N === EG_WEAVE_N - 1;",
+    "new": "  weaves(entity) && damageSpell(spell) && _weaveB === _held?.b && _woven % EG_WEAVE_N === 0;",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -779,8 +779,8 @@
   {
     "name": "EGZS-weave-uncounted",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  _woven++;\n",
-    "new": "\n",
+    "old": "  _woven++;\n}",
+    "new": "}",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -789,8 +789,8 @@
   {
     "name": "EGZS-weave-count-kept",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (_weaveB !== _held?.b) { _weaveB = _held?.b ?? ''; _woven = 0; }",
-    "new": "if (_weaveB !== _held?.b) { _weaveB = _held?.b ?? ''; }",
+    "old": "    _woven = 0;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -799,8 +799,8 @@
   {
     "name": "EGZS-weave-breach-unread",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "damageSpell(spell) && _weaveB === _held?.b && _woven",
-    "new": "damageSpell(spell) && _woven",
+    "old": "const weaveFree = (entity, spell) =>\n  weaves(entity) && damageSpell(spell) && _weaveB === _held?.b && _woven % EG_WEAVE_N === EG_WEAVE_N - 1;",
+    "new": "const weaveFree = (entity, spell) => weaves(entity) && damageSpell(spell) && _woven % EG_WEAVE_N === EG_WEAVE_N - 1;",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -809,8 +809,8 @@
   {
     "name": "EGZS-weave-family",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "egResonance(_held.vs).includes('arcana')",
-    "new": "egResonance(_held.vs).includes('hunt')",
+    "old": "const weaves = (entity) => !!_held && entity === _held.entity && egResonance(_held.vs).includes('arcana');",
+    "new": "const weaves = (entity) => !!_held && entity === _held.entity && egResonance(_held.vs).includes('hunt');",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -819,8 +819,8 @@
   {
     "name": "EGZS-weave-another-entity",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "const weaves = (entity) => !!_held && entity === _held.entity && egResonance",
-    "new": "const weaves = (entity) => !!_held && egResonance",
+    "old": "const weaves = (entity) => !!_held && entity === _held.entity && egResonance(_held.vs).includes('arcana');",
+    "new": "const weaves = (entity) => !!_held && egResonance(_held.vs).includes('arcana');",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -849,8 +849,8 @@
   {
     "name": "EGZS-cry-unread",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (_held && holder?.cry === true && holder.dn > 0 &&",
-    "new": "if (_held && holder.dn > 0 &&",
+    "old": "  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "  if (_held && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -859,8 +859,8 @@
   {
     "name": "EGZS-cry-door-unread",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (_held && holder?.cry === true && holder.dn > 0 &&",
-    "new": "if (_held && holder?.cry === true &&",
+    "old": "  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "  if (_held && holder?.cry === true && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -869,8 +869,8 @@
   {
     "name": "EGZS-cry-every-frame",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
-    "new": "holder.dn > 0) {",
+    "old": "  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "  if (_held && holder?.cry === true && holder.dn > 0) {",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],

@@ -2640,14 +2640,14 @@ one over. The next answer took the extra back: *The key turns to rust.* - the st
 (`egClient.js` open) restacks only on the service's yes, never on a refusal or a lost answer: #41's eight were KEY-FACE's
 faces.
 
-FIXED. Every face thrown is kept with the body's list it lies in (`weirKey.js:"export function throwWeirKeyFace("`), and
-every restack sets the pack to the balance less the faces still lying (`weirKey.js:"  const want = Math.max(0, n - weirKeysLying());"`):
+FIXED. Every face thrown is kept with the body's list it lies in (`weirKey.js:"export function throwWeirKeyFace"`), and
+every restack sets the pack to the balance less the faces still lying (`weirKey.js:"const want = Math.max"`):
 one taken up - gone from its list, whatever door took it - leaves the count, so the pack and the bodies always show the
 balance together. Out of the dungeon (the find's tier door, `setWeirKeyFacesHere`, null outside a dungeon) the faces left
 behind are folded off their bodies at the next answer, so a dungeon entered again shows none and the pack holds
 the whole balance; a load keeps none as lying (`foldStrayWeirKeys`, KEY-FACE's fold, clears the list); the find let go
 keeps none. The throw is now `throwWeirKeyFace` then the restack to the balance
-(`egFind.js:"  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);"`).
+(`egFind.js:"if (Array.isArray(entity?.items))"`).
 
 THE WORDS. Nothing the player saw said the keys are the account's. The key's card carries, under its own line, *Every
 character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine = () =>"`,
@@ -2664,8 +2664,8 @@ dungeon and into the next (or into the same one, which the world's modes build a
 outside, the faces of the visit before were still counted as lying - on bodies its context took with it - and every
 restack there held the pack a key short of the balance for each, none of them on any body to take up, until an answer
 landed outside again. A face is kept against the visit it was thrown in: the world host's door is
-`egFind.js:"export const egFindPlace = (mode, modes) =>"` (the dungeon's tier and its context), and a face of another
-visit is folded as one away is (`weirKey.js:"  foldLyingWeirKeys((e) => e.at !== here);"`). A find answered after the
+`egFind.js:"export const egFindPlace"` (the dungeon's tier and its context), and a face of another
+visit is folded as one away is (`weirKey.js:"foldLyingWeirKeys((e) => e.at !== here)"`). A find answered after the
 player left the visit it was asked in puts its key in the pack, not on the body left behind. The world host's entry is
 rewritten in place (`placeNow` for `tierNow`), no host line added. Pinned: `test/scenes/audit_rpt1026_client.test.js`
 (K1, 5); PIN MOVED: `test/scenes/eliteGates/egeco_hosts.test.js` reads the world's `placeNow`.

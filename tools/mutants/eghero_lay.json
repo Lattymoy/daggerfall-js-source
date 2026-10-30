@@ -839,8 +839,8 @@
   {
     "name": "EGHL-reverb-hero-half-unread",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave",
-    "new": "const half = hero ? 6 : cave",
+    "old": "    const half = hero\n      ? Math.max(f.x - hero.box[0], hero.box[3] - f.x)\n      : cave\n        ? cave.halfW\n        : f.cls === 'chamber'\n          ? (f.z1 - f.z0) / 2\n          : 6;",
+    "new": "    const half = hero ? 6 : cave ? cave.halfW : f.cls === 'chamber' ? (f.z1 - f.z0) / 2 : 6;",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]

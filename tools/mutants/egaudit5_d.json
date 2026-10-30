@@ -388,8 +388,8 @@
   {
     "name": "EG5D-L8-2-embers-on-gold-alone",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "o.goldOnly ? null : egEmberStack(o.embers)",
-    "new": "egEmberStack(o.embers)",
+    "old": "  return dressed(seed, rollEgSpoils(seed, level, w, o), o.goldOnly ? null : egEmberStack(o.embers));",
+    "new": "  return dressed(seed, rollEgSpoils(seed, level, w, o), egEmberStack(o.embers));",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "EG5D-L8-2-the-stack-one",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) })",
-    "new": "sigilStone()",
+    "old": "export const egEmberStack = (n) =>\n  Number.isSafeInteger(n) && n > 0 ? Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) }) : null;",
+    "new": "export const egEmberStack = (n) => (Number.isSafeInteger(n) && n > 0 ? sigilStone() : null);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -465,8 +465,8 @@
   {
     "name": "EG5D-L8-5-the-client-rolls-the-receipts",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0",
-    "new": "(c?.c ?? 0) >>> 0",
+    "old": "export const egSpoilsSeedOf = (c, d) =>\n  Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0;",
+    "new": "export const egSpoilsSeedOf = (c, d) => (c?.c ?? 0) >>> 0;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -475,7 +475,7 @@
   {
     "name": "EG5D-L8-5-the-reliquaries-the-receipts",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "  const seed = egSpoilsSeedOf(c, d);   // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own",
+    "old": "  const seed = egSpoilsSeedOf(c, d); // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own",
     "new": "  const seed = c.c;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"

@@ -25,27 +25,39 @@
 // item's picture draws it (the custom template's world arm - systems/item/itemTemplates.js usesWorldTexture).
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
-import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from '../item/itemTemplates.js';
+import {
+  registerCustomTemplates,
+  setItemFields,
+  mintCondition,
+  registerItemUseHandler,
+} from '../item/itemTemplates.js';
 import { EG_TEXT } from '../../net/eliteGates/egLaw.js';
-import { WEIR_KEY_ART, registerWeirKeyArt } from '../../world/eliteGates/egKeyArt.js';   // EG-ZH: its own picture
+import { WEIR_KEY_ART, registerWeirKeyArt } from '../../world/eliteGates/egKeyArt.js'; // EG-ZH: its own picture
 import { addVendorTextures } from '../textureReplacement.js';
-import { WEIR_KEY_TEMPLATE, WEIR_KEY_LAW_ROW } from './weirKeyRow.js';   // KEY-LAW: its row a leaf, so the law knows it headless
+import { WEIR_KEY_TEMPLATE, WEIR_KEY_LAW_ROW } from './weirKeyRow.js'; // KEY-LAW: its row a leaf, so the law knows it headless
 
 export { WEIR_KEY_TEMPLATE };
 /** Its row: the leaf's (weirKeyRow.js - bound, stacked, pack-only) with its name and its picture. */
 export const WEIR_KEY_ROW = Object.freeze({
-  ...WEIR_KEY_LAW_ROW, name: EG_TEXT.keyName, worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record,
+  ...WEIR_KEY_LAW_ROW,
+  name: EG_TEXT.keyName,
+  worldTextureArchive: WEIR_KEY_ART.archive,
+  worldTextureRecord: WEIR_KEY_ART.record,
 });
 registerCustomTemplates([WEIR_KEY_ROW]);
-registerWeirKeyArt(addVendorTextures);   // EG-ZH: the import IS the registration
+registerWeirKeyArt(addVendorTextures); // EG-ZH: the import IS the registration
 /** Whether a record is a Weir Key - its template and its group, the one spelling every rule reads. */
-export const isWeirKey = (/** @type {any} */ item) => item?.templateIndex === WEIR_KEY_TEMPLATE && item?.group === 'UselessItems2';
+export const isWeirKey = (/** @type {any} */ item) =>
+  item?.templateIndex === WEIR_KEY_TEMPLATE && item?.group === 'UselessItems2';
 /** `n` Weir Keys (at least one), one stack. */
 export function weirKeys(n = 1) {
-  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: WEIR_KEY_TEMPLATE })), { stackCount: Math.max(1, Math.trunc(Number(n) || 1)) });
+  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: WEIR_KEY_TEMPLATE })), {
+    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),
+  });
 }
 /** How many the pack holds (its stacks summed). */
-export const weirKeysHeld = (/** @type {any[]} */ items) => (Array.isArray(items) ? items.filter(isWeirKey).reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0) : 0);
+export const weirKeysHeld = (/** @type {any[]} */ items) =>
+  Array.isArray(items) ? items.filter(isWeirKey).reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0) : 0;
 /**
  * RPT1026-CLIENT (private reports: a pack's count of Weir Keys fell back to one now and then from more): THE FACES
  * LYING ON BODIES. The find throws its face onto the body (egFind.js egFindThrow), and KEY-FACE left its count open: the
@@ -92,14 +104,20 @@ function foldLyingWeirKeys(gone = (/** @type {{ at: unknown }} */ _e) => true) {
 }
 /** How many keys the faces still lying on bodies show - a face taken up leaves the count; away, none lies (folded). */
 export function weirKeysLying() {
-  if (!_facesHere()) { foldLyingWeirKeys(); return 0; }
+  if (!_facesHere()) {
+    foldLyingWeirKeys();
+    return 0;
+  }
   const here = _facesHere();
-  foldLyingWeirKeys((e) => e.at !== here);   // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it
+  foldLyingWeirKeys((e) => e.at !== here); // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it
   for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);
   return _lying.reduce((s, e) => s + Math.max(1, e.face.stackCount ?? 1), 0);
 }
 /** Test seam: no face lying anywhere. */
-export const _resetWeirKeyFacesForTests = () => { _lying.length = 0; _facesHere = () => true; };
+export const _resetWeirKeyFacesForTests = () => {
+  _lying.length = 0;
+  _facesHere = () => true;
+};
 /**
  * THE RESTACK (section 5): the pack's Weir Keys set to the account's balance `n` less the faces still lying on bodies
  * (RPT1026-CLIENT, above) - one stack, or none - whatever the pack held before. Answers whether the pack changed.
@@ -123,7 +141,7 @@ export function restackWeirKeys(items, n) {
  * @param {any[][]} lists @param {any[]} [records]
  */
 export function foldStrayWeirKeys(lists, records = []) {
-  _lying.length = 0;   // RPT1026-CLIENT: the load's world is a new one - every face it holds out of the pack is folded here
+  _lying.length = 0; // RPT1026-CLIENT: the load's world is a new one - every face it holds out of the pack is folded here
   const folded = new Set();
   for (const list of lists) {
     if (!Array.isArray(list)) continue;
@@ -131,7 +149,11 @@ export function foldStrayWeirKeys(lists, records = []) {
   }
   for (const r of records) {
     if (!r || typeof r !== 'object') continue;
-    for (const [id, item] of Object.entries(r)) if (isWeirKey(item)) { folded.add(item); delete r[id]; }
+    for (const [id, item] of Object.entries(r))
+      if (isWeirKey(item)) {
+        folded.add(item);
+        delete r[id];
+      }
   }
   return [...folded].reduce((n, it) => n + Math.max(1, it.stackCount ?? 1), 0);
 }
@@ -139,7 +161,9 @@ export function foldStrayWeirKeys(lists, records = []) {
  *  empty line is the opener's "the start window will ask" (scenes/eliteGates/egClient.js useKey) - the use closes the pack,
  *  so the window has the screen when its preflight lands; a pack left up held the slot and the window was refused, unsaid. */
 let _opener = null;
-export function setWeirKeyOpener(/** @type {((item: any) => string)|null} */ fn) { _opener = typeof fn === 'function' ? fn : null; }
+export function setWeirKeyOpener(/** @type {((item: any) => string)|null} */ fn) {
+  _opener = typeof fn === 'function' ? fn : null;
+}
 registerItemUseHandler(WEIR_KEY_TEMPLATE, (item) => {
   const text = _opener ? _opener(item) : EG_TEXT.cold;
   return { kind: 'text', text, closesWindow: text === '' };

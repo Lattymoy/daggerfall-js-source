@@ -617,8 +617,8 @@
   {
     "name": "EGA3C-longstep-held-dropped",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "...(holder.ls === true ? { ls: true } : {})",
-    "new": "...{}",
+    "old": "        ? {\n            entity,\n            vs: holder.vs ?? [],\n            mast: holder.mast ?? -1,\n            b: holder.b ?? '',\n            h: holder.h | 0,\n            ...(holder.ls === true ? { ls: true } : {}),\n          }",
+    "new": "        ? { entity, vs: holder.vs ?? [], mast: holder.mast ?? -1, b: holder.b ?? '', h: holder.h | 0, ...{} }",
     "tests": [
       "test/net/eliteGates/egaudit3_client_tonic.test.js"
     ]

@@ -102,6 +102,8 @@
 /src/systems/dungeon/*/
 !/src/systems/dynamicSkies/
 /src/systems/dynamicSkies/*/
+!/src/systems/eliteGates/
+/src/systems/eliteGates/*/
 !/src/systems/faction/
 /src/systems/faction/*/
 !/src/systems/festival/

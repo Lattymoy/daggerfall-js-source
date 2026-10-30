@@ -642,8 +642,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-13-no-end-for-fall",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "    end: !!p.end || (Number.isFinite(p.sinceFall) && p.sinceFall >= 0 && p.sinceFall < SPIRE_END_MS),",
-    "new": "    end: !!p.end,",
+    "old": "    end: !!p.end || (Number.isFinite(p.sinceFall) && p.sinceFall >= 0 && p.sinceFall < SPIRE_END_MS), // AUDIT EG V (c, L7-13): \"the tear, a fall, the end\" - my own fall's",
+    "new": "    end: !!p.end, // AUDIT EG V (c, L7-13): \"the tear, a fall, the end\" - my own fall's",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]

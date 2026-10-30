@@ -706,8 +706,8 @@
   {
     "name": "EGZR-stoneskin-of-cushion",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "Math.round(spireBodyMax(entity) * skin)",
-    "new": "Math.round(entity.maxHealth * skin)",
+    "old": "  setSpireHp(entity, skin ? Math.round(spireBodyMax(entity) * skin) : 0);",
+    "new": "  setSpireHp(entity, skin ? Math.round(entity.maxHealth * skin) : 0);",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -716,8 +716,8 @@
   {
     "name": "EGZR-stoneskin-trunc",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "Math.round(spireBodyMax(entity) * skin)",
-    "new": "Math.trunc(spireBodyMax(entity) * skin)",
+    "old": "  setSpireHp(entity, skin ? Math.round(spireBodyMax(entity) * skin) : 0);",
+    "new": "  setSpireHp(entity, skin ? Math.trunc(spireBodyMax(entity) * skin) : 0);",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -726,8 +726,8 @@
   {
     "name": "EGZR-spellbane-unrefolded",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (bane !== _bane) { _bane = bane; computeEntityMods(entity); }",
-    "new": "if (bane !== _bane) { _bane = bane; }",
+    "old": "    computeEntityMods(entity);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -746,8 +746,8 @@
   {
     "name": "EGZR-held-any-entity",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "(_held && entity === _held.entity ? egVOf(_held.vs, key) : 0)",
-    "new": "(_held ? egVOf(_held.vs, key) : 0)",
+    "old": "const heldV = (key, entity = _held?.entity) => (_held && entity === _held.entity ? egVOf(_held.vs, key) : 0);",
+    "new": "const heldV = (key, entity = _held?.entity) => (_held ? egVOf(_held.vs, key) : 0);",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -756,8 +756,8 @@
   {
     "name": "EGZR-focus-dearer",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "return v ? sp * (1 - v) : sp;",
-    "new": "return v ? sp * (1 + v) : sp;",
+    "old": "  return v ? sp * (1 - v) : sp;",
+    "new": "  return v ? sp * (1 + v) : sp;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -766,8 +766,8 @@
   {
     "name": "EGZR-weaver-any-shield",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "(a?.bundleSelfCast ? 1 + heldV('shieldweaver', entity) : 1)",
-    "new": "(1 + heldV('shieldweaver', entity))",
+    "old": "const weaverSoak = (entity, a) => (a?.bundleSelfCast ? 1 + heldV('shieldweaver', entity) : 1);",
+    "new": "const weaverSoak = (entity, a) => 1 + heldV('shieldweaver', entity);",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -796,8 +796,8 @@
   {
     "name": "EGZR-wind-line-from",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
-    "new": "if (!(before > line && after < line) || _wind === hall) return;",
+    "old": "  if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "  if (!(before > line && after < line) || _wind === hall) return;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -806,8 +806,8 @@
   {
     "name": "EGZR-wind-line-at",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
-    "new": "if (!(before >= line && after <= line) || _wind === hall) return;",
+    "old": "  if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "  if (!(before >= line && after <= line) || _wind === hall) return;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -816,8 +816,8 @@
   {
     "name": "EGZR-wind-every-hurt",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
-    "new": "if (!(after < line) || _wind === hall) return;",
+    "old": "  if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "  if (!(after < line) || _wind === hall) return;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -837,8 +837,8 @@
   {
     "name": "EGZR-wind-hall-unread",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "hall = `${_held?.b}:${_held?.h}`;",
-    "new": "hall = `${_held?.b}`;",
+    "old": "    hall = `${_held?.b}:${_held?.h}`;",
+    "new": "    hall = `${_held?.b}`;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -847,8 +847,8 @@
   {
     "name": "EGZR-wind-breach-unread",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "hall = `${_held?.b}:${_held?.h}`;",
-    "new": "hall = `${_held?.h}`;",
+    "old": "    hall = `${_held?.b}:${_held?.h}`;",
+    "new": "    hall = `${_held?.h}`;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -857,8 +857,8 @@
   {
     "name": "EGZR-wind-saved",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "if (!v || saved || !(after > 0) || !(max > 0)) return;",
-    "new": "if (!v || !(after > 0) || !(max > 0)) return;",
+    "old": "  if (!v || saved || !(after > 0) || !(max > 0)) return;",
+    "new": "  if (!v || !(after > 0) || !(max > 0)) return;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -867,8 +867,8 @@
   {
     "name": "EGZR-wind-share",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "healMine(entity, max * v);",
-    "new": "healMine(entity, max * 0.35);",
+    "old": "  const healed = healMine(entity, max * v);",
+    "new": "  const healed = healMine(entity, max * 0.35);",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -887,8 +887,8 @@
   {
     "name": "EGZR-blow-momentum-uncapped",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "x *= 1 + EG_MOMENTUM_STEP * Math.min(stacks, egVOf(vs, 'momentum'));",
-    "new": "x *= 1 + EG_MOMENTUM_STEP * stacks;",
+    "old": "  x *= 1 + EG_MOMENTUM_STEP * Math.min(stacks, egVOf(vs, 'momentum'));",
+    "new": "  x *= 1 + EG_MOMENTUM_STEP * stacks;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

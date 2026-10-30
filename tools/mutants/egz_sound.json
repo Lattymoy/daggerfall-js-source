@@ -2,8 +2,8 @@
   {
     "name": "EGZ-reverb-cave-unmapped",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "{ cave: 'Cave', stoneroom: 'Stoneroom', quarry: 'Quarry' }",
-    "new": "{ cave: 'Quarry', stoneroom: 'Stoneroom', quarry: 'Quarry' }",
+    "old": "export const EG_REVERB_PRESETS = Object.freeze({ cave: 'Cave', stoneroom: 'Stoneroom', quarry: 'Quarry' });",
+    "new": "export const EG_REVERB_PRESETS = Object.freeze({ cave: 'Quarry', stoneroom: 'Stoneroom', quarry: 'Quarry' });",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZ-reverb-hyst-on-the-way-in",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "for (let i = 0; i < zones.length; i++) if (inside(zones[i], 0)) return i;",
-    "new": "for (let i = 0; i < zones.length; i++) if (inside(zones[i], hyst)) return i;",
+    "old": "  for (let i = 0; i < zones.length; i++) if (inside(zones[i], 0)) return i;",
+    "new": "  for (let i = 0; i < zones.length; i++) if (inside(zones[i], hyst)) return i;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZ-reverb-no-hyst-out",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (cur >= 0 && zones[cur] && inside(zones[cur], hyst)) return cur;",
-    "new": "if (cur >= 0 && zones[cur] && inside(zones[cur], 0)) return cur;",
+    "old": "  if (cur >= 0 && zones[cur] && inside(zones[cur], hyst)) return cur;",
+    "new": "  if (cur >= 0 && zones[cur] && inside(zones[cur], 0)) return cur;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZ-reverb-reach-ignored",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "&& Math.abs(x - q.x) <= q.half + pad;",
-    "new": ";",
+    "old": "  const inside = (q, pad) => z >= q.z0 - pad && z <= q.z1 + pad && Math.abs(x - q.x) <= q.half + pad;",
+    "new": "  const inside = (q, pad) => z >= q.z0 - pad && z <= q.z1 + pad;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZ-reverb-second-is-none",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "const second = zones.find((q) => q.preset !== EG_REVERB_OPEN)?.preset ?? null;",
-    "new": "const second = null;",
+    "old": "  const second = zones.find((q) => q.preset !== EG_REVERB_OPEN)?.preset ?? null;",
+    "new": "  const second = null;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZ-reverb-chamber-half",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : f.cls === 'chamber' ? (f.z1 - f.z0) / 2 : 6;",
-    "new": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : 6;",
+    "old": "    const half = hero\n      ? Math.max(f.x - hero.box[0], hero.box[3] - f.x)\n      : cave\n        ? cave.halfW\n        : f.cls === 'chamber'\n          ? (f.z1 - f.z0) / 2\n          : 6;",
+    "new": "    const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : 6;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZ-reverb-never-held",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "held = !!audio?.holdReverb?.(EG_REVERB_OWNER);",
-    "new": "held = !!audio?.holdReverb?.(EG_REVERB_OWNER) && false;",
+    "old": "      held = !!audio?.holdReverb?.(EG_REVERB_OWNER);",
+    "new": "      held = !!audio?.holdReverb?.(EG_REVERB_OWNER) && false;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZ-reverb-hall-every-frame",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (!held || !spec || k === key) return false;",
-    "new": "if (!held || !spec) return false;",
+    "old": "      if (!held || !spec || k === key) return false;",
+    "new": "      if (!held || !spec) return false;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGZ-reverb-fade-cut",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "plan.zones[i].preset, EG_REVERB_FADE_S);",
-    "new": "plan.zones[i].preset, 0);",
+    "old": "        audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, EG_REVERB_FADE_S);",
+    "new": "        audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, 0);",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZ-reverb-no-retry",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "      if (!made) key = '';",
-    "new": "",
+    "old": "      if (!made) key = ''; // no context yet (no gesture has woken the engine): asked again next frame",
+    "new": "      // no context yet (no gesture has woken the engine): asked again next frame",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZ-reverb-never-released",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (held) { try { audio?.releaseReverb?.(EG_REVERB_OWNER); }",
-    "new": "if (false) { try { audio?.releaseReverb?.(EG_REVERB_OWNER); }",
+    "old": "      if (held) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGZ-peers-scope-never-set",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "setPeerSoundScope(want ? (run) =>",
-    "new": "setPeerSoundScope(false ? (run) =>",
+    "old": "        want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,",
+    "new": "        false ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGZ-peers-gain-not-mix",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.scaled(mix.peerVolume(1), run)",
-    "new": "audio.scaled(1, run)",
+    "old": "      setPeerSoundScope(\n        want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,\n      );",
+    "new": "      setPeerSoundScope(want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(1, run) : run()) : null);",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGZ-tell-at-sting-pitch",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "pitch: EG_MIX.watchfirePitch, volume: BOSS_CUES.sting.volume",
-    "new": "pitch: BOSS_CUES.sting.pitch, volume: BOSS_CUES.sting.volume",
+    "old": "  pitch: EG_MIX.watchfirePitch,",
+    "new": "  pitch: BOSS_CUES.sting.pitch,",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "EGZ-key-row-talisman",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record,",
-    "new": "worldTextureArchive: 211, worldTextureRecord: 50,",
+    "old": "  worldTextureArchive: WEIR_KEY_ART.archive,\n  worldTextureRecord: WEIR_KEY_ART.record,",
+    "new": "  worldTextureArchive: 211,\n  worldTextureRecord: 50,",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "EGZ-key-unregistered",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "registerWeirKeyArt(addVendorTextures);   // EG-ZH: the import IS the registration",
-    "new": "void registerWeirKeyArt;   // EG-ZH: the import IS the registration",
+    "old": "registerWeirKeyArt(addVendorTextures); // EG-ZH: the import IS the registration",
+    "new": "void registerWeirKeyArt; // EG-ZH: the import IS the registration",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
