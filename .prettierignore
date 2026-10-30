@@ -6,6 +6,10 @@
 /src/poi/*/
 !/src/poi/uv/
 /src/poi/uv/*/
+!/src/render/
+/src/render/*
+!/src/render/dragon/
+/src/render/dragon/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
