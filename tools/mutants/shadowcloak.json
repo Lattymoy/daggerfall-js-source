@@ -594,8 +594,8 @@
   {
     "name": "SHADOWCLOAK-no-pendulum",
     "file": "src/render/auraRing.js",
-    "old": "  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h;   // a rise never drops it below the feet",
-    "new": "  py += max(uSwing.z, 0.0) * h * h;   // a rise never drops it below the feet",
+    "old": "  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h;",
+    "new": "  py += max(uSwing.z, 0.0) * h * h;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

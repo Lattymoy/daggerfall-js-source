@@ -3,12 +3,12 @@
 The owner, with a screenshot of a player in the Eternal cape: "With the new cape why is it showing on the front of the
 player? Did we learn nothing from the angel wings aura? And the cape sides and top shouldnt be curved". Read on main's
 `cc2e350af` with the freeware's data. The pins are `test/render/capecard.test.js`, the mutants
-`tools/mutants/capecard.json` (11, all dead).
+`tools/mutants/capecard.json`.
 
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | The cape on the front of the player | A peer drawn as a paperdoll or a class sprite had no face and no figure, so the cape hung on the pose's yaw, on the body's axis | CAPE-CARD |
-| 2 | "the cape sides and top shouldnt be curved" | The cape was a span of the turn round the body, 0.64 of it at the collar | CAPE-FLAT |
+| 2 | "the cape sides and top shouldnt be curved" | The cape was a span of the turn round the body, 0.64 of it at the collar | CAPE-FLAT, reverted at the owner's word |
 
 ## 1. The cape on a peer's front (CAPE-CARD)
 
@@ -25,8 +25,8 @@ view off the picture. From the side it lay over the card, as the wings did befor
 FIXED. `RemotePlayers.faceOf(id, eye)` says how its picture faces as the eye sees it - a doll its front, a class sprite
 its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`. A class sprite's face
 says `card`, and `auraSpritePosed` hangs the wings and the Eternal cape from the rest pose WING_SPRITE_BACK behind it
-(`CLOAK_CARD_POSE`). A doll's says none: it has no side to be seen from, and faced to the eye the cape is behind it at
-its own depth (`../audits/Audit-Cape-Card.md` D1). The aura host reads every sprite layer as one list (`sprites`,
+(`CLOAK_CARD_POSE`). A doll's says it too: the cut's sides and collar reach the card's plane at the body. The aura
+host reads every sprite layer as one list (`sprites`,
 `spriteAnswer`), so the Aura Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces
 the two getters it held, so bootWorld does not grow.
 
@@ -42,28 +42,25 @@ behind the picture and shows at its edge.
 THE FOUR HOSTS: world.js WIRED (the list); worldModes.js and dungeonContext.js draw through world.js's aura host,
 unchanged; exterior.js draws no aura, unchanged.
 
-## 2. The cut (CAPE-FLAT)
+## 2. The cut (CAPE-FLAT), reverted
 
 FOUND. Eternal's cloth was the Holo Shadow Cloak's shell cut to a span of the turn round the body: 0.47 of it at the
 hem, 0.5 at the shoulders, 0.64 at the collar. Its top wrapped the neck, its sides bowed round the body, and its hem
 rose at the sides.
 
-FIXED. `eternalPoint` cuts it straight. Its top edge lies across the shoulders at ETERNAL_TOP (1.47 m at rest),
-ETERNAL_HALF.top either side of the middle. Its sides run straight out to ETERNAL_HALF.hem at a level hem
-(ETERNAL_HEM_Y). It falls straight from ETERNAL_BACK.top behind the shoulders to ETERNAL_BACK.hem. Its folds and its
-wave move it in depth alone, and no fold lies along the top edge or a side, so its outline stays straight. It keeps the
-cloak's pose and swing law - the shoulders, the crouch, the pendulum, the turn's lag, the knees, a hand off the legs -
-and ETERNAL-FIT's push. The fire, the sigil, the wisps and the embers read the flat measures.
+MADE, THEN REVERTED. `eternalPoint` cut it straight, a top edge across the shoulders and straight sides to a level hem.
+The owner then: "Revert what I said about making it flat". The cape is the shape above again, the base's own lines;
+the cut's pins, mutants and its audit findings (`../audits/Audit-Cape-Card.md` B, C1, C3, D2, D3) went with it.
 
-PINS MOVED. `test/ui/shop_window.test.js` (the look's height, 1.47 for 1.54); `test/net/shadowcloak.test.js`,
-`test/net/seraphwings.test.js`, `test/player/eyeOfTheBeholder/spriteface.test.js` and `test/render/armory.test.js` (the
-host's lines, now one list); and the five host fixtures that named the two getters, in `armorylive`, `armory` (two),
-`capetoggle` and `profileslots`. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`,
-`shadowcloak.json` (the cape now has its own copy of the cloak's pendulum line, so the cloak's records name the cloak's
-comment) and `spriteface.json`.
+PINS MOVED. `test/net/shadowcloak.test.js`, `test/net/seraphwings.test.js`,
+`test/player/eyeOfTheBeholder/spriteface.test.js` and `test/render/armory.test.js` (the host's lines, now one list);
+and the five host fixtures that named the two getters, in `armorylive`, `armory` (two), `capetoggle` and
+`profileslots`. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`, `shadowcloak.json` and
+`spriteface.json`.
 
 ## Not changed
 
 From the side, the cape on a card stands WING_SPRITE_BACK behind the picture's back, ETERNAL-FIT's law. The audit
 (`../audits/Audit-Cape-Card.md`) turned every peer's picture to the camera that draws it, laid the swing in the frame
-the cloth is drawn in, and made a sprite rider a card; its last section says what it left to the owner.
+the cloth is drawn in with a doll's kept behind it, and made a sprite rider a card; its last section says what it left
+to the owner.

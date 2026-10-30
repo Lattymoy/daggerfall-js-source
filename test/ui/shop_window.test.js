@@ -452,7 +452,7 @@ test('SHOP: the Origin moves in its own SVG - its light turning, its eye breathi
 // ── ETERNAL ───────────────────────────────────────────────────────────
 
 test('SHOP: Eternal - the sixteenth look, a cape on the cloak\'s mesh, premultiplied, its cards wisps and embers; its rates whole over the clock; its light the Genesis fire\'s; its look built alone (mutants: a rate off the clock; the look added whole)', () => {
-  assert.deepEqual({ ...AURA_LOOK.eternal }, { kind: 15, ringR: 0.95, flameH: 1.47, glyphs: ETERNAL_CARDS, mesh: 'cape', shade: true });   // CAPE-FLAT (PIN MOVED): its top edge over the shoulders' line, 1.54 when it wrapped the neck
+  assert.deepEqual({ ...AURA_LOOK.eternal }, { kind: 15, ringR: 0.95, flameH: 1.54, glyphs: ETERNAL_CARDS, mesh: 'cape', shade: true });
   assert.ok(AURA_CARDS >= ETERNAL_CARDS);
   assert.equal(eternalRatesWhole(), true);
   assert.deepEqual([...ETERNAL_RGB.deep], [...GENESIS_DEEP.slice(0, 3)]);

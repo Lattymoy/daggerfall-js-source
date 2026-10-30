@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-CAPECARD-A2-the-swing-in-the-turnings-frame",
     "file": "src/render/auraRing.js",
-    "old": "const d = Number.isFinite(w.turnYaw) ? w.turnYaw - yaw : 0, c = Math.cos(d), s = Math.sin(d);",
-    "new": "const d = 0, c = Math.cos(d), s = Math.sin(d);",
+    "old": "const d = Number.isFinite(w.turnYaw) ? w.turnYaw - yaw : 0, c = Math.cos(d),",
+    "new": "const d = 0, c = Math.cos(d),",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
@@ -72,190 +72,47 @@
     ]
   },
   {
-    "name": "AUDIT-CAPECARD-D1-a-doll-a-card",
+    "name": "AUDIT-CAPECARD-A6-a-doll-no-front",
     "file": "src/net/remotePlayers.js",
-    "old": "f.card = e.kind === 'mobile';",
-    "new": "f.card = true;",
+    "old": "f.front = e.kind !== 'mobile';",
+    "new": "f.front = false;",
     "tests": [
+      "test/render/auditcapecard.test.js",
       "test/render/capecard.test.js"
     ]
   },
   {
-    "name": "AUDIT-CAPECARD-D3-no-burst",
+    "name": "AUDIT-CAPECARD-A6-the-front-unpassed",
     "file": "src/render/auraRing.js",
-    "old": "  d += vec2((1.0 - 2.0 * u) * 0.15, -(0.15 + 0.35 * sin(3.14159265 * u))) * rip;",
-    "new": "",
+    "old": "front: !fig && face?.front === true }",
+    "new": "front: false }",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
   },
   {
-    "name": "AUDIT-CAPECARD-B1-the-keep-whole-at-the-shoulders",
+    "name": "AUDIT-CAPECARD-A6-the-front-unkept",
     "file": "src/render/auraRing.js",
-    "old": "mix(0.15, 0.22, h) * smoothstep(0.0, 0.4, h)",
-    "new": "mix(0.15, 0.22, h)",
+    "old": "w.front = posed?.front === true;",
+    "new": "w.front = false;",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
   },
   {
-    "name": "AUDIT-CAPECARD-B2-the-lean-flipped",
+    "name": "AUDIT-CAPECARD-A6-the-fold-dropped",
     "file": "src/render/auraRing.js",
-    "old": "float eternalFoldLean(float u, float y) { return -0.6 *",
-    "new": "float eternalFoldLean(float u, float y) { return 0.6 *",
+    "old": "out[1] = w.front === true ? -Math.abs(back) : back;",
+    "new": "out[1] = back;",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
   },
   {
-    "name": "AUDIT-CAPECARD-the-crouch-gather-dropped",
+    "name": "AUDIT-CAPECARD-A6-every-swing-folded",
     "file": "src/render/auraRing.js",
-    "old": " + max(0.0, 1.0 - ky) * h * 0.3));",
-    "new": "));",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-no-pendulum",
-    "file": "src/render/auraRing.js",
-    "old": "  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h + rip * 0.2 * q.y;",
-    "new": "  py += max(uSwing.z, 0.0) * h * h + rip * 0.2 * q.y;",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-no-trail-clamp",
-    "file": "src/render/auraRing.js",
-    "old": "  if (tl > 0.7 * hang) trail *= 0.7 * hang / tl;   // as the cloak's: the hem never folded over itself",
-    "new": "  if (false) trail *= 0.7 * hang / tl;   // as the cloak's: the hem never folded over itself",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-no-knees",
-    "file": "src/render/auraRing.js",
-    "old": "  d.y -= cloakKneePush(uKneeL, ub, r, py) + cloakKneePush(uKneeR, ub, r, py);",
-    "new": "",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-shoulders-ignored",
-    "file": "src/render/auraRing.js",
-    "old": "  d += uCapeS.xz * (1.0 - 0.5 * h);\n",
-    "new": "",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-crouch-ignored",
-    "file": "src/render/auraRing.js",
-    "old": "  float py = y * ky, hang =",
-    "new": "  float py = y, hang =",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-no-twist",
-    "file": "src/render/auraRing.js",
-    "old": "  float a = cloakTwistAt(y) * CLOAK_TAU;",
-    "new": "  float a = 0.0;",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-twist-reversed",
-    "file": "src/render/auraRing.js",
-    "old": "  float a = cloakTwistAt(y) * CLOAK_TAU;",
-    "new": "  float a = -cloakTwistAt(y) * CLOAK_TAU;",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-width-not-the-shoulders",
-    "file": "src/render/auraRing.js",
-    "old": "* eternalHalfW(y) * uCapeS.w, -(eternalBackOf(y)",
-    "new": "* eternalHalfW(y), -(eternalBackOf(y)",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-lift-forward",
-    "file": "src/render/auraRing.js",
-    "old": "  d += trail - vec2(0.0, uSwing.z * h * 0.6);",
-    "new": "  d += trail + vec2(0.0, uSwing.z * h * 0.6);",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-swing-as-the-cloaks",
-    "file": "src/render/auraRing.js",
-    "old": "min(ky, 1.0) * ${g3(ETERNAL_SWING)};",
-    "new": "min(ky, 1.0);",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-wisps-not-off-the-hem",
-    "file": "src/render/auraRing.js",
-    "old": "float y0 = wisp ? ${g3(ETERNAL_HEM_Y)} + 0.02",
-    "new": "float y0 = wisp ? 0.6 + 0.02",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-cards-inside-the-cloth",
-    "file": "src/render/auraRing.js",
-    "old": ") - vec3(cloakFwd().x, 0.0, cloakFwd().y) * 0.03;   // on the cloth",
-    "new": ") + vec3(cloakFwd().x, 0.0, cloakFwd().y) * 0.03;   // on the cloth",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C1-sway-in-depth",
-    "file": "src/render/auraRing.js",
-    "old": "vec2 side = vec2(cos(uYaw), -sin(uYaw)) * 0.025",
-    "new": "vec2 side = cloakFwd() * 0.025",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C3-facing-forward",
-    "file": "src/render/auraRing.js",
-    "old": "  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);",
-    "new": "  vec2 bn = cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C3-no-tilt",
-    "file": "src/render/auraRing.js",
-    "old": "  return normalize(vec3(bn.x, ${g3((ETERNAL_BACK.hem - ETERNAL_BACK.top) / (ETERNAL_TOP - ETERNAL_HEM_Y))}, bn.y));",
-    "new": "  return normalize(vec3(bn.x, 0.0, bn.y));",
-    "tests": [
-      "test/render/auditcapecard.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-CAPECARD-C3-sides-ragged-again",
-    "file": "src/render/auraRing.js",
-    "old": "float sideEdge = sideM - (tongue - 0.5) * 0.02;",
-    "new": "float sideEdge = sideM - (tongue - 0.5) * 0.3;",
+    "old": "out[1] = w.front === true ? -Math.abs(back) : back;",
+    "new": "out[1] = -Math.abs(back);",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]

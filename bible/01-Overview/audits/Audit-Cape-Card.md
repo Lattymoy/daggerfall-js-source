@@ -5,12 +5,16 @@ cape on a peer's front, and its curved cut), merged with main's AURA-ON-DRAGON. 
 of that commit, each given the files and one brief (what to hunt, how to prove it), never a conclusion. Each finding
 was proven on the real code - a probe, a test that fails at the commit, or quoted lines - and proven again here before
 its fix. Fixes carry an `AUDIT CAPE-CARD <id>` comment; the pins are `test/render/auditcapecard.test.js`, the mutants
-`tools/mutants/auditcapecard.json` (34, all dead).
+`tools/mutants/auditcapecard.json` (18, all dead).
+
+Then the owner: *"Revert what I said about making it flat"*. The straight cut (CAPE-FLAT) is gone, and the findings
+that were the cut's own went with it: B1, B2, the crouch, C1, C3, D2 and D3, each marked below. D1 turned on the cut's
+depth and is undone (below). Reverting it showed A6.
 
 | Lane | Read | Found |
 |---|---|---|
-| A | the facing law and its wiring: every layer a peer is drawn in, the eye, the order | 5 |
-| B | the straight cut as geometry and GLSL, on retail's rig, the sprite figure and the rest pose | 3 |
+| A | the facing law and its wiring: every layer a peer is drawn in, the eye, the order | 5, and A6 in the revert |
+| B | the straight cut as geometry and GLSL, on retail's rig, the sprite figure and the rest pose | 3, gone with the cut |
 | C | the pins, the mutants, the record and the pull request's words | 8 |
 | D | rendered frames in Chromium: every look with a body mesh, before and after | 4 |
 
@@ -37,48 +41,40 @@ and the gather stands the wearer on them.
 **A5 (LOW). The gather read the classic layer's face before that layer drew,** a frame late, so a turning sprite's
 Aura Armory pieces flicked a frame. The gather runs after every layer's sync now.
 
-## The cut (B)
+**A6 (MEDIUM, found in the revert, A2's own). A doll whose peer ran away swung its hem through its front** - the
+owner's shot, at a run. A2 turned the trail into the doll's frame, and away from the eye a trail points at it: at
+8 m/s, 41 of 625 cloth points stood up to 0.27 m before the card. A doll's face says `front`, and the part of its swing
+along the eye folds behind it (`auraSwingDrawn`). Across the view it still trails behind the walk; a sprite with views,
+or a body, keeps its swing as it is.
 
-**B1 (MEDIUM). On a Morrowind body the straight fall had a ledge at the shoulders.** The keep off the legs was measured
-from the feet's axis and full just under the top edge, so on shoulders leaning over the feet (idle, a walk, a sneak:
-62 to 77 degrees) the rows under them stepped back off the rows over them. The keep grows from nothing at the shoulders
-and is whole by the hips. The old wrapped shape had the same step, hidden by its sides.
+## The cut (B), gone with it
 
-**B2 (LOW). The folds' light leaned the wrong way.** One home now, `eternalFoldLean`, with the cloth's own slope's sign.
-
-**B3 (LOW, recorded).** On a one-hander's thrust the free hand comes 10 cm through the cloth from behind. The old shape
-was worse (25 cm); a cape cannot know a blow's follow-through without the arm's bones, and the Eternal cape reads none.
-
-The crouch: cloakPoint's "gathering out as it is pressed down" was dropped from the cut; it is back.
+B1 (the straight fall's ledge at the shoulders), B2 (the folds' light leaning the wrong way) and the crouch's dropped
+gather were the straight cut's own, and went with it. **B3 (LOW, recorded).** On a one-hander's thrust the free hand
+comes through the cloth from behind - 25 cm in the wrapped shape, which is back. A cape cannot know a blow's
+follow-through without the arm's bones, and the Eternal cape reads none.
 
 ## Seen (D)
 
-**D1 (MEDIUM). On a doll the card's push stood the cape off it.** A doll shows every eye its front, so it has no side
-for WINGS-FIT's push to clear, and half a metre further back the cape rose behind the head from a raised third-person
-eye. A doll's face says no card now; faced to the eye, the cape is behind it at its own depth. A class sprite keeps the
-push: it has side views, as an Eye of the Beholder sprite does (ETERNAL-FIT, the owner's law).
+**D1 (MEDIUM), undone with the cut.** The straight cut hung 0.15 to 0.34 m behind the shoulders, so on a doll the card's
+push stood it half a metre off, and a doll's face said no card. The wrapped shape is back: at rest its sides lie at the
+card's plane and its collar 2.4 cm before it. A doll is a card again, and the cape stands WING_SPRITE_BACK behind it,
+WINGS-FIT's law.
 
-**D2 (MEDIUM, the owner's to decide).** Cut straight, the cape is edge-on from the side: 15 to 24 percent of the old
-area at 90 degrees. See the last section.
-
-**D3 (LOW). Turned beast, the cape no longer burst out as it tore.** cloakPoint's tear terms are back in eternalPoint.
+D2 (the flat cut thin edge-on) and D3 (the tear's burst, dropped from the cut) went with the cut: the wrapped shape
+calls cloakPoint, which bursts as it tears.
 
 **D4 (LOW). CLOAK_CARD_POSE's comment said what hangs on the back stands behind the card.** The Holo Shadow Cloak wraps
 the body and reads no `uWingBack`; the comment, the field-bug page and Shop.md say so now.
 
 ## The pins and the record (C)
 
-**C1 (MEDIUM). Nothing held the cut's own copy of the cloak's law.** The old Eternal cape called cloakPoint, so the
-cloak's pins held both; the straight cut copies the pose and the swing, and ten mutants of the copy lived - the
-pendulum, the trail's limit, the knees, the shoulders, the crouch, the lag both ways, the breadth, the lift and the
-swing's share - and three of the wisps' and embers' flights. Each is pinned on the copy now, the flights against the
-shader's own placing.
+C1 (the cut's copy of the cloak's law unpinned) and C3 (= B2) went with the cut: the wrapped shape is the cloak's own
+cloth, held by the cloak's pins.
 
 **C2 (MEDIUM). A patch note said the cloak hangs behind the card.** The Holo Shadow Cloak wraps the body - its hood and
 clasp are its front - and reads no push; it is faced as the picture now, as the note's own rule needs, and the note
 names only the wings.
-
-**C3 (LOW) = B2,** and no pin held the light's facing: one home now, `eternalNormal`, pinned with the sides' burn.
 
 **C4 (LOW). The face's edges were unpinned** - the turn's fallback, an eye over a doll's feet, a view that is no whole
 view, the wrap. Pinned.
@@ -89,10 +85,10 @@ lines. Each put right. The sigil's own mirror (a lane mutant) is no defect: the 
 
 ## Not changed, and the owner's to decide
 
-- **The cut seen from the side (D2).** A flat cape is a line edge-on. Deeper folds or a wrap at the hem alone would give
-  it a side, at some cost to "straight". Not changed without the owner's word.
-- **WINGS-FIT's push on an eight-view sprite.** The push moves what hangs on the back along the facing, so its place on
-  screen moves with the eye's bearing and height: from the side the cape stands off the back, from above it starts low.
-  The owner chose it for the wings and the cape (WINGS-FIT, ETERNAL-FIT). A push along the eye's own ray would keep the
-  silhouette and decide only the depth.
+- **WINGS-FIT's push on a card.** The push moves what hangs on the back along the facing, so its place on screen moves
+  with the eye's bearing and height: from the side the cape stands off the back, and from a raised eye before a doll
+  its top shows behind the head. The owner chose it for the wings and the cape (WINGS-FIT, ETERNAL-FIT). A push along
+  the eye's own ray would keep the silhouette and decide only the depth.
+- **A card's swing toward the eye.** An eight-view sprite facing the eye and walking backward at 4 m/s trails its hem
+  to within 2 cm of its card. Older than CAPE-CARD; a doll is held behind (A6).
 - **B3**, above.

@@ -1297,18 +1297,18 @@ export class RemotePlayers {
 
   /** CAPE-CARD (2026-10-30): the way a peer's picture faces as `eye` sees it, SPRITE-FACE's { yaw, turn } (peerRiders.js
    *  faceOf) - a doll shows every eye its front; a class sprite the view it was drawn in (mobilePortrayedYaw). `turn` the
-   *  pose's own facing, which an aura's swing reads; `card` a class sprite's - eight views, a side among them, so what
-   *  hangs on its back stands behind its card (render/auraRing.js auraSpritePosed). AUDIT CAPE-CARD D1: a doll's none -
-   *  it has no side to be seen from, and pushed back the cape stood off it. `at` the picture's feet (A4: a seated one
-   *  sinks). Written in place on the peer's entry; null for a peer this layer draws no picture of. */
+   *  pose's own facing, which an aura's swing reads; `card` - a flat card with no figure to read, so what hangs on its
+   *  back stands behind it (render/auraRing.js auraSpritePosed); `front` a doll's - its front to every eye, so its swing
+   *  stays behind it (AUDIT CAPE-CARD A6, auraSwingDrawn). `at` the picture's feet (A4: a seated one sinks). Written in
+   *  place on the peer's entry; null for a peer this layer draws no picture of. */
   faceOf(id, eye) {
     const e = this._batches.get(id), at = e?.batch?.origin;
     if (!e || !at || !eye) return null;
     const yaw = e.kind === 'mobile' ? mobilePortrayedYaw(e.mobileUnit.orientation, at, eye)
       : eye[0] !== at[0] || eye[2] !== at[2] ? Math.atan2(eye[0] - at[0], eye[2] - at[2]) : null;
     if (yaw === null) return null;
-    const turn = peerBodyYaw(e.peer?.shown), f = e.face ?? (e.face = { yaw: 0, turn: 0, card: false, at });
-    f.yaw = yaw; f.turn = Number.isFinite(turn) ? turn : yaw; f.card = e.kind === 'mobile'; f.at = at;
+    const turn = peerBodyYaw(e.peer?.shown), f = e.face ?? (e.face = { yaw: 0, turn: 0, card: true, front: false, at });
+    f.yaw = yaw; f.turn = Number.isFinite(turn) ? turn : yaw; f.front = e.kind !== 'mobile'; f.at = at;
     return f;
   }
 

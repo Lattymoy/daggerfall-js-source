@@ -1,9 +1,7 @@
-// CAPE-CARD and CAPE-FLAT (2026-10-30, the owner, with a shot of the Eternal cape on a peer's front: "Did we learn
-// nothing from the angel wings aura? And the cape sides and top shouldnt be curved"; bible/01-Overview/bugs/
-// Field-Bugs-2026-10-30.md). A paperdoll or class sprite peer had no face, so its cape hung on the pose's yaw - over a
-// doll's chest whenever its peer faced away. Now the layer says how its picture faces (faceOf), a class sprite that it
-// is a card (AUDIT CAPE-CARD D1: a doll is not), and the cape hangs behind it. CAPE-FLAT: cut straight - a straight top
-// edge across the shoulders, straight sides, a straight fall; it was a span of the turn round the body.
+// CAPE-CARD (2026-10-30, the owner, with a shot of the Eternal cape on a peer's front: "Did we learn nothing from the
+// angel wings aura?"; bible/01-Overview/bugs/Field-Bugs-2026-10-30.md). A paperdoll or class sprite peer had no face, so
+// its cape hung on the pose's yaw - over a doll's chest whenever its peer faced away. Now the layer says how its picture
+// faces (faceOf) and that it is a card, and the cape hangs behind the card.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -11,7 +9,7 @@ import { mobileOrientation, mobilePortrayedYaw } from '../../src/characters/mobi
 import { RemotePlayers } from '../../src/net/remotePlayers.js';
 import { createAuraHost, spriteAnswer } from '../../src/scenes/auraHost.js';
 import {
-  AURA_VS, AURA_GROUND_R, ETERNAL_TOP, ETERNAL_POOL_R, ETERNAL_HALF, ETERNAL_BACK, ETERNAL_HEM_Y, ETERNAL_CARDS, CLOAK_SWING,
+  AURA_VS, AURA_GROUND_R, ETERNAL_TOP, ETERNAL_POOL_R, ETERNAL_CARDS,
   CLOAK_REST_POSE, CLOAK_CARD_POSE, CLOAK_SHOULDER_Y, WING_SPRITE_BACK, auraCapeStep, auraSpritePosed, auraSpriteBones, EOTB_FIGURE,
 } from '../../src/render/auraRing.js';
 import { glslFunctions } from '../glsl.mjs';
@@ -61,7 +59,7 @@ test('CAPE-CARD a class sprite\'s facing: mobileOrientation run backwards - ever
   assert.equal(mobilePortrayedYaw(2, [1, 0, 1], [1, 4, 1]), null, 'the eye over the feet: no line of sight');
 });
 
-test('CAPE-CARD the classic layer says how its picture faces, built by its own producers: a doll shows the eye its front whichever way its peer turns, a class sprite the view it was drawn in as the camera sees it; a class sprite says it is a card and a doll does not (AUDIT CAPE-CARD D1: it has no side to be seen from); each hands the pose\'s own facing for the swing and its picture\'s feet; nothing for a peer it does not draw (mutants: a doll faced on the pose; the card unsaid; a doll a card)', async () => {
+test('CAPE-CARD the classic layer says how its picture faces, built by its own producers: a doll shows the eye its front whichever way its peer turns, a class sprite the view it was drawn in as the camera sees it; both say they are cards, and a doll that it shows every eye its front (AUDIT CAPE-CARD A6); each hands the pose\'s own facing for the swing and its picture\'s feet; nothing for a peer it does not draw (mutants: a doll faced on the pose; the card unsaid; a doll no front)', async () => {
   const dolls = dollLayer();
   const away = { id: 'd', name: 'd', look: LOOK, shown: { x: 1, y: 0, z: 3, yaw: 0, pitch: 0, mv: 0 } };   // faces +z
   await drawn(dolls, away, [1, 1, -5], 'doll');
@@ -69,7 +67,8 @@ test('CAPE-CARD the classic layer says how its picture faces, built by its own p
     const f = dolls.faceOf('d', eye);
     assert.ok(f && Math.abs(wrap(f.yaw - Math.atan2(eye[0] - 1, eye[2] - 3))) < 1e-9, `eye ${eye}: the doll's front to it (${f?.yaw})`);
     assert.equal(f?.turn, 0, 'its peer\'s own facing, for the swing');
-    assert.equal(f?.card, false, 'AUDIT CAPE-CARD D1: no side to be seen from - no push off it');
+    assert.equal(f?.card, true, 'a flat card with no figure');
+    assert.equal(f?.front, true, 'AUDIT CAPE-CARD A6: its front to every eye');
     assert.deepEqual([...(f?.at ?? [])], [1, 0, 3], 'its picture\'s feet');
   }
   assert.equal(dolls.faceOf('nobody', [0, 1, 0]), null);
@@ -81,7 +80,7 @@ test('CAPE-CARD the classic layer says how its picture faces, built by its own p
   const o = sprites._batches.get('s').mobileUnit.orientation;
   assert.equal(o, mobileOrientation(yaw, [2, 0, 2], me), 'the view drawn for the sync\'s eye');
   const mine = sprites.faceOf('s', me);
-  assert.ok(mine && Math.abs(wrap(mine.yaw - yaw)) <= Math.PI / 8 + 1e-9 && mine.card === true && mine.turn === yaw, 'from that eye: within half a view of the pose, a card');
+  assert.ok(mine && Math.abs(wrap(mine.yaw - yaw)) <= Math.PI / 8 + 1e-9 && mine.card === true && mine.front === false && mine.turn === yaw, 'from that eye: within half a view of the pose, a card with views');
   const cam = [-4, 2, 2];   // a camera elsewhere sees the same picture, facing as it is drawn to that eye
   assert.ok(Math.abs(wrap(/** @type {any} */ (sprites.faceOf('s', cam)).yaw - /** @type {number} */ (mobilePortrayedYaw(o, [2, 0, 2], cam)))) < 1e-9, 'from the camera: the picture\'s own facing');
 });
@@ -114,7 +113,7 @@ const vsOf = (/** @type {any} */ w) => glslFunctions(AURA_VS, {
 });
 const QUIET = 13.2;
 
-test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - the cape hung as the doll faces lies wholly behind its card, cloth, wisps and embers, where hung on the pose it stood between the eye and the doll (mutants: a doll faced on the pose; a doll a card)', async () => {
+test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - the cape hung as the doll faces lies wholly behind its card, cloth, wisps and embers, where hung on the pose it stood between the eye and the doll (mutants: a doll faced on the pose; the card unsaid)', async () => {
   const dolls = dollLayer();
   const peer = { id: 'p', name: 'p', look: LOOK, shown: { x: 0, y: 0, z: 0, yaw: Math.PI, pitch: 0, mv: 0 } };   // faces -z, away from the eye
   const eye = [0, 1.7, 3];
@@ -127,41 +126,12 @@ test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - t
   };
   const w = /** @type {any} */ ({ at: [0, 0, 0], yaw: Math.PI, aura: 'eternal' });
   auraCapeStep(w, auraSpritePosed(w, spriteAnswer([null, null], 'figureOf', 'p'), spriteAnswer([null, dolls], 'faceOf', 'p', eye)));
-  assert.equal(w.cape, CLOAK_REST_POSE, 'AUDIT CAPE-CARD D1: at the body - faced to the eye, the cape is behind the doll without a push');
+  assert.equal(w.cape, CLOAK_CARD_POSE, 'the rest pose behind the card: the wrapped cut\'s sides and collar reach the card\'s plane at the body (WINGS-FIT)');
   const now = depths(w);
   assert.ok(now.every((z) => z < -0.1), `all of it behind the doll (${Math.max(...now).toFixed(3)})`);
   const was = /** @type {any} */ ({ at: [0, 0, 0], yaw: Math.PI, aura: 'eternal' });
   auraCapeStep(was, null);   // the old wiring: no face for a doll - the pose's yaw, at rest
   assert.ok(depths(was).filter((z) => z > 0).length > 100, 'hung on the pose, it stood in front of the doll');
-});
-
-test('CAPE-FLAT the cut: its top edge one straight line across the shoulders - one height, one depth, from one side to the other at the top\'s width; each side a straight line from the hem to the top, seen from behind; its hem level; all of it behind the body, and off the legs swung forward as far as it swings (mutants: the sides eased; folds along the top edge; the keep off the legs dropped)', () => {
-  const w = /** @type {any} */ ({ at: [0, 0, 0], yaw: 0, aura: 'eternal' });
-  auraCapeStep(w, null);
-  const F = vsOf(w);
-  const top = [0, 0.25, 0.5, 0.75, 1].map((u) => F.eternalPoint([u, 1], QUIET));
-  for (const p of top) {
-    assert.ok(Math.abs(p[1] - ETERNAL_TOP) < 1e-6, `the top edge at one height (${p[1]})`);
-    assert.ok(Math.abs(p[2] + ETERNAL_BACK.top) < 1e-6, `and one depth behind the shoulders (${p[2]})`);
-  }
-  assert.ok(Math.abs(top[0][0] - ETERNAL_HALF.top) < 1e-6 && Math.abs(top[4][0] + ETERNAL_HALF.top) < 1e-6, 'its right side to its left');
-  for (const u of [0, 1]) {
-    const side = Array.from({ length: 11 }, (_, j) => F.eternalPoint([u, (ETERNAL_HEM_Y + (j / 10) * (ETERNAL_TOP - ETERNAL_HEM_Y)) / ETERNAL_TOP], QUIET));
-    const [a, b] = [side[0], side[10]];
-    for (const p of side) {
-      const s = (p[1] - a[1]) / (b[1] - a[1]);
-      assert.ok(Math.abs(p[0] - (a[0] + (b[0] - a[0]) * s)) < 1e-6, `side ${u}: straight (${p[0]} at ${p[1]})`);
-    }
-    assert.ok(Math.abs(Math.abs(a[0]) - ETERNAL_HALF.hem) < 1e-6, `side ${u}: the hem's width`);
-  }
-  const fs = rd('src/render/auraRing.js');
-  assert.ok(fs.includes('float hemM = y - ${g3(ETERNAL_HEM_Y)};'), 'its hem level');
-  const grid = (/** @type {any} */ G) => { const pts = []; for (let i = 0; i <= 12; i++) for (let j = 1; j <= 12; j++) pts.push(G.eternalPoint([i / 12, j / 12], QUIET)); return pts; };
-  assert.ok(grid(F).every((p) => p[2] < -0.1), 'still: behind the body');
-  const G = vsOf(w);
-  G.globals.uSwing = [0, CLOAK_SWING.trailMax, 0, 0];   // walking backward: the hem trails forward as far as it can
-  const legs = grid(G).filter((p) => p[1] < 0.9);   // AUDIT CAPE-CARD B1: the keep is the legs' - full by the hips, from nothing at the shoulders
-  assert.ok(legs.every((p) => p[2] <= -0.15 + 1e-6), `swung forward: never through the legs (${Math.max(...legs.map((p) => p[2])).toFixed(3)})`);
 });
 
 test('CAPE-CARD the host: every layer that draws a peer as a picture is one list, the paperdolls and class sprites with the Eye of the Beholder sets - the gather faces a doll\'s pieces as the doll faces, and the draw hangs a cape off any of them; world.js hands the three over (mutants: the classic layer left out)', async () => {
