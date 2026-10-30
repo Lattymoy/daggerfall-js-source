@@ -212,8 +212,8 @@
   {
     "name": "ZONESAFE-the-legend-law-unread",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
-    "new": "return laws ? [ZONE_RULES[0], ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
+    "old": "    ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]",
+    "new": "    ? [ZONE_RULES[0], ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],

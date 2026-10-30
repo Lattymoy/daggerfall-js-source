@@ -2358,8 +2358,8 @@
   {
     "name": "ACS-S17-order-marks",
     "file": "src/ui/wild/wildMarks.js",
-    "old": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 3;",
-    "new": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 5;",
+    "old": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }   /* AUDIT CAPTAIN'S SEA S17: a world label - under the glass (4) */",
+    "new": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }   /* AUDIT CAPTAIN'S SEA S17: a world label - under the glass (4) */",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

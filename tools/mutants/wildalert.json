@@ -258,8 +258,8 @@
   {
     "name": "WILD-marks-uncapped",
     "file": "src/ui/wild/wildMarks.js",
-    "old": "    .sort((a, b) => a.distance - b.distance).slice(0, WILD_MARKS_MAX);",
-    "new": "    .sort((a, b) => a.distance - b.distance);",
+    "old": "        .sort((a, b) => a.distance - b.distance)\n        .slice(0, WILD_MARKS_MAX);",
+    "new": "        .sort((a, b) => a.distance - b.distance);",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "WILD-marks-watchdog-unarmed",
     "file": "src/ui/wild/wildMarks.js",
-    "old": "  watch(want.length > 0, timers);\n",
-    "new": "",
+    "old": "  watch(want.length > 0, timers);\n  if (!root) {",
+    "new": "  if (!root) {",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]

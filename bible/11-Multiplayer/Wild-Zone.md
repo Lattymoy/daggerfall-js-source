@@ -943,7 +943,7 @@ half health", "everyone in the zone should see the same ... that the big giant i
   a zone of whole cells, are drawn as a pen would - resampled, relaxed toward their neighbours, corner-cut
   (`smoothContour`, `wildZoneMap.js:"export function smoothContour"`), and a wide soft shadow lies under the red line.
   ZONE-LINE (section 27): a zone kept to the pixel - Cyrodiil's - is drawn on its own line, never smoothed off it
-  (`wildZoneMap.js:"export const zoneLine ="`), and the fog is clipped by that line.
+  (`wildZoneMap.js:"export const zoneLine"`), and the fog is clipped by that line.
 - ZONEINK2 (the owner: "The tier colors when zoomed in on the zone map are overwriting the map too much make it look
   waaaay more high quality and take care of the performance"): the tiers are a WASH - `TIER_WASH`
   (`wildZoneMap.js:"export const TIER_WASH"`), a light pigment each laid with `multiply`, so the sheet's relief, roads
@@ -1383,7 +1383,7 @@ The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it 
   stood past it, none now; 4,121 of those places moved, a giant's walk by the border (every client's alike).
 - ONE LINE (`cyrodiilZone.js:"export function zoneLineOf("`): Cyrodiil's outline on the traced picture - its land and the
   water it encloses, against the rest - laid on the world. The red line, the fog's cut and the zone map's outer ring
-  and wash draw it unsmoothed (`wildZoneMap.js:"export const zoneLine ="`), and the province's own ink draws it in place
+  and wash draw it unsmoothed (`wildZoneMap.js:"export const zoneLine"`), and the province's own ink draws it in place
   of its own there: `tracedChains` keeps no border with Cyrodiil on one side (`keeps`), leaves Cyrodiil's open coast to
   the line (`cutCoast` - in a square of four pixel middles the line crosses, the coast is the pixels' own sides from the
   picture's corner, so a lake's shore stays and a neighbour's coast ends on the line's corner), and lays the line's

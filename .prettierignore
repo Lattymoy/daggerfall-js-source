@@ -68,6 +68,8 @@
 /src/ui/vendor/*/
 !/src/ui/wardrobe/
 /src/ui/wardrobe/*/
+!/src/ui/wild/
+/src/ui/wild/*/
 !/src/world/
 /src/world/*
 !/src/world/lands/

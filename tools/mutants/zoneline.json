@@ -126,7 +126,6 @@
       "test/systems/wild/zoneline.test.js"
     ]
   },
-  
   {
     "name": "ZONELINE-the-ink-keeps-cyrodiils-border",
     "file": "src/ui/tamrielInk.js",
@@ -145,7 +144,6 @@
       "test/systems/wild/zoneline.test.js"
     ]
   },
-  
   {
     "name": "ZONELINE-a-neighbours-coast-stopped-short",
     "file": "src/world/tamriel/tamrielLines.js",
@@ -186,8 +184,8 @@
   {
     "name": "ZONELINE-the-red-line-smoothed-again",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask) :",
-    "new": "export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask).map((c) => smoothContour(c, { step: 2.4 })) :",
+    "old": "  mask?.bits ? wildOutline(mask) : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) }));",
+    "new": "  mask?.bits\n    ? wildOutline(mask).map((c) => smoothContour(c, { step: 2.4 }))\n    : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) }));",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -195,8 +193,8 @@
   {
     "name": "ZONELINE-the-zone-maps-edge-its-own",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "    lines, edge: zoneLine(mask), anchors: wildRingAnchors(mask),",
-    "new": "    lines, edge: wildEdgeChains(mask), anchors: wildRingAnchors(mask),",
+    "old": "    edge: zoneLine(mask),",
+    "new": "    edge: wildEdgeChains(mask),",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -204,8 +202,8 @@
   {
     "name": "ZONELINE-the-fogs-line-its-own",
     "file": "src/ui/wild/wildMapInk.js",
-    "old": "chains: zoneLine(mask) };",
-    "new": "chains: zoneLine({ ...mask, line: null }) };",
+    "old": "    chains: zoneLine(mask),",
+    "new": "    chains: zoneLine({ ...mask, line: null }),",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]

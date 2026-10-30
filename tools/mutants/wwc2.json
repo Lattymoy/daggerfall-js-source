@@ -279,8 +279,8 @@
   {
     "name": "WWC2-the-view-on-the-grid",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "(maskWorldBox(mask));   // WW-C2: on the world\n  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);",
-    "new": "(mask.box);\n  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);",
+    "old": "  if (!mask?.box) return null;\n  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask)); // WW-C2: on the world\n  const bw = x1 - x0 + 1,",
+    "new": "  if (!mask?.box) return null;\n  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (mask.box);\n  const bw = x1 - x0 + 1,",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]
