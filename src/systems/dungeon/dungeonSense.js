@@ -58,7 +58,7 @@ export const SENSE_CARD_H_MAX = 2.8;
 /** The tier a stored value names; anything else is On (the row's initial). Pure. */
 export const senseTier = (v) => (v === 'off' || v === 'secrets' ? v : 'on');
 
-const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:']);
+const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']);   // DELVE II: an encounter's vault
 /**
  * A target's kind, by its key - the activation ladder's own vocabulary - and the plaque's word for it: an action
  * object the plaque calls a door (an action door's band) is a way through, as an exit is; the containers and the

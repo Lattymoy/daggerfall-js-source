@@ -155,7 +155,7 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   // are the two above-ground bodies, which PX21c could not reach.
   // DW-E3: `dwFish:` is Iliac Puddle No More's fish, a DaggerfallLoot of one item.
   // WB9f: `spoil:` a piece of the Burning Court's spoils on its floor, a pile of one; its gold (`spoilGold:`) a name.
-  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:']);
+  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);   // PIN MOVED (DELVE II): a dungeon encounter's vault
   for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x', 'dwFish:12', 'spoil:2']) {
     assert.equal(keyItemises(k), true, k);
   }

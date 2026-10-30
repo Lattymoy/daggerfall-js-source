@@ -101,6 +101,7 @@ uniform vec3 uAt;       // the crystal's foot in the scene
 uniform float uYaw;
 uniform float uGrow;    // how far grown, 0..1
 uniform float uBroke;   // seconds since it broke, < 0 standing
+uniform float uScale;   // its size against the Court's (DELVE II's are a room's)
 out vec3 vNrm;
 out vec3 vLocal;
 out vec3 vWorld;
@@ -122,6 +123,7 @@ void main() {
     lp = vec3(lp.x * cos(a) - lp.y * sin(a), lp.x * sin(a) + lp.y * cos(a), lp.z) * sh;
     p = c + lp + off;
   }
+  p *= uScale;
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 w = vec3(p.x * cy + p.z * sy, p.y, -p.x * sy + p.z * cy);
   vNrm = vec3(aNrm.x * cy + aNrm.z * sy, aNrm.y, -aNrm.x * sy + aNrm.z * cy);
@@ -241,7 +243,7 @@ export class CourtCrystalRenderer {
     this.program = buildProgram(gl, crystal[0], crystal[1], 'crystal');
     this.glowProgram = buildProgram(gl, glow[0], glow[1], 'crystal glow');
     this.u = {}; this.g = {};
-    for (const n of ['uVP', 'uAt', 'uYaw', 'uGrow', 'uBroke', 'uEye', 'uColor', 'uHp', 'uFlash', 'uSeed', 'uTime', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uAt', 'uYaw', 'uGrow', 'uBroke', 'uScale', 'uEye', 'uColor', 'uHp', 'uFlash', 'uSeed', 'uTime', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     for (const n of ['uVP', 'uKind', 'uA', 'uB', 'uW', 'uEye', 'uColor', 'uAlpha', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.g[n] = gl.getUniformLocation(this.glowProgram, n);
     const m = crystalCluster();
     this.count = m.count;
@@ -268,7 +270,7 @@ export class CourtCrystalRenderer {
 
   /**
    * Draw the crystals `list` ([{ at: [x, y, z] its foot in the scene, yaw, seed, grow 0..1, broke (s since it broke, < 0
-   * standing), hp 0..1, flash 0..1, color, beam: [x, y, z]|null - his chest, while the Reckoning winds up }], at most
+   * standing), hp 0..1, flash 0..1, color, scale (its size, 1 the Court's), beam: [x, y, z]|null - his chest, while the Reckoning winds up }], at most
    * CRYSTALS_DRAW_MAX): the clusters (opaque, depth written), then their glow (added). `fog` the frame's fog as the renderer
    * set it ({ mode, density, range, color, camPos }). Nothing to draw, nothing touched.
    */
@@ -299,6 +301,7 @@ export class CourtCrystalRenderer {
       gl.uniform1f(U.uYaw, q.yaw ?? 0);
       gl.uniform1f(U.uGrow, Math.min(1, q.grow));
       gl.uniform1f(U.uBroke, Number.isFinite(q.broke) ? q.broke : -1);
+      gl.uniform1f(U.uScale, q.scale > 0 ? q.scale : 1);
       gl.uniform3fv(U.uColor, q.color);
       gl.uniform1f(U.uHp, Math.max(0, Math.min(1, q.hp ?? 1)));
       gl.uniform1f(U.uFlash, Math.max(0, Math.min(1, q.flash ?? 0)));
@@ -321,7 +324,7 @@ export class CourtCrystalRenderer {
       if (q.broke >= 0) continue;
       const k = Math.min(1, q.grow) * (0.35 + 0.65 * Math.max(0, Math.min(1, q.hp ?? 1)));
       gl.uniform3fv(G.uColor, q.color);
-      gl.uniform1i(G.uKind, 0); gl.uniform3f(G.uA, q.at[0], q.at[1], q.at[2]); gl.uniform1f(G.uW, CRYSTAL_POOL_R); gl.uniform1f(G.uAlpha, k);
+      gl.uniform1i(G.uKind, 0); gl.uniform3f(G.uA, q.at[0], q.at[1], q.at[2]); gl.uniform1f(G.uW, CRYSTAL_POOL_R * (q.scale > 0 ? q.scale : 1)); gl.uniform1f(G.uAlpha, k);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       this.glowed++;
       if (Array.isArray(q.beam) && q.beam.every(Number.isFinite)) {

@@ -211,8 +211,8 @@
   {
     "name": "WB9f-spoils-never-itemise",
     "file": "src/systems/worldHover.js",
-    "old": "'guardCorpse:', 'dwFish:', 'spoil:']);",
-    "new": "'guardCorpse:', 'dwFish:']);",
+    "old": "'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);",
+    "new": "'guardCorpse:', 'dwFish:', 'delve:']);",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ]

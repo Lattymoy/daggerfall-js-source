@@ -338,7 +338,7 @@ import { currentWeather } from '../systems/weather/weatherSim.js';   // AUDIT AT
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
-import { dungeonLocationFor, builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at (SD-ONLINE: and its room's, read off the build)
+import { dungeonLocationFor, dungeonRoomSize } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at (SD-ONLINE: and its room's, read off the build; DELVE II, AUDIT DLV5-6 M3: and its curated block's)
 import { tierShown } from '../systems/dungeon/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { dismountOnTransition } from '../systems/transport.js';   // TR5: the interior dismount
@@ -3185,7 +3185,7 @@ export function createWorldModes(host) {
       // INSTANCES: a re-laid public room online stands none of a quest's things - its markers are the dungeon whole's
       // (systems/instancePlaces.js questMountsHere); it says once where they are, and moves nothing (QUEST-VOID's re-lay
       // would carry them into this room's blocks)
-      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: builtDungeonSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so
+      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: dungeonRoomSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so
       // QUEST-VOID (questRepair.js relayBuiltDungeon): a quest target on a marker this build has not - its foe in the
       // void, its item in rock - is laid again on the dungeon as built before anything stands.
       relayingBuilt = true;
@@ -10222,7 +10222,7 @@ export function createWorldModes(host) {
     if (key.startsWith('plaque:')) { readPlaque(key); return true; }   // ARENA5: a plaque in the Hall of Champions reads its champion
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:')) {   // SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:')) {   // SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
       dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
@@ -13160,7 +13160,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
-    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm, o: dungeonLoc.sdOwner } : isEgHall(dungeonLoc) ? { kind: 'eg', b: dungeonLoc.egBreach } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : isKetchShip(dungeonLoc) ? { kind: 'kt', key: dungeonLoc.ketch.key } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
+    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm, o: dungeonLoc.sdOwner } : isEgHall(dungeonLoc) ? { kind: 'eg', b: dungeonLoc.egBreach } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : isKetchShip(dungeonLoc) ? { kind: 'kt', key: dungeonLoc.ketch.key } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: dungeonRoomSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
       : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, instance: placeInstance, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
@@ -14204,7 +14204,7 @@ export function createWorldModes(host) {
         };
       }
       if (mode === 'dungeon') {
-        return { worldContext: WORLD_CONTEXT.Dungeon, local: [...player.pos], buildingKey: 0, interior: null, dungeon: { ...(placeInstance ? { ins: instanceWord(placeInstance) } : {}), whole: builtDungeonSize(dungeonLoc) === 'full' } };   // INSTANCES (the audit): the room and the layout the position stands in
+        return { worldContext: WORLD_CONTEXT.Dungeon, local: [...player.pos], buildingKey: 0, interior: null, dungeon: { ...(placeInstance ? { ins: instanceWord(placeInstance) } : {}), whole: dungeonRoomSize(dungeonLoc) === 'full' } };   // INSTANCES (the audit): the room and the layout the position stands in
       }
       return { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     },

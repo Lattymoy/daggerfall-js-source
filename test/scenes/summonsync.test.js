@@ -256,7 +256,7 @@ test('SUMMON-SYNC: my loose stand hunts every player in the room - my quest foe 
   const share = { tagOf: (f) => (f.questBehaviour ? { q: QUEST, s: '_vampire_' } : null), peerMayHit: (id) => PARTY.has(id), partyPeer: (id) => PARTY.has(id) };   // QUEST-OWNER: the seam's party door
   const peers = [{ id: 'mmm-0002' }, { id: 'bob-0005' }];
   const cands = mount(`${declSrc('isRoomFoe')}\n${declSrc('ownShare')}\n${declSrc('ownQuestTag')}\n${declSrc('ownLoose')}\nreturn ${arrow};`,
-    { foes: [lay, summon, vamp, stray], _layoutFoes: 1, _authority: false, partyOnlyQuestShare, opts: { questShare: () => share }, peerCandidates: () => peers });
+    { foes: [lay, summon, vamp, stray], _layoutFoes: 1, _authority: false, partyOnlyQuestShare, opts: { questShare: () => share }, peerCandidates: () => peers, delve: { wards: () => [] } });
   const ids = (rec, streamed = false) => cands(streamed, rec).filter((c) => !c.ai).map((c) => c.id);
   assert.deepEqual(ids(summon), ['mmm-0002', 'bob-0005'], 'my loose stand: everyone in the room');
   assert.deepEqual(ids(vamp), ['mmm-0002'], 'my quest foe: its party');
