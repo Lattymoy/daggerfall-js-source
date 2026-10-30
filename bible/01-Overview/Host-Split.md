@@ -874,3 +874,14 @@ its reset and its two marks) went into the gate it belongs with (`createCrossing
 imports. `bootWorld` 35,158 -> 35,140 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`, its
 mutant re-aimed under it). The tool re-aimed eight records; the two pins that lift the board's text and run it hand it
 a `host` (`audit68_worldjs.test.js`, `audit_etherow.test.js` - PIN MOVED). Nine re-aimed records, all dead.
+
+## SHOT-HOOKS - the shot-mode probe surface out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (shotMode) { ... }` block that hangs the probes' doors on `window` (`__move`, `__streamIdle`, `__pixelBuild`,
+`__standing`, `__climb` and sixty-five more) declared nothing, so no name could select it. `tools/hostMove.mjs` now
+takes a statement by its first line (`--group @17386`; the tool's own fixture `anonymous-statement` and two mutants
+pin it). The block went out verbatim to `scenes/worldShotHooks.js` `createWorldShotHooks`: 58 names by value, 20 live
+(two written), nothing returned; the host drops five imports. `bootWorld` 35,140 -> 34,479 logical lines, and the
+ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed six records and one
+doc anchor; three pins read the probes through `hostText` and the live `host.` names (`fixc_firstStart.test.js`,
+`auditclimb1.test.js`, `terrainworker.test.js` - PIN MOVED).

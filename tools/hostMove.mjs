@@ -4,6 +4,7 @@
 //   node tools/hostMove.mjs src/scenes/world.js --group tvBadgeOf,TV_PEER_HEAD_M,travelViewMarks \
 //        --to src/scenes/travelViewMarks.js --name createTravelViewMarks            the plan, nothing written
 //   ... --write                                                                      the move
+//   node tools/hostMove.mjs src/scenes/world.js --group @17386 ...     a statement that declares nothing, by its first line
 //
 // A move by hand of a block that reads sixty names of its host's scope is where a silent change hides - a `let` read
 // as a copy goes stale, a `const` read before its line throws. This decides every name by rule, so each move is the
@@ -167,8 +168,9 @@ export function planMove({ hostFile, fn, names, toFile, ctor, handle = 'host' })
   const { members, owner } = scopeOf(host);
   const refuse = [];
 
-  // THE GROUP: contiguous members
-  const group = [...new Set(names.map((n) => { const m = owner.get(n); if (!m) refuse.push(`${n} is not a member of ${host.name}`); return m; }).filter(Boolean))].sort((a, b) => a.i - b.i);
+  // THE GROUP: contiguous members, by a name they declare or, for a statement that declares none, by `@<its first line>`
+  const byLine = (n) => members.find((m) => m.stmt.loc.start.line === Number(n.slice(1)));
+  const group = [...new Set(names.map((n) => { const m = n.startsWith('@') ? byLine(n) : owner.get(n); if (!m) refuse.push(`${n} is not a member of ${host.name}`); return m; }).filter(Boolean))].sort((a, b) => a.i - b.i);
   if (refuse.length) return { refuse };
   for (let k = 1; k < group.length; k++) if (group[k].i !== group[k - 1].i + 1) refuse.push(`the group is not contiguous: ${group[k - 1].names[0]} and ${group[k].names[0]} have members between them`);
   const first = group[0], last = group[group.length - 1];

@@ -97,5 +97,23 @@
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
+  },
+  {
+    "name": "HOSTMOVE-a-statement-by-its-line-unread",
+    "file": "tools/hostMove.mjs",
+    "old": "const m = n.startsWith('@') ? byLine(n) : owner.get(n);",
+    "new": "const m = owner.get(n);",
+    "tests": [
+      "test/tooling/hostmove.test.js"
+    ]
+  },
+  {
+    "name": "HOSTMOVE-a-statement-by-another-line",
+    "file": "tools/hostMove.mjs",
+    "old": "m.stmt.loc.start.line === Number(n.slice(1))",
+    "new": "m.stmt.loc.end.line === Number(n.slice(1))",
+    "tests": [
+      "test/tooling/hostmove.test.js"
+    ]
   }
 ]

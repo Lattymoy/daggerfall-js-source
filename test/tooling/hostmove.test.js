@@ -90,6 +90,19 @@ export function host() {
   return () => [g(), count];
 }
 `, ['g'], (h) => h()()],
+  // a statement that declares nothing is named by its first line, and the host constructs it for its effects alone
+  ['anonymous-statement', `import { K } from './dep.js';
+export function host() {
+  const hooks = {};
+  if (K) {
+    hooks.a = () => K + 1;
+  }
+  let n = 2;
+  n = 3;
+  if (K) hooks.b = () => n;
+  return () => [hooks.a(), hooks.b()];
+}
+`, ['@4'], (h) => h()()],
   // a host with no import line still takes the constructor's (f8 crashed)
   ['no-imports', `export function host() {
   const x = 1;
