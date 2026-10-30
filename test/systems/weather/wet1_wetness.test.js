@@ -70,7 +70,7 @@ test('WET1 the lane draws it: the ground and the walls read uWet, glint every la
   for (const [name, fs] of [['terrain', EL_TERRAIN_FS], ['mesh', EL_MESH_FS]]) {
     assert.ok(fs.includes('uniform vec4 uWet;'), name);
     assert.ok(fs.includes('elPointLitWet(vWorldPos, n, wetG, wetGlint)'), `${name}: the lamps in the wet`);
-    assert.ok(fs.includes('wetSunGlint(n, wetV, ndl > 0.0 ? diff / ndl : 0.0, wetG)'), `${name}: the sun in the wet`);
+    assert.ok(fs.includes('wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG)'), `${name}: the sun in the wet`);
     assert.ok(/outColor = vec4\(elFinish\([^\n]*\n  outColor\.rgb = wetSky\(outColor\.rgb, n, wetV, wetG/.test(fs), `${name}: the sky over the finished colour`);
     assert.ok(!fs.includes('elPointLit(vWorldPos, n)'), `${name}: no dry lantern loop left`);
   }

@@ -593,10 +593,10 @@ ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${realWindowsGlsl('elDecode(c)')}
 ${EL_POINT_LIT_GLSL}
-${RAIN_WET_GLSL}
 ${DISSOLVE_GLSL}
 ${MESH_ALPHA_GLSL}
 out vec4 outColor;
+${RAIN_WET_GLSL}
 void main() {
 ${RW_MAIN_DERIVS}
   int amMode = int(uAutomapMode + 0.5);
@@ -633,7 +633,7 @@ ${RW_MAIN_GLASS}
   vec3 wetGlint;
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + uLight3Color * (uLight3Scale * l3diff) + elPointLitWet(vWorldPos, n, wetG, wetGlint) + elIndirectLit(vWorldPos, n));
-  lit += wetGlint + wetSunGlint(n, wetV, ndl > 0.0 ? diff / ndl : 0.0, wetG);
+  lit += wetGlint + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
 ${RW_MAIN_ROOM}
   outColor = vec4(elFinish(lit + emission, vWorldPos), meshAlphaOf(tex.a));   // POI-2: alpha 1 but in a translucent draw (render/meshAlpha.js)
   outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * max(n.y, 0.0));   // WET1: the sky on a wet roof
@@ -1104,7 +1104,7 @@ void main() {
   vec3 wetGlint;
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLitWet(vWorldPos, n, wetG, wetGlint) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
-  lit += wetGlint + wetSunGlint(n, wetV, ndl > 0.0 ? diff / ndl : 0.0, wetG);
+  lit += wetGlint + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
   outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG);   // WET1: the sky in the wet
 }`;
