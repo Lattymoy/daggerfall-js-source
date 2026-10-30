@@ -547,7 +547,7 @@ const GUILD_STATUS = Object.freeze({
   'seats-settling': 503,   // AUDIT DOMAINS S6: a castle act while another holds the Turning - asked again in a moment
   // GUILD-LOGO: a review already under way, none to withdraw, a picture of the wrong size, shape or kind
   'guild-ware-hall': 409, 'guild-ware-none': 409,   // GUILD-SHOP: a guild's own furniture - its hall alone, its stock spent
-  'logo-pending': 409, 'logo-none': 404, 'logo-bytes': 400, 'logo-type': 400, 'logo-square': 400, 'logo-side': 400,
+  'logo-pending': 409, 'logo-soon': 429, 'guild-logo': 409, 'logo-none': 404, 'logo-bytes': 400, 'logo-type': 400, 'logo-square': 400, 'logo-side': 400,
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
@@ -2017,7 +2017,7 @@ const service = {
         // AUDIT2 GUILD2 S2/S7: the word the filter caught (`why`, the door's own field for a refusal's reason), and when the
         // next new name may come - each dropped here, so the page could say neither
         if ((r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string') return json({ error: r.error, why: r.word }, GUILD_STATUS[r.error], origin);   // TEXT-F1: a rank's name's word too
-        if (r.error === 'guild-rename-soon' && Number.isSafeInteger(r.at)) return json({ error: r.error, at: r.at }, GUILD_STATUS[r.error], origin);
+        if ((r.error === 'guild-rename-soon' || r.error === 'logo-soon') && Number.isSafeInteger(r.at)) return json({ error: r.error, at: r.at }, GUILD_STATUS[r.error], origin);   // AUDIT GUILD-SHOP S3: and when the next logo may go
         // GUILD3c (bible/11-Multiplayer/Guilds-Made-Plain.md): a leave's or a disbanding's refusal names everything that holds the guild
         if (Array.isArray(r.keeps)) return json({ error: r.error, keeps: r.keeps }, GUILD_STATUS[r.error] ?? 400, origin);
         return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);

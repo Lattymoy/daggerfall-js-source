@@ -11,14 +11,14 @@ export const GUILD_LOGO_FILE_MAX = 8 * 1024 * 1024;
 
 /**
  * `file` as a logo: `{ ok: true, image, url }` - its base64 and a data URL to show it - or `{ ok: false, error }` with the
- * service's own refusal word (logo-type, logo-side, logo-bytes).
+ * refusal word: logo-unread (no picture to be read here), logo-file (a file past GUILD_LOGO_FILE_MAX), logo-side, logo-bytes.
  * @param {any} file @param {{ doc?: any, bitmap?: (f: any) => Promise<any> }} [o]
  */
 export async function pickGuildLogo(file, { doc = globalThis.document, bitmap = /** @type {any} */ (globalThis).createImageBitmap } = {}) {
-  if (!file || typeof file.size !== 'number' || typeof bitmap !== 'function') return { ok: false, error: 'logo-type' };
-  if (file.size > GUILD_LOGO_FILE_MAX) return { ok: false, error: 'logo-bytes' };
+  if (!file || typeof file.size !== 'number' || typeof bitmap !== 'function') return { ok: false, error: 'logo-unread' };   // AUDIT GUILD-SHOP C7: each its own word
+  if (file.size > GUILD_LOGO_FILE_MAX) return { ok: false, error: 'logo-file' };
   let bmp;
-  try { bmp = await bitmap(file); } catch { return { ok: false, error: 'logo-type' }; }
+  try { bmp = await bitmap(file); } catch { return { ok: false, error: 'logo-unread' }; }
   const side = Math.min(bmp.width, bmp.height);
   if (!(side >= GUILD_LOGO_SIDE_MIN)) { bmp.close?.(); return { ok: false, error: 'logo-side' }; }
   const c = doc.createElement('canvas');

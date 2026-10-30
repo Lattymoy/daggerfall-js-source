@@ -50,8 +50,8 @@ export function standardModel() {
   drum(f, R.oak, 0, 0, 8, 0.035, 0.03, 0.24, 2.7);   // the pole
   drum(f, R.gilt, 0, 0, 8, 0.06, 0.0, 2.7, 2.92);   // the finial
   box(f, R.gilt, -0.42, 2.55, -0.025, 0.42, 2.6, 0.025, solid);   // the crossbar
-  picture(f, R.banner, -0.38, 0.95, 0.38, 2.55, 0.03);   // the banner, the hall's arms
-  picture(f, R.banner, -0.38, 0.95, 0.38, 2.55, -0.03, true);
+  picture(f, R.banner, -0.38, 0.95, 0.38, 2.55, 0.045);   // the banner, the hall's arms - its faces clear of the pole (AUDIT GUILD-SHOP R8)
+  picture(f, R.banner, -0.38, 0.95, 0.38, 2.55, -0.045, true);
   return assemble(f, GUILD_ART_ARCHIVE);
 }
 
@@ -113,7 +113,7 @@ export function brazierModel() {
   for (const a of [0, 2.094, 4.189]) { const x = Math.sin(a) * 0.22, z = Math.cos(a) * 0.22; box(f, R.iron, x - 0.025, 0, z - 0.025, x + 0.025, 0.7, z + 0.025); }   // the legs
   drum(f, R.iron, 0, 0, 12, 0.14, 0.34, 0.62, 0.86, R.coals);   // the bowl, its coals on top
   drum(f, R.gilt, 0, 0, 12, 0.345, 0.345, 0.84, 0.88);   // its rim
-  drum(f, R.coals, 0, 0, 12, 0.3, 0.12, 0.86, 0.94);   // the heaped coals
+  drum(f, R.coals, 0, 0, 12, 0.3, 0.12, 0.88, 0.96);   // the heaped coals, over the rim's plate (AUDIT GUILD-SHOP R8)
   return assemble(f, GUILD_ART_ARCHIVE);
 }
 

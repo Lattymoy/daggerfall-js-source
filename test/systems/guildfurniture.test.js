@@ -133,4 +133,13 @@ test('GUILD-SHOP the service stands a guild piece only in its guild\'s hall, at 
   const fits = await batch([piece('g2')], 'txn-guild-furniture-b');
   assert.equal(fits.status, 200, JSON.stringify(fits.body));
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM home_decor WHERE model = 864300').get().n, 2);
+  // AUDIT GUILD-SHOP S6: a batch that takes one down and stands another is no new piece
+  const rev2 = Number(raw.prepare('SELECT rev FROM decor_rev WHERE map_id = 7 AND building_key = 3').get()?.rev ?? 0);
+  const swap = await s.call('/v1/homes/decor/batch', { mapId: 7, buildingKey: 3, character: gm.realm.id, rev: rev2, txn: 'txn-guild-furniture-c', put: [piece('g4')], drop: ['g2'] }, gm.secret);
+  assert.equal(swap.status, 200, JSON.stringify(swap.body));
+  assert.deepEqual(raw.prepare('SELECT id FROM home_decor WHERE model = 864300 ORDER BY id').all().map((r) => r.id), ['g1', 'g4']);
+  // AUDIT GUILD-SHOP S5: moved, it stays a guild piece - no chest, no station
+  const move = (place) => s.call('/v1/homes/decor/move', { mapId: 7, buildingKey: 3, character: gm.realm.id, id: 'g1', place }, gm.secret);
+  assert.deepEqual((await move({ pos: [2, 0, 2], rot: [0, 0, 0], scale: 1, storage: true, paid: 0 })).body, { error: 'bad-decor' }, 'a banker made a chest');
+  assert.equal((await move({ pos: [2, 0, 2], rot: [0, 0, 0], scale: 1, paid: 0 })).status, 200, 'moved as it is');
 });

@@ -169,7 +169,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
     b.append(el('span', 'slotname', characterSlotName(s.id)));
     const word = el('span', cls('slotworn', worn.kind === 'title' ? 'acttitleword' : paint && 'actauraword'), worn.word ?? t('account.slots.none', 'None'));
     if (worn.kind === 'title' && worn.key) setTitleFlame(word, worn.key);
-    if (worn.kind === 'icon' && worn.key) { const art = profileIconNode(doc, worn.key, 'sloticon', 18); if (art) { art.setAttribute?.('aria-hidden', 'true'); b.append(art); } }
+    if (worn.kind === 'icon' && worn.key) { const art = profileIconNode(doc, worn.key, 'sloticon', 18, { arms: null }); if (art) { art.setAttribute?.('aria-hidden', 'true'); b.append(art); } }   // AUDIT GUILD-SHOP C6: a slot's Guild Crest is no one guild's - the plain shield
     b.append(word);
     if (s.id === 'plate') {
       const run = el('span', 'slotglyphs');

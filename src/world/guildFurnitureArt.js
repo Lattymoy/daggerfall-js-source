@@ -7,12 +7,13 @@ import { YARD_ART_KIT } from './merchantYards/merchantYardArt.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';
 import { armsKey } from '../net/guild/guildArmsBook.js';
 import { drawArms, drawBannerArms } from '../ui/guild/guildCrestArt.js';
-import { logoImage } from '../ui/guild/guildLogoImages.js';
+import { logoImage, logoVersion } from '../ui/guild/guildLogoImages.js';
 
 const { rng, noiseField, image, put, mix } = YARD_ART_KIT;
 
-/** The pseudo-archive the guild furniture's pictures stand under (the yards' 38221 neighbourhood). */
-export const GUILD_ART_ARCHIVE = 38241;
+/** The pseudo-archive the guild furniture's pictures stand under (world/eliteGates/pseudoArchives.js registers it). AUDIT
+ *  GUILD-SHOP R2: it took 38241, the Spire's Broken Galleries - both drew each other's dress. */
+export const GUILD_ART_ARCHIVE = 38341;
 /** Its records: the shared materials, then the hall's arms. */
 export const GUILD_ART_REC = Object.freeze({ oak: 0, darkwood: 1, gilt: 2, iron: 3, velvet: 4, map: 5, coals: 6, leather: 7, banner: 8, shield: 9 });
 /** A material's side, and the arms' pictures' sizes (texels). */
@@ -116,7 +117,7 @@ export function guildArmsArt(/** @type {any} */ arms) {
   return [[GUILD_ART_REC.banner, banner], [GUILD_ART_REC.shield, shield]];
 }
 
-/** @type {WeakMap<any, { materials: boolean, arms: string|null }>} */
+/** @type {WeakMap<any, { materials: boolean, arms: string|null, armsObj: any, logoV: number }>} */
 const _worn = new WeakMap();
 /**
  * THE GUILD FURNITURE'S PICTURES ON `renderer` - its materials once, and the hall's arms (`arms`, `{ heraldry, logo }`)
@@ -128,12 +129,16 @@ const _worn = new WeakMap();
 export function wearGuildArt(renderer, arms) {
   if (!renderer?.uploadTexture) return false;
   let w = _worn.get(renderer);
-  if (!w) _worn.set(renderer, (w = { materials: false, arms: null }));
+  if (!w) _worn.set(renderer, (w = { materials: false, arms: null, armsObj: undefined, logoV: -1 }));
   let did = false;
-  if (!w.materials) { for (const [rec, pic] of guildMaterialArt()) renderer.uploadTexture(GUILD_ART_ARCHIVE, rec, pic); w.materials = true; did = true; }
+  // AUDIT GUILD-SHOP R1: under the opaque key the decor room's meshes ask (their upload's stand-in placeholder replaced)
+  if (!w.materials) { for (const [rec, pic] of guildMaterialArt()) renderer.uploadTexture(GUILD_ART_ARCHIVE, rec, pic, { opaque: true }); w.materials = true; did = true; }
+  // AUDIT GUILD-SHOP: asked each frame - the same arms object and no logo come in since is no string made
+  if (w.armsObj === arms && w.logoV === logoVersion()) return did;
+  w.armsObj = arms; w.logoV = logoVersion();
   const key = `${armsKey(arms)}|${arms?.logo && logoImage(arms.logo) ? 1 : 0}`;
   if (w.arms !== key) {
-    for (const [rec, pic] of guildArmsArt(arms)) { renderer.releaseTexture?.(GUILD_ART_ARCHIVE, rec); renderer.uploadTexture(GUILD_ART_ARCHIVE, rec, pic); }
+    for (const [rec, pic] of guildArmsArt(arms)) { renderer.releaseTexture?.(GUILD_ART_ARCHIVE, rec); renderer.uploadTexture(GUILD_ART_ARCHIVE, rec, pic, { opaque: true }); }
     w.arms = key; did = true;
   }
   return did;

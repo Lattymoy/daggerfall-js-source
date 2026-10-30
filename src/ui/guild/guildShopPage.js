@@ -46,6 +46,7 @@ export function guildWareState(/** @type {any} */ w) {
  */
 export function guildShopNodes(k, g, v) {
   const { el, btn } = k;
+  if (k.state.shopFor !== v.id) { k.state.shopFor = v.id; k.state.shopAsked = false; }   // AUDIT GUILD-SHOP C2: a guild's own read
   if (!k.state.shopAsked && g.readShop) {
     k.state.shopAsked = true;
     Promise.resolve(g.readShop()).then(k.redraw, k.redraw);
@@ -61,6 +62,7 @@ export function guildShopNodes(k, g, v) {
     }
     return out;
   }
+  if (g.shopError) out.push(el('div', 'dfsocial-err', t('guild.shop.unread', 'The shop cannot be read now: {why}', { why: k.word(g.shopError) })));   // AUDIT GUILD-SHOP C2: said over the last read too
   out.push(el('div', 'dfsocial-note', t('guild.shop.intro', 'Everything here costs silver. Your own wares come from your silver. Hall furniture comes from the silver treasury.')));
   if (shop.open) {
     const purse = el('div', 'dfguild-purse');

@@ -14,7 +14,7 @@ import { POST_SENDER } from '../../src/net/postLaw.js';
 import { MARKS_RID_RE, MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay } from '../../src/net/guild/guildLaw.js';
 import { GUILD_LOGO_FEE } from '../../src/net/guild/guildShopLaw.js';
-import { GUILD_LOGO_ID_RE, GUILD_LOGO_MAX_BYTES, guildLogoShapeOf, guildLogoUrl } from '../../src/net/guild/guildLogoLaw.js';
+import { GUILD_LOGO_ID_RE, GUILD_LOGO_MAX_BYTES, GUILD_LOGO_GAP_S, guildLogoShapeOf, guildLogoUrl } from '../../src/net/guild/guildLogoLaw.js';
 import { poiImageMetaOf } from '../../src/poi/poiImage.js';
 
 const INSERT_LINE = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
@@ -64,6 +64,9 @@ export async function submitGuildLogo(ctx, player, { character, image, rid } = {
   const shape = guildLogoShapeOf(poiImageMetaOf(bytes), bytes.byteLength);
   if ('error' in shape) return shape;
   if (await db.prepare("SELECT 1 FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(g).first()) return { error: 'logo-pending' };
+  // AUDIT GUILD-SHOP S3: one a GUILD_LOGO_GAP_S - a review withdrawn and sent again is a card each in the moderators' channel
+  const last = Number((await db.prepare('SELECT MAX(at) AS at FROM guild_logos WHERE guild_id = ?').bind(g).first())?.at ?? 0);
+  if (last && nowS < last + GUILD_LOGO_GAP_S) return { error: 'logo-soon', at: last + GUILD_LOGO_GAP_S };
   if (Number((await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(g).first())?.balance ?? 0) < GUILD_LOGO_FEE) return { error: 'guild-marks-short' };
   if (!bucket) return { error: 'no-storage' };
   if (await overRate(ctx, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
@@ -80,15 +83,26 @@ export async function submitGuildLogo(ctx, player, { character, image, rid } = {
         FROM guild_logos WHERE id = ?1`).bind(id, utcDay(nowS)),
     ]);
   } catch {
+    // AUDIT GUILD-SHOP S1/S11: a batch that landed and whose answer was lost is the review it opened, its picture kept
+    if (await db.prepare('SELECT 1 FROM guild_logos WHERE id = ?').bind(id).first()) return { ok: true, logo: id, fee: GUILD_LOGO_FEE };
     await bucket.delete(obj);
-    if (await db.prepare("SELECT 1 FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(g).first()) return { error: 'logo-pending' };
-    return { error: 'guild-marks-short' };
+    return refusedLogo(db, player, rid, g, Number(a.me.rid));
   }
   if (!(await db.prepare('SELECT 1 FROM guild_logos WHERE id = ?').bind(id).first())) {
     await bucket.delete(obj);
-    return { error: 'guild-rank' };
+    return refusedLogo(db, player, rid, g, Number(a.me.rid));
   }
   return { ok: true, logo: id, fee: GUILD_LOGO_FEE };
+}
+/** AUDIT GUILD-SHOP S7/S11: why a sending was not written, read after it - its own request's review (a twin that won), one
+ *  under way, the rank gone, or the treasury short. */
+async function refusedLogo(db, player, rid, g, memberRid) {
+  const twin = await db.prepare('SELECT id FROM guild_logos WHERE by_player = ? AND rid = ?').bind(player.id, rid).first();
+  if (twin) return { ok: true, repeat: true, logo: twin.id };
+  if (await db.prepare("SELECT 1 FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(g).first()) return { error: 'logo-pending' };
+  const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ? AND player = ?').bind(memberRid, g, player.id).first();
+  if (!still || !guildMay(Number(still.rank), 'logo')) return { error: 'guild-rank' };
+  return { error: 'guild-marks-short' };
 }
 
 /**
@@ -96,10 +110,12 @@ export async function submitGuildLogo(ctx, player, { character, image, rid } = {
  * from pending in the first: approved - the guild wears it and the fee is burnt; else the fee home (what the treasury has
  * room for; any rest burnt). A letter to the guildmaster says how it went. Answers whether this call ended it.
  */
-export async function endLogoReview(db, id, state, by, nowS) {
+export async function endLogoReview(db, id, state, by, nowS, bucket = null) {
   if (!GUILD_LOGO_ID_RE.test(String(id)) || !['approved', 'denied', 'withdrawn'].includes(state)) return false;
   const row = await db.prepare("SELECT * FROM guild_logos WHERE id = ? AND state = 'pending'").bind(id).first();
   if (!row) return false;
+  // AUDIT GUILD-SHOP S4: an approval retires the guild's logo before it - its picture served no more
+  const replaced = state === 'approved' ? (await db.prepare("SELECT id, obj FROM guild_logos WHERE guild_id = ? AND state = 'approved' AND id <> ?").bind(row.guild_id, id).all())?.results ?? [] : [];
   const day = utcDay(nowS), esc = `logo:${id}`;
   // the fee home, as much as the treasury has room for, read now - the rest burnt (a full treasury's CHECK refuses the batch)
   const has = Number((await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(row.guild_id).first())?.balance ?? 0);
@@ -109,6 +125,8 @@ export async function endLogoReview(db, id, state, by, nowS) {
   const money = state === 'approved'
     ? [
       db.prepare(`UPDATE guilds SET logo = ?1 WHERE id = (SELECT guild_id FROM guild_logos WHERE id = ?1 AND state = 'approved' AND decided_at = ?2)`).bind(id, nowS),
+      db.prepare(`UPDATE guild_logos SET state = 'withdrawn', decided_at = ?2, decided_by = 'replaced'
+        WHERE guild_id = (SELECT guild_id FROM guild_logos WHERE id = ?1 AND state = 'approved' AND decided_at = ?2) AND state = 'approved' AND id <> ?1`).bind(id, nowS),
       db.prepare(`${INSERT_LINE} SELECT 'escrow', ?2, 'burn', NULL, 'logo-fee', fee, ?3, ?4, by_player, by_name, rid || ':logo-end' ${ended} AND fee > 0`).bind(id, esc, day, nowS),
     ]
     : [
@@ -120,13 +138,16 @@ export async function endLogoReview(db, id, state, by, nowS) {
   try {
     await db.batch([
       // THE DECISION: pending still - a second press, or a withdrawal racing a moderator, moves nothing
+      // AUDIT GUILD-SHOP S3: a card never posted is never posted now - only one standing in the channel is redrawn
       db.prepare(`UPDATE guild_logos SET state = ?2, decided_at = ?3, decided_by = ?4,
-          discord_state = CASE WHEN discord_msg IS NULL AND discord_state <> 'due' THEN discord_state ELSE 'due' END
+          discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END
         WHERE id = ?1 AND state = 'pending'`).bind(id, state, nowS, String(by ?? '').slice(0, 64)),
       mustChange(db),
       ...money, ...letter,
     ]);
   } catch { return false; }
+  // AUDIT GUILD-SHOP S10: a picture nobody may wear is kept no more - turned down, withdrawn, or replaced
+  for (const obj of state === 'approved' ? replaced.map((r) => r.obj) : [row.obj]) await bucket?.delete?.(obj)?.catch?.(() => {});
   return true;
 }
 /** The guildmaster's letter for a review's end: its subject and body. Pure. */
@@ -145,7 +166,7 @@ export async function withdrawGuildLogo(ctx, player, { character } = {}) {
   if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
   const row = await db.prepare("SELECT id FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(a.me.guild_id).first();
   if (!row) return { error: 'logo-none' };
-  return (await endLogoReview(db, row.id, 'withdrawn', displayName(player), nowS)) ? { ok: true, withdrawn: row.id } : { error: 'logo-none' };
+  return (await endLogoReview(db, row.id, 'withdrawn', displayName(player), nowS, ctx.bucket)) ? { ok: true, withdrawn: row.id } : { error: 'logo-none' };
 }
 
 /** THE LOGO TAKEN DOWN: `{ character }` - the guildmaster's. The guild wears its own device again; the picture is
@@ -157,17 +178,21 @@ export async function clearGuildLogo(ctx, player, { character } = {}) {
   if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
   const g = await db.prepare('SELECT logo FROM guilds WHERE id = ?').bind(a.me.guild_id).first();
   if (!g?.logo) return { error: 'logo-none' };
+  const obj = (await db.prepare('SELECT obj FROM guild_logos WHERE id = ?').bind(g.logo).first())?.obj ?? null;
   await db.batch([
     db.prepare("UPDATE guild_logos SET state = 'withdrawn', decided_at = ?, decided_by = ? WHERE id = ? AND guild_id = ? AND state = 'approved'").bind(nowS, displayName(player), g.logo, a.me.guild_id),
     db.prepare('UPDATE guilds SET logo = NULL WHERE id = ? AND logo = ?').bind(a.me.guild_id, g.logo),
   ]);
+  if (obj) await ctx.bucket?.delete?.(obj)?.catch?.(() => {});   // AUDIT GUILD-SHOP S10: its picture kept no more
   return { ok: true, cleared: g.logo };
 }
 
 /** A LOGO'S PICTURE, for anyone: the bytes and their type while it is under review or approved, else none. */
 export async function guildLogoBytes({ db, bucket }, id) {
   if (!GUILD_LOGO_ID_RE.test(String(id))) return { error: 'no-logo' };
-  const row = await db.prepare("SELECT obj, type, state FROM guild_logos WHERE id = ? AND state IN ('pending', 'approved')").bind(id).first();
+  // AUDIT GUILD-SHOP S4: an approved picture is served only while its guild wears it
+  const row = await db.prepare(`SELECT obj, type, state FROM guild_logos l WHERE id = ? AND (state = 'pending'
+    OR (state = 'approved' AND EXISTS (SELECT 1 FROM guilds WHERE id = l.guild_id AND logo = l.id)))`).bind(id).first();
   if (!row) return { error: 'no-logo' };
   if (!bucket) return { error: 'no-storage' };
   const obj = await bucket.get(row.obj);
@@ -204,6 +229,8 @@ const cardFor = async (db, id) => {
 
 /** THE MINUTE'S LOGO CARDS: each review due posted or redrawn (safetyClock.js postCards' law). Answers how many. */
 export async function postLogoCards(ctx, env, fetchFn) {
+  // AUDIT GUILD-SHOP S12: a review sent while Discord was off goes up once it is on - else nobody could decide it
+  await ctx.db.prepare("UPDATE guild_logos SET discord_state = 'due' WHERE state = 'pending' AND discord_state = 'off'").run();
   const due = (await ctx.db.prepare("SELECT id, discord_msg FROM guild_logos WHERE discord_state = 'due' ORDER BY at LIMIT ?1").bind(LOGO_POSTS_MAX).all())?.results ?? [];
   let n = 0;
   for (const r of due) {
@@ -226,7 +253,7 @@ export const isLogoPress = (/** @type {any} */ body) => LOGO_PRESS_RE.test(Strin
 export async function onLogoPress(ctx, body, actor) {
   const m = LOGO_PRESS_RE.exec(String(body?.data?.custom_id ?? ''));
   if (!m) return null;
-  await endLogoReview(ctx.db, m[2], m[1] === 'ok' ? 'approved' : 'denied', `${displayName(actor)} (Discord)`, ctx.nowS);
+  await endLogoReview(ctx.db, m[2], m[1] === 'ok' ? 'approved' : 'denied', `${displayName(actor)} (Discord)`, ctx.nowS, ctx.bucket);
   await ctx.db.prepare("UPDATE guild_logos SET discord_state = 'posted' WHERE id = ?1 AND discord_msg IS NOT NULL").bind(m[2]).run();   // the redraw below is the post
   const card = await cardFor(ctx.db, m[2]);
   return card ? { type: 7, data: card } : { type: 4, data: { content: 'That logo is gone.', flags: 64 } };

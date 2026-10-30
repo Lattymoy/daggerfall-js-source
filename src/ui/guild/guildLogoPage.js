@@ -21,6 +21,7 @@ export const GUILD_LOGO_TEXT = () => t('guild.logo.about', 'Your guild can show 
 export function guildLogoNodes(k, g, v, may) {
   const { el, btn } = k;
   const d = k.draft;
+  if (d.logoFor !== v.id) { d.logoFor = v.id; d.logo = null; }   // AUDIT GUILD-SHOP C5: a picture picked is one guild's
   const out = [el('div', 'dfsocial-sec', t('guild.logo.title', 'Guild logo')), el('div', 'dfsocial-note', GUILD_LOGO_TEXT())];
   const pic = (/** @type {string | null} */ src, /** @type {string} */ alt) => {
     const box = el('div', 'dfguild-logo');
@@ -58,14 +59,15 @@ export function guildLogoNodes(k, g, v, may) {
     if (!file) return;
     d.logo = { busy: true };
     k.redraw();
-    pickGuildLogo(file, { doc: k.doc }).then((r) => { d.logo = r; k.redraw(); }, () => { d.logo = { ok: false, error: 'logo-type' }; k.redraw(); });
+    pickGuildLogo(file, { doc: k.doc }).then((r) => { d.logo = r; k.redraw(); }, () => { d.logo = { ok: false, error: 'logo-unread' }; k.redraw(); });
   });
   out.push(input);
   const chosen = d.logo;
   if (chosen?.ok) out.push(pic(chosen.url, t('guild.logo.preview', 'The picture chosen')));
   else if (chosen?.error) out.push(el('div', 'dfsocial-err', k.word(chosen.error)));
   const short = Number(v.marks ?? 0) < GUILD_LOGO_FEE;
-  const why = !chosen?.ok ? t('guild.logo.why.pick', 'choose a picture') : short ? t('guild.logo.why.short', 'the silver treasury is short') : g.busy ? 'a moment' : null;
+  const why = !chosen?.ok ? t('guild.logo.why.pick', 'choose a picture') : v.marks == null ? k.word('marks-closed')   // AUDIT GUILD-SHOP C7: silver closed, said so
+    : short ? t('guild.logo.why.short', 'the silver treasury is short') : g.busy ? 'a moment' : null;
   const acts = el('div', 'dfsocial-acts');
   acts.append(k.armed('logo-send')
     ? btn(t('guild.logo.sendSure', 'Sure? {fee}', { fee: marksText(GUILD_LOGO_FEE) }), { enabled: !why, why, run: () => { const image = chosen.image; d.logo = null; k.act(g.submitLogo(image), t('guild.logo.sent', 'Logo sent. A moderator will check it soon.')); } })

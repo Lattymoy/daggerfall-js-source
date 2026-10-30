@@ -8,6 +8,7 @@ import { accountKind, displayName, overRate, mintId } from './accounts.js';
 import { marksOpenFor } from './marks.js';
 import { guildActorOf } from './guilds.js';
 import { heraldryOfRow } from './halls.js';
+import { holdsAll } from './titles.js';   // AUDIT GUILD-SHOP S9: an Admin holds every ware
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { GUILD_POWERS, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_TAG_RE, guildMay } from '../../src/net/guild/guildLaw.js';
 import { GUILD_SHOP_WARES, GUILD_FURNITURE_MODELS, guildWareOf, guildWaresHeld } from '../../src/net/guild/guildShopLaw.js';
@@ -29,8 +30,8 @@ async function placedOf(db, guildId) {
  * owned, set down and its most. The two balances that pay, where silver is this account's.
  */
 async function shopViewOf(db, player, me, env) {
-  const row = await db.prepare('SELECT guild_wares FROM players WHERE id = ?').bind(player.id).first();
-  const held = new Set(guildWaresHeld(Number(row?.guild_wares ?? 0)));
+  const held = await heldOf(db, player, env);
+  if (!me) return { shop: { open: marksOpenFor(player, env), marks: null, guildMarks: null, buysForGuild: false, member: false, wares: GUILD_SHOP_WARES.filter((w) => w.payer === 'account').map((w) => ({ key: w.key, kind: w.kind, payer: w.payer, price: w.price, held: held.has(w.key) })) } };
   const owned = new Map(((await db.prepare('SELECT ware, owned FROM guild_furniture WHERE guild_id = ?').bind(me.guild_id).all())?.results ?? [])
     .map((r) => [String(r.ware), Number(r.owned)]));
   const placed = await placedOf(db, me.guild_id);
@@ -47,9 +48,18 @@ async function shopViewOf(db, player, me, env) {
   };
 }
 
-/** The shop, read: `{ character }` - a member's. */
+/** The account's wares held: its bits, and every one for an Admin (titles.js holdsAll - ADMIN-ALL is sold none of them). */
+async function heldOf(db, player, env) {
+  if (holdsAll(player, env)) return new Set(GUILD_SHOP_WARES.filter((w) => w.payer === 'account').map((w) => w.key));
+  const row = await db.prepare('SELECT guild_wares FROM players WHERE id = ?').bind(player.id).first();
+  return new Set(guildWaresHeld(Number(row?.guild_wares ?? 0)));
+}
+
+/** The shop, read: `{ character }` - a member's. AUDIT GUILD-SHOP N4: a character in no guild reads its account's wares
+ *  alone, held or not (the Fleet's sailcloth asks), and buys nothing here. */
 export async function guildShopOf(ctx, player, { character } = {}) {
   const a = await guildActorOf(ctx.db, player, character);
+  if (a.error === 'no-guild') return { ok: true, ...(await shopViewOf(ctx.db, player, null, ctx.env)) };
   if (a.error) return a;
   return { ok: true, ...(await shopViewOf(ctx.db, player, a.me, ctx.env)) };
 }
@@ -74,6 +84,7 @@ export async function buyGuildWare(ctx, player, { character, ware, rid } = {}) {
   const had = await db.prepare('SELECT ware FROM guild_shop_buys WHERE actor = ? AND rid = ?').bind(player.id, rid).first();
   if (had) return had.ware === w.key ? { ok: true, repeat: true, ware: w.key, ...(await shopViewOf(db, player, a.me, env)) } : { error: 'bad-rid' };
   if (!acct && !guildMay(Number(a.me.rank), 'shop')) return { error: 'guild-rank' };
+  if (acct && holdsAll(player, env)) return { error: 'guild-ware-held' };   // AUDIT GUILD-SHOP S9: an Admin holds every one
   if (await overRate(ctx, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
   const n = mintId(rand);
   const pays = acct ? 'COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?6' : 'COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?5), 0) >= ?6';
@@ -97,9 +108,7 @@ export async function buyGuildWare(ctx, player, { character, ware, rid } = {}) {
         : db.prepare(`INSERT INTO guild_furniture (guild_id, ware, owned) SELECT guild_id, ware, 1 FROM guild_shop_buys WHERE actor = ?1 AND n = ?2
             ON CONFLICT (guild_id, ware) DO UPDATE SET owned = owned + 1`).bind(player.id, n),
     ]);
-  } catch {
-    return { error: acct ? 'marks-short' : 'guild-marks-short' };   // a balance spent between the row's read and its line
-  }
+  } catch { /* AUDIT GUILD-SHOP S11: a batch that landed and whose answer was lost is read below, as any other */ }
   const row = await db.prepare('SELECT n FROM guild_shop_buys WHERE actor = ? AND rid = ?').bind(player.id, rid).first();
   if (row?.n === n) return { ok: true, ware: w.key, paid: w.price, ...(await shopViewOf(db, player, a.me, env)) };
   if (row) return { ok: true, repeat: true, ware: w.key, ...(await shopViewOf(db, player, a.me, env)) };

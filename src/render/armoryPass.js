@@ -366,6 +366,7 @@ in vec3 vWorld;
 in vec4 vS;
 uniform float uKindle;
 uniform sampler2D uArms;
+uniform float uMirror;   // AUDIT GUILD-SHOP R3: -1 under a mirrored projection (the game's mirrorProjectionX), so the crest reads true
 uniform vec3 uInk, uField;
 uniform int uFogMode;
 uniform float uFogDensity;
@@ -394,10 +395,11 @@ vec4 insigniaLight() {
     float g = (1.0 - smoothstep(0.35, 1.0, length(vP))) * 0.22 * pulse * uFace;
     return vec4(mix(uInk, vec3(1.0, 0.85, 0.5), 0.35) * g, 0.0);
   }
-  vec2 uv = vec2(vP.x * 0.5 + 0.5, 0.5 - vP.y * 0.5);
+  vec2 uv = vec2(vP.x * uMirror * 0.5 + 0.5, 0.5 - vP.y * 0.5);
   vec4 t = texture(uArms, uv);
   float sheen = lineAt(fract((uv.x + uv.y) * 0.5 - uTime ${hz(ARMORY_HZ.crest)} + uSeed) - 0.5, 0.08) * 0.35;
-  return vec4(t.rgb * (0.7 + 0.3 * uFace) + t.a * sheen * vec3(1.0, 0.95, 0.8), t.a);
+  float seen = smoothstep(0.0, 0.25, uFace);   // AUDIT GUILD-SHOP R7: from behind the arm, none of it
+  return vec4(t.rgb * (0.7 + 0.3 * uFace) + t.a * sheen * vec3(1.0, 0.95, 0.8), t.a) * seen;
 }
 void main() {
   vec3 c;
@@ -434,7 +436,7 @@ export function armoryPrograms(piece) {
 export const ARMORY_BODY_PIECES = Object.freeze(ARMORY_PIECES.filter((p) => p.slot !== 'weapon').map((p) => p.key));
 /** Every body piece's program - what the boot's idle starts (render/playPrograms.js). */
 export const ARMORY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(ARMORY_BODY_PIECES.flatMap((k) => armoryPrograms(ARMORY_PIECES.findIndex((p) => p.key === k)))));
-const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField']);   // GUILD-SHOP: the armlet's crest and colours
+const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror']);   // GUILD-SHOP: the armlet's crest and colours
 
 /** A tube's grid: ARMORY_ROUND steps round by ARMORY_ALONG along, two triangles a cell, as (round, along) pairs. Pure. */
 export function armoryTubeGrid() {
@@ -645,6 +647,12 @@ export function armletColours(/** @type {any} */ arms) {
   const rgb = (/** @type {string|undefined} */ hex, /** @type {number[]} */ dflt) => (hex ? [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) : dflt);
   return { field: rgb(h ? heraldryColourOf(h.field)?.hex : undefined, [0.9, 0.9, 0.9]), ink: rgb(h ? heraldryColourOf(heraldryInk(h))?.hex : undefined, [0.54, 0.54, 0.54]) };
 }
+/** AUDIT GUILD-SHOP R3: whether a view-projection mirrors the screen - its linear part's determinant turned positive
+ *  (a plain perspective or orthographic one's is negative; the game's mirrorProjectionX flips it). */
+export function mirroredVp(/** @type {ArrayLike<number>} */ m) {
+  const det = m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);
+  return det > 0;
+}
 /** GUILD-SHOP: the crest's picture for `arms` on a canvas of this page's - null where no canvas can be made (a pin's
  *  node), and the armlet then draws its band and glow alone. */
 function paintCrestCanvas(/** @type {any} */ arms) {
@@ -809,6 +817,7 @@ export class ArmoryRenderer {
     const gl = this.gl, U = P0.u;
     P0.frame = this._frame;
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
+    if (U.uMirror) gl.uniform1f(U.uMirror, mirroredVp(this._vp) ? -1 : 1);   // AUDIT GUILD-SHOP R3
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     gl.uniform3f(U.uCamRight, right[0], right[1], right[2]); gl.uniform3f(U.uCamUp, up[0], up[1], up[2]);
     gl.uniform1f(U.uTime, t);

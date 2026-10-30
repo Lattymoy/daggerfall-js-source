@@ -65,8 +65,13 @@ export const guildLogoSrc = (/** @type {unknown} */ id) => (typeof id === 'strin
 /** A pair of arms' one key - its heraldry's and its logo's - for a picture painted from them. */
 export const armsKey = (/** @type {any} */ arms) => `${heraldryKey(arms?.heraldry)}#${arms?.logo ?? ''}`;
 
+/** @type {any} */
+let _timer = null;
 function askSoon() {
-  if (_asking || !_door?.arms || !_wanted.size || _now() - _askedAt < ARMS_ASK_GAP_MS) return;
+  if (_asking || !_door?.arms || !_wanted.size) return;
+  // AUDIT GUILD-SHOP C6: a tag wanted inside the gap is asked when it ends - a one-off asker (a profile card) waited forever
+  const wait = ARMS_ASK_GAP_MS - (_now() - _askedAt);
+  if (wait > 0) { if (!_timer && typeof setTimeout === 'function') { _timer = setTimeout(() => { _timer = null; askSoon(); }, wait); _timer?.unref?.(); } return; }
   _asking = true; _askedAt = _now();
   const tags = [..._wanted].slice(0, ARMS_ASK_MAX);
   Promise.resolve(_door.arms(tags)).then((r) => {
@@ -76,7 +81,7 @@ function askSoon() {
       const a = got[t];
       noteGuildArms(t, a?.heraldry ?? null, a?.logo ?? null, a?.name ?? null);   // a tag no guild bears is known as none
     }
-  }).catch(() => {}).finally(() => { _asking = false; });
+  }).catch(() => {}).finally(() => { _asking = false; if (_wanted.size) askSoon(); });
 }
 
 /** GUILD-SHOP: a peer's guild tag by their id (online.js guildTagOf - their token's), as the host that holds the session
@@ -84,4 +89,4 @@ function askSoon() {
 export function setPeerTagReader(/** @type {((id: string) => unknown) | null} */ fn) { _peerTag = typeof fn === 'function' ? fn : null; }
 export const peerGuildTag = (/** @type {string} */ id) => { const t = _peerTag?.(id); return typeof t === 'string' && GUILD_TAG_RE.test(t) ? t : null; };
 /** For the tests: everything forgotten. */
-export function _resetArmsBook() { _peerTag = null; _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }
+export function _resetArmsBook() { if (_timer) clearTimeout(_timer); _timer = null; _peerTag = null; _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }

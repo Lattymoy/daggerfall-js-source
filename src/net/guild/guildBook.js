@@ -63,6 +63,8 @@ import { walletReserve } from '../realm/realmGoldLaw.js';   // MARKET-AUDIT: a r
 import { lastOnlineText } from '../social.js';   // GUILD-SEEN: a member's "last online" in the friends list's own words
 import { PLAY_GRACE_S } from '../playClock.js';   // GUILD-SEEN: and "Online" by the play beat's own sitting
 
+/** AUDIT GUILD-SHOP C1: how long a refused shop read waits before a reader asks it again, ms. */
+export const GUILD_SHOP_RETRY_MS = 30_000;
 /** A look older than this is taken again when the tab opens. */
 export const GUILD_FRESH_MS = 30_000;
 
@@ -182,9 +184,16 @@ export class GuildBook {
     /** @type {Map<string, {key: string, rid: string}>} GUILD-SHOP: each silver act asked (a rename, a ware, a logo) and its one request id */ this._asks = new Map();
     /** @type {any} GUILD-SHOP: the guild shop as the last read said it (guildShop.js guildShopOf), or null not yet read */ this.shopView = null;
     /** @type {string | null | undefined} GUILD-SHOP: the guild whose stock the shop's module holds */ this._shopTag = undefined;
+    /** AUDIT GUILD-SHOP C1: when the stock's last read was refused (ms, the book's clock) */ this._stockFailAt = -Infinity;
     /** @type {string|null} GUILD-SHOP: the last shop read's refusal, or null */ this.shopError = null;
     setArmsDoor(door, now);
-    setGuildStockReader(() => { if (!this._stockAsked) { this._stockAsked = true; this.readShop().finally(() => { this._stockAsked = false; }); } });   // GUILD-SHOP: the decor tool's ask
+    // GUILD-SHOP: the decor tool's and the Fleet's ask - AUDIT GUILD-SHOP C1: a read refused is not asked again for
+    // GUILD_SHOP_RETRY_MS, where a caller asking each frame made it a request a frame
+    setGuildStockReader(() => {
+      if (this._stockAsked || this.now() - (this._stockFailAt ?? -Infinity) < GUILD_SHOP_RETRY_MS) return;
+      this._stockAsked = true;
+      this.readShop().then((r) => { this._stockFailAt = r?.ok ? -Infinity : this.now(); }, () => { this._stockFailAt = this.now(); }).finally(() => { this._stockAsked = false; });
+    });
   }
 
   _changed() { this.version++; }
@@ -222,7 +231,9 @@ export class GuildBook {
     this.guild = mine.data?.guild ?? null;
     if (this.guild) noteGuildArms(this.guild.tag, this.guild.heraldry, this.guild.logo, this.guild.name);   // GUILD-SHOP: the faces that draw this guild's arms
     noteOwnGuild(this.guild?.tag ?? null);
-    if (this._shopTag !== (this.guild?.tag ?? null)) { this._shopTag = this.guild?.tag ?? null; noteGuildShop(null); }   // GUILD-SHOP: another guild's stock is read afresh
+    // GUILD-SHOP: another guild's shop is read afresh - AUDIT GUILD-SHOP C2: its view, its refusal and a read still out
+    // for the guild before all forgotten, and the purchases' request ids with them (C4)
+    if (this._shopTag !== (this.guild?.id ?? null)) { this._shopTag = this.guild?.id ?? null; this.shopView = null; this.shopError = null; this._shopGen = (this._shopGen ?? 0) + 1; this._stockFailAt = -Infinity; noteGuildShop(null); }
     this.invites = Array.isArray(inv.data?.invites) ? inv.data.invites : [];
     this.state = 'ready';
     this.error = null;
@@ -397,8 +408,11 @@ export class GuildBook {
   }
   /** GUILD-SHOP: BUY A WARE in silver - the shop read again with the answer. */
   async buyWare(ware) {
-    const r = await this._silver(`ware:${ware}`, ware, (c, rid) => this.door.shopBuy(c, ware, rid));
-    if (r?.ok && r.data?.shop) { this.shopView = r.data.shop; noteGuildShop(this.shopView); this._changed(); } else await this.readShop();
+    // AUDIT GUILD-SHOP C4: a purchase's request id is its guild's, its ware's and the count it was pressed at - a press
+    // again after a lost answer is that purchase, and the next one bought is a purchase of its own
+    const owned = this.shopView?.wares?.find((/** @type {any} */ w) => w.key === ware)?.owned ?? 0;
+    const r = await this._silver(`ware:${ware}`, `${this.guild?.id ?? ''}|${ware}|${owned}`, (c, rid) => this.door.shopBuy(c, ware, rid));
+    if (r?.ok && r.data?.shop) { this._shopGen = (this._shopGen ?? 0) + 1; this.shopView = r.data.shop; this.shopError = null; noteGuildShop(this.shopView); this._changed(); } else await this.readShop();   // AUDIT GUILD-SHOP C3: a read out before it lands as nothing
     return r;
   }
   /** GUILD-LOGO: SEND A LOGO for review - `image` the square picture in base64; its fee held from the silver treasury. */

@@ -41,7 +41,7 @@
 import { HANDLE_RE } from './handleShape.js';
 import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';
 import { noteHallArms } from './guild/guildArmsBook.js';   // GUILD-SHOP: a hall's arms, read with its pieces   // GUILD-SHOP: a new name's price, in silver
-import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, guildLogoUrl } from './guild/guildLogoLaw.js';   // GUILD-LOGO: a logo's bounds, said
+import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, GUILD_LOGO_GAP_S, guildLogoUrl } from './guild/guildLogoLaw.js';   // GUILD-LOGO: a logo's bounds, said
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS, ICONS } from './identityToken.js';
@@ -722,6 +722,9 @@ const REFUSAL_WORDS = {
   // GUILD-LOGO: a guild's own logo (server-account/src/guildLogos.js)
   'guild-logo': () => t('account.refusal.guildLogo', 'Your guild\'s logo is under review. Withdraw it on the Arms page, or wait for the moderators.'),
   'logo-pending': () => t('account.refusal.logoPending', 'The moderators are still reviewing your guild\'s last logo.'),
+  'logo-unread': () => t('account.refusal.logoUnread', 'That picture cannot be read here. Try a PNG, JPEG or WebP picture.'),   // AUDIT GUILD-SHOP C7: the picker's own
+  'logo-file': () => t('account.refusal.logoFile', 'That file is too large. Choose a picture under 8 MB.'),
+  'logo-soon': () => t('account.refusal.logoSoon', 'A guild can send one logo every {min} minutes. Try again soon.', { min: GUILD_LOGO_GAP_S / 60 }),
   'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
   'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
   'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),

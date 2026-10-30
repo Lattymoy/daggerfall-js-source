@@ -170,7 +170,9 @@ export async function commitDecorBatch(ctx, player, body = {}) {
   // GUILD-SHOP: the guild's own pieces this batch stands new, against what its stock has left (each INSERT's guard holds a race)
   const wanted = new Map();
   for (const w of writes) if (!w.had && guildWareOfModel(w.p.model)) wanted.set(w.p.model, { p: w.p, n: (wanted.get(w.p.model)?.n ?? 0) + 1 });
-  for (const { p, n } of wanted.values()) if ((await guildStockLeft(db, p, mapId, buildingKey)) < n) return { error: 'guild-ware-none' };
+  // AUDIT GUILD-SHOP S6: and the batch's own drops of the same piece give theirs back - a swap is no new piece
+  for (const id of drops) { const m = have.get(id)?.piece.model; const w = wanted.get(m); if (w) w.n--; }
+  for (const { p, n } of wanted.values()) if (n > 0 && (await guildStockLeft(db, p, mapId, buildingKey)) < n) return { error: 'guild-ware-none' };
   const delta = hall ? -pay : net;
   if (hall && refund > 0) {
     const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(home.guild_id).first();

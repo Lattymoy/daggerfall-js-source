@@ -15,7 +15,7 @@ import { GUILD_POWERS } from '../../src/net/guild/guildLaw.js';
 import {
   GUILD_SHOP_WARES, GUILD_SHOP_KEYS, GUILD_FURNITURE_MODELS, GUILD_RENAME_SILVER, GUILD_LOGO_FEE, guildWareOf, guildWaresHeld, guildWareOfModel, guildWareRoom,
 } from '../../src/net/guild/guildShopLaw.js';
-import { GUILD_LOGO_SIDE, GUILD_LOGO_MAX_BYTES, guildLogoShapeOf, guildLogoPathOf, guildLogoUrl } from '../../src/net/guild/guildLogoLaw.js';
+import { GUILD_LOGO_SIDE, GUILD_LOGO_MAX_BYTES, GUILD_LOGO_GAP_S, guildLogoShapeOf, guildLogoPathOf, guildLogoUrl } from '../../src/net/guild/guildLogoLaw.js';
 import { ARMORY_PIECES, armoryKitOk } from '../../src/net/armoryLaw.js';
 import { ICONS } from '../../src/net/identityToken.js';
 import { MARKS_KINDS } from '../../src/net/marksLaw.js';
@@ -250,8 +250,13 @@ test('GUILD-LOGO turned down or withdrawn: the fee home and the guild\'s arms un
   assert.match(deny.data.embeds[0].description, /^Turned down/);
   assert.deepEqual([s.silverOf(), s.raw.prepare('SELECT logo FROM guilds WHERE id = ?').get(s.gid).logo], [GUILD_LOGO_FEE, null], 'the fee home, nothing worn');
   assert.equal((await s.get(`/v1/guilds/logo/${first.body.logo}`)).status, 404, 'a picture turned down is served to nobody');
+  // AUDIT GUILD-SHOP S3: one a quarter hour - a withdrawn and sent again review is a card each for the moderators
+  const soon = await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-deny-2' }, s.gm.secret);
+  assert.deepEqual([soon.status, soon.body.error, soon.body.at], [429, 'logo-soon', _now + GUILD_LOGO_GAP_S]);
+  _now += GUILD_LOGO_GAP_S;
   const second = await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-deny-2' }, s.gm.secret);
   assert.equal(second.status, 200);
+  assert.equal(s.raw.prepare('SELECT discord_state FROM guild_logos WHERE id = ?').get(second.body.logo).discord_state, 'due');
   const disband = await s.call('/v1/guilds/disband', { character: s.gm.character }, s.gm.secret);
   assert.ok(disband.body.keeps.includes('guild-logo'), JSON.stringify(disband.body));
   assert.deepEqual((await s.call('/v1/guilds/logo/withdraw', { character: s.member.character }, s.member.secret)).body, { error: 'guild-rank' });
@@ -259,4 +264,59 @@ test('GUILD-LOGO turned down or withdrawn: the fee home and the guild\'s arms un
   assert.equal(w.status, 200, JSON.stringify(w.body));
   assert.equal(s.silverOf(), GUILD_LOGO_FEE, 'withdrawn: the fee home');
   assert.deepEqual((await s.call('/v1/guilds/logo/withdraw', { character: s.gm.character }, s.gm.secret)).body, { error: 'logo-none' });
+  // AUDIT GUILD-SHOP S3, S10: a card never posted is not posted for its ending; a picture nobody may wear is kept no more
+  assert.equal(s.raw.prepare('SELECT discord_state FROM guild_logos WHERE id = ?').get(second.body.logo).discord_state, 'off');
+  const objOf = (id) => s.raw.prepare('SELECT obj FROM guild_logos WHERE id = ?').get(id).obj;
+  assert.deepEqual([s.env.SAVES._map.has(objOf(first.body.logo)), s.env.SAVES._map.has(objOf(second.body.logo))], [false, false]);
+  // AUDIT GUILD-SHOP S8: a leave or disband held by a review under way is a conflict, as every hold
+  _now += GUILD_LOGO_GAP_S;
+  await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-deny-3' }, s.gm.secret);
+  assert.equal((await s.call('/v1/guilds/disband', { character: s.gm.character }, s.gm.secret)).status, 409);
+});
+
+test('AUDIT GUILD-SHOP a logo replaced is served no more, nor one taken down, and its picture goes; a sending whose answer was lost is the review it opened, its picture kept; a review sent while Discord was off goes up once it is on (mutants: the old approval kept; the lost answer\'s picture dropped; the off row never posted)', async () => {
+  const s = await stand();
+  s.guildSilver(GUILD_LOGO_FEE * 4);
+  const press = (id) => discordInteraction(s.ctx(), s.env, { type: 3, member: { user: { id: MOD_ID } }, data: { custom_id: `glogo:ok:${id}` } });
+  const a = (await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-rep-1' }, s.gm.secret)).body.logo;
+  await press(a);
+  _now += GUILD_LOGO_GAP_S;
+  // the answer lost: the batch landed, then the call threw
+  const batch = s.env.DB.batch.bind(s.env.DB);
+  s.env.DB.batch = async (...x) => { s.env.DB.batch = batch; await batch(...x); throw new Error('the answer lost'); };
+  const lost = await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-rep-2' }, s.gm.secret);
+  assert.equal(lost.status, 200, JSON.stringify(lost.body));
+  const b = lost.body.logo;
+  assert.equal((await s.get(`/v1/guilds/logo/${b}`)).status, 200, 'its picture kept');
+  await press(b);
+  assert.equal(s.raw.prepare('SELECT logo FROM guilds WHERE id = ?').get(s.gid).logo, b);
+  assert.deepEqual([(await s.get(`/v1/guilds/logo/${a}`)).status, s.raw.prepare('SELECT state FROM guild_logos WHERE id = ?').get(a).state], [404, 'withdrawn'], 'the logo before it retired');
+  assert.equal(s.env.SAVES._map.has(s.raw.prepare('SELECT obj FROM guild_logos WHERE id = ?').get(a).obj), false);
+  await s.call('/v1/guilds/logo/clear', { character: s.gm.character }, s.gm.secret);
+  assert.equal((await s.get(`/v1/guilds/logo/${b}`)).status, 404);
+  // a review sent while Discord was off
+  _now += GUILD_LOGO_GAP_S;
+  s.raw.prepare("UPDATE guild_logos SET discord_state = 'posted'").run();
+  const c = (await s.call('/v1/guilds/logo', { character: s.gm.character, image: png(128), rid: 'logo-rep-3' }, s.gm.secret)).body.logo;
+  s.raw.prepare("UPDATE guild_logos SET discord_state = 'off' WHERE id = ?").run(c);
+  const sent = [];
+  await safetyMinute(s.ctx(), s.env, { fetchFn: async (url, init) => { sent.push(JSON.parse(init.body)); return new Response(JSON.stringify({ id: '434343434343434343' }), { status: 200 }); } });
+  assert.equal(sent.length, 1, 'the card goes up');
+  assert.equal(s.raw.prepare('SELECT discord_state FROM guild_logos WHERE id = ?').get(c).discord_state, 'posted');
+});
+
+test('AUDIT GUILD-SHOP an Admin holds every account ware and is sold none; a character in no guild reads its account\'s wares alone (mutants: the Admin charged; the guildless read refused)', async () => {
+  const s = await stand();
+  const view = await s.call('/v1/guilds/shop', { character: s.mod.character ?? 'char-mac00001' }, s.mod.secret);
+  assert.equal(view.status, 200, JSON.stringify(view.body));
+  assert.deepEqual(view.body.shop.wares.map((w) => [w.key, w.held]), [['insigniaarmlet', true], ['guildcrest', true], ['guildsails', true]]);
+  assert.equal(view.body.shop.member, false);
+  const plain = await s.registered('Cora');
+  const mine = await s.call('/v1/guilds/shop', { character: 'char-cora0001' }, plain.secret);
+  assert.deepEqual(mine.body.shop.wares.map((w) => w.held), [false, false, false]);
+  // an Admin in a guild is sold none
+  await s.call('/v1/guilds/invite', { character: s.gm.character, handle: 'Mac' }, s.gm.secret);
+  await s.call('/v1/guilds/answer', { character: 'char-mac00001', guild: s.gid, accept: true }, s.mod.secret);
+  const buy = await s.call('/v1/guilds/shop/buy', { character: 'char-mac00001', ware: 'insigniaarmlet', rid: 'admin-buy-0001' }, s.mod.secret);
+  assert.equal(buy.body.error, 'guild-ware-held');
 });

@@ -203,6 +203,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     title: titleBadge(peer),
     icon: readIcon(peer),   // WITCH1: the profile icon the relay stamped off their signed token - null for their face
     iconArms: readIcon(peer) === 'guildcrest' ? guildArmsOf(peer?.gt) : undefined,   // GUILD-SHOP: their Guild Crest wears their guild's arms
+    iconTag: readIcon(peer) === 'guildcrest' ? peer?.gt ?? null : null,   // AUDIT GUILD-SHOP C6: and whose, to draw again when they come in
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
     attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],
@@ -430,9 +431,19 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   };
 
   /** Stand the card for one peer. False when the host will not have a surface now, or there is no peer. */
+  /** AUDIT GUILD-SHOP C6: a Guild Crest drawn before its guild's arms came in is drawn again once they do (a few looks). */
+  const crestLater = (peerId, view, tries = 10) => {
+    if (!view?.iconTag || view.iconArms || tries <= 0 || typeof setTimeout !== 'function') return;
+    setTimeout(() => {
+      if (!alive || !open || shownPeer !== peerId) return;
+      const arms = guildArmsOf(view.iconTag);
+      if (arms) paint({ ...view, iconArms: arms }); else crestLater(peerId, view, tries - 1);
+    }, 600);
+  };
   const show = (peerId, view) => {
     if (!alive || !peerId || !view || !canOpen()) return false;
     paint(view);
+    crestLater(peerId, view);
     shownPeer = peerId;
     const was = open;
     open = true;
@@ -447,6 +458,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const update = (peerId, view) => {
     if (!alive || !open || !peerId || peerId !== shownPeer || !view) return false;
     paint(view);
+    crestLater(peerId, view);
     return true;
   };
 

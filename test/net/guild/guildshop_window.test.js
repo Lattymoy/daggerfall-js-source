@@ -170,8 +170,8 @@ test('GUILD-LOGO the picker: the picture\'s middle square, drawn 128 across, wri
   urls = [(type) => `data:${type};base64,${big}`, () => 'data:image/png;base64,x', (type) => `data:${type};base64,${big}`];
   assert.deepEqual(await pickGuildLogo({ size: 10 }, { doc, bitmap: bitmap(128, 128) }), { ok: false, error: 'logo-bytes' });
   assert.deepEqual(await pickGuildLogo({ size: 10 }, { doc, bitmap: bitmap(63, 400) }), { ok: false, error: 'logo-side' });
-  assert.deepEqual(await pickGuildLogo({ size: 10 }, { doc, bitmap: async () => { throw new Error('no'); } }), { ok: false, error: 'logo-type' });
-  assert.deepEqual(await pickGuildLogo({ size: 9e9 }, { doc, bitmap: bitmap(128, 128) }), { ok: false, error: 'logo-bytes' });
+  assert.deepEqual(await pickGuildLogo({ size: 10 }, { doc, bitmap: async () => { throw new Error('no'); } }), { ok: false, error: 'logo-unread' });
+  assert.deepEqual(await pickGuildLogo({ size: 9e9 }, { doc, bitmap: bitmap(128, 128) }), { ok: false, error: 'logo-file' });
 });
 
 test('GUILD-SHOP the window\'s look: the column\'s pages in three groups, a group named over its first page shown; the head\'s crest the guild\'s shield on a ring of its border, an undrawn guild a plain one; every ware drawn in the guild\'s field; the look\'s small screens the window\'s (mutants: the groups, the crest, the query)', async () => {
@@ -182,7 +182,7 @@ test('GUILD-SHOP the window\'s look: the column\'s pages in three groups, a grou
   const t = await rig();
   await t.go();
   const nav = one(t.root, 'dfguild-nav');
-  assert.deepEqual(find(nav, 'dfguild-navgroup').map((n) => [n.textContent, n.attrs.role]), [['Guild', 'presentation'], ['Wealth', 'presentation'], ['Identity', 'presentation']]);
+  assert.deepEqual(find(nav, 'dfguild-navgroup').map((n) => [n.textContent, n.attrs['aria-hidden']]), [['Guild', 'true'], ['Wealth', 'true'], ['Identity', 'true']]);
   assert.match(guildCrestSvg(WOLF), /#d4a017/);
   assert.match(guildCrestSvg(WOLF), /#3b6fd8/);
   assert.doesNotMatch(guildCrestSvg(null), /#3b6fd8/);

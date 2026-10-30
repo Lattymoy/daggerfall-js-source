@@ -570,6 +570,7 @@ export function createDecorTool(deps) {
     if (!key) return;
     const entry = entryForKey(key);
     if (!entry) return;
+    if (!decorRoomEntries([entry], deps.room?.(), null, liveMods())?.length) return;   // AUDIT GUILD-SHOP R6: a slot's piece in a room that takes it alone (a hall's in a hall)
     const fly = [...placing.fly];
     endPlacing();
     beginPlacing(entry, null, { hotbar: true, at: fly });

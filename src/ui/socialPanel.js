@@ -78,7 +78,7 @@ import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the
 import { CASTLE_PRICE, castleMay, castleLostRefund, castleSaleRefund, castleCityOf } from '../net/castleLaw.js';   // DOMAIN2: the castle's price, power and refunds; AUDIT TESA III E2-2: its city
 import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { t, formatNumber } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language; AUDIT DOMAINS C5: a castle's numbers
+import { t, formatNumber, intlLocale } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language; AUDIT DOMAINS C5: a castle's numbers
 import { levelShort } from '../systems/mentorText.js';   // MENTOR2: a member's level, short
 import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
 import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
@@ -1597,7 +1597,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     for (const [id, label] of guildPagesOf(g)) {
       // GUILD-SHOP: each group's name over its first page (the column's alone - a row across shows none)
       const group = guildNavGroupAt(id, shown);
-      if (group) { const n = el('div', 'dfguild-navgroup', guildNavGroupName(group)); n.setAttribute('role', 'presentation'); strip.append(n); }
+      if (group) { const n = el('div', 'dfguild-navgroup', guildNavGroupName(group)); n.setAttribute('aria-hidden', 'true'); strip.append(n); }   // AUDIT GUILD-SHOP C8: a caption seen, no stray text among the tabs
       const b = el('button', `dfsocial-subtab${id === page ? ' active' : ''}`);
       const top = el('span', 'dfguild-navtop');
       top.append(el('span', 'dfguild-navlabel', names[id] ?? label), ...(counts[id] ? [el('span', 'dfguild-navcount', counts[id])] : []));
@@ -1626,7 +1626,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const guildOverviewNodes = (g, v, me) => {
     const out = [el('div', 'dfsocial-sec', 'The guild')];
     // GUILD-SHOP: the arms in words stand in the head now; the guild's age, and the way to its Shop
-    if (Number(v.foundedAt) > 0) out.push(el('div', 'dfsocial-note', t('social.guild.founded', 'Founded {date}.', { date: new Date(Number(v.foundedAt) * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) })));
+    if (Number(v.foundedAt) > 0) out.push(el('div', 'dfsocial-note', t('social.guild.founded', 'Founded {date}.', { date: new Date(Number(v.foundedAt) * 1000).toLocaleDateString(intlLocale(), { year: 'numeric', month: 'long', day: 'numeric' }) })));
     if (v.vault?.me) out.push(el('div', 'dfsocial-note', `At the vault: ${vaultStandingText(v.vault.me)}.`));
     if (g.readShop) {
       out.push(el('div', 'dfsocial-note', t('social.guild.shopNote', 'Hall furniture, the Insignia Armlet, the Guild Crest and the Guild Sailcloth are for sale in the Shop, for silver.')));

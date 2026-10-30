@@ -15,6 +15,8 @@ export const GUILD_LOGO_MAX_BYTES = 48 * 1024;
 /** The request's most bytes: the picture in base64 (four to every three) and the rest of the body. */
 export const GUILD_LOGO_BODY_MAX = Math.ceil(GUILD_LOGO_MAX_BYTES / 3) * 4 + 1024;
 /** A logo's id: 32 hex, minted by the service - the picture's address, which no one can guess before it is approved. */
+/** AUDIT GUILD-SHOP S3: the least time between two logos a guild sends for review, seconds - a card each for the moderators. */
+export const GUILD_LOGO_GAP_S = 15 * 60;
 export const GUILD_LOGO_ID_RE = /^[0-9a-f]{32}$/;
 /** Where the service serves a logo. */
 export const GUILD_LOGO_PATH = '/v1/guilds/logo/';

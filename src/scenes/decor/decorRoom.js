@@ -663,6 +663,7 @@ export function createDecorRoom({
   function set(pieces) {
     for (const e of standing.values()) unmount(e);
     standing.clear();
+    guildPieces = 0;   // AUDIT GUILD-SHOP R5: counted again from the load
     for (const p of pieces ?? []) put(p);
   }
 
@@ -679,7 +680,8 @@ export function createDecorRoom({
    *  box (no triangles to measure) is drawn, as before; a room's host gives none - a building is drawn whole. */
   function draw(r = renderer, texRemap = null, cull = null) {
     let n = 0;
-    if (guildPieces > 0) wearGuildArt(r ?? renderer, hallArms());   // GUILD-SHOP: the guild's pieces wear the hall's arms
+    // GUILD-SHOP: the guild's pieces wear the hall's arms - and in a hall before its first stands, for the ghost (AUDIT R4)
+    if (guildPieces > 0 || hallArms()) wearGuildArt(r ?? renderer, hallArms());
     // DECOR-CLEAR: the host's per-frame call hands the collider's gate the body it guards - every piece withheld (the
     // room's own put back among them, decorBase.js show) that the body is now clear of stands
     if (body) late()?.settle(body);

@@ -58,7 +58,7 @@ A peer's armlet shows their guild's arms, read by the tag their token carries (`
 ## 4. The hall's furniture and the Guild Banker
 
 Seven pieces of our own (`src/world/guildFurniture.js`, models 864300 to 864306), textured by
-`src/world/guildFurnitureArt.js` under pseudo-archive 38241. The banker, the standard, the plaque, the seat and the rack
+`src/world/guildFurnitureArt.js` under pseudo-archive 38341. The banker, the standard, the plaque, the seat and the rack
 carry the hall's own arms, painted again when they change. The brazier is a light.
 
 A guild piece stands only in its guild's own hall, costs no gold where it is set down, holds nothing and is no station

@@ -378,6 +378,8 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
       db.prepare('UPDATE homes SET owner_name = ? WHERE guild_id = ?').bind(n, gid),
     ]);
   } catch {
+    // AUDIT GUILD-SHOP S11: a batch that landed and whose answer was lost, or this request's twin that won, is the rename made
+    if (await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ? AND rid = ?').bind(player.id, line).first()) return renamed(ctx, player, character, gid, { repeat: true });
     // a unique held (another guild took the name or the tag), or the row moved under it: say which
     if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ? AND id != ?').bind(key, gid).first()) return { error: 'guild-name-taken' };
     if (await db.prepare('SELECT 1 FROM guilds WHERE tag = ? AND id != ?').bind(t, gid).first()) return { error: 'guild-tag-taken' };

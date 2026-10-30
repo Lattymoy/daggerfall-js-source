@@ -433,6 +433,7 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
   // gold or hold things (a piece the law refuses reads as nothing, and its cost would be owed at a sale)
   const was = pieceOfRow(row);
   if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };
+  if (guildPieceRule({ ...was, ...pl }, { hall: true, yard: false })) return { error: 'bad-decor' };   // AUDIT GUILD-SHOP S5: a guild piece moved stays one - nothing held, no station
   // DECOR-FIGURE: a figure moved to any size but its own is refused - one grown before this keeps its record's scale on a
   // turn or a station (it is drawn at its own size all the same), and is brought back to it by any move of the placer's
   if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' };   // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device

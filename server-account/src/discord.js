@@ -338,7 +338,7 @@ export async function discordInteraction(ctx, env, body, { fetchFn = (u, i) => g
   const io = { fetchFn, later: later ?? ((p) => { p.catch(() => {}); }) };
   const actor = await actorOf(ctx.db, env, body?.member?.user?.id ?? body?.user?.id, ctx.nowS);
   if (!actor) return say('Only the game\'s moderators can do that - ask a developer to add your Discord id to DISCORD_MODERATORS.');
-  if (body?.type === 3 && isLogoPress(body)) return onLogoPress(ctx, body, actor);   // GUILD-LOGO: a guild's logo approved or turned down
+  if (body?.type === 3 && isLogoPress(body)) return onLogoPress({ ...ctx, bucket: ctx.bucket ?? env?.SAVES }, body, actor);   // GUILD-LOGO: a guild's logo approved or turned down
   if (body?.type === 3) return onPress(ctx, env, body, actor, io);
   if (body?.type === 2 && body?.data?.name === 'mod') return onCommand(ctx, env, body, actor, io);
   return say('Nothing to do.');
