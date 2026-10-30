@@ -74,8 +74,8 @@
   {
     "name": "BACK-HOLSTER-the-painted-body-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": "const across = auraSpriteAcross(fig), half",
-    "new": "const across = 0, half",
+    "old": "const across = auraSpriteAcross(fig) + (B.side",
+    "new": "const across = 0 + (B.side",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BACK-HOLSTER-the-origin-shift-misses-it",
     "file": "src/net/peer/peerRiders.js",
-    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.paceFeet]",
-    "new": "r.lantern?.batch?.origin, r.paceFeet]",
+    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
+    "new": "r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BACK-HOLSTER-OVER-my-own-never-said",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    holstersDrawn() { return holsterDrawn ? holsterList : noHolsters; },",
-    "new": "    holstersDrawn() { return noHolsters; },",
+    "old": "    backList.push(holster);\n",
+    "new": "\n",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]

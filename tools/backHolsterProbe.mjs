@@ -40,6 +40,12 @@ for (const [name, rec] of Object.entries(WEAPONS)) {
   const p = uprightWeaponPicture({ width: c.width, height: c.height, colors: new Uint8Array(c.colors.buffer, c.colors.byteOffset, c.colors.byteLength) });
   pics[name] = { width: p.width, height: p.height, w: p.w, h: p.h, colors: Buffer.from(p.colors).toString('base64'), mirror: Buffer.from(p.mirror).toString('base64') };
 }
+// QUIVER: the Arrow's own picture (TEXTURE.207 record 16), stood up by the same law
+const tf207 = new TextureFile();
+tf207.load(new Uint8Array(readFileSync(join(A2, texName(207)))), texName(207), pal);
+const ac = tf207.getColor32(changeMask(tf207.getDFBitmap(16, 0)), 0);
+const ap0 = uprightWeaponPicture({ width: ac.width, height: ac.height, colors: new Uint8Array(ac.colors.buffer, ac.colors.byteOffset, ac.colors.byteLength) });
+const arrowPic = { width: ap0.width, height: ap0.height, colors: Buffer.from(ap0.colors).toString('base64') };
 
 const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { port: PORT, strictPort: true, hmr: false }, logLevel: 'error' });
 await server.listen();
@@ -48,7 +54,7 @@ const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });   // a page at the origin, nothing of its own to boot
 const W = 240, H = 320;
-const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
+const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, arrowPic, W, H }) => {
   const [{ Renderer }, m4, Hs, bb, sp, ap, ar] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbHolster.js'),
     import('/src/player/eyeOfTheBeholder/eotbBillboard.js'), import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'),
@@ -234,8 +240,65 @@ const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
       glowOut.push({ body: bodyName, o, w: cv.width, h: cv.height, glow, glowOnBodyHidden, moved, brandN, overCape, handBand, handOnBody, under, untinted, fogLeft, fogged, culled, shot: toB64(shock), hand: toB64(handGlow), cape: toB64(capedGlow), both: toB64(both) });
     }
   }
-  return { out, glowOut };
-}, { pics, W, H });
+  // QUIVER: the long bow and its quiver - the quiver alone, the bow alone, both, and the quiver empty - eight views
+  const Q = await import('/src/player/eyeOfTheBeholder/eotbQuiver.js');
+  const arrowUp = { width: arrowPic.width, height: arrowPic.height, colors: b64(arrowPic.colors) };
+  const quivers = {};
+  for (const full of [true, false]) {
+    const q = Q.quiverPicture(arrowUp, full), archive = Q.quiverArtArchive(full);
+    r.uploadTexture(archive, 0, { width: q.width, height: q.height, colors: q.colors });
+    r.uploadTexture(archive, 1, { width: q.width, height: q.height, colors: q.mirror });
+    quivers[full ? 'full' : 'empty'] = { archive, w: q.w, h: q.h, pic: { width: q.width, height: q.height } };
+  }
+  const quiverOut = [];
+  for (const [bodyName, body] of Object.entries(BODIES)) {
+    for (let o = 0; o < 8; o++) {
+      const rec = body.base + bb.RECORD_OFFSETS[o], mirror = bb.MIRRORED[o], key = `${bodyName}-${rec}${mirror ? 'm' : ''}`;
+      const pic = await color32(body.url(rec), mirror);
+      r.uploadTexture('probe-body', key, pic);
+      const xml = sp.spriteOffset(body.archive, rec), size = sp.spriteSize(pic.width, pic.height, {}, xml.scale), art = sp.spriteArtScale(body.archive, rec);
+      const a = o * Math.PI / 4 + 0.05, eye = [3.6 * Math.sin(a), 1.4, 3.6 * Math.cos(a)];
+      const yaw = Math.atan2(-eye[0], -eye[2]), right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+      const proj = m4.mirrorProjectionX(m4.perspective(50 * Math.PI / 180, W / H, 0.1, 50)), view = m4.lookAt(eye, [0, 0.95, 0], [0, 1, 0]);
+      const x = (xml.x / xml.scale) * (mirror ? -1 : 1), base = xml.y / xml.scale;
+      const fig = { base, mpp: size.h / pic.height, marks: ap.spriteMarks(new Uint32Array(pic.colors.buffer), pic.width, pic.height, { arms: o % 4 !== 2, art }), shift: x };
+      const frame = ({ bow = false, quiver = null } = {}) => {
+        r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
+        const bodyBatch = r.createBillboardBatch('probe-body', key, size, [[0, 0, 0]]);
+        bodyBatch.origin = [right[0] * x, base, right[2] * x];
+        r.drawBillboards([bodyBatch], right, [0, 1, 0]);
+        const hung = [];
+        if (quiver) hung.push(Hs.hangSpriteHolster(Hs.createSpriteHolster(), fig, o, [0, 0, 0], eye, right, quivers[quiver], Q.BACK_QUIVER));
+        if (bow) hung.push(Hs.hangSpriteHolster(Hs.createSpriteHolster(), fig, o, [0, 0, 0], eye, right, arts.longbow));
+        for (const l of hung) { Hs.mintSpriteHolster(l, r); r.drawBillboards(l.list, l.right, l.up); }
+        const px = new Uint8Array(cv.width * cv.height * 4);
+        gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        r.destroyBillboardBatch(bodyBatch);
+        for (const l of hung) Hs.dropSpriteHolster(l, r);
+        return px;
+      };
+      const plain = frame(), qOnly = frame({ quiver: 'full' }), bowOnly = frame({ bow: true }), both = frame({ bow: true, quiver: 'full' }), empty = frame({ quiver: 'empty' });
+      const vp = new Float32Array(16);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let t = 0; for (let k = 0; k < 4; k++) t += proj[k * 4 + i] * view[j * 4 + k]; vp[j * 4 + i] = t; }
+      const project = (pt) => { const c = [0, 1, 2, 3].map((i) => vp[i] * pt[0] + vp[4 + i] * pt[1] + vp[8 + i] * pt[2] + vp[12 + i]); return [(c[0] / c[3] * 0.5 + 0.5) * cv.width, (c[1] / c[3] * 0.5 + 0.5) * cv.height]; };
+      const acr = ar.auraSpriteAcross(fig), bodyCol = project([right[0] * acr, 1.2, right[2] * acr])[0];
+      const shoulderRow = project([right[0] * acr, base + ar.EOTB_FIGURE.shoulder * fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), right[2] * acr])[1];
+      const n = cv.width * cv.height, bg = [plain[0], plain[1], plain[2]];
+      const diff = (p, q, i) => p[i * 4] !== q[i * 4] || p[i * 4 + 1] !== q[i * 4 + 1] || p[i * 4 + 2] !== q[i * 4 + 2];
+      let qn = 0, qTop = -1, qCol = 0, onBody = 0, overlap = 0, bowOver = 0, en = 0, bowTop = -1, bowTopCol = 0, bn = 0, bCol = 0;
+      for (let i = 0; i < n; i++) {
+        const row = Math.floor(i / cv.width), col = i % cv.width;
+        const q = diff(qOnly, plain, i), b = diff(bowOnly, plain, i);
+        if (q) { qn++; qCol += col; if (row > qTop) qTop = row; if (plain[i * 4] !== bg[0] || plain[i * 4 + 1] !== bg[1] || plain[i * 4 + 2] !== bg[2]) onBody++; }
+        if (b) { bn++; bCol += col; if (row > bowTop) { bowTop = row; bowTopCol = col; } }
+        if (q && b) { overlap++; if (!diff(both, bowOnly, i)) bowOver++; }
+        if (diff(empty, plain, i)) en++;
+      }
+      quiverOut.push({ body: bodyName, o, w: cv.width, h: cv.height, qn, en, qTop, shoulderRow, side: qn && bn ? qCol / qn - bCol / bn : 0, bowSide: bn ? bowTopCol - bCol / bn : 0, onBody, overlap, bowOver, both: toB64(both) });
+    }
+  }
+  return { out, glowOut, quiverOut };
+}, { pics, arrowPic, W, H });
 await browser.close();
 await server.close();
 
@@ -303,6 +366,30 @@ for (const body of ['skin', 'layered']) {
   check(`${body}: AUDIT A2 - a nearer wearer's cape lies over this one's weapon, never under it`, [3, 4, 5].every((o) => v[o].under > 20 && v[o].untinted === 0), `under the nearer cape ${list('under')}; untouched by it ${list('untinted')}`);
   check(`${body}: AUDIT A7 - in full fog the glow is fogged to nothing`, v.every((g) => g.fogged > 500 && g.fogLeft === 0), `fogged ${list('fogged')}; glow left ${list('fogLeft')}`);
   check(`${body}: AUDIT A8 - a glow behind the eye is culled, one in view drawn`, v.every((g) => g.culled), list('culled'));
+}
+// QUIVER
+for (const body of ['skin', 'layered']) {
+  const v = quiverOut.filter((g) => g.body === body);
+  const list = (k) => v.map((g) => (typeof g[k] === 'number' ? Math.round(g[k]) : g[k])).join(',');
+  check(`${body}: QUIVER - drawn on the back from behind and its diagonals, its arrows over the shoulders`, [3, 4, 5].every((o) => v[o].qn > 40 && v[o].qTop > v[o].shoulderRow), `px ${list('qn')}; top ${list('qTop')} over the shoulder row ${list('shoulderRow')}`);
+  check(`${body}: QUIVER - from behind it sits off the bow's middle toward the right shoulder, as the bow's upper end does`, [3, 4, 5].every((o) => Math.sign(v[o].side) === Math.sign(v[o].bowSide) && Math.abs(v[o].side) > 2), `off the bow's middle ${list('side')}; the bow's top ${list('bowSide')}`);
+  check(`${body}: QUIVER - the bow lies over it from behind`, [3, 4, 5].every((o) => v[o].overlap === 0 || v[o].bowOver === v[o].overlap), `bow over ${list('bowOver')} of ${list('overlap')}`);
+  check(`${body}: QUIVER - from the front mostly behind the body`, v[0].qn < v[4].qn * 0.6, `front ${v[0].qn} against the back's ${v[4].qn}`);
+  check(`${body}: QUIVER - from the front, its diagonals and the side, not one pixel over the body`, [0, 1, 2, 6, 7].every((o) => v[o].onBody === 0), `over the body ${list('onBody')}`);
+  check(`${body}: QUIVER - empty, no arrows over its mouth`, [3, 4, 5].every((o) => v[o].en < v[o].qn), `empty ${list('en')} against full ${list('qn')}`);
+}
+if (SHOTS) {
+  const qcw = 150, qch = 230, qs = new PNG({ width: qcw * 8, height: qch * 2 });
+  for (const g of quiverOut) {
+    const px = Buffer.from(g.both, 'base64'), x0 = Math.floor((g.w - qcw) / 2), y0 = Math.floor((g.h - qch) / 2), row = g.body === 'skin' ? 0 : 1;
+    for (let y = 0; y < qch; y++) for (let x = 0; x < qcw; x++) {
+      const si = ((g.h - 1 - (y0 + y)) * g.w + x0 + x) * 4, di = ((row * qch + y) * qs.width + g.o * qcw + x) * 4;
+      for (let k = 0; k < 3; k++) qs.data[di + k] = px[si + k];
+      qs.data[di + 3] = 255;
+    }
+  }
+  writeFileSync(join(SHOTS, 'back-quiver.png'), PNG.sync.write(qs));
+  console.log(`quiver sheet: ${join(SHOTS, 'back-quiver.png')} (rows: skin, layered - the long bow and its quiver; views 0-7 across)`);
 }
 if (SHOTS) {
   const cw = 150, ch = 230, rows = 8;

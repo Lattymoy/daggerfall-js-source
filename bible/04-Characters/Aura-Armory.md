@@ -117,6 +117,13 @@ feet are the two leg runs nearest the body, a robe split at its quarters, a staf
 traced up from the neck. On a side view the near arm lies over the body with no edge to read, so its arm pieces keep
 the sets' rows, turned with the body.
 
+**The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). Each arm's band is read too: from a
+third of the way down, the first row where the arm stands clear of the body, and its width there; never clear, where
+its colour ends. Every arm piece is
+worn on it, as wide: the Insignia Armlet's patch, and the Ashbound Bracers' and the Eternal Armlets' line moved across
+through it. A side view's stand half an arm in from the body's back edge, where the pictures paint its near arm. An arm
+the picture hides behind the body (`armSide`) wears none.
+
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
@@ -138,6 +145,11 @@ band at the knee with the Origin's spark.
 THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`), so a piece lies on the card's near
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
+
+**The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's points move across its
+card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
+view's first row turned round; under the stage's plain lens, the row itself. Read off the row in the world, every
+piece stood mirrored across the card.
 
 **A sprite's forearm is not drawn.** A painting has no elbow or wrist to measure past the shoulder, so on a sprite an
 arm piece is drawn on the upper arm alone; the forearm draws on a rig. The legs draw from the knee down on both.
@@ -229,6 +241,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
 - `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
   skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
+- `tools/armorySpriteProbe.mjs` - Layered Gearing through the renderer's own billboard under the world's mirrored lens,
+  eight views, eight bodies: each piece on the part its picture paints (ARMORY-MIRROR). `test/render/armorymirror.test.js` pins the card's
+  right and a side view's armlet; `tools/mutants/armorymirror.json` mutates them.
 - `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
 - `test/ui/profileslots.test.js` - the slots, the presses, the stage's frame, the head pieces' tips, the bodies, and the

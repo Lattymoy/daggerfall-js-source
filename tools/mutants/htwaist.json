@@ -386,8 +386,8 @@
   {
     "name": "HT-WAIST-the-sprite-light-left-behind",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); }",
-    "new": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropHolster(); }",
+    "old": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); }",
+    "new": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropHolster(); dropQuiver(); }",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "HT-WAIST-BACK-the-recentre-leaves-it-behind",
     "file": "src/net/peer/peerRiders.js",
-    "old": "for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.paceFeet])",
-    "new": "for (const o of [r.batch?.origin, r.holster?.batch?.origin, r.paceFeet])",
+    "old": "for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet])",
+    "new": "for (const o of [r.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet])",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]

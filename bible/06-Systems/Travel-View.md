@@ -1282,6 +1282,9 @@ so away from row 250 none comes within sight - recorded here for that branch; th
   so a crewless boat sails). A sailed leg that comes no 20 m nearer its mark in 180 game seconds stops the journey
   ("Your boat can make no way toward its mark."); a boat beached on a leg that does not land stops it ("Your boat has
   run aground.").
+- **The tack's lane** (BEAT-LANE, `01-Overview/bugs/Field-Bugs-2026-10-30d.md`): a tack also goes about once she
+  stands 400 m past the wind's line through the mark. An angle's lane widens with the mark's distance, and SEA-TAUT's
+  sea legs run to 43 km.
 - **The landfall** (`tvSeaLand`, `tvSeaAshore`): on the landfall leg, beached - or 10 m off the shore and all but
   stopped - the helm is left by the mod's own disembark key ("You stop controlling the boat!", the sails lowered); when
   its second's hold is over the traveller is set on the first dry ground ahead of the bow, else about the boat, within

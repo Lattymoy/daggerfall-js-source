@@ -59,7 +59,7 @@ test('CROUCH-SNEAK + MODE-WHEEL defaults: Crouch keeps C and LB; Sneak and F1-F4
   assert.equal(by.get('Crouch'), 'KeyC');
   for (const a of ['Sneak', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode']) assert.equal(by.get(a), undefined, `${a} ships unbound`);
   assert.equal(by.get(MODE_WHEEL_ACTION), 'AltLeft');
-  assert.equal(ACTIONS.at(-9), MODE_WHEEL_ACTION,   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)
+  assert.equal(ACTIONS.at(-10), MODE_WHEEL_ACTION,   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
     'appended - a saved file resolves by position (TECH1\'s technique after it, SPYGLASS\' glass after that - PIN MOVED)');
   assert.ok(ACTIONS.includes('Sneak') && ACTIONS.includes('StealMode'), 'the old rows stay, rebindable');
   assert.ok(PORT_ACTIONS.includes(MODE_WHEEL_ACTION), 'the classic windows yield it');
@@ -111,7 +111,7 @@ test('MODE-WHEEL: press opens, the mouse steers it, the opening key\'s release c
 });
 
 test('MODE-WHEEL: a v2 bindings file lets Left Alt go of Sneak, once, so the wheel lands there; a player\'s own Alt stands and the lost wheel is told; their F1-F4 stand (mutants: the let-go run for every version; the v2 report listing every keyless default)', () => {
-  assert.equal(KEYBINDS_VERSION, 3);
+  assert.equal(KEYBINDS_VERSION, 4);   // PIN MOVED (AUDIT PVP-KEY B7: v4 tells a file whose Caps Lock is spent that the flag has no key)
   const old = createBindings();
   resetDefaults(old);
   old.primary.delete('AltLeft');

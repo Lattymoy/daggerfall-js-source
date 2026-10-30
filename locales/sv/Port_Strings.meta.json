@@ -6074,6 +6074,11 @@
   "tr": "0dbe5947be18",
   "by": "claude-in-session"
  },
+ "input.action.pvpFlag": {
+  "en": "1452b34a6cd2",
+  "tr": "02cbedca6be1",
+  "by": "claude-in-session"
+ },
  "interior.setDown.buried": {
   "en": "8159ee0fda03",
   "tr": "85a689b85930",
@@ -11439,14 +11444,19 @@
   "tr": "30114c64e288",
   "by": "claude-in-session"
  },
+ "pvp.flag.noKey": {
+  "en": "31eb2159f79d",
+  "tr": "aaa13e04b139",
+  "by": "claude-in-session"
+ },
  "pvp.flag.off": {
   "en": "4fc64767da48",
   "tr": "f630eaaecccc",
   "by": "claude-in-session"
  },
  "pvp.flag.offTitle": {
-  "en": "9644167313cd",
-  "tr": "175b1bafead6",
+  "en": "401f5d098ff9",
+  "tr": "1ca549c98087",
   "by": "claude-in-session"
  },
  "pvp.flag.on": {
@@ -11455,8 +11465,8 @@
   "by": "claude-in-session"
  },
  "pvp.flag.onTitle": {
-  "en": "ab2d677be3ee",
-  "tr": "a9c6b27d1c21",
+  "en": "e34a21eef0e1",
+  "tr": "6df9e892b187",
   "by": "claude-in-session"
  },
  "pvp.flag.villain": {
