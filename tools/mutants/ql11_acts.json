@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-QL-ACTS-M12-cardTableSession-any-showdown-counts",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "if (this.playerInHand >= 0 && h.result.pots[0]?.winners.includes(this.playerInHand)) noteAct('cards-won');",
-    "new": "if (this.playerInHand >= 0) noteAct('cards-won');",
+    "old": "      if (this.playerInHand >= 0 && h.result.pots[0]?.winners.includes(this.playerInHand)) noteAct('cards-won'); // QL11: a hand won - the main pot mine (or my share of it)",
+    "new": "      if (this.playerInHand >= 0) noteAct('cards-won'); // QL11: a hand won - the main pot mine (or my share of it)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

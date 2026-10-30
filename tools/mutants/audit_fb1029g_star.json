@@ -216,8 +216,8 @@
   {
     "name": "AFB-STAR-F9-master-card",
     "file": "src/systems/card/cardSources.js",
-    "old": "if (!entity || entity.revenant || entity.worldBoss) return null;",
-    "new": "if (!entity || entity.revenant) return null;",
+    "old": "  if (!entity || entity.revenant || entity.worldBoss) return null;",
+    "new": "  if (!entity || entity.revenant) return null;",
     "tests": [
       "test/scenes/starfall/star5_host.test.js",
       "test/systems/cards9_sources.test.js"

@@ -55,7 +55,8 @@ export const unit = (rand32) => (rand32() >>> 0) / 2 ** 32;
  */
 export function chenScore(hole) {
   const [a, b] = hole;
-  const hi = Math.max(rankOf(a), rankOf(b)), lo = Math.min(rankOf(a), rankOf(b));
+  const hi = Math.max(rankOf(a), rankOf(b)),
+    lo = Math.min(rankOf(a), rankOf(b));
   const value = (r) => (r === 12 ? 10 : r === 11 ? 8 : r === 10 ? 7 : r === 9 ? 6 : (r + 2) / 2);
   let s = value(hi);
   if (hi === lo) return Math.ceil(Math.max(5, s * 2));
@@ -88,14 +89,20 @@ export function equity(hole, board, opponents, rand32, samples = EQUITY_SAMPLES,
     // a partial Fisher-Yates: the first `need` cards of the pool, each drawn without bias
     for (let i = 0; i < need; i++) {
       const j = i + drawBelow(pool.length - i, rand32);
-      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      const t = pool[i];
+      pool[i] = pool[j];
+      pool[j] = t;
     }
     const full = board.concat(pool.slice(opponents * 2, need));
     const mine = bestHand([...hole, ...full]);
-    let best = 1, ties = 1;
+    let best = 1,
+      ties = 1;
     for (let o = 0; o < opponents; o++) {
       const c = compareHands(bestHand([pool[o * 2], pool[o * 2 + 1], ...full]), mine);
-      if (c > 0) { best = 0; break; }
+      if (c > 0) {
+        best = 0;
+        break;
+      }
       if (c === 0) ties++;
     }
     if (best) won += 1 / ties;
@@ -109,17 +116,18 @@ export function equity(hole, board, opponents, rand32, samples = EQUITY_SAMPLES,
  * @param {{view: any, seat: number, legal: any, temper: {play: number, raise: number, bluff: number, edge: number}, rand32: () => number, samples?: number}} p
  */
 export function patronDecision({ view, seat, legal, temper, rand32, samples = EQUITY_SAMPLES }) {
-  const bluffing = unit(rand32) < temper.bluff;   // the decision's FIRST draw - the weighing's come after it
+  const bluffing = unit(rand32) < temper.bluff; // the decision's FIRST draw - the weighing's come after it
   const me = view.seats[seat];
   const opponents = view.seats.filter((s, i) => i !== seat && !s.folded).length;
   const pot = view.seats.reduce((a, s) => a + s.total, 0);
   const preflop = view.board.length === 0;
   const strength = preflop ? chenScore(me.hole) / 20 : equity(me.hole, view.board, opponents, rand32, samples);
   const call = legal.call;
-  const odds = call > 0 ? call / (pot + call) : 0;   // the share of the pot after the call this call buys
+  const odds = call > 0 ? call / (pot + call) : 0; // the share of the pot after the call this call buys
   // facing a bet after the flop, what the hand is worth against the bettor - for the raise as for the call
   const pot0 = Math.max(1, pot - call);
-  const facing = !preflop && call > 0 ? strength ** (1 + BETTOR_BEND * Math.min(BETTOR_BET_MAX, call / pot0)) : strength;
+  const facing =
+    !preflop && call > 0 ? strength ** (1 + BETTOR_BEND * Math.min(BETTOR_BET_MAX, call / pot0)) : strength;
   const strong = facing >= temper.raise;
   // A bet or a raise: sized off the pot - a half to the whole of it, more the stronger - clamped to what the law allows.
   const raiseTo = () => {
@@ -131,7 +139,10 @@ export function patronDecision({ view, seat, legal, temper, rand32, samples = EQ
   // Facing a bet: before the flop, a hand under his temper's line folds; after it, a call wants its odds and his edge.
   const bb = Math.max(1, view.bb || 1);
   const plays = preflop
-    ? strength >= temper.play + PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) - DEFEND * Math.max(0, DEFEND_ODDS - odds)
+    ? strength >=
+      temper.play +
+        PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) -
+        DEFEND * Math.max(0, DEFEND_ODDS - odds)
     : facing >= odds + temper.edge;
   if (plays || call <= 0) return { type: 'call' };
   return { type: 'fold' };

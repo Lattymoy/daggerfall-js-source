@@ -283,8 +283,8 @@
   {
     "name": "WITCH1-a-card-in-the-packs",
     "file": "src/systems/card/cardSources.js",
-    "old": "&& !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id)).map",
-    "new": "&& !BOSS_CARD_IDS.includes(c.id)).map",
+    "old": "      Object.freeze(\n        ILIAC_CARDS.filter(\n          (c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id),\n        ).map((c) => c.id),\n      ),",
+    "new": "      Object.freeze(ILIAC_CARDS.filter((c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id)).map((c) => c.id)),",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],

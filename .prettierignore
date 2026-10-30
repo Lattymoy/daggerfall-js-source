@@ -86,6 +86,8 @@
 /src/scenes/wagon/*/
 !/src/systems/
 /src/systems/*
+!/src/systems/card/
+/src/systems/card/*/
 !/src/systems/deepWater/
 /src/systems/deepWater/*/
 !/src/systems/dragon/

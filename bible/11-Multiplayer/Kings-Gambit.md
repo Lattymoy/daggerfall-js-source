@@ -98,7 +98,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
   70 hp, attack 16, free.
 - THE TABLE, computed off the port's own `characters/enemy/enemyBasics.js` (ENEMY_BASICS, DFU's rows) at float32 and at
   float64, with half to even and with half up: every unit the same - the vanilla rows meet no half. The last column is
-  FACT: the card each creature already is (`cardSources.js:"export const FOE_CARDS = Object.freeze({"`).
+  FACT: the card each creature already is (`cardSources.js:"export const FOE_CARDS"`).
 
   | id | unit | level | hp | attack | cost | reach | its Iliac card |
   |---|---|---|---|---|---|---|---|

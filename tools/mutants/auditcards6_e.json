@@ -119,8 +119,8 @@
   {
     "name": "AC6-E8-chair-lost",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      if (!this.confirmed && this.chair >= 0 && f.error === SIT_OTHER_GAME) this._lose(SIT_OTHER_GAME);   // AUDIT CARDS-6 E8\n",
-    "new": "",
+    "old": "      if (!this.confirmed && this.chair >= 0 && f.error === SIT_OTHER_GAME) this._lose(SIT_OTHER_GAME); // AUDIT CARDS-6 E8\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/auditcards6_e.test.js"
     ]

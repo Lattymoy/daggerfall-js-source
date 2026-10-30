@@ -77,8 +77,8 @@
   {
     "name": "KGSET-foe-spider",
     "file": "src/systems/card/cardSources.js",
-    "old": "[M.Spider]: 'spider', ",
-    "new": "",
+    "old": "  [M.Spider]: 'spider',\n  [M.Slaughterfish]: 'slaughterfish',",
+    "new": "  [M.Slaughterfish]: 'slaughterfish',",
     "tests": [
       "test/systems/kgset_cards.test.js",
       "test/systems/cards9_sources.test.js"

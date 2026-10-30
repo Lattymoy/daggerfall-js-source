@@ -164,7 +164,7 @@ test('CARDS9 the foes: a creature drops its own card - one draw at its card\'s t
   raiseEnemyDeath(body, { rolls: () => 0 });
   assert.deepEqual(body.items.filter(isCardRecord).map((c) => c.card), ['zombie']);
   assert.equal(dropFoeCard({ mobileType: MOBILE_TYPES.Rat, items: null }, { rolls: () => 0 }), null, 'a body with no list takes none');
-  assert.match(read('src/systems/card/cardSources.js'), /registerEnemyDeathHandler\(CARD_DROP_HANDLER, \(entity, opts = \{\}\) => \{ dropFoeCard\(entity, opts\); \}\);/);
+  assert.match(read('src/systems/card/cardSources.js'), /registerEnemyDeathHandler\(CARD_DROP_HANDLER, \(entity, opts = \{\}\) => \{\n\s*dropFoeCard\(entity, opts\);\n\s*\}\);/);
   assert.equal(CARD_DROP_HANDLER, 'iliac-card');
   assert.match(read('src/systems/worldTick.js'), /^import '\.\/card\/cardSources\.js';/m, 'the app carries the import (AUDIT-THUNDERLOCK F1\'s wire)');
   // THE CAP keeps it: three Common pieces and a card, capped to three - the card stays
