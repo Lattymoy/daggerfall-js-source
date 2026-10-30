@@ -151,8 +151,9 @@ const CATALOGUE = {
   // PIN MOVED (AURUM): Season One's titles six to three and its portraits three, no figure among them; the daily wares' eight
   'title:tremorborn': 'pass pass', 'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
   'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:gearheart': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
-  'icon:gatefire': 'shop daily', 'icon:aurbis': 'shop daily', 'icon:elderscroll': 'shop daily', 'icon:azurastar': 'shop daily',
-  'icon:redmountain': 'shop daily', 'icon:hourglass': 'shop daily', 'icon:sanguinerose': 'shop daily', 'icon:whitegold': 'shop daily',
+  // PIN MOVED (AURUM-ONLY): the eight icons in the shop for good, each bought with Aurum - a deal on its day
+  'icon:gatefire': 'shop store', 'icon:aurbis': 'shop store', 'icon:elderscroll': 'shop store', 'icon:azurastar': 'shop store',
+  'icon:redmountain': 'shop store', 'icon:hourglass': 'shop store', 'icon:sanguinerose': 'shop store', 'icon:whitegold': 'shop store',
   'armory:insigniaarmlet': 'guild open', 'icon:guildcrest': 'guild open',   // GUILD-SHOP (PIN MOVED): the guild shop's armlet and crest, any member's for silver
 };
 
