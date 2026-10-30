@@ -8,6 +8,7 @@ import { releaseUnloadGuard } from '../systems/unloadGuard.js';
 import { buildUpdateText, buildUpdateSeen, fetchLiveBuildTag } from '../net/updateNotice.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { forceShellUpdates } from '../systems/shellUpdates.js';
+import { getPref } from '../systems/uiPrefs.js';
 
 /** The warning before the screen, the screen before the reload, and the longest a death or duel may hold it, ms. */
 export const UPDATE_WARN_MS = 60_000;
@@ -35,6 +36,11 @@ export const updateAppHoldText = () => t('net.update.appHold', 'A new version is
 export const updateAppBodyText = () => t('net.update.appBody', 'Your character is saved. The app closes, updates and opens again by itself.');
 export const updateRestartingText = () => t('net.update.restarting', 'Restarting the app');
 export const updateRestartButtonText = () => t('net.update.restartButton', 'Restart Now');
+// AUTO-UPDATE (2026-10-30, the owner: "turn off the automatic updates by default. Im tired of players being forced out
+// of the game"): the forced run is the player's choice now, off by default (uiPrefs autoUpdates). Off, a new build is
+// told once and the player reloads when ready; the app's update keeps its HUD line (systems/shellUpdates.js updateReadyText).
+export const autoUpdatesOn = () => getPref('autoUpdates') === true;
+export const updateReadyNoticeText = () => t('net.update.buildReady', 'A new version of the game is out. Reload the page when you are ready to play it.');
 
 /** m:ss for a count of ms, rounded up so the clock never reads 0:00 while time is left. */
 export const countdownOf = (ms) => {
@@ -153,9 +159,9 @@ export function startForcedUpdate(opts = {}) {
  * @param {any} [shell]  globalThis.daggerShell
  */
 export function pollForUpdate(opts, shell = globalThis.daggerShell) {
-  forceShellUpdates(shell, () => startForcedUpdate({ ...opts, app: true, reload: () => shell.restartForUpdate() }));
+  forceShellUpdates(shell, () => autoUpdatesOn() && startForcedUpdate({ ...opts, app: true, reload: () => shell.restartForUpdate() }));   // AUTO-UPDATE: the switch read when the update is heard
   // `fetchLiveBuildTag` swallows its own throws; the second handler is the belt for a rejection it cannot see
-  return fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate(opts), () => {});
+  return fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && (autoUpdatesOn() ? startForcedUpdate(opts) : opts.notice?.(updateReadyNoticeText())), () => {});
 }
 
 /** Whether this page is counting down to a reload. */
