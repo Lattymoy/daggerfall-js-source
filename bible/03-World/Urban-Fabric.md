@@ -13,6 +13,7 @@ TESA12), the countryside's towns (TESA7), the Imperial City's outskirts (TS5) an
 | U2 | the towns' own pictures - each province's paving, cobbles and walls; cut stone, brick and half-timbering on the capitals' landmarks (`world/urban/urbanArt.js`, `world/urban/urbanRecords.js`) | BUILT |
 | U3 | a town's fabric - main streets with pavements, side streets, alleys, dead ends, fenced yards with gates and woodpiles (`world/urban/townFabric.js`, `townFabricModel.js`, `townFabricStand.js`) | BUILT |
 | TOWN-BOARDS | the boards on the ground in the smaller towns: the pavement a ring round the carriageway, the fabric on the town's ground alone (section 9) | FIXED |
+| PROP-GROUND | the street laid under Daggerfall's props: no square of the old ground round a sign, a well or a lamp (section 10) | FIXED |
 
 ## 1. What stood (DFU's reference, measured on the freeware)
 
@@ -316,3 +317,57 @@ and past it). Mutants `tools/mutants/townboards.json` (12, all dead). PINS MOVED
 walk), `test/world/urban/urban3_stand.test.js` (the host's line, its `ground`). Mutant records re-aimed by content:
 `tools/mutants/urban.json` U3-the-pavement-band-swapped (the ring's line), `tools/mutants/townfollow.json`
 TF-the-origin-unread and TF-the-rows-turned (shutOffGround through onTownGround).
+
+## 10. PROP-GROUND - the street under a prop (FIXED, 2026-10-30)
+
+The owner's field report, 2026-10-30, a picture from Alinor: *"Ever since we changed town lauouts and stuff props
+still sit on old textures"*.
+
+**What the player saw.** A shop's hanging sign on its post stood in a square of Daggerfall's old ground, dark flagstones
+4.8 m a side, with the new setts on one side and the pavement's flags on the other. Every misc model and flat of
+Daggerfall's in a street past the Bay stood the same way: a sign, a well, a lamp, a tree in a square.
+
+**Why.** `fabricGrid` builds a prop's cell and the eight round it (section 4), so no walk, pavement or yard runs
+through it. The model laid its setts, flags and cobbles by `kind` alone, and a built cell got none: the terrain's own
+ground tile showed through, 5 cm under the street.
+
+**The fix.** The cells stay built in the plan: the walkers, the yards (MERCHANT-YARDS reads `kind`) and the pavement's
+joins (`paveWalks`) see the prop as before. Beside `kind` the plan carries `under` (`world/urban/townFabric.js`
+propGround): each clearance cell takes the surface of the nearest ground outside it, by a walk four ways through the
+clearance - the most common face one step nearer, a tie the setts' and the cobbles' (the ground's level) before the
+flags', a street's before none. A house, the water or a special's town-map byte is no source, so a sign between a shop
+and the street stands on the street. A cell nearest a yard, an alley or open ground keeps Daggerfall's ground, as round
+it.
+
+Last the pavement's own law (section 4): a bare cell in the setts' ring by the eight ways is the pavement's, so a
+clearance that reaches past the pavement leaves no notch in it. The model (`townFabricModel.js`) lays each cell by
+`kind`, or by `under` where it is built, and draws a kerb between a prop's flags and its setts.
+
+**Heights.** The setts and the cobbles are at the props' own foot (FABRIC_ROAD_Y 0). A prop in the pavement stands in
+its flags 8 cm deep (FABRIC_PAVE_Y), under the walker's 0.1 m step; Daggerfall's flats already stand 15 cm into the
+ground (BLOCK_FLATS_OFFSET_Y).
+
+**Measured on the freeware** (the slice's scratch measure, every template past the Bay cloned and outlined as section
+4's table, and the capitals but the Imperial City; a "hole" is a clearance every ground beside which is a laid street):
+
+| | holes, their cells | bare after | clearances half in a street | their cells left bare (nearest other ground) |
+|---|---|---|---|---|
+| 407 cities | 23,902, 91,475 | 0 | 45,292 | 108,315 |
+| 1,200 hamlets | 1,903, 5,651 | 0 | 9,904 | 20,912 |
+| 459 villages (every fourth) | 0 - no main streets, Daggerfall's lanes | - | 0 | - |
+| Alinor | 85, 308 | 0 | 151, 966 cells | 343 |
+| Solitude, Mournhold, Falinesti, Torval, Helstrom | 57 to 131 each | 0 | 137 to 236 each | 322 to 534 each |
+
+Every hole had been bare. Looked at on Alinor's grid, cell by cell: a sign's clearance at a cobbled side street's
+edge laid in cobbles on the street's side and Daggerfall's dirt on the open ground's; a well on the main street's road
+in setts, its pavement unbroken past it. The running game was not photographed.
+
+**THE FOUR HOSTS.** `scenes/world.js` - WIRED through its pixel build, which stands the fabric's model (no host line
+moved). `scenes/worldModes.js` (interiors) - no street. `scenes/dungeonContext.js` - no street. `scenes/exterior.js` -
+streams no land past the Bay. The Bay's towns stand no fabric (`fabricTown`): their props stand on the ground their
+blocks lay, as Daggerfall's do.
+
+**Pins**: `test/world/urban/propground.test.js` (5 - the grid's props, the surface under them, the plan, the model, and
+with ARENA2 the cities and hamlets past the Bay, the capitals and a Bay town). Mutants `tools/mutants/propground.json`
+(9, all dead). Mutant record re-aimed by content: `tools/mutants/urban.json` U3M-a-kerb-against-a-house (the kerb's
+test reads the laid surface).

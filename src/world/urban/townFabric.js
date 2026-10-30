@@ -81,8 +81,8 @@ const ROADS = new Set(ROAD_RECORDS);
  * THE TOWN'S GROUND, cell by cell (row-major from the south-west, x east, z north - the walkers' grid): `town` its blocks'
  * own cells on the town's ground (none for a block `blockAt` answers null - a left-out cell, a wall's carrier, a
  * capital's own - and none `onGround` refuses: TOWN-BOARDS, the land past the outline TS2 flattens), `built` a
- * building's, a prop's, a flat's or the water's, `house` a building's alone, `grass` Daggerfall's grass (ground record 2),
- * `road` its other ground.
+ * building's, a prop's, a flat's or the water's, `house` a building's alone, `prop` a misc model's or a flat's clearance
+ * alone (PROP-GROUND: the street laid under it), `grass` Daggerfall's grass (ground record 2), `road` its other ground.
  * @param {number} w @param {number} h
  * @param {(bx: number, by: number) => (null | { automap: ArrayLike<number>, ground: (tx: number, ty: number) => number,
  *   records?: Array<{ x: number, z: number }> })} blockAt a block's town map (rows from the north), its ground tile's record
@@ -98,6 +98,7 @@ const ROADS = new Set(ROAD_RECORDS);
 export function fabricGrid(w, h, blockAt, { onGround = null, onRoad = null } = {}) {
   const C = FABRIC_CELLS, W = w * C, H = h * C, n = W * H;
   const town = new Uint8Array(n), built = new Uint8Array(n), house = new Uint8Array(n), grass = new Uint8Array(n), road = new Uint8Array(n);
+  const prop = new Uint8Array(n);
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       const b = blockAt(bx, by);
@@ -119,12 +120,15 @@ export function fabricGrid(w, h, blockAt, { onGround = null, onRoad = null } = {
         const ci = Math.floor(r.x / NAV_CELL), cj = Math.floor(r.z / NAV_CELL);
         for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
           const x = ci + di, z = cj + dj;
-          if (x >= 0 && z >= 0 && x < C && z < C) built[(by * C + z) * W + bx * C + x] = 1;
+          if (x < 0 || z < 0 || x >= C || z >= C) continue;
+          const i = (by * C + z) * W + bx * C + x;
+          if (!built[i]) prop[i] = 1;   // PROP-GROUND: a building's byte or the water first
+          built[i] = 1;
         }
       }
     }
   }
-  return { w, h, W, H, town, built, house, grass, road };
+  return { w, h, W, H, town, built, house, prop, grass, road };
 }
 
 /** A chamfer distance (3-4: a cell's side 3, its diagonal 4) to the nearest cell `from` marks, in cells - every cell's,
@@ -287,10 +291,10 @@ function pieces(g, inSet) {
 const edgeOf = (inner, outer, dir) => ({ inner, outer, dir });
 
 /**
- * A TOWN'S PLAN (the module's header): `kind` each cell's FABRIC_KIND; `fences` and `walls` the edges a yard's fence and a
- * dead end's wall close (each `{ inner, outer, dir }`, dir the step from inner to outer), `gates` the fence edges left
- * open; `dead` each dead end's dressed cells; `shut` the cells no walker treads; `paths` each main street's walk; `ends`
- * and `centre` the cells they run between; `counts`.
+ * A TOWN'S PLAN (the module's header): `kind` each cell's FABRIC_KIND, `under` a prop's cell's surface (propGround);
+ * `fences` and `walls` the edges a yard's fence and a dead end's wall close (each `{ inner, outer, dir }`, dir the step
+ * from inner to outer), `gates` the fence edges left open; `dead` each dead end's dressed cells; `shut` the cells no
+ * walker treads; `paths` each main street's walk; `ends` and `centre` the cells they run between; `counts`.
  * @param {ReturnType<typeof fabricGrid>} g
  * @param {{ ends?: Array<[number, number]>, centre?: [number, number], seed?: number, mains?: boolean, outWalls?: boolean }} [o]
  *   `ends` the main streets' ends and `centre` the town's middle (cells, x east, z north; the grid's middle where none),
@@ -311,8 +315,8 @@ export function fabricPlan(g, o = {}) {
  * flag on its own in the stone styles, a board alone on the forest floor in the planks' - and is not laid: its cells are
  * the street's own surface, the carriageway's where it meets it (the setts, or the forest floor between the planks'
  * boardwalks), else no street's (the town's own ground, read on by the ways and the yards). It is never joined through a
- * prop's clearance: that is the cell and the eight round a model or a flat of Daggerfall's (fabricGrid), whose foot a
- * slab 0.13 m high would bury and a kerb cut through. Last, a piece of the carriageway no walk runs down (`walk`) and as
+ * prop's clearance: that is the cell and the eight round a model or a flat of Daggerfall's (fabricGrid), no walk's - its
+ * ground is the surface round it (propGround). Last, a piece of the carriageway no walk runs down (`walk`) and as
  * short - a cell or two of setts the houses' pavements closed round - is the pavement's where it meets it (its patch in
  * the flags, its hole in the boardwalk), else no street's. In place over `kind`.
  * @param {{ W: number, H: number }} g @param {Uint8Array} kind @param {?ArrayLike<number>} [walk] the main streets' walks
@@ -581,7 +585,49 @@ export function* planSteps(g, { ends = [], centre = null, seed = 0, mains = true
   }
   const deadEnds = dead.filter((d) => !d.walled || walls.some((wl) => wl.alley === d.alley)).map((d) => d.cells);
   counts.dead = deadEnds.length;
-  return { W: g.W, H: g.H, kind, fences, gates, walls: walls.flatMap((wl) => wl.edges), dead: deadEnds, props, shut, paths, ends: endCells, centre: centreCell, counts };
+  const under = propGround(g, kind);
+  return { W: g.W, H: g.H, kind, under, fences, gates, walls: walls.flatMap((wl) => wl.edges), dead: deadEnds, props, shut, paths, ends: endCells, centre: centreCell, counts };
+}
+
+/** PROP-GROUND's choice among a cell's neighbours' surfaces, tied: a street's face before none, the setts and cobbles (the
+ *  ground's own level) before the flags. */
+const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);
+/**
+ * PROP-GROUND (the owner, 2026-10-30: "props still sit on old textures"): THE STREET UNDER A PROP. Its clearance
+ * (fabricGrid `prop`) stays built in `kind`, but each cell takes the surface of the nearest ground outside it (a walk four
+ * ways through the clearance; the most common face one step nearer, a tie by UNDER_ORDER): setts, flags, cobbles, or 0 -
+ * a yard's, an alley's, open ground's (Daggerfall's own). A house, the water or a special's byte is no source. Last the
+ * pavement's own law: a bare cell in the setts' ring by the eight ways (FABRIC.kerb) is the pavement's - no notch in it.
+ * @param {{ W: number, H: number, prop?: ArrayLike<number> }} g @param {Uint8Array} kind
+ */
+export function propGround(g, kind) {
+  const n = g.W * g.H, K = FABRIC_KIND, under = new Uint8Array(n), depth = new Int32Array(n).fill(-1);
+  if (!g.prop) return under;
+  const isProp = (i) => kind[i] === K.built && g.prop[i] === 1;
+  const face = (k) => (k === K.main || k === K.pave || k === K.side ? k : 0);
+  const near = (i) => { const x = i % g.W, out = []; if (x > 0) out.push(i - 1); if (x < g.W - 1) out.push(i + 1); if (i >= g.W) out.push(i - g.W); if (i + g.W < n) out.push(i + g.W); return out; };
+  const pick = (faces) => {
+    const count = new Map();
+    for (const f of faces) count.set(f, (count.get(f) ?? 0) + 1);
+    let best = 0, most = 0;
+    for (const f of UNDER_ORDER) if ((count.get(f) ?? 0) > most) { best = f; most = count.get(f); }
+    return best;
+  };
+  let layer = [];
+  for (let i = 0; i < n; i++) {
+    if (!isProp(i)) continue;
+    const faces = near(i).filter((j) => kind[j] !== K.built).map((j) => face(kind[j]));
+    if (faces.length) { depth[i] = 1; under[i] = pick(faces); layer.push(i); }
+  }
+  for (let d = 2; layer.length; d++) {
+    const next = [];
+    for (const i of layer) for (const j of near(i)) if (isProp(j) && depth[j] < 0) { depth[j] = d; next.push(j); }
+    for (const j of next) under[j] = pick(near(j).filter((k) => depth[k] === d - 1).map((k) => under[k]));
+    layer = next;
+  }
+  const ring = maxNear(Uint8Array.from(kind, (k, i) => (k === K.main || under[i] === K.main ? 1 : 0)), g.W, g.H, FABRIC.kerb);
+  for (let i = 0; i < n; i++) if (isProp(i) && !under[i] && ring[i]) under[i] = K.pave;
+  return under;
 }
 
 /** An edge's line: the axis it runs along and where - a step east or west closes a cell's side along z (a line of

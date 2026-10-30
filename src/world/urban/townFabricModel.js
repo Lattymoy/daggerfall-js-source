@@ -204,20 +204,22 @@ export function* townFabricSteps(plan, style, { cobbles = false, classicModel = 
       mb.quad(tex, [x0 * C, yy, z0 * C], [x1 * C, yy, z0 * C], [x1 * C, yy, z1 * C], [x0 * C, yy, z1 * C], UP);
     }
   };
-  const of = (k) => { const m = new Uint8Array(n); for (let i = 0; i < n; i++) if (plan.kind[i] === k) m[i] = 1; return m; };
+  // PROP-GROUND: a prop's clearance laid in the surface round it (world/urban/townFabric.js propGround)
+  const surf = plan.under ? Uint8Array.from(plan.kind, (k, i) => (k === K.built && plan.under[i]) || k) : plan.kind;
+  const of = (k) => { const m = new Uint8Array(n); for (let i = 0; i < n; i++) if (surf[i] === k) m[i] = 1; return m; };
   // the main streets: setts between the kerbs (none on the planks' styles - their forest floor between two boardwalks)
   if (st.carriage) flat(setts, of(K.main), FABRIC_ROAD_Y);
   if (cobbles && st.side) flat(cobble, of(K.side), FABRIC_ROAD_Y);
   const pave = of(K.pave);
   flat(flags, pave, FABRIC_PAVE_Y);
-  // each kerb's face: a pavement's edge onto anything but a house or another pavement
+  // each kerb's face: a pavement's edge onto anything but a house, a prop's bare ground or another pavement
   const kerbs = [];
   for (let i = 0; i < n; i++) {
     if (!pave[i]) continue;
     const x = i % W, z = (i - x) / W;
     [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz], dir) => {
       const nx = x + dx, nz = z + dz, j = nz * W + nx;
-      if (nx >= 0 && nz >= 0 && nx < W && nz < H && (pave[j] || plan.kind[j] === K.built)) return;
+      if (nx >= 0 && nz >= 0 && nx < W && nz < H && (pave[j] || surf[j] === K.built)) return;
       kerbs.push({ inner: i, outer: j, dir });
     });
   }
