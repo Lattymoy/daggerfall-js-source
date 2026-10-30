@@ -2,8 +2,8 @@
   {
     "name": "WB9e-a-weight-left-where-it-was",
     "file": "src/net/gate/gateBrain.js",
-    "old": "shape: 'disc', r: 7, pct: 0.52, base: 14, el: null, aim: 'self'",
-    "new": "shape: 'disc', r: 7, pct: 0.40, base: 10, el: null, aim: 'self'",
+    "old": "    r: 7,\n    pct: 0.52,\n    base: 14,",
+    "new": "    r: 7,\n    pct: 0.4,\n    base: 10,",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]

@@ -36,6 +36,8 @@ test('LEGIBLE 3 a listed file the formatter would change is named, and an unlist
     mkdirSync(join(root, 'a/sub'));
     writeFileSync(join(root, 'a/sub/messy.js'), 'const w={a:1}\n');
     assert.deepEqual(await unformatted(root), ['a/messy.js']);
+    writeFileSync(join(root, 'tools/formatted.json'), '["a/sub/messy.js", "b"]');
+    assert.deepEqual(await unformatted(root), ['a/sub/messy.js', 'b/messy.js'], 'a file listed on its own, beside a folder');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -45,6 +47,10 @@ test('LEGIBLE 3 .prettierignore leaves every unlisted path alone and opens each 
     '/*', '!/src/', '/src/*', '!/src/poi/', '/src/poi/*/', '!/src/poi/uv/', '/src/poi/uv/*/', '!/src/ui/', '/src/ui/*',
     '!/src/ui/ink/', '/src/ui/ink/*/', '',
   ].join('\n'));
+  assert.equal(ignoreText(['src/systems/a.js', 'src/systems/item']), [
+    '# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.',
+    '/*', '!/src/', '/src/*', '!/src/systems/', '/src/systems/*', '!/src/systems/a.js', '!/src/systems/item/', '/src/systems/item/*/', '',
+  ].join('\n'), 'a file listed on its own opens alone, its folder shut round it');
   assert.equal(read(IGNORE), ignoreText(formattedFolders()), 'written from the list: node tools/format.mjs --ignore');
 });
 

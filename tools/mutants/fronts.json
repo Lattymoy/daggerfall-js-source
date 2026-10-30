@@ -62,8 +62,8 @@
   {
     "name": "FRONTS-gate-unfronted",
     "file": "src/net/gate/gateLaw.js",
-    "old": " && gateDayOf(n) % GATE_EVERY_DAYS === 0 && frontStands(gateFrontDay(n), gateLaneOf(n));",
-    "new": " && gateDayOf(n) % GATE_EVERY_DAYS === 0;",
+    "old": "  Number.isSafeInteger(n) &&\n  n >= 0 &&\n  gateLaneOf(n) < GATE_LANES &&\n  gateDayOf(n) % GATE_EVERY_DAYS === 0 &&\n  frontStands(gateFrontDay(n), gateLaneOf(n));",
+    "new": "  Number.isSafeInteger(n) && n >= 0 && gateLaneOf(n) < GATE_LANES && gateDayOf(n) % GATE_EVERY_DAYS === 0;",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

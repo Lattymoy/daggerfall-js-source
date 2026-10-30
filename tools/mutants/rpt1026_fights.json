@@ -62,8 +62,8 @@
   {
     "name": "RETIRED-BLOW-gate-unseen",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.seenAt = now; restoreShare(f, p);",
-    "new": "  p.seenAt = now;",
+    "old": "  restoreShare(f, p);\n  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket",
+    "new": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],

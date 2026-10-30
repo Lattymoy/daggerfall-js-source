@@ -20,8 +20,8 @@
   {
     "name": "WW2-a-lane-past-the-last",
     "file": "src/net/gate/gateLaw.js",
-    "old": "n >= 0 && gateLaneOf(n) < GATE_LANES &&",
-    "new": "n >= 0 && gateLaneOf(n) <= GATE_LANES &&",
+    "old": "  gateLaneOf(n) < GATE_LANES &&",
+    "new": "  gateLaneOf(n) <= GATE_LANES &&",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WW2-the-stagger-on-the-bays-lane",
     "file": "src/net/gate/gateLaw.js",
-    "old": "gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;",
-    "new": "gateDayOf(n) * GATE_DAY_MINUTES + (gateLaneOf(n) + 1) * GATE_LANE_STAGGER;",
+    "old": "export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;",
+    "new": "export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + (gateLaneOf(n) + 1) * GATE_LANE_STAGGER;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WW2-the-day-read-off-the-gate",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  const today = gameDayAt(nowMs, lane);\n",
-    "new": "  const today = gateDayOf(gateAt(nowMs, lane).day);\n",
+    "old": "  const today = gameDayAt(nowMs, lane);",
+    "new": "  const today = gateDayOf(gateAt(nowMs, lane).day);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WW2-the-lanes-today-the-bays",
     "file": "src/net/gate/gateLaw.js",
-    "old": "Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
-    "new": "Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
+    "old": "export const gameDayAt = (nowMs, lane = 0) =>\n  Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
+    "new": "export const gameDayAt = (nowMs, lane = 0) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WW2-the-heralds-lane",
     "file": "src/net/gate/gateHerald.js",
-    "old": "    const n = gateNumber(d, lane);\n",
-    "new": "    const n = gateNumber(d, 0);\n",
+    "old": "    const n = gateNumber(d, lane);",
+    "new": "    const n = gateNumber(d, 0);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WW2-the-order-by-number",
     "file": "src/net/gate/gateLaw.js",
-    "old": "export const gateOrder = (a, b) => (gateTimes(a).openAt - gateTimes(b).openAt) || (a - b);",
-    "new": "export const gateOrder = (a, b) => (a - b);",
+    "old": "export const gateOrder = (a, b) => gateTimes(a).openAt - gateTimes(b).openAt || a - b;",
+    "new": "export const gateOrder = (a, b) => a - b;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WW2-a-site-word-of-the-wrong-lane",
     "file": "src/net/gate/gateHerald.js",
-    "old": "(day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day)",
-    "new": "(day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day)",
+    "old": "  isGateDay(day) &&\n  (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);",
+    "new": "  isGateDay(day) && (day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

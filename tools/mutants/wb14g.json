@@ -2,8 +2,8 @@
   {
     "name": "WB14g-the-chained-knight-s-bit",
     "file": "src/net/gate/gateBrain.js",
-    "old": "portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0))",
-    "new": "portentBits(f?.pt ?? [])",
+    "old": "export const receiptPortents = (f) => portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
+    "new": "export const receiptPortents = (f) => portentBits(f?.pt ?? []);",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB14g-the-night-s-bits-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const receiptPortents = (f) => portentBits(",
-    "new": "export const receiptPortents = (f) => 0 * portentBits(",
+    "old": "export const receiptPortents = (f) => portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
+    "new": "export const receiptPortents = (f) => 0 * portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB14g-a-p-past-every-bit",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
-    "new": "c.p >= 1 && c.x !== 'rite'",
+    "old": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'))\n    return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
+    "new": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.x !== 'rite')) return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB14g-a-p-on-the-rite-s-ember",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
-    "new": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX",
+    "old": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'))\n    return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
+    "new": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX)) return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB14g-a-p-of-0-written",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "...(p > 0 ? { p } : {})",
-    "new": "...(p !== undefined ? { p } : {})",
+    "old": "  ...(p > 0 ? { p } : {}),",
+    "new": "  ...(p !== undefined ? { p } : {}),",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]

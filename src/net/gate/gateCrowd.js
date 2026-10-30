@@ -50,7 +50,12 @@ export const gateCrowdMax = (v) => (GATE_CROWD_TIERS.includes(v) ? v : GATE_CROW
  * @param {Set<any>} [out]
  * @returns {Set<any>}
  */
-export function crowdDrawn(peers, me, { at, max = GATE_CROWD_DEFAULT, mate = () => false, was = null, hold = GATE_CROWD_HOLD_M }, out = new Set()) {
+export function crowdDrawn(
+  peers,
+  me,
+  { at, max = GATE_CROWD_DEFAULT, mate = () => false, was = null, hold = GATE_CROWD_HOLD_M },
+  out = new Set(),
+) {
   out.clear();
   if (!(max > 0) || peers.length <= max) {
     for (const p of peers) out.add(p.id);
@@ -59,7 +64,10 @@ export function crowdDrawn(peers, me, { at, max = GATE_CROWD_DEFAULT, mate = () 
   /** @type {{ id: any, d: number }[]} */
   const rest = [];
   for (const p of peers) {
-    if (mate(p.id)) { out.add(p.id); continue; }
+    if (mate(p.id)) {
+      out.add(p.id);
+      continue;
+    }
     const f = at(p);
     rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });
   }
@@ -109,7 +117,12 @@ export const crowdCutsPeer = (id) => id != null && !!_crowdGone?.has(id);
  */
 export const crowdKinHidden = (f) => {
   const owner = f?.puppet ?? f?._ownFrom ?? null;
-  return owner != null && !f._pupMine && (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) && crowdCutsPeer(owner);
+  return (
+    owner != null &&
+    !f._pupMine &&
+    (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) &&
+    crowdCutsPeer(owner)
+  );
 };
 
 /**
@@ -124,11 +137,12 @@ export const crowdKinHidden = (f) => {
  * them - INVIS-NET's law for the concealed.
  */
 export function createGateCrowd() {
-  let held = new Set(), spare = new Set();
+  let held = new Set(),
+    spare = new Set();
   const gone = new Set();
   /** @type {any[]} */
   const drawn = [];
-  _crowdGone = gone;   // RPT1026-EVENTS CROWD-KIN: the page's one crowd, read where what a player brings with them stands
+  _crowdGone = gone; // RPT1026-EVENTS CROWD-KIN: the page's one crowd, read where what a player brings with them stands
   return {
     /**
      * @template {{ id: any }} P
@@ -138,12 +152,19 @@ export function createGateCrowd() {
      */
     cut(peers, { on, me, at, max = GATE_CROWD_DEFAULT, mate = () => false }) {
       gone.clear();
-      if (!on) { held.clear(); return peers; }
+      if (!on) {
+        held.clear();
+        return peers;
+      }
       const now = crowdDrawn(peers, me, { at, max, mate, was: held }, spare);
-      spare = held; held = now;
+      spare = held;
+      held = now;
       if (held.size === peers.length) return peers;
       drawn.length = 0;
-      for (const p of peers) { if (held.has(p.id)) drawn.push(p); else gone.add(p.id); }
+      for (const p of peers) {
+        if (held.has(p.id)) drawn.push(p);
+        else gone.add(p.id);
+      }
       return drawn;
     },
     /** Whether the last cut left `id` drawn - true for every player it did not cut by the count. */

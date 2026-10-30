@@ -25,11 +25,25 @@
 //   heralds and the hub that read them from this file.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (DISCORD-GATES).
-import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, portentsLine, gateNumber, gateDayOf, gateLaneOf, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
+import {
+  gameDayAt,
+  isGateDay,
+  gateAt,
+  gateTimes,
+  gateBossOf,
+  gateModsOf,
+  gatePortentsOf,
+  portentsLine,
+  gateNumber,
+  gateDayOf,
+  gateLaneOf,
+  GATE_EVERY_DAYS,
+  GATE_COLLAPSE_MS,
+} from './gateLaw.js';
 import { GATE_TOP_MAX } from '../wire.js';
-import { readGateMods } from './gateMods.js';   // WB8c: tonight's marks in the omen's post
+import { readGateMods } from './gateMods.js'; // WB8c: tonight's marks in the omen's post
 import { RITE_OMEN_LINE } from './gateRite.js';
-import { heraldCard, heraldStamp, heraldWhen, heraldWho, heraldList } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
+import { heraldCard, heraldStamp, heraldWhen, heraldWho, heraldList } from '../herald/heraldCard.js'; // HERALD-CARDS: the one card
 
 // HERALD-CARDS: the door and the safe words, the card's own now - said again here, where the heralds and the hub read them
 export { heraldWebhook, heraldRole, heraldName, heraldStamp, heraldList } from '../herald/heraldCard.js';
@@ -57,16 +71,24 @@ export const GATE_SITE_SKEW_MS = 60_000;
  * @param {{day: number, place?: string|null, role?: string|null}} o
  */
 export function omenPost({ day, place = null, role = null }) {
-  const t = gateTimes(day), boss = gateBossOf(day), { aspect, trials } = readGateMods(gateModsOf(day));
+  const t = gateTimes(day),
+    boss = gateBossOf(day),
+    { aspect, trials } = readGateMods(gateModsOf(day));
   // WB13b: the marks in the chat's own sentence (net/gate/gateLaw.js marksLine)
   const marks = `${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;
-  const pt = portentsLine(gatePortentsOf(day));   // WB14b: and the night's portents after them, the chat's own line (bible Breach-Portents.md section 6)
+  const pt = portentsLine(gatePortentsOf(day)); // WB14b: and the night's portents after them, the chat's own line (bible Breach-Portents.md section 6)
   return heraldCard({
-    family: 'gate', moment: 'Omen', role,
+    family: 'gate',
+    moment: 'Omen',
+    role,
     title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,
     ping: `Dagon's Breach opens ${heraldStamp(t.openAt, 'R')}.`,
-    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks
-    fields: [['Opens', heraldWhen(t.openAt)], ['Seals', heraldStamp(t.sealAt, 't')], ['Where', place ? `Near ${place}` : 'Marked on your map']],
+    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks
+    fields: [
+      ['Opens', heraldWhen(t.openAt)],
+      ['Seals', heraldStamp(t.sealAt, 't')],
+      ['Where', place ? `Near ${place}` : 'Marked on your map'],
+    ],
   });
 }
 
@@ -79,10 +101,14 @@ export function omenPost({ day, place = null, role = null }) {
 export function fellPost({ day, place = null, top = [], n = 0, w = 0, cs = 0 }) {
   const boss = gateBossOf(day);
   return heraldCard({
-    family: 'gate', moment: 'Slain',
-    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`,   // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)
+    family: 'gate',
+    moment: 'Slain',
+    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)
     text: 'The breach collapses.',
-    fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Struck down by', heraldWho((Array.isArray(top) ? top : []).slice(0, GATE_TOP_MAX), n)]],
+    fields: [
+      ['Where', place ? `Near ${place}` : 'In the wilds'],
+      ['Struck down by', heraldWho((Array.isArray(top) ? top : []).slice(0, GATE_TOP_MAX), n)],
+    ],
   });
 }
 
@@ -94,9 +120,13 @@ export function fellPost({ day, place = null, top = [], n = 0, w = 0, cs = 0 }) 
  */
 export function ritePost({ place = null, by = [], n = 0 }) {
   return heraldCard({
-    family: 'gate', moment: 'Rite broken',
-    title: 'The faithful\'s rite is broken',
-    fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)]],
+    family: 'gate',
+    moment: 'Rite broken',
+    title: "The faithful's rite is broken",
+    fields: [
+      ['Where', place ? `Near ${place}` : 'In the wilds'],
+      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],
+    ],
   });
 }
 
@@ -111,8 +141,9 @@ export function ritePost({ place = null, by = [], n = 0 }) {
  */
 export function heraldOmenDue(nowMs, postedDay = -1, lane = 0) {
   const today = gameDayAt(nowMs, lane);
-  const was = Number.isSafeInteger(postedDay) && postedDay >= 0 && gateLaneOf(postedDay) === lane ? gateDayOf(postedDay) : -1;
-  const posted = was <= today ? was : -1;   // a day not yet come is no post made
+  const was =
+    Number.isSafeInteger(postedDay) && postedDay >= 0 && gateLaneOf(postedDay) === lane ? gateDayOf(postedDay) : -1;
+  const posted = was <= today ? was : -1; // a day not yet come is no post made
   for (let d = Math.max(0, today); d <= today + GATE_EVERY_DAYS; d++) {
     const n = gateNumber(d, lane);
     if (!isGateDay(n) || d <= posted) continue;
@@ -124,11 +155,14 @@ export function heraldOmenDue(nowMs, postedDay = -1, lane = 0) {
 }
 
 /** Is a day's kill still news at `nowMs` - its gate a gate, and not long collapsed? */
-export const heraldFellLive = (day, nowMs) => isGateDay(day) && nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS;
+export const heraldFellLive = (day, nowMs) =>
+  isGateDay(day) && nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS;
 
 /** Does the hub take a word of day `day`'s site at `nowMs` - the gate the clock is about, or the next one a moment
  *  before the turn? WW2: on the gate's own lane (`day` a gate's number). */
-export const gateSiteDayOk = (day, nowMs) => isGateDay(day) && (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);
+export const gateSiteDayOk = (day, nowMs) =>
+  isGateDay(day) &&
+  (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);
 
 /**
  * THE HUB'S RECORD OF WHERE THE GATE STANDS, with one account's word folded in: `{d, c}` - the day, and each place said

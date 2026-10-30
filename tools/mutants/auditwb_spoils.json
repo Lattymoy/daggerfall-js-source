@@ -195,8 +195,8 @@
   {
     "name": "AUDWB-A9-anothers-offered",
     "file": "src/net/gate/gateClaims.js",
-    "old": "        if (!mine || live(r)?.s !== mine) continue;",
-    "new": "        if (!mine) continue;",
+    "old": "        if (!mine || live(r)?.s !== mine) continue; // AUDIT WB A9: another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // AUDIT WB A9: another account's waits for its own sign-in",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -205,7 +205,7 @@
     "name": "AUDWB-A9-anothers-let-go",
     "file": "src/net/gate/gateClaims.js",
     "old": "  return answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
-    "new": "  return (answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why)) || answer?.error === 'not-yours' ? 'done' : 'keep';",
+    "new": "  return (answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why)) || answer?.error === 'not-yours'\n    ? 'done'\n    : 'keep';",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js",
       "test/net/gate/wb5b_gate_claim.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDWB-A9-one-a-day-for-everyone",
     "file": "src/net/gate/gateClaims.js",
-    "old": "return k === r || (o?.d === c.d && o?.s === c.s); })",
-    "new": "return k === r || o?.d === c.d; })",
+    "old": "          return k === r || (o?.d === c.d && o?.s === c.s);",
+    "new": "          return k === r || o?.d === c.d;",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]

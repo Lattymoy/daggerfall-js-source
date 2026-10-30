@@ -665,8 +665,8 @@
   {
     "name": "SD11c-G6-each-body-charged",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    p.bqWho.push(who);\n    return true;\n  }\n  p.rate = Math.min(GATE_HIT_HZ_MAX,",
-    "new": "    void who;\n  }\n  p.rate = Math.min(GATE_HIT_HZ_MAX,",
+    "old": "    p.bqWho.push(who);\n    return true;",
+    "new": "    void who;",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]

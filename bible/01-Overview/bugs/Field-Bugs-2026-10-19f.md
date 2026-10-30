@@ -465,7 +465,7 @@ claimed 1e9 - and every wire refuses that: the gate's `hit`, `ahit`, `xhit` and 
 (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`, 100,000), an Elite Breach's at 1e6
 (`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000), r = int(m.r, 0, 2);"`). The relay dropped the
 whole cast while the spell door popped `Math.round(dealt)`: a nine-digit number, a bar that never moved. The relay caps
-a blow anyway (`gateBrain.js:"const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity));"`, spendPurse
+a blow anyway (`gateBrain.js:"HIT_CAP_X * ref, p.bucket, f.hp"`, spendPurse
 the same, an Elite Breach's bucket grown by the Vestiges' declared factor up to 1.25) - so the number was never what a
 whole blow can land, at most ~300 at level 20 and 780 at 60. Duels had met the same and solved it at the stand-in
 (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling). Mehrunes' Razor, the other whole-body producer,

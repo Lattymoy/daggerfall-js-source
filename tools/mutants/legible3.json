@@ -52,5 +52,23 @@
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
+  },
+  {
+    "name": "LEGIBLE3-a-file-entry-read-as-a-folder",
+    "file": "tools/format.mjs",
+    "old": "(isFileEntry(d) ? [d] : readdirSync",
+    "new": "(false ? [d] : readdirSync",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-file-entry-opened-as-a-folder",
+    "file": "tools/format.mjs",
+    "old": "      if (i === parts.length && isFileEntry(path)) { lines.push(`!/${path}`); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
   }
 ]

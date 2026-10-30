@@ -56,8 +56,8 @@
   {
     "name": "AUDITWW-F2-the-admission-unbounded",
     "file": "src/net/gate/gateLaw.js",
-    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
-    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "new": "  return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITWW-F2-the-hold-unbounded",
     "file": "src/net/gate/gateLaw.js",
-    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
-    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "new": "  return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "WB13a-the-ring-back-to-30",
     "file": "src/net/gate/gateBrain.js",
-    "old": "shape: 'ring', r0: 4, r1: 16,",
-    "new": "shape: 'ring', r0: 4, r1: 30,",
+    "old": "    r1: 16,",
+    "new": "    r1: 30,",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js",
       "test/net/gate/wb4_gate_boss.test.js",

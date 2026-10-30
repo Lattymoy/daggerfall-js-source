@@ -2,8 +2,8 @@
   {
     "name": "GATE-COLLAPSE-the-sealed-hours-count-nothing",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };\n",
-    "new": "",
+    "old": "  if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "GATE-COLLAPSE-counted-to-the-seal-again",
     "file": "src/net/gate/gateLaw.js",
-    "old": "return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };",
-    "new": "return { to: 'collapse', ms: Math.max(0, t.sealAt - nowMs) };",
+    "old": "  if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };",
+    "new": "  if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.sealAt - nowMs) };",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "GATE-COLLAPSE-the-collapse-said-as-a-seal",
     "file": "src/net/gate/gateLaw.js",
-    "old": "cd.to === 'seal' ? 'seals' : 'collapses'",
-    "new": "cd.to === 'seal' ? 'seals' : 'seals'",
+    "old": "  cd ? `${cd.to === 'open' ? 'opens' : cd.to === 'seal' ? 'seals' : 'collapses'} in ${countdownText(cd.ms)}` : null;",
+    "new": "  cd ? `${cd.to === 'open' ? 'opens' : cd.to === 'seal' ? 'seals' : 'seals'} in ${countdownText(cd.ms)}` : null;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"

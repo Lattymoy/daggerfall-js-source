@@ -31,7 +31,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from '../identityToken.js';
-import { bodyMeasureValid } from '../bossBody.js';   // INT14: the count's measure, carried
+import { bodyMeasureValid } from '../bossBody.js'; // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. It names the algorithm, so the payload cannot. */
 export const RECEIPT_V = 'r1';
@@ -62,10 +62,11 @@ export function receiptValid(c) {
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!RECEIPT_EARNED.includes(c.x)) return false;
-  if (c.l !== undefined && !(Number.isSafeInteger(c.l) && c.l >= 1 && c.l <= RECEIPT_LV_MAX)) return false;   // AUDIT WBX S2: optional - a receipt minted before it carries none
-  if (c.r !== undefined && (c.r !== 1 || c.x === 'rite')) return false;   // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already
-  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
-  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite')) return false;   // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never
+  if (c.l !== undefined && !(Number.isSafeInteger(c.l) && c.l >= 1 && c.l <= RECEIPT_LV_MAX)) return false; // AUDIT WBX S2: optional - a receipt minted before it carries none
+  if (c.r !== undefined && (c.r !== 1 || c.x === 'rite')) return false; // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none
+  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'))
+    return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > RECEIPT_TTL_S) return false;
   return true;
@@ -77,7 +78,19 @@ export const RECEIPT_LV_MAX = 999;
 export const RECEIPT_PORTENTS_MAX = 7;
 /** The claims in the order the minter writes them - one byte string for one receipt.
  * @param {{d: number, b: string, s: string, c: number, x: string, l?: number, r?: number, m?: number[], p?: number}} what @param {number} nowS */
-const claimsOf = ({ d, b, s, c, x, l, r, m, p }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), ...(p > 0 ? { p } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });   // WB14g: `p`, a portent night's
+const claimsOf = ({ d, b, s, c, x, l, r, m, p }, nowS) => ({
+  d,
+  b,
+  s,
+  c,
+  x,
+  ...(l !== undefined ? { l } : {}),
+  ...(r === 1 ? { r } : {}),
+  ...(m !== undefined ? { m } : {}),
+  ...(p > 0 ? { p } : {}),
+  i: nowS,
+  e: nowS + RECEIPT_TTL_S,
+}); // WB14g: `p`, a portent night's
 
 /**
  * MINT. The relay's half. With no key the receipt goes out unsigned (`r1.<body>.`) - the seed still rides it.
@@ -115,7 +128,11 @@ export function readReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return receiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -139,10 +156,18 @@ export async function verifyReceipt(r, publicKey, { subtle, nowS, skewS = SKEW_S
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!receiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
@@ -159,5 +184,9 @@ export async function importReceiptKey(b64, { subtle }) {
   if (typeof b64 !== 'string' || !b64) return null;
   const bytes = _b64url.decode(b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
   if (!bytes) return null;
-  try { return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']); } catch { return null; }
+  try {
+    return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);
+  } catch {
+    return null;
+  }
 }

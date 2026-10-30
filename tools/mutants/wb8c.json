@@ -11,8 +11,8 @@
   {
     "name": "WB8c-the-cone-holds-the-old-body",
     "file": "src/net/gate/gateStrike.js",
-    "old": "    case 'cone': return d <= r && (d <= P.bossR ||",
-    "new": "    case 'cone': return d <= r && (d <= 1.8 ||",
+    "old": "      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
+    "new": "      return d <= r && (d <= 1.8 || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB8c-the-lane-the-old-body",
     "file": "src/net/gate/gateStrike.js",
-    "old": "segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, P.bossR); }",
-    "new": "segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, 1.8); }",
+    "old": "      return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, P.bossR);",
+    "new": "      return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, 1.8);",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB8c-the-ground-always-fire",
     "file": "src/net/gate/gateStrike.js",
-    "old": "pct: G.pct, base: G.base, el: P.el }));",
-    "new": "pct: G.pct, base: G.base, el: 'fire' }));",
+    "old": "    el: P.el,",
+    "new": "    el: 'fire',",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB8c-the-ground-the-table-s",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  const A = ATTACK_BY_ID[atk?.a], G = A ? P.atk[A.key].pool : null;",
-    "new": "  const A = ATTACK_BY_ID[atk?.a], G = A && 'pool' in A ? A.pool : null;",
+    "old": "    G = A ? P.atk[A.key].pool : null;",
+    "new": "    G = A && 'pool' in A ? A.pool : null;",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB8c-the-throw-fire-s-alone",
     "file": "src/net/gate/gateStrike.js",
-    "old": "saved: L.el != null && !isDagons(A) };",
-    "new": "saved: L.el === 'fire' && !isDagons(A) };",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el === 'fire' && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB8c-the-blow-by-the-table-s-name",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name,",
-    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: A.name,",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: A.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "WB8c-the-herald-mute-on-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "text: `${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`,",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js",
       "test/net/gate/discordgates.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "WB8c-the-feeding-forgotten",
     "file": "src/net/gate/gateLink.js",
-    "old": "vgw: same ? s.vgw ?? null : null, fed: same ? s.fed ?? null : null,",
-    "new": "vgw: same ? s.vgw ?? null : null, fed: null,",
+    "old": "      fed: same ? (s.fed ?? null) : null,",
+    "new": "      fed: null,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "WB8c-the-state-forgets-the-marks",
     "file": "src/net/gate/gateLink.js",
-    "old": "md: g.md ?? null, vg: g.vg ?? null,",
-    "new": "md: null, vg: g.vg ?? null,",
+    "old": "      md: g.md ?? null,",
+    "new": "      md: null,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "WB8c-the-feeding-unfolded",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'fed': return { ...s, hp: g.h, max: g.m, fed: { ns: g.ns, at: g.at }, heardAt: now };",
-    "new": "    case 'fed': return s;",
+    "old": "      return { ...s, hp: g.h, max: g.m, fed: { ns: g.ns, at: g.at }, heardAt: now }; // WB8b: the health his feeding left, and who fed him (AUDIT PRE-MERGE 0929 W1-3: every one of the beat's)",
+    "new": "      return s; // WB8b: the health his feeding left, and who fed him (AUDIT PRE-MERGE 0929 W1-3: every one of the beat's)",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]

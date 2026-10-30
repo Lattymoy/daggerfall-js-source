@@ -179,8 +179,8 @@
   {
     "name": "MARKS1-20-the-gate-says-no-marks",
     "file": "src/net/gate/gateClaims.js",
-    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);\n",
-    "new": "",
+    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine])\n            if (typeof line === 'string' && line) say(line);\n        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
     "tests": [
       "test/net/marks1.test.js"
     ]

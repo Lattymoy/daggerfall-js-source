@@ -2,8 +2,8 @@
   {
     "name": "WB12d-the-approach-not-kept",
     "file": "src/net/gate/gateRite.js",
-    "old": "* (90 - RITE_OFF_APPROACH_DEG) *",
-    "new": "* 90 *",
+    "old": "  const a = unit(gateRoll(day, 16)) * (90 - RITE_OFF_APPROACH_DEG) * (Math.PI / 180);",
+    "new": "  const a = unit(gateRoll(day, 16)) * 90 * (Math.PI / 180);",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB12d-the-distance-not-kept",
     "file": "src/net/gate/gateRite.js",
-    "old": "const d = RITE_MIN_M + unit(gateRoll(day, 10)) * (RITE_MAX_M - RITE_MIN_M);",
-    "new": "const d = unit(gateRoll(day, 10)) * RITE_MAX_M;",
+    "old": "  const d = RITE_MIN_M + unit(gateRoll(day, 10)) * (RITE_MAX_M - RITE_MIN_M);",
+    "new": "  const d = unit(gateRoll(day, 10)) * RITE_MAX_M;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB12d-the-frame-turned",
     "file": "src/net/gate/gateRite.js",
-    "old": "return [sx + c * lx + s * lz, sz - s * lx + c * lz];",
-    "new": "return [sx + c * lx - s * lz, sz + s * lx + c * lz];",
+    "old": "  return [sx + c * lx + s * lz, sz - s * lx + c * lz];",
+    "new": "  return [sx + c * lx - s * lz, sz + s * lx + c * lz];",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB12d-the-native-north-turned",
     "file": "src/net/gate/gateRite.js",
-    "old": "(499 - py) * PIXEL_M * RITE_UNITS_PER_M + n * RITE_UNITS_PER_M",
-    "new": "(499 - py) * PIXEL_M * RITE_UNITS_PER_M - n * RITE_UNITS_PER_M",
+    "old": "    (499 - py) * PIXEL_M * RITE_UNITS_PER_M + n * RITE_UNITS_PER_M,",
+    "new": "    (499 - py) * PIXEL_M * RITE_UNITS_PER_M - n * RITE_UNITS_PER_M,",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "WB12d-the-reach-unchecked",
     "file": "src/net/gate/gateRite.js",
-    "old": "<= RITE_REACH_M * RITE_UNITS_PER_M;",
-    "new": "<= Infinity;",
+    "old": "  return Math.hypot(x - cx, z - cz) <= RITE_REACH_M * RITE_UNITS_PER_M;",
+    "new": "  return Math.hypot(x - cx, z - cz) <= Infinity;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "WB12d-the-count-one-short",
     "file": "src/net/gate/gateRite.js",
-    "old": "(RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN + 1)",
-    "new": "(RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN)",
+    "old": "  const n = RITE_FAITHFUL_MIN + (gateRoll(day, 17) % (RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN + 1));",
+    "new": "  const n = RITE_FAITHFUL_MIN + (gateRoll(day, 17) % (RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN));",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "WB12d-the-window-to-the-seal",
     "file": "src/net/gate/gateRite.js",
-    "old": "return { from: t.omenAt, to: t.openAt };",
-    "new": "return { from: t.omenAt, to: t.sealAt };",
+    "old": "  return { from: t.omenAt, to: t.openAt };",
+    "new": "  return { from: t.omenAt, to: t.sealAt };",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "WB12d-the-circle-gone-at-the-opening",
     "file": "src/net/gate/gateRite.js",
-    "old": "const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
-    "new": "const end = t.openAt;",
+    "old": "  const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
+    "new": "  const end = t.openAt;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -78,8 +78,8 @@
   {
     "name": "WB12d-r-dropped",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), ...(p > 0",
-    "new": "...(m !== undefined ? { m } : {}), ...(p > 0",
+    "old": "  ...(r === 1 ? { r } : {}),\n  ...(m !== undefined ? { m } : {}),",
+    "new": "  ...(m !== undefined ? { m } : {}),",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -89,8 +89,8 @@
   {
     "name": "WB12d-r-on-the-rite-s-own",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "(c.r !== 1 || c.x === 'rite')",
-    "new": "(c.r !== 1)",
+    "old": "  if (c.r !== undefined && (c.r !== 1 || c.x === 'rite')) return false; // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already",
+    "new": "  if (c.r !== undefined && c.r !== 1) return false; // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "WB12d-the-omen-without-the-rite",
     "file": "src/net/gate/gateHerald.js",
-    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "text: `${marks}${pt ? ` ${pt}` : ''}`,",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
     "tests": [
       "test/net/gate/discordgates.test.js",
       "test/net/gate/wb8c_gate_detail.test.js",
@@ -683,7 +683,7 @@
   {
     "name": "WB12d-let-go",
     "file": "src/net/gate/gateClaims.js",
-    "old": "if (claims?.x === 'rite' && answer?.error === 'receipt' && answer.why === 'claims') return 'keep';",
+    "old": "  if (claims?.x === 'rite' && answer?.error === 'receipt' && answer.why === 'claims') return 'keep';",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -692,8 +692,8 @@
   {
     "name": "WB12d-said-a-breach",
     "file": "src/net/gate/gateClaims.js",
-    "old": "say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n));",
-    "new": "say(GATE_CLAIM_TEXT.recorded(n));",
+    "old": "            say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n));",
+    "new": "            say(GATE_CLAIM_TEXT.recorded(n));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "WB12d-the-verdict-blind",
     "file": "src/net/gate/gateClaims.js",
-    "old": "if (gateClaimVerdict(answer, live(r)) === 'done')",
-    "new": "if (gateClaimVerdict(answer) === 'done')",
+    "old": "        if (gateClaimVerdict(answer, live(r)) === 'done') {",
+    "new": "        if (gateClaimVerdict(answer) === 'done') {",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "AUDIT-WB12d-the-early-kill-unread",
     "file": "src/net/gate/gateRite.js",
-    "old": "const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
-    "new": "const end = t.wrathAt + GATE_COLLAPSE_MS;",
+    "old": "  const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
+    "new": "  const end = t.wrathAt + GATE_COLLAPSE_MS;",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "AUDIT-WB12d-no-grace",
     "file": "src/net/gate/gateRite.js",
-    "old": "return now >= w.from && now < w.to + RITE_GRACE_MS; };",
-    "new": "return now >= w.from && now < w.to; };",
+    "old": "  return now >= w.from && now < w.to + RITE_GRACE_MS;",
+    "new": "  return now >= w.from && now < w.to;",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
     ]
@@ -1084,8 +1084,8 @@
   {
     "name": "AUDIT-WB12d-an-r-let-go-at-one",
     "file": "src/net/gate/gateClaims.js",
-    "old": "    if (claims?.r === 1 && !Number.isSafeInteger(answer.data?.stones)) return 'keep';\n",
-    "new": "",
+    "old": "    if (claims?.r === 1 && !Number.isSafeInteger(answer.data?.stones)) return 'keep';\n    return 'done'; // counted, or counted before",
+    "new": "    return 'done'; // counted, or counted before",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -1093,8 +1093,8 @@
   {
     "name": "AUDIT-WB12d-the-guest-told-of-a-breach",
     "file": "src/net/gate/gateClaims.js",
-    "old": "say(live(r)?.x === 'rite' ? GATE_CLAIM_TEXT.guestRite : GATE_CLAIM_TEXT.guest);",
-    "new": "say(GATE_CLAIM_TEXT.guest);",
+    "old": "          say(live(r)?.x === 'rite' ? GATE_CLAIM_TEXT.guestRite : GATE_CLAIM_TEXT.guest);",
+    "new": "          say(GATE_CLAIM_TEXT.guest);",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -1626,8 +1626,8 @@
   {
     "name": "AUDIT-WB12d-the-post-s-others-uncounted",
     "file": "src/net/gate/gateHerald.js",
-    "old": "heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)",
-    "new": "heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), 0)",
+    "old": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), 0)],",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1719,8 +1719,8 @@
   {
     "name": "AUDIT-WB12d-the-side-by-the-roll",
     "file": "src/net/gate/gateRite.js",
-    "old": "const across = c * ux - s * uz >= 0 ? 1 : -1, through = s * ux + c * uz >= 0 ? 1 : -1;",
-    "new": "const across = gateRoll(day, 9) % 2 ? 1 : -1, through = 1;",
+    "old": "  const across = c * ux - s * uz >= 0 ? 1 : -1,\n    through = s * ux + c * uz >= 0 ? 1 : -1; // its two halves, in the gate's frame",
+    "new": "  const across = gateRoll(day, 9) % 2 ? 1 : -1,\n    through = 1; // its two halves, in the gate's frame",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -1728,8 +1728,8 @@
   {
     "name": "AUDIT-WB12d-across-away-from-the-heart",
     "file": "src/net/gate/gateRite.js",
-    "old": "const across = c * ux - s * uz >= 0 ? 1 : -1,",
-    "new": "const across = c * ux - s * uz >= 0 ? -1 : 1,",
+    "old": "  const across = c * ux - s * uz >= 0 ? 1 : -1,",
+    "new": "  const across = c * ux - s * uz >= 0 ? -1 : 1,",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -1737,8 +1737,8 @@
   {
     "name": "AUDIT-WB12d-through-away-from-the-heart",
     "file": "src/net/gate/gateRite.js",
-    "old": "through = s * ux + c * uz >= 0 ? 1 : -1;",
-    "new": "through = s * ux + c * uz >= 0 ? -1 : 1;",
+    "old": "    through = s * ux + c * uz >= 0 ? 1 : -1; // its two halves, in the gate's frame",
+    "new": "    through = s * ux + c * uz >= 0 ? -1 : 1; // its two halves, in the gate's frame",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -2506,8 +2506,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-place-dropped",
     "file": "src/net/gate/gateHerald.js",
-    "old": "fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Broken by'",
-    "new": "fields: [['Where', 'In the wilds'], ['Broken by'",
+    "old": "    fields: [\n      ['Where', place ? `Near ${place}` : 'In the wilds'],\n      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "    fields: [\n      ['Where', 'In the wilds'],\n      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2522,8 +2522,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-pings",
     "file": "src/net/gate/gateHerald.js",
-    "old": "family: 'gate', moment: 'Rite broken',",
-    "new": "family: 'gate', moment: 'Rite broken', role: '1555589839825670258',",
+    "old": "    title: \"The faithful's rite is broken\",",
+    "new": "    role: '1555589839825670258',\n    title: \"The faithful's rite is broken\",",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2538,8 +2538,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-by-nobody",
     "file": "src/net/gate/gateHerald.js",
-    "old": "['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)]",
-    "new": "['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n) || 'nobody']",
+    "old": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n) || 'nobody'],",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2881,8 +2881,8 @@
   {
     "name": "AUDIT-WB12d-T-law-reach-strict",
     "file": "src/net/gate/gateRite.js",
-    "old": "<= RITE_REACH_M * RITE_UNITS_PER_M;",
-    "new": "< RITE_REACH_M * RITE_UNITS_PER_M;",
+    "old": "  return Math.hypot(x - cx, z - cz) <= RITE_REACH_M * RITE_UNITS_PER_M;",
+    "new": "  return Math.hypot(x - cx, z - cz) < RITE_REACH_M * RITE_UNITS_PER_M;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -2893,8 +2893,8 @@
   {
     "name": "AUDIT-WB12d-T-law-one-career-a-day",
     "file": "src/net/gate/gateRite.js",
-    "old": "RITE_CAREERS[gateHash(GATE_SALT, day, 18, i) % RITE_CAREERS.length]",
-    "new": "RITE_CAREERS[gateHash(GATE_SALT, day, 18, 0) % RITE_CAREERS.length]",
+    "old": "    out.push({ career: RITE_CAREERS[gateHash(GATE_SALT, day, 18, i) % RITE_CAREERS.length], summoner: false });",
+    "new": "    out.push({ career: RITE_CAREERS[gateHash(GATE_SALT, day, 18, 0) % RITE_CAREERS.length], summoner: false });",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -3084,8 +3084,8 @@
   {
     "name": "AUDIT-WB12d-the-post-s-rite-after-the-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "text: `${marks} ${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`,",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${marks} ${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/discordgates.test.js",

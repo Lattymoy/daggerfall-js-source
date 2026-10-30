@@ -2,8 +2,8 @@
   {
     "name": "WB13f-the-cap-gone",
     "file": "src/net/gate/gateBrain.js",
-    "old": "return fresh.length ? fresh : run >= REPEAT_MAX ? [] : out;",
-    "new": "return fresh.length ? fresh : out;",
+    "old": "  return fresh.length ? fresh : run >= REPEAT_MAX ? [] : out;",
+    "new": "  return fresh.length ? fresh : out;",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB13f-the-cap-at-one",
     "file": "src/net/gate/gateBrain.js",
-    "old": "run >= REPEAT_MAX ? [] : out;",
-    "new": "run >= REPEAT_MAX - 1 ? [] : out;",
+    "old": "  return fresh.length ? fresh : run >= REPEAT_MAX ? [] : out;",
+    "new": "  return fresh.length ? fresh : run >= REPEAT_MAX - 1 ? [] : out;",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB13f-the-run-never-counted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "f.runA = f.atk.a === f.lastA ? (f.runA ?? 0) + 1 : 1;",
-    "new": "f.runA = 1;",
+    "old": "    f.runA = f.atk.a === f.lastA ? (f.runA ?? 0) + 1 : 1; // WB13f",
+    "new": "    f.runA = 1; // WB13f",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB13f-the-run-never-passed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
-    "new": "attacksFor(f.phase, gap, near, f.lastA, P, 1, {",
+    "old": "      const can = attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
+    "new": "      const can = attacksFor(f.phase, gap, near, f.lastA, P, 1, {",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB13f-the-walk-in-without-end",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      if (now - (f.freeAt ?? 0) >= REPEAT_WALK_MS) f.runA = 0;   // WB13f: a walk-in that long breaks the run\n",
-    "new": "",
+    "old": "      if (now - (f.freeAt ?? 0) >= REPEAT_WALK_MS) f.runA = 0; // WB13f: a walk-in that long breaks the run\n      const can = attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
+    "new": "      const can = attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB13f-the-walk-in-never-timed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    f.freeAt = now;\n",
-    "new": "",
+    "old": "    f.freeAt = now;\n    f.atk = null;",
+    "new": "    f.atk = null;",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB13f-the-old-slam",
     "file": "src/net/gate/gateBrain.js",
-    "old": "name: 'Ground Slam', windup: 1600, active: 200, recover: 1700,",
-    "new": "name: 'Ground Slam', windup: 1600, active: 200, recover: 1100,",
+    "old": "    recover: 1700,",
+    "new": "    recover: 1100,",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB13f-the-old-leap",
     "file": "src/net/gate/gateBrain.js",
-    "old": "name: 'Crushing Leap', windup: 1500, active: 300, recover: 1500,",
-    "new": "name: 'Crushing Leap', windup: 1500, active: 300, recover: 900,",
+    "old": "    recover: 1500,",
+    "new": "    recover: 900,",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB13f-the-old-nova",
     "file": "src/net/gate/gateBrain.js",
-    "old": "name: 'Flame Nova', windup: 2200, active: 300, recover: 1900,",
-    "new": "name: 'Flame Nova', windup: 2200, active: 300, recover: 1300,",
+    "old": "    recover: 1900,",
+    "new": "    recover: 1300,",
     "tests": [
       "test/net/gate/wb13f_rhythm.test.js"
     ]

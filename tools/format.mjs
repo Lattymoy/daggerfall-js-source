@@ -21,10 +21,13 @@ export const formattedFolders = (root = ROOT) => JSON.parse(readFileSync(join(ro
 
 /** Every .js/.mjs file directly in a listed folder, repo-relative and sorted - a subfolder is listed on its own. */
 export function formattedFiles(root = ROOT) {
-  return formattedFolders(root).flatMap((d) => readdirSync(join(root, d), { withFileTypes: true })
+  return formattedFolders(root).flatMap((d) => (isFileEntry(d) ? [d] : readdirSync(join(root, d), { withFileTypes: true })
     .filter((e) => e.isFile() && /\.m?js$/.test(e.name))
-    .map((e) => `${d}/${e.name}`)).sort();
+    .map((e) => `${d}/${e.name}`))).sort();
 }
+
+/** An entry that names one file - a folder whose other files are not formatted yet lists its formatted ones. */
+export const isFileEntry = (entry) => /\.m?js$/.test(entry);
 
 /** .prettierignore's text: ignore everything, then open each listed folder's own files (its subfolders shut unless
  *  listed) and the parents on its way (their own contents shut). */
@@ -37,6 +40,7 @@ export function ignoreText(folders) {
       const path = parts.slice(0, i).join('/');
       if (opened.has(path)) continue;
       opened.add(path);
+      if (i === parts.length && isFileEntry(path)) { lines.push(`!/${path}`); continue; }
       lines.push(`!/${path}/`);
       lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);
     }

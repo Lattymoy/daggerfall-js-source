@@ -2,8 +2,8 @@
   {
     "name": "WB14b-every-carrier-a-portent",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  if (((n % 2) + 2) % 2 === 1) return null;   // every other carrier\n",
-    "new": "\n",
+    "old": "  if (((n % 2) + 2) % 2 === 1) return null; // every other carrier",
+    "new": "",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB14b-the-Dire-Breach-without-its-line",
     "file": "src/net/gate/gateLaw.js",
-    "old": "return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');",
-    "new": "return lines.join(' ');",
+    "old": "  return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');",
+    "new": "  return lines.join(' ');",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB14b-the-post-without-them",
     "file": "src/net/gate/gateHerald.js",
-    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "text: `${RITE_OMEN_LINE} ${marks}`,",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${RITE_OMEN_LINE} ${marks}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB14b-the-Vanguard-arriving-in-his-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "root: has('vanguard') ? FLOOR.bridgehead : FLOOR.first,",
-    "new": "root: FLOOR.first,",
+    "old": "    root: has('vanguard') ? FLOOR.bridgehead : FLOOR.first,",
+    "new": "    root: FLOOR.first,",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB14b-the-Sundering-keeping-the-third-walkway",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (has('sunder')) walks.push(WALKWAY.rift); else walks.push(WALKWAY.third);\n",
-    "new": "  walks.push(WALKWAY.third);\n",
+    "old": "  if (has('sunder')) walks.push(WALKWAY.rift);\n  else walks.push(WALKWAY.third);",
+    "new": "  walks.push(WALKWAY.third);",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB14b-the-Pen-on-no-night",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (has('captive')) { floors.push(FLOOR.pen); walks.push(WALKWAY.pen); }\n",
-    "new": "\n",
+    "old": "  if (has('captive')) {\n    floors.push(FLOOR.pen);\n    walks.push(WALKWAY.pen);\n  }",
+    "new": "",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB14b-a-hole-said-as-nothing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(_, i) => (Number.isFinite(a[i]) ? a[i] : null));",
-    "new": "(_, i) => (Number.isFinite(a[i]) ? a[i] : 0));",
+    "old": "  const out = Array.from({ length: Math.min(a.length, WALKS.length) }, (_, i) => (Number.isFinite(a[i]) ? a[i] : null)); // a hole too (a sparse array's)",
+    "new": "  const out = Array.from({ length: Math.min(a.length, WALKS.length) }, (_, i) => (Number.isFinite(a[i]) ? a[i] : 0)); // a hole too (a sparse array's)",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "WB14b-the-state-silent-on-them",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(f.pt ? { pt: f.pt } : {}),   // WB14b",
-    "new": "    ...({}),   // WB14b",
+    "old": "    ...(f.pt ? { pt: f.pt } : {}), // WB14b: the night's portents - none said, a plain night",
+    "new": "    ...{}, // WB14b: the night's portents - none said, a plain night",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-a-pair-the-table-never-makes",
     "file": "src/net/gate/gateMods.js",
-    "old": "if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;",
-    "new": "void 0;",
+    "old": "  if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;",
+    "new": "  void 0;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-an-unknown-word",
     "file": "src/net/gate/gateMods.js",
-    "old": "if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length) return undefined;",
-    "new": "if (new Set(pt).size !== pt.length) return undefined;",
+    "old": "  if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length)\n    return undefined;",
+    "new": "  if (new Set(pt).size !== pt.length) return undefined;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-tithe-every-night",
     "file": "src/net/gate/gateLaw.js",
-    "old": "gateRoll(day, 21) % TITHE_ONE_IN === 0 ?",
-    "new": "gateRoll(day, 21) % 1 === 0 ?",
+    "old": "  isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0",
+    "new": "  isGateDay(day) && gateRoll(day, 21) % 1 === 0",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-floor-open-before-its-walkway-is-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1) continue;",
-    "new": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0) continue;",
+    "old": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1)",
+    "new": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0)",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-a-walkway-from-a-floor-not-yet-reached",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!(f > 0) || !live.includes(w.a)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
-    "new": "    if (!(f > 0)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
+    "old": "      f = walkFormed(xa, k, now);\n    if (!(f > 0) || !live.includes(w.a)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz,",
+    "new": "      f = walkFormed(xa, k, now);\n    if (!(f > 0)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz,",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],

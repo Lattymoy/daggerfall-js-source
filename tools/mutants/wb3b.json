@@ -119,8 +119,8 @@
   {
     "name": "WB3b-a-word-before-the-state-starts-a-fight",
     "file": "src/net/gate/gateLink.js",
-    "old": "  if (s.day === null) return s;   // nothing but a whole state starts a fight",
-    "new": "  if (s.day === undefined) return s;   // nothing but a whole state starts a fight",
+    "old": "  if (s.day === null) return s; // nothing but a whole state starts a fight",
+    "new": "  if (s.day === undefined) return s; // nothing but a whole state starts a fight",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB3b-the-attack-does-not-supersede",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'atk': return { ...s, atk: { i: g.i,",
-    "new": "    case 'atk': return s.atk ? s : { ...s, atk: { i: g.i,",
+    "old": "      return {\n        ...s,\n        atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) },\n        move: null,\n        x: g.x,\n        z: g.z,\n        yaw: g.yw,\n        heardAt: now,\n        cx: s.cx && s.cx.i === g.i ? s.cx : null,\n        ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),\n        ...crossLaid(s, g),\n      }; // WB14a: its marked, by peer id",
+    "new": "      return s.atk\n        ? s\n        : {\n            ...s,\n            atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) },\n            move: null,\n            x: g.x,\n            z: g.z,\n            yaw: g.yw,\n            heardAt: now,\n            cx: s.cx && s.cx.i === g.i ? s.cx : null,\n            ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),\n            ...crossLaid(s, g),\n          }; // WB14a: its marked, by peer id",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WB3b-the-walk-past-its-goal",
     "file": "src/net/gate/gateLink.js",
-    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);\n  return [",
-    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;\n  return [",
+    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);",
+    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]

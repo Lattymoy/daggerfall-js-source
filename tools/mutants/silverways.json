@@ -261,8 +261,8 @@
   {
     "name": "SILVER-WAYS-cli-gate-lines-one",
     "file": "src/net/gate/gateClaims.js",
-    "old": "for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);",
-    "new": "if (typeof marksLine === 'string' && marksLine) say(marksLine);",
+    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine])\n            if (typeof line === 'string' && line) say(line);",
+    "new": "          if (typeof marksLine === 'string' && marksLine) say(marksLine);",
     "tests": [
       "test/net/silverways_client.test.js"
     ]

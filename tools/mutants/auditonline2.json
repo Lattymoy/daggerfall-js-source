@@ -11,8 +11,8 @@
   {
     "name": "F2-gate-unheard-read-expired",
     "file": "src/net/gate/gateClaims.js",
-    "old": "c && c.signed && (t == null || c.e > t)",
-    "new": "c && c.signed && (t != null && c.e > t)",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && c.signed && t != null && c.e > t ? c : null;",
     "tests": [
       "test/net/auditonline2.test.js"
     ]

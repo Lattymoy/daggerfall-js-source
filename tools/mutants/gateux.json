@@ -32,8 +32,8 @@
   {
     "name": "GATEUX-hits-uncounted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "p.hits = (p.hits ?? 0) + 1; p.best",
-    "new": "p.best",
+    "old": "    p.hits = (p.hits ?? 0) + 1;\n    p.best = Math.max(p.best ?? 0, got);",
+    "new": "    p.best = Math.max(p.best ?? 0, got);",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "GATEUX-best-summed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "p.best = Math.max(p.best ?? 0, got);",
-    "new": "p.best = (p.best ?? 0) + got;",
+    "old": "    p.best = Math.max(p.best ?? 0, got);",
+    "new": "    p.best = (p.best ?? 0) + got;",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "GATEUX-falls-every-beat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (b.dead && !p.down) p.falls",
-    "new": "if (b.dead) p.falls",
+    "old": "    if (b.dead && !p.down) p.falls = (p.falls ?? 0) + 1;",
+    "new": "    if (b.dead) p.falls = (p.falls ?? 0) + 1;",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "GATEUX-crystals-not-apart",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.cxd = (p.cxd ?? 0) + got;   // GATE-UX: the chart says the crystals apart\n",
-    "new": "",
+    "old": "  p.cxd = (p.cxd ?? 0) + got; // GATE-UX: the chart says the crystals apart\n  q.h -= got;",
+    "new": "  q.h -= got;",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -68,7 +68,7 @@
   {
     "name": "GATEUX-chart-unranked",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    .sort((a, b) => b.dealt - a.dealt || a.joinedAt - b.joinedAt).slice(0, DAMAGE_CHART_MAX)",
+    "old": "    .sort((a, b) => b.dealt - a.dealt || a.joinedAt - b.joinedAt)\n    .slice(0, DAMAGE_CHART_MAX)",
     "new": "    .slice(0, DAMAGE_CHART_MAX)",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
@@ -77,8 +77,8 @@
   {
     "name": "GATEUX-idle-listed",
     "file": "src/net/gate/gateBrain.js",
-    "old": ".filter((q) => q.dealt > 0 || q.stoodMs > 0)",
-    "new": ".filter(() => true)",
+    "old": "    .filter((q) => q.dealt > 0 || q.stoodMs > 0)",
+    "new": "    .filter(() => true)",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "GATEUX-chart-uncapped",
     "file": "src/net/gate/gateBrain.js",
-    "old": ").slice(0, DAMAGE_CHART_MAX)\n",
-    "new": ")\n",
+    "old": "    .slice(0, DAMAGE_CHART_MAX)\n    .map((q) => ({",
+    "new": "    .map((q) => ({",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "GATEUX-state-without-chart",
     "file": "src/net/gate/gateBrain.js",
-    "old": "n: f.fell.n, ...(f.fell.dm ? { dm: f.fell.dm } : {}) } : null,",
-    "new": "n: f.fell.n } : null,",
+    "old": "    fell: f.fell ? { at: f.fell.at, top: f.fell.top, n: f.fell.n, ...(f.fell.dm ? { dm: f.fell.dm } : {}) } : null,",
+    "new": "    fell: f.fell ? { at: f.fell.at, top: f.fell.top, n: f.fell.n } : null,",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "GATEUX-fall-without-chart",
     "file": "src/net/gate/gateBrain.js",
-    "old": "n: Object.keys(f.players).length, dm: damageChart(f) };",
-    "new": "n: Object.keys(f.players).length };",
+    "old": "    f.fell = { at: now, top: topDealers(f, 3), n: Object.keys(f.players).length, dm: damageChart(f) }; // GATE-UX: and every fighter's part, ranked",
+    "new": "    f.fell = { at: now, top: topDealers(f, 3), n: Object.keys(f.players).length }; // GATE-UX: and every fighter's part, ranked",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "GATEUX-echo-first-keeps-nothing",
     "file": "src/net/gate/gateLink.js",
-    "old": "if (s.fell) return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };",
-    "new": "if (s.fell) return { ...s, heardAt: now };",
+    "old": "      if (s.fell)\n        return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };",
+    "new": "      if (s.fell) return { ...s, heardAt: now };",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "GATEUX-fold-drops-chart",
     "file": "src/net/gate/gateLink.js",
-    "old": "fell: { at: g.at, top: g.top, n: g.n, ...(g.dm ? { dm: g.dm } : {}) },",
-    "new": "fell: { at: g.at, top: g.top, n: g.n },",
+    "old": "        fell: { at: g.at, top: g.top, n: g.n, ...(g.dm ? { dm: g.dm } : {}) },",
+    "new": "        fell: { at: g.at, top: g.top, n: g.n },",
     "tests": [
       "test/ui/gate/gateux_gate.test.js"
     ]

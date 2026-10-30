@@ -29,8 +29,8 @@
   {
     "name": "WB13e-the-opening-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n",
-    "new": "",
+    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}), // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}), // WB14c: the Vanguard's stage and its waves risen",
+    "new": "    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}), // WB14c: the Vanguard's stage and its waves risen",
     "tests": [
       "test/net/gate/wb13e_beats.test.js",
       "test/net/gate/wb3_gate_room.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "WB13e-the-opening-unfolded",
     "file": "src/net/gate/gateLink.js",
-    "old": "openUntil: g.op ?? 0,",
-    "new": "openUntil: 0,",
+    "old": "      openUntil: g.op ?? 0, // WB13e: the opening's end - his wake (0: an older relay's word, and no wake)",
+    "new": "      openUntil: 0, // WB13e: the opening's end - his wake (0: an older relay's word, and no wake)",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "BROKER-CAGE-a-faithful-short-counted-all",
     "file": "src/net/gate/gateRite.js",
-    "old": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n)) return false;",
-    "new": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n - 1)) return false;",
+    "old": "  for (const [career, n] of _roster) if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n)) return false;",
+    "new": "  for (const [career, n] of _roster) if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n - 1)) return false;",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BROKER-CAGE-the-summoner-not-asked",
     "file": "src/net/gate/gateRite.js",
-    "old": "  if (!fell || !slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
-    "new": "  if (!slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
+    "old": "  if (!fell || !slain || typeof slain !== 'object') return false;",
+    "new": "  if (!slain || typeof slain !== 'object') return false;",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BROKER-CAGE-a-career-missed",
     "file": "src/net/gate/gateRite.js",
-    "old": "for (const m of riteFaithfulOf(day)) if (!m.summoner) want.set(",
-    "new": "for (const m of riteFaithfulOf(day).slice(0, 2)) if (!m.summoner) want.set(",
+    "old": "    for (const m of riteFaithfulOf(day)) if (!m.summoner) want.set(m.career, (want.get(m.career) ?? 0) + 1);",
+    "new": "    for (const m of riteFaithfulOf(day).slice(0, 2)) if (!m.summoner) want.set(m.career, (want.get(m.career) ?? 0) + 1);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BROKER-CAGE-midnight-kept",
     "file": "src/net/gate/gateRite.js",
-    "old": "now >= t.omenAt && now < t.wrathAt; };",
-    "new": "now >= t.omenAt && now < t.wrathAt + GATE_COLLAPSE_MS; };",
+    "old": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt;",
+    "new": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt + GATE_COLLAPSE_MS;",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "BROKER-CAGE-the-omen-not-waited-for",
     "file": "src/net/gate/gateRite.js",
-    "old": "isGateDay(day) && now >= t.omenAt && now < t.wrathAt; };",
-    "new": "isGateDay(day) && now < t.wrathAt; };",
+    "old": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt;",
+    "new": "  return isGateDay(day) && now < t.wrathAt;",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
