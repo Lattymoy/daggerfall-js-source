@@ -294,7 +294,7 @@
   {
     "name": "HANDWRAPS-rig",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setHandGlow?.(wrapsMeshGlow());",
+    "old": "        fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));",
     "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
@@ -304,7 +304,7 @@
   {
     "name": "HANDWRAPS-peer",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);",
+    "old": "    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
     "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
@@ -514,8 +514,8 @@
   {
     "name": "HANDWRAPS-peer-switch",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);",
-    "new": "b.rig.setHandGlow?.(hands ? peerWrapsGlow(look) : null);",
+    "old": "b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
+    "new": "b.rig.setHandGlow?.(hands ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

@@ -7,24 +7,25 @@
 import { parseStaffCommand, STAFF_HELP_LINES } from '../net/staffCommands.js';
 import { worldPixelOk } from '../net/wire.js';
 import { BAY_THEATRE } from '../world/worldWide/worldGrid.js';
+import { GLOW_HELP_LINE, parseGlowCommand } from '../systems/staffGlow.js';   // GLOW-SET: /glow is the client's alone
 
 const TP_XY = /^\/tp\s+(-?\d+)\s+(-?\d+)$/i;
 /** The Bay's bound in the relay's own help line (no new words: the line is staffCommands.js's, translated with it). */
 const BAY_BOUND = / \(x 0-999, y 0-499\)$/;
 
-/** A staff line as parseStaffCommand reads it, but `/tp <x> <y>` a pixel of the world's grid (worldPixelOk), either
+/** A staff line as parseStaffCommand reads it (and GLOW-SET's /glow), but `/tp <x> <y>` a pixel of the world's grid (worldPixelOk), either
  *  sign - one off it answered as a bare /tp is, with the command's usage. @param {string} text
  *  @param {{ god?: boolean, fly?: boolean }} [now] */
 export function parseStaffLine(text, now = {}) {
   const m = TP_XY.exec(String(text ?? '').trim());
-  if (!m) return parseStaffCommand(text, now);
+  if (!m) return parseGlowCommand(text) ?? parseStaffCommand(text, now);   // GLOW-SET
   const px = Number(m[1]), py = Number(m[2]);
   if (!worldPixelOk(px) || !worldPixelOk(py)) return parseStaffCommand('/tp');
   return { cmd: 'tp', px, py };
 }
 
-/** The lines `/staff` shows, the pixel's line without the Bay's bound. */
-export const staffHelpLines = () => STAFF_HELP_LINES.map((l) => l.replace(BAY_BOUND, ''));
+/** The lines `/staff` shows, the pixel's line without the Bay's bound, and GLOW-SET's /glow. */
+export const staffHelpLines = () => [...STAFF_HELP_LINES.map((l) => l.replace(BAY_BOUND, '')), GLOW_HELP_LINE];
 
 /**
  * THE PLACES `/tp <place>` searches (net/staffCommands.js findPlace), in the order it always read them - the location

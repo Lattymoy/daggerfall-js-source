@@ -614,6 +614,7 @@ import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the ro
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
 import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
 import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, dragonWireCast, drawPeerCast, dragonRideLook } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line; DRAGON-SHOTS: the cannons on the wire, and a peer's drawn
+import { runGlowCommand } from '../systems/staffGlow.js';   // GLOW-SET: /glow, a staff's pick of weapon glow
 import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's look in the pose
 import { dragonMounted } from '../player/dragonRide.js';   // DRAGON6: a journey begun on the dragon is flown
 import { dragonFlightPlan } from '../systems/dragon/dragonJourney.js';   // DRAGON6: its plan, straight
@@ -19751,7 +19752,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
-    if (c.cmd === 'dragon') return staffDragon.command(c, say);   // DRAGON-RIDE
+    if (c.cmd === 'dragon' || c.cmd === 'glow') return c.cmd === 'glow' ? say(runGlowCommand(playerEntity, c, saveSoon.changed)) : staffDragon.command(c, say);   // DRAGON-RIDE; GLOW-SET: the weapon or wraps in my hands (one line: HOST-SPLIT)
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
