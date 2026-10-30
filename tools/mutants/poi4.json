@@ -56,7 +56,7 @@
   {
     "name": "POI4-the-sparse-values-unread",
     "file": "src/poi/gltfImport.js",
-    "old": "        for (let k = 0; k < size; k++) out[target * size + k] = conv(readV((val.byteOffset ?? 0) + (s * size + k) * comp.size));",
+    "old": "        for (let k = 0; k < size; k++)\n          out[target * size + k] = conv(readV((val.byteOffset ?? 0) + (s * size + k) * comp.size));",
     "new": "        for (let k = 0; k < size; k++) out[target * size + k] = 0;",
     "tests": [
       "test/poi/poi4_gltf.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "POI4-the-flat-normals-unflipped",
     "file": "src/poi/gltfImport.js",
-    "old": "            const e0 = at(t), e1 = at(f ? t + 2 : t + 1), e2 = at(f ? t + 1 : t + 2);",
-    "new": "            const e0 = at(t), e1 = at(t + 1), e2 = at(t + 2);",
+    "old": "              e1 = at(f ? t + 2 : t + 1),\n              e2 = at(f ? t + 1 : t + 2);",
+    "new": "              e1 = at(t + 1),\n              e2 = at(t + 2);",
     "tests": [
       "test/poi/poi4_gltf.test.js"
     ]

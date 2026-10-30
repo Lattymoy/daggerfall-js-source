@@ -83,8 +83,8 @@
   {
     "name": "POI3B-a-refused-part-uploaded",
     "file": "src/poi/poiImport.js",
-    "old": "if (code) { refused.push({ name: p.name, code }); continue; }",
-    "new": "if (code) { refused.push({ name: p.name, code }); }",
+    "old": "      continue;\n    }",
+    "new": "    }",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]

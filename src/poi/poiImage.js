@@ -24,7 +24,11 @@ export function poiImageMetaOf(input) {
   const at = (/** @type {number} */ i, /** @type {number[]} */ sig) => sig.every((v, k) => b[i + k] === v);
   /** @type {{ format: 'png' | 'jpeg' | 'webp', w: number, h: number } | null} */
   let got = null;
-  if (b.byteLength >= 33 && at(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) && at(12, [0x49, 0x48, 0x44, 0x52])) {
+  if (
+    b.byteLength >= 33 &&
+    at(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) &&
+    at(12, [0x49, 0x48, 0x44, 0x52])
+  ) {
     got = { format: 'png', w: dv.getUint32(16), h: dv.getUint32(20) };
   } else if (b.byteLength >= 4 && b[0] === 0xff && b[1] === 0xd8) {
     // walk the markers to the first SOFn (C0-CF, but C4 DHT, C8 JPG and CC DAC are not frames)
@@ -32,12 +36,21 @@ export function poiImageMetaOf(input) {
     while (i + 9 < b.byteLength) {
       if (b[i] !== 0xff) return { error: 'jpeg' };
       const m = b[i + 1];
-      if (m === 0xff) { i++; continue; }
-      if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { i += 2; continue; }
+      if (m === 0xff) {
+        i++;
+        continue;
+      }
+      if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) {
+        i += 2;
+        continue;
+      }
       const len = dv.getUint16(i + 2);
       if (len < 2) return { error: 'jpeg' };
-      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) { got = { format: 'jpeg', w: dv.getUint16(i + 7), h: dv.getUint16(i + 5) }; break; }
-      if (m === 0xda || m === 0xd9) return { error: 'jpeg' };   // scan data or the end before any frame
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+        got = { format: 'jpeg', w: dv.getUint16(i + 7), h: dv.getUint16(i + 5) };
+        break;
+      }
+      if (m === 0xda || m === 0xd9) return { error: 'jpeg' }; // scan data or the end before any frame
       i += 2 + len;
     }
     if (!got) return { error: 'jpeg' };
@@ -51,7 +64,8 @@ export function poiImageMetaOf(input) {
       const bits = dv.getUint32(21, true);
       got = { format: 'webp', w: (bits & 0x3fff) + 1, h: ((bits >>> 14) & 0x3fff) + 1 };
     } else if (chunk === 'VP8X') {
-      const w = (b[24] | (b[25] << 8) | (b[26] << 16)) + 1, h = (b[27] | (b[28] << 8) | (b[29] << 16)) + 1;
+      const w = (b[24] | (b[25] << 8) | (b[26] << 16)) + 1,
+        h = (b[27] | (b[28] << 8) | (b[29] << 16)) + 1;
       got = { format: 'webp', w, h };
     } else return { error: 'webp' };
   } else return { error: 'not-an-image' };

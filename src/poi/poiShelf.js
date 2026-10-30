@@ -30,7 +30,15 @@ import { renderThumb, encodePng } from './poiThumb.js';
 export function shelfEntryOf({ id, name, about = '', tags = [], parts, lights = [] }) {
   const scratch = { parts: [] };
   for (const p of parts) {
-    const part = newPart(scratch, { mesh: p.mesh, submeshes: p.submeshes ?? p.materials?.length ?? 1, name: p.name ?? '', materials: p.materials ?? null, t: p.t ?? [0, 0, 0], r: p.r, s: p.s });
+    const part = newPart(scratch, {
+      mesh: p.mesh,
+      submeshes: p.submeshes ?? p.materials?.length ?? 1,
+      name: p.name ?? '',
+      materials: p.materials ?? null,
+      t: p.t ?? [0, 0, 0],
+      r: p.r,
+      s: p.s,
+    });
     if (p.collide) part.collide = p.collide;
     if (typeof p.shadow === 'boolean') part.shadow = p.shadow;
     scratch.parts.push(part);
@@ -38,8 +46,14 @@ export function shelfEntryOf({ id, name, about = '', tags = [], parts, lights = 
   const words = String(about ?? '').trim();
   const tagList = [...new Set(tags.map((tg) => lawName(tg, POI_LIMITS.tag)).filter(Boolean))].slice(0, POI_LIMITS.tags);
   return {
-    v: POI_DOC_VERSION, id, name: lawName(name), ...(words ? { about: words.slice(0, POI_LIMITS.about) } : {}), ...(tagList.length ? { tags: tagList } : {}),
-    parts: scratch.parts, lights: lights.map((l) => structuredClone(l)), thumb: null,
+    v: POI_DOC_VERSION,
+    id,
+    name: lawName(name),
+    ...(words ? { about: words.slice(0, POI_LIMITS.about) } : {}),
+    ...(tagList.length ? { tags: tagList } : {}),
+    parts: scratch.parts,
+    lights: lights.map((l) => structuredClone(l)),
+    thumb: null,
   };
 }
 
@@ -51,7 +65,16 @@ export function shelfEntryOf({ id, name, about = '', tags = [], parts, lights = 
 export async function shelfThumb(entry, { meshOf, pictureOf }) {
   const pieces = [];
   const pictures = new Map();
-  const picture = (sha) => { if (!pictures.has(sha)) pictures.set(sha, Promise.resolve().then(() => pictureOf(sha)).catch(() => null)); return pictures.get(sha); };
+  const picture = (sha) => {
+    if (!pictures.has(sha))
+      pictures.set(
+        sha,
+        Promise.resolve()
+          .then(() => pictureOf(sha))
+          .catch(() => null),
+      );
+    return pictures.get(sha);
+  };
   for (const p of entry.parts) {
     const mesh = await meshOf(p.mesh);
     if (!mesh) continue;
@@ -74,7 +97,11 @@ export async function putOnShelf(entry, { meshOf, pictureOf, putAsset, shelve })
   const own = poiShelfProblems(item);
   if (own.length) return { ok: false, error: 'poi-doc', problems: own };
   let png = null;
-  try { png = await shelfThumb(item, { meshOf, pictureOf }); } catch { png = null; }
+  try {
+    png = await shelfThumb(item, { meshOf, pictureOf });
+  } catch {
+    png = null;
+  }
   if (png) {
     const r = await putAsset(png, 'texture');
     if (!r.ok) return { ok: false, error: r.error };

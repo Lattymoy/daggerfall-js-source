@@ -28,17 +28,29 @@ import { poiImageMetaOf } from './poiImage.js';
 import { poiSha256 } from './poiService.js';
 
 /** A name a file may carry: letters, digits, spaces, dashes and underscores, never empty. @param {string} name */
-export const fileNameOf = (name, ext, fallback = 'poi') => `${String(name ?? '').replace(/[^\p{L}\p{N} _-]+/gu, '').trim().replace(/\s+/g, '-').slice(0, 64) || fallback}.${ext}`;
+export const fileNameOf = (name, ext, fallback = 'poi') =>
+  `${
+    String(name ?? '')
+      .replace(/[^\p{L}\p{N} _-]+/gu, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .slice(0, 64) || fallback
+  }.${ext}`;
 
 /**
  * A model as a .glb: `{ ok: true, bytes }` or `{ ok: false, code: 'export-fetch', sha }`.
  * @param {{ name: string, parts: any[], lights?: any[] }} model @param {(sha: string) => Promise<Uint8Array>} fetchAsset
  */
 export async function exportModel({ name, parts, lights = [] }, fetchAsset) {
-  const pieces = [], pictures = new Map();
+  const pieces = [],
+    pictures = new Map();
   for (const p of parts) {
     let bytes;
-    try { bytes = await fetchAsset(p.mesh); } catch { return { ok: false, code: 'export-fetch', sha: p.mesh }; }
+    try {
+      bytes = await fetchAsset(p.mesh);
+    } catch {
+      return { ok: false, code: 'export-fetch', sha: p.mesh };
+    }
     const d = decodePoiMesh(bytes);
     if ('error' in d) return { ok: false, code: 'export-fetch', sha: p.mesh };
     pieces.push({ ...p, mesh: d.mesh });
@@ -46,7 +58,11 @@ export async function exportModel({ name, parts, lights = [] }, fetchAsset) {
       for (const sha of [m.texture, m.emissive]) {
         if (!sha || pictures.has(sha)) continue;
         let pic;
-        try { pic = await fetchAsset(sha); } catch { return { ok: false, code: 'export-fetch', sha }; }
+        try {
+          pic = await fetchAsset(sha);
+        } catch {
+          return { ok: false, code: 'export-fetch', sha };
+        }
         const im = poiImageMetaOf(pic);
         if ('error' in im) return { ok: false, code: 'export-fetch', sha };
         pictures.set(sha, { bytes: pic, format: im.format });
@@ -72,7 +88,11 @@ export async function exportPack({ pois = [], shelf = [] }, fetchAsset) {
     const { meshes, textures } = poiAssetsOf(d);
     for (const sha of [...meshes, ...textures]) {
       if (assets.has(sha)) continue;
-      try { assets.set(sha, await fetchAsset(sha)); } catch { return { ok: false, code: 'export-fetch', sha }; }
+      try {
+        assets.set(sha, await fetchAsset(sha));
+      } catch {
+        return { ok: false, code: 'export-fetch', sha };
+      }
     }
   }
   return writePack({ pois, shelf, assets });
@@ -80,13 +100,22 @@ export async function exportPack({ pois = [], shelf = [] }, fetchAsset) {
 
 /** An entry's content as one text: every object's keys in order, its id left out - two entries alike, one text. */
 const contentOf = (entry) => JSON.stringify(inOrder({ ...entry, id: null }));
-const inOrder = (v) => (Array.isArray(v) ? v.map(inOrder)
-  : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, inOrder(v[k])])) : v);
+const inOrder = (v) =>
+  Array.isArray(v)
+    ? v.map(inOrder)
+    : v && typeof v === 'object'
+      ? Object.fromEntries(
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, inOrder(v[k])]),
+        )
+      : v;
 /** The ids a copy of an entry is offered, in turn, before one is minted afresh. */
 export const POI_COPY_IDS = 8;
 /** The id the k-th copy of an entry is offered: `lib-` and twelve hex of the sha256 of its source's id, k and its
  *  content - the same copy the same id at every import, by every builder (poiLaw.js POI_SHELF_ID_RE). */
-export const copyIdOf = async (entry, k, content = contentOf(entry)) => `lib-${(await poiSha256(new TextEncoder().encode(`${entry.id}\n${k}\n${content}`))).slice(0, 12)}`;
+export const copyIdOf = async (entry, k, content = contentOf(entry)) =>
+  `lib-${(await poiSha256(new TextEncoder().encode(`${entry.id}\n${k}\n${content}`))).slice(0, 12)}`;
 
 /**
  * One entry of a pack onto the shelf, never over another: AUDIT POI P4 - it was put over whatever the store kept under
@@ -101,7 +130,10 @@ async function shelveOne(entry, { shelfEntry, shelve, rand }) {
   for (let k = -1; k <= POI_COPY_IDS; k++) {
     const id = k < 0 ? entry.id : k < POI_COPY_IDS ? await copyIdOf(entry, k, content) : mintShelfId(rand);
     const had = await shelfEntry(id);
-    if (had.ok) { if (contentOf(had.data.item) === content) return { ok: true, id, copied: k >= 0, already: true }; continue; }
+    if (had.ok) {
+      if (contentOf(had.data.item) === content) return { ok: true, id, copied: k >= 0, already: true };
+      continue;
+    }
     // taken off the shelf: its id stays its own, never put over (AUDIT POI U13, lane A: the store says 'poi-gone') - the next
     if (had.error === 'poi-gone') continue;
     if (had.error !== 'not-found') return had;
@@ -127,12 +159,18 @@ async function shelveOne(entry, { shelfEntry, shelve, rand }) {
  */
 export async function importPack(pack, { putAsset, history, shelfEntry, shelve, rand, progress = () => {} }) {
   const total = pack.assets.size + pack.shelf.length + pack.pois.length;
-  let done = 0, uploaded = 0, existed = 0, shelved = 0, copied = 0, already = 0;
+  let done = 0,
+    uploaded = 0,
+    existed = 0,
+    shelved = 0,
+    copied = 0,
+    already = 0;
   const refusal = (r, at) => ({ ok: false, error: r.error, at, ...(r.problems ? { problems: r.problems } : {}) });
   for (const [sha, a] of pack.assets) {
     const r = await putAsset(a.bytes, a.kind);
     if (!r.ok) return refusal(r, sha);
-    if (r.data.existed) existed++; else uploaded++;
+    if (r.data.existed) existed++;
+    else uploaded++;
     progress(++done, total);
   }
   for (const entry of pack.shelf) {
@@ -148,7 +186,13 @@ export async function importPack(pack, { putAsset, history, shelfEntry, shelve, 
     const h = await history(doc.id);
     if (h.ok) {
       const live = h.data.revs?.find((x) => x.rev === h.data.liveRev)?.doc ?? null;
-      open.push({ id: doc.id, doc, saved: live, base: h.data.liveRev ?? null, state: h.data.liveRev ? 'live' : 'draft' });
+      open.push({
+        id: doc.id,
+        doc,
+        saved: live,
+        base: h.data.liveRev ?? null,
+        state: h.data.liveRev ? 'live' : 'draft',
+      });
     } else if (h.error === 'not-found') {
       open.push({ id: doc.id, doc, saved: null, base: null, state: 'new' });
     } else return refusal(h, doc.name);

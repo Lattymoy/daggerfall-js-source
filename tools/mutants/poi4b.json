@@ -3,7 +3,7 @@
     "name": "POI4B-the-entry-read-as-a-poi",
     "file": "src/poi/poiLaw.js",
     "old": "  if (typeof raw.id !== 'string' || !(shelf ? POI_SHELF_ID_RE : POI_ID_RE).test(raw.id)) say('id', 'id');",
-    "new": "  if (typeof raw.id !== 'string' || !(POI_ID_RE).test(raw.id)) say('id', 'id');",
+    "new": "  if (typeof raw.id !== 'string' || !POI_ID_RE.test(raw.id)) say('id', 'id');",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "POI4B-the-picture-unread",
     "file": "src/poi/poiLaw.js",
-    "old": "POI_SHA_RE.test(raw.thumb))) say('thumb', 'texture-ref'); }",
-    "new": "POI_SHA_RE.test(raw.thumb))) void 0; }",
+    "old": "    if (raw.thumb !== null && !(typeof raw.thumb === 'string' && POI_SHA_RE.test(raw.thumb)))\n      say('thumb', 'texture-ref');",
+    "new": "    if (raw.thumb !== null && !(typeof raw.thumb === 'string' && POI_SHA_RE.test(raw.thumb))) void 0;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "POI4B-the-facing-reversed",
     "file": "src/poi/poiThumb.js",
-    "old": "  const front = (area > 0) !== q.mirrored;",
-    "new": "  const front = (area < 0) !== q.mirrored;",
+    "old": "  const front = area > 0 !== q.mirrored;",
+    "new": "  const front = area < 0 !== q.mirrored;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "POI4B-the-cut-ignored",
     "file": "src/poi/poiThumb.js",
-    "old": "    if (mat.alpha === 'cutout' && a < (mat.cutoff ?? 0.5)) return;\n",
-    "new": "\n",
+    "old": "    if (mat.alpha === 'cutout' && a < (mat.cutoff ?? 0.5)) return;",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "POI4B-uploaded-before-the-law",
     "file": "src/poi/poiShelf.js",
-    "old": "  if (own.length) return { ok: false, error: 'poi-doc', problems: own };\n",
-    "new": "\n",
+    "old": "  if (own.length) return { ok: false, error: 'poi-doc', problems: own };",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "POI4B-the-picture-not-worn",
     "file": "src/poi/poiShelf.js",
-    "old": "    item.thumb = r.data.sha;\n",
-    "new": "\n",
+    "old": "    item.thumb = r.data.sha;\n  }",
+    "new": "  }",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "POI4B-the-problems-dropped",
     "file": "src/poi/poiService.js",
-    "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}), status: res.status };",
-    "new": "      status: res.status };",
+    "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}),\n      status: res.status,",
+    "new": "      status: res.status,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

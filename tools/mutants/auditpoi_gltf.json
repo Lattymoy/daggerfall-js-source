@@ -2,8 +2,8 @@
   {
     "name": "AUDITPOI-G1-the-runs-spread-again",
     "file": "src/poi/gltfImport.js",
-    "old": "positions.set(run.positions, v0 * 3); normals.set(run.normals, v0 * 3);",
-    "new": "positions.set(Float32Array.of(...run.positions), v0 * 3); normals.set(run.normals, v0 * 3);",
+    "old": "      positions.set(run.positions, v0 * 3);",
+    "new": "      positions.set(Float32Array.of(...run.positions), v0 * 3);",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDITPOI-G2-every-vertex-of-the-accessor",
     "file": "src/poi/gltfImport.js",
-    "old": "for (let k = 0; k < prim.idx.length; k++) slot[prim.idx[k]] = -2;",
-    "new": "for (let k = 0; k < prim.pos.n; k++) slot[k] = -2;",
+    "old": "  for (let k = 0; k < prim.idx.length; k++) slot[prim.idx[k]] = -2;",
+    "new": "  for (let k = 0; k < prim.pos.n; k++) slot[k] = -2;",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "AUDITPOI-G2-the-index-unchecked",
     "file": "src/poi/gltfImport.js",
-    "old": "      for (let k = 0; k < idx.length; k++) if (!(Number.isInteger(idx[k]) && idx[k] < pos.n)) fail('missing', { what: 'vertex', index: idx[k] });",
+    "old": "        for (let k = 0; k < idx.length; k++)\n          if (!(Number.isInteger(idx[k]) && idx[k] < pos.n)) fail('missing', { what: 'vertex', index: idx[k] });",
     "new": "",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -74,7 +74,7 @@
   {
     "name": "AUDITPOI-G3-the-sparse-run-unheld",
     "file": "src/poi/gltfImport.js",
-    "old": "      if ((idx.byteOffset ?? 0) + sp.count * iComp.size > iv.bytes.byteLength || (val.byteOffset ?? 0) + sp.count * size * comp.size > vv.bytes.byteLength) fail('past-end', { what: 'accessor', index: ai });",
+    "old": "      if (\n        (idx.byteOffset ?? 0) + sp.count * iComp.size > iv.bytes.byteLength ||\n        (val.byteOffset ?? 0) + sp.count * size * comp.size > vv.bytes.byteLength\n      )\n        fail('past-end', { what: 'accessor', index: ai });",
     "new": "",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "AUDITPOI-G3-the-roots-searched",
     "file": "src/poi/gltfImport.js",
-    "old": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !parentOf.has(i));",
-    "new": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !nodes.some((n) => (n.children ?? []).includes(i)));",
+    "old": "  const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !parentOf.has(i));",
+    "new": "  const roots =\n    g.scenes?.[sceneIndex]?.nodes ??\n    nodes.map((_, i) => i).filter((i) => !nodes.some((n) => (n.children ?? []).includes(i)));",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -138,7 +138,7 @@
   {
     "name": "AUDITPOI-G3-the-glb-json-unheld",
     "file": "src/poi/gltfImport.js",
-    "old": "        try { json = JSON.parse(new TextDecoder().decode(body)); } catch { fail('glb-chunk'); }",
+    "old": "        try {\n          json = JSON.parse(new TextDecoder().decode(body));\n        } catch {\n          fail('glb-chunk');\n        }",
     "new": "        json = JSON.parse(new TextDecoder().decode(body));",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -147,7 +147,7 @@
   {
     "name": "AUDITPOI-G3-the-data-uri-unheld",
     "file": "src/poi/gltfImport.js",
-    "old": "  try { text = decodeURIComponent(m[3]); } catch { fail('data-uri'); }",
+    "old": "  try {\n    text = decodeURIComponent(m[3]);\n  } catch {\n    fail('data-uri');\n  }",
     "new": "  text = decodeURIComponent(m[3]);",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "AUDITPOI-G3-the-warnings-searched",
     "file": "src/poi/gltfImport.js",
-    "old": "const warn = (code, args = {}) => { const w = { code, ...args }, key = JSON.stringify(w); if (!said.has(key)) { said.add(key); warnings.push(w); } };",
-    "new": "const warn = (code, args = {}) => { const w = { code, ...args }; if (!warnings.some((x) => JSON.stringify(x) === JSON.stringify(w))) warnings.push(w); };",
+    "old": "    const w = { code, ...args },\n      key = JSON.stringify(w);\n    if (!said.has(key)) {\n      said.add(key);\n      warnings.push(w);\n    }",
+    "new": "    const w = { code, ...args };\n    if (!warnings.some((x) => JSON.stringify(x) === JSON.stringify(w))) warnings.push(w);",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -165,7 +165,7 @@
   {
     "name": "AUDITPOI-G3-a-part-built-past-the-law",
     "file": "src/poi/gltfImport.js",
-    "old": "        if ((vertices += list.length) > POI_MESH_LIMITS.vertices) { refused = 'too-many-vertices'; break; }",
+    "old": "        if ((vertices += list.length) > POI_MESH_LIMITS.vertices) {\n          refused = 'too-many-vertices';\n          break;\n        }",
     "new": "        vertices += list.length;",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -184,7 +184,7 @@
     "name": "AUDITPOI-G4-a-factor-under-every-glow",
     "file": "src/poi/gltfExport.js",
     "old": "      if (ti !== null) out.emissiveTexture = textureRef(ti, m);",
-    "new": "      if (ti !== null) { out.emissiveTexture = textureRef(ti, m); out.emissiveFactor ??= [1, 1, 1]; }",
+    "new": "      if (ti !== null) {\n        out.emissiveTexture = textureRef(ti, m);\n        out.emissiveFactor ??= [1, 1, 1];\n      }",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDITPOI-G5-the-base-uv-set-alone",
     "file": "src/poi/gltfImport.js",
-    "old": "      const tex = mat ? mat.base ?? mat.emissive : null;",
-    "new": "      const tex = mat ? mat.base : null;",
+    "old": "        const tex = mat ? (mat.base ?? mat.emissive) : null;",
+    "new": "        const tex = mat ? mat.base : null;",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -228,7 +228,7 @@
   {
     "name": "AUDITPOI-G6-the-skin-unread",
     "file": "src/poi/gltfImport.js",
-    "old": "          if (skinned) { Mv = skinMatrix(joints, skinned, vi); Nv = normalMatrix(Mv); if (det3(Mv) < 0) turned[e] = 1; }",
+    "old": "          if (skinned) {\n            Mv = skinMatrix(joints, skinned, vi);\n            Nv = normalMatrix(Mv);\n            if (det3(Mv) < 0) turned[e] = 1;\n          }",
     "new": "",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -237,7 +237,7 @@
   {
     "name": "AUDITPOI-G6-the-joints-world-unread",
     "file": "src/poi/gltfImport.js",
-    "old": "    skins[inst.skin] = joints.map((j, k) => mul(globalOf(j), ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
+    "old": "    skins[inst.skin] = joints.map((j, k) =>\n      mul(globalOf(j), ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()),\n    );",
     "new": "    skins[inst.skin] = joints.map((j, k) => (ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "AUDITPOI-G7-the-intensity-written-raw",
     "file": "src/poi/gltfExport.js",
-    "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
-    "new": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity, range: l.radius,",
+    "old": "          intensity: l.intensity * Math.PI,",
+    "new": "          intensity: l.intensity,",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "AUDITPOI-G7-the-light-colour-written-raw",
     "file": "src/poi/gltfExport.js",
-    "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
-    "new": "      type: 'point', color: [...l.color], intensity: l.intensity * Math.PI, range: l.radius,",
+    "old": "          color: l.color.map(srgbToLinear),",
+    "new": "          color: [...l.color],",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDITPOI-G7-the-extras-unread",
     "file": "src/poi/gltfImport.js",
-    "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
-    "new": "intensity, flicker };",
+    "old": "  return {\n    t,\n    color: ownColor,\n    radius: near(own?.radius, radius) ? own.radius : radius,\n    intensity: near(own?.intensity, intensity) ? own.intensity : intensity,\n    flicker,\n  };",
+    "new": "  return { t, color: ownColor, radius: near(own?.radius, radius) ? own.radius : radius, intensity, flicker };",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "AUDITPOI-G7-the-extras-over-the-lights-word",
     "file": "src/poi/gltfImport.js",
-    "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
-    "new": "intensity: own?.intensity ?? intensity, flicker };",
+    "old": "    intensity: near(own?.intensity, intensity) ? own.intensity : intensity,",
+    "new": "    intensity: own?.intensity ?? intensity,",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AUDITPOI-G7-a-point-light-set-aside",
     "file": "src/poi/gltfImport.js",
-    "old": "      if (def?.type === 'point') lights.push(",
-    "new": "      if (false) lights.push(",
+    "old": "      if (def?.type === 'point')",
+    "new": "      if (false)",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "AUDITPOI-R10-the-base-colour-written-raw",
     "file": "src/poi/gltfExport.js",
-    "old": "baseColorFactor: [srgbToLinear(m.color[0]), srgbToLinear(m.color[1]), srgbToLinear(m.color[2]), m.color[3]]",
-    "new": "baseColorFactor: [...m.color]",
+    "old": "      pbrMetallicRoughness: {\n        baseColorFactor: [srgbToLinear(m.color[0]), srgbToLinear(m.color[1]), srgbToLinear(m.color[2]), m.color[3]],\n        metallicFactor: 0,\n        roughnessFactor: 1,\n      },",
+    "new": "      pbrMetallicRoughness: { baseColorFactor: [...m.color], metallicFactor: 0, roughnessFactor: 1 },",
     "tests": [
       "test/poi/auditpoi_gltf.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDITPOI-R10-the-glow-read-raw",
     "file": "src/poi/gltfImport.js",
-    "old": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(linearToSrgb(clamp01(c)) * strength), 0), 16)),",
-    "new": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(clamp01(c) * strength), 0), 16)),",
+    "old": "      Math.min(Math.max(round6(linearToSrgb(clamp01(c)) * strength), 0), 16),",
+    "new": "      Math.min(Math.max(round6(clamp01(c) * strength), 0), 16),",
     "tests": [
       "test/poi/auditpoi_gltf.test.js",
       "test/poi/poi4_gltf.test.js"

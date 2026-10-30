@@ -1,2 +1,5 @@
 # Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.
 /*
+!/src/
+/src/*
+!/src/poi/

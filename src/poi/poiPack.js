@@ -29,15 +29,19 @@ import { poiSha256 } from './poiService.js';
 
 export const POI_PACK_VERSION = 1;
 export const POI_PACK_KIND = 'poi-pack';
-const MAX_POIS = 500, MAX_SHELF = 2000;
+const MAX_POIS = 500,
+  MAX_SHELF = 2000;
 /**
  * A pack's bounds: its documents and entries, and its files; AUDIT POI P5: and its bytes as read - `pack.json` at most
  * every document and entry at the law's own bound (poiLaw.js POI_LIMITS.docBytes), the whole at most what a builder may
  * upload in a day (server-account/src/poi.js POI_UPLOAD_DAY_BYTES, held here so the reader stands alone).
  */
 export const POI_PACK_LIMITS = Object.freeze({
-  pois: MAX_POIS, shelf: MAX_SHELF, files: 20000,
-  headBytes: (MAX_POIS + MAX_SHELF) * POI_LIMITS.docBytes + 65536, bytes: 1024 * 1024 * 1024,
+  pois: MAX_POIS,
+  shelf: MAX_SHELF,
+  files: 20000,
+  headBytes: (MAX_POIS + MAX_SHELF) * POI_LIMITS.docBytes + 65536,
+  bytes: 1024 * 1024 * 1024,
 });
 const EXT = { png: 'png', jpeg: 'jpg', webp: 'webp' };
 const ASSET_RE = /^assets\/([0-9a-f]{64})\.(mesh|png|jpg|webp)$/;
@@ -56,12 +60,22 @@ export function packAssetName(sha, bytes) {
  */
 export function packRefusal({ pois = [], shelf = [] }) {
   if (pois.length > POI_PACK_LIMITS.pois || shelf.length > POI_PACK_LIMITS.shelf) return { code: 'pack-too-large' };
-  for (const [i, d] of pois.entries()) { const ps = poiDocProblems(d); if (ps.length) return { code: 'pack-bad-poi', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps }; }
-  for (const [i, d] of shelf.entries()) { const ps = poiShelfProblems(d); if (ps.length) return { code: 'pack-bad-entry', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps }; }
+  for (const [i, d] of pois.entries()) {
+    const ps = poiDocProblems(d);
+    if (ps.length) return { code: 'pack-bad-poi', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps };
+  }
+  for (const [i, d] of shelf.entries()) {
+    const ps = poiShelfProblems(d);
+    if (ps.length)
+      return { code: 'pack-bad-entry', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps };
+  }
   // AUDIT POI P7: an id once - a second POI under one was dropped unsaid at the import, a second entry put over the first
   const twice = (/** @type {any[]} */ list, /** @type {string} */ code) => {
     const seen = new Set();
-    for (const [i, d] of list.entries()) { if (seen.has(d.id)) return { code, index: i, id: d.id, name: String(d.name) }; seen.add(d.id); }
+    for (const [i, d] of list.entries()) {
+      if (seen.has(d.id)) return { code, index: i, id: d.id, name: String(d.name) };
+      seen.add(d.id);
+    }
     return null;
   };
   return twice(pois, 'pack-poi-twice') ?? twice(shelf, 'pack-entry-twice');
@@ -72,7 +86,10 @@ export function packRefusal({ pois = [], shelf = [] }) {
  *  (its assets and the entries before stored, no POI opened) is refused whole, before anything is uploaded. */
 function wornRefusal(pois, shelf, factsOf) {
   const worn = (/** @type {any[]} */ list, /** @type {string} */ code) => {
-    for (const [i, d] of list.entries()) { const ps = poiAssetProblems(d, factsOf); if (ps.length) return { code, index: i, name: String(d.name), problem: ps[0], problems: ps }; }
+    for (const [i, d] of list.entries()) {
+      const ps = poiAssetProblems(d, factsOf);
+      if (ps.length) return { code, index: i, name: String(d.name), problem: ps[0], problems: ps };
+    }
     return null;
   };
   return worn(pois, 'pack-bad-poi') ?? worn(shelf, 'pack-bad-entry');
@@ -97,7 +114,10 @@ export function writePack({ pois = [], shelf = [], assets }) {
   const refused = packRefusal({ pois, shelf });
   if (refused) return { ok: false, ...refused };
   const named = new Set();
-  for (const d of [...pois, ...shelf]) { const { meshes, textures } = poiAssetsOf(d); for (const s of [...meshes, ...textures]) named.add(s); }
+  for (const d of [...pois, ...shelf]) {
+    const { meshes, textures } = poiAssetsOf(d);
+    for (const s of [...meshes, ...textures]) named.add(s);
+  }
   if (named.size + 1 > POI_PACK_LIMITS.files) return { ok: false, code: 'pack-too-large' };
   // pack.json cannot pass its own bound here: every document in it is held to the law's (packRefusal)
   const head = new TextEncoder().encode(JSON.stringify({ v: POI_PACK_VERSION, kind: POI_PACK_KIND, pois, shelf }));
@@ -113,7 +133,8 @@ export function writePack({ pois = [], shelf = [], assets }) {
   const files = [{ name: 'pack.json', data: head }];
   const facts = new Map();
   for (const sha of order) {
-    const bytes = assets.get(sha), f = factsOfBytes(bytes);
+    const bytes = assets.get(sha),
+      f = factsOfBytes(bytes);
     if (!f) return { ok: false, code: 'pack-asset-bad', sha };
     facts.set(sha, f);
     files.push({ name: packAssetName(sha, bytes), data: bytes });
@@ -149,10 +170,15 @@ function namedAssets(docs) {
 /** `pack.json` read: `{ ok: true, pois, shelf }` - its kind and version, then packRefusal's law - or the refusal. */
 function readHead(bytes) {
   let pack;
-  try { pack = JSON.parse(new TextDecoder().decode(bytes)); } catch { return { ok: false, code: 'pack-not-a-pack' }; }
+  try {
+    pack = JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return { ok: false, code: 'pack-not-a-pack' };
+  }
   if (pack?.kind !== POI_PACK_KIND) return { ok: false, code: 'pack-not-a-pack' };
   if (pack.v !== POI_PACK_VERSION) return { ok: false, code: 'pack-version', v: pack.v };
-  const pois = Array.isArray(pack.pois) ? pack.pois : [], shelf = Array.isArray(pack.shelf) ? pack.shelf : [];
+  const pois = Array.isArray(pack.pois) ? pack.pois : [],
+    shelf = Array.isArray(pack.shelf) ? pack.shelf : [];
   const refused = packRefusal({ pois, shelf });
   return refused ? { ok: false, ...refused } : { ok: true, pois, shelf };
 }
@@ -182,7 +208,7 @@ export async function readPack(entries, subtle = globalThis.crypto.subtle) {
     if (m[2] === 'mesh') {
       const d = decodePoiMesh(bytes);
       if ('error' in d) return { ok: false, code: 'pack-asset-bad', sha: m[1] };
-      assets.set(m[1], { kind: 'mesh', bytes, ...poiMeshFacts(d.mesh) });   // AUDIT POI S6: the facts the budgets read
+      assets.set(m[1], { kind: 'mesh', bytes, ...poiMeshFacts(d.mesh) }); // AUDIT POI S6: the facts the budgets read
     } else {
       const im = poiImageMetaOf(bytes);
       if ('error' in im) return { ok: false, code: 'pack-asset-bad', sha: m[1] };
@@ -192,8 +218,12 @@ export async function readPack(entries, subtle = globalThis.crypto.subtle) {
   // what they wear is all there, and of its kind
   for (const d of [...pois, ...shelf]) {
     const { meshes, textures } = poiAssetsOf(d);
-    for (const s of meshes) if (assets.get(s)?.kind !== 'mesh') return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };
-    for (const s of textures) if (assets.get(s)?.kind !== 'texture') return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };
+    for (const s of meshes)
+      if (assets.get(s)?.kind !== 'mesh')
+        return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };
+    for (const s of textures)
+      if (assets.get(s)?.kind !== 'texture')
+        return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };
   }
   const worn = wornRefusal(pois, shelf, (sha) => assets.get(sha) ?? null);
   if (worn) return { ok: false, ...worn };
@@ -210,13 +240,18 @@ export async function readPack(entries, subtle = globalThis.crypto.subtle) {
  * @param {Uint8Array} bytes the .zip
  */
 export async function readPackBytes(bytes, subtle = globalThis.crypto.subtle) {
-  const { readZipEntries } = await import('../scenes/dataSource.js');   // the port's own zip reader, stored and deflated
+  const { readZipEntries } = await import('../scenes/dataSource.js'); // the port's own zip reader, stored and deflated
   const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
   const file = { arrayBuffer: async () => buf };
   try {
-    let count = 0, root = null;
+    let count = 0,
+      root = null;
     const heads = await readZipEntries(file, {
-      pick: (names) => { count = names.length; root = packRoot(names); return root == null || count > POI_PACK_LIMITS.files ? [] : [`${root}pack.json`]; },
+      pick: (names) => {
+        count = names.length;
+        root = packRoot(names);
+        return root == null || count > POI_PACK_LIMITS.files ? [] : [`${root}pack.json`];
+      },
       limit: () => POI_PACK_LIMITS.headBytes,
     });
     if (count > POI_PACK_LIMITS.files) return { ok: false, code: 'pack-too-large' };
@@ -224,11 +259,18 @@ export async function readPackBytes(bytes, subtle = globalThis.crypto.subtle) {
     const h = readHead(bytesOf(heads[0].data));
     if (!h.ok) return h;
     const named = namedAssets([...h.pois, ...h.shelf]);
-    const wanted = (n) => { const m = n.startsWith(root) ? ASSET_RE.exec(n.slice(root.length)) : null; return !!m && named.get(m[1]) === (m[2] === 'mesh' ? 'mesh' : 'texture'); };
+    const wanted = (n) => {
+      const m = n.startsWith(root) ? ASSET_RE.exec(n.slice(root.length)) : null;
+      return !!m && named.get(m[1]) === (m[2] === 'mesh' ? 'mesh' : 'texture');
+    };
     let room = POI_PACK_LIMITS.bytes - heads[0].data.byteLength;
     const assets = await readZipEntries(file, {
       pick: (names) => names.filter(wanted),
-      limit: (name, size) => { const max = Math.min(name.endsWith('.mesh') ? POI_MESH_LIMITS.bytes : POI_IMAGE_LIMITS.bytes, room); room -= size; return max; },
+      limit: (name, size) => {
+        const max = Math.min(name.endsWith('.mesh') ? POI_MESH_LIMITS.bytes : POI_IMAGE_LIMITS.bytes, room);
+        room -= size;
+        return max;
+      },
     });
     return await readPack([...heads, ...assets], subtle);
   } catch (e) {

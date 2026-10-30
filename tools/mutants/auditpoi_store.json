@@ -56,8 +56,8 @@
   {
     "name": "AUDITPOI-S1-the-client-not-sending-it",
     "file": "src/poi/poiService.js",
-    "old": "...(typeof docSha === 'string' ? { docSha } : {})",
-    "new": "...({})",
+    "old": "  call(io, '/v1/poi/review', { id, rev, verdict, note, ...(typeof docSha === 'string' ? { docSha } : {}) });",
+    "new": "  call(io, '/v1/poi/review', { id, rev, verdict, note, ...{} });",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDITPOI-S2-a-light-unread",
     "file": "src/poi/poiLaw.js",
-    "old": "      unknownProblems(l, LIGHT_KEYS, at, say);",
-    "new": "      void 0;",
+    "old": "        unknownProblems(l, LIGHT_KEYS, at, say);",
+    "new": "        void 0;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDITPOI-S5-the-bounds-compared-as-they-differ",
     "file": "src/poi/poiMesh.js",
-    "old": "  for (let k = 0; k < 3; k++) if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3)) return { error: 'bounds' };",
-    "new": "  for (let k = 0; k < 3; k++) if (Math.abs(min[k] - boundsMin[k]) > 1e-3 || Math.abs(max[k] - boundsMax[k]) > 1e-3) return { error: 'bounds' };",
+    "old": "    if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3))\n      return { error: 'bounds' };",
+    "new": "    if (Math.abs(min[k] - boundsMin[k]) > 1e-3 || Math.abs(max[k] - boundsMax[k]) > 1e-3) return { error: 'bounds' };",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDITPOI-S13-a-lone-surrogate-through",
     "file": "src/poi/poiLaw.js",
-    "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}",
-    "new": "const UNSAID_RE = /[\\p{Cc}",
+    "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
+    "new": "const UNSAID_RE = /[\\p{Cc}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDITPOI-S13-bidi-and-separators-through",
     "file": "src/poi/poiLaw.js",
-    "old": "\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;\n// the one field",
-    "new": "\\u{2028}\\u{2029}]/u;\n// the one field",
+    "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
+    "new": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}\\u{2028}\\u{2029}]/u;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDITPOI-S13-c1-through",
     "file": "src/poi/poiLaw.js",
-    "old": "const UNSAID_RE = /[\\p{Cc}",
-    "new": "const UNSAID_RE = /[\\u{0}-\\u{1f}\\u{7f}",
+    "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
+    "new": "const UNSAID_RE = /[\\u{0}-\\u{1f}\\u{7f}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDITPOI-S13-c1-through-prose",
     "file": "src/poi/poiLaw.js",
-    "old": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}-\\u{9f}\\p{Cs}",
-    "new": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}\\p{Cs}",
+    "old": "const PROSE_UNSAID_RE =\n  /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}-\\u{9f}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
+    "new": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]

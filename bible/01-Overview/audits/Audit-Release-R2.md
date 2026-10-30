@@ -174,7 +174,7 @@ by name (`town`, the panel's `event-bad-town`), and the picker offers a province
 
 ### R2-8 - a POI past the Bay (FIXED, the second pass)
 
-`src/poi/poiLaw.js:"export const poiPixelKey = (px, py) => (px >= 0 && py >= 0 && px < POI_MAP.w && py < POI_MAP.h"`. A
+`src/poi/poiLaw.js:"export const poiPixelKey"`. A
 builder's POI was held to MAPS.BSA's 1000 x 500 by its law (the editor, the account service and the game read one law),
 the editor clamped a place to the Bay's map, and the feed filed the standing set by `py * 1000 + px` - as did the world
 host's riding frames - which past the Bay gives two pixels one id. Now the place is any pixel of the world's grid (the
