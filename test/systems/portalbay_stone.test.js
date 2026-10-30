@@ -379,7 +379,7 @@ test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able
 test('PORTAL-BAY the wiring: the world host constructs the stone\'s host where its code stood (HOST-SPLIT), handing it the world\'s own teleport and the teleport\'s gates live; its portals step into that host\'s arrival; teleportTo and Recall ask the gate under the teleport\'s law, a journey under its own (mutant: the gate unhanded)', () => {
   const wiring = cut(W_SRC, 'const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({', '\n  });\n');
   assert.match(wiring, /\bteleportTo, townTalk,/, 'the world\'s own teleportTo, by value (a function declaration)');
-  for (const name of ['_teleporting', 'veilRefused', 'wildTeleportRefused', 'wildTravelGate']) assert.match(wiring, new RegExp(`get ${name}\\(\\) \\{ return ${name}; \\}`), `${name} read live`);
+  for (const name of ['_teleporting', 'veilRefused', 'wildTravelGate']) assert.match(wiring, new RegExp(`get ${name}\\(\\) \\{ return ${name}; \\}`), `${name} read live`);   // PIN MOVED (PVP-PORTAL): the zone's gate, wildTeleportRefused, is no longer the stone's
   assert.match(W_SRC, /onEnter: \(g\) => portalArrive\(g\),/, 'a portal\'s step is the stone host\'s arrival');
   assert.match(W_SRC, /openPortal: \(item, list\) => openPortalStone\(item, list\),/, 'the pack\'s door');
   assert.match(cut(W_SRC, '  async function teleportTo(pick, { zoneFree = false } = {}) {', '\n  }\n'), /const wildTrip = wildTravelGate\(pick\.pixel, 0, teleportJourney\);/);

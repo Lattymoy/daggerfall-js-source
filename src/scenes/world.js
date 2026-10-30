@@ -15701,7 +15701,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelOptions() { return travelOptions; },
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
-    get wildTeleportRefused() { return wildTeleportRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
   });
 
