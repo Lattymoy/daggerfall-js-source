@@ -38,6 +38,7 @@ import { guildTagText } from '../../net/guild/guildLaw.js';
 import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../../net/heraldryLaw.js';   // AUDIT-SEATS: a Season's banner ribbon, under the name here too; AUDIT HERALDRY H4: the tag's frame
 import { drawShield } from '../heraldryArt.js';   // AUDIT HERALDRY H4: the guild's shield, in its tag's frame, on the canvas
 import { TV_FILTER_GROUPS, TV_FILTER_TEXT, travelViewFilters, toggleTravelViewFilter, onTravelViewFilters, markShown, countGroups } from '../../systems/travel/travelViewFilters.js';   // OW-FILTER
+import { TV_ENEMY_TEXT, enemyCatalogue, travelViewEnemies, enemyTypeShown, toggleEnemyType, setEnemyTypes, onTravelViewEnemies } from '../../systems/travel/travelViewEnemyFilters.js';   // OW-ENEMY-TYPES
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, cycleTravelViewNodeKm } from '../../systems/travel/travelViewFilters.js';   // OW-WHO / OW-NODE-KM / OW-KIN
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel on its dot
 import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from '../eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
@@ -334,6 +335,16 @@ function build(doc, hooks) {
   nodeBtn.title = TV_WHO_TEXT.nodeTip;
   nodeBtn.onclick = (e) => { e.preventDefault(); cycleTravelViewNodeKm(); };
   filters.append(renownBtn, nodeBtn);
+  // OW-ENEMY-TYPES: under the Enemies switch, shown only while it is on - a fold onto the creature types, an All and a None;
+  // the buttons are made when the list is known (paintEnemies: a mod's creatures join it as it registers its tables)
+  const enemyBox = el('div', 'tview-enemies');
+  enemyBox.append(el('div', 'tview-label', TV_ENEMY_TEXT.title));
+  const enemyHead = el('button', 'tview-filter tview-cycle tview-cycle-wide tview-enemies-head');
+  enemyHead.type = 'button';
+  enemyHead.onclick = (e) => { e.preventDefault(); enemyOpen = !enemyOpen; paintFilters(travelViewFilters()); furniture.at = -Infinity; };
+  const enemyList = el('div', 'tview-enemies-list');
+  enemyBox.append(enemyHead, enemyList);
+  filters.append(enemyBox);
   // WAYPOINTS (2026-10-06, the player: "add the waypoints you want to mark (to follow) to the filter list on the overworld
   // map with a dropdown menu"): a switch per kind (Personal, Party, Guild - the held map's key reads the same ones), the
   // dropdown that follows one, and the followed list - each its flag's colour, its name, how far, Go and unfollow
@@ -385,7 +396,7 @@ function build(doc, hooks) {
   if (route) r.append(route);
   r.append(canvas, you, bar, side, said, tip);
   doc.body.append(r);
-  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
+  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, enemyBox, enemyHead, enemyList, enemyTypeBtns: {}, enemySig: '', tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
 }
 
 /**
@@ -400,6 +411,8 @@ export function showTravelViewHud(hooks = {}, doc = globalThis.document) {
     resetMarks();   // PERF-TV: a new canvas holds nothing
     stopModes?.(); stopModes = onTravelPathMode(paintModes);
     stopFilters?.(); stopFilters = onTravelViewFilters((f) => { paintFilters(f); canvasSig = []; });
+    const stopSwitches = stopFilters, stopEnemies = onTravelViewEnemies(() => { paintFilters(travelViewFilters()); canvasSig = []; });   // OW-ENEMY-TYPES
+    stopFilters = () => { stopSwitches(); stopEnemies(); };
     stopWaypoints?.(); stopWaypoints = onWaypoints(() => { paintWaypoints(); canvasSig = []; });   // WAYPOINTS
   }
   wpHooks = hooks;   // WAYPOINTS: the followed list's Go
@@ -524,6 +537,34 @@ function paintFilters(f) {
   }
   if (parts?.renownBtn) parts.renownBtn.textContent = TV_WHO_TEXT.renown(w.renown);
   if (parts?.nodeBtn) parts.nodeBtn.textContent = TV_WHO_TEXT.nodeKm(w.nodeKm);
+  paintEnemies(f);
+}
+
+/** OW-ENEMY-TYPES: the creature types - the whole block only while Enemies is on; its buttons made when the list changes. */
+let enemyOpen = false;
+function paintEnemies(f) {
+  if (!parts?.enemyBox) return;
+  parts.enemyBox.style.display = f.enemies === false ? 'none' : '';
+  const types = enemyCatalogue(), sig = types.map((t) => t.key).join(',');
+  if (parts.enemySig !== sig) {   // the list is known (or a mod's creatures joined it): the buttons are made again
+    parts.enemySig = sig; parts.enemyTypeBtns = {};
+    const doc = parts.enemyList.ownerDocument;
+    const mk = (word, onclick) => { const b = doc.createElement('button'); b.className = 'tview-filter tview-cycle'; b.type = 'button'; b.textContent = word; b.onclick = (e) => { e.preventDefault(); onclick(); }; return b; };
+    const kids = [mk(TV_ENEMY_TEXT.all, () => setEnemyTypes(true)), mk(TV_ENEMY_TEXT.none, () => setEnemyTypes(false))];
+    for (const t of types) { const b = mk(t.label, () => toggleEnemyType(t.key)); b.dataset && (b.dataset.etype = t.key); parts.enemyTypeBtns[t.key] = b; kids.push(b); }
+    parts.enemyList.replaceChildren?.(); parts.enemyList.append(...kids);
+  }
+  const s = travelViewEnemies();
+  const shown = types.filter((t) => enemyTypeShown(t.key, s)).length;
+  parts.enemyHead.textContent = `${enemyOpen ? '▾' : '▸'} ${TV_ENEMY_TEXT.head(shown, types.length)}`;
+  parts.enemyHead.className = shown > 0 ? 'tview-filter tview-cycle tview-cycle-wide tview-enemies-head on' : 'tview-filter tview-cycle tview-cycle-wide tview-enemies-head';
+  parts.enemyList.style.display = enemyOpen ? '' : 'none';
+  for (const t of types) {
+    const b = parts.enemyTypeBtns[t.key], on = enemyTypeShown(t.key, s);
+    b.className = on ? 'tview-filter tview-cycle on' : 'tview-filter tview-cycle';
+    b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+    b.title = TV_ENEMY_TEXT.typeTip(t.label, on);
+  }
 }
 
 /** SIDE-CORNER: the HUD piece stepped aside for the filter block, put back as the view goes. */

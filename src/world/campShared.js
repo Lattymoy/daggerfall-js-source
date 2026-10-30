@@ -77,7 +77,7 @@ export function groupCamps(members, nameOf) {
     if (!g) { g = { key: m.camp, kind: m.kind, type: m.type, n: 0, x: 0, y: 0, z: 0 }; by.set(m.camp, g); }
     g.n++; g.x += m.feet[0]; g.y += m.feet[1]; g.z += m.feet[2];
   }
-  return [...by.values()].map((g) => ({ key: g.key, kind: g.kind, n: g.n, at: [g.x / g.n, g.y / g.n, g.z / g.n], label: campLabel(nameOf(g.type), g.kind, g.n) }));
+  return [...by.values()].map((g) => ({ key: g.key, kind: g.kind, n: g.n, type: g.type, at: [g.x / g.n, g.y / g.n, g.z / g.n], label: campLabel(nameOf(g.type), g.kind, g.n) }));   // OW-ENEMY-TYPES: `type`, the first member's - the creature the label names
 }
 
 /** A camp's words over its mark: "Orc camp, 4", "Wolf pack, 3", "Orc band, 5" - one alone, its kind alone. */

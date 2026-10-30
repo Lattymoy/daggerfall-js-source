@@ -162,8 +162,8 @@
   {
     "name": "TV7-chaser-lost-off-screen",
     "file": "src/scenes/travelViewMarks.js",
-    "old": "kind: chasing ? 'band chase' : 'band', edge: chasing, pick: true });",
-    "new": "kind: chasing ? 'band chase' : 'band', edge: false, pick: true });",
+    "old": "edge: chasing, pick: true });",
+    "new": "edge: false, pick: true });",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],

@@ -52,8 +52,8 @@
   {
     "name": "OW6-C-middle-wrong",
     "file": "src/world/campShared.js",
-    "old": "  return [...by.values()].map((g) => ({ key: g.key, kind: g.kind, n: g.n, at: [g.x / g.n, g.y / g.n, g.z / g.n], label: campLabel(nameOf(g.type), g.kind, g.n) }));",
-    "new": "  return [...by.values()].map((g) => ({ key: g.key, kind: g.kind, n: g.n, at: [g.x, g.y, g.z], label: campLabel(nameOf(g.type), g.kind, g.n) }));",
+    "old": "at: [g.x / g.n, g.y / g.n, g.z / g.n]",
+    "new": "at: [g.x, g.y, g.z]",
     "tests": [
       "test/scenes/ow6_camps.test.js"
     ],
