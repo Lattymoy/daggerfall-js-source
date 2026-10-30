@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { seatRealm, realmAt } from '../realmSeat.mjs';
-import { GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameOpen } from '../../src/net/guild/guildLaw.js';
+import { GUILD_RENAME_COOLDOWN_S, guildRenameOpen } from '../../src/net/guild/guildLaw.js';
+import { GUILD_RENAME_SILVER } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: a new name is paid in silver
 import { vaultStanding, vaultMayTake, vaultGrantOf, VAULT_RANK_DEFAULTS, guildVaultSlots, GUILD_VAULT_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
@@ -41,12 +42,16 @@ async function stand(extra = {}) {
   assert.equal((await s.call('/v1/guilds/invite', { character: gm.character, handle: 'Brenna' }, gm.secret)).status, 200);
   assert.equal((await s.call('/v1/guilds/answer', { character: member.character, guild: gid, accept: true }, member.secret)).status, 200);
   const realmGold = (n) => raw.prepare("UPDATE guilds SET treasury = ?, realm_gold = ?, moved_by = 'seed', moved_at = ? WHERE id = ?").run(n, n, _now, gid);
+  // GUILD-SHOP: the guild's silver treasury, seeded
+  const guildSilver = (n) => raw.prepare('INSERT INTO guild_marks (guild_id, balance) VALUES (?, ?) ON CONFLICT (guild_id) DO UPDATE SET balance = excluded.balance').run(gid, n);
   const record = async (who) => {
     const row = raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(who.character);
     return JSON.parse(new TextDecoder().decode(s.env.SAVES._map.get(row.obj)));
   };
   const memberRow = (who) => raw.prepare('SELECT rowid AS rid FROM guild_members WHERE char_id = ?').get(who.character);
-  return { ...s, raw, gm, member, gid, realmGold, record, memberRow };
+  let rids = 0;
+  const rid = () => `rename-rid-${++rids}`;   // GUILD-SHOP: a silver act's request id
+  return { ...s, raw, gm, member, gid, realmGold, guildSilver, rid, record, memberRow };
 }
 
 // ─── THE LAWS ────────────────────────────────────────────────────────
@@ -72,43 +77,49 @@ test('GUILD2 law: a rename waits a fortnight; a member stands at its rank\'s def
 
 // ─── GUILD2a: THE RENAME ─────────────────────────────────────────────
 
-test('GUILD2 service: a rename is the guildmaster\'s, from the realm\'s gold in the treasury - the row, the ledger line, the history and the hall\'s name in one batch; the new tag rides the badge', async () => {
+test('GUILD2 service: GUILD-SHOP - a rename is the guildmaster\'s, paid in silver from the guild\'s treasury - the burn, the row, the history and the hall\'s name in one batch; asked again it is the rename made; the new tag rides the badge (mutants: the gold still asked; the burn dropped; a repeat paid twice)', async () => {
   const s = await stand();
-  const body = { character: s.gm.character, name: 'The Ember Oath', tag: 'EMBR' };
+  const body = { character: s.gm.character, name: 'The Ember Oath', tag: 'EMBR', rid: 'rename-ember-1' };
   assert.deepEqual((await s.call('/v1/guilds/rename', { ...body, character: s.member.character }, s.member.secret)).body, { error: 'guild-rank' });
-  assert.deepEqual((await s.call('/v1/guilds/rename', body, s.gm.secret)).body, { error: 'guild-rename-gold' }, 'an empty treasury pays nothing');
-  // gold in the treasury that no realm record paid in buys no new name (HALL-GOLD's rule)
-  s.raw.prepare("UPDATE guilds SET treasury = ?, realm_gold = 0, moved_by = 'seed', moved_at = ? WHERE id = ?").run(GUILD_RENAME_GOLD * 2, _now, s.gid);
-  assert.deepEqual((await s.call('/v1/guilds/rename', body, s.gm.secret)).body, { error: 'guild-rename-gold' });
-  s.realmGold(GUILD_RENAME_GOLD + 500);
+  assert.deepEqual((await s.call('/v1/guilds/rename', { ...body, rid: undefined }, s.gm.secret)).body, { error: 'bad-rid' }, 'silver moves under a request id');
+  assert.deepEqual((await s.call('/v1/guilds/rename', body, s.gm.secret)).body, { error: 'guild-rename-silver' }, 'an empty silver treasury pays nothing');
+  // gold buys no new name now - the realm's gold in the treasury is left alone
+  s.realmGold(250_000);
+  assert.deepEqual((await s.call('/v1/guilds/rename', body, s.gm.secret)).body, { error: 'guild-rename-silver' });
+  s.guildSilver(GUILD_RENAME_SILVER + 500);
   s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, region, price, paid, bought_at, guild_id, owner_name) VALUES (1, 'b1', ?, ?, 0, 100, 100, 1, ?, 'The Iron Oath')").run(s.gm.id, s.gm.character, s.gid);
   const r = await s.call('/v1/guilds/rename', body, s.gm.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(s.raw.prepare('SELECT owner_name FROM homes WHERE guild_id = ?').get(s.gid).owner_name, 'The Ember Oath', 'the hall says the new name, in the same batch');
-  assert.deepEqual([r.body.guild.name, r.body.guild.tag, r.body.guild.treasury, r.body.cost], ['The Ember Oath', 'EMBR', 500, GUILD_RENAME_GOLD]);
+  assert.deepEqual([r.body.guild.name, r.body.guild.tag, r.body.guild.marks, r.body.guild.treasury, r.body.cost], ['The Ember Oath', 'EMBR', 500, 250_000, GUILD_RENAME_SILVER]);
   assert.equal(typeof r.body.order, 'string', 'the actor wears the new tag at once - its badge signed into an order for its rooms (GUILD1c)');
   // AUDIT2 D4: the order read - it carries the NEW tag, signed
   const sealed = await verifyOrder(r.body.order, s.identityPublic, { subtle: globalThis.crypto.subtle, nowS: _now, kind: 'guild' });
   assert.equal(sealed.ok, true, 'a signed guild order');
   assert.deepEqual([sealed.claims.gi, sealed.claims.gt], [s.gid, 'EMBR'], 'the new tag on the badge');
-  assert.equal(r.body.guild.ledger[0].kind, 'rename');
+  const line = r.body.guild.marksLedger[0];
+  assert.deepEqual([line.raw, line.out, line.amount, line.who], ['guild-rename', true, GUILD_RENAME_SILVER, 'Aldric'], 'the silver line, the guildmaster\'s');
   assert.equal(r.body.guild.renameAt, _now + GUILD_RENAME_COOLDOWN_S);
   const hist = s.raw.prepare('SELECT old_name, old_tag, new_name, new_tag, cost FROM guild_renames WHERE guild_id = ?').all(s.gid);
-  assert.deepEqual(hist.map((h) => ({ ...h })), [{ old_name: 'The Iron Oath', old_tag: 'IRON', new_name: 'The Ember Oath', new_tag: 'EMBR', cost: GUILD_RENAME_GOLD }]);
+  assert.deepEqual(hist.map((h) => ({ ...h })), [{ old_name: 'The Iron Oath', old_tag: 'IRON', new_name: 'The Ember Oath', new_tag: 'EMBR', cost: GUILD_RENAME_SILVER }]);
+  // asked again, its answer lost: the rename made, nothing burnt twice
+  const again = await s.call('/v1/guilds/rename', body, s.gm.secret);
+  assert.deepEqual([again.status, again.body.repeat, again.body.guild.name, again.body.guild.marks], [200, true, 'The Ember Oath', 500]);
+  assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind = 'guild-rename'").get().n, 1);
   // a fortnight apart
-  s.realmGold(GUILD_RENAME_GOLD * 2);
-  assert.equal((await s.call('/v1/guilds/rename', { ...body, name: 'The Ash Oath' }, s.gm.secret)).body.error, 'guild-rename-soon');
+  s.guildSilver(GUILD_RENAME_SILVER * 2);
+  assert.equal((await s.call('/v1/guilds/rename', { ...body, name: 'The Ash Oath', rid: s.rid() }, s.gm.secret)).body.error, 'guild-rename-soon');
   _now += GUILD_RENAME_COOLDOWN_S;
-  assert.deepEqual((await s.call('/v1/guilds/rename', body, s.gm.secret)).body, { error: 'guild-rename-same' });
-  const tagOnly = await s.call('/v1/guilds/rename', { character: s.gm.character, tag: 'ASH' }, s.gm.secret);
+  assert.deepEqual((await s.call('/v1/guilds/rename', { ...body, rid: s.rid() }, s.gm.secret)).body, { error: 'guild-rename-same' });
+  const tagOnly = await s.call('/v1/guilds/rename', { character: s.gm.character, tag: 'ASH', rid: s.rid() }, s.gm.secret);
   assert.deepEqual([tagOnly.status, tagOnly.body.guild.name, tagOnly.body.guild.tag], [200, 'The Ember Oath', 'ASH'], 'a name left out keeps the one standing');
   _now = T0;
 });
 
 test('GUILD2 service: a new name passes the name filter (and now a founding\'s does too), is free of every other guild\'s, and waits out a week the guild fights for a seat; AUDIT2 S2/S7: the refusal names the word it caught and when the next new name may come, and a word is read as written - "The Iron Staff" and "The Dark Mood" are no server\'s words (mutants: the stretched reading per word; the word unsaid; `at` dropped)', async () => {
   const s = await stand();
-  s.realmGold(GUILD_RENAME_GOLD * 3);
-  const rename = (b) => s.call('/v1/guilds/rename', { character: s.gm.character, ...b }, s.gm.secret);
+  s.guildSilver(GUILD_RENAME_SILVER * 3);
+  const rename = (b) => s.call('/v1/guilds/rename', { character: s.gm.character, rid: s.rid(), ...b }, s.gm.secret);
   assert.deepEqual((await rename({ name: 'Server Admins' })).body, { error: 'guild-name-word', why: 'server' }, 'a reserved word inside a name, word by word - named');
   assert.deepEqual((await rename({ tag: 'MODS' })).body, { error: 'guild-name-word', why: 'mod' });
   assert.deepEqual((await rename({ name: 'Server Staff' })).body, { error: 'guild-name-word', why: 'server' }, 'the server\'s word, standing alone as written');
@@ -361,8 +372,8 @@ test('GUILD2 service (AUDIT2 G1): a Chronicle row names a guild as it was that d
   const IRON = { name: 'The Iron Oath', tag: 'IRON' };
   const history = (data, at) => s.raw.prepare("INSERT INTO town_seat_history (key, week, kind, data, at) VALUES (?, 1, 'claim', ?, ?)").run(KEY, JSON.stringify(data), at);
   history({ guild: IRON, total: 6000 }, _now - 10);
-  s.realmGold(GUILD_RENAME_GOLD);
-  assert.equal((await s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ember Oath', tag: 'EMB' }, s.gm.secret)).status, 200);
+  s.guildSilver(GUILD_RENAME_SILVER);
+  assert.equal((await s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ember Oath', tag: 'EMB', rid: s.rid() }, s.gm.secret)).status, 200);
   // the old name and tag free again - another guild takes them, and its own claim follows
   const other = await s.registered('Corin', { renown: 10 });
   other.realm = await seatRealm(s.env, other.secret, 'Corin', { name: 'Corin', level: 5, goldPieces: 20_000, items: [], bankAccounts: [{ accountGold: 0 }] });
@@ -386,7 +397,7 @@ test('GUILD2 service (AUDIT2 G1): a Chronicle row names a guild as it was that d
 
 test('GUILD2 service (AUDIT2 D3): two renames racing pay once - the batch holds the row it read (its name and tag) and the fortnight, never the early read alone', async () => {
   const s = await stand();
-  s.realmGold(GUILD_RENAME_GOLD * 2);
+  s.guildSilver(GUILD_RENAME_SILVER * 2);
   const realBatch = s.env.DB.batch.bind(s.env.DB);
   let held = null;
   s.env.DB.batch = async (list) => {   // the first rename's batch waits until the second has made its own reads
@@ -395,12 +406,12 @@ test('GUILD2 service (AUDIT2 D3): two renames racing pay once - the batch holds 
     return realBatch(list);
   };
   const [a, b] = await Promise.all([
-    s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ember Oath' }, s.gm.secret),
-    s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ash Oath' }, s.gm.secret),
+    s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ember Oath', rid: s.rid() }, s.gm.secret),
+    s.call('/v1/guilds/rename', { character: s.gm.character, name: 'The Ash Oath', rid: s.rid() }, s.gm.secret),
   ]);
   s.env.DB.batch = realBatch;
   assert.deepEqual([a.status, b.status].sort(), [200, 409], JSON.stringify([a.body, b.body]));
   assert.equal([a, b].find((x) => x.status === 409).body.error, 'guild-rename-soon');
-  assert.equal(Number(s.raw.prepare('SELECT realm_gold FROM guilds WHERE id = ?').get(s.gid).realm_gold), GUILD_RENAME_GOLD, 'paid once');
+  assert.equal(Number(s.raw.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').get(s.gid).balance), GUILD_RENAME_SILVER, 'paid once');
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM guild_renames WHERE guild_id = ?').get(s.gid).n, 1);
 });

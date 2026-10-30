@@ -61,7 +61,7 @@ import {
 } from '../../src/net/homeLaw.js';
 import { PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // AUDIT LW-II P7: a door opened marks its trader's patrons' hours
 import { reckonPatrons } from './market.js';   // AUDIT LW-II-2 S4: a door leaving public reckons its town first
-import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // ARENA4b: a hall's pieces paid back, into a treasury under its cap
+import { GUILD_TREASURY_MAX, guildMay, guildPowersOf, guildRankCount } from '../../src/net/guild/guildLaw.js';   // GUILD-RANKS: a hall's keepers as the guild set them; ARENA4b: a hall's pieces paid back, into a treasury under its cap
 import { DECOR_OPS_MAX, DECOR_OPS_WINDOW_S } from '../../src/net/decorLaw.js';   // HOME-LOOK: a repaint counts as a decorator's write
 import { hallMay } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
 import { heraldryOfRow } from './halls.js';   // GUILD1d: a hall's heraldry, on its door
@@ -470,7 +470,7 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
   // GUILD1d: a hall's guild (its name, tag and heraldry) and the named character's rank in it; a home whose owner opened
   // it to their guild, whether the named character is in that guild with them
   const homesRead = db.prepare(`SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, h.score,
-      g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry,
+      g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, g.ranks AS guild_ranks, g.powers AS guild_powers,
       (SELECT COUNT(*) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ?1)) AS vacant,
       (SELECT MIN(r.price) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ?1)) AS rent_from,
       (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?2 AND r.tenant_char = ?3 AND r.until > ?1) AS tenancy,
@@ -510,15 +510,16 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
       if (h.guild_id != null) {
         // GUILD1d: A GUILD'S HALL - named by its guild, whose members walk in and whose Officers furnish it; nobody's home
         const rank = Number.isSafeInteger(h.my_rank) ? h.my_rank : null;
+        const powers = guildPowersOf(h.guild_powers ?? null, guildRankCount(h.guild_ranks ?? null));   // GUILD-RANKS: as the guild set them
         return {
           buildingKey: h.building_key, owner: h.guild_name ?? h.owner_name, entry: h.entry, mine: false,
           hall: { name: h.guild_name ?? h.owner_name, tag: h.guild_tag ?? '', heraldry: heraldryOfRow(h.guild_heraldry) },
           // AUDIT GUILD-YARD Y1: a keeper as OWNS keeps it - of the rank, and a realm character (a local one is refused
           // every write; its decorator stood for nothing)
-          ...(rank != null ? { member: true, ...(hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true } : {}) } : {}),
+          ...(rank != null ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) } : {}),
           // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;
           // `keeper`'s realm clause took the door's "Who may enter" from a local Officer the service would have answered
-          ...(rank != null && hallMay(rank, 'hallEntry') ? { hallEntry: true } : {}),
+          ...(rank != null && guildMay(rank, 'hallEntry', powers) ? { hallEntry: true } : {}),
           // GUILD-HALL-SALE (2026-10-06, asked: "Guild houses should be able to be sold, like regular houses"): who may sell
           // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the
           // sale pays back into it (with half of what records paid for its pieces, which the door says in words)

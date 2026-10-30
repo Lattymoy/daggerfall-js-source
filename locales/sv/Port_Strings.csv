@@ -273,7 +273,6 @@ account.refusal.guildPatron,"Gillet har bjudit på en avdelnings beskydd. Det ka
 account.refusal.guildRank,"Din rang i gillet kan inte göra det."
 account.refusal.guildRankWord,"En rangs namn får inte innehålla ett ord som inte är tillåtet i namn."
 account.refusal.guildRate,"Du har ändrat ditt gille för ofta den här timmen. Försök igen senare."
-account.refusal.guildRenameGold,"Ett nytt namn kostar {cost, number} guld, som betalas från guld som rikesrollfigurer har satt in i skattkammaren, och så mycket finns inte."
 account.refusal.guildRenameMoved,"Gillet ändrades medan det bytte namn. Inget betalades. Titta igen."
 account.refusal.guildRenameSame,"Det är redan gillets namn och tagg."
 account.refusal.guildRenameSiege,"Gillet deltar i en belägring eller en Tornering den här veckan. Det kan inte byta namn förrän striden är över."

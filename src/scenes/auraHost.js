@@ -18,6 +18,12 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { armoryKitPieces } from '../net/armoryLaw.js';
+import { guildArmsOf, ownGuildArms, setPeerTagReader, setPeerClothReader } from '../net/guild/guildArmsBook.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
+
+/** GUILD-SHOP: the arms a kit's Insignia Armlet wears - its wearer's guild's (`tag`, the token's), or null for none; a kit
+ *  without the armlet reads none, so no guild is asked of for it. Pure but for the arms book's ask. */
+export const armletArmsOf = (/** @type {unknown} */ kit, /** @type {unknown} */ tag) => (armoryKitPieces(kit).arms === 'insigniaarmlet' ? guildArmsOf(tag) : null);
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -72,6 +78,8 @@ export function createAuraHost(deps) {
   // AURA-STALL (bible/07-Rendering/Performance-Priority.md): built at the first wearer in range, each look's program at its
   // own door; a throw costs the auras, never the game. The armory's pass the same.
   const auraPassOf = compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the aura would not build', e?.message ?? e));
+  setPeerTagReader((id) => deps.online()?.guildTagOf?.(id) ?? null);   // GUILD-SHOP: a peer's guild, for their boats' sailcloth
+  setPeerClothReader((id) => deps.online()?.sailclothOf?.(id) === true);   // AUDIT GUILD-SHOP S2: and whether the sailcloth is theirs
   const armoryPassOf = compiledPass(renderer.gl, [], () => new ArmoryRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the armory would not build', e?.message ?? e));
   const fogNow = () => ({ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze });
   /** ARMORY-SEEN: one layer of the frame's pieces (armoryLayers), under the frame's camera. */
@@ -157,6 +165,7 @@ export function createAuraHost(deps) {
         if (selfKit.kit !== kit) selfKit.since = t;
         selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.kit = kit; selfKit.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());
         selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding || lift > 0; selfKit.torn = deps.beast() ? 1 : -1;
+        /** @type {any} */ (selfKit).arms = armoryKitPieces(kit).arms === 'insigniaarmlet' ? ownGuildArms() : null;   // GUILD-SHOP
         armoryList.push(selfKit);   // FOLLOW-NOW: placed, posed and stepped at the draw (draw's placeSelf)
       } else selfKit.kit = null;
       for (const d of seen) {
@@ -179,6 +188,7 @@ export function createAuraHost(deps) {
           if (!w || w.kit !== ak) { w = { id: d.id, at: [0, 0, 0], kit: ak, seed: auraSeedOf(d.id), kindle: 0, since: t, pose: newPose(), torn: -1 }; armoryPool.set(d.id, w); }
           w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t;
+          w.arms = armletArmsOf(ak, online.guildTagOf?.(d.id));   // GUILD-SHOP: the arms their token's guild bears
           peerPose(d.id, w, layers); armoryMotionStep(w, t, right);
           armoryList.push(w);
         }

@@ -109,7 +109,8 @@ import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
 import { SHOP_WARES, shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row
-import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
+import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../../src/net/armoryLaw.js';
+import { guildWaresHeld } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: the guild shop's wares, their bits on the row   // ARMORY: the Aura Armory's pieces and the kit worn
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -474,7 +475,7 @@ export const SOULCAKE_ICON = 'soulcake';
 export function iconsHeld(/** @type {any} */ player, /** @type {any} */ env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
   if (holdsAll(player, env)) return [...ICONS];   // ADMIN-ALL
-  const own = new Set(festivalKeys(player, 'icon'));
+  const own = new Set([...festivalKeys(player, 'icon'), ...guildWaresHeld(Number(player?.guild_wares ?? 0))]);   // GUILD-SHOP: the Guild Crest
   if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
   return ICONS.filter((i) => own.has(i));
 }
@@ -501,8 +502,14 @@ export function auraWorn(player, env) {
 export function armoryHeld(/** @type {any} */ player, /** @type {any} */ env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
   if (holdsAll(player, env)) return ARMORY_PIECES.map((p) => p.key);   // ADMIN-ALL
-  const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory')]);
+  const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory'), ...guildWaresHeld(Number(player?.guild_wares ?? 0))]);   // GUILD-SHOP: the Insignia Armlet
   return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
+}
+/** AUDIT GUILD-SHOP S2: 1 where the account holds the Guild Sailcloth (its bit, or ADMIN-ALL), else undefined - the token's
+ *  `sc`, by which a peer's client flies another's sailcloth at all. */
+export function sailclothHeld(/** @type {any} */ player, /** @type {any} */ env) {
+  if (!(typeof player?.handle === 'string' && player.handle)) return undefined;
+  return holdsAll(player, env) || guildWaresHeld(Number(player?.guild_wares ?? 0)).includes('guildsails') ? 1 : undefined;
 }
 /** ARMORY: the kit this player WEARS - the stored one, less any piece no longer held (a refund), or undefined for none
  *  (titleWorn's law). */

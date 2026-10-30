@@ -29,7 +29,7 @@ old words in `06-Systems/Online-Arc.md`, and a probe run said to be recorded tha
 floating, and Resurrect could not pick it. Both keep it (`remotePlayers.js` addCorpse, `indoorFloor.js`
 keepIndoorFloor). **N2.** The point a peer's blow lands was drawn off the floor; it rides the pose's `fy`
 (`peerFx.js`). **N3.** `poseChanged` was blind to `fy`, so a standing peer kept the old height through a relay
-redeploy; world293 was re-hashed in place, undeployed (world295 since the merge of main). **N4, open.** Foes indoors and the zone's remains are still their
+redeploy; world293 was re-hashed in place, undeployed (world296 since the merges of main). **N4, open.** Foes indoors and the zone's remains are still their
 owner's height; a peer and its foe can now disagree by the rooms' difference. Recorded in the field bugs' section 5.
 **N5.** A comment moved off its line in `online.js` lerpPose.
 

@@ -77,7 +77,7 @@ const HARDCODED = {
   'src/net/accountClient.js': 14,
   'src/net/arena/arenaBrain.js': 2,
   'src/net/arena/arenaLaw.js': 28,
-  'src/net/armoryLaw.js': 10,   // ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
+  'src/net/armoryLaw.js': 11,   // GUILD-SHOP: and the Insignia Armlet's (armory.test.js holds every piece's service name to its client words). ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
   'src/net/bagLaw.js': 26,
   'src/net/boardLaw.js': 4,
   'src/net/card/cardLaw.js': 6,
@@ -113,7 +113,7 @@ const HARDCODED = {
   'src/net/gate/gateMods.js': 31,
   'src/net/gate/gateRite.js': 1,
   'src/net/guild/guildBook.js': 1,
-  'src/net/guild/guildPowers.js': 34,
+  'src/net/guild/guildPowers.js': 33,   // GUILD-RANKS: the ranks act's words through t()
   'src/net/guild/guildVaultLaw.js': 4,
   'src/net/herald/heraldCard.js': 4,   // HERALD-CARDS: the families' names on their cards ('The Sea Serpent', ...) - the Discord channel's English, as every herald post is; KETCH: +1, the Sky-Ketch's family name ('The Sky-Ketch') - the Discord channel's English, as every herald post is
   'src/net/heraldryLaw.js': 8,
@@ -774,7 +774,7 @@ const HARDCODED = {
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
   'src/ui/socialMenu.js': 4,
-  'src/ui/socialPanel.js': 235,   // GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
+  'src/ui/socialPanel.js': 229,   // AUDIT GUILD-RANKS C3: -1, the guildmaster's-alone reason in t(). GUILD-RANKS: -4, the rank names the Ranks page's (ui/guild/guildRanksPage.js, in t()). GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
   'src/ui/socketWells.js': 4,
   'src/ui/spell/spellMakerWindow.js': 15,
   'src/ui/spellbookWindow.js': 4,
@@ -826,7 +826,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 54,   // DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 56,   // FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

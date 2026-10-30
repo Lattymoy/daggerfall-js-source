@@ -80,6 +80,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../../systems/decor/decorScan.js';
+import { guildPieceLeft } from '../../net/guild/guildStock.js';   // GUILD-SHOP: the guild's own hall pieces, its stock
+import { guildStockText } from '../../ui/guild/guildShopText.js';
 import { decorModsLive, DECOR_MODS_LIVE_S } from '../../systems/decor/decorMods.js';   // AUDIT 05b A3: the mods' pieces offered while they stand
 import { createDecorRooms } from '../../systems/decor/decorRooms.js';   // DECOR-ROOMS: a house's rooms, found in its own walls
 import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit, decorDoorwayQuad, decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DOORS
@@ -568,6 +570,7 @@ export function createDecorTool(deps) {
     if (!key) return;
     const entry = entryForKey(key);
     if (!entry) return;
+    if (!decorRoomEntries([entry], deps.room?.(), null, liveMods())?.length) return;   // AUDIT GUILD-SHOP R6: a slot's piece in a room that takes it alone (a hall's in a hall)
     const fly = [...placing.fly];
     endPlacing();
     beginPlacing(entry, null, { hotbar: true, at: fly });
@@ -894,7 +897,7 @@ export function createDecorTool(deps) {
       ready: s.phase() === 'done',
       sized: s.lateSized(),   // AUDIT 05b A3: a piece measured since - its price, listed
       radiusOf: (e) => s.radiusOf(e),
-      priceOf: (e) => { const rad = s.radiusOf(e); return rad ? decorPrice(rad, 1) : null; },
+      priceOf: (e) => { if (e?.guild != null) return 0; const rad = s.radiusOf(e); return rad ? decorPrice(rad, 1) : null; },   // GUILD-SHOP: the guild's piece costs no gold
       gold: deps.wallet?.().gold ?? 0,
       count: pool.size(),
       cap: capHere(r),
@@ -1076,7 +1079,7 @@ export function createDecorTool(deps) {
     const yard = !!deps.room?.()?.yard;   // HOME-YARD: outside, nothing is held and no piece carries a light of its own (YARD-LIGHT: a lamp lights as the town's)
     const entry0 = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage, station: editing.station ?? null } : catalogueEntry;   // AUDIT HOME-STATIONS S1: a moved station stays one
     const entry = yard ? { ...entry0, storage: false, light: null, station: null } : entry0;
-    const free = entry.kind === 'own';   // DECOR2a: the player's own item - no price, whatever its size
+    const free = entry.kind === 'own' || entry.guild != null;   // DECOR2a: the player's own item - no price, whatever its size; GUILD-SHOP: nor the guild's own piece (its silver was paid)
     // a move, and a duplicate, already paid for a size: the scan may not have reached it yet
     const priced = editing ?? (Number.isSafeInteger(pose?.paid) && pose.paid > 0 && pose.scale > 0 ? pose : null);
     const radius = free ? null : s.radiusOf(catalogueEntry) ?? (priced ? priced.paid / (DECOR_PRICE_PER_METRE * priced.scale) : null);
@@ -2381,7 +2384,7 @@ export function createDecorTool(deps) {
     const price = p.door && p.piece ? p.piece.paid : p.placer ? p.placer.price() : null;   // HOME-DOORS: a door's price is its fit's
     const edit = p.editing && p.placer ? decorEditPrice(p.radius, p.editing, p.door && p.piece ? p.piece.scale : p.placer.state().scale) : null;
     bar?.show({
-      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,
+      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry, roomPieces())) : p.free ? 'free' : null,   // GUILD-SHOP: what is left of the guild's stock
       count: pool.size(), cap: capHere(deps.room?.()),
       snap: !!p.placer?.state().snap, why: placingWhy(p, price),
       sized: decorEntrySized(p.entry), preview: !!p.lock,   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people
@@ -2471,7 +2474,8 @@ export function createDecorTool(deps) {
       if (pay > gold) return `You need ${pay - gold} more gold.`;
       return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;
     }
-    if (p.free && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)
+    if (p.free && p.entry.kind === 'own' && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)
+    if (p.entry.guild != null && guildPieceLeft(p.entry, roomPieces()) <= 0) return guildStockText(p.entry, 0);   // GUILD-SHOP: the guild's stock spent here
     const why = decorWhyNot({ price, ready: true, gold: deps.wallet?.().gold ?? 0, count: pool.size(), cap: capHere(deps.room?.()), yard: !!deps.room?.()?.yard, hall: !!deps.room?.()?.hall });
     if (why) return why;
     return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;

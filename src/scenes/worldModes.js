@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { hallPiecePress } from './guildHallPress.js';   // GUILD-SHOP: a hall's board and its banker pressed
 import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
@@ -5010,7 +5011,7 @@ export function createWorldModes(host) {
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
-    if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
+    if (hallPiecePress(piece, isHallBoard(piece), openHallBoard, openHallChest, !!(interiorHome?.hall && interiorHome.member), say)) return;   // GUILD1e: the board in a guild's hall; GUILD-SHOP: its banker, the vault (scenes/guildHallPress.js)
     if (!piece?.storage) return;
     if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; } else if (interiorSeatHall && !interiorHome) { say(CROWN_HALL_TEXT.chestShut(interiorSeatHall.name)); return; }   // AUDIT SEATS-2 C6: a visitor told whose it is   // GUILD1d: a placed chest is that piece's bin; the cupboards stay the Stores. SEAT-HALL: a palace's too
     if (decorIsShared(piece.id) || !decorOwnerHere()) {

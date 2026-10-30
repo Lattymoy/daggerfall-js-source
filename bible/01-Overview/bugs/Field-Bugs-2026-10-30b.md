@@ -3,7 +3,7 @@
 Seven Discord reports and the owner's own, handed over in a session. Read on main's `b793e26e1` with the freeware's data
 (`tools/fetch-data.sh`). The owner chose three of the fixes when asked (sections 2, 3 and 5). Then read cold and
 corrected (`../audits/Audit-FB1030.md`). The mutants are
-`tools/mutants/fb1030_fieldbugs.json`. Relay world295 (`net/wire.js`; world293 on its branch, renumbered at the merge
+`tools/mutants/fb1030_fieldbugs.json`. Relay world296 (`net/wire.js`; world293 on its branch, renumbered at the merge
 of main). The name `Field-Bugs-2026-10-30.md` is main's CAPE-CARD page, which took it first.
 
 | | Report | What it was | Done |
@@ -96,7 +96,7 @@ is not a cause there.
 
 The owner, asked: "Room-relative height".
 
-FIXED. A pose indoors carries its room's origin, `fy` (`net/peer/indoorFloor.js`, kept by `validPose` from world295 and
+FIXED. A pose indoors carries its room's origin, `fy` (`net/peer/indoorFloor.js`, kept by `validPose` from world296 and
 by the eased pose). A reader indoors draws the peer as high over its own room's floor as over the sender's. A sender
 without it, or a reader outdoors, reads the height as before. Foes indoors are still their owner's height.
 `test/net/fb1030_indoorfloor.test.js`, on the Bay and in Torval.
@@ -124,4 +124,4 @@ is a design question, left for the owner.
 The owner, 2026-10-30, reporting CAPE-TOGGLE as built: "the cape toggle in the inventory also toggles off your aura".
 Main fixed the same report first (AURA-STAYS, `25e654210`: the switch hides the worn cloak alone). This branch's own fix,
 CAPE-AURA, also dropped the look's `hc` from the wire; it was withdrawn at the merge of main for AURA-STAYS
-(`04-Characters/Cape-Toggle.md`), so the relay's world295 changes `fy` alone.
+(`04-Characters/Cape-Toggle.md`), so the relay's world296 changes `fy` alone.

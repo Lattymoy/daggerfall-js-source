@@ -273,7 +273,6 @@ account.refusal.guildPatron,"Het gilde heeft geboden op het beschermheerschap va
 account.refusal.guildRank,"Je rang in het gilde mag dat niet."
 account.refusal.guildRankWord,"De naam van een rang mag geen woord bevatten dat niet in namen is toegestaan."
 account.refusal.guildRate,"Je hebt dit uur te vaak iets aan je gilde veranderd. Probeer het later opnieuw."
-account.refusal.guildRenameGold,"Een nieuwe naam kost {cost, number} goud, betaald uit goud dat rijkspersonages in de schatkist hebben gelegd, en zoveel is er niet."
 account.refusal.guildRenameMoved,"Het gilde veranderde terwijl het werd hernoemd. Er is niets betaald. Kijk opnieuw."
 account.refusal.guildRenameSame,"Dat zijn al de naam en tag van het gilde."
 account.refusal.guildRenameSiege,"Het gilde zit deze week in een belegering of een Toernooi. Het kan niet worden hernoemd tot de strijd voorbij is."
