@@ -197,13 +197,87 @@ test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; 
   assert.match(door, /homesVersion: deps\.townHomesVersion \?\? null,/);
   const w = src('src/scenes/world.js');
   assert.doesNotMatch(w, /townBoards|townBoardMarks/);   // PIN MOVED (NOTICE-PANEL): no board stands to mark
-  assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*return h && isVendorWaypoint\(mapId, buildingKey\) \? \{ \.\.\.h, own: false, owner: vendorWaypointLabel\(h\.owner\) \} : h;\n\s*\} : null,\n\s*\}\),/);
+  // PIN MOVED (VENDOR-HOUSES): the waypoint's house and every trader's house (never my own) carry `vendor`
+  assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*if \(h && isVendorWaypoint\(mapId, buildingKey\)\) return \{ \.\.\.h, own: false, vendor: true, owner: vendorWaypointLabel\(h\.owner\) \};\n\s*return h && !h\.own && isVendorHouse\(mapId, buildingKey\) \? \{ \.\.\.h, vendor: true \} : h;\n\s*\} : null,\n\s*\}\),/);
   // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the bag `townHere` builds for either key; the homes asked as the M key's window opens and as the travel
   // key's streets are handed over
-  assert.match(w, /townHomesVersion: \(\) => \(onlineHomes\?\.version\(\) \?\? 0\) \+ vendorWaypointVersion\(\) \* 100_000,[^\n]*\n\s*\} \};/);
-  assert.match(w, /townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);\n\s*onlineHomes\?\.ensure\(here\.mapId\);/, 'the M key asks');
-  assert.match(w, /if \(!here\) return \{\};\n\s*onlineHomes\?\.ensure\(here\.mapId\);/, 'the travel key\'s streets ask too');
-  assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, deps: \{/, 'the town\'s MapId');
+  assert.match(w, /townHomesVersion: \(\) => `\$\{onlineHomes\?\.version\(\) \?\? 0\}:\$\{vendorWaypointVersion\(\)\}:\$\{vendorHousesVersion\(\)\}`,[^\n]*\n\s*\} \};/);   // PIN MOVED (VENDOR-HOUSES)
+  assert.match(w, /townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);\n\s*onlineHomes\?\.ensure\(here\.mapId\);[^\n]*\n\s*if \(onlineHomes\) ensureVendorHouses\(here\.region\);/, 'the M key asks, its traders too');
+  assert.match(w, /if \(!here\) return \{\};\n\s*onlineHomes\?\.ensure\(here\.mapId\);[^\n]*\n\s*if \(onlineHomes\) ensureVendorHouses\(here\.region\);/, 'the travel key\'s streets ask too');
+  assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, region: dfLoc\.regionIndex, deps: \{/, 'the town\'s MapId and region');
   // the classic exterior automap is DFU's own window: it draws DFU's marks alone
   assert.doesNotMatch(src('src/ui/exteriorAutomapWindow.js'), /townHomes|paintHomeMark/);
+});
+
+// ---- VENDOR-HOUSES (Mac, 2026-10-30, forwarding #feature-feedback "Player Vendors") ---------------------------------
+
+const { registerVendorHouseReader, ensureVendorHouses, isVendorHouse, vendorHousesVersion, VENDOR_HOUSES_READ_S, _resetVendorHousesForTests } = await import('../../../src/systems/vendorHouses.js');
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+test('VENDOR-HOUSES the read: a region\'s traders by town and house, read once a while, past the Bay as in it (mutants: the reread every open; the version never moved; a house of another town of the same key marked)', async () => {
+  _resetVendorHousesForTests();
+  const asked = [];
+  const rows = { 17: [{ map: 4000000000, buildingKey: 12 }, { map: 77, buildingKey: 5 }, { map: 77, buildingKey: 0 }], 66: [{ map: 9100001, buildingKey: 3 }] };
+  registerVendorHouseReader((region) => { asked.push(region); return { ok: true, data: { rows: rows[region] ?? [] } }; });
+  const v0 = vendorHousesVersion();
+  ensureVendorHouses(17, 1000);
+  ensureVendorHouses(17, 1000);   // a read out: not asked twice
+  await settle();
+  assert.deepEqual(asked, [17]);
+  assert.ok(vendorHousesVersion() > v0, 'the marks moved, so the sheet repaints');
+  assert.ok(isVendorHouse(4000000000, 12) && isVendorHouse(-294967296, 12), 'a map id read signed or not');
+  assert.ok(isVendorHouse(77, 5) && !isVendorHouse(77, 12) && !isVendorHouse(77, 0), 'a key is its own town\'s');
+  ensureVendorHouses(17, 1000 + VENDOR_HOUSES_READ_S - 1);
+  await settle();
+  assert.deepEqual(asked, [17], 'read again only after VENDOR_HOUSES_READ_S');
+  const v1 = vendorHousesVersion();
+  ensureVendorHouses(17, 1000 + VENDOR_HOUSES_READ_S);
+  await settle();
+  assert.deepEqual(asked, [17, 17]);
+  assert.equal(vendorHousesVersion(), v1, 'the same traders: no repaint');
+  // a region past the Bay (TAMRIEL-WIDE): read and marked as the Bay's
+  ensureVendorHouses(66, 1000);
+  await settle();
+  assert.ok(isVendorHouse(9100001, 3));
+  rows[17] = [];
+  ensureVendorHouses(17, 1000 + 2 * VENDOR_HOUSES_READ_S);
+  await settle();
+  assert.ok(!isVendorHouse(77, 5) && vendorHousesVersion() > v1, 'a trader shut is no longer marked');
+  // the market shut, a refusal, no reader: nothing marked, nothing thrown
+  _resetVendorHousesForTests();
+  ensureVendorHouses(17, 0);
+  registerVendorHouseReader(() => null);
+  ensureVendorHouses(17, 0);
+  ensureVendorHouses(-1, 0);
+  await settle();
+  assert.ok(!isVendorHouse(4000000000, 12));
+  _resetVendorHousesForTests();
+});
+
+test('VENDOR-HOUSES the mark: a trader\'s house carries `vendor` through the rows and the sheet and is filled blue with a parchment door; my own stays red (mutants: the flag dropped at a read; the blue fill lost; a trader\'s house in my red)', () => {
+  const buildings = [house(1, 0, 0, 30, 30), house(2, 1, 0, 60, 10), house(3, 1, 1, 10, 50)];
+  const reg = new Map([[1, { owner: 'Mac', own: true }], [2, { owner: 'Gryphoth', own: false, vendor: true }], [3, { owner: 'Trader waypoint - Eve', own: false, vendor: true }]]);
+  const rows = townHomeRows({ buildings, mapId: 4000000000, regionIndex: 66, homeAt: (m, k) => reg.get(k) ?? null });
+  assert.deepEqual(rows, [
+    { buildingKey: 1, own: true, label: 'Your home' },
+    { buildingKey: 2, own: false, vendor: true, label: "Gryphoth's home - trader" },
+    { buildingKey: 3, own: false, vendor: true, label: "Trader waypoint - Eve's home" },
+  ]);
+  assert.deepEqual(readTownHomes(() => rows), rows);
+  const s = createTownSheet({ gridW: 2, gridH: 2, blocks: [], buildings: () => buildings, discovered: () => [], homes: () => rows });
+  assert.deepEqual(s.homes().map((h) => [h.own, h.vendor === true]), [[true, false], [false, true], [false, true]]);
+  const ctx = recordingCtx();
+  s.paintOverlay(ctx, ENV);
+  const fills = ctx.calls.filter((c) => c.fn === 'fill').map((c) => c.fillStyle);
+  assert.equal(fills.filter((f) => f === TOWN_PEN.vendor).length, 2, 'the two traders\' houses in blue');
+  assert.equal(fills.filter((f) => f === TOWN_PEN.home).length, 1, 'my own in my ink');
+  assert.equal(TOWN_PEN.vendor, PEN.vendor);
+  assert.equal(PEN.vendor, 'rgba(24, 85, 190, 0.95)', 'classic\'s shop blue (townQuarters.js CLASSIC_ARGB.shop), at the pen\'s strength');
+  const one = recordingCtx();
+  paintHomeMark(one, 100, 200, true, true);
+  assert.ok(one.calls.some((c) => c.fn === 'fill' && c.fillStyle === TOWN_PEN.home) && !one.calls.some((c) => c.fn === 'fill' && c.fillStyle === TOWN_PEN.vendor), 'my own trader is my house first');
+});
+
+test('VENDOR-HOUSES the wiring: the vendor host registers the directory\'s read, the market\'s gate on it', () => {
+  assert.match(src('src/scenes/vendorHost.js'), /registerVendorHouseReader\(\(region\) => \(vendorMarketOpen\(\) \? vendorReachable\(region\) : null\)\);/);
 });

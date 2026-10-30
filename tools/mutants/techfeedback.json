@@ -1,0 +1,162 @@
+[
+  {
+    "name": "TECH-BACKSTAB-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0);",
+    "new": "      const back = backstabOf(foe);",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the press's backs never read at the hit"
+  },
+  {
+    "name": "TECH-BACKSTAB-leaf-blind",
+    "file": "src/combat/technique/techniqueBlow.js",
+    "old": "(_backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0)",
+    "new": "(_backstab && false ? _backstab(player, foe) : 0)",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the leaf answers no back"
+  },
+  {
+    "name": "TECH-BACKSTAB-swing-unread",
+    "file": "src/combat/techniques.js",
+    "old": "{ use, backs: backsAt(ctx.cam?.feet) }",
+    "new": "{ use }",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): a swing's backs not read at the press"
+  },
+  {
+    "name": "TECH-BACKSTAB-flight-from-press",
+    "file": "src/combat/techniques.js",
+    "old": "use, backs: backsAt(target.point) };",
+    "new": "use, backs: backsAt(from) };",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): a flight's backs read from where it left, not where it lands"
+  },
+  {
+    "name": "TECH-BACKSTAB-landing-drops",
+    "file": "src/combat/techniques.js",
+    "old": "{ target: a.foe, use: a.use, backs: a.backs }",
+    "new": "{ target: a.foe, use: a.use }",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the landing's strike drops the backs"
+  },
+  {
+    "name": "TECH-BACKSTAB-player-body",
+    "file": "src/combat/techniques.js",
+    "old": "f.ai?.feet && !playerBody(f) && isBackFacing(",
+    "new": "f.ai?.feet && isBackFacing(",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): a player's body read for a backstab"
+  },
+  {
+    "name": "TECH-CANCEL-gate-kept",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!ctx.ready) return true;\n",
+    "new": "  if (!ctx.ready || pw.machine?.state !== 'Idle') return true;\n",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the swing in flight holds the key again"
+  },
+  {
+    "name": "TECH-CANCEL-cooldown-kept",
+    "file": "src/characters/weaponStates.js",
+    "old": "  m.cooldownUntil = m.now;\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the cut leaves the attack's cooldown"
+  },
+  {
+    "name": "TECH-CANCEL-cut-at-rest",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): a cut said at rest"
+  },
+  {
+    "name": "TECH-CANCEL-rig-uncut",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "startSwing: (s) => { if (playerWeapon.cutForTechnique()) fpArm.cutAttack?.(); if",
+    "new": "startSwing: (s) => { if",
+    "tests": [
+      "test/scenes/tech1_hosts.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the rig never cuts the swing"
+  },
+  {
+    "name": "TECH-KEY2-reads-line",
+    "file": "src/combat/techniques.js",
+    "old": "export const handOfKey = (key, entity, pw) => (key === 2 ?",
+    "new": "export const handOfKey = (key, entity, pw) => (key === 3 ?",
+    "tests": [
+      "test/systems/martial_paths.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the signature key answers the line"
+  },
+  {
+    "name": "TECH-KEY2-press-unstepped",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!pressed && !pressed2) return;",
+    "new": "  if (!pressed) return;",
+    "tests": [
+      "test/systems/martial_paths.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the signature key's press never stepped"
+  },
+  {
+    "name": "TECH-KEY2-refusal-unsaid",
+    "file": "src/combat/techniques.js",
+    "old": "  if (!hand && key === 2) return noSignatureText();",
+    "new": "  if (!hand && key === 2) return true;",
+    "tests": [
+      "test/systems/martial_paths.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): no path held: silent"
+  },
+  {
+    "name": "TECH-KEY2-one-chip",
+    "file": "src/combat/techniques.js",
+    "old": "  const sig = hand.signature ? null : handOfKey(2, entity, pw);",
+    "new": "  const sig = null;",
+    "tests": [
+      "test/systems/martial_paths.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the HUD shows the line's chip alone"
+  },
+  {
+    "name": "TECH-KEY2-rig-unread",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      tc.held2 = !!actionDown?.(SIGNATURE_ACTION);",
+    "new": "      tc.held2 = false;",
+    "tests": [
+      "test/scenes/tech1_hosts.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the rig never reads the signature key"
+  },
+  {
+    "name": "TECH-KEY2-row-missing",
+    "file": "src/systems/inputActions.js",
+    "old": "    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature\n",
+    "new": "",
+    "tests": [
+      "test/scenes/tech1_hosts.test.js"
+    ],
+    "note": "Mac, 2026-10-30 (#feature-feedback): the Controls pane draws no row for the key"
+  }
+]

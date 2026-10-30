@@ -8187,6 +8187,7 @@ stolen.taken,"경비병이 당신이 지니고 있던 도난품을 압수했다 
 summon.noQuest,"{prince}이(가) 응답했지만, 이 지역에서는 당신에게 맡길 일이 없습니다. 금화는 그대로입니다. 다른 지역에서 소환해 보세요."
 survival.boon.meal,"든든함"
 survival.boon.mealTip,"푸짐한 선술집 식사: 지속되는 동안 배가 부르고 갈증이 억제됩니다."
+technique.noSignature,"이 무기에 쓸 수 있는 무술 기술이 없습니다."
 timers.at,"{when} 시작"
 timers.chip.all,"전체"
 timers.chip.raids,"습격"

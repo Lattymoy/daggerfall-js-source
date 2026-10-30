@@ -804,8 +804,9 @@ import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScree
 import { TerrainGenClient } from '../world/terrain/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { createCoverIndex } from '../ai/cover.js';   // TACT1: billboards are cover
-import { techniqueMarksNow, techniqueHudChips, offsetTechniques, TECHNIQUE_ACTION } from '../combat/techniques.js';   // TECH1 (bible/05-Combat/Weapon-Techniques.md): the player's marks on the ground, the HUD's chip, the recentre's shift
+import { techniqueMarksNow, techniqueHudChips, offsetTechniques } from '../combat/techniques.js';   // TECH1 (bible/05-Combat/Weapon-Techniques.md): the player's marks on the ground, the HUD's chip, the recentre's shift
 import { setHudTechniqueChips } from '../ui/enhanced/enhancedHud.js';   // TECH1: the technique's chip, beside the set powers'
+import { techniqueKeyWord } from '../ui/techniqueKeyWord.js';   // TECH-KEY2: either technique key's word, kept a binding change
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
@@ -1031,7 +1032,7 @@ import { insigniaRowOf, insigniaEquip } from './brokerInsignia.js';   // ARMORY:
 import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelWearDamage, duelStandIn } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists - INT8/INT9: the striker's half alone, the relay referees (AUDIT C&C H5: against the neutral stand-in)
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
-import { quickslotTag, quickslotHand, tagText, actionKeyWord } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
+import { quickslotTag, quickslotHand, tagText } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touch/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
@@ -1431,17 +1432,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   setSetsWearer(() => playerEntity);   // SET5: the classic tooltip's and a plaque's set lines read my worn sets
   setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e), ...martialHudChips(e)]);   // SET5: the set powers' windows and recoveries, as chips after the HUD's effects; LOOT5: and the Legendary powers' beside them; RPT1026-PROGRESS: and a martial path's passive (Flowing Steel's stacks)
   // TECH1: and the weapon's technique - its name, its seconds while it recovers or its key while ready - off the MODE's
-  // rig (indoors and underground world.js's own is never readied; the live arm names the one in hand)
-  // AUDIT TECH-FX: the key's word only when the chip is ready, and looked up once a binding change (the store's `rev`) -
-  // asked each frame, getBinding walked every binding (10 KB and 11 us a frame, a technique in hand or none)
-  // FINAL AUDIT (TECH-CARD): the card's word (quickslotTags.js actionKeyWord) - the key that answers, primary or secondary,
-  // and the pad's button while a pad is in hand - asked again when the pad is taken up or put down
-  let _techKey = null, _techKeyStore = null, _techKeyRev = -1, _techKeyPad = null;
-  const techniqueKeyWord = () => {
-    const b = bindings(), rev = b?.rev ?? 0, pad = controllerLook() ? (padFamily() ?? 'xbox') : null;
-    if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev || _techKeyPad !== pad) { _techKeyStore = b; _techKeyRev = rev; _techKeyPad = pad; _techKey = actionKeyWord(TECHNIQUE_ACTION, { bindings: b, controller: pad !== null, family: pad ?? 'xbox' }); }
-    return _techKey;
-  };
+  // rig (indoors and underground world.js's own is never readied; the live arm names the one in hand). The key's word
+  // only when the chip is ready, kept a binding change (ui/techniqueKeyWord.js - TECH-KEY2: either key's)
   setHudTechniqueChips((e) => techniqueHudChips(e, (modes?.liveArm?.()?.rig ?? weaponRig)?.playerWeapon, techniqueKeyWord));
   setSetPowersVoice({ sound: (name) => {
     if (name === 'unbroken') audio.playOneShot(SOUND.Parry6, 1);

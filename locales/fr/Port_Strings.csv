@@ -8187,6 +8187,7 @@ stolen.taken,"Les gardes confisquent les biens volés que vous portiez ({n, plur
 summon.noQuest,"{prince} répond, mais n’a aucune tâche pour vous dans cette région. Vous gardez votre or. Tentez l’invocation dans une autre région."
 survival.boon.meal,"Bien repu"
 survival.boon.mealTip,"Un copieux repas de taverne : tant qu’il dure, vous restez rassasié et votre soif est tenue en respect."
+technique.noSignature,"Vous n'avez aucune technique martiale pour cette arme."
 timers.at,"commence {when}"
 timers.chip.all,"Tout"
 timers.chip.raids,"Raids"

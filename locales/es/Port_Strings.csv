@@ -8187,6 +8187,7 @@ stolen.taken,"Los guardias se llevan los bienes robados que llevabas ({n, plural
 summon.noQuest,"{prince} responde, pero no tiene ninguna tarea para ti en esta región. Conservas tu oro. Prueba la invocación en otra región."
 survival.boon.meal,"Bien alimentado"
 survival.boon.mealTip,"Una comida abundante de taberna: mientras dura, sigues saciado y tu sed queda contenida."
+technique.noSignature,"No tienes ninguna técnica marcial para esta arma."
 timers.at,"empieza {when}"
 timers.chip.all,"Todo"
 timers.chip.raids,"Asaltos"

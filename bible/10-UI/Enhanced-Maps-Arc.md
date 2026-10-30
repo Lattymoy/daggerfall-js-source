@@ -720,6 +720,26 @@ Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` 
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 
+## VENDOR-HOUSES (2026-10-30) - a trader's house is blue on the town plan
+
+Mac, forwarding #feature-feedback "Player Vendors": "trying to find a vendor in Daggerfall is insane"; "Literally just
+make them a different color like the Player's own houses are red. Make a marked vendor blue or something."
+
+- **Every house with a player's trader and goods up is filled blue** (`TOWN_PEN.vendor` - classic's shop blue, the map's
+  pen `PEN.vendor`, so EM4 holds: no colour invented) with a parchment door; the
+  waypoint's house is blue too. My own house stays my red, trader or not. Under the pointer a trader's house reads
+  "Gryphoth's home - trader"; the waypoint's keeps its own words.
+- **The read** is the Notice Board's Vendors tab's (`scenes/vendorHost.js` vendorReachable, its door law with it),
+  registered into `systems/vendorHouses.js`. Opening the town plan, by either key, asks for its region's traders,
+  once in `VENDOR_HOUSES_READ_S` (120 s). The sheet repaints when a read changes the marks. Regions past the Bay are
+  read the same way (TAMRIEL-WIDE): the key is the town's MapId and the house's key.
+- **The rest is unchanged:** the gold coin on the world maps, the compass and the Overworld's mark (HOME-VENDOR,
+  `06-Systems/Online-Arc.md`). The classic exterior automap draws no homes.
+
+Code: `systems/vendorHouses.js`, `ui/town/townMapMarks.js`, `ui/town/townSheet.js`, `ui/ink/inkTown.js`
+(`paintHomeMark`), `scenes/exteriorAutomapToggle.js`, `scenes/vendorHost.js`. Pins: `test/ui/town/town_marks.test.js`
+(VENDOR-HOUSES, 3). Mutants: `tools/mutants/vendorhouses.json` (12, all dead).
+
 ## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
 
 A player's private report: the town map's Find me never found them. FINDME (`11-Multiplayer/Wild-Zone.md`) was built

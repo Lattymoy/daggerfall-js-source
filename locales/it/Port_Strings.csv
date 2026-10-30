@@ -8187,6 +8187,7 @@ stolen.taken,"Le guardie confiscano la merce rubata che portavi ({n, plural, one
 summon.noQuest,"{prince} risponde, ma non ha alcun compito per te in questa regione. Tieni il tuo oro. Prova a evocare in un’altra regione."
 survival.boon.meal,"Ben nutrito"
 survival.boon.mealTip,"Un pasto abbondante in taverna: finché dura resti sazio e la sete è tenuta a bada."
+technique.noSignature,"Non hai alcuna tecnica marziale per quest'arma."
 timers.at,"inizia {when}"
 timers.chip.all,"Tutto"
 timers.chip.raids,"Incursioni"

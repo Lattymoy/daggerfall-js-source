@@ -8187,6 +8187,7 @@ stolen.taken,"Vaktene tar de stjålne varene du bar på ({n, plural, one {# gjen
 summon.noQuest,"{prince} svarer, men har ingen oppgave til deg i denne regionen. Du beholder gullet ditt. Prøv å påkalle i en annen region."
 survival.boon.meal,"God og mett"
 survival.boon.mealTip,"Et solid vertshusmåltid: så lenge det varer, holder du deg mett og tørsten holdes i sjakk."
+technique.noSignature,"Du har ingen kampteknikk for dette våpenet."
 timers.at,"starter {when}"
 timers.chip.all,"Alle"
 timers.chip.raids,"Raid"

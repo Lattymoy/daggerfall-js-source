@@ -8187,6 +8187,7 @@ stolen.taken,"Die Wachen nehmen dir das Diebesgut ab, das du bei dir trugst ({n,
 summon.noQuest,"{prince} antwortet, hat aber in dieser Region keine Aufgabe für dich. Du behältst dein Gold. Versuch die Beschwörung in einer anderen Region."
 survival.boon.meal,"Gut gesättigt"
 survival.boon.mealTip,"Eine kräftige Tavernenmahlzeit: Solange sie wirkt, bleibst du satt und dein Durst ist gestillt."
+technique.noSignature,"Du hast keine Kampftechnik für diese Waffe."
 timers.at,"beginnt {when}"
 timers.chip.all,"Alle"
 timers.chip.raids,"Überfälle"

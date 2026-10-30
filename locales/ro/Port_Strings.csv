@@ -8187,6 +8187,7 @@ stolen.taken,"Gărzile confiscă bunurile furate pe care le purtai ({n, plural, 
 summon.noQuest,"{prince} răspunde, dar nu are nicio sarcină pentru tine în această regiune. Îți păstrezi aurul. Încearcă invocarea în altă regiune."
 survival.boon.meal,"Bine hrănit"
 survival.boon.mealTip,"O masă îmbelșugată la han: cât ține, rămâi sătul și setea îți e ținută în frâu."
+technique.noSignature,"Nu ai nicio tehnică marțială pentru această armă."
 timers.at,"începe {when}"
 timers.chip.all,"Toate"
 timers.chip.raids,"Raiduri"

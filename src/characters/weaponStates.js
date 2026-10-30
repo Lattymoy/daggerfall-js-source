@@ -277,6 +277,17 @@ export function machineAttack(m, strikeState) {
   return true;
 }
 
+/** TECH-CANCEL (Mac, 2026-10-30, forwarding #feature-feedback: "Make them independent of your regular attack cooldown /
+ *  animation cancel"): a weapon technique cuts the swing in flight - its hit not yet landed is lost - and waives the
+ *  attack's cooldown (a bow's reload with it), so the technique's strike starts now. True when there was one to cut. */
+export function machineCut(m) {
+  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return false;
+  m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.acc = 0; m.hold = 0;
+  m.animIndex = 0; m.damageDone = false;
+  m.cooldownUntil = m.now;
+  return true;
+}
+
 /** ActivateCenterObject / the hold cap: un-draw WITHOUT releasing an
  *  arrow (WeaponManager.cs:355-357). AUDIT 24 combat: the un-draw
  *  leaves isAttacking TRUE, so the very next Update takes the

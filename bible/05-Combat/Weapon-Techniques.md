@@ -175,7 +175,7 @@ hit frame for a technique's loose before the host sees it.
 | the ladder off | Weapon techniques need the loot ladder, which is off. |
 | a duel or a bout between players | Techniques sleep in a duel. |
 | sheathed | Draw your weapon first. |
-| a technique in flight; mid-swing, a bow's recovery, a spell's hands | (nothing - the hands are busy) |
+| a technique in flight; a spell's hands, a climb, a shot still loosing (TECH-CANCEL: no longer mid-swing or a bow's recovery) | (nothing - the hands are busy) |
 | cooling down | `<name>` is not ready (Ns). |
 | too little fatigue | You are too tired. |
 | a shot with no lane in this host / no ammunition | Not here. / You have nothing to shoot. |
@@ -645,6 +645,39 @@ the first in the block and lists the second (the item law allows one; the classi
 the recovery's titles are not reached in the hover card (it takes no pointer) - the Info box says both in words. A phone
 player with the touch layer's **Tech** button is named the bound key, as the HUD's chip names it (the touch layer has no
 binding of its own to name).
+
+## THE FEEDBACK PASS (2026-10-30, Mac, forwarding #feature-feedback "Weapon Technique Tweaks")
+
+> "Let them work with backstab. You should be able let loose and see big numbers as expected from a skill with a high
+> cooldown"; "Make them independent of your regular attack cooldown / animation cancel"; "Have a key bindable for your
+> 2nd weapon technique. You should have access to both your specialization technique and your weapons technique."
+
+- **TECH-BACKSTAB.** A foe whose back is to me when I commit a technique is a backstab's chance for its blow, however it
+  turns before the hit. A swing reads it from my feet at the press; a leap or a dash from where the body lands, as the
+  foes stand at the press, so a Shadowstep that lands behind its foe takes it from behind (`techniques.js` backsAt).
+  The chance is the hosts' own (`hostCombat.js` backstabChanceOf, its tally with it), registered into the blow's leaf
+  (`techniqueBlow.js` techniqueBackstab) and read in `playerWeapon.js` resolveHit beside the host's own read. Law 1
+  stands: the formula trebles, the technique weighs the trebled number. Shafts keep the host's read at the hit.
+- **TECH-CANCEL.** A swing in flight and the attack's cooldown (a bow's recovery with it) no longer refuse the key. The
+  rig's `startSwing` cuts them first (`weaponStates.js` machineCut, `PlayerWeapon.cutForTechnique`, the Morrowind arm's
+  `cutAttack`): the cut swing's hit is lost. The hands' own gate (`ready`) still holds - a spell, a climb, a shot still
+  loosing. A technique in flight still refuses another.
+- **TECH-KEY2.** A second key, **Martial technique** (`SignatureTechnique`, appended last, unbound - the letters are spent),
+  answers the held martial path's signature for the weapon in hand whatever line it carries (`techniques.js`
+  handOfKey). The technique key keeps its law: a line first, the signature when free. One runner, one aim and one act
+  at a time, whichever key began it; each technique its own clock. A lined weapon in a held path's pair shows two HUD
+  chips, each naming its key (`ui/techniqueKeyWord.js`, moved out of bootWorld). It is in the Controls pane's Combat
+  group, a touch corner's choice (**Path**), a d-pad's and a pad button's. Pressed with no path for the weapon, it says
+  "You have no martial technique for this weapon."
+- **Not done, the owner's call (2026-10-30):** werewolf form keeps "The beast knows no technique" (QuietHydra's ask in
+  the same thread). BAL6 balanced the claws without techniques.
+- **The four hosts.** All three ride the one rig (`combat/weapon/weaponRig.js`) and the shared resolution, so
+  `exterior.js`, `world.js`, `worldModes.js` and `dungeonContext.js` are wired alike; none grew.
+
+Pinned: `test/systems/tech1_runner.test.js` (TECH-BACKSTAB, TECH-CANCEL), `test/systems/martial_paths.test.js`
+(TECH-KEY2), `test/scenes/tech1_hosts.test.js` (the rig, the row, the word). Mutants: `tools/mutants/techfeedback.json`
+(16, all dead); fifteen records of `tech1`, `techcard1`, `techfx1`, `audit_martial` and `town_marks` re-aimed by
+content, all dead.
 
 ## The Test Room
 

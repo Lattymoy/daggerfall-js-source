@@ -105,6 +105,8 @@ export const TOWN_PEN = Object.freeze({
   // TOWN-MARKS (ui/town/townMapMarks.js): a player's house the player owns is filled in the player's own ink, as the caret
   // is; another player's house is the parchment, inked round (TOWN_PEN.halo and .wall)
   home: PEN.player,
+  // VENDOR-HOUSES (Mac, 2026-10-30): a house with a player's trader in it is filled blue - "a marked vendor blue"
+  vendor: PEN.vendor,
 });
 
 /**
@@ -371,7 +373,7 @@ export function paintTownStatic(ctx, plan, view, opts) {
  *                          quarter?:string|null, anchorY?:number, marked?:boolean}>,
  *          player?: {x:number,y:number,yaw?:number}|null,
  *          party?: Array<{x:number,y:number,yaw?:number,name?:string}>, partyFill?: string,
- *          homes?: Array<{x:number,y:number,own?:boolean}>}} opts
+ *          homes?: Array<{x:number,y:number,own?:boolean,vendor?:boolean}>}} opts
  */
 export function paintTownOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
@@ -397,7 +399,7 @@ export function paintTownOverlay(ctx, view, opts) {
   // lettered below it, and any other name that comes to cross one keeps its words whole
   for (const h of opts.homes ?? []) {
     const [x, y] = toPaper(view, h.x, h.y);
-    paintHomeMark(ctx, x, y, h.own === true);
+    paintHomeMark(ctx, x, y, h.own === true, h.vendor === true);
   }
 
   // the names, haloed then inked, as every name on every sheet is
@@ -464,16 +466,17 @@ function paintMarkShape(ctx, pts, fill) {
 /**
  * TOWN-MARKS (Mac: "and also mark owned player housing"): A PLAYER'S HOUSE - a house ON the building's place: the
  * player's own filled in the player's ink with a parchment door, another player's in parchment with an inked door
- * (the shape says "a player's house", the fill says whose - not the colour alone). Skin.
+ * (the shape says "a player's house", the fill says whose - not the colour alone). VENDOR-HOUSES: a trader's house
+ * blue with a parchment door. Skin.
  */
-export function paintHomeMark(ctx, x, y, own = false) {
+export function paintHomeMark(ctx, x, y, own = false, vendor = false) {
   const t = TOWN_MARK_HALF;
   ctx.save();
   ctx.setLineDash?.([]);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   paintMarkShape(ctx, [[x - 5, y + t], [x - 5, y], [x - 7, y], [x, y - t],
-    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : TOWN_PEN.halo);
-  ctx.fillStyle = own ? TOWN_PEN.halo : TOWN_PEN.wall;
+    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);
+  ctx.fillStyle = own || vendor ? TOWN_PEN.halo : TOWN_PEN.wall;
   ctx.beginPath();
   ctx.moveTo(x - 1.4, y + t); ctx.lineTo(x - 1.4, y + 2); ctx.lineTo(x + 1.4, y + 2); ctx.lineTo(x + 1.4, y + t);
   ctx.closePath(); ctx.fill();

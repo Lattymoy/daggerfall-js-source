@@ -10,6 +10,7 @@ import * as T from '../../src/combat/techniques.js';
 import { blowReaches, blowMult, scaleBlowDamage, playerBody, TECH_BODY_RADIUS } from '../../src/combat/technique/techniqueBlow.js';
 import { TECHNIQUES, techniqueMult } from '../../src/combat/technique/techniqueRoster.js';
 import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
+import { machineCut } from '../../src/characters/weaponStates.js';   // TECH-CANCEL
 import { ArrowFlight, playerArrowHitFoe, techniquePierces } from '../../src/combat/arrowFlight.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplates.js';
@@ -567,4 +568,78 @@ test('TECH1 THE GROUND OUTDOORS (AUDIT TECH1): on the real Collider the open gro
   assert.equal(rayHit(eye, lookAt(-0.1), 40, both), 3);
   both.raycast = () => 30;
   assert.ok(Math.abs(rayHit(eye, lookAt(-0.1), 40, both) - 1.7 / Math.sin(0.1)) < 0.01);
+});
+
+// ---- the #feature-feedback pass (Mac, 2026-10-30, forwarding "Weapon Technique Tweaks") ------------------------------
+
+test('TECH-BACKSTAB ("Let them work with backstab"): a foe whose back was to me at the press is a backstab\'s chance for the technique\'s blow, however it turns before the hit; a Shadowstep that lands behind its foe takes it from behind; never a player\'s body (mutants: the backs never read; read at the hit alone; the landing not the press\'s point)', () => {
+  reset();
+  // the set: a foe facing away from the point (yaw 0 looks along +z; the point at -z is behind it), one facing it
+  const away = foeAt(0, 2), toward = foeAt(0, 2, { ai: { feet: [0, 0, 2], height: 1.8, yaw: Math.PI } });
+  const dead = { ...foeAt(0, 3), dead: true }, duellist = { ...foeAt(0, 2), duel: true };
+  const backs = T.backsAt([0, 0, 0], [away, toward, dead, duellist]);
+  assert.deepEqual([...backs], [away], 'its back to me; never one facing me, a corpse or a player\'s body');
+  assert.equal(T.backsAt([0, 0, 0], [toward]), null);
+  // the blow: the host reads it facing me now (0), the press read its back - a backstab
+  const SWORD = { ...createWeapon(120, 1), group: 'Weapons' };
+  const pw = new PlayerWeapon({ weapon: SWORD, liveSpeed: 50 });
+  pw.machine.state = 'StrikeLeft';
+  const me = () => { const p = player(); p.skills[SKILLS.Backstabbing] = 100; return p; };
+  const sight = () => ({ dist: 2, inView: true, losClear: true });
+  pw.techniqueBlow = T.swingBlow('whirlwind', 0, { feet: [0, 0, 0], yaw: 0 }, { backs: null });
+  const plain = pw.resolveHit([away], me(), sight, () => 0.01, () => 0)[0].damage;
+  pw.techniqueBlow = T.swingBlow('whirlwind', 0, { feet: [0, 0, 0], yaw: 0 }, { backs: new Set([away]) });
+  const said = [];
+  const backed = pw.resolveHit([away], me(), sight, () => 0.01, () => 0, (l) => said.push(l))[0].damage;
+  assert.ok(plain > 0 && backed === plain * 3, `the backstab's treble on the technique's number: ${plain} -> ${backed}`);
+  assert.deepEqual(said, ['Successful backstab!']);
+  pw.techniqueBlow = null;
+  assert.equal(pw.resolveHit([away], me(), sight, () => 0.01, () => 0)[0].damage, plain, 'a plain swing reads the host\'s back alone');
+  // the press: a Whirlwind's blow carries the backs read as it was pressed
+  reset();
+  setPlayerDoor({ foes: () => [away, toward] });
+  const wpw = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
+  const r = rig({ pw: wpw, entity: player() });
+  T.stepTechnique(1 / 60, r.ctx(true));
+  assert.deepEqual([...wpw.techniqueBlow.backs], [away]);
+  // Shadowstep: the foe faces me at the press; the dash lands behind it, so its strike takes it from behind
+  reset();
+  const foe = foeAt(0, 5, { ai: { feet: [0, 0, 5], height: 1.8, yaw: Math.PI } });
+  setPlayerDoor({ foes: () => [foe] });
+  const motor = { grounded: true, techniqueLaunch() { this.grounded = false; return true; } };
+  const spw = weaponOf(piece(() => createWeapon(113, 1), 'shadowstep', 10));
+  const s = rig({ pw: spw, entity: player(), door: { motor: () => motor, face: () => {} }, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: -0.05, feet: [0, 0, 0] } });
+  T.stepTechnique(1 / 60, s.ctx(true));
+  T.stepTechnique(1 / 60, s.ctx(false));
+  for (let i = 0; i < 90 && !s.log.started.length; i++) T.stepTechnique(1 / 60, s.ctx(false));
+  assert.equal(spw.techniqueBlow.target, foe);
+  assert.ok(spw.techniqueBlow.backs?.has(foe), 'landed behind it: its back');
+  setPlayerDoor(null);
+});
+
+test('TECH-CANCEL ("independent of your regular attack cooldown / animation cancel"): a press mid-swing cuts the swing and starts the technique\'s strike; a bow\'s reload no longer holds it; the cut is the machine\'s own (mutants: the machine gate kept; the cut leaves the cooldown; the cut at rest)', () => {
+  reset();
+  const pw = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
+  assert.equal(pw.cutForTechnique(), false, 'at rest: nothing to cut');
+  assert.ok(pw.clickAttack(() => 0.5), 'a plain swing');
+  pw.update(1 / 60);
+  assert.notEqual(pw.machine.state, 'Idle');
+  const log = { started: [] };
+  const ctx = { rig: R1, entity: player(), pw, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: -0.2, feet: [0, 0, 0] }, collider: flatGround(), held: true, ready: true, say: () => {},
+    startSwing: (st) => { pw.cutForTechnique(); if (!pw.techniqueStrike(st)) return false; log.started.push(st); return true; } };
+  assert.equal(T.refusal(T.techniqueInHand(ctx.entity, pw), ctx), null, 'mid-swing is no refusal now');
+  T.stepTechnique(1 / 60, ctx);
+  assert.deepEqual(log.started, ['StrikeLeft'], 'the swing cut, the Whirlwind begun');
+  assert.equal(pw.machine.state, 'StrikeLeft');
+  assert.equal(T.techniqueWait('whirlwind'), 10);
+  // the attack's cooldown (a bow's reload): waived by the cut
+  const m = { state: 'Idle', now: 5, cooldownUntil: 7, frame: 0, ticks: 0, acc: 0, hold: 0, animIndex: 0, damageDone: false };
+  assert.equal(machineCut(m), true);
+  assert.equal(m.cooldownUntil, 5);
+  assert.equal(machineCut(m), false, 'nothing left to cut');
+  const busy = { state: 'StrikeDown', now: 1, cooldownUntil: 0, frame: 3, ticks: 2, acc: 0.01, hold: 1, animIndex: 1, damageDone: true };
+  machineCut(busy);
+  assert.deepEqual([busy.state, busy.frame, busy.ticks, busy.hold, busy.damageDone], ['Idle', 0, 0, 0, false]);
+  // still silent when the hands' own gate holds (a spell, a climb): the rig's `ready`
+  assert.equal(T.refusal(T.techniqueInHand(ctx.entity, pw), { ...ctx, ready: false }), true);
 });
