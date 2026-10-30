@@ -91,7 +91,7 @@ test('AUDIT UPDATE II B2: an arrow sold at a General Store\'s counter is paid fo
   const mine = { ...quiver, stackCount: 100 };   // the player's own hundred, sold
   assert.equal(landSoldAt(shelf, mine, B.GeneralStore), false, 'paid for, not shelved');
   assert.equal(count(shelf), 0, 'so nothing of it to buy back');
-  // SOLD-POOF (mob 2026-10-30, "just make them go poof"): no sold piece lands on any shelf, so none can be stolen back
+  // SOLD-POOF (2026-10-30): no sold piece lands on any shelf, so none can be stolen back
   const dagger = { group: 'Weapons', templateIndex: 113, name: 'Dagger' };
   assert.equal(landSoldAt(shelf, dagger, B.GeneralStore), false, 'any other piece is gone too');
   assert.equal(shelf.includes(dagger), false);

@@ -117,7 +117,7 @@ test('STOLEN-GOODS the report: a piece stolen off a smith\'s shelf (the real Ste
   assert.ok(paid > 0, `the merchant pays for it (${paid} gold)`);
   assert.deepEqual(player.items, [], 'out of the pack');
   assert.deepEqual(shelf, shelfBefore, 'and NOT on the shelf: the circle is broken');
-  // SOLD-POOF (mob 2026-10-30, "just make them go poof"): an honest piece - one the world handed over (a body's dagger) -
+  // SOLD-POOF (2026-10-30): an honest piece - one the world handed over (a body's dagger) -
   // is paid for and gone as well: shelved, it could be stolen straight back and sold again
   const found = createWeapon(DAGGER, 0, () => 0.5);
   player.items.push(found);
