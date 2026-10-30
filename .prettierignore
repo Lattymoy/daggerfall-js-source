@@ -10,3 +10,5 @@
 /tools/*
 !/tools/layered-armor/
 /tools/layered-armor/*/
+!/tools/neutral/
+/tools/neutral/*/
