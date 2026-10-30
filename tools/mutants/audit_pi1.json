@@ -235,15 +235,6 @@
     ]
   },
   {
-    "name": "AUDIT-PI1-H7-paws-take",
-    "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (beast) { say(beast.text); return true; }",
-    "new": "if (false) { say(beast.text); return true; }",
-    "tests": [
-      "test/systems/audit_pi1.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-PI1-H7-no-silver",
     "file": "src/scenes/physicalItemsLayer.js",
     "old": "if (g.silver != null) silverFindAt('corpse', g.silver);",

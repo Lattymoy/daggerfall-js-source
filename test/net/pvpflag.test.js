@@ -104,7 +104,7 @@ test('PVP-FLAG THE RELAY (server/src/index.js _wildFlagSay): each flag said to t
   } finally { Date.now = realNow; }
 });
 
-test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles it; the referee\'s word holds mine; a peer is fair while mine is up; a blow on me starts the lock; the Portal Stone is free while I am down (mutants: the fair unasked; my word unheld; the lock unstarted; the stone\'s door)', () => {
+test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles it; the referee\'s word holds mine; a peer is fair while mine is up; a blow on me starts the lock; the Portal Stone free of the zone\'s law, flagged or not (PVP-PORTAL) (mutants: the fair unasked; my word unheld; the lock unstarted; the stone\'s door asking the zone)', () => {
   let clock = 0;
   const said = [], sent = [];
   const online = { id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) };
@@ -136,7 +136,8 @@ test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles
   const world = rd('src/scenes/world.js'), stone = rd('src/scenes/portalStoneHost.js');
   assert.ok(world.includes('return pvpFlag.fair(peerId) && (modes?.mode'), 'the host asks it of every target');
   assert.ok(world.includes('const wildRefIn = pvpFlag.wrap((g, room) => {'));
-  assert.ok(stone.includes("const zoneRefused = (to = null) => pvpFlagOn() && host.wildTeleportRefused(to);"));
+  assert.ok(stone.includes('const teleportRefused = (to) => host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;'), 'the stone asks no zone law (PVP-PORTAL, the owner: "they need to work all over")');
+  assert.doesNotMatch(stone, /wildTeleportRefused|pvpFlagOn/, 'flagged or not');
 });
 
 test('PVP-FLAG THE KEY (scenes/pvpFlagHost.js): Caps Lock toggles the flag in the game alone - typed in the chat box or any field it does nothing; a held key never repeats it (mutants: the field unread)', () => {
@@ -354,7 +355,7 @@ test('PVP-FLAG-ZONE (scenes/pvpFlagHost.js; the owner: "or i can flag anywerte")
     assert.deepEqual(sent, [], 'outside the zone: no flag');
     ticks[0]();
     assert.equal(button.style.display, 'none', 'outside the zone: no button');
-    assert.deepEqual([button.style.right, button.style.top, button.style.transform], ['8px', '50%', 'translateY(-50%)'], 'the middle of the right edge');
+    assert.deepEqual([button.style.right, button.style.top, button.style.transform], ['8px', 'calc(50% - 64px)', 'none'], 'the right edge, just over its middle: clear of the Decorate button there (ui/decorPanel.js .dfdecor-open)');
     inZone = true;
     ticks[0]();
     assert.equal(button.style.display, 'block');

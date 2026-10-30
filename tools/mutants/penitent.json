@@ -65,8 +65,8 @@
   {
     "name": "PENITENT-edge-off-the-badge",
     "file": "src/ui/playerBadge.js",
-    "old": ", edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) };",
-    "new": ", flame: Object.hasOwn(TITLE_FLAME, key) };",
+    "old": ", edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
+    "new": ", flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
     "tests": [
       "test/net/penitent.test.js"
     ],

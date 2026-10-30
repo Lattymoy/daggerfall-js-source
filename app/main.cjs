@@ -516,9 +516,10 @@ app.on('will-quit', () => gpuGone.flush());
 // GPU-BACKEND: a chosen backend's GPU process gone in its first minute is that backend failing to start
 app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') backendGuard.onGpuGone(details); });
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
+const { assetCheck, swapPlan, swapScript } = require('./lib/selfSwap.cjs');   // UPDATE-SWAP: the Mac app and the portable exe update themselves
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
-  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay,
+  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH,
 } = require('./lib/launcherState.cjs');
 
 /** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
@@ -783,9 +784,124 @@ async function restartToUpdate() {
     const parent = gameWindow && !gameWindow.isDestroyed() ? gameWindow : null;
     const opts = restartAsk(updateReady?.version);
     const { response } = await (parent ? dialog.showMessageBox(parent, opts) : dialog.showMessageBox(opts));
+    // UPDATE-SWAP: a copy that swaps itself quits for it - the swap starts once the quit is sure (will-quit)
+    if (goesAhead(response) && updateReady?.swap) { quitForSwap(); return; }
     if (goesAhead(response)) installNow(updateReady?.version);
   } finally { restartAsking = false; }
 }
+
+/** UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" /
+ *  "make sure it updates"): the game's update screen, at its end (app/preload.cjs restartForUpdate). The update this
+ *  copy holds is put in place by quitting and starting again - never a reload, which can leave the page on the copy it
+ *  had: a version the channel brought is played by the next launch (gameStore.startup activates it, and the GPU caches
+ *  turn for it before Chromium opens them), straight back into the game (`--play`); an installer's runs silently and
+ *  reopens the app (installNow). No box: the screen already saved, and stood the page's unload guard down. With
+ *  nothing held, the page reloads, as it would in a browser. */
+let restartingForUpdate = false;
+function restartForUpdate() {
+  if (restartingForUpdate || installStarted) return;
+  if (updateReady?.game) {
+    restartingForUpdate = true;
+    app.relaunch({ args: [...process.argv.slice(1).filter((a) => a !== PLAY_SWITCH), PLAY_SWITCH] });
+    app.quit();
+    return;
+  }
+  if (updateReady?.swap) { restartingForUpdate = true; quitForSwap(); return; }
+  if (updateReady && currentUpdateTransport() === 'updater') { installNow(updateReady.version); return; }
+  reloadOntoUpdate();
+}
+
+// ---- UPDATE-SWAP: the copies that cannot install, updated anyway (lib/selfSwap.cjs) ----
+const SWAP_DIR = () => path.join(app.getPath('userData'), 'Update');
+/** The swap in flight - { version } - one at a time; and the versions a swap failed on, told by hand instead. */
+let swapJob = null;
+const swapFailedOn = new Set();
+/** Whether a swap is bringing `version` (or already brought it): the notice waits for it. */
+const swapping = (version) => (swapJob?.version === version || (updateReady?.swap && updateReady.version === version)) && !swapFailedOn.has(version);
+
+function swapPlanHere(file) {
+  const writable = (dir) => { try { fs.accessSync(dir, fs.constants.W_OK); return true; } catch { return false; } };
+  return swapPlan({ platform: process.platform, packaged: app.isPackaged, portableFile: process.env.PORTABLE_EXECUTABLE_FILE, execPath: process.execPath, file, writable });
+}
+
+/** `url` to `dest`, held to `check` (size, and sha256 where listed) - or a throw, and nothing left behind. */
+async function downloadChecked(url, dest, check) {
+  const { createHash } = require('node:crypto');
+  const { Readable, Transform } = require('node:stream');
+  const { pipeline } = require('node:stream/promises');
+  const res = await gameFetch(url, { headers: { 'User-Agent': 'daggerfall-js-app' } });   // DA6's one door: this repository's release downloads only
+  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+  const hash = createHash('sha256');
+  let size = 0;
+  const count = new Transform({ transform(chunk, _enc, done) { size += chunk.length; hash.update(chunk); done(null, chunk); } });
+  try {
+    await pipeline(Readable.fromWeb(res.body), count, fs.createWriteStream(dest));
+    if (size !== check.size) throw new Error(`${size} bytes, the release lists ${check.size}`);
+    if (check.sha256 && hash.digest('hex') !== check.sha256) throw new Error('its sha256 is not the release\'s');
+  } catch (err) { fs.rmSync(dest, { force: true }); throw err; }
+}
+
+/** macOS: the app out of the disk image, beside the one running (`plan.staged`); the image let go either way. */
+async function stageMacApp(dmg, plan) {
+  const { execFile } = require('node:child_process');
+  const run = (cmd, args) => new Promise((res, rej) => execFile(cmd, args, (err) => (err ? rej(err) : res())));
+  const mnt = path.join(SWAP_DIR(), 'mnt');
+  fs.mkdirSync(mnt, { recursive: true });
+  await run('hdiutil', ['attach', '-nobrowse', '-noautoopen', '-readonly', '-mountpoint', mnt, dmg]);
+  try {
+    const name = fs.readdirSync(mnt).find((n) => n.endsWith('.app'));
+    if (!name) throw new Error('the disk image holds no app');
+    fs.rmSync(plan.staged, { recursive: true, force: true });
+    await run('ditto', [path.join(mnt, name), plan.staged]);
+  } finally { await run('hdiutil', ['detach', mnt, '-force']).catch(() => {}); }
+}
+
+/** A newer release on the notice transport: this copy's own file, downloaded and staged, then told to the game as an
+ *  update it can restart onto (manual: false) - or, where it cannot swap or the download fails, the HUD line as before. */
+function startSwap(version, latest) {
+  if (swapJob || swapFailedOn.has(version) || (updateReady?.swap && updateReady.version === version)) return;
+  const plan = swapPlanHere(latest.file);
+  if (!plan.kind || !latest.asset || !latest.download) return;
+  swapJob = { version };
+  if (updateReady?.swap) { updateReady = null; buildMenu(); }   // an older staged copy is written over: it is not swapped in half-written
+  const dest = path.join(SWAP_DIR(), plan.kind === 'mac' ? 'update.dmg' : 'update.exe');
+  (async () => {
+    fs.mkdirSync(SWAP_DIR(), { recursive: true });
+    await downloadChecked(latest.download, plan.kind === 'portable' ? plan.staged : dest, latest.asset);
+    if (plan.kind === 'mac') { try { await stageMacApp(dest, plan); } finally { fs.rmSync(dest, { force: true }); } }
+  })().then(() => {
+    swapJob = null;
+    updateReady = { version, told: false, swap: plan };
+    updateReady.told = tellGame({ version, manual: false });
+    buildMenu();
+  }, (err) => {
+    swapJob = null;
+    swapFailedOn.add(version);
+    console.warn(`[update] v${version} could not be swapped in - it is the player's to download:`, err?.message ?? err);
+    if (manualUpdate?.version === version && !manualUpdate.told) manualUpdate.told = tellGame({ version, manual: true }) ? 'game' : false;
+  });
+}
+
+/** The swap runs once this process has ended: started at will-quit, so a quit the player called off swaps nothing. */
+let swapRelaunch = false;
+function quitForSwap() {
+  swapRelaunch = true;
+  app.quit();
+}
+app.on('will-quit', () => {
+  const plan = updateReady?.swap;
+  if (!plan) return;
+  try {
+    const os = require('node:os');
+    const { spawn } = require('node:child_process');
+    const win = plan.kind === 'portable';
+    const script = path.join(os.tmpdir(), `dfo-swap-${process.pid}.${win ? 'cmd' : 'sh'}`);
+    fs.writeFileSync(script, swapScript(plan, { pid: process.pid, relaunch: swapRelaunch, args: swapRelaunch ? [PLAY_SWITCH] : [] }), { mode: 0o700 });
+    const child = win ? spawn('cmd.exe', ['/d', '/c', script], { detached: true, stdio: 'ignore', windowsHide: true })
+      : spawn('/bin/sh', [script], { detached: true, stdio: 'ignore' });
+    child.unref();
+  } catch (err) { console.warn('[update] the swap could not be started:', err?.message ?? err); }
+});
 
 /** A box over the window the player is looking at - never behind a
  *  fullscreen game (AUDIT INSTALL R2-A10, as L2-2 put the restart's). */
@@ -855,7 +971,9 @@ async function fetchLatestRelease() {
     const listed = file ? releaseAssetUrl(json, file) : null;
     if (tag && listed) listedDownload = listed;
     // DA13: and the release's game - its manifest and pack, as the release lists them (null on a release with none)
-    return tag ? { tag, url, download: file ? listed ?? latestDownloadUrl(file) : url, game: gameAssetsOf(json) } : null;
+    // UPDATE-SWAP: and this copy's own file's size and sha256, which a swap's download must match (null where it is not listed)
+    const asset = listed ? assetCheck(json.assets.find((a) => a?.browser_download_url === listed)) : null;
+    return tag ? { tag, url, download: file ? listed ?? latestDownloadUrl(file) : url, game: gameAssetsOf(json), asset, file } : null;
   } catch { return null; }
 }
 
@@ -870,6 +988,7 @@ async function noticeCheck() {
   if (fresh) manualUpdate = { version, download: latest.download, told: false };
   else manualUpdate.download = latest.download;
   if (fresh) buildMenu();
+  startSwap(version, latest);
   return { newer: true, fresh, version, download: latest.download };
 }
 
@@ -880,6 +999,7 @@ async function noticeCheck() {
  *  after it saw nothing new. */
 function tellNotice(r) {
   if (!r?.newer || !manualUpdate || manualUpdate.version !== r.version || manualUpdate.told) return;
+  if (swapping(r.version)) return;   // UPDATE-SWAP: the copy updates itself - told when it is here (swapReady), or this line if it fails
   const u = launcher?.state.update;
   if (launcher && !launcher.state.launch && u?.status === 'notice' && u.version === r.version) { manualUpdate.told = 'launcher'; return; }
   manualUpdate.told = tellGame({ version: r.version, manual: true }) ? 'game' : false;
@@ -1896,6 +2016,10 @@ ipcMain.on('dagger:backend-webgl2', (e, report) => {
 // ESC-LOCK (2026-09-27, Mac: "when you hit esc to leave a menu, your cursor remains on the screen"): Escape is no user
 // activation, and after the player ends a pointer lock the next one needs one - so a menu closed on Escape could not
 // take the look back. The page asks (preload relockPointer) and its own fixed hook runs here as a user gesture.
+// UPDATE-RESTART: only the game's own window may restart the app onto its update
+ipcMain.on('dagger:restart-for-update', (e) => {
+  if (gameWindow && !gameWindow.isDestroyed() && e.sender === gameWindow.webContents) restartForUpdate();
+});
 ipcMain.on('dagger:relock', (e) => { e.sender.executeJavaScript('globalThis.__daggerRelock?.()', true).catch(() => {}); });
 
 app.whenReady().then(() => {

@@ -16,8 +16,8 @@
   {
     "name": "RIDE-POV-saddle-rule-after-the-flush",
     "file": "src/player/mwView.js",
-    "old": "  saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);\n  mounted = !!state.riding && !saddled;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }\n  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }",
-    "new": "  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }\n  saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);\n  mounted = !!state.riding && !saddled;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }",
+    "old": "  saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);\n  onDragon = !!state.dragon;   // DRAGON-POV: on a dragon the dragon is what third person shows (scenes/dragonViewHost.js)\n  mounted = !!state.riding && !saddled && !onDragon;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }\n  const wasThird = mwCamera.thirdPerson();\n  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }",
+    "new": "  const wasThird = mwCamera.thirdPerson();\n  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }\n  saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);\n  onDragon = !!state.dragon;   // DRAGON-POV: on a dragon the dragon is what third person shows (scenes/dragonViewHost.js)\n  mounted = !!state.riding && !saddled && !onDragon;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }",
     "tests": ["test/player/ridepov.test.js"]
   },
   {
@@ -30,8 +30,8 @@
   {
     "name": "RIDE-POV-saddle-forgotten-on-dismount-never-cleared",
     "file": "src/player/mwView.js",
-    "old": "  mounted = !!state.riding && !saddled;\n",
-    "new": "  mounted = mounted || (!!state.riding && !saddled);\n",
+    "old": "  mounted = !!state.riding && !saddled && !onDragon;\n",
+    "new": "  mounted = mounted || (!!state.riding && !saddled && !onDragon);\n",
     "tests": ["test/player/ridepov.test.js"]
   },
   {

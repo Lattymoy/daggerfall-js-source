@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFpArm, fpSkeletonPath, FP_CLIP_PATH, UPPER_BODY } from '../../src/combat/fpArm.js';
 import { MW_WEAPON_TYPE } from '../../src/formats/morrowind/mwFirstPerson.js';
-import { SpellCastAnim, castReleaseS, RELEASE_FRAME, CAST_FRAME_PERIOD } from '../../src/combat/fpsSpellCasting.js';
+import { SpellCastAnim, castReleaseS, castEndS, RELEASE_FRAME, CAST_FRAME_PERIOD, FRAME_INDICES } from '../../src/combat/fpsSpellCasting.js';
 import { castClip } from '../fixtures/mw/castClip.mjs';
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
@@ -96,6 +96,31 @@ test('RPT1026-MISC CAST-PACE: the Morrowind arm\'s release lands where the class
   const keyless = await castingArm(castClip({ without: ['SpellCast: Target Release'] }));
   assert.equal(keyless.castSpell(2, 1, castReleaseS(1)), true);
   assert.equal(keyless.castPaced(), false, 'no key, no pace');
+});
+
+/** Seconds from the cast to the arm's hands leaving the cast, stepped at DT. */
+function armEndS(arm) {
+  for (let i = 1; i <= 2400; i++) {
+    arm.update(DT);
+    if (arm.status().upper !== UPPER_BODY.Casting) return i * DT;
+  }
+  return null;
+}
+
+test('MW-SHOT-PACE: a paced cast\'s hands come down with the classic ones - its tail fitted to castEndS, at rate 1 and quickened; without the end handed, the tail keeps the release\'s pace', async () => {
+  assert.ok(Math.abs(castEndS(1) - FRAME_INDICES.length * CAST_FRAME_PERIOD) < 1e-9, 'the classic hands\' end: their last frame at the cast\'s rate');
+  for (const rate of [1, 1.25]) {
+    const arm = await castingArm();
+    assert.equal(arm.castSpell(2, rate, castReleaseS(rate), castEndS(rate)), true);
+    assert.ok(arm.status().castPlan, 'the cast carries its end');
+    const end = armEndS(arm);
+    assert.ok(end != null && Math.abs(end - castEndS(rate)) <= 2 * DT + 1e-9, `rate ${rate}: the hands down at ${end?.toFixed(3)} s, the classic at ${castEndS(rate).toFixed(3)} s`);
+  }
+  const old = await castingArm();
+  assert.equal(old.castSpell(2, 1, castReleaseS(1)), true);
+  assert.equal(old.status().castPlan, null, 'no end handed, no plan');
+  const oldEnd = armEndS(old);
+  assert.ok(oldEnd > castEndS(1) + 2 * DT, `unfitted, the tail runs on (${oldEnd?.toFixed(3)} s)`);
 });
 
 test('RPT1026-MISC CAST-PACE: the rig hands the arm the spell\'s moment and, the arm paced, lets the spell go on frame 5 - not held for the key; an unpaced arm is still held (MW-CAST1) (mutants: rpt1026-misc-cast-pace-unasked, rpt1026-misc-cast-pace-held)', async () => {

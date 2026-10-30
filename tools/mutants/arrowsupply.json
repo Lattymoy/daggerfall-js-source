@@ -281,8 +281,8 @@
   {
     "name": "STUCK-ARROWS-dungeon-loose-forgets",
     "file": "src/scenes/dungeonContext.js",
-    "old": "weaponRig.thunderlockMuzzle(fieldOfView()), shot.summoned ? { summoned: true } : null);",
-    "new": "weaponRig.thunderlockMuzzle(fieldOfView()));",
+    "old": "bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), shot.summoned, playerWeapon.weapon));",
+    "new": "bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), false, playerWeapon.weapon));",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

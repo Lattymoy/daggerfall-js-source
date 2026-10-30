@@ -42,7 +42,7 @@ import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
 import { enhancedWindow } from '../ui/enhanced/enhancedPorts.js';   // PORT4: the transport picker, in the enhanced skin
 import { ownsShip } from '../systems/banking.js';
 import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
-import { mwViewHides, mwViewDrawSaddle } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard); COATS3D: the 3D horse in its place
+import { mwViewHides, mwViewDrawSaddle, mwViewThirdPerson } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard); COATS3D: the 3D horse in its place
 import { SOUND } from '../systems/soundClips.js';
 import { horseVolume } from '../systems/animalVolume.js';   // HORSE-VOL: the mount's neigh, voices and hooves on the Audio tab's Horse Volume
 import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
@@ -282,7 +282,7 @@ export function createMountRig({
       }
       // COATS1: a look chosen in the saddle (the Stable card) dresses the sprite - the old one drawn until the new is up
       if (_artFor && isHorseRide(player.transportMode) && _artFor !== artKey(player.transportMode)) loadArt(player.transportMode);
-      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused) saddle.draw(canvas);   // DRAGON5
+      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused && !mwViewThirdPerson()) saddle.draw(canvas);   // DRAGON5; DRAGON-POV: out of the head the dragon stands in the world (scenes/dragonViewHost.js)
       // COATS3D: on the Morrowind body's 3D horse, that horse is the one in first person - drawn here, in the sprite's
       // place (after the world, under the hands), and the sprite stands down
       if (isHorseRide(player.transportMode) && !ridePaused && !mwViewHides().horse && mwViewDrawSaddle(typeof canvas === 'function' ? canvas() : canvas)) return r;

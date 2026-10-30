@@ -7,10 +7,12 @@ import { setStaffPowers, staffPowers } from '../characters/playerEntity.js';
 import { registerFlySpeedMod } from '../player/motor.js';
 import { loadLogo } from '../ui/titleScreen.js';
 import { createDragonSaddle } from '../player/dragonSaddle.js';   // DRAGON5: the saddle's one home, a tamed dragon's too
+import { mwViewThirdPerson } from '../player/mwView.js';   // DRAGON-POV: out of the head the dragon stands in the world (scenes/dragonViewHost.js)
 
-/** `glyphs()` my own; `paused()` the game's; `now()` ms; `load(url)` a picture's pixels (tests hand their own).
- *  @param {{ renderer: any, canvas: any, glyphs: () => unknown, paused?: () => boolean, now?: () => number, load?: (url: string) => Promise<any> }} deps */
-export function createStaffDragonHost({ renderer, canvas, glyphs, paused = () => false, now = () => performance.now(), load = loadLogo }) {
+/** `glyphs()` my own; `paused()` the game's; `now()` ms; `load(url)` a picture's pixels; `third()` whether the camera is out
+ *  of the head (tests hand their own).
+ *  @param {{ renderer: any, canvas: any, glyphs: () => unknown, paused?: () => boolean, now?: () => number, load?: (url: string) => Promise<any>, third?: () => boolean }} deps */
+export function createStaffDragonHost({ renderer, canvas, glyphs, paused = () => false, now = () => performance.now(), load = loadLogo, third = mwViewThirdPerson }) {
   registerFlySpeedMod('dragon', dragonFlyMult);
   const saddle = createDragonSaddle({ renderer, load, look: dragonRideLook });   // DRAGON-BLUE: the Aetherbright's saddle in its colours
   return {
@@ -36,9 +38,10 @@ export function createStaffDragonHost({ renderer, canvas, glyphs, paused = () =>
         say('You land the Dwarven Dragon.');
       }
     },
-    /** Each frame, where the mount is drawn: the saddle along the bottom of my view, as wide as the screen. */
+    /** Each frame, where the mount is drawn: the saddle along the bottom of my view, as wide as the screen - in first person
+     *  alone (DRAGON-POV). */
     frame() {
-      if (!ridingDragon() || !saddle.loaded() || paused()) return;
+      if (!ridingDragon() || !saddle.loaded() || paused() || third()) return;
       saddle.draw(canvas, dragonFiring(now()));
     },
   };

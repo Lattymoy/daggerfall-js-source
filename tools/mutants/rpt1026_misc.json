@@ -212,8 +212,8 @@
   {
     "name": "rpt1026-misc-cast-pace-unfit",
     "file": "src/combat/fpArm.js",
-    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
-    "new": "      if (lead > 0) { castPaced = true; }",
+    "old": "        castRate = blowRate(lead, releaseIn); castPaced = true;",
+    "new": "        castPaced = true;",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "rpt1026-misc-cast-pace-unsaid",
     "file": "src/combat/fpArm.js",
-    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
-    "new": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); }",
+    "old": "        castRate = blowRate(lead, releaseIn); castPaced = true;",
+    "new": "        castRate = blowRate(lead, releaseIn);",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "rpt1026-misc-cast-pace-unasked",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate))",
-    "new": "fpArm.castSpell(rangeType, rate)",
+    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate))",
+    "new": "fpArm.castSpell(rangeType, rate, 0, castEndS(rate))",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],
