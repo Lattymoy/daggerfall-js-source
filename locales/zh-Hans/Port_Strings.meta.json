@@ -5464,6 +5464,26 @@
   "tr": "461504888566",
   "by": "claude-in-session"
  },
+ "townmap.look.names": {
+  "en": "32988c0f3345",
+  "tr": "97d9cf78a8ed",
+  "by": "claude-in-session"
+ },
+ "townmap.look.signs": {
+  "en": "120fd0d685d4",
+  "tr": "b6f73aca90b4",
+  "by": "claude-in-session"
+ },
+ "townmap.look.toNames": {
+  "en": "4c158369f05b",
+  "tr": "fbed8959b79c",
+  "by": "claude-in-session"
+ },
+ "townmap.look.toSigns": {
+  "en": "5fa0c563e736",
+  "tr": "ad681e8c26fe",
+  "by": "claude-in-session"
+ },
  "travel.held.foes": {
   "en": "8b441a492a74",
   "tr": "2b90794c1f65",

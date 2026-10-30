@@ -41229,6 +41229,26 @@
   "tr": "dbb83ac94321",
   "by": "claude-in-session"
  },
+ "townmap.look.names": {
+  "en": "32988c0f3345",
+  "tr": "f703b3dabafd",
+  "by": "claude-in-session"
+ },
+ "townmap.look.signs": {
+  "en": "120fd0d685d4",
+  "tr": "088a97892437",
+  "by": "claude-in-session"
+ },
+ "townmap.look.toNames": {
+  "en": "4c158369f05b",
+  "tr": "16c8411d33ae",
+  "by": "claude-in-session"
+ },
+ "townmap.look.toSigns": {
+  "en": "5fa0c563e736",
+  "tr": "ebb4943fb291",
+  "by": "claude-in-session"
+ },
  "trade.counter.cost.get": {
   "en": "53eb1352da0f",
   "tr": "c2e816ef3eb2",

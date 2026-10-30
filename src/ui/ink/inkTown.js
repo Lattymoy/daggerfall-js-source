@@ -366,7 +366,7 @@ export function paintTownStatic(ctx, plan, view, opts) {
 /**
  * @param {*} ctx @param {{ox:number,oy:number,scale:number}} view
  * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean, pulse?:number,
- *          quests?: Array<{x:number,y:number}>,
+ *          quests?: Array<{x:number,y:number}>, signs?: Array<{x:number,y:number,kind:string,r:number,quarter?:string|null,quest?:boolean}>,
  *          plates?: Array<{x:number,y:number,text:string,size:number,quest?:boolean,
  *                          quarter?:string|null, anchorY?:number, marked?:boolean}>,
  *          player?: {x:number,y:number,yaw?:number}|null,
@@ -398,6 +398,13 @@ export function paintTownOverlay(ctx, view, opts) {
   for (const h of opts.homes ?? []) {
     const [x, y] = toPaper(view, h.x, h.y);
     paintHomeMark(ctx, x, y, h.own === true);
+  }
+
+  // TOWN-SIGNS (ui/town/townIcons.js): the second look, a picture for each building in the place of its name
+  for (const s of opts.signs ?? []) {
+    const [x, y] = toPaper(view, s.x, s.y);
+    if (x < -24 || y < -24 || x > paperW + 24 || y > paperH + 24) continue;   // off the paper, off the ink
+    paintSign(ctx, x, y, s.kind, s.r, s.quest ? TOWN_PEN.quest : (QUARTER_INK[s.quarter ?? ''] ?? TOWN_PEN.name), !!s.quest);
   }
 
   // the names, haloed then inked, as every name on every sheet is
@@ -477,5 +484,63 @@ export function paintHomeMark(ctx, x, y, own = false) {
   ctx.beginPath();
   ctx.moveTo(x - 1.4, y + t); ctx.lineTo(x - 1.4, y + 2); ctx.lineTo(x + 1.4, y + 2); ctx.lineTo(x + 1.4, y + t);
   ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ── TOWN-SIGNS: THE PICTURES ────────────────────────────────────────────────────────────────────
+// Each picture is a few strokes in a unit square (-1..1) on a round parchment badge, inked in its quarter's colour.
+// A glyph is data: `m`, `l`, `c`, `o` (a circle) and `z` calls, so a test can walk every picture without a canvas.
+/** @typedef {{ m: (x: number, y: number) => void, l: (x: number, y: number) => void, q: (cx: number, cy: number, x: number, y: number) => void, o: (x: number, y: number, r: number, fill?: boolean) => void, z: () => void }} GlyphPen */
+/** @type {Record<string, (g: GlyphPen) => void>} */
+export const TOWN_SIGN_GLYPHS = Object.freeze({
+  potion: (g) => { g.m(-0.25, -0.85); g.l(0.25, -0.85); g.l(0.25, -0.3); g.l(0.8, 0.75); g.l(-0.8, 0.75); g.l(-0.25, -0.3); g.z(); g.m(-0.5, 0.2); g.l(0.5, 0.2); },
+  shield: (g) => { g.m(-0.7, -0.75); g.l(0.7, -0.75); g.l(0.7, 0.05); g.q(0.7, 0.7, 0, 0.95); g.q(-0.7, 0.7, -0.7, 0.05); g.z(); g.m(0, -0.75); g.l(0, 0.9); },
+  coin: (g) => { g.o(0, 0, 0.78); g.o(0, 0, 0.42); },
+  book: (g) => { g.m(-0.6, -0.85); g.l(0.65, -0.85); g.l(0.65, 0.85); g.l(-0.6, 0.85); g.z(); g.m(-0.3, -0.85); g.l(-0.3, 0.85); g.m(0, -0.4); g.l(0.4, -0.4); g.m(0, -0.05); g.l(0.4, -0.05); },
+  shirt: (g) => { g.m(-0.4, -0.8); g.l(-0.15, -0.55); g.l(0.15, -0.55); g.l(0.4, -0.8); g.l(0.9, -0.3); g.l(0.6, 0); g.l(0.45, -0.15); g.l(0.45, 0.8); g.l(-0.45, 0.8); g.l(-0.45, -0.15); g.l(-0.6, 0); g.l(-0.9, -0.3); g.z(); },
+  chair: (g) => { g.m(-0.5, -0.9); g.l(-0.5, 0.1); g.l(0.55, 0.1); g.m(-0.5, -0.5); g.l(0.1, -0.5); g.m(-0.5, 0.1); g.l(-0.5, 0.9); g.m(0.55, 0.1); g.l(0.55, 0.9); },
+  gem: (g) => { g.m(-0.85, -0.2); g.l(-0.45, -0.75); g.l(0.45, -0.75); g.l(0.85, -0.2); g.l(0, 0.9); g.z(); g.m(-0.85, -0.2); g.l(0.85, -0.2); g.m(-0.45, -0.75); g.l(-0.2, -0.2); g.l(0, 0.9); g.m(0.45, -0.75); g.l(0.2, -0.2); g.l(0, 0.9); },
+  barrel: (g) => { g.m(-0.55, -0.85); g.q(-0.95, 0, -0.55, 0.85); g.l(0.55, 0.85); g.q(0.95, 0, 0.55, -0.85); g.z(); g.m(-0.78, -0.4); g.l(0.78, -0.4); g.m(-0.78, 0.4); g.l(0.78, 0.4); },
+  tome: (g) => { g.m(0, -0.45); g.l(-0.9, -0.7); g.l(-0.9, 0.6); g.l(0, 0.85); g.l(0.9, 0.6); g.l(0.9, -0.7); g.z(); g.m(0, -0.45); g.l(0, 0.85); },
+  balls: (g) => { g.m(-0.85, -0.8); g.l(0.85, -0.8); g.m(-0.45, -0.8); g.l(-0.45, -0.1); g.m(0.45, -0.8); g.l(0.45, -0.1); g.m(0, -0.8); g.l(0, 0.1); g.o(-0.45, 0.1, 0.3, true); g.o(0.45, 0.1, 0.3, true); g.o(0, 0.62, 0.3, true); },
+  sword: (g) => { g.m(0, -0.95); g.l(0.14, -0.7); g.l(0.14, 0.45); g.l(-0.14, 0.45); g.l(-0.14, -0.7); g.z(); g.m(-0.55, 0.45); g.l(0.55, 0.45); g.m(0, 0.45); g.l(0, 0.95); },
+  star: (g) => { g.m(0, -0.95); g.l(0.22, -0.22); g.l(0.95, 0); g.l(0.22, 0.22); g.l(0, 0.95); g.l(-0.22, 0.22); g.l(-0.95, 0); g.l(-0.22, -0.22); g.z(); },
+  mug: (g) => { g.m(-0.6, -0.45); g.l(0.35, -0.45); g.l(0.35, 0.8); g.l(-0.6, 0.8); g.z(); g.m(0.35, -0.2); g.q(0.95, -0.2, 0.95, 0.15); g.q(0.95, 0.5, 0.35, 0.5); g.m(-0.6, -0.45); g.q(-0.5, -0.9, -0.1, -0.7); g.q(0.2, -0.95, 0.35, -0.45); },
+  crown: (g) => { g.m(-0.85, 0.65); g.l(-0.85, -0.5); g.l(-0.42, 0); g.l(0, -0.75); g.l(0.42, 0); g.l(0.85, -0.5); g.l(0.85, 0.65); g.z(); g.m(-0.85, 0.3); g.l(0.85, 0.3); },
+  eye: (g) => { g.m(-0.95, 0); g.q(0, -0.85, 0.95, 0); g.q(0, 0.85, -0.95, 0); g.z(); g.o(0, 0, 0.36); g.o(0, 0, 0.14, true); },
+  swords: (g) => { g.m(-0.8, -0.8); g.l(0.65, 0.65); g.m(0.8, -0.8); g.l(-0.65, 0.65); g.m(-0.15, 0.35); g.l(0.35, -0.15); g.m(0.15, 0.35); g.l(-0.35, -0.15); },
+  dagger: (g) => { g.m(0, 0.95); g.l(0.2, 0.1); g.l(0.2, -0.3); g.l(-0.2, -0.3); g.l(-0.2, 0.1); g.z(); g.m(-0.5, -0.3); g.l(0.5, -0.3); g.m(0, -0.3); g.l(0, -0.9); },
+  banner: (g) => { g.m(-0.55, -0.9); g.l(-0.55, 0.95); g.m(-0.55, -0.85); g.l(0.8, -0.85); g.l(0.5, -0.4); g.l(0.8, 0.05); g.l(-0.55, 0.05); },
+  diamond: (g) => { g.m(0, -0.7); g.l(0.7, 0); g.l(0, 0.7); g.l(-0.7, 0); g.z(); },
+});
+
+/**
+ * One picture, at (x, y) in paper pixels, `r` its radius: the parchment badge, the quarter's ink for the picture, the pen's wall for
+ * the rim - the quest's ring as the rim, thicker, for a quest's building. Skin.
+ * @param {CanvasRenderingContext2D} ctx @param {number} x @param {number} y @param {string} kind @param {number} r @param {string} ink @param {boolean} [quest]
+ */
+export function paintSign(ctx, x, y, kind, r, ink, quest = false) {
+  const draw = TOWN_SIGN_GLYPHS[kind] ?? TOWN_SIGN_GLYPHS.diamond;
+  ctx.save();
+  ctx.setLineDash?.([]);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.fillStyle = TOWN_PEN.halo; ctx.fill();
+  ctx.strokeStyle = quest ? TOWN_PEN.quest : TOWN_PEN.wall; ctx.lineWidth = quest ? 2 : 1.1; ctx.stroke();
+  const k = r * 0.66;   // the picture stands inside the rim
+  ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = Math.max(1, r * 0.17);
+  ctx.beginPath();
+  /** @type {number[][]} */
+  const solid = [];   // the circles a picture fills (the pawnbroker's balls, the eye's pupil), after its strokes
+  /** @type {GlyphPen} */
+  const pen = {
+    m: (gx, gy) => ctx.moveTo(x + gx * k, y + gy * k),
+    l: (gx, gy) => ctx.lineTo(x + gx * k, y + gy * k),
+    q: (cx, cy, gx, gy) => ctx.quadraticCurveTo(x + cx * k, y + cy * k, x + gx * k, y + gy * k),
+    o: (gx, gy, gr, fill = false) => { if (fill) { solid.push([x + gx * k, y + gy * k, gr * k]); return; } ctx.moveTo(x + (gx + gr) * k, y + gy * k); ctx.arc(x + gx * k, y + gy * k, gr * k, 0, Math.PI * 2); },
+    z: () => ctx.closePath(),
+  };
+  draw(pen);
+  ctx.stroke();
+  for (const [cx, cy, cr] of solid) { ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
 }

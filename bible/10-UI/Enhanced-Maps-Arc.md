@@ -833,3 +833,28 @@ the port's own, on the enhanced skin alone (the held map's row, `01-Overview/Por
 Code: `ui/town/imperialSheet.js`, `ui/town/townSheet.js` (`createTownSheet`), `ui/town/townMapDoor.js` (`townSheetBag`),
 `scenes/exteriorAutomapToggle.js` (`townHere`). Pins: `test/ui/town/ic_citymap.test.js` (5, every window through the M
 key's real door). Mutants: `tools/mutants/ic_citymap.json` (16, all dead).
+
+## TOWN-SIGNS - the town map's second look: a picture a building
+
+A player asked for fewer words on a plan with a hundred shops and guilds in it. A button beside Find me switches the town map
+between two looks. **Look: Names** is the map as it was: the names, and a player's house marked with a house. **Look: Signs**
+letters nothing and marks no player's house. Each building the map would name (`townSheet.js` `named`) is a picture on its place:
+a round parchment badge, the picture inked in its quarter's colour, a quest's building ringed. The pointer over a picture answers
+with the building's name (`hoverLabel`), as the lettering did.
+
+- **The pictures** (`ui/ink/inkTown.js` `TOWN_SIGN_GLYPHS`, `paintSign`) are drawn in code and read nothing of the player's copy of
+  the game. A potion is the Alchemist, a shield the Armorer, a coin the Bank, a book the Bookseller, a tunic the Clothing store, a
+  chair the Furniture store, a gem the Gems store, a barrel the General store, an open book the Library, three balls the Pawn shop,
+  a sword the Weapon smith, a star the Temple, a mug the Tavern, a crown the Palace.
+- **Guild halls** wear a picture by WHICH guild: the Mages' eye, the Fighters' crossed swords, a dagger for the Thieves and the Dark
+  Brotherhood, and a banner for any other hall. `ui/town/townIcons.js` `signKindOf` is the one table.
+- **No trade, no picture:** a landmark such as a city wall's gate has none in this look and is named in the Names look. A quest's
+  named house keeps a plain diamond.
+- **The look** is a pref (`townMapMode`, `'names'` by default, `systems/uiPrefs.js`). The button (`hmlook`, `ui/heldMap.js`
+  `_toggleTownLook`) turns it over and asks a repaint, and the sheet reads it at every paint. The button shows on the town's sheet
+  only.
+- **Not covered:** the classic exterior automap is DFU's own window and has one look. The Notice Boards' marks show in both looks.
+  The pictures are drawn, not read from the game's signboards.
+
+Code: `ui/town/townIcons.js`, `ui/town/townSheet.js`, `ui/ink/inkTown.js`, `ui/heldMap.js`. Pins: `test/ui/town/townsigns.test.js`
+(6). Mutants: `tools/mutants/townsigns.json` (10, all dead).

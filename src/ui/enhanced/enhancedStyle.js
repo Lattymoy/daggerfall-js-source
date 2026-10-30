@@ -1869,6 +1869,9 @@ ${badgeCss()}
 .hmresult-region { color: var(--dim); font-size: 12px; }
 .hmclose { pointer-events: auto; }
 .hmfindme { pointer-events: auto; margin-right: 8px; }
+/* TOWN-SIGNS: the town map's look, on the town's sheet alone */
+.hmlook { pointer-events: auto; margin-right: 8px; }
+.hmroot:not([data-hm-sheet="town"]) .hmlook { display: none; }
 .hmcard {
   display: none; position: absolute; right: 18px; bottom: 18px;
   width: min(340px, calc(100vw / var(--hm-ui, 1) - 36px)); padding: 18px 20px;
