@@ -21,8 +21,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { unpackTree, packTree, pointsLeft, EMPTY_TREE, FIRM_RESPEC_GOLD } from './firmamentLaw.js';
-import { walletReserve } from '../realm/realmGoldLaw.js';   // a refused respec gives back exactly what it took
-import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { walletReserve } from '../realm/realmGoldLaw.js'; // a refused respec gives back exactly what it took
+import { noteAct } from '../../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** Where this device keeps a change whose answer did not come: { [account|character]: { rid, tree } }. */
 export const FIRM_KEPT_KEY = 'firm1.kept';
@@ -61,14 +61,24 @@ export function mintFirmRid(rand = (b) => globalThis.crypto.getRandomValues(b)) 
  *   storage?: any, character?: () => string|null, rid?: () => string, realm?: { act: (o: any) => Promise<any> } | null, wallet?: (() => any) | null,
  *   later?: (fn: () => void, ms: number) => void }} o
  */
-export function createFirmamentBook({ door, storage = null, character = () => null, rid = () => mintFirmRid(), realm = null, wallet = null, later = laterOnTimer }) {
+export function createFirmamentBook({
+  door,
+  storage = null,
+  character = () => null,
+  rid = () => mintFirmRid(),
+  realm = null,
+  wallet = null,
+  later = laterOnTimer,
+}) {
   const state = {
     /** whether the Firmament is this account's: true, false (shut, a guest, offline) or null not yet asked */
     open: /** @type {boolean|null} */ (null),
     /** the last refusal's word, or null */
     error: /** @type {string|null} */ (null),
     tree: /** @type {{ start: string|null, keys: string[] }} */ ({ start: null, keys: [] }),
-    renown: 1, stars: 0, craft: 0,
+    renown: 1,
+    stars: 0,
+    craft: 0,
     /** @type {Record<string, number>} */
     ranks: {},
     refund: { freeBelow: 10, perStar: 10 },
@@ -79,13 +89,39 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     character: /** @type {string|null} */ (null),
   };
   const listeners = new Set();
-  const tell = () => { for (const fn of listeners) { try { fn(state); } catch { /* a listener is not the book's problem */ } } };
-  const slot = () => `${(() => { try { return door.account?.() ?? ''; } catch { return ''; } })()}|${character() ?? ''}`;
-  const kept = () => { try { return JSON.parse(storage?.getItem?.(FIRM_KEPT_KEY) ?? '{}') ?? {}; } catch { return {}; } };
+  const tell = () => {
+    for (const fn of listeners) {
+      try {
+        fn(state);
+      } catch {
+        /* a listener is not the book's problem */
+      }
+    }
+  };
+  const slot = () =>
+    `${(() => {
+      try {
+        return door.account?.() ?? '';
+      } catch {
+        return '';
+      }
+    })()}|${character() ?? ''}`;
+  const kept = () => {
+    try {
+      return JSON.parse(storage?.getItem?.(FIRM_KEPT_KEY) ?? '{}') ?? {};
+    } catch {
+      return {};
+    }
+  };
   const keep = (entry) => {
     const all = kept();
-    if (entry) all[slot()] = entry; else delete all[slot()];
-    try { storage?.setItem?.(FIRM_KEPT_KEY, JSON.stringify(all)); } catch { /* storage is a convenience */ }
+    if (entry) all[slot()] = entry;
+    else delete all[slot()];
+    try {
+      storage?.setItem?.(FIRM_KEPT_KEY, JSON.stringify(all));
+    } catch {
+      /* storage is a convenience */
+    }
   };
   // AUDIT QUESTLINES ACTS-5: A STAR IS TAKEN ONCE. `star-taken` (systems/questlines/qlActs.js) counted each star the
   // service held after a change that it did not hold before it - so one star taken, given back (free below Renown 10,
@@ -101,7 +137,11 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
   const takenKnown = () => {
     if (takenMemo.has(slot())) return takenMemo.get(slot());
     let v = null;
-    try { v = JSON.parse(storage?.getItem?.(FIRM_TAKEN_KEY) ?? '{}')?.[slot()]; } catch { v = null; }
+    try {
+      v = JSON.parse(storage?.getItem?.(FIRM_TAKEN_KEY) ?? '{}')?.[slot()];
+    } catch {
+      v = null;
+    }
     return Array.isArray(v) ? new Set(v.filter((k) => typeof k === 'string')) : null;
   };
   /** The sky holds `keys` now: each star it never held before is a star taken, said when `count`; all remembered. */
@@ -115,8 +155,10 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       const o = JSON.parse(storage?.getItem?.(FIRM_TAKEN_KEY) ?? '{}') ?? {};
       o[slot()] = [...all];
       storage?.setItem?.(FIRM_TAKEN_KEY, JSON.stringify(o));
-    } catch { /* storage is a convenience - the memo holds it for the session */ }
-    if (count && fresh.length) noteAct('star-taken', fresh.length);   // QL11: a star taken - each newly held, once
+    } catch {
+      /* storage is a convenience - the memo holds it for the session */
+    }
+    if (count && fresh.length) noteAct('star-taken', fresh.length); // QL11: a star taken - each newly held, once
   };
   const apply = (data) => {
     state.tree = unpackTree(data?.tree ?? '');
@@ -124,7 +166,8 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     state.stars = Number.isSafeInteger(data?.stars) ? data.stars : state.stars;
     state.craft = Number.isSafeInteger(data?.craft) ? data.craft : state.craft;
     if (data?.ranks && typeof data.ranks === 'object') state.ranks = { ...data.ranks };
-    if (data?.refund) state.refund = { freeBelow: Number(data.refund.freeBelow) || 10, perStar: Number(data.refund.perStar) || 10 };
+    if (data?.refund)
+      state.refund = { freeBelow: Number(data.refund.freeBelow) || 10, perStar: Number(data.refund.perStar) || 10 };
     state.open = true;
     state.error = null;
     state.status = null;
@@ -171,15 +214,19 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     if (r?.ok) {
       keep(null);
       apply(r.data);
-      held(state.tree.keys, true);   // QL11: a star taken - each the service holds now that the sky never held (AUDIT QUESTLINES ACTS-5)
+      held(state.tree.keys, true); // QL11: a star taken - each the service holds now that the sky never held (AUDIT QUESTLINES ACTS-5)
       tell();
       return { ok: true, silver: Number(r.data?.silver) || 0 };
     }
     const error = r?.error ?? 'server';
     state.error = error;
-    if (!UNHEARD.has(error)) { keep(null); await book.read(); state.error = error; tell(); }
-    else {
-      retryLater();   // FIRM-RETRY: the kept change is asked again by that read
+    if (!UNHEARD.has(error)) {
+      keep(null);
+      await book.read();
+      state.error = error;
+      tell();
+    } else {
+      retryLater(); // FIRM-RETRY: the kept change is asked again by that read
       tell();
     }
     return { ok: false, error };
@@ -188,12 +235,18 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
   const book = {
     state,
     /** Told whenever the state moves. */
-    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    onChange(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
     /** The character's tree and purses, from the service - a change kept from before asked first, with its own id. */
     async read() {
       const who = character();
       if (!who) return false;
-      if (state.character !== who) { state.character = who; state.tree = { start: null, keys: [] }; }
+      if (state.character !== who) {
+        state.character = who;
+        state.tree = { start: null, keys: [] };
+      }
       const left = kept()[slot()];
       /** AUDIT UICALM-FIRM1 L2 L4: a kept change the service refused when it looked - the player was told it would be
        *  sent again, so they are told it was not */
@@ -201,18 +254,24 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       if (left?.rid && !state.sending) {
         const r = await door.set(who, left.tree, left.rid);
         if (r?.ok || !UNHEARD.has(r?.error)) keep(null);
-        if (r?.ok) held(unpackTree(left.tree).keys, true);   // AUDIT QUESTLINES ACTS-5: the stars the lost answer's change took, counted here - the tree this book asked for
+        if (r?.ok) held(unpackTree(left.tree).keys, true); // AUDIT QUESTLINES ACTS-5: the stars the lost answer's change took, counted here - the tree this book asked for
         if (!r?.ok && !UNHEARD.has(r?.error)) refused = r?.error ?? 'server';
       }
       const r = await door.state(who);
-      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys);   // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted
-      if (r?.ok) { answered(); apply(r.data); if (refused) state.error = refused; tell(); return true; }
+      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys); // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted
+      if (r?.ok) {
+        answered();
+        apply(r.data);
+        if (refused) state.error = refused;
+        tell();
+        return true;
+      }
       state.error = r?.error ?? 'server';
       if (UNHEARD.has(state.error)) retryLater();
-      else answered();   // the service looked and refused (a shut sky, a 404): asking again changes nothing
-      state.status = Number.isSafeInteger(r?.status) ? r.status : null;   // UI-CALM: the window says WHY no stars came (a 404 is a service without the Firmament)
+      else answered(); // the service looked and refused (a shut sky, a 404): asking again changes nothing
+      state.status = Number.isSafeInteger(r?.status) ? r.status : null; // UI-CALM: the window says WHY no stars came (a 404 is a service without the Firmament)
       if (state.error === 'firm-closed' || state.error === 'no-session') state.open = false;
-      if (state.error === 'firm-closed') state.tree = { start: null, keys: [] };   // AUDIT UICALM-FIRM1 L2 M4: a shut sky is no sky in force
+      if (state.error === 'firm-closed') state.tree = { start: null, keys: [] }; // AUDIT UICALM-FIRM1 L2 M4: a shut sky is no sky in force
       tell();
       return false;
     },
@@ -220,15 +279,29 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     async commit(tree) {
       const t = { start: tree?.start ?? null, keys: [...(tree?.keys ?? [])] };
       if (respecking) return { ok: false, error: 'firm-busy' };
-      if (state.sending) { queued = t; return { ok: true, queued: true }; }
+      if (state.sending) {
+        queued = t;
+        return { ok: true, queued: true };
+      }
       let r = await send(t);
-      while (queued) { const next = queued; queued = null; r = await send(next); }
+      while (queued) {
+        const next = queued;
+        queued = null;
+        r = await send(next);
+      }
       return r;
     },
     /** Whether a respec can be paid now: a sky with something in it, the gold in the wallet, nothing on its way. */
     canRespec() {
       const w = wallet?.();
-      return !!state.tree?.start && !state.sending && !!realm && !!w && w.gold() >= FIRM_RESPEC_GOLD && typeof door.respec === 'function';
+      return (
+        !!state.tree?.start &&
+        !state.sending &&
+        !!realm &&
+        !!w &&
+        w.gold() >= FIRM_RESPEC_GOLD &&
+        typeof door.respec === 'function'
+      );
     },
     /** THE RESPEC: every star and the birthsign back, for FIRM_RESPEC_GOLD gold. */
     async respec() {
@@ -239,7 +312,7 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       const w = wallet?.();
       if (!w || w.gold() < FIRM_RESPEC_GOLD) return { ok: false, error: 'firm-gold' };
       if (typeof door.respec !== 'function') return { ok: false, error: 'server' };
-      if (!realm) return { ok: false, error: 'realm-needed' };   // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service
+      if (!realm) return { ok: false, error: 'realm-needed' }; // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service
       const id = rid();
       const region = Number.isSafeInteger(w.region?.()) ? w.region() : null;
       state.sending = { start: null, keys: [] };
@@ -247,11 +320,18 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       tell();
       let r;
       try {
-        r = await realm.act({ reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve, call: (/** @type {any} */ at) => door.respec(who, id, at, region) });
-      } finally { state.sending = null; respecking = false; }
+        r = await realm.act({
+          reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve,
+          call: (/** @type {any} */ at) => door.respec(who, id, at, region),
+        });
+      } finally {
+        state.sending = null;
+        respecking = false;
+      }
       if (r?.ok) {
-        keep(null);   // a change kept from before is over a sky that is gone
-        if (r.data?.tree !== undefined) apply(r.data); else await book.read();
+        keep(null); // a change kept from before is over a sky that is gone
+        if (r.data?.tree !== undefined) apply(r.data);
+        else await book.read();
         tell();
         return { ok: true };
       }
@@ -260,9 +340,13 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       return { ok: false, error: state.error };
     },
     /** What is left in each purse under `tree` (the state's own by default). */
-    left(tree = state.tree) { return pointsLeft(tree.keys, state.stars, state.craft); },
+    left(tree = state.tree) {
+      return pointsLeft(tree.keys, state.stars, state.craft);
+    },
     /** The tree the window draws from: the one on its way, else the service's. */
-    current() { return state.sending ?? state.tree ?? EMPTY_TREE; },
+    current() {
+      return state.sending ?? state.tree ?? EMPTY_TREE;
+    },
   };
   return book;
 }
@@ -270,5 +354,7 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
 // ── the page's book ─────────────────────────────────────────────────
 let _book = /** @type {ReturnType<typeof createFirmamentBook>|null} */ (null);
 /** The host's word: this page's book (online), or null. The window reads it here, so no door has to carry it. */
-export function setFirmamentBook(book) { _book = book ?? null; }
+export function setFirmamentBook(book) {
+  _book = book ?? null;
+}
 export const firmamentBook = () => _book;

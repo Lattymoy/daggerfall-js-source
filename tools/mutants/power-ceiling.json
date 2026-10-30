@@ -670,8 +670,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D8-a-weapon-channel-raised",
     "file": "src/net/firmament/firmamentLaw.js",
-    "old": "  weaponDmg: def('combat', 30,",
-    "new": "  weaponDmg: def('combat', 35,",
+    "old": "  weaponDmg: def('combat', 30, (v) => `${signed(v)}% damage with all weapons`, -20),",
+    "new": "  weaponDmg: def('combat', 35, (v) => `${signed(v)}% damage with all weapons`, -20),",
     "tests": [
       "test/combat/powerceiling_walk.test.js"
     ]

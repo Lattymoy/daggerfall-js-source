@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-QL-ACTS-ACTS-5a-firmamentBook-the-toggle-counted-again-the-old-diff-",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      keep(null);\n      apply(r.data);\n      held(state.tree.keys, true);",
-    "new": "      keep(null);\n      const had = new Set(state.tree?.keys ?? []);\n      apply(r.data);\n      held(state.tree.keys);\n      noteAct('star-taken', state.tree.keys.filter((k) => !had.has(k)).length);",
+    "old": "      apply(r.data);\n      held(state.tree.keys, true); // QL11: a star taken - each the service holds now that the sky never held (AUDIT QUESTLINES ACTS-5)",
+    "new": "      const had = new Set(state.tree?.keys ?? []);\n      apply(r.data);\n      held(state.tree.keys);\n      noteAct('star-taken', state.tree.keys.filter((k) => !had.has(k)).length); // QL11: a star taken - each the service holds now that the sky never held (AUDIT QUESTLINES ACTS-5)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-QL-ACTS-ACTS-5b-firmamentBook-the-kept-change-uncounted",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "        if (r?.ok) held(unpackTree(left.tree).keys, true);",
-    "new": "",
+    "old": "        if (r?.ok) held(unpackTree(left.tree).keys, true); // AUDIT QUESTLINES ACTS-5: the stars the lost answer's change took, counted here - the tree this book asked for",
+    "new": "        // AUDIT QUESTLINES ACTS-5: the stars the lost answer's change took, counted here - the tree this book asked for",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-QL-ACTS-ACTS-5d-firmamentBook-the-sky-read-counted",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys);",
-    "new": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys, true);",
+    "old": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys); // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted",
+    "new": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys, true); // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

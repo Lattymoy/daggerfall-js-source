@@ -24,6 +24,8 @@
 /src/net/dragon/*/
 !/src/net/duel/
 /src/net/duel/*/
+!/src/net/firmament/
+/src/net/firmament/*/
 !/src/net/gambit/
 /src/net/gambit/*/
 !/src/net/safety/

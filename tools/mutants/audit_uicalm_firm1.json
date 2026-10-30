@@ -56,7 +56,7 @@
   {
     "name": "AUF-L1M2-castcost-uncapped",
     "file": "src/net/firmament/firmamentLaw.js",
-    "old": "  return Math.min(CAST_COST_CAP, gain) + price;   // the gains capped, then the price paid (AUDIT UICALM-FIRM1 L1 M2)",
+    "old": "  return Math.min(CAST_COST_CAP, gain) + price; // the gains capped, then the price paid (AUDIT UICALM-FIRM1 L1 M2)",
     "new": "  return gain + price;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "AUF-L2M1-commit-during-respec",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (respecking) return { ok: false, error: 'firm-busy' };\n",
-    "new": "",
+    "old": "      if (respecking) return { ok: false, error: 'firm-busy' };\n      if (state.sending) {",
+    "new": "      if (state.sending) {",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUF-L2M4-shut-tree-kept",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (state.error === 'firm-closed') state.tree = { start: null, keys: [] };",
-    "new": "",
+    "old": "      if (state.error === 'firm-closed') state.tree = { start: null, keys: [] }; // AUDIT UICALM-FIRM1 L2 M4: a shut sky is no sky in force",
+    "new": "      // AUDIT UICALM-FIRM1 L2 M4: a shut sky is no sky in force",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUF-L2L1-book-no-realm",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (!realm) return { ok: false, error: 'realm-needed' };   // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service\n",
-    "new": "",
+    "old": "      if (!realm) return { ok: false, error: 'realm-needed' }; // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service\n      const id = rid();",
+    "new": "      const id = rid();",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUF-L2L4-kept-refusal-silent",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (r?.ok) { answered(); apply(r.data); if (refused) state.error = refused; tell(); return true; }",
-    "new": "      if (r?.ok) { answered(); apply(r.data); tell(); return true; }",
+    "old": "        if (refused) state.error = refused;\n        tell();",
+    "new": "        tell();",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "AUF-L5M3-pact-price-30",
     "file": "src/net/firmament/firmamentTree.js",
-    "old": "{ spellPower: 12, castCost: 8, blowTaken: 7 }",
-    "new": "{ spellPower: 12, castCost: 8, blowTaken: 30 }",
+    "old": "      { spellPower: 12, castCost: 8, blowTaken: 7 },",
+    "new": "      { spellPower: 12, castCost: 8, blowTaken: 30 },",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "AUF-L5M3-charge-spell-price-30",
     "file": "src/net/firmament/firmamentTree.js",
-    "old": "{ meleeDmg: 9, speed: 3, blowTaken: 5 }",
-    "new": "{ meleeDmg: 9, speed: 3, spellTaken: 30 }",
+    "old": "      { meleeDmg: 9, speed: 3, blowTaken: 5 },",
+    "new": "      { meleeDmg: 9, speed: 3, spellTaken: 30 },",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "AUF-L5M4-lines-cross-stars",
     "file": "src/net/firmament/firmamentTree.js",
-    "old": "    const first = anchorFor(s, from, centre, false, flip);\n    if (!first.cluster) return first;",
-    "new": "    const first = anchorFor(s, from, centre, false, flip);\n    return first;",
+    "old": "    if (!first.cluster) return first;",
+    "new": "    return first;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
