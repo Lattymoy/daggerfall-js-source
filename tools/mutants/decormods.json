@@ -2,8 +2,8 @@
   {
     "name": "DECORMODS-structure-offered",
     "file": "src/systems/decor/decorMods.js",
-    "old": "    45170: 14,\n",
-    "new": "    45170: 14, 53160: 1,\n",
+    "old": "    53006: 2,",
+    "new": "    53160: 1,\n    53006: 2,",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DECORMODS-twin-offered",
     "file": "src/systems/decor/decorMods.js",
-    "old": "    45169: 42, 45190: 547, 45191: 362, 45192: 14, 45194: 8,\n",
-    "new": "    45169: 42, 45190: 547, 45191: 362, 45192: 14, 45194: 8, 45113: 1,\n",
+    "old": "    // the paintings (Rosy's Resources, New Paintings) and Rosy's small hangings and rugs",
+    "new": "    45113: 1,\n    // the paintings (Rosy's Resources, New Paintings) and Rosy's small hangings and rugs",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "DECORMODS-filed-as-itself",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]);",
-    "new": "    let kind = c.model != null ? modelKind(c.model) : c.person ? 'people' : flatKind(c.flat[0]);",
+    "old": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR",
+    "new": "    let kind = c.model != null ? modelKind(c.model) : c.person ? 'people' : flatKind(c.flat[0]); // HOME-VENDOR",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "DECORMODS-unnamed",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const own = c.base ?? (c.model != null",
-    "new": "    const own = (c.model != null",
+    "old": "      c.base ??\n      (c.model != null // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)\n        ? kind === 'storage'\n          ? HOUSE_CONTAINER_NAMES[c.model]\n          : kind === 'bed'\n            ? 'Bed'\n            : IIL_FIREPLACE_MODELS.has(c.model)\n              ? 'Fireplace'\n              : null // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were \"Furniture 26\" and \"27\"\n        : kind === 'light'\n          ? LIGHT_NAMES[c.flat[1]]\n          : kind === 'nature' && isTreeRecord(c.nature, c.flat[1])\n            ? 'Tree'\n            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
+    "new": "      c.model != null // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)\n        ? kind === 'storage'\n          ? HOUSE_CONTAINER_NAMES[c.model]\n          : kind === 'bed'\n            ? 'Bed'\n            : IIL_FIREPLACE_MODELS.has(c.model)\n              ? 'Fireplace'\n              : null // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were \"Furniture 26\" and \"27\"\n        : kind === 'light'\n          ? LIGHT_NAMES[c.flat[1]]\n          : kind === 'nature' && isTreeRecord(c.nature, c.flat[1])\n            ? 'Tree'\n            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "DECORMODS-numbered-first",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "nature: 3, mod: 4, modstreet: 5 });",
-    "new": "nature: 3, mod: -1, modstreet: 5 });",
+    "old": "export const DECOR_FROM = Object.freeze({ room: 0, dungeon: 1, street: 2, nature: 3, mod: 4, modstreet: 5 });",
+    "new": "export const DECOR_FROM = Object.freeze({ room: 0, dungeon: 1, street: 2, nature: 3, mod: -1, modstreet: 5 });",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "DECORMODS-kind-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    else if (c.from === 'mod' && plain) kind = 'mods';",
-    "new": "    else if (false) kind = 'mods';",
+    "old": "    else if (c.from === 'mod' && plain) kind = 'mods'; // DECOR-MODS: and a mod's room's is its furnishing",
+    "new": "    else if (false) kind = 'mods'; // DECOR-MODS: and a mod's room's is its furnishing",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -86,8 +86,8 @@
   {
     "name": "DECORMODS-scan-unjoined",
     "file": "src/systems/decor/decorScan.js",
-    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
-    "new": "[...decorCatalogue(read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
+    "old": "      entries = Object.freeze([\n        ...decorCatalogue(mods ? addDecorMods(read) : read),\n        HALL_BOARD_ENTRY,\n        ...GUILD_FURNITURE_ENTRIES,\n      ]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
+    "new": "      entries = Object.freeze([...decorCatalogue(read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -105,8 +105,8 @@
   {
     "name": "DECORMODS-alias-unmeasured",
     "file": "src/systems/decor/decorScan.js",
-    "old": "      const rec = arch?.getRecordIndex?.(classicModelIdOf(id));",
-    "new": "      const rec = arch?.getRecordIndex?.(id);",
+    "old": "      const rec = arch?.getRecordIndex?.(classicModelIdOf(id)); // DECOR-MODS: an alias (a coloured bed) is its classic model's size",
+    "new": "      const rec = arch?.getRecordIndex?.(id); // DECOR-MODS: an alias (a coloured bed) is its classic model's size",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "DECORMODS-offered-unswitched",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && (!MOD_FROM.has(e.from) || !!mods?.has(e.key))) ?? null;",
-    "new": "    ) ?? null;",
+    "old": "        (e.nature == null || e.nature === room?.natureBase) &&\n        (!MOD_FROM.has(e.from) || !!mods?.has(e.key)),",
+    "new": "        (e.nature == null || e.nature === room?.natureBase),",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "DECORMODS-never-remeasured",
     "file": "src/systems/decor/decorScan.js",
-    "old": "    else if (phase === 'done') measureLate(modelsPerStep);\n",
-    "new": "",
+    "old": "    else if (phase === 'done') measureLate(modelsPerStep);\n    return phase === 'done';",
+    "new": "    return phase === 'done';",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "DECORMODS-bed-unfiled",
     "file": "src/systems/decor/decorMods.js",
-    "old": "as: bed.model };",
-    "new": "as: id };",
+    "old": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: bed.model }; // AUDIT 05b A3: its classic bed by the table, never by a switch",
+    "new": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: id }; // AUDIT 05b A3: its classic bed by the table, never by a switch",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "DECORMODS-kept-dropped",
     "file": "src/systems/decor/decorMods.js",
-    "old": "{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_KEPT, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }",
-    "new": "{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }",
+    "old": "    { table: DECOR_MOD_KEPT, from: 'mod' },\n    { table: DECOR_MOD_STREETS, from: 'modstreet' },",
+    "new": "    { table: DECOR_MOD_STREETS, from: 'modstreet' },",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "DECORMODS-items-unnamed",
     "file": "src/systems/decor/decorMods.js",
-    "old": "  if (named) return { base: named, as: archive === 1210 ? 205 : archive };   // the bottles are bottles\n",
-    "new": "",
+    "old": "  if (named) return { base: named, as: archive === 1210 ? 205 : archive }; // the bottles are bottles\n  const drawn = DET_FLAT_DRAWINGS[DET_OLD_ARCHIVES[archive] ?? archive]?.[record];",
+    "new": "  const drawn = DET_FLAT_DRAWINGS[DET_OLD_ARCHIVES[archive] ?? archive]?.[record];",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]

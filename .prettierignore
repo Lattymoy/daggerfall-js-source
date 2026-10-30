@@ -96,6 +96,8 @@
 /src/systems/*
 !/src/systems/card/
 /src/systems/card/*/
+!/src/systems/decor/
+/src/systems/decor/*/
 !/src/systems/deepWater/
 /src/systems/deepWater/*/
 !/src/systems/dragon/

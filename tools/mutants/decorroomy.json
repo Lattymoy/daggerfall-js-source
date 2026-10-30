@@ -146,8 +146,8 @@
   {
     "name": "DECORROOMY-any-room",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "(room && room.key === keyOf(mapId, buildingKey) ? room.cap : null)",
-    "new": "(room ? room.cap : null)",
+    "old": "export const homeDecorCap = (mapId, buildingKey) => (room && room.key === keyOf(mapId, buildingKey) ? room.cap : null);",
+    "new": "export const homeDecorCap = (mapId, buildingKey) => (room ? room.cap : null);",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "DECORROOMY-answer-unread",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "room = { key, cap: decorCapOf(res.data.ground) };",
-    "new": "room = room;",
+    "old": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')\n        room = { key, cap: decorCapOf(res.data.ground) };",
+    "new": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number') room = room;",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]

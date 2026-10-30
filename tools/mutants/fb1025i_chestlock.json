@@ -216,8 +216,8 @@
   {
     "name": "FB1025I-E8-SILENT",
     "file": "src/systems/decor/decorPack.js",
-    "old": "  if (back.length) say?.(",
-    "new": "  if (!back.length) say?.(",
+    "old": "  if (back.length)",
+    "new": "  if (!back.length)",
     "why": "AUDIT FB1025i E8: things handed back to the pack at the door, and nothing said",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"

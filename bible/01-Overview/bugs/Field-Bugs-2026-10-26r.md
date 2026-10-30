@@ -351,7 +351,7 @@ the pack. Both skins.
 
 FIXED.
 - A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {"`).
-  The shared chest's list carries the mark (`decorGrants.js:"  Object.defineProperty(goods, 'pileCoins', { value: true });"`),
+  The shared chest's list carries the mark (`decorGrants.js:"Object.defineProperty(goods, 'pileCoins', { value: true })"`),
   so in both windows a pile taken from it lands in the window's pack as a pile. The close counts the coins leaving
   (whole piles and handfuls cut off one), tells the service (`purse` on the settle), and pays the purse in the act's
   `apply` (the door's new `pay`, `bindDecorHouseFrom`) - only once the settle lands, or a lost answer's record moved one

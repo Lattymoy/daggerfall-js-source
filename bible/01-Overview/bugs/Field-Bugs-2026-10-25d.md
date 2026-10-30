@@ -44,7 +44,7 @@ Which chests are shared is the service's answer (`op: 'grants'`), asked when the
 refused or thrown ask was never asked again, so a slow service made it the whole visit.
 
 THE CHANGE: the owner's press in an online home goes through `openOwnChest`
-(`decorGrants.js:"export function openOwnChest(id, online, openSave) {"`). Until the answer stands, the chest stays shut
+(`decorGrants.js:"export function openOwnChest"`). Until the answer stands, the chest stays shut
 ("The chest stays shut.") and the ask goes out again if none is out. A shared chest opens the bin, a private one the
 save's window. An answer for an earlier room is not this room's (`asked`). A room with no grants door shares nothing.
 The host's tail of `activateDecor` hands its window to it, at the same count of logical lines.

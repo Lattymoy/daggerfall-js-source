@@ -35,7 +35,7 @@ dungeon's piece was "Dungeon furniture", a street's "Outdoors". Over the freewar
 benches (ARCH3D 42500-42571) and 66 pieces of the house family were dungeon furniture, and the potted plants
 (TEXTURE.213) and the crops and flowers (TEXTURE.301) were decorations or outdoor pieces.
 
-FIXED. `systems/decor/decorCatalogue.js:"export function decorWhatKind(what) {"` files a piece by what it is first: each
+FIXED. `systems/decor/decorCatalogue.js:"export function decorWhatKind"` files a piece by what it is first: each
 picture archive the catalogue holds was looked at whole and named (FLAT_WHAT), the free-standing models by their editor's
 tags (MODEL_WHAT), a model of the furniture families as furniture and of the exterior family as an outdoor piece. Four
 kinds more: Statues, Tools, Animals, Remains. The plants join Trees and plants, as Houseplant and Crop (Daggerfall's
@@ -72,7 +72,7 @@ PINS: `test/server/decorroomy_service.test.js`, `test/systems/decor/decorroomy.t
 FIXED. The owner's bar in their own online home has a chip, "Who may rest", that steps through Me, Friends, Party and
 Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0196), set and read as a
 chest's is (`server-account/src/decorAccess.js`). A guest the row names is told so with the room's grants, and the
-rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest = (mapId, buildingKey) =>"`.
+rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest"`.
 A guild's hall keeps its own law; its members already rest there. A home's rows end with it: a sale or a character's
 delete clears them, a claim clears what no home holds, an arena move carries the rest row (AUDIT FB1029f A1).
 
@@ -106,7 +106,7 @@ PINS: `test/scenes/yardlight.test.js`, `test/world/audityardlight.test.js` (move
 ## 6. NUDGE - sideways steps, and some clipping
 
 FIXED. Four bar buttons and Numpad 4, 6, 8 and 2 push a piece along the level axis nearest the eye's left, right, away
-and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {"`).
+and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep"`).
 The push is applied after WALL-CLEAR's clearance, so a piece may sit into a wall or another piece as far as its owner
 chooses (item 14). A hung piece slides along its surface.
 

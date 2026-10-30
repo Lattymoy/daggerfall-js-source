@@ -173,8 +173,8 @@
   {
     "name": "L10N3d-DECOR_SIZES-frozen-english",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "export const DECOR_SIZES = localizedStrings({",
-    "new": "export const DECOR_SIZES = Object.freeze({",
+    "old": "export const DECOR_SIZES = localizedStrings({ small: 'Small', medium: 'Medium', large: 'Large' });",
+    "new": "export const DECOR_SIZES = Object.freeze({ small: 'Small', medium: 'Medium', large: 'Large' });",
     "tests": [
       "test/systems/l10n3d.test.js"
     ]

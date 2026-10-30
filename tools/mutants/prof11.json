@@ -554,8 +554,8 @@
   {
     "name": "PROF11-stone-not-delivered",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": " || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
-    "new": ");",
+    "old": "export const isFurnishing = (item) =>\n  item?.group === 'Furniture' &&\n  (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
+    "new": "export const isFurnishing = (item) => item?.group === 'Furniture' && FURNITURE_TEMPLATES.includes(item?.templateIndex);",
     "tests": [
       "test/systems/prof11_client.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "PROF11-stone-given-looks",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null;",
-    "new": "if (FURNISH_PILLOWS.has(t)) return null;",
+    "old": "  if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null; // PROF11: a carving stands as its own model",
+    "new": "  if (FURNISH_PILLOWS.has(t)) return null; // PROF11: a carving stands as its own model",
     "tests": [
       "test/systems/prof11_client.test.js"
     ]

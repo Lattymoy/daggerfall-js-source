@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-DYE-ICON-7-the-index-less-artifact-a-base-item",
     "file": "src/systems/decor/decorItems.js",
-    "old": "(bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN",
-    "new": "(bits & 1) ? bits >> 1 : null",
+    "old": "  const a = item.artifact ? (bits & 1 ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;",
+    "new": "  const a = item.artifact ? (bits & 1 ? bits >> 1 : null) : null;",
     "tests": [
       "test/systems/item/dyeicon.test.js",
       "test/systems/decor2a.test.js"

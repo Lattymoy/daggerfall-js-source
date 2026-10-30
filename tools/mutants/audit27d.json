@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-S1-placer-drops-craft",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": ", ...(entry.station ? { station: entry.station } : {})",
-    "new": "",
+    "old": "        paid,\n        ...(entry.station ? { station: entry.station } : {}), // AUDIT HOME-STATIONS S1: a moved station keeps its craft",
+    "new": "        paid, // AUDIT HOME-STATIONS S1: a moved station keeps its craft",
     "tests": [
       "test/ui/homestations.test.js"
     ]

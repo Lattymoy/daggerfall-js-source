@@ -2,8 +2,8 @@
   {
     "name": "NUDEDECOR-offer-ungated",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && !(nude && e.nude)\n",
-    "new": "",
+    "old": "        !(nude && e.nude) &&\n        (!e.outside || !!room?.yard || !!e.inRoom) && // DECOR-KINDS: the street's plain pieces, filed now as what they are",
+    "new": "        (!e.outside || !!room?.yard || !!e.inRoom) && // DECOR-KINDS: the street's plain pieces, filed now as what they are",
     "tests": [
       "test/scenes/nudedecor.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "NUDEDECOR-flag-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    nude: !!e.flat && isNudeFlat(e.flat[0], e.flat[1]),",
-    "new": "    nude: false,",
+    "old": "      nude: !!e.flat && isNudeFlat(e.flat[0], e.flat[1]), // NUDE-DECOR (AUDIT 05b A7): asked once here, never a frame",
+    "new": "      nude: false, // NUDE-DECOR (AUDIT 05b A7): asked once here, never a frame",
     "tests": [
       "test/scenes/nudedecor.test.js"
     ],

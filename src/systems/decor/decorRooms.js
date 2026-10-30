@@ -65,7 +65,9 @@ const UP = Object.freeze([0, 1, 0]);
  * @param {{ raycastHit: (o: number[], d: readonly number[], max: number) => ({ dist: number }|null), box: { min: number[], max: number[] }, cell?: number }} o
  */
 export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
-  const ok = box && [0, 1, 2].every((i) => Number.isFinite(box.min?.[i]) && Number.isFinite(box.max?.[i]) && box.max[i] >= box.min[i]);
+  const ok =
+    box &&
+    [0, 1, 2].every((i) => Number.isFinite(box.min?.[i]) && Number.isFinite(box.max?.[i]) && box.max[i] >= box.min[i]);
   const spanX = ok ? box.max[0] - box.min[0] : 0;
   const spanZ = ok ? box.max[2] - box.min[2] : 0;
   let size = cell > 0 ? cell : DECOR_ROOM_CELL;
@@ -81,7 +83,11 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
   /** `out.back`: whether the ray struck a face's BACK (player/collider.js raycastHit, AUDIT REST II F4). */
   const cast = (o, d, max, out = null) => {
     let h = null;
-    try { h = raycastHit(o, d, max); } catch { h = null; }
+    try {
+      h = raycastHit(o, d, max);
+    } catch {
+      h = null;
+    }
     if (out) out.back = h?.back === true;
     const dist = h?.dist;
     return typeof dist === 'number' && dist >= 0 ? dist : Infinity;
@@ -91,11 +97,21 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
   const nodes = [];
   /** @type {number[][]} column -> its floors' node indices */
   const byCol = Array.from({ length: nx * nz }, () => []);
-  let col = 0;          // the next column to sample
-  let link = 0;         // the next node to join to its neighbours
+  let col = 0; // the next column to sample
+  let link = 0; // the next node to join to its neighbours
   const parent = [];
-  const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
-  const join = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent[Math.max(ra, rb)] = Math.min(ra, rb); };
+  const find = (i) => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const join = (a, b) => {
+    const ra = find(a),
+      rb = find(b);
+    if (ra !== rb) parent[Math.max(ra, rb)] = Math.min(ra, rb);
+  };
   /** @type {any[]|null} */
   let found = null;
   /** @type {Map<number, number>} a kept component's root -> its room's index */
@@ -104,7 +120,8 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
    *  doorways among them (systems/decor/decorDoorways.js) */
   const linked = [];
 
-  const below = { back: false }, above = { back: false };
+  const below = { back: false },
+    above = { back: false };
   /** One column: every floor it passes through, top down. Answers the rays it cast. */
   function sample(c) {
     const x = x0 + (c % nx) * size;
@@ -120,7 +137,10 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
       rays++;
       // VOID-ROOM: a face met from behind under the samples and another over them - a ceiling's top under the next
       // storey's floor, the inside of a wall - is outside every room, however much room it has
-      if (below.back && above.back) { y = fy - 0.05; continue; }
+      if (below.back && above.back) {
+        y = fy - 0.05;
+        continue;
+      }
       if (head >= DECOR_ROOM_HEADROOM && Number.isFinite(head)) {
         const i = nodes.length;
         nodes.push({ x, y: fy, z, col: c });
@@ -138,7 +158,10 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
     const cx = a.col % nx;
     const cz = Math.floor(a.col / nx);
     let rays = 0;
-    for (const [dx, dz] of [[1, 0], [0, 1]]) {
+    for (const [dx, dz] of [
+      [1, 0],
+      [0, 1],
+    ]) {
       if (cx + dx >= nx || cz + dz >= nz) continue;
       for (const j of byCol[a.col + dx + dz * nx]) {
         const b = nodes[j];
@@ -147,7 +170,10 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
         const dir = [dx, 0, dz];
         const d = cast(from, dir, size);
         rays++;
-        if (d >= size - 1e-6) { join(i, j); linked.push([i, j, dx, dz]); }
+        if (d >= size - 1e-6) {
+          join(i, j);
+          linked.push([i, j, dx, dz]);
+        }
       }
     }
     return rays;
@@ -159,29 +185,43 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
     for (let i = 0; i < nodes.length; i++) {
       const r = find(i);
       let g = groups.get(r);
-      if (!g) { g = []; groups.set(r, g); }
+      if (!g) {
+        g = [];
+        groups.set(r, g);
+      }
       g.push(i);
     }
-    const kept = [...groups.entries()].filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS).map(([root, g]) => {
-      const floor = Math.min(...g.map((i) => nodes[i].y));
-      const cxm = g.reduce((s, i) => s + nodes[i].x, 0) / g.length;
-      const czm = g.reduce((s, i) => s + nodes[i].z, 0) / g.length;
-      // the flight begins over the floor nearest the room's middle - a floor, so never inside a wall or a cupboard
-      let best = g[0];
-      let bestD = Infinity;
-      for (const i of g) {
-        const n = nodes[i];
-        const dd = (n.x - cxm) ** 2 + (n.z - czm) ** 2 + (n.y - floor) ** 2;
-        if (dd < bestD) { bestD = dd; best = i; }
-      }
-      const n = nodes[best];
-      return { root, cells: g.length, floor, eye: [n.x, n.y + DECOR_ROOM_EYE, n.z] };
-    });
+    const kept = [...groups.entries()]
+      .filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)
+      .map(([root, g]) => {
+        const floor = Math.min(...g.map((i) => nodes[i].y));
+        const cxm = g.reduce((s, i) => s + nodes[i].x, 0) / g.length;
+        const czm = g.reduce((s, i) => s + nodes[i].z, 0) / g.length;
+        // the flight begins over the floor nearest the room's middle - a floor, so never inside a wall or a cupboard
+        let best = g[0];
+        let bestD = Infinity;
+        for (const i of g) {
+          const n = nodes[i];
+          const dd = (n.x - cxm) ** 2 + (n.z - czm) ** 2 + (n.y - floor) ** 2;
+          if (dd < bestD) {
+            bestD = dd;
+            best = i;
+          }
+        }
+        const n = nodes[best];
+        return { root, cells: g.length, floor, eye: [n.x, n.y + DECOR_ROOM_EYE, n.z] };
+      });
     // lowest floor first, then the larger; ties by where it stands, so the same house numbers its rooms the same way
     kept.sort((a, b) => a.floor - b.floor || b.cells - a.cells || a.eye[0] - b.eye[0] || a.eye[2] - b.eye[2]);
     found = kept.map((r, k) => {
       roomOfRoot.set(r.root, k);
-      return Object.freeze({ id: k + 1, name: `Room ${k + 1}`, cells: r.cells, floor: r.floor, eye: Object.freeze(r.eye) });
+      return Object.freeze({
+        id: k + 1,
+        name: `Room ${k + 1}`,
+        cells: r.cells,
+        floor: r.floor,
+        eye: Object.freeze(r.eye),
+      });
     });
   }
 
@@ -205,7 +245,8 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
       for (let dz = -r; dz <= r; dz++) {
         for (let dx = -r; dx <= r; dx++) {
           if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
-          const gx = cx + dx, gz = cz + dz;
+          const gx = cx + dx,
+            gz = cz + dz;
           if (gx < 0 || gz < 0 || gx >= nx || gz >= nz) continue;
           for (const i of byCol[gx + gz * nx]) {
             const n = nodes[i];
@@ -214,7 +255,10 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
             const k = roomOfRoot.get(find(i));
             if (k === undefined) continue;
             const d = (n.x - p[0]) ** 2 + (n.z - p[2]) ** 2 + below * 0.01;
-            if (d < bestD) { bestD = d; best = found[k]; }
+            if (d < bestD) {
+              bestD = d;
+              best = found[k];
+            }
           }
         }
       }
@@ -229,10 +273,14 @@ export function createDecorRooms({ raycastHit, box, cell = DECOR_ROOM_CELL }) {
     roomOf,
     /** HOME-DOORS: once done, every pair of neighbouring floors the eye passes between - `{ a, b, dir }`, the two floors
      *  (a floor's point) and the step from `a` to `b` (east or south, one sample on) - else null. */
-    links: () => (found ? linked.map(([i, j, dx, dz]) => {
-      const a = nodes[i], b = nodes[j];
-      return { a: [a.x, a.y, a.z], b: [b.x, b.y, b.z], dir: [dx, 0, dz] };
-    }) : null),
+    links: () =>
+      found
+        ? linked.map(([i, j, dx, dz]) => {
+            const a = nodes[i],
+              b = nodes[j];
+            return { a: [a.x, a.y, a.z], b: [b.x, b.y, b.z], dir: [dx, 0, dz] };
+          })
+        : null,
     /** How far along, 0..1 - the columns, then the joins. */
     progress: () => (found ? 1 : (col + link) / Math.max(1, nx * nz + nodes.length)),
   };

@@ -49,7 +49,15 @@
 
 import { trs } from '../../world/mat4.js';
 import { transformedAabb } from '../../render/frustum.js';
-import { decorPieceOf, decorPrice, decorMountFrame, decorIsFigure, DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_MOUNT_LIFT } from '../../net/decorLaw.js';   // DECOR-FIGURE: a person stands at its own size
+import {
+  decorPieceOf,
+  decorPrice,
+  decorMountFrame,
+  decorIsFigure,
+  DECOR_SCALE_MIN,
+  DECOR_SCALE_MAX,
+  DECOR_MOUNT_LIFT,
+} from '../../net/decorLaw.js'; // DECOR-FIGURE: a person stands at its own size
 
 export const DECOR_TURN_STEP = 15;
 export const DECOR_TURN_FINE = 1;
@@ -77,7 +85,7 @@ export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {
   const y = Number.isFinite(yaw) ? yaw : 0;
   const side = dir === 'left' || dir === 'right';
   const sign = dir === 'left' || dir === 'back' ? -1 : 1;
-  const v = side ? [Math.cos(y), -Math.sin(y)] : [Math.sin(y), Math.cos(y)];   // the motor's right, the look's forward
+  const v = side ? [Math.cos(y), -Math.sin(y)] : [Math.sin(y), Math.cos(y)]; // the motor's right, the look's forward
   return Math.abs(v[0]) >= Math.abs(v[1]) ? [Math.sign(v[0]) * sign * step, 0] : [0, Math.sign(v[1]) * sign * step];
 }
 /** The wall offset: a door, and a piece with no measured reach, stay clear by DECOR_WALL_GAP. Any other may clip. */
@@ -91,7 +99,10 @@ export function wrapTurn(deg) {
   const d = ((((deg + 180) % 360) + 360) % 360) - 180;
   return d === -180 ? 180 : d;
 }
-const round = (v, places) => { const k = 10 ** places; return Math.round(v * k) / k; };
+const round = (v, places) => {
+  const k = 10 ** places;
+  return Math.round(v * k) / k;
+};
 const snapTo = (v, step) => round(Math.round(v / step) * step, 3);
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const DEG = 180 / Math.PI;
@@ -112,9 +123,15 @@ export const decorEntrySized = (entry) => !decorIsFigure(entry);
  * reaches into a wall it is set on.
  */
 export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false, flat = null } = {}) {
-  let measured = radius;   // the scan's, or what a copy was priced at - filled in once the scan reaches it
+  let measured = radius; // the scan's, or what a copy was priced at - filled in once the scan reaches it
   const mount = !!entry.mount;
-  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };
+  const s = {
+    yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,
+    raise: 0,
+    scale: from?.scale ?? 1,
+    snap: false,
+    nudge: [0, 0],
+  };
   // DECOR-FIGURE: one of Daggerfall's people takes no size step - placed or moved, it stands at scale 1, one grown before
   // brought back to its own size
   const figure = !decorEntrySized(entry);
@@ -135,7 +152,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
 
   /** WALL-CLEAR: how far the piece, turned and scaled, reaches from its origin into a wall whose level normal is `n`. */
   function reach(n) {
-    if (entry.model == null) return flat && flat.w > 0 ? flat.w * s.scale / 2 : 0;
+    if (entry.model == null) return flat && flat.w > 0 ? (flat.w * s.scale) / 2 : 0;
     if (!box) return 0;
     const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
     return Math.max(0, Math.max(-n[0] * b[0], -n[0] * b[3]) + Math.max(-n[1] * b[2], -n[1] * b[5]));
@@ -149,20 +166,29 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     const level = Math.hypot(n[0], n[2]) > 1e-3;
     const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;
     const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];
-    const { right, up } = decorMountFrame([rot[0], rot[1], 0]);   // the surface's own axes, before the spin
+    const { right, up } = decorMountFrame([rot[0], rot[1], 0]); // the surface's own axes, before the spin
     let p = [hit[0] - origin[0], hit[1] - origin[1], hit[2] - origin[2]];
-    if (s.snap) {   // across the surface, never off it
+    if (s.snap) {
+      // across the surface, never off it
       const a = snapTo(dot(p, right), DECOR_GRID);
       const b = snapTo(dot(p, up), DECOR_GRID);
       const c = dot(p, n);
       p = [0, 1, 2].map((i) => right[i] * a + up[i] * b + n[i] * c);
     }
-    const push = [s.nudge[0], 0, s.nudge[1]];   // NUDGE: along the surface, never off it
+    const push = [s.nudge[0], 0, s.nudge[1]]; // NUDGE: along the surface, never off it
     const off = dot(push, n);
     p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);
     return decorPieceOf({
-      id, model: null, flat: [entry.flat[0], entry.flat[1]], item: entry.item ?? null, pos: p, rot, scale: s.scale,
-      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null, storage: false, paid,
+      id,
+      model: null,
+      flat: [entry.flat[0], entry.flat[1]],
+      item: entry.item ?? null,
+      pos: p,
+      rot,
+      scale: s.scale,
+      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
+      storage: false,
+      paid,
     });
   }
 
@@ -170,12 +196,17 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     entry,
     state: () => ({ ...s, nudge: [...s.nudge] }),
     /** Turn by `deg` (a step, or a fine one). */
-    turn(deg) { s.yaw = wrapTurn(round(s.yaw + deg, 1)); },
+    turn(deg) {
+      s.yaw = wrapTurn(round(s.yaw + deg, 1));
+    },
     /** Lift or lower by `d` metres, within the tool's own bound. */
-    raise(d) { s.raise = round(Math.min(DECOR_RAISE_MAX, Math.max(DECOR_RAISE_MIN, s.raise + d)), 3); },
+    raise(d) {
+      s.raise = round(Math.min(DECOR_RAISE_MAX, Math.max(DECOR_RAISE_MIN, s.raise + d)), 3);
+    },
     /** NUDGE: push it [dx, dz] metres along the level, each axis within DECOR_NUDGE_MAX. */
     nudge(dx, dz) {
-      const at = (v, d) => round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);
+      const at = (v, d) =>
+        round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);
       s.nudge = [at(s.nudge[0], dx), at(s.nudge[1], dz)];
     },
     /** A size step up or down, within the law's (DECOR-FIGURE: none for a figure). */
@@ -185,14 +216,19 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       s.scale = round(Math.min(DECOR_SCALE_MAX, Math.max(DECOR_SCALE_MIN, next)), 3);
     },
     /** The grid, on or off; answers which. */
-    toggleSnap() { s.snap = !s.snap; return s.snap; },
+    toggleSnap() {
+      s.snap = !s.snap;
+      return s.snap;
+    },
     /** The price at this scale (the law's), or null for a piece the scan could not measure; nothing for one's own. */
     price() {
       if (free) return 0;
       return measured != null && measured > 0 ? decorPrice(measured, s.scale) : null;
     },
     /** The scan's measure, once a placement started before the scan had reached this piece. */
-    setRadius(r) { if (r > 0) measured = r; },
+    setRadius(r) {
+      if (r > 0) measured = r;
+    },
     /**
      * THE PIECE for a surface point `hit` (the free camera's eye meeting the room, this visit's frame), measured from
      * the building's `origin` - projected by the law, or null (unpriced, or outside what a piece may be). DECOR2c: a
@@ -227,7 +263,8 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       const wall = !hang && hl > 0 && Math.abs(normal[1] / nl) < DECOR_HANG_NY;
       if (wall) {
         const n = [normal[0] / hl, normal[2] / hl];
-        if (s.snap) {   // along the wall, never into it
+        if (s.snap) {
+          // along the wall, never into it
           const a = snapTo(x * -n[1] + z * n[0], DECOR_GRID);
           const c = x * n[0] + z * n[1];
           x = -n[1] * a + n[0] * c;
@@ -236,14 +273,24 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
         const out = decorWallOffset(reach(n), { door: entry.kind === 'door' });
         x = round(x + n[0] * out, 3);
         z = round(z + n[1] * out, 3);
-      } else if (s.snap) { x = snapTo(x, DECOR_GRID); z = snapTo(z, DECOR_GRID); }
-      x = round(x + s.nudge[0], 3);   // NUDGE: the owner's push, after the wall's clearance - so it may clip
+      } else if (s.snap) {
+        x = snapTo(x, DECOR_GRID);
+        z = snapTo(z, DECOR_GRID);
+      }
+      x = round(x + s.nudge[0], 3); // NUDGE: the owner's push, after the wall's clearance - so it may clip
       z = round(z + s.nudge[1], 3);
       return decorPieceOf({
-        id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,
-        pos: [x, hit[1] - origin[1] + up, z], rot: [s.yaw, 0, 0], scale: s.scale,
+        id,
+        model: entry.model ?? null,
+        flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null,
+        item: entry.item ?? null,
+        pos: [x, hit[1] - origin[1] + up, z],
+        rot: [s.yaw, 0, 0],
+        scale: s.scale,
         light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
-        storage: !!entry.storage, paid, ...(entry.station ? { station: entry.station } : {}),   // AUDIT HOME-STATIONS S1: a moved station keeps its craft
+        storage: !!entry.storage,
+        paid,
+        ...(entry.station ? { station: entry.station } : {}), // AUDIT HOME-STATIONS S1: a moved station keeps its craft
       });
     },
   };

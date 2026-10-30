@@ -164,7 +164,7 @@
   {
     "name": "DECOR1e-the-placer-from-nothing",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };",
+    "old": "  const s = {\n    yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,\n    raise: 0,\n    scale: from?.scale ?? 1,\n    snap: false,\n    nudge: [0, 0],\n  };",
     "new": "  const s = { yaw: 0, raise: 0, scale: 1, snap: false, nudge: [0, 0] };",
     "tests": [
       "test/systems/online/decor1e.test.js"

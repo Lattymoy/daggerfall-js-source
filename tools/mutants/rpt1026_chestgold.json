@@ -32,8 +32,8 @@
   {
     "name": "CHESTGOLD-purse-unsaid",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "...(cutting.length ? { cut: cutting } : {}), purse: coin, realm }),",
-    "new": "...(cutting.length ? { cut: cutting } : {}), realm }),",
+    "old": "            purse: coin,\n            realm,",
+    "new": "            realm,",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CHESTGOLD-cut-coins-uncounted",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "        + cuts.reduce((n, cut) => n + (coins(cut.give) ? cut.give.stackCount ?? 1 : 0), 0);",
-    "new": "        + 0;",
+    "old": "        taking.reduce((n, uid) => n + (coins(takenOf.get(uid)) ? (takenOf.get(uid).stackCount ?? 1) : 0), 0) +\n        cuts.reduce((n, cut) => n + (coins(cut.give) ? (cut.give.stackCount ?? 1) : 0), 0);",
+    "new": "        taking.reduce((n, uid) => n + (coins(takenOf.get(uid)) ? (takenOf.get(uid).stackCount ?? 1) : 0), 0) + 0;",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CHESTGOLD-put-back-parks-on-pack",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "    if (dir === 'put' && draft.includes(item) && !real.includes(item)) {",
-    "new": "    if (false) {",
+    "old": "      if (dir === 'put' && draft.includes(item) && !real.includes(item)) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CHESTGOLD-cut-put-back-loses-count",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "        if (source) { absorbStack(source, item); goods.splice(goods.indexOf(item), 1); }",
-    "new": "        if (source) { goods.splice(goods.indexOf(item), 1); }",
+    "old": "            absorbStack(source, item);\n            goods.splice(goods.indexOf(item), 1);",
+    "new": "            goods.splice(goods.indexOf(item), 1);",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CHESTGOLD-part-of-put-is-a-cut",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "      if (put.has(item.uid)) { if (!real.includes(landed)) real.push(landed); } else cutOf(item, landed);",
-    "new": "      cutOf(item, landed);",
+    "old": "        if (put.has(item.uid)) {\n          if (!real.includes(landed)) real.push(landed);\n        } else cutOf(item, landed);",
+    "new": "        cutOf(item, landed);",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CHESTGOLD-lost-hold-moves-on",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "    if (lost) { chestShut(d, lost); return false; }",
-    "new": "    void lost;",
+    "old": "      if (lost) {\n        chestShut(d, lost);\n        return false;\n      }",
+    "new": "      void lost;",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CHESTGOLD-lost-never-heard",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "r?.error === 'decor-shut')) lost = r.error;",
-    "new": "r?.error === 'decor-shut')) void r;",
+    "old": "        if (!r?.ok && (r?.error === 'decor-lapsed' || r?.error === 'decor-busy' || r?.error === 'decor-shut'))\n          lost = r.error;",
+    "new": "        if (!r?.ok && (r?.error === 'decor-lapsed' || r?.error === 'decor-busy' || r?.error === 'decor-shut')) void r;",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "CHESTGOLD-coin-take-back-spends-park",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "      put.delete(uid);\n    } else { take.add(uid); takenOf.set(uid, item); }",
-    "new": "      put.delete(uid);\n      if (coins(item)) { const real = d.items?.() ?? []; const atPile = real.indexOf(item); if (atPile >= 0) real.splice(atPile, 1); }\n    } else { take.add(uid); takenOf.set(uid, item); }",
+    "old": "      put.delete(uid);\n    } else {",
+    "new": "      put.delete(uid);\n      if (coins(item)) {\n        const real = d.items?.() ?? [];\n        const atPile = real.indexOf(item);\n        if (atPile >= 0) real.splice(atPile, 1);\n      }\n    } else {",
     "tests": [
       "test/systems/decor/decorchest.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "SPEC-floor-open",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "    dropRefusal: () => t('decor.grants.noDrop', 'Shut the chest before you drop that.'),",
-    "new": "",
+    "old": "    dropRefusal: () => t('decor.grants.noDrop', 'Shut the chest before you drop that.'),\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],

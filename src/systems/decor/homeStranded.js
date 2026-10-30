@@ -8,8 +8,9 @@ import { interiorSceneName } from '../sceneCache.js';
 import { t } from '../textManager.js';
 
 /** The building's scene names the old pour may have used: the map id as the client sent it, signed or not. */
-const buildingScenes = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) =>
-  [...new Set([interiorSceneName(mapId >>> 0, buildingKey), interiorSceneName(mapId | 0, buildingKey)])];
+const buildingScenes = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) => [
+  ...new Set([interiorSceneName(mapId >>> 0, buildingKey), interiorSceneName(mapId | 0, buildingKey)]),
+];
 
 /** The pieces whose goods a building's scene holds without a piece of its own standing there to hold them. */
 function strandedIds(/** @type {any} */ entry) {
@@ -54,15 +55,19 @@ function uidsOutside(/** @type {any} */ cache, /** @type {Set<string>} */ skip) 
   const uids = new Set();
   for (const [name, entry] of cache?.scenes ?? []) {
     if (skip.has(name)) continue;
-    for (const list of Object.values(entry?.decorItems ?? {})) for (const it of Array.isArray(list) ? list : []) if (it?.uid) uids.add(it.uid);
-    for (const it of Object.values(entry?.decorOwn ?? {})) if (/** @type {any} */ (it)?.uid) uids.add(/** @type {any} */ (it).uid);
+    for (const list of Object.values(entry?.decorItems ?? {}))
+      for (const it of Array.isArray(list) ? list : []) if (it?.uid) uids.add(it.uid);
+    for (const it of Object.values(entry?.decorOwn ?? {}))
+      if (/** @type {any} */ (it)?.uid) uids.add(/** @type {any} */ (it).uid);
   }
   return uids;
 }
 
 /** A scene entry with no list or record left in it: the old pour made it for the goods alone. */
 function emptyEntry(/** @type {any} */ entry) {
-  return Object.values(entry ?? {}).every((v) => (Array.isArray(v) ? !v.length : v && typeof v === 'object' ? !Object.keys(v).length : true));
+  return Object.values(entry ?? {}).every((v) =>
+    Array.isArray(v) ? !v.length : v && typeof v === 'object' ? !Object.keys(v).length : true,
+  );
 }
 
 /**
@@ -115,4 +120,9 @@ export function dropGhosts(cache, id, uids) {
 }
 
 /** What is said when stranded goods come back into the home's chests. */
-export const strandedBackLine = (/** @type {number} */ n) => t('decor.strandedBack', '{n, plural, one {One thing your home\'s chest had lost was found and put back in it.} other {# things your home\'s chests had lost were found and put back in them.}}', { n });
+export const strandedBackLine = (/** @type {number} */ n) =>
+  t(
+    'decor.strandedBack',
+    "{n, plural, one {One thing your home's chest had lost was found and put back in it.} other {# things your home's chests had lost were found and put back in them.}}",
+    { n },
+  );

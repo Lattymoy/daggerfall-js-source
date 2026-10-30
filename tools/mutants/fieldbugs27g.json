@@ -272,8 +272,8 @@
   {
     "name": "DECOR-ROOMS-wall-joins",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "if (d >= size - 1e-6) { join(i, j); linked.push([i, j, dx, dz]); }",
-    "new": "{ join(i, j); linked.push([i, j, dx, dz]); }",
+    "old": "        if (d >= size - 1e-6) {",
+    "new": "        {",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DECOR-ROOMS-nook-a-room",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)",
-    "new": "filter(([, g]) => g.length >= 1)",
+    "old": "      .filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)",
+    "new": "      .filter(([, g]) => g.length >= 1)",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]

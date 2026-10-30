@@ -76,7 +76,8 @@ export const DOOR_FILL_SLACK = 0.2;
 export const DOORWAY_MARK_HIGH = 2.4;
 
 /** Whether a model is one of the doors (the five DaggerfallInterior hangs). */
-export const isDoorModel = (model) => Number.isSafeInteger(model) && model >= DOOR_MODEL_BASE_ID && model < DOOR_MODEL_BASE_ID + DOOR_MODEL_COUNT;
+export const isDoorModel = (model) =>
+  Number.isSafeInteger(model) && model >= DOOR_MODEL_BASE_ID && model < DOOR_MODEL_BASE_ID + DOOR_MODEL_COUNT;
 /** Whether a placed piece is a door - a catalogue door (never one's own item). */
 export const decorIsDoor = (piece) => !!piece && !piece.item && isDoorModel(piece.model);
 
@@ -95,7 +96,11 @@ export function createDecorDoorways({ raycastHit, links }) {
   const all = Array.isArray(links) ? links : [];
   const cast = (o, d, max) => {
     let h = null;
-    try { h = raycastHit(o, d, max); } catch { h = null; }
+    try {
+      h = raycastHit(o, d, max);
+    } catch {
+      h = null;
+    }
     const dist = h?.dist;
     return typeof dist === 'number' && dist >= 0 ? dist : Infinity;
   };
@@ -104,10 +109,13 @@ export function createDecorDoorways({ raycastHit, links }) {
   /** @type {any[]|null} */
   let list = null;
 
-  const same = (d, c) => d.normal[0] === c.normal[0] && d.normal[2] === c.normal[2]
-    && Math.abs((c.center[0] - d.center[0]) * c.normal[2] + (c.center[2] - d.center[2]) * c.normal[0]) < DOORWAY_SAME
-    && Math.abs((c.center[0] - d.center[0]) * c.normal[0] + (c.center[2] - d.center[2]) * c.normal[2]) < DOORWAY_DEPTH_MAX / 2
-    && Math.abs(c.center[1] - d.center[1]) < DOORWAY_SAME;
+  const same = (d, c) =>
+    d.normal[0] === c.normal[0] &&
+    d.normal[2] === c.normal[2] &&
+    Math.abs((c.center[0] - d.center[0]) * c.normal[2] + (c.center[2] - d.center[2]) * c.normal[0]) < DOORWAY_SAME &&
+    Math.abs((c.center[0] - d.center[0]) * c.normal[0] + (c.center[2] - d.center[2]) * c.normal[2]) <
+      DOORWAY_DEPTH_MAX / 2 &&
+    Math.abs(c.center[1] - d.center[1]) < DOORWAY_SAME;
 
   /**
    * One link looked across: a doorway kept, or none. Answers the rays it cast. A ray runs along the way through from
@@ -117,11 +125,14 @@ export function createDecorDoorways({ raycastHit, links }) {
    */
   function probe(link) {
     const { a, b, dir } = link;
-    const p = [dir[2], 0, dir[0]];   // across the way through
+    const p = [dir[2], 0, dir[0]]; // across the way through
     const h = Math.max(a[1], b[1]) + DOORWAY_WAIST;
     const len = Math.hypot(b[0] - a[0], b[2] - a[2]);
     let rays = 0;
-    const along = (u, from = a, sign = 1, max = len) => { rays++; return cast([from[0] + p[0] * u, h, from[2] + p[2] * u], [dir[0] * sign, 0, dir[2] * sign], max); };
+    const along = (u, from = a, sign = 1, max = len) => {
+      rays++;
+      return cast([from[0] + p[0] * u, h, from[2] + p[2] * u], [dir[0] * sign, 0, dir[2] * sign], max);
+    };
     // no wall within half the widest door either side: the link is in the open, never through a doorway
     const reach = DOORWAY_WIDTH_MAX / 2 + DOORWAY_STEP;
     if (!Number.isFinite(along(reach)) && !Number.isFinite(along(-reach))) return rays;
@@ -131,12 +142,21 @@ export function createDecorDoorways({ raycastHit, links }) {
       let open = 0;
       for (let u = DOORWAY_STEP; u <= DOORWAY_WIDTH_MAX + 1e-9; u += DOORWAY_STEP) {
         const t = along(side * u);
-        if (!Number.isFinite(t)) { open = u; continue; }
-        let lo = open, hi = u, at = t;
-        for (let i = 0; i < 4; i++) {   // halved four times: the jamb to a few millimetres
+        if (!Number.isFinite(t)) {
+          open = u;
+          continue;
+        }
+        let lo = open,
+          hi = u,
+          at = t;
+        for (let i = 0; i < 4; i++) {
+          // halved four times: the jamb to a few millimetres
           const mid = (lo + hi) / 2;
           const tm = along(side * mid);
-          if (Number.isFinite(tm)) { hi = mid; at = tm; } else lo = mid;
+          if (Number.isFinite(tm)) {
+            hi = mid;
+            at = tm;
+          } else lo = mid;
         }
         return { u: side * hi, t: at };
       }
@@ -148,16 +168,23 @@ export function createDecorDoorways({ raycastHit, links }) {
     if (!l) return rays;
     const width = r.u - l.u;
     if (width < DOORWAY_WIDTH_MIN || width > DOORWAY_WIDTH_MAX) return rays;
-    if (Math.abs(r.t - l.t) > DOORWAY_DEPTH_MAX / 2) return rays;   // not one wall
+    if (Math.abs(r.t - l.t) > DOORWAY_DEPTH_MAX / 2) return rays; // not one wall
     // the wall goes on past both jambs, at the same depth - a wall with an opening in it, not a gap between two things
     const beyond = DOORWAY_OPENS + DOORWAY_STEP;
-    const tr = along(r.u + beyond), tl = along(l.u - beyond);
+    const tr = along(r.u + beyond),
+      tl = along(l.u - beyond);
     // AUDIT: or a wall meets it at a corner within that reach - a doorway beside a room's corner (a ray along the wall's
     // face, just in front of it, outward from the jamb); a free-standing post has neither
     const cornered = (j, side) => {
       rays++;
       const back = j.t - DOORWAY_STEP;
-      return cast([a[0] + p[0] * j.u + dir[0] * back, h, a[2] + p[2] * j.u + dir[2] * back], [p[0] * side, 0, p[2] * side], beyond) < beyond;
+      return (
+        cast(
+          [a[0] + p[0] * j.u + dir[0] * back, h, a[2] + p[2] * j.u + dir[2] * back],
+          [p[0] * side, 0, p[2] * side],
+          beyond,
+        ) < beyond
+      );
     };
     const goesOn = (t, j, side) => Math.abs(t - j.t) <= DOORWAY_STEP * 2 || cornered(j, side);
     if (!goesOn(tr, r, 1) || !goesOn(tl, l, -1)) return rays;
@@ -180,13 +207,16 @@ export function createDecorDoorways({ raycastHit, links }) {
     // the lintel, either side of the wall's plane - each side from its own floor (AUDIT: a step at the doorway put one
     // side's ray inside the step, and the opening measured a hand high), measured from the doorway's floor
     rays += 4;
-    const lintel = Math.min(...[-1, 1].map((k) => {
-      const sx = cx + dir[0] * k * DOORWAY_LINTEL_SIDE, sz = cz + dir[2] * k * DOORWAY_LINTEL_SIDE;
-      const sd = cast([sx, h, sz], DOWN, h - Math.min(a[1], b[1]) + 0.5);
-      const sideFloor = Number.isFinite(sd) ? h - sd : floor;
-      const u = cast([sx, sideFloor + 0.05, sz], UP, DOORWAY_HEIGHT_MAX);
-      return Number.isFinite(u) ? sideFloor + 0.05 + u : Infinity;
-    }));
+    const lintel = Math.min(
+      ...[-1, 1].map((k) => {
+        const sx = cx + dir[0] * k * DOORWAY_LINTEL_SIDE,
+          sz = cz + dir[2] * k * DOORWAY_LINTEL_SIDE;
+        const sd = cast([sx, h, sz], DOWN, h - Math.min(a[1], b[1]) + 0.5);
+        const sideFloor = Number.isFinite(sd) ? h - sd : floor;
+        const u = cast([sx, sideFloor + 0.05, sz], UP, DOORWAY_HEIGHT_MAX);
+        return Number.isFinite(u) ? sideFloor + 0.05 + u : Infinity;
+      }),
+    );
     const height = Number.isFinite(lintel) ? lintel - floor : DOORWAY_HEIGHT_MAX;
     if (height < DOORWAY_HEIGHT_MIN) return rays;
     const c = { center: [cx, floor, cz], normal: [dir[0], 0, dir[2]], width, height };
@@ -200,7 +230,15 @@ export function createDecorDoorways({ raycastHit, links }) {
     while (spent < budget && next < all.length) spent += probe(all[next++]);
     if (next >= all.length) {
       found.sort((x, y) => x.center[1] - y.center[1] || x.center[0] - y.center[0] || x.center[2] - y.center[2]);
-      list = found.map((d, i) => Object.freeze({ id: i + 1, center: Object.freeze(d.center), normal: Object.freeze(d.normal), width: d.width, height: d.height }));
+      list = found.map((d, i) =>
+        Object.freeze({
+          id: i + 1,
+          center: Object.freeze(d.center),
+          normal: Object.freeze(d.normal),
+          width: d.width,
+          height: d.height,
+        }),
+      );
     }
     return !!list;
   }
@@ -216,8 +254,14 @@ export function createDecorDoorways({ raycastHit, links }) {
 /** The doorways no door stands in - `doors` the points doors stand at (a hinge, a middle), world. */
 export function decorDoorwaysFree(doorways, doors) {
   const at = Array.isArray(doors) ? doors.filter((d) => Array.isArray(d) && d.length >= 3) : [];
-  return (doorways ?? []).filter((w) => !at.some((d) => Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < DOORWAY_NEAR_DOOR
-    && Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN));
+  return (doorways ?? []).filter(
+    (w) =>
+      !at.some(
+        (d) =>
+          Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < DOORWAY_NEAR_DOOR &&
+          Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN,
+      ),
+  );
 }
 
 /**
@@ -254,7 +298,9 @@ export function decorDoorwayAimed(doorways, eye, dir, reach, seen = null) {
 export function decorDoorFit(doorway, box, flip = false) {
   if (!doorway || !Array.isArray(box) || box.length < 6) return null;
   const [x0, y0, z0, x1, y1, z1] = box;
-  const wx = x1 - x0, wz = z1 - z0, high = y1 - y0;
+  const wx = x1 - x0,
+    wz = z1 - z0,
+    high = y1 - y0;
   if (!(high > 0) || !(Math.max(wx, wz) > 0)) return null;
   const n = doorway.normal;
   const alongX = wx >= wz;
@@ -264,14 +310,20 @@ export function decorDoorFit(doorway, box, flip = false) {
   const wide = alongX ? wx : wz;
   const fit = Math.min(doorway.width / wide, (doorway.height - DOOR_FIT_GAP) / high);
   const scale = Math.min(DECOR_SCALE_MAX, Math.max(DECOR_SCALE_MIN, fit));
-  const mx = ((x0 + x1) / 2) * scale, mz = ((z0 + z1) / 2) * scale;
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const mx = ((x0 + x1) / 2) * scale,
+    mz = ((z0 + z1) / 2) * scale;
+  const c = Math.cos(yaw),
+    s = Math.sin(yaw);
   let deg = (yaw * 180) / Math.PI;
   while (deg > 180) deg -= 360;
   while (deg <= -180) deg += 360;
   return {
-    pos: [doorway.center[0] - (c * mx + s * mz), doorway.center[1] - y0 * scale, doorway.center[2] - (-s * mx + c * mz)],
-    yaw: Math.round(deg * 10) / 10 + 0,   // never -0
+    pos: [
+      doorway.center[0] - (c * mx + s * mz),
+      doorway.center[1] - y0 * scale,
+      doorway.center[2] - (-s * mx + c * mz),
+    ],
+    yaw: Math.round(deg * 10) / 10 + 0, // never -0
     scale,
     // AUDIT: whether the door, so sized, closes the opening - scaled whole, a door in an opening much wider than itself
     // (an arch) leaves a gap either side that parts no room and stops nobody

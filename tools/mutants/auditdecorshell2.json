@@ -29,8 +29,8 @@
   {
     "name": "AUDIT2-DECOR-SHELL-2-the-lift-kept-while-hung",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (hang && s.raise > 0) s.raise = 0;\n",
-    "new": "",
+    "old": "      if (hang && s.raise > 0) s.raise = 0;\n      const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "      const up = hang ? drop() + s.raise : lift() + s.raise;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT2-DECOR-SHELL-2-a-hung-piece-raised",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "if (hang && s.raise > 0) s.raise = 0;",
-    "new": "if (hang && s.raise < 0) s.raise = 0;",
+    "old": "      if (hang && s.raise > 0) s.raise = 0;",
+    "new": "      if (hang && s.raise < 0) s.raise = 0;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]

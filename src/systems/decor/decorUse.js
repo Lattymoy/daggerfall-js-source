@@ -25,7 +25,7 @@
 import { isBedModel } from '../roleplayRealism/rrRealism.js';
 import { classicModelIdOf } from '../../world/customModels.js';
 import { isHearthFlat } from '../survival/hearth.js';
-import { IIL_FIREPLACE_MODELS } from '../improvedInteriorLighting.js';   // AUDIT DECOR-USE D4: Daggerfall's fireplaces, one home
+import { IIL_FIREPLACE_MODELS } from '../improvedInteriorLighting.js'; // AUDIT DECOR-USE D4: Daggerfall's fireplaces, one home
 
 /** The station that makes any piece a hearth (net/decorLaw.js DECOR_STATIONS). */
 export const COOKING_STATION = 'cooking';
@@ -41,7 +41,7 @@ export function decorBed(piece) {
 export function decorHearth(piece) {
   if (!piece || piece.storage) return false;
   if (piece.station) return piece.station === COOKING_STATION;
-  if (piece.model != null) return IIL_FIREPLACE_MODELS.has(classicModelIdOf(piece.model));   // AUDIT DECOR-USE D4
+  if (piece.model != null) return IIL_FIREPLACE_MODELS.has(classicModelIdOf(piece.model)); // AUDIT DECOR-USE D4
   return Array.isArray(piece.flat) && isHearthFlat(piece.flat[0], piece.flat[1]);
 }
 
@@ -53,10 +53,11 @@ export function decorHearth(piece) {
  * left to its station or its storage.
  */
 export function useDecorPiece(piece, camps, mode, bed, stores = () => false) {
-  if (piece?.station === COOKING_STATION && !piece.storage && stores()) return true;   // AUDIT DECOR-USE D2
-  if (decorHearth(piece)) { if (camps.usable?.() !== false) camps.activate('hearth:', mode()); }   // AUDIT DECOR-USE D6
+  if (piece?.station === COOKING_STATION && !piece.storage && stores()) return true; // AUDIT DECOR-USE D2
+  if (decorHearth(piece)) {
+    if (camps.usable?.() !== false) camps.activate('hearth:', mode());
+  } // AUDIT DECOR-USE D6
   else if (decorBed(piece)) bed();
   else return false;
   return true;
 }
-

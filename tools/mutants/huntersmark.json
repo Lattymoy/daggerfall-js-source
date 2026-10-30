@@ -473,8 +473,8 @@
   {
     "name": "HUNTERS-MARK-trophy-stands",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (item.templateIndex === TROPHY_TEMPLATE) return null;   // HUNTERS-MARK: a trophy hangs",
-    "new": "  // HUNTERS-MARK: a trophy hangs",
+    "old": "  if (item.templateIndex === TROPHY_TEMPLATE) return null; // HUNTERS-MARK: a trophy hangs (decorMountOf), never stands",
+    "new": "  // HUNTERS-MARK: a trophy hangs (decorMountOf), never stands",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "HUNTERS-MARK-trophy-descriptor-blind",
     "file": "src/systems/decor/decorItems.js",
-    "old": "item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) && Number.isSafeInteger(item.message)",
-    "new": "item.group === 'Books') && Number.isSafeInteger(item.message)",
+    "old": "    (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) &&\n    Number.isSafeInteger(item.message)\n      ? item.message\n      : null;",
+    "new": "    (item.group === 'Paintings' || item.group === 'Books') && Number.isSafeInteger(item.message) ? item.message : null;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

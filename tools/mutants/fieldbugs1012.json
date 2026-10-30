@@ -41,7 +41,7 @@
   {
     "name": "VOID-ROOM-the-facing-unread",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "      if (below.back && above.back) { y = fy - 0.05; continue; }",
+    "old": "      if (below.back && above.back) {\n        y = fy - 0.05;\n        continue;\n      }",
     "new": "",
     "tests": [
       "test/systems/decor/decorrooms.test.js"

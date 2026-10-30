@@ -40,10 +40,18 @@ export function interiorDoorKeys(list) {
  * @param {any} object
  */
 export function isRemovableInteriorDoor(object) {
-  return !!object && object.kind === 'door' && !object.special && !object.sealed
-    && (object.actionFlag ?? 0) === 0 && (object.loadID ?? 0) === 0
-    && (object.triggerFlag ?? 0) === 0 && (object.nextKey ?? -1) === -1
-    && typeof object.key === 'string' && object.key.startsWith('door:');
+  return (
+    !!object &&
+    object.kind === 'door' &&
+    !object.special &&
+    !object.sealed &&
+    (object.actionFlag ?? 0) === 0 &&
+    (object.loadID ?? 0) === 0 &&
+    (object.triggerFlag ?? 0) === 0 &&
+    (object.nextKey ?? -1) === -1 &&
+    typeof object.key === 'string' &&
+    object.key.startsWith('door:')
+  );
 }
 
 /**
@@ -62,9 +70,14 @@ export function createInteriorDoors({ draws, addDoor, removeDoor }) {
     object.roomDoor = true;
     object.roomIndex = index;
     recs.push({
-      index, key: interiorDoorKey(index), cpu, matrix: object.matrix,
+      index,
+      key: interiorDoorKey(index),
+      cpu,
+      matrix: object.matrix,
       at: [object.matrix[12], object.matrix[13], object.matrix[14]],
-      object, draw, hidden: false,
+      object,
+      draw,
+      hidden: false,
     });
     return true;
   }
@@ -108,12 +121,14 @@ export function createInteriorDoors({ draws, addDoor, removeDoor }) {
     hidden: () => recs.filter((r) => r.hidden).map((r) => r.key),
     list: () => recs.map((r) => ({ key: r.key, at: r.at, hidden: r.hidden, holds: false, door: true })),
     targets() {
-      return recs.filter((r) => !r.hidden && r.object && r.cpu?.positions).map((r) => ({
-        key: r.key,
-        aabb: worldAabb(r.cpu.positions, r.object.matrix ?? r.matrix),
-        distance: RAY_DISTANCE,
-        meshCollider: true,
-      }));
+      return recs
+        .filter((r) => !r.hidden && r.object && r.cpu?.positions)
+        .map((r) => ({
+          key: r.key,
+          aabb: worldAabb(r.cpu.positions, r.object.matrix ?? r.matrix),
+          distance: RAY_DISTANCE,
+          meshCollider: true,
+        }));
     },
   };
 }

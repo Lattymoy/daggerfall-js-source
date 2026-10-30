@@ -92,8 +92,8 @@
   {
     "name": "FB1025-DOORVOID-the-owner-takes-it-out",
     "file": "src/systems/decor/decorInteriorDoors.js",
-    "old": "object.kind === 'door' && !object.special && !object.sealed",
-    "new": "object.kind === 'door' && !object.special",
+    "old": "    !object.sealed &&\n    (object.actionFlag ?? 0) === 0 &&",
+    "new": "    (object.actionFlag ?? 0) === 0 &&",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]

@@ -42,8 +42,8 @@
   {
     "name": "DECOR-FIGURE-step-taken",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (figure) return;\n",
-    "new": "",
+    "old": "      if (figure) return;\n      const next = up ? s.scale * DECOR_SCALE_STEP : s.scale / DECOR_SCALE_STEP;",
+    "new": "      const next = up ? s.scale * DECOR_SCALE_STEP : s.scale / DECOR_SCALE_STEP;",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],

@@ -221,8 +221,8 @@
   {
     "name": "GUILD1e-board-in-a-home",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "(!e.hall || (!!room?.hall && !room?.yard))",
-    "new": "(!e.hall || true)",
+    "old": "        (!e.hall || (!!room?.hall && !room?.yard)) &&",
+    "new": "        (!e.hall || true) &&",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "GUILD1e-scan-without-the-board",
     "file": "src/systems/decor/decorScan.js",
-    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
-    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read), ...GUILD_FURNITURE_ENTRIES]",
+    "old": "      entries = Object.freeze([\n        ...decorCatalogue(mods ? addDecorMods(read) : read),\n        HALL_BOARD_ENTRY,\n        ...GUILD_FURNITURE_ENTRIES,\n      ]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
+    "new": "      entries = Object.freeze([...decorCatalogue(mods ? addDecorMods(read) : read), ...GUILD_FURNITURE_ENTRIES]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
     "tests": [
       "test/net/guild1e_client.test.js"
     ],

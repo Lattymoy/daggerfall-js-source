@@ -3,19 +3,20 @@
 import { decorGoldMove, mintDecorId } from '../../net/decorLaw.js';
 import { t } from '../textManager.js';
 
-const shapeOf = (p) => JSON.stringify({
-  model: p?.model ?? null,
-  flat: p?.flat ?? null,
-  item: p?.item ?? null,
-  pos: p?.pos ?? null,
-  rot: p?.rot ?? null,
-  scale: p?.scale ?? null,
-  light: p?.light ?? null,
-  storage: !!p?.storage,
-  paid: p?.paid ?? 0,
-  station: p?.station ?? null,
-  name: p?.name ?? null,
-});
+const shapeOf = (p) =>
+  JSON.stringify({
+    model: p?.model ?? null,
+    flat: p?.flat ?? null,
+    item: p?.item ?? null,
+    pos: p?.pos ?? null,
+    rot: p?.rot ?? null,
+    scale: p?.scale ?? null,
+    light: p?.light ?? null,
+    storage: !!p?.storage,
+    paid: p?.paid ?? 0,
+    station: p?.station ?? null,
+    name: p?.name ?? null,
+  });
 
 /** A Confirm's id: long enough for decorLaw's DECOR_TXN_RE, and a new one after each kept Confirm. */
 export function mintDecorTxn(rand = Math.random) {
@@ -47,7 +48,11 @@ export function decorDraftParts(before, after) {
   let delta = 0;
   let pay = 0;
   let back = 0;
-  const add = (d) => { delta += d; if (d > 0) back += d; else if (d < 0) pay -= d; };
+  const add = (d) => {
+    delta += d;
+    if (d > 0) back += d;
+    else if (d < 0) pay -= d;
+  };
   for (const [id, p] of was) if (!now.has(id)) add(decorGoldMove(p, null, p.paid).delta);
   for (const [id, p] of now) {
     const old = was.get(id) ?? null;
@@ -65,7 +70,11 @@ export function decorDraftGold(before, after) {
 export function decorHallDraftText(parts) {
   const pay = parts?.pay ?? 0;
   const back = parts?.back ?? 0;
-  if (pay && back) return t('decor.draft.hallBoth', '{pay} gold to confirm, {back} to the guild', { pay: pay.toLocaleString('en-US'), back: back.toLocaleString('en-US') });
+  if (pay && back)
+    return t('decor.draft.hallBoth', '{pay} gold to confirm, {back} to the guild', {
+      pay: pay.toLocaleString('en-US'),
+      back: back.toLocaleString('en-US'),
+    });
   if (back) return t('decor.draft.hallBack', '{back} gold to the guild', { back: back.toLocaleString('en-US') });
   return decorDraftText(-pay);
 }
@@ -74,5 +83,7 @@ export function decorHallDraftText(parts) {
 export function decorDraftText(delta) {
   if (!delta) return t('decor.draft.free', 'nothing to pay');
   const n = Math.abs(delta).toLocaleString('en-US');
-  return delta < 0 ? t('decor.draft.pay', '{n} gold to confirm', { n }) : t('decor.draft.back', '{n} gold back on confirm', { n });
+  return delta < 0
+    ? t('decor.draft.pay', '{n} gold to confirm', { n })
+    : t('decor.draft.back', '{n} gold back on confirm', { n });
 }

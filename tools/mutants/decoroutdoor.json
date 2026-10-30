@@ -11,8 +11,8 @@
   {
     "name": "DECOROUTDOOR-street-flats-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    for (const f of rmb?.miscFlatObjectRecords ?? []) streetFlat(f);\n",
-    "new": "",
+    "old": "    for (const f of rmb?.miscFlatObjectRecords ?? []) streetFlat(f);\n    for (const sub of rmb?.subRecords ?? []) for (const f of sub?.exterior?.blockFlatObjectRecords ?? []) streetFlat(f);",
+    "new": "    for (const sub of rmb?.subRecords ?? []) for (const f of sub?.exterior?.blockFlatObjectRecords ?? []) streetFlat(f);",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DECOROUTDOOR-outside-flats-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    for (const sub of rmb?.subRecords ?? []) for (const f of sub?.exterior?.blockFlatObjectRecords ?? []) streetFlat(f);\n",
-    "new": "",
+    "old": "    for (const sub of rmb?.subRecords ?? []) for (const f of sub?.exterior?.blockFlatObjectRecords ?? []) streetFlat(f);\n    // DECOR-DUNGEON: A DUNGEON BLOCK'S FURNISHINGS - each model of the furniture families (or a free-standing piece) that",
+    "new": "    // DECOR-DUNGEON: A DUNGEON BLOCK'S FURNISHINGS - each model of the furniture families (or a free-standing piece) that",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DECOROUTDOOR-exclusions-lost",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "  && id !== BULLETIN_BOARD_MODEL_ID && !isCityGate(id);",
-    "new": ";",
+    "old": "  Number.isSafeInteger(id) &&\n  id > 0 &&\n  id !== LADDER_MODEL_ID &&\n  id !== WINDMILL_MODEL_ID &&\n  id !== BULLETIN_BOARD_MODEL_ID &&\n  !isCityGate(id);",
+    "new": "  Number.isSafeInteger(id) && id > 0 && id !== LADDER_MODEL_ID && id !== WINDMILL_MODEL_ID;",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "DECOROUTDOOR-street-nature-taken",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "      if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || isNatureArchive(a)) return;",
+    "old": "      if (\n        !Number.isSafeInteger(a) ||\n        !Number.isSafeInteger(r) ||\n        r < 0 ||\n        a === EDITOR_FLATS_ARCHIVE ||\n        isNatureArchive(a)\n      )\n        return;",
     "new": "      if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE) return;",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "DECOROUTDOOR-nature-unnumbered-by-set",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const group = e.nature != null ? `${e.base}|${e.nature}` : e.base;",
-    "new": "    const group = e.base;",
+    "old": "    const group = e.nature != null ? `${e.base}|${e.nature}` : e.base; // DECOR-OUTDOOR: a climate's trees numbered among its own - a yard sees its set alone",
+    "new": "    const group = e.base; // DECOR-OUTDOOR: a climate's trees numbered among its own - a yard sees its set alone",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DECOROUTDOOR-tree-unnamed",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": " : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
-    "new": " : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
+    "old": "          : kind === 'nature' && isTreeRecord(c.nature, c.flat[1])\n            ? 'Tree'\n            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
+    "new": "          : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "DECOROUTDOOR-outside-indoors",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && (!e.outside || !!room?.yard || !!e.inRoom)   // DECOR-KINDS: the street's plain pieces, filed now as what they are\n",
-    "new": "",
+    "old": "        (!e.outside || !!room?.yard || !!e.inRoom) && // DECOR-KINDS: the street's plain pieces, filed now as what they are\n        (e.nature == null || e.nature === room?.natureBase) &&",
+    "new": "        (e.nature == null || e.nature === room?.natureBase) &&",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "DECOROUTDOOR-any-climate",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && (e.nature == null || e.nature === room?.natureBase)\n",
-    "new": "",
+    "old": "        (e.nature == null || e.nature === room?.natureBase) &&\n        (!MOD_FROM.has(e.from) || !!mods?.has(e.key)),",
+    "new": "        (!MOD_FROM.has(e.from) || !!mods?.has(e.key)),",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
@@ -86,7 +86,7 @@
   {
     "name": "DECOROUTDOOR-scan-natureless",
     "file": "src/systems/decor/decorScan.js",
-    "old": "    nature: true,   // DECOR-OUTDOOR: a yard's trees and plants, its own climate's",
+    "old": "    nature: true, // DECOR-OUTDOOR: a yard's trees and plants, its own climate's",
     "new": "    nature: false,",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "DECORKINDS-flat-table",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
-    "new": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? null;",
+    "old": "  return (\n    FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null\n  );",
+    "new": "  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "DECORKINDS-model-table",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (MODEL_WHAT[what.model]) return MODEL_WHAT[what.model];\n",
-    "new": "",
+    "old": "    if (MODEL_WHAT[what.model]) return MODEL_WHAT[what.model];\n    if (what.model >= DECOR_FURNITURE_FIRST && what.model < EXTERIOR_FIRST) return 'furniture';",
+    "new": "    if (what.model >= DECOR_FURNITURE_FIRST && what.model < EXTERIOR_FIRST) return 'furniture';",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "DECORKINDS-family-lost",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (what.model >= DECOR_FURNITURE_FIRST && what.model < EXTERIOR_FIRST) return 'furniture';\n",
-    "new": "",
+    "old": "    if (what.model >= DECOR_FURNITURE_FIRST && what.model < EXTERIOR_FIRST) return 'furniture';\n    return what.model >= EXTERIOR_FIRST && what.model <= EXTERIOR_LAST ? 'outdoor' : null;",
+    "new": "    return what.model >= EXTERIOR_FIRST && what.model <= EXTERIOR_LAST ? 'outdoor' : null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "DECORKINDS-mods-what",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const what = plain && c.from !== 'mod' ? decorWhatKind(",
-    "new": "    const what = plain ? decorWhatKind(",
+    "old": "    const what =\n      plain && c.from !== 'mod'\n        ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] })\n        : null;",
+    "new": "    const what = plain\n      ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] })\n      : null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ],

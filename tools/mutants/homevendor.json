@@ -229,8 +229,8 @@
   {
     "name": "HOMEVENDOR-people-read-as-decorations",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "c.person ? 'people' : flatKind(c.as ?? c.flat[0])",
-    "new": "flatKind(c.as ?? c.flat[0])",
+    "old": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR",
+    "new": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR",
     "tests": [
       "test/server/decor1.test.js"
     ],

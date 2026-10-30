@@ -65,8 +65,8 @@
   {
     "name": "AUDITFB1029F-A6-asked-again",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "    if (res?.ok === false) refused.add(key);\n",
-    "new": "",
+    "old": "      if (res?.ok === false) refused.add(key);\n      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')",
+    "new": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITFB1029F-C2-one-plant-word",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
-    "new": "'Tree' : null));",
+    "old": "            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
+    "new": "            : null); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITFB1029F-C3-mod-street-unfiled",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const what = plain && c.from !== 'mod' ? decorWhatKind(",
-    "new": "    const what = plain && !MOD_FROM.has(c.from) ? decorWhatKind(",
+    "old": "      plain && c.from !== 'mod'",
+    "new": "      plain && !MOD_FROM.has(c.from)",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDITFB1029F-C4-records-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
-    "new": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
+    "old": "  return (\n    FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null\n  );",
+    "new": "  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITFB1029F-C4-pots-tools",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "214: 'tools', 218: 'boxes',",
-    "new": "214: 'tools', 218: 'tools',",
+    "old": "  218: 'boxes',",
+    "new": "  218: 'tools',",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]

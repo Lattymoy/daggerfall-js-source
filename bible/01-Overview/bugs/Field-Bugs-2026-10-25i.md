@@ -223,7 +223,7 @@ ordered journal, undone last first (`decorTool.js:"for (const [i, m] of [...d.mo
 thing set down and taken down in one draft stays in the pack (the pack's door refuses a record it holds, and the take
 that followed lost the only copy; a ruby given again joined its stack, four of three), a thing taken down joins the
 stack it landed on and Discard takes one off that stack, and one gone from the pack since (stored, sold, dropped, or
-worn - `decorPack.js:"if (!pack.includes(item) || item?.equipSlot != null) return null;"`) stays down for Confirm,
+worn - `decorPack.js:"if (!pack.includes(item) || item?.equipSlot != null)"`) stays down for Confirm,
 said. The doors are the host's own, out of it (`systems/decor/decorPack.js`), so the pins stand on them. A staged
 chest's Access set before Confirm goes through the record's act (`decorTool.js:"const act = kind === 'storage' ? deps.realm?.() : null;"`):
 the service moves what the chest holds now, and the save's list empties only on its word - it had been cleared on an
