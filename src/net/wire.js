@@ -1942,6 +1942,7 @@ export function poseChanged(a, b, eps = 0.01) {
     || (a.hs | 0) !== (b.hs | 0)   // DISC7: and the clop's swap, as the rider's own swaps on its edge
     || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0)   // DISC12: a hand switch and a change of shape go out at once, as a draw does
     || (a.dd | 0) !== (b.dd | 0)   // PCORPSE1: a death is news - never a keepalive for the relay to tier away
+    || (a.fy ?? null) !== (b.fy ?? null)   // AUDIT FB1030 N3: a room's floor said (INDOOR-FLOOR) - a standing peer takes it, a relay's redeploy over
     || (a.lc | 0) !== (b.lc | 0)   // PEERLIGHT2: a Light spell cast or run out goes out at once
     || (a.lt | 0) !== (b.lt | 0)   // PEERLIGHT1: a torch lit, put out or guttering goes out at once
     || (a.hl | 0) !== (b.hl | 0)   // HT-WAIST-NET: a lantern lit at the waist, or put out, goes out at once, as a draw does
@@ -3340,7 +3341,7 @@ export function validPartyPose(p) {
   // stands the body from this; it goes when the field does (a respawn, a rise). Omitted alive.
   const dk = p.dd && typeof p.dd === 'object' && !Array.isArray(p.dd) && typeof p.dd.k === 'string' && p.dd.k.length <= 96 && /^[\w:.,\-]+$/.test(p.dd.k) ? p.dd.k : null;
   if (dk && [p.dd.x, p.dd.y, p.dd.z, p.dd.at].every(finite) && Math.abs(p.dd.x) <= POSE_BOUND && Math.abs(p.dd.z) <= POSE_BOUND && Math.abs(p.dd.y) <= POSE_Y_BOUND) {
-    out.dd = { k: dk, x: p.dd.x, y: p.dd.y, z: p.dd.z, at: Math.max(0, Math.round(p.dd.at)) };
+    out.dd = { k: dk, x: p.dd.x, y: p.dd.y, z: p.dd.z, ...(finite(p.dd.fy) && Math.abs(p.dd.fy) <= POSE_Y_BOUND ? { fy: p.dd.fy } : {}), at: Math.max(0, Math.round(p.dd.at)) };   // AUDIT FB1030 N1: its room's floor (INDOOR-FLOOR)
   }
   // REZ-BLOODLINE (FIELD BUGS 2026-10-16b): FALLEN FOR GOOD - the sender's death is decided (Project Legacy's Bloodline, or
   // an Enduring line's last; scenes/legacyHost.js raisable), so a Resurrect at their body is refused at the caster's

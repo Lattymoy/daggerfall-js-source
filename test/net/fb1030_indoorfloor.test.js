@@ -5,7 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { indoorFloorOf, withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';
-import { validPose } from '../../src/net/wire.js';
+import { validPose, validPartyPose, poseChanged } from '../../src/net/wire.js';
+import { RemotePlayers } from '../../src/net/remotePlayers.js';
+import { createPeerFxPlayer } from '../../src/net/peer/peerFx.js';
 import { lerpPose, poseAlong } from '../../src/net/online.js';
 import { trs, transformPoint } from '../../src/world/mat4.js';
 
@@ -34,4 +36,22 @@ test('INDOOR-FLOOR two copies whose town ground differs by 3 m draw each other o
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /const pose = withIndoorFloor\(nativeFrame\n/, 'the world host sends it');
   assert.equal((w.match(/indoorSceneY\(p, mode === 'interior' && modes\?\.interiorCtx, state\.compensation\[1\]\)/g) ?? []).length, 2, 'and reads it in both frames');
+});
+
+test('AUDIT FB1030 N1-N3: what a peer leaves indoors stands on the same floor as the peer - the body it falls as (its death pose, and the party pose\'s mark of it), the point its blow lands; and a floor said is news, so a peer standing still through a relay\'s redeploy takes it (mutants: the corpse drops it; the party mark drops it; the blow\'s point drops it; poseChanged blind to it)', () => {
+  const rp = new RemotePlayers({ renderer: null, deps: null, compose: async () => null });
+  rp.addCorpse({ id: 'p1', acct: 'a1' }, { x: 1, y: 60.2, z: 2, fy: 60, dd: 1 }, 'interior:m7.300', { quiet: true });
+  assert.equal(rp._corpses.at(-1).pose.fy, 60, 'N1: the body keeps its room\'s floor');
+  const party = validPartyPose({ px: 120, py: 140, h: 1, hm: 10, f: 1, fm: 10, m: 1, mm: 10, dd: { k: 'interior:m7.300', x: 1, y: 60.2, z: 2, fy: 60, at: 5 } });
+  assert.equal(party?.dd?.fy, 60, 'N1: the party pose\'s mark of the body keeps it');
+  assert.match(readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8'), /_deadMark = online\._pose \? \{ k: online\.room, x: online\._pose\.x, y: online\._pose\.y, z: online\._pose\.z, \.\.\.\(Number\.isFinite\(online\._pose\.fy\) \? \{ fy: online\._pose\.fy \} : \{\}\)/, 'and the host marks it');
+  const asked = [];
+  const fx = createPeerFxPlayer({ play: () => {}, toScene: (p) => { asked.push(p); return [p.x, p.y, p.z]; }, now: () => 10 });
+  fx.update('p1', { hk: 0, fy: 60 }, [0, 0, 0]);
+  fx.frame?.();
+  fx.update('p1', { hk: 1, hp: [1, 61, 2], hb: 0, hq: 10, fy: 60 }, [0, 0, 0]);
+  assert.equal(asked.at(-1)?.fy, 60, 'N2: the blow\'s point read over the sender\'s floor');
+  const still = { x: 1, y: 60.2, z: 2, yaw: 0, pitch: 0, mv: 0 };
+  assert.equal(poseChanged(still, { ...still, fy: 60 }), true, 'N3: a floor said is news');
+  assert.equal(poseChanged({ ...still, fy: 60 }, { ...still, fy: 60 }), false, 'and the same floor is none');
 });

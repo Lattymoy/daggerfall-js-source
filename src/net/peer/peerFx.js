@@ -112,7 +112,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
       if (hk && hk !== s.hk) {
         s.hk = hk;
         const hp = Array.isArray(pose.hp) && pose.hp.length === 3 && pose.hp.every(Number.isFinite) ? pose.hp : null;
-        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2] }) : null;
+        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2], fy: pose.fy }) : null;   // AUDIT FB1030 N2: over the sender's room floor, as its body
         // AUDIT MERGE-PLUS B6: no faster than a blow can land (FX_MIN_GAP_S) - a modified client's pose said a new blow
         // on every one of its twenty frames a second, blood and a ring at any point it liked
         if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {
