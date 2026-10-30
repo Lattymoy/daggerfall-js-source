@@ -74,6 +74,11 @@ export const zoneBaseTier = (px, py, area) => Math.min(TOP, Math.floor(zoneProgr
  *  keeps off them - and a new character walks out of the heart on them. Its wild is the PvP zone's and stands high. */
 export const SAFE_ROAD_AREAS = Object.freeze(['Imperial']);
 
+/** GROUP-PARTY (the owner, 2026-10-30: "we need an area above that", "for group"): the heart's inner ring - this far
+ *  on the road to the Imperial City and more - is the party zone: its groups stand whole (pveGrant.js packShare passed
+ *  by), weighing a party of their level, where everywhere else a group is one player's pack. */
+export const PARTY_ZONE_FROM = 0.9;
+
 /** A district's step from its base band, drawn from its key - most stand at the base, some a step either side. */
 export const DISTRICT_STEP = Object.freeze([-1, 0, 0, 0, 1, 1]);
 /** Of each hundred districts: the first ENCLAVE are high-level enclaves (three bands up), the next FARMING farming
@@ -110,9 +115,10 @@ export function pveZoneAt({ px, py, region, place = 'wild', dungeon = null }) {
   else if (place === 'road') tier = Math.min(tier, base);
   else if (place === 'town') tier = 0;
   else if (place === 'dungeon') tier = clampTier(tier + 1 + (DEEP_DUNGEONS.includes(/** @type {number} */ (dungeon)) ? 1 : 0));
+  const party = area === 'Imperial' && (place === 'wild' || place === 'dungeon') && zoneProgress(px, py, area) >= PARTY_ZONE_FROM;
   const band = ZONE_BANDS[tier], safeRoad = place === 'road' && SAFE_ROAD_AREAS.includes(area);   // SAFE-ROAD below
   return Object.freeze({ region, name: REGION_NAMES[region], area, pastBay: region >= BAY_REGION_COUNT, place, tier, band,
-    safe: place === 'town' || safeRoad, enclave, farming, warning: enclave || tier >= base + 2 });
+    safe: place === 'town' || safeRoad, enclave, farming, party, warning: enclave || party || tier >= base + 2 });
 }
 
 /** The Combat Score a band's foes ask (advice only): the middle of the six reference builds at the band's floor. @param {readonly number[]} band */

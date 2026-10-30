@@ -160,3 +160,23 @@ test('STAGE 9: a template revenant comes back as its template, a level a rank, w
   assert.match(rev, /tpl: typeof entity\.pveTemplate === 'string' && entity\.pveTemplate \? entity\.pveTemplate : null,/, 'a revenant minted from a template keeps it');
   assert.match(rev, /tpl: isStr\(r\.tpl\) && r\.tpl \? r\.tpl : null,/, 'and a load keeps it');
 });
+
+test('GROUP-SOLO: a camp stands as one player\'s pack - every build grinds it at the group\'s level; the party zone keeps it whole', async () => {
+  const { GROUP_SOLO_WEIGHT, packShare, grantTemplateFoe } = await import('../../../src/systems/pve/pveGrant.js');
+  const { GROUP_TEMPLATES, groupWeight } = await import('../../../src/systems/pve/pveTemplates.js');
+  const { simMany, groupFoes } = await import('../../../src/systems/pve/pveSim.js');
+  const { buildAt, BUILD_KIND_KEYS } = await import('../../../src/systems/pve/pveBuilds.js');
+  assert.equal(GROUP_SOLO_WEIGHT, 1.5);
+  for (const g of GROUP_TEMPLATES.filter((x) => !x.community)) {
+    const k = packShare(g);
+    assert.ok(Math.abs(groupWeight(g) * k - 1.5) < 1e-9, `${g.key} weighs one and a half Normals`);
+    const foes = groupFoes(g.key).map((t) => ({ ...t, pack: { health: k, damage: k } }));
+    const lv = Math.min(45, Math.max(...foes.map((t) => t.level)));
+    for (const b of BUILD_KIND_KEYS) assert.ok(simMany({ party: [buildAt(b, lv)], foes, magicka: true }, 12).winRate >= 0.6, `${b} grinds ${g.key}`);
+  }
+  const camp = grant('camp', 5), whole = templateFoe(grantTemplateKey(camp, 0, orcs)), pack = grantTemplateFoe(camp, 0, orcs);
+  assert.equal(pack.level, whole.level, 'a pack member keeps its level');
+  assert.ok(pack.health < whole.health * 0.5 && pack.damage[1] < whole.damage[1] * 0.5);
+  assert.deepEqual(grantTemplateFoe(camp, 0, { ...orcs, zone: { ...orcs.zone, party: true } }), whole, 'the party zone keeps it whole');
+  assert.deepEqual(grantTemplateFoe(grant('encr', 77), 0, orcs), templateFoe(grantTemplateKey(grant('encr', 77), 0, orcs)), 'an encounter is no pack');
+});

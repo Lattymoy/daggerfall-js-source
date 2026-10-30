@@ -84,6 +84,19 @@ test('SAFE-ROAD: Cyrodiil\'s roads hold no hostile foe, so the Imperial start wa
   assert.equal(pveZoneAt({ px: cx, py: cy, region: SKYRIM, place: 'road' }).safe, false);
 });
 
+test('GROUP-PARTY: the heart\'s inner ring is the party zone - wild and dungeons, never a road or a town, nowhere else', async () => {
+  const { PARTY_ZONE_FROM, zoneProgress } = await import('../../../src/systems/pve/pveZones.js');
+  const [cx, cy] = zoneCenterPx().map(Math.floor);
+  assert.equal(PARTY_ZONE_FROM, 0.9);
+  const at = (o) => pveZoneAt({ px: cx + 20, py: cy, region: CYRODIIL_REGION, ...o });
+  assert.ok(zoneProgress(cx + 20, cy, 'Imperial') >= 0.9);
+  assert.deepEqual([at({}).party, at({}).warning, at({ place: 'dungeon', dungeon: DUNGEON_TYPES.Crypt }).party], [true, true, true]);
+  assert.deepEqual([at({ place: 'road' }).party, at({ place: 'town' }).party], [false, false]);
+  const sk = CITIES.find((c) => c.name === 'Skingrad').at, [sx, sy] = pictureToBay(sk[0], sk[1]).map(Math.floor);
+  assert.equal(pveZoneAt({ px: sx, py: sy, region: CYRODIIL_REGION }).party, false, 'Skingrad lies outside it');
+  assert.equal(pveZoneAt({ px: cx + 20, py: cy, region: SKYRIM }).party, false);
+});
+
 test('STAGE 7: the recommended score climbs with the band and is advice only', () => {
   const s = ZONE_BANDS.map(recommendedScore);
   for (let i = 1; i < s.length; i++) assert.ok(s[i] > s[i - 1]);

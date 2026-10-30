@@ -51,7 +51,7 @@ import { serviceBase } from '../net/accountClient.js';
 import { appStorage } from '../systems/appStorage.js';
 import { resolveEncounterTableIndex, chooseRandomEnemy } from '../systems/encounters.js';
 import { encounterTableChoices, encounterTableGeneration } from '../characters/encounterTableDoor.js';   // DEX3: every table a mod may pick, on any machine
-import { templateDiceRefusal, grantTemplateKey, templateFoe } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a grant stands its seed's template while the switch is on
+import { templateDiceRefusal, grantTemplateFoe } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a grant stands its seed's template while the switch is on
 import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 /** The reader's bounds: the verdicts it keeps (owner and grant), the members it has seen stand, the puppets it knows the
@@ -482,7 +482,7 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
   }
   /** GRANT8: my `encr` member's species - its seed's at its pixel's climate (-1: none, or no map to read). */
   /** FIXED-PVE: member `i`'s template under `gr` (its body, level, health, blow), or null - the switch off, no table. */
-  const templateOf = (gr, i) => (tableAt && gr ? templateFoe(grantTemplateKey(gr, i, tableAt(gr))) : null);
+  const templateOf = (gr, i) => (tableAt && gr ? grantTemplateFoe(gr, i, tableAt(gr)) : null);
   /** FIXED-PVE: the template of `from`'s record `seq`, once its grant is judged here - null before, or switched off. */
   const puppetTemplate = (from, seq) => { const m = pups.get(`${from}|${seq}`); return m ? templateOf(m.gr, m.i) : null; };
   const speciesOf = (gr, i, inRect) => (tableAt && gr?.k === 'encr' ? templateOf(gr, i)?.mobile ?? -1 : gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);

@@ -16,7 +16,7 @@ export const KIT_METALS = Object.freeze(['iron', 'steel', 'silver', 'elven', 'dw
 
 /** @typedef {{ key: string, name: string, species: string, level: number, category: string, roles: string[],
  *  noncombat?: string[], abilities?: string[], disposition: string, wildlife?: string, interact?: string[],
- *  faction?: string|null, protected?: boolean, kit?: string|null }} MobTemplate */
+ *  faction?: string|null, protected?: boolean, kit?: string|null, pack?: { health: number, damage: number } }} MobTemplate */
 
 const T = (o) => Object.freeze({ noncombat: [], abilities: [], interact: [], faction: null, protected: false, kit: null, ...o });
 
@@ -177,9 +177,9 @@ export function groupProblems(g, byKey = TEMPLATE_BY_KEY) {
  */
 export function templateStats(t) {
   const base = categoryStats(t.level, t.category);
-  const s = roleShares(t.roles);
-  return { level: base.level, category: base.category, health: Math.max(1, Math.round(base.health * s.health)),
-    damage: /** @type {[number, number]} */ ([Math.max(1, Math.round(base.damage[0] * s.damage)), Math.max(1, Math.round(base.damage[1] * s.damage))]) };
+  const s = roleShares(t.roles), h = s.health * (t.pack?.health ?? 1), d = s.damage * (t.pack?.damage ?? 1);   // GROUP-SOLO: a pack member's share
+  return { level: base.level, category: base.category, health: Math.max(1, Math.round(base.health * h)),
+    damage: /** @type {[number, number]} */ ([Math.max(1, Math.round(base.damage[0] * d)), Math.max(1, Math.round(base.damage[1] * d))]) };
 }
 
 /** How many reference players of the group's level a group weighs: each member's health times blow over a Normal foe's,

@@ -244,3 +244,16 @@ at the foe's fixed level. Every material roll under it reads Daggerfall Unity's 
 Daedric is set aside: "smaller weapon roll, more armor" - a weapon and an armour piece are each Daedric at 0.47% a level
 past 10 (`foeDaedricChance`): none to 10, about 4.7% at 20, 7% at 25, 9.3% at 30 and 16% at 45. Other foes keep
 Unleveled Loot. The tests: `test/systems/loot/foemetal.test.js`.
+
+## 16. Groups are one player's pack, and the heart is for parties (GROUP-SOLO, GROUP-PARTY, 2026-10-30)
+
+The owner: "make sure a lvl 45 can grind groups in the 45 area", "lower need to be able to grind groups", "we need an
+area above that for group", "that way each band can be grinded by a lower group if needed". A camp's members stand as a
+pack (`pveGrant.js` `grantTemplateFoe`): their health and blow are cut by `packShare` so the whole group weighs
+`GROUP_SOLO_WEIGHT`, one and a half Normal foes of its level. In the simulator every build alone beats every group at
+its own level 75-100% of the time, in 4-13 seconds, so a lower party can grind a band above it. Members keep their
+level, and an encounter is no pack.
+
+The heart's inner ring (`pveZones.js` `PARTY_ZONE_FROM`, 0.9 of the road to the Imperial City, wild and dungeons) is the
+party zone: its groups stand whole and the zone warns. A whole level 45 group beats one player and most pairs, and
+falls to three. Daggerfall Unity has no groups. The tests: `pve_grant.test.js`, `pve_population.test.js`.

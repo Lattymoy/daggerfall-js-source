@@ -11,7 +11,7 @@ import { theatreAt } from '../../world/worldWide/worldGrid.js';
 import { provinceKeyAt } from '../../world/tamriel/tamrielLand.js';
 import { regionOfTheatre, REGION_RACES } from '../../formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../formats/mapsFile.js';
-import { TEMPLATE_BY_KEY, GROUP_TEMPLATES, templateStats } from './pveTemplates.js';
+import { TEMPLATE_BY_KEY, GROUP_TEMPLATES, templateStats, groupWeight } from './pveTemplates.js';
 import { SPECIES_BY_KEY } from './pveSpecies.js';
 import { ORSINIUM_REGION } from './pveBestiary.js';
 import { drawByShare } from './pveEncounter.js';
@@ -48,18 +48,36 @@ export function pveTableAt(px, py, { regionAt, climateAt, minute, place = 'wild'
 export function grantTemplateKey(gr, i, table) {
   if (!table) return null;
   if (gr.k === 'camp') {
-    const g = GROUP_TEMPLATES.find((x) => x.key === drawByShare(table.lists.group, 1, grantRng(gr.s, 'group'))[0]);
+    const g = campGroup(gr, table);
     return g ? g.members.flatMap(([k, n]) => Array(n).fill(k))[i] ?? null : null;
   }
   return gr.k === 'encr' ? drawByShare(table.lists.encounter, 1, grantDice(gr.s, i).species)[0] ?? null : null;
 }
+/** A camp grant's group: the seed's draw from the table's groups. */
+const campGroup = (gr, table) => GROUP_TEMPLATES.find((x) => x.key === drawByShare(table.lists.group, 1, grantRng(gr.s, 'group'))[0]) ?? null;
+
+/** GROUP-SOLO (the owner, 2026-10-30: "make sure a lvl 45 can grind groups in the 45 area", "lower need to be able to
+ *  grind groups"): a camp's members stand as a pack whose whole weighs this many Normal foes of its level - one
+ *  player grinds it (the simulator: 75-100% of every build at every group's level). A party zone keeps groups whole. */
+export const GROUP_SOLO_WEIGHT = 1.5;
+/** The pack share of group `g`: its members' health and blow over their template's, 1 where it already weighs no more. @param {any} g */
+export const packShare = (g) => Math.min(1, GROUP_SOLO_WEIGHT / Math.max(1e-9, groupWeight(g)));
+
+/** Member `i`'s template foe under grant `gr` at `table`: a camp's at its pack share, unless the zone is a party zone.
+ *  @param {{ k: string, s: number }} gr @param {number} i @param {any} table */
+export function grantTemplateFoe(gr, i, table) {
+  const key = grantTemplateKey(gr, i, table);
+  if (!key || gr.k !== 'camp' || table?.zone?.party) return templateFoe(key);
+  const k = packShare(campGroup(gr, table));
+  return templateFoe(key, { health: k, damage: k });
+}
 
 /** What a template stands as: its body's mobile id and its own level, health and blow. Null for no template. @param {string|null} key */
-export function templateFoe(key) {
+export function templateFoe(key, pack = null) {
   const t = key ? TEMPLATE_BY_KEY.get(key) : null;
   const body = t ? SPECIES_BY_KEY.get(t.species)?.body : undefined;
   if (!t || body == null) return null;
-  return Object.freeze({ key: t.key, name: t.name, mobile: body, ...templateStats(t) });
+  return Object.freeze({ key: t.key, name: t.name, mobile: body, ...templateStats(pack ? { ...t, pack } : t) });   // GROUP-SOLO: a pack member's share
 }
 
 /** A reader's word on record `r` ({ t: mobile, l: level, gr: [g, i] }) under grant `gr` at `table`: 'dice' when its body
