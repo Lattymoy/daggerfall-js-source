@@ -630,3 +630,11 @@ test('INT1 (its audit): THE ACCOUNT WORKER LOADS WHERE A MODULE\'S URL IS NO URL
     assert.equal(typeof m.default?.fetch, 'function', 'the Worker\'s fetch, loaded');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('BIRTH-SKILL (#1484): the post-deploy smoke\'s first realm save is one the first-save law takes', async () => {
+  // main's account deploy went red on 'realm-birth' when #1484 judged a first save's skills and the smoke sent none
+  const m = rd(WF).match(/put \/tmp\/realmsave\.json "\$base\/v1\/realm\/\$rc\/data" '([^']+)'/);
+  assert.ok(m, 'the smoke\'s realm first save, found in the workflow');
+  const { firstSaveRefusal } = await import(pathToFileURL(join(root, 'server-account/src/realm.js')).href);
+  assert.equal(firstSaveRefusal(m[1], { origin_id: null, lineage_id: null }), null, 'a fresh character\'s first save is taken');
+});

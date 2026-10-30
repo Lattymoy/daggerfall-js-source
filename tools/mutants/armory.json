@@ -61,7 +61,7 @@
   {
     "name": "ARMORY-a-piece-not-held-worn",
     "file": "server-account/src/titles.js",
-    "old": "return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';",
+    "old": "return armoryHeld(player, env).includes(p.key) ? null : 'armory-not-held';",
     "new": "return null;",
     "tests": [
       "test/server/armory_service.test.js"
@@ -355,8 +355,8 @@
   {
     "name": "ARMORY-a-kit-worn-with-a-piece-not-held",
     "file": "server-account/src/accounts.js",
-    "old": "const why = key ? armoryRefusal(slot, key, player) : null;",
-    "new": "const why = key && slot === 'head' ? armoryRefusal(slot, key, player) : null;",
+    "old": "const why = key ? armoryRefusal(slot, key, player, env) : null;",
+    "new": "const why = key && slot === 'head' ? armoryRefusal(slot, key, player, env) : null;",
     "tests": [
       "test/server/armory_service.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "ARMORY-the-peers-embers-off-no-right",
     "file": "src/scenes/auraHost.js",
-    "old": "peerPose(d.id, w); armoryMotionStep(w, t, right);",
-    "new": "peerPose(d.id, w); armoryMotionStep(w, t);",
+    "old": "peerPose(d.id, w, layers); armoryMotionStep(w, t, right);",
+    "new": "peerPose(d.id, w, layers); armoryMotionStep(w, t);",
     "tests": [
       "test/render/armory.test.js"
     ]

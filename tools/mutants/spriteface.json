@@ -102,8 +102,8 @@
   {
     "name": "SPRITEFACE-the-pose-not-the-picture",
     "file": "src/render/auraRing.js",
-    "old": "  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
-    "new": "  ? { feet: w.at, yaw: w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
+    "old": "  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null, card: !fig && face?.card === true, front: !fig && face?.front === true }",
+    "new": "  ? { feet: w.at, yaw: w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null, card: !fig && face?.card === true, front: !fig && face?.front === true }",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -152,7 +152,7 @@
   {
     "name": "SPRITEFACE-a-peers-light-off-the-pose",
     "file": "src/scenes/auraHost.js",
-    "old": "const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
+    "old": "const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "const face = peerBodyYaw(d.shown) ?? 0;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"

@@ -246,7 +246,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/safety/` | The chat's safety: the relay's stamp on a line, its feed to the reviewer, a report's law and the code of conduct (`11-Multiplayer/Chat-Safety-Arc.md`) - online - the law both ends run. |
 | `src/net/sea/` | The Eltheric Ocean's ventures (`03-World/Eltheric-Ocean.md` SEA-BOUNTY, SEA-SEASON, SHIP-PVP): the bounty board's and the season boards' law, a wreck's prize, the open sea's guns refereed - online - the law both ends run. |
 | `src/net/serpent/` | The sea serpent, the sea's world boss (`11-Multiplayer/Sea-Serpent.md`) - online - the law both ends run. |
-| `src/net/dragon/` | The Dwarven Dragon, the sky's world boss (`11-Multiplayer/Dwarven-Dragon.md`) - online - the law both ends run: its watch, its path, its brain, its receipt. |
+| `src/net/dragon/` | The Dwarven Dragon, the sky's world boss (`11-Multiplayer/Dwarven-Dragon.md`) - online - the law both ends run (its watch, its path, its brain, its receipt) and the relay's seed of a watch (`dragonSeed.js`). |
 | `src/net/siege/` | Sieges of a seat - online - the law both ends run. |
 | `src/net/starfall/` | The Starfall, the Witches' Festival's fallen stars (`11-Multiplayer/Starfall.md`) - online - the law both ends run: the night and its stars, the defense's ledger, the receipt. |
 | `src/net/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - online - the law both ends run. |
@@ -385,6 +385,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/enhanced/` | The Enhanced skin's windows and HUD - its windows. |
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
+| `src/ui/guild/` | The guild window's pages (`11-Multiplayer/Guild-Shop.md`): its look and crest, the shop and its wares, the logo's pick and page, the ranks and the join requests. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |

@@ -142,7 +142,8 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
 
 test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, after the range early-out; the flat too', () => {
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: EL8 - a caster's map (DISC15: of either tier), else a contact shadow`);
+    // PIN MOVED (LIGHT-REACH): a surface turned from the light leaves the loop before its caster is read
+    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n(?:    \/\/[^\n]*\n)*    if \(dot\(n, Ln\) <= 0\.0\) continue;\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: EL8 - a caster's map (DISC15: of either tier), else a contact shadow`);
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n(?:    [^\n]*\n){3}    float sh = shadowOfLight\(i, uPointLights\[i\], at, vec3\(0\.0\)\);/);

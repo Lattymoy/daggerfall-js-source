@@ -126,9 +126,10 @@ test('GUILD1 the law: founding costs 10,000 gold and Renown 10; a guild holds 75
   assert.deepEqual(Object.fromEntries(Object.entries(GUILD_POWERS).map(([k, v]) => [k, [...v]])), {
     invite: [0, 1], remove: [0, 1], promote: [0, 1], deposit: [0, 1, 2, 3], withdraw: [0], renameRanks: [0], handOver: [0], disband: [0],
     rename: [0], vaultGrant: [0],   // GUILD2 (PIN MOVED): the guild's own new name and the vault's grants, the guildmaster's alone
+    shop: [0], logo: [0],   // GUILD-SHOP (PIN MOVED): the hall's furniture bought and a logo sent, the guildmaster's alone
   });
   assert.deepEqual([guildMay(0, 'withdraw'), guildMay(1, 'withdraw'), guildMay(3, 'deposit'), guildMay(2, 'invite'), guildMay(0, 'nonsense')], [true, false, true, false, false]);
-  assert.deepEqual([guildOutranks(1, 2), guildOutranks(1, 1), guildOutranks(2, 1), guildOutranks(0, 4)], [true, false, false, false]);
+  assert.deepEqual([guildOutranks(1, 2), guildOutranks(1, 1), guildOutranks(2, 1), guildOutranks(0, 8)], [true, false, false, false]);   // PIN MOVED (GUILD-RANKS): eight ranks at most - rank 4 is one now, 8 none
   assert.deepEqual([guildMayMove(0, 1, 2), guildMayMove(0, 3, 1), guildMayMove(1, 2, 3), guildMayMove(1, 3, 2)], [true, true, true, true], 'within the ranks below');
   assert.deepEqual([guildMayMove(1, 2, 1), guildMayMove(1, 1, 2), guildMayMove(2, 3, 2), guildMayMove(0, 2, 0), guildMayMove(0, 2, 2)], [false, false, false, false, false],
     'never to the mover\'s own rank, never an equal, never by a member, never a new guildmaster, never nothing');
@@ -268,7 +269,7 @@ test('GUILD1 ranks: the guildmaster moves anyone below into any rank below; an o
   assert.deepEqual(await rank(member, await id(recruit), 2), { status: 403, body: { error: 'guild-rank' } }, 'a member moves nobody');
   assert.deepEqual(await rank(gm, 'm999999', 2), { status: 404, body: { error: 'no-member' } });
   // rename
-  assert.deepEqual((await call('/v1/guilds/ranks', { character: gm.character, ranks: ['Lord', 'Knight', 'Squire', 'Page'] }, gm.secret)).body, { ok: true, ranks: ['Lord', 'Knight', 'Squire', 'Page'] });
+  assert.deepEqual((await call('/v1/guilds/ranks', { character: gm.character, ranks: ['Lord', 'Knight', 'Squire', 'Page'] }, gm.secret)).body, { ok: true, ranks: ['Lord', 'Knight', 'Squire', 'Page'], demoted: 0 });   // PIN MOVED (GUILD-RANKS): and how many a rank taken moved down
   assert.deepEqual((await mine(call, recruit)).ranks, ['Lord', 'Knight', 'Squire', 'Page'], 'every member reads them');
   assert.deepEqual(await call('/v1/guilds/ranks', { character: officer.character, ranks: ['A', 'B', 'C', 'D'] }, officer.secret), { status: 403, body: { error: 'guild-rank' } });
   assert.deepEqual(await call('/v1/guilds/ranks', { character: gm.character, ranks: ['A', 'A', 'B', 'C'] }, gm.secret), { status: 400, body: { error: 'bad-ranks' } });

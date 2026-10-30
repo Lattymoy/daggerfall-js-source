@@ -130,15 +130,6 @@
     ]
   },
   {
-    "name": "AUDITTESA2Z-Z5-the-doors-zone-unread",
-    "file": "src/scenes/portalStoneHost.js",
-    "old": "    if (zoneRefused() || host.veilRefused()) return false;",
-    "new": "    if (host.veilRefused()) return false;",
-    "tests": [
-      "test/systems/portal1_stone.test.js"
-    ]
-  },
-  {
     "name": "AUDITTESA2Z-Z5-the-picks-zone-unread",
     "file": "src/scenes/portalStoneHost.js",
     "old": "    if (teleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6",

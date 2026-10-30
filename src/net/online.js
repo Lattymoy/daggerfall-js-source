@@ -408,6 +408,7 @@ export function lerpPose(from, to, t) {
     ...(to.ga ? { ga: to.ga, ...(to.gm ? { gm: to.gm } : {}) } : {}), ...(to.gb ? { gb: to.gb } : {}),   // PEER-ACTS: the gathering act and the net's throw, and the beats on their own - discrete, omitted at none as the wire omits them
     ...(to.ab ? { ab: aboardAlong(from.ab, to.ab, k) } : {}),   // DECK-POSE: the place aboard, eased along its deck as the feet are - omitted ashore as the wire omits it
     ...(to.pl ? { pl: rideAlong(from.pl, to.pl, k) } : {}),   // EG-H1 (RIDE-PLAY): the ride on a breach's moving piece, eased on one piece as the feet are - dropped here, no ridden peer ever reached rideAt
+    ...(Number.isFinite(to.fy) ? { fy: to.fy } : {}),   // INDOOR-FLOOR: the sender's room floor - discrete, omitted outdoors as the wire omits it
   };
 }
 /** DECK-POSE (net/wire.js validAboard): a place aboard drawn between two poses' - on one deck, the feet in her frame eased
@@ -1905,7 +1906,7 @@ export class OnlineSession {
     if (!validVitIn(report) || !this.vitOk || this.status !== 'open' || !this._ws) return false;
     const gate = vitGate(this._vitBucket, this._now());
     if (!gate.pass) return false;
-    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}), ...(report.g !== undefined ? { g: report.g } : {}), ...(report.w !== undefined ? { w: report.w } : {}), ...(report.sh !== undefined ? { sh: report.sh } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`; PVP-GUARD: `g`; PVP-WARD: `w`; PVP-SHIELD: `sh`
+    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}), ...(report.g !== undefined ? { g: report.g } : {}), ...(report.w !== undefined ? { w: report.w } : {}), ...(report.sh !== undefined ? { sh: report.sh } : {}), ...(report.m !== undefined ? { m: report.m } : {}), ...(report.f !== undefined ? { f: report.f } : {}), ...(report.u !== undefined ? { u: report.u } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`; PVP-GUARD: `g`; PVP-WARD: `w`; PVP-SHIELD: `sh`; PVP-VITALS: `m`, `f`, `u`
     this._vitBucket = gate.bucket; this.stats.sent++;
     return true;
   }
@@ -2092,11 +2093,13 @@ export class OnlineSession {
 
   /** DRAGON3: my word on a dragon's fight (net/wire.js validDragonIn) - down the socket of the CELL its site stands in (my
    *  own cell's or a halo's, the serpent's law), DRAGON_HZ_MAX a second, never at a relay that would close the socket for
-   *  it. TRUE MEANS THE WORD LEFT THE SOCKET. */
+   *  it. AUDIT DRAGON-HIDDEN B1: an `ask` down my primary whatever its room (a siege's battle, a tourney) - the omen is
+   *  the relay's, never a cell's. TRUE MEANS THE WORD LEFT THE SOCKET. */
   sendDragon(word, cell) {
     const w = validDragonIn(word);
-    if (!w || !this.dragonReady(cell)) return false;
-    const ws = this._mine(cell) ? this._ws : this._haloFor(cell)?.ws;
+    const ask = w?.k === 'ask';
+    if (!w || (ask ? !(this.dragonOk && this.status === 'open' && this._ws) : !this.dragonReady(cell))) return false;
+    const ws = ask || this._mine(cell) ? this._ws : this._haloFor(cell)?.ws;
     const gate = dragonGate(this._dragonBucket, this._now());
     if (!gate.pass) return false;
     try { ws.send(JSON.stringify({ t: 'dragon', ...w })); } catch { return false; }
@@ -2993,6 +2996,10 @@ export class OnlineSession {
     if (id == null) return null;
     if (id === this.id) return this.ak ?? null;
     return (this.peers.get(id) ?? this._known.get(id))?.ak ?? null;
+  }
+  /** AUDIT GUILD-SHOP S2: whether a peer's token says the Guild Sailcloth is theirs - their ships' sailcloth flown only so. */
+  sailclothOf(id) {
+    return id != null && this.peers.get(id)?.sc === true;   // a peer in a room - their ships are a room's
   }
   /** WITCH1: THE PROFILE ICON A PLAYER WEARS, BY ID - mine, or a peer's in a room or introduced - or null (the face). */
   iconOf(id) {
@@ -3972,9 +3979,10 @@ export class OnlineSession {
       const r = validSerpentOut(m);
       if (r && (isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' : isCellRoom(room) && r.k !== 'at')) this._deliver('serpent', () => this.onSerpent?.(r, room));
     } else if (m.t === 'dragon') {
-      // DRAGON3: a dragon's cell's word (on any cell socket I hold), or the hub's - my receipt alone, kept for me past its kill
+      // DRAGON3: a dragon's cell's word (on any cell socket I hold), or the hub's - my receipt alone, kept for me past its kill;
+      // AUDIT DRAGON-HIDDEN B1: and a watch's omen from whatever room my `ask` went to
       const r = validDragonOut(m);
-      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room))) this._deliver('dragon', () => this.onDragon?.(r, room));
+      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room) || r.k === 'omen')) this._deliver('dragon', () => this.onDragon?.(r, room));
     } else if (m.t === 'wdun') {
       // PVPDUNGEONS: the hub's word on the zone's halls (the day, my locks, an entry's answer, the crows) - the hub's alone
       const w = isSocialRoom(room) ? validWdunOut(m) : null;
@@ -4443,7 +4451,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs, ts = null } = readBadge(p);   // SEAT1c: and a seat title's claim
-    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
+    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p), look: validLook(p.look), told: true, pose, sc: p.gsc === 1, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // AUDIT GUILD-SHOP S2: `sc` whether the Guild Sailcloth is theirs   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -4458,6 +4466,7 @@ export class OnlineSession {
     p.gt = readGuildTag(m);   // GUILD1c: and the newest hello's guild tag, including none
     p.au = readAura(m);   // WB9g: and the newest hello's aura, including none - one taken off is gone at the next hello
     p.ak = readArmory(m);   // ARMORY: and the newest hello's kit, including none
+    p.sc = m.gsc === 1;   // AUDIT GUILD-SHOP S2: and whether the Guild Sailcloth is theirs (D1: `gsc` on the row - the relay's own `sc` is a secret)
     p.pi = readIcon(m);   // WITCH1: and the newest hello's profile icon, including none
     p.rb = readRibbon(m);   // SEASON1 part two: and the newest hello's ribbon, including none - a Season's end takes it off
     p.house = readHouse(m);   // LEGACY7: and the newest hello's house, including none (a member played now of another line)

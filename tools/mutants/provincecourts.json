@@ -233,8 +233,8 @@
   {
     "name": "PC-the-copy-unseated",
     "file": "src/world/capitalCastles.js",
-    "old": "g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o)).map(castleSeated)",
-    "new": "g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o))",
+    "old": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o)).map(castleSeated)",
+    "new": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o))",
     "tests": ["test/world/worldWide/provincecourts.test.js"]
   },
   {

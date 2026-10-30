@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { hallPiecePress } from './guildHallPress.js';   // GUILD-SHOP: a hall's board and its banker pressed
 import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
@@ -35,7 +36,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1:
 import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, dungeonExitFeet, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -3969,7 +3970,7 @@ export function createWorldModes(host) {
       // mode IS the merchant's collection, so the goods are already on
       // the shelf by now and `remoteItems.Clear()` (:1051) only drops
       // the window's view of them. The port stages into the window and
-      // lands them here, which is what makes a sold item buyable back.
+      // lands them here; SOLD-POOF: landSold shelves nothing, so it is gone.
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
@@ -5011,7 +5012,7 @@ export function createWorldModes(host) {
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
-    if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
+    if (hallPiecePress(piece, isHallBoard(piece), openHallBoard, openHallChest, !!(interiorHome?.hall && interiorHome.member), say)) return;   // GUILD1e: the board in a guild's hall; GUILD-SHOP: its banker, the vault (scenes/guildHallPress.js)
     if (!piece?.storage) return;
     if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; } else if (interiorSeatHall && !interiorHome) { say(CROWN_HALL_TEXT.chestShut(interiorSeatHall.name)); return; }   // AUDIT SEATS-2 C6: a visitor told whose it is   // GUILD1d: a placed chest is that piece's bin; the cupboards stay the Stores. SEAT-HALL: a palace's too
     if (decorIsShared(piece.id) || !decorOwnerHere()) {
@@ -5445,7 +5446,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
-    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone - ZONE-BANK: but a settlement's
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -7187,7 +7188,7 @@ export function createWorldModes(host) {
     // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
     const graves = host.graveTargets?.() ?? [];
     graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: searchReachFor(aabb, player.pos, player.eye[1]) }));
-    // LEFAY1 (scenes/lefayMonumentHost.js): the monument to Julian LeFay outside Privateer's Hold - both exterior hosts stand it
+    // LEFAY1 (scenes/lefayMonumentHost.js): the monuments - Julian LeFay's, Patrick Stewart's - both exterior hosts stand them
     // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
     for (const t of host.monumentTargets?.() ?? []) targets.push(t);
     // MERCHANT-YARDS (scenes/merchantYardsHost.js): every city's and town's Stable and Wagon Yard - the streaming host's
@@ -7726,7 +7727,7 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateGrave?.(graves[Number(key.split(':')[1])], getInteractionMode()) ?? true;
     }
-    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
+    if (typeof key === 'string' && key.startsWith('monument:')) {   // LEFAY1: a monument - too far speaks the refusal; the plaque's lit row is the verb
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
@@ -10233,7 +10234,7 @@ export function createWorldModes(host) {
   const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)) ?? dungeonReturn.from ?? null);   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
   function exitDungeonNow() {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
-    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
+    // PositionPlayerToDungeonExit, but for its height (TALL-DOOR, player/enterExit.js dungeonExitFeet); the camera faces the normal.
     const landing = returnLanding();   // WB3b: before the gate, out of the court
     dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)
     const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3: before the room's memory goes - AUDIT REST II H4: said outside, below
@@ -10267,7 +10268,7 @@ export function createWorldModes(host) {
     if (landing) {
       // RepositionPlayer(DungeonEntrance): same law as the building
       // door - the door centre is the controller's centre, not the feet.
-      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
+      player.spawn(landing.pos[0], dungeonExitFeet(player.collider, landing), landing.pos[2]);   // TALL-DOOR: never over the floor before the door
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
       // DE2: PositionPlayerToDungeonExit ends on
       // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs

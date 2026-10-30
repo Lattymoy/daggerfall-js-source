@@ -371,6 +371,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.masterSkillsInfoSeen = !!entity.masterSkillsInfoSeen;   // SOFTCAP3: the one-time online explanation, shown
   snap.masterPracticeHeld = normalPracticeHeld(entity.masterPracticeHeld);   // AUDIT RPT1026 F1: the tough-foe practice held while the switch is off
   snap.lefayTribute = normalTribute(entity.lefayTribute);   // LEFAY1: the flowers laid at Julian LeFay's monument - how many, and the newest where they lay
+  snap.stewartTribute = normalTribute(entity.stewartTribute);   // STEWART-MONUMENT: and at Patrick Stewart's
   snap.masteredSkills = Array.isArray(entity.masteredSkills) ? [...entity.masteredSkills] : [];   // SOFTCAP4: the permanent 3/2/1 masteries (MASTER-THREE)
   snap.masteryPrompted = Array.isArray(entity.masteryPrompted) ? [...entity.masteryPrompted] : [];   // SOFTCAP4: the skills already asked about
   snap.arcanePath = isPathId(entity.arcanePath) ? entity.arcanePath : null;   // SCHOOLS1: the specialisation (systems/arcanePaths.js; given up only by systems/specReset.js)
@@ -865,6 +866,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.masterSkillsInfoSeen = snap.masterSkillsInfoSeen === true;   // SOFTCAP3
   entity.masterPracticeHeld = normalPracticeHeld(snap.masterPracticeHeld);   // AUDIT RPT1026 F1: a save from before it held none
   entity.lefayTribute = normalTribute(snap.lefayTribute);   // LEFAY1: a save from before it laid none
+  entity.stewartTribute = normalTribute(snap.stewartTribute);   // STEWART-MONUMENT: a save from before it laid none
   entity.masteredSkills = Array.isArray(snap.masteredSkills) ? snap.masteredSkills.filter(Number.isInteger) : [];   // SOFTCAP4
   entity.masteryPrompted = Array.isArray(snap.masteryPrompted) ? snap.masteryPrompted.filter(Number.isInteger) : [];   // SOFTCAP4
   entity.arcanePath = isPathId(snap.arcanePath) ? snap.arcanePath : null;   // SCHOOLS1: an id no table holds reads as none

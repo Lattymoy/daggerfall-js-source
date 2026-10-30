@@ -341,5 +341,32 @@
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
+  },
+  {
+    "name": "PVP-KIT-REGEN-a-saved-cure-lost",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "  if (raw?.id === 'cure') raw = {",
+    "new": "  if (raw?.id === 'cured') raw = {",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REGEN-not-the-regenerate",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "case 'regen': return [buff(18, -1,",
+    "new": "case 'regen': return [buff(10, 8,",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REGEN-a-scale-end-moved",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4])",
+    "new": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 5])",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
   }
 ]

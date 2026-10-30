@@ -2,38 +2,42 @@
   {
     "name": "DRAGON2-every-watch-a-dragon",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "dragonRoll(w, 0) % DRAGON_WATCH_ONE_IN === 0",
-    "new": "dragonRoll(w, 0) % DRAGON_WATCH_ONE_IN >= 0",
+    "old": "dragonOmenOk(o) && dragonRoll(o, 0) % DRAGON_WATCH_ONE_IN === 0",
+    "new": "dragonOmenOk(o) && dragonRoll(o, 0) % DRAGON_WATCH_ONE_IN >= 0",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON2-every-dragon-shiny",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonShinyOf = (w) => dragonRoll(w, 1) % DRAGON_SHINY_ONE_IN === 0;",
-    "new": "export const dragonShinyOf = (w) => dragonRoll(w, 1) >= 0;",
+    "old": "export const dragonShinyOf = (o) => dragonRoll(o, 1) % DRAGON_SHINY_ONE_IN === 0;",
+    "new": "export const dragonShinyOf = (o) => dragonRoll(o, 1) >= 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON2-the-stay-unbounded",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "return isDragonWatch(w) && nowMs >= t.landAt && nowMs < t.leaveAt; };",
-    "new": "return isDragonWatch(w) && nowMs >= t.landAt; };",
+    "old": "const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt; };",
+    "new": "const t = dragonTimes(o); return nowMs >= t.landAt; };",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
   },
   {
     "name": "DRAGON2-the-site-day-a-gates",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonSiteDay = (w) => DRAGON_SITE_BASE + (w % DRAGON_SITE_BASE);",
-    "new": "export const dragonSiteDay = (w) => w;",
+    "old": "export const dragonSiteDay = (o) => DRAGON_SITE_BASE + (dragonRoll(o, 5) % DRAGON_SITE_BASE);",
+    "new": "export const dragonSiteDay = (o) => o.w;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON2-the-orbits-pace",
@@ -110,8 +114,8 @@
   {
     "name": "DRAGON2-the-share-the-gates",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "export const DRAGON_TTK_S = 200;",
-    "new": "export const DRAGON_TTK_S = 240;",
+    "old": "export const DRAGON_TTK_S = 720;",
+    "new": "export const DRAGON_TTK_S = 600;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]

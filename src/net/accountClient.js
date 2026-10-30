@@ -39,6 +39,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { HANDLE_RE } from './handleShape.js';
+import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';
+import { noteHallArms } from './guild/guildArmsBook.js';   // GUILD-SHOP: a hall's arms, read with its pieces   // GUILD-SHOP: a new name's price, in silver
+import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, GUILD_LOGO_GAP_S, guildLogoUrl } from './guild/guildLogoLaw.js';   // GUILD-LOGO: a logo's bounds, said
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS, ICONS } from './identityToken.js';
@@ -56,8 +59,8 @@ import {
   DEEP_UNCONFIRMED_PER_DAY, STORES_MAX, WITHDRAW_MAX, COURT_WRITS_PER_DAY, RESPEC, HIGH_HIDES_PER_DAY,
 } from './professionLaw.js';   // PROF1: the bounds its refusals name; PROF7: Hunting's rare hides (CAP-OFF: no day's cap)
 import {
-  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
-  GUILD_RENAME_GOLD,
+  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX, GUILD_REQUESTS_MAX,
+
 } from './guild/guildLaw.js';   // GUILD1: the bounds its refusals name; GUILD2a: a new name's price
 import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guild/guildVaultLaw.js';   // GUILD2b: the vault's shelf, in its refusal's own sentence
 import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, AUCTION_BID_MAX } from './marketLaw.js';   // PROF5: the bounds its refusals name
@@ -401,6 +404,18 @@ const REFUSAL_WORDS = {
   'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, goods on the way or waiting to be collected, or a trader\'s takings. Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
   'no-member': () => t('account.refusal.noMember', 'That member is no longer in the guild.'),
   'bad-ranks': () => t('account.refusal.badRanks', 'Each rank needs a name of its own, 1 to {max} letters, digits, spaces, apostrophes or hyphens.', { max: GUILD_RANK_NAME_MAX }),
+  // GUILD-RANKS, GUILD-REQUESTS
+  'bad-powers': () => t('account.refusal.badPowers', 'Those permissions name a rank the guild does not have.'),
+  'no-request': () => t('account.refusal.noRequest', 'That request is no longer open.'),
+  'no-guild-tag': () => t('account.refusal.noGuildTag', 'No guild has that tag.'),
+  'guild-invited': () => t('account.refusal.guildInvited', 'That guild already invited you. Answer its invitation instead.'),
+  'guild-requests-max': () => t('account.refusal.guildRequestsMax', 'Your account has {max} requests open. Withdraw one first.', { max: GUILD_REQUESTS_MAX }),
+  'guild-requests-full': () => t('account.refusal.guildRequestsFull', 'That guild has too many requests open. Try again later.'),
+  'guild-request-joined': () => t('account.refusal.guildRequestJoined', 'That character joined another guild.'),
+  // AUDIT GUILD-RANKS B1, A5, A2
+  'guild-requested': () => t('account.refusal.guildRequested', 'Another of your characters already asked that guild.'),
+  'guild-ranks-moved': () => t('account.refusal.guildRanksMoved', 'The guild\'s ranks changed meanwhile. Look again.'),
+  'vault-grant-over': () => t('account.refusal.vaultGrantOver', 'You cannot give more vault access than you have.'),
   'bad-gold': () => t('account.refusal.badGold', 'Gold goes in or out 1 to {max} at a time.', { max: GUILD_MOVE_MAX }),
   'guild-treasury-full': () => t('account.refusal.guildTreasuryFull', 'The treasury can hold no more.'),
   'guild-treasury-short': () => t('account.refusal.guildTreasuryShort', 'The treasury does not hold that much.'),
@@ -710,7 +725,25 @@ const REFUSAL_WORDS = {
   'guild-rank-word': () => t('account.refusal.guildRankWord', 'A rank\'s name cannot contain a word that is not allowed in names.'),   // TEXT-F1
   'guild-rename-soon': () => t('account.refusal.guildRenameSoon', 'The guild was renamed too recently. It can be renamed again 2 weeks after the last time.'),
   'guild-rename-siege': () => t('account.refusal.guildRenameSiege', 'The guild is in a siege or a Tourney this week. It cannot be renamed until the battle is over.'),
-  'guild-rename-gold': () => t('account.refusal.guildRenameGold', 'A new name costs {cost, number} gold, paid from gold that realm characters put in the treasury, and there is not that much.', { cost: GUILD_RENAME_GOLD }),
+  'guild-rename-silver': () => t('account.refusal.guildRenameSilver', 'A new name costs {cost, number} silver from the guild\'s silver treasury, and it holds less.', { cost: GUILD_RENAME_SILVER }),   // GUILD-SHOP
+  // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop (server-account/src/guildShop.js)
+  'no-ware': () => t('account.refusal.noWare', 'The guild shop does not sell that.'),
+  'guild-ware-held': () => t('account.refusal.guildWareHeld', 'Your account already has that.'),
+  'guild-ware-max': () => t('account.refusal.guildWareMax', 'The guild already owns as many of those as a guild can.'),
+  'guild-ware-hall': () => t('account.refusal.guildWareHall', 'Guild furniture stands only inside the guild\'s own hall.'),
+  'guild-ware-none': () => t('account.refusal.guildWareNone', 'Every piece of that kind the guild owns is already set down. Buy another on the guild\'s Shop page.'),
+  // GUILD-LOGO: a guild's own logo (server-account/src/guildLogos.js)
+  'guild-logo': () => t('account.refusal.guildLogo', 'Your guild\'s logo is under review. Withdraw it on the Arms page, or wait for the moderators.'),
+  'logo-pending': () => t('account.refusal.logoPending', 'The moderators are still reviewing your guild\'s last logo.'),
+  'logo-unread': () => t('account.refusal.logoUnread', 'That picture cannot be read here. Try a PNG, JPEG or WebP picture.'),   // AUDIT GUILD-SHOP C7: the picker's own
+  'logo-file': () => t('account.refusal.logoFile', 'That file is too large. Choose a picture under 8 MB.'),
+  'logo-soon': () => t('account.refusal.logoSoon', 'A guild can send one logo every {min} minutes. Try again soon.', { min: GUILD_LOGO_GAP_S / 60 }),
+  'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
+  'no-logo': () => t('account.refusal.noLogo', 'That logo is not shown now.'),   // GUILD-SHOP: a picture under no review and worn by no guild
+  'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
+  'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),
+  'logo-square': () => t('account.refusal.logoSquare', 'A logo must be square.'),
+  'logo-side': () => t('account.refusal.logoSide', 'A logo is {min} to {max} pixels on a side.', { min: GUILD_LOGO_SIDE_MIN, max: GUILD_LOGO_SIDE_MAX }),
   'guild-rename-moved': () => t('account.refusal.guildRenameMoved', 'The guild changed while it was being renamed. Nothing was paid. Look again.'),
   // GUILD2b: the vault (server-account/src/guildVault.js)
   'guild-vault-rank': () => t('account.refusal.guildVaultRank', 'The guildmaster has not given you that permission at the guild vault.'),
@@ -2198,7 +2231,8 @@ export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }
   const post = sessionPost({ fetch, storage });
   const waited = waitedPost({ fetch, storage }, listWaitMs);
   return {
-    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm
+    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) })
+      .then((r) => { if (r?.ok && !yard && !seat) noteHallArms(/** @type {any} */ (r).data?.arms ?? null); return r; }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm; GUILD-SHOP: a hall's arms, its pieces' pictures
     rev: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, revOnly: true, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // the standing poll: one row, the pieces only once the revision moves
     place: ({ mapId, buildingKey, character, piece, realm = null, yard = false, seat = false }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece, ...(realm ? { realm } : {}), ...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),   // REALM P2.2b: and its gold on the record; HOME-YARD: outside
     yardCells: (mapId, cells) => waited('/v1/homes/yards/cells', { mapId, cells }),   // YARD-CELL: a town's yard cells past the versions held
@@ -2227,6 +2261,11 @@ export function accountGuilds({ fetch, storage }) {
     remove: (character, member) => post('/v1/guilds/remove', { character, member }),
     rank: (character, member, rank) => post('/v1/guilds/rank', { character, member, rank }),
     ranks: (character, ranks) => post('/v1/guilds/ranks', { character, ranks }),
+    powers: (character, powers) => post('/v1/guilds/powers', { character, powers }),   // GUILD-RANKS: what each rank may do
+    // GUILD-REQUESTS: a request to join by a guild's tag, taken back by its guild, answered by its request's id
+    request: (character, tag) => post('/v1/guilds/request', { character, tag }),
+    requestWithdraw: (character, guild) => post('/v1/guilds/request/withdraw', { character, guild }),
+    requestAnswer: (character, request, accept) => post('/v1/guilds/request/answer', { character, request, accept: accept === true }),
     deposit: (character, gold, realm = null, region = null) => post('/v1/guilds/deposit', { character, gold, ...(realm ? { realm, region } : {}) }),   // REALM P2.2
     // GUILD-LETTER (FIELD BUGS 2026-09-30): `letter`, the record takes it as a letter of credit - the pack cannot carry it
     withdraw: (character, gold, realm = null, letter = false) => post('/v1/guilds/withdraw', { character, gold, ...(realm ? { realm, letter: letter === true } : {}) }),
@@ -2244,7 +2283,16 @@ export function accountGuilds({ fetch, storage }) {
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken
     // out on the realm record where it stands (`realm`), the guildmaster's grants
-    rename: (character, name, tag) => post('/v1/guilds/rename', { character, ...(name ? { name } : {}), ...(tag ? { tag } : {}) }),
+    rename: (character, name, tag, rid = null) => post('/v1/guilds/rename', { character, ...(name ? { name } : {}), ...(tag ? { tag } : {}), ...(rid ? { rid } : {}) }),   // GUILD-SHOP: `rid`, the silver's request id
+    // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop and a ware bought in silver; every guild's arms by its
+    // tag; a logo sent for review (`image` in base64) and withdrawn
+    shop: (character) => post('/v1/guilds/shop', { character }),
+    shopBuy: (character, ware, rid) => post('/v1/guilds/shop/buy', { character, ware, rid }),
+    arms: (tags) => post('/v1/guilds/arms', { tags }),
+    logo: (character, image, rid) => post('/v1/guilds/logo', { character, image, rid }),
+    logoWithdraw: (character) => post('/v1/guilds/logo/withdraw', { character }),
+    logoClear: (character) => post('/v1/guilds/logo/clear', { character }),
+    logoUrl: (id) => guildLogoUrl(serviceBase(storage), id),   // GUILD-LOGO: where a logo's picture is served
     vault: (character) => post('/v1/guilds/vault', { character }),
     vaultPut: ({ character, realm, pick, item, count }) => post('/v1/guilds/vault/put', { character, realm, pick, item, count }),
     vaultTake: ({ character, realm, slot, count = null, at = null }) => post('/v1/guilds/vault/take', { character, realm, slot, ...(count == null ? {} : { count }), ...(at == null ? {} : { at }) }),

@@ -165,9 +165,9 @@ test('PVP-SET THE MENU\'S MODULE: the PvP set is in force while my flag is up in
   assert.equal(hotbarSetName(), 'pvp');
   assert.equal(hotbarInForce(), true, 'flagged: the hotbar is up whatever the style');
   assert.deepEqual(hotbarEntry(0), potion, 'the potion on 1');
-  assert.equal(hotbarEntry(2).kit.id, 'cure', 'the old bar on 3');
+  assert.equal(hotbarEntry(2).kit.id, 'regen', 'the old bar on 3 (PVP-KIT-REGEN: its Cure is Regenerate)');
   assert.equal(hotbarPress(2, { entity: me }).kind, 'spell');
-  assert.equal(readied[0].pvpKit, 'cure');
+  assert.equal(readied[0].pvpKit, 'regen');
   assert.equal(menu.refusal({ effects: [] }) != null, true, 'only the toolkit is cast');
   left = PVP_FLAG.lockMs;
   assert.equal(setHotbarSlot(3, kitEntry(heal)), false, 'the flag host\'s lock');

@@ -15,7 +15,7 @@ import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { ITEM_UID_RE, lawfulItem } from '../../src/systems/item/itemLaw.js';
 import { absorbStack, stacksWith } from '../../src/systems/inventory.js';
 import { mintItemId } from '../../src/systems/item/itemIds.js';
-import { GUILD_RANK_RECRUIT, guildRankOk } from '../../src/net/guild/guildLaw.js';
+import { GUILD_RANK_RECRUIT, GUILD_RANKS_MAX, guildRankOk } from '../../src/net/guild/guildLaw.js';
 import { creditSave } from '../../src/net/realm/realmGoldLaw.js';
 
 const KINDS = new Set(['storage', 'station']);
@@ -133,10 +133,11 @@ function clearGhosts(save, homeScene, id, uids) {
   }
 }
 
-/** The lowest rank that may open a hall piece. No row, and anything that is not a rank, is the whole guild. Higher ranks may too. */
+/** The lowest rank that may open a hall piece. No row, and anything that is not a rank, is the whole guild. Higher ranks may too.
+ *  GUILD-RANKS: the Recruit's place ('Everyone') is still the whole guild, the ranks a guild added under it too. */
 function hallCutoff(row) {
-  if (!row || row.mode !== 'guild' || typeof row.friends !== 'string' || !/^[0-3]$/.test(row.friends)) return GUILD_RANK_RECRUIT;
-  return Number(row.friends);
+  if (!row || row.mode !== 'guild' || typeof row.friends !== 'string' || !/^[0-3]$/.test(row.friends)) return GUILD_RANKS_MAX - 1;
+  return Number(row.friends) === GUILD_RANK_RECRUIT ? GUILD_RANKS_MAX - 1 : Number(row.friends);
 }
 
 /** A hall's chest is the guild's. The rank is the roster's, never the request's. */
@@ -197,7 +198,7 @@ export async function setDecorAccess(ctx, player, body) {
   const home = await homeOf(db, mapId, buildingKey);
   if (kind === 'rest' && home?.guild_id != null) return { error: 'bad-decor' };
   if (home?.guild_id != null) {
-    if (!guildRankOk(body.rank)) return { error: 'bad-decor' };
+    if (!guildRankOk(body.rank, GUILD_RANK_RECRUIT + 1)) return { error: 'bad-decor' };   // GUILD-RANKS: the four the door names (decorLook.js HALL_USE_RANKS)
     await db.prepare(`INSERT INTO decor_access (map_id, building_key, piece_id, kind, mode, friends) VALUES (?, ?, ?, ?, 'guild', ?)
       ON CONFLICT(map_id, building_key, piece_id, kind) DO UPDATE SET mode = 'guild', friends = excluded.friends`)
       .bind(mapId, buildingKey, id, kind, String(body.rank)).run();

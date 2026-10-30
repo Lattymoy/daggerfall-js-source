@@ -674,6 +674,32 @@ export const GOLD_PIECE_WEIGHT_KG = 0.0025;
 export const carriedWeight = (entity) =>
   totalWeight(entity?.items ?? []) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
 
+/** CARRY-CLAIMS: what `n` of a piece weighs in the pack - coin by the purse's own weight. */
+export const pieceKg = (item, n) => Math.max(0, n) * (isGoldPieces(item) ? GOLD_PIECE_WEIGHT_KG : effectiveUnitWeightInKg(item));
+
+// CARRY-CLAIMS (2026-10-30, the owner: "u can pick stuff up past your carry weight"): WHAT A SHARED PILE'S TAKES IN
+// FLIGHT WEIGH. A take off a shared pile - a room's chest or body (scenes/roomLootHost.js), a peer's foe or a building's
+// cupboard (systems/loot/claimLedger.js), a fallen player's remains (net/wild/wildRemains.js) - is lifted back OUT of the
+// pack until the pile's authority grants it. The carry gate (item/itemTransfer.js planTake) read a pack that did not hold
+// it, so every take inside that wait passed, and the grants then landed past the limit. Each keeper of such takes says
+// here what its open ones weigh, under its own key; the gate counts it as carried. A keeper answers null once it holds
+// nothing in flight, and is let go - so none outlives the dungeon or the pool that made it.
+/** @type {Map<any, (entity: any) => (number|null)>} */
+const _carryClaims = new Map();
+/** Registers (or keeps) `key`'s reading of its takes in flight: `fn(entity)` -> kg, or null when it holds none. */
+export function addCarryClaims(key, fn) { if (!_carryClaims.has(key)) _carryClaims.set(key, fn); }
+/** What `entity`'s takes in flight weigh, over every keeper; a keeper that answers null is let go. */
+export function claimedCarryKg(entity) {
+  let kg = 0;
+  for (const [key, fn] of [..._carryClaims]) {
+    let v = null;
+    try { v = fn(entity); } catch { v = null; }
+    if (v == null) { _carryClaims.delete(key); continue; }
+    if (Number.isFinite(v) && v > 0) kg += v;
+  }
+  return kg;
+}
+
 /** ComputeCanHoldAmount (DaggerfallInventoryWindow.cs:1444-1455,
  *  L-slice AUDIT 23 items-9): how many units of an item fit under a
  *  capacity, in GP-unit INTEGER arithmetic - `(roundCapacity -

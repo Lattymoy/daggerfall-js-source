@@ -3171,6 +3171,7 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(prefRow('showFps', t('menu.hud.fps', 'FPS counter'),
     t('menu.hud.fpsNote', 'Frame rate in the top-right corner.')));
   if (!pause) out.push(prefRow('skipStartVideo', skipStartVideoName(), skipStartVideoNote()));   // UXB1-A: read at launch, so the front door's alone - as the skin's
+  out.push(prefRow('autoUpdates', autoUpdatesName(), autoUpdatesNote()));   // AUTO-UPDATE: off by default, read when a new version is found
   out.push(...spireAccessRows());   // EG-G1: Settings > Accessibility lists them (ui/settings/settingsMap.js)
   return out.filter(Boolean);   // FT13
 }
@@ -3207,6 +3208,11 @@ export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu. Applies 
 /** L10N4: the row's words in the player's language (the constants stay the English the pins read). */
 export const skipStartVideoName = () => t('menu.skipVideo.name', SKIP_START_VIDEO_NAME);
 export const skipStartVideoNote = () => t('menu.skipVideo.note', SKIP_START_VIDEO_NOTE);
+/** AUTO-UPDATE (2026-10-30): the row's words. The switch is uiPrefs' autoUpdates, read by ui/updateScreen.js. */
+export const AUTO_UPDATES_NAME = 'Automatic updates';
+export const AUTO_UPDATES_NOTE = 'When a new version is out, save and restart the game after one minute. Off: you update when you are ready.';
+export const autoUpdatesName = () => t('menu.autoUpdates.name', AUTO_UPDATES_NAME);
+export const autoUpdatesNote = () => t('menu.autoUpdates.note', AUTO_UPDATES_NOTE);
 
 /** QREPAIR (2026-09-24, Mac: "Add a quest refresh option to settings" - "Repair active quests"): THE GAME CATEGORY'S
  *  PORT ROW. The repair runs over a game in play, so its door is the PAUSE's settings (the host hands

@@ -138,8 +138,8 @@ served and its block not, the fill finds `RRFORT01.RMB` unresolved before any pl
 ## F2 - the residency clock and prosperity (BUILT, 2026-10-30)
 
 `src/net/regionClockLaw.js` is the clock and its first rule; `server-account/src/regionClock.js` keeps it
-(`region_clock`, `region_clock_meta`, migration 0198 - main's 0198 and 0199 came first, so the merge renumbers it
-0200). A tick is a UTC day, TOWN-ECON's. Tick t adds the acts of day t - 3 (`REGION_ACTS_SETTLE_DAYS`): a Watch receipt
+(`region_clock`, `region_clock_meta`, migration 0200 - 0198 on its branch, renumbered past main's 0198 and 0199 at
+the merge). A tick is a UTC day, TOWN-ECON's. Tick t adds the acts of day t - 3 (`REGION_ACTS_SETTLE_DAYS`): a Watch receipt
 is claimed up to two days late and a patron's sale reckoned up to 48 hours late, each on its own day.
 
 A region is resident on tick t when players acted at one of its towns on day t - 3
@@ -242,8 +242,8 @@ the code and not the first audit's findings. What they found, and what was done:
   through their clones, 8 ms a slice. **A2** a bundle stood past the Bay is kept. **A3** a mod's block was asked
   under the pin of the town read last. **A4** the mod additions' loop is pinned.
 
-Recorded, not changed: the migration's number is the merge's to change (MIGRATION-PREFIX wants no gap here); a home
-resold by `homeTransfer` keeps no row's word; a home bought at a removed row's price keeps no later ground. All
+The migration renumbered 0200 at the merge of main (C1 of the clock's review). Recorded, not changed: a home resold by
+`homeTransfer` keeps no row's word; a home bought at a removed row's price keeps no later ground. All
 mutants of the second audit dead.
 
 ## THE FOUR HOSTS (Home.md)

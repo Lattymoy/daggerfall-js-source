@@ -76,8 +76,8 @@
   {
     "name": "MARKS1-9-an-officer-takes-marks-out",
     "file": "server-account/src/marks.js",
-    "old": "  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw')) return { error: 'guild-rank' };",
-    "new": "  if (!guildMay(a.me.rank, 'deposit')) return { error: 'guild-rank' };",
+    "old": "  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw', a.powers)) return { error: 'guild-rank' };",
+    "new": "  if (!guildMay(a.me.rank, 'deposit', a.powers)) return { error: 'guild-rank' };",
     "tests": [
       "test/net/marks1.test.js"
     ]

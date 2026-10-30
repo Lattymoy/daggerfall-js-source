@@ -216,7 +216,7 @@ test('PROFILE-SLOTS a name lifts only over a head piece DRAWN this frame: a near
       renderer, online: () => online, travelActive: () => false, quiet: () => quiet, camYaw: () => 0,
       player: () => ({ feetAt: () => [0, 0, 0], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => false, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     const seen = [{ id: 'near', shown: { at: [0, 0, -5] } }, { id: 'far', shown: { at: [0, 0, -(ARMORY_RANGE_M + 5)] } }, { id: 'wolf', shown: { at: [2, 0, -5], wb: 1 } }];
     host.frame(seen); host.draw();

@@ -7,15 +7,15 @@
 //   granite - the steps: a cool grey, speckled dark and light. Tileable.
 //   marble  - the pedestal and the obelisk: a pale stone, veined faintly grey. Tileable.
 //   gilt    - the obelisk's point: a warm gold, burnished in bands.
-//   plaque  - bronze, its border bevelled, the inscription (LEFAY_TEXT.plaque) cut into it in square capitals: the
-//             name and the years twice the size of the two lines under them.
+//   plaque  - bronze, its border bevelled, the inscription (its monument's `text.plaque`) cut into it in square
+//             capitals: the first two lines twice the size of the two under them.
 //   bronze  - the plaque's edges: the plate's own metal, plain.
 //
 // Low and square-pixelled, Daggerfall's own texel size: the monument sits in the pixel world, not over it.
 // Deterministic (its own mulberry32 on fixed seeds): every client's monument is the same stone.
 //
 // Not a DFU member. Ledger A (LEFAY).
-import { LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, LEFAY_PLAQUE, LEFAY_BRONZE, LEFAY_TEXT } from './lefayMonument.js';
+import { LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, LEFAY_BRONZE, LEFAY_TEXT, MONUMENTS } from './lefayMonument.js';
 
 /** A stone picture's side, texels. */
 export const LEFAY_ART_SIZE = 64;
@@ -116,13 +116,18 @@ export const LEFAY_GLYPHS = Object.freeze({
   H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
   I: ['.###.', '..#..', '..#..', '..#..', '..#..', '..#..', '.###.'],
   J: ['..###', '...#.', '...#.', '...#.', '...#.', '#..#.', '.##..'],
+  K: ['#...#', '#..#.', '#.#..', '##...', '#.#..', '#..#.', '#...#'],
   L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
+  M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'],
   N: ['#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#', '#...#'],
   O: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+  P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
   R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'],
   S: ['.####', '#....', '#....', '.###.', '....#', '....#', '####.'],
   T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
   U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+  V: ['#...#', '#...#', '#...#', '#...#', '#...#', '.#.#.', '..#..'],
+  W: ['#...#', '#...#', '#...#', '#.#.#', '#.#.#', '##.##', '#...#'],
   Y: ['#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..'],
   0: ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'],
   1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
@@ -188,12 +193,12 @@ export function lefayPlaqueArt(lines = LEFAY_TEXT.plaque, seed = 0x91a0) {
   return img;
 }
 
-/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws.
- *  @type {() => Array<[number, { width: number, height: number, colors: Uint8Array }]>} */
-export const lefayArt = () => [
+/** Every picture a monument (MONUMENTS) wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws.
+ *  @type {(subject?: { plaque: number, text: { plaque: ReadonlyArray<string> } }) => Array<[number, { width: number, height: number, colors: Uint8Array }]>} */
+export const lefayArt = (subject = MONUMENTS.lefay) => [
   [LEFAY_GRANITE, lefayGraniteArt()],
   [LEFAY_MARBLE, lefayMarbleArt()],
   [LEFAY_GILT, lefayGiltArt()],
-  [LEFAY_PLAQUE, lefayPlaqueArt()],
+  [subject.plaque, lefayPlaqueArt(subject.text.plaque)],
   [LEFAY_BRONZE, lefayBronzeArt()],
 ];

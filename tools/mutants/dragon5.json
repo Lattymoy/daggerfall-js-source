@@ -146,7 +146,7 @@
   {
     "name": "DRAGON5-the-saddle-undrawn",
     "file": "src/player/mountRig.js",
-    "old": "      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused) saddle.draw(canvas);   // DRAGON5\n",
+    "old": "      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused && !mwViewThirdPerson()) saddle.draw(canvas);   // DRAGON5; DRAGON-POV: out of the head the dragon stands in the world (scenes/dragonViewHost.js)\n",
     "new": "",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"

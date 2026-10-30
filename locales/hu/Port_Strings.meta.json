@@ -1369,11 +1369,6 @@
   "tr": "2c3269d26724",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "4eddbf75be3a",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "bbc303c9b152",
@@ -2057,6 +2052,11 @@
  "account.refusal.noLineage": {
   "en": "1720f337da24",
   "tr": "0c21be18450c",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "af4bcefc69b2",
   "by": "claude-in-session"
  },
  "account.refusal.noMember": {
@@ -6090,8 +6090,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "8cd2d555af57",
-  "tr": "8ebfd675167c",
+  "en": "cd250f3b92e7",
+  "tr": "cfbcbb9c3900",
   "by": "claude-in-session"
  },
  "inventory.store.chestAct": {
@@ -7402,6 +7402,16 @@
  "menu.act.begin": {
   "en": "c3651ab2341e",
   "tr": "05d2136cc45b",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "4bef44a5e86a",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "edf1e3aadf0d",
   "by": "claude-in-session"
  },
  "menu.begin.blurb": {
@@ -12779,6 +12789,26 @@
   "tr": "00ffba101c17",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "0678c453e743",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "3e41478bfccd",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "24cc5ade7bd8",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "50572febc19d",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "a8a00b26f16a",
@@ -12792,6 +12822,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "a0b130905b58",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "823bdba156c1",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -12812,6 +12847,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "c0484c76dd5f",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "b59cfc989e3e",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "0ca998caecef",
   "by": "claude-in-session"
  },
  "net.update.saving": {
@@ -13479,6 +13524,11 @@
   "tr": "3810276c0475",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "bf67c43d09aa",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "f9f606624cea",
@@ -13589,11 +13639,6 @@
   "tr": "090df7bd0605",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "781b04fbb4da",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "f2e5a881cf47",
@@ -13672,6 +13717,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "9a3e7e568bd6",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "02ddd247e077",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
@@ -14294,6 +14344,11 @@
   "tr": "4beda0625609",
   "by": "claude-in-session"
  },
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "98a3f86a4047",
+  "by": "claude-in-session"
+ },
  "sea.wild.dropLate": {
   "en": "81c1d7e08802",
   "tr": "0410250c9001",
@@ -14809,6 +14864,11 @@
   "tr": "9c1978b3a25b",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "ec36bca377d0",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "0840973ebb69",
@@ -14954,6 +15014,11 @@
   "tr": "95c4a12fbf50",
   "by": "claude-in-session"
  },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "efe42c48e718",
+  "by": "claude-in-session"
+ },
  "town.panel.new": {
   "en": "c06b33d8318f",
   "tr": "9799520e062c",
@@ -15037,6 +15102,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "548cc997b72c",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "d7103d58316b",
   "by": "claude-in-session"
  },
  "wild.death.away": {

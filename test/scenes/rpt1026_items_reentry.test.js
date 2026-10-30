@@ -27,7 +27,7 @@ import { SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX } from '../../src/systems/sear
 import { generateItems, addPileLootExtras, validLootList, LOOT_LIST_MAX, DUNGEON_LOOT_KEYS, LOOT_NEWER_TEXT } from '../../src/systems/loot/loot.js';
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons, LOOT_RARITY_KEY } from '../../src/systems/loot/lootRarity.js';
 import { peerHanded, neverPeerHanded, notCarried } from '../../src/systems/peerWord.js';
-import { addItem, stacksWith, isGoldPieces, addGoldPieces } from '../../src/systems/inventory.js';
+import { addItem, stacksWith, isGoldPieces, addGoldPieces, addCarryClaims, pieceKg } from '../../src/systems/inventory.js';
 import { isEquipped, unequipItem } from '../../src/systems/equip.js';
 import { spawnEnemyLoot, wildLootAfter, rollRoomBonus } from '../../src/scenes/hostCombat.js';
 import { raiseEnemyDeath, corpseTextureOf } from '../../src/scenes/corpseMarker.js';
@@ -157,7 +157,7 @@ function visit(net, { id, player, seed, host, partners, seat, clock }) {
     SUPER_LOOT_DROP_MULT: 1.5, ELITE_LOOT_DROP_MULT: 1.2, SUPER_LOOT_QUALITY_MULT: 1.5, ELITE_LOOT_QUALITY_MULT: 1.2,
     opts: { selfId: () => id, onActions: (data) => net.send(id, data), onLootClaimed: () => {}, partyLevels: () => partners, roomHost: () => seat.id },
     _foesFrom: host ? null : seat.id, _sharedStamp: `${id}:${seed}`, _sharedApplied: false, _foesSeqIn: -1, clearSurplus: () => {}, ...TRAIT_DOORS,
-    addItem, stacksWith, isGoldPieces, addGoldPieces, isEquipped, unequipItem, neverPeerHanded, notCarried,
+    addItem, stacksWith, isGoldPieces, addGoldPieces, addCarryClaims, pieceKg, isEquipped, unequipItem, neverPeerHanded, notCarried,
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus, applyChampion, championTraitFor, promoteEliteFoe, _retyping: new Set(),
