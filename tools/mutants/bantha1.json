@@ -752,8 +752,8 @@
   {
     "name": "AUDIT-BANTHA1-TREE-1-the-wide-search-not-widened",
     "file": "src/ai/cover.js",
-    "old": "        const R = set.wideR, wide = set.wide;",
-    "new": "        const R = 0, wide = set.wide;",
+    "old": "        const R = set.wideR,",
+    "new": "        const R = 0,",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

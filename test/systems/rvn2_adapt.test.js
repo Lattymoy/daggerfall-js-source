@@ -261,7 +261,7 @@ test('RVN2 PATIENT: a blade feints one wind-up in three (TELL5\'s one in five ot
   assert.equal(feintChance(null), TELL.FEINT_CHANCE);
   assert.equal(trackShare(ent(['patient'])), 0.7);
   assert.equal(trackShare(ent([])), TELL.TRACK_SHARE);
-  assert.match(read('src/ai/tactics.js'), /&& Math\.random\(\) < feintChance\(ent\)\) \{/, 'the brain draws against it');
+  assert.match(read('src/ai/tactics.js'), /&&\n\s*Math\.random\(\) < feintChance\(ent\)\n\s*\) \{/, 'the brain draws against it');
   // live: a beast's lunge (TELL5's own rig - Math.random pinned at 0.05), looked at between half and 0.7 of its wind-up
   const turnedLate = (learned) => {
     resetTactics(); resetBlows(); T = 0;

@@ -267,7 +267,7 @@ test('RVN5 ON THE REAL BRAIN: its signature ahead of every other blow - x2.0, it
   assert.equal(withRandom(0.99, () => firstWindup(brainFoe('slam'), [0, 0, 0], 3)), null, 'no roll, no signature');
   assert.equal(BLOW_CHANCE, 0.1);
   // the source: no feint on a signature, nor on a pyre
-  assert.match(read('src/ai/tactics.js'), /if \(chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS\.includes\(shape\)/);
+  assert.match(read('src/ai/tactics.js'), /if \(\n\s*chain === 0 &&\n\s*!sig &&\n\s*shape !== 'aimed' &&\n\s*shape !== 'pyre' &&\n\s*!GAP_CLOSERS\.includes\(shape\)/);
 });
 
 test('RVN5 THE PYRE on the REAL brain: wound up at my feet (locked, out to 12 m), iron from rank 3, no held swing; standing in it its blast is asked of the pool (`_blowPyre`, x2.0) and the foe waits - no swing; stepped off, nothing, and it overreaches (mutants: aimed at its own feet; unlocked; a swing held; the blast asked on a miss; no overreach)', () => {
@@ -310,7 +310,7 @@ test('RVN5 THE PYRE as a shooter\'s turn: a caster that fights at range winds it
   f.ai._tac.sigReady = T; f.ai._tac.blowReady = T;
   assert.equal(withRandom(0.05, () => firstWindup(f, player, 3))?.kind, 'pyre', 'past it, again');
   // with its token, as its shot goes (TACT's ranged token)
-  assert.match(read('src/ai/tactics.js'), /if \(has && sig\?\.kind === 'pyre' && _me && ai\.canAct !== false && now >= \(s\.blowReady \?\? 0\) && now >= \(s\.sigReady \?\? 0\)/);
+  assert.match(read('src/ai/tactics.js'), /if \(\n\s*has &&\n\s*sig\?\.kind === 'pyre' &&\n\s*_me &&\n\s*ai\.canAct !== false &&\n\s*now >= \(s\.blowReady \?\? 0\) &&\n\s*now >= \(s\.sigReady \?\? 0\)/);
   // the gates
   const ai = { inSight: true, _armedTargeting: false };
   assert.equal(signatureReaches(ai, {}, 'pyre', 12, false, 0, 12), true);

@@ -326,8 +326,8 @@
   {
     "name": "EM-follow-straight",
     "file": "src/ai/enhancedMotor.js",
-    "old": "      this._repathToward(chf, leader, dt);\n      if (!this.path",
-    "new": "      if (true) return leader;\n      if (!this.path",
+    "old": "      this._repathToward(chf, leader, dt);",
+    "new": "      if (true) return leader;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EM-follow-path-dropped",
     "file": "src/ai/enhancedMotor.js",
-    "old": "      if (this._following) {\n        if (this.path && this.moving)",
-    "new": "      if (this._following && false) {\n        if (this.path && this.moving)",
+    "old": "      if (this._following) {",
+    "new": "      if (this._following && false) {",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]

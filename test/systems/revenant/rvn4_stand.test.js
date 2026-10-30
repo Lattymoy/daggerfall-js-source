@@ -208,7 +208,7 @@ test('RVN4 PHASE TWO in the brain\'s table: wind-ups x0.85, cooldowns x0.7, iron
   assert.equal(blowGuard('lunge', 300, plain, 0.01), 'poise');
   assert.equal(chainMax(p2), 2);
   assert.equal(chainMax(plain), 1);
-  assert.match(read('src/ai/tactics.js'), /\(b\.chain \?\? 0\) < chainMax\(ent\) && chains\(/, 'the brain chains to its max');
+  assert.match(read('src/ai/tactics.js'), /\(b\.chain \?\? 0\) < chainMax\(ent\) &&\n\s*chains\(/, 'the brain chains to its max');
   assert.equal(TELL.CHAIN_CHANCE, 0.35);
 });
 

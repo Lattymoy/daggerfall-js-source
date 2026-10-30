@@ -262,7 +262,7 @@ test('AUDIT CC-B4 (major): a companion never runs out past the leash at a foe st
 });
 
 test('AUDIT CC-B5: the pathing motor drops the route it held when it turns from fighting to following and back', () => {
-  assert.match(rd('src/ai/enhancedMotor.js'), /if \(this\._following !== this\._wasFollowing\) \{ this\._wasFollowing = this\._following; this\.path = null; this\.repathT = 0; \}/);
+  assert.match(rd('src/ai/enhancedMotor.js'), /if \(this\._following !== this\._wasFollowing\) \{\n\s*this\._wasFollowing = this\._following;\n\s*this\.path = null;\n\s*this\.repathT = 0;\n\s*\}/);
 });
 
 test('AUDIT CC-B6: a torch thrown indoors or underground passes a companion by (the street\'s already did); the watch stays while a monster fights one', () => {

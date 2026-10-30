@@ -8,8 +8,12 @@
 let _t = 0;
 let _override = null;
 /** Each host, once a frame: the foes' step (the frame's foe dt, capped as the pools cap it; 0 when they are held). */
-export function tickTactics(dt) { if (dt > 0 && Number.isFinite(dt)) _t += dt; }
+export function tickTactics(dt) {
+  if (dt > 0 && Number.isFinite(dt)) _t += dt;
+}
 /** The brain's now, seconds. */
 export const tacticsNow = () => (_override ? _override() : _t);
 /** Tests: drive the clock (null: back to the ticked one). */
-export function setTacticsClock(fn) { _override = typeof fn === 'function' ? fn : null; }
+export function setTacticsClock(fn) {
+  _override = typeof fn === 'function' ? fn : null;
+}

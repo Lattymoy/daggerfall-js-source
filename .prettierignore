@@ -4,6 +4,8 @@
 /scripts/*/
 !/src/
 /src/*
+!/src/ai/
+/src/ai/*/
 !/src/characters/
 /src/characters/*
 !/src/characters/bodyMotion/

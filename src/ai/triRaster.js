@@ -26,13 +26,27 @@ import { AGENT } from './nav/navmesh.js';
  *  -1 for a zero-area triangle. The ONE degenerate test the voxeliser and
  *  soupExtent share (AUDIT 68 S02-coarsen-sizing-pass). */
 function readTri(positions, indices, t, a, b, c) {
-  const i = indices[t] * 3, j = indices[t + 1] * 3, k = indices[t + 2] * 3;
-  a[0] = positions[i]; a[1] = positions[i + 1]; a[2] = positions[i + 2];
-  b[0] = positions[j]; b[1] = positions[j + 1]; b[2] = positions[j + 2];
-  c[0] = positions[k]; c[1] = positions[k + 1]; c[2] = positions[k + 2];
-  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
-  const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-  const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+  const i = indices[t] * 3,
+    j = indices[t + 1] * 3,
+    k = indices[t + 2] * 3;
+  a[0] = positions[i];
+  a[1] = positions[i + 1];
+  a[2] = positions[i + 2];
+  b[0] = positions[j];
+  b[1] = positions[j + 1];
+  b[2] = positions[j + 2];
+  c[0] = positions[k];
+  c[1] = positions[k + 1];
+  c[2] = positions[k + 2];
+  const ux = b[0] - a[0],
+    uy = b[1] - a[1],
+    uz = b[2] - a[2];
+  const vx = c[0] - a[0],
+    vy = c[1] - a[1],
+    vz = c[2] - a[2];
+  const nx = uy * vz - uz * vy,
+    ny = uz * vx - ux * vz,
+    nz = ux * vy - uy * vx;
   const nl = Math.hypot(nx, ny, nz);
   return nl ? Math.abs(ny) / nl : -1;
 }
@@ -45,16 +59,20 @@ function readTri(positions, indices, t, a, b, c) {
  * @returns {Array<{x0,x1,z0,z1,top,bottom,noNavTop}>} colliders for buildNav
  */
 export function trianglesToColliders(positions, indices, { cs = AGENT.cs, maxSlope = AGENT.maxSlope } = {}) {
-  const cosMax = 1 / Math.sqrt(1 + maxSlope * maxSlope);   // normal.y at the slope limit
-  const cells = new Map();   // "ix,iz" -> [{y0, y1, walk}]
-  const a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0];
+  const cosMax = 1 / Math.sqrt(1 + maxSlope * maxSlope); // normal.y at the slope limit
+  const cells = new Map(); // "ix,iz" -> [{y0, y1, walk}]
+  const a = [0, 0, 0],
+    b = [0, 0, 0],
+    c = [0, 0, 0];
   for (let t = 0; t + 2 < indices.length; t += 3) {
     const cosN = readTri(positions, indices, t, a, b, c);
-    if (cosN < 0) continue;   // degenerate
+    if (cosN < 0) continue; // degenerate
     const walk = cosN >= cosMax;
     // the cells the triangle's xz footprint touches
-    const ix0 = Math.floor(Math.min(a[0], b[0], c[0]) / cs), ix1 = Math.floor(Math.max(a[0], b[0], c[0]) / cs);
-    const iz0 = Math.floor(Math.min(a[2], b[2], c[2]) / cs), iz1 = Math.floor(Math.max(a[2], b[2], c[2]) / cs);
+    const ix0 = Math.floor(Math.min(a[0], b[0], c[0]) / cs),
+      ix1 = Math.floor(Math.max(a[0], b[0], c[0]) / cs);
+    const iz0 = Math.floor(Math.min(a[2], b[2], c[2]) / cs),
+      iz1 = Math.floor(Math.max(a[2], b[2], c[2]) / cs);
     for (let iz = iz0; iz <= iz1; iz++) {
       for (let ix = ix0; ix <= ix1; ix++) {
         // clip the triangle to the cell in xz and take the y-range of what is left
@@ -62,7 +80,10 @@ export function trianglesToColliders(positions, indices, { cs = AGENT.cs, maxSlo
         if (!range) continue;
         const key = ix + ',' + iz;
         let list = cells.get(key);
-        if (!list) { list = []; cells.set(key, list); }
+        if (!list) {
+          list = [];
+          cells.set(key, list);
+        }
         list.push({ y0: range[0], y1: range[1], walk });
       }
     }
@@ -74,12 +95,26 @@ export function trianglesToColliders(positions, indices, { cs = AGENT.cs, maxSlo
     const merged = [];
     for (const r of list) {
       const last = merged[merged.length - 1];
-      if (last && r.y0 <= last.y1) { if (r.y1 >= last.y1) { last.y1 = r.y1; last.walk = r.walk; } }
-      else merged.push({ ...r });
+      if (last && r.y0 <= last.y1) {
+        if (r.y1 >= last.y1) {
+          last.y1 = r.y1;
+          last.walk = r.walk;
+        }
+      } else merged.push({ ...r });
     }
     const [ix, iz] = key.split(',').map(Number);
-    const x0 = ix * cs, z0 = iz * cs;
-    for (const r of merged) out.push({ x0, x1: x0 + cs, z0, z1: z0 + cs, top: r.y1, bottom: Math.min(r.y0, r.y1 - FLAT_EPS), noNavTop: !r.walk });   // FLAT_EPS, below
+    const x0 = ix * cs,
+      z0 = iz * cs;
+    for (const r of merged)
+      out.push({
+        x0,
+        x1: x0 + cs,
+        z0,
+        z1: z0 + cs,
+        top: r.y1,
+        bottom: Math.min(r.y0, r.y1 - FLAT_EPS),
+        noNavTop: !r.walk,
+      }); // FLAT_EPS, below
   }
   return out;
 }
@@ -105,26 +140,42 @@ export const FLAT_EPS = 1e-4;
  *  for an empty soup). The cell holding each extreme vertex always gets a
  *  box, so this IS the voxeliser's extent - all that coarsenAgent reads. */
 export function soupExtent(positions, indices, cs = AGENT.cs) {
-  let xmn = Infinity, xmx = -Infinity, zmn = Infinity, zmx = -Infinity;
-  const a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0];
+  let xmn = Infinity,
+    xmx = -Infinity,
+    zmn = Infinity,
+    zmx = -Infinity;
+  const a = [0, 0, 0],
+    b = [0, 0, 0],
+    c = [0, 0, 0];
   for (let t = 0; t + 2 < indices.length; t += 3) {
     if (readTri(positions, indices, t, a, b, c) < 0) continue;
-    xmn = Math.min(xmn, a[0], b[0], c[0]); xmx = Math.max(xmx, a[0], b[0], c[0]);
-    zmn = Math.min(zmn, a[2], b[2], c[2]); zmx = Math.max(zmx, a[2], b[2], c[2]);
+    xmn = Math.min(xmn, a[0], b[0], c[0]);
+    xmx = Math.max(xmx, a[0], b[0], c[0]);
+    zmn = Math.min(zmn, a[2], b[2], c[2]);
+    zmx = Math.max(zmx, a[2], b[2], c[2]);
   }
   if (xmn === Infinity) return [];
-  const x0 = Math.floor(xmn / cs) * cs, z0 = Math.floor(zmn / cs) * cs;
-  const x1 = Math.floor(xmx / cs) * cs + cs, z1 = Math.floor(zmx / cs) * cs + cs;   // spelled as the voxeliser's `x0 + cs`
+  const x0 = Math.floor(xmn / cs) * cs,
+    z0 = Math.floor(zmn / cs) * cs;
+  const x1 = Math.floor(xmx / cs) * cs + cs,
+    z1 = Math.floor(zmx / cs) * cs + cs; // spelled as the voxeliser's `x0 + cs`
   return [{ x0, x1, z0, z1 }];
 }
 
 /** A collider set packed for a thread hop (AUDIT 68 S02-hydrate-main-
  *  thread-revoxelize): six doubles a box and its noNavTop, transferable. */
 export function packColliders(cols) {
-  const box = new Float64Array(cols.length * 6), noNavTop = new Uint8Array(cols.length);
+  const box = new Float64Array(cols.length * 6),
+    noNavTop = new Uint8Array(cols.length);
   for (let i = 0; i < cols.length; i++) {
-    const c = cols[i], o = i * 6;
-    box[o] = c.x0; box[o + 1] = c.x1; box[o + 2] = c.z0; box[o + 3] = c.z1; box[o + 4] = c.top; box[o + 5] = c.bottom;
+    const c = cols[i],
+      o = i * 6;
+    box[o] = c.x0;
+    box[o + 1] = c.x1;
+    box[o + 2] = c.z0;
+    box[o + 3] = c.z1;
+    box[o + 4] = c.top;
+    box[o + 5] = c.bottom;
     noNavTop[i] = c.noNavTop ? 1 : 0;
   }
   return { box, noNavTop };
@@ -135,7 +186,15 @@ export function unpackColliders({ box, noNavTop }) {
   const out = new Array(noNavTop.length);
   for (let i = 0; i < out.length; i++) {
     const o = i * 6;
-    out[i] = { x0: box[o], x1: box[o + 1], z0: box[o + 2], z1: box[o + 3], top: box[o + 4], bottom: box[o + 5], noNavTop: noNavTop[i] === 1 };
+    out[i] = {
+      x0: box[o],
+      x1: box[o + 1],
+      z0: box[o + 2],
+      z1: box[o + 3],
+      top: box[o + 4],
+      bottom: box[o + 5],
+      noNavTop: noNavTop[i] === 1,
+    };
   }
   return out;
 }
@@ -147,19 +206,41 @@ function clipRangeY(a, b, c, x0, x1, z0, z1) {
   const clip = (inside, cut) => {
     const out = [];
     for (let i = 0; i < poly.length; i++) {
-      const p = poly[i], q = poly[(i + 1) % poly.length];
-      const pin = inside(p), qin = inside(q);
+      const p = poly[i],
+        q = poly[(i + 1) % poly.length];
+      const pin = inside(p),
+        qin = inside(q);
       if (pin) out.push(p);
       if (pin !== qin) out.push(cut(p, q));
     }
     poly = out;
   };
   const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
-  clip((p) => p[0] >= x0, (p, q) => lerp(p, q, (x0 - p[0]) / (q[0] - p[0]))); if (!poly.length) return null;
-  clip((p) => p[0] <= x1, (p, q) => lerp(p, q, (x1 - p[0]) / (q[0] - p[0]))); if (!poly.length) return null;
-  clip((p) => p[2] >= z0, (p, q) => lerp(p, q, (z0 - p[2]) / (q[2] - p[2]))); if (!poly.length) return null;
-  clip((p) => p[2] <= z1, (p, q) => lerp(p, q, (z1 - p[2]) / (q[2] - p[2]))); if (!poly.length) return null;
-  let lo = Infinity, hi = -Infinity;
-  for (const p of poly) { if (p[1] < lo) lo = p[1]; if (p[1] > hi) hi = p[1]; }
+  clip(
+    (p) => p[0] >= x0,
+    (p, q) => lerp(p, q, (x0 - p[0]) / (q[0] - p[0])),
+  );
+  if (!poly.length) return null;
+  clip(
+    (p) => p[0] <= x1,
+    (p, q) => lerp(p, q, (x1 - p[0]) / (q[0] - p[0])),
+  );
+  if (!poly.length) return null;
+  clip(
+    (p) => p[2] >= z0,
+    (p, q) => lerp(p, q, (z0 - p[2]) / (q[2] - p[2])),
+  );
+  if (!poly.length) return null;
+  clip(
+    (p) => p[2] <= z1,
+    (p, q) => lerp(p, q, (z1 - p[2]) / (q[2] - p[2])),
+  );
+  if (!poly.length) return null;
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const p of poly) {
+    if (p[1] < lo) lo = p[1];
+    if (p[1] > hi) hi = p[1];
+  }
   return [lo, hi];
 }
