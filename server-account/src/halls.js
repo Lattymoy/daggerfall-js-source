@@ -93,8 +93,8 @@ export async function buyHall(ctx, player, body = {}) {
   if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE: a build from before the online price (homes.js claimHome)
   if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in
   if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };   // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)
-  if (homeListedOff(mapId, buildingKey)) return { error: 'home-unlisted' };   // FOUNDATION F3: off the market by its row
-  if (homeListedPrice(mapId, buildingKey, price) !== price) return { error: 'home-update' };
+  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };   // FOUNDATION F3: off the market by its row
+  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };
   if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };   // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)
   const gid = a.me.guild_id;
   const held = await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();

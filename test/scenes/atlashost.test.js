@@ -5,8 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createAtlasHost, ATLAS_SLICE, ATLAS_SAID } from '../../src/scenes/atlasHost.js';
-import { createWorldPlaces } from '../../src/world/worldWide/worldPlaces.js';
+import { createAtlasHost, ATLAS_SLICE, ATLAS_SAID, ATLAS_RUN, ATLAS_SLICE_MS } from '../../src/scenes/atlasHost.js';
+import { createWorldPlaces, placeOfRow } from '../../src/world/worldWide/worldPlaces.js';
 import { districtOf, areaOfDistrict } from '../../src/world/worldWide/worldGrid.js';
 
 const [cx, cy] = districtOf(1500, -400);
@@ -14,7 +14,7 @@ const BAY = Array.from({ length: 1200 }, (_, i) => ({ mapId: 100 + i, name: `Bay
 const loc = (names) => ({ exterior: { exteriorData: { width: names.length, height: 1, blockNames: names }, buildings: [], recordElement: { doors: [] } } });
 const BLOCKS = { count: 1295, checkName: (n) => (n.startsWith('GONE') ? '' : n), getBlockIndex: () => 0 };
 
-const world = () => {
+const world = (o = {}) => {
   const places = createWorldPlaces();
   places.register('bay', BAY);
   places.register('tesa', [{ mapId: 9000, name: 'Skyrim town', px: 1500, py: -400, type: 0, area: areaOfDistrict(3, cx, cy) }]);
@@ -25,7 +25,7 @@ const world = () => {
     places, blocks: BLOCKS,
     standing: (p) => stood.get(p.mapId) ?? null,
     stand: (p) => { stands++; if (stood.has(p.mapId)) return stood.get(p.mapId); const l = p.mapId === 9000 ? loc(['TESAOPEN.RMB']) : null; if (l) { stood.set(p.mapId, l); gen++; } return l; },   // stood anew: into the index, its stamp moved
-    schedule: (fn) => queue.push(fn), stamp: () => gen,
+    schedule: (fn) => queue.push(fn), stamp: () => gen, clock: () => 0, ...o,
   });
   const drain = () => { let n = 0; while (queue.length) { queue.shift()(); n++; } return n; };
   return { places, host, drain, stands: () => stands, stood, bump: () => { gen++; } };
@@ -41,6 +41,8 @@ test('F1 host: a bundle is made when first asked, from the location the host wou
   assert.equal(stands(), 1, 'asked twice, stood once');
   const sky = host.bundle(9000);
   assert.deepEqual([sky.place.region, sky.place.theatre], [64, 3], 'Skyrim\'s town, Skyrim\'s region');
+  assert.equal(host.bundle(9000), sky, 'kept, though standing it moved the stamp (AUDIT FOUNDATION II A2)');
+  assert.equal(stands(), 2);
   assert.equal(host.bundle(424242), null);
 });
 
@@ -84,6 +86,26 @@ test(`F1 host: the check walks every listed place in slices of ${ATLAS_SLICE} at
   assert.ok(ATLAS_SAID >= 1);
 });
 
+test('F1 host: the check reads a place past the Bay the host has not stood through its peek - cloned, never stood - so every listed place is checked, and a property row in a town past the Bay against its grid (AUDIT FOUNDATION II A1; mutant: the peek unread)', async () => {
+  const listings = () => [{ map: 9000, cell: [2, 0], sale: false }];
+  const { host, drain, stands } = world({ peek: (p) => (p.mapId === 9000 ? loc(['GONE77.RMB']) : p.mapId === 105 ? loc(['GONE01.RMB']) : loc(['AAA.RMB'])), listings });
+  const warn = console.warn;
+  console.warn = () => {};
+  let report;
+  try { const done = host.check(); drain(); report = await done; } finally { console.warn = warn; }
+  assert.deepEqual([report.unlocated, report.problems.map((q) => q.place), report.unplaced.map((u) => [u.row.map, u.why]), stands()], [0, [105, 9000], [[9000, 'no such cell']], 0]);
+});
+
+test('F1 host: a slice of the check keeps to its budget - a slow place ends it early, the rest at the next idle (AUDIT FOUNDATION II A1; mutant: the clock unread)', async () => {
+  let t = 0;
+  const { host, drain } = world({ clock: () => (t += ATLAS_SLICE_MS / 1.6) });
+  const warn = console.warn;
+  console.warn = () => {};
+  let report;
+  try { const done = host.check(); assert.equal(drain(), Math.ceil(1201 / (2 * ATLAS_RUN))); report = await done; } finally { console.warn = warn; }
+  assert.equal(report.checked, 1201);
+});
+
 test('F1 host: a client\'s own world-data additions are checked with the listed places, and a property row naming a cell past its town\'s grid is said - read off what the host holds, nothing stood (mutants: the additions unread, the rows unchecked)', async () => {
   const places = createWorldPlaces();
   places.register('bay', BAY.slice(0, 3));
@@ -117,9 +139,21 @@ test('F1 host: a check whose slice throws ends - said, answered null, and asked 
   } finally { console.warn = warn; }
 });
 
+test('F1 host: a mod\'s additions are each region\'s rows past its base count, with their locations - the base rows never (scenes/tamrielPlacesHost.js modAdditions; AUDIT FOUNDATION II A4; mutant: the base count unread)', () => {
+  const src = readFileSync(new URL('../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8');
+  const at = src.indexOf('  const modAdditions = () => {');
+  const body = src.slice(at, src.indexOf('\n  };\n', at) + 5);
+  const row = (r, l) => ({ name: `r${r}l${l}`, regionIndex: r, mapTableData: { mapId: r * 1000 + l } });
+  const maps = { regionCount: 62, getRegion: (r) => ({ locationCount: r === 16 ? 3 : 2 }), baseLocationCount: () => 2, getLocation: row };
+  const bayRows = (locs) => locs.map((l) => ({ mapId: l.mapTableData.mapId, name: l.name, px: 300, py: 300, type: 0, region: l.regionIndex }));
+  const modAdditions = new Function('maps', 'placeOfRow', 'bayPlaceRows', `${body}\n  return modAdditions;`)(maps, placeOfRow, bayRows);
+  assert.deepEqual(modAdditions().map(([p, loc]) => [p.mapId, p.region, loc.name]), [[16_002, 16, 'r16l2']]);
+});
+
 test('F1 host: the streaming world wires it - the places host makes it over the registry (none without one), the blocks and the index, and checks when the world-data door serves edits (scenes/tamrielPlacesHost.js)', () => {
   const src = readFileSync(new URL('../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8');
   assert.match(src, /const worldAtlas = worldPlaces \? createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
   assert.match(src, /if \(worldAtlas && \(worldDataDoorOpen\(\) \|\| homeListings\(\)\.length\)\) worldAtlas\.check\(\);/);
-  assert.match(src, /listings: homeListings, additions: modAdditions, stamp: \(\) => host\._locIndexGen \}\) : null;/);
+  assert.match(src, /peek: peekAt, listings: homeListings, additions: modAdditions, stamp: \(\) => host\._locIndexGen \}\) : null;/);
+  assert.match(src, /const peekAt = \(p\) => locationIndex\.get\(`\$\{p\.px\},\$\{p\.py\}`\) \?\? \(inBay\(p\.px, p\.py\) \? null : capitalSliceAt\(p\.px, p\.py\) \?\? arenaPeekAt\(p\.px, p\.py\)\);/, 'AUDIT FOUNDATION II A1: a capital\'s slice and an Arena place read unstood');
 });

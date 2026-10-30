@@ -17,6 +17,8 @@ import { standService, T0 } from '../accountDb.mjs';
 import { MINUTE_JOBS, runCron, CRON_MINUTE } from '../../server-account/src/cron.js';
 import { tickRegionClock, regionsProsperity } from '../../server-account/src/regionClock.js';
 import { _resetTownEconForTests } from '../../server-account/src/townEcon.js';
+import { createTownEconHost } from '../../src/scenes/townEconHost.js';
+import { townKeyOf, townDayOf } from '../../src/net/townEconLaw.js';
 
 const rng = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 
@@ -117,4 +119,46 @@ test('F2 the service\'s tick is one write: a write that fails loses no day and i
   assert.equal(await tickRegionClock(db, now), 30, 'asked again, every region with acts stepped');
   assert.ok(statements <= 5, `${statements} statements`);
   assert.equal(raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick, D + 10);
+});
+
+test('F2 two runners at once: the second reads the rows the first wrote, and its write is refused whole - no day\'s acts added twice; a runner refused across midnight is not marked, and ticks its day at its next ask (AUDIT FOUNDATION II C2/C4; mutants: the guard unread, the refused marked)', async () => {
+  let now = T0;
+  const s = await standService({ PROFESSIONS_OPEN: 'on' });
+  const raw = s.env.DB._raw, real = s.env.DB;
+  const rows = () => raw.prepare('SELECT region, v, tick FROM region_clock ORDER BY region').all().map((r) => ({ ...r }));
+  const meta = () => raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick;
+  /** a database whose read of the rows lets `other` run first */
+  const racing = (other) => ({ prepare: (q) => (q.startsWith('SELECT region, v, tick FROM region_clock') ? { all: async () => { await other(); return real.prepare(q).all(); } } : real.prepare(q)), batch: (l) => real.batch(l) });
+  await tickRegionClock(real, now);
+  const D = Math.floor(now / 86_400);
+  raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, ?, ?, ?, ?, ?)').run(3_000_207, 207, 212, 17, 5, now);
+  for (const d of [D, D + 1]) raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(3_000_207, d, 'watch', 30);
+  now += 4 * 86_400;
+  let first = null;
+  assert.equal(await tickRegionClock(racing(async () => { assert.equal(await tickRegionClock(real, now), 1); first = rows(); }), now), 0, 'the second refused');
+  assert.deepEqual(rows(), first, 'the first\'s rows stand');
+  assert.equal(first[0].v, regionProsperityStepTo(0, D + 2, D + 4, () => 30), 'each day\'s acts added once');
+  // across midnight: the first ticks the day before while the second reads, and the second's day waits for its next ask
+  now += 2 * 86_400;
+  _resetTownEconForTests();
+  assert.equal(await tickRegionClock(racing(async () => { await tickRegionClock(real, now - 86_400); }), now), 0);
+  assert.equal(meta(), D + 5, 'the first took the day before');
+  await tickRegionClock(real, now);
+  assert.equal(meta(), D + 6, 'asked again, its day ticked');
+});
+
+test('F2 the client: the book reads each region\'s prosperity with the shares, a bad pair dropped, and a town\'s Prosperity carries its region\'s term - a town of another region not (AUDIT FOUNDATION II C3; mutants: the regions unkept, the term unpassed, the host unwired)', async () => {
+  const town = (px, py) => ((3 << 20) | (py * 1000 + px)) >>> 0;
+  const RIP = town(212, 151), OTHER = town(300, 151);
+  const towns = new Map([[RIP, { name: 'Ripmarket', px: 212, py: 151, region: 17, type: 0, location: 5 }], [OTHER, { name: 'Elsewhere', px: 300, py: 151, region: 18, type: 0, location: 6 }]]);
+  const door = { me: () => 'acct-1', econ: async () => ({ ok: true, data: { towns: [], regions: [[17, REGION_TERM_HALF], [18, 'x'], [71, 900], [-1, 5]] } }), witness: async () => ({ ok: true, data: {} }), watch: async () => ({ ok: true, data: {} }) };
+  const clock = 1_800_000_000_000, m = new Map();
+  const host = createTownEconHost({ online: () => true, townOf: (id) => towns.get(id), seatAt: () => null, seats: () => null, raidedAt: () => false, nowMs: () => clock,
+    locAt: () => null, door, storage: { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) } });
+  host.prosperityOf(RIP);
+  for (let i = 0; i < 3; i++) await new Promise((r) => setTimeout(r, 0));
+  const day = townDayOf(clock);
+  assert.deepEqual([host.book.regionalOf(17), host.book.regionalOf(18), host.book.regionalOf(71)], [REGION_TERM_HALF, 0, 0]);
+  assert.equal(host.prosperityOf(RIP) - townProsperity({ key: townKeyOf(212, 151), type: 0, day }), REGION_TERM_MAX / 2);
+  assert.equal(host.prosperityOf(OTHER), townProsperity({ key: townKeyOf(300, 151), type: 0, day }), 'region 18 read nothing');
 });

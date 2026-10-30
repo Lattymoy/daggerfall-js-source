@@ -141,8 +141,8 @@
   {
     "name": "F1-host-one-slice",
     "file": "src/scenes/atlasHost.js",
-    "old": "        const r = fillAtlas(scratch, list.slice(i, i + ATLAS_SLICE), standing);",
-    "new": "        const r = fillAtlas(scratch, list.slice(i), standing);",
+    "old": "const t0 = clock(), end = Math.min(list.length, i + ATLAS_SLICE);",
+    "new": "const t0 = clock(), end = list.length;",
     "tests": [
       "test/scenes/atlashost.test.js"
     ]
@@ -252,7 +252,7 @@
   {
     "name": "F1-door-mod-files-unserved",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "(worldDataOn() && !!liveAsset(blockReplacementFilename(blockName)));",
+    "old": "(worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));",
     "new": "false;",
     "tests": [
       "test/world/atlas/f1_atlas_layer.test.js",
@@ -352,8 +352,8 @@
   {
     "name": "F3-key-row-second",
     "file": "src/net/homeListingLaw.js",
-    "old": "return rows.find((r) => r.map === map && r.key === k) ?? rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? null;",
-    "new": "return rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? rows.find((r) => r.map === map && r.key === k) ?? null;",
+    "old": "return (homeLayoutsMatch(layout, null) ? rows.find((r) => r.map === map && r.key === k) : null) ?? rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? null;",
+    "new": "return rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? (homeLayoutsMatch(layout, null) ? rows.find((r) => r.map === map && r.key === k) : null) ?? null;",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "F3-claim-row-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (homeListedOff(mapId, buildingKey)) return { error: 'home-unlisted' };\n  if (homeListedPrice(mapId, buildingKey, price) !== price) return { error: 'home-update' };\n  // ARENA4b",
-    "new": "  if (homeListedPrice(mapId, buildingKey, price) !== price) return { error: 'home-update' };\n  // ARENA4b",
+    "old": "  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };\n  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };\n  // ARENA4b",
+    "new": "  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };\n  // ARENA4b",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]
@@ -370,7 +370,7 @@
   {
     "name": "F3-claim-price-unheld",
     "file": "server-account/src/homes.js",
-    "old": "  if (homeListedPrice(mapId, buildingKey, price) !== price) return { error: 'home-update' };\n  // ARENA4b",
+    "old": "  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };\n  // ARENA4b",
     "new": "  // ARENA4b",
     "tests": [
       "test/net/f3_homelistings.test.js"
@@ -379,7 +379,7 @@
   {
     "name": "F3-door-row-unasked",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "=> !homeListedOff(mapId, bd?.buildingKey) &&   // FOUNDATION F3",
+    "old": "=> !homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) &&   // FOUNDATION F3",
     "new": "=> true &&   // FOUNDATION F3",
     "tests": [
       "test/net/f3_homelistings.test.js"
@@ -433,7 +433,7 @@
   {
     "name": "F4-detail-kept",
     "file": "src/world/land/landLayer.js",
-    "old": "    if (/** @type {number} */ (e.height) <= WATER_LINE) w._bytes.fill(0, w.dataOffsets[i] + 22, w.dataOffsets[i] + 22 + 25);   // the 5 x 5 detail (woodsFile.js getLargeMapData)\n",
+    "old": "    w._bytes.fill(Math.min(255, Math.round(largeOfByte(b))), w.dataOffsets[i] + 22, w.dataOffsets[i] + 22 + 25);\n",
     "new": "",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "AF-P2-ground-held-to-row",
     "file": "src/net/homeListingLaw.js",
-    "old": "(homeListingOf(mapId, key)?.price != null\n  ? homeOnlinePrice",
-    "new": "(false\n  ? homeOnlinePrice",
+    "old": "  if (homeListingOf(mapId, key, _rows, layout)?.price == null) return price;\n",
+    "new": "  return price;\n",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]
@@ -613,7 +613,7 @@
   {
     "name": "AF-P3-pick-unasked",
     "file": "src/systems/arena/arenaMove.js",
-    "old": " && !homeListedOff(o?.mapId, s.buildingKey)), opts);",
+    "old": " && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId))), opts);",
     "new": "), opts);",
     "tests": [
       "test/net/f3_homelistings.test.js"
@@ -622,7 +622,7 @@
   {
     "name": "AF-P3-move-unasked",
     "file": "server-account/src/homes.js",
-    "old": "  if (homeListedOff(mapId, to)) return { error: 'home-unlisted' };   // AUDIT FOUNDATION P3: nor one its row takes off the market\n",
+    "old": "  if (homeListedOff(mapId, to, undefined, home.layout ?? null)) return { error: 'home-unlisted' };   // AUDIT FOUNDATION P3: nor one its row takes off the market, in the town's layout\n",
     "new": "",
     "tests": [
       "test/net/f3_homelistings.test.js"
@@ -640,7 +640,7 @@
   {
     "name": "AF-L2-seam-unread",
     "file": "src/world/land/landLayer.js",
-    "old": "  else if (inSeam(r.x, r.y, w, h)) out.push('seam');\n",
+    "old": "  else if (anyPixel(r.x, r.y, w, h, inSeamPixel)) out.push('seam');\n",
     "new": "",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
@@ -699,6 +699,240 @@
     "new": "        step();\n",
     "tests": [
       "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L1-filed-unkept",
+    "file": "src/world/land/landLayer.js",
+    "old": "  filed.set(k, { ...was, ...filed.get(k) });",
+    "new": "  filed.get(k ?? was);",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L1-fit-served",
+    "file": "src/scenes/world.js",
+    "old": "keptBayFit({ bayLand: (x, y) => !isWaterPixel(filedClimate(x, y, maps.getClimateIndex(x, y)), filedHeight(x, y, woods.getHeightMapValue(x, y))), trace })",
+    "new": "keptBayFit({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace })",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L1-counts-served",
+    "file": "src/scenes/world.js",
+    "old": "countryCounts(_countryTemplates, (x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)))",
+    "new": "countryCounts(_countryTemplates, (x, y) => maps.getClimateIndex(x, y))",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L1-rates-served",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "bayLand((x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)), (x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y))))",
+    "new": "bayLand((x, y) => maps.getClimateIndex(x, y), (x, y, c) => isWaterPixel(c, host.woods.getHeightMapValue(x, y)))",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L2-detail-kept",
+    "file": "src/world/land/landLayer.js",
+    "old": "    w._bytes.fill(Math.min(255, Math.round(largeOfByte(b))), w.dataOffsets[i] + 22, w.dataOffsets[i] + 22 + 25);",
+    "new": "    if (b <= WATER_LINE) w._bytes.fill(Math.min(255, Math.round(largeOfByte(b))), w.dataOffsets[i] + 22, w.dataOffsets[i] + 22 + 25);",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L3-ether-unread",
+    "file": "src/world/land/landLayer.js",
+    "old": "  else if (anyPixel(r.x, r.y, w, h, inEtherLaw)) out.push('ether');\n",
+    "new": "",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L4-air-unread",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    if (row !== undefined) return row;\n",
+    "new": "",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L4-felt-unread",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "(inBay(x, y) || landLayer().climateAt(x, y) !== undefined ? null : ",
+    "new": "(inBay(x, y) ? null : ",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L4-line-unread",
+    "file": "src/world/peaks/snowcap.js",
+    "old": "z = row === undefined ? tamrielBiomeAt(px, py) : null;",
+    "new": "z = tamrielBiomeAt(px, py);",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-L6-print-stamp",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "|${landLayer().stamp ? `l${landLayer().stamp}|` : ''}${fit ?",
+    "new": "|${fit ?",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF2-C2-guard-unread",
+    "file": "server-account/src/regionClock.js",
+    "old": "WHERE (SELECT tick FROM region_clock_meta WHERE id = 1) = ?2",
+    "new": "WHERE ?2 IS NOT NULL",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF2-C4-refused-marked",
+    "file": "server-account/src/regionClock.js",
+    "old": "  if (!took?.meta?.changes) return 0;",
+    "new": "  if (!took?.meta?.changes) { _tickedDay = today; return 0; }",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF2-C3-regions-unkept",
+    "file": "src/net/townEconBook.js",
+    "old": "        regions = byRegion;\n",
+    "new": "",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF2-C3-term-unpassed",
+    "file": "src/systems/town/townEcon.js",
+    "old": "const regional = host.regional?.(town.region) ?? 0;",
+    "new": "const regional = 0;",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF2-C3-host-unwired",
+    "file": "src/scenes/townEconHost.js",
+    "old": ", regional: (region) => book?.regionalOf(region) ?? 0 });",
+    "new": " });",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A1-peek-unread",
+    "file": "src/scenes/atlasHost.js",
+    "old": "list.slice(i, Math.min(end, i + ATLAS_RUN)), peek);",
+    "new": "list.slice(i, Math.min(end, i + ATLAS_RUN)), standing);",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A1-clock-unread",
+    "file": "src/scenes/atlasHost.js",
+    "old": "} while (i < end && clock() - t0 < ATLAS_SLICE_MS);",
+    "new": "} while (i < end);",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A1-host-unwired",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "peek: peekAt, ",
+    "new": "",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A2-old-atlas",
+    "file": "src/scenes/atlasHost.js",
+    "old": "return loc ? current().add(p, loc) : null;",
+    "new": "return loc ? a.add(p, loc) : null;",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A3-pin-read",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "(_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true)",
+    "new": "!!liveAsset(blockReplacementFilename(blockName))",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "AF2-A4-base-unread",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "for (let l = reg ? maps.baseLocationCount(r) : 0;",
+    "new": "for (let l = 0;",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF2-P5-ground-uncovered",
+    "file": "src/net/homeListingLaw.js",
+    "old": "  return law <= price ? law : price;",
+    "new": "  return law;",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF2-P6-key-any-layout",
+    "file": "src/net/homeListingLaw.js",
+    "old": "return (homeLayoutsMatch(layout, null) ? rows.find((r) => r.map === map && r.key === k) : null) ??",
+    "new": "return rows.find((r) => r.map === map && r.key === k) ??",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF2-P6-claim-layout-unpassed",
+    "file": "server-account/src/homes.js",
+    "old": "  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };",
+    "new": "  if (homeListedOff(mapId, buildingKey)) return { error: 'home-unlisted' };",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF2-P6-door-layout-unpassed",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "!homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) &&",
+    "new": "!homeListedOff(mapId, bd?.buildingKey) &&",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF2-P6-hall-price-unheld",
+    "file": "server-account/src/halls.js",
+    "old": "  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };\n",
+    "new": "",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
     ]
   }
 ]

@@ -6,7 +6,7 @@
 // grid (`cell`, [blockX, blockY]): `sale: false` takes it off the market, `price` sets what it costs (in the law's range).
 // The rows are checked against the world's atlas (world/atlas/atlas.js) at the fill and in the tests. Pure.
 import LISTINGS from './homeListings.json' with { type: 'json' };
-import { homeMapIdOk, homeBuildingKeyOk, homePriceOk, homeOnlinePrice, HOME_KEY_MAX } from './homeLaw.js';
+import { homeMapIdOk, homeBuildingKeyOk, homePriceOk, homeOnlinePrice, homeLayoutsMatch, HOME_KEY_MAX } from './homeLaw.js';
 
 /** @typedef {{ map: number, key?: number, cell?: [number, number], sale?: boolean, price?: number, note?: string }} HomeListing */
 
@@ -43,23 +43,29 @@ export const setHomeListings = (rows = HOME_LISTINGS) => { _rows = rows; };
 export const homeKeyCell = (k) => (k === HOME_KEY_MAX ? [0, 0] : [k >> 16, (k >> 8) & 0xff]);
 
 /** The row for a building of a town - its own row first, else its cell's - or null. A key row names a building of
- *  Daggerfall's own layout (WD3): a town a pack lays out anew is curated by cell.
- *  @param {unknown} mapId @param {unknown} key @param {readonly HomeListing[]} [rows] */
-export function homeListingOf(mapId, key, rows = _rows) {
+ *  Daggerfall's own layout (WD3) and is read only there (AUDIT FOUNDATION II P6): in a town a pack lays out anew
+ *  (`layout`, homeLaw.js homeLayoutsMatch) the key is another building, and the town is curated by cell.
+ *  @param {unknown} mapId @param {unknown} key @param {readonly HomeListing[]} [rows] @param {unknown} [layout] */
+export function homeListingOf(mapId, key, rows = _rows, layout = null) {
   if (!rows.length || !homeBuildingKeyOk(key)) return null;
   const map = Number(mapId) >>> 0, k = /** @type {number} */ (key), [bx, by] = homeKeyCell(k);
-  return rows.find((r) => r.map === map && r.key === k) ?? rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? null;
+  return (homeLayoutsMatch(layout, null) ? rows.find((r) => r.map === map && r.key === k) : null) ?? rows.find((r) => r.map === map && r.cell && r.cell[0] === bx && r.cell[1] === by) ?? null;
 }
-/** Whether a building is off the market by its row. @param {unknown} mapId @param {unknown} key @param {readonly HomeListing[]} [rows] */
-export const homeListedOff = (mapId, key, rows = _rows) => homeListingOf(mapId, key, rows)?.sale === false;
-/** AUDIT FOUNDATION P2: the price a home's ground is held to (homeLaw.js homeGroundOk) - the law's for that ground where
- *  a row sets the home's price, else the price paid. @param {unknown} mapId @param {unknown} key @param {number} price
- *  @param {unknown} ground @param {unknown} townBlocks */
-export const homeGroundPrice = (mapId, key, price, ground, townBlocks) => (homeListingOf(mapId, key)?.price != null
-  ? homeOnlinePrice(/** @type {number} */ (ground), /** @type {number} */ (townBlocks)) : price);
+/** Whether a building is off the market by its row. @param {unknown} mapId @param {unknown} key
+ *  @param {readonly HomeListing[]} [rows] @param {unknown} [layout] */
+export const homeListedOff = (mapId, key, rows = _rows, layout = null) => homeListingOf(mapId, key, rows, layout)?.sale === false;
+/** AUDIT FOUNDATION P2: the price a home's ground is held to (homeLaw.js homeGroundOk) - where a row sets the home's
+ *  price, the law's for that ground while the price paid covers it (AUDIT FOUNDATION II P5: never more room than the
+ *  gold bought), else the price paid. @param {unknown} mapId @param {unknown} key @param {number} price
+ *  @param {unknown} ground @param {unknown} townBlocks @param {unknown} [layout] */
+export const homeGroundPrice = (mapId, key, price, ground, townBlocks, layout = null) => {
+  if (homeListingOf(mapId, key, _rows, layout)?.price == null) return price;
+  const law = homeOnlinePrice(/** @type {number} */ (ground), /** @type {number} */ (townBlocks));
+  return law <= price ? law : price;
+};
 /** What a building costs online: its row's price where it sets one, else `lawPrice`. @param {unknown} mapId
- *  @param {unknown} key @param {number} lawPrice @param {readonly HomeListing[]} [rows] */
-export const homeListedPrice = (mapId, key, lawPrice, rows = _rows) => homeListingOf(mapId, key, rows)?.price ?? lawPrice;
+ *  @param {unknown} key @param {number} lawPrice @param {readonly HomeListing[]} [rows] @param {unknown} [layout] */
+export const homeListedPrice = (mapId, key, lawPrice, rows = _rows, layout = null) => homeListingOf(mapId, key, rows, layout)?.price ?? lawPrice;
 
 /**
  * THE ROWS CHECKED AGAINST THE WORLD (world/atlas/atlas.js): each row's town a place with an exterior, and its cell (a

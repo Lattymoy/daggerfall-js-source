@@ -35,8 +35,8 @@ import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's l
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
 import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-WATER: the land let down about the Imperial City at the sea
 import { perlinNoise } from '../perlin.js';   // RELIEF-PEAKS: the large map before it (largeMapBefore), for the records written on it
-import { inEtherLaw } from '../ethericSea.js';
-import { landLayer } from '../land/landLayer.js';   // FOUNDATION F4: the land's rows, asked before the law   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
+import { inEtherLaw } from '../ethericSea.js';   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
+import { landLayer } from '../land/landLayer.js';   // FOUNDATION F4: the land's rows, asked before the law
 import { BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, cubicInterpolator } from '../terrain/terrainSampler.js';   // RELIEF-PEAKS: the kernel's own two terms
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
@@ -293,6 +293,8 @@ export function groundClimateIndex(bayClimateIndex) {
 export function groundAirClimateIndex(bayClimateIndex) {
   return (x, y) => {
     if (inBay(x, y)) return bayClimateIndex(x, y);
+    const row = landLayer().climateAt(x, y);   // AUDIT FOUNDATION II L4: a row's climate its air too
+    if (row !== undefined) return row;
     const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
     return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
   };
@@ -306,7 +308,7 @@ export function groundAirClimateIndex(bayClimateIndex) {
  * @param {number} x @param {number} y @param {number} climate
  */
 export function feltClimateIndex(x, y, climate) {
-  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;
+  return (inBay(x, y) || landLayer().climateAt(x, y) !== undefined ? null : tamrielBiomeAt(x, y)?.air) ?? climate;   // AUDIT FOUNDATION II L4: a row's climate felt
 }
 
 /** WW-R (bible/03-World/World-Wide.md WW-R): THE POLITIC MAP PAST THE BAY - a province's land its region's politic

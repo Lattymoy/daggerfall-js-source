@@ -108,7 +108,7 @@ export function homeCandidate(bd) {
  *  takes HouseForSale and House1-4, BuildingDirectory.cs:156-184). The producers stamp `hasInterior`
  *  (talkTopics.js); a record without the stamp is not refused. Not in homeCandidate: a crypt already bought stays its
  *  owner's home, plaque and "Sell it" row with it. */
-export const homePurchasable = (bd, { isActiveQuestBuilding = null, mapId = bd?.townMapId } = {}) => !homeListedOff(mapId, bd?.buildingKey) &&   // FOUNDATION F3: nor one its row takes off the market
+export const homePurchasable = (bd, { isActiveQuestBuilding = null, mapId = bd?.townMapId } = {}) => !homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) &&   // FOUNDATION F3: nor one its row takes off the market, in the town's layout
   homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);
 
 export { homeSceneName };   // the header's scene (net/homeScene.js, so the service names it too)

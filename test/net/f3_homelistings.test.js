@@ -14,7 +14,7 @@ import { makeBuildingKey, BUILDING_KEY_0 } from '../../src/systems/talk/talkTopi
 import { arenaHomeFor } from '../../src/systems/arena/arenaMove.js';
 import { homePurchasable } from '../../src/systems/online/onlineHomes.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
-import { HOME_PRICE_MAX, HOME_ARENA_MAP_ID, homeOnlinePrice } from '../../src/net/homeLaw.js';
+import { HOME_PRICE_MAX, HOME_ARENA_MAP_ID, homeOnlinePrice, homeGroundOk } from '../../src/net/homeLaw.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { standService } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
@@ -42,6 +42,12 @@ test('F3 the law: a row names a town and one building or one cell, and says it i
   assert.deepEqual([homeKeyCell(BUILDING_KEY_0), homeListedOff(77, makeBuildingKey(0, 0, 0), corner), homeListedOff(77, makeBuildingKey(0, 0, 1), corner)], [[0, 0], true, true]);
   assert.deepEqual([homeListedPrice(77, key(2, 3, 4), 9_000, ROWS), homeListedPrice(77, key(1, 1, 1), 9_000, ROWS)], [42_000, 9_000]);
   assert.equal(homeListedOff(78, key(2, 3, 9), ROWS), false, 'another town\'s cell');
+  // AUDIT FOUNDATION II P6: a key row names its building in Daggerfall's own layout alone - in a town a pack lays out
+  // anew the key is another building; a cell row stands in every layout
+  const BV = 'beautiful-villages@1.4.2';
+  assert.deepEqual([homeListedOff(SKYRIM_TOWN, key(0, 0, 1), ROWS, BV), homeListedPrice(77, key(1, 1, 1), 9_000, homeListingsOf({ listings: [{ map: 77, key: key(1, 1, 1), price: 42_000 }] }), BV)], [false, 9_000]);
+  assert.deepEqual([homeListedOff(77, key(2, 3, 4), ROWS, BV), homeListedOff(77, key(2, 3, 4), ROWS, 'beautiful-cities@1.0.0+beautiful-villages@1.4.2')], [true, true], 'the cell\'s row read in any layout');
+  assert.equal(homeListedOff(SKYRIM_TOWN, key(0, 0, 1), ROWS, null), true, 'Daggerfall\'s own');
 });
 
 test('F3 the game\'s file: every row it holds is a good one, and both ends read it', () => {
@@ -50,9 +56,13 @@ test('F3 the game\'s file: every row it holds is a good one, and both ends read 
   assert.equal(HOME_LISTINGS.length, raw.listings.length, 'no row of the game\'s is dropped');
   assert.equal(homeListings(), HOME_LISTINGS);
   const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-  assert.match(src('server-account/src/homes.js'), /if \(homeListedOff\(mapId, buildingKey\)\) return \{ error: 'home-unlisted' \};\n\s*if \(homeListedPrice\(mapId, buildingKey, price\) !== price\) return \{ error: 'home-update' \};/);
-  assert.match(src('server-account/src/halls.js'), /if \(homeListedOff\(mapId, buildingKey\)\) return \{ error: 'home-unlisted' \};/);
-  assert.match(src('src/scenes/worldModes.js'), /return homePriceOk\(price\) \? homeListedPrice\(homeTownOf\(bd\), bd\?\.buildingKey, price\) : 0;/);
+  // PIN MOVED (AUDIT FOUNDATION II P6): each read in the town's layout - the claim's, the hall's, the door's
+  assert.match(src('server-account/src/homes.js'), /if \(homeListedOff\(mapId, buildingKey, undefined, layout\)\) return \{ error: 'home-unlisted' \};\n\s*if \(homeListedPrice\(mapId, buildingKey, price, undefined, layout\) !== price\) return \{ error: 'home-update' \};/);
+  assert.match(src('server-account/src/halls.js'), /if \(homeListedOff\(mapId, buildingKey, undefined, layout\)\) return \{ error: 'home-unlisted' \};[^\n]*\n\s*if \(homeListedPrice\(mapId, buildingKey, price, undefined, layout\) !== price\) return \{ error: 'home-update' \};/);
+  assert.match(src('src/scenes/worldModes.js'), /return homePriceOk\(price\) \? homeListedPrice\(homeTownOf\(bd\), bd\?\.buildingKey, price, undefined, homeClaimLayout\(homeTownOf\(bd\)\)\) : 0;/);
+  assert.match(src('src/systems/online/onlineHomes.js'), /=> !homeListedOff\(mapId, bd\?\.buildingKey, undefined, homeClaimLayout\(mapId\)\) &&/);
+  assert.match(src('src/systems/arena/arenaMove.js'), /!homeListedOff\(o\?\.mapId, s\.buildingKey, undefined, homeClaimLayout\(o\?\.mapId\)\)\), opts\);/);
+  assert.match(src('server-account/src/decorAccess.js'), /homeGroundPrice\(mapId, buildingKey, Number\(home\.price\), ground, townBlocks, home\.layout \?\? null\)/);
 });
 
 test('F3 the door: a house its row takes off the market is not for sale; one beside it is (mutant: the row unasked)', () => {
@@ -71,10 +81,10 @@ test('F3 a home the arena displaced moves only to a house on the market - the ow
   try {
     for (let i = 0; i < 6; i++) assert.equal(arenaHomeFor({ ...o, oldKey: o.oldKey + i }, [house(key(1, 1, 1)), house(key(2, 2, 1))])?.buildingKey, key(2, 2, 1));
   } finally { setHomeListings(); }
-  assert.match(readFileSync(new URL('../../server-account/src/homes.js', import.meta.url), 'utf8'), /if \(homeListedOff\(mapId, to\)\) return \{ error: 'home-unlisted' \};/);
+  assert.match(readFileSync(new URL('../../server-account/src/homes.js', import.meta.url), 'utf8'), /if \(homeListedOff\(mapId, to, undefined, home\.layout \?\? null\)\) return \{ error: 'home-unlisted' \};/);   // PIN MOVED (AUDIT FOUNDATION II P6): in the town's layout
 });
 
-test('F3 the service: a claim of a house off the market is refused and nothing is paid; a curated house at its row\'s price lands with its ground, at the law\'s refused (mutants: the row unread, the price unheld, the ground held to the row)', async () => {
+test('F3 the service: a claim of a house off the market is refused before anything is read; a curated house at its row\'s price lands with the ground its price covers, at the law\'s refused, and a ground the price does not cover is not kept (AUDIT FOUNDATION II P5; mutants: the row unread, the price unheld, the ground held to the row, the ground uncovered)', async () => {
   setHomeListings(ROWS);
   try {
     const s = await standService();
@@ -83,12 +93,13 @@ test('F3 the service: a claim of a house off the market is refused and nothing i
     const claim = (buildingKey, price) => s.call('/v1/homes/claim', { mapId: 77, buildingKey, region: 17, character: R.id, price, realm: R.at(), layout: null }, who.secret);
     assert.equal((await claim(key(2, 3, 9), 20_000)).body?.error, 'home-unlisted');
     assert.equal((await claim(key(2, 3, 4), HOME_PRICE_MAX)).body?.error, 'home-update', 'not its row\'s price');
-    const ok = await s.call('/v1/homes/claim', { mapId: 77, buildingKey: key(2, 3, 4), region: 17, character: R.id, price: 42_000, realm: R.at(), layout: null, ground: 140, townBlocks: 9 }, who.secret);
+    const ok = await s.call('/v1/homes/claim', { mapId: 77, buildingKey: key(2, 3, 4), region: 17, character: R.id, price: 42_000, realm: R.at(), layout: null, ground: 40, townBlocks: 9 }, who.secret);
     assert.equal(ok.status, 200);
     // AUDIT FOUNDATION P2: a curated price keeps the ground its law's price would (the decor's room) - the ground held to
-    // the law, the price to the row
-    assert.deepEqual({ ...s.env.DB._raw.prepare('SELECT price, ground FROM homes WHERE building_key = ?').get(key(2, 3, 4)) }, { price: 42_000, ground: 140 });
-    assert.equal(homeGroundPrice(77, key(2, 3, 4), 42_000, 140, 9), homeOnlinePrice(140, 9));
+    // the law, the price to the row; AUDIT FOUNDATION II P5: while the price paid covers it, never more room than bought
+    assert.deepEqual({ ...s.env.DB._raw.prepare('SELECT price, ground FROM homes WHERE building_key = ?').get(key(2, 3, 4)) }, { price: 42_000, ground: 40 });
+    assert.equal(homeGroundPrice(77, key(2, 3, 4), 42_000, 40, 9), homeOnlinePrice(40, 9));
+    assert.ok(homeOnlinePrice(2000, 64) > 42_000 && !homeGroundOk(2000, 64, homeGroundPrice(77, key(2, 3, 4), 42_000, 2000, 64)), 'the largest ground on a 42,000 house: not kept');
     assert.equal(homeGroundPrice(77, key(1, 1, 1), 9_000, 140, 9), 9_000, 'no row: the price paid');
   } finally { setHomeListings(); }
 });
@@ -102,11 +113,11 @@ test('F3 the atlas says which rows name nothing - a town no place is, a cell pas
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(join(ARENA2 ?? '', 'MAPS.BSA')) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
 
-test('F3 with ARENA2: the game\'s rows against the world\'s atlas name only real towns and cells - and Daggerfall\'s corner cell stands where a hamlet\'s does not (mutant: the grid unread)', { skip: skipReal }, async () => {
+test('F3 with ARENA2: the game\'s rows against the world\'s atlas name only real towns and cells - Daggerfall\'s corner cell and Solitude\'s stand where a hamlet\'s does not (AUDIT FOUNDATION II P7: the served world\'s atlas, its places past the Bay listed, so a row there is a town; mutant: the grid unread)', { skip: skipReal }, async () => {
   const { loadWorldAtlas } = await import('../../tools/atlasMeasure.mjs');
-  const { atlas } = await loadWorldAtlas(/** @type {string} */ (ARENA2));
+  const { atlas } = await loadWorldAtlas(/** @type {string} */ (ARENA2), { served: true });
   assert.deepEqual(homeListingsUnplaced(HOME_LISTINGS, (m) => atlas.place(m)), []);
-  const hamlet = atlas.bundles().find((b) => b.exterior && b.exterior.w === 1 && b.exterior.h === 1);
-  const rows = homeListingsOf({ listings: [{ map: 1291010263, cell: [7, 7], sale: false }, { map: hamlet?.id, cell: [1, 1], sale: false }] });
-  assert.deepEqual(homeListingsUnplaced(rows, (m) => atlas.place(m)).map((u) => u.why), ['no such cell']);
+  const hamlet = atlas.bundles().find((b) => b.exterior && b.exterior.w === 1 && b.exterior.h === 1 && b.place.theatre === 0);
+  const rows = homeListingsOf({ listings: [{ map: 1291010263, cell: [7, 7], sale: false }, { map: SKYRIM_TOWN, cell: [7, 7], sale: false }, { map: hamlet?.id, cell: [1, 1], sale: false }] });
+  assert.deepEqual(homeListingsUnplaced(rows, (m) => atlas.place(m)).map((u) => [u.row.map, u.why]), [[hamlet?.id, 'no such cell']]);
 });

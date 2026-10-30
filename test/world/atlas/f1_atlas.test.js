@@ -8,7 +8,8 @@ import { createAtlas, fillAtlas, ATLAS_VERSION, PART_KINDS, blockKindOf } from '
 import { placeOfRow } from '../../../src/world/worldWide/worldPlaces.js';
 import { districtOf, areaOfDistrict } from '../../../src/world/worldWide/worldGrid.js';
 import { servedBlockOf } from '../../../src/world/atlas/atlasServed.js';
-import { registerPortBlock } from '../../../src/formats/worldData/worldDataReplacement.js';
+import { registerPortBlock, registerWorldDataAsset, setLayoutPinOracle, installWorldDataReplacement } from '../../../src/formats/worldData/worldDataReplacement.js';
+import { setValue } from '../../../src/systems/settings/settings.js';
 
 const [cx, cy] = districtOf(1500, -400);
 const SKYRIM_AREA = areaOfDistrict(3, cx, cy);
@@ -110,4 +111,11 @@ test('F1 served: a name resolves as the layout reads it - BLOCKS.BSA\'s alternat
   registerPortBlock('PORTZ001.RMB', { Name: 'PORTZ001.RMB' }, 950001);
   const served = servedBlockOf(blocks);
   assert.deepEqual(['AAA.RMB', 'AAX.RMB', 'NEWB0001.RMB', 'PORTZ001.RMB', 'NONE.RMB'].map(served), ['AAA.RMB', 'AAA.RMB', '', 'PORTZ001.RMB', '']);
+  // AUDIT FOUNDATION II A3: a mod's block is served as at a town no save pinned - the pin of the town read last (here
+  // every town's, out of the mod) is never the door's answer
+  installWorldDataReplacement();
+  setValue('Enhancements', 'AssetInjection', 'True');
+  registerWorldDataAsset('NEWB0001.RMB.json', { Name: 'NEWB0001.RMB' }, null, { vendor: 'beautiful-villages' });
+  setLayoutPinOracle(() => ({ out: new Set(['beautiful-villages']), in: new Set() }));
+  try { assert.equal(served('NEWB0001.RMB'), 'NEWB0001.RMB'); } finally { setLayoutPinOracle(null); setValue('Enhancements', 'AssetInjection', 'False'); }
 });

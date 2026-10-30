@@ -9,8 +9,12 @@ import { createAtlas, fillAtlas, ATLAS_VERSION } from '../world/atlas/atlas.js';
 import { servedBlockOf } from '../world/atlas/atlasServed.js';
 import { homeListingsUnplaced } from '../net/homeListingLaw.js';   // FOUNDATION F3: the property rows checked against the places
 
-/** Places checked in one idle slice. */
+/** Places checked in one idle slice at most. */
 export const ATLAS_SLICE = 500;
+/** The most of an idle slice the check takes, ms - a place past the Bay is cloned to be read (AUDIT FOUNDATION II A1). */
+export const ATLAS_SLICE_MS = 8;
+/** Places filled between two looks at the clock. */
+export const ATLAS_RUN = 25;
 /** The most problems the console names (the count is always whole). */
 export const ATLAS_SAID = 8;
 
@@ -18,13 +22,13 @@ const idle = (/** @type {() => void} */ fn) => (typeof globalThis.requestIdleCal
 
 /**
  * @param {{ places: any, blocks: { checkName: (n: string) => string, getBlockIndex: (n: string) => number, count: number }, standing: (p: any) => any, stand?: (p: any) => any,
- *   schedule?: (fn: () => void) => unknown, listings?: () => readonly any[], additions?: () => ReadonlyArray<readonly [any, any]>, stamp?: () => unknown }} o - `places` the registry
- *   (world/worldWide/worldPlaces.js); `standing` the location the host already holds for a place (no side effect), `stand`
- *   the one it would stand on asking (a place past the Bay cloned and indexed); `listings` the property rows, each
- *   checked to name a town and a cell; `additions` this client's world-data additions, `[place, location]`; `stamp`
- *   what moves when the host stands a location again (AUDIT FOUNDATION A2: a town's layout pinned anew)
+ *   schedule?: (fn: () => void) => unknown, listings?: () => readonly any[], additions?: () => ReadonlyArray<readonly [any, any]>, stamp?: () => unknown,
+ *   peek?: (p: any) => any, clock?: () => number }} o - `standing` the location the host holds for a place, `stand` the one
+ *   it stands on asking, `peek` the one it would stand, read and not indexed (the check's: AUDIT FOUNDATION II A1);
+ *   `listings` the property rows; `additions` this client's world-data additions, `[place, location]`; `stamp` what
+ *   moves when the host stands a location again (AUDIT FOUNDATION A2); `clock` ms, a slice's budget
  */
-export function createAtlasHost({ places, blocks, standing, stand = standing, schedule = idle, listings = () => [], additions = () => [], stamp = () => 0 }) {
+export function createAtlasHost({ places, blocks, standing, stand = standing, peek = standing, schedule = idle, listings = () => [], additions = () => [], stamp = () => 0, clock = () => performance.now() }) {
   const resolveBlock = servedBlockOf(blocks);
   let atlas = createAtlas({ resolveBlock });
   let generation = places.generation(), stood = stamp();
@@ -46,7 +50,7 @@ export function createAtlasHost({ places, blocks, standing, stand = standing, sc
     const had = a.place(p.mapId);
     if (had) return had;
     const loc = stand(p);
-    return loc ? a.add(p, loc) : null;
+    return loc ? current().add(p, loc) : null;   // AUDIT FOUNDATION II A2: standing it moved the stamp - kept on the atlas that is now
   }
 
   /** A place's bundle from the location the host already holds for it - nothing stood (AUDIT FOUNDATION A3) - or null.
@@ -66,9 +70,12 @@ export function createAtlasHost({ places, blocks, standing, stand = standing, sc
         try { step(); } catch (e) { checking = false; console.warn('[atlas] the check stopped:', e); done(null); }   // AUDIT FOUNDATION A5: never left running
       };
       const step = () => {
-        const r = fillAtlas(scratch, list.slice(i, i + ATLAS_SLICE), standing);
-        unlocated += r.unlocated.length;
-        i += ATLAS_SLICE;
+        const t0 = clock(), end = Math.min(list.length, i + ATLAS_SLICE);
+        do {
+          const r = fillAtlas(scratch, list.slice(i, Math.min(end, i + ATLAS_RUN)), peek);
+          unlocated += r.unlocated.length;
+          i = Math.min(end, i + ATLAS_RUN);
+        } while (i < end && clock() - t0 < ATLAS_SLICE_MS);
         if (i < list.length) { schedule(slice); return; }
         for (const [p, loc] of additions()) scratch.add(p, loc);   // a mod's places, each client's own
         report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved'), unplaced: homeListingsUnplaced(listings(), (map) => held(scratch, places.byMapId(map)) ?? undefined) };

@@ -103,9 +103,10 @@ index to any block a location names (`assignBlockIndices`), so a name could pass
 `createTamrielPlaces` makes the atlas host over its registry and returns it as `worldAtlas`. A bundle is made when
 first asked, from the location the host holds. The places near a pixel are the registry's `near`, asked each time:
 residency is derived, never stored. A provider that registers starts a new atlas. Where the world-data door serves
-edits or property rows stand, the host checks at idle, 500 places a slice: every listed place, this client's own
-world-data additions (HUB1 keeps them off the registry), and every property row (F3). What serves nothing, or a row
-that names no town or cell, is told to the console once.
+edits or property rows stand, the host checks at idle, at most 500 places and 8 ms a slice: every listed place (one
+past the Bay the host has not stood read through its clone, never stood), this client's own world-data additions
+(HUB1 keeps them off the registry), and every property row (F3). A mod's block is asked as at a town no save pinned.
+What serves nothing, or a row that names no town or cell, is told to the console once.
 
 ### What it measured
 
@@ -137,11 +138,11 @@ served and its block not, the fill finds `RRFORT01.RMB` unresolved before any pl
 ## F2 - the residency clock and prosperity (BUILT, 2026-10-30)
 
 `src/net/regionClockLaw.js` is the clock and its first rule; `server-account/src/regionClock.js` keeps it
-(`region_clock`, `region_clock_meta`, migration 0198). A tick is a UTC day, TOWN-ECON's. Tick t adds the acts of day t - 3
-(`REGION_ACTS_SETTLE_DAYS`): a Watch receipt is claimed up to two days late and a patron's sale reckoned up to 48 hours
-late, each on its own day.
+(`region_clock`, `region_clock_meta`, migration 0198 - main's 0198 and 0199 came first, so the merge renumbers it
+0200). A tick is a UTC day, TOWN-ECON's. Tick t adds the acts of day t - 3 (`REGION_ACTS_SETTLE_DAYS`): a Watch receipt
+is claimed up to two days late and a patron's sale reckoned up to 48 hours late, each on its own day.
 
-A region is resident on a tick when players acted at one of its towns that day
+A region is resident on tick t when players acted at one of its towns on day t - 3
 (`town_econ_days` by `town_econ_towns.region`): derived each tick, never stored. This departs from the proposal's
 radius round the player: the service knows players by their acts at towns. A resident region steps; the rotation steps
 two more, so none of the 71 regions is more than 36 ticks behind (the proposal's bound is 45). The cron's `town-shares`
@@ -163,10 +164,11 @@ market; `price` sets what it costs, in the law's range. The door asks (`systems/
 (`home-unlisted`) or at another price (`home-update`). The game ships no row: the market is the law's until one is
 written.
 
-The atlas checks every row names a real town and a cell of its grid, in the tests and in the game. A key row
-names a building of Daggerfall's own layout; a town a pack lays out anew is curated by cell. A row's price sells only a
-house the door can measure, and its ground is held to the law's price for that ground. A Knightly Order's house is a
-grant, not a sale, and ignores the rows. Open land for homesteads is PLOT1's, the owner's planned slice.
+The atlas checks every row names a real town and a cell of its grid: in the tests over the served world, in the game
+over the registry's towns. A key row names a building of Daggerfall's own layout and is read only there; a town a pack
+lays out anew is curated by cell, which every layout reads. A row's price keeps a home's ground only while it covers
+the law's price for that ground. A Knightly Order's house is a grant and ignores the rows, though its buy-back reads a
+row's price. A home already owned is not touched by a later row. Open land for homesteads is PLOT1's.
 
 ## F4 - the land as data (BUILT, 2026-10-30)
 
@@ -176,10 +178,16 @@ Ocean on water alone), so every reader of the water agrees. A row in the 14 pixe
 ground there is the Bay's, then blended.
 
 On the Bay the rows are written into WOODS.WLD and CLIMATE.PAK as
-`scenes/shared.js` `fetchBytes` serves them, a water pixel's 5 x 5 detail flattened; every host, worker and reader reads
-those bytes, and DFU's two boot repairs (the coast's climate dilated, a steep town's neighbours smoothed) run over a row
-as over the file's own. Past the Bay `tamrielHeightByte` and `tamrielClimateAt` ask the rows first. The roads' kept
-caches carry the rows' stamp. `node tools/landEdit.mjs` writes a row through the same check. The game ships no row.
+`scenes/shared.js` `fetchBytes` serves them, each pixel's 5 x 5 detail by WOODS.WLD's own law for its byte
+(`largeOfByte`); every host, worker and reader reads those bytes, and DFU's two boot repairs (the coast's climate
+dilated, a steep town's neighbours smoothed) run over a row as over the file's own. The Bay's fit to the picture and
+the countryside's rates read the files as they came (`filedClimate`, `filedHeight`): a row moves no place past the Bay.
+A town's own climate reads the PAK column west of its ground's (DFU's quirk, kept), so a row for a town's climate
+covers that pixel too.
+
+Past the Bay `tamrielHeightByte`, `tamrielClimateAt`, the air's climate and the snow line ask the rows first. A row in
+the Eltheric Ocean's box is refused: its isles answer their own ground. The roads' kept caches carry the rows' stamp.
+`node tools/landEdit.mjs` writes a row through the same check. The game ships no row.
 
 ## F5 - the build's open files (BUILT, 2026-10-30)
 
@@ -214,6 +222,30 @@ Recorded, not changed: the card's yesterday reads today's regional term; the mea
 (a host's ring is read off its file, not its function); the tool's served world is the game's installs without its
 loose mod files.
 
+## AUDIT FOUNDATION II (2026-10-30)
+
+The owner: *"Audit this"*, again, of the branch with the first audit's fixes. Four fresh reviews, one slice each, given
+the code and not the first audit's findings. What they found, and what was done:
+
+- **L1 (bug)** The Bay's fit to the picture and the countryside's rates read the served Bay: one island row moved the
+  continent 5% and changed a tenth of the swamp places past the Bay. They read the files as they came.
+- **L2 (bug)** A land row on the Bay kept the file's 5 x 5 detail: a mountain let down to byte 10 still stood 500 units
+  up. The detail is WOODS.WLD's law for the row's byte. **L3** a row in the Eltheric Ocean's box read land to the roads
+  and sea to the world; refused. **L4** past the Bay the air's climate, the felt climate and the snow line read a row.
+- **C2, C4 (risk)** A second runner's refusal is pinned; a runner refused across midnight is no longer marked ticked.
+  **C3** the client's half of the regional term is pinned.
+- **P5 (bug)** A row's price made the ground check pass for any ground: a 5,000 hut could keep the largest room. A
+  ground is kept only while the price paid covers the law's price for it.
+- **P6 (bug)** A key row applied in a town a pack lays out anew, where its key is another building. Key rows are read
+  in Daggerfall's own layout alone, at the door, the claim, the hall, the arena move and the ground.
+- **A1 (gap)** The game's check never read a place past the Bay the host had not stood: 909 places. It reads them
+  through their clones, 8 ms a slice. **A2** a bundle stood past the Bay is kept. **A3** a mod's block was asked
+  under the pin of the town read last. **A4** the mod additions' loop is pinned.
+
+Recorded, not changed: the migration's number is the merge's to change (MIGRATION-PREFIX wants no gap here); a home
+resold by `homeTransfer` keeps no row's word; a home bought at a removed row's price keeps no later ground. All
+mutants of the second audit dead.
+
 ## THE FOUR HOSTS (Home.md)
 
 - `scenes/world.js` - wired, through `scenes/tamrielPlacesHost.js` (`worldAtlas`), `scenes/townEconHost.js` (the
@@ -231,7 +263,7 @@ loose mod files.
 - `test/net/f3_homelistings.test.js` - the rows, the door, the claim, the atlas's check.
 - `test/world/land/f4_landlayer.test.js` - the rows, past the Bay, the kept keys, the served files on ARENA2.
 - `test/tooling/f5_openfiles.test.js`, `test/tooling/foundationmeasure.test.js`.
-- `tools/mutants/foundation.json` - 78 mutants, the audit's among them.
+- `tools/mutants/foundation.json` - 103 mutants, the two audits' among them.
 
 ## Port-Ledger
 

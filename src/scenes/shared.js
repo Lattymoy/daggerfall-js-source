@@ -115,8 +115,8 @@ import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a 
 import { audio } from '../systems/audio.js';
 import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
-import { getBytes, forgetBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';
-import { landServedBytes } from '../world/land/landLayer.js';   // FOUNDATION F4: the land as data   // M-EXT/M-TEX: the player's own packs
+import { getBytes, forgetBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { landServedBytes } from '../world/land/landLayer.js';   // FOUNDATION F4: the land as data
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data

@@ -7,16 +7,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { landRowProblems, landLayerOf, landLayer, setLandLayer, landServedBytes, WATER_LINE, LAND_LEAST, LAND_SEAM_REACH } from '../../../src/world/land/landLayer.js';
+import { landRowProblems, landLayerOf, landLayer, setLandLayer, landServedBytes, filedClimate, filedHeight, WATER_LINE, LAND_LEAST, LAND_SEAM_REACH } from '../../../src/world/land/landLayer.js';
 import { addLandRow } from '../../../tools/landEdit.mjs';
-import { tamrielHeightByte, groundClimateIndex, dropGroundCache, tamrielLargeMap, tamrielClimateAt, groundWoods, SEAM_PX, BLEND_PX } from '../../../src/world/tamriel/tamrielGround.js';
+import { tamrielHeightByte, groundClimateIndex, groundAirClimateIndex, feltClimateIndex, dropGroundCache, tamrielLargeMap, tamrielClimateAt, groundWoods, largeOfByte, SEAM_PX, BLEND_PX } from '../../../src/world/tamriel/tamrielGround.js';
+import { capLineOfPixel, SNOWCAP } from '../../../src/world/peaks/snowcap.js';
+import { ETHER_BOX } from '../../../src/world/ethericSea.js';
 import { isWaterPixel } from '../../../src/ui/overworldModel.js';
 import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { roadsCacheKey } from '../../../src/world/roadsCache.js';
 import { regionKey } from '../../../src/world/tamrielRoads.js';
 import { CLIMATES } from '../../../src/formats/mapsTables.js';
 
-test('F4 the row: a rectangle of the world\'s pixels, water at 0 or land at the shore and over with a land climate - nothing between, and none in the seam band past the Bay\'s edge - so no two readers of the water disagree, and why (mutants: the between bytes kept, the note unasked, the land climate unasked, the seam unread)', () => {
+test('F4 the row: a rectangle of the world\'s pixels, water at 0 or land at the shore and over with a land climate - nothing between, and none in the seam band past the Bay\'s edge nor the Eltheric Ocean\'s box - so no two readers of the water disagree, and why (mutants: the between bytes kept, the note unasked, the land climate unasked, the seam unread, the box unread)', () => {
   assert.deepEqual(landRowProblems({ x: 100, y: 100, height: 0, note: 'a cove' }), []);
   assert.deepEqual(landRowProblems({ x: -900, y: -300, w: 4, h: 2, climate: CLIMATES.Swamp, note: 'past the Bay' }), []);
   for (const height of [1, WATER_LINE, WATER_LINE + 1, LAND_LEAST - 1]) assert.deepEqual(landRowProblems({ x: 1, y: 1, height, note: 'n' }), ['height'], `${height}`);
@@ -31,6 +33,10 @@ test('F4 the row: a rectangle of the world\'s pixels, water at 0 or land at the 
   assert.equal(LAND_SEAM_REACH, SEAM_PX + BLEND_PX);
   for (const r of [{ x: -5, y: 100 }, { x: 990, y: 100, w: 20 }, { x: 500, y: 499 + LAND_SEAM_REACH }]) assert.deepEqual(landRowProblems({ ...r, height: 0, note: 'n' }), ['seam'], JSON.stringify(r));
   assert.deepEqual(landRowProblems({ x: -1 - LAND_SEAM_REACH, y: 100, height: 0, note: 'n' }), [], 'just past the band');
+  // AUDIT FOUNDATION II L3: the Eltheric Ocean's box answers its own ground (ethericSea.js etherWoods) - a row there read
+  // land to the roads and sea to the world
+  assert.deepEqual(landRowProblems({ x: 500, y: -5000, height: 40, climate: CLIMATES.Woodlands, note: 'n' }), ['ether']);
+  assert.deepEqual(landRowProblems({ x: ETHER_BOX.x0 - 64 - 3, y: -5000, w: 3, height: 0, note: 'n' }), [], 'just west of the box');
   assert.deepEqual(landRowProblems({ x: 1, y: 1, climate: 99, note: '' }), ['climate', 'note']);
   assert.deepEqual(landRowProblems({ x: 9000, y: 1, height: 0, note: 'n' }), ['pixel']);
   assert.deepEqual(landRowProblems({ x: 1, y: 1, w: 65, height: 0, note: 'n' }), ['size']);
@@ -83,6 +89,20 @@ test('F4 past the Bay: a row\'s height and climate are the ground\'s - the byte,
   assert.ok(tamrielHeightByte(x, y) >= 20, 'the law\'s again without the row');
 });
 
+test('F4 past the Bay a row\'s climate is the pixel\'s air and its snow line too - Morrowind\'s Velothi foothills made woodland neither feel nor snow as the mountain under its zone\'s air did (AUDIT FOUNDATION II L4; mutants: the air unread, the felt unread, the line unread)', () => {
+  const x = 2973, y = 157, bay = () => CLIMATES.Woodlands;
+  dropGroundCache();
+  const was = [groundAirClimateIndex(bay)(x, y), feltClimateIndex(x, y, tamrielClimateAt(x, y)), capLineOfPixel(x, y, tamrielClimateAt)];
+  assert.deepEqual([tamrielClimateAt(x, y), was[0], was[1]], [CLIMATES.Mountain, CLIMATES.Subtropical, CLIMATES.Subtropical], 'a mountain under its zone\'s own air');
+  setLandLayer(landLayerOf({ edits: [{ x, y, climate: CLIMATES.Woodlands, note: 'a green hollow in the foothills' }] }));
+  dropGroundCache();
+  try {
+    assert.deepEqual([groundAirClimateIndex(bay)(x, y), feltClimateIndex(x, y, tamrielClimateAt(x, y)), capLineOfPixel(x, y, tamrielClimateAt)], [CLIMATES.Woodlands, CLIMATES.Woodlands, SNOWCAP.climates[CLIMATES.Woodlands]]);
+    assert.deepEqual([groundAirClimateIndex(bay)(x + 1, y), capLineOfPixel(x + 1, y, tamrielClimateAt)], [was[0], was[2]], 'the pixel beside it its zone\'s');
+  } finally { setLandLayer(); dropGroundCache(); }
+  assert.deepEqual([groundAirClimateIndex(bay)(x, y), feltClimateIndex(x, y, tamrielClimateAt(x, y)), capLineOfPixel(x, y, tamrielClimateAt)], was);
+});
+
 test('F4 the kept caches\' keys move with the rows - the Bay\'s roads and a region\'s past the Bay - and stand as they were with none (mutants: the land out of a key)', () => {
   const plain = [roadsCacheKey({ settlements: [], woodsLength: 9 }), regionKey({ region: { i: 1, j: 2 }, inputs: 'p' })];
   setLandLayer(landLayerOf({ edits: [{ x: 10, y: 10, height: 0, note: 'a' }] }));
@@ -91,6 +111,8 @@ test('F4 the kept caches\' keys move with the rows - the Bay\'s roads and a regi
     assert.deepEqual([roadsCacheKey({ settlements: [], woodsLength: 9 }), regionKey({ region: { i: 1, j: 2 }, inputs: 'p' })], [`${plain[0]}:land${stamp}`, plain[1].replace('tamriel-roads:1,2:', `tamriel-roads:1,2:land${stamp}:`)]);
   } finally { setLandLayer(); }
   assert.ok(!plain[0].includes('land') && !plain[1].includes('land'));
+  // AUDIT FOUNDATION II L6: and the kept regions' ground print past the Bay (tamrielRoadsHost.js)
+  assert.ok(readFileSync(new URL('../../../src/scenes/tamrielRoadsHost.js', import.meta.url), 'utf8').includes("|${landLayer().stamp ? `l${landLayer().stamp}|` : ''}${fit ?"));
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -142,4 +164,33 @@ test('F4 with ARENA2, on the Bay: the served WOODS.WLD holds the rows\' heights 
     assert.equal(ground.getHeightMapValue(far[0], far[1]), 0);
     assert.ok(Math.max(...generateSamples(ground, far[0], far[1])) * MAX_TERRAIN_HEIGHT <= SCALED_OCEAN_ELEVATION + 1e-3, 'the kernel stands water past the Bay');
   } finally { setLandLayer(); dropGroundCache(); }
+});
+
+test('F4 with ARENA2, on the Bay: a land row\'s 5 x 5 is the file\'s own law for its height, so the kernel stands it where the map draws it; and the Bay as the files hold it stays read under the rows - the fit to the picture and the countryside\'s rates read that, so a row moves no place past the Bay (AUDIT FOUNDATION II L1/L2; mutants: the detail kept, the file unkept, the fit\'s and the rates\' Bay served)', { skip: skipReal }, async () => {
+  const { WoodsFile } = await import('../../../src/formats/woodsFile.js');
+  const { PakFile } = await import('../../../src/formats/pakFile.js');
+  const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
+  const woodsRaw = bytes('WOODS.WLD'), pakRaw = bytes('CLIMATE.PAK');
+  const plain = new WoodsFile(); plain.load(woodsRaw);
+  const p0 = new PakFile(); p0.load(pakRaw);
+  let at = null;
+  for (let y = 20; y < 480 && !at; y += 2) for (let x = 20; x < 980 && !at; x += 2) if (plain.getHeightMapValue(x, y) >= 100) at = [x, y];
+  assert.ok(at, 'a mountain pixel of the Bay');
+  const [x, y] = at;
+  setLandLayer(landLayerOf({ edits: [{ x, y, height: 10, climate: CLIMATES.Desert, note: 'a mountain let down' }] }));
+  try {
+    const w = new WoodsFile(); w.load(landServedBytes('WOODS.WLD', woodsRaw));
+    const p1 = new PakFile(); p1.load(landServedBytes('CLIMATE.PAK', pakRaw));
+    assert.equal(w.getHeightMapValue(x, y), 10);
+    assert.ok(w.getLargeMapData(x, y).every((col) => col.every((v) => v === Math.round(largeOfByte(10)))), 'the detail the law\'s for byte 10, not the mountain\'s');
+    assert.deepEqual(w.getLargeMapData(x + 1, y), plain.getLargeMapData(x + 1, y), 'the pixel beside it the file\'s');
+    assert.deepEqual([filedHeight(x, y, w.getHeightMapValue(x, y)), filedClimate(x, y, p1.getValue(x + 1, y))], [plain.getHeightMapValue(x, y), p0.getValue(x + 1, y)], 'the files as they came');
+    assert.deepEqual([filedHeight(x + 1, y, 77), filedClimate(x + 1, y, 77)], [77, 77], 'a pixel no row names: the reader\'s own');
+  } finally { setLandLayer(); }
+  assert.equal(filedHeight(x, y, 10), 10, 'no row: the reader\'s own');
+  const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+  assert.ok(src('src/scenes/world.js').includes('keptBayFit({ bayLand: (x, y) => !isWaterPixel(filedClimate(x, y, maps.getClimateIndex(x, y)), filedHeight(x, y, woods.getHeightMapValue(x, y))), trace })'));
+  assert.ok(src('src/scenes/world.js').includes('countryCounts(_countryTemplates, (x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)))'));
+  assert.ok(src('src/scenes/world.js').includes('countryCounts(_lairTemplates, (x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)))'));
+  assert.ok(src('src/scenes/tamrielPlacesHost.js').includes('bayLand((x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)), (x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y))))'));
 });

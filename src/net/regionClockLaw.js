@@ -1,7 +1,7 @@
 // @ts-check
 // FOUNDATION F2 (2026-10-30, bible/03-World/Foundation-Arc.md) - THE REGIONS' CLOCK AND THEIR PROSPERITY. A tick is a UTC
-// day. A region is RESIDENT on a tick when players acted at one of its towns the day before (derived, never stored); it
-// steps, and the rotation steps REGION_CLOCK_TURN more, so none is more than REGION_CLOCK_MAX_LAG ticks behind. A rule
+// day. A region is RESIDENT on tick t when players acted at one of its towns on day t - REGION_ACTS_SETTLE_DAYS
+// (derived); it steps, and the rotation REGION_CLOCK_TURN more, so none is more than REGION_CLOCK_MAX_LAG behind. A rule
 // steps a region's integer state a day at a time: a catch-up of n days is n steps, nothing added a closed form. The
 // account service keeps the state (server-account/src/regionClock.js). Leaf: imports nothing.
 export const REGION_CLOCK_REGIONS = 71;   // regions 0..70: the Bay's 62 and the nine provinces'
@@ -32,8 +32,9 @@ export function regionClockDue(resident, cursor) {
 
 // ─── THE FIRST RULE: A REGION'S PROSPERITY ─────────────────────────────
 // The players' acts at a region's towns (TOWN-ECON's weighed acts, the account service's town_econ_days) are added to
-// its prosperity the day after; on every REGION_HALF_DAYS-th day it halves toward nothing. The restoring force is the
-// shift: a region nobody walks falls back to its towns' own economy. The town reads it as a term (townEconLaw.js).
+// its prosperity REGION_ACTS_SETTLE_DAYS days on; on every REGION_HALF_DAYS-th day it halves toward nothing. The
+// restoring force is the shift: a region nobody walks falls back to its towns' own economy. The town reads it as a term
+// (townEconLaw.js).
 
 /** The days over which a region's prosperity halves: on each tick that is a multiple of it. */
 export const REGION_HALF_DAYS = 4;
@@ -41,7 +42,7 @@ export const REGION_HALF_DAYS = 4;
 export const REGION_IMPULSE_MAX = 2000;
 /** The most a region's prosperity holds. */
 export const REGION_PROSPERITY_MAX = 16000;
-/** The most a region adds to a town's Prosperity, and the prosperity at which it adds half that. */
+/** The bound a region's term approaches (it adds REGION_TERM_MAX - 1 at most), and the prosperity at which it adds half. */
 export const REGION_TERM_MAX = 6;
 export const REGION_TERM_HALF = 600;
 
@@ -53,13 +54,13 @@ export const regionImpulse = (acts) => { const n = Math.floor(Number(acts)); ret
 /** The halvings between two ticks: the multiples of REGION_HALF_DAYS in (from, to]. @param {number} from @param {number} to */
 export const regionHalvings = (from, to) => (to > from ? Math.floor(to / REGION_HALF_DAYS) - Math.floor(from / REGION_HALF_DAYS) : 0);
 
-/** A region's prosperity stepped one tick: halved on its day, then the day before's acts added. @param {number} v
+/** A region's prosperity stepped one tick: halved on its day, then the tick's acts added. @param {number} v
  *  @param {number} tick @param {number} impulse */
 export const regionProsperityStep = (v, tick, impulse) => Math.min(REGION_PROSPERITY_MAX, halvedToward0(v, tick % REGION_HALF_DAYS === 0 ? 1 : 0) + regionImpulse(impulse));
 
 /**
- * A region's prosperity stepped from tick `from` to `to`, a day at a time - `impulseOf(t)` the acts that tick adds (the
- * day before's). Where nothing is added it is the closed form (regionProsperityAt), so a region read off its own tick
+ * A region's prosperity stepped from tick `from` to `to`, a day at a time - `impulseOf(t)` the acts that tick adds (day
+ * t - REGION_ACTS_SETTLE_DAYS's). Where nothing is added it is the closed form (regionProsperityAt), so a region read off its own tick
  * answers what stepping it would. @param {number} v @param {number} from @param {number} to
  * @param {((tick: number) => number)|null} [impulseOf]
  */

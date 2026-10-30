@@ -636,10 +636,10 @@ async function setHomeGround(ctx, player, { mapId, buildingKey, character, groun
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };
   if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };
-  const home = await db.prepare('SELECT price, ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  const home = await db.prepare('SELECT price, ground, guild_id, layout FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
   if (!home || home.guild_id != null) return { error: 'no-home' };
   if (home.ground != null) return { ok: true, ground: home.ground };
-  if (!homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks))) return { error: 'bad-home' };   // AUDIT FOUNDATION P2: a row's price, the law's ground
+  if (!homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null))) return { error: 'bad-home' };   // AUDIT FOUNDATION P2: a row's price, the law's ground
   const kept = homeGroundKept(ground);
   await db.prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ? AND ground IS NULL').bind(kept, mapId, buildingKey).run();
   return { ok: true, ground: kept };

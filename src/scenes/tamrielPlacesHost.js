@@ -29,6 +29,7 @@ import { locationKeyOf } from '../world/locationKey.js';   // BAY-LEFT-B: a capi
 import { fabricSliceSites } from '../world/imperialFabricBuildings.js';   // BAY-LEFT-B: and the Imperial City's fabric's
 import { createAtlasHost } from './atlasHost.js';   // FOUNDATION F1: the world's places read whole
 import { homeListings } from '../net/homeListingLaw.js';   // FOUNDATION F3: the property rows the atlas checks
+import { filedClimate, filedHeight } from '../world/land/landLayer.js';   // AUDIT FOUNDATION II L1: the Bay's rates read the files as they came
 import { placeOfRow } from '../world/worldWide/worldPlaces.js';   // FOUNDATION F1: a mod's addition as the registry would read it
 import { bayPlaceRows } from '../world/worldWide/bayPlaces.js';
 import { worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';   // FOUNDATION F1: a check when the door serves edits
@@ -62,18 +63,24 @@ export function createTamrielPlaces(host) {
     if (!place) return null;
     const template = arenaTemplateOf(_arenaTemplates, place);
     if (!template) return null;
+    const loc = arenaCloneOf(template, place, px, py);
+    host._locIndexGen += 1;
+    locationIndex.set(key, loc);
+    return loc;
+  }
+  /** An Arena place's clone on (px, py) - NOT stood (AUDIT FOUNDATION II A1: the atlas's check reads it; arenaLocationAt
+   *  stands the same clone). */
+  function arenaCloneOf(template, place, px, py) {
     const regionIndex = maps.getRegionIndexAt(px, py);
     const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) }), blockOf, { round: imperialOutskirts(px, py) });   // TS5: the Imperial City's outskirts round
     if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf, townOutlineBlockJson);   // TOWN-SHAPES TS4; TS7: what stands at its gates from the game's own blocks
-    host._locIndexGen += 1;
-    locationIndex.set(key, loc);
     return loc;
   }
   /** TESA7 (world/tamrielCountry.js): THE COUNTRYSIDE'S RATES - each climate's chances, the Bay's count over the Bay's land
    *  (CLIMATE.PAK and WOODS.WLD's water law, ui/overworldModel.js isWaterPixel), worked out at the first pixel past the Bay
    *  that asks (the Bay's half a million pixels read once). */
   const _pastBay = { countryRates: null, lairRates: null, bayLand: null, countryRoll: null, lairRoll: null };   // TESA7-8: each made once, when first asked (a holder, so the place law moves out whole - scenes/tamrielPlacesHost.js)
-  const bayLandNow = () => (_pastBay.bayLand ??= bayLand((x, y) => maps.getClimateIndex(x, y), (x, y, c) => isWaterPixel(c, host.woods.getHeightMapValue(x, y))));
+  const bayLandNow = () => (_pastBay.bayLand ??= bayLand((x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)), (x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y)))));   // AUDIT FOUNDATION II L1: the Bay as it came
   const countryRatesNow = () => (_pastBay.countryRates ??= countryRates(_countryCounts, bayLandNow()));
   const lairRatesNow = () => (_pastBay.lairRates ??= countryRates(_lairCounts, bayLandNow(), LAIR_TYPES));   // TESA8: the lairs' over the same land
   const _countryGround = _countryTemplates ? createCountryGround(host.woods) : null;
@@ -491,10 +498,17 @@ export function createTamrielPlaces(host) {
     }
     return out;
   };
+  /** AUDIT FOUNDATION II A1: the location a registry place would stand as, read and not indexed - the index's where it
+   *  stands; past the Bay a capital's slice, else an Arena place's clone (the atlas's check reads every listed place). */
+  const peekAt = (p) => locationIndex.get(`${p.px},${p.py}`) ?? (inBay(p.px, p.py) ? null : capitalSliceAt(p.px, p.py) ?? arenaPeekAt(p.px, p.py));
+  const arenaPeekAt = (px, py) => {
+    const place = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null, template = place ? arenaTemplateOf(_arenaTemplates, place) : null;
+    return template ? arenaCloneOf(template, place, px, py) : null;
+  };
   /** FOUNDATION F1 (scenes/atlasHost.js): the world's places whole - a place's bundle off the location the host holds
    *  for it (the Bay's in the index, a place past the Bay as the build stands it); checked once at idle where the door
    *  serves edits. */
-  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py), listings: homeListings, additions: modAdditions, stamp: () => host._locIndexGen }) : null;
+  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py), peek: peekAt, listings: homeListings, additions: modAdditions, stamp: () => host._locIndexGen }) : null;
   if (worldAtlas && (worldDataDoorOpen() || homeListings().length)) worldAtlas.check();   // FOUNDATION F3: and where property rows stand
   return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName, worldAtlas };
 }

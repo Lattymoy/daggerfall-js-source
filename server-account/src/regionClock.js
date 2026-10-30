@@ -68,8 +68,9 @@ export async function tickRegionClock(db, nowS) {
     db.prepare(ROWS_SQL).bind(write, from),
     db.prepare('UPDATE region_clock_meta SET tick = ?1, cursor = ?2 WHERE id = 1 AND tick = ?3').bind(today, cursor, from),
   ]);
+  if (!took?.meta?.changes) return 0;   // AUDIT FOUNDATION II C4: another runner took it - read again next minute, never marked
   _tickedDay = today;
-  return took?.meta?.changes ? moved.size : 0;
+  return moved.size;
 }
 
 /** THE REGIONS' PROSPERITY on `nowS`'s day, as the clients read it: `[[region, v], ...]` for each above nothing, each
