@@ -6,12 +6,10 @@
 // thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch.
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
 import {
-  SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopSpent, shopOnSaleOf, shopPriceText, shopReceiptBatch,
+  SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch,
   shopPriceFor, shopHeldIds, shopHeldDirect, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopClosure, shopCreditOf, SHOP_CHECKOUT_MS, shopRepeatable,
 } from '../../src/net/shopLaw.js';
 import { aurumSwitchOf } from '../../src/net/aurumLaw.js';   // AURUM: its packs are sold while it is open to every account
-import { PASS_SEASONS, passSeasonAt, passSeasonById, passOpen, passWareXp, passWareSeason } from '../../src/net/battlePassLaw.js';   // STOREFRONT: the levels a pass or a booster gives at once
-import { passSwitchOf } from './battlePass.js';   // AUDIT-STOREFRONT S6: a season's wares are sold while its finds are open
 import { POST_SENDER } from '../../src/net/postLaw.js';
 import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
@@ -35,7 +33,7 @@ export const SHOP_COSMETIC = 'Every item is cosmetic. It gives no power in the g
 
 /** How long a Buy link in the account read may be followed (s) - the window is not open longer. */
 export const SHOP_TICKET_S = 60 * 60;
-/** How long Stripe's page stays up (s) - shopLaw.js SHOP_CHECKOUT_MS, which a season's wares stop selling before it ends. */
+/** How long Stripe's page stays up (s) - shopLaw.js SHOP_CHECKOUT_MS. */
 export const SHOP_CHECKOUT_S = SHOP_CHECKOUT_MS / 1000;
 /** How old a signed webhook may be (s) - Stripe's own default tolerance. */
 export const SHOP_HOOK_TOLERANCE_S = 300;
@@ -63,19 +61,15 @@ export const shopOn = (/** @type {any} */ env) =>
 export const shopOnSale = (/** @type {any} */ env) => shopOnSaleOf(env?.SHOP_ON_SALE);
 /** STOREFRONT: the featured schedule (SHOP_FEATURED in wrangler.toml - the owner's launch windows, limited or not). */
 export const shopFeatured = (/** @type {any} */ env) => shopFeaturedOf(env?.SHOP_FEATURED);
-/** AUDIT-STOREFRONT S6: a season's wares are sold only while its finds are open to every account (PASS_OPEN 'on') - a
- *  pass or a booster bought while they are shut buys nothing. */
-const seasonShut = (/** @type {any} */ env, /** @type {any} */ w) => !!w?.season && passSwitchOf(env?.PASS_OPEN) !== 'on';
 /** AURUM: an Aurum pack is sold only while Aurum is open to every account (AURUM_OPEN 'on') - Aurum nobody can spend
  *  is no sale. */
 const aurumShut = (/** @type {any} */ env, /** @type {any} */ w) => w?.kind === 'aurum' && aurumSwitchOf(env?.AURUM_OPEN) !== 'on';
-/** STOREFRONT: whether a ware is sold at `nowS` (shopLaw.js shopSellable: on sale, in its season, inside a limited window). */
-export const shopSoldNow = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopSellable(w, shopOnSale(env), shopFeatured(env), nowS * 1000) && !seasonShut(env, w) && !aurumShut(env, w);
-/** STOREFRONT: THE CAROUSEL'S WARES at `nowS`, in order: the live season's passes first while they are sold, then the
- *  schedule's featured wares in its order - each sold now (a ware featured but off sale is not shown). */
+/** STOREFRONT: whether a ware is sold at `nowS` (shopLaw.js shopSellable: on sale, inside a limited window). */
+export const shopSoldNow = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopSellable(w, shopOnSale(env), shopFeatured(env), nowS * 1000) && !aurumShut(env, w);
+/** STOREFRONT: THE CAROUSEL'S WARES at `nowS`, in order: the schedule's featured wares in its order - each sold now (a
+ *  ware featured but off sale is not shown). PASS-PANELS: the pass sells nothing for money, so it leads it no more. */
 export function shopCarousel(/** @type {any} */ env, /** @type {number} */ nowS) {
-  const season = passSeasonAt(nowS * 1000);
-  const ids = SHOP_WARES.filter((w) => season && w.kind === 'pass' && w.season === season.id).map((w) => w.id);
+  /** @type {string[]} */ const ids = [];
   for (const e of shopFeaturedNow(shopFeatured(env), nowS * 1000)) if (!ids.includes(e.id)) ids.push(e.id);
   return ids.filter((id) => shopSoldNow(env, shopWareById(id), nowS));
 }
@@ -103,14 +97,13 @@ export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ e
   for (const w of SHOP_WARES) {
     if (!w.alone || !w.cash) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own; AURUM: nor one sold only for Aurum
     const isHeld = registered(player) && shopOwns(player, w.id), onSale = shopSoldNow(env, w, nowS);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares
-    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut
-    const spent = !isHeld && registered(player) && shopSpent(player, w.id);   // AUDIT-STOREFRONT S5
-    if (on && onSale && !isHeld && !spent && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
-    const buy = key && onSale && !isHeld && !spent
+    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut
+    if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
+    const buy = key && onSale && !isHeld
       ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
       : null;
     const feat = onSale ? live.find((e) => e.id === w.id) : null;   // AUDIT-STOREFRONT S9: a window's end only beside a sale
-    wares.push({ id: w.id, sale: onSale, held: isHeld, ...(spent ? { spent } : {}), buy, cents: (registered(player) ? shopPriceFor(player, w.id) : null) ?? w.cents, ...(feat ? { until: feat.toMs, limited: feat.limited } : {}) });
+    wares.push({ id: w.id, sale: onSale, held: isHeld, buy, cents: (registered(player) ? shopPriceFor(player, w.id) : null) ?? w.cents, ...(feat ? { until: feat.toMs, limited: feat.limited } : {}) });
   }
   return { on, wares, featured: shopCarousel(env, nowS) };
 }
@@ -131,7 +124,6 @@ export const SHOP_PAGES = Object.freeze({
   account: { heading: 'This account needs a username', lines: ['Give your game account a username and a password, then buy from the shop.'] },
   sold: { heading: 'Not on sale', lines: ['This item is no longer sold. Nothing was charged.'] },
   held: { heading: 'Already yours', lines: ['Your account holds this item already. Nothing was charged.'] },
-  spent: { heading: 'Not needed', lines: ['Your account has a stronger booster for this season. Nothing was charged.'] },
   down: { heading: 'The payment page did not open', lines: ['Nothing was charged. Wait a minute, then press Buy in the game again.'] },
   rate: { heading: 'Too many tries', lines: ['Wait a few minutes, then press Buy in the game again.'] },
   cancel: { heading: 'Nothing was bought', lines: ['Nothing was charged. You can close this page.'] },
@@ -235,7 +227,6 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   const player = await db.prepare(`SELECT id, handle, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
   if (!registered(player)) return { page: 'account' };
   if (shopOwns(player, ware.id)) return { page: 'held' };
-  if (shopSpent(player, ware.id)) return { page: 'spent' };
   const cents = shopPriceFor(player, ware.id) ?? ware.cents;   // STOREFRONT: a bundle's price for this account - what it does not hold yet
   const credit = shopCreditOf(player, ware.id).join(' ');   // AUDIT-STOREFRONT S1: what that price took off, kept on the order
   // an open page at another price (a ware bought meanwhile that the bundle holds) is not gone back to: a new order is priced now
@@ -297,12 +288,9 @@ export async function stripeSignatureOk(/** @type {string} */ secret, /** @type 
   return sig.v1.some((v) => timingSafeEqual(enc.encode(v), want));
 }
 
-/** STOREFRONT: where a ware is used, as its receipt says it - the pass in the shop's Battle Pass, a booster at once, the
- *  rest from the profile. Pure. */
+/** STOREFRONT: where a ware is used, as its receipt says it - Aurum in the shop, the rest from the profile. Pure. */
 export function receiptUse(/** @type {any} */ w) {
-  if (w.kind === 'aurum') return 'Spend it on the daily wares in the shop. They change each day at midnight, UTC.';   // AURUM
-  if (w.kind === 'pass' || (w.kind === 'bundle' && w.season)) return 'Its premium track is open now: every reward you reached on it is yours. See it in the shop\'s Battle Pass.';
-  if (w.kind === 'boost') return 'It works at once: more pass experience from every deed for the rest of the season.';
+  if (w.kind === 'aurum') return 'Spend it in the shop, on the Battle Pass and the daily wares.';   // AURUM; PASS-PANELS: the pass is bought with it
   return 'Wear it from your profile, or from the Collections page.';
 }
 /** THE RECEIPT, its words fixed here (a letter no player writes - post.js's law). Pure. */
@@ -358,12 +346,11 @@ export function restorePost(/** @type {any} */ order) {
   };
 }
 /** AUDIT-STOREFRONT S3: the letter a payment the service returns itself sends - for a ware held already when the payment
- *  landed (two pages paid at once), a booster a stronger one makes worth nothing, or a season's ware paid after its
- *  season. Pure. */
-export function refundPost(/** @type {any} */ order, /** @type {'held'|'spent'|'late'|'price'} */ why) {
+ *  landed (two pages paid at once), or a giver whose price moved. Pure. */
+export function refundPost(/** @type {any} */ order, /** @type {'held'|'price'} */ why) {
   const w = /** @type {any} */ (shopWareById(order.ware));
   const first = {
-    held: `Your account already held ${wareLine(w)} when this payment arrived.`, spent: `Your account already had a stronger booster than ${wareLine(w)} when this payment arrived.`, late: `The season ended before this payment for ${wareLine(w)} arrived.`,
+    held: `Your account already held ${wareLine(w)} when this payment arrived.`,
     price: `What your account holds of ${wareLine(w)} changed before this payment arrived, and its price with it.`,   // AUDIT-STOREFRONT II A2
   };
   return {
@@ -419,21 +406,10 @@ export function heldRevoked(/** @type {any} */ row, /** @type {any} */ order, /*
   return { shop_wares: bits, shop_held: toks.join(' ') };
 }
 /** The row's write, guarded on the row as read: a grant or a loss landing between the read and this batch rolls the batch
- *  back (mustChange next), and the order is decided again on the row as it then is - so the levels a pass ware moves are
- *  never counted twice (AUDIT-STOREFRONT S7). */
+ *  back (mustChange next), and the order is decided again on the row as it then is (AUDIT-STOREFRONT S7). */
 const rowWrite = (/** @type {any} */ db, /** @type {string} */ player, /** @type {any} */ before, /** @type {any} */ after) =>
   db.prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')
     .bind(player, after.shop_wares, after.shop_held, before.shop_wares, before.shop_held);
-/** STOREFRONT (bible/06-Systems/Battle-Pass.md): THE LEVELS A GRANT GIVES OR A LOSS TAKES - each season's experience of the
- *  pass wares the row comes to hold (a Deluxe Pass, a booster, a bundle holding them), or stops holding; a ware held
- *  already moves nothing. Statements for the batch, one a season that moves. */
-export function passXpStatements(/** @type {any} */ db, /** @type {string} */ player, /** @type {any} */ before, /** @type {any} */ after) {
-  const had = shopHeldIds(before), has = shopHeldIds(after);
-  /** @type {Record<string, number>} */ const by = {};
-  for (const id of has) if (!had.includes(id)) { const s = passWareSeason(id); if (s) by[s] = (by[s] ?? 0) + passWareXp(id); }
-  for (const id of had) if (!has.includes(id)) { const s = passWareSeason(id); if (s) by[s] = (by[s] ?? 0) - passWareXp(id); }
-  return PASS_SEASONS.filter((s) => by[s.id]).map((s) => db.prepare(`UPDATE players SET pass_${s.id} = MAX(0, pass_${s.id} + ?2) WHERE id = ?1`).bind(player, by[s.id]));
-}
 const heldRow = (/** @type {any} */ db, /** @type {string} */ player) => db.prepare(`SELECT ${HELD_COLS} FROM players WHERE id = ?1`).bind(player).first();
 /** An account's other paid orders - what else covers its wares. */
 const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) =>
@@ -500,8 +476,8 @@ const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {an
 /**
  * A PAYMENT TAKEN: the order paid, its ware on the row, the receipt in the mailbox - one batch, guarded on the order
  * moving from open (or expired) and the row as read, so a webhook told twice grants once; its amount the order's. A ware
- * held by then, a booster spent, a season's ware late, or a giver whose price moved (AUDIT-STOREFRONT II A2) is refunded
- * (S3, S5, S10); a payment refunded or disputed before this word is never granted (A1). `{ ok, applied }`.
+ * held by then, or a giver whose price moved (AUDIT-STOREFRONT II A2) is refunded (S3); a payment refunded or disputed
+ * before this word is never granted (A1). `{ ok, applied }`.
  * @param {{ db: any, nowS: number }} ctx @param {string} orderId @param {{ intent?: unknown, amount?: unknown, currency?: unknown }} paid
  * @param {{ env?: any, fetch?: typeof fetch }} [io] Stripe, to close pages and return payments
  */
@@ -527,8 +503,8 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
       ]);
       return { ok: true, applied: 0 };
     }
-    /** @type {'held'|'spent'|'late'|'price'|null} */
-    const refund = shopOwns(row, w.id) ? 'held' : shopSpent(row, w.id) ? 'spent' : w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : creditMoved(row, w, order) ? 'price' : null;
+    /** @type {'held'|'price'|null} */
+    const refund = shopOwns(row, w.id) ? 'held' : creditMoved(row, w, order) ? 'price' : null;
     if (refund) {
       await db.batch([
         db.prepare("UPDATE shop_orders SET status = 'refunded', paid_at = ?2, ended_at = ?2, payment_intent = ?3, refund = ?4, refund_owed = 1 WHERE id = ?1 AND status IN ('open', 'expired')").bind(order.id, nowS, pi, refund),
@@ -543,7 +519,6 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
       mustChange(db),
       rowWrite(db, order.player, row, after),   // STOREFRONT: a bit, or a held id; AUDIT-STOREFRONT S1: and the marks it covers off
       mustChange(db),
-      ...passXpStatements(db, order.player, row, after),   // STOREFRONT: the levels a pass ware gives at once
       postStatement(db, order.player, receiptPost(order, nowS), w.id, nowS),
     ]);
     return { ok: true, applied: 1 };
@@ -589,7 +564,7 @@ export async function revokeOrder({ db, nowS }, intent, why, { env = {}, fetch }
     await db.batch([
       db.prepare("UPDATE shop_orders SET status = ?2, ended_at = ?3 WHERE id = ?1 AND status = 'paid'").bind(order.id, why, nowS),
       mustChange(db),
-      ...(row ? [rowWrite(db, order.player, row, after), mustChange(db), ...passXpStatements(db, order.player, row, after)] : []),   // STOREFRONT: the levels it gave, taken back
+      ...(row ? [rowWrite(db, order.player, row, after), mustChange(db)] : []),
       ...(order.player ? [postStatement(db, order.player, revokePost(order, why, had.filter((id) => !has.includes(id))), null, nowS)] : []),   // no ware: a letter with nothing on the account
     ]);
     return { ok: true, applied: 1 };
@@ -619,7 +594,6 @@ export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) 
       mustChange(db),
       rowWrite(db, order.player, row, after),
       mustChange(db),
-      ...passXpStatements(db, order.player, row, after),   // STOREFRONT: and the levels it gives, back
       postStatement(db, order.player, restorePost(order), w.id, nowS),
     ]);
     return { ok: true, applied: 1 };
@@ -706,7 +680,6 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     const player = await ctx.db.prepare(`SELECT id, handle, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
     if (shopOwns(player, ware.id)) return shopHtml(SHOP_PAGES.held, 409);
-    if (shopSpent(player, ware.id)) return shopHtml(SHOP_PAGES.spent, 409);
     const held = shopHeldIds(player);
     const holds = ware.gives.filter((g) => held.includes(g)).length, part = !holds && shopCreditOf(player, ware.id).length > 0;
     return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket, cents: shopPriceFor(player, ware.id) ?? ware.cents, holds, part }));   // NOTHING IS WRITTEN on a GET

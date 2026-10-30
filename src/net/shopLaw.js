@@ -7,21 +7,20 @@
 import { TITLES, AURAS, GLYPHS, ICONS } from './identityToken.js';
 import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryLinePieces } from './armoryLaw.js';   // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
 import { EFFECTS, effectOf } from './effectLaw.js';   // STOREFRONT: the kill effects, portal skins and mount looks - a leaf
-import { passSeasonById, passOpen, PASS_BOOSTS, passMult } from './battlePassLaw.js';   // STOREFRONT: a season's wares are sold while it runs - a leaf
 
 /** The currency every price is charged in, as Stripe spells it. */
 export const SHOP_CURRENCY = 'usd';
 /** STOREFRONT: the least a checkout may charge - Stripe's own floor for a dollar charge. */
 export const SHOP_MIN_CENTS = 50;
-/** How long Stripe's page stays up (ms): its own floor is thirty minutes, and a minute more covers the clocks' skew. A
- *  season's ware stops selling this long before its season ends, so no page outlives it. */
+/** How long Stripe's page stays up (ms): its own floor is thirty minutes, and a minute more covers the clocks' skew. */
 export const SHOP_CHECKOUT_MS = 31 * 60_000;
 /** The shop's sections, in the window's order (STOREFRONT: the sheet's rows; the titles and glyphs one section, the
- *  name visuals). AURUM (bible/06-Systems/Aurum.md): the profile icons, and the Aurum's packs last. */
-export const SHOP_CATEGORIES = Object.freeze(['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'boosts', 'aurum']);
+ *  name visuals). AURUM (bible/06-Systems/Aurum.md): the profile icons, and the Aurum's packs last. PASS-PANELS: the
+ *  Battle Pass a section of its own tracks, bought with Aurum - no ware of it is sold for money. */
+export const SHOP_CATEGORIES = Object.freeze(['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'aurum']);
 /** The section each kind of ware is sold in. */
 export const SHOP_KIND_CATEGORY = Object.freeze({
-  title: 'names', glyph: 'names', icon: 'icons', aura: 'auras', armory: 'armory', kill: 'kills', portal: 'portals', mount: 'mounts', pass: 'pass', boost: 'boosts', bundle: 'bundles', aurum: 'aurum',
+  title: 'names', glyph: 'names', icon: 'icons', aura: 'auras', armory: 'armory', kill: 'kills', portal: 'portals', mount: 'mounts', bundle: 'bundles', aurum: 'aurum',
 });
 /** STOREFRONT: a ware's tier - the sheet's three columns. The pre-alpha wares have none (they carry their Pre-alpha mark). */
 export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
@@ -29,28 +28,26 @@ export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
 /**
  * One ware. `cents` its price in US cents (a ware never sold alone: its worth in a bundle); `bit` its bit on
  * `players.shop_wares` (the first nine only, never renumbered: a stored bit is a sale) or 0 for one held by its id in
- * `players.shop_held`. `gives` what it holds for its holder, `extra` its own worth beside them (a Deluxe's); `season` its
- * season; `alone` false for a bundle's alone. AURUM: `cash` false for Aurum alone (the daily wares); `aurum` a pack's.
+ * `players.shop_held`. `gives` what it holds for its holder; `alone` false for a bundle's alone. AURUM: `cash` false
+ * for Aurum alone (the daily wares); `aurum` a pack's.
  * @param {string} kind @param {string} key @param {number} cents
- * @param {{ bit?: number, tier?: string|null, gives?: string[], extra?: number, season?: string|null, alone?: boolean, preAlpha?: boolean, cash?: boolean, aurum?: number }} [o]
+ * @param {{ bit?: number, tier?: string|null, gives?: string[], alone?: boolean, preAlpha?: boolean, cash?: boolean, aurum?: number }} [o]
  */
-const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], extra = 0, season = null, alone = true, preAlpha = false, cash = true, aurum = 0 } = {}) => Object.freeze({
+const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], alone = true, preAlpha = false, cash = true, aurum = 0 } = {}) => Object.freeze({
   id: `${kind}:${key}`, kind, key, category: SHOP_KIND_CATEGORY[/** @type {keyof typeof SHOP_KIND_CATEGORY} */ (kind)], cents, bit, preAlpha, tier,
-  gives: Object.freeze([...gives]), extra, season, alone, cash, aurum,
+  gives: Object.freeze([...gives]), alone, cash, aurum,
 });
 /** AURUM: a profile icon sold only for Aurum - its worth in cents, should a bundle ever give it. */
 const icon = (/** @type {string} */ key, /** @type {number} */ cents, /** @type {string} */ tier) => ware('icon', key, cents, { tier, cash: false });
 const pre = (/** @type {number} */ bit) => ({ bit, preAlpha: true });
-/** THE PRICE CAP (the owner, 2026-10-29: "the most expensive anything should be is $30"): no ware, bundle, pass or pack
- *  costs more, in US cents; a pin holds every ware to it. */
+/** THE PRICE CAP (the owner, 2026-10-29: "the most expensive anything should be is $30"): no ware, bundle or pack costs
+ *  more, in US cents; a pin holds every ware to it. */
 export const SHOP_PRICE_CAP = 3000;
 /** THE WARES, in the window's order within each section. The pre-alpha nine are the owner's (SHOP, ARMORY); the rest are
  *  the sheet's (STOREFRONT, Storefront.md sections 2-8). */
 export const SHOP_WARES = Object.freeze([
-  // THE BATTLE PASS (bible/06-Systems/Battle-Pass.md): the Deluxe holds the Premium and is worth $10 of its own. Every
-  // price under SHOP_PRICE_CAP (AUDIT-STOREFRONT II): the sheet's tiers kept, each ware about half the sheet's
-  ware('pass', 's1premium', 1499, { tier: 'premium', season: 's1' }),
-  ware('pass', 's1deluxe', 2499, { tier: 'exclusive', season: 's1', gives: ['pass:s1premium'], extra: 1000 }),
+  // Every price under SHOP_PRICE_CAP (AUDIT-STOREFRONT II): the sheet's tiers kept, each ware about half the sheet's.
+  // PASS-PANELS: the Battle Pass sells nothing for money - its tracks are opened and bought with Aurum (battlePassLaw.js)
   ware('kill', 'ashen', 499, { tier: 'standard' }),
   ware('kill', 'voidrend', 999, { tier: 'premium' }),
   ware('kill', 'pyre', 1499, { tier: 'exclusive' }),
@@ -67,7 +64,6 @@ export const SHOP_WARES = Object.freeze([
   ware('title', 'eternalchampion', 999, { tier: 'exclusive' }),
   ware('glyph', 'oblivion', 299, { alone: false }),
   ware('glyph', 'gatesigil', 299, { alone: false }),
-  ware('glyph', 'gearcrown', 299, { alone: false }),
   ware('aura', 'eternal', 2000, pre(4)),
   ware('aura', 'dominion', 1499, { alone: false }),
   // ARMORY (bible/04-Characters/Aura-Armory.md section 4): the Eternal line - the owner: "The store set should be $20" -
@@ -81,10 +77,6 @@ export const SHOP_WARES = Object.freeze([
   ware('bundle', 'daedricchampion', 2799, { tier: 'exclusive', gives: ['aura:dominion', 'kill:pyre', 'title:eternalchampion', 'glyph:oblivion'] }),
   ware('bundle', 'portalmaster', 1999, { tier: 'premium', gives: ['portal:daedric', 'aura:dominion', 'glyph:gatesigil'] }),
   ware('bundle', 'lordofoblivion', 2999, { tier: 'exclusive', gives: ['mount:warhorse', 'portal:daedric', 'aura:dominion', 'kill:pyre'] }),
-  ware('bundle', 'seasonalcollector', 2999, { tier: 'exclusive', season: 's1', gives: ['pass:s1deluxe', 'boost:s1heart', 'glyph:gearcrown'] }),
-  ware('boost', 's1cog', 299, { tier: 'standard', season: 's1' }),
-  ware('boost', 's1tonal', 599, { tier: 'premium', season: 's1' }),
-  ware('boost', 's1heart', 999, { tier: 'exclusive', season: 's1' }),
   // AURUM (bible/06-Systems/Aurum.md): the profile icons the daily wares sell, and the Aurum's packs - bought again and
   // again, never held (shopRepeatable); a bigger pack gives more for each dollar
   icon('gatefire', 300, 'premium'), icon('aurbis', 400, 'exclusive'), icon('elderscroll', 300, 'premium'), icon('azurastar', 300, 'premium'),
@@ -98,10 +90,8 @@ export const SHOP_WARES = Object.freeze([
  *  own (playerBadge.js TITLE_TEXT, AURA_TEXT, enhancedAccount.js GLYPH_LABEL - a pin holds them equal). */
 const OWN_NAME = Object.freeze({
   'title:dawnbringer': 'Dawnbringer', 'title:voidwalker': 'Voidwalker', 'title:eternalchampion': 'Eternal Champion',
-  'glyph:oblivion': 'Oblivion Sigil', 'glyph:gatesigil': 'Gate Sigil', 'glyph:gearcrown': 'Brass Crown', 'aura:dominion': 'Daedric Dominion',
-  'pass:s1premium': "Dwemer's Breach Premium Pass", 'pass:s1deluxe': "Dwemer's Breach Deluxe Pass",
-  'bundle:daedricchampion': 'Daedric Champion', 'bundle:portalmaster': 'Portal Master', 'bundle:lordofoblivion': 'Lord of Oblivion', 'bundle:seasonalcollector': 'Seasonal Collector',
-  'boost:s1cog': 'Cog Booster', 'boost:s1tonal': 'Tonal Booster', 'boost:s1heart': 'Heart Booster',
+  'glyph:oblivion': 'Oblivion Sigil', 'glyph:gatesigil': 'Gate Sigil', 'aura:dominion': 'Daedric Dominion',
+  'bundle:daedricchampion': 'Daedric Champion', 'bundle:portalmaster': 'Portal Master', 'bundle:lordofoblivion': 'Lord of Oblivion',
   'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:3900': '3,900 Aurum',   // AURUM: Stripe's line and the receipt; an icon is never sold for money, so never named here
 });
 /** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt. */
@@ -113,7 +103,7 @@ export const SHOP_WARE_NAME = Object.freeze({
 });
 export const SHOP_KIND_NAME = Object.freeze({
   title: 'title', glyph: 'glyph', icon: 'profile icon', aura: 'aura', armory: 'Aura Armory', kill: 'kill effect', portal: 'portal skin', mount: 'mount look',
-  pass: 'Battle Pass', boost: 'Pass Booster', bundle: 'bundle', aurum: 'Aurum',
+  bundle: 'bundle', aurum: 'Aurum',
 });
 /** A ware by its id (`kind:key`), or null. */
 export const shopWareById = (/** @type {unknown} */ id) => SHOP_WARES.find((w) => w.id === id) ?? null;
@@ -121,7 +111,6 @@ export const shopWareById = (/** @type {unknown} */ id) => SHOP_WARES.find((w) =
  *  wares that are. */
 export const shopVocabularyOk = () => SHOP_WARES.every((w) => {
   if (w.gives.length && !w.gives.every((g) => shopWareById(g))) return false;
-  if (w.kind === 'pass' || w.kind === 'boost') return !!passSeasonById(w.season);
   if (w.kind === 'bundle') return w.gives.length > 0;
   if (w.kind === 'aurum') return Number.isSafeInteger(w.aurum) && w.aurum > 0 && w.cash;   // AURUM: a pack gives Aurum, for money
   if (w.kind === 'icon') return ICONS.includes(w.key);
@@ -201,24 +190,18 @@ export const shopKeysOf = (/** @type {unknown} */ row, /** @type {string} */ kin
 export function shopWorth(/** @type {unknown} */ id) {
   const w = shopWareById(id);
   if (!w) return 0;
-  return w.gives.length ? w.extra + w.gives.reduce((a, g) => a + shopWorth(g), 0) : w.cents;
+  return w.gives.length ? w.gives.reduce((a, g) => a + shopWorth(g), 0) : w.cents;
 }
 /** The worth of what a ware gives that `held` (ware ids, as shopHeldIds answers) does not - 0 once all of it is held. */
 function worthLeft(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ held) {
   if (!w || held.includes(w.id)) return 0;
-  return w.gives.length ? w.extra + w.gives.reduce((a, /** @type {string} */ g) => a + worthLeft(shopWareById(g), held), 0) : w.cents;
+  return w.gives.length ? w.gives.reduce((a, /** @type {string} */ g) => a + worthLeft(shopWareById(g), held), 0) : w.cents;
 }
 /** Whether a row holds what a ware gives - its own id, or everything it gives: a ware so held is not sold again. Pure. */
 export const shopOwns = (/** @type {unknown} */ row, /** @type {string} */ id) => {
   const w = shopWareById(id);
   return !!w && worthLeft(w, shopHeldIds(row)) === 0;
 };
-/** AUDIT-STOREFRONT S5: WHETHER A WARE WOULD ADD NOTHING TO A ROW - a booster that gives no levels, beside one as strong
- *  held (the highest held counts, never their sum: battlePassLaw.js passMult). It is not sold to that row. Pure. */
-export function shopSpent(/** @type {unknown} */ row, /** @type {string} */ id) {
-  const b = Object.hasOwn(PASS_BOOSTS, id) ? PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (id)] : null;
-  return !!b && b.levels === 0 && passMult(b.season, shopHeldIds(row)) >= b.mult;
-}
 /** STOREFRONT: A WARE'S PRICE FOR A ROW - a giver's price times the share of its worth not yet held (never under
  *  SHOP_MIN_CENTS), any other ware's own; null when it is owned. The service charges it and the window shows it. Pure. */
 export function shopPriceFor(/** @type {unknown} */ row, /** @type {string} */ id) {
@@ -275,13 +258,11 @@ export function shopFeaturedNow(/** @type {ReadonlyArray<{ id: string, fromMs: n
   for (const e of list) if (nowMs >= e.fromMs && nowMs < e.toMs && !seen.has(e.id)) { seen.add(e.id); out.push(e); }
   return out;
 }
-/** WHETHER A WARE IS SOLD FOR MONEY AT `nowMs`: sold alone and for money, named on sale, inside its season's days, never
- *  before its first featured window (a drop is news when it lands), and - for a ware the schedule marks limited - inside
- *  one of its limited windows. Pure. */
+/** WHETHER A WARE IS SOLD FOR MONEY AT `nowMs`: sold alone and for money, named on sale, never before its first featured
+ *  window (a drop is news when it lands), and - for a ware the schedule marks limited - inside one of its limited
+ *  windows. Pure. */
 export function shopSellable(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ onSale, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
   if (!w?.alone || !w.cash || !onSale.includes(w.id)) return false;
-  const season = w.season ? passSeasonById(w.season) : null;
-  if (w.season && !(passOpen(season, nowMs) && passOpen(season, nowMs + SHOP_CHECKOUT_MS))) return false;   // AUDIT-STOREFRONT S10: no page outlives its season
   const mine = featured.filter((e) => e.id === w.id);
   if (mine.some((e) => e.bad)) return false;
   if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;
@@ -290,8 +271,8 @@ export function shopSellable(/** @type {any} */ w, /** @type {ReadonlyArray<stri
 }
 
 /** AUDIT-STOREFRONT S2: WHETHER A WARE MAY BE TOLD at `nowMs` - its first featured window open (a drop is news when it
- *  lands); a ware the schedule cannot read has no date to tell. A season's days are told already (the window's "On sale
- *  from"). One told and not sold now is no longer sold; one not told is not on the card at all. Pure. */
+ *  lands); a ware the schedule cannot read has no date to tell. One told and not sold now is no longer sold; one not
+ *  told is not on the card at all. Pure. */
 export function shopDropped(/** @type {any} */ w, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
   if (!w?.alone) return false;
   const mine = featured.filter((e) => e.id === w.id);
@@ -316,7 +297,7 @@ export const shopReceiptBatch = (/** @type {string} */ orderId) => `shop-${order
 
 /**
  * THE SHOP'S CARD as the account read carries it (`/v1/account`'s `shop`), checked on the way in: `{ on, wares, featured }`
- * - `on` whether the service takes payments, each ware `{ id, sale, held, spent, buy, cents, until, limited }` (`buy` the
+ * - `on` whether the service takes payments, each ware `{ id, sale, held, buy, cents, until, limited }` (`buy` the
  * service's own https link, or null; `cents` this account's price, a giver's share; `until` the end of its featured window
  * now, or null), `featured` the carousel's ware ids in order. Null for anything else, which draws nothing to buy. Pure.
  * @param {any} card
@@ -331,8 +312,7 @@ export function shopCardOf(card) {
     const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;
     const cents = Number.isSafeInteger(r.cents) && r.cents >= SHOP_MIN_CENTS && r.cents <= w.cents ? r.cents : w.cents;
     const until = Number.isSafeInteger(r.until) && r.until > 0 ? r.until : null;
-    const spent = r.held !== true && r.spent === true;   // AUDIT-STOREFRONT S5: a booster a stronger one held makes worth nothing
-    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, spent, buy: card.on && r.sale === true && r.held !== true && !spent ? buy : null, cents, until, limited: until !== null && r.limited === true });
+    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, buy: card.on && r.sale === true && r.held !== true ? buy : null, cents, until, limited: until !== null && r.limited === true });
   }
   const featured = (Array.isArray(card.featured) ? card.featured : []).filter((/** @type {unknown} */ id, /** @type {number} */ i, /** @type {unknown[]} */ a) => wares.some((x) => x.id === id) && a.indexOf(id) === i);
   return { on: card.on, wares, featured };

@@ -4,7 +4,6 @@
 // service (server-account/src/aurum.js) and the shop's window. Aurum is the account's and buys cosmetics alone - never
 // traded, never gold, never power (THE CEILING HOLDS). Pure. Not a DFU member. Ledger A (AURUM).
 import { SHOP_WARES, shopWareById } from './shopLaw.js';
-import { PASS_SEASONS, passAurumOf } from './battlePassLaw.js';
 
 const DAY_MS = 86_400_000;
 /** The most a balance may read - a card's bound, far past any account's. */
@@ -23,12 +22,6 @@ export const aurumWeekOf = (/** @type {number} */ nowS) => Math.floor((Math.floo
 /** When a week ends (ms): the next Monday at 00:00 UTC. Pure. */
 export const aurumWeekEndMs = (/** @type {number} */ week) => (week * 7 + 4) * DAY_MS;
 
-// ═══ EARNED: THE PASS ═════════════════════════════════════════════════════════════════════════════════════════════════
-/** THE AURUM EVERY SEASON'S TRACKS GAVE a row (`pass_<season>` its experience, `held` its ware ids). Counted at every ask,
- *  never stored, so a track's Aurum leaves with the pass that opened it. Pure. */
-export const aurumTrackOf = (/** @type {any} */ row, /** @type {ReadonlyArray<string>} */ held, /** @type {number} */ nowMs) =>
-  PASS_SEASONS.reduce((a, s) => a + passAurumOf(s.id, Number(row?.[`pass_${s.id}`]) || 0, held, nowMs), 0);
-
 // ═══ BOUGHT: THE PACKS ════════════════════════════════════════════════════════════════════════════════════════════════
 /** The packs (net/shopLaw.js `aurum` wares), in the window's order. Each paid order is its pack's Aurum (`shop_orders`'s
  *  own `aurum`, set at its checkout), so a refund or a dispute takes it back and a won dispute gives it again. */
@@ -44,7 +37,7 @@ export function aurumBonusOf(/** @type {unknown} */ id) {
 const daily = (/** @type {string} */ id, /** @type {number} */ aurum, /** @type {'effect'|'name'|'icon'} */ slot) => Object.freeze({ id, aurum, slot });
 /** WHAT THE DAILY WARES DRAW FROM, each with its price in Aurum and its slot - a ware sold for money too a little under its
  *  price at the smallest pack's rate (SHOP_PRICE_CAP's prices, AUDIT-STOREFRONT II). The shop's effects and name visuals (also
- *  sold for money) and the profile icons sold for Aurum alone. A season's wares never: the pass is how they are had. */
+ *  sold for money) and the profile icons sold for Aurum alone. A season's items never: its tracks are how they are had. */
 export const AURUM_DAILY = Object.freeze([
   daily('kill:ashen', 400, 'effect'), daily('kill:voidrend', 900, 'effect'), daily('kill:pyre', 1300, 'effect'),
   daily('portal:runic', 700, 'effect'), daily('portal:daedric', 1200, 'effect'), daily('portal:aetheric', 1800, 'effect'),

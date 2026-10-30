@@ -288,7 +288,7 @@ import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-R
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
-import { passOf, findPass, BATTLE_PASS_STATUS } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's season and a deed's find
+import { passOf, findPass, BATTLE_PASS_STATUS, unlockPass, buyPass } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's pass and a deed's find; PASS-PANELS: a track opened and an item bought
 import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
@@ -1262,7 +1262,7 @@ const service = {
         // guild's badge below - three reads of one row; each keeps its own law over it
         const member = renownCharacterOk(body.character) && (seats || body.guild === true) ? await mintMemberOf(ctx, who.player.id, body.character) : undefined;
         const seatBadge = seats && renownCharacterOk(body.character) ? await seatBadgeOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)?.n ?? 0, member) : null;
-        const wornT = titleWorn(worn, env, nowS);
+        const wornT = titleWorn(worn, env);
         // CROWN1 part two: the champion's is the account's own, kept for good - no guildmaster's; SEASON1: and so are a
         // Season's crowned and keeper (seatRoyal.js keptTitleOf)
         const kept = seats && KEPT_TITLES.includes(wornT) ? await keptTitleOf(ctx.db, who.player.id, wornT, zero) : null;
@@ -1279,10 +1279,10 @@ const service = {
         const wardrobe = {
           ...seatT,
           g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),   // STOREFRONT (the wire audit): in the order, and once each, the token's mask hands the room
-          au: auraWorn(who.player, env, nowS),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
-          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
+          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
+          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
           ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none
-          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none
+          fx: effectsWorn(who.player),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none
           ...(rb ? { rb } : {}),
         };
         // GLYPH-WEAR: the glyphs taken off ride BESIDE `g`, never out of it - `g` is what is true and what the relay's
@@ -2368,7 +2368,7 @@ const service = {
 
       // ═══ STOREFRONT: THE BATTLE PASS ═══════════════════════════════════
       //
-      // bible/06-Systems/Battle-Pass.md: the account's season (its level, tracks, day and challenges), and a deed's find -
+      // bible/06-Systems/Battle-Pass.md: the account's pass (its tracks, items, day and challenges), and a deed's find -
       // AUDIT PASS 3: a progression claim, its seat asked at the door (progress.js PROGRESS_ROUTES)
       if (path === '/v1/pass/mine' || path === '/v1/pass/find') {
         if (request.method !== 'POST') return no('method', 405, origin);
@@ -2376,6 +2376,16 @@ const service = {
         if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: an ask answered
         if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
+      }
+
+      if (path === '/v1/pass/unlock' || path === '/v1/pass/buy') {
+        // PASS-PANELS (bible/06-Systems/Battle-Pass.md): THE PREMIUM TRACK OPENED, AND AN ITEM BOUGHT, FOR AURUM - one
+        // guarded batch each (battlePass.js); the answer is the wardrobe after it, the Aurum's card and the pass's card.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/unlock' ? await unlockPass(ctx, who.player, body, env) : await buyPass(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        const after = 'row' in r && r.row ? await withSeatTitles(ctx, r.row, env) : null;
+        return json({ ...r, row: undefined, ...(after ? accountWardrobe(after, env, nowS) : {}), aurum: await aurumCardOf(ctx, after ?? who.player, env), pass: await passOf(ctx, who.player, env) }, 200, origin);
       }
 
       if (path === '/v1/season/maul') {

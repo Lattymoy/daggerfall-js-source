@@ -541,7 +541,7 @@ export async function equipTitle({ db, nowS }, player, env, title) {
  * wardrobe after the write.
  */
 export async function equipAura({ db, nowS }, player, env, aura) {
-  const why = auraRefusal(aura, player, env, nowS);   // AEGIS: a list's aura is held off the config
+  const why = auraRefusal(aura, player, env);   // AEGIS: a list's aura is held off the config
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
@@ -572,9 +572,9 @@ export async function equipArmoryKit({ db, nowS }, player, env, kit) {
  *  effect, the portal skin and the mount look. Refused against what the player holds now (effectRefusal); the kit written
  *  is the one worn now with that slot changed. Answers the wardrobe after the write. */
 export async function equipEffect({ db, nowS }, player, env, slot, key) {
-  const why = effectRefusal(slot, key, player, nowS);
+  const why = effectRefusal(slot, key, player);
   if (why) return { error: why };
-  const effects = effectKitWith(effectsWorn(player, nowS) ?? null, /** @type {string} */ (slot), key);
+  const effects = effectKitWith(effectsWorn(player) ?? null, /** @type {string} */ (slot), key);
   await db.prepare('UPDATE players SET effects = ?, last_seen = ? WHERE id = ?').bind(effects, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, effects }, env, nowS) };
 }
@@ -584,7 +584,7 @@ export async function equipEffect({ db, nowS }, player, env, slot, key) {
  * in the portrait well. Answers the wardrobe after the write; `not-held` for one the account does not hold.
  */
 export async function equipIcon({ db, nowS }, player, env, icon) {
-  const why = iconRefusal(icon, player, nowS);
+  const why = iconRefusal(icon, player);
   if (why) return { error: why };
   await db.prepare('UPDATE players SET icon = ?, last_seen = ? WHERE id = ?').bind(icon, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, icon }, env, nowS) };

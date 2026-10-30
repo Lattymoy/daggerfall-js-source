@@ -13,26 +13,26 @@
 --              with credit for it (shopLaw.js shopLostOf)
 --   effects    the effects kit worn (src/net/effectLaw.js: a kill effect, a portal skin, a mount look), signed as `fx`;
 --              NULL for none. Read against what is held at every ask (titles.js effectsWorn)
---   pass_s1    Season One's experience (src/net/battlePassLaw.js) - finds, challenges and the levels a ware gives at once;
---              what the track gives is read off it at every ask (titles.js passKeys)
+--   pass_items the Battle Pass's items the account bought (src/net/battlePassLaw.js PASS_PANELS - PASS-PANELS), grants
+--              space-separated in buy order; written in the buy's own batch beside its ledger line (battlePass.js buyPass)
 ALTER TABLE players ADD COLUMN shop_held TEXT NOT NULL DEFAULT '';
 ALTER TABLE players ADD COLUMN effects TEXT;
-ALTER TABLE players ADD COLUMN pass_s1 INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE players ADD COLUMN pass_items TEXT NOT NULL DEFAULT '';
 
--- A SEASON'S DAY, an account a UTC day: the asks heard, the experience found before a booster's share (battlePassLaw.js
--- PASS_DAY_ASKS, PASS_DAY_XP), and the last find's base - the batch's next statement reads it, so the day's row decides.
+-- A FIND'S DAY, an account a UTC day (PASS-PANELS: a deed's find pays Aurum, a season's or not): the asks heard, the
+-- Aurum found (battlePassLaw.js PASS_DAY_ASKS, PASS_DAY_AURUM), and the last find's Aurum - the batch's next statements
+-- read it, so the day's row decides what the ledger's day line takes.
 CREATE TABLE IF NOT EXISTS pass_days (
   account TEXT NOT NULL,
-  season  TEXT NOT NULL,
   day     INTEGER NOT NULL,
   asks    INTEGER NOT NULL DEFAULT 0,
-  xp      INTEGER NOT NULL DEFAULT 0,
+  aurum   INTEGER NOT NULL DEFAULT 0,
   last    INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (account, season, day),
+  PRIMARY KEY (account, day),
   FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
 );
 
--- A STAGE'S CHALLENGE, an account: its deeds counted while its stage is open, and when it paid (0 not yet) - once.
+-- A STAGE'S CHALLENGE, an account: its deeds counted while its stage runs, and when it paid its Aurum (0 not yet) - once.
 CREATE TABLE IF NOT EXISTS pass_counts (
   account   TEXT NOT NULL,
   season    TEXT NOT NULL,
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS pass_asks (
 -- AN ORDER'S CREDIT AND ITS OWN REFUND (AUDIT-STOREFRONT S1, S3):
 --   credit       what of the ware the account held at its checkout - its price took it off, so a payment taken back
 --                never takes it (shopLaw.js shopCreditOf), space-separated ids
---   refund       why the service returned the payment itself: 'held' (two pages paid at once), 'spent' (a stronger
---                booster held), 'late' (a season's ware paid after it); NULL for a payment it kept
+--   refund       why the service returned the payment itself: 'held' (two pages paid at once), 'price' (a giver whose
+--                price moved before the payment landed); NULL for a payment it kept
 --   refund_owed  1 while Stripe has not yet taken that refund - asked again at Stripe's next word on the order
 ALTER TABLE shop_orders ADD COLUMN credit TEXT NOT NULL DEFAULT '';
 ALTER TABLE shop_orders ADD COLUMN refund TEXT;
@@ -84,13 +84,15 @@ CREATE TABLE IF NOT EXISTS season_mauls (
 
 -- AURUM (2026-10-29, the owner: "a currency that can be earned ingame and through the past + purchased to be used to
 -- purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md). An account's Aurum is counted at every ask:
--- its paid packs (`shop_orders.aurum`), its pass tracks' rewards (src/net/aurumLaw.js aurumTrackOf) and this ledger's
--- lines. A refund or a dispute takes a pack's Aurum back by its order's status alone.
+-- its paid packs (`shop_orders.aurum`) and this ledger's lines. A refund or a dispute takes a pack's Aurum back by its
+-- order's status alone.
 --   shop_orders.aurum  the Aurum a pack's order gives, set at its checkout (0 for every other ware)
 ALTER TABLE shop_orders ADD COLUMN aurum INTEGER NOT NULL DEFAULT 0;
 
--- THE LEDGER: a line a deed struck or a ware bought, once each (the key): `deed` the week's first of a witnessed kind
--- (ref `<kind>:<week>`, the week from Monday, UTC), `buy` a daily ware (ref its id, spent as a negative amount).
+-- THE LEDGER, once each (the key): `deed` the week's first of a witnessed kind (ref `<kind>:<week>`, the week from Monday,
+-- UTC), `find` a UTC day's finds (ref the day, its amount the day's sum), `challenge` a stage's challenge paid (ref
+-- `<season>:<key>`), `cache` a cache found (ref its id), and spent as negative amounts: `buy` a daily ware (ref its id),
+-- `track` a premium track opened (ref `<season>:premium`), `panel` a pass item bought (ref `<season>:<grant>`).
 CREATE TABLE IF NOT EXISTS aurum_ledger (
   account TEXT NOT NULL,
   kind    TEXT NOT NULL,

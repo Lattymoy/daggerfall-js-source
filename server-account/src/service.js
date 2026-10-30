@@ -416,8 +416,9 @@ export const ROUTES = new Set([
   '/v1/account/icon',   // WITCH1: a profile icon worn, or none
   '/v1/account/armory',   // ARMORY: an Aura Armory piece worn in its slot, or the slot emptied
   '/v1/account/effect',   // STOREFRONT: a kill effect, a portal skin or a mount look worn in its slot, or the slot bared
-  // STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS - the account's season, and a deed's find
-  '/v1/pass/mine', '/v1/pass/find',
+  // STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS - the account's pass, and a deed's find; PASS-PANELS: the
+  // premium track opened and an item bought, for Aurum
+  '/v1/pass/mine', '/v1/pass/find', '/v1/pass/unlock', '/v1/pass/buy',
   '/v1/season/maul',   // AUDIT LANE 5: the Resonant Maul's day, an account's (seasonClaim.js)
   '/v1/aurum/buy',   // AURUM (bible/06-Systems/Aurum.md): a daily ware bought for Aurum (aurum.js)
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's

@@ -45,7 +45,7 @@ export async function boardNamesOf(ctx, ids, env, nowS, own) {
     rows = await withMasteryMarksAll(ctx, rows);   // MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles, read off their rows
     for (const row of rows) {
       const withH = { ...row, ...(own.arena ? { arena: own.arena(row) } : {}), ...(own.iliac ? { iliac: own.iliac(row) } : {}), ...(own.gambit ? { gambit: own.gambit(row) } : {}) };
-      out.set(row.id, { name: displayName(row), title: titleWorn(withH, env, nowS) ?? null, glyphs: glyphsOf(withH, env, nowS) });
+      out.set(row.id, { name: displayName(row), title: titleWorn(withH, env) ?? null, glyphs: glyphsOf(withH, env, nowS) });
     }
   }
   return out;
