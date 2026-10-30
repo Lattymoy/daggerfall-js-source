@@ -187,7 +187,7 @@ test('STUCK-ARROWS: THE FOUR HOSTS - the three flights pass their pool (the worl
     assert.ok(at > 0 && s.slice(at, s.indexOf('\n', at)).includes('summoned: shot.summoned'), `${name}: the shaft carries it`);
     assert.match(s, /\.\.\.\(o\?\.summoned \? \{ summoned: true \} : \{\}\) \}\),/, `${name}: the technique door carries it`);
   }
-  assert.match(dun, /if \(!spendAmmoFor\(playerEntity\.items, playerWeapon\.weapon, shot\)\) continue;\n\s*fireArrow\([^\n]*bowShotExtra\([^\n]*shot\.summoned\)\);/);   // PIN MOVED (BOW-BLOOM, BOW-FAST): the conjured round rides bowShotExtra
+  assert.match(dun, /if \(!spendAmmoFor\(playerEntity\.items, playerWeapon\.weapon, shot\)\) continue;\n\s*fireArrow\([^\n]*bowShotExtra\([^\n]*shot\.summoned, playerWeapon\.weapon\)\);/);   // PIN MOVED (BOW-BLOOM, BOW-FAST): the conjured round rides bowShotExtra
   assert.match(dun, /\.\.\.\(o\?\.summoned \? \{ summoned: true \} : \{\}\) \}\),/);
   assert.match(read('src/scenes/droppedLoot.js'), /p\.owner !== 'wild' && !p\.unsaved\)/);
 });

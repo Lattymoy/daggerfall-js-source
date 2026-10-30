@@ -7681,7 +7681,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
           const shot = { summoned: false };   // STUCK-ARROWS: DFU's isArrowSummoned, carried by the shaft
           if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon, shot)) continue;
-          fireArrow(eye, orbArchiveFor(playerWeapon.weapon) ? lookDir : bowShotAim(lookDir), playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()), bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), shot.summoned)); weaponRig.noteShot?.(playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+          fireArrow(eye, orbArchiveFor(playerWeapon.weapon) ? lookDir : bowShotAim(lookDir, playerWeapon.weapon), playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()), bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), shot.summoned, playerWeapon.weapon)); weaponRig.noteShot?.(playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
           // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),

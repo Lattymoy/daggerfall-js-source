@@ -2,7 +2,7 @@
 // rest shrinks; the first shot after a rest flies true.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOW_BLOOM, BOW_FAST, bowBloomNow, bowBloomShot, bowFastShot, bowFastDamage, whileShaftLands, landingShaft, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
+import { BOW_BLOOM, BOW_FAST, BOW_KINDS, bowKindOf, bowShotStamp, bowBloomNow, bowBloomShot, bowFastShot, bowFastDamage, whileShaftLands, landingShaft, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
 import { bloomRingPx, paintBowBloomRing } from '../../src/ui/bowBloomRing.js';
 import { ArrowFlight, shaftOnRelayBody } from '../../src/combat/arrowFlight.js';
 
@@ -84,4 +84,24 @@ test('BOW-FAST THE LANE: the player\'s bow shaft carries its stacks; a duel\'s d
   assert.equal(whileShaftLands({ fast: 2 }, () => bowFastDamage(landingShaft(), 100)), 60);
   assert.equal(landingShaft(), null, 'cleared after');
   assert.equal(shaftOnRelayBody({ fast: 3 }, { name: 'x' }, 50), 20);
+});
+
+test('BOW-KINDS: the short bow whole at 0.75 s, its circle back 4 a second; the long bow whole at 1.25 s and x1.5; any other bow the plain law; paced, the two land about the same a second (mutants: a window moved; the pull unread; the settle unread)', () => {
+  const SHORT = { templateIndex: 129 }, LONG = { templateIndex: 130 };
+  assert.deepEqual([bowKindOf(SHORT), bowKindOf(LONG)], [BOW_KINDS[129], BOW_KINDS[130]]);
+  assert.deepEqual({ ...bowKindOf(null) }, { within: BOW_FAST.within, settle: BOW_BLOOM.settle, pull: 1 });
+  _resetBowBloomForTests();
+  assert.deepEqual([0, 0.75, 1.5].map((t) => bowShotStamp(SHORT, 700 + t).fast), [0, 0, 0], 'the short bow every 0.75 s: whole');
+  _resetBowBloomForTests();
+  assert.deepEqual([0, 1, 2].map((t) => bowShotStamp(LONG, 800 + t)), [{ fast: 0, pull: 1.5 }, { fast: 1, pull: 1.5 }, { fast: 2, pull: 1.5 }], 'the long bow every second: it stacks');
+  assert.equal(bowShotStamp(LONG, 803.25).fast, 0, 'the long bow after 1.25 s: whole');
+  assert.equal(bowFastDamage({ fast: 0, pull: 1.5 }, 12), 18);
+  assert.equal(bowFastDamage({ fast: 1, pull: 1.5 }, 12), 14);
+  // paced: the short bow's mean 11 every 0.75 s against the long bow's 12 x1.5 every 1.25 s
+  assert.ok(Math.abs(11 / 0.75 - 18 / 1.25) < 0.5);
+  _resetBowBloomForTests();
+  bowBloomShot(FWD, 900, () => 0.5, BOW_KINDS[129]);
+  assert.equal(bowBloomNow(900.25), 1, 'the short bow\'s circle: 2 - 4 x 0.25');
+  bowBloomShot(FWD, 901, () => 0.5, BOW_KINDS[130]);
+  assert.equal(bowBloomNow(901.5), 0.5, 'the long bow\'s: 2 - 3 x 0.5');
 });
