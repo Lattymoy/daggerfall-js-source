@@ -306,7 +306,9 @@ numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's slot, the classic Regenerate at
 2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
 (`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
-rise, so PVP-HEAL's window caps it with every other heal. A saved Cure slot loads as Regenerate
+rise, so PVP-HEAL's window caps it with every other heal. The relay prices it in Cure's place and banks its rounds
+as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen') {"`). A
+saved Cure slot loads as Regenerate
 (`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
 
 PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of

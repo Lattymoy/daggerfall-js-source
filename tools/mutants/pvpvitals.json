@@ -113,7 +113,7 @@
   {
     "name": "BOW-FAST-unbounded",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1)",
+    "old": "Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1)",
     "new": "((v.fastK ?? 0) + 1)",
     "tests": [
       "test/net/pvpvitals.test.js"
@@ -123,11 +123,38 @@
   {
     "name": "BOW-KINDS-window-unread",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? BOW_FAST.within;",
-    "new": "  const within = BOW_FAST.within;",
+    "old": "  const within = BOW_FAST_WITHIN[/** @type {129|130} */ (w)] ?? RELAY_BOW_FAST.within;",
+    "new": "  const within = RELAY_BOW_FAST.within;",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
     "note": "A Long Bow's quick shots would escape their cut."
+  },
+  {
+    "name": "PVP-KIT-REGEN-the-price-Cure's",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "fortify: 10, regen: 10, jump: 6,",
+    "new": "fortify: 10, regen: 5, jump: 6,",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REGEN-the-rounds-uncounted",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  if (rs > 0) { v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100); v.creditAt = now; }",
+    "new": "",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REGEN-the-minute-unended",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "v.regenTo = now + PVP_VITALS.buffMs; }",
+    "new": "v.regenTo = Infinity; }",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ]
   }
 ]
