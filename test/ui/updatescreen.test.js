@@ -113,7 +113,10 @@ test('UPDATE-FORCE: Reload Now goes at once; a busy that throws counts as not bu
 
 test('UPDATE-FORCE: the host starts it where the build poll finds a new build, with the online save and the death and duel hold', () => {
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\)/);
+  // PIN MOVED (UPDATE-RESTART): the host hands its save and hold to the poll, which starts the run (ui/updateScreen.js pollForUpdate)
+  assert.match(w, /pollForUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\);/);
+  const u = readFileSync(new URL('../../src/ui/updateScreen.js', import.meta.url), 'utf8');
+  assert.match(u, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && startForcedUpdate\(opts\)/);
 });
 
 // UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" / "make
@@ -160,8 +163,8 @@ test('UPDATE-RESTART: the app\'s update starts the run once it can be put in pla
 });
 
 test('UPDATE-RESTART: the host starts the app\'s run with the same save and hold, ended by the shell\'s restart; the shell quits and starts again', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /forceShellUpdates\(globalThis\.daggerShell, \(\) => startForcedUpdate\(\{ app: true, notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\), reload: \(\) => globalThis\.daggerShell\.restartForUpdate\(\) \}\)\)/);
+  const u = readFileSync(new URL('../../src/ui/updateScreen.js', import.meta.url), 'utf8');
+  assert.match(u, /forceShellUpdates\(shell, \(\) => startForcedUpdate\(\{ \.\.\.opts, app: true, reload: \(\) => shell\.restartForUpdate\(\) \}\)\);/, 'the same save and hold as the browser\'s run');
   const pre = readFileSync(new URL('../../app/preload.cjs', import.meta.url), 'utf8');
   assert.match(pre, /restartForUpdate: \(\) => ipcRenderer\.send\('dagger:restart-for-update'\)/);
   const main = readFileSync(new URL('../../app/main.cjs', import.meta.url), 'utf8');
@@ -169,5 +172,4 @@ test('UPDATE-RESTART: the host starts the app\'s run with the same save and hold
   assert.match(fn, /if \(updateReady\?\.game\) \{[^}]*app\.relaunch\(\{ args: \[\.\.\.process\.argv\.slice\(1\)\.filter\(\(a\) => a !== PLAY_SWITCH\), PLAY_SWITCH\] \}\);\s*app\.quit\(\);/, 'a channel version: quit and start again, straight into the game');
   assert.match(fn, /currentUpdateTransport\(\) === 'updater'\) \{ installNow\(updateReady\.version\); return; \}/, 'an installer: it runs and reopens the app');
   assert.match(main, /ipcMain\.on\('dagger:restart-for-update', \(e\) => \{\s*if \(gameWindow && !gameWindow\.isDestroyed\(\) && e\.sender === gameWindow\.webContents\) restartForUpdate\(\);/, 'only the game\'s own window');
-  assert.match(main, /if \(leaveForUpdate \|\| restartingForUpdate\) \{ e\.preventDefault\(\); return; \}/, 'no Leave/Stay box in the way of the restart');
 });

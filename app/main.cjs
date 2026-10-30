@@ -792,8 +792,8 @@ async function restartToUpdate() {
  *  copy holds is put in place by quitting and starting again - never a reload, which can leave the page on the copy it
  *  had: a version the channel brought is played by the next launch (gameStore.startup activates it, and the GPU caches
  *  turn for it before Chromium opens them), straight back into the game (`--play`); an installer's runs silently and
- *  reopens the app (installNow). No box: the screen already saved and gave its minute. With nothing held, the page
- *  reloads, as it would in a browser. */
+ *  reopens the app (installNow). No box: the screen already saved, and stood the page's unload guard down. With
+ *  nothing held, the page reloads, as it would in a browser. */
 let restartingForUpdate = false;
 function restartForUpdate() {
   if (restartingForUpdate || installStarted) return;
@@ -1390,7 +1390,7 @@ async function createWindow({ onShown = null } = {}) {
   // that did not could raise box after box, each freezing the main process.
   win.on('close', () => markLeaving(win.webContents));
   win.webContents.on('will-prevent-unload', (e) => {
-    if (leaveForUpdate || restartingForUpdate) { e.preventDefault(); return; }
+    if (leaveForUpdate) { e.preventDefault(); return; }
     if (!isLeaving(win.webContents)) return;
     const choice = dialog.showMessageBoxSync(win, { ...UNLOAD_ASK, buttons: [...UNLOAD_ASK.buttons] });
     if (leaves(choice)) e.preventDefault();

@@ -5,7 +5,9 @@
 // A death screen or a duel holds the reload (at most UPDATE_HOLD_MAX_MS), so no corpse or duel health is saved.
 import { t } from '../systems/textManager.js';
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';
-import { buildUpdateText } from '../net/updateNotice.js';
+import { buildUpdateText, buildUpdateSeen, fetchLiveBuildTag } from '../net/updateNotice.js';
+import { BUILD_TAG } from '../buildTag.js';
+import { forceShellUpdates } from '../systems/shellUpdates.js';
 
 /** The warning before the screen, the screen before the reload, and the longest a death or duel may hold it, ms. */
 export const UPDATE_WARN_MS = 60_000;
@@ -141,6 +143,19 @@ export function startForcedUpdate(opts = {}) {
   tick();
   run.timer = win.setInterval?.(tick, UPDATE_TICK_MS);
   return true;
+}
+
+/**
+ * The host's build poll (scenes/world.js buildPoll). In a browser: the site's page, against THIS bundle's tag - a new
+ * build starts the run. UPDATE-RESTART: in the desktop app that page is the app's own copy, so the app's own update
+ * starts it, and the app restarting onto it ends it (systems/shellUpdates.js forceShellUpdates).
+ * @param {{ notice?: (text: string) => void, save?: () => unknown, busy?: () => boolean }} opts
+ * @param {any} [shell]  globalThis.daggerShell
+ */
+export function pollForUpdate(opts, shell = globalThis.daggerShell) {
+  forceShellUpdates(shell, () => startForcedUpdate({ ...opts, app: true, reload: () => shell.restartForUpdate() }));
+  // `fetchLiveBuildTag` swallows its own throws; the second handler is the belt for a rejection it cannot see
+  return fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate(opts), () => {});
 }
 
 /** Whether this page is counting down to a reload. */

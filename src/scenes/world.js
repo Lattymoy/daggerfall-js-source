@@ -1035,10 +1035,8 @@ import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageToken
 import { quickslotTag, quickslotHand, tagText, actionKeyWord } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touch/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
-import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
-import { startForcedUpdate } from '../ui/updateScreen.js';   // UPDATE-FORCE: a new build saves and reloads every open game
-import { forceShellUpdates } from '../systems/shellUpdates.js';   // UPDATE-RESTART: and in the desktop app, the app's update restarts it
-import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
+import { relayVersionSeen, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { pollForUpdate } from '../ui/updateScreen.js';   // UPDATE-FORCE: a new build saves and reloads every open game (UPDATE-RESTART: restarts the desktop app)
 import { morrowindDataCount, morrowindDataGeneration, getBytes, clearRetiredArena } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows, choiceDoor } from './quest/questBridge.js';
@@ -26850,10 +26848,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (now - _buildPolledAt < BUILD_POLL_MS) return;
     _buildPolledAt = now;
     // UPDATE-FORCE: the minute's warning, then the screen - held while a death screen or a duel is up
-    fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() }), () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
-    // UPDATE-RESTART: in the desktop app the poll above reads the app's own copy - its update is the app's word, and the
-    // same countdown ends with the app restarting onto it (systems/shellUpdates.js forceShellUpdates)
-    forceShellUpdates(globalThis.daggerShell, () => startForcedUpdate({ app: true, notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen(), reload: () => globalThis.daggerShell.restartForUpdate() }));
+    // UPDATE-RESTART: the site's new build in a browser, the app's own update in the desktop app (ui/updateScreen.js pollForUpdate)
+    pollForUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
   };
   // ═══ CHAT-CHAN — THE FOUR CHANNELS, AT THE HOST ═══════════════════
   //
