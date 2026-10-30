@@ -147,9 +147,11 @@ BOW_HAND = {
                '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1),
                '19-0': (40.0, 89.5, 0)},
 }
-# The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views,
-# the back-3/4 idle, the female's 3-2 - the near hand is the left: the bow is there.
-BOW_NEAR = {(b, rf) for b in ('male', 'female') for rf in ('2-0', '2-1', '2-2', '2-3', '17-0', '18-0')} | {('female', '3-2')}
+# The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views -
+# the near hand is the left: the bow is there. The back-3/4 idle and the female's 3-2 press that hand flat to the body
+# in profile, where a bow lies across the arm: the body hides it, and none is drawn, flipped or not (the owner,
+# 2026-10-30: "Bow is wonky on these frames still").
+BOW_NEAR = {(b, rf) for b in ('male', 'female') for rf in ('2-0', '2-1', '2-2', '2-3', '17-0')}
 # Records 1-3 and 16-18 are also drawn flipped (eotbBillboard.js MIRRORED), and the flip swaps the hands: there the left
 # hand is the art's other one, the hammer's fist, on the far side - the bow at that fist (`bowM`), behind the body, which
 # may hide it (the owner, 2026-10-30: "Its okay if the body hides it"), turned to that hand's side.

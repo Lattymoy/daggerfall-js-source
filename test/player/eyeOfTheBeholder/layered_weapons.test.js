@@ -425,19 +425,24 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
   assert.deepEqual(heldImage(ls, { gender: 'female' }), inventoryItemImage(ls, { gender: 'female' }));
 });
 
-test('the bow is in the left hand: the free hand the art draws, or the near fist where it hides it; a flipped picture\'s left hand is the art\'s other - the hammer\'s fist, on the far side, behind the body', { skip: !PNG && 'no pngjs' }, async () => {
+test('the bow is in the left hand: the free hand the art draws, or the near fist where it hides it - none where that fist lies flat on the body; a flipped picture\'s left hand is the art\'s other - the hammer\'s fist, on the far side, behind the body', { skip: !PNG && 'no pngjs' }, async () => {
   // unflipped: the back-3/4 walk's free hand is the near one, before the body; the idle and the female's 3-2 hold the hammer near
   for (const [body, frames] of [['male', ['3-0', '3-1', '3-2', '3-3']], ['female', ['3-0', '3-1', '3-3']]]) {
     for (const rf of frames) assert.equal(weaponRigOf(body, rf).bow[2], 1, `${body} ${rf}: the near hand, before the body`);
   }
+  // the back-3/4 idle and the female's 3-2 press the bow hand flat to the body: the body hides the bow, flipped or not
   for (const [body, rf] of [['male', '18-0'], ['female', '18-0'], ['female', '3-2']]) {
-    const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
-    assert.ok(fr.bow[2] === 1 && Math.hypot(fr.bow[0] - gx, fr.bow[1] - gy) <= 2.5, `${body} ${rf}: the near fist`);
+    const fr = weaponRigOf(body, rf), plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    assert.ok(fr.bow === undefined && fr.bowM === undefined, `${body} ${rf}: no bow hand`);
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@lb1`, decodePng, opts);
+    assert.deepEqual(armed.data, bare.data, `${body} ${rf}: none drawn, no hammer left`);
   }
+  assert.ok(!layeredSprite('IdleRanged', 3, 0, 1, { outfit: 'lll', gender: 'male', weapon: 'lb3' }, true).key.endsWith(':m'), 'a flipped frame with no bow is the same picture flipped');
   // flipped (eotbBillboard.js MIRRORED: records 1-3 and their idles): the hammer's fist, behind the body, turned to its side
   const flippable = Object.keys(rig.male.frames).filter((rf) => [1, 2, 3, 16, 17, 18].includes(Number(rf.split('-')[0])));
   for (const body of ['male', 'female']) for (const rf of flippable) {
     const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
+    if (!fr.bow) continue;   // the body hides it (above)
     assert.ok(Array.isArray(fr.bowM) && fr.bowM[2] === 0 && fr.bowM[3] === -1 && Math.hypot(fr.bowM[0] - gx, fr.bowM[1] - gy) <= 2.5, `${body} ${rf}: the flipped bow at the hammer's fist ${JSON.stringify(fr.bowM)}`);
   }
   for (const rf of ['0-0', '4-0', '15-0', '19-0']) assert.equal(weaponRigOf('male', rf).bowM, undefined, `${rf}: never flipped`);

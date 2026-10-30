@@ -168,12 +168,15 @@ ways, since the doll cuts the lower limb short. The fist closes over the grip. T
 (`BOW_PX`, the short bow three quarters). Edge on, it is a line, not dashes.
 
 **Which hand.** The left is the art's free hand (`BOW_HAND`, the loose's own bow hand). Where the art hides it and
-holds the hammer in the near hand - the side views, the back-3/4 idle, the female's 3-2 - the near hand is the left,
-and the bow is there (`BOW_NEAR`), as Daggerfall's side views hold a weapon. Records 1-3 and their idles are also drawn
-flipped (`eotbBillboard.js` MIRRORED), and the flip swaps the hands (the owner, 2026-10-30: "Bow is still wrong on the
-back facing left. Its okay if the body hides it" - then "Youre not presenting the flipped version of the sprite"). A
-flipped frame is its own picture (the key's `:m`): the bow at the hammer's fist (`bowM`), the left hand once turned, on
-the far side, behind the body, which hides what it covers.
+holds the hammer in the near hand - the side views - the near hand is the left, and the bow is there (`BOW_NEAR`), as
+Daggerfall's side views hold a weapon. The back-3/4 idle and the female's 3-2 press that fist flat to the body in
+profile, where a bow lies across the arm ("Bow is wonky on these frames still"): the body hides it, flipped or not.
+
+**Flipped.** Records 1-3 and their idles are also drawn flipped (`eotbBillboard.js` MIRRORED), and the flip swaps the
+hands (the owner, 2026-10-30: "Bow is still wrong on the back facing left. Its okay if the body hides it" - then
+"Youre not presenting the flipped version of the sprite"). A flipped frame is its own picture (the key's `:m`): the
+bow at the hammer's fist (`bowM`), the left hand once turned, on the far side, behind the body, which hides what it
+covers.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses

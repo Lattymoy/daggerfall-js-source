@@ -682,7 +682,7 @@
   {
     "name": "LAYERED-WEAPONS-flip-no-own-picture",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  const hand = flip && isBowCode(weapon) ? ':m' : '';",
+    "old": "  const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : '';",
     "new": "  const hand = '';",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"

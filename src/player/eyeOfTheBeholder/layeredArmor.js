@@ -156,7 +156,7 @@ export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
   const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${weapon == null ? '' : `@${weapon}`}`;
   const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
   const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin && weapon === '0' ? !mirror : mirror;
-  const hand = flip && isBowCode(weapon) ? ':m' : '';   // a flipped picture's bow is in the art's other hand: its own picture
+  const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : '';   // a flipped picture's bow is in the art's other hand: its own picture
   return {
     archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
     key: `LA:${body}:${combo}:${rec}-${fr}:${code}${hand}`,
