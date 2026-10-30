@@ -456,3 +456,5 @@ arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if
 The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
 SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
 0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
+BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within a second of the last, four at most
+(`pvpVitals.js:"export function bowFastCut(f, d, now) {"`). The game sends that claim uncut, so it cannot skip the cut.

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
+import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, bowFastCut, BOW_FAST, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
 import { HEALTH_SHARE_WHOLE, takeHealthReport, PVP_HEALTH_MAX } from '../../src/net/siege/refereeHealthShare.js';
 import { newWildRef, wildZone, wildBlow, wildCarry, wildCarryOf, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT, newFighter } from '../../src/net/siege/siegeRef.js';
@@ -119,6 +119,15 @@ test('BOW-RATE: an arrow comes no sooner than the fastest honest bow (its loose,
   const fp = vitalsOf(a.f, 10_100).fp;
   assert.equal(shot('03', 10_100), 'rate');
   assert.equal(vitalsOf(a.f, 10_100).fp, fp);
+});
+
+test('BOW-FAST: the relay cuts a judged shaft landing within a second of the last by a fifth a stack, four at most, at least 1 kept; a second apart takes none (mutants: no stacks; the stacks unbounded)', () => {
+  assert.deepEqual(BOW_FAST, { cut: 20, most: 4, within: 1 });
+  const f = newFighter(10, 0);
+  const cuts = [0, 300, 600, 900, 1200, 1500].map((t) => bowFastCut(f, 100, 1000 + t));
+  assert.deepEqual(cuts, [100, 80, 60, 40, 20, 20]);
+  assert.equal(bowFastCut(f, 100, 2500 + 1000), 100, 'a second apart');
+  assert.equal(bowFastCut(f, 1, 3600), 1, 'at least 1 kept');
 });
 
 test('SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, two may bunch; a Cleave lands on each player in its arc (mutants: no bucket; one bucket for all targets)', () => {

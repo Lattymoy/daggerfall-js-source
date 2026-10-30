@@ -38,7 +38,7 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
-import { castPaid, shaftPaid, swingPaid, payFatigue, absorbLanded, runPaid, vitalsCarry, vitalsTake, PVP_VITALS } from './pvpVitals.js';   // PVP-VITALS: a flagged fighter's casts and swings paid for
+import { castPaid, shaftPaid, swingPaid, bowFastCut, payFatigue, absorbLanded, runPaid, vitalsCarry, vitalsTake, PVP_VITALS } from './pvpVitals.js';   // PVP-VITALS: a flagged fighter's casts and swings paid for
 import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
@@ -265,6 +265,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   const spell = r === SIEGE_HIT.Spell;
   if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now) : r === SIEGE_HIT.Melee && !swingPaid(a.f, to, now)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'rate', graceEnded };   // BOW-RATE, SWING-RATE
   if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now)) return { ok: false, dealt: 0, fell: false, fall: null, why: spell ? 'magicka' : 'tired', graceEnded };
+  if (r === SIEGE_HIT.Shaft) d = bowFastCut(a.f, d, now);   // BOW-FAST: the game sends a shaft's claim uncut
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);

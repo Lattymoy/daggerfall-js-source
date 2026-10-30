@@ -32,6 +32,11 @@ export const PVP_VITALS = Object.freeze({
  *  `shaftBurst` the arrows a late network may bunch together. SWING-RATE: `swingMs` the quickest honest swing
  *  (MELEE_NUM_FRAMES.StrikeDown x SWING_FRAME_MIN, pinned equal), per target - a Cleave lands on several. */
 
+/** BOW-FAST: a shaft landing within `within` seconds of the shooter's last takes a stack, at most `most`, and each takes
+ *  `cut` per cent off it, at least 1 kept (combat/bowBloom.js BOW_FAST, pinned equal). The relay counts it for a shaft it
+ *  judges, so a game cannot leave the cut off. */
+export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
+
 /** Declarations a report may carry (`u`): a potion drunk (health, magicka, other), or a kit spell cast on myself (10 + its
  *  place in KIT_ORDER). */
 export const DECLARE = Object.freeze({ hpPotion: 1, mpPotion: 2, otherPotion: 3, kit: 10 });
@@ -48,11 +53,11 @@ export function healthCapAt(cl, cap = 3000) {
 export const potionHealAt = (cl) => 5 + 19 * (Number.isSafeInteger(cl) && cl >= 1 ? cl : 45);
 
 /**
- * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, castC: number, castAt: number, castTo: string[], shafts: number, shaftAt: number, swings: Record<string, [number, number]> }} Vitals
+ * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, castC: number, castAt: number, castTo: string[], shafts: number, shaftAt: number, fastK: number, fastAt: number, swings: Record<string, [number, number]> }} Vitals
  */
 /** A fighter's ledgers - made unheard (full until the game's word anchors them). @param {any} f @param {number} now @returns {Vitals} */
 export function vitalsOf(f, now) {
-  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, swings: {} };
+  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, fastK: 0, fastAt: -Infinity, swings: {} };
   return f.vitals;
 }
 /** The regen since the ledgers last moved: magicka, and health credit (to `creditMax` of the whole). */
@@ -94,6 +99,13 @@ export function shaftPaid(f, now) {
   if (v.shafts < 1) return false;
   v.shafts -= 1;
   return true;
+}
+/** BOW-FAST: a judged shaft's claim `d` landing now, after its stacks. */
+export function bowFastCut(f, d, now) {
+  const v = vitalsOf(f, now);
+  v.fastK = now - (v.fastAt ?? -Infinity) < BOW_FAST.within * 1000 ? Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;
+  v.fastAt = now;
+  return v.fastK > 0 && d > 0 ? Math.max(1, Math.round((d * (100 - BOW_FAST.cut * v.fastK)) / 100)) : d;
 }
 /** SWING-RATE: a melee blow on `to` now - false where it comes sooner than the quickest swing allows (two may bunch). */
 export function swingPaid(f, to, now) {

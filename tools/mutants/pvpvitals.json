@@ -99,5 +99,25 @@
       "test/net/pvpvitals.test.js"
     ],
     "note": "An honest Cleave on three players would land on only two."
+  },
+  {
+    "name": "BOW-FAST-no-stacks",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < BOW_FAST.within * 1000 ?",
+    "new": "  v.fastK = false ?",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A game that left its cut off would loose full arrows as fast as the bow allows."
+  },
+  {
+    "name": "BOW-FAST-unbounded",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "Math.min(BOW_FAST.most, (v.fastK ?? 0) + 1)",
+    "new": "((v.fastK ?? 0) + 1)",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A fifth arrow would be cut to the floor of 1."
   }
 ]
