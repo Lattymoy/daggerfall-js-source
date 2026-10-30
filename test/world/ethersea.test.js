@@ -11,7 +11,7 @@ import {
   ETHER_BOX, ETHER_MARGIN, LEAGUE_M, LEAGUE_PX, VEIL_PX, VEIL_X, inEther, inEtherLaw, inVeil, etherFrame, BANDS, etherDepthAt, etherBandOf, etherBandAt,
   etherHash, etherRng, ISLE_CELL_PX, ISLE_KINDS, KIND_IDS, ETHER_GOODS, CLIMATE_REACH_PX, etherCellOf, CELLS_W, CELLS_H, VEILHAVEN_CELL, VEILHAVEN_NAME,
   isleOfCell, isleAt, islesNear, isleByKey, veilhaven, isleName, isleByte, etherHeightByte, etherLargeMap, etherClimateAt, etherWoods,
-  etherClimateIndex, etherPoliticIndex, crossingWaters, CROSS_X, CROSS_LAND_PX, HOME_WATERS, landfall, LANDFALL_OFF_PX, dropIsleCache, isleCacheSize,
+  etherClimateIndex, etherPoliticIndex, crossingWaters, CROSS_X, CROSS_LAND_PX, CROSS_SEA_PX, HOME_WATERS, landfall, LANDFALL_OFF_PX, dropIsleCache, isleCacheSize,
   ETHER_SEA_NAME, NAME_HEADS, NAME_TAILS, HEIGHT_NOISE, etherLight, ETHER_LIGHT_TINT, ETHER_KEY_TINT, compassPoint,
 } from '../../src/world/ethericSea.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
@@ -253,16 +253,25 @@ test('ETHER-SEA through the kernel: the open sea all water, every port and ruin 
   assert.equal(seaShare(w, ETHER_BOX.x0 + empty * ISLE_CELL_PX + 5, ETHER_BOX.y0 + 255 * ISLE_CELL_PX + 5), 0, 'an empty cell\'s middle, open water');
 });
 
-test('ETHER-SEA the crossing\'s waters: out on the open Abecean - west of CROSS_X, CROSS_LAND_PX pixels and more from any land - and never the sea\'s own; home through the Veil; the Bay\'s mouth the way home\'s fallback (mutants: the west, the land\'s distance, the box\'s refusal)', () => {
-  // PIN MOVED (AUDIT CAPTAIN'S SEA X4): west of the Bay's mouth (its line crosses this row at about 243)
-  assert.equal(CROSS_X, 230); assert.equal(CROSS_LAND_PX, 20);
-  assert.equal(crossingWaters(200, 300, 20), true);
-  assert.equal(crossingWaters(200, 300, 19), false, 'too near land');
-  assert.equal(crossingWaters(229, 300, 30), true); assert.equal(crossingWaters(230, 300, 30), false, 'east of the mouth: the Bay itself');
-  assert.equal(crossingWaters(HOME_WATERS.px, HOME_WATERS.py, Infinity), true, 'the way home\'s fallback is crossing water still');
-  assert.equal(crossingWaters(-200, 300, Infinity), true, 'past the Bay\'s west edge, the Eltheric');
-  assert.equal(crossingWaters(200, 300, NaN), false, 'a distance nobody measured');
-  assert.equal(crossingWaters(200, -5000, Infinity), false, 'never in the sea\'s box - west of CROSS_X there too');
+test('ETHER-SEA the crossing\'s waters: out on the open ocean - west of CROSS_X, CROSS_LAND_PX pixels and more from any land and CROSS_SEA_PX from the sea the world sails, on every row - and never the sea\'s own; home through the Veil; the Bay\'s mouth the way home\'s fallback (mutants: the west, the land\'s distance, the sailed sea\'s, the box\'s refusal)', () => {
+  // PIN MOVED (AUDIT CAPTAIN'S SEA X4): west of the Bay's mouth (its line crosses this row at about 243). PIN MOVED
+  // (SEA-ROWS): the sea the world sails measured too, its distance the fourth argument (the host's createCrossSea)
+  assert.equal(CROSS_X, 230); assert.equal(CROSS_LAND_PX, 20); assert.equal(CROSS_SEA_PX, 20);
+  assert.equal(crossingWaters(200, 300, 20, Infinity), true);
+  assert.equal(crossingWaters(200, 300, 19, Infinity), false, 'too near land');
+  assert.equal(crossingWaters(229, 300, 30, Infinity), true); assert.equal(crossingWaters(230, 300, 30, Infinity), false, 'east of the mouth: the Bay itself');
+  assert.equal(crossingWaters(HOME_WATERS.px, HOME_WATERS.py, Infinity, Infinity), true, 'the way home\'s fallback is crossing water still');
+  assert.equal(crossingWaters(-200, 300, Infinity, Infinity), true, 'past the Bay\'s west edge, the Eltheric');
+  assert.equal(crossingWaters(200, 300, NaN, Infinity), false, 'a distance nobody measured');
+  assert.equal(crossingWaters(200, -5000, Infinity, Infinity), false, 'never in the sea\'s box - west of CROSS_X there too');
+  // SEA-ROWS (Field-Bugs-2026-10-29g): every row, out of sight of the sea the world sails - a lane's way, the serpent's ring
+  assert.equal(crossingWaters(200, 300, Infinity, 20), true, 'as far from it as from land');
+  assert.equal(crossingWaters(200, 300, Infinity, 19), false, 'by a lane, or the serpent\'s waters');
+  assert.equal(crossingWaters(66, 1575, Infinity, 3), false, 'off Sunhold, by its lane');
+  assert.equal(crossingWaters(-300, 1500, Infinity, Infinity), true, 'west of Sumurset, the open ocean');
+  assert.equal(crossingWaters(100, -200, Infinity, Infinity), true, 'north-west of High Rock');
+  assert.equal(crossingWaters(200, 300, Infinity, null), false, 'the sailed sea not yet measured');
+  assert.equal(crossingWaters(200, 300, Infinity, NaN), false, 'nor a distance nobody measured');
   assert.deepEqual({ ...HOME_WATERS }, { px: 180, py: 300 });
 });
 

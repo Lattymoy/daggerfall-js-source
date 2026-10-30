@@ -226,7 +226,7 @@
   {
     "name": "P7-one-slice",
     "file": "src/world/pastBayRows.js",
-    "old": "for (let s = 0; s < n * n; s++) {",
+    "old": "for (let s = 0; s < D.w * D.h; s++) {",
     "new": "for (let s = 0; s < 1; s++) {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "P7-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
-    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
+    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -323,7 +323,7 @@
   {
     "name": "P7-near-no-margin",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
     "new": "      return da + db <= beyondPathPx(lane);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"

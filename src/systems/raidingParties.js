@@ -417,9 +417,9 @@ const allRaids = () => { const s = staffRaids(); return s.length ? [...state.rai
  *   townHere()                {regionIndex, locationIndex} while the player stands OUTDOORS in a location's rect
  *                             (FindCurrentRaid's three tests [IL_0df9-IL_0e09]), else null
  *   playerPixel()             PlayerGPS.CurrentMapPixel
- *   standRaider(mobileType, at) a hostile foe placed 10-35 units off, just outside the view (FoeSpawner), or where a
- *                             staff event's pack asks (`at`: raidSpawnRange's, and its leader's feet) - a promise of
- *                             the foe record, null when no spot was found
+ *   standRaider(mobileType, at, boss) a hostile foe placed 10-35 units off, out of view (FoeSpawner), or where a staff
+ *                             event's pack asks (`at`: raidSpawnRange's, and its leader's feet) - a promise of the record,
+ *                             null with no spot; `boss` the mini boss, an event's own from its stand (STAR-MASTER-FLED)
  *   standDefender(threats)    one of the town's watch, the player's ally, sent at the nearest threat - a promise
  *   defenderCount()           the defenders standing and coming (cityGuards.defenderCount)
  *   defendersAllowed()        the watch would keep one here (no crime on the player, not a beast)
@@ -650,8 +650,8 @@ function spawn(raid, kind, mobileType, o = undefined, pack = null) {
   _pending = p;
   const threats = () => liveRaiders(p.key).map((e) => e.foe);
   const sites = h.sites?.() ?? null;   // RAID5: the town's square, its way, its bearer and its refugees (scenes/raidSitesHost.js)
-  const promise = kind === 'defender' ? h.standDefender?.(threats()) : kind === 'bearer' ? sites?.standBearer(o) : kind === 'refugee' ? sites?.standRefugee(o.at, o.follow) : h.standRaider?.(mobileType, o);   // STAFF-EVENT PACKS: where, for a pack's
   const boss = kind === 'boss';   // STAFF-EVENT: a staff event's mini boss - one raider, promoted
+  const promise = kind === 'defender' ? h.standDefender?.(threats()) : kind === 'bearer' ? sites?.standBearer(o) : kind === 'refugee' ? sites?.standRefugee(o.at, o.follow) : h.standRaider?.(mobileType, o, boss);   // STAFF-EVENT PACKS: where, for a pack's
   Promise.resolve(promise).then((foe) => {
     if (_pending === p) _pending = null;
     if (!foe) { if (boss) { raid.bossFc = -1; _bossMisses++; } if (pack && !pack.at) { pack.left++; pack.far = false; pack.fails = (pack.fails ?? 0) + 1; } return; }   // STAFF-EVENT: no spot - the call is answered again; a pack's leader tried again, nearer

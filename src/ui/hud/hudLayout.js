@@ -69,6 +69,8 @@ export const HUD_PIECES = Object.freeze([
   // EVENTS1 (bible/10-UI/Event-Board.md): the event board, its news at its head - one piece; built when there is first an
   // event to show, a preview until then
   { id: 'events', sel: '.evhud', get name() { return t('menu.hud.piece.events', 'Event board'); }, dummy: true, ghost: 'events' },
+  // NOTICE-PANEL: the town panel under the compass (ui/hud/townPanel.js) - a preview out of town
+  { id: 'town', sel: '.hud .dftown-panel', get name() { return t('menu.hud.piece.town', 'Town panel'); }, dummy: true },
   // HUD-SADDLE (FIELD BUGS 2026-10-14, Discord: "Riding Window is not able to be edited in the HUD Editor (Alt+U)"): the
   // saddle panel's bar (ui/enhanced/enhancedSaddle.js) - its layer is the whole screen, so the piece is the bar inside it; a
   // preview while nobody rides (its stand-in is that layer, the bar inside it the piece - ghostOf). No `dummy`: the
@@ -207,6 +209,8 @@ ${MOVED} { translate: var(--hmx, 0px) var(--hmy, 0px); scale: var(--hms, 1); }
 [data-hm-ghost] .notice { transform: none !important; opacity: 1 !important; }
 #enhanced-midtext[data-hm-dummy], #enhanced-netstatus[data-hm-dummy] { display: block !important; visibility: visible !important; }
 #enhanced-midtext[data-hm-dummy]:empty::before { content: 'Screen message (preview)'; }
+.hud .dftown-panel[data-hm-dummy]:not(.on) { display: flex !important; opacity: 0.85; }
+.hud .dftown-panel[data-hm-dummy]:not(.on) .dftown-name:empty::before { content: 'Town (preview)'; }
 #enhanced-netstatus[data-hm-dummy]:empty::before { content: 'Online status (preview)'; }
 /* the NAMES: each outlined piece's name over its top-left corner */
 #${HANDLES_ID} b { position: fixed; display: block; pointer-events: none; padding: 1px 6px; white-space: nowrap;

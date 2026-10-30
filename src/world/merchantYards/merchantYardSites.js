@@ -56,7 +56,7 @@ import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK } from '../city/cityNavig
 import { trs, multiply } from '../mat4.js';   // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
 import { staticBuildingBox, staticBuildingWorldAabb } from '../staticBuildings.js';
 import { localAabb, transformedAabb } from '../../render/frustum.js';
-import { ROAD_WEIGHT } from '../../systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../city/cityNavigation.js';
 import { YARD_KIND_ORDER, CRAFT_YARD_ORDER } from '../../systems/merchantYards.js';
 import { FABRIC, FABRIC_KIND, isPortCell } from '../urban/townFabric.js';   // IC-PROPS: a house's garden by URBANIZER's law, its plan's ways, the town's own blocks
 

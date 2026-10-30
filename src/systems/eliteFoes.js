@@ -330,13 +330,14 @@ export const isStaffBoss = (entity) => !!entity?.staffBoss;
 /**
  * Make a freshly built foe a staff event's mini boss: an elite (the flag, the blows, the drop), `healthX` times its health
  * (staff's pick on the start form, 1-100; STAFF_BOSS_HEALTH_MULT unset) or BOSS-HP's `hp`, the exact health staff typed (it
- * wins; 0 none), at `sizePct` of its kind's size, held to the Troll's Silver and armour (BOSS-HARD). `own` false for a puppet - its maximum is its owner's word (the record's `k`). Idempotent.
+ * wins; 0 none), at `sizePct` of its kind's size, held to the Troll's Silver and armour (BOSS-HARD), and an event's own foe (`eventFoe`: it never rises). `own` false for a puppet - its maximum is its owner's word (the record's `k`). Idempotent.
  * @param {any} entity @param {{ own?: boolean, sizePct?: number, healthX?: number, hp?: number, level?: number }} [o]
  */
 export function promoteStaffBoss(entity, { own = true, sizePct = 200, healthX = STAFF_BOSS_HEALTH_MULT, hp = 0, level } = {}) {
   if (!entity || entity.staffBoss) return !!entity;
   entity.staffBoss = { size: Math.max(1.5, Math.min(3, sizePct / 100)) };
   entity.eliteFoe = true;
+  entity.eventFoe = true;   // STAR-MASTER-FLED: an event's own - never a revenant (revenant/unquietMark.js isEventFoe)
   if (own) {
     const base = entity.maxHealth || 1;
     const hx = Number.isSafeInteger(hp) && hp >= 1 ? Math.min(1000000, hp) / base   // BOSS-HP: the exact health staff typed

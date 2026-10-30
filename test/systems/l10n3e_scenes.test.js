@@ -24,8 +24,6 @@ import { REGION_NAMES } from '../../src/formats/mapsFile.js';
 import { FACTION_TYPES } from '../../src/formats/factionFile.js';
 import { restoreDiscovery, discoverRandomLocation, hasDiscoveredLocationId, snapshotDiscovery, discoveredBuildings } from '../../src/systems/discovery.js';
 import { expandGuildRows } from '../../src/systems/guild/guildServiceActions.js';
-import { bulletinBoardRows } from '../../src/systems/bulletinBoard.js';
-import { tokenRows } from '../../src/ui/messageBox.js';
 import { generateBuildingName, BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { PlayerNotebook } from '../../src/systems/notebook.js';
 import { expandMacros } from '../../src/systems/talk/talkSession.js';
@@ -47,6 +45,7 @@ import { presentNpcInfoText } from '../../src/player/activate.js';
 import { TopicTree, INFO_FACTION_IDS } from '../../src/systems/topicTree.js';
 import { revealGuildHallsOnMap } from '../../src/systems/guild/guildHallReveal.js';
 import { GUILDS, joinGuild } from '../../src/systems/guild/guilds.js';
+import { panelTownOf } from '../../src/scenes/townPanelHost.js';   // NOTICE-PANEL: the settlement's own law (AUDIT FB1029g P2, P7)
 
 beforeEach(() => { tm._resetTextManagerForTests(); restoreDiscovery(null); setSpellRecordsByIndex(null); });
 
@@ -217,22 +216,19 @@ test('L10N3e scenes: the guild popup\'s %fon/%kno is the order\'s faction name a
   }, 'the gate the promotion reads (ThievesGuild.cs:112) stays canonical; a faction FACTION.TXT lacks has no name to translate (GetFactionData fails)');
 });
 
-test('L10N3e scenes: the bulletin board\'s heading is PlayerGPS.CurrentLocalizedLocationName (PlayerActivate.cs:721) - the location by its MapId; the wilderness has none (worldModes.js activateBulletinBoard, run whole)', () => {
-  const board = (here) => {
-    const shown = [];
-    const activate = mount(`${fnSrc('worldModes.js', 'activateBulletinBoard')}\nreturn activateBulletinBoard;`, {
-      rayAabb: () => 1, BULLETIN_BOARD_ACTIVATION_DISTANCE: 10, setMidScreenText: () => {}, tooFarAwayText: () => 'too far',
-      buildingDirectory: () => here, bulletinBoardRows, bulletinBoardNews: () => null, tokenRows,
-      townTalk: { showOverlay: (w) => shown.push(w) }, ChoiceWindow: class { constructor(o) { this.lines = o.lines; } },
-      getLocalizedLocationName: tm.getLocalizedLocationName,
+test('L10N3e scenes: the Notice Board\'s heading is PlayerGPS.CurrentLocalizedLocationName (PlayerActivate.cs:721) - the location by its MapId; off a settlement there is none (NOTICE-PANEL, PIN MOVED: the town panel\'s settlement, world.js settlementHere, run whole)', () => {
+  const here = (inTown) => {
+    const settlementHere = mount(`${declSrc('world.js', 'settlementHere')}\nreturn settlementHere;`, {
+      playerTravelPixel: () => ({ x: 207, y: 213 }), _storesReached: () => inTown, getLocalizedLocationName: tm.getLocalizedLocationName, panelTownOf,
+      _musicLoc: { name: 'Daggerfall', mapTableData: { mapId: DAGGERFALL_MAP_ID, locationType: 0 } },
     });
-    activate({ min: [0, 0, 0], max: [1, 1, 1] }, [0, 0, 0], [0, 0, 1]);
-    return shown[0]?.lines ?? null;
+    const t = settlementHere();
+    return t ? [t.name, t.shown] : null;
   };
-  const show = () => [board({ mapId: DAGGERFALL_MAP_ID, locationName: 'Daggerfall', regionIndex: 17 }), board(null)];
+  const show = () => [here(true), here(false)];
   const { en, fr } = inFrench(PLACES, show);
-  assert.deepEqual(en, [['Daggerfall'], ['']]);
-  assert.deepEqual(fr, [['Chutedague'], ['']], 'no directory, no name - in any language');
+  assert.deepEqual(en, [['Daggerfall', 'Daggerfall'], null]);
+  assert.deepEqual(fr, [['Daggerfall', 'Chutedague'], null], 'the MAPS name kept beside the shown one; off a settlement, nothing - in any language');
 });
 
 test('L10N3e scenes: the town map\'s plates carry the shown pair beside the canonical one (ExteriorAutomap.cs:717-718) - world.js and exterior.js, their own statements run; the canonical name still chooses the palace, and the title is the name as shown', () => {

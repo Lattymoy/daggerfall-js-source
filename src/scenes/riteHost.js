@@ -141,7 +141,7 @@ function groundSamples(L) {
  *   pixelTranslation: (px: number, py: number, out?: number[]) => number[],
  *   groundAt?: (x: number, z: number) => number, coarseGround?: ((px: number, py: number, x: number, z: number) => number)|null,
  *   feet?: () => number[]|null, online?: () => boolean, onBare?: (x0: number, z0: number, x1: number, z1: number) => void,
- *   foes?: { spawn: (career: number, xz: number[], o: { yaw: number, site: string, transient: boolean }) => Promise<any>, list: () => any[], drop: (site: string) => void, remove: (foe: any) => void, reclaim?: (site: string) => void, campId: () => number }|null,
+ *   foes?: { spawn: (career: number, xz: number[], o: { yaw: number, site: string, transient: boolean, eventFoe: boolean }) => Promise<any>, list: () => any[], drop: (site: string) => void, remove: (foe: any) => void, reclaim?: (site: string) => void, campId: () => number }|null,
  *   peerSprang?: (site: string) => boolean, peerHeldAgo?: (site: string) => number, forgetPeer?: (site: string) => void,
  *   sprang?: (site: string) => void, unsprang?: (site: string) => void, struckAt?: (foe: any) => (number|null),
  *   send?: (word: any, cell: string) => boolean, say?: (text: string, n?: number) => void, sayNear?: (text: string) => void,
@@ -279,7 +279,7 @@ export function createRiteHost({
   function riteFoe(f, summoner, career, camp, fresh) {
     f.riteRole = summoner ? 'summoner' : 'faithful'; f.riteCareer = career;
     f.campId = camp; f.campAlertRadius = RITE_ALERT_M;
-    if (f.entity) f.entity.campId = camp;
+    if (f.entity) { f.entity.campId = camp; f.entity.eventFoe = true; }   // STAR-MASTER-FLED: the rite's own - never a revenant, never "Unquiet"
     if (f.ai && !f.ai.target) f.ai.sightRadius = RITE_SIGHT_M;
     if (fresh && summoner && f.entity) { f.entity.maxHealth = Math.max(1, Math.round((f.entity.maxHealth ?? 1) * RITE_SUMMONER_HEALTH)); f.entity.health = f.entity.maxHealth; f.entity.healthMult = (f.entity.healthMult ?? 1) * RITE_SUMMONER_HEALTH; }   // TELL1: what was stood on the kind's own health (its poise)
   }
@@ -303,7 +303,7 @@ export function createRiteHost({
         if (f) { c.spawned = true; riteFoe(f, m.summoner, m.career, camp, true); if (f.entity && m.summoner) f.entity.properName = RITE_TEXT.summoner; }
         if (!c.pending && !c.spawned && C === c) unsprang(site);   // none stood: claimed by nobody, tried again
       };
-      foes.spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true }).then(landed, () => landed(null));
+      foes.spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true, eventFoe: true }).then(landed, () => landed(null));   // STAR-MASTER-FLED: the rite's own from its stand, before its promotion draws the mark
     }
   }
   /** One of the faithful seen dead with a body, counted once: the Summoner's fall while the rite holds, the others by

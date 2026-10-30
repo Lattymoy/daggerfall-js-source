@@ -499,6 +499,9 @@ export function createTravelOptions(deps = {}) {
     // clears it, :392-398's callers), Exit, the map's Forget it, a load. The port's own count, read by a host that must
     // tell a journey's END from a STOP: a spot's stop nulls its route too (TV2 AUDIT TV A4), so the fields cannot.
     cleared: 0,
+    // SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): how many journeys ARRIVED - the ends `cleared` counts
+    // that reached the place, pixel or spot picked, not an Exit, a Forget it or a load (the crossing asks where one ends)
+    arrived: 0,
     // RATE-LAW: what the journey walks - 'path' (the follow key's legs: a road or a track), 'ring' (a town's border
     // ring, the mod's own ceiling over it), or null (a route says by its legs; the mod's straight journeys ask the host)
     // - and the rate it last asked of the clock, with the ground that rate is for
@@ -607,6 +610,7 @@ export function createTravelOptions(deps = {}) {
     st.autopilot.onArrival = () => {
       ui?.closeWindow();
       clearTravelDestination();
+      st.arrived++;   // SEA-ROWS
       messageBox(T.MsgArrived);
     };
     st.lastLocation = deps.currentLocation?.() ?? null;
@@ -631,6 +635,7 @@ export function createTravelOptions(deps = {}) {
     st.autopilot.onArrival = () => {
       ui?.closeWindow();
       clearTravelDestination();
+      st.arrived++;   // SEA-ROWS
       messageBox(T.MsgArrived);
     };
     st.lastLocation = deps.currentLocation?.() ?? null;
@@ -650,6 +655,7 @@ export function createTravelOptions(deps = {}) {
   function arriveRoute(quiet) {
     ui?.closeWindow();
     clearTravelDestination();
+    st.arrived++;   // SEA-ROWS
     // AUDIT DEEP X-7: asked AT the arrival - a journey the view began but the player came down from ends in the mod's box
     if (typeof quiet === 'function' ? quiet() : quiet) say(T.MsgArrived);
     else messageBox(T.MsgArrived);
@@ -1490,6 +1496,7 @@ export function createTravelOptions(deps = {}) {
     set settings(v) { st.settings = v; },
     get destinationName() { return st.destinationName; },
     get cleared() { return st.cleared; },   // AUDIT OW3 P5: the ends counted (st.cleared)
+    get arrived() { return st.arrived; },   // SEA-ROWS: the arrivals among them (st.arrived)
     get road() { return st.road; },
     get isTravelActive() { return !!ui?.isShowing; },
     get isPathFollowing() { return !!ui?.isShowing && st.destinationName == null; },

@@ -221,9 +221,6 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    dark plate edged in the guild's border colour (written per peer), its shield (ui/heraldrySwatch.js) at the plate's left. */
 .dfname-guild.armed { padding: .06em .3em .04em 1.25em; border: 1px solid; border-radius: .12em;
   background: rgba(14, 16, 19, .78) no-repeat .22em 50% / .82em auto; }
-/* NOTICE1: a Notice Board's count - brass on a dark tab, never mistaken for a person's name */
-.dfname-board .dfname-tag { padding: 1px 6px; background: rgba(14,12,11,0.78); border: 1px solid #c08a3e; }
-.dfname-board .dfname-who { color: #f3cf86; letter-spacing: .06em; }
 /* RENOWN1 - THE RENOWN, LEFT OF THE NAME (Mac: "having their
    level appear on the left side of character name"). A small plate in
    the row the name and glyphs already are, so the whole run stays
@@ -461,7 +458,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         live.add(p.id);
         let tag = tags.get(p.id);
         if (!tag) { tag = makeTag(); tags.set(p.id, tag); }
-        setCls(tag.node, p.kind === 'board' ? 'dfname dfname-board' : 'dfname');   // NOTICE1: a Notice Board's count, not a person
+        setCls(tag.node, 'dfname');
         // NAME_GAP_PX is taken HERE and not inside namePoints because it is a screen-pixel clearance and the point
         // is a projected head: the anchor stays the head for anything else that wants it, and the label's bottom
         // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -

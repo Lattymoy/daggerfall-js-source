@@ -1076,10 +1076,10 @@ each is a line here, findable by its tag.
   direction!"), GOTHWAY-NORTH ("place them to the north on the border of the town so new player coming from privateers
   hold can see them") and GOTHWAY-LIFT ("the boards are in the ground"): Gothway Garden stands two bounty boards at
   its north entrance, one each side of the road in from Privateer's Hold, a few paces inside the border, facing
-  north - the road read off the town's own walk grid (`gothwayNorthSpots`,
-  `gothwayBoards.js:"export function gothwayNorthSpots"`; `src/systems/gothwayBoards.js`), stood in the town's build
-  each with its foot on the ground (`pixelBuild.js:"if (isGothwayGarden(dfLocation.name))"`) and counted a bounty board
-  always (`boardSplitOf`, `world.js:"const boardSplitOf"`).
+  north - the road read off the town's own walk grid (`gothwayNorthSpots`), stood in the town's build each with its foot
+  on the ground and counted a bounty board always (`boardSplitOf`). NOTICE-PANEL (2026-10-29, the owner: "remove the
+  notice board prop from all cities") took them with every town's board: Gothway Garden's Bounty Board is on its town
+  panel now (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`).
 - PVPFIX (the owner: "Undeniable Access/lockpicking should actually work on locked crates"): an armed Open spell fires
   on the next lock touched, a crate's as a door's, and the pick is tried in Grab mode too
   (`dungeonContext.js:"Access/lockpicking"`).
