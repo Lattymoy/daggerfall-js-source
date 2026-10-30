@@ -245,8 +245,8 @@
   {
     "name": "SD8D-the-courts-radius-over-the-arena",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R, floorKs",
-    "new": "    const floorCourts = floor?.courts ?? COURTS, floorR = COURT_R, floorKs",
+    "old": "      floorR = floor?.r ?? COURT_R,",
+    "new": "      floorR = COURT_R,",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD8D-the-arena-quad-the-courts",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  const C = courts[k], half = R + TELEGRAPH_MARGIN;",
-    "new": "  const C = courts[k], half = COURT_R + TELEGRAPH_MARGIN;",
+    "old": "    half = R + TELEGRAPH_MARGIN;",
+    "new": "    half = COURT_R + TELEGRAPH_MARGIN;",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]

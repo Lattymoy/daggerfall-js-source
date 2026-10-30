@@ -129,8 +129,8 @@
   {
     "name": "WB14b-the-telegraph-over-every-floor",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "floorKs = floor ? floor.ks ?? null : PLAN_PLAIN.floors;",
-    "new": "floorKs = floor ? floor.ks ?? null : null;",
+    "old": "      floorKs = floor ? (floor.ks ?? null) : PLAN_PLAIN.floors;",
+    "new": "      floorKs = floor ? (floor.ks ?? null) : null;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]

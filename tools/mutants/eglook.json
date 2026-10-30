@@ -458,8 +458,8 @@
   {
     "name": "EGLOOK-tele-spire-lost-in-fog",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "float f = uAlpha * max(fogFactorAt(vWorld), kept);",
-    "new": "float f = uAlpha * fogFactorAt(vWorld);",
+    "old": "    '  float kept = uFogFloor.x * (1.0 - smoothstep(uFogFloor.y, uFogFloor.y + uFogFloor.z, distance(vWorld, uCamPos)));\\n  float f = uAlpha * max(fogFactorAt(vWorld), kept);\\n  float keyl2 = (uLook & 1) != 0 ? (1.0 - fin) * (1.0 - smoothstep(9.0 * aa, 13.0 * aa, edge)) * smoothstep(7.0 * aa, 9.0 * aa, edge) : 0.0;\\n  float hatch = (uLook & 2) != 0 ? 0.55 + 0.45 * step(0.5, fract((vCourt.x + vCourt.y) * 1.1785)) : 1.0;\\n',",
+    "new": "    '  float kept = uFogFloor.x * (1.0 - smoothstep(uFogFloor.y, uFogFloor.y + uFogFloor.z, distance(vWorld, uCamPos)));\\n  float f = uAlpha * fogFactorAt(vWorld);\\n  float keyl2 = (uLook & 1) != 0 ? (1.0 - fin) * (1.0 - smoothstep(9.0 * aa, 13.0 * aa, edge)) * smoothstep(7.0 * aa, 9.0 * aa, edge) : 0.0;\\n  float hatch = (uLook & 2) != 0 ? 0.55 + 0.45 * step(0.5, fract((vCourt.x + vCourt.y) * 1.1785)) : 1.0;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "EGLOOK-tele-fill-unscaled",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "* inFade * uFillK * hatch;",
-    "new": "* inFade * hatch;",
+    "old": "    '  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade * uFillK * hatch;\\n',",
+    "new": "    '  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade * hatch;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "EGLOOK-tele-no-haven",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "if (uPool == 3) {",
-    "new": "if (uPool == 33) {",
+    "old": "    '  if (uPool == 3) {\\n    // EG-G2 (section 25.5): A HAVEN - gold and lit, its line bright, a dark keyline outside it, chevrons flowing in to its heart\\n    float a8 = atan(rel.x, rel.y) / 6.283185307179586 * 8.0;\\n    float chev = step(0.5, fract(s * 3.0 - abs(fract(a8) - 0.5) * 1.4 + uSince * 0.8));\\n    vec3 lit = uColor * (fin * (0.14 + 0.16 * chev) + core * 0.9 + glow * 0.15);\\n    o = vec4(lit * f, (fin * 0.1 + keyl * 0.85) * f);\\n    return;\\n  }\\n  // THE FILL - eased in behind the line',",
+    "new": "    '  if (uPool == 33) {\\n    // EG-G2 (section 25.5): A HAVEN - gold and lit, its line bright, a dark keyline outside it, chevrons flowing in to its heart\\n    float a8 = atan(rel.x, rel.y) / 6.283185307179586 * 8.0;\\n    float chev = step(0.5, fract(s * 3.0 - abs(fract(a8) - 0.5) * 1.4 + uSince * 0.8));\\n    vec3 lit = uColor * (fin * (0.14 + 0.16 * chev) + core * 0.9 + glow * 0.15);\\n    o = vec4(lit * f, (fin * 0.1 + keyl * 0.85) * f);\\n    return;\\n  }\\n  // THE FILL - eased in behind the line',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "EGLOOK-tele-single-keyline",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "+ keyl * 0.55 + keyl2 * 0.75;",
-    "new": "+ keyl * 0.55;",
+    "old": "    '  float a = fin * (0.22 + 0.18 * filled) * inFade * uFillK + keyl * 0.55 + keyl2 * 0.75;\\n',",
+    "new": "    '  float a = fin * (0.22 + 0.18 * filled) * inFade * uFillK + keyl * 0.55;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]

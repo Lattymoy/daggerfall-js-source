@@ -65,8 +65,8 @@
   {
     "name": "GATESEEN-the-far-fire",
     "file": "src/render/gate/gatePass.js",
-    "old": "      if (g.beaconOnly) continue;   // GATE-SEEN: a gate on a pixel not built yet is its beacon alone - no fire floating over the far ground\n",
-    "new": "",
+    "old": "      if (g.beaconOnly) continue; // GATE-SEEN: a gate on a pixel not built yet is its beacon alone - no fire floating over the far ground\n      const v = gatePassValues(g); // EG-F: the membrane's scale and tint, per draw - the gate's own unless named",
+    "new": "      const v = gatePassValues(g); // EG-F: the membrane's scale and tint, per draw - the gate's own unless named",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]

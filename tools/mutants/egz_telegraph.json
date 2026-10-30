@@ -353,8 +353,8 @@
   {
     "name": "EGZ-vs-floor-height-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "'vWorld = uCentre + vec3(vCourt.x, uFloorY + uLift, vCourt.y);'",
-    "new": "'vWorld = uCentre + vec3(vCourt.x, uLift, vCourt.y);'",
+    "old": "    'vWorld = uCentre + vec3(vCourt.x, uFloorY + uLift, vCourt.y);',",
+    "new": "    'vWorld = uCentre + vec3(vCourt.x, uLift, vCourt.y);',",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGZ-vs-floor-read-as-quad",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "'  vCourt = uOnFloor == 1 ? aCourt : uOnWalk == 1 ?'",
-    "new": "'  vCourt = uOnFloor == 2 ? aCourt : uOnWalk == 1 ?'",
+    "old": "  out = swap(out, '  vCourt = uOnWalk == 1 ?', '  vCourt = uOnFloor == 1 ? aCourt : uOnWalk == 1 ?');",
+    "new": "  out = swap(out, '  vCourt = uOnWalk == 1 ?', '  vCourt = uOnFloor == 2 ? aCourt : uOnWalk == 1 ?');",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZ-fs-pull-chevrons-in",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "float chev = step(0.5, fract((u + 1.6 * ld) / 1.2 - uSince * 1.2));",
-    "new": "float chev = step(0.5, fract((u - 1.6 * ld) / 1.2 - uSince * 1.2));",
+    "old": "      float chev = step(0.5, fract((u + 1.6 * ld) / 1.2 - uSince * 1.2));",
+    "new": "      float chev = step(0.5, fract((u - 1.6 * ld) / 1.2 - uSince * 1.2));",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZ-fs-pull-flows-in",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "fract((u + 1.6 * ld) / 1.2 - uSince * 1.2)",
-    "new": "fract((u + 1.6 * ld) / 1.2 + uSince * 1.2)",
+    "old": "      float chev = step(0.5, fract((u + 1.6 * ld) / 1.2 - uSince * 1.2));",
+    "new": "      float chev = step(0.5, fract((u + 1.6 * ld) / 1.2 + uSince * 1.2));",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-fs-pull-tick-at-pair",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR1)))",
-    "new": "float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR)))",
+    "old": "      float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR1))) * (1.0 - smoothstep(2.0 * uHalfW, 2.0 * uHalfW + ${TELEGRAPH_TICK_REACH.toFixed(2)}, ld));   // AUDIT EG V (L6-2): its reach, its strip's (telegraphStrip)",
+    "new": "      float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR))) * (1.0 - smoothstep(2.0 * uHalfW, 2.0 * uHalfW + ${TELEGRAPH_TICK_REACH.toFixed(2)}, ld));   // AUDIT EG V (L6-2): its reach, its strip's (telegraphStrip)",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-fs-pull-line-to-break",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "float onLine = (u <= uR ? 1.0 : 0.0) * fin;",
-    "new": "float onLine = (u <= uR1 ? 1.0 : 0.0) * fin;",
+    "old": "      float onLine = (u <= uR ? 1.0 : 0.0) * fin;",
+    "new": "      float onLine = (u <= uR1 ? 1.0 : 0.0) * fin;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-fs-chain-never-taut",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "link * (0.35 + 0.65 * uT) * throb",
-    "new": "link * 0.35 * throb",
+    "old": "    o = vec4(uEdgeCol * link * (0.35 + 0.65 * uT) * throb * f, 0.0);",
+    "new": "    o = vec4(uEdgeCol * link * 0.35 * throb * f, 0.0);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-fs-chain-throb-fast",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(1.5 + 1.5 * uT) * uSince",
-    "new": "(1.5 + 4.5 * uT) * uSince",
+    "old": "    float throb = uT > 0.0 ? 0.75 + 0.25 * cos(6.283185307179586 * (1.5 + 1.5 * uT) * uSince) : 1.0;",
+    "new": "    float throb = uT > 0.0 ? 0.75 + 0.25 * cos(6.283185307179586 * (1.5 + 4.5 * uT) * uSince) : 1.0;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-fs-ring-filled",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);\n    return;\n  }\n  if (uPool == 8) {",
-    "new": "    o = vec4(uColor * max(core, fin) * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);\n    return;\n  }\n  if (uPool == 8) {",
+    "old": "    o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);",
+    "new": "    o = vec4(uColor * max(core, fin) * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZ-fs-dark-havens-darkened",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "uT * smoothstep(-0.3, 0.3, m) * f",
-    "new": "uT * f",
+    "old": "    o = vec4(0.0, 0.0, 0.0, uT * smoothstep(-0.3, 0.3, m) * f);",
+    "new": "    o = vec4(0.0, 0.0, 0.0, uT * f);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZ-pass-floor-height-unset",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "gl.uniform1i(U.uOnFloor, 1); gl.uniform1f(U.uFloorY, d.f.y);",
-    "new": "gl.uniform1i(U.uOnFloor, 1); gl.uniform1f(U.uFloorY, 0);",
+    "old": "          gl.uniform1f(U.uFloorY, d.f.y);",
+    "new": "          gl.uniform1f(U.uFloorY, 0);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZ-pass-quad-not-given-back",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    } finally {\n      this.vao = vao; this.count = count;\n",
-    "new": "    } finally {\n",
+    "old": "      this.vao = vao;\n      this.count = count;\n      gl.useProgram(this.program);",
+    "new": "      gl.useProgram(this.program);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "EGZ-floor-no-strip",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "const strip = this.floorVao && this.vao === this.floorVao ? null : telegraphStrip(shape);",
-    "new": "const strip = telegraphStrip(shape);",
+    "old": "    const strip = this.floorVao && this.vao === this.floorVao ? null : telegraphStrip(shape);",
+    "new": "    const strip = telegraphStrip(shape);",
     "why": "AOE-PERF's strip laid over a fight floor's own triangles (the merge of main)",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"

@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-WB9-the-far-walkway-for-the-middle-court",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(one && w.a !== k0 && w.b !== k0)",
-    "new": "(one && w.a !== k0)",
+    "old": "        if (!(f > 0) || (one && w.a !== k0 && w.b !== k0)) continue; // WB14b: a walkway by its two floors",
+    "new": "        if (!(f > 0) || (one && w.a !== k0)) continue; // WB14b: a walkway by its two floors",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

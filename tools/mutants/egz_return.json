@@ -524,8 +524,8 @@
   {
     "name": "EGZ-stage-ignores-dash",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  if ((uLook & 4) != 0) { float dsh",
-    "new": "  if ((uLook & 8) != 0) { float dsh",
+    "old": "    '  if ((uLook & 4) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
+    "new": "    '  if ((uLook & 8) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

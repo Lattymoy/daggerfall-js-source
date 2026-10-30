@@ -589,8 +589,8 @@
   {
     "name": "SD11D-the-theme-never-set",
     "file": "src/render/gate/gateVeil.js",
-    "old": "    gl.uniform1f(this.u.uTheme, theme);\n",
-    "new": "",
+    "old": "    gl.uniform1f(this.u.uTheme, theme);\n    gl.bindVertexArray(this.vao);",
+    "new": "    gl.bindVertexArray(this.vao);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "SD11D-the-throat-a-pow",
     "file": "src/render/gate/gateVeil.js",
-    "old": "exp(-(r - 0.3) * (r - 0.3) * 30.25)",
-    "new": "exp(-pow((r - 0.3) * 5.5, 2.0))",
+    "old": "  col *= 1.0 - 0.5 * exp(-(r - 0.3) * (r - 0.3) * 30.25) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)",
+    "new": "  col *= 1.0 - 0.5 * exp(-pow((r - 0.3) * 5.5, 2.0)) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "SD11D-the-lip-a-pow",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "exp(-(uT - s) * (uT - s) * 144.0)",
-    "new": "exp(-pow((uT - s) * 12.0, 2.0))",
+    "old": "  float lip = filled * exp(-(uT - s) * (uT - s) * 144.0) * (1.0 - step(0.999, uT));   // AUDIT SD II: squared - GLSL leaves pow of a negative undefined (NaN on D3D)",
+    "new": "  float lip = filled * exp(-pow((uT - s) * 12.0, 2.0)) * (1.0 - step(0.999, uT));   // AUDIT SD II: squared - GLSL leaves pow of a negative undefined (NaN on D3D)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]

@@ -309,8 +309,8 @@
   {
     "name": "AUDIT-GATE-FBX-E5-the-masks-foot-at-the-ground",
     "file": "src/render/gate/gatePass.js",
-    "old": "  if (vLocal.y < ${FIRE_FOOT_Y.toFixed(4)} ||",
-    "new": "  if (vLocal.y < ${ARCH_Y0.toFixed(4)} ||",
+    "old": "  if (vLocal.y < ${FIRE_FOOT_Y.toFixed(4)} || vLocal.y > ${ARCH_Y1.toFixed(4)}) discard;   // AUDIT GATE-FBX E5: down to the soles - the ground cuts it",
+    "new": "  if (vLocal.y < ${ARCH_Y0.toFixed(4)} || vLocal.y > ${ARCH_Y1.toFixed(4)}) discard;   // AUDIT GATE-FBX E5: down to the soles - the ground cuts it",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "AUDIT-GATE-FBX-E5-the-quads-foot-at-the-ground",
     "file": "src/render/gate/gatePass.js",
-    "old": "  const x0 = -MEMBRANE_HALF_W, x1 = MEMBRANE_HALF_W, y0 = FIRE_FOOT_Y, y1 = ARCH_Y1;",
-    "new": "  const x0 = -MEMBRANE_HALF_W, x1 = MEMBRANE_HALF_W, y0 = ARCH_Y0, y1 = ARCH_Y1;",
+    "old": "    y0 = FIRE_FOOT_Y,",
+    "new": "    y0 = ARCH_Y0,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "GATE-FBX-the-way-in-a-beacon",
     "file": "src/render/gate/gatePass.js",
-    "old": "      if (g.fireOnly) continue;   // GATE-FBX: the court's way in - its fire alone\n",
-    "new": "",
+    "old": "      if (g.fireOnly) continue; // GATE-FBX: the court's way in - its fire alone\n      const v = gatePassValues(g); // EG-F: the beacon's colour, height, foot and light, per draw - the gate's own unless named",
+    "new": "      const v = gatePassValues(g); // EG-F: the beacon's colour, height, foot and light, per draw - the gate's own unless named",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]

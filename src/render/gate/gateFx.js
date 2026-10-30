@@ -42,10 +42,14 @@ export const FX_SPARK_M = 0.32;
 export const METEOR_FALL_MS = 1700;
 export const METEOR_FROM_M = 90;
 export const METEOR_ELEV_DEG = 35;
-export const METEOR_DIR = Object.freeze((() => {
-  const h = [0.28, -0.42], l = Math.hypot(...h), e = (METEOR_ELEV_DEG * Math.PI) / 180;
-  return [(h[0] / l) * Math.cos(e), Math.sin(e), (h[1] / l) * Math.cos(e)];
-})());
+export const METEOR_DIR = Object.freeze(
+  (() => {
+    const h = [0.28, -0.42],
+      l = Math.hypot(...h),
+      e = (METEOR_ELEV_DEG * Math.PI) / 180;
+    return [(h[0] / l) * Math.cos(e), Math.sin(e), (h[1] / l) * Math.cos(e)];
+  })(),
+);
 export const METEOR_HEAD_M = 4.2;
 export const METEOR_TRAIL_M = 32;
 
@@ -58,16 +62,27 @@ export const METEOR_TRAIL_M = 32;
  */
 export function fxBurstOf(A) {
   switch (A?.key) {
-    case 'slam': return FX_KINDS.slam;
-    case 'leap': return FX_KINDS.leap;
-    case 'cross': return FX_KINDS.cross;
-    case 'hellfire': return FX_KINDS.hellfire;
-    case 'meteor': return FX_KINDS.meteor;
-    case 'nova': return FX_KINDS.nova;
-    case 'wrath': case 'reckon': return FX_KINDS.dagon;
-    case 'sunder': return FX_KINDS.slam;   // WB14d: the tear at his feet, and the halves meeting as a bound lands
-    case 'rejoin': return FX_KINDS.cross;
-    default: return null;
+    case 'slam':
+      return FX_KINDS.slam;
+    case 'leap':
+      return FX_KINDS.leap;
+    case 'cross':
+      return FX_KINDS.cross;
+    case 'hellfire':
+      return FX_KINDS.hellfire;
+    case 'meteor':
+      return FX_KINDS.meteor;
+    case 'nova':
+      return FX_KINDS.nova;
+    case 'wrath':
+    case 'reckon':
+      return FX_KINDS.dagon;
+    case 'sunder':
+      return FX_KINDS.slam; // WB14d: the tear at his feet, and the halves meeting as a bound lands
+    case 'rejoin':
+      return FX_KINDS.cross;
+    default:
+      return null;
   }
 }
 /** WB13d: the light a landing throws where it falls away from him - `light` [intensity, reach m] for FX_LIGHT_MS, fading
@@ -91,8 +106,13 @@ export const FX_KINDS = Object.freeze({
 });
 
 /** A seed's two numbers for spark `i` (0..1 each) - the shader's own hash of its vertex, in JS. */
-export const sparkSeed = (i) => [fract(Math.sin(i * 12.9898 + 4.1) * 43758.5453), fract(Math.sin(i * 78.233 + 1.7) * 24634.6345)];
-function fract(x) { return x - Math.floor(x); }
+export const sparkSeed = (i) => [
+  fract(Math.sin(i * 12.9898 + 4.1) * 43758.5453),
+  fract(Math.sin(i * 78.233 + 1.7) * 24634.6345),
+];
+function fract(x) {
+  return x - Math.floor(x);
+}
 /**
  * WHERE SPARK `i` OF A BURST IS, `t` seconds after it (the shader's own flight, in JS): out along its bearing, up, and
  * falling - `[x, y, z]` from the burst's origin, and its life's share spent (1 gone). WB9f: `floorRel` the floor's
@@ -102,14 +122,22 @@ function fract(x) { return x - Math.floor(x); }
  */
 export function sparkAt(i, t, power = 1, floorRel = 0, edge = null) {
   const [a, b] = sparkSeed(i);
-  const bearing = a * Math.PI * 2, out = (3 + 7 * b) * power, up = (4 + 6 * fract(a * 7.31 + b)) * Math.sqrt(power);
+  const bearing = a * Math.PI * 2,
+    out = (3 + 7 * b) * power,
+    up = (4 + 6 * fract(a * 7.31 + b)) * Math.sqrt(power);
   const life = (0.55 + 0.45 * fract(b * 5.17 + a)) * (FX_BURST_MS / 1000);
-  const g = 0.5 * FX_GRAVITY, rest = floorRel + 0.05;
-  let y = Math.max(rest, up * t - g * t * t);   // at rest on the floor once fallen
+  const g = 0.5 * FX_GRAVITY,
+    rest = floorRel + 0.05;
+  let y = Math.max(rest, up * t - g * t * t); // at rest on the floor once fallen
   if (edge && edge[2] > 0) {
-    const ox = -edge[0], oz = -edge[1], dx = Math.sin(bearing) * out, dz = Math.cos(bearing) * out;
-    const dd = Math.max(dx * dx + dz * dz, 1e-6), bq = ox * dx + oz * dz, cq = ox * ox + oz * oz - edge[2] * edge[2];
-    const tc = cq >= 0 ? 0 : (-bq + Math.sqrt(Math.max(bq * bq - dd * cq, 0))) / dd;   // when its run out crosses the edge
+    const ox = -edge[0],
+      oz = -edge[1],
+      dx = Math.sin(bearing) * out,
+      dz = Math.cos(bearing) * out;
+    const dd = Math.max(dx * dx + dz * dz, 1e-6),
+      bq = ox * dx + oz * dz,
+      cq = ox * ox + oz * oz - edge[2] * edge[2];
+    const tc = cq >= 0 ? 0 : (-bq + Math.sqrt(Math.max(bq * bq - dd * cq, 0))) / dd; // when its run out crosses the edge
     if (t > tc) y = up * tc - g * tc * tc > rest ? up * t - g * t * t : rest - g * (t - tc) * (t - tc);
   }
   return { at: [Math.sin(bearing) * out * t, y, Math.cos(bearing) * out * t], spent: Math.min(1, t / life) };
@@ -121,9 +149,11 @@ export function sparkAt(i, t, power = 1, floorRel = 0, edge = null) {
  * @param {{a: number, at: number, tg?: number[][]}|null} atk
  */
 export function meteorFall(atk, now) {
-  const A = atk ? ATTACK_BY_ID[atk.a] : null, p = atk?.tg?.[0];
+  const A = atk ? ATTACK_BY_ID[atk.a] : null,
+    p = atk?.tg?.[0];
   if (A !== ATTACKS.meteor || !p || now < atk.at - METEOR_FALL_MS || now >= atk.at) return null;
-  const k = (now - (atk.at - METEOR_FALL_MS)) / METEOR_FALL_MS, d = METEOR_FROM_M * (1 - k * k);   // it gathers speed as it falls
+  const k = (now - (atk.at - METEOR_FALL_MS)) / METEOR_FALL_MS,
+    d = METEOR_FROM_M * (1 - k * k); // it gathers speed as it falls
   return { at: [p[0] + METEOR_DIR[0] * d, METEOR_DIR[1] * d, p[1] + METEOR_DIR[2] * d], k };
 }
 
@@ -131,7 +161,9 @@ const HEAD = `#version 300 es
 precision highp float;
 precision highp int;
 `;
-export const FX_SPARK_VS = HEAD + `layout(location = 0) in float aI;
+export const FX_SPARK_VS =
+  HEAD +
+  `layout(location = 0) in float aI;
 uniform mat4 uVP;
 uniform vec3 uAt;        // the burst's origin in the scene
 uniform float uFloor;    // WB9f: the floor's height under it, where a fallen spark rests
@@ -167,7 +199,9 @@ void main() {
   vColor = uGrit == 1 ? mix(hot, vec3(0.55, 0.3, 0.16), 0.45) : hot;
   vFade = (1.0 - spent) * (1.0 - spent);
 }`;
-export const FX_SPARK_FS = HEAD + `in vec3 vColor;
+export const FX_SPARK_FS =
+  HEAD +
+  `in vec3 vColor;
 in float vFade;
 in vec3 vWorld;
 uniform int uFogMode;
@@ -184,7 +218,9 @@ void main() {
   o = vec4(vColor * (glow * 2.2 + step(r, 0.2) * 1.2) * vFade * fogFactorAt(vWorld), 1.0);   // a hot core in a soft glow
 }`;
 /** THE METEOR: one quad, drawn twice - the trail (a ribbon from the stone back up its path) and the stone's glow. */
-export const FX_METEOR_VS = HEAD + `layout(location = 0) in vec2 aP;   // x across -1..1, y 0..1 (the trail's length; the glow's up)
+export const FX_METEOR_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;   // x across -1..1, y 0..1 (the trail's length; the glow's up)
 uniform mat4 uVP;
 uniform int uKind;       // 0 the trail, 1 the stone's glow
 uniform vec3 uHead;
@@ -208,7 +244,9 @@ void main() {
   vWorld = w;
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-export const FX_METEOR_FS = HEAD + `in vec2 vUv;
+export const FX_METEOR_FS =
+  HEAD +
+  `in vec2 vUv;
 in vec3 vWorld;
 uniform int uKind;
 uniform vec3 uColor;
@@ -238,10 +276,17 @@ void main() {
 
 /** SHADER-STALL: the pass's two programs, the sparks' and the meteor's, as its constructor builds them - what a host
  *  starts ahead of the build (render/glProgram.js startPrograms). */
-export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS], [FX_METEOR_VS, FX_METEOR_FS]]));
+export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [FX_SPARK_VS, FX_SPARK_FS],
+    [FX_METEOR_VS, FX_METEOR_FS],
+  ])
+);
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 function mat4Multiply(out, a, b) {
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   return out;
 }
 
@@ -251,19 +296,54 @@ export class GateFxRenderer {
     const [sparks, meteor] = GATE_FX_PROGRAMS;
     this.sparks = buildProgram(gl, sparks[0], sparks[1], 'gate sparks');
     this.meteor = buildProgram(gl, meteor[0], meteor[1], 'gate meteor');
-    this.us = {}; this.um = {};
-    for (const n of ['uVP', 'uAt', 'uFloor', 'uEdge', 'uT', 'uPower', 'uPxPerM', 'uColor', 'uGrit', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.us[n] = gl.getUniformLocation(this.sparks, n);
-    for (const n of ['uVP', 'uKind', 'uHead', 'uDir', 'uLen', 'uW', 'uEye', 'uColor', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.um[n] = gl.getUniformLocation(this.meteor, n);
+    this.us = {};
+    this.um = {};
+    for (const n of [
+      'uVP',
+      'uAt',
+      'uFloor',
+      'uEdge',
+      'uT',
+      'uPower',
+      'uPxPerM',
+      'uColor',
+      'uGrit',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+    ])
+      this.us[n] = gl.getUniformLocation(this.sparks, n);
+    for (const n of [
+      'uVP',
+      'uKind',
+      'uHead',
+      'uDir',
+      'uLen',
+      'uW',
+      'uEye',
+      'uColor',
+      'uTime',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+    ])
+      this.um[n] = gl.getUniformLocation(this.meteor, n);
     this.sparkVao = gl.createVertexArray();
     gl.bindVertexArray(this.sparkVao);
-    this.sparkBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.sparkBuf);
+    this.sparkBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.sparkBuf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Array.from({ length: FX_SPARKS }, (_, i) => i)), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 1, gl.FLOAT, false, 4, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 1, gl.FLOAT, false, 4, 0);
     this.quadVao = gl.createVertexArray();
     gl.bindVertexArray(this.quadVao);
-    this.quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
+    this.quadBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 0, 1, 0, 1, 1, -1, 0, 1, 1, -1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** how many bursts and meteors the last draw put down, for the stats and the tests */
@@ -278,13 +358,19 @@ export class GateFxRenderer {
    * null). `viewH` the world image's height in pixels (the sparks' size). Nothing to draw, nothing touched.
    */
   draw(bursts, meteor, proj, view, eye, seconds, fog = null, viewH = 0) {
-    this.bursts = 0; this.meteors = 0;
+    this.bursts = 0;
+    this.meteors = 0;
     let any = !!meteor;
-    for (const b of bursts ?? []) if (b && b.t >= 0 && b.t < FX_BURST_MS / 1000) { any = true; break; }
-    if (!any || !this.gl) return;   // AUDIT EG-FALL (L1-6): a destroyed pass draws nothing
+    for (const b of bursts ?? [])
+      if (b && b.t >= 0 && b.t < FX_BURST_MS / 1000) {
+        any = true;
+        break;
+      }
+    if (!any || !this.gl) return; // AUDIT EG-FALL (L1-6): a destroyed pass draws nothing
     const gl = this.gl;
     mat4Multiply(this._vp, proj, view);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     const fogOn = (U) => {
@@ -306,8 +392,8 @@ export class GateFxRenderer {
         gl.bindVertexArray(this.sparkVao);
       }
       gl.uniform3f(S.uAt, b.at[0], b.at[1], b.at[2]);
-      gl.uniform1f(S.uFloor, Number.isFinite(b.floor) ? b.floor : b.at[1]);   // WB9f: on the floor unless it says where the floor is
-      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0);   // AUDIT SD IV (R3): and where it ends, if it says
+      gl.uniform1f(S.uFloor, Number.isFinite(b.floor) ? b.floor : b.at[1]); // WB9f: on the floor unless it says where the floor is
+      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0); // AUDIT SD IV (R3): and where it ends, if it says
       gl.uniform1f(S.uT, b.t);
       gl.uniform1f(S.uPower, b.kind?.power ?? 1);
       gl.uniform1i(S.uGrit, b.kind?.grit ? 1 : 0);
@@ -328,9 +414,12 @@ export class GateFxRenderer {
       gl.bindVertexArray(this.quadVao);
       gl.uniform3f(M.uHead, meteor.at[0], meteor.at[1], meteor.at[2]);
       gl.uniform3f(M.uDir, METEOR_DIR[0], METEOR_DIR[1], METEOR_DIR[2]);
-      gl.uniform1i(M.uKind, 0); gl.uniform1f(M.uLen, METEOR_TRAIL_M); gl.uniform1f(M.uW, METEOR_HEAD_M * 0.6);
+      gl.uniform1i(M.uKind, 0);
+      gl.uniform1f(M.uLen, METEOR_TRAIL_M);
+      gl.uniform1f(M.uW, METEOR_HEAD_M * 0.6);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      gl.uniform1i(M.uKind, 1); gl.uniform1f(M.uW, METEOR_HEAD_M);
+      gl.uniform1i(M.uKind, 1);
+      gl.uniform1f(M.uW, METEOR_HEAD_M);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       this.meteors = 1;
     }
@@ -349,6 +438,11 @@ export class GateFxRenderer {
     for (const v of [this.sparkVao, this.quadVao]) if (v) gl.deleteVertexArray(v);
     for (const b of [this.sparkBuf, this.quadBuf]) if (b) gl.deleteBuffer(b);
     for (const p of [this.sparks, this.meteor]) if (p) gl.deleteProgram(p);
-    this.sparkVao = null; this.quadVao = null; this.sparkBuf = null; this.quadBuf = null; this.sparks = null; this.meteor = null;
+    this.sparkVao = null;
+    this.quadVao = null;
+    this.sparkBuf = null;
+    this.quadBuf = null;
+    this.sparks = null;
+    this.meteor = null;
   }
 }

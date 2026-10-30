@@ -479,8 +479,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-13-the-fill-to-its-reach",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "s: d / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], rx / (d || 1), rz / (d || 1), C[0], C[1])) };",
-    "new": "s: d / sh.r + 0 * C[0] };",
+    "old": "        s: d / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], rx / (d || 1), rz / (d || 1), C[0], C[1])),",
+    "new": "        s: d / sh.r + 0 * C[0],",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

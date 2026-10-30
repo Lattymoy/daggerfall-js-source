@@ -65,8 +65,8 @@
   {
     "name": "SS-a-list-misses-a-program",
     "file": "src/render/gate/gateFx.js",
-    "old": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS], [FX_METEOR_VS, FX_METEOR_FS]]));",
-    "new": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS]]));",
+    "old": "  Object.freeze([\n    [FX_SPARK_VS, FX_SPARK_FS],\n    [FX_METEOR_VS, FX_METEOR_FS],\n  ])",
+    "new": "  Object.freeze([[FX_SPARK_VS, FX_SPARK_FS]])",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

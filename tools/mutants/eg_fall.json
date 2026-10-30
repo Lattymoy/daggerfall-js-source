@@ -522,8 +522,8 @@
   {
     "name": "AUDIT-EG-FALL-L1-6-programs-kept",
     "file": "src/render/gate/gateFx.js",
-    "old": "for (const p of [this.sparks, this.meteor]) if (p) gl.deleteProgram(p);",
-    "new": "void 0;",
+    "old": "    for (const p of [this.sparks, this.meteor]) if (p) gl.deleteProgram(p);",
+    "new": "    void 0;",
     "tests": [
       "test/net/eliteGates/eg_lordfall.test.js",
       "test/net/eliteGates/eg_lordfall_relay.test.js"
@@ -532,8 +532,8 @@
   {
     "name": "AUDIT-EG-FALL-L1-6-destroyed-draws",
     "file": "src/render/gate/gateFx.js",
-    "old": "if (!any || !this.gl) return;",
-    "new": "if (!any) return;",
+    "old": "    if (!any || !this.gl) return; // AUDIT EG-FALL (L1-6): a destroyed pass draws nothing",
+    "new": "    if (!any) return; // AUDIT EG-FALL (L1-6): a destroyed pass draws nothing",
     "tests": [
       "test/net/eliteGates/eg_lordfall.test.js",
       "test/net/eliteGates/eg_lordfall_relay.test.js"

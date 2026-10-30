@@ -196,8 +196,8 @@
   {
     "name": "AUDWBX-F7-the-lane-at-half-its-width",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2,",
-    "new": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
+    "old": "    halfW: tether\n      ? TELEGRAPH_CHAIN_HALF_W\n      : A.shape === 'lane'\n        ? Math.max((A.width ?? 0) / 2, P.bossR)\n        : (A.width ?? 0) / 2,",
+    "new": "    halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
     "tests": [
       "test/net/gate/auditwbx.test.js",
       "test/net/gate/wb4_gate_boss.test.js"

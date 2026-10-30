@@ -250,8 +250,8 @@
   {
     "name": "WB14a-the-chain-s-colour-fixed",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) :",
-    "new": "color: tether ? attackColor(A, P) :",
+    "old": "    color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) : torment ? TORMENT_COLOR : attackColor(A, P),",
+    "new": "    color: tether ? attackColor(A, P) : torment ? TORMENT_COLOR : attackColor(A, P),",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "WB14a-the-blades-dark-through-their-turn",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0,",
-    "new": "flash: tel.since >= 0 ? 1 : 0,",
+    "old": "    flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0,",
+    "new": "    flash: tel.since >= 0 ? 1 : 0,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]

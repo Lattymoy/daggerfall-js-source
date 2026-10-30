@@ -452,8 +452,8 @@
   {
     "name": "SD20C-V14-the-veils-sparks-reversed",
     "file": "src/render/gate/gateVeil.js",
-    "old": "(1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5)))",
-    "new": "smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5))",
+    "old": "  float spark = step(0.993, vh(floor(sc))) * (1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5))) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);",
+    "new": "  float spark = step(0.993, vh(floor(sc))) * smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5)) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

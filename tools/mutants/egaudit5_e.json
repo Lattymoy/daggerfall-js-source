@@ -67,8 +67,8 @@
   {
     "name": "EGA5E-telegraph-floor-buffer-kept",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "for (const b of [this.vbo, this.walkVbo, this.floorVbo]) if (b) gl.deleteBuffer(b);",
-    "new": "for (const b of [this.vbo, this.walkVbo]) if (b) gl.deleteBuffer(b);",
+    "old": "    for (const b of [this.vbo, this.walkVbo, this.floorVbo]) if (b) gl.deleteBuffer(b);",
+    "new": "    for (const b of [this.vbo, this.walkVbo]) if (b) gl.deleteBuffer(b);",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "EGA5E-telegraph-floor-vao-kept",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "for (const v of [this.vao, this.walkVao, this.floorVao]) if (v) gl.deleteVertexArray(v);",
-    "new": "for (const v of [this.vao, this.walkVao]) if (v) gl.deleteVertexArray(v);",
+    "old": "    for (const v of [this.vao, this.walkVao, this.floorVao]) if (v) gl.deleteVertexArray(v);",
+    "new": "    for (const v of [this.vao, this.walkVao]) if (v) gl.deleteVertexArray(v);",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "EGA5E-telegraph-program-kept",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    if (this.program) gl.deleteProgram(this.program);\n    this.vao = null; this.walkVao = null;",
-    "new": "    this.vao = null; this.walkVao = null;",
+    "old": "    if (this.program) gl.deleteProgram(this.program);\n    this.vao = null;",
+    "new": "    this.vao = null;",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "EGA5E-telegraph-destroy-twice",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    this.gl = null;\n    for (const v of [this.vao, this.walkVao, this.floorVao])",
-    "new": "    for (const v of [this.vao, this.walkVao, this.floorVao])",
+    "old": "    this.gl = null;\n    for (const v of [this.vao, this.walkVao, this.floorVao]) if (v) gl.deleteVertexArray(v);",
+    "new": "    for (const v of [this.vao, this.walkVao, this.floorVao]) if (v) gl.deleteVertexArray(v);",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "EGA5E-tether-chain-no-strip",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "const across = sh.pool === TELEGRAPH_POOL.path || sh.pool === TELEGRAPH_POOL_SPIRE.chain ? sh.halfW",
-    "new": "const across = sh.pool === TELEGRAPH_POOL.path ? sh.halfW",
+    "old": "    sh.pool === TELEGRAPH_POOL.path || sh.pool === TELEGRAPH_POOL_SPIRE.chain",
+    "new": "    sh.pool === TELEGRAPH_POOL.path",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "EGA5E-tether-pull-no-strip",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": ": sh.pool === TELEGRAPH_POOL_SPIRE.pull ? 2 * sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
-    "new": ": NaN;",
+    "old": "  const across =\n    sh.pool === TELEGRAPH_POOL.path || sh.pool === TELEGRAPH_POOL_SPIRE.chain\n      ? sh.halfW\n      : sh.pool === TELEGRAPH_POOL_SPIRE.pull\n        ? 2 * sh.halfW + TELEGRAPH_TICK_REACH\n        : NaN;",
+    "new": "  const across = sh.pool === TELEGRAPH_POOL.path || sh.pool === TELEGRAPH_POOL_SPIRE.chain ? sh.halfW : NaN;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "EGA5E-tether-tick-narrow",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "? 2 * sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
-    "new": "? sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
+    "old": "        ? 2 * sh.halfW + TELEGRAPH_TICK_REACH",
+    "new": "        ? sh.halfW + TELEGRAPH_TICK_REACH",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "EGA5E-tether-shader-tick-wider",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "2.0 * uHalfW + ${TELEGRAPH_TICK_REACH.toFixed(2)}, ld)",
-    "new": "2.0 * uHalfW + 0.3, ld)",
+    "old": "      float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR1))) * (1.0 - smoothstep(2.0 * uHalfW, 2.0 * uHalfW + ${TELEGRAPH_TICK_REACH.toFixed(2)}, ld));   // AUDIT EG V (L6-2): its reach, its strip's (telegraphStrip)",
+    "new": "      float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR1))) * (1.0 - smoothstep(2.0 * uHalfW, 2.0 * uHalfW + 0.3, ld));   // AUDIT EG V (L6-2): its reach, its strip's (telegraphStrip)",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "EGA5E-tether-bounds-wide",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "stripW(sh) || sh.halfW + M);",
-    "new": "sh.halfW + M);",
+    "old": "        stripW(sh) || sh.halfW + M,",
+    "new": "        sh.halfW + M,",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "EGA5E-ring-reach-glow",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "sh.pool === TELEGRAPH_POOL_SPIRE.ring ? TELEGRAPH_RING_REACH : M));",
-    "new": "sh.pool === TELEGRAPH_POOL_SPIRE.ring ? M : M));",
+    "old": "        sh.r + (sh.kind === TELEGRAPH_KIND.disc && sh.pool === TELEGRAPH_POOL_SPIRE.ring ? TELEGRAPH_RING_REACH : M),",
+    "new": "        sh.r + (sh.kind === TELEGRAPH_KIND.disc && sh.pool === TELEGRAPH_POOL_SPIRE.ring ? M : M),",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "EGA5E-ring-line-uncut",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);",
-    "new": "o = vec4(uColor * core * f, 0.0);",
+    "old": "    o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);",
+    "new": "    o = vec4(uColor * core * f, 0.0);",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "EGA5E-bounds-box-ignored",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  const b = out ?? [0, 0, 0, 0];\n",
-    "new": "  const b = [0, 0, 0, 0];\n",
+    "old": "  const b = out ?? [0, 0, 0, 0];",
+    "new": "  const b = [0, 0, 0, 0];",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]

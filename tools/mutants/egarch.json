@@ -235,8 +235,8 @@
   {
     "name": "EGF-the-foot-the-gate-s-always",
     "file": "src/render/gate/gatePass.js",
-    "old": "foot: b && Number.isFinite(b.start) ? beaconFoot(below, b.start, height) : G.foot,",
-    "new": "foot: G.foot,",
+    "old": "    foot: b && Number.isFinite(b.start) ? beaconFoot(below, b.start, height) : G.foot,",
+    "new": "    foot: G.foot,",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
