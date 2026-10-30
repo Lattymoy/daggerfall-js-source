@@ -22,7 +22,7 @@ import { rarityLines, LOOT_RARITY_KEY } from '../../../src/systems/loot/lootRari
 import { setPref, _resetForTests } from '../../../src/systems/uiPrefs.js';
 import { sigilCard } from '../../../src/ui/sigilCard.js';
 import { setCard } from '../../../src/ui/setCard.js';
-import { fitCard, CARD_FITS, CARD_SHEET_SHARE, itemBriefLines, itemChatText, mountEnhancedInventory } from '../../../src/ui/enhanced/enhancedInventory.js';
+import { fitCard, CARD_FITS, CARD_SHEET_SHARE, itemBriefLines, mountEnhancedInventory } from '../../../src/ui/enhanced/enhancedInventory.js';
 import { PLUS_CSS } from '../../../src/ui/enhanced/enhancedPlusStyle.js';
 import { wrapToolTipRows, TOOLTIP_WRAP_W } from '../../../src/ui/toolTip.js';
 
@@ -159,7 +159,7 @@ test('CARD-FIT the Info box is the whole read: the tier\'s lines and the lore (a
 
 // ── CARD-FIT, the card audit's follow-ups (the whole card's surfaces, measured: U4-U16) ──
 
-test('CARD-FIT U4 + U10: a strip or a chat line says an item in BRIEF - the tier and its affixes, the sigil\'s own line, the set by its name (what I wear of it only in my own trade window) - never the set\'s tiers or the lore; a chat post names no worn count and never runs out mid-tier (mutants: the brief with the set\'s tiers and the lore; the sigil left out; the post with the poster\'s count; the post on the long list)', () => {
+test('CARD-FIT U4 + U10: a strip says an item in BRIEF - the tier and its affixes, the sigil\'s own line, the set by its name (what I wear of it only in my own trade window) - never the set\'s tiers or the lore (mutants: the brief with the set\'s tiers and the lore; the sigil left out)', () => {
   _resetForTests(); setPref(LOOT_RARITY_KEY, true);
   setSigilOnline(true); setSigilRenown(12);
   try {
@@ -174,12 +174,8 @@ test('CARD-FIT U4 + U10: a strip or a chat line says an item in BRIEF - the tier
     assert.ok(brief.some((l) => /^Sigil \(/.test(l)), 'the sigil\'s own line (the card draws it as a block; a strip had none)');
     const lore = rarityLines(crown).find((l) => !rarityLines(crown, { lore: false }).includes(l));
     assert.ok(lore && !brief.includes(lore), 'no lore');
-    const post = itemChatText(crown, {});
-    assert.match(post, /Ruhn's Regalia set/, 'a post names the set');
-    assert.doesNotMatch(post, /of 9 worn|pieces - /, 'never the poster\'s count, never a tier');
-    assert.ok(!post.endsWith('...'), `and it fits whole: ${post}`);
-    const cleave = itemChatText(blade, {});
-    assert.match(cleave, /Sigil \([^)]+\): \+[\d.]+% damage/, 'a weapon\'s post carries its blow');
+    const bladeBrief = itemBriefLines(blade, {});
+    assert.ok(bladeBrief.some((l) => /Sigil \([^)]+\): \+[\d.]+% damage/.test(l)), 'a weapon\'s brief carries its blow');
   } finally { setSetsWearer(() => null); _resetSigilSetsForTests(); _resetSigilForTests(); _resetForTests(); }
   const t = strip(read('src/ui/enhanced/enhancedPlayerTrade.js'));
   assert.match(t, /const powers = itemBriefLines\(selected\.item, deps, \{ worn: true \}\);/, 'the trade strip reads the brief');

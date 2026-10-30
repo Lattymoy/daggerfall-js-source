@@ -123,7 +123,9 @@ test('GUILD-WINDOW the column of pages: each page its name and the words under i
   assert.deepEqual([names.overview, names.settings, words.vault], ['Overview', 'Settings', 'The pieces the guild keeps']);
   assert.deepEqual(find(nav, 'dfsocial-subtab').map((b) => [b.dataset.page, one(b, 'dfguild-navlabel').textContent, one(b, 'dfguild-navcount')?.textContent ?? null, one(b, 'dfguild-navsub').textContent, b.attrs.tabindex]), [
     ['overview', names.overview, null, words.overview, '0'], ['members', names.members, '1/75', words.members, '-1'],
+    ['ranks', names.ranks, null, words.ranks, '-1'],   // PIN MOVED: GUILD-RANKS (Guild-Shop.md 13) - the Ranks page
     ['treasury', names.treasury, null, words.treasury, '-1'], ['vault', names.vault, '1/50', words.vault, '-1'],
+    ['shop', names.shop, null, words.shop, '-1'],   // PIN MOVED: GUILD-SHOP (Guild-Shop.md) - the Shop page
     ['arms', names.arms, null, words.arms, '-1'], ['settings', names.settings, null, words.settings, '-1'],
   ]);
   const main = one(t.root, 'dfguild-main');

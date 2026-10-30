@@ -86,8 +86,8 @@
   {
     "name": "DECORMODS-scan-unjoined",
     "file": "src/systems/decor/decorScan.js",
-    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
-    "new": "[...decorCatalogue(read), HALL_BOARD_ENTRY]",
+    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
+    "new": "[...decorCatalogue(read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],

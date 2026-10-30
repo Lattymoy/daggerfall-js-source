@@ -18,6 +18,7 @@ export const ARMORY_SLOT_TEXT = Object.freeze({
 export const ARMORY_LINE_TEXT = Object.freeze({
   dagonfire: () => t('armory.line.dagonfire', 'Dagonfire'),
   eternal: () => t('armory.line.eternal', 'Eternal'),
+  guild: () => t('armory.line.guild', 'Guild'),   // GUILD-SHOP
 });
 /** Each piece's name. */
 export const ARMORY_TEXT = Object.freeze({
@@ -31,6 +32,7 @@ export const ARMORY_TEXT = Object.freeze({
   eternalarmlets: () => t('armory.name.eternalarmlets', 'Eternal Armlets'),
   eternalgreaves: () => t('armory.name.eternalgreaves', 'Eternal Greaves'),
   eternaledge: () => t('armory.name.eternaledge', 'Eternal Edge'),
+  insigniaarmlet: () => t('armory.name.insigniaarmlet', 'Insignia Armlet'),   // GUILD-SHOP
 });
 /** What each piece looks like, in a sentence or two. */
 export const ARMORY_LOOK = Object.freeze({
@@ -44,6 +46,7 @@ export const ARMORY_LOOK = Object.freeze({
   eternalarmlets: () => t('armory.look.eternalarmlets', 'Engraved bands of blue-violet fire circle the upper arms and the wrists. Flames lick up off them.'),
   eternalgreaves: () => t('armory.look.eternalgreaves', 'Blue-violet fire wraps the legs from the knee to the foot, under a lattice of light. Sparks rise as you walk.'),
   eternaledge: () => t('armory.look.eternaledge', 'A blade of blue-violet light runs along the weapon\'s edge. Sparks trail from it when you swing.'),
+  insigniaarmlet: () => t('armory.look.insigniaarmlet', 'A gilt band round the left upper arm, enamelled in your guild\'s colors, with its arms on a shield of beaten gold.'),   // GUILD-SHOP
 });
 /** A SET's name and look (the shop's Eternal Set, its five pieces at once). */
 export const ARMORY_SET_TEXT = Object.freeze({ eternalset: () => t('armory.name.eternalset', 'The Eternal Set') });

@@ -5476,6 +5476,13 @@ make the aura misallign".
   content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
+- **At the painted body** (BACK-HOLSTER, 2026-10-30; Mac: "Why is the cape backwards on the side facing?"). The cape and
+  the wings hung from the sprite's feet, but a side view's picture paints its body up to a third of a metre toward its
+  back (the sword held out front widens it), so the cape was worn on the chest. For the aura pass alone,
+  `scenes/auraHost.js` moves each sprite's cape or wings to its painted body along the view's right
+  (`render/auraRing.js` auraSpriteAcross, the Aura Armory's own `dx`; auraShiftAcross) and back after it, so the swing
+  never reads a picture's change as a step. A ring at the feet stays at the feet (`06-Systems/Eye-Of-The-Beholder.md`
+  BACK-HOLSTER).
 
 ## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct87 - acct84 on its branch, renumbered past SERPENT-SET's acct84, then YARD-SHED's acct85, then YARD-HEIGHT's acct86 at the merges of main)
 

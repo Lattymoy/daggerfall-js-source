@@ -143,8 +143,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-days-read",
     "file": "server-account/src/townEcon.js",
-    "old": "  let towns = null;\n  try { towns = row ? JSON.parse(String(row.towns)) : null; } catch { towns = null; }",
-    "new": "  let towns = null;",
+    "old": "  let towns = null, regions = null;\n  try { towns = row ? JSON.parse(String(row.towns)) : null; } catch { towns = null; }",
+    "new": "  let towns = null, regions = null;",
     "tests": [
       "test/server/townecon_service.test.js"
     ],

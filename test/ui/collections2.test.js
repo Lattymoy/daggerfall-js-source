@@ -145,6 +145,7 @@ const CATALOGUE = {
   'armory:burningcrown': 'broker open', 'armory:emberheart': 'broker open', 'armory:ashbound': 'broker open', 'armory:cinderstride': 'broker open',
   'armory:breachbrand': 'broker open', 'armory:eternalhalo': 'shop shop', 'armory:eternalsigil': 'shop shop', 'armory:eternalarmlets': 'shop shop',
   'armory:eternalgreaves': 'shop shop', 'armory:eternaledge': 'shop shop',
+  'armory:insigniaarmlet': 'guild open', 'icon:guildcrest': 'guild open',   // GUILD-SHOP (PIN MOVED): the guild shop's armlet and crest, any member's for silver
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -156,7 +157,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
   assert.deepEqual(got, CATALOGUE);
   // PIN MOVED (WYRM-RIDER): the Dwarven Dragon's source, after the Sea Serpent's
-  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'dragon', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
+  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'dragon', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'guild', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (GUILD-SHOP): the guild shop, after the account's own */ /* PIN MOVED (SHOP): the shop before the patrons */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) {
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);

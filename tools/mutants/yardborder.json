@@ -38,7 +38,7 @@
   {
     "name": "YARDJOINED-walls-unjoined",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };",
+    "old": "  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...theirs], ...(lot.grounds ? { loose: [...(lot.loose ?? []), ...theirs] } : {}) };",
     "new": "  return lot;",
     "tests": [
       "test/scenes/yardborder.test.js"

@@ -167,6 +167,6 @@ test('DECOR-FIGURE AUDIT C2: a figure grown before is turned where it stands on 
   asked.length = 0;
   all(root, 'dfdecor-btn').find((b) => b.textContent === 'Turn right').fire('click');
   const foot = asked.at(-1);
-  assert.ok(foot?.length === 4, 'the turn asked the lot');
+  assert.ok(foot?.length === 8, 'the turn asked the lot');   // PIN MOVED (AUDIT FB1030 Y8): a flat's ground is the circle it turns over
   assert.ok(Math.abs(Math.max(...foot.map(([x]) => Math.abs(x))) - 0.2) < 1e-9, `its own size's ground (${JSON.stringify(foot)})`);
 });

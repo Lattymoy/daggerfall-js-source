@@ -586,7 +586,7 @@ export class RemotePlayers {
   addCorpse(peer, pose, room = null, { until = null, quiet = false } = {}) {
     if (!pose) return;
     const ct = corpseTextureFor(peer?.look);
-    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };
+    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z, ...(Number.isFinite(pose.fy) ? { fy: pose.fy } : {}) }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };   // AUDIT FB1030 N1: and its room's floor (INDOOR-FLOOR)
     this._corpses.push(c);
     while (this._corpses.length > CORPSES_MAX) this._dropCorpse(this._corpses.shift());
     const audio = this.deps?.audio;

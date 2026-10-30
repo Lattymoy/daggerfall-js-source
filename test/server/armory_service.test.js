@@ -28,7 +28,7 @@ const closeGates = (/** @type {any} */ env, /** @type {any} */ who, /** @type {n
 
 test('ARMORY the law: five slots in the kit\'s order; ten pieces, two a slot - the Sigil Broker\'s Dagonfire, the shop\'s Eternal; a code a slot never shared (mutants: a slot dropped; two pieces one code; a line sold at the other\'s door)', () => {
   assert.deepEqual(ARMORY_SLOTS, ['head', 'torso', 'arms', 'legs', 'weapon']);
-  assert.deepEqual(ARMORY_SOURCE, { dagonfire: 'broker', eternal: 'shop' });
+  assert.deepEqual(ARMORY_SOURCE, { dagonfire: 'broker', eternal: 'shop', guild: 'guild' });   // GUILD-SHOP (PIN MOVED): the Insignia Armlet's line, the guild shop's
   assert.deepEqual(ARMORY_PIECES.map((p) => [p.key, p.slot, p.code, p.line, p.source]), [
     ['burningcrown', 'head', 'a', 'dagonfire', 'broker'],
     ['emberheart', 'torso', 'a', 'dagonfire', 'broker'],
@@ -40,6 +40,7 @@ test('ARMORY the law: five slots in the kit\'s order; ten pieces, two a slot - t
     ['eternalarmlets', 'arms', 'b', 'eternal', 'shop'],
     ['eternalgreaves', 'legs', 'b', 'eternal', 'shop'],
     ['eternaledge', 'weapon', 'b', 'eternal', 'shop'],
+    ['insigniaarmlet', 'arms', 'c', 'guild', 'guild'],   // GUILD-SHOP (PIN MOVED): the arms slot's third, the guild shop's
   ]);
   assert.deepEqual(armoryLinePieces('dagonfire').map((p) => p.key), DAGONFIRE);
   assert.deepEqual(armoryLinePieces('eternal').map((p) => p.key), ETERNAL);

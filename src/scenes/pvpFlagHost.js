@@ -1,9 +1,9 @@
 // @ts-check
 // PVP-FLAG (systems/wild/pvpFlag.js): THE FLAG, ON THIS PAGE - the module the world host wires (src/scenes/fishHost.js is
 // the shape). It holds my flag and every peer's as the zone's referee says them (`wref` k 'flag'), notes my last PvP blow
-// given or taken (`wref` k 'hp'), toggles on Caps Lock or the HUD button, and answers the two doors the host asks: may I
-// strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not flagged - the owner: "with no
-// flagg we will allow player to use portal stone anywwere").
+// given or taken (`wref` k 'hp'), toggles on its key (PvpFlag, Caps Lock by default) or the HUD button, and answers the
+// two doors the host asks: may I strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not
+// flagged - the owner: "with no flagg we will allow player to use portal stone anywwere").
 import { pvpFlagRefusal, PVP_FLAG, pvpAggroLeft } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
@@ -13,6 +13,12 @@ import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
 import { setPvpFoeSight, pvpGearStruck } from '../combat/pvpGearPowers.js';   // PVP-GEAR: a foe's bar and my hits taken
 import { PVP_FLAG_SPOT, createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
+import { eventActions, mouseCode, isDomControlTarget, neverTheFocus } from '../ui/input.js';   // PVP-KEY: the flag's key is the registry's
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // AUDIT PVP-KEY B1: a window up has the keys
+import { actionKeyWord } from '../ui/quickslotTags.js';
+
+/** PVP-KEY: the flag's action in the bindings registry (systems/inputActions.js). */
+export const PVP_FLAG_ACTION = 'PvpFlag';
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -28,10 +34,11 @@ const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b
 /**
  * The host's own (positional, so the wiring is one line of it): its live link, the player, the mid-screen line and the
  * town talk a line is said on.
- * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void }} talk
- * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean }} [o]
+ * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void, overlayActive?: boolean }} talk
+ * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean, keyActions?: (e: { code: string | null, shiftKey?: boolean, ctrlKey?: boolean, altKey?: boolean }) => string[], keyWord?: () => string, windowUp?: () => boolean }} [o]
  */
-export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere } = {}) {
+export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere,
+  keyActions = eventActions, keyWord = () => actionKeyWord(PVP_FLAG_ACTION), windowUp = () => !!talk?.overlayActive || overlayOpen() } = {}) {
   const level = () => Math.trunc(player?.level || 1);
   const say = (line) => { midScreen(line); talk.say(line); };
   const sayLock = (line) => { midScreen(line, PVP_SAY_S); talk.say(line); };   // PVP-HUD: a combat timer's line, 3 s
@@ -63,7 +70,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     const kind = mySkull();
     Object.assign(button.style, { backgroundImage: `url("${skullSrc(kind ?? 'white')}")`, borderColor: SKULL_EDGE[kind ?? 'off'],
       filter: kind ? '' : 'grayscale(1) brightness(0.6)', boxShadow: kind === 'gold' ? `0 0 0 3px ${SKULL_EDGE.gold}55` : '' });
-    button.title = on ? t('pvp.flag.onTitle', 'PvP on (Caps Lock)') : t('pvp.flag.offTitle', 'PvP off (Caps Lock)');
+    const key = keyWord() || t('pvp.flag.noKey', 'no key');   // PVP-KEY: the key it answers now
+    button.title = on ? t('pvp.flag.onTitle', 'PvP on ({key})', { key }) : t('pvp.flag.offTitle', 'PvP off ({key})', { key });
     button.setAttribute('aria-label', button.title);
     hud?.draw({ kind, left: pvpAggroLeft(fightAt, now()), shown: here(), hits: hitLines });
   };
@@ -74,7 +82,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     wasLock = lock;
   };
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
-  /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
+  /** The key or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
     if (!on && !zone()) return false;   // PVP-FLAG-ZONE: up only in the zone
     const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
@@ -111,12 +119,24 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(id, { h: hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / max))) : 0, s: bars.get(id)?.s ?? 0 });   // PVP-BAR: a blow's own count, at once
     return false;
   };
+  /** AUDIT PVP-KEY B1: the world has the key - no window up (a game window, the pause, the Tab dial) and no window's own
+   *  control in focus. A letter bound to the flag was typed into the game's text boxes as a flag. */
+  const inGame = (el) => !windowUp() && !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');
   if (doc) {
     doc.addEventListener('keydown', (e) => {
       const el = /** @type {any} */ (e.target);
-      if (e.code !== 'CapsLock' || e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
-      noteCaps('game');
-      if (here()) toggle();
+      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
+      const acts = inGame(el) ? keyActions(e) : [];   // AUDIT PVP-KEY B2: eventActions - a combo's own, never its bare key's
+      if (e.code === 'CapsLock') {   // PVP-FLAG-CAPS: the light is the game's only where its press did something (AUDIT PVP-KEY B6)
+        noteCaps(acts.length ? 'game' : null);
+      }
+      if (here() && acts.includes(PVP_FLAG_ACTION)) toggle();
+    });
+    // PVP-KEY: a mouse button bound to the flag, on the world alone (AUDIT PVP-KEY B3: a window's button, the chat and this
+    // button were pressed through)
+    doc.addEventListener('mousedown', (e) => {
+      const code = mouseCode(e.button), el = /** @type {any} */ (e.target);
+      if (code && el?.tagName === 'CANVAS' && inGame(el) && here() && keyActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }).includes(PVP_FLAG_ACTION)) toggle();
     });
     // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
     // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
@@ -124,6 +144,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     button.type = 'button';
     Object.assign(button.style, { position: 'fixed', top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`, right: '8px', transform: 'none', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
+    neverTheFocus(button);   // AUDIT PVP-KEY B5 (FB1020h HUD-FOCUS): clicked, it kept the focus and the next Space pressed it again
     doc.body?.appendChild(button);
     if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud(doc, () => { beat(); paint(); });   // PVP-HUD: the ring, the banner, the last hits
     paint();

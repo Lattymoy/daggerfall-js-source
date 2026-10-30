@@ -228,8 +228,8 @@
   {
     "name": "DECOR1e-the-bar-whole-price",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,",
-    "new": "priceText: p.free ? 'free' : null,",
+    "old": "priceText: edit ? decorEditText(edit) : p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry, roomPieces())) : p.free ? 'free' : null,",
+    "new": "priceText: p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry, roomPieces())) : p.free ? 'free' : null,",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]

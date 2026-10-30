@@ -133,8 +133,11 @@ export function castleSeated(o) {
 /**
  * A BAY PALACE BLOCK'S PORT COPY (`dfBlock`, BLOCKS.BSA's, read): the same block under its port name and index, every
  * object it keeps (castleKeeps) - and every object an action chain names kept whatever it is, so no chain breaks.
+ * AUDIT FB1030 D1: and a flat that STARTS a chain - S0000160's foyer guard (183.3, his faction bytes his action's) asks
+ * the terms and opens the two foyer doors; dropped, Alinor's, Falinesti's and Helstrom's courts stood behind them.
  * @param {any} dfBlock @param {{ name: string, index: number }} copy
  */
+const chainHead = (o) => o.type === RDB_RESOURCE_TYPES.Flat && o.resources?.flatResource?.action > 0 && o.resources.flatResource.nextObjectOffset > 0;
 export function castleBlockOf(dfBlock, copy) {
   const rdb = dfBlock?.rdbBlock;
   if (!rdb) return null;
@@ -146,6 +149,6 @@ export function castleBlockOf(dfBlock, copy) {
   }
   return {
     ...dfBlock, index: copy.index, name: copy.name, servedName: copy.name,
-    rdbBlock: { ...rdb, objectRootList: (rdb.objectRootList ?? []).map((g) => ({ ...g, rdbObjects: g.rdbObjects ? g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o)).map(castleSeated) : g.rdbObjects })) },
+    rdbBlock: { ...rdb, objectRootList: (rdb.objectRootList ?? []).map((g) => ({ ...g, rdbObjects: g.rdbObjects ? g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o)).map(castleSeated) : g.rdbObjects })) },
   };
 }

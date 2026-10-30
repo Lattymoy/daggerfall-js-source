@@ -1,62 +1,42 @@
 // CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat").
 //
-// AN ITEM IN CHAT: Post sends its own line; Link inserts `[Label]` into the chat field so a typed message can carry
-// one or more pieces (wire.js validChatItems). A hearing client draws coloured [Name]s whose hover is the pack's tip.
+// AN ITEM IN CHAT: Link inserts `[Label]` into the chat field so a typed message can carry one or more pieces
+// (wire.js validChatItems). A hearing client draws coloured [Name]s whose hover is the pack's tip.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { itemChatText, itemChatLabel, itemPowerLines, POSTED_TEXT, NOT_POSTED_TEXT, LINKED_TEXT, NOT_LINKED_TEXT } from '../../src/ui/enhanced/enhancedInventory.js';
+import { itemChatLabel, LINKED_TEXT, NOT_LINKED_TEXT } from '../../src/ui/enhanced/enhancedInventory.js';
 import { chatItemOf, chatItemLink, chatTextParts, openLinkQuery, matchBagItems, takePendingLinks, prunePendingLinks } from '../../src/ui/chatItemLink.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { LOOT_RARITY_KEY, RARITIES } from '../../src/systems/loot/lootRarity.js';
-import { CHAT_MAX, sanitizeChat, validChatItem, validChatItems, parseClient } from '../../src/net/wire.js';
+import { validChatItem, validChatItems, parseClient } from '../../src/net/wire.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 setPref(LOOT_RARITY_KEY, false);
 
-test('CHAT-POST itemChatText: the name in brackets, then the magic, a line the chat carries whole; a long one is cut at a whole word inside CHAT_MAX (mutants: the magic left off; the bound not kept; cut mid-word)', () => {
-  const sword = { templateIndex: 113, itemGroup: 2, name: 'Longsword', enchantments: [{ type: 4, param: 1 }, { type: 11, param: -1 }], isIdentified: true };
-  const t = itemChatText(sword, {});
-  assert.match(t, /^\[[^\]]+\]/, 'the name first, in brackets');
-  assert.match(t, /Potent vs Daedra · Feather weight$/, 'then its powers, as the card says them');
-  assert.equal(sanitizeChat(t), t, 'the chat carries it as it is');
-  const plain = itemChatText({ templateIndex: 113, itemGroup: 2, name: 'Longsword', enchantments: [] }, {});
-  assert.match(plain, /^\[[^\]]+\]/);
+test('CHAT-POST itemChatLabel: the name, and xN when the stack is more than one (mutants: the stack count left off)', () => {
   assert.equal(itemChatLabel({ templateIndex: 3, name: 'Ruby', stackCount: 260 }, {}), 'Ruby x260', 'a stack names its count');
   assert.equal(itemChatLabel({ templateIndex: 3, name: 'Ruby', stackCount: 1 }, {}), 'Ruby', 'one is bare');
-  assert.match(itemChatText({ templateIndex: 3, name: 'Ruby', stackCount: 260 }, {}), /^\[Ruby x260\]/);
-  // a piece with more magic than one line holds
-  const many = { ...sword, enchantments: [4, 5, 7, 8, 9, 11, 12, 13, 3, 4, 5, 3, 3, 4].map((type, i) => ({ type, param: i % 4 })) };
-  const long = itemChatText(many, {});
-  assert.ok(long.length <= CHAT_MAX, `${long.length} within ${CHAT_MAX}`);
-  assert.ok(long.endsWith('...'), 'said to be cut');
-  assert.equal(sanitizeChat(long), long);
-  assert.doesNotMatch(long, / \.\.\.$|·\.\.\.$/, 'cut at a word, never after a separator');
-  const name = long.slice(1, long.indexOf(']'));
-  const whole = `[${name}] ${itemPowerLines(many, {}).join(' · ')}`;
-  const kept = long.slice(0, -3);
-  assert.ok(whole.startsWith(kept) && /[ ·]/.test(whole[kept.length]), `cut at a whole word: "...${kept.slice(-12)}" + "${whole[kept.length]}"`);
+  assert.equal(itemChatLabel({ templateIndex: 113, itemGroup: 2, name: 'Longsword', enchantments: [] }, {}), 'Longsword');
 });
 
-test('CHAT-POST the card and the hosts: Link and Post only where the host hands the door, said on the chat\'s open tab through chatSend, in the three hosts that open a pack (mutants: offered offline; sent past chatSend; a host that hands none)', () => {
+test('CHAT-POST the card and the hosts: Link only where the host hands the door, in the three hosts that open a pack (mutants: offered offline; a host that hands none)', () => {
   const inv = src('src/ui/enhanced/enhancedInventory.js');
   assert.match(inv, /if \(deps\.canPostItem\?\.\(\)\) \{/);
   assert.match(inv, /el\('button', 'act', 'Link in chat'\)/);
   assert.match(inv, /deps\.linkItem\?\.\(picked\) \? LINKED_TEXT : NOT_LINKED_TEXT/);
-  assert.match(inv, /el\('button', 'act', 'Post in chat'\)/);
-  assert.match(inv, /deps\.postItem\?\.\(itemChatText\(picked\), picked\) \? POSTED_TEXT : NOT_POSTED_TEXT/);
-  assert.equal(POSTED_TEXT, 'Posted in chat.');
+  assert.doesNotMatch(inv, /Post in chat/);
+  assert.doesNotMatch(inv, /postItem/);
   assert.equal(LINKED_TEXT, 'Linked in chat.');
-  assert.match(NOT_POSTED_TEXT, /Could not post/);
   assert.match(NOT_LINKED_TEXT, /Could not link/);
   const W = src('src/scenes/world.js');
   assert.match(W, /const canPostItemInChat = \(\) => !!\(chatLog\?\.active && chatPanel\);/);
-  assert.match(W, /const postItemInChat = \(text, item\) => \(canPostItemInChat\(\) \? chatSend\(chatLog\.active, text, chatLog\.active, \{ item \}\) === true : false\);/);
   assert.match(W, /const linkItemInChat = \(item\) => \(canPostItemInChat\(\) \? chatPanel\.linkItem\?\.\(item\) === true : false\);/);
-  assert.match(W, /postItem: \(text, item\) => postItemInChat\(text, item\), linkItem: \(item\) => linkItemInChat\(item\), canPostItem: \(\) => canPostItemInChat\(\),   \/\/ CHAT-POST: post or link into the field/);
-  assert.match(W, /postItem: \(text, item\) => postItemInChat\(text, item\), linkItem: \(item\) => linkItemInChat\(item\), canPostItem: \(\) => canPostItemInChat\(\),   \/\/ CHAT-POST: the building's and the dungeon's packs post too/);
-  assert.match(src('src/scenes/worldModes.js'), /postItem: \(text, item\) => host\.postItem\?\.\(text, item\) \?\? false, linkItem: \(item\) => host\.linkItem\?\.\(item\) \?\? false, canPostItem: \(\) => host\.canPostItem\?\.\(\) \?\? false,/);
-  assert.match(src('src/scenes/dungeonContext.js'), /postItem: \(text, item\) => opts\.postItem\?\.\(text, item\) \?\? false, linkItem: \(item\) => opts\.linkItem\?\.\(item\) \?\? false, canPostItem: \(\) => opts\.canPostItem\?\.\(\) \?\? false,/);
+  assert.doesNotMatch(W, /postItemInChat/);
+  assert.match(W, /linkItem: \(item\) => linkItemInChat\(item\), canPostItem: \(\) => canPostItemInChat\(\),   \/\/ CHAT-POST: link into the field/);
+  assert.match(W, /linkItem: \(item\) => linkItemInChat\(item\), canPostItem: \(\) => canPostItemInChat\(\),   \/\/ CHAT-POST: the building's and the dungeon's packs link too/);
+  assert.match(src('src/scenes/worldModes.js'), /linkItem: \(item\) => host\.linkItem\?\.\(item\) \?\? false, canPostItem: \(\) => host\.canPostItem\?\.\(\) \?\? false,/);
+  assert.match(src('src/scenes/dungeonContext.js'), /linkItem: \(item\) => opts\.linkItem\?\.\(item\) \?\? false, canPostItem: \(\) => opts\.canPostItem\?\.\(\) \?\? false,/);
   assert.match(src('src/ui/chatPanel.js'), /linkItem: \(item\) => \{/);
   assert.match(src('src/ui/chatPanel.js'), /takePending\(text\)/);
   assert.match(W, /bagItems: \(\) => playerEntity\.items \?\? \[\],   \/\/ CHAT-POST: typing `\[` in the field lists the pack by name/);

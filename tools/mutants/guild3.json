@@ -289,8 +289,8 @@
   {
     "name": "GUILD3c-the-ranks-by-default-names",
     "file": "src/ui/socialPanel.js",
-    "old": "guildRankLines(Array.isArray(v.ranks) ? v.ranks : GUILD_RANK_NAMES)",
-    "new": "guildRankLines(GUILD_RANK_NAMES)",
+    "old": "guildRankLines(Array.isArray(v.ranks) ? v.ranks : GUILD_RANK_NAMES, v.powers)",
+    "new": "guildRankLines(GUILD_RANK_NAMES, v.powers)",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

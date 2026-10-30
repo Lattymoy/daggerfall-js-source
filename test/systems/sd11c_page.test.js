@@ -158,7 +158,7 @@ test('SD11c THE CAST-OUT CLOSES THE WINDOW (L1 F1): the Hollow\'s end casts out 
     host: {}, teardownDungeonQuestFlats: () => {}, say: () => {}, CAMP_TEXT: {}, destroyWorldPlaque: () => {},
     rrDouseOnDungeonExit: () => null, isDayFromMinutes: () => true, skyMinutes: () => 0, townTalk: null, ActionTextBox: class {}, expandItemMacro: () => '', USE_TEXT: {},
     mwViewTransition: () => {}, immersiveFootsteps: { onTransitionExterior() {} }, betterAmbience: { onTransition() {} }, questBridge: null, npcSession: null,
-    player: { spawn() {}, collider: null, eyeAt: () => [0, 0, 0] }, baseCollider: () => ({ heightAt: () => 0 }), repositionFeetY: (h, y) => y, cam: {},
+    player: { spawn() {}, collider: null, eyeAt: () => [0, 0, 0] }, baseCollider: () => ({ heightAt: () => 0 }), repositionFeetY: (h, y) => y, dungeonExitFeet: (c, l) => l.pos[1], cam: {},
   };
   const body = `
     let mode = 'dungeon', dungeonCtx = ctx, dungeonLoc = { sdSlot: 1 }, pendingDungeonExit = false, pendingDungeonWagonOpen = false, crownHall = null;

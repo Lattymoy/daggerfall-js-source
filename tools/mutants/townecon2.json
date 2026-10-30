@@ -162,7 +162,7 @@
   {
     "name": "TOWNECON2-read-unkept",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };\n",
+    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns, regions: _kept.regions };\n",
     "new": "",
     "tests": [
       "test/server/townecon_service.test.js"
@@ -262,7 +262,7 @@
   {
     "name": "TOWNECON2-book-unstopped",
     "file": "src/net/townEconBook.js",
-    "old": "      } else if (TOWN_ECON_STOPS.includes(r?.error)) { stopped = true; heard = true; shares = new Map(); }",
+    "old": "      } else if (TOWN_ECON_STOPS.includes(r?.error)) { stopped = true; heard = true; shares = new Map(); regions = new Map(); }",
     "new": "      }",
     "tests": [
       "test/net/townecon_client.test.js"
