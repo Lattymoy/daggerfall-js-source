@@ -281,10 +281,7 @@
 /src/net/raid/*/
 !/src/net/raiseWord.js
 !/src/net/realm/
-/src/net/realm/*
-!/src/net/realm/realmGoldLaw.js
-!/src/net/realm/realmSaveCodec.js
-!/src/net/realm/realmTradeLaw.js
+/src/net/realm/*/
 !/src/net/recipeLaw.js
 !/src/net/reconnectWave.js
 !/src/net/relayCfg.js
