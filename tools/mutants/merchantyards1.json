@@ -147,8 +147,8 @@
   {
     "name": "MERCHANT-YARDS-the-second-horse-at-the-general-store",
     "file": "src/systems/wagon/wagonKinds.js",
-    "old": "Buy another at a town's Stable.",
-    "new": "Buy another at a General Store.",
+    "old": "    `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a town's Stable.`,",
+    "new": "    `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a General Store.`,",
     "tests": [
       "test/player/wagons3.test.js"
     ]

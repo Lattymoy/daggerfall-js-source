@@ -47,8 +47,8 @@
   {
     "name": "WAGON-TIERS-the-laws-floor",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound'",
-    "new": "return s.pace * (s.key === 'sound'",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return s.pace * (s.key === 'sound' ? rules.soundPace : 1);",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGON-TIERS-the-sales-law",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "isWagonItem(item) && !rules?.wearPrices;",
-    "new": "isWagonItem(item) && !rules;",
+    "old": "export const wagonSoldWhole = (item, rules = WAGON_UPKEEP_HARD) => isWagonItem(item) && !rules?.wearPrices;",
+    "new": "export const wagonSoldWhole = (item, rules = WAGON_UPKEEP_HARD) => isWagonItem(item) && !rules;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WAGON-TIERS-the-boon-unread",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
-    "new": "return (rules.wearSlows ? s.pace : 1);",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return rules.wearSlows ? s.pace : 1;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WAGON-TIERS-a-worn-wagon-earns",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "(s.key === 'sound' ? rules.soundPace : 1)",
-    "new": "(s.key !== 'failing' ? rules.soundPace : 1)",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return (rules.wearSlows ? s.pace : 1) * (s.key !== 'failing' ? rules.soundPace : 1);",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]

@@ -35,7 +35,11 @@ export const GET_DOWN_REACH = 6;
  *  across the bed, so GET_DOWN_STEP back from its feet is past the wagon's side, clear of its box (the Open Wagon's
  *  seats stand 0.82 m off its middle, its box 1.6 m). FIELD BUGS 2026-10-18 WAGON-ALIGHT: ONE POINT FOR EVERY RIDER -
  *  the players' alone had it, and a companion whose seat went dropped through the bed where it sat. */
-export const getDownPoint = (seat) => [seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP, seat.feet[1], seat.feet[2] - Math.cos(seat.yaw) * GET_DOWN_STEP];
+export const getDownPoint = (seat) => [
+  seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP,
+  seat.feet[1],
+  seat.feet[2] - Math.cos(seat.yaw) * GET_DOWN_STEP,
+];
 /** A peer id as the wire carries one (net/wire.js's ids: the relay's, short and printable). */
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 export const validPeerId = (v) => typeof v === 'string' && ID_RE.test(v);
@@ -55,31 +59,51 @@ export const RIDE_TEXT = Object.freeze({
   left: (rider) => `${rider} climbs down from your wagon.`,
   gotOff: 'You climb down from the wagon.',
   ownerGone: 'The wagon you rode in is gone; you climb down.',
-  lifted: 'The town watch lifts the wagon out from under you!',   // AUDIT WARDEN1 C10: a parked wagon I sat in, thrown
-  leftBehind: (owner) => `You could not go with ${owner}; you climb down.`,   // WAGONS2 (AUDIT)
-  tooFar: 'You are too far away...',   // WAGONS2 (FINAL AUDIT): the game's own (player/activate.js TOO_FAR_AWAY_TEXT) - out of reach said "no room"
-  lapsed: (rider) => `${rider} is no longer asking to ride.`,   // WAGONS2 (FINAL AUDIT): an Accept after the ask lapsed said "no seat free"
+  lifted: 'The town watch lifts the wagon out from under you!', // AUDIT WARDEN1 C10: a parked wagon I sat in, thrown
+  leftBehind: (owner) => `You could not go with ${owner}; you climb down.`, // WAGONS2 (AUDIT)
+  tooFar: 'You are too far away...', // WAGONS2 (FINAL AUDIT): the game's own (player/activate.js TOO_FAR_AWAY_TEXT) - out of reach said "no room"
+  lapsed: (rider) => `${rider} is no longer asking to ride.`, // WAGONS2 (FINAL AUDIT): an Accept after the ask lapsed said "no seat free"
 });
 
 /** A rider's word (`wr` on their foes frame) through the door, or null. */
 export function validRideWord(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   if (raw.a !== undefined) return validPeerId(raw.a) ? { ask: raw.a } : null;
-  if (Array.isArray(raw.s) && raw.s.length === 2 && validPeerId(raw.s[0]) && Number.isInteger(raw.s[1]) && raw.s[1] >= 0 && raw.s[1] < MAX_SEATS) return { seated: raw.s[0], seat: raw.s[1] };
+  if (
+    Array.isArray(raw.s) &&
+    raw.s.length === 2 &&
+    validPeerId(raw.s[0]) &&
+    Number.isInteger(raw.s[1]) &&
+    raw.s[1] >= 0 &&
+    raw.s[1] < MAX_SEATS
+  )
+    return { seated: raw.s[0], seat: raw.s[1] };
   return null;
 }
 /** A rider's word as their frame says it: asking `owner`, or seated in `owner`'s `seat`, or nothing. */
-export const rideWord = (state) => (!state ? null : state.seat != null ? { s: [state.owner, state.seat] } : { a: state.owner });
+export const rideWord = (state) =>
+  !state ? null : state.seat != null ? { s: [state.owner, state.seat] } : { a: state.owner };
 
 /** An owner's passengers (`hv.ps`) through the door: at most MAX_SEATS, each seat and each rider once - or null. */
 export function validPassengers(raw) {
   if (raw === undefined) return [];
   if (!Array.isArray(raw) || raw.length > MAX_SEATS) return null;
-  const seats = new Set(), riders = new Set(), out = [];
+  const seats = new Set(),
+    riders = new Set(),
+    out = [];
   for (const e of raw) {
-    if (!Array.isArray(e) || e.length !== 2 || !validPeerId(e[0]) || !Number.isInteger(e[1]) || e[1] < 0 || e[1] >= MAX_SEATS) return null;
+    if (
+      !Array.isArray(e) ||
+      e.length !== 2 ||
+      !validPeerId(e[0]) ||
+      !Number.isInteger(e[1]) ||
+      e[1] < 0 ||
+      e[1] >= MAX_SEATS
+    )
+      return null;
     if (seats.has(e[1]) || riders.has(e[0])) return null;
-    seats.add(e[1]); riders.add(e[0]);
+    seats.add(e[1]);
+    riders.add(e[0]);
     out.push([e[0], e[1]]);
   }
   return out;
@@ -105,17 +129,24 @@ export function companionSeats(n, playerSeats, count, riding) {
 /** The owner's book of riders: who asked (and when), who sits where, who was turned away (and until when). Pure state
  *  over `now` handed in. */
 export function createRideBook() {
-  const asks = new Map();   // rider -> at (ms)
-  const seated = new Map();   // rider -> seat
-  const declined = new Map();   // rider -> until (ms)
+  const asks = new Map(); // rider -> at (ms)
+  const seated = new Map(); // rider -> seat
+  const declined = new Map(); // rider -> until (ms)
   return {
     /** A rider's word heard this frame (`word` validRideWord's or null); answers what changed: 'asked' (a new ask to
      *  put to the owner), 'left' (a seated rider who no longer says they sit), or null. */
     hear(rider, word, me, now) {
       if (!validPeerId(rider)) return null;
-      const asking = word?.ask === me, sitting = word?.seated === me;
-      if (seated.has(rider) && !sitting && !asking) { seated.delete(rider); return 'left'; }
-      if (asking && !seated.has(rider) && !asks.has(rider) && !((declined.get(rider) ?? 0) > now)) { asks.set(rider, now); return 'asked'; }
+      const asking = word?.ask === me,
+        sitting = word?.seated === me;
+      if (seated.has(rider) && !sitting && !asking) {
+        seated.delete(rider);
+        return 'left';
+      }
+      if (asking && !seated.has(rider) && !asks.has(rider) && !((declined.get(rider) ?? 0) > now)) {
+        asks.set(rider, now);
+        return 'asked';
+      }
       if (!asking) asks.delete(rider);
       return null;
     },
@@ -129,18 +160,39 @@ export function createRideBook() {
       return true;
     },
     /** The owner says no: the ask goes, and that rider waits RIDE_REASK_MS before asking again. */
-    decline(rider, now) { asks.delete(rider); declined.set(rider, now + RIDE_REASK_MS); },
+    decline(rider, now) {
+      asks.delete(rider);
+      declined.set(rider, now + RIDE_REASK_MS);
+    },
     /** A rider gone from the room, or the wagon no longer one with seats (`n` 0): out of the book. */
-    drop(rider) { asks.delete(rider); seated.delete(rider); },
+    drop(rider) {
+      asks.delete(rider);
+      seated.delete(rider);
+    },
     /** Every seat given up (the owner's wagon gone, or changed for one with fewer seats than are taken). */
-    fit(n) { for (const [r, k] of [...seated]) if (k >= n) seated.delete(r); if (!n) asks.clear(); },
+    fit(n) {
+      for (const [r, k] of [...seated]) if (k >= n) seated.delete(r);
+      if (!n) asks.clear();
+    },
     /** Asks older than RIDE_ASK_TTL_MS: dropped, and answered (the riders whose asks lapsed). */
-    lapse(now) { const out = []; for (const [r, at] of [...asks]) if (now - at > RIDE_ASK_TTL_MS) { asks.delete(r); out.push(r); } return out; },
+    lapse(now) {
+      const out = [];
+      for (const [r, at] of [...asks])
+        if (now - at > RIDE_ASK_TTL_MS) {
+          asks.delete(r);
+          out.push(r);
+        }
+      return out;
+    },
     /** The asks standing, oldest first: `{ rider, at }`. */
     asks: () => [...asks.entries()].sort((a, b) => a[1] - b[1]).map(([rider, at]) => ({ rider, at })),
     /** Who sits where - the owner's word (`hv.ps`). */
     passengers: () => [...seated.entries()].map(([r, k]) => [r, k]).sort((a, b) => a[1] - b[1]),
     seatOf: (rider) => seated.get(rider) ?? null,
-    clear() { asks.clear(); seated.clear(); declined.clear(); },
+    clear() {
+      asks.clear();
+      seated.clear();
+      declined.clear();
+    },
   };
 }

@@ -146,8 +146,8 @@
   {
     "name": "WAGONS2-FINAL-the-floor-are",
     "file": "src/systems/wagon/wagonLooks.js",
-    "old": "`The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`",
-    "new": "`The ${part} are now ${name.toLowerCase()}.`",
+    "old": "  paintedInside: (part, name) => `The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`, // FINAL AUDIT: \"The floor are now\" - the walls alone are many",
+    "new": "  paintedInside: (part, name) => `The ${part} are now ${name.toLowerCase()}.`, // FINAL AUDIT: \"The floor are now\" - the walls alone are many",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

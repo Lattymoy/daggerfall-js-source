@@ -424,7 +424,7 @@ and the book asks the room for what the window moved. Traced end to end on the r
   showed the katana, broadsword, cloak and shoes but no coin; after he took everything the room still held the 70,050. A
   purse of 20,100 with a cart of 200,000 laid 110,050, the same. A pack tops out at 225 kg and DFU's trade window pays in
   letters past that (DaggerfallTradeWindow.cs:1038-1048), so a purse past 131,070 is rare - but a wagon carries 300,000
-  to 800,000 coins (`wagonKinds.js:"export const SMALL_CART_KG = 750;"`, to the Caravan's 2,000 kg), and its coin drops
+  to 800,000 coins (`wagonKinds.js:"export const SMALL_CART_KG"`, to the Caravan's 2,000 kg), and its coin drops
   whenever the wagon is with the fallen (CART-AWAY).
 
 FIXED, both in the book, which every host reaches. REMAINS-TAKE: a pile shows what the room holds less my takes still

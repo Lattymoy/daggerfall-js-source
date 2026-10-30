@@ -141,8 +141,8 @@
   {
     "name": "AUDIT-WARDEN1-C1-record-every-horse",
     "file": "src/systems/wagon/wagonWarden.js",
-    "old": "if (Array.isArray(r.h) && horseThrownWith(from, [r.h[0], r.h[2]]))",
-    "new": "if (Array.isArray(r.h))",
+    "old": "  if (Array.isArray(r.h) && horseThrownWith(from, [r.h[0], r.h[2]])) {",
+    "new": "  if (Array.isArray(r.h)) {",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "AUDIT-WARDEN1-C1-reach-one-axis",
     "file": "src/systems/wagon/wagonWarden.js",
-    "old": " && Math.abs(horse[1] - wagon[1]) <= WARDEN_HORSE_BY_NATIVES;",
-    "new": ";",
+    "old": "  !!wagon &&\n  !!horse &&\n  Math.abs(horse[0] - wagon[0]) <= WARDEN_HORSE_BY_NATIVES &&\n  Math.abs(horse[1] - wagon[1]) <= WARDEN_HORSE_BY_NATIVES;",
+    "new": "  !!wagon && !!horse && Math.abs(horse[0] - wagon[0]) <= WARDEN_HORSE_BY_NATIVES;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT-WARDEN1-D13-thrownTo-z",
     "file": "src/systems/wagon/wagonWarden.js",
-    "old": " || Math.abs(anchor[1] - from[1]) > WARDEN_SAME_NATIVES) return null;",
-    "new": ") return null;",
+    "old": "  if (Math.abs(anchor[0] - from[0]) > WARDEN_SAME_NATIVES || Math.abs(anchor[1] - from[1]) > WARDEN_SAME_NATIVES)\n    return null;",
+    "new": "  if (Math.abs(anchor[0] - from[0]) > WARDEN_SAME_NATIVES) return null;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-WARDEN1-D13-word-z-reach",
     "file": "src/systems/wagon/wagonWarden.js",
-    "old": " || Math.abs(stamp.ly[1] - anchor[1]) > WARDEN_LAND_REACH) return null;",
-    "new": ") return null;",
+    "old": "  if (Math.abs(stamp.ly[0] - anchor[0]) > WARDEN_LAND_REACH || Math.abs(stamp.ly[1] - anchor[1]) > WARDEN_LAND_REACH)\n    return null;",
+    "new": "  if (Math.abs(stamp.ly[0] - anchor[0]) > WARDEN_LAND_REACH) return null;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-WARDEN1-R6-edges-unsorted",
     "file": "src/systems/wagon/wagonWarden.js",
-    "old": "return [0, 1, 2, 3].sort((i, j) => d[i] - d[j] || i - j).map((i) => out[i]);",
-    "new": "return [0, 1, 2, 3].map((i) => out[i]);",
+    "old": "  return [0, 1, 2, 3].sort((i, j) => d[i] - d[j] || i - j).map((i) => out[i]);",
+    "new": "  return [0, 1, 2, 3].map((i) => out[i]);",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js",
       "test/systems/horse/warden1.test.js"

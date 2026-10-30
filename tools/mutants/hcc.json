@@ -192,7 +192,7 @@
   {
     "name": "HCC-wheels-not-planar-test",
     "file": "src/systems/wagon/wagon41214.js",
-    "old": "  if (wheels[0].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE || wheels[1].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
+    "old": "  if (wheels[0].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE || wheels[1].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE)\n    throw new Error('Model 41214 wheel components are no longer planar on local X.');",
     "new": "  if (false) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
     "tests": [
       "test/systems/wagon/hcc_wagon41214.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "HCC-mesh-not-rebased",
     "file": "src/systems/wagon/wagon41214.js",
-    "old": "    positions[i * 3] = model.positions[s * 3] - pivot[0]; positions[i * 3 + 1] = model.positions[s * 3 + 1] - pivot[1]; positions[i * 3 + 2] = model.positions[s * 3 + 2] - pivot[2];",
-    "new": "    positions[i * 3] = model.positions[s * 3]; positions[i * 3 + 1] = model.positions[s * 3 + 1]; positions[i * 3 + 2] = model.positions[s * 3 + 2];",
+    "old": "    positions[i * 3] = model.positions[s * 3] - pivot[0];\n    positions[i * 3 + 1] = model.positions[s * 3 + 1] - pivot[1];\n    positions[i * 3 + 2] = model.positions[s * 3 + 2] - pivot[2];",
+    "new": "    positions[i * 3] = model.positions[s * 3];\n    positions[i * 3 + 1] = model.positions[s * 3 + 1];\n    positions[i * 3 + 2] = model.positions[s * 3 + 2];",
     "tests": [
       "test/systems/wagon/hcc_wagon41214.test.js"
     ]

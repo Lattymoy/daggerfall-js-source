@@ -42,8 +42,8 @@
   {
     "name": "WAGON-ALIGHT-step-sign",
     "file": "src/systems/wagon/wagonSeats.js",
-    "old": "[seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP,",
-    "new": "[seat.feet[0] + Math.sin(seat.yaw) * GET_DOWN_STEP,",
+    "old": "  seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP,",
+    "new": "  seat.feet[0] + Math.sin(seat.yaw) * GET_DOWN_STEP,",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],

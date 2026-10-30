@@ -37,18 +37,56 @@ export const SMALL_CART_KG = 750;
  * on the bench (world/wagonModels.js driverSeatFor); the Small Cart keeps one between its shafts.
  */
 export const WAGON_KINDS = Object.freeze({
-  cart: Object.freeze({ key: 'cart', name: 'Small Cart', kg: SMALL_CART_KG, value: 150, floor: 150, hitch: 3.8, seats: 0, enterable: false, icon: 112490, rank: 0, horses: 1 }),
-  openWagon: Object.freeze({ key: 'openWagon', name: 'Open Wagon', kg: 1500, value: 9000, floor: 900, hitch: 7.1, seats: 4, enterable: false, icon: 112491, rank: 1, horses: 2 }),
-  caravan: Object.freeze({ key: 'caravan', name: 'Caravan', kg: 2000, value: 25000, floor: 2500, hitch: 7.7, seats: 0, enterable: true, icon: 112492, rank: 2, horses: 2 }),
+  cart: Object.freeze({
+    key: 'cart',
+    name: 'Small Cart',
+    kg: SMALL_CART_KG,
+    value: 150,
+    floor: 150,
+    hitch: 3.8,
+    seats: 0,
+    enterable: false,
+    icon: 112490,
+    rank: 0,
+    horses: 1,
+  }),
+  openWagon: Object.freeze({
+    key: 'openWagon',
+    name: 'Open Wagon',
+    kg: 1500,
+    value: 9000,
+    floor: 900,
+    hitch: 7.1,
+    seats: 4,
+    enterable: false,
+    icon: 112491,
+    rank: 1,
+    horses: 2,
+  }),
+  caravan: Object.freeze({
+    key: 'caravan',
+    name: 'Caravan',
+    kg: 2000,
+    value: 25000,
+    floor: 2500,
+    hitch: 7.7,
+    seats: 0,
+    enterable: true,
+    icon: 112492,
+    rank: 2,
+    horses: 2,
+  }),
 });
 /** The kinds in the order a shop shelves them and the Stable ranks them. */
 export const WAGON_KIND_ORDER = Object.freeze(['cart', 'openWagon', 'caravan']);
 /** A kind the law knows, or null. */
-export const validWagonKind = (k) => (typeof k === 'string' && Object.prototype.hasOwnProperty.call(WAGON_KINDS, k) ? k : null);
+export const validWagonKind = (k) =>
+  typeof k === 'string' && Object.prototype.hasOwnProperty.call(WAGON_KINDS, k) ? k : null;
 /** A kind as the wire says it (systems/horse/horseCartWire.js `wk`): its place in WAGON_KIND_ORDER - 0 the Small Cart. */
 export const wagonKindCode = (k) => Math.max(0, WAGON_KIND_ORDER.indexOf(validWagonKind(k) ?? 'cart'));
 /** The kind a wire code names: the Small Cart for anything the law does not know (an older word says nothing). */
-export const wagonKindOfCode = (c) => (Number.isInteger(c) && c >= 0 && c < WAGON_KIND_ORDER.length ? WAGON_KIND_ORDER[c] : 'cart');
+export const wagonKindOfCode = (c) =>
+  Number.isInteger(c) && c >= 0 && c < WAGON_KIND_ORDER.length ? WAGON_KIND_ORDER[c] : 'cart';
 
 /** Whether an item is a wagon (DFU's Small Cart, marked or not). */
 export const isWagonItem = (item) => item?.templateIndex === TRANSPORT_SMALL_CART;
@@ -58,16 +96,23 @@ export const wagonKindOf = (item) => validWagonKind(item?.wagonKind) ?? 'cart';
 /** The wagon a player drives, out of what they carry: the best they own (the highest rank; the first of a rank), or
  *  null. */
 export function activeWagonItem(items) {
-  let best = null, rank = -1;
+  let best = null,
+    rank = -1;
   for (const it of items ?? []) {
     if (!isWagonItem(it)) continue;
     const r = WAGON_KINDS[wagonKindOf(it)].rank;
-    if (r > rank) { best = it; rank = r; }
+    if (r > rank) {
+      best = it;
+      rank = r;
+    }
   }
   return best;
 }
 /** The kind of the wagon a player drives, or null when they own none. */
-export const activeWagonKind = (items) => { const it = activeWagonItem(items); return it ? wagonKindOf(it) : null; };
+export const activeWagonKind = (items) => {
+  const it = activeWagonItem(items);
+  return it ? wagonKindOf(it) : null;
+};
 /** A kind's capacity (kg); the Small Cart's for no kind (DFU's, which every window read before). */
 export const wagonKgLimitOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'].kg;
 /** The capacity of the wagon an entity drives (its pack's best wagon - the Small Cart's when it owns none, as every
@@ -79,10 +124,15 @@ export const wagonHitchOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'
 export const wagonHorsesOf = (kind) => WAGON_KINDS[validWagonKind(kind) ?? 'cart'].horses;
 /** WAGONS3: how many horses a pack holds - each Horse is its own item (DFU's ItemGroups.Transportation.Horse; a shop
  *  sells as many as are bought). */
-export const horseCountOf = (items) => { let n = 0; for (const it of items ?? []) if (it?.templateIndex === TRANSPORT_HORSE) n++; return n; };
+export const horseCountOf = (items) => {
+  let n = 0;
+  for (const it of items ?? []) if (it?.templateIndex === TRANSPORT_HORSE) n++;
+  return n;
+};
 /** WAGONS3: the word a short team is refused with. */
 export const WAGON_TEAM_TEXT = Object.freeze({
-  short: (kind) => `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a town's Stable.`,
+  short: (kind) =>
+    `Your ${WAGON_KINDS[validWagonKind(kind) ?? 'cart'].name} needs ${wagonHorsesOf(kind) === 2 ? 'two horses' : 'a horse'} to pull it. Buy another at a town's Stable.`,
 });
 /** WAGONS3: why the wagon a pack drives cannot be hitched - its team is short of the horses it takes (one owned, two
  *  needed) - or null. No horse at all is the mod's own refusal (horseCart.js `needHorseToPull`), said where it says it. */
@@ -105,7 +155,15 @@ export function newWagonItem(kind) {
 }
 /** The name a marked wagon is shown by (the Open Wagon, the Caravan), or null for every other item - the Small Cart's
  *  is its template's. */
-export const wagonItemName = (item) => (isWagonItem(item) && validWagonKind(item?.wagonKind) && item.wagonKind !== 'cart' ? WAGON_KINDS[item.wagonKind].name : null);
+export const wagonItemName = (item) =>
+  isWagonItem(item) && validWagonKind(item?.wagonKind) && item.wagonKind !== 'cart'
+    ? WAGON_KINDS[item.wagonKind].name
+    : null;
 
 /** The Stable card's name for a kind ("Your wagon" before WAGONS1 - the Small Cart's still). */
-export const stableWagonName = (kind) => (validWagonKind(kind) === 'openWagon' ? 'Your open wagon' : validWagonKind(kind) === 'caravan' ? 'Your caravan' : 'Your wagon');
+export const stableWagonName = (kind) =>
+  validWagonKind(kind) === 'openWagon'
+    ? 'Your open wagon'
+    : validWagonKind(kind) === 'caravan'
+      ? 'Your caravan'
+      : 'Your wagon';

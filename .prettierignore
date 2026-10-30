@@ -96,6 +96,8 @@
 /src/systems/starts/*/
 !/src/systems/studioArt/
 /src/systems/studioArt/*/
+!/src/systems/wagon/
+/src/systems/wagon/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/card/

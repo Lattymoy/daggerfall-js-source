@@ -24,13 +24,19 @@
 
 import { isWagonItem, wagonKindOf, WAGON_KINDS } from './wagonKinds.js';
 import { templateByIndex, mintCondition, TRANSPORT_SMALL_CART } from '../item/itemTemplates.js';
-import { WAGON_UPKEEP_HARD } from '../upkeep/upkeepTiers.js';   // WAGON-TIERS: what a law handed no rules runs
-import { t } from '../textManager.js';   // WAGON-TIERS: Boons' two words in the player's language
+import { WAGON_UPKEEP_HARD } from '../upkeep/upkeepTiers.js'; // WAGON-TIERS: what a law handed no rules runs
+import { t } from '../textManager.js'; // WAGON-TIERS: Boons' two words in the player's language
 
 /** A wagon's condition at most - its template's (93's 1400), or the item's own where it carries one. */
-export const wagonConditionMax = (item) => (Number.isInteger(item?.maxCondition) && item.maxCondition > 0 ? item.maxCondition : (templateByIndex(TRANSPORT_SMALL_CART)?.hitPoints ?? 1400));
+export const wagonConditionMax = (item) =>
+  Number.isInteger(item?.maxCondition) && item.maxCondition > 0
+    ? item.maxCondition
+    : (templateByIndex(TRANSPORT_SMALL_CART)?.hitPoints ?? 1400);
 /** A wagon's condition now - whole where it carries none (minted before its condition was). */
-export const wagonCondition = (item) => (Number.isInteger(item?.currentCondition) ? Math.max(0, Math.min(wagonConditionMax(item), item.currentCondition)) : wagonConditionMax(item));
+export const wagonCondition = (item) =>
+  Number.isInteger(item?.currentCondition)
+    ? Math.max(0, Math.min(wagonConditionMax(item), item.currentCondition))
+    : wagonConditionMax(item);
 /** Its condition as a share of whole (0-1). */
 export const wagonSoundness = (item) => wagonCondition(item) / wagonConditionMax(item);
 
@@ -83,7 +89,9 @@ export const journeyWear = (days) => Math.min(JOURNEY_WEAR_MAX, Math.max(0, Numb
 export function wearWagon(item, share) {
   if (!isWagonItem(item) || !(share > 0)) return null;
   mintCondition(item);
-  const before = wagonState(item), max = wagonConditionMax(item), now = wagonCondition(item);
+  const before = wagonState(item),
+    max = wagonConditionMax(item),
+    now = wagonCondition(item);
   const after = Math.max(Math.min(now, WEAR_FLOOR), Math.round(now - share * max));
   if (after === now) return null;
   item.currentCondition = after;
@@ -144,8 +152,12 @@ export const WAGON_UPKEEP_TEXT = Object.freeze({
   kitDone: (name, pct) => `You spend an hour mending your ${name}. It is ${pct}% sound.`,
   smith: 'A smith does not mend wagons. A town’s Wagon Yard does.',
   // WAGON-TIERS: Boons' words for a step down - the same news, and no slowness it does not have
-  failingBoons: (name) => t('wagon.upkeep.boons.failing', 'Your {name} is falling apart. A Wagon Yard or a Wagon Repair Kit will mend it.', { name }),
-  ricketyBoons: (name) => t('wagon.upkeep.boons.rickety', 'Your {name} is rickety. A Wagon Yard can mend it.', { name }),
+  failingBoons: (name) =>
+    t('wagon.upkeep.boons.failing', 'Your {name} is falling apart. A Wagon Yard or a Wagon Repair Kit will mend it.', {
+      name,
+    }),
+  ricketyBoons: (name) =>
+    t('wagon.upkeep.boons.rickety', 'Your {name} is rickety. A Wagon Yard can mend it.', { name }),
 });
 /** A wagon's name in a sentence ("Small Cart", "Caravan"). */
 export const wagonWord = (item) => WAGON_KINDS[wagonKindOf(item)]?.name ?? 'wagon';
@@ -163,7 +175,9 @@ export function mendWagon(item) {
 export function kitMendWagon(item) {
   if (!isWagonItem(item)) return { ok: false, text: WAGON_UPKEEP_TEXT.noWagon };
   mintCondition(item);
-  const max = wagonConditionMax(item), now = wagonCondition(item), top = Math.round(WAGON_KIT_CEILING * max);
+  const max = wagonConditionMax(item),
+    now = wagonCondition(item),
+    top = Math.round(WAGON_KIT_CEILING * max);
   if (now >= top) return { ok: false, text: WAGON_UPKEEP_TEXT.kitCeiling(wagonWord(item)) };
   item.currentCondition = Math.min(top, now + Math.round(KIT_MEND * max));
   return { ok: true, text: WAGON_UPKEEP_TEXT.kitDone(wagonWord(item), Math.round(wagonSoundness(item) * 100)) };
