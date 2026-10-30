@@ -192,12 +192,11 @@ const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @t
 
 /**
  * THE POSE OFF A RIG'S BONES (`bones` as fpArm.thirdBones answers: each bone's origin [right, up, forward] m about the
- * feet, null where its skeleton lacks one), written into `out` - or false when the head or a shoulder is missing (a
- * creature's skeleton - Bloodmoon's wolf has every one), and `out` is left as it was. A bone's origin is its joint: the upper arm's the shoulder, the forearm's
- * the elbow, the hand's the wrist, the thigh's the hip, the calf's the knee, the foot's the ankle. A limb's missing bone is
- * the rest pose's point, moved with the shoulder or hip it hangs from. WOLF-KIT: `beast` - the rig is Bloodmoon's wolf,
- * its every bone a person's but its limbs and chest thicker: the pose's scale ARMORY_BEAST_FIT, so a band, a greave and
- * the chest's piece sit on the fur, not inside it. Pure but for `out`.
+ * feet, null where its skeleton lacks one), written into `out` - or false when the head or a shoulder is missing, and
+ * `out` is left as it was. A bone's origin is its joint: upper arm = shoulder, forearm = elbow, hand = wrist, thigh =
+ * hip, calf = knee, foot = ankle. A missing limb bone is the rest pose's point, moved with its shoulder or hip.
+ * WOLF-KIT: `beast` - Bloodmoon's wolf has every bone, but thicker limbs and chest: the pose's scale is
+ * ARMORY_BEAST_FIT, so a band, a greave and the chest piece sit on the fur, not inside it. Pure but for `out`.
  */
 export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out, beast = false) {
   const H = bones?.['bip01 head'], L = bones?.['bip01 l upperarm'], R = bones?.['bip01 r upperarm'];
