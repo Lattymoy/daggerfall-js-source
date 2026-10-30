@@ -78,6 +78,7 @@ export function standTemplate(entity, foe) {
   entity.maxHealth = foe.health; entity.health = foe.health;
   entity.pveBlow = [foe.damage[0], foe.damage[1]];
   entity.pveTemplate = foe.key;
+  entity.pveCategory = foe.category;   // pveBackstab.js: a leader's cap
   entity.name = foe.name;   // its own name over its body's, on the hover and the target bar
   return entity;
 }

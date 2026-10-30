@@ -20,6 +20,7 @@
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
+import { templateBackstab } from '../systems/pve/pveBackstab.js';   // FIXED-PVE: the backstab on a template foe
 import { MELEE_DISTANCE } from '../characters/enemy/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
@@ -735,6 +736,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, wraps: 
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);
       if (before > 0 && damage === before * 3) notes.backstab = true;
+      damage = templateBackstab(target, before, damage, !!unaware);   // FIXED-PVE: an opener's triple, a fight's half again
     }
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
@@ -743,6 +745,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, wraps: 
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
       if (before > 0 && damage === before * 3) notes.backstab = true;
+      damage = templateBackstab(target, before, damage, !!unaware);
     }
   }
   // THE BACKSTAB IS INSIDE THE HIT. Both C# call sites (:627 for hand

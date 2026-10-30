@@ -192,3 +192,12 @@ A revenant minted from a template foe keeps the template's key (`revenant.js`, `
 level higher per rank, its rank's health and blows on top (`revenantTemplate`), and its band is the rest of the group
 it fought in, at the templates' own levels (`templateBand`), never the player's level minus two. A revenant from before
 the switch stands as today. Daggerfall Unity has no elites or revenants. The tests: `pve_grant.test.js`.
+
+## 12. The backstab on a template foe (2026-10-30)
+
+Daggerfall's backstab triples a blow from behind on any swing (`combat/formulas.js` backstabDamage), and against fixed
+health a sneak would triple most of a fight. On a template foe the triple lands only as an opener, on a foe that has
+not seen the striker; once it fights, a backstab is half again (`systems/pve/pveBackstab.js`). One backstab takes at
+most 40% of a leader's health (Strong, Elite, Champion). A player, a duel and every foe that is no template keep the
+triple. Daggerfall Unity triples every landed backstab (`FormulaHelper.CalculateAttackDamage`). The tests:
+`test/systems/pve/pve_backstab.test.js`.
