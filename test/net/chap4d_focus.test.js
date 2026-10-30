@@ -81,7 +81,7 @@ test('CHAP4d the Hall of Records: the region\'s chapters after the seat\'s own, 
   assert.deepEqual(hallOfRecordsChapterLines({ ...chapters, zero: 36 }), ['In the first week of the Season of Morning Star, Alda took the Master\'s chair of the Fighters Guild.'], 'the Season the service counts');
   const texts = (t) => t.filter((x) => typeof x.text === 'string').map((x) => x.text);
   const withChapters = texts(hallOfRecordsTokens(seat, [], null, null, chapters));
-  assert.deepEqual(withChapters.slice(1), ['Nothing is written here yet.', 'The Chapters of Anticlere', 'In week 40, Alda took the Master\'s chair of the Fighters Guild.'], 'the seat\'s own Chronicle empty, its region\'s chapters still said');
+  assert.deepEqual(withChapters.slice(1), ['No guild has held this seat yet. Its claims, sieges and holders are written here.', 'The Chapters of Anticlere', 'In week 40, Alda took the Master\'s chair of the Fighters Guild.'], 'the seat\'s own Chronicle empty, its region\'s chapters still said');
   assert.deepEqual(texts(hallOfRecordsBook(seat, [], null, null, chapters).getPageTokens()), texts(hallOfRecordsTokens(seat, [], null, null, chapters)), 'the book the window reads');
   assert.equal(texts(hallOfRecordsTokens(seat, [], null, null, null)).includes('The Chapters of Anticlere'), false);
   assert.equal(texts(hallOfRecordsTokens(seat, [], null, null, { rows: [], zero: null })).includes('The Chapters of Anticlere'), false, 'none to say, no heading');

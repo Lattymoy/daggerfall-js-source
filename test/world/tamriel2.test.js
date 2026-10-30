@@ -317,5 +317,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // (world/road/roadEdge.js), both pure
   // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
   // PIN MOVED (FB1029 GROUND): 75 - ACROSS-EDGE's meet (world/terrain/townMeet.js) and ROAD-DRY's lift (world/road/roadDry.js), both pure
-  assert.ok(seen.size > 20 && seen.size < 76, `${seen.size} modules`);
+  // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
+  assert.ok(seen.size > 20 && seen.size < 78, `${seen.size} modules`);
 });

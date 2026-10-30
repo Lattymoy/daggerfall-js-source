@@ -58,6 +58,10 @@ A piece is the ACCOUNT's, as an aura is: every character on the account may wear
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.
 
+GUILD-SHOP (2026-10-30, `11-Multiplayer/Guild-Shop.md` section 3): the **Insignia Armlet** is the arms slot's guild
+piece, bought for silver in the guild window's Shop - its bit on `players.guild_wares`, read by armoryHeld beside the
+others. It draws the wearer's guild's crest on a gilt band round the left upper arm.
+
 **The Sigil Broker.** The Dagonfire pieces are her insignia (`src/net/insignia.js` INSIGNIA, ids `armory:<piece>`),
 sold beside the Gatebreaker title and Dagon's Fire aura through their one door (`/v1/account/insignia`,
 `server-account/src/accounts.js` buyInsignia). Each is 75 Deadlands Embers, half again her aura's 50, so the five are
@@ -158,8 +162,9 @@ the Eternal Edge a blue-violet line with a light running along it, a fainter one
 GILDED-GLOW; AUDIT FB1029f D3: the owner may turn this round). An element shows next, because it is the blow's truth.
 The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it
-while the piece is worn. A sprite in third person shows no weapon piece: its weapon is painted into the picture, with
-nothing to measure.
+while the piece is worn. A sprite in third person wears it as an outline round the whole sprite while its weapon is
+drawn, and on the weapon on its back while sheathed (BACK-HOLSTER GLOW, `05-Combat/Weapon-Glow.md` "On a sprite"): its
+weapon is painted into the picture, with nothing to tell it from the hand.
 
 **In the shop** a weapon piece stands on a stage of its own (`src/render/weaponPiecePreview.js`): a longsword of
 Daggerfall's pixels, outlined by the classic hand's own shaders - the field baked once, the band drawn each frame.

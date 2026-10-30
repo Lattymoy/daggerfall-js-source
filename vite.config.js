@@ -5,6 +5,9 @@ import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
 import { firstVisitPinsPlugin } from './scripts/firstVisitPins.mjs';   // FIRST-VISIT: the kept answers' pins, computed by the build and the dev server
 import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029g TLA-1): no imported chunk awaits at its top level
+import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5: the assets' reads held under Windows' open-file limit (EMFILE)
+
+limitOpenFiles();
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.

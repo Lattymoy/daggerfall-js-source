@@ -562,7 +562,7 @@
   {
     "name": "TESA7-host-rates-dry",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "(x, y, c) => isWaterPixel(c, host.woods.getHeightMapValue(x, y))));",
+    "old": "(x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y)))));",
     "new": "() => false));",
     "tests": [
       "test/tesa7_country.test.js"

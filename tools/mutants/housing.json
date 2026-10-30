@@ -331,7 +331,7 @@
   {
     "name": "HOME-YARD-the-house-let-in",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
     "new": "  if (false) return YARD_IN_HOUSE;",
     "tests": [
       "test/scenes/homeyard.test.js"

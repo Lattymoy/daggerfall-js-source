@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-RPT1026-J2-the-first-model-alone",
     "file": "src/scenes/pixelBuild.js",
-    "old": "f.rects.push(...rects); f.parts?.push([cpu, local]); }",
-    "new": "f.rects.push(...rects); }",
+    "old": "f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
+    "new": "f.rects.push(...rects); f.grounds?.push(ground); }",
     "tests": [
       "test/scenes/audit_rpt1026_world.test.js"
     ],

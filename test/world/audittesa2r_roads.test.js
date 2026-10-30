@@ -228,7 +228,7 @@ test('AUDIT TESA II R6 the print reads every byte of the height map and every re
     assert.notEqual(inputsPrint({ ...base, trace: { ...trace, relief } }), p, `relief cell ${i}`);
   }
   assert.notEqual(inputsPrint({ ...base, held: [{ x: 1, y: 1 }] }), p, 'the held pixels');
-  assert.match(regionKey({ region: { i: 1, j: 2 }, inputs: p }), new RegExp(`^tamriel-roads:1,2:v\\d+:g\\d+:l${GROUND_ROLL_VERSION}:`));
+  assert.match(regionKey({ region: { i: 1, j: 2 }, inputs: p }), new RegExp(`^tamriel-roads:1,2:(land[0-9a-z]+:)?v\\d+:g\\d+:l${GROUND_ROLL_VERSION}:`));
 });
 
 /** The ground's and the rolls' laws' own answers, a fingerprint: the height law on a trace with its relief and without
