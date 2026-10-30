@@ -1,7 +1,7 @@
 // @ts-check
 // BOW-BLOOM's ring: a circle round the screen's centre the size of the bow's bloom, drawn while it is open. Started
 // by the first bloomed shot (bowShotAim), so no host wires it. A departure: DFU has no bloom.
-import { bowBloomNow, bowBloomShot, bowKindOf, bowShotStamp, bowPvpRules } from '../combat/bowBloom.js';
+import { bowBloomNow, bowBloomShot, bowKindOf, bowShotStamp } from '../combat/bowBloom.js';
 import { fieldOfView } from './viewSettings.js';
 
 /** The ring's diameter in pixels for a bloom of `deg` on a view `height` tall at vertical field of view `fov` (radians). */
@@ -29,12 +29,9 @@ function startRing() {
 
 /** A player's shot along `dir` from bow `weapon`: where it flies (combat/bowBloom.js), the ring started. */
 export function bowShotAim(dir, weapon = null) {
-  if (!bowPvpRules()) return dir;   // BOW-PVP-ONLY: out of a fight a shot flies true, and no ring opens
   startRing();
   return bowBloomShot(dir, undefined, undefined, bowKindOf(weapon));
 }
 /** The dungeon lane's `extra` for a player's shot: BOW-FAST's stacks and BOW-KINDS' pull for a bow's (a gun's none), and a
  *  conjured round's word. */
-export const bowShotExtra = (gun, summoned, weapon = null) => ({ ...(gun ? {} : bowShotStampNow(weapon)), ...(summoned ? { summoned: true } : {}) });
-/** BOW-FAST, BOW-KINDS: a bow shot's stacks and pull - in a fight; out of one, none (BOW-PVP-ONLY). */
-export const bowShotStampNow = (weapon = null) => (bowPvpRules() ? bowShotStamp(weapon) : {});
+export const bowShotExtra = (gun, summoned, weapon = null) => ({ ...(gun ? {} : bowShotStamp(weapon)), ...(summoned ? { summoned: true } : {}) });
