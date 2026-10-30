@@ -20099,6 +20099,16 @@
   "tr": "8174ad088c20",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "a7dfd92fee83",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "01cc00476147",
+  "by": "claude-in-session"
+ },
  "menu.begin.blurb": {
   "en": "e4e4d4d671eb",
   "tr": "532d433fbf08",
@@ -26922,6 +26932,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "8777da61b718",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "38c07237e001",
   "by": "claude-in-session"
  },
  "net.update.button": {
