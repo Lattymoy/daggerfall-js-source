@@ -29,7 +29,7 @@
 
 import { travelTimeSeconds } from './clock.js';
 import { Message, Formatting } from './message.js';
-import { localizedQuestMessage } from './localizedQuest.js';   // L10N3c: GetMessage's Internal_Quests lookup
+import { localizedQuestMessage, localizedQuestDisplayName } from './localizedQuest.js';   // L10N3c: GetMessage's Internal_Quests lookup; QUEST-AUDIT IV CORE-4: its name
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
 import { askAgain } from './noAsksAgain.js';   // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
@@ -572,6 +572,7 @@ export class Quest {
       // TIME3: the clock its countdowns stand on - the holder's own, as it read when this was taken. A party member's copy
       // moves them onto theirs by the distance (quest/questStamps.js); an envelope without it is from before TIME3.
       ownSecondsAt: Number.isFinite(this.nowSeconds?.()) ? Math.floor(this.nowSeconds()) : null,
+      ...(this.ticksToEnd > 0 ? { ticksToEnd: this.ticksToEnd } : {}),   // QUEST-AUDIT IV CORE-2: the grace left - the port's own, written only inside it
     };
   }
 
@@ -632,6 +633,10 @@ export class Quest {
     }
     this.oneTimeDisplayedMessages.clear();
     for (const id of data.oneTimeDisplayedMessages ?? []) this.oneTimeDisplayedMessages.add(id);
+    // QUEST-AUDIT IV CORE-2: inside EndQuest's grace, what was left of it (machine.js END-GRACE arms an older envelope's)
+    this.ticksToEnd = data.ticksToEnd === 1 || data.ticksToEnd === 2 ? data.ticksToEnd : 0;
+    // CORE-4: named in the language at every door a quest is restored through - a load, a reclaim, a receipt, a resync
+    this.localizeDisplayName(localizedQuestDisplayName(this.questName));
     // NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a save taken after such a No, under DFU's law, loads asking again
     askAgain(this);
   }

@@ -1256,9 +1256,9 @@ export class QuestMachine {
         // QUEST-AUDIT III END-GRACE (FIELD BUGS 2026-09-28's "a copy saved inside EndQuest's two ticks of grace never ends
         // on reload"): the envelope carries no ticksToEnd, and EndQuest never re-arms - a save taken while the reward's
         // window held the tick loaded a quest that ran for ever, its questor refusing all work. An `end quest` that has
-        // run (its action complete, the quest not) enters its grace again
-        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;
-        localizeDisplayName(quest);   // L10N5: the save holds the quest's own name; the language names it again
+        // run (its action complete, the quest not) enters its grace again - QUEST-AUDIT IV CORE-2: the grace it had left, an
+        // older envelope (none written) the whole of it
+        if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;
         if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
         this.quests.set(quest.uid, quest);
       } catch (e) {
@@ -1274,8 +1274,7 @@ export class QuestMachine {
     for (const questData of Array.isArray(data.toInvoke) ? data.toInvoke : []) {
       try {
         const quest = new Quest({ ...clocks, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });
-        quest.restoreSaveData(questData, this._saveResolvers());
-        localizeDisplayName(quest);
+        quest.restoreSaveData(questData, this._saveResolvers());   // QUEST-AUDIT IV CORE-4: named in the language there
         if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);
       } catch (e) {
         console.warn(`[quest] Failed to load scheduled quest '${questData?.questName ?? ''}': ${e?.message ?? e}`);

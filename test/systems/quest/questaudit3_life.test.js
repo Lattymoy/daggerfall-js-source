@@ -91,12 +91,19 @@ test('END-GRACE: a quest saved inside its `end quest`\'s two ticks of grace ends
   assert.equal(q.ticksToEnd, 2, 'the fixture: `end quest` has run, its grace begun');
   assert.ok(q.questSuccess && !q.questComplete);
   const saved = envelope(m);   // the reward box up: the five-minute save, the page-hide save
-  assert.equal('ticksToEnd' in saved.quests[0], false, 'the envelope carries no grace');
+  // QUEST-AUDIT IV CORE-2, PIN MOVED: the envelope carries the grace left (a load re-entered the whole of it, one tick of
+  // tasks too many when saved in its last); an older envelope, with none written, enters the whole grace again
+  assert.equal(saved.quests[0].ticksToEnd, 2, 'the envelope carries the grace left');
+  const older = structuredClone(saved);
+  delete older.quests[0].ticksToEnd;
+  const ob = rig();
+  ob.restoreSaveData(older);
+  assert.equal(ob.getQuest(q.uid).ticksToEnd, 2, 'an older envelope: the grace again');
 
   const back = rig();
   back.restoreSaveData(saved);
   const qb = back.getQuest(q.uid);
-  assert.equal(qb.ticksToEnd, 2, 'loaded: the grace again');
+  assert.equal(qb.ticksToEnd, 2, 'loaded: the grace left');
   back.tick(); m.tick();
   assert.deepEqual([qb.questComplete, q.questComplete], [false, false], 'one tick of grace left, on both');
   back.tick(); m.tick();

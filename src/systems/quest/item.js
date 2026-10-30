@@ -40,6 +40,15 @@ import { itemLongName, shownItemName } from '../item/itemInfo.js';   // MAC-D: R
 import { alterReward } from '../guild/guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
 
+/** QUEST-AUDIT IV CORE-1: is `it` the items table's `letter` row as Item mints it (class and subclass, no roll)? An
+ *  envelope saved before an Item carried its name is read by it. */
+function mintedAsLetter(it) {
+  const table = itemsTable();
+  if (!it || !table?.hasValue?.('letter')) return false;
+  const group = ITEM_GROUP_NAME_BY_CLASS[questParseInt(table.getValue('p1', 'letter'))];
+  return it.group === group && it.templateIndex === GROUP_TEMPLATE_INDICES[group]?.[questParseInt(table.getValue('p2', 'letter'))];
+}
+
 /** DaggerfallUnityItem.MakePermanent (DaggerfallUnityItem.cs:1240-
  *  1248): drops quest-item status so the item survives quest end. */
 export function makeItemPermanent(dfItem) {
@@ -343,6 +352,9 @@ export class Item extends QuestResource {
       madePermanent: this.madePermanent,
       item: this.daggerfallUnityItem ? structuredClone(this.daggerfallUnityItem) : null,
       ...(this.goldPaid ? { goldPaid: true } : {}),   // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid
+      // QUEST-AUDIT IV CORE-1: the port's own - the questlines read a letter by its declared name after the parse (its
+      // pay, its courier's pace, its offer); Item.cs keeps none, and a load, a reclaim or a share made a letter the pay
+      ...(this.itemName ? { itemName: this.itemName } : {}),
     };
   }
 
@@ -359,5 +371,6 @@ export class Item extends QuestResource {
     this.madePermanent = dataIn.madePermanent;
     this.daggerfallUnityItem = dataIn.item ? structuredClone(dataIn.item) : null;
     this.goldPaid = dataIn.goldPaid === true;
+    this.itemName = typeof dataIn.itemName === 'string' ? dataIn.itemName : (mintedAsLetter(this.daggerfallUnityItem) ? 'letter' : this.itemName);   // CORE-1
   }
 }
