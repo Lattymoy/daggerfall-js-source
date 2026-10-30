@@ -32,6 +32,8 @@
 /src/net/firmament/*/
 !/src/net/gambit/
 /src/net/gambit/*/
+!/src/net/iliac/
+/src/net/iliac/*/
 !/src/net/safety/
 /src/net/safety/*/
 !/src/net/sea/

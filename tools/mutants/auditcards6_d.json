@@ -328,8 +328,8 @@
   {
     "name": "AC6-E18-second-unsaid",
     "file": "src/net/iliac/iliacClaims.js",
-    "old": "      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating)) onCounted(answer.data);\n",
-    "new": "",
+    "old": "      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating))\n        onCounted(answer.data);\n      else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "      else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],

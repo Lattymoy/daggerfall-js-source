@@ -28,7 +28,18 @@
 // room or a player's id for that player alone; the relay stamps each with `t: 'iliac'`, the table's index and its clock.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { newGame, commit as commitPlays, reveal, iliacView, result as gameResult, deckValid, ILIAC_DECK_SIZE, ILIAC_HAND_MAX, ILIAC_HOLDINGS, ILIAC_TURNS } from './iliacHand.js';
+import {
+  newGame,
+  commit as commitPlays,
+  reveal,
+  iliacView,
+  result as gameResult,
+  deckValid,
+  ILIAC_DECK_SIZE,
+  ILIAC_HAND_MAX,
+  ILIAC_HOLDINGS,
+  ILIAC_TURNS,
+} from './iliacHand.js';
 import { cardById } from './iliacCards.js';
 import { HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../card/cardLaw.js';
 import { HOLDEM_TABLES_MAX, HOLDEM_NAME_MAX } from '../holdemTable.js';
@@ -60,22 +71,36 @@ const CARD_ID_MAX = 32;
 export function newIliacTable({ chairs }) {
   if (!Number.isInteger(chairs) || chairs < HOLDEM_SEATS_MIN || chairs > HOLDEM_SEATS_MAX) return null;
   return {
-    chairs, gameNo: 0, nextDealAt: 0, clockAt: 0, dealtAt: 0, id: /** @type {string|null} */ (null),
+    chairs,
+    gameNo: 0,
+    nextDealAt: 0,
+    clockAt: 0,
+    dealtAt: 0,
+    id: /** @type {string|null} */ (null),
     seats: /** @type {any[]} */ ([null, null]),
-    game: /** @type {any} */ (null), ranked: false,
+    game: /** @type {any} */ (null),
+    ranked: false,
     last: /** @type {any} */ (null),
     results: /** @type {{j: string, f: string[], r: number, h: string, to: string[]}[]} */ ([]),
   };
 }
 
 /** A seat in the room's frame: who, which chair, and whether his deck is vouched for (never the deck). */
-const seatView = (s) => (s ? { id: s.id, name: s.name, chair: s.chair, ...(s.sub ? { ranked: true } : {}), ...(s.away ? { away: true } : {}) } : null);
+const seatView = (s) =>
+  s
+    ? { id: s.id, name: s.name, chair: s.chair, ...(s.sub ? { ranked: true } : {}), ...(s.away ? { away: true } : {}) }
+    : null;
 
 /** The room's view of the table: the seats, the game as a spectator sees it, the clock, the last game's end. */
 export function iliacPublicView(t) {
   return {
-    chairs: t.chairs, gameNo: t.gameNo, seats: t.seats.map(seatView), ranked: !!t.ranked,
-    game: t.game ? iliacView(t.game, -1) : null, clockAt: t.game ? t.clockAt : 0, last: t.last,
+    chairs: t.chairs,
+    gameNo: t.gameNo,
+    seats: t.seats.map(seatView),
+    ranked: !!t.ranked,
+    game: t.game ? iliacView(t.game, -1) : null,
+    clockAt: t.game ? t.clockAt : 0,
+    last: t.last,
   };
 }
 
@@ -86,7 +111,10 @@ export const iliacEmpty = (t) => t.seats.every((s) => !s);
 
 const room = (t, events) => ({ to: null, frame: { events, state: iliacPublicView(t) } });
 /** A seat's own frame: the game as he sees it (his hand, his plays), and the clock. */
-const own = (t, p) => ({ to: t.seats[p].id, frame: { mine: { gameNo: t.gameNo, seat: p, view: iliacView(t.game, p), clockAt: t.clockAt } } });
+const own = (t, p) => ({
+  to: t.seats[p].id,
+  frame: { mine: { gameNo: t.gameNo, seat: p, view: iliacView(t.game, p), clockAt: t.clockAt } },
+});
 const owns = (t) => (t.game ? [0, 1].filter((p) => t.seats[p]).map((p) => own(t, p)) : []);
 /** A game's id off the relay's source: 64 bits, as hex. */
 const gameId = (rand32) => [rand32(), rand32()].map((v) => (v >>> 0).toString(16).padStart(8, '0')).join('');
@@ -118,7 +146,14 @@ export function iliacSit(t, { id, name, chair, deck, now, sub = null, orderE }) 
   const no = iliacSitRefusal(t, { id, chair, deck });
   if (no) return no;
   const p = t.seats.findIndex((s) => !s);
-  t.seats[p] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), chair, deck: deck.slice(), idle: 0, ...(sub ? { sub, vouchFor: t.gameNo + 1, vouchE: orderE } : {}) };
+  t.seats[p] = {
+    id,
+    name: String(name ?? '').slice(0, HOLDEM_NAME_MAX),
+    chair,
+    deck: deck.slice(),
+    idle: 0,
+    ...(sub ? { sub, vouchFor: t.gameNo + 1, vouchE: orderE } : {}),
+  };
   const events = /** @type {any[]} */ ([{ t: 'sit', seat: p, chair, name: t.seats[p].name, at: now }]);
   if (!t.game && t.seats.every(Boolean)) {
     // AUDIT CARDS-6 C5/D2: two ranked seats - each is asked for a fresh order of the realm's, and the first game waits the
@@ -138,13 +173,22 @@ const vouchAsked = (now) => ({ t: 'vouch', at: now });
 function finish(t, now, left = -1, why = null) {
   const voided = why === 'void';
   const r = left >= 0 || voided ? null : gameResult(t.game);
-  const winner = voided ? null : left >= 0 ? 1 - left : r?.winner ?? null;
-  const how = voided ? 'void' : left >= 0 ? 'left' : r?.by ?? 'draw';
+  const winner = voided ? null : left >= 0 ? 1 - left : (r?.winner ?? null);
+  const how = voided ? 'void' : left >= 0 ? 'left' : (r?.by ?? 'draw');
   // AUDIT CARDS-6 C6: a game decided on the board, or by the clock standing a seat up, counts only when both seats
   // committed in it - an absent seat's games are nobody's win (one person's second account, never at the table, was a
   // signed win every five minutes); a stand of a seat's own still concedes, and no contest counts for nobody
   const counts = t.ranked && !!t.id && !voided && ((left >= 0 && why !== 'idle') || t.game.spoke.every(Boolean));
-  const end = { t: 'end', gameNo: t.gameNo, winner, how, result: r, names: t.seats.map((s) => s?.name ?? null), ...(counts ? { ranked: true } : {}), at: now };
+  const end = {
+    t: 'end',
+    gameNo: t.gameNo,
+    winner,
+    how,
+    result: r,
+    names: t.seats.map((s) => s?.name ?? null),
+    ...(counts ? { ranked: true } : {}),
+    at: now,
+  };
   if (counts) {
     const subs = t.game.subs;
     t.results.push({ j: t.id, f: subs.slice(), r: winner === null ? 2 : winner, h: how, to: t.game.ids.slice() });
@@ -152,7 +196,15 @@ function finish(t, now, left = -1, why = null) {
   }
   // AUDIT CARDS-6 C9: the board as the room last saw it kept with the end (the spectator's view - no hand, a card still
   // face down stays so), so a watcher sees the last reveal: the frame that carries it has no game any more
-  t.last = { gameNo: t.gameNo, winner, how, result: r, names: end.names, ...(counts ? { ranked: true } : {}), view: iliacView(t.game, -1) };
+  t.last = {
+    gameNo: t.gameNo,
+    winner,
+    how,
+    result: r,
+    names: end.names,
+    ...(counts ? { ranked: true } : {}),
+    view: iliacView(t.game, -1),
+  };
   t.game = null;
   t.ranked = false;
   t.id = null;
@@ -163,16 +215,16 @@ function finish(t, now, left = -1, why = null) {
 
 /** The next game, if both seats sit: the relay's shuffle, each seat's view to it alone, the room the spectator's. */
 function deal(t, now, rand32) {
-  if (!t.seats.every((s) => s && !s.away)) return [];   // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone
+  if (!t.seats.every((s) => s && !s.away)) return []; // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone
   const game = newGame({ decks: t.seats.map((s) => s.deck), rand32 });
-  if (!game) return [];   // a deck the law took at the sit refuses nothing here - kept so a broken promise deals nothing
+  if (!game) return []; // a deck the law took at the sit refuses nothing here - kept so a broken promise deals nothing
   // AUDIT CARDS-6 C5/D2: a seat's vouch is this game's - an order given since the last deal - and its order is unexpired
   // now; an older one (the realm character's cards could have changed hands since) deals this game friendly, signs nothing
   const vouched = (s) => !!s.sub && s.vouchFor === t.gameNo + 1 && s.vouchE * 1000 > now;
   const ranked = t.seats.every(vouched) && t.seats[0].sub !== t.seats[1].sub;
   game.ids = t.seats.map((s) => s.id);
   game.subs = ranked ? t.seats.map((s) => s.sub) : null;
-  game.spoke = [false, false];   // AUDIT CARDS-6 C6: which seats have committed in this game (the clock's passes are not theirs)
+  game.spoke = [false, false]; // AUDIT CARDS-6 C6: which seats have committed in this game (the clock's passes are not theirs)
   t.game = game;
   t.ranked = ranked;
   t.gameNo++;
@@ -180,7 +232,15 @@ function deal(t, now, rand32) {
   t.last = null;
   t.clockAt = now + ILIAC_TURN_MS;
   t.dealtAt = now;
-  const events = [{ t: 'game', gameNo: t.gameNo, holdings: game.holdings.map((h) => h.id), ...(ranked ? { ranked: true } : {}), at: now }];
+  const events = [
+    {
+      t: 'game',
+      gameNo: t.gameNo,
+      holdings: game.holdings.map((h) => h.id),
+      ...(ranked ? { ranked: true } : {}),
+      at: now,
+    },
+  ];
   return [room(t, events), ...owns(t)];
 }
 
@@ -189,9 +249,9 @@ function deal(t, now, rand32) {
 function turnOver(t, now) {
   const events = reveal(t.game).map((e) => ({ ...e, at: now }));
   if (t.game.over) {
-    const views = owns(t);   // the last turn's board, each seat's own, before the game is let go
+    const views = owns(t); // the last turn's board, each seat's own, before the game is let go
     events.push(finish(t, now));
-    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now));   // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap
+    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now)); // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap
     return [room(t, events), ...views];
   }
   t.clockAt = now + ILIAC_TURN_MS;
@@ -213,9 +273,9 @@ export function iliacCommit(t, { id, plays, now, gameNo, turn }) {
   if ((gameNo !== undefined && gameNo !== t.gameNo) || (turn !== undefined && turn !== t.game.turn)) return 'stale';
   const no = commitPlays(t.game, p, plays);
   if (no) return no;
-  t.game.spoke[p] = true;   // AUDIT CARDS-6 C6: he is at the table
+  t.game.spoke[p] = true; // AUDIT CARDS-6 C6: he is at the table
   t.seats[p].idle = 0;
-  const said = { t: 'commit', seat: p, at: now };   // the room hears that he has, never what
+  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what
   if (t.game.players[1 - p].plays) return turnOverWith(t, now, said);
   // AUDIT CARDS-6 C8: and hears it alone - the table is the one it was told but for this seat's commit, so the frame
   // carries no state (it carried the whole public view, a kilobyte, to say one seat had committed)
@@ -247,7 +307,8 @@ export function iliacStand(t, { id, now, gameNo, idle = false }) {
     const late = Number.isInteger(gameNo) && gameNo < t.gameNo && now - t.dealtAt <= ILIAC_LATE_MS && !t.game.spoke[p];
     events.push(late ? finish(t, now, -1, 'void') : finish(t, now, p, idle ? 'idle' : null));
   }
-  const name = t.seats[p].name, chair = t.seats[p].chair;
+  const name = t.seats[p].name,
+    chair = t.seats[p].chair;
   t.seats[p] = null;
   events.push({ t: 'leave', seat: p, chair, name, ...(idle ? { idle: true } : {}), at: now });
   return [room(t, events), ...views];
@@ -263,7 +324,7 @@ export function iliacVouch(t, { id, sub, orderE }) {
   const p = iliacSeatOf(t, id);
   if (p < 0) return 'not seated';
   const s = t.seats[p];
-  if (!s.sub || s.sub !== sub) return 'deck refused';   // a friendly seat stays one; an order is its own account's
+  if (!s.sub || s.sub !== sub) return 'deck refused'; // a friendly seat stays one; an order is its own account's
   s.vouchFor = t.gameNo + 1;
   s.vouchE = orderE;
   return null;
@@ -322,12 +383,18 @@ export function iliacTick(t, now, rand32) {
   if (t.game) {
     if (now < t.clockAt) return msgs;
     const passed = [];
-    for (const p of [0, 1]) if (!t.game.players[p].plays) { commitPlays(t.game, p, []); t.seats[p].idle = (t.seats[p].idle ?? 0) + 1; passed.push({ t: 'commit', seat: p, timeout: true, at: now }); }
+    for (const p of [0, 1])
+      if (!t.game.players[p].plays) {
+        commitPlays(t.game, p, []);
+        t.seats[p].idle = (t.seats[p].idle ?? 0) + 1;
+        passed.push({ t: 'commit', seat: p, timeout: true, at: now });
+      }
     const turned = turnOver(t, now);
     turned[0].frame.events.unshift(...passed);
     msgs.push(...turned);
     // AUDIT CARDS-6 C6: a seat the clock has passed ILIAC_IDLE_TURNS turns running is not at the table - stood up
-    for (const s of [...t.seats]) if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));
+    for (const s of [...t.seats])
+      if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));
     return msgs;
   }
   return t.seats.every(Boolean) && now >= t.nextDealAt ? [...msgs, ...deal(t, now, rand32)] : msgs;
@@ -355,8 +422,20 @@ export function iliacLook(t, id) {
 
 const ILIAC_OPS = Object.freeze(['sit', 'stand', 'commit', 'look', 'vouch', 'ack']);
 const cardIdOk = (x) => typeof x === 'string' && x.length > 0 && x.length <= CARD_ID_MAX;
-const playsOk = (ps) => Array.isArray(ps) && ps.length <= ILIAC_HAND_MAX
-  && ps.every((x) => x && typeof x === 'object' && Number.isInteger(x.card) && x.card >= 0 && x.card < ILIAC_HAND_MAX && Number.isInteger(x.holding) && x.holding >= 0 && x.holding < ILIAC_HOLDINGS);
+const playsOk = (ps) =>
+  Array.isArray(ps) &&
+  ps.length <= ILIAC_HAND_MAX &&
+  ps.every(
+    (x) =>
+      x &&
+      typeof x === 'object' &&
+      Number.isInteger(x.card) &&
+      x.card >= 0 &&
+      x.card < ILIAC_HAND_MAX &&
+      Number.isInteger(x.holding) &&
+      x.holding >= 0 &&
+      x.holding < ILIAC_HOLDINGS,
+  );
 const orderOk = (o) => typeof o === 'string' && o.length > 0 && o.length <= ILIAC_ORDER_MAX;
 const gameNoOk = (n) => Number.isSafeInteger(n) && n >= 0;
 
@@ -376,33 +455,84 @@ export function validIliacIn(m) {
     if (!Number.isInteger(m.chair) || m.chair < 0 || m.chair >= m.chairs) return null;
     if (!Array.isArray(m.deck) || m.deck.length !== ILIAC_DECK_SIZE || !m.deck.every(cardIdOk)) return null;
     if (m.order !== undefined && !orderOk(m.order)) return null;
-    return { op: 'sit', table: m.table, chair: m.chair, chairs: m.chairs, deck: m.deck.slice(), ...(m.order !== undefined ? { order: m.order } : {}) };
+    return {
+      op: 'sit',
+      table: m.table,
+      chair: m.chair,
+      chairs: m.chairs,
+      deck: m.deck.slice(),
+      ...(m.order !== undefined ? { order: m.order } : {}),
+    };
   }
   if (m.op === 'commit') {
     if (!gameNoOk(m.gameNo) || !Number.isInteger(m.turn) || m.turn < 1 || m.turn > ILIAC_TURNS) return null;
-    return playsOk(m.plays) ? { op: 'commit', table: m.table, gameNo: m.gameNo, turn: m.turn, plays: m.plays.map((x) => ({ card: x.card, holding: x.holding })) } : null;
+    return playsOk(m.plays)
+      ? {
+          op: 'commit',
+          table: m.table,
+          gameNo: m.gameNo,
+          turn: m.turn,
+          plays: m.plays.map((x) => ({ card: x.card, holding: x.holding })),
+        }
+      : null;
   }
-  if (m.op === 'stand') return m.gameNo === undefined || gameNoOk(m.gameNo) ? { op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) } : null;
+  if (m.op === 'stand')
+    return m.gameNo === undefined || gameNoOk(m.gameNo)
+      ? { op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }
+      : null;
   if (m.op === 'vouch') return orderOk(m.order) ? { op: 'vouch', table: m.table, order: m.order } : null;
-  if (m.op === 'ack') return typeof m.j === 'string' && ILIAC_GAME_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null;
+  if (m.op === 'ack')
+    return typeof m.j === 'string' && ILIAC_GAME_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null;
   return { op: m.op, table: m.table };
 }
 
 /** A card in a view: a uid, and a catalog id unless it lies face down. */
-const viewCardOk = (c) => c && typeof c === 'object' && Number.isSafeInteger(c.uid) && (c.down === true || (typeof c.id === 'string' && !!cardById(c.form ?? c.id)));
+const viewCardOk = (c) =>
+  c &&
+  typeof c === 'object' &&
+  Number.isSafeInteger(c.uid) &&
+  (c.down === true || (typeof c.id === 'string' && !!cardById(c.form ?? c.id)));
 /** AUDIT-shaped: what the client's panel and cloth read off a view (net/iliac/iliacHand.js iliacView). */
 function viewOk(v) {
-  if (!v || typeof v !== 'object' || !Array.isArray(v.holdings) || v.holdings.length !== ILIAC_HOLDINGS || !Array.isArray(v.players) || v.players.length !== 2) return false;
+  if (
+    !v ||
+    typeof v !== 'object' ||
+    !Array.isArray(v.holdings) ||
+    v.holdings.length !== ILIAC_HOLDINGS ||
+    !Array.isArray(v.players) ||
+    v.players.length !== 2
+  )
+    return false;
   if (!Number.isInteger(v.turn) || !Number.isInteger(v.viewer) || v.viewer < -1 || v.viewer > 1) return false;
   for (const hd of v.holdings) {
-    if (!hd || typeof hd.id !== 'string' || !cardById(hd.id) || !Number.isInteger(hd.room) || !Array.isArray(hd.sides) || hd.sides.length !== 2) return false;
+    if (
+      !hd ||
+      typeof hd.id !== 'string' ||
+      !cardById(hd.id) ||
+      !Number.isInteger(hd.room) ||
+      !Array.isArray(hd.sides) ||
+      hd.sides.length !== 2
+    )
+      return false;
     if (!hd.sides.every((s) => Array.isArray(s) && s.length <= 12 && s.every(viewCardOk))) return false;
     if (!Array.isArray(hd.power) || hd.power.length !== 2 || !hd.power.every(Number.isFinite)) return false;
   }
   for (const pl of v.players) {
-    if (!pl || typeof pl !== 'object' || !Number.isInteger(pl.handCount) || !Number.isInteger(pl.deckCount) || !Number.isInteger(pl.magicka)) return false;
-    if (pl.hand !== undefined && !(Array.isArray(pl.hand) && pl.hand.length <= ILIAC_HAND_MAX && pl.hand.every(viewCardOk))) return false;
-    if (pl.discard !== undefined && !(Array.isArray(pl.discard) && pl.discard.length <= 2 * ILIAC_DECK_SIZE)) return false;
+    if (
+      !pl ||
+      typeof pl !== 'object' ||
+      !Number.isInteger(pl.handCount) ||
+      !Number.isInteger(pl.deckCount) ||
+      !Number.isInteger(pl.magicka)
+    )
+      return false;
+    if (
+      pl.hand !== undefined &&
+      !(Array.isArray(pl.hand) && pl.hand.length <= ILIAC_HAND_MAX && pl.hand.every(viewCardOk))
+    )
+      return false;
+    if (pl.discard !== undefined && !(Array.isArray(pl.discard) && pl.discard.length <= 2 * ILIAC_DECK_SIZE))
+      return false;
   }
   return true;
 }
@@ -413,19 +543,57 @@ function viewOk(v) {
  * @param {any} m
  */
 export function validIliacOut(m) {
-  if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX) return false;
+  if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX)
+    return false;
   if (typeof m.error === 'string') return m.error.length <= 40;
-  if (m.receipt !== undefined) return typeof m.receipt === 'string' && m.receipt.length <= ILIAC_RECEIPT_MAX;   // net/iliac/iliacReceipt.js reads it
-  if (m.mine) return Number.isInteger(m.mine.gameNo) && (m.mine.seat === 0 || m.mine.seat === 1) && Number.isFinite(m.mine.clockAt) && viewOk(m.mine.view) && m.mine.view.viewer === m.mine.seat;
+  if (m.receipt !== undefined) return typeof m.receipt === 'string' && m.receipt.length <= ILIAC_RECEIPT_MAX; // net/iliac/iliacReceipt.js reads it
+  if (m.mine)
+    return (
+      Number.isInteger(m.mine.gameNo) &&
+      (m.mine.seat === 0 || m.mine.seat === 1) &&
+      Number.isFinite(m.mine.clockAt) &&
+      viewOk(m.mine.view) &&
+      m.mine.view.viewer === m.mine.seat
+    );
   if (!Array.isArray(m.events) || m.events.length > 96 || !m.events.every(eventOk)) return false;
   // AUDIT CARDS-6 C8: a seat's commit, said alone - the table is the one the room was told, but for it
   if (m.state === undefined) return m.events.length > 0 && m.events.every((e) => e.t === 'commit');
   const s = m.state;
-  if (!s || typeof s !== 'object' || !Number.isInteger(s.chairs) || s.chairs < HOLDEM_SEATS_MIN || s.chairs > HOLDEM_SEATS_MAX) return false;
-  if (!Array.isArray(s.seats) || s.seats.length !== 2 || !s.seats.every((x) => x === null || (x && typeof x.id === 'string' && typeof x.name === 'string' && Number.isInteger(x.chair) && x.chair >= 0 && x.chair < s.chairs))) return false;
+  if (
+    !s ||
+    typeof s !== 'object' ||
+    !Number.isInteger(s.chairs) ||
+    s.chairs < HOLDEM_SEATS_MIN ||
+    s.chairs > HOLDEM_SEATS_MAX
+  )
+    return false;
+  if (
+    !Array.isArray(s.seats) ||
+    s.seats.length !== 2 ||
+    !s.seats.every(
+      (x) =>
+        x === null ||
+        (x &&
+          typeof x.id === 'string' &&
+          typeof x.name === 'string' &&
+          Number.isInteger(x.chair) &&
+          x.chair >= 0 &&
+          x.chair < s.chairs),
+    )
+  )
+    return false;
   if (!Number.isInteger(s.gameNo) || !Number.isFinite(s.clockAt)) return false;
   // AUDIT CARDS-6 C9/C10: the last game's end as the panel reads it - who won and how, and the board it ended on
-  if (s.last != null && !(typeof s.last === 'object' && seatOr(s.last.winner, null) && typeof s.last.how === 'string' && (s.last.view === undefined || (viewOk(s.last.view) && s.last.view.viewer === -1)))) return false;
+  if (
+    s.last != null &&
+    !(
+      typeof s.last === 'object' &&
+      seatOr(s.last.winner, null) &&
+      typeof s.last.how === 'string' &&
+      (s.last.view === undefined || (viewOk(s.last.view) && s.last.view.viewer === -1))
+    )
+  )
+    return false;
   return s.game === null || (viewOk(s.game) && s.game.viewer === -1);
 }
 
@@ -440,12 +608,26 @@ const seatOr = (x, none) => x === 0 || x === 1 || (none !== undefined && x === n
 function eventOk(e) {
   if (!e || typeof e !== 'object' || typeof e.t !== 'string') return false;
   switch (e.t) {
-    case 'sit': return seatOr(e.seat) && Number.isInteger(e.chair) && typeof e.name === 'string';
-    case 'leave': return seatOr(e.seat) && (e.name == null || typeof e.name === 'string');
-    case 'commit': case 'gone': case 'back': return seatOr(e.seat);
-    case 'game': return Number.isInteger(e.gameNo) && Array.isArray(e.holdings) && e.holdings.length === ILIAC_HOLDINGS && e.holdings.every(cardIdOk);
-    case 'end': return seatOr(e.winner, null) && typeof e.how === 'string';
-    case 'turn': return Number.isInteger(e.turn);
-    default: return true;
+    case 'sit':
+      return seatOr(e.seat) && Number.isInteger(e.chair) && typeof e.name === 'string';
+    case 'leave':
+      return seatOr(e.seat) && (e.name == null || typeof e.name === 'string');
+    case 'commit':
+    case 'gone':
+    case 'back':
+      return seatOr(e.seat);
+    case 'game':
+      return (
+        Number.isInteger(e.gameNo) &&
+        Array.isArray(e.holdings) &&
+        e.holdings.length === ILIAC_HOLDINGS &&
+        e.holdings.every(cardIdOk)
+      );
+    case 'end':
+      return seatOr(e.winner, null) && typeof e.how === 'string';
+    case 'turn':
+      return Number.isInteger(e.turn);
+    default:
+      return true;
   }
 }

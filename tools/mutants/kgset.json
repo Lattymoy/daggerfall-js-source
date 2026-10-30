@@ -87,8 +87,8 @@
   {
     "name": "KGSET-ranger-beasts",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "pick: 'strongest', tag: 'beast', n: 2 }] }",
-    "new": "pick: 'strongest', n: 2 }] }",
+    "old": "      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'strongest', tag: 'beast', n: 2 }],",
+    "new": "      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'strongest', n: 2 }],",
     "tests": [
       "test/systems/kgset_cards.test.js",
       "test/systems/loot/cards8_catalog.test.js"

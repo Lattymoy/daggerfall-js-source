@@ -110,8 +110,8 @@
   {
     "name": "AC6-C3-game-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if ((gameNo !== undefined && gameNo !== t.gameNo) || (turn",
-    "new": "  if ((false) || (turn",
+    "old": "  if ((gameNo !== undefined && gameNo !== t.gameNo) || (turn !== undefined && turn !== t.game.turn)) return 'stale';",
+    "new": "  if (false || (turn !== undefined && turn !== t.game.turn)) return 'stale';",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AC6-C3-wire-turn-optional",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (!gameNoOk(m.gameNo) || !Number.isInteger(m.turn) || m.turn < 1 || m.turn > ILIAC_TURNS) return null;\n",
-    "new": "",
+    "old": "    if (!gameNoOk(m.gameNo) || !Number.isInteger(m.turn) || m.turn < 1 || m.turn > ILIAC_TURNS) return null;\n    return playsOk(m.plays)",
+    "new": "    return playsOk(m.plays)",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AC6-D2-vouch-keeps-no-expiry",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  s.vouchE = orderE;\n",
-    "new": "",
+    "old": "  s.vouchE = orderE;\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AC6-D2-no-ask-as-the-table-fills",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (ranked) events.push(vouchAsked(now));",
-    "new": "",
+    "old": "    if (ranked) events.push(vouchAsked(now));\n  }",
+    "new": "  }",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "AC6-D2-no-ask-with-the-end",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now));   // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap",
+    "old": "    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now)); // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "AC6-C5-vouch-any-account",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!s.sub || s.sub !== sub) return 'deck refused';",
-    "new": "  if (!s.sub) return 'deck refused';",
+    "old": "  if (!s.sub || s.sub !== sub) return 'deck refused'; // a friendly seat stays one; an order is its own account's",
+    "new": "  if (!s.sub) return 'deck refused'; // a friendly seat stays one; an order is its own account's",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "AC6-C6-idle-never-stood",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    for (const s of [...t.seats]) if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));",
+    "old": "    for (const s of [...t.seats])\n      if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "AC6-C6-idle-ranked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "((left >= 0 && why !== 'idle') || t.game.spoke.every(Boolean))",
-    "new": "(left >= 0 || t.game.spoke.every(Boolean))",
+    "old": "  const counts = t.ranked && !!t.id && !voided && ((left >= 0 && why !== 'idle') || t.game.spoke.every(Boolean));",
+    "new": "  const counts = t.ranked && !!t.id && !voided && (left >= 0 || t.game.spoke.every(Boolean));",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AC6-C6-idle-never-resets",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  t.seats[p].idle = 0;\n",
-    "new": "",
+    "old": "  t.seats[p].idle = 0;\n  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
+    "new": "  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "AC6-C6-spoke-never-said",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  t.game.spoke[p] = true;   // AUDIT CARDS-6 C6: he is at the table",
+    "old": "  t.game.spoke[p] = true; // AUDIT CARDS-6 C6: he is at the table",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "AC6-C6-passes-uncounted",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "t.seats[p].idle = (t.seats[p].idle ?? 0) + 1; ",
-    "new": "",
+    "old": "        t.seats[p].idle = (t.seats[p].idle ?? 0) + 1;\n        passed.push({ t: 'commit', seat: p, timeout: true, at: now });",
+    "new": "        passed.push({ t: 'commit', seat: p, timeout: true, at: now });",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AC6-C7-back-for-any-account",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "s?.away && s.away.id === id && s.sub === sub",
-    "new": "s?.away && s.away.id === id",
+    "old": "  const p = t.seats.findIndex((s) => s?.away && s.away.id === id && s.sub === sub);",
+    "new": "  const p = t.seats.findIndex((s) => s?.away && s.away.id === id);",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AC6-C7-dealt-to-a-kept-seat",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!t.seats.every((s) => s && !s.away)) return [];",
-    "new": "  if (!t.seats.every(Boolean)) return [];",
+    "old": "  if (!t.seats.every((s) => s && !s.away)) return []; // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone",
+    "new": "  if (!t.seats.every(Boolean)) return []; // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AC6-C9-last-board-dropped",
     "file": "src/net/iliac/iliacTable.js",
-    "old": ", view: iliacView(t.game, -1) };",
-    "new": " };",
+    "old": "  t.last = {\n    gameNo: t.gameNo,\n    winner,\n    how,\n    result: r,\n    names: end.names,\n    ...(counts ? { ranked: true } : {}),\n    view: iliacView(t.game, -1),\n  };",
+    "new": "  t.last = { gameNo: t.gameNo, winner, how, result: r, names: end.names, ...(counts ? { ranked: true } : {}) };",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "AC6-C10-deal-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    case 'game': return Number.isInteger(e.gameNo) &&",
-    "new": "    case 'game': return true || Number.isInteger(e.gameNo) &&",
+    "old": "        Number.isInteger(e.gameNo) &&\n        Array.isArray(e.holdings) &&\n        e.holdings.length === ILIAC_HOLDINGS &&\n        e.holdings.every(cardIdOk)",
+    "new": "        true ||\n        (Number.isInteger(e.gameNo) &&\n          Array.isArray(e.holdings) &&\n          e.holdings.length === ILIAC_HOLDINGS &&\n          e.holdings.every(cardIdOk))",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "AC6-C10-end-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    case 'end': return seatOr(e.winner, null) && typeof e.how === 'string';",
-    "new": "    case 'end': return true;",
+    "old": "      return seatOr(e.winner, null) && typeof e.how === 'string';",
+    "new": "      return true;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "AC6-C10-last-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (s.last != null && !(typeof s.last === 'object'",
-    "new": "  if (false && !(typeof s.last === 'object'",
+    "old": "    s.last != null &&",
+    "new": "    false &&",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -708,8 +708,8 @@
   {
     "name": "AC6-E13-wire-drops-the-game",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "{ op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }",
-    "new": "{ op: 'stand', table: m.table }",
+    "old": "  if (m.op === 'stand')\n    return m.gameNo === undefined || gameNoOk(m.gameNo)\n      ? { op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }\n      : null;",
+    "new": "  if (m.op === 'stand') return m.gameNo === undefined || gameNoOk(m.gameNo) ? { op: 'stand', table: m.table } : null;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]

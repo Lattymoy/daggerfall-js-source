@@ -2,8 +2,8 @@
   {
     "name": "AC5-A-order-counts-down",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "sidePower(state, pw, h, p, (inst) => !inst.down), 0));",
-    "new": "sidePower(state, pw, h, p), 0));",
+    "old": "  const total = [0, 1].map((p) => [0, 1, 2].reduce((s, h) => s + sidePower(state, pw, h, p, (inst) => !inst.down), 0));",
+    "new": "  const total = [0, 1].map((p) => [0, 1, 2].reduce((s, h) => s + sidePower(state, pw, h, p), 0));",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -15,7 +15,7 @@
   {
     "name": "AC5-A-powers-no-floor",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (const k of Object.keys(pw)) pw[k] = Math.max(0, pw[k]);",
+    "old": "  for (const k of Object.keys(pw)) pw[k] = Math.max(0, pw[k]);",
     "new": "",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
@@ -28,8 +28,8 @@
   {
     "name": "AC5-A-cost-no-floor",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "return Math.max(0, card.cost - off);",
-    "new": "return card.cost - off;",
+    "old": "  return Math.max(0, card.cost - off);",
+    "new": "  return card.cost - off;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -41,8 +41,8 @@
   {
     "name": "AC5-A-cost-down-discounts",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "    if (inst.down) continue;\n    for (const fx of cardOf(inst).fx) if (fx.on === 'ongoing' && fx.do === 'discount'",
-    "new": "    for (const fx of cardOf(inst).fx) if (fx.on === 'ongoing' && fx.do === 'discount'",
+    "old": "      if (inst.down) continue;\n      for (const fx of cardOf(inst).fx)",
+    "new": "      for (const fx of cardOf(inst).fx)",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -54,8 +54,8 @@
   {
     "name": "AC5-A-cost-holding-any-kind",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
-    "new": "for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount') off += fx.n;",
+    "old": "  for (const fx of holdingCard(state, h).fx)\n    if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
+    "new": "  for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount') off += fx.n;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -67,8 +67,8 @@
   {
     "name": "AC5-A-cost-other-players-discount",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (const inst of state.holdings[hh].sides[p]) {",
-    "new": "for (const inst of [...state.holdings[hh].sides[0], ...state.holdings[hh].sides[1]]) {",
+    "old": "    for (const inst of state.holdings[hh].sides[p]) {",
+    "new": "    for (const inst of [...state.holdings[hh].sides[0], ...state.holdings[hh].sides[1]]) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -80,8 +80,8 @@
   {
     "name": "AC5-A-select-down-target",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "    if (inst.down) return false;\n",
-    "new": "",
+    "old": "    if (inst.down) return false;\n    const c = cardOf(inst);",
+    "new": "    const c = cardOf(inst);",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -93,8 +93,8 @@
   {
     "name": "AC5-A-pick-weakest-last",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid]",
-    "new": "fx.pick === 'weakest' ? pw[r.inst.uid] <= pw[best.inst.uid]",
+    "old": "      if (fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid] : pw[r.inst.uid] > pw[best.inst.uid]) best = r;",
+    "new": "      if (fx.pick === 'weakest' ? pw[r.inst.uid] <= pw[best.inst.uid] : pw[r.inst.uid] > pw[best.inst.uid]) best = r;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -106,8 +106,8 @@
   {
     "name": "AC5-A-pick-strongest-last",
     "file": "src/net/iliac/iliacHand.js",
-    "old": ": pw[r.inst.uid] > pw[best.inst.uid]) best = r;",
-    "new": ": pw[r.inst.uid] >= pw[best.inst.uid]) best = r;",
+    "old": "      if (fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid] : pw[r.inst.uid] > pw[best.inst.uid]) best = r;",
+    "new": "      if (fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid] : pw[r.inst.uid] >= pw[best.inst.uid]) best = r;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -119,8 +119,8 @@
   {
     "name": "AC5-A-here-all-theirs-first",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "'here.all': () => [[...sideRefs(state, h, p), ...sideRefs(state, h, 1 - p)]],",
-    "new": "'here.all': () => [[...sideRefs(state, h, 1 - p), ...sideRefs(state, h, p)]],",
+    "old": "    'here.all': () => [[...sideRefs(state, h, p), ...sideRefs(state, h, 1 - p)]],",
+    "new": "    'here.all': () => [[...sideRefs(state, h, 1 - p), ...sideRefs(state, h, p)]],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -132,8 +132,8 @@
   {
     "name": "AC5-A-here-one-pick",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "here: () => [sideRefs(state, h, 0), sideRefs(state, h, 1)],",
-    "new": "here: () => [[...sideRefs(state, h, 0), ...sideRefs(state, h, 1)]],",
+    "old": "    here: () => [sideRefs(state, h, 0), sideRefs(state, h, 1)],",
+    "new": "    here: () => [[...sideRefs(state, h, 0), ...sideRefs(state, h, 1)]],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -145,8 +145,8 @@
   {
     "name": "AC5-A-hand-max-8",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "while (k < n && pl.deck.length && pl.hand.length < ILIAC_HAND_MAX)",
-    "new": "while (k < n && pl.deck.length && pl.hand.length <= ILIAC_HAND_MAX)",
+    "old": "  while (k < n && pl.deck.length && pl.hand.length < ILIAC_HAND_MAX) {",
+    "new": "  while (k < n && pl.deck.length && pl.hand.length <= ILIAC_HAND_MAX) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -158,8 +158,8 @@
   {
     "name": "AC5-A-token-uid-collide",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "turn: 1, over: false, nextUid: 2 * ILIAC_DECK_SIZE,",
-    "new": "turn: 1, over: false, nextUid: ILIAC_DECK_SIZE,",
+    "old": "    nextUid: 2 * ILIAC_DECK_SIZE,",
+    "new": "    nextUid: ILIAC_DECK_SIZE,",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -171,8 +171,8 @@
   {
     "name": "AC5-A-uid-tells-card",
     "file": "src/net/iliac/iliacHand.js",
-    "old": ".map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + k, id: d[i] }))",
-    "new": ".map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + i, id: d[i] }))",
+    "old": "      ).map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + k, id: d[i] })),",
+    "new": "      ).map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + i, id: d[i] })),",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -184,8 +184,8 @@
   {
     "name": "AC5-A-locations-dupes",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "new Set(locations).size !== ILIAC_HOLDINGS || ",
-    "new": "",
+    "old": "    if (\n      !Array.isArray(locations) ||\n      locations.length !== ILIAC_HOLDINGS ||\n      new Set(locations).size !== ILIAC_HOLDINGS ||\n      !locations.every((id) => ids.has(id))\n    )",
+    "new": "    if (!Array.isArray(locations) || locations.length !== ILIAC_HOLDINGS || !locations.every((id) => ids.has(id)))",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -197,8 +197,8 @@
   {
     "name": "AC5-A-shape-len-room",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "plays.length > ILIAC_HAND_MAX) return 'shape';",
-    "new": "plays.length > ILIAC_ROOM) return 'shape';",
+    "old": "  if (!Array.isArray(plays) || plays.length > ILIAC_HAND_MAX) return 'shape';",
+    "new": "  if (!Array.isArray(plays) || plays.length > ILIAC_ROOM) return 'shape';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -210,8 +210,8 @@
   {
     "name": "AC5-A-room-off-by-one",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (units[h] > freeRoom(state, null, player, h)) return 'room';",
-    "new": "if (units[h] >= freeRoom(state, null, player, h) && units[h]) return 'room';",
+    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] > freeRoom(state, null, player, h)) return 'room';",
+    "new": "  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] >= freeRoom(state, null, player, h) && units[h]) return 'room';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -223,8 +223,8 @@
   {
     "name": "AC5-A-magicka-off-by-one",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (spend > pl.magicka) return 'magicka';",
-    "new": "if (spend >= pl.magicka && spend) return 'magicka';",
+    "old": "  if (spend > pl.magicka) return 'magicka';",
+    "new": "  if (spend >= pl.magicka && spend) return 'magicka';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -236,8 +236,8 @@
   {
     "name": "AC5-A-hand-dupe-ok",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "|| seen.has(x.card)) return 'hand';",
-    "new": ") return 'hand';",
+    "old": "    if (x.card < 0 || x.card >= pl.hand.length || seen.has(x.card)) return 'hand';",
+    "new": "    if (x.card < 0 || x.card >= pl.hand.length) return 'hand';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -249,8 +249,8 @@
   {
     "name": "AC5-A-spell-takes-room",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (card.kind === 'spell') { if (noSpells(state, x.holding)) return 'spell'; } else units[x.holding]++;",
-    "new": "if (card.kind === 'spell') { if (noSpells(state, x.holding)) return 'spell'; } units[x.holding]++;",
+    "old": "    } else units[x.holding]++;",
+    "new": "    }\n    units[x.holding]++;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -262,8 +262,8 @@
   {
     "name": "AC5-A-commit-aliases",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "state.players[player].plays = plays.map((x) => ({ card: x.card, holding: x.holding }));",
-    "new": "state.players[player].plays = plays;",
+    "old": "  state.players[player].plays = plays.map((x) => ({ card: x.card, holding: x.holding }));",
+    "new": "  state.players[player].plays = plays;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -275,8 +275,8 @@
   {
     "name": "AC5-A-token-to-discard",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (!r.inst.token) state.players[r.p].discard.push",
-    "new": "state.players[r.p].discard.push",
+    "old": "  if (!r.inst.token) state.players[r.p].discard.push({ uid: r.inst.uid, id: r.inst.id });",
+    "new": "  state.players[r.p].discard.push({ uid: r.inst.uid, id: r.inst.id });",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -288,8 +288,8 @@
   {
     "name": "AC5-A-discard-as-form",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "discard.push({ uid: r.inst.uid, id: r.inst.id });",
-    "new": "discard.push({ uid: r.inst.uid, id: r.inst.form ?? r.inst.id });",
+    "old": "  if (!r.inst.token) state.players[r.p].discard.push({ uid: r.inst.uid, id: r.inst.id });",
+    "new": "  if (!r.inst.token) state.players[r.p].discard.push({ uid: r.inst.uid, id: r.inst.form ?? r.inst.id });",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -301,8 +301,8 @@
   {
     "name": "AC5-A-move-no-wrap",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (let k = 1; k < ILIAC_HOLDINGS && to < 0; k++)",
-    "new": "for (let k = 1; k < ILIAC_HOLDINGS - 1 && to < 0; k++)",
+    "old": "        for (let k = 1; k < ILIAC_HOLDINGS && to < 0; k++)",
+    "new": "        for (let k = 1; k < ILIAC_HOLDINGS - 1 && to < 0; k++)",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -314,8 +314,8 @@
   {
     "name": "AC5-A-move-ignores-reserve",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (freeRoom(state, T, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0)",
-    "new": "if (freeRoom(state, null, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0)",
+    "old": "          if (freeRoom(state, T, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0) to = (r.h + k) % ILIAC_HOLDINGS;",
+    "new": "          if (freeRoom(state, null, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0) to = (r.h + k) % ILIAC_HOLDINGS;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -327,8 +327,8 @@
   {
     "name": "AC5-A-summon-ignores-reserve",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "k < n && freeRoom(state, T, ctx.p, ctx.h) > 0",
-    "new": "k < n && freeRoom(state, null, ctx.p, ctx.h) > 0",
+    "old": "      for (let k = 0; k < n && freeRoom(state, T, ctx.p, ctx.h) > 0; k++) {",
+    "new": "      for (let k = 0; k < n && freeRoom(state, null, ctx.p, ctx.h) > 0; k++) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -340,8 +340,8 @@
   {
     "name": "AC5-A-transform-keeps-mod",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "        r.inst.mod = 0;\n",
-    "new": "",
+    "old": "        r.inst.mod = 0;\n        ev.push({ t: 'transform', uid: r.inst.uid, id: fx.card, src });",
+    "new": "        ev.push({ t: 'transform', uid: r.inst.uid, id: fx.card, src });",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -353,8 +353,8 @@
   {
     "name": "AC5-A-magicka-overwrites",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "state.players[ctx.p].bonus += n;",
-    "new": "state.players[ctx.p].bonus = n;",
+    "old": "      state.players[ctx.p].bonus += n;",
+    "new": "      state.players[ctx.p].bonus = n;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -379,8 +379,8 @@
   {
     "name": "AC5-A-down-event-names",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
-    "new": "ev.push({ t: 'play', p, uid: b.uid, id: b.id, holding: h, down: true }); return; }",
+    "old": "    ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true });",
+    "new": "    ev.push({ t: 'play', p, uid: b.uid, id: b.id, holding: h, down: true });",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -392,8 +392,8 @@
   {
     "name": "AC5-A-down-reveals",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
-    "new": "ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); }",
+    "old": "    return;\n  } // the other player is told a card, never which",
+    "new": "  } // the other player is told a card, never which",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -405,8 +405,8 @@
   {
     "name": "AC5-A-end-order-seat",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (const p of order) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
-    "new": "for (const p of [0, 1]) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
+    "old": "    for (const p of order) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
+    "new": "    for (const p of [0, 1]) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -418,8 +418,8 @@
   {
     "name": "AC5-A-magicka-uncapped",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "pl.magicka = Math.min(ILIAC_MAGICKA_MAX, state.turn + pl.bonus);",
-    "new": "pl.magicka = state.turn + pl.bonus;",
+    "old": "    pl.magicka = Math.min(ILIAC_MAGICKA_MAX, state.turn + pl.bonus);",
+    "new": "    pl.magicka = state.turn + pl.bonus;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -431,8 +431,8 @@
   {
     "name": "AC5-A-bonus-kept",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "pl.bonus = 0; }",
-    "new": "}",
+    "old": "    pl.bonus = 0;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -444,8 +444,8 @@
   {
     "name": "AC5-A-draw-order-seat",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "for (const p of order) T.events.push({ t: 'drew'",
-    "new": "for (const p of [0, 1]) T.events.push({ t: 'drew'",
+    "old": "  for (const p of order) T.events.push({ t: 'drew', p, n: drawCards(state, p, 1) });",
+    "new": "  for (const p of [0, 1]) T.events.push({ t: 'drew', p, n: drawCards(state, p, 1) });",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -457,8 +457,8 @@
   {
     "name": "AC5-A-result-one-holding",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (count[0] >= 2) { winner = 0;",
-    "new": "if (count[0] >= 1 && count[1] === 0) { winner = 0;",
+    "old": "  if (count[0] >= 2) {",
+    "new": "  if (count[0] >= 1 && count[1] === 0) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -470,8 +470,8 @@
   {
     "name": "AC5-A-result-no-power-tiebreak",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "} else if (total[0] !== total[1]) {",
-    "new": "} else if (false) {",
+    "old": "  } else if (total[0] !== total[1]) {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -483,8 +483,8 @@
   {
     "name": "AC5-A-view-shows-down",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "const seen = (p) => (inst) => !inst.down || p === viewer;",
-    "new": "const seen = (p) => (inst) => true || p === viewer;",
+    "old": "  const seen = (p) => (inst) => !inst.down || p === viewer;",
+    "new": "  const seen = (p) => (inst) => true || p === viewer;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "AC5-A-view-power-leak",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "power: [0, 1].map((p) => sidePower(state, pw, h, p, seen(p))),",
-    "new": "power: [0, 1].map((p) => sidePower(state, pw, h, p)),",
+    "old": "      power: [0, 1].map((p) => sidePower(state, pw, h, p, seen(p))),",
+    "new": "      power: [0, 1].map((p) => sidePower(state, pw, h, p)),",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -509,8 +509,8 @@
   {
     "name": "AC5-A-view-spectator-hands",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "...(p === viewer ? { hand:",
-    "new": "...(p === viewer || viewer === -1 ? { hand:",
+    "old": "      ...(p === viewer",
+    "new": "      ...(p === viewer || viewer === -1",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -522,8 +522,8 @@
   {
     "name": "AC5-A-view-bonus-hidden",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "magicka: pl.magicka, bonus: pl.bonus, committed: !!pl.plays,",
-    "new": "magicka: pl.magicka, committed: !!pl.plays,",
+    "old": "      bonus: pl.bonus,\n      committed: !!pl.plays,",
+    "new": "      committed: !!pl.plays,",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -535,8 +535,8 @@
   {
     "name": "AC5-A-deck-legendary-rank",
     "file": "src/net/iliac/iliacHand.js",
-    "old": ">= LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX",
-    "new": "> LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX",
+    "old": "    if (ILIAC_TIERS.indexOf(cardById(id).tier) >= LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX) return 'legendary';",
+    "new": "    if (ILIAC_TIERS.indexOf(cardById(id).tier) > LEGENDARY_RANK && k > ILIAC_LEGENDARY_COPIES_MAX) return 'legendary';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -548,7 +548,7 @@
   {
     "name": "AC5-A-fx-move-any",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (fx.do === 'move' && !OWN_TARGETS.includes(fx.to)) return 'target';",
+    "old": "  if (fx.do === 'move' && !OWN_TARGETS.includes(fx.to)) return 'target';",
     "new": "",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
@@ -561,8 +561,8 @@
   {
     "name": "AC5-A-fx-loc-end-draw",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (loc && fx.on === 'end' && (fx.do === 'draw' || fx.do === 'magicka')) return 'verb';",
-    "new": "",
+    "old": "  if (loc && fx.on === 'end' && (fx.do === 'draw' || fx.do === 'magicka')) return 'verb'; // a holding has no owner at the turn's end",
+    "new": "  // a holding has no owner at the turn's end",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "AC5-A-fx-n-zero",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "fx.n >= 1 && fx.n <= ILIAC_MAGICKA_MAX",
-    "new": "fx.n >= 0 && fx.n <= ILIAC_MAGICKA_MAX",
+    "old": "  if (fx.n !== undefined && !(Number.isInteger(fx.n) && fx.n >= 1 && fx.n <= ILIAC_MAGICKA_MAX)) return 'n';",
+    "new": "  if (fx.n !== undefined && !(Number.isInteger(fx.n) && fx.n >= 0 && fx.n <= ILIAC_MAGICKA_MAX)) return 'n';",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -587,8 +587,8 @@
   {
     "name": "AC5-A-legal-no-early",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "  if (playsRefusal(state, player, []) !== null) return [];\n",
-    "new": "",
+    "old": "  if (playsRefusal(state, player, []) !== null) return [];\n  const out = [];",
+    "new": "  const out = [];",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -600,8 +600,8 @@
   {
     "name": "AC5-A-reveal-one-commit",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (!state || state.over || !state.players[0].plays || !state.players[1].plays) return [];",
-    "new": "if (!state || state.over || !state.players[0].plays) return [];",
+    "old": "  if (!state || state.over || !state.players[0].plays || !state.players[1].plays) return [];",
+    "new": "  if (!state || state.over || !state.players[0].plays) return [];",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -613,7 +613,7 @@
   {
     "name": "AC5-A-unveil-silent",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (cards.length) T.events.push({ t: 'unveil', cards });",
+    "old": "    if (cards.length) T.events.push({ t: 'unveil', cards });",
     "new": "",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
@@ -626,8 +626,8 @@
   {
     "name": "AC5-A-res-not-released",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "  T.res[p][h]--;\n",
-    "new": "",
+    "old": "  T.res[p][h]--;\n  if (freeRoom(state, T, p, h) <= 0) {",
+    "new": "  if (freeRoom(state, T, p, h) <= 0) {",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -639,8 +639,8 @@
   {
     "name": "AC5-A-cat-giant-9",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "kind: 'unit', cost: 6, power: 10, tier: 'rare', tags: ['giant']",
-    "new": "kind: 'unit', cost: 6, power: 9, tier: 'rare', tags: ['giant']",
+    "old": "      cost: 6,\n      power: 10,\n      tier: 'rare',",
+    "new": "      cost: 6,\n      power: 9,\n      tier: 'rare',",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -652,8 +652,8 @@
   {
     "name": "AC5-A-cat-rat-cost-2",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "{ id: 'rat', name: 'Rat', kind: 'unit', cost: 1, power: 1,",
-    "new": "{ id: 'rat', name: 'Rat', kind: 'unit', cost: 2, power: 1,",
+    "old": "      name: 'Rat',\n      kind: 'unit',\n      cost: 1,\n      power: 1,",
+    "new": "      name: 'Rat',\n      kind: 'unit',\n      cost: 2,\n      power: 1,",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -665,8 +665,8 @@
   {
     "name": "AC5-A-cat-rose-no-knight",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "kind: 'unit', cost: 3, power: 4, tier: 'magic', tags: ['human', 'knight'], emblem: 'knight',\n    fx: [{ on: 'reveal', do: 'draw', n: 1 }]",
-    "new": "kind: 'unit', cost: 3, power: 4, tier: 'magic', tags: ['human'], emblem: 'knight',\n    fx: [{ on: 'reveal', do: 'draw', n: 1 }]",
+    "old": "      power: 4,\n      tier: 'magic',\n      tags: ['human', 'knight'],\n      emblem: 'knight',",
+    "new": "      power: 4,\n      tier: 'magic',\n      tags: ['human'],\n      emblem: 'knight',",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -678,8 +678,8 @@
   {
     "name": "AC5-A-cat-lich-not-undead",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "tier: 'rare', tags: ['undead', 'mage'], emblem: 'lich',",
-    "new": "tier: 'rare', tags: ['mage'], emblem: 'lich',",
+    "old": "      tier: 'rare',\n      tags: ['undead', 'mage'],",
+    "new": "      tier: 'rare',\n      tags: ['mage'],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -691,8 +691,8 @@
   {
     "name": "AC5-A-cat-wayrest-2",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "fx: [{ on: 'ongoing', do: 'room', n: 3 }] }",
-    "new": "fx: [{ on: 'ongoing', do: 'room', n: 2 }] }",
+    "old": "      fx: [{ on: 'ongoing', do: 'room', n: 3 }],",
+    "new": "      fx: [{ on: 'ongoing', do: 'room', n: 2 }],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -705,8 +705,8 @@
   {
     "name": "AC5-A-cat-rose-daedra-lord",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "fx: [{ on: 'reveal', do: 'summon', card: 'daedroth' }] }",
-    "new": "fx: [{ on: 'reveal', do: 'summon', card: 'daedra-lord' }] }",
+    "old": "      fx: [{ on: 'reveal', do: 'summon', card: 'daedroth' }],",
+    "new": "      fx: [{ on: 'reveal', do: 'summon', card: 'daedra-lord' }],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -719,8 +719,8 @@
   {
     "name": "AC5-A-cat-clavicus-2",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "emblem: 'daedric',\n    fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 1 }] },\n",
-    "new": "emblem: 'daedric',\n    fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 2 }] },\n",
+    "old": "      emblem: 'daedric',\n      fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 1 }],",
+    "new": "      emblem: 'daedric',\n      fx: [{ on: 'ongoing', do: 'discount', kind: 'spell', n: 2 }],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -733,8 +733,8 @@
   {
     "name": "AC5-A-cat-frostbite-1",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "tags: [], emblem: 'frost',\n    fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 2 }] },\n",
-    "new": "tags: [], emblem: 'frost',\n    fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 1 }] },\n",
+    "old": "      tags: [],\n      emblem: 'frost',\n      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 2 }],\n    },",
+    "new": "      tags: [],\n      emblem: 'frost',\n      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'weakest', n: 1 }],\n    },",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -747,8 +747,8 @@
   {
     "name": "AC5-A-cat-sentinel-1-3",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 2], n: 1 }] }",
-    "new": "fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 3], n: 1 }] }",
+    "old": "      fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 2], n: 1 }],",
+    "new": "      fx: [{ on: 'ongoing', do: 'buff', to: 'here', cost: [1, 3], n: 1 }],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -761,8 +761,8 @@
   {
     "name": "AC5-A-cat-dagon-power-7",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "kind: 'prince', cost: 6, power: 6, tier: 'aetheric'",
-    "new": "kind: 'prince', cost: 6, power: 7, tier: 'aetheric'",
+    "old": "      cost: 6,\n      power: 6,",
+    "new": "      cost: 6,\n      power: 7,",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -774,8 +774,8 @@
   {
     "name": "AC5-A-cat-imp-cost-0",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "{ id: 'imp', name: 'Imp', kind: 'unit', cost: 1, power: 1,",
-    "new": "{ id: 'imp', name: 'Imp', kind: 'unit', cost: 0, power: 1,",
+    "old": "      name: 'Imp',\n      kind: 'unit',\n      cost: 1,\n      power: 1,",
+    "new": "      name: 'Imp',\n      kind: 'unit',\n      cost: 0,\n      power: 1,",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -787,8 +787,8 @@
   {
     "name": "AC5-A-cat-starter-swap",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "'host-of-the-horn', 'host-of-the-horn', 'lamia', 'priest-of-akatosh',\n]);",
-    "new": "'host-of-the-horn', 'host-of-the-horn', 'lamia', 'priest-of-mara',\n]);",
+    "old": "  'priest-of-akatosh',",
+    "new": "  'priest-of-mara',",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -813,8 +813,8 @@
   {
     "name": "AC5-A-cat-tags-unfrozen",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "const deepFreeze = (c) => Object.freeze({ ...c, tags: Object.freeze(c.tags.slice()),",
-    "new": "const deepFreeze = (c) => Object.freeze({ ...c, tags: c.tags.slice(),",
+    "old": "    tags: Object.freeze(c.tags.slice()),",
+    "new": "    tags: c.tags.slice(),",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -826,8 +826,8 @@
   {
     "name": "AC5-A-cat-ancient-lich-all",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "{ on: 'ongoing', do: 'buff', to: 'all.mine', tag: 'undead', n: 1 }] }",
-    "new": "{ on: 'ongoing', do: 'buff', to: 'here.mine', tag: 'undead', n: 1 }] }",
+    "old": "        { on: 'ongoing', do: 'buff', to: 'all.mine', tag: 'undead', n: 1 },",
+    "new": "        { on: 'ongoing', do: 'buff', to: 'here.mine', tag: 'undead', n: 1 },",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -840,8 +840,8 @@
   {
     "name": "AC5-A-cat-hold-spells-ok",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "fx: [{ on: 'ongoing', do: 'veil' }, { on: 'ongoing', do: 'nospell' }] }",
-    "new": "fx: [{ on: 'ongoing', do: 'veil' }] }",
+    "old": "      fx: [\n        { on: 'ongoing', do: 'veil' },\n        { on: 'ongoing', do: 'nospell' },\n      ],",
+    "new": "      fx: [{ on: 'ongoing', do: 'veil' }],",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -3972,8 +3972,8 @@
   {
     "name": "AC5-A-order-tie-p1",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "return total[1] > total[0] ? [1, 0] : [0, 1];",
-    "new": "return total[1] >= total[0] ? [1, 0] : [0, 1];",
+    "old": "  if (total[0] !== total[1]) return total[1] > total[0] ? [1, 0] : [0, 1];",
+    "new": "  if (total[0] !== total[1]) return total[1] >= total[0] ? [1, 0] : [0, 1];",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -3987,8 +3987,8 @@
   {
     "name": "AC5-A-select-self-down",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "return r && !r.inst.down ? [r] : [];",
-    "new": "return r ? [r] : [];",
+    "old": "    return r && !r.inst.down ? [r] : [];",
+    "new": "    return r ? [r] : [];",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -4002,8 +4002,8 @@
   {
     "name": "AC5-A-down-end-text",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (!at || at.inst.down) continue;",
-    "new": "if (!at) continue;",
+    "old": "    if (!at || at.inst.down) continue;",
+    "new": "    if (!at) continue;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",
@@ -4030,8 +4030,8 @@
   {
     "name": "AC5-A-holding-reveal-for-down",
     "file": "src/net/iliac/iliacHand.js",
-    "old": "if (down) { ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }",
-    "new": "if (down) { ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); holdingReveal(state, T, p, h); return; }",
+    "old": "    ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true });\n    return;",
+    "new": "    ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true });\n    holdingReveal(state, T, p, h);\n    return;",
     "tests": [
       "test/net/iliac/cards7_rules.test.js",
       "test/systems/loot/cards8_catalog.test.js",

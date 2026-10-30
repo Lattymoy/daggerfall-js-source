@@ -254,8 +254,8 @@
   {
     "name": "CARDS10-relay-bad-deck",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!Array.isArray(deck) || deckValid(deck) !== null) return 'bad deck';\n",
-    "new": "",
+    "old": "  if (!Array.isArray(deck) || deckValid(deck) !== null) return 'bad deck';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "CARDS10-relay-own-view",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "const own = (t, p) => ({ to: t.seats[p].id,",
-    "new": "const own = (t, p) => ({ to: null,",
+    "old": "  to: t.seats[p].id,",
+    "new": "  to: null,",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CARDS10-relay-hidden-commit",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  const said = { t: 'commit', seat: p, at: now };",
-    "new": "  const said = { t: 'commit', seat: p, plays, at: now };",
+    "old": "  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
+    "new": "  const said = { t: 'commit', seat: p, plays, at: now }; // the room hears that he has, never what",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CARDS10-relay-concede",
     "file": "src/net/iliac/iliacTable.js",
-    "old": ": finish(t, now, p, idle ? 'idle' : null));",
-    "new": ": finish(t, now, 1 - p, idle ? 'idle' : null));",
+    "old": "    events.push(late ? finish(t, now, -1, 'void') : finish(t, now, p, idle ? 'idle' : null));",
+    "new": "    events.push(late ? finish(t, now, -1, 'void') : finish(t, now, 1 - p, idle ? 'idle' : null));",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CARDS10-receipt-draw",
     "file": "src/net/iliac/iliacReceipt.js",
-    "old": "  if ((c.r === 2) !== (c.h === 'draw')) return false;   // a draw is said one way only\n",
-    "new": "",
+    "old": "  if ((c.r === 2) !== (c.h === 'draw')) return false; // a draw is said one way only\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
+    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]

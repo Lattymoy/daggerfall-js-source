@@ -340,7 +340,7 @@ structure ours.
 - THE ARMY (Q2). DECIDED (section 10.2): the mod's roster whole - any unit, as often as 300 points buy - so every player
   sits down at once and the cards are the units' faces. NOT CHOSEN: an army only of the creature cards the binder holds,
   a card a unit (the collection the barracks). It would bend the mod's balance: the starter deck
-  (`iliacCards.js:"export const STARTER_DECK = Object.freeze(["`) fields ten units worth 167 points - two Rats, two Giant
+  (`iliacCards.js:"export const STARTER_DECK"`) fields ten units worth 167 points - two Rats, two Giant
   Bats, two Mages Guild Apprentices, the Spriggan, the Centaur, the Dreugh and the Lamia.
 
 ### 5.2 The kings are the Bay's

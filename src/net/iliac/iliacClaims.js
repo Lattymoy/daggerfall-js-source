@@ -41,21 +41,60 @@ export function iliacClaimVerdict(answer) {
  *   account's rating on it (AUDIT CARDS-6 E18); `onGuest` once a receipt a guest carried. KG6: `read` and `key` another
  *   game's receipt and its own store (net/gambit/gambitClaims.js - The King's Gambit's season, the same carrier)
  */
-export function createIliacClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), me = () => null, onCounted = () => {}, onGuest = () => {}, onFoeGuest = () => {}, read = readIliacReceipt, key = ILIAC_CLAIMS_KEY }) {
-  let running = null, again = false, lastAt = -Infinity, lastMe;
-  const settled = new Set(), guestSaid = new Set();
-  const live = (r) => { const c = typeof r === 'string' ? read(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };
+export function createIliacClaims({
+  claim,
+  store = null,
+  nowS = () => Math.floor(Date.now() / 1000),
+  nowMs = () => Date.now(),
+  me = () => null,
+  onCounted = () => {},
+  onGuest = () => {},
+  onFoeGuest = () => {},
+  read = readIliacReceipt,
+  key = ILIAC_CLAIMS_KEY,
+}) {
+  let running = null,
+    again = false,
+    lastAt = -Infinity,
+    lastMe;
+  const settled = new Set(),
+    guestSaid = new Set();
+  const live = (r) => {
+    const c = typeof r === 'string' ? read(r) : null;
+    const t = nowS();
+    return c && c.signed && (t == null || c.e > t) ? c : null;
+  };
   const mineOf = (c, id) => !!c && !!id && c.f.includes(id);
   let memory = [];
   function kept() {
     let v;
-    try { v = store ? store.get(key) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(key) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((r) => live(r));
   }
-  const keep = (list) => { memory = list; try { store?.set(key, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(key, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
   function flush() {
-    if (running) { again = true; return running; }
-    running = run().finally(() => { running = null; if (again) { again = false; void flush(); } });
+    if (running) {
+      again = true;
+      return running;
+    }
+    running = run().finally(() => {
+      running = null;
+      if (again) {
+        again = false;
+        void flush();
+      }
+    });
     return running;
   }
   async function run() {
@@ -67,16 +106,30 @@ export function createIliacClaims({ claim, store = null, nowS = () => Math.floor
     for (const r of list) {
       if (!mineOf(live(r), id)) continue;
       let answer;
-      try { answer = await claim(r); } catch { answer = { ok: false, error: 'offline' }; }
-      if (answer?.ok && answer.data?.recorded === true) { recorded++; onCounted(answer.data); }
+      try {
+        answer = await claim(r);
+      } catch {
+        answer = { ok: false, error: 'offline' };
+      }
+      if (answer?.ok && answer.data?.recorded === true) {
+        recorded++;
+        onCounted(answer.data);
+      }
       // AUDIT CARDS-6 E18: THE OTHER SEAT HEARS IT TOO. One row a game, whichever seat carries it first - the second
       // carrier's answer is `claimed`, with its own side's rating and change on it (iliac.js gameAnswer), and only the
       // first was ever told: the loser of a game the winner carried never heard his rating fall
-      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating)) onCounted(answer.data);
-      else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) { guestSaid.add(r); onGuest(); }
+      else if (answer?.ok && answer.data?.why === 'claimed' && Number.isFinite(answer.data?.rating))
+        onCounted(answer.data);
+      else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {
+        guestSaid.add(r);
+        onGuest();
+      }
       // AUDIT KG II D10: the other seat no registered account - nothing on the board, said once (not a silent drop)
       else if (answer?.ok && answer.data?.why === 'foe-unregistered') onFoeGuest();
-      if (iliacClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
+      if (iliacClaimVerdict(answer) === 'done') {
+        settled.add(r);
+        keep(kept().filter((k) => k !== r));
+      }
     }
     return recorded;
   }
@@ -95,11 +148,16 @@ export function createIliacClaims({ claim, store = null, nowS = () => Math.floor
      *  signs in. */
     tick() {
       if (running) return false;
-      const t = nowMs(), due = t - lastAt >= ILIAC_CLAIM_RETRY_MS;
-      const id = me(), signedIn = id !== lastMe;
+      const t = nowMs(),
+        due = t - lastAt >= ILIAC_CLAIM_RETRY_MS;
+      const id = me(),
+        signedIn = id !== lastMe;
       lastMe = id;
       if (!signedIn && !due) return false;
-      if (!kept().some((r) => mineOf(live(r), id))) { lastAt = t; return false; }
+      if (!kept().some((r) => mineOf(live(r), id))) {
+        lastAt = t;
+        return false;
+      }
       void flush();
       return true;
     },
