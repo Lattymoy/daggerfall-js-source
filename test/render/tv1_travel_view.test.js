@@ -824,7 +824,7 @@ test('AUDIT DEEP2 D2 view: the floating origin re-anchors under a moving travell
 test('AUDIT DEEP2 D2/D6 by source: the host rebases the view with the origin; the riders and the walkers take the view\'s eye and right, as the dolls do', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /mwViewRebase\(r\.offset\);[^\n]*\n\s*travelView\?\.rebase\(r\.offset\);/);
-  assert.match(w, /const peerYaw = travelView\?\.active && travelView\.camera \? travelView\.camera\.yaw : cam\.yaw;\n\s*const peerEye = travelView\?\.eye \?\? cam\.pos, peerRight = \[Math\.cos\(peerYaw\), 0, -Math\.sin\(peerYaw\)\];/);
+  assert.match(w, /const peerYaw = travelView\?\.active && travelView\.camera \? travelView\.camera\.yaw : cam\.yaw;\n(?:\s*\/\/[^\n]*\n)*\s*const peerEye = travelView\?\.eye \?\? \(renderer\._view \? renderer\._camPos : cam\.pos\), peerRight = \[Math\.cos\(peerYaw\), 0, -Math\.sin\(peerYaw\)\];/);
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene, \{ eye: peerEye, right: peerRight,/);
   assert.match(w, /peerWalkers\.sync\(seen, onlineToScene, \{ eye: peerEye, right: peerRight,/);
 });

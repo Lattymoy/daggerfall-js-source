@@ -124,16 +124,18 @@ test('PERF-EXT26: the client sends a grid by id with the samples CLONED, answers
 });
 
 test('PERF-EXT26: the host sends every promotion to a worker that is up - on the crossing frame - swaps only a reply its pixel still wants, and keeps STREAM1\'s queue as the fallback', () => {
-  const spend = WORLD.slice(WORLD.indexOf('  function spendRestrides() {'), WORLD.indexOf('  function promoteOffThread(p) {'));
-  assert.match(spend, /if \(terrainGen\.threaded\) \{\n      for \(const p of restridePending\.values\(\)\) promoteOffThread\(p\);\n      restridePending\.clear\(\);\n      return;\n    \}\n    let budget = RESTRIDE_PER_FRAME;/, 'all at once to the worker, else the one-a-frame queue');
-  const off = WORLD.slice(WORLD.indexOf('  function promoteOffThread(p) {'), WORLD.indexOf('  function restrideTerrain('));
+  const spend = WORLD.slice(WORLD.indexOf('  function spendRestrides() {'), WORLD.indexOf('  function restrideOffThread(p, stride = 1) {'));
+  assert.match(spend, /if \(terrainGen\.threaded\) \{\n      for \(const p of restridePending\.values\(\)\) restrideOffThread\(p\);\n      restridePending\.clear\(\);\n      return;\n    \}\n    let budget = RESTRIDE_PER_FRAME;/, 'all at once to the worker, else the one-a-frame queue');
+  const off = WORLD.slice(WORLD.indexOf('  function restrideOffThread(p, stride = 1) {'), WORLD.indexOf('  function restrideTerrain('));
   assert.match(off, /if \(built\.get\(key\) !== p\) return;[^\n]*\n    if \(strideFor\(p\.px, p\.py\) === p\._stride\) return;/, 'nothing is sent for a pixel gone or no longer promoted');
   // PIN MOVED (AUDIT WATER-NEXT P1/H1): the bed rides the job, and a cap's TileMap that moved meanwhile is carved by
   // PIN MOVED (FB1029 ACROSS-EDGE): the promotion's ground is gridGround's - the pixel, its samples and its town meets
-  assert.match(off, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride: 1, landform, bed: bedBytes \}\)\.then\(\(grid\) => \{[^\n]*\n      if \(built\.get\(key\) !== p\) return;[^\n]*\n      if \(strideFor\(p\.px, p\.py\) !== 1 \|\| p\._stride === 1\) return;[^\n]*\n      if \(waterOn && bedBytesOf\(p\) !== bedBytes\) grid = [^\n]*\n      restrideTerrain\(p, 1, grid\);/, 'the reply lands only on the pixel that asked, still wanting stride 1');
+  // PIN MOVED (OW-DEMOTE): the stride the job asked, a promotion's 1 or a demotion's
+  assert.match(off, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride, landform, bed: bedBytes \}\)\.then\(\(grid\) => \{[^\n]*\n      if \(built\.get\(key\) !== p\) return;[^\n]*\n      if \(strideFor\(p\.px, p\.py\) !== stride \|\| p\._stride === stride\) return;[^\n]*\n      if \(waterOn && bedBytesOf\(p\) !== bedBytes\) grid = \{ \.\.\.grid, bed: gridBed\(grid, bedBytesOf\(p\), stride, [^\n]*\n      restrideTerrain\(p, stride, grid\);/, 'the reply lands only on the pixel that asked, still wanting the stride it asked');
   // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's, its town meets with it
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
   assert.match(WORLD, /  function restrideTerrain\(p, stride, grid = restrideGrid\(\{ \.\.\.gridGround\(p\), woods, stride, landform, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'one swap, the grid from the worker or built here by the same law (LANDFORM1-3: the build\'s ghost rows)');
-  assert.match(WORLD, /else \{ restridePending\.delete\(`\$\{p\.px\},\$\{p\.py\}`\); restrideTerrain\(p, want\); \}\n      \}\n      if \(terrainGen\.threaded\) spendRestrides\(\);/, 'the crossing frame sends them, ahead of the new pixels\' jobs');
+  // PIN MOVED (OW-DEMOTE): a demotion the worker's too where one is up, inline else
+  assert.match(WORLD, /else \{ restridePending\.delete\(`\$\{p\.px\},\$\{p\.py\}`\); \(terrainGen\.threaded \? restrideOffThread : restrideTerrain\)\(p, want\); \}[^\n]*\n      \}\n      if \(terrainGen\.threaded\) spendRestrides\(\);/, 'the crossing frame sends them, ahead of the new pixels\' jobs');
   assert.doesNotMatch(WORLD, /buildTerrainGrid\(p\.samples/, 'the host keeps no second spelling of the grid');
 });

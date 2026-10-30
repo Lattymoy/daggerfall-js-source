@@ -236,7 +236,7 @@
   {
     "name": "LEFAY-POOL-STEAL-THROWS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      if (verb == null && mode === 'steal') { midText(LEFAY_TEXT.steal); return true; }\n",
+    "old": "      if (verb == null && mode === 'steal') { midText(TEXT.steal); return true; }\n",
     "new": "\n",
     "tests": [
       "test/world/lefay1_monument.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "LEFAY-MODES-NO-REFUSAL",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb\n      if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }\n",
-    "new": "    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb\n",
+    "old": "    if (typeof key === 'string' && key.startsWith('monument:')) {   // LEFAY1: a monument - too far speaks the refusal; the plaque's lit row is the verb\n      if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }\n",
+    "new": "    if (typeof key === 'string' && key.startsWith('monument:')) {   // LEFAY1: a monument - too far speaks the refusal; the plaque's lit row is the verb\n",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-ZERO-COUNT",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "...(n > 0 ? [LEFAY_TEXT.count(n)] : [])",
-    "new": "LEFAY_TEXT.count(n)",
+    "old": "...(n > 0 ? [TEXT.count(n)] : [])",
+    "new": "TEXT.count(n)",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

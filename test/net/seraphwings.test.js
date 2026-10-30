@@ -337,7 +337,7 @@ test('SERAPH-WINGS the hosts: the draw hangs and swings every look with a mesh o
   assert.ok(line, 'the draw\'s line');
   const code = line.includes('   //') ? line.slice(0, line.indexOf('   //')) : line;
   assert.ok(!code.trim().startsWith('//') && /for \(const w of auraDraw\) if \(auraLookOf\(w\.aura\)\.mesh\) \{ auraCapeStep\(w, [^;]*\); auraMotionStep\(w, now\); \}/.test(code), 'every meshed look hung on its body and swung');
-  assert.ok(code.includes('bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }') && code.includes(': deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id)),'), 'mine off my rig, else my sprite; a peer\'s off their rig, else their sprite');
+  assert.ok(code.includes('bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced }') && code.includes(': deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, spriteAnswer(layers, \'figureOf\', w.id), spriteAnswer(layers, \'faceOf\', w.id, eye)),'), 'mine off my rig, else my sprite; a peer\'s off their rig, else their sprite');
   assert.ok(code.includes('yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn,') && w.includes('faced = mwViewSpriteFacing();'), 'AUDIT 3: mine facing the way my sprite faces, not the camera - SPRITE-FACE (PIN MOVED): the way its PICTURE faces, and swung by the way it turns');
   assert.equal(auraLookOf('seraphwings').mesh, 'wings');
   assert.ok(Math.abs(CLOAK_REST_POSE.shoulders[1] - CLOAK_SHOULDER_Y) < 1e-6, 'without bones, the wings hang from the rest pose\'s shoulders as the cape does');

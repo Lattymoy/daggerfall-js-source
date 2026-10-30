@@ -3114,6 +3114,16 @@
   "tr": "2673f8f83eb2",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "2741adc1aca2",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "8714adee29d6",
+  "by": "claude-in-session"
+ },
  "menu.home.back": {
   "en": "b52b36b7269f",
   "tr": "11d024154013",
@@ -3732,6 +3742,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "8d1d57d72f66",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "57f6ff284968",
   "by": "claude-in-session"
  },
  "net.update.button": {

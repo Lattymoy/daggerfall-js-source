@@ -147,7 +147,7 @@
   {
     "name": "YARDLIGHT-host-steady",
     "file": "src/scenes/homeYards.js",
-    "old": "    e.range = animRanges[l.slot % animRanges.length] * (l.range / CITY_LIGHT_RANGE);",
+    "old": "    e.range = animRanges[l.slot % animRanges.length] * l.range / (l.candle ? start : CITY_LIGHT_RANGE);",
     "new": "    e.range = l.range;",
     "tests": [
       "test/scenes/yardlight.test.js"

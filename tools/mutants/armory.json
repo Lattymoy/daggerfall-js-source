@@ -508,8 +508,8 @@
   {
     "name": "ARMORY-the-peers-embers-off-no-right",
     "file": "src/scenes/auraHost.js",
-    "old": "peerPose(d.id, w); armoryMotionStep(w, t, right);",
-    "new": "peerPose(d.id, w); armoryMotionStep(w, t);",
+    "old": "peerPose(d.id, w, layers); armoryMotionStep(w, t, right);",
+    "new": "peerPose(d.id, w, layers); armoryMotionStep(w, t);",
     "tests": [
       "test/render/armory.test.js"
     ]

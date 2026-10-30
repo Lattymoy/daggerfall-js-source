@@ -822,7 +822,7 @@ const HARDCODED = {
   'src/world/gate/gateBoss.js': 17,
   'src/world/ships/largeBoatModel.js': 8,
   'src/world/ships/largeBoatRig.js': 5,
-  'src/world/lefayMonument.js': 13,
+  'src/world/lefayMonument.js': 11,
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,

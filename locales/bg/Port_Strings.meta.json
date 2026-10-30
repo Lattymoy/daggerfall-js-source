@@ -20909,6 +20909,16 @@
   "tr": "9fc7135bb9f3",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "4d7b2d010ba6",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "138b45072722",
+  "by": "claude-in-session"
+ },
  "menu.begin.blurb": {
   "en": "e4e4d4d671eb",
   "tr": "038d26e15e29",
@@ -25899,6 +25909,56 @@
   "tr": "6e6e16613273",
   "by": "claude-in-session"
  },
+ "monument.count": {
+  "en": "4b14913453aa",
+  "tr": "e0e52c9070c0",
+  "by": "claude-in-session"
+ },
+ "monument.row.flowers": {
+  "en": "de433a3a3afb",
+  "tr": "fc186a5e28bf",
+  "by": "claude-in-session"
+ },
+ "monument.row.read": {
+  "en": "677735560db9",
+  "tr": "1c8ca3df7d9d",
+  "by": "claude-in-session"
+ },
+ "monument.steal": {
+  "en": "ac6702cfc6a6",
+  "tr": "c95e7bf6a386",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.laid": {
+  "en": "a08c1d74b0cd",
+  "tr": "98451d619ed5",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.name": {
+  "en": "4d088ced2d4d",
+  "tr": "7bf2d0dbd9b1",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.read": {
+  "en": "89fc7ab6af45",
+  "tr": "fe02f528492f",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.title": {
+  "en": "b8eabbcc9e8d",
+  "tr": "d842935f65a6",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.voice": {
+  "en": "ae6918d79af0",
+  "tr": "5498b65e8bc4",
+  "by": "claude-in-session"
+ },
+ "monument.travelers": {
+  "en": "0c52cabb8d6b",
+  "tr": "db98120497f3",
+  "by": "claude-in-session"
+ },
  "naval.class.fishingSkiff": {
   "en": "7038dbd7a355",
   "tr": "61abff3acca2",
@@ -27807,6 +27867,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "ce392ed1a8c8",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "617e6894427f",
   "by": "claude-in-session"
  },
  "net.update.button": {

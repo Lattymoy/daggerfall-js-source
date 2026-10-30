@@ -79,7 +79,7 @@ import { createYardNature, isNaturePiece, yardNatureFlat, yardTreeSet } from './
 import { remapSubMeshes } from '../world/texRemap.js';   // DECOR-OUTDOOR: a yard's models in its town's climate
 import { applyClimate } from '../world/climateSwaps.js';
 import { isNatureArchive } from '../world/rmbFlats.js';
-import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/city/cityLights.js';   // YARD-LIGHT: the town's lantern
+import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR, streetLightRange } from '../world/city/cityLights.js';   // YARD-LIGHT: the town's lantern; LIGHT-REACH: its start on the lane
 import { interiorLightProperties } from '../world/interior/interiorLights.js';   // a candle's own light, the same one it gives indoors
 import { interiorLightColor } from '../render/enhancedLighting.js';   // CANDLE-DIM: and its colour as a room uploads it
 import { fabricBackyardOf } from '../world/imperialBackyards.js';   // IC-BACKYARD: an Imperial City house's yard, the court behind it
@@ -148,12 +148,15 @@ export function yardLampSlot(id) {
  * the street lantern's colour made it four times the room's candle. Answers `out`.
  */
 export function yardLampRows(lamps, rows, animRanges, color, out, on = false) {
+  // AUDIT LIGHT-REACH S1: a candle flickers by its share of the animator's own start (`streetLightRange`, the lane's 27):
+  // by the prefab's 18 the lane made a yard's candle reach 7.5, half again its room's 5. A lantern reaches as the town's.
+  const start = streetLightRange(on);
   for (let i = 0; i < lamps.length; i++) {
     const l = lamps[i];
     const e = rows[i] ?? (rows[i] = { x: 0, y: 0, z: 0, range: 0, color: null });
     e.x = l.x; e.y = l.y; e.z = l.z;
     adoptLight(e, l);   // LIGHT-ID: the row is this lamp's this frame - the rows refill in the yards' order
-    e.range = animRanges[l.slot % animRanges.length] * (l.range / CITY_LIGHT_RANGE);
+    e.range = animRanges[l.slot % animRanges.length] * l.range / (l.candle ? start : CITY_LIGHT_RANGE);
     e.color = l.candle ? candleTone(l, on) : color;
     out.push(e);
   }
