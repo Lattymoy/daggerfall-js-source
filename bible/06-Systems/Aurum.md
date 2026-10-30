@@ -89,7 +89,7 @@ closed Aurum, a ware not among the day's, one held and a short balance, each wit
 ## 6. The window
 
 The shop's head carries the balance beside the title, a coin and a number, while Aurum is open to the account. The
-**Daily Wares** section stands after the Battle Pass: when the wares turn, the week's deeds - each its Aurum or done -
+**Daily Wares** section stands after the Folios (the pass): when the wares turn, the week's deeds - each its Aurum or done -
 and a panel for each ware with its price in Aurum. Buy is pressed twice: the first press arms it and says the price
 again, the second buys, and left alone for six seconds it goes back to Buy. Short of the price, the panel says how much
 more is needed and offers **Get Aurum**, which opens the **Aurum** section: the balance, what Aurum is for and what it

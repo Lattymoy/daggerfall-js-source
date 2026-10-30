@@ -185,17 +185,18 @@ const REFUSAL_WORDS = {
   'aurum-held': () => t('account.refusal.aurumHeld', 'Your account holds that already.'),
   'aurum-short': () => t('account.refusal.aurumShort', 'Your account has too little Aurum for that.'),
   'aurum-busy': () => t('account.refusal.aurumBusy', 'The shop is busy. Try again in a moment.'),
-  // PASS-PANELS (bible/06-Systems/Battle-Pass.md): a track's or an item's refusals (server-account/src/battlePass.js)
-  'pass-guest': () => t('account.refusal.passGuest', 'The Battle Pass needs a registered account. Add a username and password first.'),
-  'pass-closed': () => t('account.refusal.passClosed', 'The Battle Pass is closed for now.'),
-  'pass-season': () => t('account.refusal.passSeason', 'That is not a season the Battle Pass knows.'),
-  'pass-item': () => t('account.refusal.passItem', 'That is not on this season\'s tracks.'),
+  // PASS-PANELS (bible/06-Systems/Battle-Pass.md): a folio's or an item's refusals (server-account/src/battlePass.js) - the
+  // player reads Folios and pages, never a pass, a track or a panel (the owner: "It shouldnt be called battle pass")
+  'pass-guest': () => t('account.refusal.passGuest', 'The Folios need a registered account. Add a username and password first.'),
+  'pass-closed': () => t('account.refusal.passClosed', 'The Folios are closed for now.'),
+  'pass-season': () => t('account.refusal.passSeason', 'That is not a season the Folios know.'),
+  'pass-item': () => t('account.refusal.passItem', 'That is not in this season\'s Folios.'),
   'pass-soon': () => t('account.refusal.passSoon', 'This season has not begun yet.'),
   'pass-held': () => t('account.refusal.passHeld', 'Your account holds that already.'),
-  'pass-track': () => t('account.refusal.passTrack', 'Unlock the premium track first.'),
-  'pass-panel': () => t('account.refusal.passPanel', 'That panel is still locked. Buy more on this track to open it.'),
+  'pass-track': () => t('account.refusal.passTrack', 'Unlock the Gilded Folio first.'),
+  'pass-panel': () => t('account.refusal.passPanel', 'That page is still locked. Buy more in this folio to open it.'),
   'pass-short': () => t('account.refusal.passShort', 'Your account has too little Aurum for that.'),
-  'pass-busy': () => t('account.refusal.passBusy', 'The Battle Pass is busy. Try again in a moment.'),
+  'pass-busy': () => t('account.refusal.passBusy', 'The Folios are busy. Try again in a moment.'),
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
   // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)
@@ -1334,9 +1335,9 @@ export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon
 /** AURUM (bible/06-Systems/Aurum.md): a daily ware bought for Aurum - the wardrobe after it and the Aurum's card. The
  *  service refuses `aurum-short`, `aurum-today` (no longer among the day's wares), `aurum-held` and `aurum-closed`. */
 export const buyDailyWare = (io, ware) => call(io, '/v1/aurum/buy', { ware });
-/** PASS-PANELS (bible/06-Systems/Battle-Pass.md): a season's premium track opened for Aurum, and an item on its tracks
- *  bought for Aurum - each the wardrobe after it, the Aurum's card and the pass's. The service refuses `pass-short`,
- *  `pass-held`, `pass-track` (the premium track shut), `pass-panel` (a panel not yet open) and `pass-closed`. */
+/** PASS-PANELS (bible/06-Systems/Battle-Pass.md): a season's premium track (the Gilded Folio) opened for Aurum, and an
+ *  item on its tracks bought for Aurum - each the wardrobe after it, the Aurum's card and the pass's. The service refuses
+ *  `pass-short`, `pass-held`, `pass-track` (the premium track shut), `pass-panel` (a panel not yet open), `pass-closed`. */
 export const passUnlock = (io, season) => call(io, '/v1/pass/unlock', { season });
 export const passBuy = (io, season, grant) => call(io, '/v1/pass/buy', { season, grant });
 /** GLYPH-WEAR (2026-10-02, Mac: "players can also equip/unequip their glyphs"): show one glyph (`on` true) or hide it -

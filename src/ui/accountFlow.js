@@ -676,7 +676,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     }
   };
   self.passUnlock = (/** @type {string} */ season) => passAct(() => passUnlock(door(), season), () => t('account.flow.passUnlocked',
-    'The premium track of {season} is open.', { season: PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (passSeasonById(season)?.id ?? '')]?.() ?? season }));
+    'The Gilded Folio of {season} is unlocked.', { season: PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (passSeasonById(season)?.id ?? '')]?.() ?? season }));
   self.passBuy = (/** @type {string} */ season, /** @type {string} */ grant) => passAct(() => passBuy(door(), season, grant),
     () => t('account.flow.passBought', '{name} is yours. Wear it here or from your profile.', { name: passGrantName(grant) }));
 

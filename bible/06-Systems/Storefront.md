@@ -26,7 +26,7 @@ in the shop weighed before it ships and timed to its launch window; and sales tr
 | Name Visuals ($6.99 / $12.99 / $24.99) | Built: Dawnbringer, Voidwalker, Eternal Champion - titles on animated plates (section 6) |
 | Portal Stone Skins ($14.99 / $29.99 / $49.99) | Built: Runic Stone, Daedric Stone, Aetheric Stone - every portal of mine (section 5) |
 | Mounts ($19.99 / $34.99 / $59.99) | Built as mount looks on the horse I ride: Spectral Steed, Dawnfire Charger, Daedric Warhorse (section 7) |
-| Battle Pass ($29.99 / $49.99) | Built, then reworked (PASS-PANELS): two panel tracks bought with Aurum, no money pass (`Battle-Pass.md`) |
+| Battle Pass ($29.99 / $49.99) | Built, then reworked (PASS-PANELS) as the Folios: two folios of pages bought with Aurum, no money pass (`Battle-Pass.md`) |
 | EXP Boosters ($4.99 / $12.99 / $24.99) | Built as Pass Boosters, then retired with the pass's levels (PASS-PANELS) |
 | Bundles | Built: Daedric Champion, Portal Master, Lord of Oblivion (section 8) |
 | Housing Furniture, Interior / Exterior Textures, Complete Housing Themes, Holiday Decorations, Noble Estate | Not built (section 11) |
@@ -46,11 +46,11 @@ Boosters were built as Pass Boosters, which sped the pass's track alone; PASS-PA
 
 ## 3. The catalogue (`src/net/shopLaw.js`)
 
-The window's sections, in order: the Battle Pass, the Daily Wares (AURUM: the day's wares sold for Aurum, while Aurum is
-open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and glyphs),
-Auras, Aura Armory, Bundles and Aurum (its four packs). The Battle Pass sells nothing for money: its tracks are bought
-with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's three
-columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
+The window's sections, in order: the Folios (the pass), the Daily Wares (AURUM: the day's wares sold for Aurum, while
+Aurum is open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and
+glyphs), Auras, Aura Armory, Bundles and Aurum (its four packs). The Folios sell nothing for money: their pages are
+bought with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's
+three columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
 happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0196): a

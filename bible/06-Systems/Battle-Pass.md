@@ -1,4 +1,4 @@
-# The Battle Pass - Season One: Dwemer's Breach (STOREFRONT, PASS-PANELS)
+# The Folios - Season One: Dwemer's Breach (STOREFRONT, PASS-PANELS)
 
 > Design page and record (2026-10-29, reworked 2026-10-30), beside `06-Systems/Storefront.md` and `06-Systems/Aurum.md`.
 > Where the page and the code disagree, the code's headers and the pins are what runs. Not a DFU member: Daggerfall Unity
@@ -18,6 +18,13 @@ opened with Aurum alone (the money passes retired); and tracks that never expire
 So the pass has no levels, experience, boosters or money passes. None of those had shipped: the branch that built them
 was reworked before it merged.
 
+**The name**, the owner, 2026-10-30: *"It shouldnt be called battle pass. Something more lore accurate. Also needs to be
+a panel that you ope[n]. To reveal the track rewards. Like hell divers."* Asked, the owner chose **Folios**, and locked
+pages that preview their items. A season's tracks are two folios the player opens and leafs through, page by page: Season
+One's free track is **the Brass Folio** and its premium track **the Gilded Folio**. The player reads folio and page,
+never pass, track or panel; the code keeps its `pass` names (`battlePassLaw.js`, `/v1/pass/*`), and so does this page's
+file name.
+
 ## 2. The season
 
 **Dwemer's Breach** runs 10 November 2026 to the end of 8 January 2027, UTC: sixty days in three stages of twenty
@@ -33,10 +40,10 @@ the sky, and brass comes up out of them.
 The season's days bound its world and its challenges. Its tracks sell from its first instant for good, and the finds'
 Aurum never stops (`passTracksOpen`, PASS_FINDS_FROM_MS).
 
-## 3. The tracks
+## 3. The folios (the tracks)
 
-Each season has two tracks of panels. **The free track** is every registered account's. **The premium track** opens once
-for 1,000 Aurum (PASS_PREMIUM_AURUM). Each item is bought once, for its own Aurum, in any order the open panels allow. A
+Each season has two tracks of panels, the player's folios and their pages. **The free track** (the Brass Folio) is
+every registered account's. **The premium track** (the Gilded Folio) opens once for 1,000 Aurum (PASS_PREMIUM_AURUM). Each item is bought once, for its own Aurum, in any order the open panels allow. A
 panel opens when its own track has had its `open` Aurum spent on it; the first panel of each track is open from the start.
 Every item is the account's for good, on every character, read off the row at every ask (`players.pass_items`).
 
@@ -163,15 +170,17 @@ and the sweep reads a clearing's key once a turn. One theatre's fissures are dra
 
 ## 7. The window
 
-The shop's first section is the pass: the season's name and story and its three stages, each with the day it opens or
-the level it opens to; the account's level, the bar to the next, the day's experience and its booster's share; the track;
-the Deluxe Pass's own three; the open stage's challenges with their counts; and a button to the Pass Boosters tab. The
-Premium and Deluxe Passes are sold below the section, the three boosters on their own tab and the Seasonal Collector
-under Bundles. A level reached is said once on the screen with its rewards.
+The shop's first section is **Folios** (`src/ui/enhanced/enhancedPass.js`). It opens on the season: its name and story,
+its three stages with the day each opens, and the Aurum found today against the day's 100. Below stand the season's
+folio covers, closed, side by side: each with its art, name, items, what the account owns of them, and its state - the
+Brass Folio free, the Gilded Folio's unlock for 1,000 Aurum or unlocked.
 
-The track is a column for each level with a reward (thirty-one of the fifty), free above and premium below, each reward
-in its own paint. The rows' names stand at its left as it scrolls, the player's last reward reached is marked and
-scrolled to, and a premium cell the account has not opened carries a padlock (AUDIT-STOREFRONT II, lane E 9).
+A cover pressed opens its folio, as a Helldivers 2 warbond opens: the cover turns away to the folio's spread, one page
+at a time, with arrows, a dot for each page, the arrow keys and a swipe; Back returns to the covers. It opens on the
+first page with an item still to buy. A page's items show their art, name, kind and price, and Buy, Owned or Wear. A
+locked page shows its items greyed and padlocked, with the Aurum still to spend in its folio to open it; a locked
+Gilded Folio previews every page, its unlock at the spread's head. Short of an item's price, its panel offers Get Aurum.
+For less motion the cover and the page change without turning.
 
 ## 8. AUDIT PASS (2026-10-29)
 
