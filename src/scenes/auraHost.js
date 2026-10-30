@@ -49,9 +49,6 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  *   spawned: () => boolean, beast: () => boolean, veiled: (id: string) => boolean, toScene: (shown: any) => number[],
  *   walkers: () => any, riders: () => any, bodies: () => any, selfLift?: () => number, peerLift?: (d: any) => number,
  * }} deps
- * AURA-ON-DRAGON: `selfLift` how far over my feet my body sits this frame (m) - on my dragon drawn in the world, its
- * rider's (scenes/dragonViewHost.js auraLift) - and `peerLift` a peer's the same (a dragon's rider): the cosmetics are worn
- * there, as a rider's, never at the dragon's feet. 0 (or absent) everywhere else.
  */
 export function createAuraHost(deps) {
   const { renderer } = deps;
