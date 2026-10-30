@@ -9,33 +9,6 @@
     ]
   },
   {
-    "name": "CHAT-POST-magic-left-off",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    ...itemBriefLines(item, d)].filter(Boolean);",
-    "new": "    ].filter(Boolean);",
-    "tests": [
-      "test/systems/chatpost.test.js"
-    ]
-  },
-  {
-    "name": "CHAT-POST-bound-not-kept",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (text.length <= CHAT_MAX) return text;",
-    "new": "  return text;",
-    "tests": [
-      "test/systems/chatpost.test.js"
-    ]
-  },
-  {
-    "name": "CHAT-POST-cut-mid-word",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), label.length + 2)).replace(/[\\s·]+$/, '')}...`;",
-    "new": "  return `${cut}...`;",
-    "tests": [
-      "test/systems/chatpost.test.js"
-    ]
-  },
-  {
     "name": "CHAT-POST-offered-offline",
     "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (deps.canPostItem?.()) {",
@@ -45,18 +18,9 @@
     ]
   },
   {
-    "name": "CHAT-POST-past-chatSend",
-    "file": "src/scenes/world.js",
-    "old": "  const postItemInChat = (text, item) => (canPostItemInChat() ? chatSend(chatLog.active, text, chatLog.active, { item }) === true : false);",
-    "new": "  const postItemInChat = (text, item) => (canPostItemInChat() ? socialLink()?.sendChat(text, { item }) === true : false);",
-    "tests": [
-      "test/systems/chatpost.test.js"
-    ]
-  },
-  {
     "name": "CHAT-POST-world-pack-mute",
     "file": "src/scenes/world.js",
-    "old": "    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: post or link into the field\n",
+    "old": "    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: link into the field\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"
@@ -65,7 +29,7 @@
   {
     "name": "CHAT-POST-building-pack-mute",
     "file": "src/scenes/world.js",
-    "old": "    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too\n",
+    "old": "    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs link too\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"
@@ -74,7 +38,7 @@
   {
     "name": "CHAT-POST-dungeon-pack-mute",
     "file": "src/scenes/worldModes.js",
-    "old": "          postItem: (text, item) => host.postItem?.(text, item) ?? false, linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host\n",
+    "old": "          linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack links through the outer host\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"
