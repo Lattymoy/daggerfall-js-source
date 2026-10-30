@@ -119,8 +119,8 @@
   {
     "name": "AUDITQA3-SHARE-E3-host-owner-unpassed",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
-    "new": "    foe.creditPartnerKill?.();   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
+    "old": "    foe.creditPartnerKill?.(owner); // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought",
+    "new": "    foe.creditPartnerKill?.(); // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought",
     "tests": [
       "test/systems/quest/auditqa3_share.test.js"
     ]

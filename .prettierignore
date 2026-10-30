@@ -617,6 +617,15 @@
 !/src/scenes/poiEditorMount.js
 !/src/scenes/portalCounter.js
 !/src/scenes/portalFx.js
+!/src/scenes/quest/
+/src/scenes/quest/*
+!/src/scenes/quest/questClickFirst.js
+!/src/scenes/quest/questData.js
+!/src/scenes/quest/questFoeHost.js
+!/src/scenes/quest/questProvinceSites.js
+!/src/scenes/quest/questProvinceWarm.js
+!/src/scenes/quest/questlineHost.js
+!/src/scenes/quest/questlineOffers.js
 !/src/scenes/seasonBookHost.js
 !/src/scenes/seatBanners.js
 !/src/scenes/seatFestival.js

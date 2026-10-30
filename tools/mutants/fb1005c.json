@@ -167,8 +167,8 @@
   {
     "name": "FB1005C-sealed-level-unasked",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "  if (Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M || Math.hypot",
-    "new": "  if (Math.hypot",
+    "old": "  if (\n    Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M ||\n    Math.hypot(feet[0] - was[0], feet[2] - was[2]) > SEALED_SAVE_REACH_M\n  )\n    return null;",
+    "new": "  if (Math.hypot(feet[0] - was[0], feet[2] - was[2]) > SEALED_SAVE_REACH_M) return null;",
     "tests": [
       "test/systems/quest/fb1004d_questmarkers.test.js"
     ]

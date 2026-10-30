@@ -71,8 +71,8 @@
   {
     "name": "START1-pack-glob-dropped",
     "file": "src/scenes/quest/questData.js",
-    "old": "  ...import.meta.glob('../../systems/starts/quests/*.txt', { query: '?raw', import: 'default' }),\n",
-    "new": "",
+    "old": "  ...import.meta.glob('../../systems/starts/quests/*.txt', { query: '?raw', import: 'default' }),\n};",
+    "new": "};",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]

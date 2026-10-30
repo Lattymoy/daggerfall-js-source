@@ -283,8 +283,8 @@
   {
     "name": "FORAGE1-32-the-list-read-unpatched",
     "file": "src/scenes/quest/questData.js",
-    "old": "      if (name.startsWith('QuestList-')) tables.set(name, patched);",
-    "new": "      if (name.startsWith('QuestList-')) tables.set(name, text);",
+    "old": "        if (name.startsWith('QuestList-')) tables.set(name, patched);",
+    "new": "        if (name.startsWith('QuestList-')) tables.set(name, text);",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]

@@ -12,9 +12,9 @@
 // tables load from one place.
 
 import { loadQuestTables } from '../../systems/quest/tables.js';
-import { applyForageFix } from '../../systems/foraging/foragingLaw.js';   // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
-import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatches.js';   // SHAM-TRAIL: the port's patches over DFU's own quests, applied as they are read
-import { questlineLines } from '../../systems/questlines/qlPatches.js';   // QL4: a flagship quest's branch, patched in while the questlines' switch is on (bible/06-Systems/Questlines-Arc.md 2.3)
+import { applyForageFix } from '../../systems/foraging/foragingLaw.js'; // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
+import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatches.js'; // SHAM-TRAIL: the port's patches over DFU's own quests, applied as they are read
+import { questlineLines } from '../../systems/questlines/qlPatches.js'; // QL4: a flagship quest's branch, patched in while the questlines' switch is on (bible/06-Systems/Questlines-Arc.md 2.3)
 
 const tableFiles = import.meta.glob('../../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
@@ -36,7 +36,11 @@ const modQuestFiles = {
 };
 
 const stripBom = (s) => s.replace(/^﻿/, '');
-const baseName = (path) => path.split('/').pop().replace(/\.txt$/, '');
+const baseName = (path) =>
+  path
+    .split('/')
+    .pop()
+    .replace(/\.txt$/, '');
 
 let _pack = null;
 
@@ -45,8 +49,13 @@ let _pack = null;
  *  shipped (null: the caller reads the unpatched lines), so one patch can never take the quest down with it. */
 const _patchWarned = new Set();
 function patchedLines(name, text) {
-  try { return applyQuestPatches(name, text).split(/\r?\n/); } catch (e) {
-    if (!_patchWarned.has(name)) { _patchWarned.add(name); console.warn(`[questData] ${e.message} - loaded as shipped`); }
+  try {
+    return applyQuestPatches(name, text).split(/\r?\n/);
+  } catch (e) {
+    if (!_patchWarned.has(name)) {
+      _patchWarned.add(name);
+      console.warn(`[questData] ${e.message} - loaded as shipped`);
+    }
     return null;
   }
 }
@@ -57,30 +66,43 @@ export async function loadQuestPack() {
   if (_pack) return _pack;
   _pack = (async () => {
     const tables = new Map();
-    await Promise.all(Object.entries(tableFiles).map(async ([path, load]) => {
-      tables.set(baseName(path), stripBom(await load()));
-    }));
+    await Promise.all(
+      Object.entries(tableFiles).map(async ([path, load]) => {
+        tables.set(baseName(path), stripBom(await load()));
+      }),
+    );
     const quests = new Map();
-    const patchable = new Map();   // SHAM-TRAIL: a DFU quest the port patches, kept as shipped and patched as it is read
-    await Promise.all(Object.entries(questFiles).map(async ([path, load]) => {
-      const name = baseName(path);
-      const text = stripBom(await load());
-      if (QUEST_PATCHES[name]) patchable.set(name, text);
-      quests.set(name, text.split(/\r?\n/));
-    }));
-    await Promise.all(Object.entries(modQuestFiles).map(async ([path, load]) => {
-      const name = baseName(path);
-      const text = stripBom(await load());
-      // FORAGE-FIX (bible/06-Systems/Foraging.md 12): Foraging's quest and list patches (Q7-Q9, Q13) over the author's
-      // own text - never an edit of it. A patch that no longer finds its line is a changed file: it warns and the
-      // author's text loads as shipped, so one mod's patch can never take the whole pack (and the scene) down with it.
-      let patched = text;
-      if (path.includes('/vendor/foraging/')) {
-        try { patched = applyForageFix(name, text); } catch (e) { console.warn(`[questData] ${e.message} - loaded as shipped`); }
-      }
-      if (name.startsWith('QuestList-')) tables.set(name, patched);
-      else { quests.set(name, patched.split(/\r?\n/)); patchable.delete(name); }   // a mod's quest of the name is the mod's, unpatched
-    }));
+    const patchable = new Map(); // SHAM-TRAIL: a DFU quest the port patches, kept as shipped and patched as it is read
+    await Promise.all(
+      Object.entries(questFiles).map(async ([path, load]) => {
+        const name = baseName(path);
+        const text = stripBom(await load());
+        if (QUEST_PATCHES[name]) patchable.set(name, text);
+        quests.set(name, text.split(/\r?\n/));
+      }),
+    );
+    await Promise.all(
+      Object.entries(modQuestFiles).map(async ([path, load]) => {
+        const name = baseName(path);
+        const text = stripBom(await load());
+        // FORAGE-FIX (bible/06-Systems/Foraging.md 12): Foraging's quest and list patches (Q7-Q9, Q13) over the author's
+        // own text - never an edit of it. A patch that no longer finds its line is a changed file: it warns and the
+        // author's text loads as shipped, so one mod's patch can never take the whole pack (and the scene) down with it.
+        let patched = text;
+        if (path.includes('/vendor/foraging/')) {
+          try {
+            patched = applyForageFix(name, text);
+          } catch (e) {
+            console.warn(`[questData] ${e.message} - loaded as shipped`);
+          }
+        }
+        if (name.startsWith('QuestList-')) tables.set(name, patched);
+        else {
+          quests.set(name, patched.split(/\r?\n/));
+          patchable.delete(name);
+        } // a mod's quest of the name is the mod's, unpatched
+      }),
+    );
     loadQuestTables(Object.fromEntries(tables));
     return {
       /** QuestList-<name>.txt (the QuestListsManager's dep). */
@@ -89,7 +111,12 @@ export async function loadQuestPack() {
        *  questlines' switch is on (the read the start's stamp follows - systems/questlines/qlPatches.js). AUDIT
        *  QUESTLINES BRANCH-12: `questlines` reads it as a copy's stamp says it was read (machine.js parseQuestShape, a
        *  stamped restart) - absent, the switch now. */
-      getQuestSourceLines: (name, questlines) => questlineLines(name, (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null, questlines),
+      getQuestSourceLines: (name, questlines) =>
+        questlineLines(
+          name,
+          (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null,
+          questlines,
+        ),
       questCount: quests.size,
     };
   })();

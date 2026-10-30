@@ -30,13 +30,15 @@
 // equivalent failure throws at mint. Recorded runtime difference.
 
 import { QuestResourceBehaviour } from '../../systems/quest/resourceBehaviour.js';
-import { questNameIn } from '../../systems/quest/machine.js';   // AUDIT CURSE-SYNC: IsProtectedQuest's name test, one home
+import { questNameIn } from '../../systems/quest/machine.js'; // AUDIT CURSE-SYNC: IsProtectedQuest's name test, one home
 import { applySpell } from '../../systems/effects.js';
 import { GENDERS } from '../../characters/nameHelper.js';
 import { mendedFoeSpot } from '../../systems/quest/markerCuration.js';
-import { placeFoeFreely, PLACE_FOE_DEFAULTS, MARKER_FLOOR_REACH } from '../../systems/quest/sceneMount.js';   // SHOP-RATS: the ring, and the room's own spots after it   // SEALED-SAVE (FIELD BUGS 2026-10-05c): a saved quest foe follows its moved marker
+import { placeFoeFreely, PLACE_FOE_DEFAULTS, MARKER_FLOOR_REACH } from '../../systems/quest/sceneMount.js'; // SHOP-RATS: the ring, and the room's own spots after it   // SEALED-SAVE (FIELD BUGS 2026-10-05c): a saved quest foe follows its moved marker
 
-export function questFoeGender(foe) { return foe.gender === GENDERS.Female ? 'female' : 'male'; }
+export function questFoeGender(foe) {
+  return foe.gender === GENDERS.Female ? 'female' : 'male';
+}
 
 /** CreateFoeGameObjects' mint loop (:1248-1305), data-side: one
  *  handle + one QuestResourceBehaviour per instance (AddComponent +
@@ -73,10 +75,19 @@ export function bindQuestFoeHost(f, behaviour, pool) {
     setActive: () => {},
     destroy: () => pool.removeFoe(f),
     enemy: {
-      get currentHealth() { return f.entity.health; },
-      get maxHealth() { return f.entity.maxHealth; },
-      setCurrentHealth: (n) => { if (n <= 0) pool.zeroFoeHealth(f); else f.entity.health = n; },
-      setNonHostile: () => { if (f.ai) f.ai.isHostile = false; },
+      get currentHealth() {
+        return f.entity.health;
+      },
+      get maxHealth() {
+        return f.entity.maxHealth;
+      },
+      setCurrentHealth: (n) => {
+        if (n <= 0) pool.zeroFoeHealth(f);
+        else f.entity.health = n;
+      },
+      setNonHostile: () => {
+        if (f.ai) f.ai.isHostile = false;
+      },
       // wave 31/32: every port entity runs the broker's magic rounds,
       // so the manager always stands - the queue never parks here
       hasEffectManager: () => true,
@@ -91,13 +102,17 @@ export function bindQuestFoeHost(f, behaviour, pool) {
         if (ref?.customKey) return;
         const record = pool.spellsByIndex?.()?.get?.(ref?.classicId);
         if (!record) return;
-        applySpell(record, f.entity.level ?? 1, f.entity, pool.foeSinks(f), pool.rolls ?? Math.random, null, { bypassSavingThrows: true });
+        applySpell(record, f.entity.level ?? 1, f.entity, pool.foeSinks(f), pool.rolls ?? Math.random, null, {
+          bypassSavingThrows: true,
+        });
       },
       // The port's corpse loot IS the entity's items (both pools'
       // takeLoot reads them), so the corpse and live arms of
       // AddItemQueue land in the one place and this stays false.
       hasCorpseLootContainer: () => false,
-      addItemsToEntity: (items) => { if (items) (f.entity.items ??= []).push(...items); },
+      addItemsToEntity: (items) => {
+        if (items) (f.entity.items ??= []).push(...items);
+      },
     },
   };
   f.questBehaviour = behaviour;
@@ -128,7 +143,8 @@ export const ROOM_NEAR_RING = Object.freeze({ minDistance: 2.5, lineOfSightCheck
  *  the farthest from the player within the ring's reach that has a floor under it and is clear - its test point, as
  *  placeFoeFreely answers one - or null. */
 export function roomMarkerSpot(env, spots) {
-  const C = PLACE_FOE_DEFAULTS, me = env.playerPosition;
+  const C = PLACE_FOE_DEFAULTS,
+    me = env.playerPosition;
   const d2 = (p) => (p[0] - me.x) ** 2 + (p[2] - me.z) ** 2;
   const list = (spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2).sort((a, b) => d2(b) - d2(a));
   for (const p of list) {
@@ -154,7 +170,14 @@ export function placeRoomQuestFoe(env, handle, spots) {
 /** QUEST-BACKFACE: the dungeon context's geometry bucket (dungeonContext.js addMesh('dungeon', ...)). */
 const DUNGEON_GEOMETRY_BUCKET = 'dungeon';
 
-export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, rolls = Math.random, isOccupied = null }) {
+export function placeFoeEnv({
+  collider,
+  playerFeet,
+  playerYawRad,
+  fovDegrees,
+  rolls = Math.random,
+  isOccupied = null,
+}) {
   const toObj = (p) => ({ x: p[0], y: p[1], z: p[2] });
   return {
     playerPosition: toObj(playerFeet),
@@ -176,8 +199,11 @@ export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, ro
       let h = collider.raycastHit(o, d, maxDist);
       let travelled = 0;
       for (let k = 0; k < 8 && pastBack(h) && Number.isFinite(h.dist); k++) {
-        travelled = h.dist + 0.01;   // h.dist is measured from `o` (the re-cast adds what it had travelled)
-        if (travelled >= maxDist) { h = { dist: Infinity, normal: null, back: false }; break; }
+        travelled = h.dist + 0.01; // h.dist is measured from `o` (the re-cast adds what it had travelled)
+        if (travelled >= maxDist) {
+          h = { dist: Infinity, normal: null, back: false };
+          break;
+        }
         const o2 = [o[0] + d[0] * travelled, o[1] + d[1] * travelled, o[2] + d[2] * travelled];
         const h2 = collider.raycastHit(o2, d, maxDist - travelled);
         h = { ...h2, dist: Number.isFinite(h2.dist) ? h2.dist + travelled : Infinity };
@@ -193,7 +219,10 @@ export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, ro
       // the motor's FallCheck.
       if (d[1] < -0.999 && Math.abs(d[0]) < 1e-6 && Math.abs(d[2]) < 1e-6) {
         const drop = o[1] - (collider.heightAt?.(o[0], o[2]) ?? -Infinity);
-        if (drop >= 0 && drop <= maxDist && drop < dist) { dist = drop; normal = [0, 1, 0]; }
+        if (drop >= 0 && drop <= maxDist && drop < dist) {
+          dist = drop;
+          normal = [0, 1, 0];
+        }
       }
       if (!Number.isFinite(dist) || dist > maxDist) return null;
       return {
@@ -213,9 +242,12 @@ export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, ro
 export function entityOccupancy(feetOf, liveFoes, playerFeet) {
   const CAPSULE_R = 0.45;
   return (p, r) => {
-    const hit = (feet, half = 0.9) => {   // REVIEW 2026-09-05: a foe's sphere sits at ITS capsule centre
+    const hit = (feet, half = 0.9) => {
+      // REVIEW 2026-09-05: a foe's sphere sits at ITS capsule centre
       if (!feet) return false;
-      const dx = feet[0] - p.x, dy = feet[1] + half - p.y, dz = feet[2] - p.z;
+      const dx = feet[0] - p.x,
+        dy = feet[1] + half - p.y,
+        dz = feet[2] - p.z;
       return dx * dx + dy * dy + dz * dz < (r + CAPSULE_R) * (r + CAPSULE_R);
     };
     if (hit(playerFeet)) return true;
@@ -242,11 +274,18 @@ export function heldSpots(collider) {
 /** Hold `spot` while `stand()` runs its async chain; answers the stand's promise, the hold released either way. */
 export function holdSpotWhile(collider, spot, stand) {
   const set = heldSpots(collider);
-  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } };   // a capsule centred on the tested point
+  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } }; // a capsule centred on the tested point
   set.add(held);
-  const release = () => { set.delete(held); };
+  const release = () => {
+    set.delete(held);
+  };
   let landing;
-  try { landing = stand(); } catch (err) { release(); throw err; }
+  try {
+    landing = stand();
+  } catch (err) {
+    release();
+    throw err;
+  }
   return Promise.resolve(landing).finally(release);
 }
 
@@ -256,7 +295,7 @@ export function holdSpotWhile(collider, spot, stand) {
  *  them and fights them, and each member's own copy counts the injuries and the kills it sees; a receiver's copy
  *  stands no wave while the member who shared the quest stands within QUEST_SHARE_RADIUS (that copy stands it). Anyone
  *  outside the party never sees them, and a peer's blow and a quest foe's hunt reach only the party. */
-export const QUEST_SHARE_RADIUS = 100;   // the camps' group (systems/campEncounters.js GROUP_ROLL_RADIUS)
+export const QUEST_SHARE_RADIUS = 100; // the camps' group (systems/campEncounters.js GROUP_ROLL_RADIUS)
 
 /** QUEST-PARTY: the stream's word on quest foe `f` - { q, s } (the quest's name, the foe's symbol) while its quest is
  *  kept in step with the party and this player is partied; else null, and it stays this player's alone. */
@@ -265,7 +304,8 @@ export function questShareTag(machine, f, partied) {
   if (!partied || !b || !machine) return null;
   const quest = machine.getQuest?.(b.questUID) ?? null;
   const s = b.targetSymbol?.name;
-  if (!quest || quest.questTombstoned || typeof s !== 'string' || !machine.hasSharedQuestNamed?.(quest.questName)) return null;
+  if (!quest || quest.questTombstoned || typeof s !== 'string' || !machine.hasSharedQuestNamed?.(quest.questName))
+    return null;
   return { q: quest.questName, s };
 }
 
@@ -301,7 +341,8 @@ export function partyOnlyQuestShare(seam) {
   let w = _partyOnlySeams.get(seam);
   if (!w) {
     const member = (id) => id != null && !!seam.partyPeer?.(id);
-    const accepts = (from, tag) => member(from) && (typeof seam.accepts === 'function' ? !!seam.accepts(from, tag) : true);
+    const accepts = (from, tag) =>
+      member(from) && (typeof seam.accepts === 'function' ? !!seam.accepts(from, tag) : true);
     const peerMayHit = (id, f) => member(id) && !!seam.peerMayHit?.(id, f);
     // every other door read off the seam at the moment it is asked (the host may change one), these two narrowed
     w = new Proxy(seam, { get: (t, k) => (k === 'accepts' ? accepts : k === 'peerMayHit' ? peerMayHit : t[k]) });
@@ -320,7 +361,8 @@ export function partyQuestFoe(machine, tag) {
   if (linked) return linked;
   const quest = machine.sharedCandidateNamed?.(tag.q) ?? null;
   if (!quest || quest.questTombstoned || !quest.resources) return null;
-  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return countsByName(quest, r) ? r : null;
+  for (const r of quest.resources.values())
+    if (r.isFoe && r.symbol?.name === tag.s) return countsByName(quest, r) ? r : null;
   return null;
 }
 
@@ -338,7 +380,12 @@ export function countsByName(quest, foe) {
   const name = foe?.symbol?.name;
   for (const task of quest?.tasks?.values?.() ?? []) {
     for (const a of task.actions ?? []) {
-      if (a?.isTriggerCondition && (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe') && a.foeSymbol?.name === name) return true;
+      if (
+        a?.isTriggerCondition &&
+        (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe') &&
+        a.foeSymbol?.name === name
+      )
+        return true;
     }
   }
   return false;
@@ -417,9 +464,11 @@ export const KEPT_KILL_HOLD_MS = 5 * 60 * 1000;
 export const KEPT_KILL_MEMORY_MS = 2 * KEPT_KILL_HOLD_MS;
 export class KeptKillLedger {
   constructor({ max = 8, holdMs = KEPT_KILL_HOLD_MS, memoryMs = KEPT_KILL_MEMORY_MS } = {}) {
-    this.max = max; this.holdMs = holdMs; this.memoryMs = memoryMs;
-    this._said = [];   // { q, s, i, at } - mine, newest last
-    this._counted = new Map();   // `${owner}|${q}|${s}|${i}` -> when my copy counted it
+    this.max = max;
+    this.holdMs = holdMs;
+    this.memoryMs = memoryMs;
+    this._said = []; // { q, s, i, at } - mine, newest last
+    this._counted = new Map(); // `${owner}|${q}|${s}|${i}` -> when my copy counted it
   }
   /** The heir's half: a foe kept on the partner's word `tag` ({ q, s }) died here, number `i` on my stream. */
   said(tag, i, now) {
@@ -452,10 +501,10 @@ export function creditKeptKills(machine, ledger, owner, rows, now) {
   if (!machine || !ledger || !owner || !Array.isArray(rows)) return 0;
   let n = 0;
   for (const r of rows) {
-    const foe = partyQuestFoe(machine, r);   // DESYNC-ZERO: a linked copy, or any copy of the same quest this member holds
+    const foe = partyQuestFoe(machine, r); // DESYNC-ZERO: a linked copy, or any copy of the same quest this member holds
     if (!foe || !ledger.credit(owner, r.q, r.s, r.i, now)) continue;
     if (!foe.injuredTrigger) foe.setInjured?.();
-    foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought
+    foe.creditPartnerKill?.(owner); // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought
     n++;
   }
   return n;
@@ -468,13 +517,25 @@ export function creditKeptKills(machine, ledger, owner, rows, now) {
  *  `pick one of`, a window open, a link a reload dropped - left the party with nothing to fight (The Exterminator in a
  *  guild hall: "nothing seems to have spawned"). Otherwise this copy stands its own wave, as CreateFoe.TryPlacement
  *  always places (CreateFoe.cs:183-212). `symbol` is the wave's Foe (its symbol's name), `foes` this pool's records. */
-export function partnerStandsQuestFoes({ questName, symbol, sharerOf, inMyParty, peers, accountOfPeer, myFeet, foes, radius = QUEST_SHARE_RADIUS }) {
+export function partnerStandsQuestFoes({
+  questName,
+  symbol,
+  sharerOf,
+  inMyParty,
+  peers,
+  accountOfPeer,
+  myFeet,
+  foes,
+  radius = QUEST_SHARE_RADIUS,
+}) {
   const sharer = questName ? sharerOf(questName) : null;
   if (!sharer || !inMyParty(sharer) || !myFeet) return false;
   for (const p of peers ?? []) {
     if (!p || accountOfPeer(p.id) !== sharer || !Array.isArray(p.feet)) continue;
-    const dx = p.feet[0] - myFeet[0], dz = p.feet[2] - myFeet[2];
-    if (dx * dx + dz * dz <= radius * radius) return sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer });
+    const dx = p.feet[0] - myFeet[0],
+      dz = p.feet[2] - myFeet[2];
+    if (dx * dx + dz * dz <= radius * radius)
+      return sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer });
   }
   return false;
 }
@@ -485,8 +546,8 @@ export function partnerStandsQuestFoes({ questName, symbol, sharerOf, inMyParty,
  *  names that quest and that Foe. */
 function sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer }) {
   for (const f of foes ?? []) {
-    if (f.dead) continue;   // a body stands no wave (a puppet let go is dead too - removePuppet)
-    const tag = f._pupQuest;   // a puppet's alone: my own foes carry their behaviour, a taken one is cleared (adopt)
+    if (f.dead) continue; // a body stands no wave (a puppet let go is dead too - removePuppet)
+    const tag = f._pupQuest; // a puppet's alone: my own foes carry their behaviour, a taken one is cleared (adopt)
     if (!tag || tag.q !== questName || tag.s !== symbol) continue;
     if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;
   }
@@ -508,10 +569,15 @@ export function questBehaviourFor(machine, tag) {
  *  view names alike. */
 export function adoptsOrphanQuestFoe({ myId, myFeet, foeFeet, partyPeers, radius = QUEST_SHARE_RADIUS }) {
   if (myId == null || !myFeet || !foeFeet) return false;
-  const near = (a) => { const dx = a[0] - foeFeet[0], dz = a[2] - foeFeet[2]; return dx * dx + dz * dz <= radius * radius; };
+  const near = (a) => {
+    const dx = a[0] - foeFeet[0],
+      dz = a[2] - foeFeet[2];
+    return dx * dx + dz * dz <= radius * radius;
+  };
   if (!near(myFeet)) return false;
   const me = String(myId);
-  for (const p of partyPeers ?? []) if (p?.id != null && Array.isArray(p.feet) && near(p.feet) && String(p.id) < me) return false;
+  for (const p of partyPeers ?? [])
+    if (p?.id != null && Array.isArray(p.feet) && near(p.feet) && String(p.id) < me) return false;
   return true;
 }
 
@@ -551,14 +617,15 @@ export function reviveQuestBehaviour(machine, data) {
   if (!machine || !data) return null;
   const b = new QuestResourceBehaviour(machine);
   b.restoreSaveData(data);
-  if (!b.questUID || b.targetSymbol == null) return null;   // :214-217 - QuestSpawn = false; Destroy(questResourceBehaviour)
+  if (!b.questUID || b.targetSymbol == null) return null; // :214-217 - QuestSpawn = false; Destroy(questResourceBehaviour)
   return b;
 }
 
 /** SEALED-SAVE (FIELD BUGS 2026-10-05c; "Haunted House quest has enemy under the floor"): how near a restored quest foe
  *  stands to its marker's old spot to be its - a sealed cellar's breadth, on the old spot's level (a storey is ~3 m; the
  *  hatch's near side stands 3.15 m over the report's cellar). */
-export const SEALED_SAVE_REACH_M = 6, SEALED_SAVE_LEVEL_M = 1.5;
+export const SEALED_SAVE_REACH_M = 6,
+  SEALED_SAVE_LEVEL_M = 1.5;
 /** SEALED-SAVE: a building's restored quest foe the save stood at the spot the load's mend moved its marker FROM
  *  (markerCuration.js mendedFoeSpot) stands where the marker stands now - the floor base `ctx.parentPt` maps, `lift`
  *  above it, as the interior host's standFoe stands it; anywhere else, or with no context, null (it stands where it
@@ -567,6 +634,10 @@ export function restandMendedQuestFoe(machine, ctx, behaviour, feet, lift) {
   const m = ctx ? mendedFoeSpot(machine, behaviour) : null;
   if (!m) return null;
   const was = ctx.parentPt(m.from.x, m.from.y + lift, m.from.z);
-  if (Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M || Math.hypot(feet[0] - was[0], feet[2] - was[2]) > SEALED_SAVE_REACH_M) return null;
+  if (
+    Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M ||
+    Math.hypot(feet[0] - was[0], feet[2] - was[2]) > SEALED_SAVE_REACH_M
+  )
+    return null;
   return ctx.parentPt(m.to.x, m.to.y + lift, m.to.z);
 }

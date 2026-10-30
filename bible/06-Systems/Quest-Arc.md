@@ -7018,7 +7018,7 @@ for it. A guild's Get Quest had no work, a social giver the same, and a Daedra s
 in this region. You keep your gold." That held in every province, so past the Bay no quest left town.
 
 **THE LAW.** The quest layer's maps (`src/scenes/questWorld.js`, the `Object.create(maps)` it already wrapped for the
-smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites("`:
+smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites"`:
 
 - **Its towns** are the theatre's listed places on the world's registry (`world/worldWide/worldPlaces.js` inTheatre,
   `world/pastBayRows.js`): the capitals' slices and the model's cities, towns and villages that stand a location. A
@@ -7089,7 +7089,7 @@ towns are one location each.
 (cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
 14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
 its pools' slices one by one and took 20 s. The build keeps a place once stood, so
-`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm"` stands the questor's province's table in
 idle time while the player is in that province:
 
 - **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
@@ -7130,7 +7130,7 @@ made ready. Now:
   is CollectQuestSitesOfBuildingType's walk (`townBuildings`) and its law (`buildingAdmits`: the wildcards, the hall's
   and the temple's faction, never the Dark Brotherhood's or the Thieves Guild's), each now one home the search reads too
   (`_townBuildingsOfType`). No quest or owner changes it, so it holds for the session.
-- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt = (px, py) => {"`):
+- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt"`):
   off the slice as the build lays it - the stood slice, else its clone, not stood
   (`src/scenes/tamrielPlacesHost.js:"function capitalSliceAt(px, py) {"`, over capitalCloneOf, the one law capitalLocationAt
   stands) - and by the warmer in idle time.
@@ -7254,7 +7254,7 @@ same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LE
   (AUDIT TESA II P6). The map is still spent either way, as DFU spends it (RemoveItem outside its catch).
 - **The Mages Guild's scrying** (LOOT19, `systems/loot/lootScry.js`) refused "nowhere" past the Bay (`scryWhere` read the
   raw maps): it reads the same table, and finds the family's nearest lair. A town's row past the Bay is NoDungeon (255) as
-  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow(p) {"`): it had read as type 0, a crypt, so an
+  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow"`): it had read as type 0, a crypt, so an
   undead scrying would have named a town.
 - **%lp** (MacroHelper LocalProvince: "High Rock" in a Breton region, else "Hammerfell") said "Hammerfell" everywhere past
   the Bay ("High Rock" in Cyrodiil - its people's race): a province's region answers its own name, as shown

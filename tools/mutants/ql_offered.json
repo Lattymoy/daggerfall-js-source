@@ -143,7 +143,7 @@
   {
     "name": "QLO-the-take-unsaid",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "  const say = (text) => { if (text) ctx.say?.(text); };",
+    "old": "  const say = (text) => {\n    if (text) ctx.say?.(text);\n  };",
     "new": "  const say = () => {};",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "QLO-the-refusal-forgotten",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "          if (!yes) { resting.set(l.id, now()); return { kind: 'refused', popup: null }; }",
+    "old": "          if (!yes) {\n            resting.set(l.id, now());\n            return { kind: 'refused', popup: null };\n          }",
     "new": "          if (!yes) return { kind: 'refused', popup: null };",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "QLO-the-rest-for-good",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "(resting.get(l.id) ?? -Infinity) > s - RETRY_GAP_S) continue;",
-    "new": "resting.has(l.id)) continue;",
+    "old": "      if (l.post !== post || (resting.get(l.id) ?? -Infinity) > s - RETRY_GAP_S) continue;",
+    "new": "      if (l.post !== post || resting.has(l.id)) continue;",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "QLO-the-pool-kept",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "() => { if (!ctx.isPlayerInsideCastle?.()) ctx.removeNpcQuestor?.(npcData?.nameSeed ?? 0); }",
-    "new": "() => {}",
+    "old": "    atTavern: (npcData) =>\n      atPost('tavern', () => {\n        if (!ctx.isPlayerInsideCastle?.()) ctx.removeNpcQuestor?.(npcData?.nameSeed ?? 0);\n      }),",
+    "new": "    atTavern: (npcData) => atPost('tavern', () => {}),",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "QLO-the-busy-questor-offers",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "    if (machine.lastNPCClickedQuestorOf?.()) return null;\n",
-    "new": "",
+    "old": "    if (machine.lastNPCClickedQuestorOf?.()) return null;\n    const s = now();",
+    "new": "    const s = now();",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "QLO-the-load-ignored",
     "file": "src/scenes/quest/questlineOffers.js",
-    "old": "          if (gen !== generation) return { kind: 'close' };   // QUEST-UID1: a load took the offer away under its popup\n",
-    "new": "",
+    "old": "          if (gen !== generation) return { kind: 'close' }; // QUEST-UID1: a load took the offer away under its popup\n          if (!yes) {",
+    "new": "          if (!yes) {",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],

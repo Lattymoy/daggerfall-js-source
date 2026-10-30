@@ -47,7 +47,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { REGION_NAMES, isProvinceRegion, theatreOfRegion } from '../../formats/mapsTables.js';
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, DUNGEON_TYPES } from '../../formats/mapsFile.js';
-import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre, capitalSpanPixels } from '../../world/tamrielCapitals.js';
+import {
+  CAPITALS,
+  capitalOnPixel,
+  capitalSliceName,
+  capitalDims,
+  capitalCentre,
+  capitalSpanPixels,
+} from '../../world/tamrielCapitals.js';
 
 /** R2-5e: how far, map pixels (the travel reckoning's longest axis), a province's countryside places are drawn from the
  *  questor - the reach NEARBY-QUESTS gives at level 4 twice over (systems/quest/questReach.js), a day or two on foot. */
@@ -78,10 +85,17 @@ export const PLAN_FILL_NAMES = Object.freeze(['City Isle', 'Lake Rumare', 'Rumar
 export function isUnsitedSlice(/** @type {number} */ px, /** @type {number} */ py) {
   const at = capitalOnPixel(px, py);
   if (!at || !manySlices(at.cap)) return false;
-  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));
+  return (
+    at.s === capitalCentre(at.cap) ||
+    (capitalDims(at.cap).sea ?? []).includes(at.s) ||
+    PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s))
+  );
 }
 /** Is a capital laid over several pixels (TESA11: the Imperial City's square; a shore capital's land and harbour). */
-const manySlices = (/** @type {any} */ cap) => { const D = capitalDims(cap); return D.w * D.h > 1; };
+const manySlices = (/** @type {any} */ cap) => {
+  const D = capitalDims(cap);
+  return D.w * D.h > 1;
+};
 /** @type {Map<number, Map<number, string>>} */
 const _questNames = new Map();
 /** R2-5b: A CAPITAL'S SLICES' QUEST NAMES - slice index to name: its district's name (capitalSliceName), and where the
@@ -91,9 +105,15 @@ const _questNames = new Map();
 export function capitalQuestNames(k) {
   let names = _questNames.get(k);
   if (names) return names;
-  const cap = CAPITALS[k], D = capitalDims(cap);
-  const of = [], count = new Map();
-  for (let s = 0; s < D.w * D.h; s++) { const d = capitalSliceName(cap, s); of.push(d); count.set(d, (count.get(d) ?? 0) + 1); }
+  const cap = CAPITALS[k],
+    D = capitalDims(cap);
+  const of = [],
+    count = new Map();
+  for (let s = 0; s < D.w * D.h; s++) {
+    const d = capitalSliceName(cap, s);
+    of.push(d);
+    count.set(d, (count.get(d) ?? 0) + 1);
+  }
   const rank = new Map();
   names = new Map();
   of.forEach((d, s) => {
@@ -107,7 +127,7 @@ export function capitalQuestNames(k) {
 /** R2-5b: the quest name of the capital slice a pixel stands, or null (no capital of many slices there). */
 export function sliceQuestName(/** @type {number} */ px, /** @type {number} */ py) {
   const at = capitalOnPixel(px, py);
-  return at && manySlices(at.cap) ? capitalQuestNames(at.k).get(at.s) ?? null : null;
+  return at && manySlices(at.cap) ? (capitalQuestNames(at.k).get(at.s) ?? null) : null;
 }
 /** @type {WeakMap<object, any>} */
 const _views = new WeakMap();
@@ -120,7 +140,10 @@ export function questView(loc) {
   const name = sliceQuestName(p.x, p.y);
   if (!name || name === loc.name) return loc;
   let v = _views.get(loc);
-  if (v?.name !== name) { v = { ...loc, name }; _views.set(loc, v); }
+  if (v?.name !== name) {
+    v = { ...loc, name };
+    _views.set(loc, v);
+  }
   return v;
 }
 
@@ -167,8 +190,19 @@ export function* capitalSlicesNear(loc, standAt, admits = null, indexAt = () => 
  */
 export function provinceRow(p) {
   const ll = mapPixelToLongitudeLatitude(p.px, p.py);
-  const dungeonType = p.hasDungeon === false ? DUNGEON_TYPES.NoDungeon : p.dungeonType ?? DUNGEON_TYPES.NoDungeon;
-  return Object.freeze({ mapId: p.mapId >>> 0, name: p.name, px: p.px, py: p.py, locationType: p.type, dungeonType, key: (p.tableKey ?? 0) >>> 0, longitude: ll.x, latitude: ll.y, discovered: false });
+  const dungeonType = p.hasDungeon === false ? DUNGEON_TYPES.NoDungeon : (p.dungeonType ?? DUNGEON_TYPES.NoDungeon);
+  return Object.freeze({
+    mapId: p.mapId >>> 0,
+    name: p.name,
+    px: p.px,
+    py: p.py,
+    locationType: p.type,
+    dungeonType,
+    key: (p.tableKey ?? 0) >>> 0,
+    longitude: ll.x,
+    latitude: ll.y,
+    discovered: false,
+  });
 }
 
 /**
@@ -193,7 +227,19 @@ export function provinceRow(p) {
  *   townSitesIndex) - AUDIT RELEASE R2-5f; `tableKeyAt` a place's MapTable key as its location carries it, read without
  *   standing it (tamrielPlacesHost.js tableKeyAt, BAY-LEFT-B), or null
  */
-export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {}, sliceAt = () => null, sitesIndexOf = () => [], tableKeyAt = () => null }) {
+export function createQuestProvinceSites({
+  worldPlaces,
+  regionAt,
+  standAt,
+  lairsNear = () => [],
+  countryNear = () => [],
+  origin = () => null,
+  heldSites = () => [],
+  refresh = () => {},
+  sliceAt = () => null,
+  sitesIndexOf = () => [],
+  tableKeyAt = () => null,
+}) {
   /** R2-5f: A CAPITAL SLICE'S SITES BY KIND, kept a slice (by its pixel) for the session - quest/place.js townSitesIndex over
    *  the slice as the build stands it, read off its clone where it has not stood (`sliceAt`, scenes/tamrielPlacesHost.js
    *  capitalSliceAt): the law no quest or owner changes, the same on every client. @type {Map<string, readonly any[]>} */
@@ -203,7 +249,11 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
   const sliceIndexAt = (px, py) => {
     const k = `${px},${py}`;
     let index = sliceIndexes.get(k);
-    if (!index) { const loc = sliceAt(px, py); index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); sliceIndexes.set(k, index); }
+    if (!index) {
+      const loc = sliceAt(px, py);
+      index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]);
+      sliceIndexes.set(k, index);
+    }
     return index;
   };
   /** Is row `row` a slice of a capital of many. @param {any} row */
@@ -217,7 +267,9 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
   /** A row joined to a table: its index. @param {any} region @param {any} row */
   const join = (region, row) => {
     const i = region.mapTable.length;
-    region.mapTable.push(row); region.mapNames.push(row.name); region.locationCount = region.mapTable.length;
+    region.mapTable.push(row);
+    region.mapNames.push(row.name);
+    region.locationCount = region.mapTable.length;
     if (!region.mapNameLookup.has(row.name)) region.mapNameLookup.set(row.name, i);
     if (!region.mapIdLookup.has(row.mapId)) region.mapIdLookup.set(row.mapId, i);
     return i;
@@ -226,7 +278,15 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
   const regionOf = (r, rows) => {
     // the name lookup's miss is the held sites' (findBySite): every reader of a site by its name - quest/place.js siteTown
     // and fitSiteToBuild, questRepair.js's re-lay, the travel clock - finds it as the draw left it
-    const region = { name: REGION_NAMES[r], provinceRegion: true, locationCount: 0, mapNames: [], mapTable: [], mapNameLookup: new HeldNames((name) => findBySite(r, name)), mapIdLookup: new Map() };
+    const region = {
+      name: REGION_NAMES[r],
+      provinceRegion: true,
+      locationCount: 0,
+      mapNames: [],
+      mapTable: [],
+      mapNameLookup: new HeldNames((name) => findBySite(r, name)),
+      mapIdLookup: new Map(),
+    };
     for (const row of rows) join(region, row);
     return region;
   };
@@ -238,17 +298,27 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const key = keyOf(o);
     const had = tables.get(r);
     if (had?.key === key) return had.region;
-    const rows = [], ids = new Set(), names = new Set();
+    const rows = [],
+      ids = new Set(),
+      names = new Set();
     // R2-5e: a name once a table (the listed towns first) - a site's name names one place
-    const add = (/** @type {any} */ row) => { if (!ids.has(row.mapId) && !names.has(row.name)) { ids.add(row.mapId); names.add(row.name); rows.push(row); } };
+    const add = (/** @type {any} */ row) => {
+      if (!ids.has(row.mapId) && !names.has(row.name)) {
+        ids.add(row.mapId);
+        names.add(row.name);
+        rows.push(row);
+      }
+    };
     for (const p of worldPlaces.inTheatre(theatreOfRegion(r))) {
       if (regionAt(p.px, p.py) !== r || isUnsitedSlice(p.px, p.py)) continue;
-      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));   // R2-5b: a slice under its quest name; BAY-LEFT-B: its key
+      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) })); // R2-5b: a slice under its quest name; BAY-LEFT-B: its key
     }
     if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) {
       // R2-5e: the countryside's places nearest the questor, after the listed towns - a courier's town near, as on the Bay
-      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));
-      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow({ ...l, tableKey: tableKeyAt(l.px, l.py) }));
+      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS))
+        if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));
+      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS))
+        if (regionAt(l.px, l.py) === r) add(provinceRow({ ...l, tableKey: tableKeyAt(l.px, l.py) }));
     }
     for (const row of found.get(r)?.values() ?? []) add(row);
     const region = regionOf(r, rows);
@@ -262,7 +332,7 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const row = isProvinceRegion(r) ? tableOf(r)?.mapTable?.[i] : null;
     if (!row) return null;
     const loc = standAt(row.px, row.py);
-    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;   // R2-5b: a slice under its quest name
+    return loc && loc.mapTableData?.mapId >>> 0 === row.mapId ? questView(loc) : null; // R2-5b: a slice under its quest name
   }
   /** The site a quest holds of this name in this region, carried by its pixel, joined to the table (and to every table
    *  of the region made after); its index, or undefined. */
@@ -271,8 +341,16 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
       const p = sd?.worldPixel;
       if (sd?.regionIndex !== r || sd.locationName !== name || !p) continue;
       const loc = questView(standAt(p.x, p.y));
-      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;
-      const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0, tableKey: loc.mapTableData?.key });
+      if (!loc || loc.name !== name || loc.mapTableData?.mapId >>> 0 !== sd.mapId >>> 0) continue;
+      const row = provinceRow({
+        mapId: sd.mapId,
+        name,
+        px: p.x,
+        py: p.y,
+        type: loc.mapTableData?.locationType ?? 0,
+        dungeonType: loc.mapTableData?.dungeonType ?? 0,
+        tableKey: loc.mapTableData?.key,
+      });
       if (!found.has(r)) found.set(r, new Map());
       /** @type {Map<string, any>} */ (found.get(r)).set(name, row);
       const table = tables.get(r)?.region;
@@ -281,18 +359,24 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     return undefined;
   }
   /** A province's region's place by name: the table's, else a held site's (the lookup's miss); its index, or -1. */
-  const indexOfName = (/** @type {number} */ r, /** @type {string} */ name) => tableOf(r)?.mapNameLookup.get(name) ?? -1;
+  const indexOfName = (/** @type {number} */ r, /** @type {string} */ name) =>
+    tableOf(r)?.mapNameLookup.get(name) ?? -1;
   return {
     getRegion,
     getLocation,
     indexOfName,
     /** R2-5c: the capital's other slices nearest a slice location (capitalSlicesNear over the build's places). @param {any} loc */
-    capitalSlicesNear: (/** @type {any} */ loc, /** @type {any} */ admits = null) => capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),
+    capitalSlicesNear: (/** @type {any} */ loc, /** @type {any} */ admits = null) =>
+      capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),
     /** R2-5f: a capital slice's sites by kind (kept), by its pixel. */
     sliceIndexAt,
     /** R2-5f: whether row `i` of a province's table is a capital slice whose sites index `gives` refuses - a dart's miss
      *  known before the slice stands; false for every other row (a town, a lair, the countryside: its own walk decides). */
-    siteIndexRefuses(/** @type {number} */ r, /** @type {number} */ i, /** @type {(index: readonly any[]) => boolean} */ gives) {
+    siteIndexRefuses(
+      /** @type {number} */ r,
+      /** @type {number} */ i,
+      /** @type {(index: readonly any[]) => boolean} */ gives,
+    ) {
       const row = isProvinceRegion(r) ? tableOf(r)?.mapTable?.[i] : null;
       return sliceRow(row) && !gives(sliceIndexAt(row.px, row.py));
     },
@@ -319,12 +403,18 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
  *  sites) - `has` the rows' alone. */
 class HeldNames extends Map {
   /** @param {(name: string) => number|undefined} miss */
-  constructor(miss) { super(); this.miss = miss; }
+  constructor(miss) {
+    super();
+    this.miss = miss;
+  }
   /** @param {string} name */
-  get(name) { return super.has(name) ? super.get(name) : this.miss(name); }
+  get(name) {
+    return super.has(name) ? super.get(name) : this.miss(name);
+  }
 }
 
 /** Every site details a quest machine's quests hold (their Places'). @param {any} machine */
 export function* machineSites(machine) {
-  for (const q of machine?.quests?.values?.() ?? []) for (const res of q?.resources?.values?.() ?? []) if (res?.isPlace && res.siteDetails) yield res.siteDetails;
+  for (const q of machine?.quests?.values?.() ?? [])
+    for (const res of q?.resources?.values?.() ?? []) if (res?.isPlace && res.siteDetails) yield res.siteDetails;
 }

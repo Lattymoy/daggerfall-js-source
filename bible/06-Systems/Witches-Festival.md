@@ -198,7 +198,7 @@ The title's own UPDATE carries it, so the title row's guard is the purse's: once
 answers the title held). Only while the festival is open for the account at the claim's clock - its days
 (`festivalOpen`) and its switch (`festivalOpenFor`) - and never to a guest (a guest's end is refused before the batch).
 The answer says `purse`, the cakes paid; the page hears it at the questlines' door
-(`src/scenes/quest/questlineHost.js:"export function hearPurse(answer, { say = (line) => festivalDoors().say(line), refresh = refreshFestival } = {}) {"`):
+(`src/scenes/quest/questlineHost.js:"export function hearPurse"`):
 "+30 Soul Cakes", said as a find is, and the account's count read again through the festival's own door
 (`refreshFestival`), which restacks the pack's Soul Cakes to it. A purse whose answer was lost is on the count all the
 same, and the pack's face follows at the festival's next answer.

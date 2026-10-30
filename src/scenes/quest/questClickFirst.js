@@ -31,7 +31,12 @@ export function createQuestClickFirst({ tick, top, heard }) {
     hold(open) {
       if (!heard?.()) return false;
       const before = top?.() ?? null;
-      try { tick?.(); } catch (e) { console.error('[quest] the click\'s tick failed:', e?.message ?? e); return false; }
+      try {
+        tick?.();
+      } catch (e) {
+        console.error("[quest] the click's tick failed:", e?.message ?? e);
+        return false;
+      }
       const after = top?.() ?? null;
       if (!after || after === before) return false;
       waiting = open;
@@ -45,7 +50,11 @@ export function createQuestClickFirst({ tick, top, heard }) {
       open();
     },
     /** A scene left with the door still waiting: it never opens. */
-    drop() { waiting = null; },
-    get waiting() { return !!waiting; },
+    drop() {
+      waiting = null;
+    },
+    get waiting() {
+      return !!waiting;
+    },
   };
 }

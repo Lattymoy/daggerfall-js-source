@@ -290,8 +290,8 @@
   {
     "name": "T-B-the-door-deaf",
     "file": "src/scenes/quest/questlineHost.js",
-    "old": "const a = await door.claim(body); hearPurse(a); return a;",
-    "new": "const a = await door.claim(body); return a;",
+    "old": "      hearPurse(a);\n      return a;",
+    "new": "      return a;",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -300,8 +300,8 @@
   {
     "name": "T-B-the-pack-unrestacked",
     "file": "src/scenes/quest/questlineHost.js",
-    "old": "  refresh().catch(() => {});\n",
-    "new": "  void refresh;\n",
+    "old": "  refresh().catch(() => {});",
+    "new": "  void refresh;",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],

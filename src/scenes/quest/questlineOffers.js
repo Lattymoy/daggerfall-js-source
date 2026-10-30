@@ -31,14 +31,21 @@ export const GUILD_POSTS = Object.freeze({ [GUILD_GROUPS.MagesGuild]: 'magery', 
 /** The take's words: the line taken, or why it could not be (qlLineRunner.js takeLine's reasons). */
 export function takeWords(r, title) {
   if (r?.ok) return t('ql.offer.taken', 'You took up {title}. It is on the Quests tab of the pause menu.', { title });
-  if (r?.reason === 'noplace') return t('ql.offer.noPlace', 'It cannot be taken up here. Try again in a town, or in another region.');
+  if (r?.reason === 'noplace')
+    return t('ql.offer.noPlace', 'It cannot be taken up here. Try again in a town, or in another region.');
   return t('ql.offer.notOnOffer', 'That questline is not on offer now.');
 }
 
 /** A letter's rows as the board reads them: each paragraph's hard-wrapped lines joined, the paragraphs a blank line
  *  apart. */
-export const letterText = (rows) => rows.map((r) => String(r ?? '').trim()).join('\n')
-  .split(/\n{2,}/).map((p) => p.split('\n').filter(Boolean).join(' ')).filter(Boolean).join('\n\n');
+export const letterText = (rows) =>
+  rows
+    .map((r) => String(r ?? '').trim())
+    .join('\n')
+    .split(/\n{2,}/)
+    .map((p) => p.split('\n').filter(Boolean).join(' '))
+    .filter(Boolean)
+    .join('\n\n');
 
 /** The letter a line's first step opens with - its first letter Item's `used` message (every first step's `Item ...
  *  letter used 1011`) - as the quest's tokens, or null. */
@@ -53,7 +60,9 @@ export function firstLetterTokens(quest) {
 /** QL-OFFERED: the notice board's source on this page - the bridge's offers (setLineBoard), read by the board's one door
  *  (ui/noticeDoor.js) as the acts' sink is read (qlActs.js setActSink): one bridge a page. */
 let _board = null;
-export function setLineBoard(fn) { _board = typeof fn === 'function' ? fn : null; }
+export function setLineBoard(fn) {
+  _board = typeof fn === 'function' ? fn : null;
+}
 /** One board's opening of the introductions on offer, or null where no bridge posts any. */
 export const lineBoard = () => _board?.() ?? null;
 
@@ -70,7 +79,9 @@ export function createQuestlineOffers({ machine, questlines, rowsOf, ctx = {} })
   /** line id -> the character's second a giver's offer of it was refused: it rests RETRY_GAP_S at the givers. */
   const resting = new Map();
   const now = () => ctx.nowSeconds?.() ?? 0;
-  const say = (text) => { if (text) ctx.say?.(text); };
+  const say = (text) => {
+    if (text) ctx.say?.(text);
+  };
 
   /** A line not begun and on offer, its first step parsed for its letter - `{ line, quest, tokens }` - or null. */
   function offerOf(l) {
@@ -101,11 +112,15 @@ export function createQuestlineOffers({ machine, questlines, rowsOf, ctx = {} })
       before();
       const gen = generation;
       return {
-        kind: 'offer', line: l.id,
+        kind: 'offer',
+        line: l.id,
         prompt: { tokens: o.tokens, buttons: 'YesNo', clickAnywhereToClose: false, allowCancel: false },
         respond: (yes) => {
-          if (gen !== generation) return { kind: 'close' };   // QUEST-UID1: a load took the offer away under its popup
-          if (!yes) { resting.set(l.id, now()); return { kind: 'refused', popup: null }; }
+          if (gen !== generation) return { kind: 'close' }; // QUEST-UID1: a load took the offer away under its popup
+          if (!yes) {
+            resting.set(l.id, now());
+            return { kind: 'refused', popup: null };
+          }
           const r = take(l.id, o.quest);
           return r.ok ? { kind: 'accepted', popup: null, quest: o.quest } : { kind: 'close' };
         },
@@ -121,10 +136,17 @@ export function createQuestlineOffers({ machine, questlines, rowsOf, ctx = {} })
      * (no cards: nothing on offer here).
      */
     board() {
-      const offers = QL_LINES.filter((l) => l.post === 'board').map(offerOf).filter(Boolean);
+      const offers = QL_LINES.filter((l) => l.post === 'board')
+        .map(offerOf)
+        .filter(Boolean);
       const gen = generation;
       return {
-        cards: offers.map((o) => ({ id: o.line.id, title: o.line.title(), giver: o.line.giver(), text: letterText(rowsOf(o.tokens)) })),
+        cards: offers.map((o) => ({
+          id: o.line.id,
+          title: o.line.title(),
+          giver: o.line.giver(),
+          text: letterText(rowsOf(o.tokens)),
+        })),
         take: (id) => {
           const o = offers.find((x) => x.line.id === id);
           if (!o || gen !== generation) return { ok: false, line: id, reason: 'closed', text: takeWords(null) };
@@ -138,11 +160,17 @@ export function createQuestlineOffers({ machine, questlines, rowsOf, ctx = {} })
     /** Someone with work in a tavern (the bridge's offerSocialQuest): Corvane's, Imrah's and Hamid's lines - the offer
      *  step, or null for DFU's own social draw. DFU's ctor half first, as offerSocialQuest's: the questor leaves the work
      *  pool, unless the player is inside a castle. */
-    atTavern: (npcData) => atPost('tavern', () => { if (!ctx.isPlayerInsideCastle?.()) ctx.removeNpcQuestor?.(npcData?.nameSeed ?? 0); }),
+    atTavern: (npcData) =>
+      atPost('tavern', () => {
+        if (!ctx.isPlayerInsideCastle?.()) ctx.removeNpcQuestor?.(npcData?.nameSeed ?? 0);
+      }),
     /** THE QUESTS TAB'S TAKE UP: the line on offer begun (or its first step, set aside in the journal, taken back).
      *  Answers `{ ok, reason?, text }`. */
     takeUp: (id) => take(id),
     /** A load: every offer in hand let go, and the givers' rests with them. */
-    reset() { generation++; resting.clear(); },
+    reset() {
+      generation++;
+      resting.clear();
+    },
   };
 }

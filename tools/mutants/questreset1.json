@@ -119,8 +119,8 @@
   {
     "name": "QRESET-credit-ungated",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "return countsByName(quest, r) ? r : null;",
-    "new": "return r;",
+    "old": "  for (const r of quest.resources.values())\n    if (r.isFoe && r.symbol?.name === tag.s) return countsByName(quest, r) ? r : null;",
+    "new": "  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "QRESET-credit-killed-unread",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "(a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe')",
-    "new": "(a.typeName === 'InjuredFoe')",
+    "old": "      if (\n        a?.isTriggerCondition &&\n        (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe') &&\n        a.foeSymbol?.name === name\n      )\n        return true;",
+    "new": "      if (a?.isTriggerCondition && a.typeName === 'InjuredFoe' && a.foeSymbol?.name === name) return true;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "QRESET-credit-injured-unread",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "(a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe')",
-    "new": "(a.typeName === 'KilledFoe')",
+    "old": "      if (\n        a?.isTriggerCondition &&\n        (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe') &&\n        a.foeSymbol?.name === name\n      )\n        return true;",
+    "new": "      if (a?.isTriggerCondition && a.typeName === 'KilledFoe' && a.foeSymbol?.name === name) return true;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "QRESET-credit-any-trigger",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "&& a.foeSymbol?.name === name) return true;",
-    "new": ") return true;",
+    "old": "      if (\n        a?.isTriggerCondition &&\n        (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe') &&\n        a.foeSymbol?.name === name\n      )\n        return true;",
+    "new": "      if (a?.isTriggerCondition && (a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe')) return true;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]

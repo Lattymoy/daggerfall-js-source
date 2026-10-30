@@ -110,8 +110,8 @@
   {
     "name": "KK-ledger-held-forever",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    this._said = this._said.filter((r) => now - r.at < this.holdMs);\n",
-    "new": "",
+    "old": "    this._said = this._said.filter((r) => now - r.at < this.holdMs);\n    return this._said.length ? this._said.map(({ q, s, i }) => ({ q, s, i })) : null;",
+    "new": "    return this._said.length ? this._said.map(({ q, s, i }) => ({ q, s, i })) : null;",
     "tests": [
       "test/systems/quest/keptkill.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "KK-ledger-unbounded",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (this._said.length > this.max) this._said.splice(0, this._said.length - this.max);\n",
-    "new": "",
+    "old": "    if (this._said.length > this.max) this._said.splice(0, this._said.length - this.max);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/quest/keptkill.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "KK-ledger-counts-twice",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (this._counted.has(k)) return false;\n",
-    "new": "",
+    "old": "    if (this._counted.has(k)) return false;\n    this._counted.set(k, now);",
+    "new": "    this._counted.set(k, now);",
     "tests": [
       "test/systems/quest/keptkill.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KK-ledger-never-forgets",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    for (const [k, at] of this._counted) if (now - at >= this.memoryMs) this._counted.delete(k);\n",
-    "new": "",
+    "old": "    for (const [k, at] of this._counted) if (now - at >= this.memoryMs) this._counted.delete(k);\n    const k = `${owner}|${q}|${s}|${i}`;",
+    "new": "    const k = `${owner}|${q}|${s}|${i}`;",
     "tests": [
       "test/systems/quest/keptkill.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "KK-credit-no-injury",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (!foe.injuredTrigger) foe.setInjured?.();\n",
-    "new": "",
+    "old": "    if (!foe.injuredTrigger) foe.setInjured?.();\n    foe.creditPartnerKill?.(owner); // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought",
+    "new": "    foe.creditPartnerKill?.(owner); // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought",
     "tests": [
       "test/systems/quest/keptkill.test.js"
     ]
