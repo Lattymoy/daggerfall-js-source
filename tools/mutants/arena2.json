@@ -496,8 +496,8 @@
   {
     "name": "ARENA2-FLOOR-Y",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos - PROPS_Y,",
-    "new": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos,",
+    "old": "      yPos: o.YPos - PROPS_Y,",
+    "new": "      yPos: o.YPos,",
     "tests": [
       "test/world/arena/arena2_floor.test.js"
     ]
@@ -505,7 +505,7 @@
   {
     "name": "ARENA2-FLOOR-STAIR",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "    if (id === 43600) continue;   // the undercroft's stair is the city's",
+    "old": "    if (id === 43600) continue; // the undercroft's stair is the city's",
     "new": "",
     "tests": [
       "test/world/arena/arena2_floor.test.js"

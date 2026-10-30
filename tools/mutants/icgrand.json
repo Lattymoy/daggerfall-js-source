@@ -265,8 +265,8 @@
   {
     "name": "IC-GRAND-arena-daggerfall-alone",
     "file": "src/world/arena/arenaCity.js",
-    "old": "export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior",
-    "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior",
+    "old": "export const standsArena = (loc) =>\n  isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
+    "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "IC-GRAND-arena-any-city",
     "file": "src/world/arena/arenaCity.js",
-    "old": "export const standsArena = (loc) => isArenaCity(loc) ||",
-    "new": "export const standsArena = (loc) => true ||",
+    "old": "export const standsArena = (loc) =>\n  isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
+    "new": "export const standsArena = (loc) => true || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]

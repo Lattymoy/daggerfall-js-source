@@ -128,8 +128,8 @@
   {
     "name": "ARENA5-HANG-SIDES-SWAPPED",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null",
-    "new": "dx <= -HANG_HALF_M ? banners.east : dx >= HANG_HALF_M ? banners.west : null",
+    "old": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null;",
+    "new": "  const b = dx <= -HANG_HALF_M ? banners.east : dx >= HANG_HALF_M ? banners.west : null;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA5-HANG-MIDDLE",
     "file": "src/world/arena/arenaFloor.js",
-    "old": ": dx >= HANG_HALF_M ? banners.east : null",
-    "new": ": dx >= 0 ? banners.east : null",
+    "old": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null;",
+    "new": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= 0 ? banners.east : null;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]

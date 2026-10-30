@@ -512,8 +512,8 @@
   {
     "name": "UNDERCROFTDEEP-the-reach-dropped",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "  for (const m of order.slice(i)) if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push",
-    "new": "  for (const m of order.slice(i)) if (true) out.deep.push",
+    "old": "  for (const m of order.slice(i))\n    if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push({ x: m.x, y: m.y, z: m.z });",
+    "new": "  for (const m of order.slice(i)) if (true) out.deep.push({ x: m.x, y: m.y, z: m.z });",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -522,8 +522,8 @@
   {
     "name": "UNDERCROFTDEEP-the-reach-forgets-the-stair",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "  out.near = [[s.x, s.y, s.z], ...order",
-    "new": "  out.near = [...order",
+    "old": "  out.near = [[s.x, s.y, s.z], ...order.slice(0, i).map((m) => [m.x, m.y, m.z])];",
+    "new": "  out.near = [...order.slice(0, i).map((m) => [m.x, m.y, m.z])];",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],

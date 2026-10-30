@@ -132,6 +132,8 @@
 /src/ui/wild/*/
 !/src/world/
 /src/world/*
+!/src/world/arena/
+/src/world/arena/*/
 !/src/world/card/
 /src/world/card/*/
 !/src/world/jungle/

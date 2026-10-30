@@ -26,16 +26,20 @@
 //   recordStands answers false - `arenaRecordDisplaced`): a room is honoured at any inn of the city, a ticket at any
 //   smith, a quest site is chosen again; a house deed is moved once (systems/arena/arenaMove.js).
 
-import { registerPortBlock, registerLocationEdit, installWorldDataReplacement } from '../../formats/worldData/worldDataReplacement.js';
+import {
+  registerPortBlock,
+  registerLocationEdit,
+  installWorldDataReplacement,
+} from '../../formats/worldData/worldDataReplacement.js';
 import { drawNamedBuildings } from '../../systems/talk/talkTopics.js';
 import { configureLayoutPins, layoutLocationKeyOfMapId } from '../../systems/layoutPins.js';
 import { LOCATION_TYPES, DUNGEON_TYPES } from '../../formats/mapsFile.js';
 import { registerCustomModel } from '../customModels.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
 import { ARENA_MODEL_ID, buildArenaModel, withStairRamps, sealArenaSeams, sealArenaSeamsSliced } from './arenaModel.js';
-import { registerArenaPlaques } from './arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
-import { ARENA_GROUND_MODEL, arenaGroundModel, SAND_R } from './arenaFloor.js';   // AUDIT PRE-MERGE 1003 W1: the city's ground under the floor's instance; ARENA-MAP: the sand the town map leaves open
-import { BUILDING_TYPES } from '../buildingNames.js';   // ARENA-MAP: the byte the town map draws the colosseum in
+import { registerArenaPlaques } from './arenaPlaques.js'; // ARENA5: the Hall of Champions' plaque wall
+import { ARENA_GROUND_MODEL, arenaGroundModel, SAND_R } from './arenaFloor.js'; // AUDIT PRE-MERGE 1003 W1: the city's ground under the floor's instance; ARENA-MAP: the sand the town map leaves open
+import { BUILDING_TYPES } from '../buildingNames.js'; // ARENA-MAP: the byte the town map draws the colosseum in
 import ARENA_BLOCK_JSON from '../../../vendor/daggerfall-arena/Arena/ARENADAG.RMB.json' with { type: 'json' };
 import UNDERCROFT_JSON from '../../../vendor/daggerfall-arena/Arena/undercroft.json' with { type: 'json' };
 import ARENA_MODEL_INDEX from '../../../vendor/daggerfall-arena/Models/864102.json' with { type: 'json' };
@@ -55,13 +59,15 @@ export const UNDERCROFT_LOCATION_ID = 55398;
 export const UNDERCROFT_MAP_ID = 211207;
 
 /** Whether a building key names a building of the arena's cell: DFU's key is (x << 16) + (y << 8) + record. */
-export const inArenaCell = (buildingKey) => buildingKey > 0 && (buildingKey >> 16) === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1];
+export const inArenaCell = (buildingKey) =>
+  buildingKey > 0 && buildingKey >> 16 === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1];
 /** Whether a location is Daggerfall city. */
 export const isArenaCity = (loc) => loc?.regionIndex === ARENA_REGION && loc?.locationIndex === ARENA_LOCATION;
 /** IC-GRAND (bible/11-Multiplayer/Arena.md "IC-GRAND"): whether a location stands the arena - Daggerfall city, or a place
  *  whose grid lays the arena's block itself (the Imperial City's Arena District, world/imperialCity.js's ARENA cell):
  *  its 43600 stair the undercroft's door there too. */
-export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);
+export const standsArena = (loc) =>
+  isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);
 
 /**
  * THE GATE'S PEOPLE (ARENA1's placeholder for ARENA2/3): flats in Daggerfall's person archives (world/rdbLayout.js
@@ -75,21 +81,41 @@ export const ARENA_GATE_PEOPLE = Object.freeze([
   Object.freeze({ role: 'herald', archive: 183, record: 5, faction: 595, x: 2025, z: -200, position: 0x41524e01 }),
   Object.freeze({ role: 'warden', archive: 183, record: 2, faction: 372, x: 1930, z: -232, position: 0x41524e02 }),
   Object.freeze({ role: 'warden', archive: 183, record: 3, faction: 372, x: 2120, z: -232, position: 0x41524e03 }),
-  Object.freeze({ role: 'redRecruiter', archive: 182, record: 25, faction: 518, x: 1740, z: -160, position: 0x41524e04 }),
-  Object.freeze({ role: 'blueRecruiter', archive: 182, record: 28, faction: 518, x: 2310, z: -160, position: 0x41524e05 }),
+  Object.freeze({
+    role: 'redRecruiter',
+    archive: 182,
+    record: 25,
+    faction: 518,
+    x: 1740,
+    z: -160,
+    position: 0x41524e04,
+  }),
+  Object.freeze({
+    role: 'blueRecruiter',
+    archive: 182,
+    record: 28,
+    faction: 518,
+    x: 2310,
+    z: -160,
+    position: 0x41524e05,
+  }),
   Object.freeze({ role: 'bookmaker', archive: 182, record: 24, faction: 518, x: 2440, z: -120, position: 0x41524e06 }),
 ]);
 /** The gate person a stood street NPC is, by its record's identity, or null. */
 export function arenaGatePersonOf(pn) {
   if (!pn) return null;
-  return ARENA_GATE_PEOPLE.find((p) => p.position === pn.position && p.archive === pn.textureArchive && p.record === pn.textureRecord) ?? null;
+  return (
+    ARENA_GATE_PEOPLE.find(
+      (p) => p.position === pn.position && p.archive === pn.textureArchive && p.record === pn.textureRecord,
+    ) ?? null
+  );
 }
 /** ARENA-FIX 2: a gate person's name - their office (ARENA_TEXT.gateNames), never one drawn from the city's name bank -
  *  or null for anyone else. The one seam the hover plaque, the Info click and both talk doors ask (scenes/worldModes.js
  *  officeName). */
 export function arenaGatePersonName(pn, names = ARENA_TEXT.gateNames) {
   const p = arenaGatePersonOf(pn);
-  return p ? names?.[p.role] ?? null : null;
+  return p ? (names?.[p.role] ?? null) : null;
 }
 
 // ARENA-FIX 3 (2026-10-02): THE PAVING AND THE PLAZAS. Kamer's ground is DFARENA's - a ZLNDFLAT re-saved, grass (record
@@ -106,11 +132,18 @@ export const ARENA_PAVING = 46;
 /** THE CELL'S GROUND: every tile flagstone, its lay by the tile's own hash (the same every load). Pure. */
 export function arenaGroundTiles() {
   const out = [];
-  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-    const h = ((x * 73856093) ^ (y * 19349663)) >>> 0;
-    const rot = (h >> 3) & 1, flip = (h >> 7) & 1;
-    out.push({ TileBitfield: ARENA_PAVING | (rot ? 0x40 : 0) | (flip ? 0x80 : 0), TextureRecord: ARENA_PAVING, IsRotated: !!rot, IsFlipped: !!flip });
-  }
+  for (let y = 0; y < 16; y++)
+    for (let x = 0; x < 16; x++) {
+      const h = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+      const rot = (h >> 3) & 1,
+        flip = (h >> 7) & 1;
+      out.push({
+        TileBitfield: ARENA_PAVING | (rot ? 0x40 : 0) | (flip ? 0x80 : 0),
+        TextureRecord: ARENA_PAVING,
+        IsRotated: !!rot,
+        IsFlipped: !!flip,
+      });
+    }
   return out;
 }
 /** RMB units from the city's cell frame (metres from the cell's south-west corner): x east, z north (RMB z runs
@@ -129,32 +162,44 @@ const rmbZ = (m) => Math.round(m / 0.025) - 4096;
  */
 export const ARENA_PLAZA_FLATS = Object.freeze([
   // west: ARMRAL02's street (z 44.8..57.6) meets the wall north of the bastion - lamps either side, its signpost
-  Object.freeze({ archive: 210, record: 29, at: [6.9, 43.3] }), Object.freeze({ archive: 210, record: 29, at: [6.9, 59.3] }),
+  Object.freeze({ archive: 210, record: 29, at: [6.9, 43.3] }),
+  Object.freeze({ archive: 210, record: 29, at: [6.9, 59.3] }),
   Object.freeze({ archive: 212, record: 6, at: [1.6, 43.8] }),
   // east: CUSTAA02's street (z 44.8..57.6), the west's mirror
-  Object.freeze({ archive: 210, record: 29, at: [94.9, 43.3] }), Object.freeze({ archive: 210, record: 29, at: [94.9, 59.3] }),
+  Object.freeze({ archive: 210, record: 29, at: [94.9, 43.3] }),
+  Object.freeze({ archive: 210, record: 29, at: [94.9, 59.3] }),
   Object.freeze({ archive: 212, record: 6, at: [100.2, 58.6] }),
   // south: LIBRAL03's street (x 44.8..57.6) meets the postern - lamps either side
-  Object.freeze({ archive: 210, record: 29, at: [42.9, 3.4] }), Object.freeze({ archive: 210, record: 29, at: [58.4, 3.4] }),
+  Object.freeze({ archive: 210, record: 29, at: [42.9, 3.4] }),
+  Object.freeze({ archive: 210, record: 29, at: [58.4, 3.4] }),
 ]);
 /** Their models: `[model, x, z, turn (DF units: 512 a quarter), y]` - the benches along the walls facing the plazas,
  *  the stores stacked by the south towers. */
 export const ARENA_PLAZA_MODELS = Object.freeze([
   // west wall (its face at x 12.4): three benches, crates and a barrel by the south-west tower
-  Object.freeze([41105, 11.7, 51.8, 512, -18]), Object.freeze([41106, 11.7, 62.8, 512, -17]), Object.freeze([41105, 11.7, 29.8, 512, -18]),
-  Object.freeze([41832, 11.4, 20.4, 0, -30]), Object.freeze([41832, 11.5, 22.1, 88, -30]), Object.freeze([41822, 10.2, 21.2, 264, -19]),
+  Object.freeze([41105, 11.7, 51.8, 512, -18]),
+  Object.freeze([41106, 11.7, 62.8, 512, -17]),
+  Object.freeze([41105, 11.7, 29.8, 512, -18]),
+  Object.freeze([41832, 11.4, 20.4, 0, -30]),
+  Object.freeze([41832, 11.5, 22.1, 88, -30]),
+  Object.freeze([41822, 10.2, 21.2, 264, -19]),
   // east wall (its face at x 89.4), the mirror
-  Object.freeze([41105, 90.1, 51.8, 512, -18]), Object.freeze([41106, 90.1, 62.8, 512, -17]), Object.freeze([41105, 90.1, 29.8, 512, -18]),
-  Object.freeze([41832, 90.4, 20.4, 0, -30]), Object.freeze([41832, 90.3, 22.1, -88, -30]), Object.freeze([41822, 91.6, 21.2, -80, -19]),
+  Object.freeze([41105, 90.1, 51.8, 512, -18]),
+  Object.freeze([41106, 90.1, 62.8, 512, -17]),
+  Object.freeze([41105, 90.1, 29.8, 512, -18]),
+  Object.freeze([41832, 90.4, 20.4, 0, -30]),
+  Object.freeze([41832, 90.3, 22.1, -88, -30]),
+  Object.freeze([41822, 91.6, 21.2, -80, -19]),
   // south wall (its face at z 6.6): a bench either side of the postern
-  Object.freeze([41105, 36.9, 6.0, 0, -18]), Object.freeze([41106, 64.4, 6.0, 0, -17]),
+  Object.freeze([41105, 36.9, 6.0, 0, -18]),
+  Object.freeze([41106, 64.4, 6.0, 0, -17]),
 ]);
 
 /** The port's block JSON: Kamer's (vendored) with the gate's people stood in it - and (ARENA-FIX 3) its ground paved
  *  and the blind sides' plazas furnished. Pure. */
 export function arenaBlockJson(vendored = ARENA_BLOCK_JSON) {
   const rmb = vendored.RmbBlock;
-  const fld = { ...rmb.FldHeader, AutoMapData: arenaAutoMap(rmb.FldHeader.AutoMapData, rmb) };   // ARENA-MAP: the town map's colosseum
+  const fld = { ...rmb.FldHeader, AutoMapData: arenaAutoMap(rmb.FldHeader.AutoMapData, rmb) }; // ARENA-MAP: the town map's colosseum
   return {
     ...vendored,
     RmbBlock: {
@@ -163,14 +208,42 @@ export function arenaBlockJson(vendored = ARENA_BLOCK_JSON) {
       Misc3dObjectRecords: [
         ...rmb.Misc3dObjectRecords,
         ...ARENA_PLAZA_MODELS.map(([model, x, z, turn, y]) => ({
-          ModelId: String(model), ModelIdNum: model, ObjectType: 0, XPos: rmbX(x), YPos: y, ZPos: rmbZ(z),
-          XScale: 1, YScale: 1, ZScale: 1, XRotation: 0, YRotation: turn, ZRotation: 0,
+          ModelId: String(model),
+          ModelIdNum: model,
+          ObjectType: 0,
+          XPos: rmbX(x),
+          YPos: y,
+          ZPos: rmbZ(z),
+          XScale: 1,
+          YScale: 1,
+          ZScale: 1,
+          XRotation: 0,
+          YRotation: turn,
+          ZRotation: 0,
         })),
       ],
       MiscFlatObjectRecords: [
         ...rmb.MiscFlatObjectRecords,
-        ...ARENA_GATE_PEOPLE.map((p) => ({ Position: p.position, XPos: p.x, YPos: 0, ZPos: p.z, TextureArchive: p.archive, TextureRecord: p.record, FactionID: p.faction, Flags: 0 })),
-        ...ARENA_PLAZA_FLATS.map((f, i) => ({ Position: 0x41525100 + i, XPos: rmbX(f.at[0]), YPos: -4, ZPos: rmbZ(f.at[1]), TextureArchive: f.archive, TextureRecord: f.record, FactionID: 0, Flags: 0 })),
+        ...ARENA_GATE_PEOPLE.map((p) => ({
+          Position: p.position,
+          XPos: p.x,
+          YPos: 0,
+          ZPos: p.z,
+          TextureArchive: p.archive,
+          TextureRecord: p.record,
+          FactionID: p.faction,
+          Flags: 0,
+        })),
+        ...ARENA_PLAZA_FLATS.map((f, i) => ({
+          Position: 0x41525100 + i,
+          XPos: rmbX(f.at[0]),
+          YPos: -4,
+          ZPos: rmbZ(f.at[1]),
+          TextureArchive: f.archive,
+          TextureRecord: f.record,
+          FactionID: 0,
+          Flags: 0,
+        })),
       ],
     },
   };
@@ -200,17 +273,22 @@ export function standArenaInLocation(dfLocation, maps, blocksFile) {
       const dfBlock = blocksFile.getBlockByName(name);
       const b = { dfBlock, x, y };
       if (dfBlock) list.push(b);
-      if (x === cx && y === cy) { cell = b; break; }
+      if (x === cx && y === cy) {
+        cell = b;
+        break;
+      }
     }
   }
-  const { drawn } = drawNamedBuildings(dfLocation.exterior.buildings, list, { locationIndex: dfLocation.locationIndex ?? 0 });
+  const { drawn } = drawNamedBuildings(dfLocation.exterior.buildings, list, {
+    locationIndex: dfLocation.locationIndex ?? 0,
+  });
   const strip = new Set(drawn.get(cell) ?? []);
   const old = ed.blockNames[at];
   dfLocation.exterior.buildings = dfLocation.exterior.buildings.filter((b) => !strip.has(b));
   dfLocation.exterior.buildingCount = dfLocation.exterior.buildings.length;
   ed.blockNames = ed.blockNames.slice();
   ed.blockNames[at] = ARENA_BLOCK;
-  ed.arenaTook = old;   // the block the cell stood before - a moved deed's house type is read off it (systems/arena/arenaMove.js)
+  ed.arenaTook = old; // the block the cell stood before - a moved deed's house type is read off it (systems/arena/arenaMove.js)
   return { block: old, stripped: strip.size };
 }
 
@@ -223,32 +301,60 @@ export function undercroftLocation(city, spec = UNDERCROFT_JSON) {
   const name = spec.Name;
   const letters = ['N', 'W', 'L', 'S', 'B', 'M'];
   const header = (isInterior) => ({
-    alwaysOne1: 1, x: city.exterior?.recordElement?.header?.x ?? 0, y: city.exterior?.recordElement?.header?.y ?? 0,
-    isExterior: isInterior ? 0 : 32768, unknown1: 0, unknown2: isInterior ? spec.Unknown2 ?? 0 : 0, alwaysOne2: 1,
-    locationId: spec.LocationId, isInterior: isInterior ? 1 : 0, exteriorLocationId: isInterior ? spec.LocationId : 0, locationName: name,
+    alwaysOne1: 1,
+    x: city.exterior?.recordElement?.header?.x ?? 0,
+    y: city.exterior?.recordElement?.header?.y ?? 0,
+    isExterior: isInterior ? 0 : 32768,
+    unknown1: 0,
+    unknown2: isInterior ? (spec.Unknown2 ?? 0) : 0,
+    alwaysOne2: 1,
+    locationId: spec.LocationId,
+    isInterior: isInterior ? 1 : 0,
+    exteriorLocationId: isInterior ? spec.LocationId : 0,
+    locationName: name,
   });
   return {
     // ARENA-FIX 4: named as the place it is - "The Arena Undercroft" (Kamer's record kept its colosseum's "Arena of
     // Daggerfall", the name the header keeps for the record's identity)
-    loaded: true, regionName: city.regionName, name: ARENA_TEXT.undercroft.name, regionIndex: city.regionIndex, locationIndex: city.locationIndex,
-    hasDungeon: true, politic: city.politic, climate: city.climate,
-    mapTableData: { ...city.mapTableData, mapId: UNDERCROFT_MAP_ID, locationType: LOCATION_TYPES.DungeonKeep, dungeonType: DUNGEON_TYPES[spec.DungeonType] ?? DUNGEON_TYPES.HumanStronghold, discovered: true, key: 0, locationId: spec.LocationId },
+    loaded: true,
+    regionName: city.regionName,
+    name: ARENA_TEXT.undercroft.name,
+    regionIndex: city.regionIndex,
+    locationIndex: city.locationIndex,
+    hasDungeon: true,
+    politic: city.politic,
+    climate: city.climate,
+    mapTableData: {
+      ...city.mapTableData,
+      mapId: UNDERCROFT_MAP_ID,
+      locationType: LOCATION_TYPES.DungeonKeep,
+      dungeonType: DUNGEON_TYPES[spec.DungeonType] ?? DUNGEON_TYPES.HumanStronghold,
+      discovered: true,
+      key: 0,
+      locationId: spec.LocationId,
+    },
     exterior: city.exterior,
     dungeon: {
       recordElement: { doorCount: 0, doors: [], header: header(true) },
       header: { nullValue1: 0, unknown1: 0, unknown2: 0, blockCount: spec.Blocks.length, unknown3: null },
       blocks: spec.Blocks.map((b) => ({
-        x: b.X, z: b.Z, isStartingBlock: !!b.IsStartingBlock, blockName: b.BlockName,
-        blockIndex: Math.max(0, letters.indexOf(b.BlockName[0])), blockNumber: Number(b.BlockName.slice(1, 8)) || 0,
+        x: b.X,
+        z: b.Z,
+        isStartingBlock: !!b.IsStartingBlock,
+        blockName: b.BlockName,
+        blockIndex: Math.max(0, letters.indexOf(b.BlockName[0])),
+        blockNumber: Number(b.BlockName.slice(1, 8)) || 0,
       })),
     },
     arenaUndercroft: true,
   };
 }
 /** Whether a location is the undercroft. */
-export const isArenaUndercroft = (loc) => !!loc?.arenaUndercroft && loc?.dungeon?.recordElement?.header?.locationId === UNDERCROFT_LOCATION_ID;
+export const isArenaUndercroft = (loc) =>
+  !!loc?.arenaUndercroft && loc?.dungeon?.recordElement?.header?.locationId === UNDERCROFT_LOCATION_ID;
 /** Whether a door entry of a host's list is the undercroft's stair: a dungeon entrance of the arena's block. */
-export const isUndercroftDoor = (e, dungeonEntranceType) => e?.dfBlock?.name === ARENA_BLOCK && e?.door?.doorType === dungeonEntranceType;
+export const isUndercroftDoor = (e, dungeonEntranceType) =>
+  e?.dfBlock?.name === ARENA_BLOCK && e?.door?.doorType === dungeonEntranceType;
 
 /** A record keyed to a building of the arena's cell in Daggerfall city (its map id the city's - the layout pins'
  *  resolver says which town a map id is). */
@@ -261,7 +367,8 @@ export const arenaRecordDisplaced = (rec, keyOfMapId = layoutLocationKeyOfMapId)
 export const arenaDrawnModel = (built) => withStairRamps(sealArenaSeams(built));
 /** AUDIT PRE-MERGE 1003 W6: the same, its seal a breath at a time (world/arena/arenaModel.js sealArenaSeamsSliced) - the bytes
  *  arenaDrawnModel makes, for a build that breathes (world/customModels.js customModelBuilt). */
-export const arenaDrawnModelSliced = async (built, breathe) => withStairRamps(await sealArenaSeamsSliced(built, breathe));
+export const arenaDrawnModelSliced = async (built, breathe) =>
+  withStairRamps(await sealArenaSeamsSliced(built, breathe));
 
 /** Where the colosseum's binary is served from (the build emits it beside the bundle). */
 export const ARENA_MODEL_BIN_URL = new URL('../../../vendor/daggerfall-arena/Models/864102.bin', import.meta.url).href;
@@ -278,29 +385,44 @@ export function installArena({ readBin = null, log = console } = {}) {
   registerPortBlock(ARENA_BLOCK, arenaBlockJson(), ARENA_BLOCK_INDEX);
   registerLocationEdit(standArenaInLocation);
   configureLayoutPins({ recordDisplaced: (rec) => arenaRecordDisplaced(rec) });
-  registerArenaPlaques();   // ARENA5: the Hall of Champions' plaques (world/arena/arenaPlaques.js), down in the undercroft
-  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles()));   // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance
-  const read = readBin ?? (async () => {
-    const r = await globalThis.fetch(ARENA_MODEL_BIN_URL);
-    if (!r?.ok) throw new Error(`${ARENA_MODEL_BIN_URL}: ${r?.status ?? 'no answer'}`);
-    return new Uint8Array(await r.arrayBuffer());
-  });
+  registerArenaPlaques(); // ARENA5: the Hall of Champions' plaques (world/arena/arenaPlaques.js), down in the undercroft
+  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles())); // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance
+  const read =
+    readBin ??
+    (async () => {
+      const r = await globalThis.fetch(ARENA_MODEL_BIN_URL);
+      if (!r?.ok) throw new Error(`${ARENA_MODEL_BIN_URL}: ${r?.status ?? 'no answer'}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
   _installed = (async () => {
     try {
       const bin = await read();
-      registerCustomModel(ARENA_MODEL_ID, (ctx) => arenaDrawnModel(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null)), () => true,
-        { climateFree: true, needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))],
-          buildSliced: (ctx, breathe) => arenaDrawnModelSliced(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null), breathe) });   // AUDIT PRE-MERGE 1003 W6
+      registerCustomModel(
+        ARENA_MODEL_ID,
+        (ctx) => arenaDrawnModel(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null)),
+        () => true,
+        {
+          climateFree: true,
+          needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))],
+          buildSliced: (ctx, breathe) =>
+            arenaDrawnModelSliced(
+              buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null),
+              breathe,
+            ),
+        },
+      ); // AUDIT PRE-MERGE 1003 W6
       return true;
     } catch (e) {
-      log?.warn?.('[arena] the colosseum\'s model did not load - its block stands without it', e?.message ?? e);
+      log?.warn?.("[arena] the colosseum's model did not load - its block stands without it", e?.message ?? e);
       return false;
     }
   })();
   return _installed;
 }
 /** Test seam. */
-export function _resetArena() { _installed = null; }
+export function _resetArena() {
+  _installed = null;
+}
 
 // ARENA-MAP (2026-10-03, the owner, live: "Arena doesn't show on town map"): THE ARENA ON THE TOWN MAP. Both town maps
 // draw a cell off its block's own 64 x 64 automap bytes (ui/exteriorAutomapWindow.js buildExteriorLayout; the enhanced
@@ -338,11 +460,16 @@ export function arenaAutoMap(bytes, rmb = ARENA_BLOCK_JSON.RmbBlock, box = ARENA
   return Array.from(bytes, (v, i) => {
     if (v !== ARENA_BOWL_BYTE) return v;
     // the pixel's centre about the colosseum; the rows run against +z (ExteriorAutomap.cs:1481, the navgrid's own flip)
-    const x = ((i % 64) + 0.5) * MAP_PX - cx, z = (63 - Math.floor(i / 64) + 0.5) * MAP_PX - cz;
-    const inBox = Math.abs(x - box.center[0]) <= box.extent[0] + MAP_PX / 2 && Math.abs(z - box.center[2]) <= box.extent[2] + MAP_PX / 2;
+    const x = ((i % 64) + 0.5) * MAP_PX - cx,
+      z = (63 - Math.floor(i / 64) + 0.5) * MAP_PX - cz;
+    const inBox =
+      Math.abs(x - box.center[0]) <= box.extent[0] + MAP_PX / 2 &&
+      Math.abs(z - box.center[2]) <= box.extent[2] + MAP_PX / 2;
     return inBox && x * x + z * z > SAND_R * SAND_R ? ARENA_MAP_BYTE : v;
   });
 }
 /** The landmark a block's town-map row carries: the arena's name and place on ARENADAG.RMB, null on any other block. */
-export const arenaTownLandmark = (dfBlock) => (dfBlock?.name === ARENA_BLOCK
-  ? { name: ARENA_MAP_NAME, position: arenaColosseumAt(), buildingType: BUILDING_TYPES.GuildHall } : null);
+export const arenaTownLandmark = (dfBlock) =>
+  dfBlock?.name === ARENA_BLOCK
+    ? { name: ARENA_MAP_NAME, position: arenaColosseumAt(), buildingType: BUILDING_TYPES.GuildHall }
+    : null;

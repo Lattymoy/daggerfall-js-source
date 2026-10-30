@@ -20,8 +20,8 @@
   {
     "name": "ARENAFIX-STAIR-SAME-WAY",
     "file": "src/world/arena/arenaModel.js",
-    "old": "if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX || (sign && Math.sign(d) !== sign)) continue;",
-    "new": "if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX) continue;",
+    "old": "      if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX || (sign && Math.sign(d) !== sign)) continue;",
+    "new": "      if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX) continue;",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENAFIX-RAMP-HULL-OFF",
     "file": "src/world/arena/arenaModel.js",
-    "old": "      if ((b.s - a.s) * (p.y - a.y) - (b.y - a.y) * (p.s - a.s) >= 0) hull.pop(); else break;",
-    "new": "      break;",
+    "old": "      if ((b.s - a.s) * (p.y - a.y) - (b.y - a.y) * (p.s - a.s) >= 0) hull.pop();\n      else break; // b under the chord a-p",
+    "new": "      break; // b under the chord a-p",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENAFIX-RAMP-DRAWN",
     "file": "src/world/arena/arenaModel.js",
-    "old": "  return { ...model, positions, normals, uvs, indices, colliderOnlyFrom: model.indices.length, stairRuns: ramps.runs.length };",
-    "new": "  return { ...model, positions, normals, uvs, indices, subMeshes: [...model.subMeshes, { textureArchive: 0, textureRecord: 0, startIndex: model.indices.length, primitiveCount: ramps.indices.length / 3 }], colliderOnlyFrom: model.indices.length, stairRuns: ramps.runs.length };",
+    "old": "    colliderOnlyFrom: model.indices.length,",
+    "new": "    subMeshes: [\n      ...model.subMeshes,\n      {\n        textureArchive: 0,\n        textureRecord: 0,\n        startIndex: model.indices.length,\n        primitiveCount: ramps.indices.length / 3,\n      },\n    ],\n    colliderOnlyFrom: model.indices.length,",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "ARENAFIX-SEAL-NO-CUT",
     "file": "src/world/arena/arenaModel.js",
-    "old": "    if (!n) { outByPic[T.pic].push([corner(0), corner(1), corner(2)]); continue; }",
-    "new": "    if (n >= 0) { outByPic[T.pic].push([corner(0), corner(1), corner(2)]); continue; }",
+    "old": "    if (!n) {",
+    "new": "    if (n >= 0) {",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "ARENAFIX-SEAL-NO-SINK",
     "file": "src/world/arena/arenaModel.js",
-    "old": "      if (!loser.sink) { loser.sink = SINK_M; sunk++; }",
-    "new": "      if (!loser.sink) { sunk++; }",
+    "old": "          loser.sink = SINK_M;\n          sunk++;",
+    "new": "          sunk++;",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "ARENAFIX-SEAL-NO-WELD",
     "file": "src/world/arena/arenaModel.js",
-    "old": "        if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= T_EPS) {",
-    "new": "        if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= 0) {",
+    "old": "            if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= T_EPS) {",
+    "new": "            if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= 0) {",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "ARENAFIX-PAVING-ONE-LAY",
     "file": "src/world/arena/arenaCity.js",
-    "old": "    const rot = (h >> 3) & 1, flip = (h >> 7) & 1;",
-    "new": "    const rot = 0, flip = 0;",
+    "old": "      const rot = (h >> 3) & 1,\n        flip = (h >> 7) & 1;",
+    "new": "      const rot = 0,\n        flip = 0;",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ARENAFIX-PLAZA-GONE",
     "file": "src/world/arena/arenaCity.js",
-    "old": "        ...ARENA_PLAZA_FLATS.map((f, i) =>",
-    "new": "        ...[].map((f, i) =>",
+    "old": "        ...ARENA_PLAZA_FLATS.map((f, i) => ({",
+    "new": "        ...[].map((f, i) => ({",
     "tests": [
       "test/systems/arena/arena_fix.test.js",
       "test/world/arena/arena1_city.test.js"
@@ -139,7 +139,7 @@
   {
     "name": "ARENAFIX-GATE-NAMES",
     "file": "src/world/arena/arenaCity.js",
-    "old": "  return p ? names?.[p.role] ?? null : null;",
+    "old": "  return p ? (names?.[p.role] ?? null) : null;",
     "new": "  return null;",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "ARENAFIX-UNDERCROFT-FACTION",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "npc: !!person, role: person?.role ?? null, factionID: person ? UNDERCROFT_FACTION : 0,",
-    "new": "npc: !!person, role: person?.role ?? null, factionID: 0,",
+    "old": "      factionID: person ? UNDERCROFT_FACTION : 0,",
+    "new": "      factionID: 0,",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "ARENAFIX-CHAIN-UNHELD",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "  return { id: `undercroft:chain:${n}`, side: 0, out: false, hold: true,",
-    "new": "  return { id: 'undercroft:chain', side: n, out: false, hold: false,",
+    "old": "    id: `undercroft:chain:${n}`,\n    side: 0,\n    out: false,\n    hold: true,",
+    "new": "    id: 'undercroft:chain',\n    side: n,\n    out: false,\n    hold: false,",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
