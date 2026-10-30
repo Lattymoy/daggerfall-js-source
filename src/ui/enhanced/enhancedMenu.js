@@ -254,7 +254,7 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { seasonMark, seasonWindow, seasonSource, anchorSeason } from './enhancedSeason.js';   // SEASON-BOOK: the laurel beside the envelope, and its window
-import { shopMark, shopWindow } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window
+import { shopMark, shopWindow, shopNow } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window - AUDIT-STOREFRONT III B8: its clock the shared one
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
 import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
@@ -4659,7 +4659,7 @@ function renderHome() {
     else if (shopOpen) {
       // SHOP: the shop's window, on the hourglass's own stage; its flow is the visit's, read on its first open
       const shstage = el('div', 'px-stage px-timersstage px-shopstage');
-      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody });
+      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody, now: shopNow });
       shopFocusIn = false;
       shstage.append(shopView.root);
       home.append(shstage);
@@ -6403,7 +6403,7 @@ function onKey(e) {
     : timersOpen && timersView ? () => { timersOpen = false; timersFocusBack = true; render(); }   // TIMERS1: the window first, ahead of the pause face's resume (AUDIT UI-11: a window that is drawn)
     : postOpen && postView ? () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
     : seasonOpen && seasonView ? () => closeSeason()   // SEASON-BOOK: the season window, as the timers'
-    : shopOpen && shopView ? () => closeShop()   // SHOP: the shop's window, as the timers'
+    : shopOpen && shopView ? () => { if (!shopView.back()) closeShop(); }   // SHOP: the shop's window, as the timers' - AUDIT-STOREFRONT III C8: an open folio first
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
     : confirming ? () => { answered(); render(); }   // RPT1026-MISC CONFIRM-SHEET: and the sheet the ask raised

@@ -651,7 +651,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
    * account again. Answers `{ ok, error? }` - `error` the service's word, for the window.
    */
   const passAct = async (/** @type {() => Promise<any>} */ asking, /** @type {() => string} */ noted) => {
-    if (self.busy || self.stage !== 'in') return { ok: false, error: 'busy' };
+    if (self.busy || self.stage !== 'in') return { ok: false, error: 'pass-busy' };   // AUDIT-STOREFRONT III C10: a word the refusals' table says
     const asked = secret();
     self.busy = true; self.error = ''; self.note = ''; changed();
     try {

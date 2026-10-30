@@ -71,8 +71,9 @@ export function passGrantName(/** @type {string} */ grant) {
   return kind === 'kill' || kind === 'portal' || kind === 'mount' ? effectName(kind, key) : key;
 }
 
-/** PASS-PANELS: a page's number as its tab says it (`p` from 0): I, II, III. */
-export const passPanelNumeral = (/** @type {number} */ p) => ['I', 'II', 'III', 'IV', 'V', 'VI'][p] ?? String(p + 1);
+/** PASS-PANELS: a page's number as its tab says it (`p` from 0): I, II, III. AUDIT-STOREFRONT III C4: `arabic` 1, 2, 3 -
+ *  the Grimoire's Alagard draws a capital I as a 1, so its II read 11. */
+export const passPanelNumeral = (/** @type {number} */ p, arabic = false) => (arabic ? String(p + 1) : ['I', 'II', 'III', 'IV', 'V', 'VI'][p] ?? String(p + 1));
 /** PASS-PANELS: THE FOLIOS' WORDS, as the shop's Folios section says them (ui/enhanced/enhancedPass.js). */
 export const PASS_PANEL_TEXT = Object.freeze({
   how: () => t('shop.pass.howFolios', 'Spend Aurum on any item of an open page. Each page opens once you spend enough in its folio. The folios never close.'),
@@ -94,7 +95,7 @@ export const PASS_PANEL_TEXT = Object.freeze({
   prev: () => t('shop.pass.prev', 'Previous page'),
   next: () => t('shop.pass.next', 'Next page'),
   pageLocked: (/** @type {number} */ n) => t('shop.pass.pageLocked', 'Spend {n, number} more Aurum in this folio to open this page.', { n }),
-  pageFolio: (/** @type {string} */ name) => t('shop.pass.pageFolio', 'Unlock {name} to open this page.', { name }),
+  pageFolio: () => t('shop.pass.pageFolioLocked', 'Unlock this folio to open this page.'),   // AUDIT-STOREFRONT III C17: no name mid-sentence
   spent: (/** @type {number} */ n) => t('shop.pass.spent', '{n, number} Aurum spent', { n }),
   found: (/** @type {number} */ n, /** @type {number} */ max) => t('shop.pass.found', 'Aurum found today: {n, number} of {max, number}', { n, max }),
   foundLabel: () => t('shop.pass.foundLabel', 'Aurum your deeds found today'),
@@ -108,6 +109,8 @@ export const PASS_PANEL_TEXT = Object.freeze({
   buyLabel: (/** @type {string} */ name, /** @type {number} */ n) => t('shop.pass.buyLabel', 'Buy {name} for {n, number} Aurum', { name, n }),
   confirm: () => t('shop.pass.confirm', 'Confirm'),
   confirmLabel: (/** @type {string} */ name, /** @type {number} */ n) => t('shop.pass.confirmLabel', 'Confirm: buy {name} for {n, number} Aurum', { name, n }),
+  buying: () => t('shop.pass.buying', 'Buying...'),   // AUDIT-STOREFRONT III C12: a spend's press while its answer is out
+  unlocking: () => t('shop.pass.unlocking', 'Unlocking...'),
   itemOwned: () => t('shop.state.held', 'Owned'),
   short: (/** @type {number} */ n) => t('shop.daily.short', 'You need {n, number} more Aurum', { n }),
   getAurum: () => t('shop.daily.get', 'Get Aurum'),
@@ -116,6 +119,11 @@ export const PASS_PANEL_TEXT = Object.freeze({
   reading: () => t('shop.who.reading', 'Reading your account...'),
   closed: () => t('shop.pass.closedFolios', 'The Folios are not open yet.'),
   soon: (/** @type {string} */ day) => t('shop.pass.soonFolios', 'The Folios open on {day}.', { day }),
+  // AUDIT-STOREFRONT III C5: why an item or the unlock offers no press, on it - the shop's own short words
+  itemSoon: (/** @type {string} */ day) => t('shop.pass.opens', 'Opens {day}', { day }),
+  itemClosed: () => t('shop.state.closed', 'Not on sale yet'),
+  itemGuest: () => t('shop.state.guest', 'Needs a username'),
+  itemOut: () => t('shop.state.out', 'Sign in to buy'),
   stageOpens: (/** @type {string} */ day) => t('shop.pass.opens', 'Opens {day}', { day }),
   stageUntil: (/** @type {string} */ day) => t('shop.pass.until', 'Until {day}', { day }),
   stageEnded: (/** @type {string} */ day) => t('shop.pass.ended', 'Ended {day}', { day }),
@@ -123,21 +131,3 @@ export const PASS_PANEL_TEXT = Object.freeze({
   challengePay: (/** @type {number} */ n) => t('shop.deed.pay', '+{n, number} Aurum', { n }),
   over: () => t('shop.pass.overFolios', 'The season is over, and its challenges with it. Its folios stay open.'),
 });
-/** PASS-PANELS: why the account flow says a buy or an unlock was turned down (its `pass-*` words, and its own three). */
-const PASS_REFUSAL = Object.freeze({
-  'pass-guest': PASS_PANEL_TEXT.guest,
-  'pass-closed': PASS_PANEL_TEXT.closed,
-  'pass-season': () => t('shop.pass.err.season', 'That season has no folios.'),
-  'pass-item': () => t('shop.pass.err.item', 'No folio holds that item.'),
-  'pass-soon': () => t('shop.pass.err.soon', 'The folios open when the season starts.'),
-  'pass-held': () => t('shop.pass.err.held', 'You own it already.'),
-  'pass-track': () => t('shop.pass.err.track', 'Unlock this folio first.'),
-  'pass-panel': () => t('shop.pass.err.panel', 'Its page is not open yet. Spend more Aurum in its folio first.'),
-  'pass-short': () => t('shop.pass.err.short', 'You do not have enough Aurum.'),
-  'pass-busy': () => t('shop.pass.err.busy', 'Another purchase is going through. Try again in a moment.'),
-  busy: () => t('shop.pass.err.busy', 'Another purchase is going through. Try again in a moment.'),
-  auth: () => t('shop.pass.err.auth', 'Your sign-in has lapsed. Sign in again from your profile.'),
-  offline: () => t('shop.pass.err.offline', 'The account service cannot be reached. Try again later.'),
-});
-/** A refusal's sentence - an error no table names said plainly. */
-export const passRefusalText = (/** @type {unknown} */ error) => PASS_REFUSAL[/** @type {keyof typeof PASS_REFUSAL} */ (String(error))]?.() ?? t('shop.pass.err.other', 'It did not go through. Try again.');

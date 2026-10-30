@@ -62,7 +62,9 @@ test('AURUM the balance in the head: the account\'s Aurum, its words for a scree
   const chip = all(w.root, 'sh-balance')[0];
   assert.equal(chip.hidden, false);
   assert.equal(all(chip, 'sh-balancen')[0].textContent, '1,450');
-  assert.equal(chip.attrs['aria-label'], 'Your Aurum: 1,450');
+  // PIN MOVED (AUDIT-STOREFRONT III C9): a span's aria-label is dropped from the tree - its words are its own, the number hidden
+  assert.equal(all(chip, 'sh-sr')[0].textContent, 'Your Aurum: 1,450');
+  assert.equal(all(chip, 'sh-balancen')[0].attrs['aria-hidden'], 'true');
   flow.aurum = aurum(-300); w.draw();
   assert.ok(String(chip.className).includes('sh-owing'));
   flow.aurum = aurumCardOf({ open: false, balance: 10 }); w.draw();

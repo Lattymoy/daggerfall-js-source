@@ -117,7 +117,7 @@ test('FOLIOS the pages: one at a time, turned by the arrows (labelled, still at 
   const w = open(fl, { doc, keep: { folio: 'free', page: 0 } });
   const prev = all(w.root, 'sh-pageprev')[0], next = all(w.root, 'sh-pagenext')[0], spread = all(w.root, 'sh-spread')[0];
   assert.deepEqual([prev.attrs['aria-label'], next.attrs['aria-label']], ['Previous page', 'Next page']);
-  assert.deepEqual([prev.disabled, next.disabled], [true, false]);
+  assert.deepEqual([prev.attrs['aria-disabled'], next.attrs['aria-disabled']], ['true', 'false'], 'PIN MOVED (AUDIT-STOREFRONT III C2): aria-disabled, so a focused arrow keeps the focus');
   assert.equal(all(w.root, 'sh-page').length, 1, 'one page shown');
   assert.equal(all(w.root, 'sh-page')[0].attrs['aria-labelledby'], 'sh-page-free-0');
   const tabs = all(w.root, 'sh-pagetab');
@@ -130,7 +130,7 @@ test('FOLIOS the pages: one at a time, turned by the arrows (labelled, still at 
   assert.deepEqual(all(w.root, 'sh-pitem').map((c) => c.attrs['data-grant']), passPanelsOf('s1', 'free')[1].items.map((it) => it.grant));
   tabs[2].click();
   assert.equal(selected(w), 2);
-  assert.equal(all(w.root, 'sh-pagenext')[0].disabled, true, 'the last page: no next');
+  assert.equal(all(w.root, 'sh-pagenext')[0].attrs['aria-disabled'], 'true', 'the last page: no next (PIN MOVED, AUDIT-STOREFRONT III C2)');
   const key = (k) => { let stopped = false; for (const f of spread.listeners.keydown ?? []) f({ key: k, preventDefault() {}, stopPropagation() { stopped = true; } }); return stopped; };
   assert.equal(key('ArrowLeft'), true);
   assert.equal(selected(w), 1);
@@ -154,11 +154,11 @@ test('FOLIOS a locked page previews its items greyed and padlocked, offering no 
   }
   w.stop();
   const g = open(flowIn({ balance: 2400 }), { keep: { folio: 'premium', page: 0 } });
-  assert.equal(all(g.root, 'sh-ppanelstate')[0].textContent, 'Unlock The Gilded Folio to open this page.');
+  assert.equal(all(g.root, 'sh-ppanelstate')[0].textContent, 'Unlock this folio to open this page.', 'PIN MOVED (AUDIT-STOREFRONT III C17): no "The" mid-sentence');
   assert.ok(all(g.root, 'sh-pitem').every((c) => has(c, 'sh-pitemlocked') && !all(c, 'sh-pbuy').length));
   assert.equal(all(g.root, 'sh-punlock')[0].hidden, false, 'its unlock in the spread\'s head');
   all(g.root, 'sh-pagenext')[0].click();
-  assert.equal(all(g.root, 'sh-ppanelstate')[0].textContent, `Spend ${passPanelsOf('s1', 'premium')[1].open.toLocaleString('en-US')} more Aurum in this folio to open this page.`);
+  assert.equal(all(g.root, 'sh-ppanelstate')[0].textContent, 'Unlock this folio to open this page.', 'PIN MOVED (AUDIT-STOREFRONT III C17): the folio\'s lock first - nothing is spent in it yet');
   g.stop();
   const u = open(flowIn({ premium: true }), { keep: { folio: 'premium', page: 0 } });
   assert.equal(all(u.root, 'sh-ppanelstate')[0].textContent, `0 of ${passPanelsOf('s1', 'premium')[0].items.length} owned`);
@@ -185,7 +185,7 @@ test('FOLIOS an item bought with two presses - Buy arms it, the second buys thro
   buy().click(); buy().click();
   assert.deepEqual(calls, [['s1', grant]], 'two presses: bought');
   await new Promise((r) => setImmediate(r));
-  assert.equal(text(itemCard(w, grant), 'sh-state'), 'Its page is not open yet. Spend more Aurum in its folio first.');
+  assert.equal(text(itemCard(w, grant), 'sh-state'), 'That page is still locked. Buy more in this folio to open it.', 'PIN MOVED (AUDIT-STOREFRONT III C10): the account flow\'s own sentence');
   assert.ok(has(all(itemCard(w, grant), 'sh-state')[0], 'sh-state-bad'));
   all(w.root, 'sh-pageprev')[0].click();
   const owned = itemCard(w, 'glyph:cog');

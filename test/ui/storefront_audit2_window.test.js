@@ -148,7 +148,7 @@ test('AUDIT-STOREFRONT II E3, E5, E12: a title on a folio\'s item keeps its own 
   const w = open({ flow: fl, keep: { cat: 'kills' } });
   const row = all(w.root, 'sh-panel').find((p) => p.attrs['data-ware'] === 'kill:pyre');
   assert.ok(String(all(row, 'sh-buyrow')[0].className).includes('sh-buyrow-held'));
-  assert.match(SHOP_CSS, /\.px-shopwin \.sh-buyrow-held \.sh-price \{ font-size: 15px; opacity: 0\.6; \}/);
+  assert.match(SHOP_CSS, /\.px-shopwin \.sh-buyrow-held \.sh-price \{ font-size: 15px; opacity: 0\.8; \}/, 'PIN MOVED (AUDIT-STOREFRONT III C7): at 0.6 it read 3.9:1 on Stone');
   w.stop();
 });
 
