@@ -2,50 +2,64 @@
   {
     "name": "MAP-POV-eotb-toggled-back-into-third",
     "file": "src/player/mwView.js",
-    "old": "    eotbCamera.toggleOffset(false);\n    return true;",
-    "new": "    eotbCamera.toggleOffset(true);\n    return true;",
-    "tests": ["test/player/mappov.test.js"]
+    "old": "    if (!eotbCamera.thirdPerson()) return false;\n    eotbCamera.toggleOffset(false);",
+    "new": "    if (!eotbCamera.thirdPerson()) return false;\n    eotbCamera.toggleOffset(true);",
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-eotb-lane-never-moves",
     "file": "src/player/mwView.js",
-    "old": "    if (!eotbCamera.thirdPerson()) return false;\n    eotbCamera.toggleOffset(false);",
-    "new": "    return false;\n    eotbCamera.toggleOffset(false);",
-    "tests": ["test/player/mappov.test.js"]
+    "old": "    if (!eotbCamera.thirdPerson()) return false;",
+    "new": "    return false;",
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-mw-lane-inverted",
     "file": "src/player/mwView.js",
-    "old": "  if (!mwCamera.thirdPerson()) return false;\n  mwCamera.restore(",
-    "new": "  if (mwCamera.thirdPerson()) return false;\n  mwCamera.restore(",
-    "tests": ["test/player/mappov.test.js"]
+    "old": "function mwIntoHead() {\n  if (!mwCamera.thirdPerson()) return false;",
+    "new": "function mwIntoHead() {\n  if (mwCamera.thirdPerson()) return false;",
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-mw-lane-takes-the-wheel",
     "file": "src/player/mwView.js",
-    "old": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  fpArm.setViewMode('first');",
-    "new": "  mwCamera.wheel(1, { ready: false });\n  fpArm.setViewMode('first');",
-    "tests": ["test/player/mappov.test.js"]
+    "old": "  if (!mwCamera.thirdPerson()) return false;\n  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });",
+    "new": "  if (!mwCamera.thirdPerson()) return false;\n  mwCamera.wheel(1, { ready: false });",
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-rig-not-moved-with-the-camera",
     "file": "src/player/mwView.js",
-    "old": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  fpArm.setViewMode('first');\n  return true;",
-    "new": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  return true;",
-    "tests": ["test/player/mappov.test.js"]
+    "old": "  fpArm.setViewMode('first');\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-builder-forgets-the-move",
     "file": "src/scenes/world.js",
     "old": "    mwViewFirstPerson();\n    return createTravelMapWindow({",
     "new": "    return createTravelMapWindow({",
-    "tests": ["test/player/mappov.test.js"]
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   },
   {
     "name": "MAP-POV-the-move-at-the-door-above-the-refusals",
     "file": "src/scenes/world.js",
     "old": "    if (gotoPlace) _travelGoto = gotoPlace;\n    // AUDIT PARTY-UI 1: IsPlayerInside, dfuiOpenTravelMapWindow's FIRST",
     "new": "    if (gotoPlace) _travelGoto = gotoPlace;\n    mwViewFirstPerson();\n    // AUDIT PARTY-UI 1: IsPlayerInside, dfuiOpenTravelMapWindow's FIRST",
-    "tests": ["test/player/mappov.test.js"]
+    "tests": [
+      "test/player/mappov.test.js"
+    ]
   }
 ]

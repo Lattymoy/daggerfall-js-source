@@ -304,8 +304,8 @@
   {
     "name": "ATACT-C1-plaque-puppet",
     "file": "src/player/activate.js",
-    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}),",
-    "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}),",
+    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "ATACT-C5-companion-passed",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
-    "new": "  if (!foe || mode === 'steal') return false;",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "ATACT-C5-steal-passed",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
-    "new": "  if (!foe || foe.companion != null) return false;",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || foe.companion != null) return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "ATACT-C5-plaque-steal",
     "file": "src/player/activate.js",
-    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind)",
-    "new": "  if (!foeHit || !(Number.isFinite(doorBehind)",
+    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))\n    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "new": "  if (!foeHit || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE)) return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

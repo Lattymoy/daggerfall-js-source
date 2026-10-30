@@ -245,8 +245,8 @@
   {
     "name": "SENSE1-an-ask-uncounted",
     "file": "src/player/interactionMode.js",
-    "old": "  _asks[m]++;\n",
-    "new": "",
+    "old": "  _asks[m]++;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]

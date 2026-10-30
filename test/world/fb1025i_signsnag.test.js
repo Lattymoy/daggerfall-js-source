@@ -272,7 +272,7 @@ test('SIGN-PASS THE TOWN HOSTS: the world\'s town build and the exterior host st
   assert.match(pb, /import \{ sightMarksOf \} from '\.\.\/world\/signSolid\.js';/);
   assert.match(ex, /collider\.addMesh\(bucketKey, cpu\.positions, cpu\.indices, matrix, null, null, false, sightMarksOf\(placed\.modelIdNum, cpu\)\);/);
   assert.match(ex, /import \{ sightMarksOf \} from '\.\.\/world\/signSolid\.js';/);
-  assert.match(ls, /const stand = \(key, h\) => collider\.addMesh\?\.\(key, h\.positions, h\.indices, h\.matrix, h\.translation, null, false, h\.sight\);/);
+  assert.match(ls, /const stand = \(key, h\) =>\n\s*collider\.addMesh\?\.\(key, h\.positions, h\.indices, h\.matrix, h\.translation, null, false, h\.sight\);/);
 });
 
 test('SIGN-PASS THE PORT\'S OWN BOARDS: the Stable\'s, the Wagon Yard\'s, the Joinery\'s and the Shipyard\'s signboards, and the Shipyard\'s crew board under its eaves, hang - a ray\'s, no body\'s: every model marks a board\'s triangles (its two faces, its four edges, its two rods: 32) and no other, and no hung triangle comes lower than 1.75 m (mutants: a board laid a body\'s; the mark left on after it; every triangle a body\'s)', () => {

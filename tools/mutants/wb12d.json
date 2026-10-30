@@ -1662,8 +1662,8 @@
   {
     "name": "AUDIT-WB12d-the-summoner-by-his-kind-seen",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "const own = properName(entity);",
-    "new": "const own = null;",
+    "old": "    const own = properName(entity); // AUDIT WB12d (D2): a foe with a name of its own is seen by it - \"You see the Summoner.\"",
+    "new": "    const own = null; // AUDIT WB12d (D2): a foe with a name of its own is seen by it - \"You see the Summoner.\"",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

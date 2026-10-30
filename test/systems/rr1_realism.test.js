@@ -441,7 +441,7 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(wm, /setRrHostSeams\(\{ spawnFoe: \(mobileType, opts\) => standInteriorLooseFoe\(mobileType, opts\) \}\);/);
   assert.match(rd('src/combat/formulas.js'), /chanceToHitMod \+=\n\s*_overrides\.get\('calculateWeaponToHit'\)\?\.\(weapon\) \?\? \(WEAPON_MATERIAL_MODIFIER\[weapon\.material\] \?\? 0\) \* 10;/);
   assert.match(rd('src/combat/formulas.js'), /if \(_overrides\.get\('applyConditionDamageThroughPhysicalHit'\)\?\.\(item, owner, damage, \{ say, rolls \}\) === true\)\n\s*return;/);   // BALANCE1: the override is handed the rolls, for the wear scale's rounding
-  assert.match(rd('src/player/climbing.js'), /const chance = climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\? climbingChance\(/);
+  assert.match(rd('src/player/climbing.js'), /const chance =\n\s*climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\?\n\s*climbingChance\(/);
   assert.match(rd('src/combat/weapon/weaponRig.js'), /const poseProbe = \(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\);/, 'the pair through its one law (HARD2c)');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /setWeaponPoseProbe\(poseProbe\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');
   assert.match(rd('src/player/mountRig.js'), /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\)/);

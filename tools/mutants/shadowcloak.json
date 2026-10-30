@@ -786,8 +786,8 @@
   {
     "name": "SHADOWCLOAK-bones-in-first-person",
     "file": "src/player/mwView.js",
-    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;\n  return fpArm.thirdBones(names);",
-    "new": "  if (eotbLane()) return null;\n  return fpArm.thirdBones(names);",
+    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;",
+    "new": "  if (eotbLane()) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

@@ -258,8 +258,8 @@
   {
     "name": "SIGN-PASS-the-gate-stands-it-whole",
     "file": "src/player/lateSolid.js",
-    "old": "h.matrix, h.translation, null, false, h.sight);\n  return {",
-    "new": "h.matrix, h.translation);\n  return {",
+    "old": "  const stand = (key, h) =>\n    collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation);",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "SIGN-PASS-the-gate-asks-it-whole",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
+    "old": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]

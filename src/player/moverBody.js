@@ -50,8 +50,10 @@ export function carriedBy(m0, m1, p) {
 /** How many meets the mover's step from `m0` to `m1` (its bucket stood at `m1`) is taken in: none when the body neither
  *  stands on it nor is anywhere its step could reach, else one per MOVER_STEP of its motion at the body. */
 export function moverSteps(collider, key, m0, m1, body) {
-  const d = carriedBy(m0, m1, centreOf(body)), travel = Math.hypot(d[0], d[1], d[2]);
-  if (body.groundKey !== key && collider.capsuleContact(body.pos, body.height, travel, { only: [key] }) === null) return 0;
+  const d = carriedBy(m0, m1, centreOf(body)),
+    travel = Math.hypot(d[0], d[1], d[2]);
+  if (body.groundKey !== key && collider.capsuleContact(body.pos, body.height, travel, { only: [key] }) === null)
+    return 0;
   return Math.min(MOVER_STEPS_MAX, Math.max(1, Math.ceil(travel / MOVER_STEP)));
 }
 
@@ -68,7 +70,8 @@ export function meetBody(collider, key, m0, m1, body, place) {
   if (body.groundKey !== key && !moverPresses(collider, key, body)) return true;
   place(m0);
   const before = moverPresses(collider, key, body);
-  const want = carriedBy(m0, m1, centreOf(body)), to = [body.pos[0], body.pos[1], body.pos[2]];
+  const want = carriedBy(m0, m1, centreOf(body)),
+    to = [body.pos[0], body.pos[1], body.pos[2]];
   place(null);
   collider.move(to, want[0], want[1], want[2], body.height, false);
   body.carryBy(to[0] - body.pos[0], to[1] - body.pos[1], to[2] - body.pos[2]);

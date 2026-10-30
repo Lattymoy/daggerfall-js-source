@@ -36,9 +36,9 @@
 // back, as before. The desktop app can: its shell grants the gesture
 // (`shellRelock` below, app/main.cjs).
 
-import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
-import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
-import { isTouchDevice } from '../ui/touch/touchDevice.js';   // RPT1026-MISC TOUCH-NO-LOCK: a finger never takes the lock
+import { isTextEntryTarget } from '../ui/input.js'; // PL2: a typed field's Enter is the field's (CG2)
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js'; // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
+import { isTouchDevice } from '../ui/touch/touchDevice.js'; // RPT1026-MISC TOUCH-NO-LOCK: a finger never takes the lock
 
 let _errBound = false;
 const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -87,16 +87,18 @@ const TOUCH_TYPES = ['touchstart', 'touchmove', 'touchend', 'touchcancel'];
 let _timeClosedInputBox = -Infinity;
 export const INPUT_BOX_TOGGLE_REFUSAL_MS = 300;
 /** DaggerfallInputMessageBox.CloseWindow's stamp (:301). */
-export function noteInputBoxClosed(now = (typeof performance !== 'undefined' ? performance.now() : Date.now())) {
+export function noteInputBoxClosed(now = typeof performance !== 'undefined' ? performance.now() : Date.now()) {
   _timeClosedInputBox = now;
 }
 /** PlayerMouseLook.cs:196's gate - C# ALLOWS when the elapsed time is
  *  strictly greater than 0.3s, so <= refuses. */
-export const cursorToggleRefused = (now = (typeof performance !== 'undefined' ? performance.now() : Date.now())) =>
+export const cursorToggleRefused = (now = typeof performance !== 'undefined' ? performance.now() : Date.now()) =>
   now - _timeClosedInputBox <= INPUT_BOX_TOGGLE_REFUSAL_MS;
 let _cursorActive = false;
 export const cursorActive = () => _cursorActive;
-export const setCursorActive = (b) => { _cursorActive = !!b; };
+export const setCursorActive = (b) => {
+  _cursorActive = !!b;
+};
 export function toggleCursorActive(canvas) {
   _cursorActive = !_cursorActive;
   if (_cursorActive) releaseLook();
@@ -142,7 +144,9 @@ const _cursorKeyClaims = new Set();
 export function claimCursorKey(takes = () => true) {
   const claim = { takes };
   _cursorKeyClaims.add(claim);
-  return () => { _cursorKeyClaims.delete(claim); };
+  return () => {
+    _cursorKeyClaims.delete(claim);
+  };
 }
 export function cursorKeyClaimed(e = null) {
   for (const c of _cursorKeyClaims) if (c.takes(e)) return true;
@@ -167,8 +171,8 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // is a fresh PlayerMouseLook (cursorActive is an instance field,
   // :32) - so the bind is the reset.
   setCursorActive(false);
-  _cursorHolds.clear();   // HERB-CURSOR: and an act's hold the last host never let go
-  let lastRealEscape = -Infinity;   // ESC-LOCK (1), below
+  _cursorHolds.clear(); // HERB-CURSOR: and an act's hold the last host never let go
+  let lastRealEscape = -Infinity; // ESC-LOCK (1), below
   const onKey = (e) => {
     // ESC-LOCK (1): a real Escape the browser DID hand the page is noted first, whatever is up - the loss that follows
     // it is then not delivered a second time. The browser's own unlock key, read raw on purpose (KB1's reservation).
@@ -181,7 +185,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     // and released the lock, and the dial's own close never relocked:
     // every later click was refused by the precedence line, for good.
     if (overlayOpen()) return;
-    if (isTextEntryTarget(e.target)) return;   // PL2: a name being typed into a DOM field is not the toggle
+    if (isTextEntryTarget(e.target)) return; // PL2: a name being typed into a DOM field is not the toggle
     // FREEMOUSE: TWO ACTIONS, ONE TOGGLE. `ActivateCursor` is DFU's
     // (PlayerMouseLook.cs:190) and keeps its meaning; `FreeMouse` is
     // the port's own row, minted because ActivateCursor's default key
@@ -192,8 +196,8 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     // binding over `_cursorActive` is the bug PL3 spent a whole slice
     // on, in a new hat.
     const got = actionsOf(e);
-    const acts = Array.isArray(got) ? got : got ? [got] : [];   // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
-    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
+    const acts = Array.isArray(got) ? got : got ? [got] : []; // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
+    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
     e.preventDefault();
     // AUDIT HERB-CURSOR A2: never while an act holds the cursor free - the press changed nothing a player could see,
     // latched the flag, and the look never came back after the act (requestLook's precedence line refused every click).
@@ -235,8 +239,10 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // own Escape - that one is not delivered twice.
   let held = typeof document !== 'undefined' && document.pointerLockElement === canvas;
   let pending = null;
-  let lastTouch = -Infinity;   // TOUCH-UNLOCK: the last touch event, on the capture phase - before Gecko's unlock posts
-  const onTouch = () => { lastTouch = nowMs(); };
+  let lastTouch = -Infinity; // TOUCH-UNLOCK: the last touch event, on the capture phase - before Gecko's unlock posts
+  const onTouch = () => {
+    lastTouch = nowMs();
+  };
   const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;
   const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();
   const onLockChange = () => {
@@ -276,7 +282,10 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
   return () => {
     removeEventListener('keydown', onKey, true);
-    if (pending) { clearTimeout(pending); pending = null; }
+    if (pending) {
+      clearTimeout(pending);
+      pending = null;
+    }
     if (typeof document !== 'undefined') {
       document.removeEventListener?.('pointerdown', onDown, true);
       document.removeEventListener?.('pointerlockchange', onLockChange);
@@ -321,8 +330,15 @@ function shellRelock(canvas) {
   const at = nowMs();
   if (at - _shellRelockAt < SHELL_RELOCK_MS) return;
   _shellRelockAt = at;
-  globalThis.__daggerRelock = () => { globalThis.__daggerRelock = null; requestLook(canvas); };
-  try { shell.relockPointer(); } catch { /* a shell without the bridge is a tab */ }
+  globalThis.__daggerRelock = () => {
+    globalThis.__daggerRelock = null;
+    requestLook(canvas);
+  };
+  try {
+    shell.relockPointer();
+  } catch {
+    /* a shell without the bridge is a tab */
+  }
 }
 
 // PL3: the moment of the last honoured request - the look gate's grace
@@ -345,14 +361,24 @@ export function requestLook(canvas) {
   if (isTouchDevice()) return;
   _lastRequestAt = nowMs();
   if (!_errBound && typeof document !== 'undefined') {
-    document.addEventListener('pointerlockerror', () => {
-      console.warn('[input] pointer lock refused (focus/cooldown); the next gesture retries');
-    }, false);
+    document.addEventListener(
+      'pointerlockerror',
+      () => {
+        console.warn('[input] pointer lock refused (focus/cooldown); the next gesture retries');
+      },
+      false,
+    );
     // AUDIT OW5 V1: A LOCK GRANTED AFTER THE CURSOR WAS FREED IS LET GO. The browser answers a request frames later, and
     // a free cursor asked for between (the travel view risen on the frame after a window closed, over the look gate's
     // relock: its release found no lock yet to let go) had the lock land under it - no cursor over the Overworld, a drag
     // turned the traveller's head, a click picked where the Begin button had been. Only this module asks for the lock.
-    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);
+    document.addEventListener(
+      'pointerlockchange',
+      () => {
+        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();
+      },
+      false,
+    );
     _errBound = true;
   }
   // CLICK-STUTTER (2026-10-13): every world click lands here (the hosts' canvas pointerdown), and asking for a lock the
@@ -373,11 +399,16 @@ export function requestLook(canvas) {
     const p = canvas.requestPointerLock({ unadjustedMovement: true });
     if (p && typeof p.catch === 'function') {
       p.catch((err) => {
-        if (err?.name !== 'NotSupportedError') { shellRelock(canvas); return; }   // ESC-LOCK (2)
+        if (err?.name !== 'NotSupportedError') {
+          shellRelock(canvas);
+          return;
+        } // ESC-LOCK (2)
         try {
           const q = canvas.requestPointerLock();
           if (q && typeof q.catch === 'function') q.catch(() => shellRelock(canvas));
-        } catch { /* non-fatal */ }
+        } catch {
+          /* non-fatal */
+        }
       });
     }
   } catch {
@@ -388,8 +419,12 @@ export function requestLook(canvas) {
 /** Exit pointer lock (no-op when not held). */
 export function releaseLook() {
   if (typeof document !== 'undefined' && document.pointerLockElement) {
-    _pageReleaseAt = nowMs();   // ESC-LOCK: the page's own release is never the player's Escape
-    try { document.exitPointerLock(); } catch { /* non-fatal */ }
+    _pageReleaseAt = nowMs(); // ESC-LOCK: the page's own release is never the player's Escape
+    try {
+      document.exitPointerLock();
+    } catch {
+      /* non-fatal */
+    }
   }
 }
 
@@ -406,8 +441,9 @@ export function makeLookGate(canvas) {
     // no gesture at all, which the browser refuses after an Escape exit.
     // A request honoured within the grace holds; a window that is
     // really still up releases on the frame after it.
-    if (held) { if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook(); }
-    else if (wasHeld) requestLook(canvas);
+    if (held) {
+      if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook();
+    } else if (wasHeld) requestLook(canvas);
     wasHeld = held;
   };
 }

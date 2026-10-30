@@ -300,8 +300,8 @@
   {
     "name": "DISC19-E-no-mesh-colliders",
     "file": "src/player/activate.js",
-    "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
-    "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
+    "old": "  !!o &&",
+    "new": "  false &&",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "DISC19-E-every-entered-model-skipped",
     "file": "src/player/activate.js",
-    "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
-    "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
+    "old": "      if (firstHit.key != null && firstHit.key !== target.key) {",
+    "new": "      continue;\n      if (firstHit.key != null && firstHit.key !== target.key) {",
     "tests": [
       "test/systems/disc19.test.js"
     ]

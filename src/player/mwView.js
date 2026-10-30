@@ -38,11 +38,11 @@ import { eotbCamera } from './eyeOfTheBeholder/eotbCamera.js';
 import { eotbBody } from './eyeOfTheBeholder/eotbBody.js';
 import { eotbWagon } from './eyeOfTheBeholder/eotbWagon.js';
 import { modSetting } from '../systems/modSettings.js';
-import { getPref } from '../systems/uiPrefs.js';   // MW-SHOULDER: the player's shoulder
-import { horseRigFor, HORSE_SEAT } from '../world/horseRig.js';   // COATS3D: the 3D horse under the Morrowind body
+import { getPref } from '../systems/uiPrefs.js'; // MW-SHOULDER: the player's shoulder
+import { horseRigFor, HORSE_SEAT } from '../world/horseRig.js'; // COATS3D: the 3D horse under the Morrowind body
 import { gaitShare } from '../world/horseModel.js';
 import { SEAT_PELVIS_HEIGHT } from './seatPose.js';
-import { RIDE_EYE_HEIGHT } from './motor.js';   // AUDIT COATS3D A8: the saddle's eye, the horse's ground under it
+import { RIDE_EYE_HEIGHT } from './motor.js'; // AUDIT COATS3D A8: the saddle's eye, the horse's ground under it
 
 /**
  * EOTB4: is Eye Of The Beholder the lane this frame?
@@ -69,9 +69,13 @@ let eotbBodyReady = () => false;
  * MW-D25's law, the reason this seam exists at all.
  */
 let eotbPlayerState = () => ({});
-export function setEotbPlayerState(fn) { eotbPlayerState = typeof fn === 'function' ? fn : () => ({}); }
+export function setEotbPlayerState(fn) {
+  eotbPlayerState = typeof fn === 'function' ? fn : () => ({});
+}
 /** EOTB5's door: the host tells the seam its body can draw. */
-export function setEotbBodyReady(fn) { eotbBodyReady = typeof fn === 'function' ? fn : () => false; }
+export function setEotbBodyReady(fn) {
+  eotbBodyReady = typeof fn === 'function' ? fn : () => false;
+}
 /**
  * DISC10 (kurkku on Discord, 2026-09-23: "two wagons appear whenever you hitch it up, visual only"). TWO MODS,
  * ONE CART. EOTB's ShowCart stands its cart (41239) for the Cart transport, and Horse Cart and Cargo trails its
@@ -103,14 +107,17 @@ function standInEdge({ fpEye, feet, yaw, pitch }) {
     if (!_beastInSprite) return;
     const third = mwCamera.thirdPerson();
     eotbCamera.toggleOffset(false);
-    eotbCamera.eye({ fpEye, feet, yaw, pitch });   // the head the view leaves from
+    eotbCamera.eye({ fpEye, feet, yaw, pitch }); // the head the view leaves from
     if (third) eotbCamera.toggleOffset(true);
     return;
   }
-  if (_beastInSprite && !mounted) mwCamera.restore({ firstPerson: !eotbCamera.thirdPerson(), baseDistance: mwCamera.baseDistance() });
+  if (_beastInSprite && !mounted)
+    mwCamera.restore({ firstPerson: !eotbCamera.thirdPerson(), baseDistance: mwCamera.baseDistance() });
   _beastInSprite = false;
 }
-export function setEotbCartYields(fn) { eotbCartYields = typeof fn === 'function' ? fn : () => false; }
+export function setEotbCartYields(fn) {
+  eotbCartYields = typeof fn === 'function' ? fn : () => false;
+}
 
 /**
  * EG-ZH (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 11.8, "The camera in
@@ -129,7 +136,9 @@ export const SPIRE_CAMERA_EASE_S = 0.25;
 export const SPIRE_EOTB_FULL_M = Math.hypot(0.5, 2);
 let _spireCamera = () => false;
 /** The breach client's word: true while the Spire holds the camera (its halls), false everywhere else. */
-export function setSpireCamera(fn) { _spireCamera = typeof fn === 'function' ? fn : () => false; }
+export function setSpireCamera(fn) {
+  _spireCamera = typeof fn === 'function' ? fn : () => false;
+}
 /**
  * THE EASE (pure): the distance the camera stands at this frame - `want` the lane's own (its casts' answer, at most its free
  * distance `full`), `prev` last frame's (null: none - a cut), `dt` the frame (s). In at once; out at most `full` every
@@ -145,12 +154,20 @@ let _spireCamDist = null;
  *  distance; a first-person eye (no focal) is a cut. In place; answers `out`. */
 export function spireCameraFrame(out, full, dt) {
   let on = false;
-  try { on = !!_spireCamera(); } catch { on = false; }
-  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) { _spireCamDist = null; return out; }
+  try {
+    on = !!_spireCamera();
+  } catch {
+    on = false;
+  }
+  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) {
+    _spireCamDist = null;
+    return out;
+  }
   const d = spireCameraEase(_spireCamDist, out.distance, full, dt);
   _spireCamDist = d;
   if (d < out.distance) {
-    const f = out.focal, k = d / out.distance;
+    const f = out.focal,
+      k = d / out.distance;
     out.eye = [f[0] + (out.eye[0] - f[0]) * k, f[1] + (out.eye[1] - f[1]) * k, f[2] + (out.eye[2] - f[2]) * k];
     out.distance = d;
   }
@@ -180,7 +197,9 @@ export const SPIRE_SHAFT_FACE_OUT = Math.cos((75 * Math.PI) / 180);
 let _spireShaft = () => null;
 /** The breach client's word: `{ way, still }` while I stand alive in the Spire (`way` the unit [x, z] a shaft's ledge I stand
  *  on faces down, or null; `still` reduced motion), null everywhere else. */
-export function setSpireShaft(fn) { _spireShaft = typeof fn === 'function' ? fn : () => null; }
+export function setSpireShaft(fn) {
+  _spireShaft = typeof fn === 'function' ? fn : () => null;
+}
 /** Whether a look at `yaw` faces the way `way` ([x, z], unit) - within SPIRE_SHAFT_FACE_IN, or SPIRE_SHAFT_FACE_OUT while it
  *  already did (`was`). Pure. */
 export function spireShaftFacing(way, yaw, was) {
@@ -194,13 +213,22 @@ export function spireShaftEase(prev, want, dt, still) {
   const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;
   return prev < want ? Math.min(want, prev + step) : Math.max(want, prev - step);
 }
-let _shaftBias = 0, _shaftFacing = false;
+let _shaftBias = 0,
+  _shaftFacing = false;
 /** The frame's camera pitch over a shaft's ledge: the look's `pitch` less the eased bias (at most the camera's own limit),
  *  the bias stepped first. Out of the Spire, or in first person (`third` false), none at once. */
 export function spireShaftPitch(pitch, yaw, dt, third) {
   let word = null;
-  try { word = _spireShaft(); } catch { word = null; }
-  if (!word || !third) { _shaftBias = 0; _shaftFacing = false; return pitch; }
+  try {
+    word = _spireShaft();
+  } catch {
+    word = null;
+  }
+  if (!word || !third) {
+    _shaftBias = 0;
+    _shaftFacing = false;
+    return pitch;
+  }
   _shaftFacing = !!word.way && spireShaftFacing(word.way, yaw, _shaftFacing);
   _shaftBias = spireShaftEase(_shaftBias, _shaftFacing ? SPIRE_SHAFT_PITCH : 0, dt, !!word.still);
   return _shaftBias > 0 ? Math.max(-PITCH_LIMIT, pitch - _shaftBias) : pitch;
@@ -214,7 +242,10 @@ export function spireShaftPivot(floor, pivotY) {
 /** The camera's own forward on a third-person eye while the bias is laid (`out.look` - the host's view looks along it; the
  *  aim keeps the player's). In place; answers `out`. */
 export function spireShaftLook(out, yaw, pitch) {
-  if (_shaftBias > 0 && out?.thirdPerson && out.focal) { const cp = Math.cos(pitch); out.look = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp]; }
+  if (_shaftBias > 0 && out?.thirdPerson && out.focal) {
+    const cp = Math.cos(pitch);
+    out.look = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
+  }
   return out;
 }
 /** The bias laid now (radians; tests). */
@@ -227,13 +258,17 @@ export const spireShaftBias = () => _shaftBias;
  */
 export function setEotbComeSailAway(mod) {
   eotbCamera.setComeSailAway(mod);
-  eotbCamera.setLog((text) => { if (modSetting('eye-of-the-beholder', 'Enabled')) console.log(text); });
+  eotbCamera.setLog((text) => {
+    if (modSetting('eye-of-the-beholder', 'Enabled')) console.log(text);
+  });
 }
 export function eotbLane() {
-  if (fpArm.canThirdPerson()) return false;          // the Morrowind body wins where it exists
+  if (fpArm.canThirdPerson()) return false; // the Morrowind body wins where it exists
   try {
     if (!modSetting('eye-of-the-beholder', 'Enabled')) return false;
-  } catch { return false; }                          // not vendored: no lane
+  } catch {
+    return false;
+  } // not vendored: no lane
   return !!eotbBodyReady();
 }
 
@@ -261,12 +296,27 @@ let pendingClicks = 0;
  *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number, look?:number[]}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, pivotFloor = null, ...state }) {
+export function mwViewFrame({
+  fpEye,
+  feet,
+  yaw,
+  pitch,
+  heightScale = null,
+  raycast = null,
+  spherecast = null,
+  eyeOverride = null,
+  seaReach = 0,
+  pivotFloor = null,
+  ...state
+}) {
   // DRAGON-POV: on a dragon (`dragon` the rider's seat over my feet, m) the camera turns about the seat, and the wheel reaches
   // out past the foot's far end - a helm's reach wins
-  if (state.dragon > 0) { pivotFloor ??= feet[1] + state.dragon; seaReach ||= DRAGON_VIEW_REACH_M; }
-  standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
-  benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
+  if (state.dragon > 0) {
+    pivotFloor ??= feet[1] + state.dragon;
+    seaReach ||= DRAGON_VIEW_REACH_M;
+  }
+  standInEdge({ fpEye, feet, yaw, pitch }); // BEAST-SELF: the view carried across the arm's stand-aside
+  benchSeated = !!state.seated; // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
   // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
   // FIELD BUGS 2026-09-29 (the sea) #3: the helm's reach (player/seaZoom.js; 0 off it) to both cameras, every frame -
   // the host's word for the hull sailed, and off the helm a distance past either's own far end comes back to it
@@ -300,11 +350,11 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // at all. Found by a test helper that span forever waiting for it.
     pendingClicks = 0;
     eotbCamera.tick(frame);
-    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson());   // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...
-    pivotFloor = spireShaftPivot(pivotFloor, fpEye[1]);   // ...and its pivot - the head - risen
-    const out = eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, pivotFloor, ...frame });   // BENCH-CAM: the pivot over my wagon's roof
-    spireCameraFrame(out, SPIRE_EOTB_FULL_M, frame.dt ?? 0);   // EG-ZH: in the Spire, eased back out
-    spireShaftLook(out, yaw, pitch);   // EG-ZN: the camera's own forward, for the host's view
+    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson()); // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...
+    pivotFloor = spireShaftPivot(pivotFloor, fpEye[1]); // ...and its pivot - the head - risen
+    const out = eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, pivotFloor, ...frame }); // BENCH-CAM: the pivot over my wagon's roof
+    spireCameraFrame(out, SPIRE_EOTB_FULL_M, frame.dt ?? 0); // EG-ZH: in the Spire, eased back out
+    spireShaftLook(out, yaw, pitch); // EG-ZN: the camera's own forward, for the host's view
     // EOTB-IL: the billboard's three Unity phases, handed the frame's
     // camera - `PlayerBillboard` reads mainCamera's position and forward
     // in LateUpdate (IL_3d86-IL_3dbf, IL_455d), and its FEET are the
@@ -317,9 +367,17 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // every frame before its own `offset` gate (IL_1c74-IL_1c7f), so
     // it follows in first person too. `cart` and `onExteriorPath` are
     // the host's (TransportMode == Cart, PlayerMotor.OnExteriorPath).
-    eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart && !eotbCartYields(), onExteriorPath: !!frame.onExteriorPath, raycast });   // DISC10: HCC's wagon, when it trails, is the one cart
-    dropOwnHorse(); saddled = false;   // the sprite lane's rider is its own picture
-    return eyeOverride ? { ...out, eye: eyeOverride, ownEye: out.eye } : out;   // TV1: the body's own camera kept - the view rises out of it
+    eotbWagon.tick(frame.dt ?? 0, {
+      feet,
+      yaw,
+      height: frame.motion?.height,
+      cart: !!frame.cart && !eotbCartYields(),
+      onExteriorPath: !!frame.onExteriorPath,
+      raycast,
+    }); // DISC10: HCC's wagon, when it trails, is the one cart
+    dropOwnHorse();
+    saddled = false; // the sprite lane's rider is its own picture
+    return eyeOverride ? { ...out, eye: eyeOverride, ownEye: out.eye } : out; // TV1: the body's own camera kept - the view rises out of it
   }
   // HT-WAIST: the Morrowind lane has the frame, so the sprite's lantern at the waist (and the light point it drew
   // from) stands down - one line here rather than one in each of the four hosts.
@@ -332,9 +390,12 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   // height action) it rises under them: never a first-person eye inside its back. SINK_SLACK keeps a step's bob out.
   ownSink = fpEye && feet ? Math.max(0, RIDE_EYE_HEIGHT - (fpEye[1] - feet[1]) - SINK_SLACK) : 0;
   saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);
-  onDragon = !!state.dragon;   // DRAGON-POV: on a dragon the dragon is what third person shows (scenes/dragonViewHost.js)
+  onDragon = !!state.dragon; // DRAGON-POV: on a dragon the dragon is what third person shows (scenes/dragonViewHost.js)
   mounted = !!state.riding && !saddled && !onDragon;
-  if (mounted) { mwIntoHead(); pendingClicks = 0; }
+  if (mounted) {
+    mwIntoHead();
+    pendingClicks = 0;
+  }
   const wasThird = mwCamera.thirdPerson();
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
@@ -347,7 +408,8 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   if (heightScale == null) heightScale = fpArm.raceHeightScale();
   mwCamera.update({ ready: fpArm.upperBodyReady() });
   // DRAGON-POV: out of the head on a dragon the camera starts at the foot's far end - the closest ring stands inside its body
-  if (onDragon && !wasThird && mwCamera.thirdPerson()) mwCamera.restore({ firstPerson: false, baseDistance: MAX_DISTANCE });
+  if (onDragon && !wasThird && mwCamera.thirdPerson())
+    mwCamera.restore({ firstPerson: false, baseDistance: MAX_DISTANCE });
   if (mwCamera.thirdPerson()) {
     if (!fpArm.setViewMode('third')) {
       // The body refused (or was never built): third person does not
@@ -364,15 +426,16 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   // for all four hosts (MW-D25's law: the seam, not the hosts)
   mwCamera.setShoulder(getPref('mwShoulderCam'));
   mwCamera.stepShoulder(state.dt ?? 0, fpArm.shoulderStance());
-  pitch = spireShaftPitch(pitch, yaw, state.dt ?? 0, mwCamera.thirdPerson());   // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...
-  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER);   // ...and its focal risen (the standing feet's: no saddle in the Spire)
+  pitch = spireShaftPitch(pitch, yaw, state.dt ?? 0, mwCamera.thirdPerson()); // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...
+  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER); // ...and its focal risen (the standing feet's: no saddle in the Spire)
   // COATS3D: astride, the third-person camera turns about the rider's head - its feet lifted as far as the saddle lifts
   // the hips over a standing body's (player/seatPose.js SEAT_PELVIS_HEIGHT, at the race's height)
-  if (saddled && ownSaddle) feet = [feet[0], feet[1] + Math.max(0, ownSaddle.seat[1] - feet[1] - SEAT_PELVIS_HEIGHT * heightScale), feet[2]];
-  const eye = mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast, pivotFloor });   // MAC-A: the obstacle guards are castSphere's, where the host has one; BENCH-CAM: the pivot over my wagon's roof
-  spireCameraFrame(eye, mwCamera.baseDistance() / MW_UNITS_PER_METER, state.dt ?? 0);   // EG-ZH: in the Spire, eased back out
-  spireShaftLook(eye, yaw, pitch);   // EG-ZN: the camera's own forward, for the host's view
-  return eyeOverride ? { ...eye, eye: eyeOverride, ownEye: eye.eye } : eye;   // TV1: the travel view's eye, the rig's frame run all the same
+  if (saddled && ownSaddle)
+    feet = [feet[0], feet[1] + Math.max(0, ownSaddle.seat[1] - feet[1] - SEAT_PELVIS_HEIGHT * heightScale), feet[2]];
+  const eye = mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast, pivotFloor }); // MAC-A: the obstacle guards are castSphere's, where the host has one; BENCH-CAM: the pivot over my wagon's roof
+  spireCameraFrame(eye, mwCamera.baseDistance() / MW_UNITS_PER_METER, state.dt ?? 0); // EG-ZH: in the Spire, eased back out
+  spireShaftLook(eye, yaw, pitch); // EG-ZN: the camera's own forward, for the host's view
+  return eyeOverride ? { ...eye, eye: eyeOverride, ownEye: eye.eye } : eye; // TV1: the travel view's eye, the rig's frame run all the same
 }
 
 /**
@@ -388,14 +451,16 @@ export function mwViewWheel(deltaY) {
   // ladders read a click the same way round - negative is out of the
   // head - so nothing about the sign moves at the seam.
   if (eotbLane()) return eotbCamera.wheel(clicks);
-  if (mwCamera.mode() === 'first' && clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false;   // RIDE-POV: no saddle to show
-  pendingClicks += clicks;   // flushed once per frame (actionbindings.lua:113-114)
+  if (mwCamera.mode() === 'first' && clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false; // RIDE-POV: no saddle to show
+  pendingClicks += clicks; // flushed once per frame (actionbindings.lua:113-114)
   return true;
 }
 
 /** The frame's pending, exposed for the pins - a probe with its own
  *  counter measures the copy. */
-export function mwViewPendingClicks() { return pendingClicks; }
+export function mwViewPendingClicks() {
+  return pendingClicks;
+}
 
 /**
  * MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to use
@@ -415,7 +480,7 @@ export function mwViewPendingClicks() { return pendingClicks; }
  * where the player left the camera. Answers whether the view moved.
  */
 export function mwViewFirstPerson() {
-  if (heldFirst) heldFirst.changed = false;   // AUDIT CAPTAIN'S SEA S8: the head wanted for itself (MAP-POV) - the glass hands nothing back
+  if (heldFirst) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the head wanted for itself (MAP-POV) - the glass hands nothing back
   if (eotbLane()) {
     if (!eotbCamera.thirdPerson()) return false;
     eotbCamera.toggleOffset(false);
@@ -434,7 +499,10 @@ export function mwViewFirstPerson() {
  */
 export function mwViewTogglePerspective() {
   if (!mwViewCanTogglePerspective()) return false;
-  if (eotbLane()) { eotbCamera.toggleOffset(!eotbCamera.thirdPerson()); return true; }
+  if (eotbLane()) {
+    eotbCamera.toggleOffset(!eotbCamera.thirdPerson());
+    return true;
+  }
   if (mwCamera.thirdPerson()) return mwIntoHead();
   mwCamera.restore({ firstPerson: false, baseDistance: mwCamera.baseDistance() });
   fpArm.setViewMode('third');
@@ -443,7 +511,7 @@ export function mwViewTogglePerspective() {
 /** STEED-UI: whether the toggle would turn the view now - the saddle panel's View button stands only where it does
  *  (a lane with a third person, not held, not in the head of a seat that keeps it - RIDE-POV's `mounted`). */
 export function mwViewCanTogglePerspective() {
-  if (heldThird || heldFirst) return false;   // SPYGLASS: nor while the glass holds the head
+  if (heldThird || heldFirst) return false; // SPYGLASS: nor while the glass holds the head
   if (eotbLane() || mwCamera.thirdPerson()) return true;
   return !!fpArm.canThirdPerson() && !mounted;
 }
@@ -456,7 +524,7 @@ export function mwViewCanTogglePerspective() {
  * cannot show - neither lane, or the Morrowind body in the saddle (RIDE-POV) - holds nothing, and the view's own
  * marker is the traveller. Answers whether a body is held.
  */
-let heldThird = null;   // null, or { lane: 'eotb'|'mw'|null, changed: boolean }
+let heldThird = null; // null, or { lane: 'eotb'|'mw'|null, changed: boolean }
 export function mwViewHoldThird(on) {
   if (on) {
     if (heldThird) return heldThird.lane != null;
@@ -471,7 +539,10 @@ export function mwViewHoldThird(on) {
     }
     if (fpArm.canThirdPerson() && !mounted) {
       const was = mwCamera.thirdPerson();
-      if (!was) { mwCamera.restore({ firstPerson: false, baseDistance: mwCamera.baseDistance() }); fpArm.setViewMode('third'); }
+      if (!was) {
+        mwCamera.restore({ firstPerson: false, baseDistance: mwCamera.baseDistance() });
+        fpArm.setViewMode('third');
+      }
       heldThird = { lane: 'mw', changed: !was };
       return true;
     }
@@ -492,7 +563,7 @@ export function mwViewHoldThird(on) {
  * travel view's hold wins (it holds the body out of the head; the glass is never up under it). Answers whether the view
  * is held in the head.
  */
-let heldFirst = null;   // null, or { changed: boolean, lane: 'eotb'|'mw' } - whether the hold took the body INTO the head, and whose
+let heldFirst = null; // null, or { changed: boolean, lane: 'eotb'|'mw' } - whether the hold took the body INTO the head, and whose
 export function mwViewHoldFirst(on) {
   if (on) {
     if (heldFirst) return true;
@@ -504,14 +575,15 @@ export function mwViewHoldFirst(on) {
   if (!heldFirst) return false;
   const h = heldFirst;
   heldFirst = null;
-  if (h.changed) mwViewTogglePerspective();   // back out into the third person it stood in
+  if (h.changed) mwViewTogglePerspective(); // back out into the third person it stood in
   return true;
 }
 /** SPYGLASS: is the view held in the head for the glass (the pins' read). */
 export const mwViewHeldFirst = () => !!heldFirst;
 /** CANDLE-POV: is the camera out of the head now, on whichever body answers (the travel view's hold included)? The
  *  classic view has no third person. */
-export const mwViewThirdPerson = () => !!heldThird || (eotbLane() ? !!eotbCamera.thirdPerson() : fpArm.canThirdPerson() && mwCamera.thirdPerson());
+export const mwViewThirdPerson = () =>
+  !!heldThird || (eotbLane() ? !!eotbCamera.thirdPerson() : fpArm.canThirdPerson() && mwCamera.thirdPerson());
 /** TV1: is a body held out of the head for the travel view (the pins' read). */
 export const mwViewHeldThird = () => (heldThird ? heldThird.lane : undefined);
 /** AUDIT DEEP T1-10: did the hold take the body OUT of the head (it was in first person)? The view's rise and fall then
@@ -521,7 +593,7 @@ export const mwViewHoldChanged = () => !!heldThird?.changed;
  *  its body (a save taken under the view came back in third person). */
 export function mwViewSaveCamera() {
   const s = mwCamera.state();
-  if (heldFirst?.changed && heldFirst.lane === 'mw') return { ...s, firstPerson: false };   // AUDIT CAPTAIN'S SEA S9: nor the head the glass borrowed
+  if (heldFirst?.changed && heldFirst.lane === 'mw') return { ...s, firstPerson: false }; // AUDIT CAPTAIN'S SEA S9: nor the head the glass borrowed
   return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;
 }
 
@@ -587,7 +659,10 @@ export function mwViewAttachHorse(renderer) {
 /** COATS3D: one frame of the player's own horse - stepped, and its seat made the body's saddle. Answers whether the
  *  body is astride it this frame. */
 function stepOwnHorse(horse, feet, yaw, dt) {
-  if (!horse || !horseRig?.ready() || !feet || !fpArm.canThirdPerson()) { dropOwnHorse(); return false; }
+  if (!horse || !horseRig?.ready() || !feet || !fpArm.canThirdPerson()) {
+    dropOwnHorse();
+    return false;
+  }
   ownHorse ??= horseRig.horse(1);
   if (!ownHorse) return false;
   if (lastFeet && dt > 0) {
@@ -595,16 +670,30 @@ function stepOwnHorse(horse, feet, yaw, dt) {
     if (v < HORSE_TELEPORT) groundSpeed += (v - groundSpeed) * Math.min(1, dt / SPEED_EASE);
   }
   lastFeet = [feet[0], feet[1], feet[2]];
-  horseRig.step(ownHorse, { feet: horseFeetUnder(feet, yaw), yaw, speed: groundSpeed, dt, look: horse.look | 0, gallops: !horse.slow });   // HORSE-WALK: the host's slow ride (motor.js slowRide) never gallops
+  horseRig.step(ownHorse, {
+    feet: horseFeetUnder(feet, yaw),
+    yaw,
+    speed: groundSpeed,
+    dt,
+    look: horse.look | 0,
+    gallops: !horse.slow,
+  }); // HORSE-WALK: the host's slow ride (motor.js slowRide) never gallops
   const seat = horseRig.seat(ownHorse);
   ownSaddle = seat ? { feet: lastFeet, seat, yaw, lean: gaitShare(ownHorse.gait, 'gallop') } : null;
   return !!ownSaddle;
 }
 /** The horse's own feet, so its seat stands over the rider's: its origin back from them by the seat's own way forward. */
-const horseFeetUnder = (feet, yaw, grow = 1) => [feet[0] - Math.sin(yaw) * HORSE_SEAT[1] * grow, feet[1] - ownSink * grow, feet[2] - Math.cos(yaw) * HORSE_SEAT[1] * grow];
+const horseFeetUnder = (feet, yaw, grow = 1) => [
+  feet[0] - Math.sin(yaw) * HORSE_SEAT[1] * grow,
+  feet[1] - ownSink * grow,
+  feet[2] - Math.cos(yaw) * HORSE_SEAT[1] * grow,
+];
 function dropOwnHorse() {
   if (ownHorse) horseRig?.release(ownHorse);
-  ownHorse = null; ownSaddle = null; lastFeet = null; groundSpeed = 0;
+  ownHorse = null;
+  ownSaddle = null;
+  lastFeet = null;
+  groundSpeed = 0;
 }
 
 /** COATS3D: the 3D horse rig while the world's horses are 3D - the Morrowind body is the one on screen (the player's
@@ -661,7 +750,7 @@ export function mwViewTransition(kind) {
   // AUDIT OW5 V3: a door taken under the travel view - a row that DECIDES the POV decides it for the view's hold too; the
   // view's release at the door came a frame later and put the head back (a player's "interior: third person" undone)
   if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;
-  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false;   // AUDIT CAPTAIN'S SEA S8: the glass's hold the same
+  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same
   eotbCamera.transition(kind);
   return true;
 }
@@ -672,16 +761,16 @@ export function mwViewTransition(kind) {
  *  "Determines the POV when starting or loading a game"), so the sprite
  *  camera is re-seeded from the setting, not from the save. */
 export function mwViewLoadPose(pose, inside = false) {
-  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a load decides the view - the glass hands nothing back over it
+  heldFirst = null; // AUDIT CAPTAIN'S SEA S8: a load decides the view - the glass hands nothing back over it
   if (pose) mwCamera.restore(pose);
-  eotbCamera.onLoad(inside);   // EOTB-IL: the mod's OnLoad (IL_0a08) - a transition row when the table is armed, StartInThirdPerson otherwise
+  eotbCamera.onLoad(inside); // EOTB-IL: the mod's OnLoad (IL_0a08) - a transition row when the table is armed, StartInThirdPerson otherwise
 }
 
 /** [IL] StartGameBehaviour.OnNewGame (IL_0930), the new game's own
  *  door - the same shape as the load's. `inside` is
  *  PlayerEnterExit.IsPlayerInside. */
 export function mwViewNewGame(inside = false) {
-  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a new game's view its own
+  heldFirst = null; // AUDIT CAPTAIN'S SEA S8: a new game's view its own
   eotbCamera.onNewGame(inside);
 }
 
@@ -691,7 +780,7 @@ export function mwViewNewGame(inside = false) {
 export function mwViewRebase(delta) {
   eotbCamera.onPositionUpdate(delta);
   eotbWagon.rebase(delta);
-  eotbBody.rebase(delta);   // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing
+  eotbBody.rebase(delta); // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing
 }
 
 // ═══ EOTB-IL: THE CART's three doors ═════════════════════════════════
@@ -702,7 +791,9 @@ export function mwViewRebase(delta) {
 // (TransportMode == Cart, IL_1f58) never exists inside.
 
 /** The host's mesh pipeline, for CreateDaggerfallMeshGameObject's model 41239. */
-export function mwViewAttachWagon(pipeline) { eotbWagon.attach(pipeline); }
+export function mwViewAttachWagon(pipeline) {
+  eotbWagon.attach(pipeline);
+}
 
 /** The cart in the host's world pass, after its models. Off the lane there is no cart. PERF-WAGON: `cull` the host's
  *  view test, handed on (player/eyeOfTheBeholder/eotbWagon.js draw). */
@@ -737,7 +828,7 @@ export function mwViewHides() {
   // so no first-person horse is on the screen. mwViewDrawSaddle answers false out of first person, and the sprite read
   // that as its turn.
   if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };
-  return benchSeated ? { ...hides, horse: true } : hides;   // WAGONS3: on the bench the team is in the world, not on the screen
+  return benchSeated ? { ...hides, horse: true } : hides; // WAGONS3: on the bench the team is in the world, not on the screen
 }
 
 /** The third-person body composite, after the host's world draw. A
@@ -753,9 +844,18 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
   // AUDIT CLIMB-ARC N1: the sprite lane's `yaw` is its QUAD's plane and its camera's (eotbBody.js) - the view's - never
   // the body's on the wall (CLIMB5 handed it the body's, and a hanging player looking along the wall saw the sprite
   // edge-on); the Morrowind body below turns to the wall (`yaw`, the body's)
-  if (onDragon && mwViewThirdPerson()) { spriteFigure = null; spriteFacing = null; return false; }   // DRAGON-POV: the dragon's sprite carries its rider
-  if (eotbLane()) { const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face }); spriteFigure = drawn ? eotbFigure() : null; spriteFacing = drawn ? eotbFacing() : null; return drawn; }   // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
-  lastCamera = { proj, view, feet, yaw };   // COATS3D: the frame's camera, for the horse in first person (mwViewDrawSaddle)
+  if (onDragon && mwViewThirdPerson()) {
+    spriteFigure = null;
+    spriteFacing = null;
+    return false;
+  } // DRAGON-POV: the dragon's sprite carries its rider
+  if (eotbLane()) {
+    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });
+    spriteFigure = drawn ? eotbFigure() : null;
+    spriteFacing = drawn ? eotbFacing() : null;
+    return drawn;
+  } // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
+  lastCamera = { proj, view, feet, yaw }; // COATS3D: the frame's camera, for the horse in first person (mwViewDrawSaddle)
   if (!mwCamera.thirdPerson()) return false;
   // COATS3D: astride, the horse under the body - placed at the body's own feet and facing this draw, in its picture
   const grow = face?.grow > 1 ? face.grow : 1;
@@ -763,7 +863,16 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
   // AUDIT OW3 J6: OW-BIG's grown traveller is the Morrowind body's too - `face.grow` (player/travelCamera.js tvOwnGrow)
   // reached the sprite body alone, and under the travel view the Morrowind body stood a speck at its own size.
   // AUDIT OW4 J6: and `face.up` - its quad leaned as the sprite lane's is (eotbBody.js), not upright under a pitched picture
-  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });
+  return fpArm.drawThird(canvas, {
+    proj,
+    view,
+    eye,
+    feet,
+    yaw,
+    grow: face?.grow > 1 ? face.grow : 1,
+    up: face?.up ?? null,
+    horse,
+  });
 }
 
 /** SHADOW-CLOAK: the third-person Morrowind body's named bones where they stand this frame, in its own frame
@@ -775,17 +884,25 @@ export function mwViewBodyBones(names) {
 /** SERAPH-WINGS: the sprite lane's body as drawn this frame - { base, h } over its feet (player/eyeOfTheBeholder/eotbBody.js figure()) - or
  *  null: another lane, or no sprite drawn. */
 let spriteFigure = null;
-export function mwViewSpriteFigure() { return eotbLane() ? spriteFigure : null; }
+export function mwViewSpriteFigure() {
+  return eotbLane() ? spriteFigure : null;
+}
 /** SPRITE-FACE (2026-10-05): the sprite lane's body's facing as drawn this frame - { yaw, turn }: the way its picture
  *  faces and the way the body turns (player/eyeOfTheBeholder/eotbBody.js facing()) - or null: another lane, no sprite drawn, first person.
  *  An aura on the sprite hangs on `yaw`, never on the walk's facing the picture lags (world.js auraFrame, drawAuras). */
 let spriteFacing = null;
-export function mwViewSpriteFacing() { return eotbLane() ? spriteFacing : null; }
+export function mwViewSpriteFacing() {
+  return eotbLane() ? spriteFacing : null;
+}
 
 /** EOTB5's door, matching `setEotbBodyReady`: the host hands the seam
  *  the one call that paints the mod's sprite. Null until then, which
  *  is why `eotbBodyReady` answers false. */
 let drawEotbBody = () => false;
-let eotbFigure = () => null;   // SERAPH-WINGS: the figure the sprite drew
-let eotbFacing = () => null;   // SPRITE-FACE: and the way it faced
-export function setEotbDrawBody(fn, figure = null, facing = null) { drawEotbBody = typeof fn === 'function' ? fn : () => false; eotbFigure = typeof figure === 'function' ? figure : () => null; eotbFacing = typeof facing === 'function' ? facing : () => null; }
+let eotbFigure = () => null; // SERAPH-WINGS: the figure the sprite drew
+let eotbFacing = () => null; // SPRITE-FACE: and the way it faced
+export function setEotbDrawBody(fn, figure = null, facing = null) {
+  drawEotbBody = typeof fn === 'function' ? fn : () => false;
+  eotbFigure = typeof figure === 'function' ? figure : () => null;
+  eotbFacing = typeof facing === 'function' ? facing : () => null;
+}

@@ -145,7 +145,7 @@ FOUND. The panel's build is Update 0.0.296 (`a0ba01168`, the release `app-v0.1.1
 the release's own build stamp, its chunks are `worldTick-CEm_09Ca.js` - the panel's, exactly - with `arenaGate-GhJErWMY`
 and `world-6d1hmgxx` beside it, which the blurred names on the panel match; the world chunk carries the build tag, so
 the hash names that one build. The rebuilt sourcemaps map every frame of the panel, column for column:
-`activate.js:"let t0 = (aabb.min[a] - origin[a]) * inv;"` in `rayAabb` <- `nearestActivatableHit` <- `nearest` <-
+`activate.js:"let t0 = (aabb.min[a] - origin[a])"` in `rayAabb` <- `nearestActivatableHit` <- `nearest` <-
 `firmFirst` <- `pickActivatableHit` <- `worldModes.js` `exteriorActivationHit` <- the press's `raceActivation` in
 `world.js`'s `frameMotor`. The rebuilt chunk's own `pickActivatableHit`, handed a person and one target as WITCH1 minted
 it, throws the panel's five frames at the panel's columns.

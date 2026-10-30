@@ -174,8 +174,8 @@
   {
     "name": "EGA3P-shaft-still-whole",
     "file": "src/player/mwView.js",
-    "old": "  if (still) return 0;\n",
-    "new": "  if (still) return want;\n",
+    "old": "  if (still) return 0;",
+    "new": "  if (still) return want;",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js",
       "test/net/eliteGates/egz_camera_shaft.test.js"

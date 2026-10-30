@@ -38,8 +38,8 @@
   {
     "name": "ALLY-YIELDS-the-target-unmarked",
     "file": "src/player/activate.js",
-    "old": "      ...(isCompanion(f) ? { ally: true } : {}),",
-    "new": "      ...({}),",
+    "old": "      ...(isCompanion(f) ? { ally: true } : {}), // FB1012d ALLY-YIELDS: he yields to what answers behind him (peacefulFoePass marks his hit, raceWinner reads it)",
+    "new": "      ...{}, // FB1012d ALLY-YIELDS: he yields to what answers behind him (peacefulFoePass marks his hit, raceWinner reads it)",
     "tests": [
       "test/scenes/fb1012d_allyyields.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ALLY-YIELDS-the-hit-unmarked",
     "file": "src/player/activate.js",
-    "old": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true };",
-    "new": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return foeHit;",
+    "old": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true }; // FB1012d ALLY-YIELDS",
+    "new": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return foeHit; // FB1012d ALLY-YIELDS",
     "tests": [
       "test/scenes/fb1012d_allyyields.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ALLY-YIELDS-the-press-never-asks",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (allyYields(hit.foe, deps.behind)) return false;",
-    "new": "  if (allyYields(hit.foe, null)) return false;",
+    "old": "  if (allyYields(hit.foe, deps.behind)) return false; // FB1012d ALLY-YIELDS: a companion passes the press to what answers behind him",
+    "new": "  if (allyYields(hit.foe, null)) return false; // FB1012d ALLY-YIELDS: a companion passes the press to what answers behind him",
     "tests": [
       "test/scenes/fb1012d_allyyields.test.js"
     ]

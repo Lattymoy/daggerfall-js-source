@@ -56,7 +56,7 @@
   {
     "name": "CRACK-LIP-the-crack-read-as-a-lip",
     "file": "src/player/parkour.js",
-    "old": "    if (!Number.isFinite(at(i - 1)) && faceGoesOn(collider, ox, rungY(i - 1), oz, dir, dist, PARKOUR_GRIP_RUNG)) continue;",
+    "old": "    if (!Number.isFinite(at(i - 1)) && faceGoesOn(collider, ox, rungY(i - 1), oz, dir, dist, PARKOUR_GRIP_RUNG))\n      continue;",
     "new": "",
     "tests": [
       "test/player/fb1002_climb.test.js"
@@ -65,7 +65,7 @@
   {
     "name": "CRACK-LIP-the-plain-wall-asks-an-eave",
     "file": "src/player/parkour.js",
-    "old": "    if (!Number.isFinite(d) && faceGoesOn(collider, ox, lipY + PARKOUR_LIP_FOLLOW - i * PARKOUR_GRIP_RUNG, oz, dir, back, PARKOUR_GRIP_RUNG)) continue;",
+    "old": "    if (\n      !Number.isFinite(d) &&\n      faceGoesOn(collider, ox, lipY + PARKOUR_LIP_FOLLOW - i * PARKOUR_GRIP_RUNG, oz, dir, back, PARKOUR_GRIP_RUNG)\n    )\n      continue;",
     "new": "",
     "tests": [
       "test/player/fb1002_climb.test.js"
@@ -74,7 +74,7 @@
   {
     "name": "CRACK-LIP-the-ledge-scan-opens-at-the-crack",
     "file": "src/player/parkour.js",
-    "old": "      continue;   // CRACK-LIP: a crack between two of the wall's pieces, the face going on over it",
+    "old": "      continue; // CRACK-LIP: a crack between two of the wall's pieces, the face going on over it",
     "new": "      return { ...wall, openY: y, faceDist };",
     "tests": [
       "test/player/fb1002_climb.test.js"

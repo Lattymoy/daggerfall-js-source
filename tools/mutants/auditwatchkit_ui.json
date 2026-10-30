@@ -254,8 +254,8 @@
   {
     "name": "WK-P6-reach-unbounded",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }\n",
-    "new": "",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }\n    if (openCompanion(foe)) return true;",
+    "new": "    if (openCompanion(foe)) return true;",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "WK-P6-refusal-unsaid",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
-    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { return true; }",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;",
+    "new": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      return true;",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "WK-P6-refusal-not-spent",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
-    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return false; }",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }",
+    "new": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return false;\n    }",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "WK-P6-boundary-refused",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE)",
-    "new": "if (distance >= TREASURE_ACTIVATION_DISTANCE)",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {",
+    "new": "    if (distance >= TREASURE_ACTIVATION_DISTANCE) {",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -381,7 +381,7 @@
     "name": "LD-MEA-failed-open-consumed",
     "file": "src/player/mobileEnemyActivate.js",
     "old": "    if (openCompanion(foe)) return true;",
-    "new": "    openCompanion(foe); return true;",
+    "new": "    openCompanion(foe);\n    return true;",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]

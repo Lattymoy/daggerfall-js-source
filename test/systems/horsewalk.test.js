@@ -284,7 +284,7 @@ test('HORSE-WALK THE 3D HORSE UNDER ITS RIDER: a slow ride (gallops false - the 
   assert.equal(h.gait.gait, 'trot', 'its rider\'s slow ride');
   rig.release(h);
   // the player's horse holds to the host's slow ride, a peer's to its pose's hs
-  assert.match(rd('src/player/mwView.js'), /look: horse\.look \| 0, gallops: !horse\.slow \}\);/);
+  assert.match(rd('src/player/mwView.js'), /look: horse\.look \| 0,\n\s*gallops: !horse\.slow,\n\s*\}\);/);
   assert.match(rd('src/net/peer/peerBodies.js'), /look: shown\.rc \| 0,\n\s*gallops: !shown\.hs,\n\s*pose: false,\n\s*\}\);/);   // PIN MOVED (HORSE-VIEW): the gait alone stepped here - the pose waits for the rider's
 });
 

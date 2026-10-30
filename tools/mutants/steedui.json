@@ -173,8 +173,8 @@
   {
     "name": "STEEDUI-view-unguarded",
     "file": "src/player/mwView.js",
-    "old": "  if (!mwViewCanTogglePerspective()) return false;\n",
-    "new": "  // unguarded\n",
+    "old": "  if (!mwViewCanTogglePerspective()) return false;",
+    "new": "  // unguarded",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]

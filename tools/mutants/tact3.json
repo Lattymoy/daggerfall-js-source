@@ -128,8 +128,8 @@
   {
     "name": "TACT3d-press-no-yield",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (yieldsToDoor(hit.foe, deps.doorBehind, mode)) return false;",
-    "new": "  if (false) return false;",
+    "old": "  if (yieldsToDoor(hit.foe, deps.doorBehind, mode)) return false; // TACT3d: the door behind takes the click",
+    "new": "  if (false) return false; // TACT3d: the door behind takes the click",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TACT3d-plaque-unmarked",
     "file": "src/player/activate.js",
-    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}),",
-    "new": "      ...({}),",
+    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "new": "      ...{}, // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TACT3d-plaque-any-distance",
     "file": "src/player/activate.js",
-    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE)) return foeHit;",
-    "new": "  if (!foeHit || mode === 'steal' || !Number.isFinite(doorBehind)) return foeHit;",
+    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))\n    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "new": "  if (!foeHit || mode === 'steal' || !Number.isFinite(doorBehind)) return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
     "tests": [
       "test/player/tact3.test.js"
     ]

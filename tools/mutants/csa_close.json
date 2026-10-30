@@ -355,8 +355,8 @@
   {
     "name": "CSA-J-seam-dropped",
     "file": "src/player/mwView.js",
-    "old": "  eotbCamera.setComeSailAway(mod);\n",
-    "new": "",
+    "old": "  eotbCamera.setComeSailAway(mod);\n  eotbCamera.setLog((text) => {",
+    "new": "  eotbCamera.setLog((text) => {",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]

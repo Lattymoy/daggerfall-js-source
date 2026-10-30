@@ -344,8 +344,8 @@
   {
     "name": "CROWD-KIN-ray-offered",
     "file": "src/player/activate.js",
-    "old": "  if (!feet || crowdKinHidden(f)) return null;",
-    "new": "  if (!feet) return null;",
+    "old": "  if (!feet || crowdKinHidden(f)) return null; // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it",
+    "new": "  if (!feet) return null; // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],

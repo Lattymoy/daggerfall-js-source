@@ -27,8 +27,8 @@
 // the wall probe live in the motor - they own the capsule.
 
 import { SYSTEM_TIMER_UPDATES_DIVISOR } from './motor.js';
-import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { overcapClimbSpeed } from '../systems/skillSoftcap.js';   // CLIMB-PAST: a leaf (its one import, masterSkills.js, imports nothing)
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { overcapClimbSpeed } from '../systems/skillSoftcap.js'; // CLIMB-PAST: a leaf (its one import, masterSkills.js, imports nothing)
 
 // ClimbingMotor.cs:75-84, verbatim.
 export const CONTINUE_CLIMBING_SKILL_CHECK_FREQUENCY = 15;
@@ -40,12 +40,12 @@ export const GRASP_WALL_MIN_CHANCE = 40;
 // CalcFrequencyAndToleranceOfWallChecks' classic branch (:522-526).
 export const START_CLIMB_SKILL_CHECK_FREQUENCY = 14;
 export const START_CLIMB_HORIZONTAL_TOLERANCE = 0.12;
-export const KHAJIIT_CLIMBING_BONUS = 30;   // FormulaHelper.CalculateClimbingChance racial arm
+export const KHAJIIT_CLIMBING_BONUS = 30; // FormulaHelper.CalculateClimbingChance racial arm
 /** The HUD line ClimbingMotor.cs:603 pushes once an attempt -
  *  `climbingMode`, Internal_Strings.csv:371, verbatim. */
 export const CLIMBING_MODE_TEXT = 'Climbing mode.';
 
-const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));   // Mathf.Lerp clamps t
+const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t)); // Mathf.Lerp clamps t
 
 /** FormulaHelper.CalculateClimbingChance, verbatim: skill = live
  *  Climbing (+30 Khajiit; x2 under the Climbing effect - pends its
@@ -56,7 +56,9 @@ const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));   // Mathf.
 // override takes the same inputs the deps answer, plus what a mod's arm
 // reads that DFU's does not (the drawn weapon, a mid-screen say).
 let _chanceOverride = null;
-export function registerClimbingChanceOverride(fn) { _chanceOverride = typeof fn === 'function' ? fn : null; }
+export function registerClimbingChanceOverride(fn) {
+  _chanceOverride = typeof fn === 'function' ? fn : null;
+}
 export const climbingChanceOverride = (base, inputs) => _chanceOverride?.(base, inputs) ?? null;
 
 export function climbingChance(base, liveClimbing, liveLuck, { khajiit = false, enhanced = false } = {}) {
@@ -90,8 +92,8 @@ export class ClimbingState {
     this.isSlipping = false;
     this.startTimer = 0;
     this.continueTimer = 0;
-    this.showModeMessage = true;   // showClimbingModeMessage: once per climb attempt
-    this.lastHorizontal = null;    // lastHorizontalPosition (reset on every abort)
+    this.showModeMessage = true; // showClimbingModeMessage: once per climb attempt
+    this.lastHorizontal = null; // lastHorizontalPosition (reset on every abort)
   }
 
   /** ClimbingSkillCheck (:826-846): tally FIRST, then the chance roll,
@@ -100,10 +102,13 @@ export class ClimbingState {
   skillCheck(base) {
     this.deps.tally?.();
     const i = this.deps.inputs?.() ?? { climbing: 0, luck: 0 };
-    const chance = climbingChanceOverride(base, { ...i, say: this.deps.say ?? null }) ?? climbingChance(base, i.climbing ?? 0, i.luck ?? 0, i);   // RR1: a registered override first
+    const chance =
+      climbingChanceOverride(base, { ...i, say: this.deps.say ?? null }) ??
+      climbingChance(base, i.climbing ?? 0, i.luck ?? 0, i); // RR1: a registered override first
     const rolls = this.deps.rolls ?? Math.random;
-    if (Math.floor(rolls() * 100) >= chance) {          // Dice100.FailedRoll
-      if (!this.deps.waterForgiven?.()) return false;   // dry land: the fail stands
+    if (Math.floor(rolls() * 100) >= chance) {
+      // Dice100.FailedRoll
+      if (!this.deps.waterForgiven?.()) return false; // dry land: the fail stands
     }
     return true;
   }
@@ -131,27 +136,29 @@ export class ClimbingState {
    *  Returns isClimbing. */
   step(dt, c) {
     const airborneGraspWall = !this.isClimbing && !this.isSlipping && c.falling;
-    const inputAbort = !c.forward;   // the classic abort key (:332)
+    const inputAbort = !c.forward; // the classic abort key (:332)
     if (!this.lastHorizontal) this.lastHorizontal = [c.horizontalPos[0], c.horizontalPos[1]];
     const horizontallyStationary =
-      Math.hypot(c.horizontalPos[0] - this.lastHorizontal[0], c.horizontalPos[1] - this.lastHorizontal[1])
-        < START_CLIMB_HORIZONTAL_TOLERANCE;
+      Math.hypot(c.horizontalPos[0] - this.lastHorizontal[0], c.horizontalPos[1] - this.lastHorizontal[1]) <
+      START_CLIMB_HORIZONTAL_TOLERANCE;
     const slippedToGround = this.isSlipping && c.grounded;
     const nonOrthogonalStart = !this.isClimbing && c.forward && !horizontallyStationary;
     const climbingOrForwardOrGrasping = this.isClimbing || c.forward || airborneGraspWall;
-    const tooClose = ((this.isClimbing && (c.back || this.isSlipping)) || airborneGraspWall)
-      && !!c.tooCloseToGround?.();
+    const tooClose =
+      ((this.isClimbing && (c.back || this.isSlipping)) || airborneGraspWall) && !!c.tooCloseToGround?.();
     this.wasClimbing = this.isClimbing;
-    if (inputAbort
-        || !climbingOrForwardOrGrasping
-        || !c.touchingSides
-        || c.levitating
-        || c.riding
-        || c.travelling   // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each
-        || (airborneGraspWall && c.slowFalling)   // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)
-        || slippedToGround
-        || tooClose
-        || nonOrthogonalStart) {
+    if (
+      inputAbort ||
+      !climbingOrForwardOrGrasping ||
+      !c.touchingSides ||
+      c.levitating ||
+      c.riding ||
+      c.travelling || // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each
+      (airborneGraspWall && c.slowFalling) || // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)
+      slippedToGround ||
+      tooClose ||
+      nonOrthogonalStart
+    ) {
       this.stop();
       this.lastHorizontal = [c.horizontalPos[0], c.horizontalPos[1]];
     } else {
@@ -171,12 +178,16 @@ export class ClimbingState {
       }
       if (this.isClimbing) {
         // the continue cadence - faster while slipping (:443)
-        if (this.continueTimer <= SYSTEM_TIMER_UPDATES_DIVISOR
-            * (this.isSlipping ? REGAIN_HOLD_SKILL_CHECK_FREQUENCY : CONTINUE_CLIMBING_SKILL_CHECK_FREQUENCY)) {
+        if (
+          this.continueTimer <=
+          SYSTEM_TIMER_UPDATES_DIVISOR *
+            (this.isSlipping ? REGAIN_HOLD_SKILL_CHECK_FREQUENCY : CONTINUE_CLIMBING_SKILL_CHECK_FREQUENCY)
+        ) {
           this.continueTimer += dt;
         } else {
           this.continueTimer = 0;
-          if (!c.anyMove) this.isSlipping = false;   // "don't allow slipping if not moving" (:449-454)
+          if (!c.anyMove)
+            this.isSlipping = false; // "don't allow slipping if not moving" (:449-454)
           else if (this.isSlipping) this.isSlipping = !this.skillCheck(REGAIN_HOLD_MIN_CHANCE);
           else this.isSlipping = !this.skillCheck(CONTINUE_CLIMB_MIN_CHANCE);
         }
@@ -190,7 +201,7 @@ export class ClimbingState {
         this.showModeMessage = false;
       }
     } else {
-      this.isSlipping = false;   // the not-climbing cleanup (:478)
+      this.isSlipping = false; // the not-climbing cleanup (:478)
     }
     return this.isClimbing;
   }

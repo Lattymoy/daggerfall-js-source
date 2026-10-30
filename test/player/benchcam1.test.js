@@ -150,7 +150,7 @@ test('BENCH-CAM THE SEAM AND THE HOSTS: mwViewFrame hands `pivotFloor` to whiche
     setModSetting('eye-of-the-beholder', 'Enabled', false);
   }
   const src = rd('src/player/mwView.js');
-  assert.match(src, /seaReach = 0, pivotFloor = null, \.\.\.state \}\) \{/, 'the seam takes it');
+  assert.match(src, /seaReach = 0,\n\s*pivotFloor = null,\n\s*\.\.\.state\n\s*\}\) \{/, 'the seam takes it');
   assert.match(src, /eotbCamera\.eye\(\{ fpEye, feet, yaw, pitch, raycast, pivotFloor, \.\.\.frame \}\);/, 'the sprite\'s camera reads it');
   assert.match(src, /mwCamera\.eye\(\{ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast, pivotFloor \}\);/, 'the Morrowind camera reads it');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

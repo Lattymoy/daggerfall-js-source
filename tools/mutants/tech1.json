@@ -633,8 +633,8 @@
   {
     "name": "TECH1-AUDIT-the-march-dropped",
     "file": "src/player/groundRay.js",
-    "old": "  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity;   // no terrain here (indoors, underground)",
-    "new": "  return Infinity;   // no terrain here (indoors, underground)",
+    "old": "  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity; // no terrain here (indoors, underground)",
+    "new": "  return Infinity; // no terrain here (indoors, underground)",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -669,7 +669,7 @@
   {
     "name": "TECH1-AUDIT-the-mesh-ignored",
     "file": "src/player/groundRay.js",
-    "old": "  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }",
+    "old": "  try {\n    const m = collider?.raycast?.(origin, dir, max);\n    if (Number.isFinite(m) && m >= 0) best = m;\n  } catch {\n    /* no meshes */\n  }",
     "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"

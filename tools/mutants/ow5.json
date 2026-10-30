@@ -54,8 +54,8 @@
   {
     "name": "OW5-V1-late-lock-kept",
     "file": "src/player/pointerLock.js",
-    "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
-    "new": "",
+    "old": "    document.addEventListener(\n      'pointerlockchange',\n      () => {\n        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();\n      },\n      false,\n    );\n    _errBound = true;",
+    "new": "    _errBound = true;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
@@ -298,8 +298,8 @@
   {
     "name": "OW5-V3-row-undone",
     "file": "src/player/mwView.js",
-    "old": "  if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;\n",
-    "new": "",
+    "old": "  if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;\n  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
+    "new": "  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],

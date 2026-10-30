@@ -14,7 +14,9 @@ export function groundAt(collider, x, z) {
   try {
     const h = typeof collider?.surfaceAt === 'function' ? collider.surfaceAt(x, z) : collider?.heightAt?.(x, z);
     return Number.isFinite(h) ? h : NaN;
-  } catch { return NaN; }
+  } catch {
+    return NaN;
+  }
 }
 /** Steps the look's march takes along the ground (metres), and the halvings that refine where it crossed. */
 export const GROUND_MARCH_STEP = 0.25;
@@ -28,16 +30,24 @@ const GROUND_MARCH_REFINE = 10;
  * @param {ArrayLike<number>} origin @param {ArrayLike<number>} dir @param {number} max @param {any} collider
  */
 export function groundHit(origin, dir, max, collider) {
-  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity;   // no terrain here (indoors, underground)
+  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity; // no terrain here (indoors, underground)
   const above = (/** @type {number} */ t) => {
     const g = groundAt(collider, origin[0] + dir[0] * t, origin[2] + dir[2] * t);
     return !Number.isFinite(g) || origin[1] + dir[1] * t > g;
   };
-  if (!above(0)) return Infinity;   // an origin under the ground meets nothing it can see
+  if (!above(0)) return Infinity; // an origin under the ground meets nothing it can see
   for (let t = GROUND_MARCH_STEP, prev = 0; prev < max; prev = t, t = Math.min(max, t + GROUND_MARCH_STEP)) {
-    if (above(t)) { if (t >= max) break; continue; }
-    let lo = prev, hi = t;
-    for (let i = 0; i < GROUND_MARCH_REFINE; i++) { const mid = (lo + hi) / 2; if (above(mid)) lo = mid; else hi = mid; }
+    if (above(t)) {
+      if (t >= max) break;
+      continue;
+    }
+    let lo = prev,
+      hi = t;
+    for (let i = 0; i < GROUND_MARCH_REFINE; i++) {
+      const mid = (lo + hi) / 2;
+      if (above(mid)) lo = mid;
+      else hi = mid;
+    }
     return hi;
   }
   return Infinity;
@@ -52,6 +62,11 @@ export function groundHit(origin, dir, max, collider) {
  */
 export function rayHit(origin, dir, max, collider) {
   let best = Infinity;
-  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }
+  try {
+    const m = collider?.raycast?.(origin, dir, max);
+    if (Number.isFinite(m) && m >= 0) best = m;
+  } catch {
+    /* no meshes */
+  }
   return Math.min(best, groundHit(origin, dir, Math.min(max, best), collider));
 }

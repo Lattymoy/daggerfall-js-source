@@ -119,8 +119,8 @@
   {
     "name": "FBSEA-3-the-save-past-the-reference",
     "file": "src/player/mwCamera.js",
-    "old": "baseDistance: Math.min(baseDistance, MAX_DISTANCE) }; },",
-    "new": "baseDistance }; },",
+    "old": "      return { firstPerson, baseDistance: Math.min(baseDistance, MAX_DISTANCE) };",
+    "new": "      return { firstPerson, baseDistance };",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]

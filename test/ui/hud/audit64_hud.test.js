@@ -274,7 +274,7 @@ test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the t
   // ...and mobileEnemyActivate's pickpocket RESULT keeps the popup sink
   // it always had (:838 -> :1611), which is why the refusal took a
   // second sink instead of re-pointing the first.
-  assert.match(src('player/mobileEnemyActivate.js'), /if \(r\.modal\) modal\?\.\(r\.message\); else hud\?\.\(r\.message\);/);
+  assert.match(src('player/mobileEnemyActivate.js'), /if \(r\.modal\) modal\?\.\(r\.message\);\n\s*else hud\?\.\(r\.message\);/);
   // the notebook tail is wired wherever HudText's is
   assert.match(src('scenes/townTalk.js'), /midScreenText\.onMessage = fn;/);
   assert.match(src('scenes/dungeonContext.js'), /midScreenText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);

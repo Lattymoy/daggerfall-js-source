@@ -128,8 +128,8 @@
   {
     "name": "DRAGON5c-a-journey-lifts-it-winded",
     "file": "src/player/dragonRide.js",
-    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');",
-    "new": "  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');",
+    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off'); // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)",
+    "new": "  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off'); // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
     ]

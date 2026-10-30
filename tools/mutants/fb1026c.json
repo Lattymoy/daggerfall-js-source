@@ -29,8 +29,8 @@
   {
     "name": "MW-SHOULDER-transition-carries-nothing",
     "file": "src/player/mwCamera.js",
-    "old": "    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [speed[0], speed[1]]; prevInfluence = 1; },",
-    "new": "    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [0, 0]; prevInfluence = 0; },",
+    "old": "      prevSpeed = [speed[0], speed[1]];\n      prevInfluence = 1;",
+    "new": "      prevSpeed = [0, 0];\n      prevInfluence = 0;",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MW-SHOULDER-instant-ignored",
     "file": "src/player/mwCamera.js",
-    "old": "    instant() { skip = true; },",
-    "new": "    instant() { },",
+    "old": "    instant() {\n      skip = true;\n    },",
+    "new": "    instant() {},",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MW-SHOULDER-left-not-mirrored",
     "file": "src/player/mwCamera.js",
-    "old": "shoulderState === 'left' ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]] : COMBAT_OFFSET",
-    "new": "shoulderState === 'left' ? SHOULDER_OFFSET : COMBAT_OFFSET",
+    "old": "          shoulderState === 'right'\n            ? SHOULDER_OFFSET\n            : shoulderState === 'left'\n              ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]]\n              : COMBAT_OFFSET,",
+    "new": "          shoulderState === 'right' ? SHOULDER_OFFSET : shoulderState === 'left' ? SHOULDER_OFFSET : COMBAT_OFFSET,",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MW-SHOULDER-entry-eased",
     "file": "src/player/mwCamera.js",
-    "old": "      if (noThirdLast) { focalShift.instant(); noThirdLast = false; }",
-    "new": "      if (noThirdLast) { noThirdLast = false; }",
+    "old": "        focalShift.instant();\n        noThirdLast = false;",
+    "new": "        noThirdLast = false;",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MW-SHOULDER-setting-change-eased",
     "file": "src/player/mwCamera.js",
-    "old": "      if (next !== shoulder) { shoulder = next; noThirdLast = true; }",
-    "new": "      if (next !== shoulder) { shoulder = next; }",
+    "old": "        noThirdLast = true;\n      }",
+    "new": "      }",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MW-SHOULDER-right-is-left",
     "file": "src/player/mwCamera.js",
-    "old": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
-    "new": "        focal[0] -= Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] += Math.sin(yaw) * fo[0] * u;",
+    "old": "        focal[0] += Math.cos(yaw) * fo[0] * u;\n        focal[1] += fo[1] * u;\n        focal[2] -= Math.sin(yaw) * fo[0] * u;",
+    "new": "        focal[0] -= Math.cos(yaw) * fo[0] * u;\n        focal[1] += fo[1] * u;\n        focal[2] += Math.sin(yaw) * fo[0] * u;",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MW-SHOULDER-offset-unscaled",
     "file": "src/player/mwCamera.js",
-    "old": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
-    "new": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] / 10 * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
+    "old": "        focal[1] += fo[1] * u;",
+    "new": "        focal[1] += (fo[1] / 10) * u;",
     "tests": [
       "test/player/fb1026c_shoulder.test.js"
     ]

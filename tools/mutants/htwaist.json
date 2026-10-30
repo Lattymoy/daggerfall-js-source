@@ -413,8 +413,8 @@
   {
     "name": "HT-WAIST-the-lane-never-stands-it-down",
     "file": "src/player/mwView.js",
-    "old": "  eotbBody.standDown();\n",
-    "new": "",
+    "old": "  eotbBody.standDown();\n  // RIDE-POV: the saddle first, before any queued notch can cross out of the head - COATS3D: unless the body sits a",
+    "new": "  // RIDE-POV: the saddle first, before any queued notch can cross out of the head - COATS3D: unless the body sits a",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]

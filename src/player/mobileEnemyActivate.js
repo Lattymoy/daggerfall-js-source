@@ -46,14 +46,21 @@
 // PlayerActivate alone and appears in no save record, so it lives on
 // the live foe entity and dies with the pool, as DFU's does.
 
-import { PICKPOCKET_DISTANCE, TREASURE_ACTIVATION_DISTANCE, tooFarAwayText, pickFoeHit, DOOR_ACTIVATION_DISTANCE, allyYields } from './activate.js';   // AUDIT WK-P6: a companion's pack is storage, at storage's reach; FB1012d ALLY-YIELDS: and he yields to what answers behind him
-import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: :834 is the HUD's centred label, not the popup queue
-import { PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemy/enemyTargets.js';   // AUDIT NAV2 F54: MakeEnemyHostileToAttacker's entity-side half
+import {
+  PICKPOCKET_DISTANCE,
+  TREASURE_ACTIVATION_DISTANCE,
+  tooFarAwayText,
+  pickFoeHit,
+  DOOR_ACTIVATION_DISTANCE,
+  allyYields,
+} from './activate.js'; // AUDIT WK-P6: a companion's pack is storage, at storage's reach; FB1012d ALLY-YIELDS: and he yields to what answers behind him
+import { setMidScreenText } from '../ui/midScreenText.js'; // AUDIT 64 F34: :834 is the HUD's centred label, not the popup queue
+import { PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemy/enemyTargets.js'; // AUDIT NAV2 F54: MakeEnemyHostileToAttacker's entity-side half
 import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';
-import { properName } from '../systems/champions.js';   // AUDIT WB12d (D2): a foe with a name of its own
+import { properName } from '../systems/champions.js'; // AUDIT WB12d (D2): a foe with a name of its own
 import { pickpocket } from '../systems/talk/talk.js';
-import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
-import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F54: the player's own hands - and a town's defenders - are no mark
+import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
+import { sparedByPlayer } from '../combat/friendlyFire.js'; // AUDIT NAV2 F54: the player's own hands - and a town's defenders - are no mark
 
 /** Internal_Strings.csv:23-24 - `youSeeAn,You see an %s.` and
  *  `youSeeA,You see a %s.`, picked by the vowel test at :817 over the
@@ -65,7 +72,10 @@ export const YOU_SEE_AN_TEXT = 'You see an %s.';
 export function youSeeEnemyText(name) {
   const n = name ?? '';
   const vowel = 'aeiouAEIOU'.includes(n[0] ?? '');
-  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll('%s', n);
+  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll(
+    '%s',
+    n,
+  );
 }
 
 /**
@@ -90,44 +100,69 @@ export function youSeeEnemyText(name) {
  * @returns true when the activation was CONSUMED (DFU's `break` out of
  *   ActivateMobileEnemy - the enemy was the ray's hit either way)
  */
-export function activateMobileEnemy(foe, distance, mode, player, {
-  hud = null, modal = null, makeEnemiesHostile = null, playerFeet = null,
-  rolls = Math.random, nothingText = () => 'You found nothing valuable.',
-  // AUDIT 64 F34: the ONE line in this member that is
-  // SetMidScreenText (PlayerActivate.cs:834) rather than
-  // PopupMessage/MessageBox - the refusal, not the pickpocket result
-  // (:838 -> :1611). It is a second sink so re-pointing `hud` cannot
-  // drag the result onto the label with it; the default is the same
-  // static funnel DaggerfallUI.cs:783-789 gives every caller.
-  midScreen = setMidScreenText,
-  openCompanion = null,
-  openFate = null,   // REVENANT-FATE: (foe) => the yielded revenant's choice (the host's loot-menu door)
-  openLiving = null,   // LW14: (foe) => a company's choices (the living world's door), whether one was opened
-} = {}) {
+export function activateMobileEnemy(
+  foe,
+  distance,
+  mode,
+  player,
+  {
+    hud = null,
+    modal = null,
+    makeEnemiesHostile = null,
+    playerFeet = null,
+    rolls = Math.random,
+    nothingText = () => 'You found nothing valuable.',
+    // AUDIT 64 F34: the ONE line in this member that is
+    // SetMidScreenText (PlayerActivate.cs:834) rather than
+    // PopupMessage/MessageBox - the refusal, not the pickpocket result
+    // (:838 -> :1611). It is a second sink so re-pointing `hud` cannot
+    // drag the result onto the label with it; the default is the same
+    // static funnel DaggerfallUI.cs:783-789 gives every caller.
+    midScreen = setMidScreenText,
+    openCompanion = null,
+    openFate = null, // REVENANT-FATE: (foe) => the yielded revenant's choice (the host's loot-menu door)
+    openLiving = null, // LW14: (foe) => a company's choices (the living world's door), whether one was opened
+  } = {},
+) {
   if (!foe || foe.dead) return false;
   // REVENANT-FATE (2026-10-02, Mac: "Players should have the option to kill or spare"; "the choice popup should reuse
   // the loot menu"): a beaten revenant on its knees is reached as a body is - at the treasure's reach, the HUD's one
   // refusal past it - and opens its fate's window; a peer's (a puppet's) is its owner's choice
   if (foe.yielded && !foe.puppet && openFate) {
-    if (!(distance <= TREASURE_ACTIVATION_DISTANCE)) { midScreen?.(tooFarAwayText()); return true; }   // the treasure's reach, as his pack's (WK-P6)
+    if (!(distance <= TREASURE_ACTIVATION_DISTANCE)) {
+      midScreen?.(tooFarAwayText());
+      return true;
+    } // the treasure's reach, as his pack's (WK-P6)
     openFate(foe);
     return true;
   }
   const entity = foe.entity ?? null;
   // COMPANION-KIT (2026-10-01, Mac: companions "act as storage"): my companion activated opens his pack - Steal from him
   // is the shipmate's silent break below
-  if (mode !== 'steal' && openCompanion && foe.companion != null && foe.shipmate === true && !String(foe.companion).startsWith('peer:')) {
+  if (
+    mode !== 'steal' &&
+    openCompanion &&
+    foe.companion != null &&
+    foe.shipmate === true &&
+    !String(foe.companion).startsWith('peer:')
+  ) {
     // AUDIT WK-P6: HIS PACK IS STORAGE, AND STORAGE IS REACHED. This arm runs at the ray's reach (RAY_DISTANCE, 76.8 -
     // MC-2's one call in every host), and his pack opened from across a square; a chest, a pile, a boat's box and a cart
     // open at TreasureActivationDistance and refuse past it with the HUD's one refusal (ActivateLootContainer :868-873)
-    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }
+    if (distance > TREASURE_ACTIVATION_DISTANCE) {
+      midScreen?.(tooFarAwayText());
+      return true;
+    }
     if (openCompanion(foe)) return true;
   }
   // LW14: one of a company of the living world beside the player - its door (join us, lead on, part ways)
   // AUDIT LW-II D11: at the treasure's reach, as his pack's (the HUD's one refusal past it), and never in Info ("You see")
   if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {
     const far = distance > TREASURE_ACTIVATION_DISTANCE;
-    if (far) { midScreen?.(tooFarAwayText()); return true; }
+    if (far) {
+      midScreen?.(tooFarAwayText());
+      return true;
+    }
     if (openLiving(foe)) return true;
   }
   if (mode !== 'steal') {
@@ -136,10 +171,15 @@ export function activateMobileEnemy(foe, distance, mode, player, {
     // (PlayerActivate.cs:811) - a translation's enemyNames row by the
     // MobileTypes id, the port's own name where it has none - so the
     // vowel test reads the first letter of the name the player sees.
-    const own = properName(entity);   // AUDIT WB12d (D2): a foe with a name of its own is seen by it - "You see the Summoner."
+    const own = properName(entity); // AUDIT WB12d (D2): a foe with a name of its own is seen by it - "You see the Summoner."
     const mobileType = foe.mobileType ?? entity?.mobileType ?? -1;
     const name = own ?? enemyDisplayName(mobileType);
-    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)));
+    if (name)
+      hud?.(
+        own
+          ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the '))
+          : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)),
+      );
     return true;
   }
   // :827-828 - a monster breaks out, silently, and the activation is
@@ -155,10 +195,14 @@ export function activateMobileEnemy(foe, distance, mode, player, {
   if (sparedByPlayer(foe)) return true;
   // :830 - the flag wraps EVERYTHING below, the distance line included.
   if (entity.pickpocketAttempted) return true;
-  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal
-  entity.pickpocketAttempted = true;   // :837
-  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611
-  if (r.modal) modal?.(r.message); else hud?.(r.message);
+  if (distance > PICKPOCKET_DISTANCE) {
+    midScreen?.(tooFarAwayText());
+    return true;
+  } // :834 - the mid-screen refusal
+  entity.pickpocketAttempted = true; // :837
+  const r = pickpocket(player, { target: entity, rolls, nothingText }); // :838 -> :1611
+  if (r.modal) modal?.(r.message);
+  else hud?.(r.message);
   if (!r.success) {
     // :1661-1671, in DFU's order: the IsHostile read precedes the walk.
     if (!foe.ai?.isHostile) makeEnemiesHostile?.();
@@ -232,8 +276,8 @@ export function tryMobileEnemyActivate(eye, dir, foes, collider, reach, mode, pl
   // :419 is reached only for the ray's OWN hit - a nearer activatable
   // means the enemy was never the thing the ray struck.
   if (!(hit.distance < (deps.nearerThan ?? Infinity))) return false;
-  if (allyYields(hit.foe, deps.behind)) return false;   // FB1012d ALLY-YIELDS: a companion passes the press to what answers behind him
-  if (yieldsToDoor(hit.foe, deps.doorBehind, mode)) return false;   // TACT3d: the door behind takes the click
+  if (allyYields(hit.foe, deps.behind)) return false; // FB1012d ALLY-YIELDS: a companion passes the press to what answers behind him
+  if (yieldsToDoor(hit.foe, deps.doorBehind, mode)) return false; // TACT3d: the door behind takes the click
   return activateMobileEnemy(hit.foe, hit.distance, mode, player, deps);
 }
 
@@ -251,7 +295,7 @@ export function tryMobileEnemyActivate(eye, dir, foes, collider, reach, mode, pl
  * headstone out of its 1.6) never takes his press.
  */
 export function yieldsToDoor(foe, doorBehind, mode = null) {
-  if (!foe || foe.companion != null || mode === 'steal') return false;   // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM
+  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM
   return !hostileToMe(foe) && Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE;
 }
 

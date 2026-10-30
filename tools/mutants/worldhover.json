@@ -514,8 +514,8 @@
   {
     "name": "WORLD-HOVER-the-mobile-band-reaches-as-far-as-the-ray",
     "file": "src/player/activate.js",
-    "old": "      distance: RAY_DISTANCE,\n      reach: MOBILE_NPC_ACTIVATION_DISTANCE,\n",
-    "new": "      distance: RAY_DISTANCE,\n      reach: RAY_DISTANCE,\n",
+    "old": "      reach: MOBILE_NPC_ACTIVATION_DISTANCE,",
+    "new": "      reach: RAY_DISTANCE,",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -523,8 +523,8 @@
   {
     "name": "WORLD-HOVER-a-body-is-stood-as-a-live-foe",
     "file": "src/player/activate.js",
-    "old": "    if (!f || f.dead) continue;   // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
-    "new": "    if (!f) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "old": "    i += 1;\n    if (!f || f.dead) continue; // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit\n    const aabb = foeAabb(f);",
+    "new": "    i += 1;\n    if (!f) continue;\n    const aabb = foeAabb(f);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "WORLD-HOVER-the-live-foe-box-is-not-the-press-s",
     "file": "src/player/activate.js",
-    "old": "  const half = 0.45;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
-    "new": "  const half = 0.6;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
+    "old": "  const half = 0.45;",
+    "new": "  const half = 0.6;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

@@ -308,7 +308,7 @@ Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 1
 FOUND ON THE WAY, NOT FIXED. One key does two things there (Controls.md KB1 law 3, "No default code ships twice", and
 law 5, no raw read of a bound key):
 - Y is the default FreeMouse (`inputActions.js:"  ['KeyY', 'FreeMouse'],"`), heard first by the capture-phase toggle
-  (`pointerLock.js:"  addEventListener('keydown', onKey, true);"`), which does not stop the key. The world's handler
+  (`pointerLock.js:"addEventListener('keydown', onKey, true)"`), which does not stop the key. The world's handler
   then hands the same press to the Spire (`world.js:"if ((!e.repeat && !gamePaused() && egClient?.key(e)) || (!gamePaused() && staffView.key(e))) { e.preventDefault(); return; }"`),
   which reads Y as a Ready vote (`egClient.js:"if (open.length && (code === 'KeyY' || code === 'KeyN')) return this.vote("`).
   A solo player who frees the mouse to read the panel votes Ready, sees it marked - "the option is selected to

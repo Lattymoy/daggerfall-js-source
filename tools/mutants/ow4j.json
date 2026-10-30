@@ -196,8 +196,8 @@
   {
     "name": "OW4-J6-mwview-no-up",
     "file": "src/player/mwView.js",
-    "old": "grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });",
-    "new": "grow: face?.grow > 1 ? face.grow : 1, horse });",
+    "old": "  return fpArm.drawThird(canvas, {\n    proj,\n    view,\n    eye,\n    feet,\n    yaw,\n    grow: face?.grow > 1 ? face.grow : 1,\n    up: face?.up ?? null,\n    horse,\n  });",
+    "new": "  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: face?.grow > 1 ? face.grow : 1, horse });",
     "tests": [
       "test/render/prbow1_bow.test.js",
       "test/formats/morrowind/prbow1b_followups.test.js"

@@ -493,8 +493,8 @@
   {
     "name": "SERAPHWINGS-the-view-forgets-the-figure",
     "file": "src/player/mwView.js",
-    "old": "spriteFigure = drawn ? eotbFigure() : null;",
-    "new": "spriteFigure = null;",
+    "old": "    spriteFigure = drawn ? eotbFigure() : null;",
+    "new": "    spriteFigure = null;",
     "tests": [
       "test/net/seraphwings.test.js"
     ]

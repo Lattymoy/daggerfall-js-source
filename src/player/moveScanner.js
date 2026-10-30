@@ -37,9 +37,9 @@ import { CAPSULE_RADIUS } from './motor.js';
  *  origin (:159) - "get the normalized horizontal component of
  *  player's direction". */
 export const STEP_PROBE_RADIUS = 0.1;
-export const STEP_PROBE_DISPLACEMENT = 0.10;
+export const STEP_PROBE_DISPLACEMENT = 0.1;
 /** maxRange = height/2 + 2.10 (:157). */
-export const STEP_PROBE_RANGE = 2.10;
+export const STEP_PROBE_RANGE = 2.1;
 /** HeadHitRadius = controller.radius * 0.85 (:114); the cast reaches
  *  2f (:174). */
 export const HEAD_HIT_RADIUS_FACTOR = 0.85;
@@ -65,7 +65,9 @@ export class PlayerMoveScanner {
   /** A collider that carries no sweep API (a facade in a headless
    *  test) leaves every probe at its default, exactly as the motor's
    *  climb probe backs off rather than crashing the step. */
-  get _canScan() { return typeof this.collider?.sphereCast === 'function'; }
+  get _canScan() {
+    return typeof this.collider?.sphereCast === 'function';
+  }
 
   /**
    * FindStep (:151-169), verbatim: a 0.1 sphere dropped from the
@@ -83,15 +85,17 @@ export class PlayerMoveScanner {
    * @param {boolean} jumping AcrobatMotor.Jumping
    */
   findStep(position, moveDirection, height, jumping) {
-    if (!this._canScan) { this.stepHitDistance = 0; return; }
+    if (!this._canScan) {
+      this.stepHitDistance = 0;
+      return;
+    }
     const maxRange = height / 2 + STEP_PROBE_RANGE;
     const hx = moveDirection[0];
     const hz = moveDirection[2];
     const len = Math.hypot(hx, hz);
     const s = len > 0 ? STEP_PROBE_DISPLACEMENT / len : 0;
     const origin = [position[0] + hx * s, position[1], position[2] + hz * s];
-    const d = jumping ? Infinity
-      : this.collider.sphereCast(origin, STEP_PROBE_RADIUS, [0, -1, 0], maxRange).dist;
+    const d = jumping ? Infinity : this.collider.sphereCast(origin, STEP_PROBE_RADIUS, [0, -1, 0], maxRange).dist;
     this.stepHitDistance = Number.isFinite(d) ? d : 0;
   }
 
@@ -133,9 +137,13 @@ export class PlayerMoveScanner {
    * header. It is here so the class is whole.
    */
   setHitSomethingInFront(position, direction) {
-    if (typeof this.collider?.raycast !== 'function') { this.hitSomethingInFront = false; return false; }
+    if (typeof this.collider?.raycast !== 'function') {
+      this.hitSomethingInFront = false;
+      return false;
+    }
     this.hitSomethingInFront = Number.isFinite(
-      this.collider.raycast(position, direction, this.radius + IN_FRONT_REACH));
+      this.collider.raycast(position, direction, this.radius + IN_FRONT_REACH),
+    );
     return this.hitSomethingInFront;
   }
 }

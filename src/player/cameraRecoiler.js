@@ -62,14 +62,25 @@ export class CameraRecoiler {
 
   /** ResetRecoil (:135-138): a world init, a load, the court screen.
    *  The offset still on the look comes off on the next update. */
-  reset() { this.swaying = false; }
+  reset() {
+    this.swaying = false;
+  }
 
   /**
    * Update (:48-77). `paused` covers IsGamePaused and cursorActive.
    * @returns {boolean} whether the camera was rotated this frame
    */
-  update(dt, cam, { healthLost = 0, healthLostPercent = 0, paused = false,
-    setting = getInt('Controls', 'CameraRecoilStrength', 0, 4), rolls = Math.random } = {}) {
+  update(
+    dt,
+    cam,
+    {
+      healthLost = 0,
+      healthLostPercent = 0,
+      paused = false,
+      setting = getInt('Controls', 'CameraRecoilStrength', 0, 4),
+      rolls = Math.random,
+    } = {},
+  ) {
     // Take last frame's offset back off the look (the mouselook's
     // absolute write, PlayerMouseLook.cs:257).
     cam.pitch += this.applied[0] * DEG;
@@ -80,7 +91,7 @@ export class CameraRecoiler {
       this.swaying = true;
       this.timerStart = recoilTimerStart(healthLostPercent);
       this.timer = this.timerStart;
-      const a = rolls() * 2 * Math.PI;   // insideUnitCircle.normalized
+      const a = rolls() * 2 * Math.PI; // insideUnitCircle.normalized
       this.swayAxis = [Math.cos(a), Math.sin(a)];
     }
     if (!this.swaying) return false;
@@ -88,8 +99,8 @@ export class CameraRecoiler {
     const scalar = recoilRotationScalar(setting, healthLost, this.timer, this.timerStart);
     const xAngle = Math.sin(this.timer) * scalar * this.swayAxis[0];
     const yAngle = Math.sin(this.timer) * scalar * this.swayAxis[1];
-    cam.pitch -= xAngle * DEG;   // Rotate(+x) pitches DOWN in Unity's frame; the port's +pitch looks up
-    cam.yaw += yAngle * DEG;     // Rotate(+y) turns right, as the port's +yaw does
+    cam.pitch -= xAngle * DEG; // Rotate(+x) pitches DOWN in Unity's frame; the port's +pitch looks up
+    cam.yaw += yAngle * DEG; // Rotate(+y) turns right, as the port's +yaw does
     this.applied = [xAngle, yAngle];
     this.swaying = this.timer > 0;
     return true;

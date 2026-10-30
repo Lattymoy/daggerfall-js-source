@@ -521,7 +521,7 @@
   {
     "name": "LW14-AUDIT-D11-reach",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (far) { midScreen?.(tooFarAwayText()); return true; }\n    if (openLiving(foe)) return true;",
+    "old": "    if (far) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }\n    if (openLiving(foe)) return true;",
     "new": "    if (openLiving(foe)) return true;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -531,8 +531,8 @@
   {
     "name": "LW14-AUDIT-D11-info",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (mode !== 'steal' && mode !== 'info' && openLiving",
-    "new": "if (mode !== 'steal' && openLiving",
+    "old": "  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
+    "new": "  if (mode !== 'steal' && openLiving && foe.living?.res && foe.shipmate === true) {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]

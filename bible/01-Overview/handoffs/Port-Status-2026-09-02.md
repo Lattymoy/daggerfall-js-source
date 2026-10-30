@@ -843,7 +843,7 @@ that was a claim once and is a pointer at a stranger now.
 - **`src/world/wagonModels.js:"FLAGGED: the Small Cart has no bench"`** - the Small Cart's driver in the saddle.
   *Mac's choice: the cart has no bench, so RIDE-POV keeps the Morrowind body in the head on it. The day it has one,
   the sentence goes.*
-- **`src/player/mwView.js:"FLAGGED: Eye Of The Beholder has no sitting art"`** - the sprite lane's driver standing.
+- **`src/player/mwView.js:"FLAGGED: Eye Of The"`** - the sprite lane's driver standing.
   *The day the lane has a sitting picture, the sentence goes.*
 - **`src/scenes/horseCartPool.js:"FLAGGED: a peer's word does not say how many horses they own"`** - another
   player's parked pair. *The relay's word carries no horse count (a new field is a relay version); the day it does,

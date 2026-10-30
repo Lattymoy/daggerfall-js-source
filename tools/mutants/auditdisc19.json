@@ -534,8 +534,8 @@
   {
     "name": "AUDIT-DISC19-E2-special-door-a-box",
     "file": "src/player/activate.js",
-    "old": "  || (o.kind === 'door' && o.special === true)\n",
-    "new": "",
+    "old": "  !!o &&\n  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  !!o && (o.kind === 'action' || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "AUDIT-DISC19-E2-flats-are-mesh",
     "file": "src/player/activate.js",
-    "old": "  || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
-    "new": "  || (o.kind === 'relay' || o.kind === 'effect'));",
+    "old": "  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  (o.kind === 'action' || (o.kind === 'door' && o.special === true) || o.kind === 'relay' || o.kind === 'effect');",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-DISC19-E2-movers-not-mesh",
     "file": "src/player/activate.js",
-    "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'\n",
-    "new": "export const hasMeshCollider = (o) => !!o && (o.kind === 'mover'\n",
+    "old": "  (o.kind === 'action' ||",
+    "new": "  (o.kind === 'mover' ||",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "AUDIT-DISC19-E2-effects-not-mesh",
     "file": "src/player/activate.js",
-    "old": "((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null)",
-    "new": "((o.kind === 'relay') && o.modelIdNum != null)",
+    "old": "  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  (o.kind === 'action' || (o.kind === 'door' && o.special === true) || (o.kind === 'relay' && o.modelIdNum != null));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]

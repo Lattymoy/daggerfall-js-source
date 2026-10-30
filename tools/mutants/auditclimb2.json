@@ -155,8 +155,8 @@
   {
     "name": "AUDITCLIMB2-C1-face-rung-on-roof",
     "file": "src/player/parkour.js",
-    "old": "    if (dist - at(i + 1) > PARKOUR_EDGE_INSET) continue;",
-    "new": "    if (false) continue;",
+    "old": "    if (dist - at(i + 1) > PARKOUR_EDGE_INSET) continue; // a rung on a top rising away from the edge, not on the face",
+    "new": "    if (false) continue; // a rung on a top rising away from the edge, not on the face",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "AUDITCLIMB2-C1-depth-one-rung",
     "file": "src/player/parkour.js",
-    "old": "for (let j = i - 2; j >= i - 3 && ",
-    "new": "for (let j = i - 2; j >= i - 1 && ",
+    "old": "    for (let j = i - 2; j >= i - 3 && deep - dist < PARKOUR_GRIP_DEPTH; j--) {",
+    "new": "    for (let j = i - 2; j >= i - 1 && deep - dist < PARKOUR_GRIP_DEPTH; j--) {",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -203,8 +203,8 @@
   {
     "name": "AUDITCLIMB2-C1-step-the-inset",
     "file": "src/player/parkour.js",
-    "old": "at(i - 1) - dist <= PARKOUR_RAY_SCATTER) continue;",
-    "new": "at(i - 1) - dist < PARKOUR_EDGE_INSET) continue;",
+    "old": "    if (Math.abs(dist - back) > PARKOUR_LIP_FOLLOW || at(i - 1) - dist <= PARKOUR_RAY_SCATTER) continue;",
+    "new": "    if (Math.abs(dist - back) > PARKOUR_LIP_FOLLOW || at(i - 1) - dist < PARKOUR_EDGE_INSET) continue;",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -215,8 +215,8 @@
   {
     "name": "AUDITCLIMB2-C1-no-face-under-eave",
     "file": "src/player/parkour.js",
-    "old": "?? faceHit(collider, [ox, Math.min(y - PARKOUR_UNDER, loY - PARKOUR_GRIP_RUNG), oz], dir, far);",
-    "new": "?? null;",
+    "old": "  const under =\n    faceHit(collider, [ox, y - PARKOUR_UNDER, oz], dir, far) ??\n    faceHit(collider, [ox, Math.min(y - PARKOUR_UNDER, loY - PARKOUR_GRIP_RUNG), oz], dir, far);",
+    "new": "  const under = faceHit(collider, [ox, y - PARKOUR_UNDER, oz], dir, far) ?? null;",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -263,8 +263,8 @@
   {
     "name": "AUDITCLIMB2-C5-move-lip-not-shifted",
     "file": "src/player/parkour.js",
-    "old": "  if (m.hang) m.hang.lipY += offset[1];\n",
-    "new": "",
+    "old": "  if (m.hang) m.hang.lipY += offset[1];\n  if (m.next) offsetMove(m.next, offset); // CLIMB-DOWN: the move chained on after it",
+    "new": "  if (m.next) offsetMove(m.next, offset); // CLIMB-DOWN: the move chained on after it",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -275,8 +275,8 @@
   {
     "name": "AUDITCLIMB2-C5-move-hang-not-carried",
     "file": "src/player/parkour.js",
-    "old": "  if (m.hang) carryLip(m.hang, m.to[1] - y0, was, now);",
-    "new": "",
+    "old": "  if (m.hang) carryLip(m.hang, m.to[1] - y0, was, now); // AUDIT CLIMB2 C5: the hang it ends in, as a hold is carried",
+    "new": "  // AUDIT CLIMB2 C5: the hang it ends in, as a hold is carried",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -373,8 +373,8 @@
   {
     "name": "AUDITCLIMB2-G2-bands-unasked",
     "file": "src/player/parkour.js",
-    "old": " || !bandsClear(collider, p, height)) return false;",
-    "new": ") return false;",
+    "old": "  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS) || !bandsClear(collider, p, height)) return false;",
+    "new": "  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS)) return false;",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -385,8 +385,8 @@
   {
     "name": "AUDITCLIMB2-G2-bands-thin",
     "file": "src/player/parkour.js",
-    "old": "PARKOUR_BODY_RADIUS - PARKOUR_BAND_SLACK)) return false;",
-    "new": "PARKOUR_BODY_RADIUS - 0.2)) return false;",
+    "old": "    if (\n      collider.sphereOverlaps(\n        [p[0], p[1] + PARKOUR_BODY_RADIUS + (axis * i) / n, p[2]],\n        PARKOUR_BODY_RADIUS - PARKOUR_BAND_SLACK,\n      )\n    )",
+    "new": "    if (collider.sphereOverlaps([p[0], p[1] + PARKOUR_BODY_RADIUS + (axis * i) / n, p[2]], PARKOUR_BODY_RADIUS - 0.2))",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",
@@ -652,8 +652,8 @@
   {
     "name": "AUDITCLIMB2-G5-thirty-falls-between",
     "file": "src/player/parkour.js",
-    "old": "< PARKOUR_FACE_FOLLOW - PARKOUR_RAY_SCATTER) return null;",
-    "new": "< PARKOUR_FACE_FOLLOW) return null;",
+    "old": "  if (!under || under.normal[0] * normal[0] + under.normal[2] * normal[2] < PARKOUR_FACE_FOLLOW - PARKOUR_RAY_SCATTER)\n    return null;",
+    "new": "  if (!under || under.normal[0] * normal[0] + under.normal[2] * normal[2] < PARKOUR_FACE_FOLLOW) return null;",
     "tests": [
       "test/player/auditclimb2.test.js",
       "test/player/climb2.test.js",

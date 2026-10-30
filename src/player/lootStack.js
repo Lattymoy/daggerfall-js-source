@@ -33,7 +33,7 @@
 /** @typedef {{ key: string, distance: number, reach: number }} RayPick */
 /** @typedef {{ key: string, body?: boolean }} StackTarget */
 
-let _seen = /** @type {string[]|null} */ (null);   // the last stack a pick stood, nearest first
+let _seen = /** @type {string[]|null} */ (null); // the last stack a pick stood, nearest first
 
 /** Is this target a body? Its producer's word, and nothing else. */
 const isBody = (t) => !!t && t.body === true;
@@ -57,7 +57,7 @@ export function bodyStack(first, targets, nearest) {
   let rest = targets.filter((t) => isBody(t) && t.key !== first.key);
   while (rest.length) {
     const hit = nearest(rest);
-    if (!hit || !(hit.distance <= hit.reach)) break;   // the next is beyond reach, and so is everything behind it
+    if (!hit || !(hit.distance <= hit.reach)) break; // the next is beyond reach, and so is everything behind it
     out.push(hit);
     rest = rest.filter((t) => t.key !== hit.key);
   }
@@ -108,7 +108,13 @@ export function lootPile(key, { keys = null, describe, open }) {
     if (d || k === key) bodies.push({ key: k, name: d?.name ?? '', count: d?.count ?? 0 });
   }
   if (bodies.length < 2) return null;
-  return { bodies, current: key, open: (k) => { if (k !== key && bodies.some((b) => b.key === k)) open(k, all); } };
+  return {
+    bodies,
+    current: key,
+    open: (k) => {
+      if (k !== key && bodies.some((b) => b.key === k)) open(k, all);
+    },
+  };
 }
 
 /** How many bodies the pile under `key` holds, for the plaque's mark - null for a body alone or no body. */
@@ -118,7 +124,9 @@ export function bodyStackMark(key) {
 
 /** Freed with the host that raised it (ui/worldPlaque.js destroyWorldPlaque, beside quick loot's): the note is ABOUT
  *  bodies in a world a teardown is unmaking. */
-export function resetBodyStack() { _seen = null; }
+export function resetBodyStack() {
+  _seen = null;
+}
 
 /** For tests: the state, read. */
 export const _bodyStackStateForTests = () => ({ seen: _seen ? [..._seen] : null });

@@ -128,8 +128,8 @@
   {
     "name": "PERF-WAGON-o-the-cart-handed-no-test",
     "file": "src/player/mwView.js",
-    "old": "return eotbWagon.draw(renderer, texRemap, cull);",
-    "new": "return eotbWagon.draw(renderer, texRemap, null);",
+    "old": "  return eotbWagon.draw(renderer, texRemap, cull);",
+    "new": "  return eotbWagon.draw(renderer, texRemap, null);",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]

@@ -277,8 +277,8 @@
   {
     "name": "YARD-RECENTRE-the-bucket-left-behind",
     "file": "src/player/lateSolid.js",
-    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]); else stand(key, h);",
-    "new": "      if (was) held.set(key, [h]); else stand(key, h);",
+    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]);",
+    "new": "      if (was) held.set(key, [h]);",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ]

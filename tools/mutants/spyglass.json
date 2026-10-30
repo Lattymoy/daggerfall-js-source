@@ -683,8 +683,8 @@
   {
     "name": "SPY-M-no-hand-back",
     "file": "src/player/mwView.js",
-    "old": "  if (h.changed) mwViewTogglePerspective();   // back out into the third person it stood in\n",
-    "new": "",
+    "old": "  if (h.changed) mwViewTogglePerspective(); // back out into the third person it stood in\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "SPY-M-travel-view-loses",
     "file": "src/player/mwView.js",
-    "old": "    if (heldFirst) return true;\n    if (heldThird) return false;\n",
-    "new": "    if (heldFirst) return true;\n",
+    "old": "    if (heldThird) return false;\n    const lane = eotbLane() ? 'eotb' : 'mw';",
+    "new": "    const lane = eotbLane() ? 'eotb' : 'mw';",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]

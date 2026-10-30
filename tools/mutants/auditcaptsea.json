@@ -2259,8 +2259,8 @@
   {
     "name": "ACS-S8-view-release-first",
     "file": "src/player/mwView.js",
-    "old": "    if (heldFirst) mwViewHoldFirst(false);\n",
-    "new": "",
+    "old": "    if (heldFirst) mwViewHoldFirst(false);\n    if (eotbLane()) {",
+    "new": "    if (eotbLane()) {",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2268,8 +2268,8 @@
   {
     "name": "ACS-S8-map-claim",
     "file": "src/player/mwView.js",
-    "old": "  if (heldFirst) heldFirst.changed = false;   // AUDIT CAPTAIN'S SEA S8",
-    "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8",
+    "old": "  if (heldFirst) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the head wanted for itself (MAP-POV) - the glass hands nothing back",
+    "new": "  void 0; // AUDIT CAPTAIN'S SEA S8: the head wanted for itself (MAP-POV) - the glass hands nothing back",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2277,8 +2277,8 @@
   {
     "name": "ACS-S9-save-camera",
     "file": "src/player/mwView.js",
-    "old": "  if (heldFirst?.changed && heldFirst.lane === 'mw') return { ...s, firstPerson: false };",
-    "new": "  void 0;",
+    "old": "  if (heldFirst?.changed && heldFirst.lane === 'mw') return { ...s, firstPerson: false }; // AUDIT CAPTAIN'S SEA S9: nor the head the glass borrowed",
+    "new": "  void 0; // AUDIT CAPTAIN'S SEA S9: nor the head the glass borrowed",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2295,8 +2295,8 @@
   {
     "name": "ACS-S8-load-forgets",
     "file": "src/player/mwView.js",
-    "old": "  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a load decides the view",
-    "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8: a load decides the view",
+    "old": "  heldFirst = null; // AUDIT CAPTAIN'S SEA S8: a load decides the view - the glass hands nothing back over it",
+    "new": "  void 0; // AUDIT CAPTAIN'S SEA S8: a load decides the view - the glass hands nothing back over it",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2304,8 +2304,8 @@
   {
     "name": "ACS-S8-new-game-forgets",
     "file": "src/player/mwView.js",
-    "old": "  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
-    "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
+    "old": "  heldFirst = null; // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
+    "new": "  void 0; // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2313,8 +2313,8 @@
   {
     "name": "ACS-S8-door-row",
     "file": "src/player/mwView.js",
-    "old": "if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false;",
-    "new": "void 0;",
+    "old": "  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
+    "new": "  void 0; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

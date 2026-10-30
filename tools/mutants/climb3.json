@@ -2,8 +2,8 @@
   {
     "name": "CLIMB3-up-reach-flat",
     "file": "src/player/parkour.js",
-    "old": "export function leapUpReach(jumping) { return lerp(PARKOUR_LEAP_UP_MIN, PARKOUR_LEAP_UP_MAX, clamp01(jumping / 100)); }",
-    "new": "export function leapUpReach(jumping) { return PARKOUR_LEAP_UP_MAX; }",
+    "old": "  return lerp(PARKOUR_LEAP_UP_MIN, PARKOUR_LEAP_UP_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_UP_MAX;",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -17,7 +17,7 @@
   {
     "name": "CLIMB3-eject-flat",
     "file": "src/player/parkour.js",
-    "old": "  return { out: lerp(PARKOUR_EJECT_OUT_MIN, PARKOUR_EJECT_OUT_MAX, t), up: lerp(PARKOUR_EJECT_UP_MIN, PARKOUR_EJECT_UP_MAX, t) };",
+    "old": "  return {\n    out: lerp(PARKOUR_EJECT_OUT_MIN, PARKOUR_EJECT_OUT_MAX, t),\n    up: lerp(PARKOUR_EJECT_UP_MIN, PARKOUR_EJECT_UP_MAX, t),\n  };",
     "new": "  return { out: PARKOUR_EJECT_OUT_MIN, up: PARKOUR_EJECT_UP_MIN };",
     "tests": [
       "test/player/climb3.test.js",
@@ -47,8 +47,8 @@
   {
     "name": "CLIMB3-runleap-flat",
     "file": "src/player/parkour.js",
-    "old": "  const apex = lerp(PARKOUR_RUNLEAP_APEX_MIN, PARKOUR_RUNLEAP_APEX_MAX, t), dist = lerp(PARKOUR_RUNLEAP_DIST_MIN, PARKOUR_RUNLEAP_DIST_MAX, t);",
-    "new": "  const apex = PARKOUR_RUNLEAP_APEX_MIN, dist = PARKOUR_RUNLEAP_DIST_MIN;",
+    "old": "  const apex = lerp(PARKOUR_RUNLEAP_APEX_MIN, PARKOUR_RUNLEAP_APEX_MAX, t),\n    dist = lerp(PARKOUR_RUNLEAP_DIST_MIN, PARKOUR_RUNLEAP_DIST_MAX, t);",
+    "new": "  const apex = PARKOUR_RUNLEAP_APEX_MIN,\n    dist = PARKOUR_RUNLEAP_DIST_MIN;",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -77,7 +77,7 @@
   {
     "name": "CLIMB3-wallrun-height-flat",
     "file": "src/player/parkour.js",
-    "old": "  return lerp(PARKOUR_WALLRUN_MIN, PARKOUR_WALLRUN_MAX, clamp01((clamp01(climbing / 100) + clamp01(jumping / 100)) / 2));",
+    "old": "  return lerp(\n    PARKOUR_WALLRUN_MIN,\n    PARKOUR_WALLRUN_MAX,\n    clamp01((clamp01(climbing / 100) + clamp01(jumping / 100)) / 2),\n  );",
     "new": "  return PARKOUR_WALLRUN_MIN;",
     "tests": [
       "test/player/climb3.test.js",
@@ -92,8 +92,8 @@
   {
     "name": "CLIMB3-side-leap-along-the-held-lip",
     "file": "src/player/parkour.js",
-    "old": "for (let at = { face: held.face, normal: n, lipY: held.lipY }; runs + PARKOUR_HAND_SPAN <= reach;)",
-    "new": "for (let at = { face: held.face, normal: n, lipY: held.lipY }; false && runs + PARKOUR_HAND_SPAN <= reach;)",
+    "old": "  for (let at = { face: held.face, normal: n, lipY: held.lipY }; runs + PARKOUR_HAND_SPAN <= reach;) {",
+    "new": "  for (let at = { face: held.face, normal: n, lipY: held.lipY }; false && runs + PARKOUR_HAND_SPAN <= reach;) {",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "CLIMB3-wallrun-hands-reach-nothing",
     "file": "src/player/parkour.js",
-    "old": "y <= feet[1] + height + reach + 1e-9; y += PARKOUR_SCAN_STEP)",
-    "new": "y <= feet[1] + height + 1e-9; y += PARKOUR_SCAN_STEP)",
+    "old": "  for (let y = feet[1] + stand * 0.5; y <= feet[1] + height + reach + 1e-9; y += PARKOUR_SCAN_STEP) {",
+    "new": "  for (let y = feet[1] + stand * 0.5; y <= feet[1] + height + 1e-9; y += PARKOUR_SCAN_STEP) {",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -212,8 +212,8 @@
   {
     "name": "CLIMB3-drop-sees-floor",
     "file": "src/player/parkour.js",
-    "old": "    if (y == null) return true;\n    prev = y;",
-    "new": "    if (y != null) return true;\n    prev = y;",
+    "old": "    if (y == null) return true;",
+    "new": "    if (y != null) return true;",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -582,8 +582,8 @@
   {
     "name": "CLIMB3-side-reach-flat",
     "file": "src/player/parkour.js",
-    "old": "export function leapSideReach(jumping) { return lerp(PARKOUR_LEAP_SIDE_MIN, PARKOUR_LEAP_SIDE_MAX, clamp01(jumping / 100)); }",
-    "new": "export function leapSideReach(jumping) { return PARKOUR_LEAP_SIDE_MAX; }",
+    "old": "  return lerp(PARKOUR_LEAP_SIDE_MIN, PARKOUR_LEAP_SIDE_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_SIDE_MAX;",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -597,8 +597,8 @@
   {
     "name": "CLIMB3-leap-pace-flat",
     "file": "src/player/parkour.js",
-    "old": "export function leapSpeed(jumping) { return lerp(PARKOUR_LEAP_SPEED_MIN, PARKOUR_LEAP_SPEED_MAX, clamp01(jumping / 100)); }",
-    "new": "export function leapSpeed(jumping) { return PARKOUR_LEAP_SPEED_MIN; }",
+    "old": "  return lerp(PARKOUR_LEAP_SPEED_MIN, PARKOUR_LEAP_SPEED_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_SPEED_MIN;",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -612,8 +612,8 @@
   {
     "name": "CLIMB3-side-leap-reach-unbudgeted",
     "file": "src/player/parkour.js",
-    "old": "      if (Math.abs(dy) > reach - s + 0.3) continue;",
-    "new": "",
+    "old": "      if (Math.abs(dy) > reach - s + 0.3) continue; // the reach is the leap's whole way, along and up or down",
+    "new": "      // the reach is the leap's whole way, along and up or down",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -627,7 +627,7 @@
   {
     "name": "CLIMB3-leap-path-unproven",
     "file": "src/player/parkour.js",
-    "old": "    return pathClear(collider, path(feet, mid, g.feet, way === 'up' ? 0.3 : 0.5, 0), stand) ? { ...g, up: mid, split: way === 'up' ? 0.3 : 0.5 } : null;",
+    "old": "    return pathClear(collider, path(feet, mid, g.feet, way === 'up' ? 0.3 : 0.5, 0), stand)\n      ? { ...g, up: mid, split: way === 'up' ? 0.3 : 0.5 }\n      : null;",
     "new": "    return { ...g, up: mid, split: way === 'up' ? 0.3 : 0.5 };",
     "tests": [
       "test/player/climb3.test.js",
@@ -642,7 +642,7 @@
   {
     "name": "CLIMB3-leap-not-out-from-the-wall",
     "file": "src/player/parkour.js",
-    "old": "    mid[0] += n[0] * shift; mid[2] += n[2] * shift;",
+    "old": "    mid[0] += n[0] * shift;\n    mid[2] += n[2] * shift;",
     "new": "",
     "tests": [
       "test/player/climb3.test.js",
@@ -657,8 +657,8 @@
   {
     "name": "CLIMB3-wallrun-path-unproven",
     "file": "src/player/parkour.js",
-    "old": "return pathClear(collider, path(feet, up, to, 0.25, 0), stand) ? { up, to, grip, normal: n, key: hit.key ?? null } : null;",
-    "new": "return { up, to, grip, normal: n, key: hit.key ?? null };",
+    "old": "  return pathClear(collider, path(feet, up, to, 0.25, 0), stand)\n    ? { up, to, grip, normal: n, key: hit.key ?? null }\n    : null; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
+    "new": "  return { up, to, grip, normal: n, key: hit.key ?? null }; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
     "tests": [
       "test/player/climb3.test.js",
       "test/player/climbdown.test.js",
@@ -672,7 +672,7 @@
   {
     "name": "CLIMB3-wallrun-lip-without-hold-runs-on",
     "file": "src/player/parkour.js",
-    "old": "    if (!grip) return null;   // a lip with no hold under it: no run\n    top = grip.feet[1];",
+    "old": "    if (!grip) return null; // a lip with no hold under it: no run\n    top = grip.feet[1];",
     "new": "    if (grip) top = grip.feet[1];",
     "tests": [
       "test/player/climb3.test.js",

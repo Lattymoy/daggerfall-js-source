@@ -2,8 +2,8 @@
   {
     "name": "LS-reach-gate-dropped",
     "file": "src/player/lootStack.js",
-    "old": "    if (!hit || !(hit.distance <= hit.reach)) break;",
-    "new": "    if (!hit) break;",
+    "old": "    if (!hit || !(hit.distance <= hit.reach)) break; // the next is beyond reach, and so is everything behind it",
+    "new": "    if (!hit) break; // the next is beyond reach, and so is everything behind it",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "LS-pick-changed",
     "file": "src/player/lootStack.js",
-    "old": "  _seen = stack.length < 2 ? null : stack.map((h) => h.key);\n  return first;",
-    "new": "  _seen = stack.length < 2 ? null : stack.map((h) => h.key);\n  return stack.length > 1 ? stack[1] : first;",
+    "old": "  return first;",
+    "new": "  return stack.length > 1 ? stack[1] : first;",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "LS-open-body-dropped",
     "file": "src/player/lootStack.js",
-    "old": "    if (d || k === key) bodies.push(",
-    "new": "    if (d) bodies.push(",
+    "old": "    if (d || k === key) bodies.push({ key: k, name: d?.name ?? '', count: d?.count ?? 0 });",
+    "new": "    if (d) bodies.push({ key: k, name: d?.name ?? '', count: d?.count ?? 0 });",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LS-pile-not-carried",
     "file": "src/player/lootStack.js",
-    "old": "open(k, all); } };",
-    "new": "open(k, null); } };",
+    "old": "      if (k !== key && bodies.some((b) => b.key === k)) open(k, all);",
+    "new": "      if (k !== key && bodies.some((b) => b.key === k)) open(k, null);",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LS-tab-onto-open-body",
     "file": "src/player/lootStack.js",
-    "old": "{ if (k !== key && bodies.some((b) => b.key === k)) open(k, all); }",
-    "new": "{ if (bodies.some((b) => b.key === k)) open(k, all); }",
+    "old": "      if (k !== key && bodies.some((b) => b.key === k)) open(k, all);",
+    "new": "      if (bodies.some((b) => b.key === k)) open(k, all);",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "LS-reset-dropped",
     "file": "src/player/lootStack.js",
-    "old": "export function resetBodyStack() { _seen = null; }",
-    "new": "export function resetBodyStack() { }",
+    "old": "export function resetBodyStack() {\n  _seen = null;\n}",
+    "new": "export function resetBodyStack() {}",
     "tests": [
       "test/ui/lootstack.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "LS-pick-bypasses-note",
     "file": "src/player/activate.js",
-    "old": "  return noteBodyStack(firmFirst(targets, nearest), targets, nearest);   // PR-WAGON1: another player's team yields",
-    "new": "  return firmFirst(targets, nearest);   // PR-WAGON1: another player's team yields",
+    "old": "  return noteBodyStack(firmFirst(targets, nearest), targets, nearest); // PR-WAGON1: another player's team yields",
+    "new": "  return firmFirst(targets, nearest); // PR-WAGON1: another player's team yields",
     "tests": [
       "test/ui/lootstack.test.js"
     ],

@@ -175,8 +175,8 @@
   {
     "name": "KEEPHEIGHT-2-the-crosshair-ducks",
     "file": "src/player/activate.js",
-    "old": "  const h = f.ai?.height ?? 1.8;\n  const half = 0.45;",
-    "new": "  const h = f.ai?.controllerHeight ?? 1.8;\n  const half = 0.45;",
+    "old": "  const h = f.ai?.height ?? 1.8;",
+    "new": "  const h = f.ai?.controllerHeight ?? 1.8;",
     "tests": [
       "test/characters/enemy/fb1014b_doorjam.test.js"
     ]

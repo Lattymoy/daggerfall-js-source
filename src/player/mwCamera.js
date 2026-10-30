@@ -45,7 +45,7 @@
  *  ONE HOME: minted in the format layer (mwFirstPerson.js), re-exported
  *  here because it is part of this module's contract too. */
 import { MW_UNITS_PER_METER } from '../formats/morrowind/mwFirstPerson.js';
-import { seaZoomStep, SEA_ZOOM_RATIO } from './seaZoom.js';   // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
+import { seaZoomStep, SEA_ZOOM_RATIO } from './seaZoom.js'; // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
 export { MW_UNITS_PER_METER };
 
 /** camera.cpp:63 - the third-person focal point sits this far above the
@@ -103,34 +103,60 @@ export const SHOULDER_SIDES = Object.freeze(['off', 'right', 'left']);
  * on the next step. Pure state; [x, y] in MW units.
  */
 export function createFocalOffset() {
-  let current = [0, 0], target = [0, 0], coef = 1;
-  let speed = [0, 0], prevSpeed = [0, 0], prevExtra = [0, 0], prevInfluence = 0, skip = true;
+  let current = [0, 0],
+    target = [0, 0],
+    coef = 1;
+  let speed = [0, 0],
+    prevSpeed = [0, 0],
+    prevExtra = [0, 0],
+    prevInfluence = 0,
+    skip = true;
   return {
     current: () => current,
     target: () => target,
     /** setFocalTransitionSpeed (third_person.lua:110-116). */
-    setSpeed(v) { coef = v; },
+    setSpeed(v) {
+      coef = v;
+    },
     /** camera.cpp:247-252 setFocalPointTargetOffset. */
-    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [speed[0], speed[1]]; prevInfluence = 1; },
+    setTarget(v) {
+      target = [v[0], v[1]];
+      prevSpeed = [speed[0], speed[1]];
+      prevInfluence = 1;
+    },
     /** camera.cpp:423-426 instantTransition's focal half. */
-    instant() { skip = true; },
+    instant() {
+      skip = true;
+    },
     /** camera.cpp:254-294 updateFocalPointOffset. */
     step(dt) {
       if (!(dt > 0)) return current;
-      if (skip) { skip = false; prevExtra = [0, 0]; prevInfluence = 0; current = [target[0], target[1]]; }
+      if (skip) {
+        skip = false;
+        prevExtra = [0, 0];
+        prevInfluence = 0;
+        current = [target[0], target[1]];
+      }
       const old = [current[0], current[1]];
       if (prevInfluence > 0) {
         current = [current[0] - prevExtra[0], current[1] - prevExtra[1]];
-        prevExtra = [prevExtra[0] / prevInfluence + prevSpeed[0] * dt, prevExtra[1] / prevInfluence + prevSpeed[1] * dt];
+        prevExtra = [
+          prevExtra[0] / prevInfluence + prevSpeed[0] * dt,
+          prevExtra[1] / prevInfluence + prevSpeed[1] * dt,
+        ];
         prevInfluence = Math.max(0, prevInfluence - dt * coef);
         prevExtra = [prevExtra[0] * prevInfluence, prevExtra[1] * prevInfluence];
         current = [current[0] + prevExtra[0], current[1] + prevExtra[1]];
       }
-      const delta = [target[0] - current[0], target[1] - current[1]], dl = Math.hypot(delta[0], delta[1]);
+      const delta = [target[0] - current[0], target[1] - current[1]],
+        dl = Math.hypot(delta[0], delta[1]);
       if (dl > 0) {
         const k = Math.min(1, dt * (1 + 5 / dl) * coef * (1 - prevInfluence));
         current = [current[0] + delta[0] * k, current[1] + delta[1] * k];
-      } else { prevExtra = [0, 0]; prevInfluence = 0; }
+      } else {
+        prevExtra = [0, 0];
+        prevInfluence = 0;
+      }
       speed = [(current[0] - old[0]) / dt, (current[1] - old[1]) / dt];
       return current;
     },
@@ -177,12 +203,20 @@ export function createMwCamera() {
   let queuedFirstPerson = null;
   // MW-SHOULDER: the player's side ('off' | 'right' | 'left'), third_person.lua's `state` and noThirdPersonLastFrame,
   // and camera.cpp's focal offset
-  let shoulder = 'off', shoulderState = null, noThirdLast = true;
+  let shoulder = 'off',
+    shoulderState = null,
+    noThirdLast = true;
   const focalShift = createFocalOffset();
 
   function setFirstPerson(next, ready) {
-    if (next === firstPerson) { queuedFirstPerson = null; return; }
-    if (!ready) { queuedFirstPerson = next; return; }
+    if (next === firstPerson) {
+      queuedFirstPerson = null;
+      return;
+    }
+    if (!ready) {
+      queuedFirstPerson = next;
+      return;
+    }
     firstPerson = next;
     queuedFirstPerson = null;
   }
@@ -209,7 +243,8 @@ export function createMwCamera() {
         // swipe sends a burst of them, and a ratio each crossed the whole range in one gesture)
         const notch = Math.max(-1, Math.min(1, delta / WHEEL_STEP));
         const from = delta > 0 ? Math.max(MIN_DISTANCE, baseDistance - Math.max(0, obstacleDelta)) : baseDistance;
-        if (delta > 0 || obstacleDelta < baseDistance * (SEA_ZOOM_RATIO - 1)) baseDistance = seaZoomStep(from, notch, MIN_DISTANCE, seaFar);
+        if (delta > 0 || obstacleDelta < baseDistance * (SEA_ZOOM_RATIO - 1))
+          baseDistance = seaZoomStep(from, notch, MIN_DISTANCE, seaFar);
         return;
       }
       if (delta > 0 && baseDistance === MIN_DISTANCE) {
@@ -232,11 +267,21 @@ export function createMwCamera() {
 
   return {
     /** 'first' | 'third' - what the frame should draw. */
-    mode() { return firstPerson ? 'first' : 'third'; },
-    thirdPerson() { return !firstPerson; },
-    queued() { return queuedFirstPerson; },
-    baseDistance() { return baseDistance; },
-    cameraDistance() { return cameraDistance; },
+    mode() {
+      return firstPerson ? 'first' : 'third';
+    },
+    thirdPerson() {
+      return !firstPerson;
+    },
+    queued() {
+      return queuedFirstPerson;
+    },
+    baseDistance() {
+      return baseDistance;
+    },
+    cameraDistance() {
+      return cameraDistance;
+    },
 
     /** Wheel notches: +1 per click zooming in (ZoomIn = wheel up,
      *  bindingsmanager.cpp:300-301), -1 zooming out. One click is
@@ -252,7 +297,10 @@ export function createMwCamera() {
      *  (third_person.lua:31-44): the next step takes the new offset at once. */
     setShoulder(side) {
       const next = SHOULDER_SIDES.includes(side) ? side : 'off';
-      if (next !== shoulder) { shoulder = next; noThirdLast = true; }
+      if (next !== shoulder) {
+        shoulder = next;
+        noThirdLast = true;
+      }
     },
     shoulder: () => shoulder,
     shoulderState: () => shoulderState,
@@ -267,9 +315,17 @@ export function createMwCamera() {
      * transition's speed - fast into and out of combat - and at once on the frame the view or the option changed.
      */
     stepShoulder(dt, stance = null) {
-      if (firstPerson) { noThirdLast = true; focalShift.step(dt); return; }
+      if (firstPerson) {
+        noThirdLast = true;
+        focalShift.step(dt);
+        return;
+      }
       if (shoulder === 'off') {
-        if (noThirdLast) { focalShift.setTarget([0, 0]); focalShift.instant(); noThirdLast = false; }
+        if (noThirdLast) {
+          focalShift.setTarget([0, 0]);
+          focalShift.instant();
+          noThirdLast = false;
+        }
         shoulderState = null;
         focalShift.step(dt);
         return;
@@ -278,12 +334,25 @@ export function createMwCamera() {
       const old = shoulderState;
       if (stance === 'combat') shoulderState = 'combat';
       else if (stance === 'swimming') shoulderState = 'swimming';
-      else shoulderState = own;   // :93-104 - out of combat or the water, or none yet: the default shoulder (no auto switch)
+      else shoulderState = own; // :93-104 - out of combat or the water, or none yet: the default shoulder (no auto switch)
       if (old !== shoulderState || noThirdLast) {
-        focalShift.setSpeed(old === 'combat' || shoulderState === 'combat' ? FOCAL_TRANSITION_SPEED.combat : FOCAL_TRANSITION_SPEED.normal);
-        focalShift.setTarget(shoulderState === 'right' ? SHOULDER_OFFSET : shoulderState === 'left' ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]] : COMBAT_OFFSET);
+        focalShift.setSpeed(
+          old === 'combat' || shoulderState === 'combat'
+            ? FOCAL_TRANSITION_SPEED.combat
+            : FOCAL_TRANSITION_SPEED.normal,
+        );
+        focalShift.setTarget(
+          shoulderState === 'right'
+            ? SHOULDER_OFFSET
+            : shoulderState === 'left'
+              ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]]
+              : COMBAT_OFFSET,
+        );
       }
-      if (noThirdLast) { focalShift.instant(); noThirdLast = false; }   // :153-156 - just into third person: no transition
+      if (noThirdLast) {
+        focalShift.instant();
+        noThirdLast = false;
+      } // :153-156 - just into third person: no transition
       focalShift.step(dt);
     },
 
@@ -299,11 +368,15 @@ export function createMwCamera() {
       seaFar = Number.isFinite(metres) && metres * MW_UNITS_PER_METER > MAX_DISTANCE ? metres * MW_UNITS_PER_METER : 0;
       if (baseDistance > Math.max(MAX_DISTANCE, seaFar)) baseDistance = Math.max(MAX_DISTANCE, seaFar);
     },
-    seaFar() { return seaFar; },
+    seaFar() {
+      return seaFar;
+    },
 
     /** Restore/persist seam (camera.lua:350-352 saves the distance). The helm's zoom is its own: a distance past the
      *  reference's far end is saved as that far end. */
-    state() { return { firstPerson, baseDistance: Math.min(baseDistance, MAX_DISTANCE) }; },
+    state() {
+      return { firstPerson, baseDistance: Math.min(baseDistance, MAX_DISTANCE) };
+    },
     restore(s) {
       if (!s) return;
       if (typeof s.firstPerson === 'boolean') firstPerson = s.firstPerson;
@@ -367,7 +440,7 @@ export function createMwCamera() {
      */
     eye({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null, spherecast = null, pivotFloor = null }) {
       if (firstPerson) {
-        cameraDistance = 0;   // camera.cpp:165-169
+        cameraDistance = 0; // camera.cpp:165-169
         return { eye: fpEye, thirdPerson: false, distance: 0, focal: null };
       }
       const u = 1 / MW_UNITS_PER_METER;
@@ -378,9 +451,7 @@ export function createMwCamera() {
       // MAC-A: the cast is a SPHERE where the host has one
       // (castSphere, camera.cpp:186); the ray is the fallback for a
       // host that hands no sphere seam.
-      const cast = spherecast
-        ? (o, d, m, r) => spherecast(o, r, d, m)
-        : (raycast ? (o, d, m) => raycast(o, d, m) : null);
+      const cast = spherecast ? (o, d, m, r) => spherecast(o, r, d, m) : raycast ? (o, d, m) => raycast(o, d, m) : null;
       // MW-SHOULDER: the focal point's offset (camera.cpp:101-107 - x along the actor's right, y up; this port's right
       // is (cos yaw, 0, -sin yaw), the strafe's, world/mat4.js's handedness law), and camera.cpp:177-193's guard in
       // full: a sphere swept from the actor's line to the offset focal point (the +10 ceiling term added to its run,
@@ -389,7 +460,9 @@ export function createMwCamera() {
       const fo = focalShift.current();
       const shoulderOn = cast && (fo[0] !== 0 || fo[1] !== 0);
       if (fo[0] !== 0 || fo[1] !== 0) {
-        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;
+        focal[0] += Math.cos(yaw) * fo[0] * u;
+        focal[1] += fo[1] * u;
+        focal[2] -= Math.sin(yaw) * fo[0] * u;
         if (pivotFloor != null) focal[1] = Math.max(focal[1], pivotFloor);
       }
       if (shoulderOn) {

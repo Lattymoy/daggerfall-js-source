@@ -863,8 +863,8 @@
   {
     "name": "DLV4-carry-step-let-go-unasked",
     "file": "src/player/carryStep.js",
-    "old": "if (st.forced && st.sheathed === false) return sendDrop()",
-    "new": "if (false && st.sheathed === false) return sendDrop()",
+    "old": "  if (st.forced && st.sheathed === false)",
+    "new": "  if (false && st.sheathed === false)",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js",
       "test/scenes/ketch_client.test.js"

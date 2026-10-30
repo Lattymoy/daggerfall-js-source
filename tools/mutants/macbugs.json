@@ -121,7 +121,7 @@
   {
     "name": "MAC-A-the-pull-in-casts-a-RAY-again-so-a-thin-pillar-is-threaded",
     "file": "src/player/mwCamera.js",
-    "old": "      const cast = spherecast\n        ? (o, d, m, r) => spherecast(o, r, d, m)\n        : (raycast ? (o, d, m) => raycast(o, d, m) : null);",
+    "old": "      const cast = spherecast ? (o, d, m, r) => spherecast(o, r, d, m) : raycast ? (o, d, m) => raycast(o, d, m) : null;",
     "new": "      const cast = raycast ? (o, d, m) => raycast(o, d, m) : null;",
     "tests": [
       "test/player/maca_camera_sphere.test.js"

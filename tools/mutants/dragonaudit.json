@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-DRAGON-dropped-not-set-down",
     "file": "src/player/dragonRide.js",
-    "old": "  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down\n",
-    "new": "",
+    "old": "  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true; // off it in the air: set down\n  if (_settling && (grounded || mounted)) _settling = false;",
+    "new": "  if (_settling && (grounded || mounted)) _settling = false;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

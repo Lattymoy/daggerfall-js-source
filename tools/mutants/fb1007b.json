@@ -39,8 +39,8 @@
   {
     "name": "FB1007B-CLASSIC-CLIMBS-TRAVELLING",
     "file": "src/player/climbing.js",
-    "old": "        || c.travelling   // CLIMB-TRAVEL",
-    "new": "        || false   // CLIMB-TRAVEL",
+    "old": "      c.travelling || // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each",
+    "new": "      false || // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each",
     "tests": [
       "test/systems/fb1007b_climbtravel.test.js"
     ],

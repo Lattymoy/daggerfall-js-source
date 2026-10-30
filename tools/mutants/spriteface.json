@@ -142,8 +142,8 @@
   {
     "name": "SPRITEFACE-the-view-keeps-none",
     "file": "src/player/mwView.js",
-    "old": "spriteFacing = drawn ? eotbFacing() : null;",
-    "new": "spriteFacing = null;",
+    "old": "    spriteFacing = drawn ? eotbFacing() : null;",
+    "new": "    spriteFacing = null;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],

@@ -275,8 +275,8 @@
   {
     "name": "FIX-D-a-flat-gets-the-meshes-pardon-and-a-fire-behind-a-door-is-named-through-it",
     "file": "src/player/activate.js",
-    "old": "    if (bestNoSurface) return null;\n",
-    "new": "\n",
+    "old": "    if (bestNoSurface) return null;\n    const hx = eye[0] + dir[0] * wall;",
+    "new": "    const hx = eye[0] + dir[0] * wall;",
     "tests": [
       "test/scenes/fixd_hearthbox.test.js"
     ]

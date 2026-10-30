@@ -13,7 +13,7 @@
   {
     "name": "L10N3e-player-mobileEnemyActivate-106-Enemy",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)));",
+    "old": "    if (name)\n      hud?.(\n        own\n          ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the '))\n          : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)),\n      );",
     "new": "    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(name));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

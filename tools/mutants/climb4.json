@@ -137,8 +137,8 @@
   {
     "name": "CLIMB4-turn-latched-as-mouse-look",
     "file": "src/player/lookFilter.js",
-    "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;\n  }",
-    "new": "    this.add(dyaw, dpitch);\n  }",
+    "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;",
+    "new": "    this.add(dyaw, dpitch);",
     "tests": [
       "test/player/climb4.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "CLIMBFIELD-E1-no-eave",
     "file": "src/player/parkour.js",
-    "old": "    return senseEave(collider, face, normal, lipY, opts, fit);\n  }\n  return null;\n}",
-    "new": "    return null;\n  }\n  return null;\n}",
+    "old": "    return senseEave(collider, face, normal, lipY, opts, fit);",
+    "new": "    return null;",
     "tests": [
       "test/player/climbfield.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "CLIMBFIELD-E1-face-under-unasked",
     "file": "src/player/parkour.js",
-    "old": "  if (Number.isFinite(under.dist)) {\n    return plainGrip(",
-    "new": "  if (false) {\n    return plainGrip(",
+    "old": "  if (Number.isFinite(under.dist)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/player/climbfield.test.js",
       "test/player/climb2.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "CLIMBFIELD-E1-lower-no-eave",
     "file": "src/player/parkour.js",
-    "old": " : senseGrip(collider, edge, dir, lipY, opts);",
-    "new": " : null;",
+    "old": "  const grip = face\n    ? senseGrip(collider, face.point, face.normal, lipY, opts)\n    : senseGrip(collider, edge, dir, lipY, opts);",
+    "new": "  const grip = face ? senseGrip(collider, face.point, face.normal, lipY, opts) : null;",
     "tests": [
       "test/player/climbfield.test.js",
       "test/player/climbdown.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "CLIMBFIELD-E2-terrain-roof-ahead",
     "file": "src/player/parkour.js",
-    "old": "    const h = collider.raycastHit([px, y0, pz], DOWN, high + 0.05 - low);",
-    "new": "    const h = collider.surfaceHit([px, y0, pz], DOWN, high + 0.05 - low);",
+    "old": "    const h = collider.raycastHit([px, y0, pz], DOWN, high + 0.05 - low); // a roof: the meshes' (the eave's own law)",
+    "new": "    const h = collider.surfaceHit([px, y0, pz], DOWN, high + 0.05 - low); // a roof: the meshes' (the eave's own law)",
     "tests": [
       "test/player/climbfield.test.js"
     ],

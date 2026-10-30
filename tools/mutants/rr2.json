@@ -209,7 +209,7 @@
   {
     "name": "RR2-24-the-axes-forget-the-clamp",
     "file": "src/player/moveAxes.js",
-    "old": "  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1) };",
+    "old": "  return {\n    forward: clamp(axes.forward, -(l.negVertical ?? 1), 1),\n    strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1),\n  };",
     "new": "  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: axes.strafe };",
     "tests": [
       "test/systems/rr2_realism.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "RR2-25-the-floor-can-pass-the-reference",
     "file": "src/player/lookFilter.js",
-    "old": "return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };",
-    "new": "return Number.isFinite(d) ? (Math.max(d, -90) * Math.PI) / 180 : PITCH_FLOOR; };",
+    "old": "  return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR;",
+    "new": "  return Number.isFinite(d) ? (Math.max(d, -90) * Math.PI) / 180 : PITCH_FLOOR;",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ]

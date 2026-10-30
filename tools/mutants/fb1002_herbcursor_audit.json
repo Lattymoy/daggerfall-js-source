@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-A2-toggle-under-a-hold",
     "file": "src/player/pointerLock.js",
-    "old": "    if (_cursorHolds.size) return;\n    // PL1:",
-    "new": "    // PL1:",
+    "old": "    if (_cursorHolds.size) return;\n    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
+    "new": "    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]

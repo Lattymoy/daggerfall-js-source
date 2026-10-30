@@ -101,7 +101,7 @@
   {
     "name": "DRAGON5-the-catch",
     "file": "src/player/dragonRide.js",
-    "old": "  if (_falling >= DRAGON_CATCH_S && flight.lift()) { _falling = 0; _heard?.('took-off'); }",
+    "old": "  if (_falling >= DRAGON_CATCH_S && flight.lift()) {\n    _falling = 0;\n    _heard?.('took-off');\n  }",
     "new": "",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"

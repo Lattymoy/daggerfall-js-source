@@ -191,8 +191,8 @@
   {
     "name": "HORSEWALK-own-horse-ungated",
     "file": "src/player/mwView.js",
-    "old": "look: horse.look | 0, gallops: !horse.slow });",
-    "new": "look: horse.look | 0, gallops: true });",
+    "old": "    gallops: !horse.slow,",
+    "new": "    gallops: true,",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

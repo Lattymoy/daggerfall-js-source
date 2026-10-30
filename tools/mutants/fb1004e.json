@@ -242,8 +242,8 @@
   {
     "name": "HORSEFACE-the-host-never-shifts-the-body",
     "file": "src/player/mwView.js",
-    "old": "  eotbBody.rebase(delta);   // HORSE-FACE",
-    "new": "  void delta;   // HORSE-FACE",
+    "old": "  eotbBody.rebase(delta); // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing",
+    "new": "  void delta; // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing",
     "tests": [
       "test/player/eyeOfTheBeholder/fb1004e_horseface.test.js"
     ],

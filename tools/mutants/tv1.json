@@ -472,8 +472,8 @@
   {
     "name": "AUDIT-DEEP-X3-the-save-keeps-third-person",
     "file": "src/player/mwView.js",
-    "old": "return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;",
-    "new": "return s;",
+    "old": "  return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;",
+    "new": "  return s;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -612,8 +612,8 @@
   {
     "name": "AUDIT-DEEP-R2-the-seam-drops-it",
     "file": "src/player/mwView.js",
-    "old": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
-    "new": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw });",
+    "old": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
+    "new": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw });",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],

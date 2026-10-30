@@ -49,19 +49,19 @@ a quest person no task listens to (a departure in QUEST-FOE-LINE's spirit) - new
 `door` and `next`, PERSON_KEY, raceWinner; `src/scenes/worldModes.js` exteriorActivationHit; each host's `_enemyArm`.
 
 FOUND. The port has no single raycast, so every host races its families' picks and gives a live foe the press only
-when the foe is strictly the nearer (`mobileEnemyActivate.js:"if (!(hit.distance < (deps.nearerThan ?? Infinity))) return false;"`,
+when the foe is strictly the nearer (`mobileEnemyActivate.js:"if (!(hit.distance < (deps.nearerThan ?? Infinity)))"`,
 AUDIT 65 MC-2's law for DFU's one ray, PlayerActivate.cs:314). A companion is in that pool (crewAshore.js stands him
 there: `companion`, a `shipmate`), and his hit opens his pack
-(`mobileEnemyActivate.js:"if (mode !== 'steal' && openCompanion && foe.companion != null"`). He keeps HEEL_M (2.5 m)
+(`mobileEnemyActivate.js:"is the shipmate's".."mode !== 'steal' &&"`). He keeps HEEL_M (2.5 m)
 from the player and walks where the player walks, so he stands between the crosshair and whatever the player has
 just walked up to: a body (3.75), a pile (3.2), a boat's helm (Come Sail Away's box, 3.2 - raced in the street's
 `raceActivation` as `boat` and pressed below the foe arm), a door, a shelf. TACT3d's door pass, which lets a peaceful
-watchman yield to a door, was never his (`mobileEnemyActivate.js:"if (!foe || foe.companion != null || mode === 'steal') return false;"`,
+watchman yield to a door, was never his (`mobileEnemyActivate.js:"if (!foe || foe.companion != null || mode === 'steal')"`,
 AUDIT TACT C5: his pack is asked of him), and the plaque raced him the same way, so it named him too.
 
 FIXED. A companion YIELDS: the press goes to whatever it would take were he not there - the ladder's own winner
 behind him - when that ANSWERS from where the player stands, a firm pick inside its own reach
-(`activate.js:"export const answersPress = (p) =>"`). Out of its reach that thing would only refuse, so he keeps the
+(`activate.js:"export const answersPress"`). Out of its reach that thing would only refuse, so he keeps the
 press, and with nothing behind him he is the hit as ever. Another player's team, which yields itself (PR-WAGON1), is
 no answer. Every mode: in Steal he was a silent break (a shipmate is no mark), so the thing behind him is the better
 answer there too. "Companion" is the companion layer's body and another player's (`peer:`); a hostile foe, a peaceful
@@ -73,7 +73,7 @@ every look - he would have been unreachable, and the press would have answered "
 across the room. Reach is the line DFU already draws (MC-2: past its reach a handler only refuses).
 
 The press asks `allyYields(foe, behind)` before TACT3d's door pass
-(`mobileEnemyActivate.js:"if (allyYields(hit.foe, deps.behind)) return false;"`), each host handing its ladder's winner as
+(`mobileEnemyActivate.js:"if (allyYields(hit.foe, deps.behind))"`), each host handing its ladder's winner as
 `behind`. On the street that winner is the race's `next`: `raceWinner` over every family with the door set and the
 townsfolk raced in, the door set's own reach from its own pick (worldModes `exteriorActivationHit`, handed to the race as
 `door`, where it was its distance alone), a townsperson at MobileNPCActivationDistance - the plaque's own person pick.

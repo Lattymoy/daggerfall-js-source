@@ -193,8 +193,8 @@
   {
     "name": "OW3-J6-mw-body-ungrown",
     "file": "src/player/mwView.js",
-    "old": "grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });",
-    "new": "grow: 1, up: face?.up ?? null, horse });",
+    "old": "  return fpArm.drawThird(canvas, {\n    proj,\n    view,\n    eye,\n    feet,\n    yaw,\n    grow: face?.grow > 1 ? face.grow : 1,\n    up: face?.up ?? null,\n    horse,\n  });",
+    "new": "  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: 1, up: face?.up ?? null, horse });",
     "tests": [
       "test/player/eotb_view.test.js"
     ],

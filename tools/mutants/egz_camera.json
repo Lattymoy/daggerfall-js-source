@@ -800,8 +800,8 @@
   {
     "name": "EGZN-shaft-still-eased",
     "file": "src/player/mwView.js",
-    "old": "  if (still) return 0;\n",
-    "new": "\n",
+    "old": "  if (still) return 0;\n  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;",
+    "new": "  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ],
@@ -828,8 +828,8 @@
   {
     "name": "EGZN-shaft-first-person-biased",
     "file": "src/player/mwView.js",
-    "old": "  if (!word || !third) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
-    "new": "  if (!word) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
+    "old": "  if (!word || !third) {",
+    "new": "  if (!word) {",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -873,8 +873,8 @@
   {
     "name": "EGZN-shaft-rise-without-bias",
     "file": "src/player/mwView.js",
-    "old": "  if (!(_shaftBias > 0)) return floor;\n",
-    "new": "\n",
+    "old": "  if (!(_shaftBias > 0)) return floor;\n  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
+    "new": "  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -900,8 +900,8 @@
   {
     "name": "EGZN-shaft-sprite-lane-unbiased",
     "file": "src/player/mwView.js",
-    "old": "    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson());",
-    "new": "    void spireShaftPitch;",
+    "old": "    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson()); // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...",
+    "new": "    void spireShaftPitch; // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -909,8 +909,8 @@
   {
     "name": "EGZN-shaft-mw-lane-unrisen",
     "file": "src/player/mwView.js",
-    "old": "  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER);",
-    "new": "  void spireShaftPivot;",
+    "old": "  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER); // ...and its focal risen (the standing feet's: no saddle in the Spire)",
+    "new": "  void spireShaftPivot; // ...and its focal risen (the standing feet's: no saddle in the Spire)",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]

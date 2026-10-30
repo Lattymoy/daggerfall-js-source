@@ -223,8 +223,8 @@
   {
     "name": "CK-steal-opens",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (mode !== 'steal' && openCompanion && foe.companion != null",
-    "new": "  if (openCompanion && foe.companion != null",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (openCompanion && foe.companion != null && foe.shipmate === true && !String(foe.companion).startsWith('peer:')) {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "CK-peer-opened",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": " && !String(foe.companion).startsWith('peer:')) {",
-    "new": ") {",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (mode !== 'steal' && openCompanion && foe.companion != null && foe.shipmate === true) {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

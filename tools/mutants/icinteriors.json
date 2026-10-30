@@ -263,8 +263,8 @@
   {
     "name": "IC-INTERIORS-climb-by-the-player's-nearest",
     "file": "src/player/enterExit.js",
-    "old": "const head = ladder ? [ladder[12], ladder[13] + LADDER_HALF, ladder[14]] : playerPos;",
-    "new": "const head = playerPos;",
+    "old": "  const head = ladder ? [ladder[12], ladder[13] + LADDER_HALF, ladder[14]] : playerPos;",
+    "new": "  const head = playerPos;",
     "tests": [
       "test/world/icinteriors.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "IC-INTERIORS-climb-head-and-foot-swapped",
     "file": "src/player/enterExit.js",
-    "old": "const top = closestOf(markerTypes.LADDER_TOP, head);",
-    "new": "const top = closestOf(markerTypes.LADDER_TOP, foot);",
+    "old": "  const top = closestOf(markerTypes.LADDER_TOP, head);",
+    "new": "  const top = closestOf(markerTypes.LADDER_TOP, foot);",
     "tests": [
       "test/world/icinteriors.test.js"
     ]

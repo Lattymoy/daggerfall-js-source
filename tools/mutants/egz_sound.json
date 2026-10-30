@@ -749,8 +749,8 @@
   {
     "name": "EGZ-cam-pace",
     "file": "src/player/mwView.js",
-    "old": "const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / SPIRE_CAMERA_EASE_S;",
-    "new": "const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / 1;",
+    "old": "  const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / SPIRE_CAMERA_EASE_S;",
+    "new": "  const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / 1;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "EGZ-cam-everywhere",
     "file": "src/player/mwView.js",
-    "old": "try { on = !!_spireCamera(); } catch { on = false; }",
-    "new": "on = true;",
+    "old": "  try {\n    on = !!_spireCamera();\n  } catch {\n    on = false;\n  }",
+    "new": "  on = true;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "EGZ-cam-first-person-no-cut",
     "file": "src/player/mwView.js",
-    "old": "!(out.distance > 1e-6)) { _spireCamDist = null; return out; }",
-    "new": "!(out.distance > 1e-6)) return out;",
+    "old": "  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) {\n    _spireCamDist = null;\n    return out;\n  }",
+    "new": "  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) return out;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "EGZ-cam-off-the-line",
     "file": "src/player/mwView.js",
-    "old": "out.eye = [f[0] + (out.eye[0] - f[0]) * k, f[1] + (out.eye[1] - f[1]) * k, f[2] + (out.eye[2] - f[2]) * k];",
-    "new": "out.eye = [out.eye[0] * k, out.eye[1] * k, out.eye[2] * k];",
+    "old": "    out.eye = [f[0] + (out.eye[0] - f[0]) * k, f[1] + (out.eye[1] - f[1]) * k, f[2] + (out.eye[2] - f[2]) * k];",
+    "new": "    out.eye = [out.eye[0] * k, out.eye[1] * k, out.eye[2] * k];",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]

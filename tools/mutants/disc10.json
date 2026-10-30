@@ -2,8 +2,8 @@
   {
     "name": "DISC10-the-cart-never-yields",
     "file": "src/player/mwView.js",
-    "old": "cart: !!frame.cart && !eotbCartYields(),",
-    "new": "cart: !!frame.cart,",
+    "old": "      cart: !!frame.cart && !eotbCartYields(),",
+    "new": "      cart: !!frame.cart,",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISC10-the-pick-ignores-the-turned-box",
     "file": "src/player/activate.js",
-    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);",
-    "new": "    let d = rayAabb(eye, dir, target.aabb);",
+    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb); // DISC10: a turned body's own box where it has one",
+    "new": "    let d = rayAabb(eye, dir, target.aabb); // DISC10: a turned body's own box where it has one",
     "tests": [
       "test/systems/disc10.test.js"
     ]

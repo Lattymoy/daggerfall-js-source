@@ -128,8 +128,8 @@
   {
     "name": "SWAP-BEHIND-late-parts-left",
     "file": "src/player/lateSolid.js",
-    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);",
-    "new": "",
+    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]

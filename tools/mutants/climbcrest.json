@@ -2,7 +2,7 @@
   {
     "name": "CC-crest-never",
     "file": "src/player/parkour.js",
-    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist) ? null : a;",
+    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist)\n    ? null\n    : a;",
     "new": "  return null;",
     "tests": [
       "test/player/climbcrest.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "CC-fall-unread",
     "file": "src/player/parkour.js",
-    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist) ? null : a;",
+    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist)\n    ? null\n    : a;",
     "new": "  return a;",
     "tests": [
       "test/player/climbcrest.test.js"
@@ -39,7 +39,7 @@
   {
     "name": "CC-ledge-refused",
     "file": "src/player/parkour.js",
-    "old": "    const c = crestTop(collider, feet, dir, wall.faceDist, Math.max(wall.y, wall.openY - PARKOUR_SCAN_STEP), wall.openY);",
+    "old": "    const c = crestTop(\n      collider,\n      feet,\n      dir,\n      wall.faceDist,\n      Math.max(wall.y, wall.openY - PARKOUR_SCAN_STEP),\n      wall.openY,\n    );",
     "new": "    const c = null;",
     "tests": [
       "test/player/climbcrest.test.js"

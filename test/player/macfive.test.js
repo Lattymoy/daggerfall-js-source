@@ -152,7 +152,7 @@ test('PL3: the look gate holds a lock a door just won inside its gesture, and re
     gate(true); gate(false);
     assert.equal(dom.requests, 2, '...and asks again for one it lost');
     assert.ok(RELOCK_GRACE_MS < 250, 'a grace, not a hold: a window that really opens releases on the next frame past it');
-    assert.match(read('src/player/pointerLock.js'), /if \(held\) \{ if \(nowMs\(\) - _lastRequestAt > RELOCK_GRACE_MS\) releaseLook\(\); \}/);
+    assert.match(read('src/player/pointerLock.js'), /if \(held\) \{\n\s*if \(nowMs\(\) - _lastRequestAt > RELOCK_GRACE_MS\) releaseLook\(\);\n\s*\}/);
     // the seams by source
     assert.match(read('src/scenes/world.js'), /onOpen: \(\) => surfaceOpen\('chat'\),/, 'the Enter that opens the chat is the chat\'s (AUDIT SOC B6: the chat is the first of the counted pointer surfaces)');
     assert.match(read('src/scenes/world.js'), /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/, 'and the surface\'s open still flips cursorActive off inside the gesture');

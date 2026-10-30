@@ -45,9 +45,15 @@ export const EOTB_FOOT_SET_COUNT = 16;
 
 /** @typedef {{archive:number, name:string, gender:string|null, bow:boolean, scale?:Readonly<Record<string, number>>, frames:ReadonlyArray<number>}} ClassSkin */
 /** @type {ReadonlyArray<ClassSkin>} */
-export const CLASS_SKINS = Object.freeze(manifest.skins.map((s) => Object.freeze({
-  ...s, frames: Object.freeze([...s.frames]), ...(s.scale ? { scale: Object.freeze({ ...s.scale }) } : {}),
-})));
+export const CLASS_SKINS = Object.freeze(
+  manifest.skins.map((s) =>
+    Object.freeze({
+      ...s,
+      frames: Object.freeze([...s.frames]),
+      ...(s.scale ? { scale: Object.freeze({ ...s.scale }) } : {}),
+    }),
+  ),
+);
 
 /**
  * ACRO-SHORT (2026-09-27, Discord: "acrobat sprite is super short on certain angles"). A class record's XML scale -
@@ -66,7 +72,10 @@ export function classRecordScale(archive, record) {
 export const FOOT_SKIN_COUNT = EOTB_FOOT_SET_COUNT + CLASS_SKINS.length;
 
 /** The class skin an on-foot index names, or null for one of the mod's own sets. */
-export const classSkinOf = (onFoot) => (Number.isInteger(onFoot) && onFoot >= EOTB_FOOT_SET_COUNT ? CLASS_SKINS[onFoot - EOTB_FOOT_SET_COUNT] ?? null : null);
+export const classSkinOf = (onFoot) =>
+  Number.isInteger(onFoot) && onFoot >= EOTB_FOOT_SET_COUNT
+    ? (CLASS_SKINS[onFoot - EOTB_FOOT_SET_COUNT] ?? null)
+    : null;
 
 /** The label a class skin is shown under: "Healer (female)", "Dark Acolyte". */
 export const classSkinLabel = (skin) => (skin.gender ? `${skin.name} (${skin.gender})` : skin.name);
@@ -78,10 +87,18 @@ export const classSkinLabel = (skin) => (skin.gender ? `${skin.name} (${skin.gen
  * does not, and the cast on the ranged-or-spell group.
  */
 export const CLASS_TABLE_BASE = Object.freeze({
-  Idle: 15, Move: 0, Death: 10,
-  IdleMelee: 15, MoveMelee: 0, AttackMelee: 5,
-  IdleRanged: 15, MoveRanged: 0, AttackRanged: 20,
-  IdleSpell: 15, MoveSpell: 0, AttackSpell: 20,
+  Idle: 15,
+  Move: 0,
+  Death: 10,
+  IdleMelee: 15,
+  MoveMelee: 0,
+  AttackMelee: 5,
+  IdleRanged: 15,
+  MoveRanged: 0,
+  AttackRanged: 20,
+  IdleSpell: 15,
+  MoveSpell: 0,
+  AttackSpell: 20,
 });
 /** The bow's group, on a set that carries one. */
 export const CLASS_BOW_BASE = 25;
@@ -101,5 +118,5 @@ export function classFrame(skin, record, frame, tableFrames) {
   const n = skin.frames[record] ?? 1;
   const t = Math.max(1, tableFrames | 0);
   const f = Math.min(Math.max(frame | 0, 0), t - 1);
-  return Math.floor((f * n) / t);   // f < t, so never past the record's last
+  return Math.floor((f * n) / t); // f < t, so never past the record's last
 }

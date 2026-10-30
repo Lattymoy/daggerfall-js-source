@@ -560,7 +560,7 @@ test('AUDIT DEEP T1-7/X-1/X-2/T1-5: a look key let go in a text box still stops 
   // R-2: the traveller's own sprite turns its quad to the VIEW's eye and leans with the flats
   assert.match(w, /const tvFace = tvf \? \{ yaw: tvf\.yaw, up: tvf\.up, grow: player\.drawGrow \?\? tvf\.grow \} : null;/);
   assert.match(w, /mwViewDrawBody\(canvas, \{ proj, view, eye: mwv\.eye, feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), viewYaw: cam\.yaw, face: tvFace \}\);/);
-  assert.match(rd('src/player/mwView.js'), /if \(eotbLane\(\)\) \{ const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);/);   // AUDIT CLIMB-ARC N1: the sprite lane on the VIEW's yaw
+  assert.match(rd('src/player/mwView.js'), /if \(eotbLane\(\)\) \{\n\s*const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);/);   // AUDIT CLIMB-ARC N1: the sprite lane on the VIEW's yaw
   const eb = rd('src/player/eyeOfTheBeholder/eotbBody.js');
   // FP-SHADOW1 (perf pass v5): the up is named once (`bbUp`) and the draw is gated on the first-person visibility - the facing law unchanged
   assert.match(eb, /const by = face \? face\.yaw : cam\.yaw;\n\s*const camRight = \[Math\.cos\(by\), 0, -Math\.sin\(by\)\];\n(?:\s*\/\/[^\n]*\n)*\s*const bbUp = face\?\.up \?\? \[0, 1, 0\];\n\s*if \(!FP \|\| cfg\.visibility === 2\) renderer\.drawBillboards\(\[batch\], camRight, bbUp\);/);

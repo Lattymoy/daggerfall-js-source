@@ -356,8 +356,8 @@
   {
     "name": "WAGONS3-the-bench-hides-no-horse",
     "file": "src/player/mwView.js",
-    "old": "return benchSeated ? { ...hides, horse: true } : hides;",
-    "new": "return hides;",
+    "old": "  return benchSeated ? { ...hides, horse: true } : hides; // WAGONS3: on the bench the team is in the world, not on the screen",
+    "new": "  return hides; // WAGONS3: on the bench the team is in the world, not on the screen",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "WAGONS3-the-bench-word-kept",
     "file": "src/player/mwView.js",
-    "old": "benchSeated = !!state.seated;",
-    "new": "benchSeated = benchSeated || !!state.seated;",
+    "old": "  benchSeated = !!state.seated; // WAGONS3: the host's word that the player drives from a wagon's bench, either lane",
+    "new": "  benchSeated = benchSeated || !!state.seated; // WAGONS3: the host's word that the player drives from a wagon's bench, either lane",
     "tests": [
       "test/player/wagons3.test.js"
     ]

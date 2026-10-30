@@ -734,8 +734,8 @@
   {
     "name": "TWOHANDS-AUDIT-bob-timer-stale",
     "file": "src/player/headBobber.js",
-    "old": "    if (this.timer > Math.PI * 2) this.timer = 0;\n    if (out) out.bobTimer = this.timer;",
-    "new": "    if (this.timer > Math.PI * 2) this.timer = 0;",
+    "old": "    if (out) out.bobTimer = this.timer;\n    posY = this._applySimpleBouncing(dt, posY, { grounded, swimming, climbing, levitating });",
+    "new": "    posY = this._applySimpleBouncing(dt, posY, { grounded, swimming, climbing, levitating });",
     "tests": [
       "test/combat/twohands.test.js"
     ]
