@@ -71,7 +71,7 @@ test('SERAPH-WINGS grant: every developer holds the wings, case-folded, read off
   const dev = row(DEVS[0], { aura: 'seraphwings' });
   assert.equal(auraWorn(dev, ENV), 'seraphwings');
   assert.equal(auraWorn(dev), undefined, 'without the config, the Broker\'s alone - the wings are the list\'s');
-  assert.deepEqual(aurasHeld(row(DEVS[0], { insignia: 'aura:dagonfire' }), ENV), ['seraphwings', 'dagonfire'], 'the wings, then what the Broker sold');
+  assert.deepEqual(aurasHeld(row(DEVS[0], { insignia: 'aura:dagonfire' }), ENV).slice(0, 2), ['seraphwings', 'dagonfire'], 'the wings, then what the Broker sold');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
   const w = wardrobeOf(dev, ENV, LATER);
   assert.ok(w.auras.includes('seraphwings') && w.aura === 'seraphwings' && titlesHeld(dev, ENV).includes('developer'), 'the account card\'s answer: the wings beside the developer title');
   const off = { ...ENV, DEVELOPER_HANDLES: '' };
@@ -84,8 +84,8 @@ test('SERAPH-WINGS grant: every developer holds the wings, case-folded, read off
     assert.equal(auraRefusal('seraphwings', row(h), ENV), 'not-held');
   }
   const both = { ...ENV, SHADOW_FANG_HANDLES: DEVS[0] };
-  assert.deepEqual(aurasHeld(row(DEVS[0]), both), ['shadowcloak', 'seraphwings'], 'a developer on another list: that list\'s aura first, then the wings');
-  assert.deepEqual(aurasHeld(row('SirMcMobdon'), ENV), ['shadowcloak', 'seraphwings'], 'as SirMcMobdon, a developer and a Shadow Fang (STAFF-PANEL1, mob, 06:33Z), holds both');
+  assert.deepEqual(aurasHeld(row(DEVS[0]), both).slice(0, 2), ['shadowcloak', 'seraphwings'], 'a developer on another list: that list\'s aura first, then the wings');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js)
+  assert.deepEqual(aurasHeld(row('SirMcMobdon'), ENV).slice(0, 2), ['shadowcloak', 'seraphwings'], 'as SirMcMobdon, a developer and a Shadow Fang (STAFF-PANEL1, mob, 06:33Z), holds both');   // ADMIN-ALL (PIN MOVED): an Admin holds every aura after these (test/server/admin_all.test.js)
 });
 
 test('SERAPH-WINGS the service end to end: a developer registers and holds the wings; wears them through the aura door; the token signs them; a stranger is refused them; off the list the next token carries none', async () => {

@@ -172,7 +172,7 @@ test('HERALD grant: a Herald pledge holds the title and its glyph by PATREON_TIE
     assert.deepEqual(titlesHeld(row(h), named), ['herald'], `${h}: by name, case-folded`);
     assert.deepEqual(glyphsOf(row(h), named, LATER), ['herald']);
   }
-  for (const h of ['Diggleborf', 'Dutchess', 'SirMcMobdon', 'SquidKamer', 'Stranger']) {
+  for (const h of ['Diggleborf', 'Dutchess', 'SquidKamer', 'Stranger']) {   // ADMIN-ALL (PIN MOVED): the Admins are out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), named).includes('herald'), `${h} does not hold it`);
     assert.equal(equipRefusal('herald', row(h), named), 'not-held');
   }
