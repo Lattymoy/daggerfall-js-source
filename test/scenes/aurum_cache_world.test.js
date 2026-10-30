@@ -1,5 +1,5 @@
 // AURUM-CACHES (2026-10-30, the owner: "Also Aurum caches"; bible/06-Systems/Aurum.md section 3a): THE COFFER IN THE WORLD -
-// which dungeons hold one (a Bay dungeon by its pixel id, a lair past the Bay by its whole id; no made level, Abyss
+// which dungeons hold one (CACHES-ONCE: every one - a Bay dungeon by its pixel id, a lair past the Bay by its whole id; no made level, Abyss
 // Dungeon, arena floor or zone hall), where it stands (beside a treasure pile the cache's hash picks, clear of the walls,
 // on the pile's floor), and the press (claimed once, opened, kept open for the account; refused, said why). On the
 // freeware, a Bay dungeon and a lair of Cyrodiil each stand theirs. tools/mutants/aurum_caches.json.
@@ -14,18 +14,14 @@ import {
 } from '../../src/scenes/aurumCacheHost.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE } from '../../src/world/aurumCofferArt.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
-import { aurumCacheHolds, aurumCacheId, aurumCacheSpotOf, aurumCacheDayOf } from '../../src/net/aurumCacheLaw.js';
+import { aurumCacheSpotOf } from '../../src/net/aurumCacheLaw.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { GATE_ARENA_LOCATION_ID } from '../../src/world/gate/gateArena.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
 import { TREASURE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const DAY0 = Math.floor(Date.UTC(2026, 10, 18) / 86_400_000);
 const loc = (mapId, o = {}) => ({ name: 'D', hasDungeon: true, mapTableData: { mapId, dungeonType: 0 }, dungeon: { recordElement: { header: { locationId: 9 } }, blocks: [] }, ...o });
-/** The first day from DAY0 a location holds a cache. */
-const cacheDay = (l) => { for (let d = DAY0; ; d++) if (aurumCacheHolds(d, aurumCachePlaceOf(l))) return d; };
-const at = (day) => () => (day * 86_400 + 43_200) * 1000;
 
 /** A corridor along z, 4 m wide (walls at x = +-2), its floor at 0 - but a pit a metre deep from z 26 to 28, a dais
  *  0.4 m high from z 29 to 35, a lift's deck 0.1 m up from z 40 to 42 (its bucket `act:0:7`), a curb 0.3 m high at x 1.4
@@ -150,14 +146,16 @@ const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ??
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const PILES = [pile([0, 0, 0]), pile([0, 0, 4]), pile([0, 0, 8])];
 
-test('AURUM-CACHES the coffer stood: online and signed in, in a dungeon that holds today\'s cache - its shut picture at its foot, its target at a treasure pile\'s reach, its name, and a line that it is here; none offline, for a guest, with no session, on a day it holds none (mutants: offline stands one, a guest stands one, the day unread)', async () => {
+// PIN MOVED (CACHES-ONCE): a dungeon that held today's cache, none on a day it held none
+test('AURUM-CACHES the coffer stood: online and signed in, in a dungeon - its id the dungeon\'s key, its shut picture at its foot, its target at a treasure pile\'s reach, its name, and a line that it is here; none offline, for a guest, with no session (mutants: offline stands one, a guest stands one)', async () => {
   _resetAurumCaches();
-  const L = loc(lairPlaceId(77)), day = cacheDay(L);
-  const deps = (o = {}) => ({ online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage: memory(), claim: async () => ({ ok: true }), audio: null, ...o });
+  const L = loc(lairPlaceId(77));
+  const deps = (o = {}) => ({ online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: true }), audio: null, ...o });
   const ctx = fakeCtx();
   const c = standAurumCache(ctx, L, PILES, deps());
   assert.ok(c, 'stood');
-  assert.equal(c.id, aurumCacheId(day, aurumCachePlaceOf(L)));
+  assert.equal(c.id, aurumCachePlaceOf(L));
+  assert.equal(c.id, `d${lairPlaceId(77)}`);
   assert.deepEqual(c.foot, aurumCacheFoot(PILES, aurumCacheSpotOf(c.id), CORRIDOR), 'the law\'s foot');
   await tick();
   assert.deepEqual(ctx.stood.map((b) => [b.archive, b.record, b.scale, b.centers]), [[AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART.shut, 1, [c.foot]]]);
@@ -171,8 +169,7 @@ test('AURUM-CACHES the coffer stood: online and signed in, in a dungeon that hol
   assert.equal(aurumCacheStood(), c);
   ctx.downs.forEach((f) => f());
   assert.equal(aurumCacheStood(), null, 'let go with the level');
-  for (const [why, o] of [['offline', { online: () => false }], ['a guest', { session: () => ({ id: 'g', kind: 'guest' }) }], ['no session', { session: () => null }],
-    ['a day with none', { nowMs: at(DAY0 + [...Array(40).keys()].find((k) => !aurumCacheHolds(DAY0 + k, aurumCachePlaceOf(L)))) }]]) {
+  for (const [why, o] of [['offline', { online: () => false }], ['a guest', { session: () => ({ id: 'g', kind: 'guest' }) }], ['no session', { session: () => null }]]) {
     assert.equal(standAurumCache(fakeCtx(), L, PILES, deps(o)), null, why);
   }
   assert.equal(standAurumCache(fakeCtx(), loc(77, { superTier: true }), PILES, deps()), null, 'an Abyss Dungeon');
@@ -182,13 +179,13 @@ test('AURUM-CACHES the coffer stood: online and signed in, in a dungeon that hol
   assert.deepEqual([cell.said, cell.stood, cell.pick()], [[], [], []], 'and nothing said, stood or pressed');
 });
 
-test('AURUM-CACHES the press: the coffer asks the service once with its id - a second press while it asks is that ask - and on its yes opens, says its Aurum and is kept open for the account; pressed again it is empty and asks nothing; entered again the same day it stands open (mutants: the ask repeated, the open not kept, the picture not swapped)', async () => {
+test('AURUM-CACHES the press: the coffer asks the service once with its id - a second press while it asks is that ask - and on its yes opens, says its Aurum and is kept open for the account; pressed again it is empty and asks nothing; entered again it stands open, every id kept (mutants: the ask repeated, the open not kept, the picture not swapped)', async () => {
   _resetAurumCaches();
-  const L = loc((3 << 20) | 4321), day = cacheDay(L), storage = memory();
+  const L = loc((3 << 20) | 4321), storage = memory();
   const asked = [];
   let answer;
   const claim = (id) => { asked.push(id); return new Promise((r) => { answer = r; }); };
-  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage, claim, audio: null };
+  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim, audio: null };
   const ctx = fakeCtx();
   const c = standAurumCache(ctx, L, PILES, deps);
   await tick();
@@ -210,7 +207,7 @@ test('AURUM-CACHES the press: the coffer asks the service once with its id - a s
   await tick();
   assert.equal(ctx.said.at(-1), AURUM_CACHE_TEXT.empty());
   assert.equal(asked.length, 1, 'an open coffer asks nothing');
-  // the same dungeon again, the same day: open, and no line that one is here
+  // the same dungeon again: open, and no line that one is here
   const again = fakeCtx();
   const c2 = standAurumCache(again, L, PILES, deps);
   await tick();
@@ -220,19 +217,18 @@ test('AURUM-CACHES the press: the coffer asks the service once with its id - a s
   // another account on this device: shut
   const other = standAurumCache(fakeCtx(), L, PILES, { ...deps, session: () => ({ id: 'other', kind: 'user' }) });
   assert.equal(other.open, false);
-  // the device keeps today's and yesterday's alone: an older id goes with the next one kept
-  storage.setItem(AURUM_CACHE_STORE, JSON.stringify({ acct: [`${day - 2}:d1`, `${day - 1}:d2`, c.id], gone: [`${day - 5}:d3`] }));
-  const L2 = loc((3 << 20) | [...Array(500).keys()].find((k) => aurumCacheHolds(day, `d${k}`) && k !== 4321));
-  const next = standAurumCache(fakeCtx(), L2, PILES, { ...deps, claim: async () => ({ ok: true }) });
+  // PIN MOVED (CACHES-ONCE): the device kept today's and yesterday's alone. Now every id, and a day's id or mark goes
+  storage.setItem(AURUM_CACHE_STORE, JSON.stringify({ acct: ['20756:d1', 'd2', '20757:cap', c.id], gone: ['20751:d3'] }));
+  const next = standAurumCache(fakeCtx(), loc((3 << 20) | 4322), PILES, { ...deps, claim: async () => ({ ok: true }) });
   next.press(AURUM_CACHE_KEY);
   await tick(); await tick();
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [`${day - 1}:d2`, c.id, next.id], gone: [] });
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: ['d2', c.id, next.id], gone: [] });
 });
 
 test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and says so; capped stays shut and says the bound; closed says so and stands no coffer again this session; an answer after the level is gone touches nothing (mutants: taken left shut, closed forgotten, a late answer stands a picture)', async () => {
   _resetAurumCaches();
-  const L = loc((3 << 20) | 999), day = cacheDay(L);
-  const deps = (error) => ({ online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage: memory(), claim: async () => ({ ok: false, error }), audio: null });
+  const L = loc((3 << 20) | 999);
+  const deps = (error) => ({ online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: false, error }), audio: null });
   const taken = fakeCtx(), t = standAurumCache(taken, L, PILES, deps('cache-taken'));
   t.press(AURUM_CACHE_KEY);
   await tick(); await tick();
@@ -261,44 +257,31 @@ test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and say
   _resetAurumCaches();
 });
 
-test('AUDIT-STOREFRONT III D4 a UTC day the account\'s caches are spent stands no coffer: the yes whose `today` reaches `max`, or a capped answer, keeps the day\'s mark, and every later cache dungeon that day stands none and says nothing - one it emptied still stands open, another account and the next day stand theirs; a shut coffer pressed on a spent day says so and asks nothing more (mutants: the mark unread, the last yes unread, the capped answer unread, the press asks again)', async () => {
+// PIN MOVED (CACHES-ONCE): a UTC day's caches spent stood no coffer, kept by a `<day>:cap` mark on the device
+test('CACHES-ONCE a day the forgery bound is met stands every coffer still: a capped answer keeps nothing and the coffer stays shut, said why; entered again it stands and is said; a later press asks again and its yes opens it - no coffer is lost to a day (mutants: a capped coffer kept as emptied)', async () => {
   _resetAurumCaches();
-  const day = DAY0 + 3, held = (d) => [...Array(5000).keys()].map((k) => loc((3 << 20) | k)).filter((L) => aurumCacheHolds(d, aurumCachePlaceOf(L)));
-  const [A, B, C] = held(day), storage = memory(), asked = [];
-  let reply = { ok: true, data: { aurum: 15, today: 2, max: 3 } };
-  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage, claim: async (id) => { asked.push(id); return reply; }, audio: null };
-  const a = standAurumCache(fakeCtx(), A, PILES, deps);
-  a.press(AURUM_CACHE_KEY);
-  await tick(); await tick();
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [a.id] }, 'the second yes: the day not spent');
-  reply = { ok: true, data: { aurum: 15, today: 3, max: 3 } };
-  const b = standAurumCache(fakeCtx(), B, PILES, deps);
-  b.press(AURUM_CACHE_KEY);
-  await tick(); await tick();
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [a.id, b.id, `${day}:cap`] }, 'the third yes: spent');
-  const cCtx = fakeCtx();
-  assert.equal(standAurumCache(cCtx, C, PILES, deps), null, 'a spent day: no coffer');
-  assert.deepEqual([cCtx.said, cCtx.stood, cCtx.pick()], [[], [], []], 'nothing said, stood or pressed');
-  const again = fakeCtx();
-  assert.equal(standAurumCache(again, A, PILES, deps)?.open, true, 'the one it emptied still stands open');
-  assert.equal(standAurumCache(fakeCtx(), C, PILES, { ...deps, session: () => ({ id: 'other', kind: 'user' }) })?.open, false, 'another account\'s day is its own');
-  const [next] = held(day + 1);
-  assert.ok(standAurumCache(fakeCtx(), next, PILES, { ...deps, nowMs: at(day + 1) }), 'the next UTC day stands again');
-  // a capped answer (another device spent the day): kept, said; a second press says it again and asks nothing
-  const s2 = memory(), asked2 = [];
-  const capped = fakeCtx(), c = standAurumCache(capped, C, PILES, { ...deps, storage: s2, claim: async (id) => { asked2.push(id); return { ok: false, error: 'cache-capped' }; } });
+  const L = loc((3 << 20) | 999), storage = memory(), asked = [];
+  let reply = { ok: false, error: 'cache-capped' };
+  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim: async (id) => { asked.push(id); return reply; }, audio: null };
+  const ctx = fakeCtx(), c = standAurumCache(ctx, L, PILES, deps);
   c.press(AURUM_CACHE_KEY);
   await tick(); await tick();
-  assert.deepEqual(JSON.parse(s2.getItem(AURUM_CACHE_STORE)), { acct: [`${day}:cap`] });
-  assert.equal(c.press(AURUM_CACHE_KEY), true);
-  assert.deepEqual([asked2.length, capped.said.slice(-2)], [1, [REFUSALS['cache-capped'], REFUSALS['cache-capped']]], 'one ask, the bound said twice');
-  assert.equal(standAurumCache(fakeCtx(), B, PILES, { ...deps, storage: s2 }), null, 'and no coffer after it');
+  assert.deepEqual([c.open, ctx.said.at(-1), storage.getItem(AURUM_CACHE_STORE)], [false, REFUSALS['cache-capped'], null]);
+  const again = fakeCtx();
+  assert.equal(standAurumCache(again, L, PILES, deps)?.open, false, 'it still stands, shut');
+  assert.deepEqual(again.said, [AURUM_CACHE_TEXT.here()]);
+  reply = { ok: true, data: { aurum: 10, today: 1, max: 10 } };
+  c.press(AURUM_CACHE_KEY);
+  await tick(); await tick();
+  assert.deepEqual([asked.length, c.open, ctx.said.at(-1)], [2, true, '+10 Aurum']);
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] });
 });
 
-test('AUDIT-STOREFRONT III D4 a coffer the service no longer knows - stood before one midnight, pressed after the next (cache-id) - is taken away: its picture, its target and its name go, and the refusal is said once (mutants: cache-id left standing)', async () => {
+// PIN MOVED (CACHES-ONCE): the service no longer knew one stood before one midnight and pressed after the next
+test('AUDIT-STOREFRONT III D4 a coffer the service does not know (cache-id: a page and a service of two laws) is taken away: its picture, its target and its name go, and the refusal is said once (mutants: cache-id left standing)', async () => {
   _resetAurumCaches();
-  const L = loc((3 << 20) | 999), day = cacheDay(L), ctx = fakeCtx();
-  const c = standAurumCache(ctx, L, PILES, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage: memory(), claim: async () => ({ ok: false, error: 'cache-id' }), audio: null });
+  const L = loc((3 << 20) | 999), ctx = fakeCtx();
+  const c = standAurumCache(ctx, L, PILES, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: false, error: 'cache-id' }), audio: null });
   await tick();
   c.press(AURUM_CACHE_KEY);
   await tick(); await tick();
@@ -309,10 +292,10 @@ test('AUDIT-STOREFRONT III D4 a coffer the service no longer knows - stood befor
 
 test('AUDIT-STOREFRONT III D5 a yes that lands after the level is gone is kept: the id kept for the account (entered again, the coffer stands open and unannounced) and the find said on the HUD\'s line that outlives the level, no picture stood; a late refusal says nothing (mutants: kept after the gone check, the late find unsaid)', async () => {
   _resetAurumCaches();
-  const L = loc((3 << 20) | 999), day = cacheDay(L), storage = memory(), late = [];
+  const L = loc((3 << 20) | 999), storage = memory(), late = [];
   let answer;
-  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage, claim: () => new Promise((r) => { answer = r; }), audio: null, lateSay: (l) => late.push(l) };
-  for (const [reply, said] of [[{ ok: false, error: 'server' }, []], [{ ok: true, data: { aurum: 15, today: 1, max: 3 } }, ['+15 Aurum']]]) {
+  const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim: () => new Promise((r) => { answer = r; }), audio: null, lateSay: (l) => late.push(l) };
+  for (const [reply, said] of [[{ ok: false, error: 'server' }, []], [{ ok: true, data: { aurum: 10, today: 1, max: 10 } }, ['+10 Aurum']]]) {
     const ctx = fakeCtx(), c = standAurumCache(ctx, L, PILES, deps);
     await tick();
     c.press(AURUM_CACHE_KEY);
@@ -322,7 +305,7 @@ test('AUDIT-STOREFRONT III D5 a yes that lands after the level is gone is kept: 
     await tick(); await tick();
     assert.deepEqual([ctx.stood.length, late], [1, said]);
   }
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [aurumCacheId(day, aurumCachePlaceOf(L))] });
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [aurumCachePlaceOf(L)] });
   const again = fakeCtx(), c2 = standAurumCache(again, L, PILES, { ...deps, claim: async () => assert.fail('asked again') });
   assert.deepEqual([c2.open, again.said], [true, []]);
 });
@@ -363,7 +346,7 @@ async function freeware() {
 const NO_ARENA2 = HAS ? false : 'ARENA2_PATH not set - the freeware is fetched by tools/fetch-data.sh';
 
 // PIN MOVED (AUDIT-STOREFRONT III D1): beside its pile by the pile's size, its piles the game's own (tools/aurumCacheLayout.mjs)
-test('AURUM-CACHES on the player\'s data: a Bay dungeon (The Convocation of Elona) and a lair of Cyrodiil (The Androgulus Reformatory) each stand their coffer on a day they hold one - beside a random treasure pile, on its floor, clear of the walls, the same spot twice (mutants: the foot left at knee height)', { skip: NO_ARENA2 }, async () => {
+test('AURUM-CACHES on the player\'s data: a Bay dungeon (The Convocation of Elona) and a lair of Cyrodiil (The Androgulus Reformatory) each stand their coffer - beside a random treasure pile, on its floor, clear of the walls, the same spot twice (mutants: the foot left at knee height)', { skip: NO_ARENA2 }, async () => {
   const { w, built } = await freeware();
   const { cofferMeets } = await import('../../tools/aurumCacheLayout.mjs');
   const bay = w.maps.getLocationByName('Daggerfall', 'The Convocation of Elona');
@@ -377,8 +360,7 @@ test('AURUM-CACHES on the player\'s data: a Bay dungeon (The Convocation of Elon
     assert.equal(Number(place.slice(1)) < 0x80000, inBay, `${name}: ${place}`);
     const { col, piles } = built(L);
     assert.ok(piles.filter((p) => !p.isFixed && p.lawHalf).length >= 2, `${name}: its random treasure piles (${piles.length})`);
-    const day = cacheDay(L), id = aurumCacheId(day, place);
-    assert.equal(aurumCacheDayOf(at(day)() / 1000), day);
+    const id = place;
     const foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), col);
     assert.deepEqual(aurumCacheFoot(piles, aurumCacheSpotOf(id), col), foot, `${name}: the same spot twice`);
     assert.ok(piles.some((p) => p.lawHalf && Math.hypot(p.pos[0] - foot[0], p.pos[2] - foot[2]) <= reach(p.lawHalf[0]) * Math.SQRT2 + 1e-6), `${name}: beside its pile`);
@@ -390,7 +372,7 @@ test('AURUM-CACHES on the player\'s data: a Bay dungeon (The Convocation of Elon
     // and the whole stand on the real foot: the coffer stood where the law says
     _resetAurumCaches();
     const ctx = { ...fakeCtx(), collider: col };
-    const c = standAurumCache(ctx, L, piles, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), nowMs: at(day), storage: memory(), claim: async () => ({ ok: true }), audio: null });
+    const c = standAurumCache(ctx, L, piles, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: true }), audio: null });
     assert.deepEqual(c.foot, foot, name);
   }
   assert.equal(places.size, 2, 'two places, two caches');
@@ -403,22 +385,20 @@ test('AUDIT-STOREFRONT III D1-D3 on the player\'s data, the auditor\'s own coffe
   const { synthesizeDungeonLocation, WORLD_SALT } = await import('../../src/world/spawnedDungeons.js');
   const chirtir = w.maps.getLocationByName('Dragontail Mountains', 'Ruins of Chirtir Hall'), formte = w.maps.getLocationByName('Alik\'r Desert', 'Ruins of The F\'ormte Cabin');
   const cases = [
-    ['Morrowind (3293,548)', dungeonLocationFor(synthesizeDungeonLocation(chirtir, { salt: WORLD_SALT, px: 3293, py: 548 }), { online: true }), '20756:d1226386653'],
-    ['Chirtir Hall, whole', chirtir, '20756:d411869'], ['Chirtir Hall, online', dungeonLocationFor(chirtir, { online: true }), '20756:d411869'],
-    ['F\'ormte Cabin, whole', formte, '20756:d439449'], ['F\'ormte Cabin, online', dungeonLocationFor(formte, { online: true }), '20756:d439449'],
-    ['Perore, whole', w.maps.getLocationByName('Wrothgarian Mountains', 'The Laboratory of Perore'), '20777:d130893'],
+    ['Morrowind (3293,548)', dungeonLocationFor(synthesizeDungeonLocation(chirtir, { salt: WORLD_SALT, px: 3293, py: 548 }), { online: true }), 'd1226386653'],
+    ['Chirtir Hall, whole', chirtir, 'd411869'], ['Chirtir Hall, online', dungeonLocationFor(chirtir, { online: true }), 'd411869'],
+    ['F\'ormte Cabin, whole', formte, 'd439449'], ['F\'ormte Cabin, online', dungeonLocationFor(formte, { online: true }), 'd439449'],
+    ['Perore, whole', w.maps.getLocationByName('Wrothgarian Mountains', 'The Laboratory of Perore'), 'd130893'],
   ];
   for (const [name, L, id] of cases) {
-    const day = Number(id.split(':')[0]);
-    assert.equal(aurumCacheId(day, aurumCachePlaceOf(L)), id, name);
-    assert.ok(aurumCacheHolds(day, aurumCachePlaceOf(L)), name);
+    assert.equal(aurumCachePlaceOf(L), id, name);
     const { col, piles } = built(L), foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), col);
     assert.ok(foot, `${name}: a coffer stands`);
     assert.deepEqual(cofferMeets(foot, piles, col), [], name);
   }
 });
 
-test('AUDIT-STOREFRONT III D1-D3 on the player\'s data, the world over: every 16th Bay dungeon (the online layout and the whole by turns) and lairs of every theatre past the Bay, each on the first day from DAY0 it holds a cache - no coffer\'s box meets a pile\'s, a door\'s or a mover\'s, none stands on a pile\'s foot, and a dungeon with a pile to stand by stands its coffer in all but a few (mutants: the mesh read as a door)', { skip: NO_ARENA2 }, async () => {
+test('AUDIT-STOREFRONT III D1-D3 on the player\'s data, the world over: every 16th Bay dungeon (the online layout and the whole by turns) and lairs of every theatre past the Bay, each its one cache - no coffer\'s box meets a pile\'s, a door\'s or a mover\'s, none stands on a pile\'s foot, and a dungeon with a pile to stand by stands its coffer in all but a few (mutants: the mesh read as a door)', { skip: NO_ARENA2 }, async () => {
   const { w, built } = await freeware();
   const { cofferMeets } = await import('../../tools/aurumCacheLayout.mjs');
   const { dungeonLocationFor } = await import('../../src/world/smallerDungeons.js');
@@ -428,7 +408,7 @@ test('AUDIT-STOREFRONT III D1-D3 on the player\'s data, the world over: every 16
   const check = (L, label, theatre) => {
     const place = aurumCachePlaceOf(L);
     if (!place) return;
-    const { col, piles } = built(L), id = aurumCacheId(cacheDay(L), place), T = (by[theatre] ??= { piled: 0, coffers: 0 });
+    const { col, piles } = built(L), id = place, T = (by[theatre] ??= { piled: 0, coffers: 0 });
     const foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), col);
     if (!piles.some((p) => p.lawHalf)) return assert.equal(foot, null, `${label}: no pile, no coffer`);
     T.piled++;

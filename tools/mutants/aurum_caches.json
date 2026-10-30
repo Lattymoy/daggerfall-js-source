@@ -2,62 +2,17 @@
   {
     "name": "AURUM-CACHES-the-amount",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_AURUM = 25;",
-    "new": "export const AURUM_CACHE_AURUM = 30;",
+    "old": "export const AURUM_CACHE_AURUM = 10;",
+    "new": "export const AURUM_CACHE_AURUM = 15;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]
   },
   {
-    "name": "AURUM-CACHES-the-cap",
+    "name": "CACHES-ONCE-the-forgery-bound",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_DAY_MAX = 3;",
-    "new": "export const AURUM_CACHE_DAY_MAX = 4;",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-share",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_SHARE = 0.25;",
-    "new": "export const AURUM_CACHE_SHARE = 0.3;",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-share-test-turned",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "aurumCacheUnit(`${day}:${place}`) < AURUM_CACHE_SHARE",
-    "new": "aurumCacheUnit(`${day}:${place}`) >= AURUM_CACHE_SHARE",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-day-not-hashed",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "aurumCacheUnit(`${day}:${place}`) < AURUM_CACHE_SHARE",
-    "new": "aurumCacheUnit(`${place}`) < AURUM_CACHE_SHARE",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-place-not-hashed",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "aurumCacheUnit(`${day}:${place}`) < AURUM_CACHE_SHARE",
-    "new": "aurumCacheUnit(`${day}`) < AURUM_CACHE_SHARE",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-a-place-not-held-read-as-a-cache",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "return aurumCacheHolds(day, place) ? { day, place } : null;",
-    "new": "return { day, place };",
+    "old": "export const AURUM_CACHE_DAY_MAX = 10;",
+    "new": "export const AURUM_CACHE_DAY_MAX = 11;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]
@@ -65,37 +20,8 @@
   {
     "name": "AURUM-CACHES-a-leading-zero-let-through",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "const ID_RE = /^(0|[1-9]\\d{0,5}):(d\\d{1,10})$/;",
-    "new": "const ID_RE = /^(\\d{1,6}):(d\\d{1,10})$/;",
-    "tests": [
-      "test/net/aurum_cache_law.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-yesterday-refused",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "return !!c && (c.day === today || c.day === today - 1);",
-    "new": "return !!c && c.day === today;",
-    "tests": [
-      "test/net/aurum_cache_law.test.js",
-      "test/server/aurum_cache_service.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-day-after-taken",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "return !!c && (c.day === today || c.day === today - 1);",
-    "new": "return !!c && c.day <= today && c.day >= today - 2;",
-    "tests": [
-      "test/net/aurum_cache_law.test.js",
-      "test/server/aurum_cache_service.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-a-day-ahead-taken",
-    "file": "src/net/aurumCacheLaw.js",
-    "old": "return !!c && (c.day === today || c.day === today - 1);",
-    "new": "return !!c && c.day <= today + 1 && c.day >= today - 1;",
+    "old": "aurumCacheDungeonKey(Number(id.slice(1))) === id",
+    "new": "aurumCacheDungeonKey(Number(id.slice(1))) !== null",
     "tests": [
       "test/net/aurum_cache_law.test.js",
       "test/server/aurum_cache_service.test.js"
@@ -165,10 +91,10 @@
     ]
   },
   {
-    "name": "AURUM-CACHES-the-day-the-ids",
+    "name": "CACHES-ONCE-the-bound-made-lifelong",
     "file": "server-account/src/aurumCache.js",
     "old": "const day = utcDay(nowS);",
-    "new": "const day = Number(String(id).split(':')[0]);",
+    "new": "const day = 0;",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -176,7 +102,7 @@
   {
     "name": "AURUM-CACHES-the-id-unchecked",
     "file": "server-account/src/aurumCache.js",
-    "old": "if (!aurumCacheIdOk(id, nowS)) return { error: 'cache-id' };",
+    "old": "if (!aurumCacheIdOk(id)) return { error: 'cache-id' };",
     "new": "if (typeof id !== 'string') return { error: 'cache-id' };",
     "tests": [
       "test/server/aurum_cache_service.test.js"
@@ -300,10 +226,19 @@
     ]
   },
   {
-    "name": "AURUM-CACHES-the-day-unread",
+    "name": "CACHES-ONCE-a-capped-coffer-kept-as-emptied",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "if (!place || !aurumCacheHolds(day, place)) return null;",
-    "new": "if (!place) return null;",
+    "old": "if (r?.ok || r?.error === 'cache-taken') keepId(",
+    "new": "if (r?.ok || r?.error === 'cache-taken' || r?.error === 'cache-capped') keepId(",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-ONCE-a-days-id-kept-on-the-device",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter(aurumCacheIdOk);",
+    "new": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter((x) => typeof x === 'string');",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -320,7 +255,7 @@
   {
     "name": "AURUM-CACHES-the-open-not-kept",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, day);\n",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);\n",
     "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"

@@ -18,7 +18,7 @@ bought with Aurum, and the pass no longer gives it (`Battle-Pass.md` section 3).
 AURUM-ONLY, the owner, 2026-10-30: *"So nothing should cost money money anymore. Aurem should now be the main way to buy
 all items. Aurem purchase itself should be the only thing."* Asked, the owner chose $1 = 100 Aurum and daily deals at a
 quarter off. So every ware in the shop is bought with Aurum, and money buys the packs alone (sections 4 and 5). With
-it: *"ensure the aurem caches are balanced"* (section 3a, Balance).
+it: *"ensure the aurem caches are balanced"* (section 3a, Balance), then caches with no clock (CACHES-ONCE, section 3a).
 
 ## 2. The currency
 
@@ -68,46 +68,46 @@ week's 120 Aurum a player can earn is held by the same checks those claims are.
 
 The owner, asked whether "world finds" meant deeds alone or "also Aurum caches placed in the world (dungeon chests,
 points of interest) that a player picks up, each one server-checked and under a daily cap": *"Also Aurum caches"*.
+CACHES-ONCE, the owner, 2026-10-30: *"Is there a way we can make it non time gated"*. Asked, the owner chose one coffer
+in every dungeon, opened once ever by an account, its Aurum tuned so the total does not flood the economy.
 
-**Where they stand.** Each UTC day one dungeon in four holds an Aurum coffer, the same dungeons for every player: a
-hash of the day and the dungeon's key (`src/net/aurumCacheLaw.js` aurumCacheHolds). The key is the professions'
-(`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map id of a lair, a ruin, a spawned dungeon
-or an abyss past the Bay, so every theatre has its caches. A made level (the Burning Court, the Shattered Hour, the
-Spire, the ketch), an Abyss Dungeon, the arena's floor and undercroft and a zone hall hold none.
+**Where they stand.** Every dungeon holds one Aurum coffer, the same for every player (`src/net/aurumCacheLaw.js`). Its
+id is the dungeon's key, the professions' (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map
+id of a lair, a ruin, a spawned dungeon or an abyss past the Bay, so every theatre has its caches. A made level (the
+Burning Court, the Shattered Hour, the Spire, the ketch), an Abyss Dungeon, the arena's floor and undercroft and a zone
+hall hold none. Before CACHES-ONCE one dungeon in four held one each UTC day, by a hash of the day and the key.
 
 **Inside.** The coffer stands beside the random treasure pile the cache's hash picks, or the next pile in the layout's
 order where that one has no room (`src/scenes/aurumCacheHost.js` aurumCacheFoot). Its box stands 0.15 m clear of the
 pile's, by the pile's size in the archive (never a texture mod's), and clear of every other pile's, door's and mover's
 box, on the pile's floor, with no wall or ceiling near enough to cut its picture. A pile on a mover is passed. Every
-client stands it in the same spot. Where no pile has room no coffer stands, about one cache dungeon in 160 that has a
-pile (AUDIT-STOREFRONT III lane D, measured on the freeware over the Bay and every theatre).
+client stands it in the same spot. Where no pile has room no coffer stands: the pin holds that under one dungeon in
+fifty that has a pile (AUDIT-STOREFRONT III lane D, on the freeware over the Bay and every theatre).
 
-**Found and opened.** In a cache dungeon the HUD says "An Aurum coffer is hidden in this dungeon today." The coffer is
-an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`, a billboard as
-Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the service, and on a
-yes the coffer stands open and empty and the HUD says "+25 Aurum". A refusal says why. A coffer the account emptied
-stands open for it on every visit that day; the device keeps a note, and the service's answer is what counts. The note
-also keeps a UTC day the account claimed its third cache: no shut coffer stands for it again that day. A coffer pressed
-after its id has expired (stood before one midnight, pressed after the next) is taken away.
+**Found and opened.** Where the account has not emptied the coffer, the HUD says "An Aurum coffer is hidden in this
+dungeon." The coffer is an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`,
+a billboard as Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the
+service, and on a yes the coffer stands open and empty and the HUD says "+10 Aurum". A refusal says why. A coffer the
+account emptied stands open for it on every visit, for good. The device keeps a note of each, and the service's answer
+is what counts. A coffer the service does not know (a page and a service of two laws) is taken away.
 
 **The claim.** `/v1/aurum/cache` `{ id }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
-`<day>:d<dungeon>`, checked by the law alone: in its one spelling, a place that holds a cache that day, of today or
-yesterday (a coffer found just before midnight). One statement writes a ledger line of 25 Aurum, kind `cache` and ref
-the id, only while the account has claimed fewer than three today; the line's key makes a second claim of one id
-write nothing. So the caches pay an account 75 Aurum a day at most. The balance needs nothing new: it sums the ledger.
-It refuses a guest, a closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's caches spent, and it is
-a progression claim (`progress.js`): asked of the seated realm character, as the Maul's day is.
+`d<dungeon>`, checked by the law alone: a dungeon's key in its one spelling. One statement writes a ledger line of 10
+Aurum, kind `cache` and ref the id, only while the account has claimed fewer than ten today; the line's key makes a
+second claim of one id write nothing, ever. The balance needs nothing new: it sums the ledger. It refuses a guest, a
+closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's bound met, and it is a progression claim
+(`progress.js`): asked of the seated realm character, as the Maul's day is.
 
-**What the service cannot see.** It holds no map, so a forged id of a real-shaped dungeon that holds a cache that day
-is taken. The day's bound is what holds: no account earns more than 75 Aurum a day from caches, forged or found.
+**What the service cannot see.** It holds no map, so a forged id of a real-shaped dungeon is taken. The day's bound is
+what holds: ten claims a UTC day, so no account earns more than 100 Aurum a day from caches, forged or found, which is
+a day's finds. Play meets it only with ten new dungeons in a day. A coffer past it is not lost: it stays shut, the
+refusal says to come back after midnight, UTC, and it opens then.
 
-**Balance** (AURUM-CACHES BALANCE, 2026-10-30). At 15 Aurum in one dungeon in five, a dungeon visit was worth 3 Aurum
-on average - a tenth of the finds a run gives - and a regular player (four dungeons a day) earned 9% of a week from
-caches; the day's three were rarely reached. With every ware now in Aurum the caches are 25 Aurum in one dungeon in
-four, three a day: a cache is worth two and a half quests' finds, a regular day finds about one, and a dungeon visit is
-worth about 6 Aurum. The caches' day, 75 at most, stays under the finds' own 100, so deeds stay the first way Aurum is
-earned. Modelled for a casual, a regular and a dedicated player, caches are now 16%, 16% and 24% of their week.
-`test/net/aurum_cache_law.test.js` holds the ratios, not only the numbers.
+**Balance** (CACHES-ONCE BALANCE). AURUM-CACHES BALANCE had set 25 Aurum in one dungeon in four, three a day (15 in one
+in five before it). Now every dungeon pays once, so a coffer is 10 Aurum, one quest's finds. Modelled for a casual, a
+regular and a dedicated player (one, four and ten dungeons a day, three in five of them new), caches pay 6, 24 and 60
+Aurum a day, against 6, 25 and 62 before. So the flow stays where it was and only the clock is gone. The Bay alone holds
+4,232 dungeons. `test/net/aurum_cache_law.test.js` holds the ratios, not only the numbers.
 
 **The four hosts.** `dungeonContext.js` stands the coffer at the end of its build, and its takeLoot presses it; the loot
 arms of `worldModes.js`'s dungeon ladder and the standalone `dungeon.js` carry the `aurum:` key there, as DELVE II's
@@ -195,9 +195,9 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 `test/ui/aurum_shop.test.js` (the sections, the balance, the two-press Buy, the flow) and
 `test/server/storefront_service.test.js` (the demand). The mutants are `tools/mutants/aurum.json`.
 
-The caches (section 3a): `test/net/aurum_cache_law.test.js` (the share, the id, the check, the spot),
-`test/server/aurum_cache_service.test.js` (the claim, the bound, a repeat, a forged id, the guards),
+The caches (section 3a): `test/net/aurum_cache_law.test.js` (the numbers, the balance, the id, the spot),
+`test/server/aurum_cache_service.test.js` (the claim, the day's bound, a repeat, a forged id, the guards),
 `test/scenes/aurum_cache_world.test.js` (which dungeons, the spot, the press; a Bay dungeon and a lair of Cyrodiil on
 the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`
-and, for AUDIT-STOREFRONT III lane D (the coffer's room, its spent day, its late yes), `tools/mutants/storefront_audit3_caches.json`.
+and, for AUDIT-STOREFRONT III lane D (the coffer's room, its late yes), `tools/mutants/storefront_audit3_caches.json`.
 `tools/aurumCacheProbe.mjs` renders and presses a coffer in a place past the Bay (`--spawn`) or a Bay dungeon (`--bay`).

@@ -1330,8 +1330,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.cacheCapped": {
-  "en": "664ac093c9f4",
-  "tr": "0d82b5bbe683",
+  "en": "9104ce44c542",
+  "tr": "aeab17895ac5",
   "by": "claude-in-session"
  },
  "account.refusal.cacheClosed": {
@@ -1345,8 +1345,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.cacheId": {
-  "en": "de898300fc42",
-  "tr": "af13ea3f87c6",
+  "en": "8ba6102ac2b0",
+  "tr": "fcee1b1cd271",
   "by": "claude-in-session"
  },
  "account.refusal.cacheTaken": {
@@ -4605,8 +4605,8 @@
   "by": "claude-in-session"
  },
  "aurumCache.here": {
-  "en": "9b1a850d79d7",
-  "tr": "284df3995ebe",
+  "en": "4aff98f86149",
+  "tr": "701e2cb3c763",
   "by": "claude-in-session"
  },
  "aurumCache.name": {

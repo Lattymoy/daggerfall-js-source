@@ -7,10 +7,9 @@
 // as the bench lays it. The coffer's box is checked clear of every pile's, door's and mover's; the page's coffer must be
 // the law's, its press must take it and send one claim.
 //
-//   ARENA2_PATH=/path/to/arena2 node tools/aurumCacheProbe.mjs [outDir] [--spawn px,py | --bay] [--region R] [--dungeon N] [--day D]
+//   ARENA2_PATH=/path/to/arena2 node tools/aurumCacheProbe.mjs [outDir] [--spawn px,py | --bay] [--region R] [--dungeon N]
 //
-// The day is the first UTC day from today the place holds a cache (the page's clock is moved there). CHROMIUM=<a chrome>
-// for another browser.
+// CACHES-ONCE: every dungeon holds its cache, so any day shows it. CHROMIUM=<a chrome> for another browser.
 import { readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createServer } from 'vite';
@@ -21,7 +20,7 @@ import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { dungeonLocationFor } from '../src/world/smallerDungeons.js';
 import { synthesizeDungeonLocation, WORLD_SALT } from '../src/world/spawnedDungeons.js';
 import { aurumCachePlaceOf, aurumCacheFoot, aurumCofferBox, aurumPileBox, AURUM_CACHE_KEY } from '../src/scenes/aurumCacheHost.js';
-import { aurumCacheDayOf, aurumCacheHolds, aurumCacheId, aurumCacheSpotOf } from '../src/net/aurumCacheLaw.js';
+import { aurumCacheSpotOf, AURUM_CACHE_AURUM, AURUM_CACHE_DAY_MAX } from '../src/net/aurumCacheLaw.js';
 import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { hostModelReader } from './dungeonFireProbe.mjs';
 import { cacheDungeon, cofferMeets, treasureTexture } from './aurumCacheLayout.mjs';
@@ -43,12 +42,10 @@ const template = maps.getLocationByName(region, name);
 if (!template) throw new Error(`no dungeon ${region}/${name}`);
 const [px, py] = (spawn ?? '').split(',').map(Number);
 const loc = spawn ? dungeonLocationFor(synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py }), { online: true }) : template;
-const place = aurumCachePlaceOf(loc);
-let day = flag('--day') != null ? Number(flag('--day')) : aurumCacheDayOf(Date.now() / 1000);
-for (const last = day + 60; place && !aurumCacheHolds(day, place) && day < last; day++);
-if (!place || !aurumCacheHolds(day, place)) throw new Error(`${loc.name} (${place}) holds no cache by day ${day}`);
+const id = aurumCachePlaceOf(loc);
+if (!id) throw new Error(`${loc.name} holds no cache`);
 const { col, piles } = cacheDungeon(loc, blocks, hostModelReader(arch), treasureTexture(ARENA2));
-const id = aurumCacheId(day, place), foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), col);
+const foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), col);
 if (!foot) throw new Error(`${loc.name} ${id}: no pile has room for a coffer`);
 const failures = [];
 const met = cofferMeets(foot, piles, col);
@@ -79,23 +76,19 @@ const eyeAt = (dist, up, aim) => {
   const eye = [foot[0] + Math.sin(way.a) * dist, foot[1] + up, foot[2] + Math.cos(way.a) * dist];
   return { eye, yaw: Math.atan2(foot[0] - eye[0], foot[2] - eye[2]), pitch: Math.atan2(foot[1] + aim - eye[1], dist) };
 };
-const noon = day * 86_400_000 + 12 * 3_600_000;
 try {
   for (const lane of ['', 'classic']) {
     const L = lane || 'lane';
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     page.on('pageerror', (e) => console.log('[pageerror]', e.message));
     page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 300)); });
-    // the page's clock on the cache's day, a signed-in account (the coffer stands for one alone), and the tutorial's
-    // popups off - a page over the shot hides it
-    await page.addInitScript((t) => {
-      const real = Date.now.bind(Date), off = t - real();
-      Date.now = () => real() + off;
+    // a signed-in account (the coffer stands for one alone), and the tutorial's popups off - a page over the shot hides it
+    await page.addInitScript(() => {
       localStorage.setItem('dagger.account.session', JSON.stringify({ secret: 'probe', id: 'probe-account', kind: 'user', name: 'Probe' }));
       localStorage.setItem('dagger.ui.v1', JSON.stringify({ ...JSON.parse(localStorage.getItem('dagger.ui.v1') || '{}'), tutorialPopups: false }));
-    }, noon);
+    });
     const claims = [];
-    await page.route('**/v1/aurum/cache', (route) => { claims.push(route.request().postData()); route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ok: true, id, aurum: 15, today: 1, max: 3 }) }); });
+    await page.route('**/v1/aurum/cache', (route) => { claims.push(route.request().postData()); route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ok: true, id, aurum: AURUM_CACHE_AURUM, today: 1, max: AURUM_CACHE_DAY_MAX }) }); });
     const q = `shot&online&nofoes&region=${encodeURIComponent(region)}&dungeon=${encodeURIComponent(name)}${spawn ? `&spawn=${spawn}` : ''}${lane ? `&lighting=${lane}` : ''}`;
     await page.goto(`http://localhost:5197/play/?${q}`);
     // the bench's `class` skip reads no class today (scenes/dungeon.js hands it inside a comment): the character is made

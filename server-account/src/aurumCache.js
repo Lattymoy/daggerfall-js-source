@@ -1,9 +1,9 @@
 // @ts-check
 // AURUM-CACHES (2026-10-30, the owner: "Also Aurum caches"; bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE
 // CLAIMED. The page asks with the cache's id when a player opens a coffer (scenes/aurumCacheHost.js); the id is checked
-// by the law alone (src/net/aurumCacheLaw.js - well formed, of today or yesterday, a place that holds one). One ledger
-// line a cache an account, written only while the account's caches today are under the day's bound: the line's key makes
-// a second claim of one id write nothing. The balance needs nothing new - it sums the ledger (aurum.js balanceOfRow).
+// by the law alone (src/net/aurumCacheLaw.js - a dungeon's key in its one spelling). One ledger line a cache an account,
+// ever (CACHES-ONCE), written only while the account's claims today are under the forgery bound: the line's key makes a
+// second claim of one id write nothing. The balance needs nothing new - it sums the ledger (aurum.js balanceOfRow).
 import { AURUM_CACHE_AURUM, AURUM_CACHE_DAY_MAX, aurumCacheIdOk } from '../../src/net/aurumCacheLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { aurumOpenFor } from './aurum.js';
@@ -14,7 +14,7 @@ export const AURUM_CACHE_STATUS = Object.freeze({ 'cache-guest': 403, 'cache-clo
 /**
  * A CACHE CLAIMED for the session's account: `{ ok: true, id, aurum, today, max }` - `today` the caches it has claimed
  * this UTC day, this one counted - or `{ error }`: cache-guest (no account to keep Aurum for), cache-closed (AURUM_OPEN),
- * cache-id (no cache's id, or not today's or yesterday's), cache-taken (this account claimed it already), cache-capped.
+ * cache-id (no cache's id), cache-taken (this account claimed it already), cache-capped (the day's bound met).
  * The write and both reads are one batch, so the answer is the write's own.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
@@ -22,7 +22,7 @@ export async function claimCache({ db, nowS }, player, body, env) {
   if (!player?.handle) return { error: 'cache-guest' };
   if (!aurumOpenFor(player, env)) return { error: 'cache-closed' };
   const id = body?.id;
-  if (!aurumCacheIdOk(id, nowS)) return { error: 'cache-id' };
+  if (!aurumCacheIdOk(id)) return { error: 'cache-id' };
   const day = utcDay(nowS);
   const [put, held, count] = await db.batch([
     db.prepare(`INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'cache', ?2, ?3, ?4, ?5

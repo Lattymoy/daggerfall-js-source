@@ -78,7 +78,7 @@ import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the car
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 import { tradeHeldSaid } from './realm/realmTradeLaw.js';   // RPT1026-MARKET HOLD-SAID: the standing hold's own notice
 import { MINT_VERSION } from './productRecord.js';   // AUDIT FB1026d C3: a craft asks its record be stamped with the version this build mints
-import { AURUM_CACHE_DAY_MAX } from './aurumCacheLaw.js';   // AURUM-CACHES: the day's bound, in its refusal
+import { AURUM_CACHE_DAY_MAX } from './aurumCacheLaw.js';   // AURUM-CACHES: the day's forgery bound, in its refusal
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -205,9 +205,9 @@ const REFUSAL_WORDS = {
   // AURUM-CACHES: a cache's refusals (server-account/src/aurumCache.js claimCache)
   'cache-guest': () => t('account.refusal.cacheGuest', 'Aurum caches need a registered account. Add a username and password first.'),
   'cache-closed': () => t('account.refusal.cacheClosed', 'Aurum is closed for now. The coffer stays shut.'),
-  'cache-id': () => t('account.refusal.cacheId', 'This coffer is no longer one of today\'s caches.'),
+  'cache-id': () => t('account.refusal.cacheId', 'This coffer cannot be opened. Reload the game and try again.'),
   'cache-taken': () => t('account.refusal.cacheTaken', 'You emptied this coffer already.'),
-  'cache-capped': () => t('account.refusal.cacheCapped', 'You have opened {n, plural, one {# Aurum cache} other {# Aurum caches}} today. More open after midnight, UTC.', { n: AURUM_CACHE_DAY_MAX }),
+  'cache-capped': () => t('account.refusal.cacheCapped', 'You have opened {n, plural, one {# Aurum coffer} other {# Aurum coffers}} today. Come back after midnight, UTC, to open this one.', { n: AURUM_CACHE_DAY_MAX }),
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
   // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)

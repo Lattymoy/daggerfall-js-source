@@ -74,7 +74,8 @@ test('PASS-PANELS the prices: the free track costs 2,300 Aurum, the premium 1,00
   assert.ok(30 * PASS_DAY_AURUM >= sum(free), 'the free track inside a month of finds');
   assert.ok(days * PASS_DAY_AURUM + challenges >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium.slice(0, -1)) - 2000, 'both tracks but the capstone within reach of the season, a little short without the deeds and caches');
   const deeds = Object.values(AURUM_DEEDS).reduce((a, n) => a + n, 0) * (days / 7);
-  assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 2 * AURUM_CACHE_AURUM >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and two caches a day');
+  // PIN MOVED (CACHES-ONCE): two caches a day at 25; now a dedicated day's, six new dungeons of ten at 10 - about the same Aurum
+  assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 6 * AURUM_CACHE_AURUM >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and a dedicated day\'s caches');
 });
 
 test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, its season\'s tracks not open yet, held, the premium track shut, its panel shut - in that order; bought on an open panel once the track opens it; the tracks sell from the season\'s first instant for good (mutants: a premium item sold on a shut track; a shut panel sold; the tracks closed with the season)', () => {

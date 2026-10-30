@@ -117,42 +117,6 @@
     ]
   },
   {
-    "name": "AUDIT3-D4-the-mark-unread",
-    "file": "src/scenes/aurumCacheHost.js",
-    "old": "  if (!kept.includes(id) && kept.includes(capOf(day))) return null;",
-    "new": "",
-    "tests": [
-      "test/scenes/aurum_cache_world.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT3-D4-the-last-yes-unread",
-    "file": "src/scenes/aurumCacheHost.js",
-    "old": " || (r?.ok && Number.isSafeInteger(r.data?.max) && r.data.today >= r.data.max)",
-    "new": "",
-    "tests": [
-      "test/scenes/aurum_cache_world.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT3-D4-the-capped-answer-unread",
-    "file": "src/scenes/aurumCacheHost.js",
-    "old": "if (r?.error === 'cache-capped' || (r?.ok",
-    "new": "if ((r?.ok",
-    "tests": [
-      "test/scenes/aurum_cache_world.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT3-D4-the-press-asks-again",
-    "file": "src/scenes/aurumCacheHost.js",
-    "old": "    if (keptIds(storage, me.id).includes(capOf(today()))) { say(accountRefusalText('cache-capped')); return true; }\n",
-    "new": "",
-    "tests": [
-      "test/scenes/aurum_cache_world.test.js"
-    ]
-  },
-  {
     "name": "AUDIT3-D4-cache-id-left-standing",
     "file": "src/scenes/aurumCacheHost.js",
     "old": "      if (r?.error === 'cache-id') takeAway();\n",
@@ -164,8 +128,8 @@
   {
     "name": "AUDIT3-D5-kept-only-while-the-level-stands",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, day);",
-    "new": "      if (!gone && (r?.ok || r?.error === 'cache-taken')) keepId(storage, me.id, id, day);",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);",
+    "new": "      if (!gone && (r?.ok || r?.error === 'cache-taken')) keepId(storage, me.id, id);",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
