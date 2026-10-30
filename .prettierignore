@@ -240,6 +240,8 @@
 /src/world/peaks/*/
 !/src/world/starfall/
 /src/world/starfall/*/
+!/src/world/superDungeon/
+/src/world/superDungeon/*/
 !/src/world/underwater/
 /src/world/underwater/*/
 !/src/world/urban/

@@ -30,8 +30,8 @@
   {
     "name": "SD4B-the-copies-counted",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "if (e && !e.eliteCopy && Number.isFinite(e.x)",
-    "new": "if (e && Number.isFinite(e.x)",
+    "old": "    if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });",
+    "new": "    if (e && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SD4B-the-start-markers-unplaced",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });",
-    "new": "out.push({ x: m.x, y: m.y, z: m.z });",
+    "old": "      if (Number.isFinite(m?.x) && Number.isFinite(m?.z))\n        out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });",
+    "new": "      if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x, y: m.y, z: m.z });",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "SD4B-through-a-wall",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;\n",
-    "new": "",
+    "old": "  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;\n  const x = from[0] + dir[0] * r,",
+    "new": "  const x = from[0] + dir[0] * r,",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "SD4B-the-Return-inside-the-ring",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {",
-    "new": "  for (const r of [SD_RETURN_GAP_M, 1.5]) {",
+    "old": "    for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {",
+    "new": "    for (const r of [SD_RETURN_GAP_M, 1.5]) {",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SD4B-another-slot-through",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
-    "new": "  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;",
+    "new": "  if (fallen) return SD_NO_FALLEN;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SD4B-the-Return-after-the-kill",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  return ph === 'risen' || ph === 'found';\n}",
-    "new": "  return ph === 'risen' || ph === 'found' || ph === 'fell';\n}",
+    "old": "  return ph === 'risen' || ph === 'found';",
+    "new": "  return ph === 'risen' || ph === 'found' || ph === 'fell';",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]

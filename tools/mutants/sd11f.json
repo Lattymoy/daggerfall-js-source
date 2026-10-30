@@ -147,8 +147,8 @@
   {
     "name": "SD11f-the-hours-by-the-second",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
-    "new": "return SD_COUNT_TEXT.fades(`${Math.ceil((rec.until - now) / 3_600_000)}h`);",
+    "old": "  return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "  return SD_COUNT_TEXT.fades(`${Math.ceil((rec.until - now) / 3_600_000)}h`);",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD11f-the-minutes-rounded-down",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
-    "new": "return SD_COUNT_TEXT.fades(timerText(rec.until - now - 999));",
+    "old": "  return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "  return SD_COUNT_TEXT.fades(timerText(rec.until - now - 999));",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SD11f-the-collapse-uncounted",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(timerText(rec.fellAt + SD_COLLAPSE_MS - now));\n",
-    "new": "",
+    "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(timerText(rec.fellAt + SD_COLLAPSE_MS - now));\n  if (ph !== 'risen' && ph !== 'found') return null;",
+    "new": "  if (ph !== 'risen' && ph !== 'found') return null;",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SD11f-another-slot-counted",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (!rec || rec.s !== s) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
-    "new": "  if (!rec) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
+    "old": "  if (!rec || rec.s !== s) return null;",
+    "new": "  if (!rec) return null;",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
     ]

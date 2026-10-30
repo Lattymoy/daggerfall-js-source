@@ -75,8 +75,8 @@
   {
     "name": "SD26-F34-a-higher-floor-taken",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "(lower ? y - from[1] : Math.abs(y - from[1]))",
-    "new": "(lower ? -1 : Math.abs(y - from[1]))",
+    "old": "  return y != null && (lower ? y - from[1] : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;",
+    "new": "  return y != null && (lower ? -1 : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SD26-F36-only-across",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
-    "new": "[0, 8].map((k) => (k * Math.PI) / 8)",
+    "old": "const SD_DISC_ANGLES = Object.freeze([0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8));",
+    "new": "const SD_DISC_ANGLES = Object.freeze([0, 8].map((k) => (k * Math.PI) / 8));",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SD26-F36-the-lower-half-asked",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
-    "new": "[-3, -2, -1, 0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11].map((k) => (k * Math.PI) / 8)",
+    "old": "const SD_DISC_ANGLES = Object.freeze([0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8));",
+    "new": "const SD_DISC_ANGLES = Object.freeze([-3, -2, -1, 0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11].map((k) => (k * Math.PI) / 8));",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD26-F36-along-its-face",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "dir = [-face[2] * across, Math.sin(a), face[0] * across];",
-    "new": "dir = [face[0] * across, Math.sin(a), face[2] * across];",
+    "old": "      dir = [-face[2] * across, Math.sin(a), face[0] * across];",
+    "new": "      dir = [face[0] * across, Math.sin(a), face[2] * across];",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SD26-F36-the-centre-on-the-floor",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "const R = size / 2, c = [at[0], at[1] + riftCentreY(size), at[2]];",
-    "new": "const R = size / 2, c = [at[0], at[1] + R, at[2]];",
+    "old": "    c = [at[0], at[1] + riftCentreY(size), at[2]];",
+    "new": "    c = [at[0], at[1] + R, at[2]];",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SD26-F38-the-markers-own-height",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
-    "new": "m.y < -level * GLOBAL_SCALE",
+    "old": "    return level != null && (floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE;",
+    "new": "    return level != null && m.y < -level * GLOBAL_SCALE;",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SD26-F38-every-wet-one-dropped",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return dry.length ? dry : list; };",
-    "new": "return dry; };",
+    "old": "    return dry.length ? dry : list;",
+    "new": "    return dry;",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SD26-F38-the-surface-upside-down",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
-    "new": "(floorOf ? floorOf(m) : m.y) < level * GLOBAL_SCALE",
+    "old": "    return level != null && (floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE;",
+    "new": "    return level != null && (floorOf ? floorOf(m) : m.y) < level * GLOBAL_SCALE;",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]

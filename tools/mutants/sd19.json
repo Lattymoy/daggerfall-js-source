@@ -65,8 +65,8 @@
   {
     "name": "SD19-the-grade-one-brass",
     "file": "src/world/superDungeon/sdBrassSky.js",
-    "old": "const [a, b, f] = l < s1.at ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))] : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];",
-    "new": "const [a, b, f] = [s1.color, s1.color, 0];",
+    "old": "  const [a, b, f] =\n    l < s1.at\n      ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))]\n      : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];",
+    "new": "  const [a, b, f] = [s1.color, s1.color, 0];",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]

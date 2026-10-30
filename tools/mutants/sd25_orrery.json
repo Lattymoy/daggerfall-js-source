@@ -2,8 +2,8 @@
   {
     "name": "SD25-S10-the-plinth-ten-out",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "plinth0: Object.freeze({ r: 0.845, o: 0.395, y: 0.16 })",
-    "new": "plinth0: Object.freeze({ r: 0.945, o: 0.395, y: 0.16 })",
+    "old": "  plinth0: Object.freeze({ r: 0.845, o: 0.395, y: 0.16 }),",
+    "new": "  plinth0: Object.freeze({ r: 0.945, o: 0.395, y: 0.16 }),",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD25-S10-the-banner-off-the-stone",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "o: 0.375, amp: 0.017, ampWind: 0.02,",
-    "new": "o: 0.475, amp: 0.017, ampWind: 0.02,",
+    "old": "  o: 0.375,",
+    "new": "  o: 0.475,",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD25-S10-the-banner's-ripple-past-the-law",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "o: 0.375, amp: 0.017, ampWind: 0.02,",
-    "new": "o: 0.375, amp: 0.017, ampWind: 0.06,",
+    "old": "  ampWind: 0.02,",
+    "new": "  ampWind: 0.06,",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD25-S10-the-shaft-shrunk",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "shaft: Object.freeze({ r: 0.77, o: 0.33, chamfer: 0.06 }),",
-    "new": "shaft: Object.freeze({ r: 0.67, o: 0.25, chamfer: 0.06 }),",
+    "old": "  shaft: Object.freeze({ r: 0.77, o: 0.33, chamfer: 0.06 }),",
+    "new": "  shaft: Object.freeze({ r: 0.67, o: 0.25, chamfer: 0.06 }),",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD25-S10-the-gear-past-its-crown",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "export const SD_CROWN_GEAR = Object.freeze({ y: 3.26, tip: 0.6,",
-    "new": "export const SD_CROWN_GEAR = Object.freeze({ y: 3.26, tip: 0.95,",
+    "old": "  tip: 0.6,",
+    "new": "  tip: 0.95,",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD25-S10-the-bezel-proud",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.378,",
-    "new": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.45,",
+    "old": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.378, sides: 16 });",
+    "new": "export const SD_BEZEL = Object.freeze({ r0: 0.44, r1: 0.52, o0: 0.355, o1: 0.45, sides: 16 });",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD25-S10-the-gear-one-to-one",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "teeth: 12, spokes: 5, t: 0.08, ratio: 2 });",
-    "new": "teeth: 12, spokes: 5, t: 0.08, ratio: 1 });",
+    "old": "  ratio: 2,",
+    "new": "  ratio: 1,",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD25-S10-the-shiver-from-the-first-turn",
     "file": "src/world/superDungeon/sdOrreryModel.js",
-    "old": "  if (fray > 0.75) tilt +=",
-    "new": "  if (fray > 0) tilt +=",
+    "old": "  if (fray > 0.75) tilt += ((SD_RING_SHIVER * Math.PI) / 180) * Math.sin(Math.PI * 2 * SD_RING_SHIVER_HZ * t + k * 1.7);",
+    "new": "  if (fray > 0) tilt += ((SD_RING_SHIVER * Math.PI) / 180) * Math.sin(Math.PI * 2 * SD_RING_SHIVER_HZ * t + k * 1.7);",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD25-S10-the-rings-down-into-the-hall",
     "file": "src/world/superDungeon/sdOrreryModel.js",
-    "old": "medallion: 0.9, pin: 0.25, hubY: 12.5,",
-    "new": "medallion: 0.9, pin: 0.25, hubY: 6,",
+    "old": "  hubY: 12.5,",
+    "new": "  hubY: 6,",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD25-S10-the-relief-lit-from-below",
     "file": "src/world/superDungeon/sdHallArt.js",
-    "old": "const lit = m(x - 1, y + 1) < 1, shade = m(x + 1, y - 1) < 1;",
-    "new": "const lit = m(x + 1, y - 1) < 1, shade = m(x - 1, y + 1) < 1;",
+    "old": "        const lit = m(x - 1, y + 1) < 1,\n          shade = m(x + 1, y - 1) < 1;",
+    "new": "        const lit = m(x + 1, y - 1) < 1,\n          shade = m(x - 1, y + 1) < 1;",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD25-S10-the-cloth-blue",
     "file": "src/world/superDungeon/sdHallArt.js",
-    "old": "  [[14, 30, 28], [22, 46, 42], [34, 64, 58], [48, 84, 76], [66, 106, 96]],",
-    "new": "  [[14, 28, 44], [22, 44, 70], [34, 60, 98], [48, 80, 126], [66, 100, 150]],",
+    "old": "      [14, 30, 28],\n      [22, 46, 42],\n      [34, 64, 58],\n      [48, 84, 76],\n      [66, 106, 96],",
+    "new": "      [14, 28, 44],\n      [22, 44, 70],\n      [34, 60, 98],\n      [48, 80, 126],\n      [66, 100, 150],",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD25-S10-the-plates'-hours-forward",
     "file": "src/world/superDungeon/sdHallArt.js",
-    "old": "const s = SD_HOUR_NUMERALS[(12 - j) % 12], y0 = j * 16;",
-    "new": "const s = SD_HOUR_NUMERALS[j], y0 = j * 16;",
+    "old": "    const s = SD_HOUR_NUMERALS[(12 - j) % 12],",
+    "new": "    const s = SD_HOUR_NUMERALS[j],",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD25-S10-a-numeral-misspelt",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "numeralStrokes(SD_HOUR_NUMERALS[h]))",
-    "new": "numeralStrokes(SD_HOUR_NUMERALS[(h + 1) % 12]))",
+    "old": "    for (const [x0, y0, x1, y1] of numeralStrokes(SD_HOUR_NUMERALS[h]))",
+    "new": "    for (const [x0, y0, x1, y1] of numeralStrokes(SD_HOUR_NUMERALS[(h + 1) % 12]))",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD25-S10-the-atlas-left-unquantized",
     "file": "src/world/superDungeon/sdHallArt.js",
-    "old": "  quantize(albedo, paletteOf(B, Br, Bz, Vg, Pa, ...SD_BANNER_RAMPS));\n",
-    "new": "",
+    "old": "  quantize(albedo, paletteOf(B, Br, Bz, Vg, Pa, ...SD_BANNER_RAMPS));\n  return { albedo, emission };",
+    "new": "  return { albedo, emission };",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]

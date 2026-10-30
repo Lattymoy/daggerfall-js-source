@@ -227,8 +227,8 @@
   {
     "name": "EGZL-art-the-hours-ember",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "col = ember ? warn : GOLD",
-    "new": "col = ember ? EMBER : GOLD",
+    "old": "    col = ember ? warn : GOLD,",
+    "new": "    col = ember ? EMBER : GOLD,",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGZL-art-dash-never-drawn",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "if (dash && ember) fill(emission, A.line,",
-    "new": "if (false) fill(emission, A.line,",
+    "old": "  if (dash && ember) fill(emission, A.line, (s, t, x) => (((x >> 2) & 1) === 1 ? BLACK : null)); // EG-ZL: its warning's line dashed, four texels on and four off",
+    "new": "  if (false) fill(emission, A.line, (s, t, x) => (((x >> 2) & 1) === 1 ? BLACK : null)); // EG-ZL: its warning's line dashed, four texels on and four off",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]

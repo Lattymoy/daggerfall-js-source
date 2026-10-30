@@ -155,8 +155,8 @@
   {
     "name": "SD20E-T6-a-count-of-its-own",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
-    "new": "return SD_COUNT_TEXT.fades(`${Math.floor((rec.until - now) / 3_600_000)}h ${String(Math.ceil(((rec.until - now) % 3_600_000) / 60_000)).padStart(2, '0')}m`);",
+    "old": "  return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "  return SD_COUNT_TEXT.fades(\n    `${Math.floor((rec.until - now) / 3_600_000)}h ${String(Math.ceil(((rec.until - now) % 3_600_000) / 60_000)).padStart(2, '0')}m`,\n  );",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD20E-T15-the-way-back-the-hollows",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "wayBack: 'To the Abyss Dungeon',",
-    "new": "wayBack: 'To the Hollow',",
+    "old": "  wayBack: 'To the Abyss Dungeon', // AUDIT SD III (T15): the player's word for it",
+    "new": "  wayBack: 'To the Hollow', // AUDIT SD III (T15): the player's word for it",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

@@ -152,8 +152,8 @@
   {
     "name": "SD11c-L6F18-toward-the-Rift",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe)",
-    "new": "besideOn(ret, [-dx / len, 0, -dz / len], SD_LANDING_PAST_M, probe)",
+    "old": "    const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe);",
+    "new": "    const at = besideOn(ret, [-dx / len, 0, -dz / len], SD_LANDING_PAST_M, probe);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "SD11c-L6F18-boxed-in-nowhere",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return [ret[0], ret[1], ret[2]];",
-    "new": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return null;",
+    "old": "  return [ret[0], ret[1], ret[2]];",
+    "new": "  return null;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

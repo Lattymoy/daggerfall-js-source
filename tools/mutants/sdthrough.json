@@ -242,8 +242,8 @@
   {
     "name": "SD-THROUGH-stood-before-anyone",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
-    "new": "return !!rec && rec.s === s && sdPhase(rec, now) === 'found';",
+    "old": "  return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "  return !!rec && rec.s === s && sdPhase(rec, now) === 'found';",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "SD-THROUGH-stood-after-the-kill",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
-    "new": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) !== 'gone';",
+    "old": "  return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "  return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) !== 'gone';",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SD-THROUGH-another-slots",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
-    "new": "return !!rec && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "old": "  return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "  return !!rec && rec.inAt != null && sdPhase(rec, now) === 'found';",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SD-THROUGH-its-row-unkeyed",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  get to() { return t('sd.through.to', 'To the Shattered Hour'); },",
-    "new": "  get to() { return SD_END_TEXT.riftTo; },",
+    "old": "    return t('sd.through.to', 'To the Shattered Hour');",
+    "new": "    return SD_END_TEXT.riftTo;",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "SD-THROUGH-the-heading-dropped",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "const size = SD_THROUGH_SIZE_M, a0 = Number.isFinite(yaw) ? yaw : 0;",
-    "new": "const size = SD_THROUGH_SIZE_M, a0 = 0;",
+    "old": "    a0 = Number.isFinite(yaw) ? yaw : 0;",
+    "new": "    a0 = 0;",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "SD-THROUGH-the-bearings-mirrored",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map(",
-    "new": "const BESIDE = Object.freeze([-1, 1, 0, -2, 2, -3, 3, 4].map(",
+    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map((k) => (k * Math.PI) / 4));",
+    "new": "const BESIDE = Object.freeze([-1, 1, 0, -2, 2, -3, 3, 4].map((k) => (k * Math.PI) / 4));",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "SD-THROUGH-ahead-first",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map(",
-    "new": "const BESIDE = Object.freeze([0, 1, -1, 2, -2, 3, -3, 4].map(",
+    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map((k) => (k * Math.PI) / 4));",
+    "new": "const BESIDE = Object.freeze([0, 1, -1, 2, -2, 3, -3, 4].map((k) => (k * Math.PI) / 4));",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "SD-THROUGH-the-disc-unswept",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (!discClear(at, size, face, probe)) return false;\n",
-    "new": "",
+    "old": "  if (!discClear(at, size, face, probe)) return false;\n  const R = size / 2,",
+    "new": "  const R = size / 2,",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "SD-THROUGH-the-ceiling-unasked",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (probe.ray([at[0], cy, at[2]], [0, 1, 0], R + SD_RIFT_AIR_M) != null) return false;\n",
-    "new": "",
+    "old": "  if (probe.ray([at[0], cy, at[2]], [0, 1, 0], R + SD_RIFT_AIR_M) != null) return false;\n  const chest = [at[0], at[1] + SD_CHEST_M, at[2]],",
+    "new": "  const chest = [at[0], at[1] + SD_CHEST_M, at[2]],",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "SD-THROUGH-no-way-past-asked",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (probe.ray(chest, [-face[2], 0, face[0]], past) != null && probe.ray(chest, [face[2], 0, -face[0]], past) != null) return false;\n",
-    "new": "",
+    "old": "  if (probe.ray(chest, [-face[2], 0, face[0]], past) != null && probe.ray(chest, [face[2], 0, -face[0]], past) != null)\n    return false;\n  const water = probe.water?.(at[0], at[2]);",
+    "new": "  const water = probe.water?.(at[0], at[2]);",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "SD-THROUGH-the-half-way-pass-gone",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  for (const r of [SD_THROUGH_AHEAD_M, SD_THROUGH_AHEAD_M / 2]) {\n    for (const da of BESIDE) {",
-    "new": "  for (const r of [SD_THROUGH_AHEAD_M]) {\n    for (const da of BESIDE) {",
+    "old": "  for (const r of [SD_THROUGH_AHEAD_M, SD_THROUGH_AHEAD_M / 2]) {",
+    "new": "  for (const r of [SD_THROUGH_AHEAD_M]) {",
     "tests": [
       "test/world/superDungeon/sdthrough_way.test.js"
     ],

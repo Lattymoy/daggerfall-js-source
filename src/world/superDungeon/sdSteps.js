@@ -31,7 +31,13 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA } from '../../net/superDungeon/sdBrain.js';
 import { SD_FIRST_STEP } from './sdHall.js';
-import { courseOf, EG_BEAT_CYCLE_S, EG_BEAT_SOLID_S, EG_BEAT_BLINK_S, EG_CRUMBLE_DELAY_S } from '../../net/eliteGates/egSpanLaw.js';
+import {
+  courseOf,
+  EG_BEAT_CYCLE_S,
+  EG_BEAT_SOLID_S,
+  EG_BEAT_BLINK_S,
+  EG_CRUMBLE_DELAY_S,
+} from '../../net/eliteGates/egSpanLaw.js';
 export { stepAt, beatStands, beatBlinks, beatWarned } from '../../net/eliteGates/egSpanLaw.js';
 
 /** Below this (the realm's y) the Hour casts a body back; and how much of its health it costs. */
@@ -66,7 +72,17 @@ const DRIFT_GAPS = [2.6, 2.8, 2.4, 3.0, 2.6, 3.2, 2.8, 2.6, 2.6];
 const DRIFT_AMPS = [1.2, 1.6, 1.0, 1.8, 1.4, 2.0, 1.6, 1.2];
 const DRIFT_PERIODS = [4, 5, 6, 4.5, 7, 5.5, 6.5, 5];
 /** The Beat: the gaps (0: a riser stands against the step before it), and which are risers. */
-const BEAT_PLAN = [['beat', 2.6], ['beat', 2.8], ['beat', 2.6], ['riser', 0], ['beat', 2.6], ['beat', 2.8], ['riser', 0], ['beat', 2.6], ['beat', 2.8]];
+const BEAT_PLAN = [
+  ['beat', 2.6],
+  ['beat', 2.8],
+  ['beat', 2.6],
+  ['riser', 0],
+  ['beat', 2.6],
+  ['beat', 2.8],
+  ['riser', 0],
+  ['beat', 2.6],
+  ['beat', 2.8],
+];
 const BEAT_TO_C = 2.6;
 /** The Crumble's eight, each a step down to the arena's floor: the gap before each, and before the arena. */
 const CRUMBLE_GAPS = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8, 2.6];
@@ -83,13 +99,28 @@ const CHECK_R = 3;
 export const SD_COURSE_SPEC = (() => {
   const size = (q) => Object.freeze({ w: q.w, d: q.d });
   const drift = [];
-  for (let k = 0; k < 8; k++) drift.push(Object.freeze({ kind: 'drift', gap: DRIFT_GAPS[k], size: size(SD_DRIFT_SIZE), ...{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 } }));
+  for (let k = 0; k < 8; k++)
+    drift.push(
+      Object.freeze({
+        kind: 'drift',
+        gap: DRIFT_GAPS[k],
+        size: size(SD_DRIFT_SIZE),
+        ...{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 },
+      }),
+    );
   let beat = 0;
-  const beats = BEAT_PLAN.map(([kind, gap]) => Object.freeze(kind === 'riser' ? { kind, gap, size: size(SD_BEAT_SIZE), rise: SD_RISER_H }
-    : { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF }));
+  const beats = BEAT_PLAN.map(([kind, gap]) =>
+    Object.freeze(
+      kind === 'riser'
+        ? { kind, gap, size: size(SD_BEAT_SIZE), rise: SD_RISER_H }
+        : { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF },
+    ),
+  );
   const crumble = CRUMBLE_GAPS.map((gap) => Object.freeze({ kind: 'crumble', gap, size: size(SD_CRUMBLE_SIZE) }));
   return Object.freeze({
-    start: Object.freeze({ x: SD_FIRST_STEP.x, y: 0, z: SD_FIRST_STEP.z, r: SD_FIRST_STEP.r }), checkR: CHECK_R, toEnd: CRUMBLE_TO_ARENA,
+    start: Object.freeze({ x: SD_FIRST_STEP.x, y: 0, z: SD_FIRST_STEP.z, r: SD_FIRST_STEP.r }),
+    checkR: CHECK_R,
+    toEnd: CRUMBLE_TO_ARENA,
     sections: Object.freeze([
       Object.freeze({ pieces: Object.freeze(drift), check: DRIFT_GAPS[8] }),
       Object.freeze({ pieces: Object.freeze(beats), check: BEAT_TO_C }),
@@ -98,7 +129,12 @@ export const SD_COURSE_SPEC = (() => {
   });
 })();
 /** A course record frozen whole: every step and checkpoint its own frozen record. */
-const frozenCourse = (c) => Object.freeze({ steps: Object.freeze(c.steps.map((s) => Object.freeze(s))), checkpoints: Object.freeze(c.checkpoints.map((q) => Object.freeze(q))), end: c.end });
+const frozenCourse = (c) =>
+  Object.freeze({
+    steps: Object.freeze(c.steps.map((s) => Object.freeze(s))),
+    checkpoints: Object.freeze(c.checkpoints.map((q) => Object.freeze(q))),
+    end: c.end,
+  });
 /** THE HOUR'S COURSE - the record every reader takes by default. */
 export const SD_COURSE = frozenCourse(courseOf(SD_COURSE_SPEC));
 /** Every step, in the order they are crossed. */
@@ -109,7 +145,10 @@ export const SD_CHECKPOINTS = SD_COURSE.checkpoints;
 export const SD_COURSE_END = SD_COURSE.end;
 /** The band the edge lets go of (world/superDungeon/sdRealm.js realmClamp): from just inside the first step's far edge to just inside
  *  the arena's near edge - the void below is the Hour's own, and the cast-back its edge. */
-export const SD_STEPS_FREE = Object.freeze({ z0: SD_FIRST_STEP.z + SD_FIRST_STEP.r - 0.4, z1: SD_ARENA.z - SD_ARENA.r + 0.4 });
+export const SD_STEPS_FREE = Object.freeze({
+  z0: SD_FIRST_STEP.z + SD_FIRST_STEP.r - 0.4,
+  z1: SD_ARENA.z - SD_ARENA.r + 0.4,
+});
 /** SD7b: the edge's floors past the first step (realmClamp's shapes), laid with the Concord's: that band, so wide no body
  *  over the Steps meets its sides before the void has it (SD_STEPS_FREE_HALF_W either way), and the arena. */
 export const SD_STEPS_FREE_HALF_W = 40;
@@ -132,10 +171,22 @@ export function spanAt(z, course = SD_COURSE) {
  * II (L2 F9): into `out` when one is given - the page's frame makes nothing.
  */
 export function crumbleAfter(since, out = { drop: 0, whole: true, shaking: false }) {
-  if (since == null || since < 0 || since >= SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK) { out.drop = 0; out.whole = true; out.shaking = false; return out; }
-  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = true; return out; }
+  if (since == null || since < 0 || since >= SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK) {
+    out.drop = 0;
+    out.whole = true;
+    out.shaking = false;
+    return out;
+  }
+  if (since < SD_CRUMBLE_DELAY) {
+    out.drop = 0;
+    out.whole = true;
+    out.shaking = true;
+    return out;
+  }
   const f = since - SD_CRUMBLE_DELAY;
-  out.drop = 0.5 * SD_CRUMBLE_FALL_G * f * f; out.whole = false; out.shaking = false;
+  out.drop = 0.5 * SD_CRUMBLE_FALL_G * f * f;
+  out.whole = false;
+  out.shaking = false;
   return out;
 }
 /** The way gust `n` blows: +x for the even, -x for the odd (the turns). */
@@ -143,7 +194,8 @@ const gustSign = (n) => (n % 2 === 0 ? 1 : -1);
 /** The Warp's breath at `t`: `{ push, warn }` - the sideways speed it pushes with now (m/s along x, 0 between gusts),
  *  and whether its wind is rising (the second before a gust). AUDIT SD II (L2 F9): into `out` when one is given. */
 export function gustAt(t, out = { push: 0, warn: false }) {
-  const n = Math.floor(t / SD_GUST_EVERY), u = t - n * SD_GUST_EVERY;
+  const n = Math.floor(t / SD_GUST_EVERY),
+    u = t - n * SD_GUST_EVERY;
   out.push = u < SD_GUST_FOR ? gustSign(n) * SD_GUST_SPEED : 0;
   out.warn = u >= SD_GUST_EVERY - SD_GUST_WARN;
   return out;
@@ -152,15 +204,28 @@ export function gustAt(t, out = { push: 0, warn: false }) {
  *  the way that gust blows: `{ dir, k }` - +1 or -1 along x (0 when no breath is due) and how far through that span it
  *  is (0 to 1). It was heard alone: a player with the sound off met each gust unwarned. Into `out` when one is given. */
 export function breathSeen(t, out = { dir: 0, k: 0 }) {
-  const n = Math.floor((t + SD_GUST_WARN) / SD_GUST_EVERY), u = t + SD_GUST_WARN - n * SD_GUST_EVERY, span = SD_GUST_WARN + SD_GUST_FOR;
-  if (u < span) { out.dir = gustSign(n); out.k = u / span; } else { out.dir = 0; out.k = 0; }
+  const n = Math.floor((t + SD_GUST_WARN) / SD_GUST_EVERY),
+    u = t + SD_GUST_WARN - n * SD_GUST_EVERY,
+    span = SD_GUST_WARN + SD_GUST_FOR;
+  if (u < span) {
+    out.dir = gustSign(n);
+    out.k = u / span;
+  } else {
+    out.dir = 0;
+    out.k = 0;
+  }
   return out;
 }
 /** Whether a body at realm z feels the Warp's breath - over the Crumble alone, from C's far edge to the arena (EG-H3: of
  *  `course`, the Hour's by default). */
-export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;
+export const inBreath = (z, course = SD_COURSE) =>
+  z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;
 /** Whether a body (the realm's y) has fallen past the course into the void. */
 export const inVoid = (y) => y < SD_VOID_Y;
 /** Where a body cast back stands: its span's checkpoint's centre (the realm's frame, feet on its stone - EG-H3: of
  *  `course`, the Hour's by default). */
-export const castBackTo = (span, course = SD_COURSE) => { const C = course.checkpoints, c = C[Math.max(0, Math.min(C.length - 1, span))]; return [c.x, c.y, c.z]; };
+export const castBackTo = (span, course = SD_COURSE) => {
+  const C = course.checkpoints,
+    c = C[Math.max(0, Math.min(C.length - 1, span))];
+  return [c.x, c.y, c.z];
+};

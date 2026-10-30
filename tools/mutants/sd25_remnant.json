@@ -2,8 +2,8 @@
   {
     "name": "SD25-S8-the-blade-heating-from-its-tip",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "const a = (lx + 0.5) / w, from = 1 - SD_BLADE_MID;",
-    "new": "const a = 1 - (lx + 0.5) / w, from = 1 - SD_BLADE_MID;",
+    "old": "    const a = (lx + 0.5) / w,",
+    "new": "    const a = 1 - (lx + 0.5) / w,",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD25-S8-mid-lighting-the-whole-region",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "  return feature ? 1 : 0;\n}",
-    "new": "  return 1;\n}",
+    "old": "  return feature ? 1 : 0;",
+    "new": "  return 1;",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD25-S8-a-region-in-another-blows-colour",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "export const SD_TELL_BLOW = Object.freeze({ sole: 'stomp',",
-    "new": "export const SD_TELL_BLOW = Object.freeze({ sole: 'volley',",
+    "old": "export const SD_TELL_BLOW = Object.freeze({ sole: 'stomp', fist: 'volley', blade: 'hand', rib: 'pulse' });",
+    "new": "export const SD_TELL_BLOW = Object.freeze({ sole: 'volley', fist: 'volley', blade: 'hand', rib: 'pulse' });",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD25-S8-the-cold-atlas-lit",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "  if (!(heat > 0)) return 0;\n  const feature",
-    "new": "  if (heat < 0) return 0;\n  const feature",
+    "old": "  if (!(heat > 0)) return 0;",
+    "new": "  if (heat < 0) return 0;",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD25-S8-the-blade-mapped-tip-to-root",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "[x - 1, B.armBot, -1], [x + 1, L.root, 1], 1)",
-    "new": "[x - 1, L.root, -1], [x + 1, B.armBot, 1], 1)",
+    "old": "        blade = placeRegion(f, SD_TELL_REGION.blade, [x - 1, B.armBot, -1], [x + 1, L.root, 1], 1); // SD-LOOK S8: the Hour-Hand's tell, root to tip",
+    "new": "        blade = placeRegion(f, SD_TELL_REGION.blade, [x - 1, L.root, -1], [x + 1, B.armBot, 1], 1); // SD-LOOK S8: the Hour-Hand's tell, root to tip",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD25-S8-the-sole-on-the-sabatons-top",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "if (under && a === 4)",
-    "new": "if (under && a === 0)",
+    "old": "    if (under && a === 4) plate(under.f, under.rec, c[a], c[b], c[e], c[g], ref);",
+    "new": "    if (under && a === 0) plate(under.f, under.rec, c[a], c[b], c[e], c[g], ref);",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD25-S8-the-hours-mirrored",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "const at = (a, r, z) => [Math.sin(a) * r, D.y + Math.cos(a) * r, z];",
-    "new": "const at = (a, r, z) => [-Math.sin(a) * r, D.y + Math.cos(a) * r, z];",
+    "old": "  const at = (a, r, z) => [Math.sin(a) * r, D.y + Math.cos(a) * r, z]; // a: clockwise from XII as the back is seen",
+    "new": "  const at = (a, r, z) => [-Math.sin(a) * r, D.y + Math.cos(a) * r, z]; // a: clockwise from XII as the back is seen",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD25-S8-the-hours-inward",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "putTexel(albedo, left + c, H - 6 - cy, step(M, 4))",
-    "new": "putTexel(albedo, left + c, 3 + cy, step(M, 4))",
+    "old": "      for (let c = 0; c < wd; c++) if (numeralCell(s, c, cy)) putTexel(albedo, left + c, H - 6 - cy, step(M, 4));",
+    "new": "      for (let c = 0; c < wd; c++) if (numeralCell(s, c, cy)) putTexel(albedo, left + c, 3 + cy, step(M, 4));",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD25-S8-the-strip-lit-from-the-top",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "    if (k < n) {",
-    "new": "    if (k >= 8 - n) {",
+    "old": "      if (k < n) {",
+    "new": "      if (k >= 8 - n) {",
     "tests": [
       "test/world/superDungeon/sd25_remnant.test.js"
     ]

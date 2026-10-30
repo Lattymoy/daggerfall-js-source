@@ -56,8 +56,8 @@
   {
     "name": "SD7A-all-on-one-phase",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 }",
-    "new": "{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: 0.9 }",
+    "old": "        ...{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 },",
+    "new": "        ...{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: 0.9 },",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD7A-all-on-one-beat",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": ": { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF }));",
-    "new": ": { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++, 0) }));",
+    "old": "        : { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF },",
+    "new": "        : { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++, 0) },",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD7A-no-shaking",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = true; return out; }",
-    "new": "  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = false; return out; }",
+    "old": "    out.shaking = true;",
+    "new": "    out.shaking = false;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD7A-the-breath-over-the-Beat",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;",
-    "new": "export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[1].z + course.checkpoints[1].r && z < course.end;",
+    "old": "  z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;",
+    "new": "  z > course.checkpoints[1].z + course.checkpoints[1].r && z < course.end;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD7A-cast-back-to-A",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "const C = course.checkpoints, c = C[Math.max(0, Math.min(C.length - 1, span))];",
-    "new": "const C = course.checkpoints, c = C[0];",
+    "old": "    c = C[Math.max(0, Math.min(C.length - 1, span))];",
+    "new": "    c = C[0];",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]

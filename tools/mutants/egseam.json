@@ -209,8 +209,8 @@
   {
     "name": "EGSEAM-the-waystones-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "export const sdWaystonesOf = (course) => Object.freeze(course.checkpoints.map(",
-    "new": "export const sdWaystonesOf = (course) => Object.freeze(SD_COURSE.checkpoints.map(",
+    "old": "  Object.freeze(course.checkpoints.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));",
+    "new": "  Object.freeze(SD_COURSE.checkpoints.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGSEAM-the-vane-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "export const sdVaneAt = (course) => { const C = course.checkpoints[2];",
-    "new": "export const sdVaneAt = (course) => { const C = SD_COURSE.checkpoints[2];",
+    "old": "  const C = course.checkpoints[2];",
+    "new": "  const C = SD_COURSE.checkpoints[2];",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGSEAM-the-floors-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "of course.checkpoints.entries()) {\n",
-    "new": "of SD_COURSE.checkpoints.entries()) {\n",
+    "old": "  for (const [k, { x: cx, y, z: cz, r }] of course.checkpoints.entries()) {",
+    "new": "  for (const [k, { x: cx, y, z: cz, r }] of SD_COURSE.checkpoints.entries()) {",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGSEAM-the-islands-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "  for (const [k, c] of course.checkpoints.entries()) if (k > 0)",
-    "new": "  for (const [k, c] of SD_COURSE.checkpoints.entries()) if (k > 0)",
+    "old": "  for (const [k, c] of course.checkpoints.entries())",
+    "new": "  for (const [k, c] of SD_COURSE.checkpoints.entries())",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGSEAM-the-breath-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "z0 = C.z + C.r, z1 = course.end;",
-    "new": "z0 = C.z + C.r, z1 = SD_COURSE.end;",
+    "old": "    z1 = course.end;",
+    "new": "    z1 = SD_COURSE.end;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGSEAM-the-hang-the-hours",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "  ...course.checkpoints.map((c, k) => ({ stage: 'steps',",
-    "new": "  ...SD_COURSE.checkpoints.map((c, k) => ({ stage: 'steps',",
+    "old": "      ...course.checkpoints.map((c, k) => ({",
+    "new": "      ...SD_COURSE.checkpoints.map((c, k) => ({",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGSEAM-the-hang-model-the-hours",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "  for (const isl of islands) if (isl.stage === stage)",
-    "new": "  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage)",
+    "old": "  for (const isl of islands) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));",
+    "new": "  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGSEAM-the-span-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  const C = course.checkpoints;\n  for (let k = C.length - 1;",
-    "new": "  const C = SD_COURSE.checkpoints;\n  for (let k = C.length - 1;",
+    "old": "  const C = course.checkpoints;",
+    "new": "  const C = SD_COURSE.checkpoints;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGSEAM-the-breath-end-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "&& z < course.end;",
-    "new": "&& z < SD_COURSE.end;",
+    "old": "  z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;",
+    "new": "  z > course.checkpoints[2].z + course.checkpoints[2].r && z < SD_COURSE.end;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGSEAM-the-cast-back-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "const C = course.checkpoints, c = C[Math.max(",
-    "new": "const C = SD_COURSE.checkpoints, c = C[Math.max(",
+    "old": "  const C = course.checkpoints,",
+    "new": "  const C = SD_COURSE.checkpoints,",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
