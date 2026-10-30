@@ -12,3 +12,5 @@
 /tools/layered-armor/*/
 !/tools/neutral/
 /tools/neutral/*/
+!/tools/realGpu/
+/tools/realGpu/*/

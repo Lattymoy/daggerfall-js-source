@@ -24,7 +24,12 @@ export function compileWaits(profile) {
     const at = chain.findIndex((n) => n.callFrame.functionName === 'buildProgram');
     if (at < 0) continue;
     total += w;
-    const callers = chain.slice(at + 1).filter((n) => n.callFrame.functionName !== '_buildProgram').slice(0, 2).map(nodeKey).join(' < ');
+    const callers = chain
+      .slice(at + 1)
+      .filter((n) => n.callFrame.functionName !== '_buildProgram')
+      .slice(0, 2)
+      .map(nodeKey)
+      .join(' < ');
     byCaller.set(callers, (byCaller.get(callers) || 0) + w);
   }
   return { total, byCaller: [...byCaller].sort((a, b) => b[1] - a[1]) };

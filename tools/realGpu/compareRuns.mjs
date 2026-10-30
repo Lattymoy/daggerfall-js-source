@@ -21,15 +21,29 @@ export function armLines(label, coldDir, warmDir) {
   const coldProfile = join(coldDir, 'boot.cpuprofile');
   const waits = existsSync(coldProfile) ? compileWaits(JSON.parse(readFileSync(coldProfile, 'utf8'))) : null;
   if (cold) {
-    lines.push(`cold boot: ${cold.seconds}s, worst stall ${cold.frameMs.max} ms, frames>100ms ${cold.over100}, first world frame ${cold.firstFrameS ?? '?'} s, link wait ${waits ? (waits.total / 1000).toFixed(1) : '?'} s`);
-    if (waits) lines.push(`   by caller (s): ${waits.byCaller.slice(0, 7).map(([k, v]) => `${k.split(' ')[0]} ${(v / 1000).toFixed(2)}`).join(', ')}`);
+    lines.push(
+      `cold boot: ${cold.seconds}s, worst stall ${cold.frameMs.max} ms, frames>100ms ${cold.over100}, first world frame ${cold.firstFrameS ?? '?'} s, link wait ${waits ? (waits.total / 1000).toFixed(1) : '?'} s`,
+    );
+    if (waits)
+      lines.push(
+        `   by caller (s): ${waits.byCaller
+          .slice(0, 7)
+          .map(([k, v]) => `${k.split(' ')[0]} ${(v / 1000).toFixed(2)}`)
+          .join(', ')}`,
+      );
   }
   const warm = readPhase(warmDir, 'boot');
   const standing = readPhase(warmDir, 'settled');
   const flying = readPhase(warmDir, 'out');
   if (warm) lines.push(`warm boot: ${warm.seconds}s, worst stall ${warm.frameMs.max} ms, frames>100ms ${warm.over100}`);
-  if (standing) lines.push(`standing: ${fps(standing)} fps, p50 ${standing.frameMs.p50} p95 ${standing.frameMs.p95} p99 ${standing.frameMs.p99} max ${standing.frameMs.max}; main thread ${JSON.stringify(standing.share)}`);
-  if (flying) lines.push(`flying:   ${fps(flying)} fps, p50 ${flying.frameMs.p50} p95 ${flying.frameMs.p95} max ${flying.frameMs.max}, >50ms ${flying.over50}; main thread ${JSON.stringify(flying.share)}`);
+  if (standing)
+    lines.push(
+      `standing: ${fps(standing)} fps, p50 ${standing.frameMs.p50} p95 ${standing.frameMs.p95} p99 ${standing.frameMs.p99} max ${standing.frameMs.max}; main thread ${JSON.stringify(standing.share)}`,
+    );
+  if (flying)
+    lines.push(
+      `flying:   ${fps(flying)} fps, p50 ${flying.frameMs.p50} p95 ${flying.frameMs.p95} max ${flying.frameMs.max}, >50ms ${flying.over50}; main thread ${JSON.stringify(flying.share)}`,
+    );
   return lines;
 }
 
