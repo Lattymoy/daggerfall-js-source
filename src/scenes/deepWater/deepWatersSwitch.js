@@ -7,4 +7,6 @@ import { modSetting } from '../../systems/modSettings.js';
 export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
 
 /** The mod's switch (the port's Enabled). */
-export function deepWatersOn() { return modSetting(DEEP_WATERS_VENDOR, 'Enabled') === true; }
+export function deepWatersOn() {
+  return modSetting(DEEP_WATERS_VENDOR, 'Enabled') === true;
+}

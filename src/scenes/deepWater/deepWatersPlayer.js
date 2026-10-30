@@ -51,14 +51,28 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  DeepWaterSwimState, forgedSwimWaterLineY, swimCheckY, surfaceAscentCeiling, presentationWaterLineForFog,
-  worldYToBlockWaterLevel, blockWaterLevelToWorldY, NO_WATER_LEVEL, headClearOfSurface, headUnderwater, SHORE_GROUND_PROBE_HEIGHT, SHORE_GROUND_PROBE_DISTANCE, SHORE_GROUND_OCEAN_MARGIN,
-  WATER_CONTACT_MINIMUM_DEPTH, SHORE_EXIT, SWIM_EXIT_CLEARANCE, SWIM_ENTER_CLEARANCE,
+  DeepWaterSwimState,
+  forgedSwimWaterLineY,
+  swimCheckY,
+  surfaceAscentCeiling,
+  presentationWaterLineForFog,
+  worldYToBlockWaterLevel,
+  blockWaterLevelToWorldY,
+  NO_WATER_LEVEL,
+  headClearOfSurface,
+  headUnderwater,
+  SHORE_GROUND_PROBE_HEIGHT,
+  SHORE_GROUND_PROBE_DISTANCE,
+  SHORE_GROUND_OCEAN_MARGIN,
+  WATER_CONTACT_MINIMUM_DEPTH,
+  SHORE_EXIT,
+  SWIM_EXIT_CLEARANCE,
+  SWIM_ENTER_CLEARANCE,
 } from '../../world/deepWater/deepWaterSwim.js';
 import { UnderwaterFog } from '../../render/underwaterFog.js';
 import { underwaterFogDensityMax, underwaterFogColor } from '../../world/deepWater/deepWaterLook.js';
 import { evaluateSwimmingSuppression, publishState, clearState } from '../../systems/deepWater/deepWaterPlayer.js';
-import { OVER_ENCUMBERED_LIMIT } from '../../player/motor.js';   // OCEAN-STUCK: LevitateMotor's own weight test (:83)
+import { OVER_ENCUMBERED_LIMIT } from '../../player/motor.js'; // OCEAN-STUCK: LevitateMotor's own weight test (:83)
 import { ON_EXTERIOR_WATER } from '../../player/exteriorSurface.js';
 
 const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));
@@ -78,11 +92,19 @@ export const FRAME_SPIKE_SECONDS = 0.1;
  * @param {() => object} deps.settings - lookSettings' + {swimSpeedMultiplier, enableSwimStroke, argonianInfiniteBreath}
  * @param {() => void} [deps.dismount] - the host's transport change to Foot
  */
-export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, collider, settings, dismount = () => {} }) {
+export function createDeepWatersPlayer({
+  host,
+  locate,
+  seaY,
+  terrainGroundAt,
+  collider,
+  settings,
+  dismount = () => {},
+}) {
   const swim = new DeepWaterSwimState();
   const fog = new UnderwaterFog();
-  let uncrouchUntil = 0;       // uncrouchAfterExitUntil
-  let suppressed = false;      // swimmingSuppressed
+  let uncrouchUntil = 0; // uncrouchAfterExitUntil
+  let suppressed = false; // swimmingSuppressed
   let exteriorContext = false; // exteriorContextActive
   let lastDecision = null;
   let spikeSuppressed = false; // suppressedSwimMotorForFrameSpike
@@ -106,7 +128,10 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     return at ? host.rawWaterColumn(at.entry, at.lx, at.lz, at.baseY) : null;
   }
   /** TryGetUsableWaterColumn. */
-  const usableAt = (x, z) => { const c = columnAt(x, z); return !!c && c.depth >= WATER_CONTACT_MINIMUM_DEPTH; };
+  const usableAt = (x, z) => {
+    const c = columnAt(x, z);
+    return !!c && c.depth >= WATER_CONTACT_MINIMUM_DEPTH;
+  };
   const centreOf = (p) => p.pos[1] + p.height / 2;
   /** OCEAN-STUCK (2026-09-26, Mac, from the Discord: "someone is stuck in the ocean"): a swimmer the weight holds
    *  under - LevitateMotor's first arm (:81-84) drags one past 62.5 kg down and takes the float keys away, levitation
@@ -122,8 +147,12 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   function probeDown(x, yTop, z, dist) {
     const mesh = collider.raycastHit?.([x, yTop, z], [0, -1, 0], dist, { skip: host.wallBuckets }) ?? null;
     const g = terrainGroundAt(x, z);
-    let best = mesh && Number.isFinite(mesh.dist) ? { y: yTop - mesh.dist, normalY: mesh.normal ? Math.abs(mesh.normal[1]) : 1 } : null;
-    if (Number.isFinite(g) && g <= yTop && yTop - g <= dist && (!best || g > best.y)) best = { y: g, normalY: collider.groundNormal ? collider.groundNormal(x, z)[1] : 1 };
+    let best =
+      mesh && Number.isFinite(mesh.dist)
+        ? { y: yTop - mesh.dist, normalY: mesh.normal ? Math.abs(mesh.normal[1]) : 1 }
+        : null;
+    if (Number.isFinite(g) && g <= yTop && yTop - g <= dist && (!best || g > best.y))
+      best = { y: g, normalY: collider.groundNormal ? collider.groundNormal(x, z)[1] : 1 };
     return best;
   }
   /** IsValidLandingHit (shore ground, a walkable slope, no open water under it - TryGetWaterColumn's depth). */
@@ -149,14 +178,19 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     if (!(f.input.forward > SHORE_EXIT.minForwardInput)) return false;
     const cp = Math.cos(f.pitch ?? 0);
     if (cp * cp < 0.01) return false;
-    const fx = Math.sin(f.yaw), fz = Math.cos(f.yaw);
-    for (const [po, lo] of [[1, 0.5], [0, 0]]) {
-      const x = p.pos[0] + fx * po, z = p.pos[2] + fz * po;
+    const fx = Math.sin(f.yaw),
+      fz = Math.cos(f.yaw);
+    for (const [po, lo] of [
+      [1, 0.5],
+      [0, 0],
+    ]) {
+      const x = p.pos[0] + fx * po,
+        z = p.pos[2] + fz * po;
       const hit = probeDown(x, oceanY + SHORE_EXIT.probeHeightAboveOcean, z, SHORE_EXIT.probeDistance);
       if (!hit || !validLanding(x, hit, z, oceanY)) continue;
       if (hit.y >= oceanY - 1 && hit.y <= oceanY + SHORE_EXIT.maxLandingAboveOcean && hit.y > centreOf(p) - 0.1) {
         const dy = hit.y + 1.5 - centreOf(p);
-        collider.move(p.pos, x + fx * lo - p.pos[0], dy, z + fz * lo - p.pos[2], p.height, false);   // CharacterController.Move: no snap
+        collider.move(p.pos, x + fx * lo - p.pos[0], dy, z + fz * lo - p.pos[2], p.height, false); // CharacterController.Move: no snap
         return true;
       }
     }
@@ -166,8 +200,15 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   /** The decisions, in Update's order - {inWater, swimming, headSubmerged, underwater, onShore}. */
   function decide(p, f, oceanY) {
     return swim.step({
-      now: f.now, oceanY, centreY: centreOf(p), cameraY: f.cameraY, descend: f.descend, ascend: f.ascend,
-      onShore: onShoreGround(p, oceanY), grounded: !!p.grounded, usableColumnHere: usableAt(p.pos[0], p.pos[2]),
+      now: f.now,
+      oceanY,
+      centreY: centreOf(p),
+      cameraY: f.cameraY,
+      descend: f.descend,
+      ascend: f.ascend,
+      onShore: onShoreGround(p, oceanY),
+      grounded: !!p.grounded,
+      usableColumnHere: usableAt(p.pos[0], p.pos[2]),
     });
   }
   /** ApplyDfuWaterAudioState + ApplyDfuSwimFlags on the host's two flags (LevitateMotor.IsSwimming is the host's one
@@ -175,13 +216,17 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
    *  the level's own height, a 0.025 m step, as DFU's reads of blockWaterLevel * -GlobalScale are. */
   function applyFlags(p, oceanY, swimming) {
     audio.waterLevel = worldYToBlockWaterLevel(forgedSwimWaterLineY(oceanY, swimming, centreOf(p)));
-    audio.submerged = headUnderwater(centreOf(p), oceanY);   // IsPlayerHeadUnderwater
+    audio.submerged = headUnderwater(centreOf(p), oceanY); // IsPlayerHeadUnderwater
     audio.method = swimming ? ON_EXTERIOR_WATER.Swimming : ON_EXTERIOR_WATER.None;
-    p.isPlayerSwimming = swimming;         // PlayerEnterExit.IsPlayerSwimming
+    p.isPlayerSwimming = swimming; // PlayerEnterExit.IsPlayerSwimming
     return { swimming, waterSurfaceY: blockWaterLevelToWorldY(audio.waterLevel) };
   }
   /** ApplyWaterAudioState(10000, None, false) - Restore's and ClearBoatSwimPose's. */
-  function clearAudio() { audio.waterLevel = NO_WATER_LEVEL; audio.submerged = false; audio.method = ON_EXTERIOR_WATER.None; }
+  function clearAudio() {
+    audio.waterLevel = NO_WATER_LEVEL;
+    audio.submerged = false;
+    audio.method = ON_EXTERIOR_WATER.None;
+  }
   /** Restore: the flags down, the fog's backup back (fog() reads the decision), the head reset, the uncrouch window open.
    *  LevitateMotor.IsSwimming goes down with them (ApplyDfuSwimFlags(false)) - a no-op ahead of the motor, where the
    *  host's one write is false anyway, and the post phase's own edge after it, as DFU's is. */
@@ -197,7 +242,10 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   function requestStand(p) {
     const sinking = p.isInWaterTile || p.heightAction === 'sink';
     p.forcedSwimCrouch = false;
-    if (sinking && p.heightAction !== 'unsink') { p.forceUnsink(); return; }
+    if (sinking && p.heightAction !== 'unsink') {
+      p.forceUnsink();
+      return;
+    }
     if (p.crouching && p.heightAction !== 'unsink') p.forceStand();
   }
   /** ClearCrouchAfterWaterExit. */
@@ -220,7 +268,10 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
    */
   function guardFrameSpike(p, swimming, frameDelta) {
     if (swimming && !p.levitating && frameDelta > FRAME_SPIKE_SECONDS) {
-      if (p.levitateMotorEnabled !== false) { p.levitateMotorEnabled = false; spikeSuppressed = true; }
+      if (p.levitateMotorEnabled !== false) {
+        p.levitateMotorEnabled = false;
+        spikeSuppressed = true;
+      }
     } else if (p.levitateMotorEnabled === false) {
       p.levitateMotorEnabled = true;
       spikeSuppressed = false;
@@ -258,20 +309,32 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     /** The sea's world height now (TryGetCachedOceanSurfaceWorldY - always known outdoors). */
     seaY,
     /** currentlyForged. */
-    get forged() { return swim.forged; },
+    get forged() {
+      return swim.forged;
+    },
     /** exteriorContextActive (DeepWaterPlayer.TryGetWaterColumn answers only while it holds). */
-    get exteriorContext() { return exteriorContext; },
+    get exteriorContext() {
+      return exteriorContext;
+    },
     /** PlayerEnterExit.IsPlayerSubmerged as the forge leaves it (Temple.AvoidDeath; the ambient's bubbles). */
-    get submerged() { return audio.submerged; },
+    get submerged() {
+      return audio.submerged;
+    },
     /** blockWaterLevel * -1 * GlobalScale as the forge leaves it - the world height the ambient's WaterGentle plays at
      *  and an aquatic foe's WaterMove stops under - or null at NoWaterSentinel. */
-    get waterLevelY() { return audio.waterLevel === NO_WATER_LEVEL ? null : blockWaterLevelToWorldY(audio.waterLevel); },
+    get waterLevelY() {
+      return audio.waterLevel === NO_WATER_LEVEL ? null : blockWaterLevelToWorldY(audio.waterLevel);
+    },
     /** CSA-C: PlayerEnterExit.blockWaterLevel itself, as the forge leaves it (NoWaterSentinel with no forge) - what
      *  Come Sail Away's placement reads outdoors. */
-    get blockWaterLevel() { return audio.waterLevel; },
+    get blockWaterLevel() {
+      return audio.waterLevel;
+    },
     /** OnExteriorWaterMethod as the driver wrote it this frame (Swimming / None), or null when it wrote none -
      *  then PlayerMotor.Update's own, the host's surface model, is what the late readers see too. */
-    get waterMethod() { return audio.method; },
+    get waterMethod() {
+      return audio.method;
+    },
 
     /**
      * AUDIT DW-F: OnSaveLoad, on SaveLoadManager.OnStartLoad and again on OnLoad (after the save's crouch is back):
@@ -309,12 +372,28 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
      * axes, then along the camera's flattened forward and its right.
      */
     playerWaterColumn(p, yaw, radius = 0.35) {
-      const x = p.pos[0], z = p.pos[2];
-      const usable = (px, pz) => { const c = columnAt(px, pz); return c && c.depth >= WATER_CONTACT_MINIMUM_DEPTH ? c : null; };
+      const x = p.pos[0],
+        z = p.pos[2];
+      const usable = (px, pz) => {
+        const c = columnAt(px, pz);
+        return c && c.depth >= WATER_CONTACT_MINIMUM_DEPTH ? c : null;
+      };
       const r = clamp(radius * 0.85, 0.35, 0.75);
-      const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;
-      return usable(x, z) ?? usable(x + r, z) ?? usable(x - r, z) ?? usable(x, z + r) ?? usable(x, z - r)
-        ?? usable(x + fx * r, z + fz * r) ?? usable(x - fx * r, z - fz * r) ?? usable(x + rx * r, z + rz * r) ?? usable(x - rx * r, z - rz * r);
+      const fx = Math.sin(yaw),
+        fz = Math.cos(yaw),
+        rx = fz,
+        rz = -fx;
+      return (
+        usable(x, z) ??
+        usable(x + r, z) ??
+        usable(x - r, z) ??
+        usable(x, z + r) ??
+        usable(x, z - r) ??
+        usable(x + fx * r, z + fz * r) ??
+        usable(x - fx * r, z - fz * r) ??
+        usable(x + rx * r, z + rz * r) ??
+        usable(x - rx * r, z - rz * r)
+      );
     },
 
     /** IsPlayerInOrAboveDeepWater(minimumDepth): the camera under the sea by 0.25, or a column that deep under the player. */
@@ -333,19 +412,30 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
      */
     beforeMove(f) {
       const p = f.player;
-      audio.method = null;   // PlayerMotor.Update's own until the driver writes it
+      audio.method = null; // PlayerMotor.Update's own until the driver writes it
       exteriorContext = true;
       suppressed = !!f.onBoat || evaluateSwimmingSuppression();
-      if (suppressed) { clearState(); suppress(p, f.now); lastDecision = null; return null; }
+      if (suppressed) {
+        clearState();
+        suppress(p, f.now);
+        lastDecision = null;
+        return null;
+      }
       const oceanY = seaY();
       const d = decide(p, f, oceanY);
       d.oceanY = oceanY;
       lastDecision = d;
       guardFrameSpike(p, d.swimming, f.frameDelta ?? 0);
-      if (d.swimming && p.riding) dismount();   // DismountForSwimming: off the horse or the cart
+      if (d.swimming && p.riding) dismount(); // DismountForSwimming: off the horse or the cart
       // the shore exit - a swimmer near the surface (OCEAN-STUCK: or one the weight holds under), not diving, outside
       // the load grace
-      if (!f.descend && (swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p)) && !f.loadGrace && d.swimming && tryMoveToShore(p, f, oceanY)) {
+      if (
+        !f.descend &&
+        (swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p)) &&
+        !f.loadGrace &&
+        d.swimming &&
+        tryMoveToShore(p, f, oceanY)
+      ) {
         if (swim.forged) restore(p, f.now);
         clearState();
         requestStand(p);
@@ -355,11 +445,14 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       }
       publishState(d.inWater, d.swimming, d.headSubmerged, d.underwater);
       if (!d.swimming && !d.underwater) {
-        if (swim.forged) { restore(p, f.now); requestStand(p); }
+        if (swim.forged) {
+          restore(p, f.now);
+          requestStand(p);
+        }
         clearCrouch(p, f.now);
         return null;
       }
-      swim.forged = true;   // Forge
+      swim.forged = true; // Forge
       const forge = applyFlags(p, oceanY, d.swimming);
       if (d.swimming) keepSurfaceCameraUnsunk(p, d.underwater, oceanY, f.descend);
       return forge;
@@ -373,7 +466,11 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     afterMove(f) {
       const p = f.player;
       const none = { swimming: false, headSubmerged: false, underwater: false };
-      if (f.onBoat || suppressed) { clearState(); suppress(p, f.now); return none; }
+      if (f.onBoat || suppressed) {
+        clearState();
+        suppress(p, f.now);
+        return none;
+      }
       if (!swim.forged) return none;
       const oceanY = seaY();
       if (!f.descend && onShoreGround(p, oceanY)) {
@@ -385,7 +482,15 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       }
       // the decisions again, from where the move left the player (no shore arm: that returned above)
       const centreY = centreOf(p);
-      const inWater = swim.recentContact({ now: f.now, oceanY, centreY, descend: f.descend, onShore: false, grounded: !!p.grounded, usableColumnHere: usableAt(p.pos[0], p.pos[2]) });
+      const inWater = swim.recentContact({
+        now: f.now,
+        oceanY,
+        centreY,
+        descend: f.descend,
+        onShore: false,
+        grounded: !!p.grounded,
+        usableColumnHere: usableAt(p.pos[0], p.pos[2]),
+      });
       const atDepth = swimCheckY(centreY) < oceanY + (swim.forged ? SWIM_EXIT_CLEARANCE : SWIM_ENTER_CLEARANCE);
       const swimming = inWater && (atDepth || f.descend || f.ascend);
       const underwater = inWater && swim.presentationUnderwater(oceanY, f.cameraY, centreY);
@@ -393,7 +498,7 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       publishState(inWater, swimming, headSubmerged, underwater);
       lastDecision = { inWater, swimming, headSubmerged, underwater, onShore: false, oceanY };
       applyFlags(p, oceanY, swimming);
-      p.swimming = swimming;   // ApplyDfuSwimFlags' LevitateMotor.IsSwimming - a change here cancels the next step, as DFU's does
+      p.swimming = swimming; // ApplyDfuSwimFlags' LevitateMotor.IsSwimming - a change here cancels the next step, as DFU's does
       // ClampSurfaceAscent: rising stops with the centre at the sea + 0.55 - 1.25 + 0.93
       if (swimming && f.ascend && !p.levitating) {
         const ceiling = surfaceAscentCeiling(oceanY);
@@ -416,7 +521,11 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       const oceanY = seaY();
       const under = !!d && d.underwater;
       fog.fogDensityMin = 0;
-      fog.fogDensityMax = clamp(Math.max(underwaterFogDensityMax(s.fogStrength, s.fogDistance), lerp(0, 0.0012, clamp(s.fogStrength, 0, 1))), 0, 0.03);
+      fog.fogDensityMax = clamp(
+        Math.max(underwaterFogDensityMax(s.fogStrength, s.fogDistance), lerp(0, 0.0012, clamp(s.fogStrength, 0, 1))),
+        0,
+        0.03,
+      );
       const level = under ? worldYToBlockWaterLevel(presentationWaterLineForFog(oceanY, cameraY)) : 10000;
       const out = fog.updateFog(level, cameraY, current);
       if (!under) return null;
@@ -441,7 +550,7 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
      *   (a pausing window up is none of it - absent reads as playing)
      */
     fogPresentation(f) {
-      if (f.playing === false) return { under: false, oceanY: 0 };   // AUDIT DW-F: !IsPlayingGame - false, the out height 0 (IL_12020, IL_1203e)
+      if (f.playing === false) return { under: false, oceanY: 0 }; // AUDIT DW-F: !IsPlayingGame - false, the out height 0 (IL_12020, IL_1203e)
       let oceanY = seaY();
       const local = rawColumnAt(f.camera[0], f.camera[2]);
       const c = local && local.depth > 0.25 ? local : rawColumnAt(f.centre[0], f.centre[2]);
@@ -456,9 +565,12 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     /** IsPointInsideDeepWater (UnderwaterDistanceFog's; the presentation's head test shadows it all but at its edge). */
     insideDeepWater: (x, y, z, oceanY, pad) => insideDeepWater(x, y, z, oceanY, pad),
     /** DeepWaterWorld.HasNearbyWaterColumn. */
-    hasNearbyColumn: (x, z, minDistance, maxDistance, directions, minimumDepth) => hasNearbyColumn(x, z, minDistance, maxDistance, directions, minimumDepth),
+    hasNearbyColumn: (x, z, minDistance, maxDistance, directions, minimumDepth) =>
+      hasNearbyColumn(x, z, minDistance, maxDistance, directions, minimumDepth),
 
-    get decision() { return lastDecision; },
+    get decision() {
+      return lastDecision;
+    },
   };
 
   /** IsPointInsideDeepWater: under the sea by the padding, over a column 0.25 deep or more and no more than 8 m under its floor - or, off every column, one within 36 m. */
@@ -470,7 +582,10 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   }
   /** HasNearbyWaterColumn: the point's own column, or one on a ring of `directions` at the near, the middle and the far radius. */
   function hasNearbyColumn(x, z, minDistance, maxDistance, directions, minimumDepth) {
-    const deep = (px, pz) => { const c = rawColumnAt(px, pz); return !!c && c.depth >= minimumDepth; };   // TryGetWaterColumnDepth
+    const deep = (px, pz) => {
+      const c = rawColumnAt(px, pz);
+      return !!c && c.depth >= minimumDepth;
+    }; // TryGetWaterColumnDepth
     if (deep(x, z)) return true;
     const n = Math.max(1, directions);
     for (const r of [minDistance, (minDistance + maxDistance) * 0.5, maxDistance]) {

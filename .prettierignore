@@ -512,6 +512,15 @@
 /src/scenes/decor/*
 !/src/scenes/decor/decorBase.js
 !/src/scenes/decor/trophyArt.js
+!/src/scenes/deepWater/
+/src/scenes/deepWater/*
+!/src/scenes/deepWater/deepWatersDecor.js
+!/src/scenes/deepWater/deepWatersEncounters.js
+!/src/scenes/deepWater/deepWatersFish.js
+!/src/scenes/deepWater/deepWatersLoot.js
+!/src/scenes/deepWater/deepWatersPlayer.js
+!/src/scenes/deepWater/deepWatersSwimMove.js
+!/src/scenes/deepWater/deepWatersSwitch.js
 !/src/scenes/delve/
 /src/scenes/delve/*/
 !/src/scenes/doorTokenHost.js

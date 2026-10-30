@@ -32,8 +32,16 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  placeTileDecorations, decorationCap, populateRadius, usesArchiveAnimation, framesPerSecondOf, authoredVisualHeight, clearEdgeBlackPixels,
-  DECORATION_SCALE_MIN, DECORATION_SCALE_MAX, TEXTURE_106_FPS,
+  placeTileDecorations,
+  decorationCap,
+  populateRadius,
+  usesArchiveAnimation,
+  framesPerSecondOf,
+  authoredVisualHeight,
+  clearEdgeBlackPixels,
+  DECORATION_SCALE_MIN,
+  DECORATION_SCALE_MAX,
+  TEXTURE_106_FPS,
 } from '../../world/underwater/underwaterDecorations.js';
 
 /** DeepWaterPromoteTiming's bar: no decoration work in a frame the promote work spent more than a millisecond in. */
@@ -54,7 +62,20 @@ export const PROMOTE_BUDGET_MS = 1;
  * @param {() => number} deps.now - seconds (a batch's animation begins when it stands)
  * @param {() => number} [deps.roll] - the unseeded UnityEngine.Random (Port-Ledger A, the engine-PRNG rule)
  */
-export function createUnderwaterDecorations({ terrainAt, currentPixel, settings, canRunLight, canRunHeavy, promoteMs, floorOf, textures, gpu, worldPoint, now, roll = Math.random }) {
+export function createUnderwaterDecorations({
+  terrainAt,
+  currentPixel,
+  settings,
+  canRunLight,
+  canRunHeavy,
+  promoteMs,
+  floorOf,
+  textures,
+  gpu,
+  worldPoint,
+  now,
+  roll = Math.random,
+}) {
   const workQueue = [];
   const queued = new Set();
   const pending = [];
@@ -69,7 +90,10 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
   const radius = () => populateRadius(settings().radius);
 
   function enqueue(entry) {
-    if (entry && !queued.has(entry)) { queued.add(entry); workQueue.push(entry); }
+    if (entry && !queued.has(entry)) {
+      queued.add(entry);
+      workQueue.push(entry);
+    }
   }
   function withinRadius(entry) {
     const c = currentPixel();
@@ -79,7 +103,10 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
   }
   function removeDecoration(entry) {
     const h = batches.get(entry);
-    if (h) { gpu.destroy(h); batches.delete(entry); }
+    if (h) {
+      gpu.destroy(h);
+      batches.delete(entry);
+    }
   }
   const clearMarker = (entry) => markers.delete(entry);
   function markCurrent(entry) {
@@ -121,10 +148,19 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
     const s = settings();
     const f = floorOf(entry);
     const positions = placeTileDecorations({
-      mapPixelX: entry.px, mapPixelY: entry.py, mapData: { samples: entry.samples }, floor: f.floor, climateIndex: f.climateIndex,
-      frequency: s.frequency, cap: decorationCap(s.maxPerTile), visualHeight: (rec) => textures.visualHeight(rec),
+      mapPixelX: entry.px,
+      mapPixelY: entry.py,
+      mapData: { samples: entry.samples },
+      floor: f.floor,
+      climateIndex: f.climateIndex,
+      frequency: s.frequency,
+      cap: decorationCap(s.maxPerTile),
+      visualHeight: (rec) => textures.visualHeight(rec),
     });
-    if (positions === null) { markCurrent(entry); return; }
+    if (positions === null) {
+      markCurrent(entry);
+      return;
+    }
     if (positions.length) pending.push({ entry, px: entry.px, py: entry.py, version: f.version, positions, warm: 0 });
   }
 
@@ -142,8 +178,13 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
       const at = worldPoint(entry, positions[i].local);
       let drop = false;
       for (const fn of subs) {
-        try { drop = (fn(entry, at) === true) || drop; } catch (e) {
-          if (!suppressionFailureLogged) { suppressionFailureLogged = true; console.warn(`[DeepWaters.Decorations] ShouldSuppressDecoration subscriber threw: ${e?.message ?? e}`); }
+        try {
+          drop = fn(entry, at) === true || drop;
+        } catch (e) {
+          if (!suppressionFailureLogged) {
+            suppressionFailureLogged = true;
+            console.warn(`[DeepWaters.Decorations] ShouldSuppressDecoration subscriber threw: ${e?.message ?? e}`);
+          }
         }
       }
       if (drop) positions.splice(i, 1);
@@ -163,7 +204,10 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
     const groups = new Map();
     const group = (key, texture, fps, facing = 0) => {
       let g = groups.get(key);
-      if (!g) { g = { texture, fps, born, facing, billboards: [] }; groups.set(key, g); }
+      if (!g) {
+        g = { texture, fps, born, facing, billboards: [] };
+        groups.set(key, g);
+      }
       return g;
     };
     for (const p of positions) {
@@ -172,24 +216,39 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
       if (rep && usesArchiveAnimation(rec) && rep.animated) {
         // SpawnAnimatedReplacementBillboards: a DaggerfallBillboard each, centred on the point, turned as one turns (facing 1)
         const scale = DECORATION_SCALE_MIN + roll() * (DECORATION_SCALE_MAX - DECORATION_SCALE_MIN);
-        const w = rep.size.w * scale, h = rep.size.h * scale;
-        group(`${rec.archive}_${rec.record}#ra`, textures.texture(rec, 'animated'), Math.max(1, Math.round(TEXTURE_106_FPS)), 1)
-          .billboards.push({ centre: [p.local[0], p.local[1], p.local[2]], width: w, height: h, start: 0 });
+        const w = rep.size.w * scale,
+          h = rep.size.h * scale;
+        group(
+          `${rec.archive}_${rec.record}#ra`,
+          textures.texture(rec, 'animated'),
+          Math.max(1, Math.round(TEXTURE_106_FPS)),
+          1,
+        ).billboards.push({ centre: [p.local[0], p.local[1], p.local[2]], width: w, height: h, start: 0 });
       } else if (rep) {
         // SpawnReplacementBatch / BuildMaterialBillboardBatchMesh: its base on the point, a random scale, still
         const scale = DECORATION_SCALE_MIN + roll() * (DECORATION_SCALE_MAX - DECORATION_SCALE_MIN);
-        const w = rep.size.w * scale, h = rep.size.h * scale;
-        group(`${rec.archive}_${rec.record}#r`, textures.texture(rec, 'replacement'), 0)
-          .billboards.push({ centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]], width: w, height: h, start: 0 });
+        const w = rep.size.w * scale,
+          h = rep.size.h * scale;
+        group(`${rec.archive}_${rec.record}#r`, textures.texture(rec, 'replacement'), 0).billboards.push({
+          centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]],
+          width: w,
+          height: h,
+          start: 0,
+        });
       } else {
         // SpawnArchiveBillboards: DaggerfallBillboardBatch.AddItem - the record's size, its base on the point, RandomStartFrame
         const size = textures.scaledSize(rec);
         const tex = textures.texture(rec, 'archive');
         if (!size || !tex) continue;
-        const w = size.w, h = size.h;
+        const w = size.w,
+          h = size.h;
         const frames = tex.frames;
-        group(`${rec.archive}_${rec.record}`, tex, framesPerSecondOf(rec.archive))
-          .billboards.push({ centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]], width: w, height: h, start: Math.floor(roll() * frames) });
+        group(`${rec.archive}_${rec.record}`, tex, framesPerSecondOf(rec.archive)).billboards.push({
+          centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]],
+          width: w,
+          height: h,
+          start: Math.floor(roll() * frames),
+        });
       }
     }
     const list = [...groups.values()].filter((g) => g.texture && g.billboards.length);
@@ -200,10 +259,21 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
   function processPendingBatch() {
     while (pending.length) {
       const b = pending[0];
-      if (!isPendingCurrent(b)) { pending.shift(); continue; }
-      if (!canPopulate()) { pending.shift(); removeDecoration(b.entry); clearMarker(b.entry); continue; }
-      if (preservePlayerTile(b.entry)) { pending.shift(); continue; }
-      if (textures.warm(b)) return true;   // PumpArchiveWarmup: the batch waits on its pictures' loads
+      if (!isPendingCurrent(b)) {
+        pending.shift();
+        continue;
+      }
+      if (!canPopulate()) {
+        pending.shift();
+        removeDecoration(b.entry);
+        clearMarker(b.entry);
+        continue;
+      }
+      if (preservePlayerTile(b.entry)) {
+        pending.shift();
+        continue;
+      }
+      if (textures.warm(b)) return true; // PumpArchiveWarmup: the batch waits on its pictures' loads
       pending.shift();
       removeDecoration(b.entry);
       const h = spawn(b.entry, b.positions);
@@ -218,48 +288,79 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
     /** ShouldSuppressDecoration: `+= fn(entry, worldPoint) -> bool`; returns the `-=`. */
     onShouldSuppressDecoration(fn) {
       suppressors.push(fn);
-      return () => { const i = suppressors.indexOf(fn); if (i >= 0) suppressors.splice(i, 1); };
+      return () => {
+        const i = suppressors.indexOf(fn);
+        if (i >= 0) suppressors.splice(i, 1);
+      };
     },
 
     /** ProcessWorkQueue: once a frame. */
     process() {
       if (!canRunHeavy() || promoteMs() > PROMOTE_BUDGET_MS || processPendingBatch()) return;
-      if (!textures.ready()) { textures.load(); return; }   // the placement reads the records' sizes: the archives first
+      if (!textures.ready()) {
+        textures.load();
+        return;
+      } // the placement reads the records' sizes: the archives first
       let placed = 0;
       while (workQueue.length > 0 && placed < 1) {
         const e = workQueue.shift();
         queued.delete(e);
         if (!e || !e.samples || e._dead) continue;
-        if (!canPopulate()) { removeDecoration(e); clearMarker(e); }
-        else if (hasReadyFloor(e) && !preservePlayerTile(e) && !isCurrentDecoration(e)) { populateTile(e); placed++; }
+        if (!canPopulate()) {
+          removeDecoration(e);
+          clearMarker(e);
+        } else if (hasReadyFloor(e) && !preservePlayerTile(e) && !isCurrentDecoration(e)) {
+          populateTile(e);
+          placed++;
+        }
       }
     },
 
     /** RefreshPlayerArea: the player's pixel and its rings. */
-    refreshPlayerArea() { if (canRunLight()) { const c = currentPixel(); if (c) enqueueAround(c); } },
+    refreshPlayerArea() {
+      if (canRunLight()) {
+        const c = currentPixel();
+        if (c) enqueueAround(c);
+      }
+    },
 
     /** RefreshLoadedTile: this pixel's decorations gone and asked again. */
-    refreshLoadedTile(entry) { if (!entry) return; removeDecoration(entry); clearMarker(entry); enqueue(entry); },
+    refreshLoadedTile(entry) {
+      if (!entry) return;
+      removeDecoration(entry);
+      clearMarker(entry);
+      enqueue(entry);
+    },
 
     /** HandlePromote: a stale marker cleared; within the radius, queued. */
     onPromote(entry) {
       if (!entry || !canRunLight()) return;
       const m = markers.get(entry);
-      if (m && (m.px !== entry.px || m.py !== entry.py)) { removeDecoration(entry); clearMarker(entry); }
+      if (m && (m.px !== entry.px || m.py !== entry.py)) {
+        removeDecoration(entry);
+        clearMarker(entry);
+      }
       if (withinRadius(entry)) enqueue(entry);
     },
 
     /** HandleFloorRefreshed. */
-    onFloorRefreshed(entry) { if (entry && canRunLight() && withinRadius(entry)) enqueue(entry); },
+    onFloorRefreshed(entry) {
+      if (entry && canRunLight() && withinRadius(entry)) enqueue(entry);
+    },
 
     /** HandleMapPixelChanged. */
-    onMapPixelChanged(pixel) { if (canRunLight() && pixel) enqueueAround(pixel); },
+    onMapPixelChanged(pixel) {
+      if (canRunLight() && pixel) enqueueAround(pixel);
+    },
 
     /** The pixel left the world: its batch goes with it (the terrain's child). */
     destroyed(entry) {
       removeDecoration(entry);
       markers.delete(entry);
-      if (queued.delete(entry)) { const i = workQueue.indexOf(entry); if (i >= 0) workQueue.splice(i, 1); }
+      if (queued.delete(entry)) {
+        const i = workQueue.indexOf(entry);
+        if (i >= 0) workQueue.splice(i, 1);
+      }
       for (let i = pending.length - 1; i >= 0; i--) if (pending[i].entry === entry) pending.splice(i, 1);
     },
 
@@ -273,7 +374,9 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
     },
 
     /** The drawn batch of a pixel, or null. */
-    batchOf(entry) { return batches.get(entry) ?? null; },
+    batchOf(entry) {
+      return batches.get(entry) ?? null;
+    },
 
     /**
      * DW-E5: the factory for another spawner's placements - the sunken
@@ -285,16 +388,30 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
      */
     filter: (entry, positions) => filterPlacements(entry, positions),
     stand: (entry, positions) => standPlacements(entry, positions),
-    get textures() { return textures; },
+    get textures() {
+      return textures;
+    },
     destroyBatch: (h) => gpu.destroy(h),
-    get pendingWorkCount() { return workQueue.length + pending.length; },
+    get pendingWorkCount() {
+      return workQueue.length + pending.length;
+    },
     /** Probes: the pictures' archives in, the pending batches. */
-    get texturesReady() { return textures.ready(); },
-    get pendingBatchCount() { return pending.length; },
-    get debug() { return { tex: textures.debug, warm: pending[0]?.warm ?? null, n: pending[0]?.positions.length ?? null }; },
-    get queuedTerrainCount() { return queued.size; },
+    get texturesReady() {
+      return textures.ready();
+    },
+    get pendingBatchCount() {
+      return pending.length;
+    },
+    get debug() {
+      return { tex: textures.debug, warm: pending[0]?.warm ?? null, n: pending[0]?.positions.length ?? null };
+    },
+    get queuedTerrainCount() {
+      return queued.size;
+    },
     /** Tests: the marker of a pixel. */
-    markerOf(entry) { return markers.get(entry) ?? null; },
+    markerOf(entry) {
+      return markers.get(entry) ?? null;
+    },
   };
 }
 
@@ -319,25 +436,48 @@ export const DECORATION_ARCHIVES = Object.freeze([105, 106, 206, 211, 213, 253, 
  * @param {(archive: number, record: number, frame: number) => Promise<?{colors: Uint8ClampedArray, width: number, height: number}>} deps.loadReplacement
  * @param {(frames: Array<{width: number, height: number, data: Uint8Array | Uint8ClampedArray}>) => ?{tex: any, frames: number}} deps.createTexture
  */
-export function createDecorTextureSource({ getTexture, scaledSize, replacementSize, replacementsOn, hasReplacement, loadReplacement, createTexture }) {
-  const files = new Map();       // archive -> its TEXTURE file, once in
-  const failed = new Set();      // an archive that will not load (its records are never placed: a height of 0)
+export function createDecorTextureSource({
+  getTexture,
+  scaledSize,
+  replacementSize,
+  replacementsOn,
+  hasReplacement,
+  loadReplacement,
+  createTexture,
+}) {
+  const files = new Map(); // archive -> its TEXTURE file, once in
+  const failed = new Set(); // an archive that will not load (its records are never placed: a height of 0)
   const textureFile = (archive) => files.get(archive) ?? null;
-  const fileOf = (archive) => Promise.resolve(getTexture(archive)).then((t) => { if (t) files.set(archive, t); return t; });
-  const fileLoads = new Map();   // archive -> its load in flight, for a record no pool names (DW-E5's piles and rubble)
+  const fileOf = (archive) =>
+    Promise.resolve(getTexture(archive)).then((t) => {
+      if (t) files.set(archive, t);
+      return t;
+    });
+  const fileLoads = new Map(); // archive -> its load in flight, for a record no pool names (DW-E5's piles and rubble)
   /** The record's file is in, or settled without one - else its load is started once and the caller waits. */
   function fileIn(archive) {
     if (files.has(archive) || failed.has(archive)) return true;
     if (!fileLoads.has(archive)) {
-      fileLoads.set(archive, fileOf(archive).then((t) => { if (!t) failed.add(archive); }, () => { failed.add(archive); })
-        .finally(() => fileLoads.delete(archive)));
+      fileLoads.set(
+        archive,
+        fileOf(archive)
+          .then(
+            (t) => {
+              if (!t) failed.add(archive);
+            },
+            () => {
+              failed.add(archive);
+            },
+          )
+          .finally(() => fileLoads.delete(archive)),
+      );
     }
     return false;
   }
   const heights = new Map();
   const replacements = new Map();
-  const textures = new Map();   // key -> {tex, frames} | null (ready) ; absent: not asked
-  const building = new Map();   // key -> Promise
+  const textures = new Map(); // key -> {tex, frames} | null (ready) ; absent: not asked
+  const building = new Map(); // key -> Promise
   let loading = null;
   const key = (rec) => `${rec.archive}_${rec.record}`;
 
@@ -346,7 +486,7 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
     const k = key(rec);
     if (replacements.has(k)) return replacements.get(k);
     const t = textureFile(rec.archive);
-    if (!t) return null;   // AUDIT DW-F: no answer before the file is in, and none cached - a cached "none" outlived the load for the session
+    if (!t) return null; // AUDIT DW-F: no answer before the file is in, and none cached - a cached "none" outlived the load for the session
     let info = null;
     if (t && hasReplacement(rec.archive, rec.record, 0)) {
       let frames = 1;
@@ -380,7 +520,7 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
         out.push({ width: c.width, height: c.height, data: new Uint8Array(c.colors) });
       }
     }
-    if (kind !== 'animated') for (const img of out) clearEdgeBlackPixels(img);   // GetEdgeCleanedTexture
+    if (kind !== 'animated') for (const img of out) clearEdgeBlackPixels(img); // GetEdgeCleanedTexture
     return out;
   }
   const kindOf = (rec) => {
@@ -391,10 +531,19 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
 
   return {
     /** Every pool archive's file is in (the placement reads the records' sizes) - or settled without one. */
-    ready() { return DECORATION_ARCHIVES.every((a) => files.has(a) || failed.has(a)); },
+    ready() {
+      return DECORATION_ARCHIVES.every((a) => files.has(a) || failed.has(a));
+    },
     /** Their loads, once (an archive that will not load leaves its records unplaced - a height of 0). */
     load() {
-      loading ??= Promise.all(DECORATION_ARCHIVES.map((a) => fileOf(a).catch(() => { failed.add(a); return null; })));
+      loading ??= Promise.all(
+        DECORATION_ARCHIVES.map((a) =>
+          fileOf(a).catch(() => {
+            failed.add(a);
+            return null;
+          }),
+        ),
+      );
       return loading;
     },
     /** The classic record's scaled size in metres, or null. */
@@ -411,35 +560,57 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
     visualHeight(rec) {
       const k = key(rec);
       if (heights.has(k)) return heights.get(k);
-      const h = authoredVisualHeight(rec, { scaledSize: (r) => this.scaledSize(r), replacementSize: (r) => replacementOf(r)?.size ?? null });
+      const h = authoredVisualHeight(rec, {
+        scaledSize: (r) => this.scaledSize(r),
+        replacementSize: (r) => replacementOf(r)?.size ?? null,
+      });
       heights.set(k, h);
       return h;
     },
     /** Probes: the pictures built, and those in flight. */
-    get debug() { return { built: textures.size, building: [...building.keys()], nulls: [...textures].filter(([, v]) => !v).map(([k]) => k) }; },
+    get debug() {
+      return {
+        built: textures.size,
+        building: [...building.keys()],
+        nulls: [...textures].filter(([, v]) => !v).map(([k]) => k),
+      };
+    },
     /** The record's GPU picture of `kind`, when built. */
-    texture(rec, kind) { return textures.get(`${key(rec)}:${kind}`) ?? null; },
+    texture(rec, kind) {
+      return textures.get(`${key(rec)}:${kind}`) ?? null;
+    },
     /**
      * PumpArchiveWarmup: while any of the spawn batch's pictures is not on the GPU
      * yet it waits (true) - every missing one started at once, so it
      * waits on the slowest load and no more. DFU builds its atlases inside
      * the frame; the port reads files asynchronously.
      */
-    warm(spawn) {   // a spawn batch (its positions and how far its pictures are warm) - not a renderer batch
+    warm(spawn) {
+      // a spawn batch (its positions and how far its pictures are warm) - not a renderer batch
       let busy = false;
       for (let i = spawn.warm; i < spawn.positions.length; i++) {
         const p = spawn.positions[i];
         const rec = { archive: p.archive, record: p.record };
-        if (!fileIn(rec.archive)) { busy = true; continue; }   // AUDIT DW-F: the kind is the file's answer, asked once it is in
+        if (!fileIn(rec.archive)) {
+          busy = true;
+          continue;
+        } // AUDIT DW-F: the kind is the file's answer, asked once it is in
         const kind = kindOf(rec);
         const k = `${key(rec)}:${kind}`;
         if (textures.has(k)) continue;
         busy = true;
         if (!building.has(k)) {
-          building.set(k, framesOf(rec, kind)
-            .then((frames) => { textures.set(k, frames.length ? createTexture(frames) : null); })
-            .catch(() => { textures.set(k, null); })
-            .finally(() => building.delete(k)));
+          building.set(
+            k,
+            framesOf(rec, kind)
+              .then((frames) => {
+                textures.set(k, frames.length ? createTexture(frames) : null);
+              })
+              .catch(() => {
+                textures.set(k, null);
+              })
+              .finally(() => building.delete(k)),
+          );
         }
       }
       if (!busy) spawn.warm = spawn.positions.length;

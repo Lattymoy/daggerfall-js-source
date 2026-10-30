@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-QL-ACTS-M9-deepWatersFish-a-fish-that-swam-off-despawned-its-loot-wh",
     "file": "src/scenes/deepWater/deepWatersFish.js",
-    "old": "if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');",
-    "new": "if (!o.gone) noteAct('fish-caught');",
+    "old": "    if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught'); // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once",
+    "new": "    if (!o.gone) noteAct('fish-caught'); // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-QL-ACTS-M9b-deepWatersFish-counted-at-every-remove",
     "file": "src/scenes/deepWater/deepWatersFish.js",
-    "old": "if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');",
-    "new": "if (o.loot.items.length === 0) noteAct('fish-caught');",
+    "old": "    if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught'); // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once",
+    "new": "    if (o.loot.items.length === 0) noteAct('fish-caught'); // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

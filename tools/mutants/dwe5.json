@@ -272,8 +272,8 @@
   {
     "name": "DW-E5-gate-cache",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "    if (gateCached && time < nextGateTime) return gateResult ? pos : null;\n",
-    "new": "",
+    "old": "    if (gateCached && time < nextGateTime) return gateResult ? pos : null;\n    gateResult = hasNearbyColumn(",
+    "new": "    gateResult = hasNearbyColumn(",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DW-E5-cell-memory",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS)",
-    "new": "while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS + 1)",
+    "old": "    while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS) recentCells.delete(recentOrder.shift());",
+    "new": "    while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS + 1) recentCells.delete(recentOrder.shift());",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "DW-E5-cell-skip",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "      if (recentCells.has(key)) continue;\n",
-    "new": "",
+    "old": "      if (recentCells.has(key)) continue;\n      const floor = resolveSeafloorAt(column(x, z));",
+    "new": "      const floor = resolveSeafloorAt(column(x, z));",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DW-E5-cap-returns",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "    if (tracked.count >= s.maxLive) return;\n",
-    "new": "",
+    "old": "    if (tracked.count >= s.maxLive) return;\n    let cluster = false,",
+    "new": "    let cluster = false,",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DW-E5-shore-eighth",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "? 1 : SHORE_LOOT_PULSE_MULTIPLIER;",
-    "new": "? 1 : 1;",
+    "old": "    const shore = inOrAboveDeepWater(DEEP_WATER_PULSE_DEPTH) ? 1 : SHORE_LOOT_PULSE_MULTIPLIER;",
+    "new": "    const shore = inOrAboveDeepWater(DEEP_WATER_PULSE_DEPTH) ? 1 : 1;",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DW-E5-first-frame-forced",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "        tryRunLootPulse(true, pos);\n",
-    "new": "        tryRunLootPulse(false, pos);\n",
+    "old": "        tryRunLootPulse(true, pos);",
+    "new": "        tryRunLootPulse(false, pos);",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DW-E5-wreck-depth-test",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "    if (!isDeepEnoughForWreck(column(s.spot[0], s.spot[2]), settings().waterDepth)) return false;\n",
-    "new": "",
+    "old": "    if (!isDeepEnoughForWreck(column(s.spot[0], s.spot[2]), settings().waterDepth)) return false;\n    const debris = spawnClusterDebris(s.spot);",
+    "new": "    const debris = spawnClusterDebris(s.spot);",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "DW-E5-no-guards",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "    spawnGuards(s.spot);\n",
-    "new": "",
+    "old": "    spawnGuards(s.spot);\n    clusters.push(s.spot);",
+    "new": "    clusters.push(s.spot);",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DW-E5-cluster-spots-kept",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "      spots.push(p);\n",
-    "new": "",
+    "old": "      spots.push(p);\n      placed++;",
+    "new": "      placed++;",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DW-E5-reset-keeps-tracked",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "      tracked.clear();\n",
-    "new": "",
+    "old": "      tracked.clear();\n      clusters.length = 0;",
+    "new": "      clusters.length = 0;",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DW-E5-reset-keeps-anchor",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "      recentOrder.length = 0;\n      anchor = null;",
-    "new": "      recentOrder.length = 0;",
+    "old": "      anchor = null;\n      nextAllowedPulseTime = 0;",
+    "new": "      nextAllowedPulseTime = 0;",
     "tests": [
       "test/scenes/dwe_loot.test.js"
     ]

@@ -47,7 +47,7 @@
   {
     "name": "APACE-P2-drop-keeps-the-counts",
     "file": "src/scenes/deepWater/deepWatersEncounters.js",
-    "old": "      for (const r of pending) if (r.group?.active) { r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1); liveCount = Math.max(0, liveCount - 1); }\n      pending.length = 0;",
+    "old": "      for (const r of pending)\n        if (r.group?.active) {\n          r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1);\n          liveCount = Math.max(0, liveCount - 1);\n        }\n      pending.length = 0;",
     "new": "      pending.length = 0;",
     "tests": [
       "test/scenes/deepshare.test.js"
