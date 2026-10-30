@@ -1191,7 +1191,7 @@ the two met with one set of values, and the relay's row is world270, past BOW-TO
 1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
 kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
 Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
-(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`,
 `net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX"`). Both files are in the relay's bundle,
 so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
 on the merge, which drops every open socket once.

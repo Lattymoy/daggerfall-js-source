@@ -2,8 +2,8 @@
   {
     "name": "AUDIT1003-O1-RELAY-HEAL-UNDONE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (e.some((x) => x.k === 'heal')) for (const f of st.b.fighters) f.health = f.maxHealth;\n",
-    "new": "",
+    "old": "  if (e.some((x) => x.k === 'heal')) for (const f of st.b.fighters) f.health = f.maxHealth;\n  /** @type {any[]} */",
+    "new": "  /** @type {any[]} */",
     "tests": [
       "test/systems/arena/audit1003_online.test.js"
     ]

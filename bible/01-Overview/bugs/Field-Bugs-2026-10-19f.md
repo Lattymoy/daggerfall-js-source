@@ -463,7 +463,7 @@ A Disintegrate deals its target the health it has left
 (`effects.js:"if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }"`), so the cast
 claimed 1e9 - and every wire refuses that: the gate's `hit`, `ahit`, `xhit` and the Abyss's at GATE_DMG_WIRE_MAX
 (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`, 100,000), an Elite Breach's at 1e6
-(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000), r = int(m.r, 0, 2);"`). The relay dropped the
+(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000)"`). The relay dropped the
 whole cast while the spell door popped `Math.round(dealt)`: a nine-digit number, a bar that never moved. The relay caps
 a blow anyway (`gateBrain.js:"HIT_CAP_X * ref, p.bucket, f.hp"`, spendPurse
 the same, an Elite Breach's bucket grown by the Vestiges' declared factor up to 1.25) - so the number was never what a

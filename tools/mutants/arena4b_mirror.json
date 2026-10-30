@@ -120,8 +120,8 @@
   {
     "name": "ARENA4b-MIR-KIND",
     "file": "src/net/arena/arenaLink.js",
-    "old": "st.kind === 'ex' ? 'exhibition' : 'ladder', fighters, ring:",
-    "new": "st.kind === 'ex' ? 'ladder' : 'ladder', fighters, ring:",
+    "old": "          kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'exhibition' : 'ladder',",
+    "new": "          kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'ladder' : 'ladder',",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ARENA4b-MIR-VERDICT-EVENT",
     "file": "src/net/arena/arenaLink.js",
-    "old": "const e = (w.e ?? []).find((x) => x.k === 'end' || x.k === 'verdict');",
-    "new": "const e = (w.e ?? []).find((x) => x.k === 'end');",
+    "old": "    const e = (w.e ?? []).find((x) => x.k === 'end' || x.k === 'verdict');",
+    "new": "    const e = (w.e ?? []).find((x) => x.k === 'end');",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"
     ]

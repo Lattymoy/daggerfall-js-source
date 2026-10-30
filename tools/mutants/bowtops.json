@@ -2,8 +2,8 @@
   {
     "name": "BOW-TOPS-1-arena-long-bow-short",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "129: 17, 130: 19 });",
-    "new": "129: 17, 130: 18 });",
+    "old": "  130: 19,",
+    "new": "  130: 18,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "BOW-TOPS-2-arena-short-bow-short",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "129: 17, 130: 19 });",
-    "new": "129: 16, 130: 19 });",
+    "old": "  129: 17,",
+    "new": "  129: 16,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ],

@@ -157,6 +157,14 @@
 /src/net/*
 !/src/net/alchemyLaw.js
 !/src/net/appearanceLaw.js
+!/src/net/arena/
+/src/net/arena/*
+!/src/net/arena/arenaBrain.js
+!/src/net/arena/arenaClaims.js
+!/src/net/arena/arenaExhibition.js
+!/src/net/arena/arenaLaw.js
+!/src/net/arena/arenaLink.js
+!/src/net/arena/arenaReceipt.js
 !/src/net/armoryLaw.js
 !/src/net/backoff.js
 !/src/net/bagLaw.js

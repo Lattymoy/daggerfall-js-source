@@ -212,8 +212,8 @@
   {
     "name": "ARENA2-EX-OPEN",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "open: minute < EXHIBITION_START_MINUTES,",
-    "new": "open: true,",
+    "old": "    open: minute < EXHIBITION_START_MINUTES,",
+    "new": "    open: true,",
     "tests": [
       "test/systems/arena/arena2_hud.test.js",
       "test/systems/arena/arena2_ladder.test.js"

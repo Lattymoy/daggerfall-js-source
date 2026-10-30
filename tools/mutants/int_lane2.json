@@ -850,8 +850,8 @@
   {
     "name": "INT7-AUDIT-ARENA-THE-SIGNED-REACH-UNREAD",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "(arenaArmsOk(wa) ? Math.min(wmax + mat, wa[0]) : wmax + mat)",
-    "new": "(wmax + mat)",
+    "old": "  const reach = wmax != null ? (arenaArmsOk(wa) ? Math.min(wmax + mat, wa[0]) : wmax + mat) : ARENA_HAND_MAX;",
+    "new": "  const reach = wmax != null ? wmax + mat : ARENA_HAND_MAX;",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]

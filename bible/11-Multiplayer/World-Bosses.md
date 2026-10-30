@@ -2797,7 +2797,7 @@ reads it: a Disintegrate deals its target what health it has left
 (`effects.js:"if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }"` - DFU's
 `Disintegrate.MagicRound`, `SetHealth(0)`). So the cast claimed 1e9, and no wire carries that: the gate's `hit`, `ahit` and
 `xhit` and the Abyss's stop at GATE_DMG_WIRE_MAX (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`,
-100,000), an Elite Breach's at 1e6, a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000), r = int(m.r, 0, 2);"`).
+100,000), an Elite Breach's at 1e6, a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000)"`).
 Every relay refused the cast whole, and the spell door popped the claim. The relay caps a blow anyway (HIT_CAP_X times
 the reference at the striker's level - section 5's bucket; an Elite Breach's grown by the Vestiges' declared factor), so
 the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling):

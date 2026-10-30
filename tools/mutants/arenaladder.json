@@ -112,8 +112,8 @@
   {
     "name": "ARENA-LADDER-relay-tier-unread",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "const shapes = (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now",
-    "new": "const shapes = (a.level >= 0 || a.elite) && now",
+    "old": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) &&\n        now >= (a.blowAt ?? 0) &&\n        !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
+    "new": "        (a.level >= 0 || a.elite) && now >= (a.blowAt ?? 0) && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "ARENA-LADDER-relay-verdict-reach",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "(s ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1]) : Math.hypot",
-    "new": "(Math.hypot",
+    "old": "    const hit =\n      !!(t && !t.out && p) &&\n      (s\n        ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1])\n        : Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);",
+    "new": "    const hit = !!(t && !t.out && p) && Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "ARENA-LADDER-relay-weight-dropped",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;",
-    "new": "const dmg = roll;",
+    "old": "      const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;",
+    "new": "      const dmg = roll;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "ARENA-LADDER-relay-cooldown-unset",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "        a.blowAt = now + ARENA_BLOW_COOLDOWN_MIN_MS",
-    "new": "        a.blowAt = now + 0 * ARENA_BLOW_COOLDOWN_MIN_MS",
+    "old": "          ARENA_BLOW_COOLDOWN_MIN_MS +",
+    "new": "          0 * ARENA_BLOW_COOLDOWN_MIN_MS +",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "ARENA-LADDER-relay-champion-plain",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion }))",
-    "new": "foes: list.map(([m, l]) => arenaFoeStats(m, l))",
+    "old": "    foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion })),",
+    "new": "    foes: list.map(([m, l]) => arenaFoeStats(m, l)),",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "ARENA-LADDER-judges-floor-not-passed",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0 });",
-    "new": "judgesFloor: 0 });",
+    "old": "    judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0,",
+    "new": "    judgesFloor: 0,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "ARENA-LADDER-ticket-any-shape",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "      if (m.z !== undefined) { if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null; out.z = m.z; }",
-    "new": "      if (m.z !== undefined) { out.z = m.z; }",
+    "old": "        if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null;\n        out.z = m.z;",
+    "new": "        out.z = m.z;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ARENA-LADDER-atk-shape-any",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "        if (!ARENA_BLOW_SHAPES.includes(m.s) || num(m.yw, 10) == null",
-    "new": "        if (num(m.yw, 10) == null",
+    "old": "        if (\n          !ARENA_BLOW_SHAPES.includes(m.s) ||\n          num(m.yw, 10) == null ||\n          num(m.ox, 1e5) == null ||\n          num(m.oz, 1e5) == null\n        )\n          return null;",
+    "new": "        if (num(m.yw, 10) == null || num(m.ox, 1e5) == null || num(m.oz, 1e5) == null) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ARENA-LADDER-receipt-z-unsigned",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "h: r.how, ...(st.f[0].tk ? { z: st.f[0].tk } : {}) }];",
-    "new": "h: r.how }];",
+    "old": "  return [\n    {\n      a: 'l',\n      j: st.o,\n      s: st.f[0].sub,\n      q: st.tier,\n      u: st.bout,\n      r: r.side === 0 ? 1 : 0,\n      h: r.how,\n      ...(st.f[0].tk ? { z: st.f[0].tk } : {}),\n    },\n  ]; // AUDIT ARENA-LADDER: the attempt's ticket, signed",
+    "new": "  return [{ a: 'l', j: st.o, s: st.f[0].sub, q: st.tier, u: st.bout, r: r.side === 0 ? 1 : 0, h: r.how }]; // AUDIT ARENA-LADDER: the attempt's ticket, signed",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -692,8 +692,8 @@
   {
     "name": "ARENA-LADDER-2-flush-quiet",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "    if (running) { again = true; return running; }",
-    "new": "    if (running) { again = true; return Promise.resolve(0); }",
+    "old": "      return running;",
+    "new": "      return Promise.resolve(0);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -782,8 +782,8 @@
   {
     "name": "ARENA-LADDER-2-one-at-a-time",
     "file": "src/net/arena/arenaBrain.js",
-    "old": " && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
-    "new": "",
+    "old": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) &&\n        now >= (a.blowAt ?? 0) &&\n        !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)\n          ? blowShapesOf(a.mobile)\n          : [];",
+    "new": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now >= (a.blowAt ?? 0) ? blowShapesOf(a.mobile) : [];",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],

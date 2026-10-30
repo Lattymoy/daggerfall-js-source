@@ -611,8 +611,8 @@
   {
     "name": "EG5D-L9-5-a-week-off-by-one",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
-    "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S) + 1);",
+    "old": "  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "new": "  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S) + 1);",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -620,7 +620,7 @@
   {
     "name": "EG5D-L9-5-the-old-epoch-of-1970-weeks",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "old": "export const arenaWeekOf = (nowS) =>\n  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
     "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor(Math.floor(Number(nowS) || 0) / ARENA_WEEK_S));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"

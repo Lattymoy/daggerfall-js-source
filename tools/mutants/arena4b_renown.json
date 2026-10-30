@@ -92,8 +92,8 @@
   {
     "name": "ARENA4B-CLAIMS-FIGHTER",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "keep([...list, arenaKeptEntry(r, character(), name())]",
-    "new": "keep([...list, r]",
+    "old": "        keep([...list, arenaKeptEntry(r, character(), name())].slice(-ARENA_CLAIMS_MAX));",
+    "new": "        keep([...list, r].slice(-ARENA_CLAIMS_MAX));",
     "tests": [
       "test/net/arena/arena4b_renown.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA4B-CLAIMS-RENOWN-UNTOLD",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "if (answer?.ok && answer.data?.renown) onRenown(answer.data);",
-    "new": "if (answer?.ok && answer.data?.recorded && answer.data?.renown) onRenown(answer.data);",
+    "old": "        if (answer?.ok && answer.data?.renown) onRenown(answer.data); // ARENA4b: the bout's Renown, counted now or before",
+    "new": "        if (answer?.ok && answer.data?.recorded && answer.data?.renown) onRenown(answer.data); // ARENA4b: the bout's Renown, counted now or before",
     "tests": [
       "test/net/arena/arena4b_renown.test.js"
     ]

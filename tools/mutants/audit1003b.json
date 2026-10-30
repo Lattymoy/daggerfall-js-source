@@ -169,8 +169,8 @@
   {
     "name": "AUDIT1003b-S4-LOCK-IGNORED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "    if (S.locked) return { no: 'locked' };",
-    "new": "",
+    "old": "    if (S.locked) return { no: 'locked' }; // AUDIT PRE-MERGE 1003b S4: locked to newcomers - a member coming back is let in",
+    "new": "    // AUDIT PRE-MERGE 1003b S4: locked to newcomers - a member coming back is let in",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js",
       "test/systems/arena/audit1003b_client.test.js"
@@ -179,8 +179,8 @@
   {
     "name": "AUDIT1003b-S9-BOTH-GONE-FORFEIT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
-    "new": "  if (false && boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
+    "old": "    boutLive(b) &&",
+    "new": "    false &&\n    boutLive(b) &&",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT1003b-S4-LOCK-OFF-WIRE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null;   // AUDIT PRE-MERGE 1003b S4\n",
-    "new": "",
+    "old": "      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null; // AUDIT PRE-MERGE 1003b S4\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js",
       "test/systems/arena/arena6_private.test.js"

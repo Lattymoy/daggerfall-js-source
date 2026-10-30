@@ -329,7 +329,7 @@ test('AUDIT ARENA-LADDER L4: THE LADDER\'S JUDGES\' FLOOR - at the time limit a 
   boutHit(y.b, { from: 'p', to: 'a', dmg: 30, now: y.t + 1 });
   boutTick(y.b, y.t + BOUT_LIMIT_MS);
   assert.equal(y.b.result.side, 0);
-  assert.match(rd('src/net/arena/arenaBrain.js'), /judgesFloor: st\.kind === 'pve' \? LADDER_JUDGES_SHARE : 0 \}\);/);
+  assert.match(rd('src/net/arena/arenaBrain.js'), /judgesFloor: st\.kind === 'pve' \? LADDER_JUDGES_SHARE : 0,\n\s*\}\);/);
 });
 
 test('AUDIT ARENA-LADDER L5: THE SAND\'S KIT LAW - in a bout of one\'s own no potion is drunk (the bottle kept), no Invisibility, Levitate, Chameleon, Shadow, Charm or Teleport is cast, and those already on the fighter come off; outside a bout, all as before (mutants: a barred type dropped; the bottle eaten; the strip unread)', () => {
