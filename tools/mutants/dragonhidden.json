@@ -11,8 +11,8 @@
   {
     "name": "DRAGON-HIDDEN-the-watch-unread",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "enc.encode(`dragon-watch:${w}`)",
-    "new": "enc.encode('dragon-watch')",
+    "old": "  const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(`dragon-watch:${w}`)));",
+    "new": "  const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode('dragon-watch')));",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DRAGON-HIDDEN-the-bytes-shortened",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
-    "new": "return ((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "old": "  return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "new": "  return ((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DRAGON-HIDDEN-told-before-its-landing",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
-    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_LAND_SPAN_MS : nowMs >= dragonQuietAt(w));",
+    "old": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt - DRAGON_LAND_SPAN_MS : nowMs >= dragonQuietAt(w));",
     "tests": [
       "test/net/dragon/dragonhidden.test.js",
       "test/net/dragon/dragon2_law.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "DRAGON-HIDDEN-the-brains-floor-left",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const DRAGON_BRAIN_MIN = 2;",
-    "new": "export const DRAGON_BRAIN_MIN = 1;",
+    "old": "export const DRAGON_BRAIN_MIN = 2; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload",
+    "new": "export const DRAGON_BRAIN_MIN = 1; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "DRAGON-HIDDEN-a-watch-to-come-told",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
-    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_WATCH_MS : nowMs >= dragonQuietAt(w) - DRAGON_WATCH_MS);",
+    "old": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "  (o && isDragonOmen(o)\n    ? nowMs >= dragonTimes(o).landAt - DRAGON_WATCH_MS\n    : nowMs >= dragonQuietAt(w) - DRAGON_WATCH_MS);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],

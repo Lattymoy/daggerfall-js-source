@@ -21,7 +21,14 @@ export const dragonNameOnWire = (name) => (typeof name === 'string' ? sanitizeLa
  * stands - `toWire` turns a scene point to the wire's frame. Answers `{ p, yw, fl?, lk?, n? }` or null.
  */
 export function dragonKeepWireRecord(shown, toWire = (p) => p) {
-  if (!shown || !Array.isArray(shown.spot) || shown.spot.length !== 3 || !shown.spot.every(Number.isFinite) || !Number.isFinite(shown.yaw)) return null;
+  if (
+    !shown ||
+    !Array.isArray(shown.spot) ||
+    shown.spot.length !== 3 ||
+    !shown.spot.every(Number.isFinite) ||
+    !Number.isFinite(shown.yaw)
+  )
+    return null;
   const p = toWire(shown.spot);
   const out = { p: [r2(p[0]), r2(p[1]), r2(p[2])], yw: r4(shown.yaw) };
   const code = FLIGHT_CODE[shown.kind];
@@ -39,16 +46,26 @@ export function validDragonKeepRecord(raw) {
   if (!Array.isArray(p) || p.length !== 3 || !p.every(Number.isFinite)) return null;
   if (Math.abs(p[0]) > POSE_BOUND || Math.abs(p[2]) > POSE_BOUND || Math.abs(p[1]) > POSE_Y_BOUND) return null;
   if (!Number.isFinite(raw.yw) || Math.abs(raw.yw) > 8) return null;
-  let kind = null, age = 0;
+  let kind = null,
+    age = 0;
   if (raw.fl !== undefined) {
     const fl = raw.fl;
-    if (!Array.isArray(fl) || fl.length !== 2 || !FLIGHT_KIND[fl[0]] || !Number.isInteger(fl[1]) || fl[1] < 0) return null;
+    if (!Array.isArray(fl) || fl.length !== 2 || !FLIGHT_KIND[fl[0]] || !Number.isInteger(fl[1]) || fl[1] < 0)
+      return null;
     kind = FLIGHT_KIND[fl[0]];
     age = Math.min(fl[1], kind === 'in' ? DRAGON_COME_MS : DRAGON_LEAVE_MS);
   }
   if (raw.n !== undefined && (typeof raw.n !== 'string' || raw.n.length > DRAGON_NAME_MAX * 4)) return null;
-  return { spot: [p[0], p[1], p[2]], yaw: raw.yw, kind, age, look: raw.lk === 1 ? 1 : 0, name: dragonNameOnWire(raw.n ?? '') };
+  return {
+    spot: [p[0], p[1], p[2]],
+    yaw: raw.yw,
+    kind,
+    age,
+    look: raw.lk === 1 ? 1 : 0,
+    name: dragonNameOnWire(raw.n ?? ''),
+  };
 }
 
 /** A change key: a frame carries the record only when the word moved (a flight's age aside - every screen runs it). */
-export const dragonKeepRecordKey = (rec) => (rec ? JSON.stringify([rec.p, rec.yw, rec.fl?.[0] ?? 0, rec.lk ?? 0, rec.n ?? '']) : '');
+export const dragonKeepRecordKey = (rec) =>
+  rec ? JSON.stringify([rec.p, rec.yw, rec.fl?.[0] ?? 0, rec.lk ?? 0, rec.n ?? '']) : '';

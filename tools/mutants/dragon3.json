@@ -11,8 +11,8 @@
   {
     "name": "DRAGON3-a-blow-taken-twice",
     "file": "src/net/dragon/dragonLink.js",
-    "old": "    case 'atk': return s.blows.some((q) => q.i === w.i) ? s :",
-    "new": "    case 'atk': return false ? s :",
+    "old": "      return s.blows.some((q) => q.i === w.i)",
+    "new": "      return false",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DRAGON3-a-refusal-said-each-time",
     "file": "src/net/dragon/dragonLink.js",
-    "old": "      if (w.k === 'no') { if (!refused.has(w.m)) { refused.add(w.m); say(w.m); } return; }",
-    "new": "      if (w.k === 'no') { say(w.m); return; }",
+    "old": "        if (!refused.has(w.m)) {\n          refused.add(w.m);\n          say(w.m);\n        }",
+    "new": "        say(w.m);",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]

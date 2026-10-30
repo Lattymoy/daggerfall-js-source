@@ -23,7 +23,8 @@ export const DRAGON_REMAINS_MS = 10 * 60_000;
 /** One dragon in this many is the Aetherbright (section 11). */
 export const DRAGON_SHINY_ONE_IN = 20;
 /** Is `o` a watch's omen - its number and the relay's seed for it, a whole 32-bit number? @param {any} o */
-export const dragonOmenOk = (o) => !!o && Number.isSafeInteger(o.w) && o.w >= 0 && Number.isSafeInteger(o.s) && o.s >= 0 && o.s <= 0xffffffff;
+export const dragonOmenOk = (o) =>
+  !!o && Number.isSafeInteger(o.w) && o.w >= 0 && Number.isSafeInteger(o.s) && o.s >= 0 && o.s <= 0xffffffff;
 /** Roll `k` of an omen, a whole number in [0, 2^32). @param {{w: number, s: number}} o @param {number} k */
 export const dragonRoll = (o, k) => gateHash(o.s, o.w, k);
 /** The watch a relay-clock instant stands in. */
@@ -49,13 +50,27 @@ export const dragonQuietAt = (w) => w * DRAGON_WATCH_MS + DRAGON_LAND_SPAN_MS;
 export const dragonAskEnd = (w) => dragonQuietAt(w) + DRAGON_STAY_MS + DRAGON_CLIMB_MS + DRAGON_REMAINS_MS;
 /** May omen `o`'s seed be told at `nowMs` - its dragon landed, or for a quiet watch its latest landing past; never a
  *  watch to come, never a landing ahead. Null `o` (no secret here) is told as quiet. @param {any} o @param {number} w @param {number} nowMs */
-export const dragonSeedTold = (o, w, nowMs) => Number.isSafeInteger(w) && w >= 0 && (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));
+export const dragonSeedTold = (o, w, nowMs) =>
+  Number.isSafeInteger(w) &&
+  w >= 0 &&
+  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));
 /** The watches a screen may still see a dragon of at `nowMs`: this one and the last (its remains may lie past it). */
-export const dragonWatchesAbout = (nowMs) => { const w = dragonWatchAt(nowMs); return w > 0 ? [w, w - 1] : [w]; };
+export const dragonWatchesAbout = (nowMs) => {
+  const w = dragonWatchAt(nowMs);
+  return w > 0 ? [w, w - 1] : [w];
+};
 /** May a fight with this omen's dragon begin now - from its landing until it climbs away? @param {any} o @param {number} nowMs */
-export const dragonAdmits = (o, nowMs) => { if (!isDragonOmen(o)) return false; const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt; };
+export const dragonAdmits = (o, nowMs) => {
+  if (!isDragonOmen(o)) return false;
+  const t = dragonTimes(o);
+  return nowMs >= t.landAt && nowMs < t.leaveAt;
+};
 /** May a fighter already in it be in it now (a reconnect after a blip) - until its climb is over? @param {any} o @param {number} nowMs */
-export const dragonHolds = (o, nowMs) => { if (!isDragonOmen(o)) return false; const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt + DRAGON_CLIMB_MS; };
+export const dragonHolds = (o, nowMs) => {
+  if (!isDragonOmen(o)) return false;
+  const t = dragonTimes(o);
+  return nowMs >= t.landAt && nowMs < t.leaveAt + DRAGON_CLIMB_MS;
+};
 
 // THE SITE. The gate's site law (systems/gate/gateSite.js findGateSite, theatreGateSite.js for a province) under a number of
 // the dragon's own: DRAGON_SITE_BASE past every game day the gate will see for millennia and below the lanes' span, so no
@@ -72,7 +87,8 @@ export const pixelCentreNative = (px, py) => ({ sx: (px + 0.5) * PIXEL_UNITS, sz
  *  centre on its theatre's side of the Bay's edge (wire.js gateLanePixelOk; no province's border is the relay's).
  *  @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
 export function dragonSiteOk(o, sx, sz) {
-  const [px, py] = mapPixelOfWire(sx, sz), c = pixelCentreNative(px, py);
+  const [px, py] = mapPixelOfWire(sx, sz),
+    c = pixelCentreNative(px, py);
   return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;
 }
 
@@ -87,4 +103,4 @@ export const DRAGON_SITES_MAX = 3;
 
 /** The brain's law a client fights by: the relay tells an older game to reload (the gate's GATE-RELOAD law). */
 export const DRAGON_BRAIN_V = 2;
-export const DRAGON_BRAIN_MIN = 2;   // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload
+export const DRAGON_BRAIN_MIN = 2; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload
