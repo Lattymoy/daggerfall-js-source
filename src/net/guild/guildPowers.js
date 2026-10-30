@@ -68,6 +68,8 @@ export const GUILD_RANK_ACTS = Object.freeze([
   Object.freeze({ table: 'guild', power: 'vaultGrant', words: 'grant or take back each member\'s use of the vault' }),
   Object.freeze({ table: 'guild', power: 'renameRanks', words: 'rename the ranks' }),
   Object.freeze({ table: 'guild', power: 'rename', words: 'give the guild a new name, for a price' }),
+  Object.freeze({ table: 'guild', power: 'shop', words: 'buy hall furniture from the guild shop with the silver treasury' }),   // GUILD-SHOP
+  Object.freeze({ table: 'guild', power: 'logo', words: 'send the guild\'s own logo to the moderators for review' }),   // GUILD-LOGO
   Object.freeze({ table: 'guild', power: 'handOver', words: 'hand the guild on' }),
   Object.freeze({ table: 'guild', power: 'disband', words: 'disband it' }),
 ]);

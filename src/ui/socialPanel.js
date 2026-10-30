@@ -52,8 +52,10 @@ import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, cleanBody } from
 import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_RANK_NAMES,
   guildMay, guildMayMove, guildOutranks, guildNameOf, guildTagOf, guildRankNamesOf, GUILD_MOVE_MAX,
-  GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT, GUILD_RENAME_GOLD,   // GUILD2a: a new name, for a price
+  GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
 } from '../net/guild/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
+import { GUILD_RENAME_SILVER } from '../net/guild/guildShopLaw.js';   // GUILD2a, GUILD-SHOP: a new name, for silver
+import { guildWareName } from './guild/guildShopText.js';   // GUILD-SHOP: a ware's name in a silver line
 import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guild/guildVaultLaw.js';   // GUILD2b: the vault
 import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
 import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
@@ -205,7 +207,7 @@ export const GUILD_KEEPS_HEAD = 'Before the guild can be disbanded';   // AUDIT 
 /** GUILD3c: the codes the service's view reads of what holds a guild (server-account/src/guilds.js guildHolds) - where
  *  the view carries its list, its word stands for these; a refusal's older word for one of them is not repeated. */
 export const GUILD_HOLD_CODES = Object.freeze(['guild-treasury', 'guild-stores', 'guild-writs', 'guild-writ-escrow', 'guild-contracts', 'guild-hall',
-  'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron', 'marks-full']);   // AUDIT GUILD3 S3: the silver's room, the view's too
+  'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron', 'guild-logo', 'marks-full']);   // AUDIT GUILD3 S3: the silver's room, the view's too; GUILD-LOGO: a review under way
 /** AUDIT GUILD3 S3: a hold the Settings list says in the going's own terms where the service's sentence is a general one
  *  (an account's cap, said of any silver it is paid). */
 export const GUILD_KEEPS_WORDS = Object.freeze({
@@ -238,7 +240,7 @@ export function guildKeepsOf(v, said) {
 }
 export const GUILD_HERALDRY_NONE_TEXT = 'Your guild has no arms yet.';   // AUDIT GUILD3 W6: one word - the page is "Arms"
 /** GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): the pages' own sentences. */
-export const GUILD_RENAME_COST_TEXT = `A new name or tag costs ${GUILD_RENAME_GOLD.toLocaleString('en-US')} gold from the treasury (gold put in by realm characters). You can rename again after two weeks. The old name is free for anyone at once.`;
+export const GUILD_RENAME_COST_TEXT = `A new name or tag costs ${marksText(GUILD_RENAME_SILVER)} from the silver treasury. You can rename again after two weeks. The old name is free for anyone at once.`;   // GUILD-SHOP: silver, no longer the realm's gold
 /** GUILD2a: when the next new name may come, from `at` (epoch seconds). */
 export const guildRenameSoonText = (at, nowS) => {
   const days = Math.max(1, Math.ceil((at - nowS) / 86_400));
@@ -291,6 +293,11 @@ export const GUILD_SILVER_LINE_WORDS = Object.freeze({
  *  English stands as it was), each a guild's own line ("The guild bought a castle for 120,000 silver"). */
 export const GUILD_SILVER_LINE_SAID = Object.freeze({
   castle: () => t('social.guild.silver.castle', 'bought a castle for'),
+  // GUILD-SHOP, GUILD-LOGO (bible/11-Multiplayer/Guild-Shop.md): a new name, a ware bought, a logo's review fee held and home
+  'guild-rename': () => t('social.guild.silver.rename', 'renamed the guild for'),
+  'guild-shop': (/** @type {any} */ l) => t('social.guild.silver.shop', 'bought {ware} for', { ware: guildWareName(l?.ware) }),
+  'logo-escrow': () => t('social.guild.silver.logo', 'sent a logo for review, its fee held:'),
+  'logo-return': () => t('social.guild.silver.logoReturn', 'had a logo review fee come home:'),
   'castle-sale': () => t('social.guild.silver.castleSale', 'gave up a castle, and got back'),
   'castle-lost': () => t('social.guild.silver.castleLost', 'lost a castle with its crown, and got back'),
 });
@@ -299,7 +306,7 @@ export const GUILD_SILVER_LINE_SAID = Object.freeze({
  *  npcChapters.js a patron's bid). Every other kind's `who` is the service's own label - 'A Sellsword', 'The Turning', 'The
  *  registry', a writ's material, an auction's id, a work's name - and GUILD3b made it the sentence's subject ("A Sellsword
  *  hired a Sellsword for 1,500 silver"): those lines are the guild's own. */
-export const GUILD_SILVER_MEMBER_KINDS = Object.freeze(['guild-deposit', 'guild-withdraw', 'heraldry', 'guild-deed', 'contract-escrow', 'tribute', 'patron-escrow']);
+export const GUILD_SILVER_MEMBER_KINDS = Object.freeze(['guild-deposit', 'guild-withdraw', 'heraldry', 'guild-deed', 'contract-escrow', 'tribute', 'patron-escrow', 'guild-rename', 'guild-shop', 'logo-escrow']);   // GUILD-SHOP, GUILD-LOGO: the guildmaster's
 /** GUILD3b: a silver line in words - by its own kind and direction where the service sent them (`raw`, `out`); a kind with
  *  no words here said by its direction alone ("paid", "received"), never "put in" for silver that left; the member its
  *  subject where a member acted, the guild where the service did (AUDIT GUILD3 W2); an older service's line (no `raw`) by
@@ -307,7 +314,7 @@ export const GUILD_SILVER_MEMBER_KINDS = Object.freeze(['guild-deposit', 'guild-
 export function guildSilverLineText(l) {
   const amount = marksText(Number(l?.amount ?? 0));
   if (typeof l?.raw !== 'string') return `${l?.who} ${GUILD_MARKS_LEDGER_WORDS[l?.kind] ?? GUILD_MARKS_LEDGER_WORDS.deposit} ${amount}`;
-  const w = Object.hasOwn(GUILD_SILVER_LINE_SAID, l.raw) ? GUILD_SILVER_LINE_SAID[l.raw]() : Object.hasOwn(GUILD_SILVER_LINE_WORDS, l.raw) ? GUILD_SILVER_LINE_WORDS[l.raw] : null;   // DOMAIN2: the castle's lines first
+  const w = Object.hasOwn(GUILD_SILVER_LINE_SAID, l.raw) ? GUILD_SILVER_LINE_SAID[l.raw](l) : Object.hasOwn(GUILD_SILVER_LINE_WORDS, l.raw) ? GUILD_SILVER_LINE_WORDS[l.raw] : null;   // DOMAIN2: the castle's lines first
   const words = typeof w === 'string' ? w : w ? w[l.out === true ? 'out' : 'in'] : l.out === true ? 'paid' : 'received';
   return `${GUILD_SILVER_MEMBER_KINDS.includes(l.raw) ? l.who : 'The guild'} ${words} ${amount}`;
 }
@@ -2031,16 +2038,17 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       out.push(form);
       const typed = () => ({ name: guildNameOf(d.newName ?? ''), tag: guildTagOf(d.newTag ?? '') });
       const of = () => {
-        const t = typed();
-        const why = busy ? 'a moment' : !t.name || !t.tag ? 'a name of 3 to 32 characters and a tag of 2 to 4 letters or digits'
-          : t.name === v.name && t.tag === v.tag ? 'already the guild\'s'
+        const n = typed();
+        const why = busy ? 'a moment' : !n.name || !n.tag ? 'a name of 3 to 32 characters and a tag of 2 to 4 letters or digits'
+          : n.name === v.name && n.tag === v.tag ? 'already the guild\'s'
             : Number.isSafeInteger(v.renameAt) && v.renameAt > Math.floor(social.now() / 1000) ? 'not yet'
-              : Number(v.hallGold ?? 0) < GUILD_RENAME_GOLD ? `${GUILD_RENAME_GOLD.toLocaleString('en-US')} of the realm's gold in the treasury` : '';
+              : v.marks == null ? t('social.guild.renameSilverShut', 'silver open to this account')
+                : Number(v.marks) < GUILD_RENAME_SILVER ? t('social.guild.renameSilver', '{silver} in the silver treasury', { silver: marksText(GUILD_RENAME_SILVER) }) : '';   // GUILD-SHOP
         return { enabled: !why, why };
       };
       const acts = el('div', 'dfsocial-acts');
       acts.append(armed('rename')
-        ? liveBtn(`Sure? ${GUILD_RENAME_GOLD.toLocaleString('en-US')} gold`, of, { warn: true, run: () => { const t = typed(); guildDo(g.rename(t.name, t.tag), `The guild is ${t.name} [${t.tag}] now.`); } })
+        ? liveBtn(t('social.guild.renameSure', 'Sure? {silver}', { silver: marksText(GUILD_RENAME_SILVER) }), of, { warn: true, run: () => { const t = typed(); guildDo(g.rename(t.name, t.tag), `The guild is ${t.name} [${t.tag}] now.`); } })
         : liveBtn('Rename', of, { run: () => arm('rename') }));
       out.push(acts);
     }

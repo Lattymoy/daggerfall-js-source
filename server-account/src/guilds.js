@@ -73,7 +73,7 @@ import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjec
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // REALM P2.2: the wallet's own order, over the record
 import { renownTrackOf } from './renownTracks.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
-import { MARKS_LEDGER_SHOWN, MARKS_MAX } from '../../src/net/marksLaw.js';   // MARKS1: the guild's Marks lines shown; AUDIT GUILD3 S3: the room its going needs
+import { MARKS_LEDGER_SHOWN, MARKS_MAX, MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';   // MARKS1: the guild's Marks lines shown; AUDIT GUILD3 S3: the room its going needs
 import { marksOpenFor, guildMarksSweep, guildDeedsToday } from './marks.js';   // AUDIT 28 M5: the Marks shown only where they are the viewer's; M3: a guild that goes sweeps them; AUDIT SILVER-WAYS A3: the day's deeds
 import { hallViewOf, heraldryOfRow } from './halls.js';   // GUILD1d: the guild's hall and heraldry, in its view
 import { castleViewOf } from './castles.js';   // DOMAIN2: a guild's castles on its view
@@ -81,8 +81,9 @@ import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_RANK_NAMES, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
   GUILD_TREASURY_MAX, GUILD_LEDGER_SHOWN, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_INVITE_TTL_S, GUILD_ID_RE, GUILD_MEMBER_RE,
   guildMay, guildMayMove, guildOutranks, guildNameOf, guildNameKey, guildTagOf, guildRankNamesOf, guildGoldOk,
-  GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen,   // GUILD2a: a new name, for a price
+  GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen,   // GUILD2a: a new name, for a price
 } from '../../src/net/guild/guildLaw.js';
+import { GUILD_RENAME_SILVER } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: a new name's price, in silver
 import { vaultStanding, guildVaultSlots } from '../../src/net/guild/guildVaultLaw.js';   // GUILD2b: the vault, in the guild's view
 import { checkName, normaliseName, standsAlone, IMPERSONATION, textCaught } from '../../src/net/nameFilter.js';   // GUILD2a: a guild's name and tag pass the name filter (Seats-Arc 18 said they did)
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // GUILD2a: no new name in a week the guild fights for a seat
@@ -203,7 +204,7 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
   const ledger = await db.prepare('SELECT at, who, kind, amount, balance FROM guild_ledger WHERE guild_id = ? ORDER BY seq DESC LIMIT ?').bind(guildId, GUILD_LEDGER_SHOWN).all();
   // MARKS1: the Marks treasury beside the gold one, and its latest lines (0025_marks.sql - the one ledger)
   const marks = marksOpen ? await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(guildId).first() : null;
-  const marksLines = marksOpen ? await db.prepare(`SELECT at, who, kind, amount, src_kind, src_id FROM marks_ledger
+  const marksLines = marksOpen ? await db.prepare(`SELECT at, who, kind, amount, src_kind, src_id, dst_id FROM marks_ledger
     WHERE (dst_kind = 'guild' AND dst_id = ?1) OR (src_kind = 'guild' AND src_id = ?1) ORDER BY seq DESC LIMIT ?2`).bind(guildId, MARKS_LEDGER_SHOWN).all() : null;
   let ranks = GUILD_RANK_NAMES;
   try { ranks = guildRankNamesOf(JSON.parse(g.ranks)) ?? GUILD_RANK_NAMES; } catch { /* the defaults */ }
@@ -215,6 +216,8 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
     hallGold: Number(g.realm_gold ?? 0),
     // GUILD1d (Seats-Arc 8): the hall (null for none) and the heraldry (null until chosen), every member's to read
     hall, heraldry: heraldryOfRow(g.heraldry),
+    // GUILD-LOGO: the guild's own picture, worn in place of its device once the moderators approved it, and the one under review
+    ...(await logoViewOf(db, guildId, g.logo)),
     // DOMAIN2 (Domains.md 6): its castles - each one's region, key and the instance's epoch the door keys its room by - and,
     // to its Guildmaster, the castles its crowns may buy; a castle gone with its region released first (castles.js)
     ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),
@@ -244,7 +247,8 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
       // left this treasury) - the `kind` above read every line it had no word for as a deposit, so a Tribute, an upkeep, a
       // claim fee or a patron's bid said "put in"; `kind` stands as it was for a client from before
       marksLedger: (marksLines?.results ?? []).map((l) => ({ at: l.at, who: l.who, kind: GUILD_MARKS_LINE_KIND[l.kind] ?? 'deposit', raw: String(l.kind),
-        out: l.src_kind === 'guild' && String(l.src_id) === String(guildId), amount: l.amount })),
+        out: l.src_kind === 'guild' && String(l.src_id) === String(guildId), amount: l.amount,
+        ...(l.kind === 'guild-shop' && typeof l.dst_id === 'string' ? { ware: l.dst_id } : {}) })),   // GUILD-SHOP: the ware a purchase bought
       // AUDIT SILVER-WAYS A3: the day's guild deeds against their cap (marks.js guildDeedsToday) - written for this line
       // and never read, so a guild could not see its four
       ...(await guildDeedsToday(db, guildId, nowS)),
@@ -252,10 +256,19 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
   };
 }
 
+/** GUILD-LOGO: a guild's approved logo (null for none) and its review standing, if one is - `{ at }`. */
+async function logoViewOf(db, guildId, logo) {
+  const rows = await db.prepare(`SELECT id, state, at FROM guild_logos WHERE (id = ?1 AND state = 'approved') OR (guild_id = ?2 AND state = 'pending')`).bind(logo ?? '', guildId).all();
+  const list = rows?.results ?? [];
+  const pending = list.find((r) => r.state === 'pending');
+  return { logo: list.find((r) => r.state === 'approved')?.id ?? null, logoReview: pending ? { at: Number(pending.at) } : null };
+}
+
 /** AUDIT GUILD1d R5: a treasury line's word on the Guild tab - a heraldry changed is the treasury paying, never a
  *  deposit. SILVER-WAYS: and a guild deed struck to it, a contract's pay put up from it and what came home. */
 const GUILD_MARKS_LINE_KIND = Object.freeze({
   'guild-withdraw': 'withdraw', heraldry: 'heraldry', 'guild-deed': 'deed', 'contract-escrow': 'contract', 'contract-return': 'contract-return',
+  'guild-rename': 'rename', 'guild-shop': 'shop', 'logo-escrow': 'logo', 'logo-return': 'logo-return',   // GUILD-SHOP, GUILD-LOGO
 });
 
 /** The member a roster names, in the actor's own guild - or null. */
@@ -299,15 +312,13 @@ export const guildWordsOk = (name, tag) => guildWordRefusal(name, tag) == null;
 /**
  * GUILD2a (bible/11-Multiplayer/Guild-Overhaul.md; asked: "A way to change your guild name for a price"): A NEW NAME - the
  * guildmaster's: a name, a tag, or both (`name`/`tag` absent or the same keep the one standing), through the law's shapes
- * and the name filter, free of every other guild's (a guild nobody is left in gives its own up, as at a founding), paid
- * GUILD_RENAME_GOLD from the treasury - from the gold realm characters put in (`realm_gold`, the part a hall is bought
- * with: HALL-GOLD), so no bank's word buys it - never sooner than a fortnight after the last, and never in a week the
- * guild fights for a seat (heraldry's own rule, AUDIT-SEATS S10: its banners are on the field). ONE BATCH: the row
- * renamed and paid only where every one of those still holds, the treasury's line the ledger trigger's (`rename`), the
- * rename written down, the hall's owner name with it. Answers the guild's view and the actor's badge (its tag is new -
- * GUILD1c's order carries it to the rooms).
+ * and the name filter, free of every other guild's (a guild nobody is left in gives its own up, as at a founding), never
+ * sooner than a fortnight after the last, and never in a week the guild fights for a seat (heraldry's own rule,
+ * AUDIT-SEATS S10). GUILD-SHOP: paid GUILD_RENAME_SILVER from the silver treasury, under a request id. ONE BATCH: the
+ * burn, then the row renamed only where every rule still holds, the rename written down, the hall's owner name with it.
+ * Answers the guild's view and the actor's badge (its tag is new - GUILD1c's order carries it to the rooms).
  */
-export async function renameGuild(ctx, player, { character, name = null, tag = null } = {}) {
+export async function renameGuild(ctx, player, { character, name = null, tag = null, rid = null } = {}) {
   const { db, nowS } = ctx;
   const a = await actorOf(db, player, character);
   if (a.error) return a;
@@ -315,6 +326,9 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
   const gid = a.me.guild_id;
   const g = await db.prepare('SELECT * FROM guilds WHERE id = ?').bind(gid).first();
   if (!g) return { error: 'no-guild' };
+  // GUILD-SHOP: a rename asked again because its answer was lost is known by its burn, before the name it took reads as the same
+  const line = `${rid}:rename`;
+  if (typeof rid === 'string' && MARKS_RID_RE.test(rid) && await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ? AND rid = ?').bind(player.id, line).first()) return renamed(ctx, player, character, gid, { repeat: true });
   const n = name == null || name === '' ? g.name : guildNameOf(name);
   const t = tag == null || tag === '' ? g.tag : guildTagOf(tag);
   if (!n || !t) return { error: 'bad-guild' };
@@ -326,7 +340,10 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
   const week = seatWeekOf(nowS * 1000);
   const battle = `EXISTS (SELECT 1 FROM town_seat_battles WHERE week = ${week} AND (attacker = ?1 OR defender = ?1) AND state <> 'void')`;
   if ((await db.prepare(`SELECT ${battle} AS b`).bind(gid).first())?.b) return { error: 'guild-rename-siege' };
-  if (Number(g.realm_gold ?? 0) < GUILD_RENAME_GOLD) return { error: 'guild-rename-gold' };
+  if (!marksOpenFor(player, ctx.env)) return { error: 'marks-closed' };
+  if (typeof rid !== 'string' || !MARKS_RID_RE.test(rid)) return { error: 'bad-rid' };
+  const silver = async () => Number((await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(gid).first())?.balance ?? 0);
+  if (await silver() < GUILD_RENAME_SILVER) return { error: 'guild-rename-silver' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   const key = guildNameKey(n);
   // a guild nobody is left in holds its name and tag for no one (foundGuild's sweep, the same clause)
@@ -335,15 +352,20 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
   const who = displayName(player);
   try {
     await db.batch([
-      db.prepare(`UPDATE guilds SET name = ?2, name_key = ?3, tag = ?4, renamed_at = ?5, treasury = treasury - ?6, realm_gold = realm_gold - ?6,
-          moved_by = ?7, moved_at = ?5, moved_kind = 'rename'
-        WHERE id = ?1 AND name = ?8 AND tag = ?9 AND realm_gold >= ?6 AND treasury >= ?6
-          AND (renamed_at IS NULL OR renamed_at + ?10 <= ?5) AND NOT ${battle}
-          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?11 AND guild_id = ?1 AND rank = ${GUILD_RANK_MASTER})`)
-        .bind(gid, n, key, t, nowS, GUILD_RENAME_GOLD, who, g.name, g.tag, GUILD_RENAME_COOLDOWN_S, a.me.rid),
+      db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
+        SELECT 'guild', ?1, 'burn', NULL, 'guild-rename', ?2, ?3, ?4, ?5, ?6, ?7
+        WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2
+          AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?5 AND rid = ?7)`)
+        .bind(gid, GUILD_RENAME_SILVER, utcDay(nowS), nowS, player.id, who, line),
+      mustChange(db),
+      db.prepare(`UPDATE guilds SET name = ?2, name_key = ?3, tag = ?4, renamed_at = ?5
+        WHERE id = ?1 AND name = ?6 AND tag = ?7
+          AND (renamed_at IS NULL OR renamed_at + ?8 <= ?5) AND NOT ${battle}
+          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?9 AND guild_id = ?1 AND rank = ${GUILD_RANK_MASTER})`)
+        .bind(gid, n, key, t, nowS, g.name, g.tag, GUILD_RENAME_COOLDOWN_S, a.me.rid),
       mustChange(db),
       db.prepare('INSERT INTO guild_renames (guild_id, at, who, old_name, old_tag, new_name, new_tag, cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(gid, nowS, who, g.name, g.tag, n, t, GUILD_RENAME_GOLD),
+        .bind(gid, nowS, who, g.name, g.tag, n, t, GUILD_RENAME_SILVER),
       // the hall's owner, as its purchase copied the guild's name (halls.js buyHall) - reads prefer the live name; the copy too
       db.prepare('UPDATE homes SET owner_name = ? WHERE guild_id = ?').bind(n, gid),
     ]);
@@ -351,16 +373,21 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
     // a unique held (another guild took the name or the tag), or the row moved under it: say which
     if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ? AND id != ?').bind(key, gid).first()) return { error: 'guild-name-taken' };
     if (await db.prepare('SELECT 1 FROM guilds WHERE tag = ? AND id != ?').bind(t, gid).first()) return { error: 'guild-tag-taken' };
-    const now = await db.prepare('SELECT realm_gold, renamed_at FROM guilds WHERE id = ?').bind(gid).first();
+    const now = await db.prepare('SELECT renamed_at FROM guilds WHERE id = ?').bind(gid).first();
     if (!now) return { error: 'no-guild' };
-    if (Number(now.realm_gold ?? 0) < GUILD_RENAME_GOLD) return { error: 'guild-rename-gold' };
+    if (await silver() < GUILD_RENAME_SILVER) return { error: 'guild-rename-silver' };
     const was = now.renamed_at == null ? null : Number(now.renamed_at);
     if (!guildRenameOpen(was, nowS)) return { error: 'guild-rename-soon', at: guildRenameAt(was) };   // AUDIT2 GUILD2 S7: said here too
     return { error: 'guild-rename-moved' };
   }
+  return renamed(ctx, player, character, gid);
+}
+/** GUILD2a: a rename's answer - the guild's view, the actor's badge under the tag the guild bears now, what it cost. */
+async function renamed({ db, nowS, env }, player, character, gid, more = {}) {
   const me = await memberRow(db, player.id, character);
   if (!me) return { error: 'no-guild' };
-  return { ok: true, guild: await viewOf(db, gid, me, nowS, marksOpenFor(player, ctx.env), ctx.env), badge: badgeOfRow(me, t), cost: GUILD_RENAME_GOLD };
+  const tag = (await db.prepare('SELECT tag FROM guilds WHERE id = ?').bind(gid).first())?.tag;
+  return { ok: true, ...more, guild: await viewOf(db, gid, me, nowS, marksOpenFor(player, env), env), badge: badgeOfRow(me, tag), cost: GUILD_RENAME_SILVER };
 }
 
 /**
@@ -520,6 +547,7 @@ const GUILD_HOLDS = Object.freeze([
   ['guild-seat', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})`],   // SEAT1c: a Charter it holds - relinquished first (SEAT0 16)
   ['guild-battle', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`],   // SEAT1c: a battle it is named in, still to come
   ['guild-patron', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`],   // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild
+  ['guild-logo', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_logos WHERE guild_id = ${p} AND state = 'pending')`],   // GUILD-LOGO: a logo under review - its fee held until the moderators decide or it is withdrawn
 ]);
 /** The codes GUILD_HOLDS names, once each - the client's GUILD_HOLD_CODES is swept against them (test/net/audit_guild3.test.js). */
 export const GUILD_HOLD_KEEP_CODES = Object.freeze([...new Set(GUILD_HOLDS.map(([code]) => code))]);

@@ -52,6 +52,8 @@ export const GUILD_POWERS = Object.freeze({
   disband: Object.freeze([0]),
   rename: Object.freeze([0]),          // GUILD2a: the guild's own name and tag - the guildmaster's, for a price
   vaultGrant: Object.freeze([0]),      // GUILD2b: who may put in and take out of the guild's vault - the leader's to grant and revoke
+  shop: Object.freeze([0]),            // GUILD-SHOP: the hall's furniture bought from the silver treasury
+  logo: Object.freeze([0]),            // GUILD-LOGO: the guild's own picture sent for review, its fee from the silver treasury
 });
 /** One deposit or withdrawal, and the most a treasury holds. */
 export const GUILD_MOVE_MAX = 1_000_000;
@@ -118,13 +120,10 @@ export function guildRankNamesOf(raw) {
 
 // ─── GUILD2a (2026-10-03): A NEW NAME, FOR A PRICE ─────────────────────────────────────────────────────────────────
 // Asked: "A way to change your guild name for a price." The guildmaster renames the guild - its name, its tag, or both -
-// paying from the treasury: gold the guild's realm characters put in (the part a hall is bought with, HALL-GOLD), a sink a
-// guild chooses (Economy-Arc: "a sink that scales with wealth is a prestige one a player chooses"). Never sooner than
-// GUILD_RENAME_COOLDOWN_S after the last, so a name is not a costume changed by the hour; the old one is free at once for
-// any founder. bible/11-Multiplayer/Guild-Overhaul.md.
+// never sooner than GUILD_RENAME_COOLDOWN_S after the last, so a name is not a costume changed by the hour; the old one is
+// free at once for any founder. GUILD-SHOP: the price is silver from the guild's treasury (guildShopLaw.js
+// GUILD_RENAME_SILVER), no longer the realm's gold. bible/11-Multiplayer/Guild-Overhaul.md, Guild-Shop.md.
 
-/** What a rename costs, in gold from the treasury - two and a half foundings. */
-export const GUILD_RENAME_GOLD = 25_000;
 /** How long a guild keeps a name before it may change it again, in seconds - a fortnight. */
 export const GUILD_RENAME_COOLDOWN_S = 14 * 24 * 3600;
 /** When a guild renamed at `renamedAt` (epoch seconds, or null for never) may rename again - null for now. */

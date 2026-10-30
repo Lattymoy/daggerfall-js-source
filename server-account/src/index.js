@@ -370,7 +370,10 @@ import { staffRoute, STAFF_STATUS, STAFF_SESSION_HEADER, auditStatement } from '
 import { staffMessagesFor, staffMessageOk } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: the game's two doors
 import { hiddenToken, takeHiddenSeen } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: a hidden staff member's token, and a private home it entered
 import { HIDDEN_SEEN_PATH, HIDDEN_SEEN_MAX_BYTES, HIDDEN_SEEN_SIG_HEADER } from '../../src/net/hiddenSeen.js';
-import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';   // SAFE8: the moderators' queue in Discord
+import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';
+import { guildShopOf, buyGuildWare, guildArmsOf } from './guildShop.js';   // GUILD-SHOP: the guild shop, in silver; every guild's arms by its tag
+import { submitGuildLogo, withdrawGuildLogo, guildLogoBytes } from './guildLogos.js';   // GUILD-LOGO: a guild's own logo, reviewed on Discord
+import { GUILD_LOGO_BODY_MAX, guildLogoPathOf } from '../../src/net/guild/guildLogoLaw.js';   // SAFE8: the moderators' queue in Discord
 import { FEED_MAX_BYTES, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';   // SAFE5: the relay's feed of public lines
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
 import { ADMIT_ROUTES, admitWait } from './admit.js';   // ADMIT-LINE: the sign-in line
@@ -529,7 +532,7 @@ const GUILD_STATUS = Object.freeze({
   // GUILD2a: a new name - the same as the old, a word the filter refuses, too soon after the last, a siege week, the
   // realm's gold short, moved under it; GUILD2b: the vault - the standing short, the day's limit, full, empty, moved,
   // a piece the record does not hold or may not leave, a guild kept from going by its vault
-  'guild-rename-same': 409, 'guild-name-word': 400, 'guild-rank-word': 400, 'guild-rename-soon': 409, 'guild-rename-siege': 409, 'guild-rename-gold': 409, 'guild-rename-moved': 409,
+  'guild-rename-same': 409, 'guild-name-word': 400, 'guild-rank-word': 400, 'guild-rename-soon': 409, 'guild-rename-siege': 409, 'guild-rename-silver': 409, 'no-ware': 400, 'guild-ware-held': 409, 'guild-ware-max': 409, 'marks-short': 409, 'guild-rename-moved': 409,
   'guild-vault-rank': 403, 'guild-vault-limit': 409, 'guild-vault-full': 409, 'guild-vault-empty': 404, 'guild-vault-moved': 409, 'vault-goods': 409, 'guild-vault': 409,
   'realm-only': 400, 'bad-vault-item': 400, 'bad-vault-count': 400, 'bad-vault-slot': 400, 'bad-vault-grant': 400,
   'guild-seat': 409, 'guild-battle': 409,   // SEAT1c: a guild holding a Charter, or named in a battle still to come, does not go
@@ -542,6 +545,8 @@ const GUILD_STATUS = Object.freeze({
   // of the guild's to give up, the treasury short
   'seats-closed': 403, 'bad-rid': 400, 'castle-none': 404, 'castle-not-held': 409, 'castle-taken': 409, 'castle-not-yours': 404, 'guild-marks-short': 409,
   'seats-settling': 503,   // AUDIT DOMAINS S6: a castle act while another holds the Turning - asked again in a moment
+  // GUILD-LOGO: a review already under way, none to withdraw, a picture of the wrong size, shape or kind
+  'logo-pending': 409, 'logo-none': 404, 'logo-bytes': 400, 'logo-type': 400, 'logo-square': 400, 'logo-side': 400,
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
@@ -871,7 +876,8 @@ const service = {
     const slot = savePathOf(path);
     const realmSlot = realmPathOf(path);   // REALM P1: a realm character's save, matched as a save slot is
     const poiPath = poiPathOf(path);   // POI-1: the POI store's paths, matched the same way
-    if (!ROUTES.has(path) && !slot && !realmSlot && !poiPath) return no('not-found', 404, origin);
+    const logoPath = guildLogoPathOf(path);   // GUILD-LOGO: a guild's logo, by its id
+    if (!ROUTES.has(path) && !slot && !realmSlot && !poiPath && !logoPath) return no('not-found', 404, origin);
 
     if (!env.DB) return no('no-database', 503, origin);
     // ADMIT-LINE (admit.js): A SIGN-IN TAKES ITS PLACE IN THE LINE before it costs the database a statement - the open
@@ -1077,7 +1083,7 @@ const service = {
       // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES). LOST-SPOILS: and a floor's leftovers,
       // to theirs (lostLaw.js LOST_BODY_MAX - the largest spoils send past 4 KiB)
       const body = request.method === 'POST'
-        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines; DECOR-BATCH: a home's Confirm; LOST-SPOILS
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/post/lost' ? LOST_BODY_MAX : path === '/v1/guilds/logo' ? GUILD_LOGO_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines; DECOR-BATCH: a home's Confirm; LOST-SPOILS
       if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (body === undefined && path === '/v1/homes/decor/batch') return no('too-large', 413, origin);   // DECOR-BATCH: past 128 KiB, before a session is read
       if (!body) return no('body', 400, origin);
@@ -1115,6 +1121,16 @@ const service = {
           const r = await getPoiAsset({ ...ctx, db: env.DB, bucket: env.SAVES }, poiPath.sha, { builder: false });
           return 'error' in r ? no(r.error, r.error === 'no-storage' ? 503 : 404, origin) : poiAssetResponse(r, origin);
         }
+      }
+      // GUILD-LOGO: A LOGO'S PICTURE NEEDS NO SESSION - the Discord card shows it under review, and every player draws it
+      // once approved. Bounded per address as a POI asset is; an approved one kept a day, one under review never kept.
+      if (logoPath) {
+        if (request.method !== 'GET') return no('method', 405, origin);
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+        if (overAccountRate(`logo:${ip}`, nowS, POI_OPEN_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
+        const r = await guildLogoBytes({ db: env.DB, bucket: env.SAVES }, logoPath);
+        if ('error' in r) return no(r.error, r.error === 'no-storage' ? 503 : 404, origin);
+        return new Response(r.bytes, { status: 200, headers: { 'content-type': r.type, 'access-control-allow-origin': origin, 'cache-control': r.approved ? 'public, max-age=86400' : 'no-store', 'x-content-type-options': 'nosniff' } });
       }
       // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
       //
@@ -1969,6 +1985,7 @@ const service = {
           return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         }
         if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
+        if (path === '/v1/guilds/arms') return json(await guildArmsOf(ctx, body), 200, origin);   // GUILD-SHOP: any session's - a peer's arms by its tag
         if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
         const castleAct = (f) => async (c, p, b) => (seatsOpenFor(p, env) && (await settleDueOnce(c.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).pending ? { error: 'seats-settling' } : f(c, p, b));
         const act = {
@@ -1988,9 +2005,11 @@ const service = {
           // DOMAINS S6: after the Turnings due, as every seat act is (a castle bought in the minutes a week has turned
           // unsettled bought a crown that Turning was about to lapse, and lost half its price at once)
           '/v1/guilds/castle/buy': castleAct(buyCastle), '/v1/guilds/castle/sell': castleAct(sellCastle),
+          // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the shop and a ware bought in silver; a logo sent for review and withdrawn
+          '/v1/guilds/shop': guildShopOf, '/v1/guilds/shop/buy': buyGuildWare, '/v1/guilds/logo': submitGuildLogo, '/v1/guilds/logo/withdraw': withdrawGuildLogo,
         }[path];
         if (!act) return no('not-found', 404, origin);
-        const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
+        const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);   // GUILD-LOGO: `self` the service's own origin, a logo's address; REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
         if (!('error' in r)) return json(await homeOrdersOf(await guildOrdersOf(r, who.player.id, env, subtle, nowS), who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a hall bought or sold
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // REALM P2.2: the service's own, as a checkpoint's
         if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // AUDIT PRE-MERGE 1003 WD1: the town's layout, as /v1/homes/claim answers it

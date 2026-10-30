@@ -39,6 +39,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { HANDLE_RE } from './handleShape.js';
+import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';   // GUILD-SHOP: a new name's price, in silver
+import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, guildLogoUrl } from './guild/guildLogoLaw.js';   // GUILD-LOGO: a logo's bounds, said
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS, ICONS } from './identityToken.js';
@@ -57,7 +59,7 @@ import {
 } from './professionLaw.js';   // PROF1: the bounds its refusals name; PROF7: Hunting's rare hides (CAP-OFF: no day's cap)
 import {
   GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
-  GUILD_RENAME_GOLD,
+
 } from './guild/guildLaw.js';   // GUILD1: the bounds its refusals name; GUILD2a: a new name's price
 import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guild/guildVaultLaw.js';   // GUILD2b: the vault's shelf, in its refusal's own sentence
 import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, AUCTION_BID_MAX } from './marketLaw.js';   // PROF5: the bounds its refusals name
@@ -709,7 +711,19 @@ const REFUSAL_WORDS = {
   'guild-rank-word': () => t('account.refusal.guildRankWord', 'A rank\'s name cannot contain a word that is not allowed in names.'),   // TEXT-F1
   'guild-rename-soon': () => t('account.refusal.guildRenameSoon', 'The guild was renamed too recently. It can be renamed again 2 weeks after the last time.'),
   'guild-rename-siege': () => t('account.refusal.guildRenameSiege', 'The guild is in a siege or a Tourney this week. It cannot be renamed until the battle is over.'),
-  'guild-rename-gold': () => t('account.refusal.guildRenameGold', 'A new name costs {cost, number} gold, paid from gold that realm characters put in the treasury, and there is not that much.', { cost: GUILD_RENAME_GOLD }),
+  'guild-rename-silver': () => t('account.refusal.guildRenameSilver', 'A new name costs {cost, number} silver from the guild\'s silver treasury, and it holds less.', { cost: GUILD_RENAME_SILVER }),   // GUILD-SHOP
+  // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop (server-account/src/guildShop.js)
+  'no-ware': () => t('account.refusal.noWare', 'The guild shop does not sell that.'),
+  'guild-ware-held': () => t('account.refusal.guildWareHeld', 'Your account already has that.'),
+  'guild-ware-max': () => t('account.refusal.guildWareMax', 'The guild already owns as many of those as a guild can.'),
+  // GUILD-LOGO: a guild's own logo (server-account/src/guildLogos.js)
+  'guild-logo': () => t('account.refusal.guildLogo', 'Your guild\'s logo is under review. Withdraw it on the Arms page, or wait for the moderators.'),
+  'logo-pending': () => t('account.refusal.logoPending', 'The moderators are still reviewing your guild\'s last logo.'),
+  'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
+  'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
+  'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),
+  'logo-square': () => t('account.refusal.logoSquare', 'A logo must be square.'),
+  'logo-side': () => t('account.refusal.logoSide', 'A logo is {min} to {max} pixels on a side.', { min: GUILD_LOGO_SIDE_MIN, max: GUILD_LOGO_SIDE_MAX }),
   'guild-rename-moved': () => t('account.refusal.guildRenameMoved', 'The guild changed while it was being renamed. Nothing was paid. Look again.'),
   // GUILD2b: the vault (server-account/src/guildVault.js)
   'guild-vault-rank': () => t('account.refusal.guildVaultRank', 'The guildmaster has not given you that permission at the guild vault.'),
@@ -2243,7 +2257,15 @@ export function accountGuilds({ fetch, storage }) {
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken
     // out on the realm record where it stands (`realm`), the guildmaster's grants
-    rename: (character, name, tag) => post('/v1/guilds/rename', { character, ...(name ? { name } : {}), ...(tag ? { tag } : {}) }),
+    rename: (character, name, tag, rid = null) => post('/v1/guilds/rename', { character, ...(name ? { name } : {}), ...(tag ? { tag } : {}), ...(rid ? { rid } : {}) }),   // GUILD-SHOP: `rid`, the silver's request id
+    // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop and a ware bought in silver; every guild's arms by its
+    // tag; a logo sent for review (`image` in base64) and withdrawn
+    shop: (character) => post('/v1/guilds/shop', { character }),
+    shopBuy: (character, ware, rid) => post('/v1/guilds/shop/buy', { character, ware, rid }),
+    arms: (tags) => post('/v1/guilds/arms', { tags }),
+    logo: (character, image, rid) => post('/v1/guilds/logo', { character, image, rid }),
+    logoWithdraw: (character) => post('/v1/guilds/logo/withdraw', { character }),
+    logoUrl: (id) => guildLogoUrl(serviceBase(storage), id),   // GUILD-LOGO: where a logo's picture is served
     vault: (character) => post('/v1/guilds/vault', { character }),
     vaultPut: ({ character, realm, pick, item, count }) => post('/v1/guilds/vault/put', { character, realm, pick, item, count }),
     vaultTake: ({ character, realm, slot, count = null, at = null }) => post('/v1/guilds/vault/take', { character, realm, slot, ...(count == null ? {} : { count }), ...(at == null ? {} : { at }) }),

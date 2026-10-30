@@ -57,6 +57,7 @@ import { GUILD_FOUND_GOLD, guildGoldOk } from './guildLaw.js';
 import { guildHallEntryOk } from '../hallLaw.js';   // GUILD1d: who may walk into a hall
 import { heraldryOf } from '../heraldryLaw.js';   // GUILD1d: a heraldry chosen, in the law's shape
 import { mintMarksRid } from '../marksBook.js';   // GUILD1d: a heraldry changed burns Drakes - one request id a choice
+import { setArmsDoor, noteGuildArms } from './guildArmsBook.js';   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
 import { walletReserve } from '../realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 import { lastOnlineText } from '../social.js';   // GUILD-SEEN: a member's "last online" in the friends list's own words
 import { PLAY_GRACE_S } from '../playClock.js';   // GUILD-SEEN: and "Online" by the play beat's own sitting
@@ -177,6 +178,10 @@ export class GuildBook {
     /** @type {Promise<any>|null} */ this._looking = null;
     /** @type {{key: string, rid: string}|null} GUILD1d: the heraldry change asked, and its one request id */ this._heraldryAsk = null;
     /** @type {{ask: string, rid: string}|null} DOMAIN2: a castle bought or given up, and its one request id */ this._castleAsk = null;
+    /** @type {Map<string, {key: string, rid: string}>} GUILD-SHOP: each silver act asked (a rename, a ware, a logo) and its one request id */ this._asks = new Map();
+    /** @type {any} GUILD-SHOP: the guild shop as the last read said it (guildShop.js guildShopOf), or null not yet read */ this.shopView = null;
+    /** @type {string|null} GUILD-SHOP: the last shop read's refusal, or null */ this.shopError = null;
+    setArmsDoor(door, now);
   }
 
   _changed() { this.version++; }
@@ -212,6 +217,7 @@ export class GuildBook {
     }
     const was = pictureOf(this.state, this.guild, this.invites);
     this.guild = mine.data?.guild ?? null;
+    if (this.guild) noteGuildArms(this.guild.tag, this.guild.heraldry, this.guild.logo, this.guild.name);   // GUILD-SHOP: the faces that draw this guild's arms
     this.invites = Array.isArray(inv.data?.invites) ? inv.data.invites : [];
     this.state = 'ready';
     this.error = null;
@@ -355,7 +361,45 @@ export class GuildBook {
 
   /** GUILD2a: A NEW NAME, TAG OR BOTH - the guildmaster's, paid from the treasury on the service (no purse moves). The new
    *  tag rides the answer's order to the rooms (GUILD1c), as a founding's does. */
-  rename(name, tag) { return this._act((c) => this.door.rename(c, name ?? null, tag ?? null)); }
+  /** GUILD-SHOP: a new name, paid in silver - one request id while the same name and tag are asked. */
+  rename(name, tag) { return this._silver('rename', `${name ?? ''}|${tag ?? ''}`, (c, rid) => this.door.rename(c, name ?? null, tag ?? null, rid)); }
+  /**
+   * GUILD-SHOP: A SILVER ACT under ONE REQUEST ID while the same thing is asked (an answer lost and asked again is the
+   * line it made, never a second burn); an answer, or a refusal the service gave, lets it go.
+   * @param {string} kind @param {string} key @param {(character: string, rid: string) => Promise<any>} run
+   */
+  _silver(kind, key, run) {
+    let ask = this._asks.get(kind);
+    if (ask?.key !== key) this._asks.set(kind, (ask = { key, rid: mintMarksRid() }));
+    const { rid } = ask;
+    return this._act(async (c) => {
+      const r = await run(c, rid);
+      const lost = !r?.ok && ['offline', 'server', 'timeout'].includes(r?.error);
+      if (!lost && this._asks.get(kind)?.rid === rid) this._asks.delete(kind);
+      return r;
+    });
+  }
+  /** GUILD-SHOP: THE SHOP READ - what is held and owned, and the two balances; the last read asked is the one kept. */
+  async readShop() {
+    const character = this.character?.() ?? null;
+    if (!character || !this.door.shop) return { ok: false, error: 'guild-character' };
+    const gen = (this._shopGen = (this._shopGen ?? 0) + 1);
+    const r = await this.door.shop(character);
+    if (gen !== this._shopGen) return r;
+    if (r?.ok) { this.shopView = r.data?.shop ?? null; this.shopError = null; } else { this.shopError = r?.error ?? 'server'; this._whole(r?.error); }
+    this._changed();
+    return r;
+  }
+  /** GUILD-SHOP: BUY A WARE in silver - the shop read again with the answer. */
+  async buyWare(ware) {
+    const r = await this._silver(`ware:${ware}`, ware, (c, rid) => this.door.shopBuy(c, ware, rid));
+    if (r?.ok && r.data?.shop) { this.shopView = r.data.shop; this._changed(); } else await this.readShop();
+    return r;
+  }
+  /** GUILD-LOGO: SEND A LOGO for review - `image` the square picture in base64; its fee held from the silver treasury. */
+  submitLogo(image) { return this._silver('logo', String(image).slice(0, 64) + String(image).length, (c, rid) => this.door.logo(c, image, rid)); }
+  /** GUILD-LOGO: the review under way withdrawn, its fee home. */
+  withdrawLogo() { return this._act((c) => this.door.logoWithdraw(c)); }
 
   /** GUILD2b: THE VAULT READ - every slot's piece, the lines, this member's standing. Not an act: nothing moves. */
   async readVault() {

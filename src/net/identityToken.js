@@ -246,7 +246,7 @@ export const GLYPHS_MAX = GLYPHS.length;
  *  title's reason: a picture another player's Inspect card shows is one the service vouches for. Holding one is the
  *  service's business (server-account/src/titles.js iconsHeld: the Witches' Festival's, bought or earned); this list is
  *  the vocabulary both ends share. Appended, never reordered. */
-export const ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake']);
+export const ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake', 'guildcrest']);   // GUILD-SHOP: the Guild Crest - the wearer's guild's arms (guildShopLaw.js)
 
 /** RENOWN1 (2026-09-24, Mac: "What if the leveling system was something
  *  seperate unique to online but compatible" ... "Plus having their level
