@@ -116,7 +116,7 @@ test('APPEARANCES THE SHEET, THE CLONE AND THE HELM: the classic first-person sh
   assert.match(rig, /function artFor\(held\) \{\s*const plain = !!glowOf\(held\);\s*const type = heldType\(held\);\s*if \(type === WEAPON_TYPES\.None\) return null;\s*const item = drawnPiece\(held\);/);
   // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
   assert.match(rig, /art: c \? artFor\(item\) : null, weapon: drawnPiece\(item\),\s*weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/);
-  assert.match(strip(read('src/characters/headPortraits.js')), /const helm = drawnPiece\(entity\?\.equip \? equipTableOf\(entity\)\?\.\[EQUIP_SLOTS\.Head\] \?\? null : null\);/);
+  assert.match(strip(read('src/characters/headPortraits.js')), /const helm = drawnPiece\(entity\?\.equip \? \(equipTableOf\(entity\)\?\.\[EQUIP_SLOTS\.Head\] \?\? null\) : null\);/);
   const sword = createWeapon(WEAPONS.Longsword, 1);
   sword.appearance = { t: WEAPONS.Katana, m: 7, v: 0 };
   assert.equal(drawnPiece(sword), drawnPiece(sword), 'one copy, so the clone sees one weapon');

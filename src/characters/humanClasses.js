@@ -198,11 +198,7 @@ export const CLASS_DESIGNS = [
     weaponTier: 0,
     // Whites, and the only garment here meant to be seen clean.
     build: { ...PERSON, arm: 0.94, shoulder: 0.94 },
-    zones: [
-      pelvis('cloth'),
-      legs('cloth', 0.48),
-      feet('boot'),
-    ],
+    zones: [pelvis('cloth'), legs('cloth', 0.48), feet('boot')],
     mats: { cloth: CLASS_RAMPS.linen, boot: CLASS_RAMPS.homespun },
     hideRamp: 'skin',
     bootRamp: 'homespun',
@@ -273,10 +269,7 @@ export const CLASS_DESIGNS = [
     weaponTier: 0,
     // Bare arms and bare feet: the only fighter here who wears nothing on either.
     build: { ...PERSON, torso: 1.02, arm: 1.04, shoulder: 1.02 },
-    zones: [
-      pelvis('cloth'),
-      legs('cloth', 0.52),
-    ],
+    zones: [pelvis('cloth'), legs('cloth', 0.52)],
     mats: { cloth: CLASS_RAMPS.homespun },
     hideRamp: 'skin',
     bootRamp: 'skin',
@@ -330,11 +323,7 @@ export const CLASS_DESIGNS = [
     weaponTier: 0,
     // Wearing as little as anyone here: weight is the enemy.
     build: { ...PERSON, torso: 0.9, shoulder: 0.94, arm: 0.92, leg: 0.94 },
-    zones: [
-      torso('cloth', 1.16, 1.5, 0.012),
-      pelvis('cloth'),
-      legs('cloth', 0.5),
-    ],
+    zones: [torso('cloth', 1.16, 1.5, 0.012), pelvis('cloth'), legs('cloth', 0.5)],
     mats: { cloth: CLASS_RAMPS.homespun },
     hideRamp: 'skin',
     bootRamp: 'skin',
@@ -390,11 +379,7 @@ export const CLASS_DESIGNS = [
     weaponTier: 1,
     // Bare to the waist and half again the width of a mage.
     build: { ...PERSON, torso: 1.24, shoulder: 1.3, arm: 1.24, hand: 1.14, neck: 1.12, leg: 1.16 },
-    zones: [
-      pelvis('fur', 0.88, 1.16, 0.026),
-      legs('fur', 0.56, 0.96, 0.022),
-      feet('fur', 0.0, 0.2, 0.02),
-    ],
+    zones: [pelvis('fur', 0.88, 1.16, 0.026), legs('fur', 0.56, 0.96, 0.022), feet('fur', 0.0, 0.2, 0.02)],
     mats: { fur: CLASS_RAMPS.fur },
     hideRamp: 'skin',
     bootRamp: 'fur',

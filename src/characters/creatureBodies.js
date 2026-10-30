@@ -7,8 +7,8 @@
 // (lich) and Bloodmoon's (BM_spriggan, BM_bear_black, bm_frost_giant, draugr); a master that lacks one refuses the
 // build and the sprite stands, as for any refused body.
 import { MOBILE_TYPES as M } from './mobile/mobileTypes.js';
-import { ENEMY_BASICS, isClassEnemyId } from './enemy/enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite); DEX7: a mod's row a monster's, never a class's
-import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the spectral sprite's opacity
+import { ENEMY_BASICS, isClassEnemyId } from './enemy/enemyBasics.js'; // MWNPC13: a spectral's own archive (a named one keeps its sprite); DEX7: a mod's row a monster's, never a class's
+import { BaseImageFile } from '../formats/baseImageFile.js'; // MWNPC13: the spectral sprite's opacity
 
 /** The match: mobile type -> `{ creature: [CREA ids, first carried wins] }` or `{ miss: reason }`. Every creature
  *  mobile is named - the table is the census. MWNPC13: `veil` a spectral's - its body drawn translucent (SPECTRAL_VEIL).
@@ -18,50 +18,54 @@ export const CREATURE_MATCH = Object.freeze({
   [M.Rat]: { creature: ['rat'] },
   // AUDIT MW-NPC D4: Daggerfall's imp FLIES (its behaviour, its hover at the gate) and Morrowind's scamp walks - stood,
   // it paddled its walk cycle in the air; a flyer with no Morrowind flyer keeps its sprite, as the bat and the harpy do
-  [M.Imp]: { miss: 'a flyer - Morrowind\'s scamp walks, and no imp flies there' },
+  [M.Imp]: { miss: "a flyer - Morrowind's scamp walks, and no imp flies there" },
   [M.Spriggan]: { creature: ['bm_spriggan'] },
   [M.GiantBat]: { miss: 'no bat walks Morrowind' },
-  [M.GrizzlyBear]: { creature: ['bm_bear_black'] },        // Bloodmoon's grizzly
+  [M.GrizzlyBear]: { creature: ['bm_bear_black'] }, // Bloodmoon's grizzly
   [M.SabertoothTiger]: { miss: 'no great cat' },
   [M.Spider]: { miss: 'no giant spider (the centurion spider is a Dwemer machine)' },
-  [M.Orc]: { miss: 'an orc is a person - Morrowind\'s Orc (MWNPC12, foeBodies.js isPersonFoe), never a creature' },
+  [M.Orc]: { miss: "an orc is a person - Morrowind's Orc (MWNPC12, foeBodies.js isPersonFoe), never a creature" },
   [M.Centaur]: { miss: 'no centaur' },
-  [M.Werewolf]: { miss: 'a werewolf is a person in its beast form - Bloodmoon\'s wolf (MWNPC15, foeBodies.js isPersonFoe), never a creature' },
+  [M.Werewolf]: {
+    miss: "a werewolf is a person in its beast form - Bloodmoon's wolf (MWNPC15, foeBodies.js isPersonFoe), never a creature",
+  },
   [M.Nymph]: { miss: 'no nymph' },
   [M.Slaughterfish]: { miss: 'a water creature - the swimming groups are not driven yet' },
   [M.OrcSergeant]: { miss: 'an orc is a person' },
   [M.Harpy]: { miss: 'no harpy' },
   [M.Wereboar]: { miss: 'no wereboar' },
   [M.SkeletalWarrior]: { creature: ['skeleton warrior', 'skeleton'] },
-  [M.Giant]: { creature: ['bm_frost_giant'] },             // Bloodmoon's frost giant
+  [M.Giant]: { creature: ['bm_frost_giant'] }, // Bloodmoon's frost giant
   [M.Zombie]: { creature: ['bonewalker'] },
-  [M.Ghost]: { creature: ['ancestor_ghost'], veil: true },   // MWNPC13: Morrowind's ancestor ghost, seen through as Daggerfall's is
-  [M.Mummy]: { creature: ['draugr'] },                     // Bloodmoon's draugr, the barrows' wrapped dead
+  [M.Ghost]: { creature: ['ancestor_ghost'], veil: true }, // MWNPC13: Morrowind's ancestor ghost, seen through as Daggerfall's is
+  [M.Mummy]: { creature: ['draugr'] }, // Bloodmoon's draugr, the barrows' wrapped dead
   [M.GiantScorpion]: { miss: 'no giant scorpion' },
   [M.OrcShaman]: { miss: 'an orc is a person' },
   [M.Gargoyle]: { miss: 'no gargoyle' },
-  [M.Wraith]: { creature: ['ancestor_ghost'], veil: true },   // MWNPC13: Morrowind has no wraith - its ghost, the same veil
+  [M.Wraith]: { creature: ['ancestor_ghost'], veil: true }, // MWNPC13: Morrowind has no wraith - its ghost, the same veil
   [M.OrcWarlord]: { miss: 'an orc is a person' },
   [M.FrostDaedra]: { creature: ['atronach_frost'] },
   [M.FireDaedra]: { creature: ['atronach_flame'] },
   [M.Daedroth]: { creature: ['daedroth'] },
-  [M.Vampire]: { miss: 'a vampire is a person - its race\'s vampire head (MWNPC14, foeBodies.js isPersonFoe), never a creature' },
+  [M.Vampire]: {
+    miss: "a vampire is a person - its race's vampire head (MWNPC14, foeBodies.js isPersonFoe), never a creature",
+  },
   // AUDIT MW-NPC II K5: transformed she FLIES (mobileUnit.js setSpecialTransformationCompleted: 'Flying'), so her body
   // must be a creature that flies - the build asks the record's own Flies flag (fpArm.js buildCreatureBody) and a
   // winged twilight that walks keeps her sprite
   [M.DaedraSeducer]: { creature: ['winged twilight'], flies: true },
   [M.VampireAncient]: { miss: 'a vampire is a person' },
   [M.DaedraLord]: { creature: ['dremora_lord'] },
-  [M.Lich]: { creature: ['lich'] },                        // Tribunal's
+  [M.Lich]: { creature: ['lich'] }, // Tribunal's
   [M.AncientLich]: { creature: ['lich'] },
   [M.Dragonling]: { miss: 'no dragon' },
   [M.FireAtronach]: { creature: ['atronach_flame'] },
-  [M.IronAtronach]: { creature: ['atronach_storm'] },      // the stone atronach for the iron one
+  [M.IronAtronach]: { creature: ['atronach_storm'] }, // the stone atronach for the iron one
   [M.FleshAtronach]: { miss: 'no flesh atronach' },
   [M.IceAtronach]: { creature: ['atronach_frost'] },
   [M.Horse_Invalid]: { miss: 'not a foe' },
   [M.Dragonling_Alternate]: { miss: 'no dragon' },
-  [M.Dreugh]: { miss: 'a water creature - the swimming groups are not driven yet' },   // AUDIT MW-NPC D5: the slaughterfish's law - it swims (Aquatic), and its body walked through the water
+  [M.Dreugh]: { miss: 'a water creature - the swimming groups are not driven yet' }, // AUDIT MW-NPC D5: the slaughterfish's law - it swims (Aquatic), and its body walked through the water
   [M.Lamia]: { miss: 'no lamia' },
 });
 
@@ -72,9 +76,18 @@ export const CREATURE_MATCH = Object.freeze({
 export const SPECTRAL_VEIL = Object.freeze({ mode: 3, alpha: BaseImageFile.SPECTRAL_ALPHA / 255, t: 0, phase: 0 });
 
 /** A row's look, one frozen object (a look is a body key - PeerBodies keys it `crea|<ids>`). */
-const lookOf = (m) => Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies ? { flies: true } : {}) });
+const lookOf = (m) =>
+  Object.freeze({
+    creature: Object.freeze([...m.creature]),
+    ...(m.veil ? { veil: SPECTRAL_VEIL } : {}),
+    ...(m.flies ? { flies: true } : {}),
+  });
 /** The looks, one a mobile type. */
-const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature).map(([t, m]) => [Number(t), lookOf(m)]));
+const LOOKS = new Map(
+  Object.entries(CREATURE_MATCH)
+    .filter(([, m]) => m.creature)
+    .map(([t, m]) => [Number(t), lookOf(m)]),
+);
 
 /** DEX7 (bible/04-Characters/Enemy-Expansion.md section 10): A MOD'S CREATURES, matched by the classic table's law - a
  *  mod that adds monsters past the classic ids (characters/enemy/enemyBasics.js registerEnemyRows) registers a row for
@@ -87,13 +100,26 @@ const _modMatch = new Map();
 /** Register a mod's rows: `[mobileType, row]` pairs, each mobile once. */
 export function registerCreatureMatches(rows) {
   for (const [t, m] of rows) {
-    if (!Number.isInteger(t) || t in CREATURE_MATCH || _modMatch.has(t)) throw new Error(`registerCreatureMatches: mobile ${t} is already named`);
-    if (isClassEnemyId(t)) throw new Error(`registerCreatureMatches: mobile ${t} is a class - a person (foeBodies.js registerPersonFoes), never a creature`);
-    if (!!m.creature === !!m.miss) throw new Error(`registerCreatureMatches: mobile ${t} is a match or a miss, never both`);
-    if (m.creature && !(m.creature.length && m.creature.every((id) => typeof id === 'string' && id === id.toLowerCase() && id.trim() === id))) throw new Error(`registerCreatureMatches: mobile ${t}'s ids as the reader keeps them (lower case, trimmed)`);
+    if (!Number.isInteger(t) || t in CREATURE_MATCH || _modMatch.has(t))
+      throw new Error(`registerCreatureMatches: mobile ${t} is already named`);
+    if (isClassEnemyId(t))
+      throw new Error(
+        `registerCreatureMatches: mobile ${t} is a class - a person (foeBodies.js registerPersonFoes), never a creature`,
+      );
+    if (!!m.creature === !!m.miss)
+      throw new Error(`registerCreatureMatches: mobile ${t} is a match or a miss, never both`);
+    if (
+      m.creature &&
+      !(
+        m.creature.length &&
+        m.creature.every((id) => typeof id === 'string' && id === id.toLowerCase() && id.trim() === id)
+      )
+    )
+      throw new Error(`registerCreatureMatches: mobile ${t}'s ids as the reader keeps them (lower case, trimmed)`);
     if (m.miss && !(String(m.miss).length > 4)) throw new Error(`registerCreatureMatches: mobile ${t}'s miss says why`);
     const b = ENEMY_BASICS[t]?.behaviour ?? 'General';
-    if (m.creature && (b === 'Aquatic' || (b === 'Flying' && !m.flies))) throw new Error(`registerCreatureMatches: mobile ${t} (${b}) needs a Morrowind creature that moves as it does`);
+    if (m.creature && (b === 'Aquatic' || (b === 'Flying' && !m.flies)))
+      throw new Error(`registerCreatureMatches: mobile ${t} (${b}) needs a Morrowind creature that moves as it does`);
     _modMatch.set(t, Object.freeze({ ...m, ...(m.creature ? { creature: Object.freeze([...m.creature]) } : {}) }));
     if (m.creature) LOOKS.set(t, lookOf(m));
   }
@@ -118,7 +144,8 @@ export function creatureLook(f) {
   if (look?.veil) {
     // MWNPC13: a NAMED spectral - Lysandus, placed by his quest in his own archive (473) - keeps his own sprite: the
     // body is the stock ghost's, and he is no stock ghost
-    const a = f.mobileArchive ?? f.archive, b = ENEMY_BASICS[f.mobileType];
+    const a = f.mobileArchive ?? f.archive,
+      b = ENEMY_BASICS[f.mobileType];
     if (a != null && b && a !== b.maleTexture && a !== b.femaleTexture) return null;
   }
   return look;

@@ -16,7 +16,7 @@
 // head, a mesh not in hand).
 import { portraitRenderer } from '../render/portraitRenderer.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
-import { drawnPiece } from '../net/appearanceLaw.js';   // APPEARANCES: a worn helm's look
+import { drawnPiece } from '../net/appearanceLaw.js'; // APPEARANCES: a worn helm's look
 import { getPref } from '../systems/uiPrefs.js';
 
 /** The shape a door that draws a head at its record's own size draws it at (the party's plate, the family's and the
@@ -28,12 +28,18 @@ export const HEAD_RECORD = Object.freeze({ w: 32, h: 34, scale: 3 });
  *  own order, and a host's - its network door is bound at its load). */
 let _data = null;
 /** The tests' window: a store to read the data's stamp off (null - the real one, behind its door again). */
-export function _setHeadDataForTests(ds) { _data = ds; }
+export function _setHeadDataForTests(ds) {
+  _data = ds;
+}
 /** The data's generation while Morrowind's data is attached, else 0 - read at once, for a face's key (0 until the store
  *  has loaded: the key moves when it has). */
 export function headDataStamp() {
   if (!_data) {
-    import('../scenes/dataSource.js').then((m) => { _data = m; }).catch(() => {});
+    import('../scenes/dataSource.js')
+      .then((m) => {
+        _data = m;
+      })
+      .catch(() => {});
     return 0;
   }
   return _data.morrowindDataCount() > 0 ? _data.morrowindDataGeneration() : 0;
@@ -45,13 +51,13 @@ export function headDataStamp() {
 export function playerHeadKey(entity) {
   const stamp = headDataStamp();
   if (!stamp) return '0';
-  const helm = drawnPiece(entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);   // APPEARANCES: the helm as it is drawn - a look worn over it is a new face
+  const helm = drawnPiece(entity?.equip ? (equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null) : null); // APPEARANCES: the helm as it is drawn - a look worn over it is a new face
   return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}` : '-'}`;
 }
 
 /** The data gate the player's face reads - the same count the player's body stands on. */
 async function dataAttached() {
-  const { morrowindDataCount } = _data ?? await import('../scenes/dataSource.js');
+  const { morrowindDataCount } = _data ?? (await import('../scenes/dataSource.js'));
   return morrowindDataCount() > 0;
 }
 
@@ -65,16 +71,39 @@ async function dataAttached() {
  *  @param {{ px?: number, ph?: number, renderer?: any }} [opts] */
 export async function playerHeadImage(who, { px = 128, ph = px, renderer = portraitRenderer() } = {}) {
   if (!who || !renderer || !(await dataAttached())) return null;
-  const [{ headPortrait }, { mwRaceId }] = await Promise.all([import('../combat/fpArm.js'), import('../formats/morrowind/mwNpc.js')]);
+  const [{ headPortrait }, { mwRaceId }] = await Promise.all([
+    import('../combat/fpArm.js'),
+    import('../formats/morrowind/mwNpc.js'),
+  ]);
   if (who.equip) {
-    const [{ armBuildOptsOf }, { liveLycanthropy }] = await Promise.all([import('../combat/weapon/weaponRig.js'), import('../systems/lycanthropy.js')]);
-    if (liveLycanthropy(who)?.isTransformed && !armBuildOptsOf(who).werewolf) return null;   // the wereboar: no Morrowind boar
+    const [{ armBuildOptsOf }, { liveLycanthropy }] = await Promise.all([
+      import('../combat/weapon/weaponRig.js'),
+      import('../systems/lycanthropy.js'),
+    ]);
+    if (liveLycanthropy(who)?.isTransformed && !armBuildOptsOf(who).werewolf) return null; // the wereboar: no Morrowind boar
     const o = armBuildOptsOf(who);
-    return headPortrait({ renderer, race: o.race, female: o.female, faceIndex: o.faceIndex, armor: o.armor, vampire: o.vampire, werewolf: o.werewolf, skin: o.skin, ownHeads: o.ownHeads, px, ph });
+    return headPortrait({
+      renderer,
+      race: o.race,
+      female: o.female,
+      faceIndex: o.faceIndex,
+      armor: o.armor,
+      vampire: o.vampire,
+      werewolf: o.werewolf,
+      skin: o.skin,
+      ownHeads: o.ownHeads,
+      px,
+      ph,
+    });
   }
   return headPortrait({
-    renderer, race: mwRaceId(who.race ?? 'Breton'), female: who.gender === 'female',
-    faceIndex: Number.isInteger(who.faceIndex) ? who.faceIndex : 0, ownHeads: !who.npc, px, ph,
+    renderer,
+    race: mwRaceId(who.race ?? 'Breton'),
+    female: who.gender === 'female',
+    faceIndex: Number.isInteger(who.faceIndex) ? who.faceIndex : 0,
+    ownHeads: !who.npc,
+    px,
+    ph,
   });
 }
 
@@ -85,10 +114,23 @@ export async function npcHeadImage(look, { px = 128, ph = px, renderer = portrai
   if (!look || look.creature || !renderer) return null;
   const { npcBodiesOn } = await import('./npcBodies.js');
   if (!npcBodiesOn()) return null;
-  const [{ headPortrait }, { peerBuildOpts }] = await Promise.all([import('../combat/fpArm.js'), import('../net/peer/peerBodies.js')]);
+  const [{ headPortrait }, { peerBuildOpts }] = await Promise.all([
+    import('../combat/fpArm.js'),
+    import('../net/peer/peerBodies.js'),
+  ]);
   const o = /** @type {any} */ (peerBuildOpts(look));
   if (!o || o.creature || o.werewolf || !o.race) return null;
-  return headPortrait({ renderer, race: o.race, female: !!o.female, faceIndex: o.faceIndex | 0, npcFace: o.npcFace ?? null, vampire: !!o.vampire, armor: o.armor ?? null, px, ph });   // its helm and hood too
+  return headPortrait({
+    renderer,
+    race: o.race,
+    female: !!o.female,
+    faceIndex: o.faceIndex | 0,
+    npcFace: o.npcFace ?? null,
+    vampire: !!o.vampire,
+    armor: o.armor ?? null,
+    px,
+    ph,
+  }); // its helm and hood too
 }
 
 /** A face of the record (systems/legacy/facePose.js facePose - a member, a player's character; ui/partyPanel.js a
@@ -102,7 +144,10 @@ export async function poseHeadImage(pose, opts = {}) {
   if (!pose) return null;
   if (Number.isInteger(pose.common) && /** @type {number} */ (pose.common) >= 0) {
     if (!pose.resident) return null;
-    const [{ npcHint }, { textSeed }] = await Promise.all([import('./wardrobe.js'), import('../systems/livingWorld/seed.js')]);
+    const [{ npcHint }, { textSeed }] = await Promise.all([
+      import('./wardrobe.js'),
+      import('../systems/livingWorld/seed.js'),
+    ]);
     return npcHeadImage(residentHeadLook(pose, npcHint, textSeed), opts);
   }
   return playerHeadImage({ race: pose.race, gender: pose.gender, faceIndex: pose.face, npc: !!pose.kin }, opts);
@@ -112,7 +157,10 @@ export async function poseHeadImage(pose, opts = {}) {
  *  @param {{ race?: string, gender?: string, resident?: string }} pose @param {(seed: number, tier: number) => any} npcHint
  *  @param {(s: string) => number} textSeed */
 export const residentHeadLook = (pose, npcHint, textSeed) => ({
-  race: pose.race ?? 'Breton', gender: pose.gender === 'female' ? 'female' : 'male', faceIndex: 0, items: [],
+  race: pose.race ?? 'Breton',
+  gender: pose.gender === 'female' ? 'female' : 'male',
+  faceIndex: 0,
+  items: [],
   npc: npcHint(textSeed(String(pose.resident)), 0),
 });
 
@@ -123,7 +171,8 @@ export const residentHeadLook = (pose, npcHint, textSeed) => ({
 export function headCanvas(img, { w = 0, h = 0, doc = globalThis.document } = {}) {
   if (!img || !doc) return null;
   const src = doc.createElement('canvas');
-  src.width = img.width; src.height = img.height;
+  src.width = img.width;
+  src.height = img.height;
   const sctx = src.getContext('2d');
   if (!sctx) return null;
   const rgba = new Uint8ClampedArray(img.width * img.height * 4);
@@ -131,11 +180,13 @@ export function headCanvas(img, { w = 0, h = 0, doc = globalThis.document } = {}
   sctx.putImageData(new ImageData(rgba, img.width, img.height), 0, 0);
   if (!(w > 0 && h > 0)) return src;
   const out = doc.createElement('canvas');
-  out.width = w; out.height = h;
+  out.width = w;
+  out.height = h;
   const ctx = out.getContext('2d');
   if (!ctx) return src;
   const s = Math.min(w / img.width, h / img.height);
-  const dw = Math.round(img.width * s), dh = Math.round(img.height * s);
+  const dw = Math.round(img.width * s),
+    dh = Math.round(img.height * s);
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(src, Math.round((w - dw) / 2), Math.round((h - dh) / 2), dw, dh);
   return out;

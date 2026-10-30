@@ -92,8 +92,8 @@
   {
     "name": "HANDWRAPS-hand",
     "file": "src/characters/equipTable.js",
-    "old": "  if (group === ITEM_GROUPS.Weapons && item.templateIndex === HAND_WRAPS_TEMPLATE) return ITEM_HANDS.Either;",
-    "new": "",
+    "old": "  if (group === ITEM_GROUPS.Weapons && item.templateIndex === HAND_WRAPS_TEMPLATE) return ITEM_HANDS.Either; // HAND-WRAPS: worn in either hand, both fists up (combat/twoHands/handsLaw.js)",
+    "new": "  // HAND-WRAPS: worn in either hand, both fists up (combat/twoHands/handsLaw.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

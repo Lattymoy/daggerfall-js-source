@@ -496,8 +496,8 @@
   {
     "name": "APPEARANCES-the-helm-of-the-piece",
     "file": "src/characters/headPortraits.js",
-    "old": "  const helm = drawnPiece(entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);",
-    "new": "  const helm = (entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);",
+    "old": "  const helm = drawnPiece(entity?.equip ? (equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null) : null); // APPEARANCES: the helm as it is drawn - a look worn over it is a new face",
+    "new": "  const helm = entity?.equip ? (equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null) : null; // APPEARANCES: the helm as it is drawn - a look worn over it is a new face",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "APPEARANCES2-kit-look-never-decoded",
     "file": "src/characters/foeBodies.js",
-    "old": "if (items[i]) items[i].ap = [t, m, v];",
-    "new": "if (items[i]) void [t, m, v];",
+    "old": "  for (const [i, t, m, v] of la ?? []) if (items[i]) items[i].ap = [t, m, v];",
+    "new": "  for (const [i, t, m, v] of la ?? []) if (items[i]) void [t, m, v];",
     "tests": [
       "test/net/appearances2_kit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "APPEARANCES2-kit-decoder-index",
     "file": "src/characters/foeBodies.js",
-    "old": "if (items[i]) items[i].ap = [t, m, v];",
-    "new": "if (items[i + 1]) items[i + 1].ap = [t, m, v];",
+    "old": "  for (const [i, t, m, v] of la ?? []) if (items[i]) items[i].ap = [t, m, v];",
+    "new": "  for (const [i, t, m, v] of la ?? []) if (items[i + 1]) items[i + 1].ap = [t, m, v];",
     "tests": [
       "test/net/appearances2_kit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "APPEARANCES2-body-key-blind-to-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": ":${it.variant ?? ''}:${it.ap ?? ''}`).join('|');",
-    "new": ":${it.variant ?? ''}`).join('|');",
+    "old": "    .map(\n      (it) =>\n        `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}:${it.ap ?? ''}`,\n    )",
+    "new": "    .map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}`)",
     "tests": [
       "test/net/appearances2_kit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "APPEARANCES2-record-key-blind-to-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": "`${lw.map((w) => w.join(',')).join(';')}${la ? `|${la.map((w) => w.join(',')).join(';')}` : ''}`;",
-    "new": "`${lw.map((w) => w.join(',')).join(';')}`;",
+    "old": "  `${lw.map((w) => w.join(',')).join(';')}${la ? `|${la.map((w) => w.join(',')).join(';')}` : ''}`;",
+    "new": "  `${lw.map((w) => w.join(',')).join(';')}`;",
     "tests": [
       "test/net/appearances2_kit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "APPEARANCES2-heir-drops-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": "    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = f._mwWornWireLooks ?? null; }",
-    "new": "    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = null; }",
+    "old": "      looks = f._mwWornWireLooks ?? null;",
+    "new": "      looks = null;",
     "tests": [
       "test/net/appearances2_kit.test.js"
     ]

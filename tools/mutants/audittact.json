@@ -376,8 +376,8 @@
   {
     "name": "ATACT-C6-wrong-axis",
     "file": "src/characters/foeSpacing.js",
-    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] });",
-    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] });",
+    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] }); // a door is thin across its doorway",
+    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] }); // a door is thin across its doorway",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

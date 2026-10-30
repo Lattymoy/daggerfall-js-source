@@ -92,8 +92,8 @@
   {
     "name": "PFOLK-a-variant-of-its-own-race's-alone",
     "file": "src/characters/folkBodies.js",
-    "old": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
-    "new": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
+    "old": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
+    "new": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PFOLK-the-body-the-town's",
     "file": "src/characters/folkBodies.js",
-    "old": "const s = spawnOf(person, person.folk ?? race);",
-    "new": "const s = spawnOf(person, race);",
+    "old": "  const s = spawnOf(person, person.folk ?? race); // PROVINCE-FOLK: the walker's own people, past the Bay the province's",
+    "new": "  const s = spawnOf(person, race); // PROVINCE-FOLK: the walker's own people, past the Bay the province's",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "PFOLK-the-foe-the-Bay's-anywhere",
     "file": "src/characters/foeBodies.js",
-    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
+    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? (ownRace(f) ?? bay) : placeRace(f, h));",
     "new": "const personRace = (f, h, bay) => bay;",
     "tests": [
       "test/characters/provincefolk.test.js"
@@ -191,7 +191,7 @@
   {
     "name": "PFOLK-a-companion-the-place's",
     "file": "src/characters/foeBodies.js",
-    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
+    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? (ownRace(f) ?? bay) : placeRace(f, h));",
     "new": "const personRace = (f, h, bay) => placeRace(f, h);",
     "tests": [
       "test/characters/provincefolk.test.js"

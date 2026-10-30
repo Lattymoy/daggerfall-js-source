@@ -22,8 +22,8 @@
   {
     "name": "CRATEFREE-walls-three",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
-    "new": "  return walls >= (lidded ? 3 : KNEE_BEARINGS.length);",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
+    "new": "  return walls >= (lidded ? 3 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CRATEFREE-walls-none",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
-    "new": "  return walls >= (lidded ? 0 : KNEE_BEARINGS.length);",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
+    "new": "  return walls >= (lidded ? 0 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CRATEFREE-path-passes-fronts",
     "file": "src/characters/foeSpacing.js",
-    "old": "    if (h.back !== true) return false;   // a face that looks at the line: a wall, the next crate\n",
-    "new": "",
+    "old": "    if (h.back !== true) return false; // a face that looks at the line: a wall, the next crate\n    const step = h.dist + PASS_SKIN;",
+    "new": "    const step = h.dist + PASS_SKIN;",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CRATEFREE-path-stops-at-its-skin",
     "file": "src/characters/foeSpacing.js",
-    "old": "    if (h.back !== true) return false;   // a face that looks at the line: a wall, the next crate\n",
-    "new": "    return false;\n",
+    "old": "    if (h.back !== true) return false; // a face that looks at the line: a wall, the next crate",
+    "new": "    return false;",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CRATEFREE-floor-ground",
     "file": "src/characters/foeSpacing.js",
-    "old": "  if (Number.isFinite(g) && g > y && g <= _from[1] && g >= y0 - STEP_OFFSET) y = g;\n",
-    "new": "",
+    "old": "  if (Number.isFinite(g) && g > y && g <= _from[1] && g >= y0 - STEP_OFFSET) y = g;\n  return y > -Infinity ? y : null;",
+    "new": "  return y > -Infinity ? y : null;",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "QUEST-FOE-WALL-the-column-unheld",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
-    "new": "  return walls >= (lidded ? 2 : Infinity);",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
+    "new": "  return walls >= (lidded ? 2 : Infinity); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "QUEST-FOE-WALL-the-open-room-held",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
-    "new": "  return walls >= (lidded ? 2 : 2);",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
+    "new": "  return walls >= (lidded ? 2 : 2); // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin",
     "tests": [
       "test/systems/quest/fb1004d_cratefree.test.js"
     ],

@@ -8,22 +8,26 @@
 // Plate -> steel, Chain -> mail, Leather -> leather.
 import { MATERIAL_FAMILY } from './paperdoll/paperdollArt.js';
 
-const B = 'body', LL = 'legL', LR = 'legR', AL = 'armL', AR = 'armR';
+const B = 'body',
+  LL = 'legL',
+  LR = 'legR',
+  AL = 'armL',
+  AR = 'armR';
 
 // Template index -> body-hugging zones (rig group + Y band + thickness
 // + optional front/back squash). Tuned in the viewer.
 const ZONES = {
-  102: [{ groups: [B], yLo: 1.12, yHi: 1.62, th: 0.022 }],                               // Cuirass
-  104: [{ groups: [LL, LR], yLo: 0.56, yHi: 1.00, th: 0.020, zScale: 0.28, leg: true },  // Greaves (legs)
-        { groups: [B], yLo: 0.90, yHi: 1.14, th: 0.020 }],                               //   + hip fauld
-  103: [{ groups: [AL, AR], yLo: 0.83, yHi: 1.22, th: 0.016, arm: true }],               // Gauntlets
-  108: [{ groups: [LL, LR], yLo: 0.00, yHi: 0.42, th: 0.016, leg: true }],               // Boots
+  102: [{ groups: [B], yLo: 1.12, yHi: 1.62, th: 0.022 }], // Cuirass
+  104: [
+    { groups: [LL, LR], yLo: 0.56, yHi: 1.0, th: 0.02, zScale: 0.28, leg: true }, // Greaves (legs)
+    { groups: [B], yLo: 0.9, yHi: 1.14, th: 0.02 },
+  ], //   + hip fauld
+  103: [{ groups: [AL, AR], yLo: 0.83, yHi: 1.22, th: 0.016, arm: true }], // Gauntlets
+  108: [{ groups: [LL, LR], yLo: 0.0, yHi: 0.42, th: 0.016, leg: true }], // Boots
 };
 
 const materialOf = (family) =>
-  family === MATERIAL_FAMILY.Leather ? 'leather'
-  : family === MATERIAL_FAMILY.Chain ? 'mail'
-  : 'steel'; // Plate (default)
+  family === MATERIAL_FAMILY.Leather ? 'leather' : family === MATERIAL_FAMILY.Chain ? 'mail' : 'steel'; // Plate (default)
 
 /** Body-hugging displace zones for an armour template + family, each
  *  stamped with the family material. [] for standoff/held pieces. */

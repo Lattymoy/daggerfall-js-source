@@ -65,7 +65,7 @@ FIXED, HeightAdjust verbatim and what it needs:
   collider's own wall law) - never a floor or a walkable slope the lower sphere rides, nor a resting touch. A step the
   ladder climbs is none; a rung the resolve threw back as far as it came is no step (a head under a lintel's edge: the
   ladder "landed" the body backwards every other frame and called it a step).
-- `foeSpacing.js:"export const sweepHeight = (ai) =>"` - the pushes that stand in for two controllers meeting
+- `foeSpacing.js:"export const sweepHeight"` - the pushes that stand in for two controllers meeting
   (spaceFoes, spaceAcross, clearDoorways' nudge) sweep the live controller height: at the full height a push swept a
   ducking body's head into the lintel it was passing. The ground check under a push keeps the body's own height
   (FallCheck's).

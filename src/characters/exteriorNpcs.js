@@ -41,12 +41,16 @@ export function collectExteriorNpcs(flats) {
  */
 export function exteriorNpcRecord(flat, flatData = null) {
   return {
-    x: flat.x, y: flat.y, z: flat.z,
+    x: flat.x,
+    y: flat.y,
+    z: flat.z,
     textureArchive: flat.archive,
     textureRecord: flat.record,
     factionID: flat.factionID,
     flags: exteriorNpcFlags(flat.flags ?? 0, flatData),
-    rawX: flat.rawX, rawY: flat.rawY, rawZ: flat.rawZ,
+    rawX: flat.rawX,
+    rawY: flat.rawY,
+    rawZ: flat.rawZ,
     // DFU's obj.Position - the nameSeed's identity component.
     position: flat.recordPosition,
     // ...and the overload's own last line (StaticNPC.cs:206): an

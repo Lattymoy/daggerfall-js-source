@@ -2,8 +2,8 @@
   {
     "name": "DYE-ICON-the-swatch-ignored",
     "file": "src/characters/dyes.js",
-    "old": "for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex(bitmap.data[i], dye, target);",
-    "new": "for (let i = 0; i < data.length; i++) data[i] = bitmap.data[i];",
+    "old": "  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex(bitmap.data[i], dye, target);",
+    "new": "  for (let i = 0; i < data.length; i++) data[i] = bitmap.data[i];",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DYE-ICON-the-source-edited",
     "file": "src/characters/dyes.js",
-    "old": "  const data = new Uint8Array(bitmap.data.length);\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
-    "new": "  const data = bitmap.data;\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
+    "old": "  const data = new Uint8Array(bitmap.data.length);",
+    "new": "  const data = bitmap.data;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DYE-ICON-18-skipped-as-Unchanged",
     "file": "src/characters/dyes.js",
-    "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
-    "new": "if (!bitmap?.data || target == null || dyeToken(dye) === '') return bitmap;",
+    "old": "  if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
+    "new": "  if (!bitmap?.data || target == null || dyeToken(dye) === '') return bitmap;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DYE-ICON-no-target-dyed-anyway",
     "file": "src/characters/dyes.js",
-    "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
-    "new": "if (!bitmap?.data || dye == null || dye === '') return bitmap;",
+    "old": "  if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
+    "new": "  if (!bitmap?.data || dye == null || dye === '') return bitmap;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

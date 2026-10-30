@@ -164,8 +164,8 @@
   {
     "name": "BEAST-BOOTS-portrait-key-unswitched",
     "file": "src/characters/headPortraits.js",
-    "old": "/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}`",
-    "new": "/${getPref('mwSteelHelm')}`",
+    "old": "  return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}` : '-'}`;",
+    "new": "  return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}` : '-'}`;",
     "tests": [
       "test/ui/portrait3d.test.js"
     ]

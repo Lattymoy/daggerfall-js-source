@@ -1,65 +1,65 @@
 [
- {
-  "name": "MWNPC15-pose-no-wolf",
-  "file": "src/characters/npcBodies.js",
-  "old": "    wb: a.look?.wolf ? 1 : 0,",
-  "new": "    wb: 0,",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-pose-all-wolves",
-  "file": "src/characters/npcBodies.js",
-  "old": "    wb: a.look?.wolf ? 1 : 0,",
-  "new": "    wb: 1,",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-wolf-not-a-person",
-  "file": "src/characters/foeBodies.js",
-  "old": " || f?.mobileType === WOLF_MOBILE;",
-  "new": ";",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-foe-wolf-on-two-legs",
-  "file": "src/characters/foeBodies.js",
-  "old": ", ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });",
-  "new": " });",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-roster-wolf-creature",
-  "file": "src/characters/foeBodies.js",
-  "old": "  const wolf = mobileType === WOLF_MOBILE;   // MWNPC15",
-  "new": "  const wolf = false;   // MWNPC15",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-roster-wolf-armed",
-  "file": "src/characters/foeBodies.js",
-  "old": ": vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
-  "new": ": vampire || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- },
- {
-  "name": "MWNPC15-roster-wolf-on-two-legs",
-  "file": "src/characters/foeBodies.js",
-  "old": ", ...(wolf ? { wolf: true } : {}) });",
-  "new": " });",
-  "tests": [
-   "test/characters/mwnpc15_werewolf.test.js"
-  ]
- }
+  {
+    "name": "MWNPC15-pose-no-wolf",
+    "file": "src/characters/npcBodies.js",
+    "old": "    wb: a.look?.wolf ? 1 : 0,",
+    "new": "    wb: 0,",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-pose-all-wolves",
+    "file": "src/characters/npcBodies.js",
+    "old": "    wb: a.look?.wolf ? 1 : 0,",
+    "new": "    wb: 1,",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-wolf-not-a-person",
+    "file": "src/characters/foeBodies.js",
+    "old": "  return (\n    isClassFoe(f) ||\n    ORC_MOBILES.has(f?.mobileType) ||\n    VAMPIRE_MOBILES.has(f?.mobileType) ||\n    f?.mobileType === WOLF_MOBILE\n  );",
+    "new": "  return isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) || VAMPIRE_MOBILES.has(f?.mobileType);",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-foe-wolf-on-two-legs",
+    "file": "src/characters/foeBodies.js",
+    "old": "    ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}),\n  }); // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast; MWNPC17: the seed every machine shares, so the copy is the same man",
+    "new": "  }); // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast; MWNPC17: the seed every machine shares, so the copy is the same man",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-roster-wolf-creature",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const wolf = mobileType === WOLF_MOBILE; // MWNPC15: and a werewolf",
+    "new": "  const wolf = false; // MWNPC15: and a werewolf",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-roster-wolf-armed",
+    "file": "src/characters/foeBodies.js",
+    "old": "    orc ? orcKit(mobileType, h) : vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]",
+    "new": "    orc ? orcKit(mobileType, h) : vampire || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC15-roster-wolf-on-two-legs",
+    "file": "src/characters/foeBodies.js",
+    "old": "    ...(wolf ? { wolf: true } : {}),\n  }); // MWNPC17",
+    "new": "  }); // MWNPC17",
+    "tests": [
+      "test/characters/mwnpc15_werewolf.test.js"
+    ]
+  }
 ]

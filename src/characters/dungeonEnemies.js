@@ -23,31 +23,31 @@
 
 import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
-import { encounterTable } from './encounterTableDoor.js';   // DEX3: the dungeon's tables as a mod's pick left them
+import { encounterTable } from './encounterTableDoor.js'; // DEX3: the dungeon's tables as a mod's pick left them
 import { MOBILE_TYPES } from './mobile/mobileTypes.js';
-import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
+import { getBool } from '../systems/settings/settings.js'; // AUDIT 28 W3: AlternateRandomEnemySelection
 
-const EDITOR_FLATS_ARCHIVE = 199;   // TextureReader.EditorFlatsTextureArchive
+const EDITOR_FLATS_ARCHIVE = 199; // TextureReader.EditorFlatsTextureArchive
 const FIXED_RECORD = 16;
-export const RANDOM_RECORD = 15;   // AUDIT LW-II-2 D11: exported, the one home - the living world's dive stops read it (deepRoute.js STOP_FOE)
+export const RANDOM_RECORD = 15; // AUDIT LW-II-2 D11: exported, the one home - the living world's dive stops read it (deepRoute.js STOP_FOE)
 const UNDERWATER_TABLE = 19;
 const PASSIVE_ACTION = 99;
 const GENDER_FEMALE_FLAG = 1;
 const GENDER_MALE_FLAG = 2;
 /** RDBLayout.AddEnemy's water species - the one home (SLAUGHTER-BOX: a search's foe and the wild halls read it too). */
-export const WATER_SPECIES = new Set([
-  MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,
-]);
+export const WATER_SPECIES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);
 
 // Deterministic stand-in for DFU's UnityEngine.Random slot reroll
 // (upstream seeds DateTime ticks - a TODO); xorshift32 over the
 // LocationId. Range semantics mirror Unity: max EXCLUSIVE.
 export function makeSlotRng(seed) {
-  let s = (seed >>> 0) || 1;
+  let s = seed >>> 0 || 1;
   return (min, maxExclusive) => {
-    s ^= s << 13; s >>>= 0;
+    s ^= s << 13;
+    s >>>= 0;
     s ^= s >>> 17;
-    s ^= s << 5; s >>>= 0;
+    s ^= s << 5;
+    s >>>= 0;
     return min + (s % (maxExclusive - min));
   };
 }
@@ -104,8 +104,10 @@ export const RANDOM_MONSTER_VARIANCE = 4;
 export function alternateRandomEnemyType(table, playerLevel, rng, variance = RANDOM_MONSTER_VARIANCE) {
   const monsterPower = Math.min(Math.max(playerLevel / 20, 0), 1);
   const base = Math.trunc(table.length * monsterPower);
-  let min = base - variance; if (min < 0) min = 0;
-  let max = base + variance; if (max >= table.length) max = table.length - 1;
+  let min = base - variance;
+  if (min < 0) min = 0;
+  let max = base + variance;
+  if (max >= table.length) max = table.length - 1;
   return table[rng(min, max + 1)];
 }
 
@@ -117,15 +119,24 @@ export const dungeonPlace = (dfLocation) => ({
   dungeon: { unknown2: dfLocation.dungeon.recordElement.header.unknown2, region: dfLocation.regionIndex },
 });
 
-export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, dungeon = null, playerLevel = 1,
-  alternate = getBool('Enhancements', 'AlternateRandomEnemySelection') } = {}) {
+export function collectDungeonEnemies(
+  blockLayouts,
+  {
+    locationId,
+    dungeonType,
+    dungeon = null,
+    playerLevel = 1,
+    alternate = getBool('Enhancements', 'AlternateRandomEnemySelection'),
+  } = {},
+) {
   const slotRng = makeSlotRng(locationId);
   // DEX3: the two tables as the transition left them - a mod picks on PlayerEnterExit.OnPreTransition, before the
   // dungeon is laid out (characters/encounterTableDoor.js); DFU's own where no mod writes. The player's own dungeon, so
   // read as written where no `dungeon` is handed. Read before the fill seeds its stream, as the pick came before the
   // layout there.
   const place = { dungeon, local: true };
-  const dungeonTable = encounterTable(dungeonType, place), underwaterTable = encounterTable(UNDERWATER_TABLE, place);
+  const dungeonTable = encounterTable(dungeonType, place),
+    underwaterTable = encounterTable(UNDERWATER_TABLE, place);
   const nonWater = new Array(256);
   const water = new Array(256);
   if (!alternate) {
@@ -141,8 +152,7 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, d
   const out = [];
   const emit = (marker, block, mobileType, fixed) => {
     // Verbatim water-species veto against the BLOCK water level.
-    if (WATER_SPECIES.has(mobileType)
-      && (block.waterLevel === 10000 || block.waterLevel - 20 > marker.rawY)) {
+    if (WATER_SPECIES.has(mobileType) && (block.waterLevel === 10000 || block.waterLevel - 20 > marker.rawY)) {
       return;
     }
     // AddEnemy's useGenderFlag is TRUE only for FIXED enemies (audit
@@ -162,8 +172,8 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, d
       reaction: marker.actionByte === PASSIVE_ACTION ? 'passive' : 'hostile',
       gender,
       spawnDistanceType: marker.soundIndex,
-      loadID: marker.loadID ?? 0,   // OH-E: DaggerfallEnemy.LoadID (RDBLayout.cs:1351/1400 - blockData.Position + obj.Position)
-      blockIndex,   // AUDIT OH-F C6: the block it stands under (its Fixed Enemies / Random Enemies node's parent)
+      loadID: marker.loadID ?? 0, // OH-E: DaggerfallEnemy.LoadID (RDBLayout.cs:1351/1400 - blockData.Position + obj.Position)
+      blockIndex, // AUDIT OH-F C6: the block it stands under (its Fixed Enemies / Random Enemies node's parent)
     });
   };
 
@@ -206,7 +216,6 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, d
   return out;
 }
 
-
 // ---------------------------------------------------------------- ELITE DUNGEONS
 //
 // An elite spawned dungeon (world/spawnedDungeons.js isEliteSpawn) stands `copies` foes at every
@@ -236,7 +245,10 @@ export const ELITE_FLOOR_STEP = 0.6;
  *   (the host answers it with a collider ray; omitted = open floor everywhere).
  *   floor: the height of the floor under `at` (null: none near) - DROPS-AUDIT ELITE-LEDGE; omitted = level floor.
  */
-export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OFFSET, clearance = null, floor = null } = {}) {
+export function expandEliteEnemies(
+  enemies,
+  { copies = 3, offset = ELITE_COPY_OFFSET, clearance = null, floor = null } = {},
+) {
   const n = Math.max(1, copies | 0);
   const out = [];
   for (const e of enemies) {
@@ -247,7 +259,8 @@ export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OF
       const a0 = ((k - 1) / (n - 1)) * 2 * Math.PI;
       // DROPS-AUDIT ELITE-LEDGE: the copy's own bearing first, then a quarter turn either way, then the far side -
       // the first that keeps it on the marker's floor; none does, and it stands on the marker itself
-      let x = e.x, z = e.z;
+      let x = e.x,
+        z = e.z;
       for (const turn of [0, 0.5, -0.5, 1]) {
         const a = a0 + turn * Math.PI;
         const dir = [Math.cos(a), 0, Math.sin(a)];
@@ -256,12 +269,14 @@ export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OF
           const free = clearance([e.x, e.y, e.z], dir, offset + ELITE_WALL_MARGIN);
           if (Number.isFinite(free)) d = Math.max(0, Math.min(offset, free - ELITE_WALL_MARGIN));
         }
-        const cx = e.x + dir[0] * d, cz = e.z + dir[2] * d;
+        const cx = e.x + dir[0] * d,
+          cz = e.z + dir[2] * d;
         if (floor && base != null && d > 0) {
           const f = floor([cx, e.y, cz]);
           if (f == null || Math.abs(f - base) > ELITE_FLOOR_STEP) continue;
         }
-        x = cx; z = cz;
+        x = cx;
+        z = cz;
         break;
       }
       out.push({ ...e, x, z, elite: true, eliteCopy: true });
@@ -277,7 +292,13 @@ export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OF
  *  carries its `blockIndex` and `fixed`); a copy, the pool itself untouched. */
 export function enemyHierarchyOrder(pool, layoutCount) {
   return pool
-    .map((f, i) => ({ f, k: i < layoutCount && Number.isInteger(f?.src?.blockIndex) ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i] : [Infinity, 2, i] }))
+    .map((f, i) => ({
+      f,
+      k:
+        i < layoutCount && Number.isInteger(f?.src?.blockIndex)
+          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]
+          : [Infinity, 2, i],
+    }))
     .sort((a, b) => (a.k[0] === b.k[0] ? 0 : a.k[0] - b.k[0]) || a.k[1] - b.k[1] || a.k[2] - b.k[2])
     .map((x) => x.f);
 }

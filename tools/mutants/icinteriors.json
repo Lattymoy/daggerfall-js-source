@@ -191,8 +191,8 @@
   {
     "name": "IC-INTERIORS-people-named-off-their-room-spot",
     "file": "src/characters/interiorPeople.js",
-    "old": "rawX: obj.castPos?.[0] ?? obj.xPos, rawY: obj.castPos?.[1] ?? obj.yPos, rawZ: obj.castPos?.[2] ?? obj.zPos,",
-    "new": "rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,",
+    "old": "      rawX: obj.castPos?.[0] ?? obj.xPos,\n      rawY: obj.castPos?.[1] ?? obj.yPos,\n      rawZ: obj.castPos?.[2] ?? obj.zPos,",
+    "new": "      rawX: obj.xPos,\n      rawY: obj.yPos,\n      rawZ: obj.zPos,",
     "tests": [
       "test/world/icinteriors.test.js"
     ]

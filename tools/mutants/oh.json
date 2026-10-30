@@ -1016,8 +1016,8 @@
   {
     "name": "OH-F-C6-pool-order",
     "file": "src/characters/dungeonEnemies.js",
-    "old": "[f.src.blockIndex, f.src.fixed ? 0 : 1, i]",
-    "new": "[f.src.blockIndex, 0, i]",
+    "old": "      k:\n        i < layoutCount && Number.isInteger(f?.src?.blockIndex)\n          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]\n          : [Infinity, 2, i],",
+    "new": "      k: i < layoutCount && Number.isInteger(f?.src?.blockIndex) ? [f.src.blockIndex, 0, i] : [Infinity, 2, i],",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
@@ -1025,8 +1025,8 @@
   {
     "name": "OH-F-C6-spawns-interleaved",
     "file": "src/characters/dungeonEnemies.js",
-    "old": "i < layoutCount && Number.isInteger(f?.src?.blockIndex)",
-    "new": "Number.isInteger(f?.src?.blockIndex)",
+    "old": "      k:\n        i < layoutCount && Number.isInteger(f?.src?.blockIndex)\n          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]\n          : [Infinity, 2, i],",
+    "new": "      k: Number.isInteger(f?.src?.blockIndex) ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i] : [Infinity, 2, i],",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]

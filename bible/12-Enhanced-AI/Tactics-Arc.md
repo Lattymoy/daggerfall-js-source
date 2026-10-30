@@ -125,7 +125,7 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   pass (the doorway rule makes it moot for now).
 - Pins `test/player/tact3.test.js` (15); mutants `tools/mutants/tact3.json` (23), all dead.
 - DOOR-JAM (FIELD BUGS 2026-10-14b, `01-Overview/bugs/Field-Bugs-2026-10-14b.md`): the pushes (spaceAcross, the doorway's
-  nudge, and every pool's spaceFoes) sweep a body at its controller's live height (`foeSpacing.js:"export const sweepHeight = (ai) =>"`),
+  nudge, and every pool's spaceFoes) sweep a body at its controller's live height (`foeSpacing.js:"export const sweepHeight"`),
   EnemyMotor.HeightAdjust's 1.65 duck while a foe taller than a doorway passes under its lintel.
 
 ## TACT1 - BUILT 2026-10-02 (the Enhanced AI switch on, every host)

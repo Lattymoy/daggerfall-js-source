@@ -11,8 +11,8 @@
   {
     "name": "APF-A5-raced-again-with-the-kit",
     "file": "src/characters/foeBodies.js",
-    "old": "if (f._mwRaceSeed !== h) {",
-    "new": "if (true) {",
+    "old": "  if (f._mwRaceSeed !== h) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "APF-A1-own-race-unread",
     "file": "src/characters/foeBodies.js",
-    "old": "const r = f?.folk ?? f?.entity?.revenant?.race;",
-    "new": "const r = null;",
+    "old": "  const r = f?.folk ?? f?.entity?.revenant?.race;",
+    "new": "  const r = null;",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "APF-A3-the-home-unread",
     "file": "src/characters/foeBodies.js",
-    "old": "home === undefined ? folkHere() : folkOfKey(home)",
-    "new": "folkHere()",
+    "old": "  const bay = bayPerson(h, race ? null : home === undefined ? folkHere() : folkOfKey(home)); // AUDIT PROVINCE-FOLK A3: `home` a roster's own people (provinceFolk.js folkOfKey - a ship's waters'; null the Bay's), else the place's",
+    "new": "  const bay = bayPerson(h, race ? null : folkHere()); // AUDIT PROVINCE-FOLK A3: `home` a roster's own people (provinceFolk.js folkOfKey - a ship's waters'; null the Bay's), else the place's",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "APF-A7-the-race-in-the-seed",
     "file": "src/characters/folkBodies.js",
-    "old": "const seed = mix(strHash(roll) ^ mix(shell));",
-    "new": "const seed = mix(strHash(key) ^ mix(shell));",
+    "old": "  const seed = mix(strHash(roll) ^ mix(shell)); // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key",
+    "new": "  const seed = mix(strHash(key) ^ mix(shell)); // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "APF-C-walker-variant-searches-own-race-last",
     "file": "src/characters/folkBodies.js",
-    "old": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
-    "new": "for (const t of [...Object.values(PERSON_TEXTURES), PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
+    "old": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
+    "new": "  for (const t of [...Object.values(PERSON_TEXTURES), PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
     "tests": [
       "test/characters/provincefolk.test.js"
     ],

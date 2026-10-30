@@ -2,8 +2,8 @@
   {
     "name": "MWFOLK1-no-picture-wears-its-outfit",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (false && own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (false && own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MWFOLK1-a-woman-in-a-mans-picture",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (own && !WARDROBE_BEAST_RACES.includes(race)) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (own && !WARDROBE_BEAST_RACES.includes(race))",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MWFOLK1-boots-on-a-beast",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (own && spriteSex(person.archive) === gender) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (own && spriteSex(person.archive) === gender)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "MWFOLK1-AUDIT-one-face-for-all",
     "file": "src/characters/folkBodies.js",
-    "old": "items: [], npc: npcHint(seed, 0), outfit: own.id };",
-    "new": "items: [], npc: npcHint(1, 0), outfit: own.id };",
+    "old": "    return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };",
+    "new": "    return { race, gender, faceIndex, items: [], npc: npcHint(1, 0), outfit: own.id };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -643,8 +643,8 @@
   {
     "name": "MWFOLK1-AUDIT-outfit-face-index-fixed",
     "file": "src/characters/folkBodies.js",
-    "old": "return { race, gender, faceIndex, items: [], npc:",
-    "new": "return { race, gender, faceIndex: 0, items: [], npc:",
+    "old": "    return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };",
+    "new": "    return { race, gender, faceIndex: 0, items: [], npc: npcHint(seed, 0), outfit: own.id };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
