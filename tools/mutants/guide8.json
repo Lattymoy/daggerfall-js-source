@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-the-unnamed-building",
     "file": "src/ui/quest/questLens.js",
-    "old": "    building: said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building",
-    "new": "    building: site.siteType === SITE_TYPES.Building",
+    "old": "      said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building && site.buildingKey > 0",
+    "new": "      site.siteType === SITE_TYPES.Building && site.buildingKey > 0",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-DELVE-E7-exact-unfed",
     "file": "src/ui/quest/questTracker.js",
-    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
-    "new": "export const followOn = () => trackerOn() || marksOn();",
+    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal'; // ...and the Town tier's compass",
+    "new": "export const followOn = () => trackerOn() || marksOn(); // ...and the Town tier's compass",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]

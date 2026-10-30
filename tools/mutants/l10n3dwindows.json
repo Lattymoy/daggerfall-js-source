@@ -442,8 +442,8 @@
   {
     "name": "L10N3d2-ui-questJournal-91-table",
     "file": "src/ui/quest/questJournal.js",
-    "old": "export const JOURNAL_TIPS = localizedTable({",
-    "new": "export const JOURNAL_TIPS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "old": "export const JOURNAL_TIPS = localizedTable({\n  dialog: ['dialogButtonInfo', 'Switch between: Active Quests; Finished Quests; Notebook; Messages'],\n  activeQuests: ['activeQuestsInfo', 'Click on an active quest that has a target location to initiate travel.'],\n  finishedQuests: ['finishedQuestsInfo', 'Click on an entry to move it. Right click to delete.'],\n  notebook: ['notebookInfo', 'Click a note to move. Right click to delete. Click in-between to add a new note.'],\n  messages: ['messagesInfo', 'History of messages recently shown on screen'],\n});",
+    "new": "export const JOURNAL_TIPS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))(\n  {\n    dialog: ['dialogButtonInfo', 'Switch between: Active Quests; Finished Quests; Notebook; Messages'],\n    activeQuests: ['activeQuestsInfo', 'Click on an active quest that has a target location to initiate travel.'],\n    finishedQuests: ['finishedQuestsInfo', 'Click on an entry to move it. Right click to delete.'],\n    notebook: ['notebookInfo', 'Click a note to move. Right click to delete. Click in-between to add a new note.'],\n    messages: ['messagesInfo', 'History of messages recently shown on screen'],\n  },\n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -453,7 +453,7 @@
     "name": "L10N3d2-ui-questJournal-143-table",
     "file": "src/ui/quest/questJournal.js",
     "old": "export const FIND_PLACE_TEXT = localizedTable({",
-    "new": "export const FIND_PLACE_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "new": "export const FIND_PLACE_TEXT = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "L10N3d2-ui-questLens-242-locationInRegionProvince",
     "file": "src/ui/quest/questLens.js",
-    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName);",
-    "new": "  formatText('{0} in {1} province', locationName, regionName);",
+    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName); // L10N3d: in the player's language",
+    "new": "  formatText('{0} in {1} province', locationName, regionName); // L10N3d: in the player's language",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "L10N3d2-ui-questJournal-155-table",
     "file": "src/ui/quest/questJournal.js",
-    "old": "export const CONFIRM_TEXT = localizedTable({   // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)",
-    "new": "export const CONFIRM_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({   // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)",
+    "old": "export const CONFIRM_TEXT = localizedTable({\n  // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)\n  moveHead: ['confirmMoveHead', 'Move entry'],\n  move: ['confirmMove', 'Do you want to change the position of this entry?'],\n  move2: ['confirmMove2', '(It will be moved to before the next entry clicked)'],\n  removeHead: ['confirmRemoveHead', 'Delete entry'],\n  remove: ['confirmRemove', 'Are you sure you want to remove this entry?'],\n  remove2: ['confirmRemove2', '(It will be deleted permanently and cannot be restored)'],\n});",
+    "new": "export const CONFIRM_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))(\n  {\n    // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)\n    moveHead: ['confirmMoveHead', 'Move entry'],\n    move: ['confirmMove', 'Do you want to change the position of this entry?'],\n    move2: ['confirmMove2', '(It will be moved to before the next entry clicked)'],\n    removeHead: ['confirmRemoveHead', 'Delete entry'],\n    remove: ['confirmRemove', 'Are you sure you want to remove this entry?'],\n    remove2: ['confirmRemove2', '(It will be deleted permanently and cannot be restored)'],\n  },\n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

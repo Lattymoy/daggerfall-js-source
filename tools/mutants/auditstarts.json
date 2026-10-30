@@ -78,8 +78,8 @@
   {
     "name": "AUDIT-STARTS-U5-here-by-the-map-alone",
     "file": "src/ui/quest/questLens.js",
-    "old": "const here = hereByName && (onMap !== false || !!site.worldPixel);",
-    "new": "const here = hereByName && onMap !== false;",
+    "old": "  const here = hereByName && (onMap !== false || !!site.worldPixel);",
+    "new": "  const here = hereByName && onMap !== false;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT-STARTS-U5-the-bay-note-past-it",
     "file": "src/ui/quest/questLens.js",
-    "old": "(target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap)",
-    "new": "WHERE_TEXT.offMap",
+    "old": "    note:\n      target.locationName && target.onMap === false && !target.here\n        ? target.pastBay\n          ? WHERE_TEXT.offMapPastBay\n          : WHERE_TEXT.offMap\n        : null,",
+    "new": "    note: target.locationName && target.onMap === false && !target.here ? WHERE_TEXT.offMap : null,",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-STARTS-U5-note-where-here",
     "file": "src/ui/quest/questLens.js",
-    "old": "target.onMap === false && !target.here ?",
-    "new": "target.onMap === false ?",
+    "old": "      target.locationName && target.onMap === false && !target.here",
+    "new": "      target.locationName && target.onMap === false",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

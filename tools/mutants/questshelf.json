@@ -452,8 +452,8 @@
   {
     "name": "QS-A-the-lens-forgets",
     "file": "src/ui/quest/questLens.js",
-    "old": "    for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);\n",
-    "new": "",
+    "old": "    for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);\n    this._last = last;",
+    "new": "    this._last = last;",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -462,7 +462,7 @@
     "name": "QS-A-the-rail-unordered",
     "file": "src/ui/quest/questRail.js",
     "old": "  return (log?.shelved ?? []).map((q, i) => railRow(q, i, readLines, 's'));",
-    "new": "  return (log?.shelved ?? []).map((q, i) => ({ ...railRow(q, i, readLines, 's'), entries: (q.messages ?? []).map((m) => readLines(m, null, q) ?? []).filter((x) => x.length) }));",
+    "new": "  return (log?.shelved ?? []).map((q, i) => ({\n    ...railRow(q, i, readLines, 's'),\n    entries: (q.messages ?? []).map((m) => readLines(m, null, q) ?? []).filter((x) => x.length),\n  }));",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]

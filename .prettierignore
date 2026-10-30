@@ -172,6 +172,8 @@
 /src/ui/merchant/*/
 !/src/ui/poi/
 /src/ui/poi/*/
+!/src/ui/quest/
+/src/ui/quest/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
 !/src/ui/revenant/

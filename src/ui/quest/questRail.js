@@ -25,9 +25,9 @@
 // it from the chronicle would pull the pause menu into the chronicle's
 // chunk for four functions.
 
-import { isMainQuestName as isMainQuest } from '../../systems/quest/questLists.js';   // AUDIT 68 S31-questshare-mainquest-dup: the share gates' own predicate, one home
-import { dayNames, monthNames } from '../../systems/gameDate.js';   // GUIDE3: the date header an entry opens with
-import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: and the format it is written in
+import { isMainQuestName as isMainQuest } from '../../systems/quest/questLists.js'; // AUDIT 68 S31-questshare-mainquest-dup: the share gates' own predicate, one home
+import { dayNames, monthNames } from '../../systems/gameDate.js'; // GUIDE3: the date header an entry opens with
+import { localizedText, t } from '../../systems/textManager.js'; // L10N3d: and the format it is written in
 
 /** The token formattings that carry a printable line - questJournal's
  *  own counted set (`LINE_FORMATTINGS`). */
@@ -49,17 +49,27 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** L10N3d: the header is written in the language of the moment (dateString reads dateFormatString and the name lists
  *  through the text core), so it is read off that language's own format and names - built when asked, never frozen
  *  at module load, and kept while they stand. English builds exactly "<day> the <n><st|nd|rd|th> of <month>". */
-let _dateHeader = null, _dateHeaderOf = null;
+let _dateHeader = null,
+  _dateHeaderOf = null;
 function dateHeaderRe() {
   const fmt = localizedText('dateFormatString', '{0} the {1}{2} of {3:00}');
-  const days = dayNames(), months = monthNames();
+  const days = dayNames(),
+    months = monthNames();
   const of = [fmt, ...days, ...months].join('\u0000');
   if (of !== _dateHeaderOf) {
-    const arms = [`(?:${days.map(escapeRe).join('|')})`, '\\d{1,2}', '(?:st|nd|rd|th)', `(?:${months.map(escapeRe).join('|')})`];
-    const body = fmt.split(/(\{\d+(?::0+)?\})/).map((p) => {
-      const m = /^\{(\d+)(?::0+)?\}$/.exec(p);
-      return m ? (arms[Number(m[1])] ?? '.*?') : escapeRe(p);
-    }).join('');
+    const arms = [
+      `(?:${days.map(escapeRe).join('|')})`,
+      '\\d{1,2}',
+      '(?:st|nd|rd|th)',
+      `(?:${months.map(escapeRe).join('|')})`,
+    ];
+    const body = fmt
+      .split(/(\{\d+(?::0+)?\})/)
+      .map((p) => {
+        const m = /^\{(\d+)(?::0+)?\}$/.exec(p);
+        return m ? (arms[Number(m[1])] ?? '.*?') : escapeRe(p);
+      })
+      .join('');
     _dateHeader = new RegExp(`^\\s*${body}:?\\s*$`);
     _dateHeaderOf = of;
   }
@@ -97,7 +107,7 @@ export const OPENING_MAX = 140;
  */
 export function entryOpening(lines, max = OPENING_MAX) {
   const all = (lines ?? []).map((l) => String(l ?? ''));
-  const head = all.findIndex((l) => l.trim());   // AUDIT GUIDE W4: the header is the first line with words
+  const head = all.findIndex((l) => l.trim()); // AUDIT GUIDE W4: the header is the first line with words
   const body = all.filter((l, i) => !(i === head && DATE_HEADER.test(l)));
   const text = body.join(' ').replace(/\s+/g, ' ').trim();
   if (!text) return '';
@@ -124,7 +134,8 @@ export function entryOpening(lines, max = OPENING_MAX) {
 // and the noun may be joined, spaced or hyphenated; the LABEL still
 // needs its own trailing separator, which is what keeps "Main Quest
 // Backbone" a name.
-const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-–]*(?:quest|quests|questline|storyline|story)\s*[:–—|\-•]\s*/i;
+const QUEST_KIND_LABEL =
+  /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-–]*(?:quest|quests|questline|storyline|story)\s*[:–—|\-•]\s*/i;
 
 /** The display name with any "Main Quest:" style label cut off. */
 export function questTitleOf(name) {
@@ -160,10 +171,22 @@ export const QUEST_URGENT_SECONDS = 86400;
  *  from the pause window, so the chronicle's deadline - the window the L
  *  key opens - reads exactly as the pause tab's does. */
 export function remainWords(s) {
-  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m2 = Math.floor((s % 3600) / 60);
+  const d = Math.floor(s / 86400),
+    h = Math.floor((s % 86400) / 3600),
+    m2 = Math.floor((s % 3600) / 60);
   // AUDIT OW-REVISITED L5-6: in the player's language (L10N4) - OW-QUEST put it under every quest mark on the Overworld
-  if (d > 0) return h ? t('quest.remain.daysHours', '{d, plural, one {# day} other {# days}} {h, plural, one {# hour} other {# hours}}', { d, h }) : t('quest.remain.days', '{d, plural, one {# day} other {# days}}', { d });
-  if (h > 0) return m2 ? t('quest.remain.hoursMin', '{h, plural, one {# hour} other {# hours}} {m} min', { h, m: m2 }) : t('quest.remain.hours', '{h, plural, one {# hour} other {# hours}}', { h });
+  if (d > 0)
+    return h
+      ? t(
+          'quest.remain.daysHours',
+          '{d, plural, one {# day} other {# days}} {h, plural, one {# hour} other {# hours}}',
+          { d, h },
+        )
+      : t('quest.remain.days', '{d, plural, one {# day} other {# days}}', { d });
+  if (h > 0)
+    return m2
+      ? t('quest.remain.hoursMin', '{h, plural, one {# hour} other {# hours}} {m} min', { h, m: m2 })
+      : t('quest.remain.hours', '{h, plural, one {# hour} other {# hours}}', { h });
   return t('quest.remain.min', '{m} min', { m: Math.max(1, m2) });
 }
 
@@ -230,8 +253,14 @@ function railRow(q, i, readLines, tag) {
   // loud read latches the quest's last-referenced resource and place
   // for the next entry's pronouns - and only then put them in the
   // order they were written.
-  const read = (q.messages ?? []).map((message, j) => ({ step: q.steps?.[j] ?? null, message, lines: readLines(message, q.steps?.[j] ?? null, q) ?? [] }));
-  const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);
+  const read = (q.messages ?? []).map((message, j) => ({
+    step: q.steps?.[j] ?? null,
+    message,
+    lines: readLines(message, q.steps?.[j] ?? null, q) ?? [],
+  }));
+  const written = writtenOrder(q)
+    .map((j) => read[j])
+    .filter((e) => e.lines.length);
   return {
     key: `${tag}:${q.id ?? i}`,
     // QUEST1: the raw id, kept alongside `key` rather than folded only
@@ -246,7 +275,7 @@ function railRow(q, i, readLines, tag) {
     clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
     entries: written.map((e) => e.lines),
     written,
-    ql: q.ql ?? null,   // QL2: a stamped quest's objectives, choices and outcome (systems/questlines/qlLayer.js rowOf) - null for DFU's
+    ql: q.ql ?? null, // QL2: a stamped quest's objectives, choices and outcome (systems/questlines/qlLayer.js rowOf) - null for DFU's
   };
 }
 
@@ -255,8 +284,15 @@ function railRow(q, i, readLines, tag) {
  *  entries). Every other face reads `active` alone: a quest with nothing in its journal is nothing to the lens. */
 export function unloggedRail(log) {
   return (log?.unlogged ?? []).map((q, i) => ({
-    key: `a:${q.id ?? `u${i}`}`, id: q.id ?? null, name: q.name || `Quest ${i + 1}`, questName: q.questName ?? '',
-    main: isMainQuest(q.questName), clockSeconds: null, entries: [], written: [], ql: q.ql ?? null,
+    key: `a:${q.id ?? `u${i}`}`,
+    id: q.id ?? null,
+    name: q.name || `Quest ${i + 1}`,
+    questName: q.questName ?? '',
+    main: isMainQuest(q.questName),
+    clockSeconds: null,
+    entries: [],
+    written: [],
+    ql: q.ql ?? null,
   }));
 }
 

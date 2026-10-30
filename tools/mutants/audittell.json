@@ -562,8 +562,8 @@
   {
     "name": "AUDITTELL-U5-sig",
     "file": "src/ui/quest/questTracker.js",
-    "old": "${foe?.classList?.contains?.('poised') ? '|poised' : ''}`;",
-    "new": "`;",
+    "old": "  const sig = `${scale}|${foe ? (foe.classList?.contains?.('blade') ? 'blade' : 'bar') : ''}${foe?.classList?.contains?.('poised') ? '|poised' : ''}`; // AUDIT TELL U5: the poise track's coming or going moves it too",
+    "new": "  const sig = `${scale}|${foe ? (foe.classList?.contains?.('blade') ? 'blade' : 'bar') : ''}`; // AUDIT TELL U5: the poise track's coming or going moves it too",
     "tests": [
       "test/scenes/audittell.test.js"
     ]

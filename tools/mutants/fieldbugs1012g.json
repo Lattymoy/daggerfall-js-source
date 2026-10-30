@@ -391,8 +391,8 @@
   {
     "name": "QUEST-TOWN-the-town-not-named",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const named = onMap === true || here || !!moved || said.has(",
-    "new": "  const named = onMap === true || here || said.has(",
+    "old": "  const named =\n    onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "new": "  const named = onMap === true || here || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"
     ]

@@ -31,8 +31,8 @@
 
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { timeLeftWords } from './questRail.js';   // the quest faces' one phrase for the time left
-import { t } from '../../systems/textManager.js';   // AUDIT OW-REVISITED L5-6: the card's own words
+import { timeLeftWords } from './questRail.js'; // the quest faces' one phrase for the time left
+import { t } from '../../systems/textManager.js'; // AUDIT OW-REVISITED L5-6: the card's own words
 
 /** The switch's prefs key (systems/features.js row `quest-marks`). */
 export const MARKS_PREF = 'questMarks';
@@ -85,13 +85,30 @@ export function questMapMarks(views, trackedId, pixelOf) {
     const find = v?.target?.find;
     if (!find) continue;
     let p = null;
-    try { p = pixelOf(find); } catch { p = null; }
+    try {
+      p = pixelOf(find);
+    } catch {
+      p = null;
+    }
     if (!p || !Number.isInteger(p.x) || !Number.isInteger(p.y)) continue;
     const key = `${p.x},${p.y}`;
     const tracked = v.id != null && v.id === trackedId;
     // AUDIT GUIDE K2: a mark says its town; each quest says its own building (the entry's, when it names one)
-    const at = byPixel.get(key) ?? { px: p.x, py: p.y, town: v.words?.town || find.locationName, placeName: find.locationName, quests: [], tracked: false };
-    at.quests.push({ title: String(v.title ?? ''), clockSeconds: v.clockSeconds, tracked, building: v.target?.buildingName ?? null, where: v.words?.where || find.locationName });
+    const at = byPixel.get(key) ?? {
+      px: p.x,
+      py: p.y,
+      town: v.words?.town || find.locationName,
+      placeName: find.locationName,
+      quests: [],
+      tracked: false,
+    };
+    at.quests.push({
+      title: String(v.title ?? ''),
+      clockSeconds: v.clockSeconds,
+      tracked,
+      building: v.target?.buildingName ?? null,
+      where: v.words?.where || find.locationName,
+    });
     at.tracked = at.tracked || tracked;
     byPixel.set(key, at);
   }
@@ -112,12 +129,22 @@ export function questMapMarks(views, trackedId, pixelOf) {
       px: m.px,
       py: m.py,
       tracked: m.tracked,
-      placeName: m.placeName,   // START3: the place's own name - what a press on a mark past the Bay picks it by (ui/heldMap.js _questPlace)
-      label: titles.length ? fitHead(titles.join(' / '), place, QUEST_LABEL_MAX) : place,   // the place kept, the titles cut
+      placeName: m.placeName, // START3: the place's own name - what a press on a mark past the Bay picks it by (ui/heldMap.js _questPlace)
+      label: titles.length ? fitHead(titles.join(' / '), place, QUEST_LABEL_MAX) : place, // the place kept, the titles cut
       // one quest: its title, where, and the time left; several: how many, the town, and each quest
       tip: one
-        ? { title: fitHead(titles[0] || QUEST_LEGEND_TEXT, '', QUEST_TIP_TEXT), lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean) }
-        : { title: t('quest.mark.many', '{n, plural, one {# quest} other {# quests}}', { n: quests.length }), lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : [])] },   // AUDIT OW-REVISITED L5-6: in the player's language
+        ? {
+            title: fitHead(titles[0] || QUEST_LEGEND_TEXT, '', QUEST_TIP_TEXT),
+            lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean),
+          }
+        : {
+            title: t('quest.mark.many', '{n, plural, one {# quest} other {# quests}}', { n: quests.length }),
+            lines: [
+              fitHead(place, '', QUEST_TIP_TEXT),
+              ...listed.map(lineOf),
+              ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : []),
+            ],
+          }, // AUDIT OW-REVISITED L5-6: in the player's language
       // AUDIT GUIDE K8: the place card names them (a keyboard or a finger that never hovers learns them there)
       quests: quests.map((q) => ({ title: q.title, left: left(q) })),
     };
@@ -137,18 +164,46 @@ export function questMapMarks(views, trackedId, pixelOf) {
 export function readQuestMarks(fn, size, frame = null) {
   const box = frame ?? { x0: 0, y0: 0, w: size.width, h: size.height };
   let list = null;
-  try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
+  try {
+    list = typeof fn === 'function' ? fn() : null;
+  } catch {
+    return [];
+  }
   if (!Array.isArray(list)) return [];
   const out = [];
   for (const m of list) {
     if (!m || typeof m !== 'object') continue;
     const { px, py } = m;
-    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
-    const quests = (Array.isArray(m.quests) ? m.quests : []).slice(0, 12).map((q) => ({ title: String(q?.title ?? '').slice(0, QUEST_TIP_TEXT), left: String(q?.left ?? '').slice(0, 40) }));
-    out.push({ key: String(m.key ?? `quest:${px},${py}`), px, py, x: px + 0.5, y: py + 0.5, tracked: !!m.tracked, label: String(m.label ?? '').slice(0, QUEST_LABEL_MAX), placeName: String(m.placeName ?? '').slice(0, QUEST_LABEL_MAX), tip: m.tip ?? null, quests, lift: QUEST_MARK_LIFT });
+    if (
+      !Number.isInteger(px) ||
+      !Number.isInteger(py) ||
+      px < box.x0 ||
+      py < box.y0 ||
+      px >= box.x0 + box.w ||
+      py >= box.y0 + box.h
+    )
+      continue;
+    const quests = (Array.isArray(m.quests) ? m.quests : []).slice(0, 12).map((q) => ({
+      title: String(q?.title ?? '').slice(0, QUEST_TIP_TEXT),
+      left: String(q?.left ?? '').slice(0, 40),
+    }));
+    out.push({
+      key: String(m.key ?? `quest:${px},${py}`),
+      px,
+      py,
+      x: px + 0.5,
+      y: py + 0.5,
+      tracked: !!m.tracked,
+      label: String(m.label ?? '').slice(0, QUEST_LABEL_MAX),
+      placeName: String(m.placeName ?? '').slice(0, QUEST_LABEL_MAX),
+      tip: m.tip ?? null,
+      quests,
+      lift: QUEST_MARK_LIFT,
+    });
   }
   return out;
 }
 
 /** What the held map repaints its quest marks on: where they stand, which is followed, and what they say. */
-export const questMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.tracked ? 1 : 0}|${m.label}`).join(';');
+export const questMarksKey = (marks) =>
+  marks.map((m) => `${m.key}@${m.px},${m.py}|${m.tracked ? 1 : 0}|${m.label}`).join(';');
