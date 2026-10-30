@@ -298,13 +298,13 @@ test('the body reads the held weapon off the rig, and its look carries the code'
 // THE PAPER DOLL'S PICTURE: a synthetic picture (color32, row 0 the bottom) - a handle, the doll's hand's gap, a guard,
 // a blade - each part its own colour, so a composed frame says which part landed where
 const RED = [255, 0, 0], GREEN = [0, 255, 0], BLUE = [0, 0, 255];
-function sword({ flip = false, gap = true } = {}) {
-  const W = 60, H = 9, colors = new Uint8Array(W * H * 4);
-  const put = (x, y, c) => colors.set([...c, 255], (y * W + (flip ? W - 1 - x : x)) * 4);
-  for (let x = 0; x < 8; x++) put(x, 4, BLUE);                                   // the handle
+function sword({ flip = false, gap = true, handle = 0 } = {}) {
+  const W = 60 + handle, H = 9, colors = new Uint8Array(W * H * 4);
+  const put = (x, y, c) => colors.set([...c, 255], (y * W + (flip ? W - 1 - x - handle : x + handle)) * 4);
+  for (let x = -handle; x < 8; x++) put(x, 4, BLUE);                             // the handle
   if (!gap) for (let x = 8; x < 12; x++) put(x, 4, BLUE);
   for (let y = 0; y < H; y++) for (const x of [12, 13]) put(x, y, GREEN);        // the guard
-  for (let x = 14; x < W; x++) for (const y of [3, 4, 5]) put(x, y, RED);        // the blade
+  for (let x = 14; x < W - handle; x++) for (const y of [3, 4, 5]) put(x, y, RED);   // the blade
   return { width: W, height: H, colors };
 }
 
@@ -362,6 +362,29 @@ test('the held picture is drawn on the frame\'s line from the fist; a bow from i
     const y = (i / held.width) | 0; top = Math.min(top, y); bottom = Math.max(bottom, y);
   }
   assert.ok(Math.abs((hy - top) - (bottom - hy)) <= 3, `above ${hy - top}, below ${bottom - hy}`);
+  assert.ok(Math.abs(bottom - top - rig.male.bow * Math.cos(Math.PI / 15)) <= 3, `tip to tip ${bottom - top}: the loose's own bow`);
+});
+
+test('from behind the blade is hidden behind the arm and the pommel shows; from the side the bow is in the near hand', { skip: !PNG && 'no pngjs' }, async () => {
+  const withPic = { ...opts, heldArt: async () => sword({ handle: 24 }) };
+  for (const [body, frames] of [['male', ['4-0', '4-1', '4-2', '4-3']], ['female', ['4-0', '4-1', '4-2', '4-3']]]) {
+    let pommel = 0;
+    for (const rf of frames) {
+      const armed = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, withPic);
+      let red = 0;
+      for (let i = 0; i < armed.width * armed.height; i++) {
+        const [r, g, b] = armed.data.subarray(i * 4, i * 4 + 3);
+        if (r > 200 && g < 60 && b < 60) red++;
+        if (b > 200 && r < 60 && g < 60) pommel++;
+      }
+      assert.equal(red, 0, `${body} ${rf}: no blade from behind`);
+    }
+    assert.ok(pommel > 0, `${body}: the pommel shows below the fist`);
+  }
+  for (const body of ['male', 'female']) for (const rf of ['2-0', '2-1', '2-2', '2-3', '17-0']) {
+    const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
+    assert.ok(fr.bow[2] === 1 && Math.hypot(fr.bow[0] - gx, fr.bow[1] - gy) <= 2.5, `${body} ${rf}: the bow in the near fist`);
+  }
 });
 
 test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack\'s foreshortened one', { skip: !PNG && 'no pngjs' }, async () => {

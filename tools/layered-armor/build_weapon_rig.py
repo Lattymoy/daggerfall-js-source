@@ -105,24 +105,25 @@ HAND = {
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
 }
 # Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
-# body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword (TEXTURE.482, .481: the Archer, one render with
-# the strips) instead: (grip, the head's place at the hammer's length, and the blade's side of the body: f before it, b
-# behind it, None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
+# body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword
+# (TEXTURE.482, .481: the Archer, one render with the strips) instead: (grip, the head's place at the hammer's length, and
+# the blade's side: f before the body, b behind it, x hidden - a back view's, behind the arm: the pommel shows where the
+# butt was, as Daggerfall's back views show it - None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
 # leaves). The sword's own length is twice the hammer's, so the head's place is half way to its tip.
 SHAFT = {
     ('male', '0-0'): (7, 66, 11.7, 58.6, 'f'), ('male', '0-1'): (6.5, 63, 9.7, 52.7, 'f'),
     ('male', '0-3'): (5, 63, 7.7, 52.7, 'f'), ('male', '2-2'): (37.5, 56.5, 11.2, 50.6, None),
     ('male', '3-0'): (46.1, 60.1, 20.3, 52.4, 'b'), ('male', '3-1'): (49.7, 57.8, 26.5, 47.9, 'b'),
     ('male', '3-2'): (59.9, 62.6, 43.5, 53.7, 'b'), ('male', '3-3'): (54.7, 58.9, 33.1, 50.5, 'b'),
-    ('male', '4-0'): (49.5, 56.8, 43.6, 50.3, None), ('male', '4-1'): (55.8, 54.0, 49.4, 44.8, None),
-    ('male', '4-2'): (65.3, 56.5, 66.1, 49.1, None), ('male', '4-3'): (54.7, 54.6, 48.0, 46.0, None),
+    ('male', '4-0'): (51.5, 59, 38.9, 45.2, 'x'), ('male', '4-1'): (57.5, 56.5, 46.8, 41.2, 'x'),
+    ('male', '4-2'): (65, 59.5, 67.1, 40.9, 'x'), ('male', '4-3'): (56.5, 57, 45.0, 42.2, 'x'),
     ('male', '15-0'): (10.5, 58.5, 18.6, 50.9, 'f'), ('male', '16-0'): (28, 54, 18.9, 44.1, 'f'),
     ('male', '18-0'): (26.9, 50.5, 8.3, 41.7, None),
     ('female', '0-0'): (50, 88, 44.2, 86.8, 'f'), ('female', '0-1'): (51, 82, 52.9, 71.3, 'f'),
     ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
     ('female', '3-1'): (83.7, 89.4, 60.7, 80.3, 'b'), ('female', '3-2'): (64.5, 78.5, 48.3, 71.1, None),
-    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-1'): (80.7, 85.8, 75.9, 76.3, None),
-    ('female', '4-2'): (77.8, 87.8, 74.0, 79.2, None), ('female', '4-3'): (80.6, 85.6, 77.9, 76.6, None),
+    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 92.6, 79.9, 'x'), ('female', '4-1'): (82, 88.5, 75.0, 74.5, 'x'),
+    ('female', '4-2'): (79, 90.5, 72.6, 76.2, 'x'), ('female', '4-3'): (81.5, 88.5, 77.0, 73.5, 'x'),
     ('female', '15-0'): (49, 85.5, 53, 78.3, 'f'), ('female', '16-0'): (54, 78, 47, 69.4, 'f'),
     ('female', '18-0'): (59.7, 77.7, 43.4, 69.8, None),
     ('female', '8-2'): (63, 68, 87.4, 69.4, 'b'),   # a swing's: the fist is out at the left, the hammer behind the body
@@ -146,6 +147,9 @@ BOW_HAND = {
                '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1), '17-0': (70.0, 88.0, 0), '18-0': (88.0, 93.0, 0),
                '19-0': (40.0, 89.5, 0)},
 }
+# The side views hide the free hand behind the body: there, as Daggerfall's side views hold a weapon, the bow is in the
+# near hand, the one the hammer was in.
+BOW_NEAR = ('2-0', '2-1', '2-2', '2-3', '17-0')
 # The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
 BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
@@ -481,6 +485,9 @@ def main(only=None):
             for p in per:
                 p.pop('bow', None)
                 if rf in BOW_HAND[body]: p['bow'] = list(BOW_HAND[body][rf])
+                if rf in BOW_NEAR:   # the side views: the near fist, half its width back from the grip
+                    gx, gy, ex, ey = p.get('w') or (p['q'] + p['t']); D = math.hypot(ex - gx, ey - gy) or 1.0
+                    p['bow'] = [round(gx - 2 * (ex - gx) / D, 1), round(gy - 2 * (ey - gy) / D, 1), 1]
         fig = np.nonzero(strip_base(body, 'leather_leather_leather', '15-0')[..., 3] > 0)[0]   # the idle's height is 1.8 m
         rig[body] = {'len': ln, 'bow': BOW_PX[body], 'cm': round(float(np.ptp(fig) + 1) / 180, 4), 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))

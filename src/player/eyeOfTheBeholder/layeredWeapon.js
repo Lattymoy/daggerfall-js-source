@@ -408,7 +408,7 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   if (shape === 'wh') return;   // the art's own
   if (BOWS.has(shape)) {
     if (!Array.isArray(fr.bow)) return out;
-    return pic ? drawBowPicture(out, fr.bow, pic, view, /** @type {number} */ (art.cm)) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);
+    return pic ? drawBowPicture(out, fr.bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);
   }
   const w = out.width, h = out.height, d = out.data;
   // the line the weapon is drawn on: the hammer's, or (`w`) where the hammer hides its shaft - pointed at the camera,
@@ -419,12 +419,14 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const k = len / HAMMER_CM;   // px a cm
   const f = Math.max(0.14, Math.min(1, D / len));   // the shaft's foreshortening in this frame
   const depth = depthOf(fr), lo = WEAPON_SPAN[0];
-  const front = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
+  // f before the body, b behind it (open air only), x hidden whatever is behind it (a back view's blade)
+  const depthAt = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))];
+  const shown = (alpha, proj) => { const k = depthAt(proj); return k !== 'x' && (!alpha || k === 'f'); };
   const px = { ux, uy, nx, ny, minS: 1.1 / (k * f) };
   const side = fr.side || 1;
   // a flail's chain hangs: its heavier side down the picture, whatever the hammer's face
   const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
-  if (pic) return drawPicture(out, pic, { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face }, front);
+  if (pic) return drawPicture(out, pic, { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face }, shown);
   const parts = SHAPES[shape];
   if (!parts) return;
   const sMin = Math.min(...parts.map((p) => p.from)), sMax = Math.max(...parts.map((p) => p.to));
@@ -436,7 +438,7 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
     const proj = ex * ux + ey * uy, s = proj / (k * f), v = (ex * nx + ey * ny) / k;
     if (s < sMin - 1 || s > sMax + 1 || Math.abs(v) > 20) return null;
     return sample(parts, s, v, side, px);
-  }, (x, y) => front((x - qx) * ux + (y - qy) * uy), box, metal);
+  }, (a, x, y) => shown(a, (x - qx) * ux + (y - qy) * uy), box, metal);
 
   function paint(o, at, inFront, b, mt) {
     const x0 = Math.max(0, Math.floor(b[0])), x1 = Math.min(w - 1, Math.ceil(b[2]));
@@ -452,7 +454,7 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
       }
       if (hits < 4) continue;
       const i = (y * w + x) * 4;
-      if (d[i + 3] && !inFront(x + 0.5, y + 0.5)) continue;   // the body is in front here
+      if (!inFront(d[i + 3], x + 0.5, y + 0.5)) continue;   // the body is in front here, or the blade is hidden
       d[i] = R / hits; d[i + 1] = G / hits; d[i + 2] = Bl / hits; d[i + 3] = 255; drawn[y * w + x] = 1;
     }
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {   // a dark rim, as the art's own weapons have
@@ -485,9 +487,9 @@ function samplePicture(img, x, y, n, at) {
  * the hammer face's side. Where the hammer was behind the body, open air only.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {any} P
  * @param {{qx:number,qy:number,ux:number,uy:number,nx:number,ny:number,along:number,across:number,side:number}} L
- * @param {(proj:number) => boolean} front
+ * @param {(alpha:number, proj:number) => boolean} shown
  */
-function drawPicture(out, P, L, front) {
+function drawPicture(out, P, L, shown) {
   const w = out.width, h = out.height, d = out.data, sg = L.side >= 0 ? 1 : -1;
   const ends = [P.from, P.to].map((s) => [L.qx + L.ux * s * L.along, L.qy + L.uy * s * L.along]), wide = P.half * L.across + 1;
   const x0 = Math.max(0, Math.floor(Math.min(ends[0][0], ends[1][0]) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(ends[0][0], ends[1][0]) + wide));
@@ -499,7 +501,7 @@ function drawPicture(out, P, L, front) {
   };
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
-    if (d[i + 3] && !front((x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
+    if (!shown(d[i + 3], (x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
     const c = samplePicture(P.img, x, y, n, at);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
@@ -508,9 +510,9 @@ function drawPicture(out, P, L, front) {
 }
 
 /** A held bow picture (heldBow) in the free hand, as drawBow lays the drawn one: its grip in the fist, the string along
- *  the bow's upright, its back turned BOW_TURN off the facing. `cm` the body's px a picture px. */
-function drawBowPicture(out, bow, P, view, cm) {
-  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data;
+ *  the bow's upright, its back turned BOW_TURN off the facing; `tips` px tip to tip, as the loose draws its bow. */
+function drawBowPicture(out, bow, P, view, tips) {
+  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data, cm = tips / (2 * P.reach);
   const v = Math.max(0, Math.min(4, view | 0));
   const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];
   const lean = Math.sin(BOW_LEAN) * FACING_X[v], up = Math.cos(BOW_LEAN);

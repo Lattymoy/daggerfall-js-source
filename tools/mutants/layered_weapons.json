@@ -262,8 +262,8 @@
   {
     "name": "LAYERED-WEAPONS-bow-in-weapon-hand",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "return pic ? drawBowPicture(out, fr.bow, pic, view, /** @type {number} */ (art.cm)) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);",
-    "new": "return pic ? drawBowPicture(out, [...fr.q, 1], pic, view, /** @type {number} */ (art.cm)) : drawBow(out, [...fr.q, 1], shape, metal, view, art.bow ?? 70);",
+    "old": "return pic ? drawBowPicture(out, fr.bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);",
+    "new": "return pic ? drawBowPicture(out, [...fr.q, 1], pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, [...fr.q, 1], shape, metal, view, art.bow ?? 70);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -378,5 +378,25 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the katana held as the doll's short right-hand picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-hidden-blade-shown",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return k !== 'x' && (!alpha || k === 'f');",
+    "new": "return !alpha || k === 'f';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a back view's blade pokes out between the arm and the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-picture-own-size",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "cm = tips / (2 * P.reach);",
+    "new": "cm = 0.6;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the doll's long bow, completed, taller than the loose's bow it turns into"
   }
 ]
