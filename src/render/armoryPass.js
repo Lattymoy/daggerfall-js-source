@@ -503,7 +503,8 @@ export function armoryDraws(key, w, eye, near, right = null) {
     }
   } else if (key === 'cinderstride' || key === 'eternalgreaves') {
     for (const side of ['L', 'R']) {
-      const ft = add(pt(`ft${side}`), UP, -0.06 * s), kn = pt(`kn${side}`);
+      // WOLF-KIT: a wolf stands on its toes - its greaves on the long shank from the hock down, not over the hock
+      const hock = pt(`ft${side}`), ft = pose.hock ? [hock[0], at[1] + 0.1 * s, hock[2]] : add(hock, UP, -0.06 * s), kn = pose.hock ? hock : pt(`kn${side}`);
       tube(0, ft, kn, 0.088, 0.07);
       cards(key === 'cinderstride' ? 2 : 1, 8, ft, kn, UP, [0.08 * s, 0], 0, 1, key === 'cinderstride' ? 0.4 + 0.6 * speed : speed);
     }

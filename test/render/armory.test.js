@@ -334,13 +334,12 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
   for (const kit of ['0a000', '00a00', '000a0', '0b000', '00b00', '000b0']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 1, `${kit} worn turned`); }
   for (const kit of ['a0000', 'b0000']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 0, `${kit}: no head piece on the wolf`); }
   assert.ok(count('drawArrays') > 0);
-  const bones = { 'bip01 head': [0, 1.65, 0.3], 'bip01 neck': [0, 1.5, 0.2], 'bip01 spine2': [0, 1.3, 0], 'bip01 l upperarm': [-0.25, 1.42, 0.1], 'bip01 r upperarm': [0.25, 1.42, 0.1] };
+  const bones = { 'bip01 head': [0, 1.65, 0.3], 'bip01 neck': [0, 1.5, 0.2], 'bip01 spine2': [0.08, 1.3, 0], 'bip01 l upperarm': [-0.25, 1.42, 0.1], 'bip01 r upperarm': [0.25, 1.42, 0.1] };
   const person = newPose(), wolf = newPose();
   poseFromBones(bones, person); poseFromBones(bones, wolf, true);
   assert.deepEqual([person.scale, wolf.scale], [1, ARMORY_BEAST_FIT], 'the wolf\'s pieces as wide as its limbs');
   assert.ok(ARMORY_BEAST_FIT > 1);
-  assert.ok(wolf.pts[POSE_AT.chest + 2] > person.pts[POSE_AT.chest + 2], 'the chest\'s face forward of a deeper chest');
-  assert.equal(+(wolf.pts[POSE_AT.chest + 2] - bones['bip01 spine2'][2]).toFixed(3), ARMORY_BEAST_CHEST.face, 'the hunched chest\'s face');
+    assert.deepEqual([+wolf.pts[POSE_AT.chest].toFixed(3), +(wolf.pts[POSE_AT.chest + 2] - 0.1).toFixed(3)], [0, ARMORY_BEAST_CHEST.face], 'the hunched chest\'s face, centred between the shoulders - not on its leaning spine');
   assert.deepEqual([person.back, wolf.back], [0, ARMORY_BEAST_CHEST.back]);
   poseFromBones(bones, wolf); assert.equal(wolf.back, 0, 'turned back, a person\'s back again');
   const sigil = (/** @type {any} */ pose) => armoryDraws('eternalsigil', { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 2);
@@ -357,13 +356,20 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
     assert.ok(Math.abs(w[0].r[0] / p[0].r[0] - ARMORY_BEAST_FIT * ARMORY_BEAST_ARM.arm) < 1e-6, `${key}: as wide as the wolf's arm`);
   }
   assert.deepEqual([person.arm, person.claw, wolfBack.arm, wolfBack.claw], [1, 0, ARMORY_BEAST_ARM.arm, ARMORY_BEAST_ARM.claw]);
+  // the greaves on the wolf's shank, from the hock down to its toes - a person's from the ankle up to the knee
+  const legs = (/** @type {any} */ pose) => armoryDraws('eternalgreaves', { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 0);
+  const [pl] = legs(person), [wl] = legs(wolfBack);
+  assert.ok(pl.B[1] > pl.A[1] + 0.1, 'a person\'s up the shin');
+  assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
+  assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
   poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.claw, wolfBack.back], [1, 0, 0], 'the rest pose a person\'s - no claws left on it');
   // the classic sprite's lycanthrope: its own picture's limbs (BEAST_ROWS), forearms and claws worn
   const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
   assert.deepEqual([lyc.card, lyc.limbs, lyc.arm], [true, 'full', ARMORY_BEAST_ARM.arm], 'a beast\'s picture measured to the claws');
   assert.ok(lyc.claw > 0);
-  assert.equal(+lyc.pts[POSE_AT.waR].toFixed(4), +(BEAST_ROWS.wristOut * 0.029).toFixed(4), 'its hands flung out as its picture draws them');
-  assert.equal(+lyc.pts[POSE_AT.knL + 1].toFixed(4), +(0.1 + BEAST_ROWS.knee * 0.029).toFixed(4), 'its knees where its picture bends them');
+  assert.equal(+lyc.pts[POSE_AT.waR].toFixed(4), +(BEAST_ROWS.R.wa[0] * 0.029).toFixed(4), 'its hands flung out as its picture draws them');
+  assert.ok(lyc.pts[POSE_AT.ftL + 1] > lyc.pts[POSE_AT.ftR + 1], 'its left leg drawn up, its right planted - no side the other\'s mirror');
+  assert.equal(+lyc.pts[POSE_AT.knL + 1].toFixed(4), +(0.1 + BEAST_ROWS.L.kn[1] * 0.029).toFixed(4), 'its knees where its picture bends them');
   assert.equal(arms('ashbound', lyc).length, 6, 'shoulder to claws on the sprite\'s wolf, both arms');
   poseFromFigure({ base: 0, mpp: 0.02, marks: null }, lyc); assert.deepEqual([lyc.limbs, lyc.arm, lyc.claw], ['upper', 1, 0], 'turned back, a person\'s picture');
   poseFromBones(bones, wolfBack, true); poseFromFigure({ base: 0, mpp: 0.02, marks: null }, wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.claw, wolfBack.back], [1, 0, 0], 'nor on a sprite\'s');

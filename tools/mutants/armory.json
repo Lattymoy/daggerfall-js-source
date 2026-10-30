@@ -587,15 +587,6 @@
     ]
   },
   {
-    "name": "WOLF-KIT-the-wolfs-chest-a-persons",
-    "file": "src/render/armoryPose.js",
-    "old": "face = beast ? ARMORY_BEAST_CHEST.face : 0.12;",
-    "new": "face = 0.12;",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
     "name": "WOLF-KIT-the-wolfs-back-a-persons",
     "file": "src/render/armoryPass.js",
     "old": "-(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)",
@@ -644,8 +635,8 @@
   {
     "name": "WOLF-KIT-claws-left-on-a-sprite",
     "file": "src/render/armoryPose.js",
-    "old": "out.back = 0; out.arm = 1; out.claw = 0;\n",
-    "new": "out.back = 0; out.arm = 1;\n",
+    "old": "out.back = 0; out.arm = 1; out.claw = 0; out.hock = false;\n",
+    "new": "out.back = 0; out.arm = 1; out.hock = false;\n",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -664,6 +655,33 @@
     "file": "src/render/armoryPose.js",
     "old": "  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm;",
     "new": "  out.arm = ARMORY_BEAST_ARM.arm;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-chest-on-its-leaning-spine",
+    "file": "src/render/armoryPose.js",
+    "old": "beast && spine ? [(L[0] + R[0]) / 2, spine[1] - drop, (L[2] + R[2]) / 2 + face] :",
+    "new": "beast && spine ? [spine[0], spine[1] - drop, spine[2] + face] :",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-greaves-over-the-hock",
+    "file": "src/render/armoryPass.js",
+    "old": "ft = pose.hock ? [hock[0], at[1] + 0.1 * s, hock[2]] :",
+    "new": "ft = pose.hock ? add(hock, UP, -0.06 * s) :",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-sprites-wolf-a-mirror",
+    "file": "src/render/armoryPose.js",
+    "old": "R: Object.freeze({ sh: [15, 57], el: [21, 48], wa: [27, 38], kn: [14, 21], ft: [17, 6] }),",
+    "new": "R: Object.freeze({ sh: [13, 58], el: [19, 47], wa: [24, 36], kn: [8, 22], ft: [10, 15] }),",
     "tests": [
       "test/render/armory.test.js"
     ]

@@ -35,13 +35,15 @@ export const REST_POINTS = Object.freeze([
  *  than a person's the wolf's limbs and chest stand - a turned wearer's pose scale (poseFromBones' `beast`), each piece's
  *  rings and decals that much wider round the fur. */
 export const ARMORY_BEAST_FIT = 1.35;
-/** WOLF-KIT: the wolf's chest, hunched over its spine - its face this far forward of the spine's bone (m; a person's a
- *  hand, 0.12) and its back this far behind the face (`back`, m - the chest's back piece; a person's the pass's own). */
-export const ARMORY_BEAST_CHEST = Object.freeze({ face: 0.44, back: 0.5, down: 0.1 });
+/** WOLF-KIT (mob: "chest need more center"): the wolf's chest, hunched and turned in its idle - centred between its
+ *  shoulders, not on its spine's bone (which leans to one side), its face this far forward of them (m; a person's a hand
+ *  forward of the spine, 0.12), `down` m under the spine's bone, and its back this far behind the face (`back`, m - the
+ *  chest's back piece; a person's the pass's own). */
+export const ARMORY_BEAST_CHEST = Object.freeze({ face: 0.08, back: 0.55, down: 0.1 });
 /** WOLF-KIT (mob: "they clip through on the arms", "where is claws?"): the wolf's arms thicker again than its fit - a
  *  band's rings `arm` times wider round them - and its hands' claws, `claw` m past the wrist along the forearm: the arm
  *  pieces burn on down them, as the weapon glow does on the claws. */
-export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.45, claw: 0.2 });
+export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.25, claw: 0.2 });
 
 /** THE SPRITE'S POINTS BY THE PIXEL - a sprite figure's rows over the frame's foot (EOTB_FIGURE's own for the shoulder,
  *  neck and head; the rest measured off the sets' idle frames - 112364, 112365, 112370, 112372 front and back) and how
@@ -51,7 +53,7 @@ const SPRITE_ROWS_CHEST = SPRITE_ROWS.chest, SPRITE_ROWS_PELVIS = SPRITE_ROWS.pe
 
 /** A fresh pose - its points the rest pose's; `dx` each point's offset along a sprite card's right (m), 0 on a rig. */
 export function newPose() {
-  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, back: 0, arm: 1, claw: 0 };
+  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, back: 0, arm: 1, claw: 0, hock: false };
 }
 
 /** THE ROWS a picture's marks are read at, in the sets' pixels over the frame's foot (EOTB_FIGURE's and SPRITE_ROWS'). */
@@ -210,7 +212,7 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out, 
   const spine = bones['bip01 spine2'];
   const k = beast ? ARMORY_BEAST_FIT : 1, face = beast ? ARMORY_BEAST_CHEST.face : 0.12;
   const drop = beast ? ARMORY_BEAST_CHEST.down : 0;
-  set(pts, 'chest', spine ? [spine[0], spine[1] - drop, spine[2] + face] : [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 - 0.2, (L[2] + R[2]) / 2 + face]);   // the chest's face, a hand forward of the spine (WOLF-KIT: the wolf's deeper)
+  set(pts, 'chest', beast && spine ? [(L[0] + R[0]) / 2, spine[1] - drop, (L[2] + R[2]) / 2 + face] : spine ? [spine[0], spine[1] - drop, spine[2] + face] : [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 - 0.2, (L[2] + R[2]) / 2 + face]);   // the chest's face, a hand forward of the spine (WOLF-KIT: the wolf's deeper)
   const hang = (/** @type {string} */ name, /** @type {any} */ v, /** @type {string} */ from, /** @type {ArrayLike<number>} */ root) => {
     if (v) { set(pts, name, v); return; }
     const r = POSE_AT[from], i = POSE_AT[name];
@@ -224,7 +226,7 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out, 
   hang('hipL', bones['bip01 l thigh'], 'pelvis', pv); hang('hipR', bones['bip01 r thigh'], 'pelvis', pv);
   hang('knL', bones['bip01 l calf'], 'pelvis', pv); hang('knR', bones['bip01 r calf'], 'pelvis', pv);
   hang('ftL', bones['bip01 l foot'], 'pelvis', pv); hang('ftR', bones['bip01 r foot'], 'pelvis', pv);
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = beast ? ARMORY_BEAST_CHEST.back : 0; out.arm = beast ? ARMORY_BEAST_ARM.arm : 1; out.claw = beast ? ARMORY_BEAST_ARM.claw : 0; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = beast ? ARMORY_BEAST_CHEST.back : 0; out.arm = beast ? ARMORY_BEAST_ARM.arm : 1; out.claw = beast ? ARMORY_BEAST_ARM.claw : 0; out.hock = beast; out.dx.fill(0);
   return true;
 }
 
@@ -276,23 +278,29 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
       out.dx[POSE_AT[`kn${S}`] / 3] = off(legs.knee[i]); out.dx[POSE_AT[`ft${S}`] / 3] = off(legs.ankle[i]);
     });
   }
-  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.claw = 0;
+  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.claw = 0; out.hock = false;
   if (fig.beast === true) beastLimbs(fig.mpp * art, fig.base, pts, out);
   return true;
 }
 
-/** WOLF-KIT (mob: "make sure this work for morrowind and paperdoll"): THE LYCANTHROPE'S PICTURE'S LIMBS, in its own pixels
- *  over the frame's foot (112380's idle, measured off its alpha): its arms flung wide, its hands at its hips, its legs
- *  bent apart - nothing like the sets' rows. `out` (`Out` m across from the axis, a side's mean). Its chest and pelvis too. */
-export const BEAST_ROWS = Object.freeze({ shoulder: 58, chest: 50, pelvis: 30, elbow: 47, wrist: 37, knee: 20, ankle: 7, shoulderOut: 14, elbowOut: 21, wristOut: 26, kneeOut: 11, ankleOut: 14 });
+/** WOLF-KIT (mob: "make sure this work for morrowind and paperdoll"; "they are off a lot"): THE LYCANTHROPE'S PICTURE'S
+ *  LIMBS, each joint [across, up] in its own pixels off its axis and over the frame's foot (112380's idle, measured off its
+ *  alpha joint by joint): its arms flung wide, its hands at its hips, its left leg drawn up and its right planted - nothing
+ *  like the sets' rows, and no side the other's mirror. Its chest and pelvis on its axis. */
+export const BEAST_ROWS = Object.freeze({
+  chest: 50, pelvis: 30,
+  L: Object.freeze({ sh: [-13, 58], el: [-19, 47], wa: [-24, 36], kn: [-8, 22], ft: [-10, 15] }),
+  R: Object.freeze({ sh: [15, 57], el: [21, 48], wa: [27, 38], kn: [14, 21], ft: [17, 6] }),
+});
 /** A beast's sprite pose written over a figure's (`px` its metres a picture's pixel, `base` the frame's foot): BEAST_ROWS,
  *  every limb measured so the forearms' pieces and the claws are worn too, the bands as wide as the wolf's arms. */
 function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @type {Float32Array} */ pts, /** @type {any} */ out) {
   const B = BEAST_ROWS, at = (/** @type {number} */ r) => base + r * px;
   set(pts, 'chest', [0, at(B.chest), 0.12]); set(pts, 'pelvis', [0, at(B.pelvis), 0]);
-  for (const [S, k] of /** @type {const} */ ([['L', -1], ['R', 1]])) {
-    set(pts, `sh${S}`, [k * B.shoulderOut * px, at(B.shoulder), 0]); set(pts, `el${S}`, [k * B.elbowOut * px, at(B.elbow), 0]); set(pts, `wa${S}`, [k * B.wristOut * px, at(B.wrist), 0.02]);
-    set(pts, `kn${S}`, [k * B.kneeOut * px, at(B.knee), 0.02]); set(pts, `ft${S}`, [k * B.ankleOut * px, at(B.ankle), -0.02]);
+  for (const S of /** @type {const} */ (['L', 'R'])) {
+    for (const j of /** @type {const} */ (['sh', 'el', 'wa', 'kn', 'ft'])) { const [x, r] = B[S][j]; set(pts, `${j}${S}`, [x * px, at(r), j === 'wa' || j === 'kn' ? 0.02 : 0]); }
+    out.dx[POSE_AT[`sh${S}`] / 3] = out.dx[POSE_AT[`el${S}`] / 3] = out.dx[POSE_AT[`wa${S}`] / 3] = out.dx[POSE_AT.chest / 3];
+    out.dx[POSE_AT[`kn${S}`] / 3] = out.dx[POSE_AT[`ft${S}`] / 3] = out.dx[POSE_AT.pelvis / 3];
   }
   out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm; out.claw = ARMORY_BEAST_ARM.claw * 0.6;
 }
@@ -302,7 +310,7 @@ function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @t
 export function poseAtRest(/** @type {any} */ out, crouch = 1, mounted = false) {
   const k = Number.isFinite(crouch) ? Math.max(0.4, Math.min(1, crouch)) : 1, lift = mounted ? AURA_SADDLE_M : 0;
   for (let i = 0; i < REST_POINTS.length; i += 3) { out.pts[i] = REST_POINTS[i]; out.pts[i + 1] = REST_POINTS[i + 1] * k + lift; out.pts[i + 2] = REST_POINTS[i + 2]; }
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = 0; out.arm = 1; out.claw = 0; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = 0; out.arm = 1; out.claw = 0; out.hock = false; out.dx.fill(0);
   return out;
 }
 
