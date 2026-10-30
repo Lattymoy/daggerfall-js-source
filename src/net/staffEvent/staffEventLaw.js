@@ -83,7 +83,8 @@ export const STAFF_EVENT_BOARD_MAX = 10;
 /** A word counts toward the stand once this long after the last that counted, ms (a word comes every 5 s). */
 export const STAFF_EVENT_STAND_TICK_MS = 4000;
 
-const intIn = (/** @type {unknown} */ v, /** @type {number} */ lo, /** @type {number} */ hi) => Number.isSafeInteger(v) && /** @type {number} */ (v) >= lo && /** @type {number} */ (v) <= hi;
+const intIn = (/** @type {unknown} */ v, /** @type {number} */ lo, /** @type {number} */ hi) =>
+  Number.isSafeInteger(v) && /** @type {number} */ (v) >= lo && /** @type {number} */ (v) <= hi;
 /** AUDIT RELEASE R2-7 (bible/01-Overview/audits/Audit-Release-R2.md; the owner: "Take care of exclusions and gaps"): AN
  *  EVENT'S PIXEL IS THE WORLD'S - within the wire's WORLD_PIXEL_BOUND either side of the Bay's corner (net/wire.js; held
  *  equal here by its pin, since this file imports nothing), so an AREA's event stands past the Bay as on it. */
@@ -97,20 +98,32 @@ export const STAFF_TOWN_INDEX_MIN = -99999999;
 /** The provinces' regions past the Bay (formats/mapsTables.js, WW-R - pinned equal; this file imports nothing). */
 export const STAFF_PROVINCE_REGIONS = Object.freeze([62, 70]);
 /** A place's word: an area (-1), a Bay town's MAPS.BSA location (0..9999), or a town past the Bay's own index. @param {unknown} loc */
-const staffLocOk = (loc) => loc === STAFF_EVENT_AREA || intIn(loc, 0, 9999) || intIn(loc, STAFF_TOWN_INDEX_MIN, STAFF_EVENT_AREA - 1);
+const staffLocOk = (loc) =>
+  loc === STAFF_EVENT_AREA || intIn(loc, 0, 9999) || intIn(loc, STAFF_TOWN_INDEX_MIN, STAFF_EVENT_AREA - 1);
 /** AUDIT RELEASE R2-7: ...and a TOWN's event stands where its town does. A town's event runs as the town's raid runs
  *  (systems/raidingParties.js RAID2 - its town by its location), and WW6 (03-World/World-Wide.md WW6) stands the raids past
  *  the Bay: a Bay town (its MAPS.BSA location, 0..9999) on the Bay's own map, as it always was; a town past the Bay (its
  *  place's own index, negative - no MAPS.BSA row holds it) on the world's grid off the Bay, in a province's region (62..70).
  *  A town's event with its location and its pixel on two sides of the Bay's edge is refused by name (`town`).
  *  @param {unknown} px @param {unknown} py @param {unknown} [loc] @param {unknown} [rg] */
-export const staffTownPixelOk = (px, py, loc = 0, rg = 0) => (/** @type {number} */ (loc) >= 0
-  ? intIn(px, 0, 999) && intIn(py, 0, 499)
-  : worldPx(px) && worldPx(py) && !(intIn(px, 0, 999) && intIn(py, 0, 499)) && intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]));
-const bit = (/** @type {unknown} */ v) => v === 1 ? 1 : 0;
-const clean = (/** @type {unknown} */ s, /** @type {number} */ max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max) : '');
+export const staffTownPixelOk = (px, py, loc = 0, rg = 0) =>
+  /** @type {number} */ (loc) >= 0
+    ? intIn(px, 0, 999) && intIn(py, 0, 499)
+    : worldPx(px) &&
+      worldPx(py) &&
+      !(intIn(px, 0, 999) && intIn(py, 0, 499)) &&
+      intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]);
+const bit = (/** @type {unknown} */ v) => (v === 1 ? 1 : 0);
+const clean = (/** @type {unknown} */ s, /** @type {number} */ max) =>
+  typeof s === 'string'
+    ? s
+        .replace(/[\u0000-\u001f\u007f<>]/g, '')
+        .trim()
+        .slice(0, max)
+    : '';
 /** Is `t` a kind an event may bring? @param {unknown} t */
-export const staffEventKindOk = (t) => intIn(t, 0, STAFF_EVENT_KIND_MAX) && !STAFF_EVENT_KINDS_BARRED.includes(/** @type {number} */ (t));
+export const staffEventKindOk = (t) =>
+  intIn(t, 0, STAFF_EVENT_KIND_MAX) && !STAFF_EVENT_KINDS_BARRED.includes(/** @type {number} */ (t));
 
 /**
  * @typedef {{ id: string, rg: number, loc: number, px: number, py: number, nm: string, ct: 0|1, mt: number[], n: number, m: number,
@@ -129,7 +142,27 @@ export const staffEventKindOk = (t) => intIn(t, 0, STAFF_EVENT_KIND_MAX) && !STA
 export function validStaffEvent(e) {
   if (staffEventFault(e)) return null;
   const mt = [...new Set(/** @type {number[]} */ (e.mt))];
-  return { id: e.id, rg: e.rg, loc: e.loc, px: e.px, py: e.py, nm: clean(e.nm, STAFF_EVENT_PLACE_MAX), ct: isAreaEvent(e) ? 0 : bit(e.ct), mt, n: e.n, m: e.m, b: e.b, bs: e.bs, bh: e.bh ?? STAFF_BOSS_HEALTH_DEFAULT, hp: e.hp ?? 0, at: e.at, ue: e.ue, eb: bit(e.eb), fb: e.fb ?? 0, by: clean(e.by, STAFF_EVENT_BY_MAX) };
+  return {
+    id: e.id,
+    rg: e.rg,
+    loc: e.loc,
+    px: e.px,
+    py: e.py,
+    nm: clean(e.nm, STAFF_EVENT_PLACE_MAX),
+    ct: isAreaEvent(e) ? 0 : bit(e.ct),
+    mt,
+    n: e.n,
+    m: e.m,
+    b: e.b,
+    bs: e.bs,
+    bh: e.bh ?? STAFF_BOSS_HEALTH_DEFAULT,
+    hp: e.hp ?? 0,
+    at: e.at,
+    ue: e.ue,
+    eb: bit(e.eb),
+    fb: e.fb ?? 0,
+    by: clean(e.by, STAFF_EVENT_BY_MAX),
+  };
 }
 /**
  * EVENT-FAULT (mob 2026-10-25: "service refused", "toop of event menu says the refusal"): the first field validStaffEvent
@@ -142,15 +175,21 @@ export function staffEventFault(e) {
   if (!intIn(e.rg, 0, 255)) return 'region';
   if (!staffLocOk(e.loc)) return 'place';
   if (!worldPx(e.px) || !worldPx(e.py)) return 'pixel';
-  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town';   // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it
-  if (!Array.isArray(e.mt) || !e.mt.length || e.mt.length > STAFF_EVENT_KINDS_MAX || !e.mt.every(staffEventKindOk)) return 'monsters';
+  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town'; // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it
+  if (!Array.isArray(e.mt) || !e.mt.length || e.mt.length > STAFF_EVENT_KINDS_MAX || !e.mt.every(staffEventKindOk))
+    return 'monsters';
   if (!intIn(e.n, STAFF_EVENT_TOTAL_MIN, STAFF_EVENT_TOTAL_MAX)) return 'total';
   if (!intIn(e.m, STAFF_EVENT_METER_MIN, Math.min(STAFF_EVENT_METER_MAX, e.n))) return 'meter';
   if (!staffEventKindOk(e.b)) return 'boss';
   if (!intIn(e.bs, STAFF_BOSS_SIZE_MIN, STAFF_BOSS_SIZE_MAX)) return 'size';
-  if (!intIn(e.bh ?? STAFF_BOSS_HEALTH_DEFAULT, STAFF_BOSS_HEALTH_MIN, STAFF_BOSS_HEALTH_MAX) || !intIn(e.hp ?? 0, 0, STAFF_BOSS_HP_MAX)) return 'health';
+  if (
+    !intIn(e.bh ?? STAFF_BOSS_HEALTH_DEFAULT, STAFF_BOSS_HEALTH_MIN, STAFF_BOSS_HEALTH_MAX) ||
+    !intIn(e.hp ?? 0, 0, STAFF_BOSS_HP_MAX)
+  )
+    return 'health';
   if (!Number.isSafeInteger(e.at) || e.at <= 0) return 'start';
-  if (!(e.ue === 0 || (Number.isSafeInteger(e.ue) && e.ue > e.at && e.ue - e.at <= STAFF_EVENT_LONGEST_MS))) return 'runs';
+  if (!(e.ue === 0 || (Number.isSafeInteger(e.ue) && e.ue > e.at && e.ue - e.at <= STAFF_EVENT_LONGEST_MS)))
+    return 'runs';
   if (!intIn(e.fb ?? 0, 0, 99)) return 'calls';
   return null;
 }
@@ -173,9 +212,27 @@ export const isAreaEvent = (e) => e.loc === STAFF_EVENT_AREA;
 export function validStaffEventIn(m) {
   if (!m || typeof m !== 'object' || m.k !== 'w') return null;
   if (typeof m.id !== 'string' || !STAFF_EVENT_ID_RE.test(m.id)) return null;
-  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) || !intIn(m.fb ?? 0, 0, 99) || !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
+  if (
+    !worldPx(m.px) ||
+    !worldPx(m.py) ||
+    !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) ||
+    !intIn(m.fb ?? 0, 0, 99) ||
+    !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)
+  )
+    return null;
   for (const k of ['s', 'bu', 'bk']) if (m[k] !== undefined && m[k] !== 0 && m[k] !== 1) return null;
-  return { k: 'w', id: m.id, px: m.px, py: m.py, n: m.n, s: bit(m.s), bu: bit(m.bu), bk: bit(m.bk), fb: m.fb ?? 0, h: m.h ?? 0 };
+  return {
+    k: 'w',
+    id: m.id,
+    px: m.px,
+    py: m.py,
+    n: m.n,
+    s: bit(m.s),
+    bu: bit(m.bu),
+    bk: bit(m.bk),
+    fb: m.fb ?? 0,
+    h: m.h ?? 0,
+  };
 }
 
 /** The bound on a receipt's length on the wire (staffEventReceipt.js STAFF_RECEIPT_MAX - this file imports nothing). */
@@ -197,13 +254,22 @@ export function validStaffEventOut(m) {
   if (m.k === 'ev') {
     if (!Array.isArray(m.l)) return null;
     const l = [];
-    for (const e of m.l) { if (l.length >= STAFF_EVENTS_MAX) break; const v = validStaffEvent(e); if (v && !l.some((x) => x.id === v.id)) l.push(v); }
+    for (const e of m.l) {
+      if (l.length >= STAFF_EVENTS_MAX) break;
+      const v = validStaffEvent(e);
+      if (v && !l.some((x) => x.id === v.id)) l.push(v);
+    }
     return { k: 'ev', l };
   }
   if (typeof m.id !== 'string' || !STAFF_EVENT_ID_RE.test(m.id)) return null;
-  if (m.k === 'end') return { k: 'end', id: m.id, why: ['staff', 'boss', 'time', 'done'].includes(m.why) ? m.why : 'staff' };
-  if (m.k === 'bd') { const top = validStaffBoard(m.top); return top ? { k: 'bd', id: m.id, top } : null; }   // THE REWARD: the board, at the fall
-  if (m.k === 'rc') return typeof m.r === 'string' && m.r.length <= STAFF_RECEIPT_WIRE_MAX ? { k: 'rc', id: m.id, r: m.r } : null;   // and my receipt
+  if (m.k === 'end')
+    return { k: 'end', id: m.id, why: ['staff', 'boss', 'time', 'done'].includes(m.why) ? m.why : 'staff' };
+  if (m.k === 'bd') {
+    const top = validStaffBoard(m.top);
+    return top ? { k: 'bd', id: m.id, top } : null;
+  } // THE REWARD: the board, at the fall
+  if (m.k === 'rc')
+    return typeof m.r === 'string' && m.r.length <= STAFF_RECEIPT_WIRE_MAX ? { k: 'rc', id: m.id, r: m.r } : null; // and my receipt
   if (!intIn(m.n, 0, STAFF_EVENT_TOTAL_MAX) || !intIn(m.fc ?? 0, 0, 99)) return null;
   return { k: 'st', id: m.id, n: m.n, bd: bit(m.bd), bu: bit(m.bu), bk: bit(m.bk), fc: m.fc ?? 0 };
 }
@@ -224,10 +290,22 @@ export function validStaffEventOut(m) {
  */
 
 /** A ledger, off the event's first word in its cell. @param {StaffEvent} e @param {number} nowMs @returns {StaffEventLedger} */
-export const newStaffLedger = (e, nowMs) => ({ id: e.id, first: nowMs, n: 0, a: {}, bd: 0, bu: 0, bk: 0, fc: 0, bossN: 0, ended: 0 });
+export const newStaffLedger = (e, nowMs) => ({
+  id: e.id,
+  first: nowMs,
+  n: 0,
+  a: {},
+  bd: 0,
+  bu: 0,
+  bk: 0,
+  fc: 0,
+  bossN: 0,
+  ended: 0,
+});
 
 /** The most the count may be at `nowMs` (THE CAP). @param {StaffEventLedger} led @param {number} nowMs */
-export const staffEventCap = (led, nowMs) => STAFF_EVENT_KILLS_BURST + Math.floor(Math.max(0, nowMs - led.first) / STAFF_EVENT_KILL_MS);
+export const staffEventCap = (led, nowMs) =>
+  STAFF_EVENT_KILLS_BURST + Math.floor(Math.max(0, nowMs - led.first) / STAFF_EVENT_KILL_MS);
 
 /**
  * A boss called: the meter full (the count at `e.m`), or staff's hand (`e.fb` past the calls the ledger took). A boss
@@ -238,15 +316,28 @@ export const staffEventCap = (led, nowMs) => STAFF_EVENT_KILLS_BURST + Math.floo
  */
 export function staffBossCall(led, e) {
   if (led.ended) return false;
-  const hc = led.hc ?? led.fc, mc = led.mc ?? led.bd;   // a ledger kept before BOSS-AGAIN: `fc` was the hands', and a meter boss called once
-  if (e.fb > hc) { led.hc = e.fb; led.mc = mc; nextStaffBoss(led); return true; }   // by hand: one more boss
-  if ((!led.bd || led.bk) && led.n >= e.m * (mc + 1)) { led.hc = hc; led.mc = mc + 1; nextStaffBoss(led); return true; }   // the meter, each time it fills
+  const hc = led.hc ?? led.fc,
+    mc = led.mc ?? led.bd; // a ledger kept before BOSS-AGAIN: `fc` was the hands', and a meter boss called once
+  if (e.fb > hc) {
+    led.hc = e.fb;
+    led.mc = mc;
+    nextStaffBoss(led);
+    return true;
+  } // by hand: one more boss
+  if ((!led.bd || led.bk) && led.n >= e.m * (mc + 1)) {
+    led.hc = hc;
+    led.mc = mc + 1;
+    nextStaffBoss(led);
+    return true;
+  } // the meter, each time it fills
   return false;
 }
 /** The next call: the one after the last, a new boss due. @param {StaffEventLedger} led */
 function nextStaffBoss(led) {
   if (led.bd) led.fc = Math.min(99, led.fc + 1);
-  led.bd = 1; led.bu = 0; led.bk = 0;
+  led.bd = 1;
+  led.bu = 0;
+  led.bk = 0;
 }
 
 /**
@@ -266,9 +357,12 @@ export function foldStaffWord(led, e, acct, name, w, nowMs) {
   out.known = true;
   rec.nm = typeof name === 'string' ? name.slice(0, 32) : '';
   rec.last = nowMs;
-  if (nowMs - (rec.tAt ?? 0) >= STAFF_EVENT_STAND_TICK_MS) { rec.t = (rec.t ?? 0) + 1; rec.tAt = nowMs; }   // THE STAND: a word a tick
+  if (nowMs - (rec.tAt ?? 0) >= STAFF_EVENT_STAND_TICK_MS) {
+    rec.t = (rec.t ?? 0) + 1;
+    rec.tAt = nowMs;
+  } // THE STAND: a word a tick
   if (w.s === 1) rec.s = 1;
-  if ((w.h ?? 0) > (rec.h ?? 0)) rec.h = Math.max(rec.h ?? 0, Math.min(w.h ?? 0, e.n, staffEventCap(led, nowMs)));   // THE REWARD: my kills, never past the event's total or its pace
+  if ((w.h ?? 0) > (rec.h ?? 0)) rec.h = Math.max(rec.h ?? 0, Math.min(w.h ?? 0, e.n, staffEventCap(led, nowMs))); // THE REWARD: my kills, never past the event's total or its pace
   if (w.n > rec.n) {
     out.credited = Math.max(0, Math.min(w.n - rec.n, staffEventCap(led, nowMs) - led.n, e.n - led.n));
     rec.n += out.credited;
@@ -277,8 +371,19 @@ export function foldStaffWord(led, e, acct, name, w, nowMs) {
   if (staffBossCall(led, e)) out.boss = true;
   // the boss's moments, said by the player who stands it, for the call it answers (an old call's word moves nothing)
   if ((w.fb ?? 0) === led.fc && led.bd) {
-    if (w.bu === 1 && !led.bu) { led.bu = 1; out.boss = true; }
-    if (w.bk === 1 && led.bu && !led.bk) { led.bk = 1; led.bossN++; out.boss = true; if (!led.kb) { led.kb = acct; led.fellAt = nowMs; } }   // THE REWARD: its first killer and fall
+    if (w.bu === 1 && !led.bu) {
+      led.bu = 1;
+      out.boss = true;
+    }
+    if (w.bk === 1 && led.bu && !led.bk) {
+      led.bk = 1;
+      led.bossN++;
+      out.boss = true;
+      if (!led.kb) {
+        led.kb = acct;
+        led.fellAt = nowMs;
+      }
+    } // THE REWARD: its first killer and fall
   }
   return out;
 }
@@ -301,38 +406,86 @@ export function staffEventEarned(led) {
   const fell = led.fellAt ?? led.first;
   const half = Math.max(0, fell - led.first) / 2;
   const rows = Object.entries(led.a)
-    .filter(([acct, r]) => !acct.startsWith('id:') && (r.h ?? 0) >= STAFF_EVENT_EARN_KILLS)   // REWARD-KILLS (mob 2026-10-25: "im getting drops even tho i barlky particpate"; card "Kills only (3+)"): a stand alone earns nothing
-    .sort(([a, x], [b, y]) => (y.h ?? 0) - (x.h ?? 0) || Number(b === led.kb) - Number(a === led.kb) || (y.t ?? 0) - (x.t ?? 0) || (a < b ? -1 : 1));
+    .filter(([acct, r]) => !acct.startsWith('id:') && (r.h ?? 0) >= STAFF_EVENT_EARN_KILLS) // REWARD-KILLS (mob 2026-10-25: "im getting drops even tho i barlky particpate"; card "Kills only (3+)"): a stand alone earns nothing
+    .sort(
+      ([a, x], [b, y]) =>
+        (y.h ?? 0) - (x.h ?? 0) ||
+        Number(b === led.kb) - Number(a === led.kb) ||
+        (y.t ?? 0) - (x.t ?? 0) ||
+        (a < b ? -1 : 1),
+    );
   return rows.map(([acct, rec], i) => ({ acct, rec, rank: i < STAFF_EVENT_BOARD_MAX ? i + 1 : 0 }));
 }
 /** The board: the earners' top STAFF_EVENT_BOARD_MAX as `[name, kills, killer]`. @param {StaffEventLedger} led @returns {StaffBoardRow[]} */
-export const staffEventBoard = (led) => staffEventEarned(led).filter((x) => x.rank > 0).map((x) => [x.rec.nm || '', Math.min(x.rec.h ?? 0, STAFF_EVENT_WORD_KILLS_MAX), x.acct === led.kb ? 1 : 0]);   // a nameless row the reader's own word (raidingParties.js staffBoardLine)
+export const staffEventBoard = (led) =>
+  staffEventEarned(led)
+    .filter((x) => x.rank > 0)
+    .map((x) => [x.rec.nm || '', Math.min(x.rec.h ?? 0, STAFF_EVENT_WORD_KILLS_MAX), x.acct === led.kb ? 1 : 0]); // a nameless row the reader's own word (raidingParties.js staffBoardLine)
 /** A board, projected (a frame's, a tell's). @param {unknown} top @returns {StaffBoardRow[] | null} */
 export function validStaffBoard(top) {
   if (!Array.isArray(top) || top.length > STAFF_EVENT_BOARD_MAX) return null;
   const out = [];
   for (const r of top) {
-    if (!Array.isArray(r) || r.length !== 3 || typeof r[0] !== 'string' || !intIn(r[1], 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
+    if (!Array.isArray(r) || r.length !== 3 || typeof r[0] !== 'string' || !intIn(r[1], 0, STAFF_EVENT_WORD_KILLS_MAX))
+      return null;
     out.push(/** @type {StaffBoardRow} */ ([clean(r[0], 32), r[1], bit(r[2])]));
   }
   return out;
 }
 
 /** The ledger as a cell says it to the place. @param {StaffEventLedger} led */
-export const staffLedgerState = (led) => ({ k: 'st', id: led.id, n: led.n, bd: led.bd, bu: led.bu, bk: led.bk, fc: led.fc });
+export const staffLedgerState = (led) => ({
+  k: 'st',
+  id: led.id,
+  n: led.n,
+  bd: led.bd,
+  bu: led.bu,
+  bk: led.bk,
+  fc: led.fc,
+});
 /** The accounts fighting now (a word within STAFF_EVENT_PRESENT_MS). @param {StaffEventLedger} led @param {number} nowMs */
-export const staffEventFighters = (led, nowMs) => Object.values(led.a).filter((r) => nowMs - r.last <= STAFF_EVENT_PRESENT_MS).length;
+export const staffEventFighters = (led, nowMs) =>
+  Object.values(led.a).filter((r) => nowMs - r.last <= STAFF_EVENT_PRESENT_MS).length;
 /** What a cell tells the hub, and the hub tells staff: the count, the boss, who is fighting. @param {StaffEventLedger} led @param {number} nowMs */
-export const staffEventTell = (led, nowMs) => ({ id: led.id, n: led.n, bd: led.bd, bu: led.bu, bk: led.bk, fc: led.fc, bossN: led.bossN, f: staffEventFighters(led, nowMs), ...(led.top ? { top: led.top } : {}) });
+export const staffEventTell = (led, nowMs) => ({
+  id: led.id,
+  n: led.n,
+  bd: led.bd,
+  bu: led.bu,
+  bk: led.bk,
+  fc: led.fc,
+  bossN: led.bossN,
+  f: staffEventFighters(led, nowMs),
+  ...(led.top ? { top: led.top } : {}),
+});
 /** A tell, projected (the hub's door reads a cell's). @param {any} t */
 export function validStaffEventTell(t) {
   if (!t || typeof t !== 'object' || typeof t.id !== 'string' || !STAFF_EVENT_ID_RE.test(t.id)) return null;
-  if (!intIn(t.n, 0, STAFF_EVENT_TOTAL_MAX) || !intIn(t.fc ?? 0, 0, 99) || !intIn(t.bossN ?? 0, 0, 99) || !intIn(t.f ?? 0, 0, STAFF_EVENT_ACCOUNTS_MAX)) return null;
+  if (
+    !intIn(t.n, 0, STAFF_EVENT_TOTAL_MAX) ||
+    !intIn(t.fc ?? 0, 0, 99) ||
+    !intIn(t.bossN ?? 0, 0, 99) ||
+    !intIn(t.f ?? 0, 0, STAFF_EVENT_ACCOUNTS_MAX)
+  )
+    return null;
   const top = t.top === undefined ? null : validStaffBoard(t.top);
   if (t.top !== undefined && !top) return null;
-  return { id: t.id, n: t.n, bd: bit(t.bd), bu: bit(t.bu), bk: bit(t.bk), fc: t.fc ?? 0, bossN: t.bossN ?? 0, f: t.f ?? 0, ...(top ? { top } : {}) };
+  return {
+    id: t.id,
+    n: t.n,
+    bd: bit(t.bd),
+    bu: bit(t.bu),
+    bk: bit(t.bk),
+    fc: t.fc ?? 0,
+    bossN: t.bossN ?? 0,
+    f: t.f ?? 0,
+    ...(top ? { top } : {}),
+  };
 }
 
 /** The relay that knows staff events (net/wire.js RELAY_VERSION) - an older one closes a socket on the frame. */
-export const STAFF_EVENT_RELAY_MIN = 256;   // world255 on its branch, renumbered past KETCH at the merge
-export const relaySupportsStaffEvents = (/** @type {unknown} */ v) => { const r = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!r && Number(r[1]) >= STAFF_EVENT_RELAY_MIN; };
+export const STAFF_EVENT_RELAY_MIN = 256; // world255 on its branch, renumbered past KETCH at the merge
+export const relaySupportsStaffEvents = (/** @type {unknown} */ v) => {
+  const r = /^world(\d+)$/.exec(typeof v === 'string' ? v : '');
+  return !!r && Number(r[1]) >= STAFF_EVENT_RELAY_MIN;
+};

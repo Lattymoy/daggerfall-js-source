@@ -431,8 +431,8 @@
   {
     "name": "WW6-staff-province-unasked",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": " && !(intIn(px, 0, 999) && intIn(py, 0, 499)) && intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]));",
-    "new": " && !(intIn(px, 0, 999) && intIn(py, 0, 499)));",
+    "old": "    : worldPx(px) &&\n      worldPx(py) &&\n      !(intIn(px, 0, 999) && intIn(py, 0, 499)) &&\n      intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]);",
+    "new": "    : worldPx(px) && worldPx(py) && !(intIn(px, 0, 999) && intIn(py, 0, 499));",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "WW6-staff-bay-pixel-past",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": " && !(intIn(px, 0, 999) && intIn(py, 0, 499)) && intIn(rg,",
-    "new": " && intIn(rg,",
+    "old": "    : worldPx(px) &&\n      worldPx(py) &&\n      !(intIn(px, 0, 999) && intIn(py, 0, 499)) &&\n      intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]);",
+    "new": "    : worldPx(px) && worldPx(py) && intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]);",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "WW6-staff-city-dropped",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "ct: isAreaEvent(e) ? 0 : bit(e.ct),",
-    "new": "ct: e.loc >= 0 ? bit(e.ct) : 0,",
+    "old": "    ct: isAreaEvent(e) ? 0 : bit(e.ct),",
+    "new": "    ct: e.loc >= 0 ? bit(e.ct) : 0,",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]

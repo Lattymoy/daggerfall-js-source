@@ -14,6 +14,8 @@
 /src/net/*
 !/src/net/sea/
 /src/net/sea/*/
+!/src/net/staffEvent/
+/src/net/staffEvent/*/
 !/src/poi/
 /src/poi/*/
 !/src/poi/uv/

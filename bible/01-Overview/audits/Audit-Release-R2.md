@@ -150,7 +150,7 @@ shorter (the host asks one positional call).
 
 ### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's by WW6)
 
-`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND = 8192;"`,
+`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND"`,
 `src/net/staffPlaces.js:"function provincePlaces(maps, region, places) {"`. The event's place was a Bay pixel by its law
 (the account service that signs it, the relay that keeps its book and its place's cell, and the game read one copy), the
 picker listed a region's MAPS.BSA places (none for 62..70), and an event runs as a town's raid runs (RAID2/RAID3). Now:

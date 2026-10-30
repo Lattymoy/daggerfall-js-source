@@ -122,8 +122,8 @@
   {
     "name": "R2-7-town-past-bay-taken",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town';",
-    "new": "",
+    "old": "  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town'; // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it",
+    "new": "  // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it",
     "tests": [
       "test/world/worldWide/auditrelease_r2_gaps.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "R2-7-word-pixel-the-bays",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
-    "new": "  if (!intIn(m.px, 0, 999) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
+    "old": "    !worldPx(m.px) ||",
+    "new": "    !intIn(m.px, 0, 999) ||",
     "tests": [
       "test/world/worldWide/auditrelease_r2_gaps.test.js"
     ],
