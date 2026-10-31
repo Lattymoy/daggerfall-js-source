@@ -66,6 +66,9 @@ contextBridge.exposeInMainWorld('daggerShell', {
   // GPU-TRAIL (src/render/gpuTrail.js): the GPU's last samples, handed over with each one - kept by the shell and written
   // to crash.log when a process stops. Not sync: the renderer never waits on it.
   gpuTrail: (trail) => ipcRenderer.send('dagger:gpu-trail', trail),
+  // The private server the launcher hosts or joined - { url } - or null for the main servers. Read once
+  // here, before any game script: a local character loaded this run plays online there (src/net/privateServer.js)
+  privateServer: ipcRenderer.sendSync('dagger:private-server'),
   storage: {
     length: () => store.length(),
     key: (i) => store.key(i),
