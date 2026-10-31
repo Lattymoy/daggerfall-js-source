@@ -610,8 +610,8 @@
   {
     "name": "AUDIT-CHAP4-T10-ROLL-JUSTIFY",
     "file": "src/ui/chapterRoll.js",
-    "old": "text(roll.title), nl(), nl(), { formatting: RSC.JustifyLeft }];",
-    "new": "text(roll.title), nl(), nl()];",
+    "old": "    { formatting: RSC.JustifyLeft },\n  ];",
+    "new": "  ];",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

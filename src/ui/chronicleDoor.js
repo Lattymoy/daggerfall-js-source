@@ -6,7 +6,7 @@
 // (ui/quest/questJournal.js) and the history (ui/playerHistory.js) are
 // separate classic windows built at four sites between them:
 //
-//   ui/charSheetNav.js:"? () => new QuestJournalWindow"   the sheet's LOGBOOK button
+//   ui/charSheetNav.js:"? () =>"   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:"history: () => new"   the sheet's HISTORY button
 //   scenes/world.js:"on the entity; the"    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's

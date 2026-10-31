@@ -1731,6 +1731,12 @@
 !/src/ui/captainTreeWindow.js
 !/src/ui/card/
 /src/ui/card/*/
+!/src/ui/carriageWheel.js
+!/src/ui/chapterRoll.js
+!/src/ui/charSheetNav.js
+!/src/ui/characterSlots.js
+!/src/ui/chatColours.js
+!/src/ui/chatItemLink.js
 !/src/ui/chronicleDoor.js
 !/src/ui/classicLootPanel.js
 !/src/ui/collections/

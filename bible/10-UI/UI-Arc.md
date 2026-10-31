@@ -1857,7 +1857,7 @@ does the pack's USE arm.
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
-    THE LOGBOOK         THREE sites: charSheetNav.js:"? () => new QuestJournalWindow",
+    THE LOGBOOK         THREE sites: charSheetNav.js:"? () =>",
     / NOTEBOOK          world.js:"MaxCharacters 80", dungeonContext.js:"U26: ui/input.js". A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:"history: () => new"), and it reads

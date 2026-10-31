@@ -140,8 +140,8 @@
   {
     "name": "CHAP5A-BOOK-TITLE",
     "file": "src/ui/chapterRoll.js",
-    "old": "{ formatting: RSC.FontPrefix, x: TITLE_FONT }, text(roll.title), nl(), nl(),",
-    "new": "{ formatting: RSC.FontPrefix, x: TITLE_FONT }, nl(), nl(),",
+    "old": "    text(roll.title),\n    nl(),",
+    "new": "    nl(),",
     "tests": [
       "test/net/chap5a_roll.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "CHAP5A-BOOK-LINES",
     "file": "src/ui/chapterRoll.js",
-    "old": "  for (const line of roll.lines) out.push(text(line), nl(), nl());\n",
-    "new": "",
+    "old": "  for (const line of roll.lines) out.push(text(line), nl(), nl());\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/net/chap5a_roll.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "CHAP5A-BOOK-AUTHOR",
     "file": "src/ui/chapterRoll.js",
-    "old": "return { title: roll.title, author: CHAPTER_ROLL_AUTHOR, pageCount: 1,",
-    "new": "return { title: roll.title, author: '', pageCount: 1,",
+    "old": "  return { title: roll.title, author: CHAPTER_ROLL_AUTHOR, pageCount: 1, getPageTokens: () => tokens };",
+    "new": "  return { title: roll.title, author: '', pageCount: 1, getPageTokens: () => tokens };",
     "tests": [
       "test/net/chap5a_roll.test.js"
     ]

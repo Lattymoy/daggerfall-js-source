@@ -2,8 +2,8 @@
   {
     "name": "PROFILE-SLOTS-a-locked-piece-worn",
     "file": "src/ui/characterSlots.js",
-    "old": "b.onclick = () => { if (locked) { tryOn(on); return false; } trial = null; lastPress = keyOf(); return wear(); };",
-    "new": "b.onclick = () => { trial = null; lastPress = keyOf(); return wear(); };",
+    "old": "      if (locked) {\n        tryOn(on);\n        return false;\n      }\n      trial = null;",
+    "new": "      trial = null;",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PROFILE-SLOTS-the-try-on-never-reaching-the-stage",
     "file": "src/ui/characterSlots.js",
-    "old": "const tryOn = (/** @type {{ slot: string, key: string|null }|null} */ next) => { trial = next; show(); };",
-    "new": "const tryOn = (/** @type {{ slot: string, key: string|null }|null} */ next) => { trial = next; };",
+    "old": "    show();\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PROFILE-SLOTS-the-gap-dropped",
     "file": "src/ui/characterSlots.js",
-    "old": "Math.round(at.y - gap)",
-    "new": "Math.round(at.y)",
+    "old": "        ? `translate(${Math.round(at.x)}px, ${Math.round(at.y - gap)}px) translate(-50%, -100%)`",
+    "new": "        ? `translate(${Math.round(at.x)}px, ${Math.round(at.y)}px) translate(-50%, -100%)`",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PROFILE-SLOTS-a-slot-left-out",
     "file": "src/ui/characterSlots.js",
-    "old": "  Object.freeze({ id: 'icon', side: 'right', armory: null }),\n",
-    "new": "",
+    "old": "  Object.freeze({ id: 'icon', side: 'right', armory: null }),\n  Object.freeze({ id: 'aura', side: 'right', armory: null }),",
+    "new": "  Object.freeze({ id: 'aura', side: 'right', armory: null }),",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "PROFILE-SLOTS-the-dead-stage-kept",
     "file": "src/ui/characterSlots.js",
-    "old": "if (canvas && stage && stage.alive?.() === false) { canvas = null;",
-    "new": "if (false) { canvas = null;",
+    "old": "    if (canvas && stage && stage.alive?.() === false) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "PROFILE-SLOTS-the-look-never-read-again",
     "file": "src/ui/characterSlots.js",
-    "old": "if (++looked >= 30) { looked = 0; freshLook(); }",
-    "new": "if (++looked >= 30) { looked = 0; }",
+    "old": "          freshLook();\n        }",
+    "new": "        }",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "PROFILE-SLOTS-the-focus-retrying-the-press",
     "file": "src/ui/characterSlots.js",
-    "old": "b.onfocus = () => { if (keyOf() === lastPress) { lastPress = ''; return; } tryOn(on); };",
-    "new": "b.onfocus = () => tryOn(on);",
+    "old": "    b.onfocus = () => {\n      if (keyOf() === lastPress) {\n        lastPress = '';\n        return;\n      }\n      tryOn(on);\n    }; // the card's repaint giving the press its focus back",
+    "new": "    b.onfocus = () => tryOn(on); // the card's repaint giving the press its focus back",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "PROFILE-SLOTS-the-weapon-note-dropped",
     "file": "src/ui/characterSlots.js",
-    "old": "const where = slot === 'weapon' ?",
-    "new": "const where = slot === 'nonsuch' ?",
+    "old": "        slot === 'weapon' ? ` ${t('account.slots.weaponNote', 'It shows on the weapon in your hand.')}` : ''; // the weapon glow's (law 7), never the stage's",
+    "new": "        slot === 'nonsuch' ? ` ${t('account.slots.weaponNote', 'It shows on the weapon in your hand.')}` : ''; // the weapon glow's (law 7), never the stage's",
     "tests": [
       "test/ui/profileslots.test.js"
     ]

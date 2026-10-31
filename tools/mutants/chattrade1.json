@@ -83,8 +83,8 @@
   {
     "name": "CT-rp-takes-the-channel-colour",
     "file": "src/ui/chatColours.js",
-    "old": ":not(.roll):not(.rp)';",
-    "new": ":not(.roll)';",
+    "old": "export const COLOURED_LINE = ':not(.system):not(.red):not(.dm):not(.ooc):not(.me):not(.roll):not(.rp)';",
+    "new": "export const COLOURED_LINE = ':not(.system):not(.red):not(.dm):not(.ooc):not(.me):not(.roll)';",
     "tests": [
       "test/ui/chattrade1.test.js"
     ]

@@ -149,8 +149,8 @@
   {
     "name": "SHADOWFANG-card-word-unwrapped",
     "file": "src/ui/characterSlots.js",
-    "old": "        b.append(word);\n",
-    "new": "        b.textContent = TITLE_TEXT[key] ?? key;\n",
+    "old": "        b.append(word);",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

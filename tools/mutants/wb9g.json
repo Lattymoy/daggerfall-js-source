@@ -382,8 +382,8 @@
   {
     "name": "WB9g-the-aura-button-wears-a-title",
     "file": "src/ui/characterSlots.js",
-    "old": "() => flow.wearAura(key)));",
-    "new": "() => flow.equip(key)));",
+    "old": "        row.append(choice(b, { slot: 'aura', key }, () => flow.wearAura(key)));",
+    "new": "        row.append(choice(b, { slot: 'aura', key }, () => flow.equip(key)));",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
