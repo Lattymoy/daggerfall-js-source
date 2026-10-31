@@ -45,6 +45,7 @@ import { bookTitle } from '../books.js';   // IM1: GetBookTitle's legacy-data ar
 import { dfRandPick } from '../../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from '../artifactEffects.js';
 import { isRestItem, restItemLines } from '../rest/restItems.js'; import { isPortalStone, portalStoneLines } from '../portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
+import { isPortalBook } from '../gate/gateSpoils.js'; import { portalBookLines } from '../portalBook.js';   // PORTAL-BOOK: and the Portal Book's
 import { maskText } from '../../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from '../walletItem.js';   // WALLET1: the wallet's card
 import { isSoulCake, isHearthOffering, SOUL_CAKE_TEXT } from '../festival/soulCake.js';   // WITCH1: the festival's two items' cards
@@ -880,6 +881,7 @@ export function survivalInfoTokens(item) {
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
+  else if (isPortalBook(item)) for (const text of portalBookLines()) out.push({ text, center: true });   // PORTAL-BOOK
   else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are
   else if (isSoulCake(item)) for (const text of SOUL_CAKE_TEXT.cake()) out.push({ text, center: true });   // WITCH1
   else if (isHearthOffering(item)) for (const text of SOUL_CAKE_TEXT.offering()) out.push({ text, center: true });   // WITCH1
@@ -902,7 +904,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isPortalBook(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -1041,7 +1043,7 @@ export function itemStatRows(item) {
   // MAT-SHOW: a Rare or better piece of armour or a weapon says its metal
   // here even while the long name keeps the prefix off. push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2: and the Lockpick's lines   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isPortalBook(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2: and the Lockpick's lines   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // STEED1: a horse's nature - its four stats as it was born (a Stable's horses say theirs before they are bought), and

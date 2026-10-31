@@ -29,6 +29,7 @@ import { VENDOR_STATION } from '../../src/net/vendorLaw.js';
 import { GUILD_GROUPS } from '../../src/formats/factionFile.js';
 import { isCaravanRoom } from '../../src/systems/caravanRoom.js';
 import { useDecorPiece } from '../../src/systems/decor/decorUse.js';
+import { MUSIC_STATION } from '../../src/systems/musicBox.js';   // MUSIC-BOX: a music box's press, before the stations
 import { decorMayStorage, decorMayStation, decorIsShared, decorStationShut, noteDecorGrants, openOwnChest } from '../../src/systems/decor/decorGrants.js';
 
 const MAP = 7;
@@ -79,6 +80,7 @@ function room(home, { privateVisitRoom = null } = {}) {
     openHomeVendor: () => log.opened.push(['vendor']), isHallBoard: () => false, openHallBoard: () => {}, openHallChest: () => log.opened.push(['hall chest']),
     hallPiecePress,   // GUILD-SHOP: the hall's board and its banker, pressed (scenes/guildHallPress.js)
     CROWN_HALL_TEXT: { chestShut: () => 'shut' }, interiorInventory: () => ({ storage: true }),
+    MUSIC_STATION, openMusicBox: () => log.opened.push(['music box']), mountInterior: () => {},   // MUSIC-BOX: the box's own press
     useDecorPiece, interiorCamps: { activate: () => log.opened.push(['fire']) }, getInteractionMode: () => 'steal', restFromInteriorBed: () => log.opened.push(['bed']),   // DECOR-USE: a placed bed's and fire's own press, ahead of the stations
     // DECOR-ACCESS: the service's grants, none heard - the gate's own law decides, as before the room's list arrives
     decorMayStorage, decorMayStation, decorIsShared, decorStationShut, openSharedChest: () => log.opened.push(['shared chest']),

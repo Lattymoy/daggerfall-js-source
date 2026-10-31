@@ -74,8 +74,9 @@
  {
   "name": "STAR7-the-cards-silent",
   "file": "server-account/src/index.js",
-  "old": "sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
-  "new": "sds: await sdRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
+  "old": "sds, stars, ketch, renown, marks }",
+  "new": "sds, ketch, renown, marks }",
+  "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer.",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]
@@ -83,8 +84,9 @@
  {
   "name": "STAR7-the-public-card-silent",
   "file": "server-account/src/index.js",
-  "old": "sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
-  "new": "sds: await sdRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
+  "old": "sds, stars, ketch }",
+  "new": "sds, ketch }",
+  "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer.",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]

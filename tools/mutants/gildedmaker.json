@@ -138,7 +138,7 @@
   {
     "name": "GMAKER-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct230';",
+    "old": "export const ACCOUNT_VERSION = 'acct232';",
     "new": "export const ACCOUNT_VERSION = 'acct219';",
     "tests": [
       "test/systems/tech1_roster.test.js"
