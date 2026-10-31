@@ -1587,8 +1587,16 @@
 /src/ui/ink/*/
 !/src/ui/intro/
 /src/ui/intro/*
+!/src/ui/intro/introBuild.js
+!/src/ui/intro/introBuildWorker.js
+!/src/ui/intro/introCity.js
+!/src/ui/intro/introLandscape.js
+!/src/ui/intro/introMap.js
+!/src/ui/intro/introShaders.js
+!/src/ui/intro/introTamriel.js
 !/src/ui/intro/set/
 /src/ui/intro/set/*/
+!/src/ui/intro/titleHeld.js
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/levelUp/

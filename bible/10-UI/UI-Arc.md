@@ -1753,7 +1753,7 @@ The two met at
 the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
 reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
 paths and an export list the only changes), so every frame of the film stays the one pinned above
-(`ui/intro/introCity.js:"import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';"`). PIN MOVED:
+(`ui/intro/introCity.js:"IC-GRAND's twenty-five".."import {"`). PIN MOVED:
 `test/ui/intro4_film.test.js` reads the landmarks off the set. The set's 23 proper names stand on the L10N4 ratchet
 where world/imperialCity.js's did (`test/systems/l10n4_hardcoded.test.js`). STILL OPEN: re-shooting the film on the
 grand city - a new camera path over a city 3.5 times as wide, without the Colosseum - is its own slice; until then the
