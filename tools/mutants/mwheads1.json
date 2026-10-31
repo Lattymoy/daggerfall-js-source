@@ -62,8 +62,8 @@
   {
     "name": "MWHEADS1-every-polygon-baked",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (wears && wears(pi) !== material) continue;   // MW-HEADS1: another picture's polygon",
-    "new": "    if (wears && wears(pi) === -1) continue;   // MW-HEADS1: another picture's polygon",
+    "old": "    if (wears && wears(pi) !== material) continue; // MW-HEADS1: another picture's polygon",
+    "new": "    if (wears && wears(pi) === -1) continue; // MW-HEADS1: another picture's polygon",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "MWHEADS1-AUDIT-a-material-reads-its-first-texture",
     "file": "tools/fbxMesh.mjs",
-    "old": "node(texs.find((c) => c.props[3] === 'DiffuseColor') ?? texs[0])",
-    "new": "node(texs[0])",
+    "old": "    const tex = texs.length ? node(texs.find((c) => c.props[3] === 'DiffuseColor') ?? texs[0]) : null; // the base colour's picture",
+    "new": "    const tex = texs.length ? node(texs[0]) : null; // the base colour's picture",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "MWHEADS1-AUDIT-any-mapping-read-as-one",
     "file": "tools/fbxMesh.mjs",
-    "old": "throw new Error(`LayerElementMaterial: MappingInformationType ${map} is not ByPolygon or AllSame`);",
-    "new": "return () => ids[0];",
+    "old": "  throw new Error(`LayerElementMaterial: MappingInformationType ${map} is not ByPolygon or AllSame`);",
+    "new": "  return () => ids[0];",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "MWHEADS1-AUDIT-no-layer-read-as-material-0",
     "file": "tools/fbxMesh.mjs",
-    "old": "if (!layer) throw new Error('the Geometry carries no LayerElementMaterial - there is no material to bake alone');",
-    "new": "if (!layer) return () => 0;",
+    "old": "  if (!layer) throw new Error('the Geometry carries no LayerElementMaterial - there is no material to bake alone');",
+    "new": "  if (!layer) return () => 0;",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "MWHEADS1-AUDIT-a-short-material-list-read",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (ids.length !== polygons) throw",
-    "new": "    if (false) throw",
+    "old": "    if (ids.length !== polygons)\n      throw new Error(`LayerElementMaterial: ${ids.length} material indices for ${polygons} polygons`);",
+    "new": "    if (false) throw new Error(`LayerElementMaterial: ${ids.length} material indices for ${polygons} polygons`);",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],

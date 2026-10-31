@@ -252,8 +252,8 @@
   {
     "name": "MWFOLK1-a-whole-object-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "    for (const m of materials) if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);\n",
-    "new": "",
+    "old": "    for (const m of materials)\n      if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);\n    throw new Error(`${label}: no polygon wears material ${materials[0]} - nothing to cut`);",
+    "new": "    throw new Error(`${label}: no polygon wears material ${materials[0]} - nothing to cut`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-slot-cut-twice",
     "file": "tools/fbxStrip.mjs",
-    "old": "    if (list.includes(material)) throw new Error(`\"${object}\": material ${material} named twice`);\n",
-    "new": "",
+    "old": "    if (list.includes(material)) throw new Error(`\"${object}\": material ${material} named twice`);\n    slotsOf.set(object, [...list, material]);",
+    "new": "    slotsOf.set(object, [...list, material]);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-deformer-left-on-the-old-numbering",
     "file": "tools/fbxStrip.mjs",
-    "old": "    if (hung) throw",
-    "new": "    if (false) throw",
+    "old": "    if (hung)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "MWFOLK1-AUDIT-direct-with-an-index-table",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (el.children.some((c) => c.name === `${valueName}Index`)) throw",
-    "new": "      if (false) throw",
+    "old": "      if (el.children.some((c) => c.name === `${valueName}Index`))\n        throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);",
+    "new": "      if (false) throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "MWFOLK1-AUDIT-direct-not-a-value-a-corner",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (values.length !== pvi.length * width) throw",
-    "new": "      if (false) throw",
+    "old": "      if (values.length !== pvi.length * width) throw new Error(`${label}: its ${valueName} is not one value a corner`);",
+    "new": "      if (false) throw new Error(`${label}: its ${valueName} is not one value a corner`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -394,7 +394,7 @@
     "name": "MWFOLK1-AUDIT-loose-vertices-dropped",
     "file": "tools/fbxStrip.mjs",
     "old": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u));",
-    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u) && keptPV.some((k) => vOf(k) === u));",
+    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter(\n    (u) => !theirs.has(u) && keptPV.some((k) => vOf(k) === u),\n  );",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -404,7 +404,7 @@
     "name": "MWFOLK1-AUDIT-cut-vertices-out-of-order",
     "file": "tools/fbxStrip.mjs",
     "old": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u));",
-    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u)).reverse();",
+    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u)\n    .filter((u) => !theirs.has(u))\n    .reverse();",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -414,7 +414,7 @@
     "name": "MWFOLK1-AUDIT-cut-table-out-of-order",
     "file": "tools/fbxStrip.mjs",
     "old": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u).filter((u) => !only.has(u));",
-    "new": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u).filter((u) => !only.has(u)).reverse();",
+    "new": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u)\n        .filter((u) => !only.has(u))\n        .reverse();",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "MWFOLK1-AUDIT-every-polygon-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "  if (keep.every((k) => !k)) throw",
-    "new": "  if (false) throw",
+    "old": "  if (keep.every((k) => !k))",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -563,8 +563,8 @@
   {
     "name": "MWFOLK1-AUDIT-normalsw-left-whole",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (wRec) wRec.props = arrayProps(wRec, keepAt.map((u) => wRec.decoded.props[0][u]));",
-    "new": "",
+    "old": "    if (wRec)\n      wRec.props = arrayProps(\n        wRec,\n        keepAt.map((u) => wRec.decoded.props[0][u]),\n      );\n  };",
+    "new": "  };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -573,8 +573,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-shared-geometry-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model')) throw",
-    "new": "if (false) throw",
+    "old": "    if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model'))\n      throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);",
+    "new": "    if (false) throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-unknown-record-left",
     "file": "tools/fbxStrip.mjs",
-    "old": "for (const c of geo.children) if (!CUT_GEOMETRY.has(c.name)) throw",
-    "new": "for (const c of geo.children) if (false) throw",
+    "old": "    if (!CUT_GEOMETRY.has(c.name))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -593,8 +593,8 @@
   {
     "name": "MWFOLK1-AUDIT-another-material-mapping-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (value(matEl, 'MappingInformationType') !== 'ByPolygon' || value(matEl, 'ReferenceInformationType') !== 'IndexToDirect') {",
-    "new": "if (false) {",
+    "old": "  if (\n    value(matEl, 'MappingInformationType') !== 'ByPolygon' ||\n    value(matEl, 'ReferenceInformationType') !== 'IndexToDirect'\n  ) {",
+    "new": "  if (false) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -603,8 +603,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-short-material-list-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (mats.length !== polys.length) throw",
-    "new": "if (false) throw",
+    "old": "  if (mats.length !== polys.length)\n    throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);",
+    "new": "  if (false) throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -613,8 +613,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-cli-asks-a-drop",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (files.length !== 2 || (!dropArg && !cut.length) || cut.some((c) => !c.object || !Number.isInteger(c.material))) {",
-    "new": "if (files.length !== 2 || !dropArg) {",
+    "old": "  if (files.length !== 2 || (!dropArg && !cut.length) || cut.some((c) => !c.object || !Number.isInteger(c.material))) {",
+    "new": "  if (files.length !== 2 || !dropArg) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -623,8 +623,8 @@
   {
     "name": "MWFOLK1-AUDIT-another-layer-mapping-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (value(el, 'MappingInformationType') !== 'ByPolygonVertex') throw",
-    "new": "if (false) throw",
+    "old": "    if (value(el, 'MappingInformationType') !== 'ByPolygonVertex')\n      throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);",
+    "new": "    if (false) throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -633,8 +633,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-open-last-polygon-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (!polys.length || polys.at(-1)[1] !== pvi.length - 1) throw",
-    "new": "if (false) throw",
+    "old": "  if (!polys.length || polys.at(-1)[1] !== pvi.length - 1)\n    throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);",
+    "new": "  if (false) throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

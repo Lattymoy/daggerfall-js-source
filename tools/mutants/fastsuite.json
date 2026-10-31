@@ -161,8 +161,8 @@
   {
     "name": "CI-FAST-no-annotation",
     "file": "tools/failSummary.mjs",
-    "old": "  for (const a of annotations) yield `${a}\\n`;\n",
-    "new": "",
+    "old": "  for (const a of annotations) yield `${a}\\n`;\n  if (github && process.env.GITHUB_STEP_SUMMARY) {",
+    "new": "  if (github && process.env.GITHUB_STEP_SUMMARY) {",
     "tests": [
       "test/tooling/cifast_failsummary.test.js"
     ],
@@ -181,8 +181,8 @@
   {
     "name": "CI-FAST-summary-unwritten",
     "file": "tools/failSummary.mjs",
-    "old": "    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\\n`); } catch { /* the summary is a convenience; the log has it */ }",
-    "new": "",
+    "old": "    try {\n      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\\n`);\n    } catch {\n      /* the summary is a convenience; the log has it */\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/cifast_failsummary.test.js"
     ],

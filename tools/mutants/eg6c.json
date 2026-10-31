@@ -1669,8 +1669,8 @@
   {
     "name": "EG6C-a-seam-welded",
     "file": "tools/fbxMesh.mjs",
-    "old": "|${uv ? uv.map((v) => v.toFixed(6)).join(',') : ''}`;",
-    "new": "|`;",
+    "old": "      const key = `${positionIndex}|${n ? n.map((v) => v.toFixed(5)).join(',') : ''}|${uv ? uv.map((v) => v.toFixed(6)).join(',') : ''}`;",
+    "new": "      const key = `${positionIndex}|${n ? n.map((v) => v.toFixed(5)).join(',') : ''}|`;",
     "tests": [
       "test/tooling/eg6c_bake.test.js",
       "test/tooling/fbxmesh.test.js"

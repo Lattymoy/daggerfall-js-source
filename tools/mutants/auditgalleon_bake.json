@@ -2,8 +2,8 @@
   {
     "name": "AUDITGN-B1-search-forward-only",
     "file": "tools/fbxMesh.mjs",
-    "old": "        if (earTipCheck(e, accept)) return e;\n        e = reverse ? prev[e] : next[e];\n",
-    "new": "        if (earTipCheck(e, accept)) return e;\n        e = next[e];\n",
+    "old": "        e = reverse ? prev[e] : next[e];",
+    "new": "        e = next[e];",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDITGN-B1-search-from-head",
     "file": "tools/fbxMesh.mjs",
-    "old": "    for (const accept of [CONVEX, TANGENTIAL]) {\n      let e = init;\n",
-    "new": "    for (const accept of [CONVEX, TANGENTIAL]) {\n      let e = head;\n",
+    "old": "      let e = init;",
+    "new": "      let e = head;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDITGN-B1-passes-swapped",
     "file": "tools/fbxMesh.mjs",
-    "old": "for (const accept of [CONVEX, TANGENTIAL])",
-    "new": "for (const accept of [TANGENTIAL, CONVEX])",
+    "old": "    for (const accept of [CONVEX, TANGENTIAL]) {",
+    "new": "    for (const accept of [TANGENTIAL, CONVEX]) {",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDITGN-B1-tangential-pass-dropped",
     "file": "tools/fbxMesh.mjs",
-    "old": "for (const accept of [CONVEX, TANGENTIAL])",
-    "new": "for (const accept of [CONVEX])",
+    "old": "    for (const accept of [CONVEX, TANGENTIAL]) {",
+    "new": "    for (const accept of [CONVEX]) {",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDITGN-B1-one-pass-before-103913",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (sign[tip] !== accept) return false;\n",
-    "new": "    if (sign[tip] === CONCAVE) return false;\n",
+    "old": "    if (sign[tip] !== accept) return false;",
+    "new": "    if (sign[tip] === CONCAVE) return false;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AUDITGN-B1-desperate-from-head",
     "file": "tools/fbxMesh.mjs",
-    "old": "    let e = init;\n    for (let i = 0; i < count; i++) {\n      if (sign[e] !== CONCAVE) return e;\n",
-    "new": "    let e = head;\n    for (let i = 0; i < count; i++) {\n      if (sign[e] !== CONCAVE) return e;\n",
+    "old": "    }\n    let e = init;",
+    "new": "    }\n    let e = head;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDITGN-B1-desperate-convex-only",
     "file": "tools/fbxMesh.mjs",
-    "old": "      if (sign[e] !== CONCAVE) return e;\n",
-    "new": "      if (sign[e] === CONVEX) return e;\n",
+    "old": "      if (sign[e] !== CONCAVE) return e;",
+    "new": "      if (sign[e] === CONVEX) return e;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDITGN-B1-desperate-sweeps",
     "file": "tools/fbxMesh.mjs",
-    "old": "      if (sign[e] !== CONCAVE) return e;\n      e = next[e];\n",
-    "new": "      if (sign[e] !== CONCAVE) return e;\n      e = reverse ? prev[e] : next[e];\n",
+    "old": "      e = next[e];",
+    "new": "      e = reverse ? prev[e] : next[e];",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDITGN-B1-desperate-last-resort",
     "file": "tools/fbxMesh.mjs",
-    "old": "    return e;   // every corner concave",
-    "new": "    return prev[e];   // every corner concave",
+    "old": "    return e; // every corner concave: the loop has come round to where it began",
+    "new": "    return prev[e]; // every corner concave: the loop has come round to where it began",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDITGN-B1-bounding-box-dropped",
     "file": "tools/fbxMesh.mjs",
-    "old": "co[ax] >= bounds[ax][0] ? walk(neg[node])",
-    "new": "true ? walk(neg[node])",
+    "old": "        const toNeg = () => (neg[node] !== UNSET && co[ax] >= bounds[ax][0] ? walk(neg[node]) : UNSET);",
+    "new": "        const toNeg = () => (neg[node] !== UNSET && true ? walk(neg[node]) : UNSET);",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDITGN-B1-sweep-dropped",
     "file": "tools/fbxMesh.mjs",
-    "old": "{ init = reverse ? prev[init] : next[init]; reverse = !reverse; }",
-    "new": "{ init = reverse ? prev[init] : next[init]; }",
+    "old": "      reverse = !reverse;\n    } // USE_CLIP_SWEEP",
+    "new": "    } // USE_CLIP_SWEEP",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDITGN-B1-sweep-no-extra-step",
     "file": "tools/fbxMesh.mjs",
-    "old": "{ init = reverse ? prev[init] : next[init]; reverse = !reverse; }",
-    "new": "{ reverse = !reverse; }",
+    "old": "      init = reverse ? prev[init] : next[init];\n      reverse = !reverse;",
+    "new": "      reverse = !reverse;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDITGN-B1-clip-even-dropped",
     "file": "tools/fbxMesh.mjs",
-    "old": "    init = reverse ? prev[p] : next[q];   // USE_CLIP_EVEN\n",
-    "new": "    init = head;   // USE_CLIP_EVEN\n",
+    "old": "    init = reverse ? prev[p] : next[q]; // USE_CLIP_EVEN",
+    "new": "    init = head; // USE_CLIP_EVEN",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDITGN-B1-neighbours-never-resigned",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (sign[p] !== CONVEX) { signCalc(p); if (sign[p] === CONVEX) { concave--; tree.remove(p); } }\n",
-    "new": "",
+    "old": "    if (sign[p] !== CONVEX) {\n      signCalc(p);\n      if (sign[p] === CONVEX) {\n        concave--;\n        tree.remove(p);\n      }\n    }\n    if (sign[q] !== CONVEX) {",
+    "new": "    if (sign[q] !== CONVEX) {",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDITGN-B1-convex-resigned",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (sign[q] !== CONVEX) { signCalc(q); if (sign[q] === CONVEX) { concave--; tree.remove(q); } }\n",
-    "new": "    { const was = sign[q]; signCalc(q); if (sign[q] === CONVEX && was !== CONVEX) { concave--; tree.remove(q); } }\n",
+    "old": "    if (sign[q] !== CONVEX) {\n      signCalc(q);\n      if (sign[q] === CONVEX) {",
+    "new": "    {\n      const was = sign[q];\n      signCalc(q);\n      if (sign[q] === CONVEX && was !== CONVEX) {",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDITGN-B1-quad-flip-inverted",
     "file": "tools/fbxMesh.mjs",
-    "old": "return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) > 0;",
-    "new": "return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) < 0;",
+    "old": "  return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) > 0;",
+    "new": "  return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) < 0;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "AUDITGN-B1-quad-never-flips",
     "file": "tools/fbxMesh.mjs",
-    "old": "  if (n === 4) return blenderQuadFlip(pts) ? [[0, 1, 3], [1, 2, 3]] : [[0, 1, 2], [0, 2, 3]];",
-    "new": "  if (n === 4) return [[0, 1, 2], [0, 2, 3]];",
+    "old": "    return blenderQuadFlip(pts)\n      ? [\n          [0, 1, 3],\n          [1, 2, 3],\n        ]\n      : [\n          [0, 1, 2],\n          [0, 2, 3],\n        ];",
+    "new": "    return [\n      [0, 1, 2],\n      [0, 2, 3],\n    ];",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "AUDITGN-B1-projection-not-negated",
     "file": "tools/fbxMesh.mjs",
-    "old": "  const z = [-nrm[0], -nrm[1], -nrm[2]];   // negate_v3_v3: exact\n",
-    "new": "  const z = [nrm[0], nrm[1], nrm[2]];   // negate_v3_v3: exact\n",
+    "old": "  const z = [-nrm[0], -nrm[1], -nrm[2]]; // negate_v3_v3: exact",
+    "new": "  const z = [nrm[0], nrm[1], nrm[2]]; // negate_v3_v3: exact",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "AUDITGN-B1-newell-from-first",
     "file": "tools/fbxMesh.mjs",
-    "old": "  let prev = P[P.length - 1];\n  for (const cur of P) {\n",
-    "new": "  let prev = P[0];\n  for (const cur of P) {\n",
+    "old": "  let prev = P[P.length - 1];",
+    "new": "  let prev = P[0];",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "AUDITGN-B1-double-precision",
     "file": "tools/fbxMesh.mjs",
-    "old": "const f32 = Math.fround;\n",
-    "new": "const f32 = (x) => x;\n",
+    "old": "const f32 = Math.fround;",
+    "new": "const f32 = (x) => x;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -216,8 +216,8 @@
   {
     "name": "AUDITGN-B1-ortho-degenerate-sign",
     "file": "tools/fbxMesh.mjs",
-    "old": "    n1 = [z[2] < 0 ? -1 : 1, 0, 0];\n",
-    "new": "    n1 = [1, 0, 0];\n",
+    "old": "    n1 = [z[2] < 0 ? -1 : 1, 0, 0];",
+    "new": "    n1 = [1, 0, 0];",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -226,8 +226,8 @@
   {
     "name": "AUDITGN-B1-tiling-orientation-unread",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (Math.sign(twice) !== s) return `triangle [${t}] is wound against the face",
-    "new": "    if (false) return `triangle [${t}] is wound against the face",
+    "old": "    if (Math.sign(twice) !== s)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -236,8 +236,8 @@
   {
     "name": "AUDITGN-B1-tiling-edge-on-unread",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (!(Math.abs(twice) > 1e-6 * own)) return `triangle [${t}] stands edge-on to the face",
-    "new": "    if (false) return `triangle [${t}] stands edge-on to the face",
+    "old": "    if (!(Math.abs(twice) > 1e-6 * own))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "AUDITGN-B1-tiling-area-unread",
     "file": "tools/fbxMesh.mjs",
-    "old": "  if (Math.abs(sum - face) > 1e-6 * Math.abs(face)) return `its triangles cover",
-    "new": "  if (false) return `its triangles cover",
+    "old": "  if (Math.abs(sum - face) > 1e-6 * Math.abs(face))\n    return `its triangles cover ${sum.toPrecision(9)} of its ${face.toPrecision(9)}`;",
+    "new": "  if (false) return `its triangles cover ${sum.toPrecision(9)} of its ${face.toPrecision(9)}`;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "AUDITGN-B1-tiling-cells-unread",
     "file": "tools/fbxMesh.mjs",
-    "old": "      if (cover !== w) return `${Math.abs(cover)} of its triangles",
-    "new": "      if (false) return `${Math.abs(cover)} of its triangles",
+    "old": "      if (cover !== w)",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -266,8 +266,8 @@
   {
     "name": "AUDITGN-B1-tiling-count-unread",
     "file": "tools/fbxMesh.mjs",
-    "old": "  if (tris.length !== n - 2) return `${tris.length} triangles where",
-    "new": "  if (false) return `${tris.length} triangles where",
+    "old": "  if (tris.length !== n - 2) return `${tris.length} triangles where ${n} corners take ${n - 2}`;",
+    "new": "  if (false) return `${tris.length} triangles where ${n} corners take ${n - 2}`;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -276,8 +276,8 @@
   {
     "name": "AUDITGN-B1-tiling-slivers-asked",
     "file": "tools/fbxMesh.mjs",
-    "old": "      if (nearEdge(q)) continue;\n",
-    "new": "",
+    "old": "      if (nearEdge(q)) continue;\n      let cover = 0;",
+    "new": "      let cover = 0;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -286,8 +286,8 @@
   {
     "name": "AUDITGN-B1-tiling-no-area-asked",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (!(own > thin * Math.max(span(A, B), span(B, C), span(C, A)))) continue;   // no area: three corners on a line\n",
-    "new": "",
+    "old": "    if (!(own > thin * Math.max(span(A, B), span(B, C), span(C, A)))) continue; // no area: three corners on a line\n    if (!(Math.abs(twice) > 1e-6 * own))",
+    "new": "    if (!(Math.abs(twice) > 1e-6 * own))",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],

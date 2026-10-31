@@ -93,7 +93,7 @@
     "name": "CI-TIMES-path-left-in-env",
     "file": "tools/failSummary.mjs",
     "old": "delete process.env.TEST_TIMES_RECORD;\n",
-    "new": "\n",
+    "new": "",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "CI-TIMES-file-times-unkept",
     "file": "tools/failSummary.mjs",
-    "old": "    if (timed) times[timed[0]] = timed[1];\n",
-    "new": "",
+    "old": "    if (timed) times[timed[0]] = timed[1];\n    if (ev?.type !== 'test:fail' || !ownFailure(ev.data)) continue;",
+    "new": "    if (ev?.type !== 'test:fail' || !ownFailure(ev.data)) continue;",
     "tests": [
       "test/tooling/citimes.test.js"
     ],

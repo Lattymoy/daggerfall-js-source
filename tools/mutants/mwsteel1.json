@@ -101,8 +101,8 @@
   {
     "name": "MWSTEEL1-strip-takes-shared",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (parents.length && parents.every((p) => gone.has(p))) { gone.add(id); grew = true; }",
-    "new": "      if (parents.length && parents.some((p) => gone.has(p))) { gone.add(id); grew = true; }",
+    "old": "      if (parents.length && parents.every((p) => gone.has(p))) {",
+    "new": "      if (parents.length && parents.some((p) => gone.has(p))) {",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]

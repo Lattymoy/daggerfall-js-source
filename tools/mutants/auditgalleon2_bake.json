@@ -3,7 +3,7 @@
     "name": "AUDITGN2-BK1-bounding-box-first",
     "file": "tools/fbxMesh.mjs",
     "old": "        if (!removed[node] && inside(co) && !ind.includes(k)) return k;",
-    "new": "        if (!removed[node] && co[0] >= bounds[0][0] && co[0] <= bounds[0][1] && co[1] >= bounds[1][0] && co[1] <= bounds[1][1] && inside(co) && !ind.includes(k)) return k;",
+    "new": "        if (\n          !removed[node] &&\n          co[0] >= bounds[0][0] &&\n          co[0] <= bounds[0][1] &&\n          co[1] >= bounds[1][0] &&\n          co[1] <= bounds[1][1] &&\n          inside(co) &&\n          !ind.includes(k)\n        )\n          return k;",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -25,7 +25,7 @@
     "name": "AUDITGN2-BK1-span-point-test",
     "file": "tools/fbxMesh.mjs",
     "old": "  return (co) => side(1, co) && side(2, co) && side(0, co);",
-    "new": "  return (co) => [[1, 2], [2, 0], [0, 1]].every(([a, b]) => { const d2x = f32(vs[b][0] - co[0]), d2y = f32(vs[b][1] - co[1]), d3x = f32(vs[a][0] - co[0]), d3y = f32(vs[a][1] - co[1]); return f32(f32(d2x * d3y) - f32(d3x * d2y)) >= 0; });",
+    "new": "  return (co) =>\n    [\n      [1, 2],\n      [2, 0],\n      [0, 1],\n    ].every(([a, b]) => {\n      const d2x = f32(vs[b][0] - co[0]),\n        d2y = f32(vs[b][1] - co[1]),\n        d3x = f32(vs[a][0] - co[0]),\n        d3y = f32(vs[a][1] - co[1]);\n      return f32(f32(d2x * d3y) - f32(d3x * d2y)) >= 0;\n    });",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -90,8 +90,8 @@
   {
     "name": "AUDITGN2-BK1-cache-never-dirty",
     "file": "tools/fbxMesh.mjs",
-    "old": "    dirty[p] = true; dirty[q] = true;   // their triangles changed: a cached corner is asked again\n",
-    "new": "",
+    "old": "    dirty[p] = true;\n    dirty[q] = true; // their triangles changed: a cached corner is asked again\n    if (sign[p] !== CONVEX) {",
+    "new": "    if (sign[p] !== CONVEX) {",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDITGN2-BK1-pruning-pos-dropped",
     "file": "tools/fbxMesh.mjs",
-    "old": "co[ax] <= bounds[ax][1] ? walk(pos[node])",
-    "new": "true ? walk(pos[node])",
+    "old": "        const toPos = () => (pos[node] !== UNSET && co[ax] <= bounds[ax][1] ? walk(pos[node]) : UNSET);",
+    "new": "        const toPos = () => (pos[node] !== UNSET && true ? walk(pos[node]) : UNSET);",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "AUDITGN2-BK1-centre-side-ignored",
     "file": "tools/fbxMesh.mjs",
-    "old": "centre[ax] > co[ax] ? [toPos, toNeg] : [toNeg, toPos]",
-    "new": "[toNeg, toPos]",
+    "old": "        const [first, then] = centre[ax] > co[ax] ? [toPos, toNeg] : [toNeg, toPos];",
+    "new": "        const [first, then] = [toNeg, toPos];",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "AUDITGN2-BK1-tree-holds-convex",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (sign[i] !== CONVEX) { index.push(i);",
-    "new": "    if (true) { index.push(i);",
+    "old": "    if (sign[i] !== CONVEX) {",
+    "new": "    if (true) {",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js",
       "test/tooling/auditgalleon_bake.test.js"
@@ -207,8 +207,8 @@
   {
     "name": "AUDITGN2-BK2-comment-reverted",
     "file": "tools/fbxMesh.mjs",
-    "old": "take itself where cross_poly_v2 <= 0",
-    "new": "coords_sign 1: cross_poly_v2 >= 0",
+    "old": "//   take itself where cross_poly_v2 <= 0 - AUDIT GN2-BK2) - and",
+    "new": "//   coords_sign 1: cross_poly_v2 >= 0 - AUDIT GN2-BK2) - and",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],
@@ -217,8 +217,8 @@
   {
     "name": "AUDITGN2-BK3-comment-reverted",
     "file": "tools/fbxMesh.mjs",
-    "old": "-ffp-contract=off on Apple, Unix and Windows' clang",
-    "new": "no fused multiply-add; an ARM build may contract a*b - c*d",
+    "old": "//   as Blender builds itself (AUDIT GN2-BK3): -ffp-contract=off on Apple, Unix and Windows' clang (v5.1.1's",
+    "new": "//   as Blender builds itself (AUDIT GN2-BK3): no fused multiply-add; an ARM build may contract a*b - c*d (v5.1.1's",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],
