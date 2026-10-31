@@ -4,7 +4,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const off = (lv) => (lv < lo ? lo - lv : lv > hi ? lv - hi : 0);",
     "new": "  const off = () => 0;",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "Every tier hunts the land's whole wild: a rat for a level-20 hunter."
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  return Object.freeze(land.filter(([, lv]) => off(lv) === best)",
     "new": "  return Object.freeze(land.filter(([, lv]) => off(lv) === 0)",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A land with nothing in a tier's band posts no beast at all."
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0]).map(([id]) => id));",
     "new": ".sort((a, b) => a[0] - b[0]).map(([id]) => id));",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The tier's beasts not weakest first: the 15+ purse reads the wrong rank."
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const land = (wild ?? []).filter(([id, lv]) => bountyNames(id) && Number.isFinite(lv));",
     "new": "  const land = (wild ?? []).filter(([, lv]) => Number.isFinite(lv));",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A werewolf posted: a bounty a way to catch a curse; a beast the board cannot name posted as 'beasts'."
   },
   {
@@ -36,7 +44,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  if (!land.length) return tier.foes;",
     "new": "  if (!land.length) return Object.freeze([]);",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "With no wild known a board posts no beast."
   },
   {
@@ -44,7 +54,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const quarry = bountyQuarry(level, wild);",
     "new": "  const quarry = bountyTierFor(level).foes;",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The posting hunts the global ladder again: Orc Warlords in Black Marsh."
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "    gold: bountyGold(lvl, count, mobileType, underground, quarry),",
     "new": "    gold: bountyGold(lvl, count, mobileType, underground),",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The 15+ purse ranks a land's beast in a list it is not in."
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const foes = foesList ?? bountyTierFor(l).foes;",
     "new": "  const foes = bountyTierFor(l).foes;",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The purse never reads the list the posting drew from."
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const kind = kindOf(mobileType);",
     "new": "  const kind = 'beast';",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "Every beast told in the beasts' stories: a lich of the hills' shepherds."
   },
   {
@@ -76,7 +94,9 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "  return bountyPosting({ day: b.day, px: b.px, py: b.py, name, slot: b.slot, level: b.level, sites, dungeons, wild });",
     "new": "  return bountyPosting({ day: b.day, px: b.px, py: b.py, name, slot: b.slot, level: b.level, sites, dungeons });",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A notice rebuilt from its id (a party mate's, a save's) hunts the ladder's beast, not the board's."
   },
   {
@@ -84,23 +104,29 @@
     "file": "src/systems/bounty/bountyBoard.js",
     "old": "    const p = bountyPosting({ day, px, py, name, slot, level, sites, dungeons, wild });",
     "new": "    const p = bountyPosting({ day, px, py, name, slot, level, sites, dungeons });",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A whole board ignores the land's wild."
   },
   {
     "name": "QUARRY-WORLD-the-host's-board-unwild",
     "file": "src/scenes/bountyHost.js",
-    "old": "dungeons: dungeonsFor(town.px, town.py), wild: wildFor(town.px, town.py) });",
-    "new": "dungeons: dungeonsFor(town.px, town.py) });",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "old": "      wild: wildFor(town.px, town.py),\n    });",
+    "new": "    });",
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The board window shows the ladder's beasts."
   },
   {
     "name": "QUARRY-WORLD-the-host's-rebuild-unwild",
     "file": "src/scenes/bountyHost.js",
-    "old": "dungeons: dungeonsFor(b.px, b.py), wild: wildFor(b.px, b.py) });",
-    "new": "dungeons: dungeonsFor(b.px, b.py) });",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "old": "      wild: wildFor(b.px, b.py),\n    });",
+    "new": "    });",
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A taken notice, rebuilt from its id, hunts another beast than the board posted."
   },
   {
@@ -108,7 +134,9 @@
     "file": "src/scenes/world.js",
     "old": "    wildAt: bountyLandWild(maps),   // QUARRY-WORLD: the board's beasts the land's own wild (systems/bounty/bountyQuarry.js)\n",
     "new": "",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The world host hands the boards no wild: the ladder everywhere."
   },
   {
@@ -116,7 +144,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": "  for (const isDay of [true, false]) {",
     "new": "  for (const isDay of [true]) {",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The land's night things never hunted."
   },
   {
@@ -124,7 +154,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": "    const index = resolveEncounterTableIndex({ climateIndex, fauna, inLocationRect: false, isDay });",
     "new": "    const index = resolveEncounterTableIndex({ climateIndex, fauna: null, inLocationRect: false, isDay });",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "Past the Bay the climate's table, not the zone's: Orcs and Centaurs in Black Marsh again."
   },
   {
@@ -132,7 +164,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": "const isMonster = (id) => Number.isInteger(id) && ((id >= 0 && id < 128) || (id >= 256 && id < 384));",
     "new": "const isMonster = (id) => Number.isInteger(id);",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A person (a class enemy) in the land's wild."
   },
   {
@@ -140,7 +174,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": " && ENEMY_BASICS[id]?.behaviour !== 'Aquatic') ids.add(id);",
     "new": ") ids.add(id);",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A mod's table's Dreugh hunted on dry land, where it never moves."
   },
   {
@@ -148,7 +184,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": "    for (const table of encounterTableChoices(index)) for (const id of table)",
     "new": "    for (const table of encounterTableChoices(index).slice(0, 1)) for (const id of table)",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "A mod's other tables for the band unread: the board's beasts one machine's choice."
   },
   {
@@ -156,7 +194,9 @@
     "file": "src/systems/bounty/bountyQuarry.js",
     "old": "    if (k !== key) { key = k; kept.clear(); }",
     "new": "    if (k !== key) { key = k; }",
-    "tests": ["test/systems/quarryworld.test.js"],
+    "tests": [
+      "test/systems/quarryworld.test.js"
+    ],
     "note": "The tables moved (a mod's install) and the boards keep the old wild."
   }
 ]

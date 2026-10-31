@@ -11,7 +11,7 @@
   {
     "name": "ARRIVAL-nothing-reset",
     "file": "src/scenes/arrivalSetDown.js",
-    "old": "    reset() { held = []; },",
+    "old": "    reset() {\n      held = [];\n    },",
     "new": "    reset() {},",
     "tests": [
       "test/scenes/arrivalSetDown.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "ARRIVAL-up-unread",
     "file": "src/scenes/arrivalSetDown.js",
-    "old": "  if (!metFromBehind(collider, [pos[0], pos[1] + 0.05, pos[2]], [0, 1, 0])) return false;",
-    "new": "",
+    "old": "  if (!metFromBehind(collider, [pos[0], pos[1] + 0.05, pos[2]], [0, 1, 0])) return false;\n  return LEVEL_RAYS.filter((d) => metFromBehind(collider, [pos[0], pos[1] + 0.15, pos[2]], d)).length >= 3;",
+    "new": "  return LEVEL_RAYS.filter((d) => metFromBehind(collider, [pos[0], pos[1] + 0.15, pos[2]], d)).length >= 3;",
     "tests": [
       "test/scenes/arrivalSetDown.test.js"
     ]

@@ -56,8 +56,8 @@
   {
     "name": "prison-release-online-refills-nothing",
     "file": "src/scenes/arrestFlow.js",
-    "old": "          // floor it replaced is inside the refill (a full pool is above it).\n          fillVitalSigns(playerEntity);",
-    "new": "          // floor it replaced is inside the refill (a full pool is above it).\n          if (!sharedClockOn()) fillVitalSigns(playerEntity);",
+    "old": "              fillVitalSigns(playerEntity);",
+    "new": "              if (!sharedClockOn()) fillVitalSigns(playerEntity);",
     "tests": [
       "test/scenes/deathloop1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "prison-release-refills-nobody",
     "file": "src/scenes/arrestFlow.js",
-    "old": "          // floor it replaced is inside the refill (a full pool is above it).\n          fillVitalSigns(playerEntity);",
-    "new": "          // floor it replaced is inside the refill (a full pool is above it).",
+    "old": "              fillVitalSigns(playerEntity);\n              // SENTENCE-MENDS (FIELD BUGS 2026-10-21d): and the name it was priced by - AUDIT FB1021d SM-1: once the days are",
+    "new": "              // SENTENCE-MENDS (FIELD BUGS 2026-10-21d): and the name it was priced by - AUDIT FB1021d SM-1: once the days are",
     "tests": [
       "test/scenes/deathloop1.test.js"
     ]

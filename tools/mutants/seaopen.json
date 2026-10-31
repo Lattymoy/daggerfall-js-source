@@ -914,8 +914,8 @@
   {
     "name": "CREW-the-old-service-a-refusal",
     "file": "src/scenes/crewSignBook.js",
-    "old": "    if (r?.error === 'not-found') { off = true; return { ok: true, fresh: false }; }",
-    "new": "    if (r?.error === 'not-found') { off = true; return { ok: false, text: CREW_SIGN_TEXT.unread }; }",
+    "old": "      return { ok: true, fresh: false };",
+    "new": "      return { ok: false, text: CREW_SIGN_TEXT.unread };",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]

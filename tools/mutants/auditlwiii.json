@@ -321,8 +321,8 @@
   {
     "name": "AUDIT-LWIII-host-robbed-after-load",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
-    "new": "if (yielded.has(trip.id) || !counterOf(trip)) continue;",
+    "old": "        if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
+    "new": "        if (yielded.has(trip.id) || !counterOf(trip)) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

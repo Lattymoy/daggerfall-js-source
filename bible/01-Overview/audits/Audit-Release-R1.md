@@ -120,7 +120,7 @@ a ford (or lays a bridge model) where `paintTamrielWaters` meets a road's tile.
 
 ### R1-4 - the Imperial City on the horizon stands its slices on the land's raw ground (LOW, FIXED)
 
-`capitalSkyline.js:"const px = centre.px + (s % IMPERIAL_SPAN) - R, py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R, lo = lowestAround(fr, px, py);"`
+`capitalSkyline.js:"const px = centre.px"`
 (IC-GRAND's file; as found, the line read the slice's own pixel's ground, `fr.groundAt(px, py)`). The stream flattens every slice of the city to its centre's ground
 (`terrainGen.js` flattenAt); the far ring has no flatten, and each slice's landmark stands on the ring's own height at its
 pixel. On the freeware the ground under the 625 slices reads 10 to 14 bytes, the ring's heights 100 to 140 m against the
@@ -129,9 +129,9 @@ lane ran none). Proposed for IC-GRAND: stand every slice's landmark at the centr
 centre.py)`), as the stream stands it.
 
 FIXED (IC-GRAND, 2026-10-26): every slice stands at the ring's ground at the centre pixel
-(`capitalSkyline.js:"function cityGround(fr, centre) {"`), its feet - every corner at its ground, the far view lays no
+(`capitalSkyline.js:"function cityGround"`), its feet - every corner at its ground, the far view lays no
 flat quad there - down to the ring's lowest round its pixel and never above the city's
-(`capitalSkyline.js:"function lowestAround(fr, px, py) {"`), so a slice over lower land stands on a plinth to it, not in
+(`capitalSkyline.js:"function lowestAround"`), so a slice over lower land stands on a plinth to it, not in
 the air. With the centre off the ring's grid (the traveller up
 to SKYLINE_REACH out, 61 pixels against the ring's 48) the city's ground is the ring's at its slice on the grid nearest the
 centre, and every slice is stood again once the ring has the centre. Pinned in `test/world/icgrand_lod.test.js` THE CITY

@@ -74,8 +74,8 @@
   {
     "name": "BOUNTY1-9-a-culled-beast-is-a-kill",
     "file": "src/scenes/bountyHost.js",
-    "old": "const killedOf = (f) => !!f?.dead && (!!f.corpse || (Number(f.entity?.health) || 0) <= 0);",
-    "new": "const killedOf = (f) => !!f?.dead;",
+    "old": "  const killedOf = (f) => !!f?.dead && (!!f.corpse || (Number(f.entity?.health) || 0) <= 0);",
+    "new": "  const killedOf = (f) => !!f?.dead;",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BOUNTY1-10-the-purse-is-never-paid",
     "file": "src/scenes/bountyHost.js",
-    "old": "    addGoldPieces(entity, posting.gold);\n",
-    "new": "",
+    "old": "    addGoldPieces(entity, posting.gold);\n    if (Array.isArray(entity?.items)) addItem(entity.items, item);",
+    "new": "    if (Array.isArray(entity?.items)) addItem(entity.items, item);",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -93,7 +93,7 @@
     "name": "BOUNTY1-11-a-notice-is-dropped-while-a-window-is-up",
     "file": "src/scenes/bountyHost.js",
     "old": "    if (deps.showNotice(notices[0])) notices.shift();",
-    "new": "    deps.showNotice(notices[0]); notices.shift();",
+    "new": "    deps.showNotice(notices[0]);\n    notices.shift();",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BOUNTY1-13-a-mates-clear-pays-nobody-else",
     "file": "src/scenes/bountyHost.js",
-    "old": "          if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate:",
-    "new": "          if (false) pay(held.id, { byMate:",
+    "old": "          if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate: String(m.name ?? 'A companion') });",
+    "new": "          if (false) pay(held.id, { byMate: String(m.name ?? 'A companion') });",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BOUNTY1-16-a-farm-vanishes-under-the-eyes",
     "file": "src/scenes/bountyFarms.js",
-    "old": "Math.hypot(feet[0] - c[0], feet[2] - c[2]) > FARM_LINGER_M) takeDown(f);",
-    "new": "Math.hypot(feet[0] - c[0], feet[2] - c[2]) > 0) takeDown(f);",
+    "old": "        if (!feet || Math.hypot(feet[0] - c[0], feet[2] - c[2]) > FARM_LINGER_M) takeDown(f); // over, and out of sight",
+    "new": "        if (!feet || Math.hypot(feet[0] - c[0], feet[2] - c[2]) > 0) takeDown(f); // over, and out of sight",
     "tests": [
       "test/systems/bounty1.test.js"
     ]

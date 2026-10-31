@@ -7,20 +7,35 @@
 // WAGONS2: the room is the caravan's own (world/caravanRoomModel.js), stood on the caravan at its pose and turned with
 // it, its pictures the caravan's - the built ones or its owner's paint (systems/wagon/wagonLooks.js) - uploaded here, its
 // windows' glass cut out so the world is seen through them.
-import { CARAVAN_BUILDING_KEY, CARAVAN_TEXT, CARAVAN_ROOM_MODEL_ID, caravanRoomBlock, readCaravanRoom } from '../systems/caravanRoom.js';
+import {
+  CARAVAN_BUILDING_KEY,
+  CARAVAN_TEXT,
+  CARAVAN_ROOM_MODEL_ID,
+  caravanRoomBlock,
+  readCaravanRoom,
+} from '../systems/caravanRoom.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { trs } from '../world/mat4.js';
 import { caravanRoomModel, CARAVAN_ENTER, CARAVAN_LANTERN } from '../world/caravanRoomModel.js';
-import { wagonArt, wagonLookArt, isGlassRecord, lookRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, TEX, WAGON_ARCHIVE } from '../world/wagonArt.js';
+import {
+  wagonArt,
+  wagonLookArt,
+  isGlassRecord,
+  lookRecord,
+  LOOK_RECORDS,
+  LOOK_RECORD_STRIDE,
+  TEX,
+  WAGON_ARCHIVE,
+} from '../world/wagonArt.js';
 import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagon/wagonLooks.js';
 import { toColor32 } from '../formats/color32Order.js';
-import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the room's pictures in Daggerfall's colours
-import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones
+import { dfLook, lookSeed } from '../world/dfLook.js'; // DF-LOOK: the room's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js'; // STUDIO1: the studio's pictures over the painted ones
 import { quatRotate } from '../world/quat.js';
 import { WAGON_MODE } from '../systems/horse/horseCartLaw.js';
 
-import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
-import { repositionFeetY, heldInSolid, openGroundNear } from '../player/enterExit.js';   // RPT1026-WORLD WAGON-OUT: the door's landing law, and UNSTUCK-OUT's
+import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js'; // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
+import { repositionFeetY, heldInSolid, openGroundNear } from '../player/enterExit.js'; // RPT1026-WORLD WAGON-OUT: the door's landing law, and UNSTUCK-OUT's
 export { CARAVAN_STANDS_NATIVES };
 
 /**
@@ -39,17 +54,28 @@ export { CARAVAN_STANDS_NATIVES };
  */
 export function caravanStepOut(collider, p, seaY = null) {
   const at = [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]];
-  return heldInSolid(collider, at) ? openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at : at;
+  return heldInSolid(collider, at)
+    ? (openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at)
+    : at;
 }
 /** Where a Horse Cart and Cargo record (the runtime's state, or a save's) has its wagon parked - `[WorldX, WorldZ]` in
  *  natives - or null when it stands nowhere. */
 /** FINAL AUDIT: and its heading as a room's turn (caravanTurnOf's degrees), or null for a state with none. */
-const parkedTurnOf = (st) => (Number.isFinite(st.HeadingX) && Number.isFinite(st.HeadingZ) && (st.HeadingX || st.HeadingZ) ? (Math.atan2(st.HeadingX, st.HeadingZ) * 180) / Math.PI : null);
-export const parkedCaravanAt = (st) => (st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ) ? [st.WorldX, st.WorldZ, parkedTurnOf(st)] : null);
+const parkedTurnOf = (st) =>
+  Number.isFinite(st.HeadingX) && Number.isFinite(st.HeadingZ) && (st.HeadingX || st.HeadingZ)
+    ? (Math.atan2(st.HeadingX, st.HeadingZ) * 180) / Math.PI
+    : null;
+export const parkedCaravanAt = (st) =>
+  st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ)
+    ? [st.WorldX, st.WorldZ, parkedTurnOf(st)]
+    : null;
 /** Whether a room (its descriptor, read) stands on the caravan parked at `at` (parkedCaravanAt's): where it stands, and
  *  (FINAL AUDIT) which way it faces, when the state says. */
-export const caravanStandsAt = (room, at) => !!room && Array.isArray(at) && Math.hypot(room.origin[0] - at[0], room.origin[2] - at[1]) <= CARAVAN_STANDS_NATIVES
-  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);
+export const caravanStandsAt = (room, at) =>
+  !!room &&
+  Array.isArray(at) &&
+  Math.hypot(room.origin[0] - at[0], room.origin[2] - at[1]) <= CARAVAN_STANDS_NATIVES &&
+  (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);
 
 /** WAGONS2: the room's faces wear its LIVE records - the built room records' as if a ninth choice
  *  (world/wagonArt.js lookRecord(rec, 9)), never a paint's own - and whatever paint the room wears is painted INTO them
@@ -59,7 +85,9 @@ export const CARAVAN_LIVE_CHOICE = 9;
 /** The records the room's faces wear: each built room record's live one. */
 export function caravanRoomRecords() {
   const out = {};
-  for (const part of CARAVAN_INSIDE_PARTS) for (const rec of LOOK_RECORDS[part]) out[Object.keys(TEX).find((k) => TEX[k] === rec)] = lookRecord(rec, CARAVAN_LIVE_CHOICE);
+  for (const part of CARAVAN_INSIDE_PARTS)
+    for (const rec of LOOK_RECORDS[part])
+      out[Object.keys(TEX).find((k) => TEX[k] === rec)] = lookRecord(rec, CARAVAN_LIVE_CHOICE);
   return out;
 }
 
@@ -71,8 +99,17 @@ export function caravanRoomPictures(look) {
   const out = [];
   for (const part of CARAVAN_INSIDE_PARTS) {
     const i = l[part[0]];
-    const painted = i ? new Map(wagonLookArt(part, i, CARAVAN_INSIDE_LOOKS[part][i]).map(([rec, pic]) => [rec % LOOK_RECORD_STRIDE, pic])) : null;
-    for (const rec of LOOK_RECORDS[part]) out.push([lookRecord(rec, CARAVAN_LIVE_CHOICE), painted?.get(rec) ?? built.get(rec), painted?.has(rec) ? lookRecord(rec, i) : rec]);
+    const painted = i
+      ? new Map(
+          wagonLookArt(part, i, CARAVAN_INSIDE_LOOKS[part][i]).map(([rec, pic]) => [rec % LOOK_RECORD_STRIDE, pic]),
+        )
+      : null;
+    for (const rec of LOOK_RECORDS[part])
+      out.push([
+        lookRecord(rec, CARAVAN_LIVE_CHOICE),
+        painted?.get(rec) ?? built.get(rec),
+        painted?.has(rec) ? lookRecord(rec, i) : rec,
+      ]);
   }
   return out;
 }
@@ -85,15 +122,25 @@ export function paintCaravanRoom(renderer, look) {
   if (!renderer?.uploadTexture) return;
   for (const [rec, pic, from] of caravanRoomPictures(look)) {
     const key = `${WAGON_ARCHIVE}_${rec}`;
-    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {
-      renderer.evictTexture?.(key); renderer.evictTexture?.(`${key}#opaque`);
-      renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, isGlassRecord(rec) ? { cutout: true } : { opaque: true });
-    }, { slot: key });   // the live record's slot: a room repainted while a picture was on its way keeps its new paint
+    wearPainted(
+      WAGON_ARCHIVE,
+      from,
+      () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))),
+      (c32) => {
+        renderer.evictTexture?.(key);
+        renderer.evictTexture?.(`${key}#opaque`);
+        renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, isGlassRecord(rec) ? { cutout: true } : { opaque: true });
+      },
+      { slot: key },
+    ); // the live record's slot: a room repainted while a picture was on its way keeps its new paint
   }
 }
 
 /** The caravan's heading (degrees about up, 0 pulled toward +z) from its pose's rotation. */
-export const caravanTurnOf = (rotation) => { const f = quatRotate(rotation, [0, 0, 1]); return (Math.atan2(f[0], f[2]) * 180) / Math.PI; };
+export const caravanTurnOf = (rotation) => {
+  const f = quatRotate(rotation, [0, 0, 1]);
+  return (Math.atan2(f[0], f[2]) * 180) / Math.PI;
+};
 
 /** The interior transition's hit, entries and building for a caravan room (`saved` its descriptor), or null: the room's
  *  own block, its model served beside the pipeline's (`roomModels`, on the live records), its door the caravan's frame -
@@ -105,17 +152,47 @@ export function caravanRoomEntry(saved, fromNative, { look = null, renderer = nu
   if (!Array.isArray(origin) || origin.length !== 3 || !origin.every(Number.isFinite)) return null;
   const dfBlock = caravanRoomBlock(CARAVAN_ENTER, CARAVAN_LANTERN);
   paintCaravanRoom(renderer, look);
-  const door = { matrix: trs(...origin, 0, room.turn, 0), blockIndex: dfBlock.index, recordIndex: 0, doorIndex: 0, centre: { x: 0, y: 0, z: 0 } };
+  const door = {
+    matrix: trs(...origin, 0, room.turn, 0),
+    blockIndex: dfBlock.index,
+    recordIndex: 0,
+    doorIndex: 0,
+    centre: { x: 0, y: 0, z: 0 },
+  };
   // `sailingCabin` is the interior host's one slot for a private room of the player's own - a ship's or this
-  const hit = { dfBlock, recordIndex: 0, door, climateBase: 2, season: 0, sailingCabin: room, roomModels: new Map([[CARAVAN_ROOM_MODEL_ID, caravanRoomModel({ records: caravanRoomRecords() })]]) };
-  const building = { buildingType: BUILDING_TYPES.Ship, buildingKey: CARAVAN_BUILDING_KEY, regionIndex: -1, name: 'Caravan', factionId: 0, quality: 0, insideOpenShop: false };
+  const hit = {
+    dfBlock,
+    recordIndex: 0,
+    door,
+    climateBase: 2,
+    season: 0,
+    sailingCabin: room,
+    roomModels: new Map([[CARAVAN_ROOM_MODEL_ID, caravanRoomModel({ records: caravanRoomRecords() })]]),
+  };
+  const building = {
+    buildingType: BUILDING_TYPES.Ship,
+    buildingKey: CARAVAN_BUILDING_KEY,
+    regionIndex: -1,
+    name: 'Caravan',
+    factionId: 0,
+    quality: 0,
+    insideOpenShop: false,
+  };
   return { hit, entries: [hit], building, room };
 }
 
 /** THE DESCRIPTOR A CARAVAN STANDING `at` IS ENTERED BY ({ position, rotation, step, yaw } - its pose, the ground behind
  *  its door and the way out, scene frame; `toNative` the host's scene-to-world law): the one law mine and another's
  *  (WAGONS2-VISIT) are entered by, or null. */
-export const caravanDescriptorAt = (at, toNative) => readCaravanRoom({ v: 2, kind: 'caravan', origin: toNative(at.position), turn: caravanTurnOf(at.rotation), step: toNative(at.step), yaw: at.yaw });
+export const caravanDescriptorAt = (at, toNative) =>
+  readCaravanRoom({
+    v: 2,
+    kind: 'caravan',
+    origin: toNative(at.position),
+    turn: caravanTurnOf(at.rotation),
+    step: toNative(at.step),
+    yaw: at.yaw,
+  });
 
 /**
  * The world host's caravan door: `deps` = { available() (the interior host can take a room now), mode(), busy(),
@@ -134,7 +211,13 @@ export function createCaravanAccess(deps) {
       const entered = !!(await (visit ? deps.enterInterior(room, visit) : deps.enterInterior(room)));
       if (!entered) deps.say(CARAVAN_TEXT.unavailable);
       return entered;
-    } catch (e) { deps.log?.(e); deps.say(CARAVAN_TEXT.unavailable); return false; } finally { entering = false; }
+    } catch (e) {
+      deps.log?.(e);
+      deps.say(CARAVAN_TEXT.unavailable);
+      return false;
+    } finally {
+      entering = false;
+    }
   }
   return {
     fromNative: deps.fromNative,
@@ -145,11 +228,17 @@ export function createCaravanAccess(deps) {
     /** A saved room comes back while the player still drives a caravan (the save's own) - WAGONS2 (AUDIT): and it still
      *  stands where the room was entered (`at` its parked place, parkedCaravanAt's: a save's own record at a load, the
      *  runtime's now at a Recall - a room rebuilt where no caravan stands let the player out onto empty ground). */
-    canRestore: (saved, at = deps.parkedAt?.()) => { const room = readCaravanRoom(saved); return deps.available() && !!room && !!deps.ownsCaravan?.() && (at === undefined || caravanStandsAt(room, at)); },
+    canRestore: (saved, at = deps.parkedAt?.()) => {
+      const room = readCaravanRoom(saved);
+      return deps.available() && !!room && !!deps.ownsCaravan?.() && (at === undefined || caravanStandsAt(room, at));
+    },
     async enter() {
       if (entering || deps.mode() !== 'exterior' || deps.busy()) return false;
       const at = deps.parked();
-      if (!at || !deps.available()) { deps.say(at ? CARAVAN_TEXT.unavailable : CARAVAN_TEXT.notHere); return false; }
+      if (!at || !deps.available()) {
+        deps.say(at ? CARAVAN_TEXT.unavailable : CARAVAN_TEXT.notHere);
+        return false;
+      }
       return go(at, null);
     },
     /** WAGONS2-VISIT: INTO ANOTHER PLAYER'S PARKED CARAVAN - `t` the cart's pool's visitTarget (its pose, the ground behind
@@ -157,9 +246,29 @@ export function createCaravanAccess(deps) {
      *  relay room: the same room at that caravan's pose, by the same door law, a visit (scenes/worldModes.js
      *  enterCaravanRoom's `visit`). */
     async visit(t, room) {
-      if (entering || deps.mode() !== 'exterior' || deps.busy() || !t || typeof room !== 'string' || !room || typeof t.owner !== 'string' || !t.owner) return false;
-      if (!deps.available()) { deps.say(CARAVAN_TEXT.unavailable); return false; }
-      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null, cell: typeof t.cell === 'string' ? t.cell : null });
+      if (
+        entering ||
+        deps.mode() !== 'exterior' ||
+        deps.busy() ||
+        !t ||
+        typeof room !== 'string' ||
+        !room ||
+        typeof t.owner !== 'string' ||
+        !t.owner
+      )
+        return false;
+      if (!deps.available()) {
+        deps.say(CARAVAN_TEXT.unavailable);
+        return false;
+      }
+      return go(t, {
+        privateRoom: room,
+        cabinOwner: t.owner,
+        look: t.look ?? null,
+        k: t.k,
+        at: Array.isArray(t.at) ? [...t.at] : null,
+        cell: typeof t.cell === 'string' ? t.cell : null,
+      });
     },
     /** Where the room's door lets the player out: the ground behind the caravan's rear door (`ground` stands a point
      *  on what is there now, as a door's landing is - scenes/worldModes.js stands a private room's landing as given),
@@ -192,7 +301,11 @@ export function serveRoomModels(hold, roomModels, renderer, cpuModels) {
     const sig = `${id}|${cpu.subMeshes.map((sm) => sm.textureRecord).join(',')}`;
     if (!cache.has(sig)) {
       cache.set(sig, renderer?.createMesh ? renderer.createMesh(cpu) : null);
-      if (cache.size > 4) { const [k, old] = cache.entries().next().value; cache.delete(k); if (old) renderer.destroyMesh?.(old); }
+      if (cache.size > 4) {
+        const [k, old] = cache.entries().next().value;
+        cache.delete(k);
+        if (old) renderer.destroyMesh?.(old);
+      }
     }
     return cache.get(sig);
   };

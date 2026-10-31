@@ -209,8 +209,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-nothing-taken",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);\n",
-    "new": "",
+    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);\n    if (result.outcome === 'banished') {",
+    "new": "    if (result.outcome === 'banished') {",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-taken-at-every-release",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n",
-    "new": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n    if (trial && !trial.taken) trial.taken = confiscateStolen(playerEntity);\n",
+    "old": "    clearArrest();",
+    "new": "    if (trial && !trial.taken) trial.taken = confiscateStolen(playerEntity);\n    clearArrest();",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-line-unsaid",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken)));   // STOLEN-GOODS: what the verdict took (finish)\n",
-    "new": "",
+    "old": "    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken))); // STOLEN-GOODS: what the verdict took (finish)\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-counted-by-records",
     "file": "src/scenes/arrestFlow.js",
-    "old": "say(confiscatedText(piecesOf(trial.taken)));",
-    "new": "say(confiscatedText(trial.taken.length));",
+    "old": "    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken))); // STOLEN-GOODS: what the verdict took (finish)",
+    "new": "    if (trial?.taken?.length) say(confiscatedText(trial.taken.length)); // STOLEN-GOODS: what the verdict took (finish)",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-said-under-the-prison-screen",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);\n",
-    "new": "    if (trial) { trial.taken = confiscateStolen(playerEntity); if (trial.taken.length) say(confiscatedText(piecesOf(trial.taken))); trial.taken = []; }\n",
+    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);",
+    "new": "    if (trial) {\n      trial.taken = confiscateStolen(playerEntity);\n      if (trial.taken.length) say(confiscatedText(piecesOf(trial.taken)));\n      trial.taken = [];\n    }",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

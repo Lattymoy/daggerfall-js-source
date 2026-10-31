@@ -164,8 +164,8 @@
   {
     "name": "CA-knock-leaves-body",
     "file": "src/scenes/crewAshore.js",
-    "old": "        stood.delete(k); leave(s);   // COMPANION-PORTAL: carried off through a portal\n        if (party.knock",
-    "new": "        stood.delete(k);\n        if (party.knock",
+    "old": "        leave(s); // COMPANION-PORTAL: carried off through a portal\n        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
+    "new": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CA-swept-never-restood",
     "file": "src/scenes/crewAshore.js",
-    "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) { carry(s); stood.delete(k); continue; }",
-    "new": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) continue;",
+    "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) {\n        carry(s);\n        stood.delete(k);\n        continue;\n      } // AUDIT WK-M3: with his spells",
+    "new": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) continue; // AUDIT WK-M3: with his spells",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CA-sent-back-stays",
     "file": "src/scenes/crewAshore.js",
-    "old": "      if (i < 0) { stood.delete(k); leave(s); continue; }",
-    "new": "      if (i < 0) continue;",
+    "old": "      if (i < 0) {\n        stood.delete(k);\n        leave(s);\n        continue;\n      } // sent back aboard - COMPANION-PORTAL: through a portal",
+    "new": "      if (i < 0) continue; // sent back aboard - COMPANION-PORTAL: through a portal",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CA-health-forgotten",
     "file": "src/scenes/crewAshore.js",
-    "old": "        party.hurt(s.c.boat, s.c.name, rec.entity.health, rec.entity.maxHealth);\n",
-    "new": "",
+    "old": "        party.hurt(s.c.boat, s.c.name, rec.entity.health, rec.entity.maxHealth);\n        // AUDIT CC-A4: the player's, whatever turned him (a blow of mine that reached him, a reset of an ally's team)",
+    "new": "        // AUDIT CC-A4: the player's, whatever turned him (a blow of mine that reached him, a reset of an ally's team)",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "CA-no-catch-up",
     "file": "src/scenes/crewAshore.js",
-    "old": "        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M || (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
+    "old": "        const away =\n          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M ||\n          (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
     "new": "        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "CA-catch-up-keeps-target",
     "file": "src/scenes/crewAshore.js",
-    "old": "          if (typeof rec.ai.resumeLive === 'function') rec.ai.resumeLive();\n          else { rec.ai.target = null; rec.ai.path = null; rec.ai.velY = 0; }\n",
-    "new": "",
+    "old": "          if (typeof rec.ai.resumeLive === 'function') rec.ai.resumeLive();\n          else {\n            rec.ai.target = null;\n            rec.ai.path = null;\n            rec.ai.velY = 0;\n          }\n          rec.ai._restGrounded = false;",
+    "new": "          rec.ai._restGrounded = false;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CA-door-keeps-bodies",
     "file": "src/scenes/crewAshore.js",
-    "old": "    if (key !== placeKey) { liftAll(); placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
-    "new": "    if (key !== placeKey) { placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
+    "old": "      liftAll();\n      placeKey = key;",
+    "new": "      placeKey = key;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CA-late-stand-kept",
     "file": "src/scenes/crewAshore.js",
-    "old": "        if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }",
-    "new": "        if (!party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }",
+    "old": "          if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) {",
+    "new": "          if (!party.isAshore(c.boat, c.name) || deps.party() !== party) {",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CA-not-a-shipmate",
     "file": "src/scenes/crewAshore.js",
-    "old": "        rec.shipmate = true;\n",
-    "new": "",
+    "old": "          rec.shipmate = true;\n          if (rec.entity) {",
+    "new": "          if (rec.entity) {",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CA-health-not-carried",
     "file": "src/scenes/crewAshore.js",
-    "old": "          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth;",
-    "new": "          if (false) { rec.entity.maxHealth = c.maxHealth;",
+    "old": "            if (c.maxHealth > 0) {",
+    "new": "            if (false) {",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CA-heel-one-distance",
     "file": "src/scenes/crewAshore.js",
-    "old": "const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });",
-    "new": "const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M, trail: () => trail });",
+    "old": "  const followOf = (i) => ({\n    feet: () => deps.leader()?.feet ?? null,\n    stop: HEEL_M + i * HEEL_STEP_M,\n    trail: () => trail,\n  }); // COMPANION-TRAIL",
+    "new": "  const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M, trail: () => trail }); // COMPANION-TRAIL",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]

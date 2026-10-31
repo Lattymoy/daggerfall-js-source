@@ -843,8 +843,8 @@
   {
     "name": "STAFF-PANEL5-CUT-FIX-mute-door",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)",
-    "new": "kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)",
+    "old": "    for (const l of allLinks()) if (kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)) n++;",
+    "new": "    for (const l of allLinks()) if (kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)) n++;",
     "why": "finding 27: the cut carried by the mute's door, which takes none",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -853,8 +853,8 @@
   {
     "name": "STAFF-PANEL5-CUT-FIX-token-kept",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (kind === 'staffcut') try { minter()?.forget?.(); }",
-    "new": "if (false) try { minter()?.forget?.(); }",
+    "old": "    if (kind === 'staffcut')",
+    "new": "    if (false)",
     "why": "finding 27: the token held from before the cut opens the next room with its glyphs",
     "tests": [
       "test/net/safety/safe_client.test.js"

@@ -756,8 +756,8 @@
   {
     "name": "SILVER-FINDS-body-unasked",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);\n",
-    "new": "  openWindow(corpseLootHooks(entry));\n",
+    "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);",
+    "new": "  openWindow(corpseLootHooks(entry));",
     "why": "a body never holds silver",
     "tests": [
       "test/net/silverfinds_client.test.js"

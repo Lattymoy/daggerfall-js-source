@@ -433,8 +433,8 @@
   {
     "name": "LW16-tale",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
-    "new": "if (alive && rep.who && rep.region >= 0) r.turn(",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (alive && rep.who && rep.region >= 0)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "LW16-tale-void",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
-    "new": "if (rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "LW16-tale-written",
     "file": "src/scenes/caravanHost.js",
-    "old": "r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });",
-    "new": "void 0;",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)\n          r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });",
+    "new": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) void 0;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "LW16-robbed-goods",
     "file": "src/scenes/caravanHost.js",
-    "old": "        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? '');",
-    "new": "        report(trip, deps.clock(), CRIMES.Theft, '');",
+    "old": "        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, deps.clock(), CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "LW16-robbed-holdup",
     "file": "src/scenes/caravanHost.js",
-    "old": "        report(trip, t, CRIMES.Theft, trip.leader?.name ?? '');",
-    "new": "        report(trip, t, CRIMES.Theft, '');",
+    "old": "        report(trip, t, CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, t, CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "LW16-robbed-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "report(trip, t, CRIMES.Pickpocketing, res.name ?? '')",
-    "new": "report(trip, t, CRIMES.Pickpocketing, '')",
+    "old": "      return trip ? report(trip, t, CRIMES.Pickpocketing, res.name ?? '') : false;",
+    "new": "      return trip ? report(trip, t, CRIMES.Pickpocketing, '') : false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

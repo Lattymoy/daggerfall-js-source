@@ -364,8 +364,8 @@
   {
     "name": "HUNTERS-MARK-host-pay-unreported",
     "file": "src/scenes/bountyHost.js",
-    "old": "    hunt.cleared(id, Number.isInteger(region) ? region : null);",
-    "new": "    void hunt;",
+    "old": "    hunt.cleared(id, Number.isInteger(region) ? region : null); // HUNTERS-MARK: reported to the hunt's ledger, kept until answered",
+    "new": "    void hunt; // HUNTERS-MARK: reported to the hunt's ledger, kept until answered",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "HUNTERS-MARK-host-region-dropped",
     "file": "src/scenes/bountyHost.js",
-    "old": "    hunt.cleared(id, Number.isInteger(region) ? region : null);",
-    "new": "    hunt.cleared(id, null);",
+    "old": "    hunt.cleared(id, Number.isInteger(region) ? region : null); // HUNTERS-MARK: reported to the hunt's ledger, kept until answered",
+    "new": "    hunt.cleared(id, null); // HUNTERS-MARK: reported to the hunt's ledger, kept until answered",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "HUNTERS-MARK-host-board-blind",
     "file": "src/scenes/bountyHost.js",
-    "old": "hunt: () => ({ rank: hunt.boardRank(t), mark: hunt.boardMark(t),",
-    "new": "hunt: () => ({ rank: null, mark: null,",
+    "old": "      hunt: () => ({\n        rank: hunt.boardRank(t),\n        mark: hunt.boardMark(t),\n        takeMark: (id) => hunt.take(id),\n        dropMark: (id) => hunt.drop(id),\n      }),",
+    "new": "      hunt: () => ({ rank: null, mark: null, takeMark: (id) => hunt.take(id), dropMark: (id) => hunt.drop(id) }),",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]

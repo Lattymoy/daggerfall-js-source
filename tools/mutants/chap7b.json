@@ -191,8 +191,8 @@
   {
     "name": "CHAP7B-BANNERS-REGION",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (!Number.isInteger(region)) continue;\n",
-    "new": "",
+    "old": "      if (!Number.isInteger(region)) continue;\n      for (const [bk, faction] of p.chapterHalls) {",
+    "new": "      for (const [bk, faction] of p.chapterHalls) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CHAP7B-BANNERS-ARMS",
     "file": "src/scenes/chapterBanners.js",
-    "old": "        if (!h) continue;\n        const anchors",
-    "new": "        const anchors",
+    "old": "        if (!h) continue;\n        const anchors = hallBannerAnchors(p.homeFrames.get(bk));",
+    "new": "        const anchors = hallBannerAnchors(p.homeFrames.get(bk));",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CHAP7B-BANNERS-ANCHORS",
     "file": "src/scenes/chapterBanners.js",
-    "old": "        if (!anchors) continue;\n        anchors.forEach",
-    "new": "        anchors?.forEach",
+    "old": "        if (!anchors) continue;\n        anchors.forEach((a, i) =>",
+    "new": "        anchors?.forEach((a, i) =>",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ],
@@ -229,8 +229,8 @@
   {
     "name": "CHAP7B-BANNERS-TOP",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1]; top[2] = t[2] + b.a.top[2];",
-    "new": "top[0] = b.a.top[0]; top[1] = b.a.top[1]; top[2] = b.a.top[2];",
+    "old": "        top[0] = t[0] + b.a.top[0];\n        top[1] = t[1] + b.a.top[1];\n        top[2] = t[2] + b.a.top[2];",
+    "new": "        top[0] = b.a.top[0];\n        top[1] = b.a.top[1];\n        top[2] = b.a.top[2];",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "CHAP7B-BANNERS-REFRESH",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (now() - at >= BANNER_REFRESH_MS) { read(); at = now(); }",
-    "new": "      if (at === -Infinity) { read(); at = now(); }",
+    "old": "      if (now() - at >= BANNER_REFRESH_MS) {",
+    "new": "      if (at === -Infinity) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "CHAP7B-BANNERS-KEY",
     "file": "src/scenes/chapterBanners.js",
-    "old": "a, key: bannerKeyOf(h), heraldry: h,",
-    "new": "a, key: 'k', heraldry: h,",
+    "old": "          out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: (bk % 11) * 0.9 + i * 1.7 }),",
+    "new": "          out.push({ px: p.px, py: p.py, a, key: 'k', heraldry: h, phase: (bk % 11) * 0.9 + i * 1.7 }),",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

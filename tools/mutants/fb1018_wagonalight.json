@@ -72,8 +72,8 @@
   {
     "name": "WAGON-ALIGHT-reach-x-only",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;",
-    "new": "if (!sat || Math.abs(f[0] - sat.feet[0]) > GET_DOWN_REACH) return;",
+    "old": "    if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;",
+    "new": "    if (!sat || Math.abs(f[0] - sat.feet[0]) > GET_DOWN_REACH) return;",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],

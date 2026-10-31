@@ -210,8 +210,8 @@
   {
     "name": "COMPANION-PORTAL-the-arrival-unasked",
     "file": "src/scenes/crewAshore.js",
-    "old": "        try { place.fx?.arrive?.(rec); } catch { /* COMPANION-PORTAL: no portal, the stand all the same */ }\n",
-    "new": "",
+    "old": "          try {\n            place.fx?.arrive?.(rec);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the stand all the same */\n          }\n          deps.onStood?.(c, rec);",
+    "new": "          deps.onStood?.(c, rec);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "COMPANION-PORTAL-the-body-out-at-once",
     "file": "src/scenes/crewAshore.js",
-    "old": "    if (typeof s.fx?.leave !== 'function') { lift(s); return; }",
-    "new": "    { lift(s); return; }",
+    "old": "    if (typeof s.fx?.leave !== 'function') {",
+    "new": "    {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "COMPANION-PORTAL-the-jump-without-its-pair",
     "file": "src/scenes/crewAshore.js",
-    "old": "          try { s.fx?.jump?.(rec, from); } catch { /* COMPANION-PORTAL: no portal, the step all the same */ }\n",
-    "new": "",
+    "old": "          try {\n            s.fx?.jump?.(rec, from);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the step all the same */\n          }\n          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
+    "new": "          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

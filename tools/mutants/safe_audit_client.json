@@ -12,8 +12,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-1-a-late-no-takes-the-yes-back",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      if (agreedHere && !issued.conduct) return;\n",
-    "new": "",
+    "old": "      if (agreedHere && !issued.conduct) return;\n      agreed = issued.conduct;",
+    "new": "      agreed = issued.conduct;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -22,7 +22,7 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-a-ban-that-latches-nothing",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    for (const l of allLinks()) { if (typeof l?.bar === 'function') l.bar(); else l?.leave?.(); }",
+    "old": "    for (const l of allLinks()) {\n      if (typeof l?.bar === 'function') l.bar();\n      else l?.leave?.();\n    }",
     "new": "    for (const l of allLinks()) l?.leave?.();",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-said-on-every-socket",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (banSaid !== `until:${until}`) { banSaid = `until:${until}`; sayActive(",
-    "new": "{ sayActive(",
+    "old": "    if (banSaid !== `until:${until}`) {\n      banSaid = `until:${until}`;",
+    "new": "    {",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-the-minters-token-kept",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    try { minter()?.forget?.(); } catch { /* the latch holds without it */ }\n",
-    "new": "",
+    "old": "    try {\n      minter()?.forget?.();\n    } catch {\n      /* the latch holds without it */\n    }\n    for (const l of allLinks()) {",
+    "new": "    for (const l of allLinks()) {",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-a-room-made-after-the-ban-opens",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    if (bannedUntil && typeof link.bar === 'function') link.bar();   // a room made after the ban stays shut\n",
-    "new": "",
+    "old": "    if (bannedUntil && typeof link.bar === 'function') link.bar(); // a room made after the ban stays shut\n  };",
+    "new": "  };",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-a-lifted-ban-keeps-the-latch",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      for (const l of allLinks()) l?.unbar?.();\n",
-    "new": "",
+    "old": "      for (const l of allLinks()) l?.unbar?.();\n      if (banSaid !== 'lifted') {",
+    "new": "      if (banSaid !== 'lifted') {",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -152,7 +152,7 @@
   {
     "name": "SAFE-AUDIT-CLIENT-3-the-peers-asked-alone",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    for (const tab of log()?.tabs ?? []) for (const l of tab.messages) if (l.sub && !l.mine && !l.system && !found.has(l.sub) && sanitizeName(l.name).toLowerCase() === want) found.set(l.sub, String(l.name));",
+    "old": "    for (const tab of log()?.tabs ?? [])\n      for (const l of tab.messages)\n        if (l.sub && !l.mine && !l.system && !found.has(l.sub) && sanitizeName(l.name).toLowerCase() === want)\n          found.set(l.sub, String(l.name));",
     "new": "",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-3-two-accounts-guessed",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    if (found.size > 1) return { error: NAMED[op].many(found.size, name), why: 'many' };\n",
-    "new": "",
+    "old": "    if (found.size > 1) return { error: NAMED[op].many(found.size, name), why: 'many' };\n    if (unaccounted)",
+    "new": "    if (unaccounted)",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-7-the-ear-never-handed",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    link.hears = hears;\n",
-    "new": "",
+    "old": "    link.hears = hears;\n    link.mayChat = mayChat;",
+    "new": "    link.mayChat = mayChat;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-8-a-failed-read-never-retried",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      retry = setTimer(() => { retry = null; void readBlocks(); }, Math.min(BLOCKS_RETRY_MAX_MS, BLOCKS_RETRY_MS * 2 ** (readFails - 1)));\n",
-    "new": "",
+    "old": "      retry = setTimer(\n        () => {\n          retry = null;\n          void readBlocks();\n        },\n        Math.min(BLOCKS_RETRY_MAX_MS, BLOCKS_RETRY_MS * 2 ** (readFails - 1)),\n      );\n      return false;",
+    "new": "      return false;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-8-a-welcome-never-reads",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      if (reading || now() - readAt < BLOCKS_REREAD_MS) return;\n      void readBlocks();",
-    "new": "      if (reading || now() - readAt < BLOCKS_REREAD_MS) return;",
+    "old": "      void readBlocks();\n    };",
+    "new": "    };",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-9-the-shown-name-forgotten",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    shownAs.set(sub, name);   // AUDIT SAFE CLIENT-9: the name the line showed, beside the account's\n",
-    "new": "",
+    "old": "    shownAs.set(sub, name); // AUDIT SAFE CLIENT-9: the name the line showed, beside the account's\n    adoptList(r.data?.blocks);",
+    "new": "    adoptList(r.data?.blocks);",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-11-the-picture-not-filtered-again",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    social()?.refilter?.();   // AUDIT SAFE CLIENT-11: a request or an invite that already stood goes with the block\n",
-    "new": "",
+    "old": "    social()?.refilter?.(); // AUDIT SAFE CLIENT-11: a request or an invite that already stood goes with the block\n  };",
+    "new": "  };",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-12-a-slowed-line-lost",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      if (lastPublic && at - lastPublic.at <= SLOWED_KEEP_MS && panel()?.restore?.(lastPublic.text) === true) lastPublic = null;\n",
-    "new": "",
+    "old": "      if (lastPublic && at - lastPublic.at <= SLOWED_KEEP_MS && panel()?.restore?.(lastPublic.text) === true)\n        lastPublic = null;\n      if (at - slowedSaid < SLOWED_SAY_MS) return;",
+    "new": "      if (at - slowedSaid < SLOWED_SAY_MS) return;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-13-a-ban-refused-as-a-mute",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "cmd.op === 'ban' && r.error === 'protected' ? t('net.safety.protectedBan', 'Moderators cannot be banned.') : accountRefusalText(r.error)",
-    "new": "accountRefusalText(r.error)",
+    "old": "        say(\n          tabId,\n          cmd.op === 'ban' && r.error === 'protected'\n            ? t('net.safety.protectedBan', 'Moderators cannot be banned.')\n            : accountRefusalText(r.error),\n        );",
+    "new": "        say(tabId, accountRefusalText(r.error));",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-13-the-arenas-rooms-never-adopted",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      extra.add(link);\n",
-    "new": "",
+    "old": "      extra.add(link);\n      wire(link);",
+    "new": "      wire(link);",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-13-the-gate-never-handed",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    link.mayChat = mayChat;\n",
-    "new": "",
+    "old": "    link.mayChat = mayChat;\n    link.onLaw = ({ order }) => carry(order);",
+    "new": "    link.onLaw = ({ order }) => carry(order);",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -402,8 +402,8 @@
   {
     "name": "SAFE-AUDIT-DOC-13-the-note-dropped",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? [], cmd.note ?? '');",
-    "new": "log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? []);",
+    "old": "          await report(\n            who.sub,\n            who.name,\n            cmd.reason,\n            log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? [],\n            cmd.note ?? '',\n          );",
+    "new": "          await report(who.sub, who.name, cmd.reason, log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? []);",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "SAFE-AUDIT-SERVICE-10-the-reason-never-sent",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "await modBan(a, target, cmd.days, cmd.reason ?? '')",
-    "new": "await modBan(a, target, cmd.days)",
+    "old": "          ? await modBan(a, target, cmd.days, cmd.reason ?? '')",
+    "new": "          ? await modBan(a, target, cmd.days)",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "SAFE-AUDIT-DOC-4-the-flagged-line-unmarked",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "flagged && flagged.at === l.at && flagged.sub === l.sub ? '!' : ",
-    "new": "",
+    "old": "      const mark = flagged && flagged.at === l.at && flagged.sub === l.sub ? '!' : l.sub === c.target ? '>' : '-';",
+    "new": "      const mark = l.sub === c.target ? '>' : '-';",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

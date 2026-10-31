@@ -328,8 +328,8 @@
   {
     "name": "IC-GRAND-skyline-never-let-go",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ if (handles.size || owed.length) drop(); ring = fr; }",
-    "new": "{ ring = fr; }",
+    "old": "      if (handles.size || owed.length) drop();\n      ring = fr;",
+    "new": "      ring = fr;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "IC-GRAND-skyline-stood-at-nought",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, 0, Math.min(cityY, lo))",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, 0, Math.min(cityY, lo)), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "IC-GRAND-skyline-all-at-once",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "while (owed.length && now() - t0 < SKYLINE_BUDGET_MS) {",
-    "new": "while (owed.length) {",
+    "old": "    while (owed.length && now() - t0 < SKYLINE_BUDGET_MS) {",
+    "new": "    while (owed.length) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "IC-GRAND-skyline-far-first",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "      .sort((a, b) => Math.hypot(",
-    "new": "      .sort((b, a) => Math.hypot(",
+    "old": "      (a, b) =>",
+    "new": "      (b, a) =>",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "IC-GRAND-skyline-wait-forgotten",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ owed.push(...waiting); waiting = []; }",
-    "new": "{ waiting = []; }",
+    "old": "      owed.push(...waiting);\n      waiting = [];",
+    "new": "      waiting = [];",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "IC-GRAND-skyline-disposed-kept",
     "file": "src/scenes/capitalSkyline.js",
-    "old": " || (first && !first.landmark.vao)",
-    "new": "",
+    "old": "    if (\n      fr !== ring ||\n      !within ||\n      (first && !first.landmark.vao) ||\n      (at && centre && (at.px !== centre.px || at.py !== centre.py))\n    ) {",
+    "new": "    if (fr !== ring || !within || (at && centre && (at.px !== centre.px || at.py !== centre.py))) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "IC-GRAND-prebuild-far-first",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "for (let ring = 0; ring <= NEAR_RING + 1; ring++) {",
-    "new": "for (let ring = NEAR_RING + 1; ring >= 0; ring--) {",
+    "old": "  for (let ring = 0; ring <= NEAR_RING + 1; ring++) {",
+    "new": "  for (let ring = NEAR_RING + 1; ring >= 0; ring--) {",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "IC-GRAND-prebuild-reach-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "> PREBUILD_REACH) { drop(); return; }",
-    "new": "> PREBUILD_REACH * 99) { drop(); return; }",
+    "old": "    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH) {",
+    "new": "    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH * 99) {",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -769,8 +769,8 @@
   {
     "name": "R1-4-skyline-own-pixel",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo))",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(\n        s,\n        fr.addLandmark({ px, py, mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo)), key: `imperial:${s}` }),\n      );",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "R1-4-skyline-feet-in-the-air",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, cityY, cityY)",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, cityY), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "R1-4-skyline-feet-above",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, cityY, lo)",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, lo), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "R1-4-skyline-feet-own-pixel",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)",
-    "new": "for (let dy = 0; dy <= 0; dy++) for (let dx = 0; dx <= 0; dx++)",
+    "old": "  for (let dy = -1; dy <= 1; dy++)\n    for (let dx = -1; dx <= 1; dx++) {",
+    "new": "  for (let dy = 0; dy <= 0; dy++)\n    for (let dx = 0; dx <= 0; dx++) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "R1-4-skyline-estimate-kept",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "if (!stood || (!stood.known && g.known)) stood = g;",
-    "new": "if (!stood) stood = g;",
+    "old": "      if (!stood || (!stood.known && g.known)) stood = g;",
+    "new": "      if (!stood) stood = g;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "R1-4-skyline-estimate-not-restood",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ for (const h of handles.values()) h.remove(); handles.clear(); waiting = []; owe(centre, cur); }",
-    "new": "{ }",
+    "old": "        for (const h of handles.values()) h.remove();\n        handles.clear();\n        waiting = [];\n        owe(centre, cur);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "R1-4-skyline-centre-unread",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n",
-    "new": "",
+    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n  for (const s of BY_CENTRE) {",
+    "new": "  for (const s of BY_CENTRE) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]

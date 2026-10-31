@@ -2,8 +2,8 @@
   {
     "name": "WERE-FRIGHT-no-beast-branch",
     "file": "src/scenes/arrestFlow.js",
-    "old": "const beast = isTransformedLycanthrope(playerEntity);",
-    "new": "const beast = false;",
+    "old": "    const beast = isTransformedLycanthrope(playerEntity);",
+    "new": "    const beast = false;",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WERE-FRIGHT-roll-ignores-guard-level",
     "file": "src/scenes/arrestFlow.js",
-    "old": "frightenChance(playerEntity.level, guardLevel ?? playerEntity.level)",
-    "new": "frightenChance(playerEntity.level, playerEntity.level)",
+    "old": "    const chance = frightenChance(playerEntity.level, guardLevel ?? playerEntity.level);",
+    "new": "    const chance = frightenChance(playerEntity.level, playerEntity.level);",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WERE-FRIGHT-watch-not-sent",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      setCrimeCommitted(playerEntity, 0);\n      watchFlees();",
-    "new": "      setCrimeCommitted(playerEntity, 0);",
+    "old": "      watchFlees();\n      say(BEAST_FRIGHTENED_TEXT);",
+    "new": "      say(BEAST_FRIGHTENED_TEXT);",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WERE-FRIGHT-changed-mid-question-walks-into-court",
     "file": "src/scenes/arrestFlow.js",
-    "old": "            if (isTransformedLycanthrope(playerEntity)) { applyDamage(); return; }\n",
-    "new": "",
+    "old": "                  if (isTransformedLycanthrope(playerEntity)) {\n                    applyDamage();\n                    return;\n                  }\n                  if (",
+    "new": "                  if (",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WERE-FRIGHT-beast-forced-to-surrender",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (!beast && playerEntity.health <= dmg)",
-    "new": "if (playerEntity.health <= dmg)",
+    "old": "    if (!beast && playerEntity.health <= dmg) {",
+    "new": "    if (playerEntity.health <= dmg) {",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WERE-FRIGHT-the-withdrawn-beast-box-still-roars",
     "file": "src/scenes/arrestFlow.js",
-    "old": "F - frighten', action: () => { if (surrenderBox !== boxOf()) return; ",
-    "new": "F - frighten', action: () => { ",
+    "old": "          action: () => {\n            if (surrenderBox !== boxOf()) return;\n            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
+    "new": "          action: () => {\n            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WERE-FRIGHT-a-roar-for-a-crime-that-is-gone",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
-    "new": "roarAtTheWatch(applyDamage, guardLevel);",
+    "old": "            if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
+    "new": "            roarAtTheWatch(applyDamage, guardLevel);",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WERE-FRIGHT-the-withdrawn-beast-box-still-fights",
     "file": "src/scenes/arrestFlow.js",
-    "old": "N - fight on', action: () => { if (surrenderBox !== boxOf()) return; ",
-    "new": "N - fight on', action: () => { ",
+    "old": "          action: () => {\n            if (surrenderBox !== boxOf()) return;\n            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) applyDamage();",
+    "new": "          action: () => {\n            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) applyDamage();",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "WERE-FRIGHT-the-beast-s-n-lands-a-blow-for-a-crime-that-is-gone",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) applyDamage();",
-    "new": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; applyDamage();",
+    "old": "            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) applyDamage();",
+    "new": "            awaitingSurrenderAnswer = false;\n            applyDamage();",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "WERE-FRIGHT-the-roar-leaves-the-question-standing",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) roarAtTheWatch(",
-    "new": "if (surrenderBox !== boxOf()) return; if (crimeId() !== 0) roarAtTheWatch(",
+    "old": "            awaitingSurrenderAnswer = false;\n            if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
+    "new": "            if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
     "tests": [
       "test/systems/werefright.test.js"
     ]

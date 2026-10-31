@@ -38,8 +38,8 @@
   {
     "name": "DISC28-B-court-over-no-crime",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (!court) return;\n",
-    "new": "",
+    "old": "    if (!court) return;\n    court.factor = playerEntity.chargedFactor ?? 1; // CURFEW-REFUND (FIELD BUGS 2026-10-21d): the charge as it was laid",
+    "new": "    court.factor = playerEntity.chargedFactor ?? 1; // CURFEW-REFUND (FIELD BUGS 2026-10-21d): the charge as it was laid",
     "tests": [
       "test/scenes/disc28_arrest.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISC28-B-surrender-to-nothing",
     "file": "src/scenes/arrestFlow.js",
-    "old": "            if (crimeId() === 0) return;\n            // WERE-FRIGHT: the question was a man's",
-    "new": "            // WERE-FRIGHT: the question was a man's",
+    "old": "                  if (crimeId() === 0) return;\n                  // WERE-FRIGHT: the question was a man's, and the answer is the beast's - a change while it stood (online",
+    "new": "                  // WERE-FRIGHT: the question was a man's, and the answer is the beast's - a change while it stood (online",
     "tests": [
       "test/scenes/disc28_arrest.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC28-B-question-outlives-crime",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (box) box.done = true;\n",
-    "new": "",
+    "old": "    if (box) box.done = true;\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/disc28_arrest.test.js"
     ]

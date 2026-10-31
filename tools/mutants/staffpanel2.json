@@ -254,8 +254,8 @@
   {
     "name": "STAFF-PANEL2-staff-still-report",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "const rows = staff() ? [] : REPORT_REASONS",
-    "new": "const rows = REPORT_REASONS",
+    "old": "      const rows = staff()\n        ? []\n        : REPORT_REASONS.map((reason) => ({\n            label: t('net.safety.reportAs', 'Report: {reason}', { reason: reportReasonLabel(reason) }),\n            run: () => {\n              void report(line.sub, name, reason, log()?.reportLines?.(line.sub, { seq: line.seq }) ?? []);\n            },\n          }));",
+    "new": "      const rows = REPORT_REASONS.map((reason) => ({\n        label: t('net.safety.reportAs', 'Report: {reason}', { reason: reportReasonLabel(reason) }),\n        run: () => {\n          void report(line.sub, name, reason, log()?.reportLines?.(line.sub, { seq: line.seq }) ?? []);\n        },\n      }));",
     "why": "an Admin's or a Moderator's chat menu still offers Report",
     "tests": [
       "test/net/safety/safe_client.test.js"

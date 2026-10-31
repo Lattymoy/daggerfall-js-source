@@ -7,9 +7,7 @@ import { nodeOf as csaNodeOf } from '../systems/comeSailAway/comeSailAwayBoat.js
 
 /** @param {any} host */
 export function createCsaAudio(host) {
-  const {
-    _csaLoops, _csaSourceNodes, csaCall, csaClipKey, csaRuntime, csaSounds, csaUnityGain
-  } = host;
+  const { _csaLoops, _csaSourceNodes, csaCall, csaClipKey, csaRuntime, csaSounds, csaUnityGain } = host;
   function csaAudioFrame() {
     if (!csaRuntime) return;
     const seen = new Set();
@@ -19,24 +17,50 @@ export function createCsaAudio(host) {
         for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
           if (!src) continue;
           let node = _csaSourceNodes.get(src);
-          if (!node) { node = csaNodeOf(boat.GameObject, src); if (node) _csaSourceNodes.set(src, node); }
+          if (!node) {
+            node = csaNodeOf(boat.GameObject, src);
+            if (node) _csaSourceNodes.set(src, node);
+          }
           let ch = _csaLoops.get(src);
           // AUDIT HELM-SIGHT A4: a boat whose helm is held from another pixel (a party's landing pending) stays in sight
           // for her sails' sake, and is not heard from there
-          if (!src.isPlaying || !node?.activeInHierarchy || boat.helmAfar) { if (ch) { ch.handle?.stop(); _csaLoops.delete(src); } continue; }
+          if (!src.isPlaying || !node?.activeInHierarchy || boat.helmAfar) {
+            if (ch) {
+              ch.handle?.stop();
+              _csaLoops.delete(src);
+            }
+            continue;
+          }
           seen.add(src);
-          if (ch && ch.plays !== src.plays) { ch.handle?.stop(); _csaLoops.delete(src); ch = null; }   // AudioSource.Play: from the clip's start
-          if (!ch) { ch = { plays: src.plays, handle: null }; _csaLoops.set(src, ch); csaSounds(); }
+          if (ch && ch.plays !== src.plays) {
+            ch.handle?.stop();
+            _csaLoops.delete(src);
+            ch = null;
+          } // AudioSource.Play: from the clip's start
+          if (!ch) {
+            ch = { plays: src.plays, handle: null };
+            _csaLoops.set(src, ch);
+            csaSounds();
+          }
           const pos = [...node.position];
-          ch.handle ??= audio.loop3d(csaClipKey(src.clip), pos, 0, { refDistance: src.minDistance, maxDistance: src.maxDistance, distanceModel: 'inverse', rolloffFactor: 0 });   // null until the clip is decoded: asked again next frame
+          ch.handle ??= audio.loop3d(csaClipKey(src.clip), pos, 0, {
+            refDistance: src.minDistance,
+            maxDistance: src.maxDistance,
+            distanceModel: 'inverse',
+            rolloffFactor: 0,
+          }); // null until the clip is decoded: asked again next frame
           if (!ch.handle) continue;
           ch.handle.move(pos);
           const d = Math.hypot(pos[0] - ear[0], pos[1] - ear[1], pos[2] - ear[2]);
-          ch.handle.setVolume(csaUnityGain(src.volume * logarithmicRolloff(d, src.minDistance, src.maxDistance)));   // AudioRolloffMode.Logarithmic, the default neither loop changes
+          ch.handle.setVolume(csaUnityGain(src.volume * logarithmicRolloff(d, src.minDistance, src.maxDistance))); // AudioRolloffMode.Logarithmic, the default neither loop changes
         }
       }
     });
-    for (const [src, ch] of _csaLoops) if (!seen.has(src)) { ch.handle?.stop(); _csaLoops.delete(src); }
+    for (const [src, ch] of _csaLoops)
+      if (!seen.has(src)) {
+        ch.handle?.stop();
+        _csaLoops.delete(src);
+      }
   }
   return { csaAudioFrame };
 }

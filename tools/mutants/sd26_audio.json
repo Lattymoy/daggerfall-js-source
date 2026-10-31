@@ -92,8 +92,8 @@
   {
     "name": "SD26-A5-the-courts-events-kept",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "        engine.fadeFar?.(AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them\n",
-    "new": "",
+    "old": "        engine.fadeFar?.(AIR_FAR); // AUDIT SD IV (A5): and its events still sounding, with them\n      } catch {",
+    "new": "      } catch {",
     "tests": [
       "test/scenes/superDungeon/sd26_audio.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD26-A5-the-courts-events-unnamed",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "pitch: e.pitch, far: AIR_FAR });",
-    "new": "pitch: e.pitch, far: true });",
+    "old": "              far: AIR_FAR,",
+    "new": "              far: true,",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]

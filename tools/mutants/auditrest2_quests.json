@@ -94,8 +94,8 @@
   {
     "name": "AUDITREST2-Q-Q3-the-host-not-asking",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);\n",
-    "new": "",
+    "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);\n    // AUDIT 28 B10: a bounty taken \"later\" than now was taken on another clock (an offline save played online): it",
+    "new": "    // AUDIT 28 B10: a bounty taken \"later\" than now was taken on another clock (an offline save played online): it",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ]

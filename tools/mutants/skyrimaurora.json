@@ -416,8 +416,8 @@
   {
     "name": "SKYRIM-AURORA-the-first-use-eased-from-0",
     "file": "src/scenes/auroraHost.js",
-    "old": "dt = last === null || !Number.isFinite(now - last) ? Infinity : Math.max(0, (now - last) / 1000);",
-    "new": "dt = last === null || !Number.isFinite(now - last) ? 0 : Math.max(0, (now - last) / 1000);",
+    "old": "        dt = last === null || !Number.isFinite(now - last) ? Infinity : Math.max(0, (now - last) / 1000);",
+    "new": "        dt = last === null || !Number.isFinite(now - last) ? 0 : Math.max(0, (now - last) / 1000);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "SKYRIM-AURORA-the-dark-eased",
     "file": "src/scenes/auroraHost.js",
-    "old": "    get weight() { return sky * dark; },",
-    "new": "    get weight() { return sky; },",
+    "old": "      return sky * dark;",
+    "new": "      return sky;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -434,7 +434,7 @@
   {
     "name": "SKYRIM-AURORA-the-jump-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "    jump() { last = null; },",
+    "old": "    jump() {\n      last = null;\n    },",
     "new": "    jump() {},",
     "tests": [
       "test/world/skyrimaurora.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "SKYRIM-AURORA-the-door-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "  if (door === 'off') return null;\n",
-    "new": "",
+    "old": "  if (door === 'off') return null;\n  const tier = AURORA_QUALITY[/** @type {keyof typeof AURORA_QUALITY} */ (quality)] ?? AURORA_QUALITY.default;",
+    "new": "  const tier = AURORA_QUALITY[/** @type {keyof typeof AURORA_QUALITY} */ (quality)] ?? AURORA_QUALITY.default;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SKYRIM-AURORA-the-door-case-kept",
     "file": "src/scenes/auroraHost.js",
-    "old": "const s = String(v).trim().toLowerCase();",
-    "new": "const s = String(v);",
+    "old": "  const s = String(v).trim().toLowerCase();",
+    "new": "  const s = String(v);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SKYRIM-AURORA-the-fading-hang-dropped",
     "file": "src/scenes/auroraHost.js",
-    "old": "      if (want.weight > 0) hang = want.hang;",
-    "new": "      hang = want.hang;",
+    "old": "      if (want.weight > 0) hang = want.hang; // a fading aurora keeps where it hung",
+    "new": "      hang = want.hang; // a fading aurora keeps where it hung",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SKYRIM-AURORA-a-bad-clock-kept",
     "file": "src/scenes/auroraHost.js",
-    "old": "dt = last === null || !Number.isFinite(now - last) ? Infinity",
-    "new": "dt = last === null ? Infinity",
+    "old": "        dt = last === null || !Number.isFinite(now - last) ? Infinity : Math.max(0, (now - last) / 1000);",
+    "new": "        dt = last === null ? Infinity : Math.max(0, (now - last) / 1000);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SKYRIM-AURORA-the-veil-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "      const v = Math.max(0, Math.min(1, veil)), w = sky * dark * v, p = w >= AURORA_DRAWN_FROM ? pass() : null;",
-    "new": "      const v = 1, w = sky * dark * v, p = w >= AURORA_DRAWN_FROM ? pass() : null;",
+    "old": "      const v = Math.max(0, Math.min(1, veil)),",
+    "new": "      const v = 1,",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "SKYRIM-AURORA-the-place-door-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "{ here = pixelHere, clock",
-    "new": "{ here = () => null, clock",
+    "old": "    here = pixelHere,",
+    "new": "    here = () => null,",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "SKYRIM-AURORA-the-key-lit",
     "file": "src/scenes/auroraHost.js",
-    "old": "if (!moon) return { dir: [0, 1, 0], scale: 0, color: [0, 0, 0],",
-    "new": "if (!moon) return { dir: [0, 1, 0], scale: 1, color: [0, 0, 0],",
+    "old": "  if (!moon) return { dir: [0, 1, 0], scale: 0, color: [0, 0, 0], ambient: [light[0], light[1], light[2]] };",
+    "new": "  if (!moon) return { dir: [0, 1, 0], scale: 1, color: [0, 0, 0], ambient: [light[0], light[1], light[2]] };",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "SKYRIM-AURORA-the-moons-ambient-lost",
     "file": "src/scenes/auroraHost.js",
-    "old": "ambient: [moon.ambient[0] + light[0], moon.ambient[1] + light[1], moon.ambient[2] + light[2]] };",
-    "new": "ambient: [light[0], light[1], light[2]] };",
+    "old": "  return { ...moon, ambient: [moon.ambient[0] + light[0], moon.ambient[1] + light[1], moon.ambient[2] + light[2]] };",
+    "new": "  return { ...moon, ambient: [light[0], light[1], light[2]] };",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "SKYRIM-AURORA-the-light-unweighted",
     "file": "src/scenes/auroraHost.js",
-    "old": "for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c] * w;",
-    "new": "for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c];",
+    "old": "      for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c] * w;",
+    "new": "      for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c];",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "SKYRIM-AURORA-the-gap-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "      if (!(dt < AURORA_DOME_GAP_S)) stale = true;\n",
-    "new": "",
+    "old": "      if (!(dt < AURORA_DOME_GAP_S)) stale = true;\n    },",
+    "new": "    },",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "SKYRIM-AURORA-the-skip-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale || drawnFrame < frame - 1);",
-    "new": "p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale);",
+    "old": "      p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale || drawnFrame < frame - 1);",
+    "new": "      p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "SKYRIM-AURORA-the-staleness-kept",
     "file": "src/scenes/auroraHost.js",
-    "old": "      drawnFrame = frame; stale = false;",
-    "new": "      drawnFrame = frame;",
+    "old": "      stale = false;\n    },",
+    "new": "    },",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -848,7 +848,7 @@
   {
     "name": "SKYRIM-AURORA-the-map-ungated",
     "file": "src/scenes/auroraHost.js",
-    "old": "      skyMap.tex = drawnFrame === frame ? pass()?.domeTex ?? null : null;",
+    "old": "      skyMap.tex = drawnFrame === frame ? (pass()?.domeTex ?? null) : null;",
     "new": "      skyMap.tex = pass()?.domeTex ?? null;",
     "tests": [
       "test/world/skyrimaurora.test.js"
@@ -857,8 +857,8 @@
   {
     "name": "SKYRIM-AURORA-the-light-veil-unread",
     "file": "src/scenes/auroraHost.js",
-    "old": "      shown = p ? sky * v : 0;",
-    "new": "      shown = p ? sky : 0;",
+    "old": "      shown = p ? sky * v : 0; // no pass yet, or a failed one: no light either",
+    "new": "      shown = p ? sky : 0; // no pass yet, or a failed one: no light either",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "SKYRIM-AURORA-the-light-without-a-pass",
     "file": "src/scenes/auroraHost.js",
-    "old": "      shown = p ? sky * v : 0;",
-    "new": "      shown = w >= AURORA_DRAWN_FROM ? sky * v : 0;",
+    "old": "      shown = p ? sky * v : 0; // no pass yet, or a failed one: no light either",
+    "new": "      shown = w >= AURORA_DRAWN_FROM ? sky * v : 0; // no pass yet, or a failed one: no light either",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]

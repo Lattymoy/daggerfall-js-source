@@ -13,8 +13,8 @@
   {
     "name": "WERE-LEVY-come-quietly-through-the-setter",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (crimeId() === 0) playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;   // the levy's own write (WERE-LEVY: the field)",
-    "new": "    if (crimeId() === 0) setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);   // the levy's own write (WERE-LEVY: the field)",
+    "old": "    if (crimeId() === 0) playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy; // the levy's own write (WERE-LEVY: the field)",
+    "new": "    if (crimeId() === 0) setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy); // the levy's own write (WERE-LEVY: the field)",
     "tests": [
       "test/systems/beastform.test.js",
       "test/scenes/rep2_sentences.test.js"

@@ -74,8 +74,8 @@
   {
     "name": "APF-A1-the-layer-unstamped",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.folk = c.folk ?? null;",
-    "new": "rec.folk = null;",
+    "old": "          rec.folk = c.folk ?? null; // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)",
+    "new": "          rec.folk = null; // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]

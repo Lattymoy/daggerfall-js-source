@@ -488,8 +488,8 @@
   {
     "name": "RVN10-layer-unhanded",
     "file": "src/scenes/crewAshore.js",
-    "old": "deps.onKnocked?.(s.c, rec._knockedBy ?? null);",
-    "new": "deps.onKnocked?.(s.c, null);",
+    "old": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
+    "new": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

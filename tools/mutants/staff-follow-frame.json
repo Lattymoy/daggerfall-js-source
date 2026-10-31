@@ -72,8 +72,8 @@
   {
     "name": "CHAT-FOLLOW-CARD-no-card",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (ok !== false && card) post('follow', sub, name);",
-    "new": "if (ok !== false && card) void 0;",
+    "old": "                      if (ok !== false && card) post('follow', sub, name);",
+    "new": "                      if (ok !== false && card) void 0;",
     "why": "a follow from the chat line menu opens no card in the panel over the game (mob: \"no panel pops up when followingf from chat\")",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "CHAT-FOLLOW-CARD-twice-from-a-tag",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "onFollow ?? follow(), !onFollow);",
-    "new": "onFollow ?? follow(), true);",
+    "old": "      return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), !onFollow);",
+    "new": "      return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), true);",
     "why": "a tag menu's Follow hands the panel its card twice",
     "tests": [
       "test/net/safety/safe_client.test.js"

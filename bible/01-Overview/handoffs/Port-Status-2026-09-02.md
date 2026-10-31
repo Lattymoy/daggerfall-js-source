@@ -853,7 +853,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by CRAFT-WRITS (2026-10-22).**
 
-- **`src/scenes/craftWritHost.js:"FLAGGED: the fixed-city bench never goes online"`** - the `?exterior` bench's crafting
+- **`src/scenes/craftWritHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's crafting
   writs. *`06-Systems/Professions-Arc.md` section 49: a realm character's crafting writs are the Notice Board's Work tab
   in the streaming host; the fixed-city bench never goes online, so it posts none, as it posts no Court writ. The day it
   goes online, the sentence goes.*

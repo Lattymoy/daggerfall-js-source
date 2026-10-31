@@ -29,8 +29,8 @@
   {
     "name": "FB1012d-the-layer-stamps-nothing",
     "file": "src/scenes/crewAshore.js",
-    "old": "        rec.person = companionPerson(c);   // FB1012d ALLY-RACE: his own person in every place - never the stand's draw",
-    "new": "        rec.person = undefined;",
+    "old": "          rec.person = companionPerson(c); // FB1012d ALLY-RACE: his own person in every place - never the stand's draw",
+    "new": "          rec.person = undefined;",
     "tests": [
       "test/scenes/fb1012d_allyrace.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FB1012d-the-key-only-the-boat",
     "file": "src/scenes/crewAshore.js",
-    "old": "  const k = companionKeyOf(c);\n  let h = 0x811c9dc5;",
-    "new": "  const k = String(c?.boat);\n  let h = 0x811c9dc5;",
+    "old": "  if (Number.isInteger(c?.person) && c.person >= 0 && c.person <= 0xffffffff) return c.person;\n  const k = companionKeyOf(c);",
+    "new": "  if (Number.isInteger(c?.person) && c.person >= 0 && c.person <= 0xffffffff) return c.person;\n  const k = String(c?.boat);",
     "tests": [
       "test/scenes/fb1012d_allyrace.test.js"
     ]

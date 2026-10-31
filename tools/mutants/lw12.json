@@ -533,8 +533,8 @@
   {
     "name": "LW12-counter-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "        if ((mode === 'Sell' || mode === 'SellMagic') && bandTook(trip, deps.clock())) { deps.say(CARAVAN_LINES.bandTook(name)); return false; }   // LW12: its purse the band's\n",
-    "new": "",
+    "old": "        if ((mode === 'Sell' || mode === 'SellMagic') && bandTook(trip, deps.clock())) {\n          deps.say(CARAVAN_LINES.bandTook(name));\n          return false;\n        } // LW12: its purse the band's\n        if ((mode === 'Sell' || mode === 'SellMagic') && s.coin + price > counter.purse) {",
+    "new": "        if ((mode === 'Sell' || mode === 'SellMagic') && s.coin + price > counter.purse) {",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "LW12-counter-half",
     "file": "src/scenes/caravanHost.js",
-    "old": "const lost = new Set(bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : []);",
-    "new": "const lost = new Set();",
+    "old": "      const lost = new Set(\n        bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : [],\n      );",
+    "new": "      const lost = new Set();",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "LW12-counter-theirs",
     "file": "src/scenes/caravanHost.js",
-    "old": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY]))",
-    "new": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it))",
+    "old": "    s.all\n      .filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY]))\n      .map((/** @type {any} */ it) => it[WARE_KEY]);",
+    "new": "    s.all.filter((/** @type {any} */ it) => !s.items.includes(it)).map((/** @type {any} */ it) => it[WARE_KEY]);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]

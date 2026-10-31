@@ -2,8 +2,8 @@
   {
     "name": "SENTENCE-MENDS-prison-mend-dropped",
     "file": "src/scenes/arrestFlow.js",
-    "old": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n",
-    "new": "",
+    "old": "              sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n              // AUDIT C&C (2026-10-12, N3/H2): AND THE NEEDS LEAVE PRISON FED, WATERED AND RESTED. The days above are a bare",
+    "new": "              // AUDIT C&C (2026-10-12, N3/H2): AND THE NEEDS LEAVE PRISON FED, WATERED AND RESTED. The days above are a bare",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SENTENCE-MENDS-zero-day-mend-dropped",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n",
-    "new": "",
+    "old": "    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() }); // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);",
+    "new": "    fillVitalSigns(playerEntity);",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CURFEW-REFUND-factor-unkept",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
-    "new": "    lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
+    "old": "    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true }); // CURFEW-REFUND: the court gives back what was charged (SM-8: the town's Curfew, this charge's alone)",
+    "new": "    lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true }); // CURFEW-REFUND: the court gives back what was charged (SM-8: the town's Curfew, this charge's alone)",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CURFEW-REFUND-court-unset",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    court.factor = playerEntity.chargedFactor ?? 1;",
-    "new": "",
+    "old": "    court.factor = playerEntity.chargedFactor ?? 1; // CURFEW-REFUND (FIELD BUGS 2026-10-21d): the charge as it was laid",
+    "new": "    // CURFEW-REFUND (FIELD BUGS 2026-10-21d): the charge as it was laid",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SENTENCE-MENDS-at-the-sentence",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      raiseRepForSentence(playerEntity, court);\n      const days = result.days;",
-    "new": "      raiseRepForSentence(playerEntity, court);\n      sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n      const days = result.days;",
+    "old": "      const days = result.days;",
+    "new": "      sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n      const days = result.days;",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SENTENCE-MENDS-name-unkept",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    court.from = playerEntity.chargedFrom ?? null;",
-    "new": "    court.from = null;",
+    "old": "    court.from = playerEntity.chargedFrom ?? null; // AUDIT FB1021d SM-3: and the name it was laid on",
+    "new": "    court.from = null; // AUDIT FB1021d SM-3: and the name it was laid on",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SENTENCE-MENDS-name-unread",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region());",
-    "new": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region()) - 100;",
+    "old": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region()); // AUDIT FB1021d SM-3: the name it came in with, which a sentence answers",
+    "new": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region()) - 100; // AUDIT FB1021d SM-3: the name it came in with, which a sentence answers",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SENTENCE-MENDS-ownNow-unhanded",
     "file": "src/scenes/arrestFlow.js",
-    "old": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n",
-    "new": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from });\n",
+    "old": "              sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });",
+    "new": "              sentenceMends(playerEntity, court.regionIndex, { from: court.from });",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "CURFEW-REFUND-watch-charge-undoubled",
     "file": "src/scenes/arrestFlow.js",
-    "old": "lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
-    "new": "lowerRepForCrime(playerEntity, region(), crimeId());",
+    "old": "    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true }); // CURFEW-REFUND: the court gives back what was charged (SM-8: the town's Curfew, this charge's alone)",
+    "new": "    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId()); // CURFEW-REFUND: the court gives back what was charged (SM-8: the town's Curfew, this charge's alone)",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],

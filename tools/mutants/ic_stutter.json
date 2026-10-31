@@ -2,7 +2,7 @@
   {
     "name": "ICS-ahead-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "old": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) =>\n    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
     "new": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => false;",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ICS-ahead-the-whole-ring",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
-    "new": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING + 1;",
+    "old": "    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "new": "    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING + 1;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "ICS-heading-never-kept",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "    if (cur && was && (cur.x !== was.x || cur.y !== was.y)) heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)];   // IC-STUTTER",
+    "old": "    if (cur && was && (cur.x !== was.x || cur.y !== was.y))\n      heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)]; // IC-STUTTER",
     "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ICS-holes-asked-last",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "client.need([...holes, ...behind]);",
-    "new": "client.need([...behind, ...holes]);",
+    "old": "    if (holes.length || behind.length) client.need([...holes, ...behind]);",
+    "new": "    if (holes.length || behind.length) client.need([...behind, ...holes]);",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ICS-view-distance-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "const near = capitalNear(px, py, host.state?.current), id",
-    "new": "const near = true, id",
+    "old": "    const near = capitalNear(px, py, host.state?.current),",
+    "new": "    const near = true,",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "ICS-city-always-ready",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "    if (!on?.cap?.family) return null;\n",
-    "new": "    return null;\n",
+    "old": "    if (!on?.cap?.family) return null;",
+    "new": "    return null;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "ICS-whole-queue-asked",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "      if (++owing > NEED_AHEAD) continue;   // asked when the pump comes nearer it",
+    "old": "      if (++owing > NEED_AHEAD) continue; // asked when the pump comes nearer it",
     "new": "      ++owing;",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "ICS-looks-unkept",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "      looks.set(id, look);\n",
-    "new": "",
+    "old": "      looks.set(id, look);\n      if (looks.size > LOOKS_KEEP) looks.delete(/** @type {number} */ (looks.keys().next().value));",
+    "new": "      if (looks.size > LOOKS_KEEP) looks.delete(/** @type {number} */ (looks.keys().next().value));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -422,8 +422,8 @@
   {
     "name": "ICS-look-word-taken",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "(look.at >= look.keys.length && (first >= 0 || whole(look)))",
-    "new": "(look.at >= look.keys.length && (first >= 0 || true))",
+    "old": "      if (!look || (look.at >= look.keys.length && (first >= 0 || whole(look)))) {",
+    "new": "      if (!look || (look.at >= look.keys.length && (first >= 0 || true))) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "ICS-looks-kept-past-drop",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "client = null; looks.clear(); };",
-    "new": "client = null; };",
+    "old": "    looks.clear();\n  };",
+    "new": "  };",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

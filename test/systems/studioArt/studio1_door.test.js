@@ -239,7 +239,7 @@ test('STUDIO1 D6: the doors - the caravan\'s room wears the studio\'s picture of
   assert.match(port, /renderer\.uploadEmissionTexture\?\.\(PORT_ARCHIVE, rec, replaced \? art : pic, OWN_LIGHT\);/, 'the beacon\'s glow is the studio\'s picture where it is the studio\'s');
   assert.match(port, /\}, \{ topDown: true \}\);\n\s+\} while \(artAt < PORT_PAINTERS\.length/, 'the port: top-down');
   assert.match(read('world/wagonModels.js'), /await studioLanded\(\);[^\n]*\n\s+const pics = new Map\(wagonArt\(\)\.map\(\(\[rec, pic\]\) => \[rec, paintedReplacement\(WAGON_ARCHIVE, rec\) \?\? toColor32/, 'the wagon\'s icon: drawn once, after the studio lands, in its pictures');
-  assert.match(read('scenes/caravanRoom.js'), /out\.push\(\[lookRecord\(rec, CARAVAN_LIVE_CHOICE\), painted\?\.get\(rec\) \?\? built\.get\(rec\), painted\?\.has\(rec\) \? lookRecord\(rec, i\) : rec\]\)/);
+  assert.match(read('scenes/caravanRoom.js'), /out\.push\(\[\n\s*lookRecord\(rec, CARAVAN_LIVE_CHOICE\),\n\s*painted\?\.get\(rec\) \?\? built\.get\(rec\),\n\s*painted\?\.has\(rec\) \? lookRecord\(rec, i\) : rec,\n\s*\]\)/);
   const shared = read('scenes/shared.js');
   assert.match(shared, /const studio = installStudioArt\(\)\.catch\(\(\) => 0\);/, 'every host\'s one bootstrap installs the studio');
 });

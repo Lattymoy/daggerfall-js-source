@@ -2,8 +2,8 @@
   {
     "name": "BAY-LEFT-B-B1-guard",
     "file": "src/scenes/bootStartHost.js",
-    "old": "  if (far) startLoc = bayGuardOf(far, { worldPlaces, locationIndex, maps });\n",
-    "new": "",
+    "old": "  if (far) startLoc = bayGuardOf(far, { worldPlaces, locationIndex, maps });\n  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);",
+    "new": "  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BAY-LEFT-B-B1-province-test",
     "file": "src/scenes/bootStartHost.js",
-    "old": "if (id == null && !isProvinceRegion(REGION_NAMES.indexOf(regionName))) return null;",
-    "new": "if (id == null) return null;",
+    "old": "  if (id == null && !isProvinceRegion(REGION_NAMES.indexOf(regionName))) return null;",
+    "new": "  if (id == null) return null;",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BAY-LEFT-B-B1-seat-parse",
     "file": "src/scenes/bootStartHost.js",
-    "old": "const id = /^\\d+$/.test(seat) ? Number(seat) >>> 0 : null;",
-    "new": "const id = null;",
+    "old": "  const id = /^\\d+$/.test(seat) ? Number(seat) >>> 0 : null;",
+    "new": "  const id = null;",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BAY-LEFT-B-B1-id-arm",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    if (listed) return { x: listed.px, y: listed.py };   // a Bay place by its id too, where its names no longer answer\n",
-    "new": "",
+    "old": "    if (listed) return { x: listed.px, y: listed.py }; // a Bay place by its id too, where its names no longer answer\n    const country = countryPixelOfId(far.id);",
+    "new": "    const country = countryPixelOfId(far.id);",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BAY-LEFT-B-B1-country-check",
     "file": "src/scenes/bootStartHost.js",
-    "old": "if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;",
-    "new": "if (country) return country;",
+    "old": "    if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;",
+    "new": "    if (country) return country;",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BAY-LEFT-B-B1-isle",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    if (isle) return isle;\n",
-    "new": "",
+    "old": "    if (isle) return isle;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BAY-LEFT-B-B1-ready-wait",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed = _worldReady() && await",
-    "new": "    const landed = await",
+    "old": "    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed =\n      _worldReady() &&\n      (await Promise.race([\n        Promise.resolve(host.arenaTraced).then(\n          () => true,\n          () => true,\n        ),\n        wait(ARENA_LOAD_WAIT_MS).then(() => false),\n      ]));",
+    "new": "    const landed = await Promise.race([\n      Promise.resolve(host.arenaTraced).then(\n        () => true,\n        () => true,\n      ),\n      wait(ARENA_LOAD_WAIT_MS).then(() => false),\n    ]);",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BAY-LEFT-B-B1-load-skip",
     "file": "src/scenes/bootStartHost.js",
-    "old": "const farStart = far && !params.has('load') && !params.has('classicload') ? reach(far) : Promise.resolve(null);",
-    "new": "const farStart = far ? reach(far) : Promise.resolve(null);",
+    "old": "  const farStart = far && !params.has('load') && !params.has('classicload') ? reach(far) : Promise.resolve(null);",
+    "new": "  const farStart = far ? reach(far) : Promise.resolve(null);",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BAY-LEFT-B-B1-reposition",
     "file": "src/scenes/bootStartHost.js",
-    "old": "await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
-    "new": "await _teleportToPixel(at.x, at.y, null, {});",
+    "old": "      await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "      await _teleportToPixel(at.x, at.y, null, {});",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BAY-LEFT-B-B1-said",
     "file": "src/scenes/bootStartHost.js",
-    "old": "      host.townTalk?.say(STARTS_TEXT.noSite);\n",
-    "new": "",
+    "old": "      host.townTalk?.say(STARTS_TEXT.noSite);\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]

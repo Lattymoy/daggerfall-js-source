@@ -275,8 +275,8 @@
   {
     "name": "RPT1026-QUESTS-BOUNTY-WAY-kept-for-a-split-hunt-alone",
     "file": "src/scenes/bountyHost.js",
-    "old": "      const clue = clues.get(`${h.id}:${stage}`);\n      if (clue) lines.push(clue);\n",
-    "new": "      const clue = clues.get(`${h.id}:${stage}`);\n      if (clue && groups.length > 1) lines.push(clue);\n",
+    "old": "        if (clue) lines.push(clue);",
+    "new": "        if (clue && groups.length > 1) lines.push(clue);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],

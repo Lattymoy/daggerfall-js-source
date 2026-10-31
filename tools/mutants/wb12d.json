@@ -1653,8 +1653,8 @@
   {
     "name": "AUDIT-WB12d-the-summoner-by-his-kind-dead",
     "file": "src/scenes/corpseMarker.js",
-    "old": "const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType));",
-    "new": "const name = championName(entity, enemyDisplayName(mobileType));",
+    "old": "  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "new": "  const name = championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

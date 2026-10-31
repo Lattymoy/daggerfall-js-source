@@ -182,8 +182,8 @@
   {
     "name": "SCR-host-not-forwarding",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      host.voice.adopt(issued);   // STAFF-CHAT-RED",
-    "new": "      void issued;   // STAFF-CHAT-RED",
+    "old": "      host.voice.adopt(issued); // STAFF-CHAT-RED: and whether this token is a hidden staff member's",
+    "new": "      void issued; // STAFF-CHAT-RED: and whether this token is a hidden staff member's",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]

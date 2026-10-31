@@ -20,8 +20,8 @@
   {
     "name": "WK-M3-door-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "function liftAll() { for (const s of stood.values()) { carry(s); lift(s); } stood.clear(); }",
-    "new": "function liftAll() { for (const s of stood.values()) lift(s); stood.clear(); }",
+    "old": "    for (const s of stood.values()) {\n      carry(s);\n      lift(s);\n    }",
+    "new": "    for (const s of stood.values()) lift(s);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WK-M3-sweep-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "{ carry(s); stood.delete(k); continue; }",
-    "new": "{ stood.delete(k); continue; }",
+    "old": "        carry(s);\n        stood.delete(k);",
+    "new": "        stood.delete(k);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WK-M3-stand-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (fx?.length) rec.entity.activeEffects =",
-    "new": "if (false) rec.entity.activeEffects =",
+    "old": "            if (fx?.length) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];",
+    "new": "            if (false) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WK-M3-ended-carried",
     "file": "src/scenes/crewAshore.js",
-    "old": "fx.filter((a) => a && !a.ended)",
-    "new": "fx.filter((a) => a)",
+    "old": "    carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a && !a.ended) : []);",
+    "new": "    carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a) : []);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WK-U2-share-again",
     "file": "src/scenes/crewAshore.js",
-    "old": "          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth)); }",
-    "new": "          { const max = rec.entity.maxHealth; if (c.health != null && c.maxHealth > 0 && max > 0) rec.entity.health = Math.max(1, Math.min(max, Math.round(c.health / c.maxHealth * max))); }",
+    "old": "            if (c.maxHealth > 0) {\n              rec.entity.maxHealth = c.maxHealth;\n              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "            {\n              const max = rec.entity.maxHealth;\n              if (c.health != null && c.maxHealth > 0 && max > 0)\n                rec.entity.health = Math.max(1, Math.min(max, Math.round((c.health / c.maxHealth) * max)));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WK-U2-hurt-healed",
     "file": "src/scenes/crewAshore.js",
-    "old": "Math.min(c.maxHealth, c.health ?? c.maxHealth)",
-    "new": "Math.min(c.maxHealth, c.maxHealth)",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.maxHealth));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WK-U2-at-nothing",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
-    "new": "rec.entity.health = Math.min(c.maxHealth, c.health ?? c.maxHealth);",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.min(c.maxHealth, c.health ?? c.maxHealth);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]

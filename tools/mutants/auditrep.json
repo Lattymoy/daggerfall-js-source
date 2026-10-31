@@ -2,8 +2,8 @@
   {
     "name": "AUDITREP-F1-the-court's-charge-dropped",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (crimeId() !== 0) chargeOnce();\n",
-    "new": "",
+    "old": "    if (crimeId() !== 0) chargeOnce();\n    // DISC28-B (Discord: \"the game locks up if guards hit you the moment you fast travel\"): the trial is read BEFORE",
+    "new": "    // DISC28-B (Discord: \"the game locks up if guards hit you the moment you fast travel\"): the trial is read BEFORE",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITREP-F2-the-court-on-the-machine-clock",
     "file": "src/scenes/arrestFlow.js",
-    "old": "banish(playerEntity, region(), trustedWorldMinutes());",
-    "new": "banish(playerEntity, region(), Date.now());",
+    "old": "      banish(playerEntity, region(), trustedWorldMinutes()); // AUDIT REP F2: an unheard relay stamps no term - the first trusted read does",
+    "new": "      banish(playerEntity, region(), Date.now()); // AUDIT REP F2: an unheard relay stamps no term - the first trusted read does",
     "tests": [
       "test/systems/auditrep.test.js"
     ]

@@ -371,8 +371,8 @@
   {
     "name": "WAGONS1-the-seat-handle-unset",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;",
-    "new": "rec.ai.seat = null; void seatOf;",
+    "old": "      rec.ai.seat = deps.seat ? seatOf(i, list.length) : null; // WAGONS1",
+    "new": "      rec.ai.seat = null;\n      void seatOf; // WAGONS1",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "WAGONS1-the-doors-landing-unground",
     "file": "src/scenes/caravanRoom.js",
-    "old": "return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };",
-    "new": "return { position: at, yaw: room.yaw };",
+    "old": "      return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };",
+    "new": "      return { position: at, yaw: room.yaw };",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]

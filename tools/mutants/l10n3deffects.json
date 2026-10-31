@@ -82,7 +82,7 @@
   {
     "name": "L10N3d2-scenes-corpseMarker-145-thingJustDied",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  const line = localizedText('thingJustDied', '%s just died.').replaceAll('%s', getLocalizedEnemyName(mobileType, name));",
+    "old": "  const line = localizedText('thingJustDied', '%s just died.').replaceAll(\n    '%s',\n    getLocalizedEnemyName(mobileType, name),\n  );",
     "new": "  const line = '%s just died.'.replaceAll('%s', getLocalizedEnemyName(mobileType, name));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

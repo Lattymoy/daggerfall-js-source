@@ -211,8 +211,8 @@
   {
     "name": "HOLD-KEPT-the-model-not-compared",
     "file": "src/scenes/chestRecords.js",
-    "old": "if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;",
-    "new": "if (taken.has(t) || !t.matrix) continue;",
+    "old": "      if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;",
+    "new": "      if (taken.has(t) || !t.matrix) continue;",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "HOLD-KEPT-the-reach-unchecked",
     "file": "src/scenes/chestRecords.js",
-    "old": "let best = null, bd = CHEST_MATCH_REACH ** 2;",
-    "new": "let best = null, bd = Infinity;",
+    "old": "      bd = CHEST_MATCH_REACH ** 2;",
+    "new": "      bd = Infinity;",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "HOLD-KEPT-a-chest-taken-twice",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (best) { out.set(c, best); taken.add(best); }",
-    "new": "    if (best) { out.set(c, best); }",
+    "old": "      taken.add(best);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "HOLD-KEPT-the-legacy-pass-gone",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
-    "new": "",
+    "old": "    if (t && !taken.has(t)) {\n      out.set(c, t);\n      taken.add(t);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "HOLD-KEPT-a-named-chest-taken-again",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
-    "new": "    if (t) { out.set(c, t); taken.add(t); }",
+    "old": "    if (t && !taken.has(t)) {",
+    "new": "    if (t) {",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]

@@ -416,8 +416,8 @@
   {
     "name": "PI1-puppet-body-shown",
     "file": "src/scenes/corpseMarker.js",
-    "old": "if (!isCorpse(e) || e.corpseDisabled || e.puppet || !e.corpseMarker) return;",
-    "new": "if (!isCorpse(e) || e.corpseDisabled || !e.corpseMarker) return;",
+    "old": "    if (!isCorpse(e) || e.corpseDisabled || e.puppet || !e.corpseMarker) return;",
+    "new": "    if (!isCorpse(e) || e.corpseDisabled || !e.corpseMarker) return;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]

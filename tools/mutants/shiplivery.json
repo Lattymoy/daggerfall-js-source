@@ -843,8 +843,8 @@
   {
     "name": "CABIN-glass-stained",
     "file": "src/scenes/cabinLook.js",
-    "old": "      if (renderer.windowMasks?.has?.(key) || renderer.glassMasks?.has?.(key)) continue;   // glass: lit as built\n",
-    "new": "",
+    "old": "        if (renderer.windowMasks?.has?.(key) || renderer.glassMasks?.has?.(key)) continue; // glass: lit as built\n        const [archive, record] = key.split('_').map(Number);",
+    "new": "        const [archive, record] = key.split('_').map(Number);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "CABIN-twice",
     "file": "src/scenes/cabinLook.js",
-    "old": "      if (seen.has(own)) continue;\n",
-    "new": "",
+    "old": "        if (seen.has(own)) continue;\n        seen.add(own);",
+    "new": "        seen.add(own);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "CABIN-own-key",
     "file": "src/scenes/cabinLook.js",
-    "old": "      const key = texRemap.get(own) ?? own;",
-    "new": "      const key = own;",
+    "old": "        const key = texRemap.get(own) ?? own;",
+    "new": "        const key = own;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -870,8 +870,8 @@
   {
     "name": "CABIN-unset",
     "file": "src/scenes/cabinLook.js",
-    "old": "      texRemap.set(own, `${CABIN_ARCHIVE}_${rec}`);\n",
-    "new": "",
+    "old": "        texRemap.set(own, `${CABIN_ARCHIVE}_${rec}`);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -879,8 +879,8 @@
   {
     "name": "CABIN-none-stained",
     "file": "src/scenes/cabinLook.js",
-    "old": "  if (!rgb) return null;\n  return async",
-    "new": "  return async",
+    "old": "  if (!rgb) return null;\n  return async (texRemap, lists, { renderer, getTexture, palette }) => {",
+    "new": "  return async (texRemap, lists, { renderer, getTexture, palette }) => {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

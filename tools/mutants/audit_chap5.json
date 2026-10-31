@@ -541,8 +541,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-Y",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[1] = t[1] + b.a.top[1];",
-    "new": "top[1] = t[1];",
+    "old": "        top[1] = t[1] + b.a.top[1];",
+    "new": "        top[1] = t[1];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-X",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[0] = t[0] + b.a.top[0];",
-    "new": "top[0] = t[0] - b.a.top[0];",
+    "old": "        top[0] = t[0] + b.a.top[0];",
+    "new": "        top[0] = t[0] - b.a.top[0];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -559,8 +559,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-Z",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[2] = t[2] + b.a.top[2];",
-    "new": "top[2] = t[2] - b.a.top[2];",
+    "old": "        top[2] = t[2] + b.a.top[2];",
+    "new": "        top[2] = t[2] - b.a.top[2];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "AUDIT-CHAP5-T11-OUT",
     "file": "src/scenes/chapterBanners.js",
-    "old": "right: b.a.right, out: b.a.out }",
-    "new": "right: b.a.out, out: b.a.right }",
+    "old": "      right: b.a.right,\n      out: b.a.out,",
+    "new": "      right: b.a.out,\n      out: b.a.right,",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -586,8 +586,8 @@
   {
     "name": "AUDIT-CHAP5-T11-SORT",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (e) { eyeAt = e; nearest.sort(byEye); }",
-    "new": "      if (e) { eyeAt = e; }",
+    "old": "        nearest.sort(byEye);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]

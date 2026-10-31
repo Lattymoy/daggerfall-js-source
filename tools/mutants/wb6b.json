@@ -148,8 +148,8 @@
   {
     "name": "WB6b-a-frames-events-heard-twice",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "    if (!(t > from && t <= to)) continue;\n    const far =",
-    "new": "    if (!(t >= from && t <= to)) continue;\n    const far =",
+    "old": "    const t = base + (f.at - s * FLASH_SLOT_S) + f.dist / SPEED_OF_SOUND;\n    if (!(t > from && t <= to)) continue;",
+    "new": "    const t = base + (f.at - s * FLASH_SLOT_S) + f.dist / SPEED_OF_SOUND;\n    if (!(t >= from && t <= to)) continue;",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "WB6b-an-event-unheld",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: AIR_FAR }",
-    "new": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: false }",
+    "old": "              far: AIR_FAR,",
+    "new": "              far: false,",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WB6b-stop-leaves-a-bed-looping",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "        engine.setBed(AIR_SEA.loop, null);\n",
-    "new": "",
+    "old": "        engine.setBed(AIR_SEA.loop, null);\n        for (let i = 0; i < beds; i++) engine.setBed3d(AIR_BRAZIER.loop + i, null, null);",
+    "new": "        for (let i = 0; i < beds; i++) engine.setBed3d(AIR_BRAZIER.loop + i, null, null);",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "WB6b-the-air-outliving-its-loop",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "  _heard?.stop();\n",
-    "new": "",
+    "old": "  _heard?.stop();\n  return (_heard = {",
+    "new": "  return (_heard = {",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]

@@ -373,8 +373,8 @@
   {
     "name": "ARMORY-a-broker-piece-worn-off-another-slot",
     "file": "src/scenes/brokerInsignia.js",
-    "old": "armoryKitPieces(ins.armory)[piece.slot] === o.key",
-    "new": "armoryKitPieces(ins.armory).head === o.key",
+    "old": "    o.kind === 'title'\n      ? ins.title === o.key\n      : piece\n        ? armoryKitPieces(ins.armory)[piece.slot] === o.key\n        : ins.aura === o.key;",
+    "new": "    o.kind === 'title' ? ins.title === o.key : piece ? armoryKitPieces(ins.armory).head === o.key : ins.aura === o.key;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "ARMORY-a-broker-piece-sent-to-the-auras-door",
     "file": "src/scenes/brokerInsignia.js",
-    "old": ": offer.kind === 'armory' ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want) : equipAura(io, want));",
-    "new": ": equipAura(io, want));",
+    "old": "  offer.kind === 'title'\n    ? equipTitle(io, want)\n    : offer.kind === 'armory'\n      ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want)\n      : equipAura(io, want);",
+    "new": "  offer.kind === 'title' ? equipTitle(io, want) : equipAura(io, want);",
     "tests": [
       "test/render/armory.test.js"
     ]

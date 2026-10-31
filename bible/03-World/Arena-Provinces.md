@@ -2876,17 +2876,17 @@ this machine - four cores shared at load 30-45, so read them against each other)
   walkers' grid, its sixty-four blocks laid in one task (`scenes/pixelBuild.js`).
 
 THE FIX - the same city, the same pace, the same views, nothing hidden behind a pause:
-- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted(x, y, px, py, heading = null) {"`):
+- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted"`):
   the sweep keeps the way of the last crossing, and the outer ring's slices one more crossing that way brings within
   NEAR_RING are wanted near, first of their ring - their pieces made while the traveller is still a pixel off.
-- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady(queue) {"`,
+- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady"`,
   wired into the stream's pump - `world.js:"if (building || !state.owes(queue)"`): a pixel of the city is built once every
   piece of the view it builds now (near within NEAR_RING, else far) is the page's (`worldDataReplacement.js`
   portBlockFamilyHas, `customModels.js` customModelReady) or held from a worker; the queue's first such pixel goes first,
   its order else kept, and the pieces the next NEED_AHEAD pixels owe are asked of their workers (`need`) - a hole in the
   land's before a view built again behind the one standing (IC-SWAP-BEHIND), which stands meanwhile. No worker (node, a
   factory that throws, one that failed), or none of the city's pixels: every pixel ready, every piece the page's as ever.
-  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py) {"`):
+  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py)"`):
   a frame looks at a queued pixel from the first piece its look found owed, and the pixel chosen is looked at whole
   before it is built (a piece let go since: owed again, asked). With the stream's square of the city queued and owing
   (81 pixels), a frame of it checks 345 pieces, where a look at each view whole every frame would check 5,931 -

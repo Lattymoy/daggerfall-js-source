@@ -275,8 +275,8 @@
   {
     "name": "STUDIO1-the-room-wears-its-built-record",
     "file": "src/scenes/caravanRoom.js",
-    "old": "painted?.has(rec) ? lookRecord(rec, i) : rec]);",
-    "new": "rec]);",
+    "old": "      out.push([\n        lookRecord(rec, CARAVAN_LIVE_CHOICE),\n        painted?.get(rec) ?? built.get(rec),\n        painted?.has(rec) ? lookRecord(rec, i) : rec,\n      ]);",
+    "new": "      out.push([lookRecord(rec, CARAVAN_LIVE_CHOICE), painted?.get(rec) ?? built.get(rec), rec]);",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "STUDIO1-room-slot-by-source",
     "file": "src/scenes/caravanRoom.js",
-    "old": "    }, { slot: key });",
-    "new": "    });",
+    "old": "      { slot: key },\n    ); // the live record's slot: a room repainted while a picture was on its way keeps its new paint",
+    "new": "    ); // the live record's slot: a room repainted while a picture was on its way keeps its new paint",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

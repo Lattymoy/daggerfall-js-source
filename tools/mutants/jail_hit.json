@@ -20,8 +20,8 @@
   {
     "name": "JAIL-HIT-nested-court",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (playerEntity.arrested) return;\n",
-    "new": "",
+    "old": "    if (playerEntity.arrested) return;\n    // AUDIT REP F1: THE COURT CHARGES THE CRIME IT TRIES. The surrender box charges the crime it asks about - but the",
+    "new": "    // AUDIT REP F1: THE COURT CHARGES THE CRIME IT TRIES. The surrender box charges the crime it asks about - but the",
     "tests": [
       "test/systems/jailhit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "JAIL-HIT-box-thrown-away-still-asks",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; if (surrenderBox === box) surrenderBox = null; };",
-    "new": "      box.dispose = () => { if (surrenderBox === box) surrenderBox = null; };",
+    "old": "        if (!box.done) awaitingSurrenderAnswer = false;\n        if (surrenderBox === box) surrenderBox = null;",
+    "new": "        if (surrenderBox === box) surrenderBox = null;",
     "tests": [
       "test/systems/jailhit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "JAIL-HIT-answered-box-reopens",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; if (surrenderBox === box) surrenderBox = null; };",
-    "new": "      box.dispose = () => { awaitingSurrenderAnswer = !box.done; if (surrenderBox === box) surrenderBox = null; };",
+    "old": "        if (!box.done) awaitingSurrenderAnswer = false;",
+    "new": "        awaitingSurrenderAnswer = !box.done;",
     "tests": [
       "test/systems/jailhit.test.js"
     ]

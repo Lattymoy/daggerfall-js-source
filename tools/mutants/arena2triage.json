@@ -110,8 +110,8 @@
   {
     "name": "ARENA2-TRIAGE-4-a-zero-day-release-shows-a-verdict",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();",
-    "new": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();\n    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }));",
+    "old": "    release();\n  }",
+    "new": "    release();\n    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }));\n  }",
     "why": "killed by audit18 social F6 against the player's own data (ARENA2_PATH): the plea shows a verdict box, and state 2 shows 8055 twice",
     "tests": [
       "test/systems/audit18_systems_social.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "ARENA2-TRIAGE-4-banishment-is-no-release",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      fillVitalSigns(playerEntity);\n      release();\n      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED,",
-    "new": "      fillVitalSigns(playerEntity);\n      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED,",
+    "old": "      release();\n      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));",
+    "new": "      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));",
     "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): banishment no longer pays the release's four hours",
     "tests": [
       "test/systems/audit18_systems_social.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "ARENA2-TRIAGE-4-the-sentence-serves-no-days",
     "file": "src/scenes/arrestFlow.js",
-    "old": "          advanceDays(days);",
-    "new": "          advanceDays(0);",
+    "old": "              advanceDays(days);",
+    "new": "              advanceDays(0);",
     "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): a no-gold sentence served on the prison screen's countdown moves the clock by no whole day",
     "tests": [
       "test/systems/audit18_systems_social.test.js"

@@ -148,7 +148,7 @@ THE LAW NOW.
 - PATROL-GRACE: `standing.js:"export function patrolHalts("` - a known criminal outside the grace an answered law gives;
   LW9's `wanted` asks it (`world.js:"patrolHalts(playerEntity, trip.from.region,"`). An arrest on the road instead of a
   knight's sword stays LW-II's open item 6.
-- CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor = lowerRepForCrime("`,
+- CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor ="`,
   the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss"`);
   a marked crime keeps half of what was charged; the People's half was never doubled.
 

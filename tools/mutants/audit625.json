@@ -453,7 +453,7 @@
     "name": "AUDIT625-D6-the-body-before-the-answer",
     "file": "src/scenes/corpseMarker.js",
     "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);",
-    "new": "  openWindow(corpseLootHooks(entry)); silverFindAt('corpse', entry);",
+    "new": "  openWindow(corpseLootHooks(entry));\n  silverFindAt('corpse', entry);",
     "why": "a refused pack rolls a body's find",
     "tests": [
       "test/net/audit625_silver.test.js"

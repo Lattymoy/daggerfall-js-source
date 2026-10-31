@@ -278,8 +278,8 @@
   {
     "name": "SAFE7-a-line-sent-before-agreeing",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      if (agreed !== false) return null;\n",
-    "new": "      return null;\n",
+    "old": "      if (agreed !== false) return null;",
+    "new": "      return null;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

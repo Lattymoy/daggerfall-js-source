@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CC-A1-clear-orphans",
     "file": "src/scenes/crewAshore.js",
-    "old": "(rec.dead || !rec.ai || (s.has && !s.has(rec)))",
-    "new": "(rec.dead || !rec.ai)",
+    "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) {",
+    "new": "      if (rec.dead || !rec.ai) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-CC-A2-health-absolute",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
-    "new": "rec.entity.health = Math.max(1, Math.min(rec.entity.maxHealth, c.health ?? c.maxHealth));",
+    "old": "              rec.entity.maxHealth = c.maxHealth;\n              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, Math.min(rec.entity.maxHealth, c.health ?? c.maxHealth));",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-CC-A3-height-chase-airborne",
     "file": "src/scenes/crewAshore.js",
-    "old": "(L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
-    "new": "(Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
+    "old": "          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M ||\n          (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
+    "new": "          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M || Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-CC-A4-side-not-reasserted",
     "file": "src/scenes/crewAshore.js",
-    "old": "        rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly';\n",
-    "new": "",
+    "old": "        rec.entity.team = 'PlayerAlly';\n        rec.entity.mobileTeam = 'PlayerAlly';\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -657,8 +657,8 @@
   {
     "name": "AUDIT-CC-F-layer-spot-ignored",
     "file": "src/scenes/crewAshore.js",
-    "old": "return place.spot ? place.spot(L.feet, dx, dz) :",
-    "new": "return false ? place.spot(L.feet, dx, dz) :",
+    "old": "    return place.spot ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];",
+    "new": "    return false ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -667,8 +667,8 @@
   {
     "name": "AUDIT-CC-F-layer-over-max",
     "file": "src/scenes/crewAshore.js",
-    "old": "Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth))",
-    "new": "Math.max(1, c.health ?? c.maxHealth)",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, c.health ?? c.maxHealth);",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "AUDIT-CC-F-layer-late-kept",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party)",
-    "new": "if (was !== epoch || deps.party() !== party)",
+    "old": "          if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) {",
+    "new": "          if (was !== epoch || deps.party() !== party) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -687,8 +687,8 @@
   {
     "name": "AUDIT-CC-F-layer-clear-keeps",
     "file": "src/scenes/crewAshore.js",
-    "old": "clear() { liftAll(); placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
-    "new": "clear() { placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
+    "old": "      liftAll();\n      placeKey = undefined;",
+    "new": "      placeKey = undefined;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

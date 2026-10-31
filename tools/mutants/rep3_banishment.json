@@ -74,8 +74,8 @@
   {
     "name": "REP3-the-court's-banishment-untimed",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      banish(playerEntity, region(), trustedWorldMinutes());",
-    "new": "      severePunishment(1);",
+    "old": "      banish(playerEntity, region(), trustedWorldMinutes()); // AUDIT REP F2: an unheard relay stamps no term - the first trusted read does",
+    "new": "      severePunishment(1); // AUDIT REP F2: an unheard relay stamps no term - the first trusted read does",
     "tests": [
       "test/systems/rep3_banishment.test.js",
       "test/systems/audit39_guildstravel.test.js"

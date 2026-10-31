@@ -294,8 +294,8 @@
   {
     "name": "AUDIT28-B1-a-cleared-hunt-taken",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (mateCleared(bountyHuntKey(id))) return { ok: false, text: BOUNTY_REFUSALS.party };\n",
-    "new": "",
+    "old": "    if (mateCleared(bountyHuntKey(id))) return { ok: false, text: BOUNTY_REFUSALS.party };\n    const done = takeBounty(ledger, id, deps.now());",
+    "new": "    const done = takeBounty(ledger, id, deps.now());",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT28-B2-a-retake-stands-a-second-pack",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (b) adopt(b.slotKey, id);\n",
-    "new": "",
+    "old": "    if (b) adopt(b.slotKey, id);\n    const p = postingOf(id);",
+    "new": "    const p = postingOf(id);",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "AUDIT28-B4-a-mates-kills-unheard",
     "file": "src/scenes/bountyHost.js",
-    "old": "      if (k > h.killed) { h.killed = k; repaint(); }",
-    "new": "      if (false) { h.killed = k; repaint(); }",
+    "old": "      if (k > h.killed) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -386,7 +386,7 @@
   {
     "name": "AUDIT28-B6-a-load-forgets-a-standing-pack",
     "file": "src/scenes/bountyHost.js",
-    "old": "    for (const k of [...packs.keys()]) if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);",
+    "old": "    for (const k of [...packs.keys()])\n      if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);",
     "new": "    packs.clear();",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT28-B10-a-future-take-runs-for-days",
     "file": "src/scenes/bountyHost.js",
-    "old": "    for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;\n",
-    "new": "",
+    "old": "    for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;\n    for (const gone of lapseBounties(ledger, now)) {",
+    "new": "    for (const gone of lapseBounties(ledger, now)) {",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -422,7 +422,7 @@
   {
     "name": "AUDIT28-B12-a-share-at-the-sharers-level",
     "file": "src/scenes/bountyHost.js",
-    "old": "  const mine = (id) => { const lv = deps.level(); return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id; };",
+    "old": "  const mine = (id) => {\n    const lv = deps.level();\n    return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id;\n  };",
     "new": "  const mine = (id) => id;",
     "tests": [
       "test/scenes/audit28_bounty.test.js",
@@ -432,8 +432,8 @@
   {
     "name": "AUDIT28-B13-a-farm-on-a-farm",
     "file": "src/scenes/bountyFarms.js",
-    "old": " || occupied(t[0] + lx, t[2] + lz, half + 4, f)) continue;",
-    "new": ") continue;",
+    "old": "      if (!deps.spotOk(t[0] + lx, t[2] + lz, half + 4) || occupied(t[0] + lx, t[2] + lz, half + 4, f)) continue; // AUDIT 28 B13: nor on another farm",
+    "new": "      if (!deps.spotOk(t[0] + lx, t[2] + lz, half + 4)) continue; // AUDIT 28 B13: nor on another farm",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -516,7 +516,7 @@
   {
     "name": "AUDIT28-H12-an-unread-notice-dropped",
     "file": "src/scenes/bountyHost.js",
-    "old": "    requeue: (n) => { if (n && !notices.includes(n)) notices.unshift(n); },",
+    "old": "    requeue: (n) => {\n      if (n && !notices.includes(n)) notices.unshift(n);\n    },",
     "new": "    requeue: () => {},",
     "tests": [
       "test/systems/audit28_forage.test.js"
@@ -525,8 +525,8 @@
   {
     "name": "AUDIT28-B8-the-owner-asked-on-the-dungeons-own-pixel",
     "file": "src/scenes/bountyHost.js",
-    "old": "pose ? { px: pose.x, py: pose.y } : p.target",
-    "new": "p.target",
+    "old": "        pose ? { px: pose.x, py: pose.y } : p.target,",
+    "new": "        p.target,",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]

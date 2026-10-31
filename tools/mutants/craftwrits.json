@@ -308,8 +308,8 @@
   {
     "name": "CRAFT-WRITS-host-no-putback",
     "file": "src/scenes/craftWritHost.js",
-    "old": "          if (t.whole) { if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec); } else t.rec.stackCount = recordCount(t.rec) + t.n;\n",
-    "new": "",
+    "old": "          if (t.whole) {\n            if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec);\n          } else t.rec.stackCount = recordCount(t.rec) + t.n;\n        }",
+    "new": "        }",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CRAFT-WRITS-host-any-piece",
     "file": "src/scenes/craftWritHost.js",
-    "old": "    const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);\n    return (player()?.items ?? []).filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))",
-    "new": "    return (player()?.items ?? []).filter((it) => pieceOf(it, w.product))",
+    "old": "    const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);\n    return (player()?.items ?? [])\n      .filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))\n      .map((it) => String(it.provenance));",
+    "new": "    return (player()?.items ?? []).filter((it) => pieceOf(it, w.product)).map((it) => String(it.provenance));",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C1-repeat-kept-out",
     "file": "src/scenes/craftWritHost.js",
-    "old": "          apply: (/** @type {any} */ a) => { if (a.data?.repeat && a.data?.realm == null) putBack(); },   // C1\n",
-    "new": "",
+    "old": "          apply: (/** @type {any} */ a) => {\n            if (a.data?.repeat && a.data?.realm == null) putBack();\n          }, // C1\n          call: (at) => {",
+    "new": "          call: (at) => {",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-throw-kept-out",
     "file": "src/scenes/craftWritHost.js",
-    "old": "        putBack();   // C9: a throw before the service was asked (the book gone) - the goods were never the record's\n",
-    "new": "",
+    "old": "        putBack(); // C9: a throw before the service was asked (the book gone) - the goods were never the record's\n        console.warn('[craft writ] the delivery would not ask', e);",
+    "new": "        console.warn('[craft writ] the delivery would not ask', e);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-foot-of-pack",
     "file": "src/scenes/craftWritHost.js",
-    "old": "pack.splice(Math.min(t.at, pack.length), 0, t.rec)",
-    "new": "pack.push(t.rec)",
+    "old": "            if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec);",
+    "new": "            if (!pack.includes(t.rec)) pack.push(t.rec);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C4-landed-unread",
     "file": "src/scenes/craftWritHost.js",
-    "old": "      if (r?.ok && !r.data) Promise.resolve(book()?.refresh?.({ force: true })).catch(() => {});\n",
-    "new": "",
+    "old": "      if (r?.ok && !r.data) Promise.resolve(book()?.refresh?.({ force: true })).catch(() => {});\n      return r;",
+    "new": "      return r;",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]

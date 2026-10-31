@@ -976,15 +976,15 @@ town hundreds of pixels away.
 WHAT IT IS NOW:
 
 - **The start's lookup left bootWorld** (HOST-SPLIT, verbatim - by hand, as `tools/hostMove.mjs` refuses a group whose
-  `let` the statements after it write): `scenes/bootStartHost.js:"export function createBootStart(host) {"`. The classic
+  `let` the statements after it write): `scenes/bootStartHost.js:"export function createBootStart"`. The classic
   cell, EE13's random spawn and the named start stand as they did.
-- **A start past the Bay** (`bootStartHost.js:"export function farStartOf(params, regionName, locationName) {"`): a name
+- **A start past the Bay** (`bootStartHost.js:"export function farStartOf"`): a name
   MAPS.BSA does not hold, with the address's kept map id (`seat`) or a province's region (62..70). It is booted the way a
   save made in a town past the Bay loads (TESA2): the world stands first at the Bay's town nearest the place where its
   pixel is known before the trace (else the boot's own default, Daggerfall); once the boot's world stands
   (`playerSpawned`, `_bootLoaded`, no load) and the land has its trace (`arenaTraced`, ARENA_LOAD_WAIT_MS at most - the
   load's own wait), the player is moved there (`_teleportToPixel`, on a start marker, as `__tesaJump` lands). The place's
-  pixel (`bootStartHost.js:"export function farPixelOf(far, worldPlaces) {"`): by its map id - the registry's place (a
+  pixel (`bootStartHost.js:"export function farPixelOf"`): by its map id - the registry's place (a
   capital's slice, an Arena place), a country place's id read back to its pixel where the countryside stands it there
   (`world/tamrielCountry.js:"export function countryPixelOfId(id) {"`), an isle's to its centre
   (`world/etherPlaces.js:"export function etherPlacePixelOfId(id) {"`) - else by name, the registry's first listed place

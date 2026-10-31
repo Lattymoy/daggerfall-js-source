@@ -272,8 +272,8 @@
   {
     "name": "LW11-host-reset",
     "file": "src/scenes/caravanHost.js",
-    "old": "    if (r !== known) { known = r; shelves.clear(); yielded.clear(); }\n",
-    "new": "",
+    "old": "    if (r !== known) {\n      known = r;\n      shelves.clear();\n      yielded.clear();\n    }\n    return r;",
+    "new": "    return r;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LW11-host-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "s.coin + price > counter.purse",
-    "new": "price > counter.purse",
+    "old": "        if ((mode === 'Sell' || mode === 'SellMagic') && s.coin + price > counter.purse) {",
+    "new": "        if ((mode === 'Sell' || mode === 'SellMagic') && price > counter.purse) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LW11-host-coin",
     "file": "src/scenes/caravanHost.js",
-    "old": "done: (mode, staged, price) => keep(trip, mode === 'Sell' || mode === 'SellMagic' ? price : 0),",
-    "new": "done: (mode, staged, price) => keep(trip, 0),",
+    "old": "      done: (mode, staged, price) => keep(trip, mode === 'Sell' || mode === 'SellMagic' ? price : 0),",
+    "new": "      done: (mode, staged, price) => keep(trip, 0),",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "LW11-host-friend",
     "file": "src/scenes/caravanHost.js",
-    "old": "roadDiscount: friend ? FRIEND_DISCOUNT : 0",
-    "new": "roadDiscount: 0",
+    "old": "      roadDiscount: friend ? FRIEND_DISCOUNT : 0,",
+    "new": "      roadDiscount: 0,",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "LW11-host-caught-regard",
     "file": "src/scenes/caravanHost.js",
-    "old": "for (const m of membersAt(trip, deps.clock())) rel()?.note?.(m.id, 'crime', day);",
+    "old": "        for (const m of membersAt(trip, deps.clock())) rel()?.note?.(m.id, 'crime', day);",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "LW11-host-witness-dead",
     "file": "src/scenes/caravanHost.js",
-    "old": "const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t) && m.id !== victim).map((m) => m.id);",
-    "new": "const witnesses = membersAt(trip, t).filter((m) => m.id !== victim).map((m) => m.id);",
+    "old": "      .filter((m) => !deps.deadAt(m, t) && m.id !== victim)",
+    "new": "      .filter((m) => m.id !== victim)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "LW11-host-charge-void",
     "file": "src/scenes/caravanHost.js",
-    "old": "      if (alive) deps.charge(rep.region, rep.crime);",
-    "new": "      deps.charge(rep.region, rep.crime);",
+    "old": "        if (alive) deps.charge(rep.region, rep.crime);",
+    "new": "        deps.charge(rep.region, rep.crime);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "LW11-host-charge-when",
     "file": "src/scenes/caravanHost.js",
-    "old": "      if (t < rep.at) continue;",
-    "new": "      if (t < rep.at - 1e9) continue;",
+    "old": "        if (t < rep.at) continue;",
+    "new": "        if (t < rep.at - 1e9) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "LW11-host-yield-once",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
-    "new": "if (!counterOf(trip)) continue;",
+    "old": "        if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
+    "new": "        if (!counterOf(trip)) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LW11-host-robbed-t",
     "file": "src/scenes/caravanHost.js",
-    "old": "        keep(trip, 0, t);\n",
-    "new": "        keep(trip, 0);\n",
+    "old": "        keep(trip, 0, t);",
+    "new": "        keep(trip, 0);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -362,7 +362,7 @@
   {
     "name": "LW11-host-take-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (left > 0) { s.items.push(deps.goldItem(left)); keep(trip, left); }",
+    "old": "      if (left > 0) {\n        s.items.push(deps.goldItem(left));\n        keep(trip, left);\n      }",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
@@ -380,8 +380,8 @@
   {
     "name": "LW11-host-hire-once",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (!contract && !robbed && escortOffer(trip, t))",
-    "new": "if (!robbed && escortOffer(trip, t))",
+    "old": "      if (!contract && !robbed && escortOffer(trip, t))",
+    "new": "      if (!robbed && escortOffer(trip, t))",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "LW11-host-travel-online",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (contract?.trip === trip.id && !deps.online() && deps.travelWith",
-    "new": "if (contract?.trip === trip.id && deps.travelWith",
+    "old": "      if (contract?.trip === trip.id && !deps.online() && deps.travelWith && deps.travelFree?.() && t < trip.outT1)",
+    "new": "      if (contract?.trip === trip.id && deps.travelWith && deps.travelFree?.() && t < trip.outT1)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LW11-host-fights",
     "file": "src/scenes/caravanHost.js",
-    "old": "const gold = c.pay + ESCORT_FIGHT * c.fights;",
-    "new": "const gold = c.pay;",
+    "old": "        const gold = c.pay + ESCORT_FIGHT * c.fights;",
+    "new": "        const gold = c.pay;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "LW11-host-fights-won",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (trip.enc && trip.enc.t0 >= c.t && r.turns?.().won?.has(trip.enc.id) && !c.fights)",
-    "new": "if (trip.enc && trip.enc.t0 >= c.t && !c.fights)",
+    "old": "      if (trip.enc && trip.enc.t0 >= c.t && r.turns?.().won?.has(trip.enc.id) && !c.fights) {",
+    "new": "      if (trip.enc && trip.enc.t0 >= c.t && !c.fights) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "LW11-host-thanks",
     "file": "src/scenes/caravanHost.js",
-    "old": "        for (const m of membersAt(trip, end)) r.note(m.id, 'helped', deps.day(t));\n",
-    "new": "",
+    "old": "        for (const m of membersAt(trip, end)) r.note(m.id, 'helped', deps.day(t));\n        // AUDIT LW-II-2 C9 (the lead's call, for Mac): a caravan a band robbed under the escort pays all the same - its",
+    "new": "        // AUDIT LW-II-2 C9 (the lead's call, for Mac): a caravan a band robbed under the escort pays all the same - its",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "LW11-host-near",
     "file": "src/scenes/caravanHost.js",
-    "old": "      if (near !== c.near) { c = { ...c, near }; r.setEscort(c); }\n",
-    "new": "",
+    "old": "      if (near !== c.near) {\n        c = { ...c, near };\n        r.setEscort(c);\n      }\n      if (t >= trip.outT1) {",
+    "new": "      if (t >= trip.outT1) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "LW11-host-fell",
     "file": "src/scenes/caravanHost.js",
-    "old": "      if ((leader && deps.deadAt(leader, end)) || !membersAt(trip, end).some((m) => m.id === lead)) { deps.say(CARAVAN_LINES.fell(name)); r.setEscort(null); return; }\n",
-    "new": "",
+    "old": "      if ((leader && deps.deadAt(leader, end)) || !membersAt(trip, end).some((m) => m.id === lead)) {\n        deps.say(CARAVAN_LINES.fell(name));\n        r.setEscort(null);\n        return;\n      }\n      // AUDIT LW-II C5c: turned back at its trouble - its way out ends there (`outT1` the trouble's minute), unpaid; it paid",
+    "new": "      // AUDIT LW-II C5c: turned back at its trouble - its way out ends there (`outT1` the trouble's minute), unpaid; it paid",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "LW11-host-gone-step",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;",
-    "new": "continue;",
+    "old": "      if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "LW11-AUDIT-C1-newcomer",
     "file": "src/scenes/caravanHost.js",
-    "old": "  if (!place || m[2] == null) return place;\n",
-    "new": "  return place;\n",
+    "old": "  if (!place || m[2] == null) return place;",
+    "new": "  return place;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "LW11-AUDIT-C1-pending",
     "file": "src/scenes/caravanHost.js",
-    "old": "return trips === undefined ? undefined : trips.find((tr) => tr.id === id) ?? null;",
-    "new": "return (trips ?? []).find((tr) => tr.id === id) ?? null;",
+    "old": "  return trips === undefined ? undefined : (trips.find((tr) => tr.id === id) ?? null);",
+    "new": "  return (trips ?? []).find((tr) => tr.id === id) ?? null;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "LW11-AUDIT-C1-pending-escort",
     "file": "src/scenes/caravanHost.js",
-    "old": "      if (trip === undefined) return;   // its trips wait on their ways: asked again\n",
-    "new": "",
+    "old": "      if (trip === undefined) return; // its trips wait on their ways: asked again\n      if (!trip) {",
+    "new": "      if (!trip) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "LW11-AUDIT-C1-pending-report",
     "file": "src/scenes/caravanHost.js",
-    "old": "        if (trip === undefined) continue;   // its trips wait on their ways: asked again\n",
-    "new": "",
+    "old": "        if (trip === undefined) continue; // its trips wait on their ways: asked again\n        const stood = trip ? new Set(membersAt(trip, rep.at).map((m) => m.id)) : null;",
+    "new": "        const stood = trip ? new Set(membersAt(trip, rep.at).map((m) => m.id)) : null;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "LW11-AUDIT-C4-hand",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (!yields(trip, t, (m) => deps.slainAt(m, t))) continue;",
-    "new": "if (!yields(trip, t, (m) => deps.deadAt(m, t))) continue;",
+    "old": "        if (!yields(trip, t, (m) => deps.slainAt(m, t))) continue;",
+    "new": "        if (!yields(trip, t, (m) => deps.deadAt(m, t))) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "LW11-AUDIT-C4-near",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (!here || at.x == null || Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M > ESCORT_KEEP_M) continue;",
-    "new": "if (at.x == null) continue;",
+    "old": "        if (\n          !here ||\n          at.x == null ||\n          Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M >\n            ESCORT_KEEP_M\n        )\n          continue;",
+    "new": "        if (at.x == null) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "LW11-AUDIT-C5a-hire",
     "file": "src/scenes/caravanHost.js",
-    "old": "const pay = escortPay(trip, deps.level(), 0, t);",
-    "new": "const pay = escortPay(trip, deps.level(), 0);",
+    "old": "    const pay = escortPay(trip, deps.level(), 0, t); // AUDIT LW-II C5a: the walk still ahead",
+    "new": "    const pay = escortPay(trip, deps.level(), 0); // AUDIT LW-II C5a: the walk still ahead",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "LW11-AUDIT-C5b-gap",
     "file": "src/scenes/caravanHost.js",
-    "old": "const was = Math.max(c.near ?? c.t, c.t, trip.outT0);",
-    "new": "const was = t;",
+    "old": "      const was = Math.max(c.near ?? c.t, c.t, trip.outT0);",
+    "new": "      const was = t;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "LW11-AUDIT-C5b-travel",
     "file": "src/scenes/caravanHost.js",
-    "old": "    if (c?.trip === trip.id) rel().setEscort({ ...c, near: Math.max(c.near ?? until, until) });\n",
-    "new": "",
+    "old": "    if (c?.trip === trip.id) rel().setEscort({ ...c, near: Math.max(c.near ?? until, until) });\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "LW11-AUDIT-C5c-turned",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (trip.turned && t >= trip.outT1) {",
-    "new": "if (trip.turned && t >= (trip.enc?.t1 ?? trip.outT1)) {",
+    "old": "      if (trip.turned && t >= trip.outT1) {",
+    "new": "      if (trip.turned && t >= (trip.enc?.t1 ?? trip.outT1)) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "LW11-AUDIT-C5d-road",
     "file": "src/scenes/caravanHost.js",
-    "old": "if ((leader && deps.deadAt(leader, end)) || !membersAt(trip, end).some((m) => m.id === lead)) {",
-    "new": "if (leader && deps.deadAt(leader, end)) {",
+    "old": "      if ((leader && deps.deadAt(leader, end)) || !membersAt(trip, end).some((m) => m.id === lead)) {",
+    "new": "      if (leader && deps.deadAt(leader, end)) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "LW11-AUDIT-C5d-fell-word",
     "file": "src/scenes/caravanHost.js",
-    "old": "deps.say(trip.fallen?.some((f) => f.res?.id === lead) ? CARAVAN_LINES.fell(name) : CARAVAN_LINES.turned(name));",
-    "new": "deps.say(CARAVAN_LINES.turned(name));",
+    "old": "        deps.say(trip.fallen?.some((f) => f.res?.id === lead) ? CARAVAN_LINES.fell(name) : CARAVAN_LINES.turned(name));",
+    "new": "        deps.say(CARAVAN_LINES.turned(name));",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "LW11-AUDIT-C5e-before",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (trip.enc && trip.enc.t0 >= c.t && r.turns",
-    "new": "if (trip.enc && r.turns",
+    "old": "      if (trip.enc && trip.enc.t0 >= c.t && r.turns?.().won?.has(trip.enc.id) && !c.fights) {",
+    "new": "      if (trip.enc && r.turns?.().won?.has(trip.enc.id) && !c.fights) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "LW11-AUDIT-C5e-robbed",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (!contract && !robbed && escortOffer(trip, t))",
-    "new": "if (!contract && escortOffer(trip, t))",
+    "old": "      if (!contract && !robbed && escortOffer(trip, t))",
+    "new": "      if (!contract && escortOffer(trip, t))",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "LW11-AUDIT-C6-band-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "const left = bandTook(trip, deps.clock()) ? 0 : Math.max(0, counter.purse - s.coin);",
-    "new": "const left = Math.max(0, counter.purse - s.coin);",
+    "old": "      const left = bandTook(trip, deps.clock()) ? 0 : Math.max(0, counter.purse - s.coin);",
+    "new": "      const left = Math.max(0, counter.purse - s.coin);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "LW11-AUDIT-C7-writeback",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;",
-    "new": "if (sig === sh.sig) continue;",
+    "old": "      if (sig === sh.sig && (sh.robbed == null || r.wares?.(id))) continue;",
+    "new": "      if (sig === sh.sig) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "LW11-AUDIT-C7-robbed-shelf",
     "file": "src/scenes/caravanHost.js",
-    "old": "return shelves.get(tripId)?.robbed ?? r?.wares?.(tripId)?.robbed ?? null;",
-    "new": "return r?.wares?.(tripId)?.robbed ?? null;",
+    "old": "    return shelves.get(tripId)?.robbed ?? r?.wares?.(tripId)?.robbed ?? null;",
+    "new": "    return r?.wares?.(tripId)?.robbed ?? null;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "LW11-AUDIT-C10-witness",
     "file": "src/scenes/caravanHost.js",
-    "old": "return w && (!stood || stood.has(id)) && !deps.deadAt(w, rep.at);",
-    "new": "return w && !deps.deadAt(w, rep.at);",
+    "old": "          return w && (!stood || stood.has(id)) && !deps.deadAt(w, rep.at);",
+    "new": "          return w && !deps.deadAt(w, rep.at);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "LW11-AUDIT-C10-trip",
     "file": "src/scenes/caravanHost.js",
-    "old": "at: reportAt(trip, t), who, witnesses, trip: trip.id },",
-    "new": "at: reportAt(trip, t), who, witnesses },",
+    "old": "          trip: trip.id,\n        },",
+    "new": "        },",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

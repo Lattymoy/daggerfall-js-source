@@ -254,8 +254,8 @@
   {
     "name": "SD20D-A3-the-deadlands-retriggered",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "engine.setBed(AIR_WIND.loop, AIR_WIND.clip,",
-    "new": "engine.setLoop?.(AIR_WIND.loop, AIR_WIND.clip,",
+    "old": "        engine.setBed(AIR_WIND.loop, AIR_WIND.clip, { volume: airWindGain(seconds), pitch: AIR_WIND.pitch });",
+    "new": "        engine.setLoop?.(AIR_WIND.loop, AIR_WIND.clip, { volume: airWindGain(seconds), pitch: AIR_WIND.pitch });",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]

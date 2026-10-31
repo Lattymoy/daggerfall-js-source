@@ -2,8 +2,8 @@
   {
     "name": "WAGONS2-FINAL-the-heading-unread",
     "file": "src/scenes/caravanRoom.js",
-    "old": "[st.WorldX, st.WorldZ, parkedTurnOf(st)]",
-    "new": "[st.WorldX, st.WorldZ]",
+    "old": "    ? [st.WorldX, st.WorldZ, parkedTurnOf(st)]",
+    "new": "    ? [st.WorldX, st.WorldZ]",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WAGONS2-FINAL-any-turn-the-same",
     "file": "src/scenes/caravanRoom.js",
-    "old": "  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);",
-    "new": "  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= 360);",
+    "old": "  (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);",
+    "new": "  (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= 360);",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

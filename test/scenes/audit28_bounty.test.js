@@ -155,7 +155,7 @@ test('AUDIT 28 B6/B9: a load that still holds a bounty keeps its standing pack, 
   host._reset(rec);   // a same-dungeon quickload: the beasts were in the save and stand patched in place
   host.tick(1); await flush();
   assert.deepEqual(stood, [p.count], 'no second pack beside them');
-  assert.ok(src('src/scenes/bountyHost.js').includes('clues.clear(); toldOwner.clear(); tierRefused.clear();'));
+  assert.ok(src('src/scenes/bountyHost.js').includes('clues.clear();\n    toldOwner.clear();\n    tierRefused.clear();'));
 });
 
 test('AUDIT 28 B7: the pose sends the NEWEST cleared rows first - today\'s never cut for yesterday\'s', () => {

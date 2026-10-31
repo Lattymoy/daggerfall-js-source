@@ -162,8 +162,8 @@
   {
     "name": "WATCH-KNOWS-lane-ignored",
     "file": "src/scenes/arrestFlow.js",
-    "old": "warnsFirst() && warningDue(",
-    "new": "warningDue(",
+    "old": "      warnsFirst() &&\n      warningDue(playerEntity, region(), crimeId(), { ownNow: ownMinutes(), worldNow: worldNow() })",
+    "new": "      warningDue(playerEntity, region(), crimeId(), { ownNow: ownMinutes(), worldNow: worldNow() })",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "WATCH-KNOWS-beast-warned",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
-    "new": "if (!playerEntity.haveShownSurrenderDialogue && warnsFirst()",
+    "old": "      !beast &&\n      !playerEntity.haveShownSurrenderDialogue &&",
+    "new": "      !playerEntity.haveShownSurrenderDialogue &&",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "WATCH-KNOWS-asked-warned",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
-    "new": "if (!beast && warnsFirst()",
+    "old": "      !playerEntity.haveShownSurrenderDialogue &&\n      warnsFirst() &&",
+    "new": "      warnsFirst() &&",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "WATCH-KNOWS-uncharged",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      chargeOnce();\n      noteWarning(",
-    "new": "      noteWarning(",
+    "old": "      chargeOnce();\n      noteWarning(playerEntity, region(), ownMinutes());",
+    "new": "      noteWarning(playerEntity, region(), ownMinutes());",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "WATCH-KNOWS-not-noted",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      noteWarning(playerEntity, region(), ownMinutes());\n",
-    "new": "",
+    "old": "      noteWarning(playerEntity, region(), ownMinutes());\n      setCrimeCommitted(playerEntity, 0);",
+    "new": "      setCrimeCommitted(playerEntity, 0);",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "WATCH-KNOWS-crime-kept",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      setCrimeCommitted(playerEntity, 0);\n      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
-    "new": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
+    "old": "      setCrimeCommitted(playerEntity, 0);\n      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(crime, regionName(region())) }));",
+    "new": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(crime, regionName(region())) }));",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "WATCH-KNOWS-blow-lands",
     "file": "src/scenes/arrestFlow.js",
-    "old": "lines: warningLines(crime, regionName(region())) }));\n      return true;",
-    "new": "lines: warningLines(crime, regionName(region())) }));\n      return false;",
+    "old": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(crime, regionName(region())) }));\n      return true;",
+    "new": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(crime, regionName(region())) }));\n      return false;",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "WATCH-KNOWS-words",
     "file": "src/scenes/arrestFlow.js",
-    "old": "`Hold! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
-    "new": "`Halt! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
+    "old": "      `Hold! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`,",
+    "new": "      `Halt! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`,",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],

@@ -11,8 +11,8 @@
   {
     "name": "AR1-abandon-leaves-the-arrest",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    playerEntity.arrested = false;   // OnPop\n",
-    "new": "",
+    "old": "    playerEntity.arrested = false; // OnPop\n    playerEntity.inPrison = false; // OnPop",
+    "new": "    playerEntity.inPrison = false; // OnPop",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AR1-abandon-leaves-the-prison-flag",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    playerEntity.inPrison = false;   // OnPop\n",
-    "new": "",
+    "old": "    playerEntity.inPrison = false; // OnPop\n    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box",
+    "new": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AR1-abandon-leaves-the-court-up",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    for (const win of t?.windows ?? []) win.done = true;\n",
-    "new": "",
+    "old": "    for (const win of t?.windows ?? []) win.done = true;\n    courtScreen = null;",
+    "new": "    courtScreen = null;",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AR1-an-abandoned-trial-still-steps",
     "file": "src/scenes/arrestFlow.js",
-    "old": "(t && trial === t && !t.released ? fn(...args) : undefined)",
-    "new": "fn(...args)",
+    "old": "    return (...args) => (t && trial === t && !t.released ? fn(...args) : undefined);",
+    "new": "    return (...args) => fn(...args);",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AR1-abandon-keeps-the-question",
     "file": "src/scenes/arrestFlow.js",
-    "old": "  function abandon() {\n    withdrawQuestion();\n",
-    "new": "  function abandon() {\n",
+    "old": "    withdrawQuestion();\n    const t = trial;",
+    "new": "    const t = trial;",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AR1-a-withdrawn-question-surrenders",
     "file": "src/scenes/arrestFlow.js",
-    "old": "label: 'Y - surrender', action: () => {\n            if (surrenderBox !== box) return;\n",
-    "new": "label: 'Y - surrender', action: () => {\n",
+    "old": "                action: () => {\n                  if (surrenderBox !== box) return;\n                  awaitingSurrenderAnswer = false;\n                  if (crimeId() === 0) return;",
+    "new": "                action: () => {\n                  awaitingSurrenderAnswer = false;\n                  if (crimeId() === 0) return;",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AR1-a-withdrawn-question-lands-the-blow",
     "file": "src/scenes/arrestFlow.js",
-    "old": "label: 'N - fight on', action: () => { if (surrenderBox !== box) return; ",
-    "new": "label: 'N - fight on', action: () => { ",
+    "old": "                action: () => {\n                  if (surrenderBox !== box) return;\n                  awaitingSurrenderAnswer = false;\n                  if (crimeId() !== 0) applyDamage();",
+    "new": "                action: () => {\n                  awaitingSurrenderAnswer = false;\n                  if (crimeId() !== 0) applyDamage();",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AR3-N-lands-the-departed-guards-blow",
     "file": "src/scenes/arrestFlow.js",
-    "old": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) applyDamage();",
-    "new": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; applyDamage();",
+    "old": "                  if (crimeId() !== 0) applyDamage();",
+    "new": "                  applyDamage();",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]

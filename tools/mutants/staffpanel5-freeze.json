@@ -855,8 +855,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-hall-lease-untaken",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      for (const x of links()) link.leaseFrom?.(x);\n",
-    "new": "",
+    "old": "      for (const x of links()) link.leaseFrom?.(x);\n      extra.add(link);",
+    "new": "      extra.add(link);",
     "why": "round two, item 1: a new hall link holds no lease - with the door on, its queue word is heard in nothing",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"

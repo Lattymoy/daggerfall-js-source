@@ -1,20 +1,182 @@
 [
-  {"name": "GRAVE-PACK-own-unread", "file": "src/scenes/world.js", "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(", "new": "isInLocationRect(", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the report: the graveyard's own rect refuses its own hunt's pack"},
-  {"name": "GRAVE-PACK-own-any-pixel", "file": "src/scenes/world.js", "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(", "new": "!own && isInLocationRect(", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "a hunt with a place stands in every location's rect, a town's among them"},
-  {"name": "GRAVE-PACK-own-column", "file": "src/scenes/world.js", "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(", "new": "!(own?.px === px.x + dx) && isInLocationRect(", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the skip the place's column, not its pixel"},
-  {"name": "GRAVE-PACK-anchor-unhanded", "file": "src/scenes/world.js", "old": "if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z], hit.ownPlace)) anchor = null;", "new": "if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the anchor refused in the graveyard still"},
-  {"name": "GRAVE-PACK-member-unhanded", "file": "src/scenes/world.js", "old": "if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z], hit.ownPlace)) spot = null;", "new": "if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the anchor stands, and every member is refused round it"},
-  {"name": "GRAVE-PACK-stand-drops", "file": "src/scenes/world.js", "old": "      ownPlace: place,   // FB1029 GRAVE-PACK", "new": "      ownPlace: null,   // FB1029 GRAVE-PACK", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the bounty's stand forgets the place the board handed"},
-  {"name": "GRAVE-PACK-host-unhanded", "file": "src/scenes/bountyHost.js", "old": "place: p.graveyard ? p.target : null });", "new": "place: null });", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the board never hands the graveyard's pixel"},
-  {"name": "GRAVE-PACK-host-every-hunt", "file": "src/scenes/bountyHost.js", "old": "place: p.graveyard ? p.target : null });", "new": "place: p.target });", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "an open-ground hunt handed its pixel too - its rect law is DISC19-F's"},
-  {"name": "GRAVE-PACK-street-unasked", "file": "src/scenes/bountyHost.js", "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;", "new": "const pool = deps.foePool?.() ?? null;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the pack forgotten in the crypt and stood again at the door"},
-  {"name": "GRAVE-PACK-street-always", "file": "src/scenes/bountyHost.js", "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;", "new": "const pool = deps.foePool?.(true) ?? null;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B2: a dungeon's pack judged by the street's pool - stood again every tick below"},
-  {"name": "GRAVE-PACK-judged-outdoors", "file": "src/scenes/bountyHost.js", "old": "        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }", "new": "        if (!!outside && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B1: a pack handed off at the door held below - the party's hunt blocked"},
-  {"name": "GRAVE-PACK-untagged", "file": "src/scenes/bountyHost.js", "old": "f.bountyPlace = p.graveyard ? p.target : null; }", "new": "f.bountyPlace = null; }", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B3: the graveyard's pack a town's foe to WILD-ALERT - no mark, no gate, no stealth check"},
-  {"name": "GRAVE-PACK-wiring-mode", "file": "src/scenes/world.js", "old": "foePool: (open = false) => (!open && (modes?.mode", "new": "foePool: (open = false) => ((modes?.mode", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "the host answers the mode's pool whatever the pack"},
-  {"name": "GRAVE-PACK-mark-unhanded", "file": "src/scenes/world.js", "old": "        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild", "new": "        if (_inAnyLocationRect(f.ai.feet)) continue;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B3: no mark over the graveyard's pack"},
-  {"name": "GRAVE-PACK-gate-unhanded", "file": "src/scenes/world.js", "old": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);", "new": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B3: the graveyard's pack never held off a fast traveller"},
-  {"name": "GRAVE-PACK-step-unhanded", "file": "src/scenes/world.js", "old": "      if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;\n      const s = wildFoes.step(", "new": "      if (_inAnyLocationRect(f.ai.feet)) continue;\n      const s = wildFoes.step(", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT B3: no stealth check for the graveyard's pack"},
-  {"name": "GRAVE-PACK-street-graveyard-only", "file": "src/scenes/bountyHost.js", "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;", "new": "const pool = deps.foePool?.(p.graveyard) ?? null;", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT C-S2: an open-ground pack forgotten while its hunter is in another dungeon"},
-  {"name": "GRAVE-PACK-skip-spot-pixel", "file": "src/scenes/world.js", "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(", "new": "!(own?.px === px.x && own?.py === px.y) && isInLocationRect(", "tests": ["test/scenes/fb1029_gravepack.test.js"], "why": "AUDIT C-M3: the skip keyed on the spot's pixel - a place's rect over its pixel's edge refuses its own hunt"}
+  {
+    "name": "GRAVE-PACK-own-unread",
+    "file": "src/scenes/world.js",
+    "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(",
+    "new": "isInLocationRect(",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the report: the graveyard's own rect refuses its own hunt's pack"
+  },
+  {
+    "name": "GRAVE-PACK-own-any-pixel",
+    "file": "src/scenes/world.js",
+    "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(",
+    "new": "!own && isInLocationRect(",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "a hunt with a place stands in every location's rect, a town's among them"
+  },
+  {
+    "name": "GRAVE-PACK-own-column",
+    "file": "src/scenes/world.js",
+    "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(",
+    "new": "!(own?.px === px.x + dx) && isInLocationRect(",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the skip the place's column, not its pixel"
+  },
+  {
+    "name": "GRAVE-PACK-anchor-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z], hit.ownPlace)) anchor = null;",
+    "new": "if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the anchor refused in the graveyard still"
+  },
+  {
+    "name": "GRAVE-PACK-member-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z], hit.ownPlace)) spot = null;",
+    "new": "if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the anchor stands, and every member is refused round it"
+  },
+  {
+    "name": "GRAVE-PACK-stand-drops",
+    "file": "src/scenes/world.js",
+    "old": "      ownPlace: place,   // FB1029 GRAVE-PACK",
+    "new": "      ownPlace: null,   // FB1029 GRAVE-PACK",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the bounty's stand forgets the place the board handed"
+  },
+  {
+    "name": "GRAVE-PACK-host-unhanded",
+    "file": "src/scenes/bountyHost.js",
+    "old": "            place: p.graveyard ? p.target : null,",
+    "new": "            place: null,",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the board never hands the graveyard's pixel"
+  },
+  {
+    "name": "GRAVE-PACK-host-every-hunt",
+    "file": "src/scenes/bountyHost.js",
+    "old": "            place: p.graveyard ? p.target : null,",
+    "new": "            place: p.target,",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "an open-ground hunt handed its pixel too - its rect law is DISC19-F's"
+  },
+  {
+    "name": "GRAVE-PACK-street-unasked",
+    "file": "src/scenes/bountyHost.js",
+    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "        const pool = deps.foePool?.() ?? null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the pack forgotten in the crypt and stood again at the door"
+  },
+  {
+    "name": "GRAVE-PACK-street-always",
+    "file": "src/scenes/bountyHost.js",
+    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "        const pool = deps.foePool?.(true) ?? null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B2: a dungeon's pack judged by the street's pool - stood again every tick below"
+  },
+  {
+    "name": "GRAVE-PACK-judged-outdoors",
+    "file": "src/scenes/bountyHost.js",
+    "old": "        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) {",
+    "new": "        if (!!outside && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) {",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B1: a pack handed off at the door held below - the party's hunt blocked"
+  },
+  {
+    "name": "GRAVE-PACK-untagged",
+    "file": "src/scenes/bountyHost.js",
+    "old": "            f.bountyPlace = p.graveyard ? p.target : null;",
+    "new": "            f.bountyPlace = null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B3: the graveyard's pack a town's foe to WILD-ALERT - no mark, no gate, no stealth check"
+  },
+  {
+    "name": "GRAVE-PACK-wiring-mode",
+    "file": "src/scenes/world.js",
+    "old": "foePool: (open = false) => (!open && (modes?.mode",
+    "new": "foePool: (open = false) => ((modes?.mode",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "the host answers the mode's pool whatever the pack"
+  },
+  {
+    "name": "GRAVE-PACK-mark-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild",
+    "new": "        if (_inAnyLocationRect(f.ai.feet)) continue;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B3: no mark over the graveyard's pack"
+  },
+  {
+    "name": "GRAVE-PACK-gate-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);",
+    "new": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B3: the graveyard's pack never held off a fast traveller"
+  },
+  {
+    "name": "GRAVE-PACK-step-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "      if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;\n      const s = wildFoes.step(",
+    "new": "      if (_inAnyLocationRect(f.ai.feet)) continue;\n      const s = wildFoes.step(",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT B3: no stealth check for the graveyard's pack"
+  },
+  {
+    "name": "GRAVE-PACK-street-graveyard-only",
+    "file": "src/scenes/bountyHost.js",
+    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "        const pool = deps.foePool?.(p.graveyard) ?? null;",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT C-S2: an open-ground pack forgotten while its hunter is in another dungeon"
+  },
+  {
+    "name": "GRAVE-PACK-skip-spot-pixel",
+    "file": "src/scenes/world.js",
+    "old": "!(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(",
+    "new": "!(own?.px === px.x && own?.py === px.y) && isInLocationRect(",
+    "tests": [
+      "test/scenes/fb1029_gravepack.test.js"
+    ],
+    "why": "AUDIT C-M3: the skip keyed on the spot's pixel - a place's rect over its pixel's edge refuses its own hunt"
+  }
 ]
