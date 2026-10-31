@@ -72,64 +72,115 @@ const VIEWS = [
   { name: 'phone', viewport: { width: 390, height: 844 }, dpr: 3, isMobile: true, hasTouch: true },
   { name: 'phone-land', viewport: { width: 844, height: 390 }, dpr: 3, isMobile: true, hasTouch: true },
 ];
-const READINGS = [[-40, 'Freezing', 'cold'], [4, 'Comfortable', 'mild'], [64, 'Scorching', 'hot']];
+const READINGS = [
+  [-40, 'Freezing', 'cold'],
+  [4, 'Comfortable', 'mild'],
+  [64, 'Scorching', 'hot'],
+];
 const meets = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
-const settle = (page) => page.evaluate(() => new Promise((res) => { let n = 0; const f = () => (++n > 20 ? res() : requestAnimationFrame(f)); f(); }));
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
+const settle = (page) =>
+  page.evaluate(
+    () =>
+      new Promise((res) => {
+        let n = 0;
+        const f = () => (++n > 20 ? res() : requestAnimationFrame(f));
+        f();
+      }),
+  );
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
-  for (const dress of ['plus', 'grimoire']) for (const v of VIEWS) for (const foe of [false, true]) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: v.dpr });
-    const page = await ctx.newPage();
-    const tag0 = `${dress}/${v.name}${foe ? '/foe' : ''}`;
-    page.on('pageerror', (err) => fails.push(`${tag0}: page error ${err.message}`));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&dress=${dress}${foe ? '&foe' : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForFunction(() => typeof globalThis.__measure === 'function' && document.querySelector('.hud-temp'), null, { timeout: 60000 });
-    if (v.scale) await page.evaluate(async (sc) => { (await import('/src/systems/uiPrefs.js')).setPref('hudScale', sc); }, v.scale);
-    for (const [felt, word, side] of READINGS) {
-      await page.evaluate((f) => globalThis.__felt(f), felt);
-      await settle(page);
-      const m = await page.evaluate(() => globalThis.__measure());
-      const tag = `${tag0} at ${felt}`;
-      check(!!m.plate, `${tag}: the plate is not shown`);
-      if (!m.plate) continue;
-      check(m.plate.x >= 0 && m.plate.y >= 0 && m.plate.r <= m.vw + 0.5 && m.plate.b <= m.vh + 0.5, `${tag}: the plate runs off the screen (${JSON.stringify(m.plate)})`);
-      // UI-CALM (2026-10-14): the plate stands in the BOTTOM-LEFT corner, the quick block's caption - no longer off the compass's end
-      check(m.plate.x < m.vw / 2 && m.plate.y > m.vh / 2, `${tag}: the plate is not in the bottom-left corner (${JSON.stringify(m.plate)})`);
-      check(!meets(m.plate, m.card), `${tag}: the plate meets the quest card`);
-      check(!meets(m.plate, m.foe), `${tag}: the plate meets the foe's bar`);
-      check(!meets(m.plate, m.stat), `${tag}: the plate meets the status widget`);
-      check(!meets(m.plate, m.strip), `${tag}: the plate meets the compass strip`);
-      check(m.num === `${felt > 0 ? '+' : felt < 0 ? '-' : ''}${Math.abs(felt)}°`, `${tag}: the number says "${m.num}"`);
-      check(m.glyph, `${tag}: the glyph did not load`);
-      check(m.side === side, `${tag}: the side is ${m.side}`);
-      const phone = v.viewport.width <= 860;
-      if (!phone && !v.scale) check(!m.compact, `${tag}: a desktop at its own scale stepped down to the compact plate`);
-      if (phone || m.compact || word === 'Comfortable') check(m.word == null && !m.scale, `${tag}: a ${phone ? 'phone' : word === 'Comfortable' ? 'comfortable plate (UI-CALM)' : 'compact plate'} shows the word or the scale`);
-      else {
-        check(m.word === word, `${tag}: the word says "${m.word}"`);
-        const at = Math.min(1, Math.max(0, (felt + 60) / 120));
-        check(m.scale && m.mark && Math.abs((m.mark.x + m.mark.w / 2) - (m.scale.x + 1 + at * (m.scale.w - 2))) <= 2.5, `${tag}: the mark is not where the reading stands on the scale`);
+  for (const dress of ['plus', 'grimoire'])
+    for (const v of VIEWS)
+      for (const foe of [false, true]) {
+        const ctx = await browser.newContext({
+          viewport: v.viewport,
+          isMobile: !!v.isMobile,
+          hasTouch: !!v.hasTouch,
+          deviceScaleFactor: v.dpr,
+        });
+        const page = await ctx.newPage();
+        const tag0 = `${dress}/${v.name}${foe ? '/foe' : ''}`;
+        page.on('pageerror', (err) => fails.push(`${tag0}: page error ${err.message}`));
+        await page.goto(
+          `http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&dress=${dress}${foe ? '&foe' : ''}`,
+          { waitUntil: 'domcontentloaded', timeout: 60000 },
+        );
+        await page.waitForFunction(
+          () => typeof globalThis.__measure === 'function' && document.querySelector('.hud-temp'),
+          null,
+          { timeout: 60000 },
+        );
+        if (v.scale)
+          await page.evaluate(async (sc) => {
+            (await import('/src/systems/uiPrefs.js')).setPref('hudScale', sc);
+          }, v.scale);
+        for (const [felt, word, side] of READINGS) {
+          await page.evaluate((f) => globalThis.__felt(f), felt);
+          await settle(page);
+          const m = await page.evaluate(() => globalThis.__measure());
+          const tag = `${tag0} at ${felt}`;
+          check(!!m.plate, `${tag}: the plate is not shown`);
+          if (!m.plate) continue;
+          check(
+            m.plate.x >= 0 && m.plate.y >= 0 && m.plate.r <= m.vw + 0.5 && m.plate.b <= m.vh + 0.5,
+            `${tag}: the plate runs off the screen (${JSON.stringify(m.plate)})`,
+          );
+          // UI-CALM (2026-10-14): the plate stands in the BOTTOM-LEFT corner, the quick block's caption - no longer off the compass's end
+          check(
+            m.plate.x < m.vw / 2 && m.plate.y > m.vh / 2,
+            `${tag}: the plate is not in the bottom-left corner (${JSON.stringify(m.plate)})`,
+          );
+          check(!meets(m.plate, m.card), `${tag}: the plate meets the quest card`);
+          check(!meets(m.plate, m.foe), `${tag}: the plate meets the foe's bar`);
+          check(!meets(m.plate, m.stat), `${tag}: the plate meets the status widget`);
+          check(!meets(m.plate, m.strip), `${tag}: the plate meets the compass strip`);
+          check(
+            m.num === `${felt > 0 ? '+' : felt < 0 ? '-' : ''}${Math.abs(felt)}°`,
+            `${tag}: the number says "${m.num}"`,
+          );
+          check(m.glyph, `${tag}: the glyph did not load`);
+          check(m.side === side, `${tag}: the side is ${m.side}`);
+          const phone = v.viewport.width <= 860;
+          if (!phone && !v.scale)
+            check(!m.compact, `${tag}: a desktop at its own scale stepped down to the compact plate`);
+          if (phone || m.compact || word === 'Comfortable')
+            check(
+              m.word == null && !m.scale,
+              `${tag}: a ${phone ? 'phone' : word === 'Comfortable' ? 'comfortable plate (UI-CALM)' : 'compact plate'} shows the word or the scale`,
+            );
+          else {
+            check(m.word === word, `${tag}: the word says "${m.word}"`);
+            const at = Math.min(1, Math.max(0, (felt + 60) / 120));
+            check(
+              m.scale && m.mark && Math.abs(m.mark.x + m.mark.w / 2 - (m.scale.x + 1 + at * (m.scale.w - 2))) <= 2.5,
+              `${tag}: the mark is not where the reading stands on the scale`,
+            );
+          }
+          if (felt === -40 && !foe) {
+            await page.screenshot({ path: join(OUT, `tempui-${dress}-${v.name}.png`) });
+            const pad = 16;
+            const clip = { x: Math.max(0, m.plate.x - pad), y: Math.max(0, m.plate.y - pad) };
+            clip.width = Math.min(m.vw - clip.x, m.plate.r - clip.x + pad);
+            clip.height = Math.min(m.vh - clip.y, m.plate.b - clip.y + pad);
+            await page.screenshot({ path: join(OUT, `tempui-${dress}-${v.name}-plate.png`), clip });
+          }
+        }
+        await ctx.close();
       }
-      if (felt === -40 && !foe) {
-        await page.screenshot({ path: join(OUT, `tempui-${dress}-${v.name}.png`) });
-        const pad = 16;
-        const clip = { x: Math.max(0, m.plate.x - pad), y: Math.max(0, m.plate.y - pad) };
-        clip.width = Math.min(m.vw - clip.x, m.plate.r - clip.x + pad);
-        clip.height = Math.min(m.vh - clip.y, m.plate.b - clip.y + pad);
-        await page.screenshot({ path: join(OUT, `tempui-${dress}-${v.name}-plate.png`), clip });
-      }
-    }
-    await ctx.close();
-  }
 } finally {
   await browser.close();
   await vite?.close();

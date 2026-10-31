@@ -42,8 +42,8 @@
   {
     "name": "AFB-REMOVAL-R6-the-sweep-counts-boards",
     "file": "tools/townSolidsSweep.mjs",
-    "old": " && !isBulletinBoard(p.id));",
-    "new": ");",
+    "old": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
+    "new": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id]); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
     "tests": [
       "test/systems/bulletinboard.test.js"
     ],

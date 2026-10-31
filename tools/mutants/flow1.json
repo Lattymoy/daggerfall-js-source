@@ -2,8 +2,8 @@
   {
     "name": "FLOW1-a-file-dealt-twice",
     "file": "tools/testShards.mjs",
-    "old": "const order = [...new Set(files)].sort(",
-    "new": "const order = [...files, ...files.slice(0, 1)].sort(",
+    "old": "  const order = [...new Set(files)].sort((a, b) => weight(b) - weight(a) || (a < b ? -1 : a > b ? 1 : 0));",
+    "new": "  const order = [...files, ...files.slice(0, 1)].sort((a, b) => weight(b) - weight(a) || (a < b ? -1 : a > b ? 1 : 0));",
     "tests": [
       "test/tooling/flow1_ci.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FLOW1-the-heaviest-shard-fed",
     "file": "tools/testShards.mjs",
-    "old": "if (shards[k].ms < shards[best].ms) best = k;",
-    "new": "if (shards[k].ms > shards[best].ms) best = k;",
+    "old": "    for (let k = 1; k < shards.length; k++) if (shards[k].ms < shards[best].ms) best = k;",
+    "new": "    for (let k = 1; k < shards.length; k++) if (shards[k].ms > shards[best].ms) best = k;",
     "tests": [
       "test/tooling/flow1_ci.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FLOW3-a-module-two-imports-away-missed",
     "file": "tools/testChanged.mjs",
-    "old": "for (const d of deps) if (!seen.has(d)) { seen.add(d); stack.push(d); }",
-    "new": "for (const d of deps) if (!seen.has(d)) { seen.add(d); }",
+    "old": "        stack.push(d);\n      }",
+    "new": "      }",
     "tests": [
       "test/tooling/flow1_ci.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FLOW3-a-pin-that-names-it-missed",
     "file": "tools/testChanged.mjs",
-    "old": "if (changed.some((f) => text.includes(f)) || names.some((n) => text.includes(n))) chosen.push(t);",
-    "new": "if (false) chosen.push(t);",
+    "old": "    if (changed.some((f) => text.includes(f)) || names.some((n) => text.includes(n))) chosen.push(t);",
+    "new": "    if (false) chosen.push(t);",
     "tests": [
       "test/tooling/flow1_ci.test.js"
     ]

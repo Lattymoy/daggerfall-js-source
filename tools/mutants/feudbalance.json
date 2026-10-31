@@ -47,8 +47,8 @@
   {
     "name": "FB-harness-time-unread",
     "file": "tools/tellDuel.mjs",
-    "old": " && at(ref, 'dodge', false).raw.mean <= at(ref, 'trade', false).raw.mean },",
-    "new": " },",
+    "old": "      held:\n        at(ref, 'dodge', false).raw.hitsOnMe <= T.DODGE_SPARES * at(ref, 'trade', false).raw.hitsOnMe &&\n        at(ref, 'dodge', false).raw.mean <= at(ref, 'trade', false).raw.mean,",
+    "new": "      held: at(ref, 'dodge', false).raw.hitsOnMe <= T.DODGE_SPARES * at(ref, 'trade', false).raw.hitsOnMe,",
     "tests": [
       "test/systems/revenant/feudbalance.test.js"
     ]

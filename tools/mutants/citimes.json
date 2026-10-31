@@ -112,8 +112,8 @@
   {
     "name": "CI-TIMES-reporter-off-with-summary",
     "file": "tools/testShards.mjs",
-    "old": "...(summary || record ? summaryReporters(root) : [])",
-    "new": "...(summary ? summaryReporters(root) : [])",
+    "old": "    ...(summary || record ? summaryReporters(root) : []),",
+    "new": "    ...(summary ? summaryReporters(root) : []),",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "CI-TIMES-path-relative",
     "file": "tools/testShards.mjs",
-    "old": "TEST_TIMES_RECORD: resolve(record) }",
-    "new": "TEST_TIMES_RECORD: record }",
+    "old": "  const env = record ? { ...process.env, TEST_TIMES_RECORD: resolve(record) } : undefined;",
+    "new": "  const env = record ? { ...process.env, TEST_TIMES_RECORD: record } : undefined;",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "CI-TIMES-bare-record-runs",
     "file": "tools/testShards.mjs",
-    "old": "  if (at > 0 && !record) { console.error('--record wants the file to write the times to'); return 2; }\n",
-    "new": "",
+    "old": "  if (at > 0 && !record) {\n    console.error('--record wants the file to write the times to');\n    return 2;\n  }\n  console.log(",
+    "new": "  console.log(",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "CI-TIMES-merge-folders-unread",
     "file": "tools/testTimes.mjs",
-    "old": "readdirSync(dir, { recursive: true })",
-    "new": "readdirSync(dir)",
+    "old": "  const records = readdirSync(dir, { recursive: true })",
+    "new": "  const records = readdirSync(dir)",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "CI-TIMES-merge-base-unread",
     "file": "tools/testTimes.mjs",
-    "old": "  const base = readTimes(root), files = testFiles(root);",
-    "new": "  const base = {}, files = testFiles(root);",
+    "old": "  const base = readTimes(root),",
+    "new": "  const base = {},",
     "tests": [
       "test/tooling/citimes.test.js"
     ],

@@ -437,8 +437,8 @@
   {
     "name": "AF-S28-dodge-early",
     "file": "tools/tellDuel.mjs",
-    "old": "T >= lb.land - TELL.TELL_LATE / 2 && T < lb.land",
-    "new": "T >= lb.land - TELL.TELL_LATE && T < lb.land",
+    "old": "          if (T >= lb.land - TELL.TELL_LATE / 2 && T < lb.land && inBlow(lb, p[0], p[2])) stepOut(lb, p);",
+    "new": "          if (T >= lb.land - TELL.TELL_LATE && T < lb.land && inBlow(lb, p[0], p[2])) stepOut(lb, p);",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AF-S28-target-moved",
     "file": "tools/tellDuel.mjs",
-    "old": "DODGE_SPARES: 0.1,",
-    "new": "DODGE_SPARES: 0.5,",
+    "old": "  DODGE_SPARES: 0.1,",
+    "new": "  DODGE_SPARES: 0.5,",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]

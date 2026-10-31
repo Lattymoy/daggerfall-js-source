@@ -165,8 +165,8 @@
   {
     "name": "AF2-S1-knockdown-undamaged",
     "file": "tools/tellDuel.mjs",
-    "old": "if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
-    "new": "if (blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "old": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "new": "  if (blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AF2-S1-guard-unread",
     "file": "tools/tellDuel.mjs",
-    "old": "blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
-    "new": "blowEffectOf(w.kind, w.iron).knockdown)",
+    "old": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "new": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown)",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AF2-S1-hold-shoves",
     "file": "tools/tellDuel.mjs",
-    "old": "  if (word === 'hold' || !weaponKnockbackApplies(",
-    "new": "  if (!weaponKnockbackApplies(",
+    "old": "  if (word === 'hold' || !weaponKnockbackApplies(ai.knockbackSpeed, false, ENEMY_BASICS[type]?.weight ?? 0)) return;",
+    "new": "  if (!weaponKnockbackApplies(ai.knockbackSpeed, false, ENEMY_BASICS[type]?.weight ?? 0)) return;",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AF2-S1-stagger-plain",
     "file": "tools/tellDuel.mjs",
-    "old": "* (word === 'stagger' ? TELL.STAGGER_KNOCK : 1);",
-    "new": "* 1;",
+    "old": "  ai.knockbackSpeed = weaponKnockbackSpeed(dmg, weight) * (word === 'stagger' ? TELL.STAGGER_KNOCK : 1);",
+    "new": "  ai.knockbackSpeed = weaponKnockbackSpeed(dmg, weight) * 1;",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AF2-S1-swing-on-the-floor",
     "file": "tools/tellDuel.mjs",
-    "old": "\n      if (T >= down.downUntil) swingT += DT;",
-    "new": "\n      swingT += DT;",
+    "old": "      }\n      if (T >= down.downUntil) swingT += DT; // AUDIT FEUD 2: knocked down, the swing stands (the rig's `paralyzed`)",
+    "new": "      }\n      swingT += DT; // AUDIT FEUD 2: knocked down, the swing stands (the rig's `paralyzed`)",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AF2-S1-dodger-early",
     "file": "tools/tellDuel.mjs",
-    "old": "T < lb.land + CLASSIC_UPDATE_INTERVAL",
-    "new": "T < lb.land",
+    "old": "        !(mode === 'dodge' && blows.some((lb) => T < lb.land + CLASSIC_UPDATE_INTERVAL))",
+    "new": "        !(mode === 'dodge' && blows.some((lb) => T < lb.land))",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AF2-S2-seed-dropped",
     "file": "tools/tellDuel.mjs",
-    "old": "  setSeed(seed);   // DFU's stream, the fight's own\n",
-    "new": "",
+    "old": "  setSeed(seed); // DFU's stream, the fight's own\n  setPref('lootRarity', true); // the revenants' switch - for this fight alone (TELL's cells stand as they were measured)",
+    "new": "  setPref('lootRarity', true); // the revenants' switch - for this fight alone (TELL's cells stand as they were measured)",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AF2-S2-tell-seed-dropped",
     "file": "tools/tellDuel.mjs",
-    "old": "  setSeed(seed);   // AUDIT FEUD: DFU's stream too - a fight was the order it ran in, not its seed\n",
-    "new": "",
+    "old": "  setSeed(seed); // AUDIT FEUD: DFU's stream too - a fight was the order it ran in, not its seed\n  let T = 0;",
+    "new": "  let T = 0;",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AF2-S2-id-unseeded",
     "file": "tools/tellDuel.mjs",
-    "old": ", _voiceId: `duel-${seed}` }",
-    "new": " }",
+    "old": "        _voiceId: `duel-${seed}`,\n      },",
+    "new": "      },",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "AF2-S2-sig-undrawn",
     "file": "tools/tellDuel.mjs",
-    "old": "    if (rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);",
-    "new": "",
+    "old": "    if (rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType); // AUDIT FEUD 2: its signature, as a deed that ranks it to 2 draws it",
+    "new": "    // AUDIT FEUD 2: its signature, as a deed that ranks it to 2 draws it",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "AF2-S2-hits-uncounted",
     "file": "tools/tellDuel.mjs",
-    "old": "if (ai._blowFx) { out.hitsOnMe++; down =",
-    "new": "if (ai._blowFx) { down =",
+    "old": "        out.hitsOnMe++;\n        down = landOnMe(ai, ent, type, player, T, down);",
+    "new": "        down = landOnMe(ai, ent, type, player, T, down);",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]

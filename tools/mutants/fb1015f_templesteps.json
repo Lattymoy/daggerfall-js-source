@@ -196,8 +196,8 @@
   {
     "name": "TEMPLESTEPS-20-sweep-structures",
     "file": "tools/townSolidsSweep.mjs",
-    "old": "export const RMBRP_STRUCTURES = Object.freeze([53160, 53170, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
-    "new": "export const RMBRP_STRUCTURES = Object.freeze([53160, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
+    "old": "  53170,\n  ...Object.keys(RMBRP_DOCKS).map(Number),",
+    "new": "  ...Object.keys(RMBRP_DOCKS).map(Number),",
     "tests": [
       "test/world/wd3_standins.test.js"
     ],
