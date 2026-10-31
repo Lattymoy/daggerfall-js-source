@@ -8456,6 +8456,7 @@ shop.who.for,"Gli acquisti vanno all’account {name}, per ogni suo personaggio.
 shop.who.guest,"Un account ospite non può comprare. Aggiungi prima un nome utente dal tuo profilo."
 shop.who.out,"Accedi dal tuo profilo per comprare."
 shop.who.reading,"Lettura dell’account…"
+shop.who.unread,"Impossibile leggere il negozio. Riaprilo quando sei online."
 shop.yourName,"Il tuo nome"
 skillswap.done,"{inn} ora è un’abilità {group}, al posto di {out}."
 skillswap.refuse.career,"Non hai una classe da cambiare."

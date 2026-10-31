@@ -8456,6 +8456,7 @@ shop.who.for,"Pembelian masuk ke akun {name}, untuk setiap karakter di dalamnya.
 shop.who.guest,"Akun tamu tidak bisa membeli. Tambahkan nama pengguna dari profilmu dulu."
 shop.who.out,"Masuk dari profilmu untuk membeli."
 shop.who.reading,"Membaca akunmu…"
+shop.who.unread,"Toko tidak dapat dibaca. Buka lagi saat kamu sedang online."
 shop.yourName,"Namamu"
 skillswap.done,"{inn} kini menjadi salah satu keahlian {group}-mu, menggantikan {out}."
 skillswap.refuse.career,"Kamu tidak punya kelas untuk diubah."

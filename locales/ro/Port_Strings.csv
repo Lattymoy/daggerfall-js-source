@@ -8456,6 +8456,7 @@ shop.who.for,"Achizițiile ajung în contul {name}, pentru fiecare personaj al s
 shop.who.guest,"Un cont de invitat nu poate cumpăra. Adaugă mai întâi un nume de utilizator din profilul tău."
 shop.who.out,"Conectează-te din profilul tău ca să cumperi."
 shop.who.reading,"Se citește contul tău..."
+shop.who.unread,"Magazinul nu a putut fi citit. Deschide-l din nou când ești online."
 shop.yourName,"Numele tău"
 skillswap.done,"{inn} este acum o abilitate {group}, în locul abilității {out}."
 skillswap.refuse.career,"Nu ai o clasă de schimbat."
