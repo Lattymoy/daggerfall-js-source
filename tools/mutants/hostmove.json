@@ -2,7 +2,7 @@
   {
     "name": "HOSTMOVE-a-for-of-head-no-write",
     "file": "tools/hostScope.mjs",
-    "old": "    if ((n.type === 'ForOfStatement' || n.type === 'ForInStatement') && n.left.type !== 'VariableDeclaration') for (const nm of bound(n.left)) wrote.add(nm);",
+    "old": "    if ((n.type === 'ForOfStatement' || n.type === 'ForInStatement') && n.left.type !== 'VariableDeclaration')\n      for (const nm of bound(n.left)) wrote.add(nm);",
     "new": "    void 0;",
     "tests": [
       "test/tooling/hostmove.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "HOSTMOVE-a-hoisted-var-no-host-name",
     "file": "tools/hostScope.mjs",
-    "old": "  const vars = hoistedVars(stmt);",
-    "new": "  const vars = [];",
+    "old": "  const vars = hoistedVars(stmt); // `if (x) { var y = 1; }` at the host's top level declares the host's y",
+    "new": "  const vars = []; // `if (x) { var y = 1; }` at the host's top level declares the host's y",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HOSTMOVE-a-declaration-settled-whatever-writes-it",
     "file": "tools/hostMove.mjs",
-    "old": "(d.kind === 'function' && neverWritten)",
-    "new": "(d.kind === 'function')",
+    "old": "        ? (d.kind === 'function' && neverWritten) ||",
+    "new": "        ? d.kind === 'function' ||",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HOSTMOVE-the-parameters-in-the-bodys-scope",
     "file": "tools/hostMove.mjs",
-    "old": "const ps = new Set(n.params.flatMap((p) => bound(p)));",
-    "new": "const ps = new Set([...n.params.flatMap((p) => bound(p)), ...(n.body.type === 'BlockStatement' ? blockDecls(n.body.body) : [])]);",
+    "old": "      const ps = new Set(n.params.flatMap((p) => bound(p)));",
+    "new": "      const ps = new Set([\n        ...n.params.flatMap((p) => bound(p)),\n        ...(n.body.type === 'BlockStatement' ? blockDecls(n.body.body) : []),\n      ]);",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HOSTMOVE-only-an-unresolved-host-refused",
     "file": "tools/hostMove.mjs",
-    "old": "if (namesIn(group.map((m) => m.stmt)).has(handle) || own.has(handle))",
-    "new": "if (refs.some((r) => r.name === handle) || own.has(handle))",
+    "old": "  if (namesIn(group.map((m) => m.stmt)).has(handle) || own.has(handle))",
+    "new": "  if (refs.some((r) => r.name === handle) || own.has(handle))",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HOSTMOVE-the-whole-line-dropped",
     "file": "tools/hostMove.mjs",
-    "old": "if (alone) edits.push",
-    "new": "if (true) edits.push",
+    "old": "      if (alone) edits.push({ from: lineStart, to: lineEnd, text: '' });",
+    "new": "      if (true) edits.push({ from: lineStart, to: lineEnd, text: '' });",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HOSTMOVE-a-quoted-brace-read-as-structure",
     "file": "tools/hostMove.mjs",
-    "old": "    if (inString) { if (c === '\\\\') i++; else if (c === '\"') inString = false; continue; }",
-    "new": "    if (false) { if (c === '\\\\') i++; else if (c === '\"') inString = false; continue; }",
+    "old": "    if (inString) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HOSTMOVE-the-anchor-with-no-left-edge",
     "file": "tools/hostMove.mjs",
-    "old": "(?<![\\\\w.-])",
-    "new": "",
+    "old": "  const anchor = new RegExp(\n    `(?<![\\\\w.-])((?:[\\\\w./-]*/)?)${hostBase.replace('.', '\\\\.')}:\"((?:[^\"\\\\\\\\]|\\\\\\\\.)+)\"`,\n    'g',\n  );",
+    "new": "  const anchor = new RegExp(`((?:[\\\\w./-]*/)?)${hostBase.replace('.', '\\\\.')}:\"((?:[^\"\\\\\\\\]|\\\\\\\\.)+)\"`, 'g');",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HOSTMOVE-a-shorthand-default-loses-its-key",
     "file": "tools/hostMove.mjs",
-    "old": "|| r.keyed;",
-    "new": ";",
+    "old": "      const shorthand = (r.parent?.type === 'Property' && r.parent.shorthand && r.key === 'value') || r.keyed;",
+    "new": "      const shorthand = r.parent?.type === 'Property' && r.parent.shorthand && r.key === 'value';",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HOSTMOVE-a-trailing-comment-taken-for-the-doc",
     "file": "tools/hostMove.mjs",
-    "old": "    if (src.slice(lineStart(c.start), c.start).trim()) break;\n",
-    "new": "",
+    "old": "    if (src.slice(lineStart(c.start), c.start).trim()) break;\n    const between = src.slice(c.end, start);",
+    "new": "    const between = src.slice(c.end, start);",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HOSTMOVE-new-target-read-as-a-name",
     "file": "tools/hostMove.mjs",
-    "old": "    if (n.type === 'MetaProperty') return;   // new.target, import.meta - no binding\n    if (n.type === 'Property' && n.shorthand",
-    "new": "    if (n.type === 'Property' && n.shorthand",
+    "old": "    if (n.type === 'MetaProperty') return; // new.target, import.meta - no binding\n    if (",
+    "new": "    if (",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HOSTMOVE-a-statement-by-its-line-unread",
     "file": "tools/hostMove.mjs",
-    "old": "const m = n.startsWith('@') ? byLine(n) : owner.get(n);",
-    "new": "const m = owner.get(n);",
+    "old": "          const m = n.startsWith('@') ? byLine(n) : owner.get(n);",
+    "new": "          const m = owner.get(n);",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "HOSTMOVE-a-statement-by-another-line",
     "file": "tools/hostMove.mjs",
-    "old": "m.stmt.loc.start.line === Number(n.slice(1))",
-    "new": "m.stmt.loc.end.line === Number(n.slice(1))",
+    "old": "    const at = members.filter((m) => m.stmt.loc.start.line === Number(n.slice(1)));",
+    "new": "    const at = members.filter((m) => m.stmt.loc.end.line === Number(n.slice(1)));",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "HOSTMOVE-the-two-on-a-line-unsaid",
     "file": "tools/hostMove.mjs",
-    "old": "    if (at.length > 1) refuse.push(`${n}: ${at.length} statements start on that line - name one by what it declares`);\n",
-    "new": "",
+    "old": "    if (at.length > 1) refuse.push(`${n}: ${at.length} statements start on that line - name one by what it declares`);\n    return at.length === 1 ? at[0] : null;",
+    "new": "    return at.length === 1 ? at[0] : null;",
     "tests": [
       "test/tooling/hostmove.test.js"
     ]

@@ -861,8 +861,8 @@
   {
     "name": "AUDIT-F3-pace-far-edge",
     "file": "tools/huntPace.mjs",
-    "old": "const nx = Math.max(x, Math.min(x + 1, at[0]))",
-    "new": "const nx = Math.max(x + 1, Math.min(x + 1, at[0]))",
+    "old": "  const nx = Math.max(x, Math.min(x + 1, at[0])),",
+    "new": "  const nx = Math.max(x + 1, Math.min(x + 1, at[0])),",
     "tests": [
       "test/tooling/huntpace.test.js"
     ]
@@ -879,8 +879,8 @@
   {
     "name": "AUDIT-F3-pace-order-not-shortest",
     "file": "tools/huntPace.mjs",
-    "old": "if (!best || s < best.s) best = { s, at: pos, legs };",
-    "new": "if (!best) best = { s, at: pos, legs };",
+    "old": "    if (!best || s < best.s) best = { s, at: pos, legs };",
+    "new": "    if (!best) best = { s, at: pos, legs };",
     "tests": [
       "test/tooling/huntpace.test.js"
     ]
@@ -888,8 +888,8 @@
   {
     "name": "AUDIT-F3-pace-carriage-never",
     "file": "tools/huntPace.mjs",
-    "old": "if (gate && best) {",
-    "new": "if (false) {",
+    "old": "      if (gate && best) {",
+    "new": "      if (false) {",
     "tests": [
       "test/tooling/huntpace.test.js"
     ]

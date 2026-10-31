@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-IT1-G1-one-slot-kept",
     "file": "tools/immersiveTravelPatches.mjs",
-    "old": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
-    "new": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
+    "old": "    for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
+    "new": "    for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-IT1-G1-the-scales-not-set",
     "file": "tools/immersiveTravelPatches.mjs",
-    "old": "    for (const k of MODEL_SCALES) if (k in rmb.Misc3dObjectRecords[i])",
-    "new": "    for (const k of MODEL_SCALES.slice(1)) if (k in rmb.Misc3dObjectRecords[i])",
+    "old": "    for (const k of MODEL_SCALES)",
+    "new": "    for (const k of MODEL_SCALES.slice(1))",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

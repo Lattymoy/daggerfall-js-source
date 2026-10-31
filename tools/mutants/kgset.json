@@ -106,8 +106,8 @@
   {
     "name": "KGSET-balance-deck-law",
     "file": "tools/iliacBalance.mjs",
-    "old": "    if ((held.get(c.id) ?? 0) >= most) continue;\n",
-    "new": "",
+    "old": "    if ((held.get(c.id) ?? 0) >= most) continue;\n    held.set(c.id, (held.get(c.id) ?? 0) + 1);",
+    "new": "    held.set(c.id, (held.get(c.id) ?? 0) + 1);",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]

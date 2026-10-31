@@ -11,8 +11,8 @@
   {
     "name": "HORSE-VOICE-a-cadence-moved",
     "file": "tools/horseSfx.mjs",
-    "old": "[[0.37, 0.22], [0.65, 0.45],",
-    "new": "[[0.37, 0.22], [0.66, 0.45],",
+    "old": "      [0.65, 0.45],",
+    "new": "      [0.66, 0.45],",
     "tests": [
       "test/systems/horse/horsevoice.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HORSE-VOICE-a-loop-the-wrong-length",
     "file": "tools/horseSfx.mjs",
-    "old": "slow: Object.freeze({ len: 1.508,",
-    "new": "slow: Object.freeze({ len: 1.5,",
+    "old": "    len: 1.508,",
+    "new": "    len: 1.5,",
     "tests": [
       "test/systems/horse/horsevoice.test.js"
     ]
