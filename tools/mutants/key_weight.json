@@ -1,0 +1,12 @@
+[
+  {
+    "name": "KEY-WEIGHT-old-weight",
+    "file": "src/systems/eliteGates/weirKeyRow.js",
+    "old": "index: WEIR_KEY_TEMPLATE, baseWeight: 0,",
+    "new": "index: WEIR_KEY_TEMPLATE, baseWeight: 0.25,",
+    "tests": [
+      "test/systems/eliteGates/key_weight.test.js"
+    ],
+    "note": "the Weir Key weighs 0.25 kg again"
+  }
+]
