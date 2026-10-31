@@ -1,4 +1,4 @@
-// AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; bible/01-Overview/audits/Audit-Dragon-Hidden.md): THE AUDIT'S
+// AUDIT DRAGON-HIDDEN (2026-10-30; bible/01-Overview/audits/Audit-Dragon-Hidden.md): THE AUDIT'S
 // PINS. A forged site held to its theatre's side of the Bay's edge and a pixel's centre (A1); a fight an older law made
 // let go when its cell wakes, a slain one kept (A4); an `ask` answered in a battle and heard from there (PIN MOVED, AUDIT
 // DRAGON-CELL II E12: in a room that judges a pose), a fight's word still its cell's (B1); the Aetherbright's look on its fight, its receipt and a party's share (A3, C2); the omen word

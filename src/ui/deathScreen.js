@@ -62,11 +62,10 @@ const hintText = (hint) => HINT_TEXT[hint]?.() ?? hint;
 // corpse disappears"): the wait is the body's own life on the others' screens (net/remotePlayers.js CORPSE_MS), so a
 // player who waits it out rises as their body fades, and Enter still rises at once.
 export const ONLINE_RESPAWN_SECONDS = 60;
-/** DEATH-15 (the owner, 2026-10-29: "Change that to 15 second on death", "For both"): online, in the zone too, Enter
+/** DEATH-15: online, in the zone too, Enter
  *  rises after this many seconds; the rest of the minute is for a party member's Resurrect. */
 export const DEATH_RISE_MIN_S = 0;
-/** DEATH-10 (the owner, 2026-10-30: "give death a 10 second timer let them click respawn now but at 10 auto respawn them",
- *  "for pve and pvp"): online, Enter rises at once and the screen rises on its own after this; the body still lies the minute. */
+/** DEATH-10: online, Enter rises at once and the screen rises on its own after this; the body still lies the minute. */
 export const DEATH_AUTO_RISE_S = 10;
 
 const DIM = [0.5, 0.5, 0.45, 1];

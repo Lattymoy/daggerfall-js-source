@@ -7466,6 +7466,7 @@ realm.locked.named,"O reino bloqueou sua peça “{name}”: encontrou a mesma p
 realm.locked.one,"O reino bloqueou uma das suas peças: encontrou a mesma peça também em outro lugar. Ela fica com você e não pode ser trocada, vendida, largada nem guardada onde outros possam pegá-la. Suas outras peças e suas trocas não são afetadas."
 realm.locked.refusal,"“{name}” está bloqueada pelo reino porque a mesma peça foi encontrada também em outro lugar. Ela fica com você e não pode ser largada, trocada, vendida nem guardada onde outros possam pegá-la."
 realm.locked.trade,"Uma peça bloqueada pelo reino não pode ser trocada."
+realm.private,"Você está em um servidor privado. Para trazer um personagem online, use primeiro ""Copiar para offline"" nele e depois carregue a cópia. Seu personagem online continua como está."
 realm.roll.stopped,"O reino não está ouvindo sua posição com as guildas nesta sessão. O que você ganhar agora fica no seu salvamento, e o reino o recebe na próxima vez que você jogar com este personagem online."
 realm.stranded,"Este dispositivo guardou um salvamento deste personagem que não chegou ao reino, e desde então o personagem foi jogado em outro lugar. Esse salvamento pode ter progresso que você não tem agora. Ele foi deixado de lado neste dispositivo e não é jogado."
 realm.strandedWayBack,"Para mantê-lo, recupere-o no quadro deste personagem na porta Online."

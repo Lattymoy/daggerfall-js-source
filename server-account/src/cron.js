@@ -419,7 +419,7 @@ export const HOUR_JOBS = Object.freeze([
   // SAFE5 (safetyClock.js): the feed's old batches, a resolved case's lines past their keeping, a case left open past its
   // own, and the reviewer's old daily counts
   ['safety-sweep', (ctx) => safetySweep(ctx)],
-  // STAFF-PANEL1 (mob, 2026-10-22 12:12Z: "only keep for one month"): the staff audit log's rows past STAFF_AUDIT_KEEP_S -
+  // STAFF-PANEL1: the staff audit log's rows past STAFF_AUDIT_KEEP_S -
   // its trigger refuses a delete of any newer (migration 0144)
   [
     'staff-audit',

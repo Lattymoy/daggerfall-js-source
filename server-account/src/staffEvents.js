@@ -1,11 +1,11 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-EVENT (2026-10-24, mob: "lets start making an event tool for staff to use"; net/staffEvent/staffEventLaw.js,
+// STAFF-EVENT (2026-10-24; net/staffEvent/staffEventLaw.js,
 // bible/11-Multiplayer/Staff-Events.md) - THE PANEL'S EVENT DOORS. Admins only.
 //
 // /v1/staff/event { op } - 'start' stages one (`ev`: the place, the monsters, how many, the meter's kills, the mini boss
 // and its size, whether its fall ends the event, and how many minutes it runs - 0 until it is ended); 'end' ends one and
-// 'boss' calls its mini boss now (`id`); EVENT-CLEAR (mob 2026-10-25: "let me clear other events as well form history")
+// 'boss' calls its mini boss now (`id`); EVENT-CLEAR
 // 'clear' takes an event that is over off the list (`id`), or every one (`all`) - a live one never. /v1/staff/events reads them back, newest first, a page at a time (`before`), each
 // with the hub's live word on it - its kills (the meter), its boss, and the players fighting.
 //

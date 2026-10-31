@@ -1,4 +1,4 @@
-// STAFF-PANEL3-DESK (2026-10-22, mob picked these at 04:13Z, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
+// STAFF-PANEL3-DESK (2026-10-22, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
 // design") - THE PANEL'S DESK (server-account/src/staffDesk.js), driven through the real Worker on the node:sqlite database
 // every account pin stands on (test/accountDb.mjs): staff notes, each member's own watchlist and its events, Your settings,
 // and the Admins' server notice, AI check scorecard and reported board notes and market listings.

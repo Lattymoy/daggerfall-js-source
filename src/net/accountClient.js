@@ -38,6 +38,7 @@
 // once" a sentence rather than a fact.
 // ═══════════════════════════════════════════════════════════════════
 
+import { privateRunOn, privateRunMinter } from './privateServer.js';   // a private run reaches no account service (serviceBase)
 import { HANDLE_RE } from './handleShape.js';
 import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';
 import { noteHallArms } from './guild/guildArmsBook.js';   // GUILD-SHOP: a hall's arms, read with its pieces   // GUILD-SHOP: a new name's price, in silver
@@ -84,6 +85,8 @@ import { MINT_VERSION } from './productRecord.js';   // AUDIT FB1026d C3: a craf
  *  ACC0's whole argument is that they deploy apart - a player pointing
  *  at a test relay has not moved their account. */
 export const DEFAULT_ACCOUNT_SERVICE = 'https://daggerfall-accounts.mackcothran.workers.dev';
+/** The account service on a private server - none (`.invalid` never resolves, RFC 2606). */
+export const PRIVATE_NO_SERVICE = 'https://private.invalid';
 
 /** The bounds the SERVICE enforces, restated here for the field caps
  *  alone. `password.js` PASSWORD_MIN/MAX and `guestName.js` HANDLE_RE
@@ -1702,6 +1705,8 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean, forget: () => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
+  const onPrivate = privateRunMinter();   // a private run signs in at its host (net/privateServer.js), never here
+  if (onPrivate) return Object.assign(onPrivate, { lastWhy: null, opened() {}, unopened() {}, coolMs: () => 0, ahead: () => false, forget() {}, holds: () => false });
   /** @type {{ token: string, secret: string, character: string|null, at: number, sent: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */
@@ -1805,7 +1810,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     /** AUDIT SAFE CLIENT-2 (2026-10-17): THE HELD TOKEN LET GO - the relay said this account is banned
      *  (scenes/chatSafetyHost.js), and a token minted a moment before the ban opened every room a rejoin asked within
      *  TOKEN_REUSE_MS. The next room mints, and the service refuses it.
-     *  STAFF-HIDE-TOGGLE (2026-10-23, mob: "need hide to be a toggle"): and Hide me or Show myself pressed
+     *  STAFF-HIDE-TOGGLE (2026-10-23): and Hide me or Show myself pressed
      *  (scenes/staffFollowHost.js relinkGame) - a token signed before the press would open a room as the game was, so it
      *  goes, and so does any mint still on its way (`forgets`): the next room asks the service, which reads the switch as
      *  it stands now. */
@@ -1855,7 +1860,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // stands. Built field by field, `who` dropped it, so the code's card never stood for anyone: every first line
           // went unread-code. Absent from a service before acct150, which says nothing (heard as yes - chatSafetyHost adopt)
           ...('conduct' in answer.data ? { conduct: answer.data.conduct === true } : {}),
-          // STAFF-CHAT-RED (mob, 2026-10-23: "give me a option next to chat to chat as /red or myself at all times"): the
+          // STAFF-CHAT-RED: the
           // service's word that this token is a hidden staff member's (server-account/src/staffHidden.js hiddenToken,
           // `hidden: 1`), so the chat's switch knows Me says nothing to players (net/chatVoice.js) - absent for everyone else
           ...(answer.data.hidden === 1 ? { hidden: true } : {}) };
@@ -2755,6 +2760,9 @@ export function accountWrits({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
 /** The service this device talks to. Overridable the same way the
  *  relay is, so a test deployment can be pointed at without a build. */
 export function serviceBase(storage) {
+  // A private run (net/privateServer.js) reaches no account service - an address that never answers, so every call
+  // fails as an unreachable service does and nothing of a private server reaches the realm
+  if (privateRunOn()) return PRIVATE_NO_SERVICE;
   try {
     const v = storage?.getItem?.(SERVICE_KEY);
     return (typeof v === 'string' && /^https:\/\/\S+$/.test(v)) ? v : DEFAULT_ACCOUNT_SERVICE;

@@ -23,7 +23,7 @@
 // pack cannot carry (systems/tradeModes.js sellProceeds; DaggerfallTradeWindow's sell arm), which is how the honest sale of
 // a lot that big pays. Never a purse of coin: a million coins weigh 2,500 kg (inventory.js GOLD_PIECE_WEIGHT_KG).
 //
-// STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"; asked before, "how to i adjust a lpayers bank?", and
+// STAFF-SET-BANK (2026-10-23; asked before how to adjust a player's bank, and
 // nothing could): A REALM CHARACTER'S BANK, SET BY STAFF. Online a character keeps ONE account, the Empire's, at
 // Daggerfall's index (systems/banking.js EMPIRE-ACCOUNT; realm/realmGoldLaw.js REALM_EMPIRE_ACCOUNT), and the Staff
 // Panel's profile says the bank as one number - every account's gold together (server-account/src/staffPlayers.js

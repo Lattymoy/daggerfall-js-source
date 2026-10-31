@@ -11,7 +11,7 @@ import { loadLogo } from '../ui/titleScreen.js';
 import { uiCanvas, onUiScreen } from '../ui/uiScreen.js';
 import { horseOffsetHeight } from '../ui/hud/hudLarge.js';
 
-/** DRAGON-POV (2026-10-30, mob: "saddle over lay is in alot of uis"): the host's word that something stands over the view the
+/** DRAGON-POV (2026-10-30): the host's word that something stands over the view the
  *  saddle would be painted on - a chat, a friends panel, the F-menu (the surfaces that free the pointer without pausing the
  *  game), a window that takes the HUD away, the travel view. The saddle is the view from its seat, so it goes with them. */
 let _covered = () => false;

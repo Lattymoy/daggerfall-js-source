@@ -1,6 +1,5 @@
 // @ts-check
-// PVP-SKULL (the owner, 2026-10-29: "no skull when not", "when you agro skull turns gold", "make the gold and red glow
-// sloightly", the mockup he picked - /mnt/project-files/pvp-rework/skull-mockup-3.png): the 16-pixel skull over a flagged
+// PVP-SKULL (the mockup he picked - /mnt/project-files/pvp-rework/skull-mockup-3.png): the 16-pixel skull over a flagged
 // player's name and on the flag button - white flagged, gold in aggro, red a villain. One drawing, three tints, as an
 // SVG data URL so any face can wear it as an image. A departure: DFU has no PvP mark.
 

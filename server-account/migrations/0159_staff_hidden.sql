@@ -1,5 +1,4 @@
--- STAFF-PANEL5-HIDDEN (2026-10-22, mob: "true invis not lattys invis", "we want the player to have no idea we are wathcing
--- them"; design doc "DFO Staff Panel: design", Invisible follow and Flat map's Hide me): A STAFF MEMBER'S HIDE ME - kept on
+-- STAFF-PANEL5-HIDDEN (2026-10-22; design doc "DFO Staff Panel: design", Invisible follow and Flat map's Hide me): A STAFF MEMBER'S HIDE ME - kept on
 -- the account, so every relay token minted for it while hidden carries the spectator's mark (server-account/src/staffHidden.js).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote

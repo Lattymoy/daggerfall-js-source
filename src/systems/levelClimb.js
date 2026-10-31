@@ -1,5 +1,5 @@
 // @ts-check
-// LEVEL-45 online (2026-10-27, mob: "need to always be 45", "everyone is converting"; Port-Ledger A LEVEL-45).
+// LEVEL-45 online (2026-10-27; Port-Ledger A LEVEL-45).
 // Daggerfall's 15 a level gave a low roll its last level early and a high one late. Online the climb from the start to
 // the six-skill top (800) is shared out, so every start reaches 45 on its last point:
 //     level = floor((28 + 647 * climbed / (800 - start)) / 15)        647 = 45 x 15 - 28
@@ -18,7 +18,7 @@ import { STAT_KEYS_ORDER, MAX_STAT_VALUE } from './statMods.js';
 /** LEVEL-45: the highest level an online character reaches - the cap's own (levelCap.js). */
 export const ONLINE_LEVEL_CAP = LEVEL_CAP;
 /** The six-skill sum's top online: five masteries at the hard cap's effective value and the sixth skill at 100 (800).
- *  LEVEL-TOP (mob: "dont count the 6th mastery"): MASTER-THREE's sixth slot climbs the skill, never the level. */
+ *  LEVEL-TOP: MASTER-THREE's sixth slot climbs the skill, never the level. */
 export const LEVEL_SUM_TOP = 5 * EFFECTIVE_SKILL_MAX + SKILL_SOFT_CAP;
 /** Daggerfall's head start and divisor (advancement.js calculatePlayerLevel's 28 and 15). */
 const HEAD_START = 28,
@@ -102,7 +102,7 @@ export function onlineLevelFraction(startingSum, currentSum) {
 /** The climbed points at which level `level` begins (0 for level 1): the least `climbed` onlineLevelFor gives it at. */
 const levelStart = (level, room) => Math.max(0, Math.ceil(((PER_LEVEL * level - HEAD_START) * room) / CLIMB_SHARE));
 
-/** LEVEL-BAR (2026-10-27, mob: "800/45", "yessss"): the level bar in skill points - `now` of the `max` this level takes
+/** LEVEL-BAR (2026-10-27): the level bar in skill points - `now` of the `max` this level takes
  *  (about 16 at an average start). The level the sums earn; at the cap the bar is full. */
 export function onlineLevelPoints(startingSum, currentSum) {
   const room = LEVEL_SUM_TOP - startingSum;

@@ -7466,6 +7466,7 @@ realm.locked.named,"Il reame ha bloccato il tuo «{name}»: ha trovato lo stesso
 realm.locked.one,"Il reame ha bloccato uno dei tuoi pezzi: ha trovato lo stesso pezzo anche altrove. Resta con te e non si può scambiare, vendere, gettare né custodire dove altri possano prenderlo. Gli altri tuoi pezzi e i tuoi scambi non ne risentono."
 realm.locked.refusal,"«{name}» è bloccato dal reame perché lo stesso pezzo è stato trovato anche altrove. Resta con te e non si può gettare, scambiare, vendere né custodire dove altri possano prenderlo."
 realm.locked.trade,"Un pezzo bloccato dal reame non si può scambiare."
+realm.private,"Sei su un server privato. Per portare un personaggio online, usa prima «Copia offline» su di esso, poi carica la copia. Il tuo personaggio online resta com'è."
 realm.roll.stopped,"Il reame non sta sentendo la tua reputazione con le gilde in questa sessione. Ciò che guadagni ora resta nel tuo salvataggio, e il reame lo accetta la prossima volta che giochi questo personaggio online."
 realm.stranded,"Questo dispositivo ha conservato un salvataggio di questo personaggio che non ha raggiunto il reame, e da allora il personaggio è stato giocato altrove. Quel salvataggio può contenere progressi che ora non hai. È messo da parte su questo dispositivo e non viene giocato."
 realm.strandedWayBack,"Per tenerlo, recuperalo dalla scheda di questo personaggio alla porta Online."

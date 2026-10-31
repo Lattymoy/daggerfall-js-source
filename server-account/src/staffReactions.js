@@ -3,7 +3,7 @@
 // STAFF-PANEL5-FEEDS (2026-10-22, design doc "DFO Staff Panel: design": Bot check) - THE BOT CHECK'S REACTIONS, KEPT
 // AND READ, Admins alone.
 //
-// mob (03:51Z): the player's game must not be able to tell it is a check, "or thats worthless"; so (04:47Z) the check
+// The player's game must not be able to tell it is a check, or it is worthless; so (04:47Z) the check
 // spawns nothing and times every player's own natural encounters, all the time, with no watch list - the relay
 // (server/src/staffFeeds.js) times each from the grant ask it already sees, from the poses it already receives, and posts
 // the finished episodes here in signed batches (server/src/staffFeedLaw.js), as the grant feed does.
