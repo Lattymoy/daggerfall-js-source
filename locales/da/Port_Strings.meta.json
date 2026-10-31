@@ -1359,6 +1359,11 @@
   "tr": "fcee1b1cd271",
   "by": "claude-in-session"
  },
+ "account.refusal.cacheProof": {
+  "en": "aec85ba71f01",
+  "tr": "4cb1f3c33430",
+  "by": "claude-in-session"
+ },
  "account.refusal.cacheTaken": {
   "en": "90e8e1c18163",
   "tr": "e3ec51fd80c1",

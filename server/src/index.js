@@ -307,6 +307,7 @@ import { starOk, starHeldOrder, starHeard, starMayMake, starLostAt, starNear, st
 import { mintStarReceipt, readStarReceipt } from '../../src/net/starfall/starReceipt.js';
 import { starRelayGate, validStarOut, STAR_INTERNAL_HELD, STAR_TELL_RETRY_MS, STAR_LEDGER_PREFIX, starLedgerKey, STAR_LEDGERS_MAX, STAR_SAVE_MS, STAR_KEEP_MS, STAR_HELD_KEY, STAR_HELD_MAX, STAR_RC_PREFIX, starReceiptKeyOf, STAR_RC_KEEP, STAR_RC_KEEP_MS, STAR_COUNT_MAX } from './relay.js';
 import { mintWatchReceipt, watchDue, watchPixelOk } from '../../src/net/watchReceipt.js';
+import { cacheProofRoomMap, mintCacheProof } from '../../src/net/cacheProof.js';
 import { newIliacTable, iliacSit, iliacStand, iliacCommit, iliacTick as iliacTableTick, iliacNextAt, iliacEmpty, iliacLook, iliacSeatOf, iliacSitRefusal, iliacVouch, iliacGone, iliacBack, iliacVoid } from '../../src/net/iliac/iliacTable.js';   // CARDS10: THE RELAY DEALS ILIAC HAND - iliacTable.js imports the rules (iliacHand.js, iliacCards.js) and Hold'em's bounds; AUDIT CARDS-6: a sit's refusal asked first, a vouch again, a seat kept for a blink
 import { newGambitTable, gambitSit, gambitSitRefusal, gambitReady, gambitReadyRefusal, gambitUnready, gambitCommand, gambitForfeit, gambitStand, gambitVoid, gambitTick as gambitTableTick, gambitNextAt, gambitEmpty, gambitLook, gambitSeatOf, gambitTableValid } from '../../src/net/gambit/gambitTable.js';   // KG5: THE RELAY RUNS THE KING'S GAMBIT - gambitTable.js imports the law (kingsGambit.js, which brings enemyBasics.js and mathf.js) and Hold'em's bounds
 import { mintIliacReceipt, ILIAC_RECEIPT_TTL_S } from '../../src/net/iliac/iliacReceipt.js';
@@ -3984,7 +3985,7 @@ export class Room {
       // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const gm = streamsFoes(a.key) ? this._grantWelcome() : '';   // GRANT2: the spawn grants' mode, a cell's (GRANT4: and a world room's)
       const rf = (isCellRoom(a.key) && this._refereesPoses() ? ',"rf":1' : '') + cellsWelcome(a);   // SCALE5b: this cell judges the poses that reach it - a halo's at their full rate; COST-2 (b): and the fine cells this socket covers (`cells`)
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)}${ow},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}${rf}${gm}${a.ly ? `,"ly":${a.ly}` : ''}}`;   // SCALE5d: and which layer of the place this is
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)}${ow},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}${rf}${gm}${await this._cacheProofField(a.key, who)}${a.ly ? `,"ly":${a.ly}` : ''}}`;   // SCALE5d: and which layer of the place this is
       if (!this._send(ws, welcome)) return;
       // AUDIT SCALE II R1-1: `_rfSaid` IS WHAT EVERY SOCKET OF THE SECOND WIRE WAS LAST TOLD - a welcome tells its own
       // socket alone. It was set here from the welcome's word, so a referee begun since the last pose (a Wild zone fighter,
@@ -7716,6 +7717,15 @@ export class Room {
     let r;
     try { r = await mintWatchReceipt({ s: sub, x, y, c: rand32() }, await this._receiptKeyOf(), { subtle: crypto.subtle, nowS: Math.floor(now / 1000) }); } catch { return; }
     this._send(ws, JSON.stringify({ t: 'watch', r }));
+  }
+  /** AUDIT AURUM-CACHES E1: a dungeon room's welcome says, signed, that this account stood in that map's dungeon - the
+   *  proof its coffer's claim carries (net/cacheProof.js). A guest, another room or no key: no field. */
+  async _cacheProofField(key, who) {
+    const m = cacheProofRoomMap(key), s = who?.kind === 'guest' ? null : who?.subject;
+    if (m == null || typeof s !== 'string' || !s) return '';
+    let cp = null;
+    try { cp = await mintCacheProof({ s, m }, await this._receiptKeyOf(), { subtle: crypto.subtle, nowS: Math.floor(Date.now() / 1000) }); } catch { return ''; }
+    return cp ? `,"cp":${JSON.stringify(cp)}` : '';
   }
   /** The relay's signing key, imported once (a CryptoKey cannot be stored; a deploy is a new object). */
   async _receiptKeyOf() {

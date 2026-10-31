@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Azi ai deschis {n, plural, one {# cufăr cu Aurum} 
 account.refusal.cacheClosed,"Aurum este închis deocamdată. Cufărul rămâne închis."
 account.refusal.cacheGuest,"Ascunzișurile cu Aurum au nevoie de un cont înregistrat. Adaugă mai întâi un nume de utilizator și o parolă."
 account.refusal.cacheId,"Acest cufăr nu poate fi deschis. Reîncarcă jocul și încearcă din nou."
+account.refusal.cacheProof,"Așteaptă o clipă în temniță, apoi deschide din nou cufărul."
 account.refusal.cacheTaken,"Ai golit deja acest cufăr."
 account.refusal.capped,"Temnițele au dat azi tot ce aveau de dat. Revino mâine."
 account.refusal.cardsCashoutFailed,"Încasarea nu a putut fi plătită. Încearcă din nou."

@@ -138,11 +138,12 @@
   {
     "name": "AURUM-CACHES-the-id-unsent",
     "file": "src/net/accountClient.js",
-    "old": "post('/v1/aurum/cache', { id })",
-    "new": "post('/v1/aurum/cache', {})",
+    "old": "post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) }, as)",
+    "new": "post('/v1/aurum/cache', { ...(proof ? { proof } : {}) }, as)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
-    ]
+    ],
+    "note": "AUDIT AURUM-CACHES E1 (re-aimed by content): beside the proof and the account"
   },
   {
     "name": "AURUM-CACHES-a-made-level-stands-one",

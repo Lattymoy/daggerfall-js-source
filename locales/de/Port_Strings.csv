@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Du hast heute {n, plural, one {# Aurum-Truhe} other
 account.refusal.cacheClosed,"Aurum ist vorerst geschlossen. Die Truhe bleibt zu."
 account.refusal.cacheGuest,"Aurum-Verstecke brauchen ein registriertes Konto. Vergib zuerst einen Benutzernamen und ein Passwort."
 account.refusal.cacheId,"Diese Truhe lässt sich nicht öffnen. Lade das Spiel neu und versuch es erneut."
+account.refusal.cacheProof,"Warte einen Moment im Verlies und öffne die Truhe dann erneut."
 account.refusal.cacheTaken,"Du hast diese Truhe schon geleert."
 account.refusal.capped,"Die Verliese haben heute alles gegeben, was sie geben. Komm morgen wieder."
 account.refusal.cardsCashoutFailed,"Die Auszahlung konnte nicht geleistet werden. Versuch es noch einmal."

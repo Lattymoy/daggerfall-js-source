@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Vous avez ouvert {n, plural, one {# coffre d’Auru
 account.refusal.cacheClosed,"L’Aurum est fermé pour le moment. Le coffre reste fermé."
 account.refusal.cacheGuest,"Les caches d’Aurum exigent un compte inscrit. Ajoutez d’abord un nom d’utilisateur et un mot de passe."
 account.refusal.cacheId,"Ce coffre ne peut pas être ouvert. Rechargez le jeu et réessayez."
+account.refusal.cacheProof,"Attendez un instant dans le donjon, puis rouvrez le coffre."
 account.refusal.cacheTaken,"Vous avez déjà vidé ce coffre."
 account.refusal.capped,"Les donjons ont donné tout ce qu’ils donneront aujourd’hui. Revenez demain."
 account.refusal.cardsCashoutFailed,"L’encaissement n’a pas pu être payé. Réessayez."

@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"You have opened {n, plural, one {# Aurum coffer} ot
 account.refusal.cacheClosed,"Aurum is closed for now. The coffer stays shut."
 account.refusal.cacheGuest,"Aurum caches need a registered account. Add a username and password first."
 account.refusal.cacheId,"This coffer cannot be opened. Reload the game and try again."
+account.refusal.cacheProof,"Wait a moment in the dungeon, then open the coffer again."
 account.refusal.cacheTaken,"You emptied this coffer already."
 account.refusal.capped,"The dungeons have given all they will today. Come back tomorrow."
 account.refusal.cardsCashoutFailed,"The cash-out could not be paid. Try again."

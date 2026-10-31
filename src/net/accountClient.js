@@ -207,6 +207,7 @@ const REFUSAL_WORDS = {
   'cache-closed': () => t('account.refusal.cacheClosed', 'Aurum is closed for now. The coffer stays shut.'),
   'cache-id': () => t('account.refusal.cacheId', 'This coffer cannot be opened. Reload the game and try again.'),
   'cache-taken': () => t('account.refusal.cacheTaken', 'You emptied this coffer already.'),
+  'cache-proof': () => t('account.refusal.cacheProof', 'Wait a moment in the dungeon, then open the coffer again.'),
   'cache-capped': () => t('account.refusal.cacheCapped', 'You have opened {n, plural, one {# Aurum coffer} other {# Aurum coffers}} today. Come back after midnight, UTC, to open this one.', { n: AURUM_CACHE_DAY_MAX }),
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
@@ -2197,7 +2198,9 @@ export function accountSeasonMaul({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS
  *  is `no-session`. */
 export function accountAurumCache({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
-  return { claim: (/** @type {string} */ id) => post('/v1/aurum/cache', { id }) };
+  // AUDIT AURUM-CACHES E1: with the relay's proof that this account stood in the dungeon (net/cacheProof.js); `as` the
+  // account the coffer was stood for - another signed in since is `no-session`, never a claim for it (AUDIT 625 S4)
+  return { claim: (/** @type {string} */ id, /** @type {string|null} */ proof = null, /** @type {string|null} */ as = null) => post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) }, as) };
 }
 
 /**

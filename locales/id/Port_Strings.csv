@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Kamu sudah membuka {n, plural, other {# peti Aurum}
 account.refusal.cacheClosed,"Aurum ditutup untuk sementara. Peti tetap terkunci."
 account.refusal.cacheGuest,"Simpanan Aurum memerlukan akun terdaftar. Tambahkan nama pengguna dan kata sandi dulu."
 account.refusal.cacheId,"Peti ini tidak bisa dibuka. Muat ulang game dan coba lagi."
+account.refusal.cacheProof,"Tunggu sebentar di dungeon, lalu buka peti itu lagi."
 account.refusal.cacheTaken,"Kamu sudah mengosongkan peti ini."
 account.refusal.capped,"Ruang bawah tanah sudah memberikan semua yang bisa diberikannya hari ini. Kembalilah besok."
 account.refusal.cardsCashoutFailed,"Penukaran tidak bisa dibayar. Coba lagi."

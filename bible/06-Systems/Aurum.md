@@ -94,17 +94,26 @@ service, and on a yes the coffer stands open and empty and the HUD says "+10 Aur
 account emptied stands open for it on every visit, for good. The device keeps a note of each, and the service's answer
 is what counts. A coffer the service does not know (a page and a service of two laws) is taken away.
 
-**The claim.** `/v1/aurum/cache` `{ id }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
-`d<dungeon>`, checked by the law alone: a dungeon's key in its one spelling. One statement writes a ledger line of 10
+**The claim.** `/v1/aurum/cache` `{ id, proof }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
+`d<dungeon>`, in its one spelling, and the relay's proof that the account stood in that dungeon. One statement writes a ledger line of 10
 Aurum, kind `cache` and ref the id, only while the account has claimed fewer than ten today; the line's key makes a
 second claim of one id write nothing, ever. The balance needs nothing new: it sums the ledger. It refuses a guest, a
 closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's bound met, and it is a progression claim
 (`progress.js`): asked of the seated realm character, as the Maul's day is.
 
-**What the service cannot see.** It holds no map, so a forged id of a real-shaped dungeon is taken. The day's bound is
-what holds: ten claims a UTC day, so no account earns more than 100 Aurum a day from caches, forged or found, which is
-a day's finds. Play meets it only with ten new dungeons in a day. A coffer past it is not lost: it stays shut, the
-refusal says to come back after midnight, UTC, and it opens then.
+**The proof** (AUDIT AURUM-CACHES E1, 2026-10-31, the owner: *"Ensure security on aurem caches so nobody can dupe or
+cheat"*). The service holds no map, so before it a script could claim any dungeon's coffer by its id. Now a dungeon
+room's welcome carries `cp`, the relay's Ed25519 proof that this account was welcomed into that map's room, good six
+hours (`src/net/cacheProof.js`, signed with the relay's receipt key, `GATE_SIGNING_KEY`). The page keeps the last one
+for its room and the coffer's claim carries it. The service pays only a proof it verifies with `GATE_PUBLIC_KEY`, for
+this account and for the cache's own dungeon: anything else is `cache-proof`, and a cache already held is still said
+held. A guest is proved nothing. The claim goes under the account the coffer was stood for, so a sign-in changed
+since is `no-session` (lane 3 F2).
+
+**What still holds it.** A script that says a hello into a dungeon's room is welcomed, so the proof raises the bar and
+does not end it. The day's bound is the floor: ten claims a UTC day, so no account earns more than 100 Aurum a day
+from caches, which is a day's finds. Play meets it only with ten new dungeons in a day. A coffer past it is not lost:
+it stays shut, the refusal says to come back after midnight, UTC, and it opens then.
 
 **Balance** (CACHES-ONCE BALANCE). AURUM-CACHES BALANCE had set 25 Aurum in one dungeon in four, three a day (15 in one
 in five before it). Now every dungeon pays once, so a coffer is 10 Aurum, one quest's finds. Modelled for a casual, a
@@ -234,8 +243,10 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 `test/server/storefront_service.test.js` (the demand). The mutants are `tools/mutants/aurum.json`.
 
 The caches (section 3a): `test/net/aurum_cache_law.test.js` (the numbers, the balance, the id, the spot),
-`test/server/aurum_cache_service.test.js` (the claim, the day's bound, a repeat, a forged id, the guards),
+`test/server/aurum_cache_service.test.js` (the claim, the day's bound, a repeat, a forged id, the guards, the proof),
+`test/net/cache_proof.test.js` (the proof's room, its cache, its signature, the relay's welcome, the page's keep),
 `test/scenes/aurum_cache_world.test.js` (which dungeons, the spot, the press; a Bay dungeon and a lair of Cyrodiil on
 the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`
-and, for AUDIT-STOREFRONT III lane D (the coffer's room, its late yes), `tools/mutants/storefront_audit3_caches.json`.
+and, for AUDIT-STOREFRONT III lane D (the coffer's room, its late yes), `tools/mutants/storefront_audit3_caches.json`;
+for the proof, `tools/mutants/cache_proof.json`.
 `tools/aurumCacheProbe.mjs` renders and presses a coffer in a place past the Bay (`--spawn`) or a Bay dungeon (`--bay`).

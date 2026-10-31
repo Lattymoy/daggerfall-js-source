@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Hoy has abierto {n, plural, one {# cofre de Aurum} 
 account.refusal.cacheClosed,"El Aurum está cerrado por ahora. El cofre sigue cerrado."
 account.refusal.cacheGuest,"Los alijos de Aurum requieren una cuenta registrada. Añade primero un nombre de usuario y una contraseña."
 account.refusal.cacheId,"Este cofre no se puede abrir. Recarga el juego e inténtalo de nuevo."
+account.refusal.cacheProof,"Espera un momento en la mazmorra y luego vuelve a abrir el cofre."
 account.refusal.cacheTaken,"Ya vaciaste este cofre."
 account.refusal.capped,"Las mazmorras ya han dado hoy todo lo que darán. Vuelve mañana."
 account.refusal.cardsCashoutFailed,"No se ha podido pagar el cobro. Inténtalo de nuevo."

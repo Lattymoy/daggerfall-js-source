@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Você abriu {n, plural, one {# baú de Aurum} many 
 account.refusal.cacheClosed,"O Aurum está fechado por enquanto. O baú continua fechado."
 account.refusal.cacheGuest,"Os esconderijos de Aurum exigem uma conta registrada. Adicione um nome de usuário e uma senha primeiro."
 account.refusal.cacheId,"Este baú não pode ser aberto. Recarregue o jogo e tente de novo."
+account.refusal.cacheProof,"Espere um momento na masmorra e depois abra o baú de novo."
 account.refusal.cacheTaken,"Você já esvaziou este baú."
 account.refusal.capped,"As masmorras já deram tudo o que vão dar hoje. Volte amanhã."
 account.refusal.cardsCashoutFailed,"Não foi possível pagar o resgate. Tente de novo."

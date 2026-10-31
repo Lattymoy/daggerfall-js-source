@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Du har åpnet {n, plural, one {# Aurum-kiste} other
 account.refusal.cacheClosed,"Aurum er stengt inntil videre. Kisten forblir lukket."
 account.refusal.cacheGuest,"Aurum-gjemmesteder krever en registrert konto. Legg til et brukernavn og et passord først."
 account.refusal.cacheId,"Denne kisten kan ikke åpnes. Last inn spillet på nytt, og prøv igjen."
+account.refusal.cacheProof,"Vent et øyeblikk i fangehullet, og åpne så kisten igjen."
 account.refusal.cacheTaken,"Du har allerede tømt denne kisten."
 account.refusal.capped,"Fangehullene har gitt alt de gir i dag. Kom tilbake i morgen."
 account.refusal.cardsCashoutFailed,"Utbetalingen kunne ikke gjennomføres. Prøv igjen."

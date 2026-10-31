@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Сегодня вы открыли {n, plural, one 
 account.refusal.cacheClosed,"Aurum пока недоступен. Сундук остаётся закрытым."
 account.refusal.cacheGuest,"Для тайников с Aurum нужна зарегистрированная учётная запись. Сначала добавьте имя пользователя и пароль."
 account.refusal.cacheId,"Этот сундук нельзя открыть. Перезагрузите игру и попробуйте снова."
+account.refusal.cacheProof,"Подождите немного в подземелье, затем откройте сундук снова."
 account.refusal.cacheTaken,"Вы уже опустошили этот сундук."
 account.refusal.capped,"Подземелья уже отдали сегодня всё, что могли. Возвращайтесь завтра."
 account.refusal.cardsCashoutFailed,"Не удалось выплатить выигрыш. Попробуйте ещё раз."

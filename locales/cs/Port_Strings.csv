@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"Dnes jsi otevřel {n, plural, one {# truhlu s Aurum
 account.refusal.cacheClosed,"Aurum je zatím zavřené. Truhla zůstává zavřená."
 account.refusal.cacheGuest,"Skrýše s Aurum vyžadují registrovaný účet. Nejdřív přidej uživatelské jméno a heslo."
 account.refusal.cacheId,"Tuhle truhlu nejde otevřít. Načti hru znovu a zkus to znovu."
+account.refusal.cacheProof,"Chvíli počkej v podzemí a pak truhlu otevři znovu."
 account.refusal.cacheTaken,"Tuhle truhlu jsi už vyprázdnil."
 account.refusal.capped,"Kobky dnes daly vše, co mohly. Vrať se zítra."
 account.refusal.cardsCashoutFailed,"Výplatu nebylo možné provést. Zkus to znovu."

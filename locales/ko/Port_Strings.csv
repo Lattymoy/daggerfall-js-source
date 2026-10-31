@@ -271,6 +271,7 @@ account.refusal.cacheCapped,"오늘 {n, plural, other {Aurum 상자 #개}}를 �
 account.refusal.cacheClosed,"Aurum은 지금 닫혀 있습니다. 상자는 잠긴 채로 남습니다."
 account.refusal.cacheGuest,"Aurum 은닉처는 등록된 계정이 필요합니다. 먼저 사용자 이름과 비밀번호를 추가하세요."
 account.refusal.cacheId,"이 상자를 열 수 없습니다. 게임을 새로 고친 뒤 다시 시도하세요."
+account.refusal.cacheProof,"던전에서 잠시 기다린 뒤 상자를 다시 여세요."
 account.refusal.cacheTaken,"이미 이 상자를 비웠습니다."
 account.refusal.capped,"던전들이 오늘 줄 수 있는 것을 모두 주었습니다. 내일 다시 오세요."
 account.refusal.cardsCashoutFailed,"정산금을 지급할 수 없습니다. 다시 시도하세요."

@@ -126,6 +126,7 @@ import { SERPENT_SITE_LAW } from './serpent/serpentLaw.js';   // SERPENT1: the s
 import { validDragonIn, validDragonOut, dragonGate, relaySupportsDragon } from './wire.js';   // DRAGON3: the Dwarven Dragon's frame, both ways
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
+import { keepCacheProof } from './cacheProof.js';   // AUDIT AURUM-CACHES E1: a dungeon's welcome brings the proof its coffer's claim carries
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
 import { ownerClock, stampedFrameText, applyingOwnerTm } from './ownerClock.js';   // OWNER-CLOCK: a foes frame says when its foes were stepped, and is applied with it in hand
 import { t } from '../systems/textManager.js';   // L10N4: the HUD line's words in the player's language (the relay's own words pass as it said them)
@@ -3687,6 +3688,7 @@ export class OnlineSession {
       // COST-2 (b): THE CELLS THIS SOCKET COVERS - the node the relay's Worker put it in (`cells`, fine-cell bounds), kept when
       // coarse and holding the room; a relay before COST-2, or a node of one cell, says no more than the room itself
       { const n = isCellRoom(room) ? nodeOfCells(m.cells) : null; const cover = n && isCoarseNode(n) && coversCell(n, room) ? n : null; if (primary) this._cover = cover; else { const h = this._halo.get(room); if (h) h.cover = cover; } }
+      if (primary) keepCacheProof(room, m.cp);   // AUDIT AURUM-CACHES E1: the relay's word that I stood in this dungeon
       if (primary) this.claim = false;   // ONE-SEAT: the hub took the claim - a reconnect from here on is a reconnect
       // SLAM12 (AUDIT SLAM): THE BACKOFF IS RESET HERE, BY THE WELCOME, AND NOT BY THE SOCKET OPENING. A full room's
       // CLOSE_BUSY arrives AFTER the socket opens (the relay's hello gate), so a reset at `onopen` undid the hard

@@ -9,6 +9,7 @@ import { aurumCacheDungeonKey, aurumCacheIdOk, aurumCacheSpotOf, AURUM_CACHE_AUR
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE, registerAurumCofferArt } from '../world/aurumCofferArt.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { accountAurumCache, accountRefusalText, storedSession } from '../net/accountClient.js';
+import { cacheProofFor } from '../net/cacheProof.js';
 import { appStorage } from '../systems/appStorage.js';
 import { isOnlinePage } from '../systems/online/onlineLane.js';
 import { isHallMapId } from '../net/wire.js';
@@ -137,12 +138,19 @@ const walled = (/** @type {any} */ collider, /** @type {number[]} */ f) => Numbe
 
 /** The ids an account emptied, as this device keeps them. */
 function keptIds(/** @type {any} */ storage, /** @type {string} */ account) {
-  try { const v = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}')?.[account]; return Array.isArray(v) ? v.filter(aurumCacheIdOk) : []; } catch { return []; }
+  const v = noteOf(storage)[account];
+  return Array.isArray(v) ? v.filter(aurumCacheIdOk) : [];
+}
+/** The device's note as a plain object - a corrupt one (an array, a number, cut JSON) starts again empty (AUDIT lane 3 F6). */
+function noteOf(/** @type {any} */ storage) {
+  let v = null;
+  try { v = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}'); } catch { /* cut or not JSON: start again */ }
+  return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
 }
 /** Keep an emptied id for an account, dropping any that is no cache's (a day's id or mark from before CACHES-ONCE). */
 function keepId(/** @type {any} */ storage, /** @type {string} */ account, /** @type {string} */ id) {
   try {
-    const all = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}') ?? {};
+    const all = noteOf(storage);
     for (const k of Object.keys(all)) all[k] = (Array.isArray(all[k]) ? all[k] : []).filter(aurumCacheIdOk);
     if (!all[account]?.includes(id)) (all[account] ??= []).push(id);
     storage?.setItem?.(AURUM_CACHE_STORE, JSON.stringify(all));
@@ -200,7 +208,7 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
     if (coffer.open) { say(AURUM_CACHE_TEXT.empty()); return true; }
     if (asking) return true;
     asking = true;
-    Promise.resolve().then(() => claim(id)).catch(() => ({ ok: false, error: 'server' })).then((/** @type {any} */ r) => {
+    Promise.resolve().then(() => claim(id, cacheProofFor(id), me.id)).catch(() => ({ ok: false, error: 'server' })).then((/** @type {any} */ r) => {
       asking = false;
       // AUDIT-STOREFRONT III D5: what the ledger now holds is kept before the level's end is read
       if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);

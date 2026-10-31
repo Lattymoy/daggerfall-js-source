@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { webcrypto } from 'node:crypto';
 
 import {
   standAurumCache, aurumCachePlaceOf, aurumCacheFoot, aurumCacheStood, _resetAurumCaches, AURUM_CACHE_KEY, AURUM_CACHE_TEXT, AURUM_CACHE_STORE,
@@ -18,6 +19,7 @@ import { aurumCacheSpotOf } from '../../src/net/aurumCacheLaw.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { GATE_ARENA_LOCATION_ID } from '../../src/world/gate/gateArena.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
+import { mintCacheProof, keepCacheProof, _resetCacheProof } from '../../src/net/cacheProof.js';
 import { TREASURE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -429,4 +431,23 @@ test('AUDIT-STOREFRONT III D1-D3 on the player\'s data, the world over: every 16
   assert.ok(provinces.length >= 2 && provinces.includes('Morrowind') && provinces.includes('Skyrim'), `the provinces: ${JSON.stringify(by)}`);
   const all = Object.values(by).reduce((a, t) => ({ piled: a.piled + t.piled, coffers: a.coffers + t.coffers }), { piled: 0, coffers: 0 });
   assert.ok(all.piled - all.coffers <= all.piled * 0.02, `a dungeon with a pile stands its coffer in all but a few: ${JSON.stringify(all)}`);
+});
+
+test('AUDIT AURUM-CACHES E1 and lane 3 F2, F6: the press carries the proof the dungeon\'s welcome brought and the account the coffer was stood for; a corrupt device note starts again and keeps the yes (mutants: the proof unsent, the account unsent, a corrupt note kept)', async () => {
+  const L = loc((3 << 20) | 4400);
+  const k = await webcrypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+  const mapId = (3 << 20) | 4400, proof = await mintCacheProof({ s: 'acct', m: mapId }, k.privateKey, { subtle: webcrypto.subtle, nowS: Math.floor(Date.now() / 1000) });
+  for (const bad of ['[]', '5', '"x"', 'true', '{"acct":["d1"', 'null']) {
+    _resetAurumCaches(); _resetCacheProof();
+    keepCacheProof(`dungeon:m${mapId}`, proof);
+    const storage = memory(), asked = [];
+    storage.setItem(AURUM_CACHE_STORE, bad);
+    const c = standAurumCache(fakeCtx(), L, PILES, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim: async (...a) => { asked.push(a); return { ok: true }; }, audio: null });
+    assert.equal(c.open, false, bad);
+    c.press(AURUM_CACHE_KEY);
+    await tick(); await tick();
+    assert.deepEqual(asked, [[c.id, proof, 'acct']], `${bad}: the id, the relay's proof, the account`);
+    assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] }, `${bad}: started again`);
+  }
+  _resetCacheProof();
 });
