@@ -155,8 +155,8 @@
   {
     "name": "MAP-KEEP-live-kept-on-restore",
     "file": "src/systems/automap/automap.js",
-    "old": "  // cleared the whole store it had just restored.\n  _inside = false;\n  _liveKey = null;\n  _live = null;\n",
-    "new": "  // cleared the whole store it had just restored.\n",
+    "old": "  _inside = false;\n  _liveKey = null;\n  _live = null;\n  for (const [key, rec] of Object.entries(snap)) {",
+    "new": "  for (const [key, rec] of Object.entries(snap)) {",
     "tests": [
       "test/systems/automap/mapkeep.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MAP-KEEP-teardown-forgets",
     "file": "src/systems/automap/automap.js",
-    "old": "if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
-    "new": "if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
+    "old": "  if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();",
+    "new": "  if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();",
     "tests": [
       "test/systems/automap/mapkeep.test.js"
     ]

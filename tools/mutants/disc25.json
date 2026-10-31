@@ -2,8 +2,8 @@
   {
     "name": "D25A-centroid-not-surface",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (!keep || keep(surfaceY(t, px, pz))) covered[k] = 1;",
-    "new": "if (!keep || keep(t.y)) covered[k] = 1;",
+    "old": "      if (!keep || keep(surfaceY(t, px, pz))) covered[k] = 1;",
+    "new": "      if (!keep || keep(t.y)) covered[k] = 1;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "D25A-surface-is-the-mean",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "  if (t.ay == null || t.by == null || t.cy == null) return t.y;\n",
-    "new": "  return t.y;\n",
+    "old": "  if (t.ay == null || t.by == null || t.cy == null) return t.y;",
+    "new": "  return t.y;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "D25A-stairs-any-rise",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (s === t || !(Math.abs(y[i] - y[j]) <= rise)) return;",
-    "new": "if (s === t) return;",
+    "old": "    if (s === t || !(Math.abs(y[i] - y[j]) <= rise)) return;",
+    "new": "    if (s === t) return;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "D25A-stairs-one-side",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    add(s, t, a, b);\n    add(t, s, b, a);\n",
-    "new": "    add(s, t, a, b);\n",
+    "old": "    add(t, s, b, a);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D25A-stack-counts-stairs",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (t === s || !(Math.abs(y[i] - y[j]) > rise)) continue;",
-    "new": "if (t === s) continue;",
+    "old": "          if (t === s || !(Math.abs(y[i] - y[j]) > rise)) continue;",
+    "new": "          if (t === s) continue;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D25A-sheets-never-merge",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
-    "new": "if (!run.length) run.push(i);",
+    "old": "    if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
+    "new": "    if (!run.length) run.push(i);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "D25A-overlap-off-by-one",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
-    "new": "if (run.every((j) => stack[j * n + i] < overlap)) run.push(i);",
+    "old": "    if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
+    "new": "    if (run.every((j) => stack[j * n + i] < overlap)) run.push(i);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]

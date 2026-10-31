@@ -488,8 +488,8 @@
   {
     "name": "TESA8-automap-shared",
     "file": "src/systems/automap/automap.js",
-    "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
-    "new": "${''}",
+    "old": "    : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}`;",
+    "new": "    : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${''}`;",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "TESA8-automap-every-place",
     "file": "src/systems/automap/automap.js",
-    "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
-    "new": "${`#${(loc?.mapTableData?.mapId ?? 0) >>> 0}`}",
+    "old": "    : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}`;",
+    "new": "    : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${`#${(loc?.mapTableData?.mapId ?? 0) >>> 0}`}`;",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

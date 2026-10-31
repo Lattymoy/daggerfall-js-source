@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-TESA-A1-1-key-names",
     "file": "src/systems/automap/automap.js",
-    "old": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (loc?.arena && !loc.capital",
-    "new": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (false",
+    "old": "  loc?.arena && !loc.capital",
+    "new": "  false",
     "tests": [
       "test/audit_tesa.test.js"
     ]
