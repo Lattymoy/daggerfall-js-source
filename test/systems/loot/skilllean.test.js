@@ -76,6 +76,6 @@ test('SKILL-LEAN WIRED: a template foe\'s body and kit roll inside the lean, at 
   assert.match(rar, /if \(entity\.pveTemplate\) withSkillLean\(entity\.level, roll\); else roll\(\);/);
   const cap = readFileSync(new URL('../../../src/systems/foeLootCap.js', import.meta.url), 'utf8');
   assert.match(cap, /const kit = entity\?\.pveTemplate \? withSkillLean\(entity\.level, draw\) : draw\(\);/);
-  assert.match(readFileSync(new URL('../../../src/systems/loot/lootPowers.js', import.meta.url), 'utf8'), /registerLeanSkills\(\(\) => \{ const me = playerDoor\(\)\?\.player\?\.\(\); return me \? bestSkills\(me\) : null; \}\);/);
+  assert.match(readFileSync(new URL('../../../src/systems/loot/lootPowers.js', import.meta.url), 'utf8'), /registerLeanSkills\(\(\) => \{\s*const me = playerDoor\(\)\?\.player\?\.\(\);\s*return me \? bestSkills\(me\) : null;\s*\}\);/);
 });
 

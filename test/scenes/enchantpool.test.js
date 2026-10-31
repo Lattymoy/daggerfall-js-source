@@ -387,7 +387,8 @@ test('EC1: the DETECT feed keeps its own exterior pool - one change, two consume
   assert.match(world, /entities: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead && f\.ai\)\.map\(foeNearbyRecord\)/);
   assert.equal(/entities: \(\) => enchantFoes\(\)/.test(world), false,
     'the detect feed must NOT read the live pool - its two consumers are exterior arms');
-  assert.match(world, /for \(const f of gone\) exteriorFoes\.removeFoe\(f\);/,
+  // SPELL-RANK (FIXED-PVE): the remover is spellDispel over the exterior pool - removeFoe for every foe but a template's
+  assert.match(world, /for \(const f of gone\) spellDispel\(f, exteriorFoes, player\.pos\);/,
     'the consumer that made the split necessary is still the one that needs it');
 });
 

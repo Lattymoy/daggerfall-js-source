@@ -65,8 +65,8 @@
   {
     "name": "SPELL-COST-PAST-the-cast-unpassed",
     "file": "src/systems/spellcost.js",
-    "old": "? skillPricedCost(e, skillOf, { online }) : effectCost(e, skillOf, { online });",
-    "new": "? skillPricedCost(e, skillOf, { online }) : effectCost(e, skillOf);",
+    "old": "      : effectCost(e, skillOf, { online }); // SPELL-SKILL",
+    "new": "      : effectCost(e, skillOf); // SPELL-SKILL",
     "tests": [
       "test/systems/fb1012c_spellcost.test.js"
     ]

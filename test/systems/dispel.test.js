@@ -86,7 +86,8 @@ test('X9: DESTROYED, not killed - both hosts sweep through the Destroy primitive
   // through damageFoe, which would spawn a corpse and roll loot.
   const dg = readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8');
   const wd = readFileSync(join(ROOT, 'src/scenes/world.js'), 'utf8');
-  for (const [name, src, call] of [['dungeon', dg, 'questPoolOps.removeFoe(f)'], ['world', wd, 'exteriorFoes.removeFoe(f)']]) {
+  // SPELL-RANK (FIXED-PVE): the world's arm removes through spellDispel - removeFoe, but for a template foe
+  for (const [name, src, call] of [['dungeon', dg, 'questPoolOps.removeFoe(f)'], ['world', wd, 'spellDispel(f, exteriorFoes, player.pos)']]) {
     const arm = src.slice(src.indexOf('onDispel:'), src.indexOf('onDispel:') + 700);
     assert.ok(arm.includes(call), `${name} destroys through the Destroy primitive`);
     assert.ok(arm.includes('dispelNearby'), `${name} rolls through the ported law`);

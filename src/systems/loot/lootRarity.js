@@ -886,14 +886,14 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, l
   };
   const open = () => kinds.filter((id) => AFFIX_KINDS[id].params ? kindParams(id, item).some((p) => !taken.has(`${id}:${p}`)) : !taken.has(id));
   const own = item.group === 'Weapons' ? 'damage' : item.group === 'Armor' ? 'armor' : isGarment(item) ? 'standing' : null;   // LOOT14: a garment's own number is its standing
-  const sl = SKILL_LEAN_GROUPS.includes(item.group) ? skillLean() : null;   // SKILL-LEAN: a template foe's drop, its first skill lines the roller's best
+  const skillLeanRoll = SKILL_LEAN_GROUPS.includes(item.group) ? skillLean() : null;   // SKILL-LEAN: a template foe's drop, its first skill lines the roller's best
   let leaned = 0;
   for (let i = 0; i < count; i++) {
     let pool = open();
     if (!pool.length) break;
-    const tries = !!sl && leaned < sl.lines && pool.includes('skill');
+    const tries = !!skillLeanRoll && leaned < skillLeanRoll.lines && pool.includes('skill');
     if (tries) leaned++;   // LEAN-CHANCE: a leaning line spends its try whether it lands or not
-    const best = tries && rolls() < sl.chance ? sl.skills.find((p) => !taken.has(`skill:${p}`) && kindParams('skill', item).includes(p)) : undefined;
+    const best = tries && rolls() < skillLeanRoll.chance ? skillLeanRoll.skills.find((skillId) => !taken.has(`skill:${skillId}`) && kindParams('skill', item).includes(skillId)) : undefined;
     if (best != null) {
       const [lo, hi] = AFFIX_RANGES.skill[tier];
       taken.add(`skill:${best}`);

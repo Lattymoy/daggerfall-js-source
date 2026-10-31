@@ -86,7 +86,7 @@ export const BESTIARY = Object.freeze([
     R({ species, provinces: { [ALL]: 'localized' }, dungeons: [D.Laboratory, D.Coven, D.Crypt], lore: 'inferred', note: 'necromancers and conjurers' })),
   // REGIONAL-PVE: Daggerfall Enemy Expansion's creatures live past the Bay through their zone's roster alone - no
   // province of PvE's own list holds them, so the Bay stays as it was (zoneRosterAt above)
-  ...DEX_SPECIES.map((s) => R({ species: s.key, provinces: {}, lore: 'established', note: 'past the Bay, by its zone roster' })),
+  ...DEX_SPECIES.map((dexSpecies) => R({ species: dexSpecies.key, provinces: {}, lore: 'established', note: 'past the Bay, by its zone roster' })),
   // a species the spec names with no art: a record, never a spawn
   ...CANDIDATE_SPECIES.map((c) => R({ species: c.key, provinces: {}, lore: 'proposed', note: 'no art yet' })),
 ]);
@@ -150,15 +150,15 @@ const ROSTER_STANDING = Object.freeze({ C: 'primary', U: 'secondary', R: 'rare',
  *  @param {number|undefined} px @param {number|undefined} py @param {boolean} night */
 export function zoneRosterAt(px, py, night, dex = dexLoaded()) {
   if (!Number.isFinite(px) || !Number.isFinite(py)) return null;
-  const b = tamrielBiomeAt(Math.floor(/** @type {number} */ (px)), Math.floor(/** @type {number} */ (py)));
-  const r = b && ROSTERS[b.key];
-  if (!r) return null;
+  const biome = tamrielBiomeAt(Math.floor(/** @type {number} */ (px)), Math.floor(/** @type {number} */ (py)));
+  const roster = biome && ROSTERS[biome.key];
+  if (!roster) return null;
   const out = [];
-  for (const [id, rarity] of faunaRoster(night ? r.night : r.day, dex)) {
-    const sp = SPECIES_BY_BODY.get(id);
-    if (sp && !sp.aquatic) out.push([sp.key, rarity]);
+  for (const [id, rarity] of faunaRoster(night ? roster.night : roster.day, dex)) {
+    const species = SPECIES_BY_BODY.get(id);
+    if (species && !species.aquatic) out.push([species.key, rarity]);
   }
-  return { zone: b.key, entries: out };
+  return { zone: biome.key, entries: out };
 }
 
 /** The species a place may hold and each one's share, by key - the same list for every player. Past the Bay outdoors,

@@ -92,7 +92,7 @@ export function registerSpellPierceMod(name, fn) {
  *  anything that is not my spell at a target the port may strengthen. */
 export function spellPowerMult(caster, target, opts = {}) {
   if (!ownSpellAt(caster, target)) return 1;
-  const { potency = true, ...rest } = /** @type {any} */ (opts);   // PVE-CAST: `potency` false leaves the school past 100 out (spell/pveCast.js reads the skill itself)
+  const { potency = true, ...rest } = /** @type {any} */ (opts); // PVE-CAST: `potency` false leaves the school past 100 out (spell/pveCast.js reads the skill itself)
   let pct = 0;
   for (const fn of _power.values()) {
     const v = fn(caster, target);

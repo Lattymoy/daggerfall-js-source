@@ -3,6 +3,9 @@
  "src/characters/clothing.js": "AUDIT 39: staged with armorSet.js for the same seam.",
  "src/characters/pieces/greaves.js": "AUDIT 39: staged with armorSet.js for the same seam.",
  "src/systems/gateTier.js": "EG1: the gate's tier words. The HUD, the timers and the herald still spell them themselves (Elite-Gates.md section 2).",
+ "src/systems/pve/pveContribution.js": "FIXED-PVE: the raid's contribution law, tested, not yet wired into a host (bible/05-Combat/Fixed-PvE.md).",
+ "src/systems/pve/pvePopulation.js": "FIXED-PVE: the cells' populations, tested, not yet wired into a host (bible/05-Combat/Fixed-PvE.md).",
+ "src/systems/pve/pveThreat.js": "FIXED-PVE: the threat table, tested, not yet wired into a host (bible/05-Combat/Fixed-PvE.md).",
  "src/world/peaks/massif.js": "PEAKS2: a range's relief, pinned and waiting for the kernel's shaper (03-World/Peaks.md).",
  "src/world/tamriel/tamrielRaster.js": "TAMRIEL1: the continent as byte planes, kept for a later use (03-World/Tamriel.md, The raster)."
 }

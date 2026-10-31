@@ -57,9 +57,9 @@ export const DEX_SPECIES = Object.freeze(DEX_ROWS.map(([id, name, group, behavio
   flying: behaviour === 'Flying', shoots: false, casts: MONSTER_SPELL_LISTS[id] != null, vanillaLevel: null, dex: /** @type {true} */ (true),
 })));
 
-export const SPECIES_BY_KEY = new Map([...SPECIES, ...DEX_SPECIES].map((s) => [s.key, s]));
+export const SPECIES_BY_KEY = new Map([...SPECIES, ...DEX_SPECIES].map((species) => [species.key, species]));
 /** A species by its body's mobile id (Latty's rosters name bodies). */
-export const SPECIES_BY_BODY = new Map([...SPECIES, ...DEX_SPECIES].map((s) => [s.body, s]));
+export const SPECIES_BY_BODY = new Map([...SPECIES, ...DEX_SPECIES].map((species) => [species.body, species]));
 
 /** The spec's species with no body in the game yet: data for a later art pass, never spawned. */
 export const CANDIDATE_SPECIES = Object.freeze([

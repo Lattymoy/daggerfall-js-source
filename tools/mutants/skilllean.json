@@ -1,5 +1,5 @@
 [
-  {"name": "LEAN-CHANCE-always", "file": "src/systems/loot/lootRarity.js", "old": "    const best = tries && rolls() < sl.chance ? ", "new": "    const best = tries ? ", "tests": ["test/systems/loot/skilllean.test.js"]},
+  {"name": "LEAN-CHANCE-always", "file": "src/systems/loot/lootRarity.js", "old": "    const best = tries && rolls() < skillLeanRoll.chance ? ", "new": "    const best = tries ? ", "tests": ["test/systems/loot/skilllean.test.js"]},
   {"name": "LEAN-CHANCE-try-kept-on-a-miss", "file": "src/systems/loot/lootRarity.js", "old": "    if (tries) leaned++;", "new": "", "tests": ["test/systems/loot/skilllean.test.js"]},
   {"name": "LEAN-CHANCE-scope-drops-it", "file": "src/systems/loot/lootSkillLean.js", "old": "skills: Object.freeze(best.slice()), chance }", "new": "skills: Object.freeze(best.slice()), chance: 1 }", "tests": ["test/systems/loot/skilllean.test.js"]},
   {"name": "SKILL-LEAN-no-steps", "file": "src/systems/loot/lootSkillLean.js", "old": "export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([12, 1]), Object.freeze([28, 2]), Object.freeze([Infinity, 3])]);", "new": "export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([Infinity, 3])]);", "tests": ["test/systems/loot/skilllean.test.js"]}

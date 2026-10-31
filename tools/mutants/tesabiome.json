@@ -635,8 +635,8 @@
   {
     "name": "TESA-BIOME-71-grant-host-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": "    gr?.k === 'encr' && climateAt\n      ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1]))\n      : -1;",
-    "new": "    gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect) : -1;",
+    "old": "        ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1]))\n",
+    "new": "        ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect)\n",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
