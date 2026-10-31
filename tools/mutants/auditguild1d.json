@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-GUILD1d-S8-restore-reads-a-hall-as-a-home",
     "file": "tools/realmRestore.mjs",
-    "old": "if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
-    "new": "if (nowHome && nowHome.player !== player) {",
+    "old": "        if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
+    "new": "        if (nowHome && nowHome.player !== player) {",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

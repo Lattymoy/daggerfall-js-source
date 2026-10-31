@@ -164,8 +164,8 @@
   {
     "name": "PURSE-MEND-the-purse-it-names-read-loosely",
     "file": "tools/realmReview.mjs",
-    "old": "was: /^-[0-9]+$/.test(was) ? Number(was) : NaN",
-    "new": "was: Number(was)",
+    "old": "    const mend = purseMendOf({\n      ticket,\n      was: /^-[0-9]+$/.test(was) ? Number(was) : NaN,\n      gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN,\n    });",
+    "new": "    const mend = purseMendOf({ ticket, was: Number(was), gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]

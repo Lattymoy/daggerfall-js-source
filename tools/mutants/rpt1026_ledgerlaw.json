@@ -112,8 +112,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-help-words",
     "file": "tools/realmReview.mjs",
-    "old": "  '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',\n",
-    "new": "",
+    "old": "  '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',\n  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',",
+    "new": "  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],

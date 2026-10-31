@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-RPT1026-C3-words",
     "file": "tools/realmReview.mjs",
-    "old": "  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',\n",
-    "new": "  '          level, attributes and skills; a change, or a clean checkpoint, ends it.',\n",
+    "old": "  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',",
+    "new": "  '          level, attributes and skills; a change, or a clean checkpoint, ends it.',",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],

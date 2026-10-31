@@ -312,8 +312,8 @@
   {
     "name": "RESTORE-C-a-trader-restored",
     "file": "tools/realmRestore.mjs",
-    "old": "    if (t.p && !realmIds.has(t.c)) held.add(t.p);",
-    "new": "",
+    "old": "    if (t.p && !realmIds.has(t.c)) held.add(t.p);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "RESTORE-C-a-standing-character-restored",
     "file": "tools/realmRestore.mjs",
-    "old": ".filter((o) => !standing.has(o)).sort();",
-    "new": ".sort();",
+    "old": "    .filter((o) => !standing.has(o))\n    .sort();",
+    "new": "    .sort();",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "RESTORE-C-a-home-never-lost-restored",
     "file": "tools/realmRestore.mjs",
-    "old": "        if (nowHome && nowHome.player === player && nowHome.char_id === origin) continue;   // never lost\n",
-    "new": "",
+    "old": "        if (nowHome && nowHome.player === player && nowHome.char_id === origin) continue; // never lost\n        // AUDIT GUILD1d S8: a guild's hall is its guild's, whichever account bought it - never a home bought again",
+    "new": "        // AUDIT GUILD1d S8: a guild's hall is its guild's, whichever account bought it - never a home bought again",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "RESTORE-C-the-census-unguarded",
     "file": "tools/realmRestore.mjs",
-    "old": " AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ${lit(origin)});`);",
-    "new": ";`);",
+    "old": "    sql.push(\n      `UPDATE realm_census SET spent = 0 WHERE char_id = ${lit(origin)} AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ${lit(origin)});`,\n    );",
+    "new": "    sql.push(`UPDATE realm_census SET spent = 0 WHERE char_id = ${lit(origin)};`);",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "RESTORE-C-a-full-guild-overfilled",
     "file": "tools/realmRestore.mjs",
-    "old": "        else if (members >= GUILD_MEMBERS_MAX)",
-    "new": "        else if (false)",
+    "old": "        else if (members >= GUILD_MEMBERS_MAX)\n          notes.push(`${who(player)}: ${guild.name} is full - the place waits for you`);",
+    "new": "        else if (false) notes.push(`${who(player)}: ${guild.name} is full - the place waits for you`);",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "RESTORE-C-a-second-master",
     "file": "tools/realmRestore.mjs",
-    "old": "        else if (place.rank === GUILD_RANK_MASTER && master)",
-    "new": "        else if (false)",
+    "old": "        else if (place.rank === GUILD_RANK_MASTER && master)\n          notes.push(`${who(player)}: ${guild.name} has a master again - the place waits for you`);",
+    "new": "        else if (false) notes.push(`${who(player)}: ${guild.name} has a master again - the place waits for you`);",
     "tests": [
       "test/net/realm_restore.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "RESTORE-C-not-idempotent",
     "file": "tools/realmRestore.mjs",
-    "old": "  return `INSERT OR IGNORE INTO ${table}",
-    "new": "  return `INSERT INTO ${table}",
+    "old": "  return `INSERT OR IGNORE INTO ${table} (${cols.join(', ')}) VALUES (${cols.map((c) => lit(row[c])).join(', ')});`;",
+    "new": "  return `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map((c) => lit(row[c])).join(', ')});`;",
     "tests": [
       "test/net/realm_restore.test.js"
     ]

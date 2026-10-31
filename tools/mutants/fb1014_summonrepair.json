@@ -137,8 +137,8 @@
   {
     "name": "SUMMON-REPAIR-the-gold-unchecked-by-the-tool",
     "file": "tools/realmReview.mjs",
-    "old": "flag: repairFlagOf(flag), gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN",
-    "new": "flag: repairFlagOf(flag), gold: Number(gold)",
+    "old": "      flag: repairFlagOf(flag),\n      gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN,",
+    "new": "      flag: repairFlagOf(flag),\n      gold: Number(gold),",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]

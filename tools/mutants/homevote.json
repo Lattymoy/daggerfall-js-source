@@ -712,8 +712,8 @@
   {
     "name": "HOME-VOTE-II-A6-score-restored",
     "file": "tools/realmRestore.mjs",
-    "old": "insert('homes', homeRowOf(home))",
-    "new": "insert('homes', home)",
+    "old": "        if (!nowHome) sql.push(insert('homes', homeRowOf(home)));",
+    "new": "        if (!nowHome) sql.push(insert('homes', home));",
     "tests": [
       "test/net/homevote.test.js"
     ],

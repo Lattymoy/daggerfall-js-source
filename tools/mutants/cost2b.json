@@ -634,8 +634,8 @@
   {
     "name": "COST2B-levels-ungrouped",
     "file": "tools/relayLoad.mjs",
-    "old": "GROUP BY kind, level ORDER BY level LIMIT 10",
-    "new": "GROUP BY kind ORDER BY kind LIMIT 10",
+    "old": "      `SELECT blob1 AS kind, blob11 AS level, ${W.n} AS room_windows, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.full} AS room_full, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'world' GROUP BY kind, level ORDER BY level LIMIT 10`,",
+    "new": "      `SELECT blob1 AS kind, blob11 AS level, ${W.n} AS room_windows, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.full} AS room_full, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'world' GROUP BY kind ORDER BY kind LIMIT 10`,",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "COST2B-empty-blob-read",
     "file": "tools/relayLoad.mjs",
-    "old": "AND blob1 = 'cells' AND blob12 != '' GROUP BY kind",
-    "new": "AND blob1 = 'cells' GROUP BY kind",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS points, SUM(_sample_interval * toUInt32(blob12)) AS moves, SUM(_sample_interval * toUInt32(blob13)) AS blocked FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'cells' AND blob12 != '' GROUP BY kind LIMIT 1`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS points, SUM(_sample_interval * toUInt32(blob12)) AS moves, SUM(_sample_interval * toUInt32(blob13)) AS blocked FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'cells' GROUP BY kind LIMIT 1`,",
     "tests": [
       "test/server/cellmoves.test.js"
     ]

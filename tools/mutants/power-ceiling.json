@@ -255,8 +255,8 @@
   {
     "name": "POWER-CEILING-a-tier-dropped-from-the-measure",
     "file": "tools/powerCeiling.mjs",
-    "old": "  'bound-in-silk': (v) => v.more,\n",
-    "new": "",
+    "old": "  'bound-in-silk': (v) => v.more,\n  undertow: (v) => v.more, // the open sea",
+    "new": "  undertow: (v) => v.more, // the open sea",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "POWER-CEILING-the-walk-one-high",
     "file": "tools/powerCeiling.mjs",
-    "old": "a.value <= top)) out.push(",
-    "new": "a.value <= top + 1)) out.push(",
+    "old": "    else if (!(Number.isInteger(a.value) && a.value <= top))",
+    "new": "    else if (!(Number.isInteger(a.value) && a.value <= top + 1))",
     "tests": [
       "test/combat/powerceiling_walk.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D7-mastery-read-at-the-raw-skill",
     "file": "tools/powerCeiling.mjs",
-    "old": "(EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT",
-    "new": "(200 - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT",
+    "old": "    (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT) * 100 +\n      WEAPON_GEAR_PCT_MOST,",
+    "new": "    (200 - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT) * 100 + WEAPON_GEAR_PCT_MOST,",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

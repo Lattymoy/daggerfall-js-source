@@ -2,8 +2,8 @@
   {
     "name": "PURSE-BACK-check-gone",
     "file": "tools/realmRollback.mjs",
-    "old": "clean == null ? 'no-clean' : clean >= first ? (back ? 'rolled-back' : 'clean-after') : null;",
-    "new": "clean == null ? 'no-clean' : null;",
+    "old": "  const why =\n    first == null\n      ? 'no-purse-finding'\n      : clean == null\n        ? 'no-clean'\n        : clean >= first\n          ? back\n            ? 'rolled-back'\n            : 'clean-after'\n          : null;",
+    "new": "  const why = first == null ? 'no-purse-finding' : clean == null ? 'no-clean' : null;",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PURSE-BACK-equal-clean-passes",
     "file": "tools/realmRollback.mjs",
-    "old": "clean >= first ? (back",
-    "new": "clean > first ? (back",
+    "old": "        : clean >= first",
+    "new": "        : clean > first",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PURSE-BACK-latest-gold-read",
     "file": "tools/realmRollback.mjs",
-    "old": "(a && a.seq <= f.seq ? a : f)",
-    "new": "(a && a.seq >= f.seq ? a : f)",
+    "old": "  const purse = law.filter((f) => codes(f).includes('gold')).reduce((a, f) => (a && a.seq <= f.seq ? a : f), null);",
+    "new": "  const purse = law.filter((f) => codes(f).includes('gold')).reduce((a, f) => (a && a.seq >= f.seq ? a : f), null);",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PURSE-BACK-rolled-back-unsaid",
     "file": "tools/realmRollback.mjs",
-    "old": "(back ? 'rolled-back' : 'clean-after')",
-    "new": "'clean-after'",
+    "old": "  const why =\n    first == null\n      ? 'no-purse-finding'\n      : clean == null\n        ? 'no-clean'\n        : clean >= first\n          ? back\n            ? 'rolled-back'\n            : 'clean-after'\n          : null;",
+    "new": "  const why = first == null ? 'no-purse-finding' : clean == null ? 'no-clean' : clean >= first ? 'clean-after' : null;",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PURSE-BACK-any-of-several",
     "file": "tools/realmRollback.mjs",
-    "old": "below.length === 1 ? below[0] : null;",
-    "new": "below.length ? below[0] : null;",
+    "old": "    : below.length === 1",
+    "new": "    : below.length",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PURSE-BACK-another-accounts",
     "file": "tools/realmRollback.mjs",
-    "old": "character ? result.characters.find((/** @type {any} */ c) => c.id === character) : below",
-    "new": "character ? result.characters.find((/** @type {any} */ c) => c.id === character) ?? below[0] : below",
+    "old": "    ? result.characters.find((/** @type {any} */ c) => c.id === character)",
+    "new": "    ? (result.characters.find((/** @type {any} */ c) => c.id === character) ?? below[0])",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "PURSE-BACK-note-without-run",
     "file": "tools/realmRollback.mjs",
-    "old": "note: noteFor(pick.reach, run) }",
-    "new": "note: noteFor(pick.reach) }",
+    "old": "  result.answer = await reviewAct(ctx, player, env, 'rollback', { id: pick.id, note: noteFor(pick.reach, run) });",
+    "new": "  result.answer = await reviewAct(ctx, player, env, 'rollback', { id: pick.id, note: noteFor(pick.reach) });",
     "tests": [
       "test/tooling/realm_rollback.test.js"
     ],

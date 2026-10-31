@@ -275,8 +275,8 @@
   {
     "name": "AUDITLWII2-S6-tool",
     "file": "tools/realmReview.mjs",
-    "old": "  if (!Array.isArray(body?.faucets)) return [];\n  return body.faucets.map(",
-    "new": "  if (!Array.isArray(body?.faucets)) return [];\n  return [].map(",
+    "old": "  return body.faucets.map(",
+    "new": "  return [].map(",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

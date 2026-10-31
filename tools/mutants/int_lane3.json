@@ -770,8 +770,8 @@
   {
     "name": "INT14-TOOL-DAYS-UNBOUNDED",
     "file": "tools/realmReview.mjs",
-    "old": "return Number.isSafeInteger(days) && days >= 1 && days <= 30 ? { path: `/v1/mod/realm-${act}`, body: { days } } : { usage: USAGE };",
-    "new": "return { path: `/v1/mod/realm-${act}`, body: { days } };",
+    "old": "    return Number.isSafeInteger(days) && days >= 1 && days <= 30\n      ? { path: `/v1/mod/realm-${act}`, body: { days } }\n      : { usage: USAGE };",
+    "new": "    return { path: `/v1/mod/realm-${act}`, body: { days } };",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
