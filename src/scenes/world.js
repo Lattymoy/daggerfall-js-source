@@ -31090,6 +31090,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
     // dip; the position rides player.eye as a world offset, the nod is a
     // per-frame offset on the look (removed and re-applied each frame).
+    const frameHeadBob = () => {   // PERF-V8 (AMBIENT-LIFE: the creatures' three calls put the host's frame past three quarters of the ceiling)
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
@@ -31099,6 +31100,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
+    };
+    frameHeadBob();
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     // OH-D: OceanHoles' clock (Time.time, held by a pause) and its Update's dungeon half - ABOVE THE MODAL GATE, as a
