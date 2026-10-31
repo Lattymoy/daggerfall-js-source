@@ -872,9 +872,7 @@
 !/src/systems/deepWater/
 /src/systems/deepWater/*/
 !/src/systems/delve/
-/src/systems/delve/*
-!/src/systems/delve/delveVault.js
-!/src/systems/delve/delveWords.js
+/src/systems/delve/*/
 !/src/systems/dfmodTextures.js
 !/src/systems/dialogShortcuts.js
 !/src/systems/discovery.js
