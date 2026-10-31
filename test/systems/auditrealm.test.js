@@ -16,7 +16,7 @@ import { isBound } from '../../src/systems/item/itemBound.js';
 import { ITEM_TEMPLATES } from '../../src/systems/item/itemTemplates.js';
 import { SURVIVAL_TEMPLATES } from '../../src/systems/survival/items.js';
 import { DEEP_WATERS_FISH_TEMPLATES } from '../../src/systems/deepWater/deepWatersFishItems.js';
-import { SIGIL_STONE_TEMPLATES, SIGIL_STONE_TEMPLATE, sigilStone, WELKYND_SHARD_TEMPLATES, PORTAL_STONE_TEMPLATES } from '../../src/systems/gate/gateSpoils.js';   // LOOT9: the Welkynd Shard's row, bound beside the Stone's; PORTAL1: and the Portal Stone's
+import { SIGIL_STONE_TEMPLATES, SIGIL_STONE_TEMPLATE, sigilStone, WELKYND_SHARD_TEMPLATES, PORTAL_STONE_TEMPLATES, PORTAL_BOOK_TEMPLATES } from '../../src/systems/gate/gateSpoils.js';   // LOOT9: the Welkynd Shard's row, bound beside the Stone's; PORTAL1: and the Portal Stone's
 import { THUNDERLOCK_TEMPLATES } from '../../src/systems/thunderlock.js';
 import { PISTOLET_TEMPLATES } from '../../src/systems/pistolet.js';   // PISTOLET: the Dwarven Pistolet's registrar
 import { HAND_WRAPS_TEMPLATES } from '../../src/systems/handWraps.js';   // HAND-WRAPS
@@ -182,6 +182,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     LOCKPICK_ROW,   // LOCKPICK: the Lockpick - not bound: a pick changes hands, sold on every General Store's counter
     DRAGON_MOUNT_ROW,   // DRAGON5: the Dwarven Dragon - bound (and pack-only): a tame is its character's alone
     ...HAND_WRAPS_TEMPLATES,   // HAND-WRAPS: the Hand Wraps - not bound: a weapon changes hands
+    ...PORTAL_BOOK_TEMPLATES,   // PORTAL-BOOK (PIN MOVED): the Portal Book - bound (and pack-only), as the wallet
   ];
   assert.deepEqual(rows.filter((t) => t.bound === true).map((t) => t.index).sort((a, b) => a - b), [...BOUND_TEMPLATES]);
   assert.ok(BOUND_TEMPLATES.includes(SIGIL_STONE_TEMPLATE));

@@ -11,7 +11,7 @@ import { PORTAL_BOOK_TEXT as TEXT, PORTAL_BOOK_MAX, keepPortalSpot, forgetPortal
 /** A spot's key on the book's list: 1..9, then 0 for the tenth. */
 const keyOf = (/** @type {number} */ i) => `Digit${(i + 1) % 10}`;
 /** The Portal Stones a pack holds, every stack together. */
-export const stonesIn = (/** @type {any[]} */ items) => (items ?? []).reduce((n, i) => n + (isPortalStone(i) ? (i.stackCount ?? 1) : 0), 0);
+export const portalStonesIn = (/** @type {any[]} */ items) => (items ?? []).reduce((n, i) => n + (isPortalStone(i) ? (i.stackCount ?? 1) : 0), 0);
 
 /**
  * THE HOUSE THE PLAYER STANDS IN, as the interior host reads it (worldModes portalBookHere): the visit's online home, a
@@ -74,7 +74,7 @@ export function createPortalBookHost(host) {
   /** THE BOOK OPENED - the pack's Use or a hotbar press. Answers true: the window always stands. */
   function open() {
     const spots = book(), here = spotHere();
-    const lines = [TEXT.title(), TEXT.stones(stonesIn(host.playerEntity.items)), ...(spots.length ? [] : [TEXT.empty()]),
+    const lines = [TEXT.title(), TEXT.stones(portalStonesIn(host.playerEntity.items)), ...(spots.length ? [] : [TEXT.empty()]),
       ...(host.mode() === 'interior' && !here ? [TEXT.noHouse()] : [])];
     host.townTalk.showOverlay(new ChoiceWindow({
       lines,

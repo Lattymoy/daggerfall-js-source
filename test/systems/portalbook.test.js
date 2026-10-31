@@ -14,7 +14,7 @@ import {
 } from '../../src/systems/portalBook.js';
 import { portalWire, validPortalRecord } from '../../src/systems/portalStone.js';
 import { createPortalGates } from '../../src/scenes/portalGates.js';
-import { bookHouseOf, createPortalBookHost, stonesIn } from '../../src/scenes/portalBookHost.js';
+import { bookHouseOf, createPortalBookHost, portalStonesIn } from '../../src/scenes/portalBookHost.js';
 import { templateByIndex, itemUseHandler } from '../../src/systems/item/itemTemplates.js';
 import { lawTemplate } from '../../src/systems/item/itemLaw.js';
 import { isBound } from '../../src/systems/item/itemBound.js';
@@ -182,7 +182,7 @@ test('PORTAL-BOOK the window outdoors: each kept spot a key (1..9, then 0), pres
   const w = r.windows.pop();
   assert.deepEqual(codes(w), ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'KeyF', 'Escape']);
   assert.ok(w.lines.includes(PORTAL_BOOK_TEXT.stones(7)));
-  assert.equal(stonesIn([portalStones(2), mintPortalBook()]), 2);
+  assert.equal(portalStonesIn([portalStones(2), mintPortalBook()]), 2);
   w.input('Digit0');
   assert.deepEqual(r.opened.map((s) => s.n), ['Friend9']);
   r.host.open();
