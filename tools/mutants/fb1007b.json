@@ -39,8 +39,8 @@
   {
     "name": "FB1007B-CLASSIC-CLIMBS-TRAVELLING",
     "file": "src/player/climbing.js",
-    "old": "        || c.travelling   // CLIMB-TRAVEL",
-    "new": "        || false   // CLIMB-TRAVEL",
+    "old": "      c.travelling || // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each",
+    "new": "      false || // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each",
     "tests": [
       "test/systems/fb1007b_climbtravel.test.js"
     ],
@@ -86,8 +86,8 @@
   {
     "name": "FB1007B-START-CELL-Y-UNREAD",
     "file": "src/systems/startDungeon.js",
-    "old": "px.y === getInt('Startup', 'StartCellY')",
-    "new": "true",
+    "old": "export const isStartCell = (px) =>\n  !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "export const isStartCell = (px) => !!px && px.x === getInt('Startup', 'StartCellX') && true;",
     "tests": [
       "test/net/holdshared.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "FB1007B-START-CELL-HARDCODED",
     "file": "src/systems/startDungeon.js",
-    "old": "px.x === getInt('Startup', 'StartCellX')",
-    "new": "px.x === 109",
+    "old": "export const isStartCell = (px) =>\n  !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "export const isStartCell = (px) => !!px && px.x === 109 && px.y === getInt('Startup', 'StartCellY');",
     "tests": [
       "test/net/holdshared.test.js"
     ]
@@ -150,7 +150,7 @@
   {
     "name": "FB1007B-SEAT-MERGED-BY-REV",
     "file": "src/systems/legacy/store.js",
-    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };",
+    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)))\n    mine.seat = { ...other.seat };",
     "new": "  if (!mine.seat && other.seat) mine.seat = { ...other.seat };",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "FB1007B-SEAT-STAMP-UNREAD",
     "file": "src/systems/legacy/family.js",
-    "old": "      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,",
-    "new": "      } : null,",
+    "old": "            ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}),\n          }",
+    "new": "          }",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "FB1007B-AUDIT-T3-ANY-MOVE-WINS",
     "file": "src/systems/legacy/store.js",
-    "old": "(Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)",
-    "new": "(Number(other.seat.at) || 0) > 0",
+    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)))\n    mine.seat = { ...other.seat };",
+    "new": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > 0)) mine.seat = { ...other.seat };",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
     ],

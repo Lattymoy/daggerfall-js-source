@@ -29,8 +29,8 @@
   {
     "name": "WEREWOLF1-robe-reserves-dropped",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      for (const part of RESERVES[piece.reserve] ?? []) claim(part, prio, null);\n",
-    "new": "\n",
+    "old": "      for (const part of RESERVES[piece.reserve] ?? []) claim(part, prio, null);",
+    "new": "",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WEREWOLF1-form-change-held",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(!!b.wolf !== peerIsWolf(peer.shown) || now - b.builtAt >= BODY_REBUILD_MS)",
-    "new": "(now - b.builtAt >= BODY_REBUILD_MS)",
+    "old": "      if (b.key !== key && (!!b.wolf !== peerIsWolf(peer.shown) || now - b.builtAt >= BODY_REBUILD_MS)) {",
+    "new": "      if (b.key !== key && now - b.builtAt >= BODY_REBUILD_MS) {",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WEREWOLF1-peer-wolf-holds-the-sword",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      const want = b.wolf ? null : tool ?? (hands?.dual",
-    "new": "      const want = tool ?? (hands?.dual",
+    "old": "      const want = b.wolf ? null : (tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown))); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
+    "new": "      const want = tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown)); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WEREWOLF1-peer-wolf-casts",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.readySpell?.(!b.wolf && !!shown.sr);",
-    "new": "    b.rig.readySpell?.(!!shown.sr);",
+    "old": "    b.rig.readySpell?.(!b.wolf && !!shown.sr); // WEREWOLF1: a werewolf casts nothing (setWerewolf clears the spell stance)",
+    "new": "    b.rig.readySpell?.(!!shown.sr); // WEREWOLF1: a werewolf casts nothing (setWerewolf clears the spell stance)",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WEREWOLF1-peer-wolf-lantern",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl);",
-    "new": "    b.rig.setHipLight?.(!!shown.hl);",
+    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl); // WEREWOLF1: and hangs nothing at the hip",
+    "new": "    b.rig.setHipLight?.(!!shown.hl); // WEREWOLF1: and hangs nothing at the hip",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WEREWOLF1-garment-pool-left-open",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "!c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)",
-    "new": "!c.enchanted && c.model)",
+    "old": "    .filter((c) => c.type === row.type && !c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)",
+    "new": "    .filter((c) => c.type === row.type && !c.enchanted && c.model)",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]

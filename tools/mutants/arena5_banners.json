@@ -11,8 +11,8 @@
   {
     "name": "ARENA5-WASH-EL-DROPPED",
     "file": "src/render/enhancedLighting.js",
-    "old": "  lit *= elDecode(uBatchTint);",
-    "new": "",
+    "old": "  lit *= elDecode(uBatchTint);   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
+    "new": "   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA5-WASH-EL-UNDECODED",
     "file": "src/render/enhancedLighting.js",
-    "old": "lit *= elDecode(uBatchTint);",
-    "new": "lit *= uBatchTint;",
+    "old": "  lit *= elDecode(uBatchTint);   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
+    "new": "  lit *= uBatchTint;   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA5-HALVES-SIDE",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "out[f.side] = b;",
-    "new": "out[0] = b;",
+    "old": "    if ((f.side === 0 || f.side === 1) && out[f.side] == null && (b === 'red' || b === 'blue')) out[f.side] = b;",
+    "new": "    if ((f.side === 0 || f.side === 1) && out[f.side] == null && (b === 'red' || b === 'blue')) out[0] = b;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA5-HALF-OF-FLIPPED",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "(x < 0 ? 0 : 1)",
-    "new": "(x < 0 ? 1 : 0)",
+    "old": "export const crowdHalfOf = (x) => (x < 0 ? 0 : 1);",
+    "new": "export const crowdHalfOf = (x) => (x < 0 ? 1 : 0);",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA5-WASH-ANY-BANNER",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "(banner === 'red' || banner === 'blue' ? CROWD_WASH[banner] : null)",
-    "new": "(banner ? CROWD_WASH[banner] ?? CROWD_WASH.red : null)",
+    "old": "export const crowdWash = (banner) => (banner === 'red' || banner === 'blue' ? CROWD_WASH[banner] : null);",
+    "new": "export const crowdWash = (banner) => (banner ? (CROWD_WASH[banner] ?? CROWD_WASH.red) : null);",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA5-CROWD-NOT-WASHED",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      if (g.tint) batch.tint = g.tint;",
-    "new": "      void g;",
+    "old": "      if (g.tint) batch.tint = g.tint; // ARENA5: its half's wash (render/renderer.js uBatchTint)",
+    "new": "      void g; // ARENA5: its half's wash (render/renderer.js uBatchTint)",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA5-CROWD-NOT-SPLIT",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const side = split ? crowdHalfOf(s.x) : 0;",
-    "new": "const side = 0;",
+    "old": "      const side = split ? crowdHalfOf(s.x) : 0;",
+    "new": "      const side = 0;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA5-CROWD-HALF-WRONG",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "tint: split ? crowdWash(halves[side]) : null",
-    "new": "tint: split ? crowdWash(halves[1 - side]) : null",
+    "old": "          tint: split ? crowdWash(halves[side]) : null,",
+    "new": "          tint: split ? crowdWash(halves[1 - side]) : null,",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ARENA5-RELAY-CROWD-THROWS",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "tier: nx ? nx.tier : C.ex?.tier ?? 0,",
-    "new": "tier: nx ? nx.tier : C.ex.tier,",
+    "old": "      tier: nx ? nx.tier : (C.ex?.tier ?? 0),",
+    "new": "      tier: nx ? nx.tier : C.ex.tier,",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ARENA5-HANG-SIDES-SWAPPED",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null",
-    "new": "dx <= -HANG_HALF_M ? banners.east : dx >= HANG_HALF_M ? banners.west : null",
+    "old": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null;",
+    "new": "  const b = dx <= -HANG_HALF_M ? banners.east : dx >= HANG_HALF_M ? banners.west : null;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA5-HANG-MIDDLE",
     "file": "src/world/arena/arenaFloor.js",
-    "old": ": dx >= HANG_HALF_M ? banners.east : null",
-    "new": ": dx >= 0 ? banners.east : null",
+    "old": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= HANG_HALF_M ? banners.east : null;",
+    "new": "  const b = dx <= -HANG_HALF_M ? banners.west : dx >= 0 ? banners.east : null;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA5-FLOOR-BANNERS-LADDER-SIDE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "return { west: ok(R ? R.banner : leagueNow()?.team), east: null };",
-    "new": "return { west: null, east: ok(R ? R.banner : leagueNow()?.team) };",
+    "old": "      return { west: ok(R ? R.banner : leagueNow()?.team), east: null };",
+    "new": "      return { west: null, east: ok(R ? R.banner : leagueNow()?.team) };",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ARENA5-FLOOR-BANNERS-REALM",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "return { west: ok(R ? R.banner : leagueNow()?.team), east: null };",
-    "new": "return { west: ok(leagueNow()?.team), east: null };",
+    "old": "      return { west: ok(R ? R.banner : leagueNow()?.team), east: null };",
+    "new": "      return { west: ok(leagueNow()?.team), east: null };",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA5-FLOOR-BANNERS-EXHIBITION",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (p.kind === 'exhibition') return { west: 'red', east: 'blue' };\n",
-    "new": "",
+    "old": "    if (p.kind === 'exhibition') return { west: 'red', east: 'blue' };\n    if (p.kind === 'ladder') {",
+    "new": "    if (p.kind === 'ladder') {",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]

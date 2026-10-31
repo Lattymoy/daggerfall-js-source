@@ -24,7 +24,14 @@ function coverage(pic, src, ax, ay) {
       const sx = x - ax;
       if (sx < 0 || sy < 0 || sx >= src.width || sy >= src.height) continue;
       const j = (sy * src.width + sx) * 4;
-      if (src.data[j + 3] !== 0 && src.data[j] === pic.data[i * 4] && src.data[j + 1] === pic.data[i * 4 + 1] && src.data[j + 2] === pic.data[i * 4 + 2] && pic.data[i * 4 + 3] === 255) same++;
+      if (
+        src.data[j + 3] !== 0 &&
+        src.data[j] === pic.data[i * 4] &&
+        src.data[j + 1] === pic.data[i * 4 + 1] &&
+        src.data[j + 2] === pic.data[i * 4 + 2] &&
+        pic.data[i * 4 + 3] === 255
+      )
+        same++;
     }
   }
   return same;
@@ -32,7 +39,9 @@ function coverage(pic, src, ax, ay) {
 
 /** Every classic record, frame 0..n, as RGBA - the search space. */
 export function* classicRecords(arena2, palette) {
-  for (const f of readdirSync(arena2).filter((n) => /^TEXTURE\.\d{3}$/i.test(n)).sort()) {
+  for (const f of readdirSync(arena2)
+    .filter((n) => /^TEXTURE\.\d{3}$/i.test(n))
+    .sort()) {
     const t = new TextureFile();
     if (!t.load(new Uint8Array(readFileSync(join(arena2, f))), f.toUpperCase(), palette)) continue;
     for (let r = 0; r < t.recordCount; r++) {

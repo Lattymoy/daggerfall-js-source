@@ -2,8 +2,8 @@
   {
     "name": "TELL6a-ring-inner",
     "file": "src/ai/blowShapes.js",
-    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
-    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.2, rOut: 4.0, mult: 1.5 }),",
+    "old": "  ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "  ring: Object.freeze({ windup: 1.0, rIn: 1.2, rOut: 4.0, mult: 1.5 }),",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TELL6a-ring-outer",
     "file": "src/ai/blowShapes.js",
-    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
-    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.5, mult: 1.5 }),",
+    "old": "  ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "  ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.5, mult: 1.5 }),",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TELL6a-ring-mult",
     "file": "src/ai/blowShapes.js",
-    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
-    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.75 }),",
+    "old": "  ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "  ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.75 }),",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TELL6a-feet-unsafe",
     "file": "src/ai/blowShapes.js",
-    "old": "return d >= P.rIn && d <= P.rOut; }   // TELL6: safe at its feet",
-    "new": "return d <= P.rOut; }   // TELL6: safe at its feet",
+    "old": "    return d >= P.rIn && d <= P.rOut;",
+    "new": "    return d <= P.rOut;",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "TELL6a-ring-never-lands",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (b.kind === 'ring') { const P = BLOW.ring, d = Math.hypot(rx, rz); return d >= P.rIn && d <= P.rOut; }   // TELL6: safe at its feet\n",
-    "new": "",
+    "old": "  if (b.kind === 'ring') {\n    const P = BLOW.ring,\n      d = Math.hypot(rx, rz);\n    return d >= P.rIn && d <= P.rOut;\n  } // TELL6: safe at its feet\n  if (b.kind === 'leap') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r; // TELL6: a disc at its point",
+    "new": "  if (b.kind === 'leap') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r; // TELL6: a disc at its point",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "TELL6a-mirror-off",
     "file": "src/render/foeTelegraph.js",
-    "old": "    const inside = d >= P.rIn && d <= P.rOut;\n    return { inside, edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn))",
-    "new": "    const inside = d <= P.rOut;\n    return { inside, edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn))",
+    "old": "    const inside = d >= P.rIn && d <= P.rOut;",
+    "new": "    const inside = d <= P.rOut;",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "TELL6a-up-wrong",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'ring') gl.uniform4f(U.uP, P.rIn, P.rOut, 0, 0);\n",
-    "new": "",
+    "old": "      else if (b.kind === 'ring') gl.uniform4f(U.uP, P.rIn, P.rOut, 0, 0);\n      else if (b.kind === 'leap' || b.kind === 'pyre')",
+    "new": "      else if (b.kind === 'leap' || b.kind === 'pyre')",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "TELL6a-quad-shared",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uHalf, quadHalf(b.kind, b.ahead));   // TELL6",
-    "new": "      gl.uniform1f(U.uHalf, BLOW_QUAD_HALF);   // TELL6",
+    "old": "      gl.uniform1f(U.uHalf, quadHalf(b.kind, b.ahead)); // TELL6: each its own size",
+    "new": "      gl.uniform1f(U.uHalf, BLOW_QUAD_HALF); // TELL6: each its own size",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "TELL6a-quad-tight",
     "file": "src/render/foeTelegraph.js",
-    "old": "? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.6;",
-    "new": "? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.2;",
+    "old": "    : (REACH[kind] ?? BLOW_QUAD_HALF)) + 0.6; // the aimed line: its own length; RVN5: a pyre's by its point",
+    "new": "    : (REACH[kind] ?? BLOW_QUAD_HALF)) + 0.2; // the aimed line: its own length; RVN5: a pyre's by its point",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "TELL6a-kind-id",
     "file": "src/render/foeTelegraph.js",
-    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
-    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 2, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
+    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
+    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 2, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
     "tests": [
       "test/characters/enemy/tell6a_ring.test.js"
     ]

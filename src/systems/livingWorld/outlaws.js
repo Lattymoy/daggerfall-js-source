@@ -22,9 +22,9 @@
 import { lwSeed, lwRng, textSeed, rollInt, pickOf } from './seed.js';
 import { NATIVE_PIXEL } from './trips.js';
 import { DAY_MIN } from './dayPlan.js';
-import { seededPersonName } from '../../characters/personNames.js';   // REGION-NAMES
+import { seededPersonName } from '../../characters/personNames.js'; // REGION-NAMES
 import { GENDERS } from '../../characters/nameHelper.js';
-import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's on the Bay
+import { nameBankOfArea } from '../../characters/areaNameBank.js'; // WW1: an area's people - the region's on the Bay
 import { isBayArea, inWorldGrid, theatreAt, theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
@@ -53,7 +53,14 @@ export const BAND_VACANT_DAYS = 20;
 export const COURT_BLOCKS = 16;
 /** A band's people: how many, and their classes. */
 export const BAND_SIZE = Object.freeze([4, 8]);
-export const OUTLAW_CLASSES = Object.freeze([MOBILE_TYPES.Thief, MOBILE_TYPES.Rogue, MOBILE_TYPES.Burglar, MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Archer]);
+export const OUTLAW_CLASSES = Object.freeze([
+  MOBILE_TYPES.Thief,
+  MOBILE_TYPES.Rogue,
+  MOBILE_TYPES.Burglar,
+  MOBILE_TYPES.Nightblade,
+  MOBILE_TYPES.Barbarian,
+  MOBILE_TYPES.Archer,
+]);
 /** The chest holds the take of this many days (the rest spent, or fenced), each robbery this share of a counter's purse
  *  (a trip that keeps none: ROB_GOLD) and TAKE_GOODS of its goods, to TAKE_GOODS_MAX. */
 export const TAKE_DAYS = 14;
@@ -62,9 +69,35 @@ export const ROB_GOLD = 40;
 export const TAKE_GOODS = 2;
 export const TAKE_GOODS_MAX = 16;
 /** A band's name: "the <word> <band>", or its leader's "<name>'s <band>". */
-export const BAND_WORDS = Object.freeze(['Black', 'Red', 'Grey', 'Iron', 'Broken', 'Hollow', 'Night', 'Ash', 'Bitter', 'Crooked', 'Silent', 'Hanged']);
-export const BAND_NOUNS = Object.freeze(['Hand', 'Wolves', 'Knives', 'Crows', 'Company', 'Brothers', 'Hounds', 'Blades', 'Ravens', 'Fangs']);
-const HIDE = 0x68696465, BAND = 0x62616e64, ROUT = 0x726f7574;   // 'hide', 'band', 'rout'
+export const BAND_WORDS = Object.freeze([
+  'Black',
+  'Red',
+  'Grey',
+  'Iron',
+  'Broken',
+  'Hollow',
+  'Night',
+  'Ash',
+  'Bitter',
+  'Crooked',
+  'Silent',
+  'Hanged',
+]);
+export const BAND_NOUNS = Object.freeze([
+  'Hand',
+  'Wolves',
+  'Knives',
+  'Crows',
+  'Company',
+  'Brothers',
+  'Hounds',
+  'Blades',
+  'Ravens',
+  'Fangs',
+]);
+const HIDE = 0x68696465,
+  BAND = 0x62616e64,
+  ROUT = 0x726f7574; // 'hide', 'band', 'rout'
 
 /**
  * @typedef {{ key: string, area: number, i: number, px: number, py: number, x: number, z: number, a: number, b: number,
@@ -78,7 +111,10 @@ const HIDE = 0x68696465, BAND = 0x62616e64, ROUT = 0x726f7574;   // 'hide', 'ban
 /** How many bands a region of `n` towns keeps. @param {number} n */
 export const bandCount = (n) => (n > 1 ? Math.min(BANDS_MAX, 1 + Math.floor(n / BAND_TOWNS_PER)) : 0);
 /** A map pixel's centre, native (the ways' frame: x east, z north). @param {number} px @param {number} py */
-export const pixelNative = (px, py) => ({ x: px * NATIVE_PIXEL + NATIVE_PIXEL / 2, z: (499 - py) * NATIVE_PIXEL + NATIVE_PIXEL / 2 });
+export const pixelNative = (px, py) => ({
+  x: px * NATIVE_PIXEL + NATIVE_PIXEL / 2,
+  z: (499 - py) * NATIVE_PIXEL + NATIVE_PIXEL / 2,
+});
 const cheb = (a, b) => Math.max(Math.abs(a.px - b.px), Math.abs(a.py - b.py));
 
 /**
@@ -92,7 +128,7 @@ const cheb = (a, b) => Math.max(Math.abs(a.px - b.px), Math.abs(a.py - b.py));
  * @returns {Hideout[] | undefined}
  */
 export function hideoutsOf(area, world) {
-  if (world.waitingArea?.(area)) return undefined;   // WW7-9: the land past the Bay under its bands still being laid: asked again
+  if (world.waitingArea?.(area)) return undefined; // WW7-9: the land past the Bay under its bands still being laid: asked again
   const towns = [...(world.townsIn?.(area) ?? [])].sort((p, q) => p.mapId - q.mapId);
   const n = bandCount(towns.length);
   if (!n) return [];
@@ -117,10 +153,27 @@ export function hideoutsOf(area, world) {
     taken.add(k);
     const [a, b] = legs[k];
     const plan = world.routeOf(a, b);
-    if (plan === undefined) return undefined;   // not planned yet: asked again
-    const at = plan?.pixels?.length ? hideoutOff(plan.pixels, lwSeed(area >>> 0, i, HIDE, 1), world, isBayArea(area) ? BAY_THEATRE : theatreOfArea(area)) : null;
+    if (plan === undefined) return undefined; // not planned yet: asked again
+    const at = plan?.pixels?.length
+      ? hideoutOff(
+          plan.pixels,
+          lwSeed(area >>> 0, i, HIDE, 1),
+          world,
+          isBayArea(area) ? BAY_THEATRE : theatreOfArea(area),
+        )
+      : null;
     if (!at) continue;
-    out.push({ key: `O${area >>> 0}.${i}`, area: area >>> 0, i, ...at, ...pixelNative(at.px, at.py), a: a.mapId, b: b.mapId, patrolled, top });
+    out.push({
+      key: `O${area >>> 0}.${i}`,
+      area: area >>> 0,
+      i,
+      ...at,
+      ...pixelNative(at.px, at.py),
+      a: a.mapId,
+      b: b.mapId,
+      patrolled,
+      top,
+    });
   }
   return out;
 }
@@ -129,16 +182,21 @@ export function hideoutsOf(area, world) {
  *  `theatre` (world/worldWide/worldGrid.js); null none. */
 function hideoutOff(pixels, seed, world, theatre = BAY_THEATRE) {
   const mid = Math.floor(pixels.length / 2);
-  const off = HIDEOUT_OFF_PX[seed % 2], side = (seed >>> 1) % 2 ? 1 : -1;
+  const off = HIDEOUT_OFF_PX[seed % 2],
+    side = (seed >>> 1) % 2 ? 1 : -1;
   for (const shift of [0, 1, -1, 2, -2]) {
     const m = Math.max(0, Math.min(pixels.length - 1, mid + shift));
-    const p = pixels[m], q = pixels[Math.min(pixels.length - 1, m + 1)], o = pixels[Math.max(0, m - 1)];
-    const dx = Math.sign(q.x - o.x), dy = Math.sign(q.y - o.y);
+    const p = pixels[m],
+      q = pixels[Math.min(pixels.length - 1, m + 1)],
+      o = pixels[Math.max(0, m - 1)];
+    const dx = Math.sign(q.x - o.x),
+      dy = Math.sign(q.y - o.y);
     const perp = dx || dy ? { x: -dy, y: dx } : { x: 1, y: 0 };
     for (const d of [off, HIDEOUT_OFF_PX[0] + HIDEOUT_OFF_PX[1] - off]) {
       for (const s of [side, -side]) {
-        const px = p.x + perp.x * d * s, py = p.y + perp.y * d * s;
-        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;   // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)
+        const px = p.x + perp.x * d * s,
+          py = p.y + perp.y * d * s;
+        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue; // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)
         if (world.townsNear(px, py, 0).length) continue;
         const c = pixelNative(px, py);
         if (world.dryAt && !world.dryAt(c.x, c.z)) continue;
@@ -166,20 +224,33 @@ const GENS = new Map();
  * @param {Hideout} h @param {number} t @returns {{ gen: number, formedT: number, vacant: boolean }}
  */
 export function genAt(h, t) {
-  const era = BAND_ERA_DAYS * DAY_MIN, vac = BAND_VACANT_DAYS * DAY_MIN;
+  const era = BAND_ERA_DAYS * DAY_MIN,
+    vac = BAND_VACANT_DAYS * DAY_MIN;
   const k = Math.max(0, Math.floor(t / era));
   // the eras before the one whose rout may still be in its vacancy (k - 1) are counted once, and kept
   let c = GENS.get(h.key);
   if (!c || c.e > k - 1) c = { e: 0, gen: 0, lastT: -Infinity };
-  for (; c.e < k - 1; c.e++) { const r = routOfEra(h, c.e); if (r != null) { c.gen++; c.lastT = r + vac; } }
+  for (; c.e < k - 1; c.e++) {
+    const r = routOfEra(h, c.e);
+    if (r != null) {
+      c.gen++;
+      c.lastT = r + vac;
+    }
+  }
   if (GENS.size > 512) GENS.clear();
   GENS.set(h.key, c);
-  let gen = c.gen, formedT = c.lastT, vacant = false;
+  let gen = c.gen,
+    formedT = c.lastT,
+    vacant = false;
   for (let e = Math.max(0, k - 1); e <= k; e++) {
     const r = routOfEra(h, e);
     if (r == null || r > t) continue;
-    if (t < r + vac) { vacant = true; continue; }
-    gen++; formedT = r + vac;
+    if (t < r + vac) {
+      vacant = true;
+      continue;
+    }
+    gen++;
+    formedT = r + vac;
   }
   return { gen, formedT, vacant };
 }
@@ -193,22 +264,34 @@ export function genAt(h, t) {
 export function outlawBandAt(h, t, routs = null, bankOf = nameBankOfArea) {
   const g = genAt(h, t);
   if (g.vacant) return null;
-  let heir = 0, formedT = g.formedT;
+  let heir = 0,
+    formedT = g.formedT;
   const vac = BAND_VACANT_DAYS * DAY_MIN;
   for (let r = routs?.get(`${h.key}@${g.gen}.0`); r; r = routs?.get(`${h.key}@${g.gen}.${heir}`)) {
-    if (r.t > t) break;   // a rout to come is no rout yet (a load past it reads it from its minute)
+    if (r.t > t) break; // a rout to come is no rout yet (a load past it reads it from its minute)
     if (t < r.t + vac) return null;
-    heir++; formedT = r.t + vac;
+    heir++;
+    formedT = r.t + vac;
   }
   const key = `${h.key}~${g.gen}${heir ? `h${heir}` : ''}`;
   const people = bandPeople(h, key, bankOf);
-  return { key, hideout: h, gen: g.gen, heir, formedT, name: outlawBandName(key, people[0]?.name ?? ''), level: Math.max(...people.map((p) => p.level)), people };
+  return {
+    key,
+    hideout: h,
+    gen: g.gen,
+    heir,
+    formedT,
+    name: outlawBandName(key, people[0]?.name ?? ''),
+    level: Math.max(...people.map((p) => p.level)),
+    people,
+  };
 }
 
 /** A band's name off its key (the leader's own one time in three). @param {string} key @param {string} leader */
 export function outlawBandName(key, leader) {
-  const rng = lwRng(textSeed(key), BAND, 0x6e616d65);   // 'name'
-  const noun = pickOf(rng, BAND_NOUNS), word = pickOf(rng, BAND_WORDS);
+  const rng = lwRng(textSeed(key), BAND, 0x6e616d65); // 'name'
+  const noun = pickOf(rng, BAND_NOUNS),
+    word = pickOf(rng, BAND_WORDS);
   const first = String(leader).split(' ')[0];
   return rng() < 1 / 3 && first ? `${first}'s ${noun}` : `the ${word} ${noun}`;
 }
@@ -223,9 +306,19 @@ export function bandPeople(h, key, bankOf = nameBankOfArea) {
   for (let i = 0; i < n; i++) {
     const female = rng() < 0.3;
     const gender = female ? GENDERS.Female : GENDERS.Male;
-    const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);
+    const cls =
+      i === 0
+        ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue])
+        : pickOf(rng, OUTLAW_CLASSES);
     const level = Math.max(1, base + (i === 0 ? 3 : rollInt(rng, -1, 2)));
-    out.push({ id: `${key}.${i}`, name: seededPersonName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.area), gender, { region: h.area ?? -1 }), cls, level, gender, sex: female ? 'female' : 'male' });
+    out.push({
+      id: `${key}.${i}`,
+      name: seededPersonName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.area), gender, { region: h.area ?? -1 }),
+      cls,
+      level,
+      gender,
+      sex: female ? 'female' : 'male',
+    });
   }
   return out;
 }
@@ -239,8 +332,13 @@ export function bandPeople(h, key, bankOf = nameBankOfArea) {
  * @returns {{ band: Band, foes: number[], level: number } | null}
  */
 export function bandTrouble(trip, px, py, t, hideouts, routs = null, max = 6) {
-  const near = hideouts.filter((h) => Math.max(Math.abs(h.px - px), Math.abs(h.py - py)) <= OUTLAW_REACH_PX)
-    .sort((a, b) => Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) || (a.key < b.key ? -1 : 1));
+  const near = hideouts
+    .filter((h) => Math.max(Math.abs(h.px - px), Math.abs(h.py - py)) <= OUTLAW_REACH_PX)
+    .sort(
+      (a, b) =>
+        Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) ||
+        (a.key < b.key ? -1 : 1),
+    );
   if (!near.length) return null;
   if (lwRng(textSeed(trip.id), BAND)() >= BAND_SHARE) return null;
   for (const h of near) {
@@ -268,6 +366,13 @@ export function takeOf(band, trips, t) {
     seen.add(tr.id);
     return true;
   });
-  const gold = robbed.reduce((a, tr) => a + (tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar' ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE) : ROB_GOLD), 0);
+  const gold = robbed.reduce(
+    (a, tr) =>
+      a +
+      (tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar'
+        ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE)
+        : ROB_GOLD),
+    0,
+  );
   return { robbed, gold, goods: Math.min(TAKE_GOODS_MAX, TAKE_GOODS * robbed.length) };
 }

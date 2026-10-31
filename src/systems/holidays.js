@@ -33,12 +33,26 @@
 //   used" comment means. It is kept in the enum and unreachable here.
 
 import { dayOfYearFromMinutes } from './gameDate.js';
-import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT 64 F10: DFRegion.LocationTypes, for the town arm's filter
+import { LOCATION_TYPES } from '../formats/mapsFile.js'; // AUDIT 64 F10: DFRegion.LocationTypes, for the town arm's filter
 
-import { HOLIDAYS, REGION_CELEBRATING_HOLIDAY, HOLIDAY_DAYS_OF_YEAR, HOLIDAY_SEARCH_LIMIT, HOLIDAY_LAST_DAY } from './holidayTables.js';   // WITCH1: the tables' leaf
+import {
+  HOLIDAYS,
+  REGION_CELEBRATING_HOLIDAY,
+  HOLIDAY_DAYS_OF_YEAR,
+  HOLIDAY_SEARCH_LIMIT,
+  HOLIDAY_LAST_DAY,
+} from './holidayTables.js'; // WITCH1: the tables' leaf
 
 // WITCH1: the tables live in holidayTables.js (a leaf the account service can load); every name stays readable here
-export { HOLIDAYS, REGION_CELEBRATING_HOLIDAY, HOLIDAY_DAYS_OF_YEAR, holidayDayOfYear, holidayRegion, HOLIDAY_SEARCH_LIMIT, HOLIDAY_LAST_DAY } from './holidayTables.js';
+export {
+  HOLIDAYS,
+  REGION_CELEBRATING_HOLIDAY,
+  HOLIDAY_DAYS_OF_YEAR,
+  holidayDayOfYear,
+  holidayRegion,
+  HOLIDAY_SEARCH_LIMIT,
+  HOLIDAY_LAST_DAY,
+} from './holidayTables.js';
 
 /** 360 * 1440: a whole year of minutes. */
 export const MINUTES_PER_YEAR = 518400;
@@ -51,8 +65,7 @@ export function getHolidayId(gameMinutes, regionIndex) {
   if (dayOfYear > HOLIDAY_LAST_DAY) return HOLIDAYS.None;
   for (let holidayID = 0; holidayID < HOLIDAY_SEARCH_LIMIT; holidayID++) {
     const region = REGION_CELEBRATING_HOLIDAY[holidayID];
-    if ((region === 0xFF || region === regionIndex + 1)
-      && dayOfYear === HOLIDAY_DAYS_OF_YEAR[holidayID]) {
+    if ((region === 0xff || region === regionIndex + 1) && dayOfYear === HOLIDAY_DAYS_OF_YEAR[holidayID]) {
       return holidayID + 1;
     }
   }
@@ -69,18 +82,21 @@ let _holidayByDay = null;
 export function holidayOn(dayOfYear) {
   if (!_holidayByDay) {
     _holidayByDay = new Map();
-    for (let i = 0; i < HOLIDAY_SEARCH_LIMIT; i++) _holidayByDay.set(HOLIDAY_DAYS_OF_YEAR[i], Object.freeze({ id: i + 1, region: REGION_CELEBRATING_HOLIDAY[i] }));
+    for (let i = 0; i < HOLIDAY_SEARCH_LIMIT; i++)
+      _holidayByDay.set(HOLIDAY_DAYS_OF_YEAR[i], Object.freeze({ id: i + 1, region: REGION_CELEBRATING_HOLIDAY[i] }));
   }
   return _holidayByDay.get(dayOfYear) ?? null;
 }
 /** HOLY-DAYS: GetHolidayId's own test of a row (:1844) - kept everywhere, or in this region (a region ID is the index
  *  plus one). */
-export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;
+export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex + 1;
 
 /** The three holidays a temple cures disease FREE on, and the one that
  *  halves the price (DaggerfallGuildServiceCureDisease :60-88). */
 export const FREE_CURE_HOLIDAYS = Object.freeze([
-  HOLIDAYS.South_Winds_Prayer, HOLIDAYS.First_Harvest, HOLIDAYS.Second_Harvest,
+  HOLIDAYS.South_Winds_Prayer,
+  HOLIDAYS.First_Harvest,
+  HOLIDAYS.Second_Harvest,
 ]);
 export const HALF_PRICE_CURE_HOLIDAY = HOLIDAYS.North_Winds_Festival;
 
@@ -115,9 +131,12 @@ export function holidayTextId(gameMinutes, regionIndex) {
  *  `else if (LocationType != Coven && != HomeYourShips)`) is the only
  *  one that primes, and Coven/HomeYourShips fall out of both. */
 export const HOLIDAY_TEXT_SILENT_LOCATION_TYPES = Object.freeze([
-  LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep,
-  LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard,
-  LOCATION_TYPES.Coven, LOCATION_TYPES.HomeYourShips,
+  LOCATION_TYPES.DungeonLabyrinth,
+  LOCATION_TYPES.DungeonKeep,
+  LOCATION_TYPES.DungeonRuin,
+  LOCATION_TYPES.Graveyard,
+  LOCATION_TYPES.Coven,
+  LOCATION_TYPES.HomeYourShips,
 ]);
 
 /** True when a rect entry of this location type takes DFU's TOWN arm,

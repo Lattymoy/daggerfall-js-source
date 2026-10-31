@@ -25,15 +25,15 @@
 // write.
 
 import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../../formats/factionFile.js';
-import { racialSuppressCrime } from '../lycanthropy.js';   // V4: SuppressCrime's inline gate (court.js imports this module)
-import { CRIMES } from '../crimes.js';   // GUARD1: the enum's leaf home - reachable from BOTH sides of the court/talk cycle
-import { tallyCrimeGuildRequirements } from '../crimeGuilds.js';   // CG2: a leaf, so this module can reach it
-import { dressTempleBonus } from '../clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the temple half of the clothing reaction, a leaf
+import { racialSuppressCrime } from '../lycanthropy.js'; // V4: SuppressCrime's inline gate (court.js imports this module)
+import { CRIMES } from '../crimes.js'; // GUARD1: the enum's leaf home - reachable from BOTH sides of the court/talk cycle
+import { tallyCrimeGuildRequirements } from '../crimeGuilds.js'; // CG2: a leaf, so this module can reach it
+import { dressTempleBonus } from '../clothingStanding.js'; // DRESS1 (2026-09-30, Discord): the temple half of the clothing reaction, a leaf
 import { calculatePickpocketingChance, dice100 } from '../../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from '../skills.js';
-import { addGoldPieces } from '../inventory.js';   // E4: the pinched purse lands in the counter
-import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';   // wave 26: the compass law
-import { REGION_NAMES } from '../../formats/mapsTables.js';   // BAY-LEFT-B: the compass law's regions are the world's
+import { addGoldPieces } from '../inventory.js'; // E4: the pinched purse lands in the counter
+import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js'; // wave 26: the compass law
+import { REGION_NAMES } from '../../formats/mapsTables.js'; // BAY-LEFT-B: the compass law's regions are the world's
 
 // PlayerActivate constants. AUDIT 24 (wave 23): these were a SECOND
 // declaration of PlayerActivate.cs:76-88, written out as bare
@@ -55,8 +55,14 @@ export const FOUND_NOTHING_VALUABLE_TEXT_ID = 8999;
  *  never-mind (425), the strings DirectionVector2DirectionHintString
  *  answers with. */
 export const DIRECTION_HINTS = localizedStrings({
-  east: 'east', northeast: 'northeast', north: 'north', northwest: 'northwest',
-  west: 'west', southwest: 'southwest', south: 'south', southeast: 'southeast',
+  east: 'east',
+  northeast: 'northeast',
+  north: 'north',
+  northwest: 'northwest',
+  west: 'west',
+  southwest: 'southwest',
+  south: 'south',
+  southeast: 'southeast',
   resolvingError: '...never mind...',
   thisPlace: 'this place',
 });
@@ -129,9 +135,10 @@ export function directionHintString(x, y) {
  *  @param {boolean} deps.isPlayerInside
  *  @param {number} deps.currentBuildingKey  the building being stood in
  */
-export function buildingCompassDirection({
-  listBuildings = [], playerPos = null, isPlayerInside = false, currentBuildingKey = 0,
-} = {}, buildingKey) {
+export function buildingCompassDirection(
+  { listBuildings = [], playerPos = null, isPlayerInside = false, currentBuildingKey = 0 } = {},
+  buildingKey,
+) {
   const ZERO = { buildingKey: 0, position: [0, 0, 0] };
   const list = listBuildings ?? [];
   const target = list.find((b) => b.buildingKey === buildingKey) ?? ZERO;
@@ -254,7 +261,7 @@ export function getPeopleOfCurrentRegion(factionDict, regionIndex) {
     guildGroup: GUILD_GROUPS.GeneralPopulace,
     region: regionIndex,
   });
-  if (factions.length !== 1) return null;   // DFU throws; the caller decides
+  if (factions.length !== 1) return null; // DFU throws; the caller decides
   return factions[0];
 }
 
@@ -280,7 +287,7 @@ export function getCourtOfCurrentRegion(factionDict, regionIndex) {
     guildGroup: GUILD_GROUPS.Region,
     region: regionIndex,
   });
-  if (factions.length !== 1) return null;   // DFU throws; the caller decides
+  if (factions.length !== 1) return null; // DFU throws; the caller decides
   return factions[0];
 }
 
@@ -300,7 +307,7 @@ export function getReactionToPlayer(faction, player) {
   const sgroup = faction.sgroup;
   if (sgroup >= 0 && sgroup < player.reactionMods.length) reaction += player.reactionMods[sgroup];
   if (sgroup >= 0 && sgroup < player.sGroupReputations.length) reaction += player.sGroupReputations[sgroup];
-  reaction += dressTempleBonus(faction, player);   // DRESS1 (2026-09-30, Discord "temple-specific robes with a positive buff for that temple faction"): a port addition, 0 unless priest(ess) robes are worn and the faction is a Temple
+  reaction += dressTempleBonus(faction, player); // DRESS1 (2026-09-30, Discord "temple-specific robes with a positive buff for that temple faction"): a port addition, 0 unless priest(ess) robes are worn and the faction is a Temple
   return reaction;
 }
 
@@ -332,22 +339,36 @@ export function getReactionToPlayer(faction, player) {
  *  notSuccessfulMessage)` :1650) - the one arm that has to stay out
  *  of the way, because the guards are spawning behind it.
  *  rolls: Math.random-compatible (Random.Range + Dice100). */
-export function pickpocket(player, { target = null, rolls = Math.random, nothingText = () => 'You found nothing valuable.' } = {}) {
+export function pickpocket(
+  player,
+  { target = null, rolls = Math.random, nothingText = () => 'You found nothing valuable.' } = {},
+) {
   tallySkill(player, SKILLS.Pickpocket, 1);
-  const chance = calculatePickpocketingChance(skillValue(player, SKILLS.Pickpocket), player.level,
-    target ? target.level ?? 0 : null);
+  const chance = calculatePickpocketingChance(
+    skillValue(player, SKILLS.Pickpocket),
+    player.level,
+    target ? (target.level ?? 0) : null,
+  );
   if (dice100(chance, rolls())) {
-    if (!dice100(33, rolls())) {   // Dice100.FailedRoll(33)
-      const gold = Math.floor(rolls() * 6) + 1;   // Random.Range(0,6) + 1
-      addGoldPieces(player, gold);   // E4: `player.GoldPieces += pinchedGoldPieces` (:1628)
+    if (!dice100(33, rolls())) {
+      // Dice100.FailedRoll(33)
+      const gold = Math.floor(rolls() * 6) + 1; // Random.Range(0,6) + 1
+      addGoldPieces(player, gold); // E4: `player.GoldPieces += pinchedGoldPieces` (:1628)
       // CG2: PlayerActivate.cs:1641's TallyCrimeGuildRequirements(true,
       // 1) - the pinched purse counts toward the Thieves Guild's ten.
       // Only the arm that actually TOOK something tallies: the 33%
       // "nothing to steal" arm below is a successful pickpocket that
       // stole nothing, and DFU's call sits inside the gold branch.
       tallyCrimeGuildRequirements(player, true, 1);
-      return { success: true, gold, modal: true, message: gold === 1 ? localizedText('youPinchedGoldPiece', 'You pinched 1 gold piece.')
-        : localizedText('youPinchedGoldPieces', 'You pinched %d gold pieces.').replace('%d', String(gold)) };   // PlayerActivate.cs:1633/1637
+      return {
+        success: true,
+        gold,
+        modal: true,
+        message:
+          gold === 1
+            ? localizedText('youPinchedGoldPiece', 'You pinched 1 gold piece.')
+            : localizedText('youPinchedGoldPieces', 'You pinched %d gold pieces.').replace('%d', String(gold)),
+      }; // PlayerActivate.cs:1633/1637
     }
     return { success: true, gold: 0, modal: true, message: nothingText() };
   }
@@ -382,15 +403,21 @@ export function pickpocket(player, { target = null, rolls = Math.random, nothing
 
 import { GENDERS, getNameBank, fullName } from '../../characters/nameHelper.js';
 import { srand } from '../../formats/dfRandom.js';
-import { localizedStrings, localizedText, getLocalizedFactionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and a faction's name
+import { localizedStrings, localizedText, getLocalizedFactionName } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and a faction's name
 
 /** FactionFile.FactionRaces (FactionFile.cs:609-622) -> the port's
  *  race keys (nameHelper's BANK_BY_RACE vocabulary). Skakmat (11) and
  *  Orc (17) fall through like None: GetRaceFromFactionRace answers
  *  Races.None and GetNameBank's default arm answers Breton. */
 export const FACTION_RACE_KEYS = Object.freeze({
-  0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
-  4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
+  0: 'Nord',
+  1: 'Khajiit',
+  2: 'Redguard',
+  3: 'Breton',
+  4: 'Argonian',
+  5: 'WoodElf',
+  6: 'HighElf',
+  7: 'DarkElf',
 });
 
 /**

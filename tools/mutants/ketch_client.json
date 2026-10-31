@@ -2,8 +2,8 @@
   {
     "name": "KTC-kept-without-my-name",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "Array.isArray(w.cr) && w.cr.some((c) => c?.[0] === mine) ?",
-    "new": "Array.isArray(w.cr) ?",
+    "old": "  w?.k === 'st' && mine && at && w.n === at.n && Array.isArray(w.cr) && w.cr.some((c) => c?.[0] === mine)",
+    "new": "  w?.k === 'st' && mine && at && w.n === at.n && Array.isArray(w.cr)",
     "tests": [
       "test/scenes/ketch_client.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTC-the-leader-over-the-ship-kept",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null) ? { owner: kept.o } : { captain: leader ?? mine });",
-    "new": "typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null) && !leader ? { owner: kept.o } : { captain: leader ?? mine });",
+    "old": "  (kept.p ?? null) === (party ?? null)",
+    "new": "  (kept.p ?? null) === (party ?? null) &&\n  !leader",
     "tests": [
       "test/scenes/ketch_client.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTC-another-voyages-ship-ridden-to",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "(kept && kept.n === n && kept.a === mine",
-    "new": "(kept && kept.a === mine",
+    "old": "  kept &&\n  kept.n === n &&\n  kept.a === mine &&\n  typeof kept.o === 'string' &&\n  kept.o &&\n  (kept.p ?? null) === (party ?? null)",
+    "new": "  kept && kept.a === mine && typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null)",
     "tests": [
       "test/scenes/ketch_client.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTC-a-share-kept-in-memory-alone",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "const keep = (list) => { memory = list; try { store?.set(KT_OWED_KEY, list); } catch { /* memory holds it */ } };",
-    "new": "const keep = (list) => { memory = list; };",
+    "old": "    try {\n      store?.set(KT_OWED_KEY, list);\n    } catch {\n      /* memory holds it */\n    }\n  };",
+    "new": "  };",
     "tests": [
       "test/scenes/ketch_shares.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTC-a-thrown-share-kept",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "if (ok) { drop(e); say(KT_SPOILS_TEXT.spilled); }",
-    "new": "if (ok) { say(KT_SPOILS_TEXT.spilled); }",
+    "old": "        drop(e);\n        say(KT_SPOILS_TEXT.spilled);",
+    "new": "        say(KT_SPOILS_TEXT.spilled);",
     "tests": [
       "test/scenes/ketch_shares.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTC-one-share-held",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "keep([...owed().filter((k) => !same(k, e)), e].slice(-KT_SHARES_OWED_MAX));",
-    "new": "keep([e]);",
+    "old": "      if (!owed().some((k) => same(k, e))) keep([...owed().filter((k) => !same(k, e)), e].slice(-KT_SHARES_OWED_MAX));",
+    "new": "      if (!owed().some((k) => same(k, e))) keep([e]);",
     "tests": [
       "test/scenes/ketch_shares.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTC-anothers-share-given",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "const mine = () => { const m = me(); return owed().filter((e) => !m || e.s === m); };",
-    "new": "const mine = () => owed();",
+    "old": "  const mine = () => {\n    const m = me();\n    return owed().filter((e) => !m || e.s === m);\n  };",
+    "new": "  const mine = () => owed();",
     "tests": [
       "test/scenes/ketch_shares.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "KTC-let-go-said-whether-it-went",
     "file": "src/player/carryStep.js",
-    "old": "return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };",
-    "new": "return (sendDrop(), { forced: false, letGoAt: t, say: 'letGo' });",
+    "old": "  if (st.forced && st.sheathed === false)\n    return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };",
+    "new": "  if (st.forced && st.sheathed === false) return (sendDrop(), { forced: false, letGoAt: t, say: 'letGo' });",
     "tests": [
       "test/scenes/ketch_client.test.js"
     ]

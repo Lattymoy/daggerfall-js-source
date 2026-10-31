@@ -29,8 +29,8 @@
   {
     "name": "LOOT7-dungeon-trait-from-the-low-bits",
     "file": "src/systems/champions.js",
-    "old": "e.champion = (h >>> 10) % CHAMPION_TRAITS.length;",
-    "new": "e.champion = h % CHAMPION_TRAITS.length;",
+    "old": "      e.champion = (h >>> 10) % CHAMPION_TRAITS.length;",
+    "new": "      e.champion = h % CHAMPION_TRAITS.length;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LOOT7-street-off",
     "file": "src/systems/champions.js",
-    "old": "  if (!lootRarityOn()) return null;\n  const h = mix(Math.round(",
-    "new": "  const h = mix(Math.round(",
+    "old": "  if (!lootRarityOn()) return null;\n  const h = mix(",
+    "new": "  const h = mix(",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LOOT7-street-without-the-count",
     "file": "src/systems/champions.js",
-    "old": "mobileType, ++_streetN, 0x57ee7);",
-    "new": "mobileType, 0x57ee7);",
+    "old": "    ++_streetN,\n    0x57ee7,",
+    "new": "    0x57ee7,",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LOOT7-street-without-its-type",
     "file": "src/systems/champions.js",
-    "old": "(Number(feet?.[2]) || 0) * 64), mobileType, ++_streetN",
-    "new": "(Number(feet?.[2]) || 0) * 64), ++_streetN",
+    "old": "    mobileType,\n    ++_streetN,",
+    "new": "    ++_streetN,",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LOOT7-street-without-the-spot",
     "file": "src/systems/champions.js",
-    "old": "const h = mix(Math.round((Number(feet?.[0]) || 0) * 64), Math.round((Number(feet?.[2]) || 0) * 64), ",
-    "new": "const h = mix(",
+    "old": "  const h = mix(\n    Math.round((Number(feet?.[0]) || 0) * 64),\n    Math.round((Number(feet?.[2]) || 0) * 64),\n    mobileType,\n    ++_streetN,\n    0x57ee7,\n  );",
+    "new": "  const h = mix(mobileType, ++_streetN, 0x57ee7);",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LOOT7-street-trait-from-the-low-bits",
     "file": "src/systems/champions.js",
-    "old": "? (h >>> 10) % CHAMPION_TRAITS.length : null;",
-    "new": "? h % CHAMPION_TRAITS.length : null;",
+    "old": "  return h % 1000 < CHAMPION_PER_MILLE ? (h >>> 10) % CHAMPION_TRAITS.length : null;",
+    "new": "  return h % 1000 < CHAMPION_PER_MILLE ? h % CHAMPION_TRAITS.length : null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LOOT7-stands-the-watch",
     "file": "src/systems/champions.js",
-    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly'",
-    "new": "  if (entity.team === 'PlayerAlly'",
+    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly')\n    return null;",
+    "new": "  if (entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "LOOT7-stands-an-ally",
     "file": "src/systems/champions.js",
-    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;",
+    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly')\n    return null;",
     "new": "  if (entity.mobileType === KNIGHT_CITY_WATCH) return null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "LOOT7-health-not-refilled",
     "file": "src/systems/champions.js",
-    "old": "  entity.health = entity.maxHealth;\n  entity.healthMult = (entity.healthMult ?? 1) * hp;",
-    "new": "  entity.healthMult = (entity.healthMult ?? 1) * hp;",
+    "old": "  entity.health = entity.maxHealth;\n  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LOOT7-over-the-elites-scale",
     "file": "src/systems/champions.js",
-    "old": "  entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE",
-    "new": "  entity.damageScale = CHAMPION_DAMAGE",
+    "old": "  entity.damageScale =\n    (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);",
+    "new": "  entity.damageScale = CHAMPION_DAMAGE * (t.damage ?? 1);",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LOOT7-mighty-no-more",
     "file": "src/systems/champions.js",
-    "old": "* CHAMPION_DAMAGE * (t.damage ?? 1);",
-    "new": "* CHAMPION_DAMAGE;",
+    "old": "  entity.damageScale =\n    (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);",
+    "new": "  entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOOT7-swift-uncapped",
     "file": "src/systems/champions.js",
-    "old": "entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
-    "new": "entity.stats.speed = (entity.stats.speed ?? 50) + t.speed;",
+    "old": "  if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
+    "new": "  if (t.speed && entity.stats) entity.stats.speed = (entity.stats.speed ?? 50) + t.speed;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LOOT7-every-champion-swift",
     "file": "src/systems/champions.js",
-    "old": "  if (t.speed && entity.stats)",
-    "new": "  if (entity.stats)",
+    "old": "  if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
+    "new": "  if (entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LOOT7-vampiric-drinks-all",
     "file": "src/systems/champions.js",
-    "old": "Math.max(1, Math.round((damage * t.drink) / 100))",
-    "new": "Math.max(1, Math.round(damage))",
+    "old": "  attacker.health = Math.min(\n    attacker.maxHealth ?? attacker.health,\n    attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)),\n  );",
+    "new": "  attacker.health = Math.min(attacker.maxHealth ?? attacker.health, attacker.health + Math.max(1, Math.round(damage)));",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LOOT7-vampiric-past-its-max",
     "file": "src/systems/champions.js",
-    "old": "  attacker.health = Math.min(attacker.maxHealth ?? attacker.health, attacker.health + ",
-    "new": "  attacker.health = (attacker.health + ",
+    "old": "  attacker.health = Math.min(\n    attacker.maxHealth ?? attacker.health,\n    attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)),\n  );",
+    "new": "  attacker.health = attacker.health + Math.max(1, Math.round((damage * t.drink) / 100));",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "LOOT7-hud-unnamed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')),",
-    "new": "    name: String(e.name ?? e.career?.name ?? 'Foe'),",
+    "old": "    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
+    "new": "    name: String(e.name ?? e.career?.name ?? 'Foe'), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "LOOT7-death-line-unnamed",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType));",
-    "new": "  const name = properName(entity) ?? enemyDisplayName(mobileType);",
+    "old": "  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "new": "  const name = properName(entity) ?? enemyDisplayName(mobileType); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]

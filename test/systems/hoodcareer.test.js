@@ -120,7 +120,7 @@ test('HOOD-CAREER: ONE hood law, and every career rung asks it - passiveSpecials
   const ps = read('src/systems/passiveSpecials.js');
   assert.match(ps, /^import \{ cloakState \} from '\.\/survival\/temperature\.js';/m, 'the felt temperature\'s hood, imported');
   assert.match(ps, /export function careerSunAverse\(entity\) \{\n\s*if \(!careerSunDamage\(entity\?\.career\)\) return false;\n\s*return !cloakState\(entity\.equip\?\.slots \?\? null\)\.hood;\n\}/);
-  assert.match(ps, /&& careerSunAverse\(entity\)\n\s*&& playerInSunlight\(clockMinutes\)\) \{\n\s*sinks\?\.hurt\?\.\(SUN_DAMAGE_AMOUNT\);/, 'the burn asks the hood');
+  assert.match(ps, /&& careerSunAverse\(entity\) && playerInSunlight\(clockMinutes\)\) \{\n\s*sinks\?\.hurt\?\.\(SUN_DAMAGE_AMOUNT\);/, 'the burn asks the hood');
   const world = hostText('src/scenes/world.js');
   assert.doesNotMatch(world, /careerSunDamage/, 'no rung reads the bare bit');
   assert.equal((world.match(/careerFastTravelBlock\(playerEntity, nowMin\)/g) ?? []).length, 3,

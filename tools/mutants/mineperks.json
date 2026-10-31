@@ -140,8 +140,8 @@
   {
     "name": "MINE-PERKS-ore-card-table-held",
     "file": "src/ui/oreMapTip.js",
-    "old": "(!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
-    "new": "(!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([...table.filter((k) => !own.includes(k) || (!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
     "tests": [
       "test/ui/mineperks.test.js"
     ],
@@ -159,8 +159,8 @@
   {
     "name": "MINE-PERKS-sensed-gone-kept",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
-    "new": "if ((l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "old": "      for (const l of state.lodes) if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "      for (const l of state.lodes) if ((l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "MINE-PERKS-sensed-spent-kept",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
-    "new": "if (t < l.closesAt) out.push(l);",
+    "old": "      for (const l of state.lodes) if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "      for (const l of state.lodes) if (t < l.closesAt) out.push(l);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "MINE-PERKS-lode-hour-once-risen",
     "file": "src/ui/lodeMapMark.js",
-    "old": "Number.isFinite(l.opensAt) && nowS < l.opensAt ? clock(l.opensAt) : null;",
-    "new": "Number.isFinite(l.opensAt) ? clock(l.opensAt) : null;",
+    "old": "  const at = clock && Number.isFinite(l.opensAt) && nowS < l.opensAt ? clock(l.opensAt) : null;",
+    "new": "  const at = clock && Number.isFinite(l.opensAt) ? clock(l.opensAt) : null;",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "MINE-PERKS-lode-off-its-pixel",
     "file": "src/ui/lodeMapMark.js",
-    "old": "out.push({ cx: l.x + 0.5, cy: l.y + 0.5,",
-    "new": "out.push({ cx: l.x, cy: l.y,",
+    "old": "    out.push({ cx: l.x + 0.5, cy: l.y + 0.5, r: BOUNTY_RING_R, label: lodeLabel(l, nowS, { oreName, clock }) });",
+    "new": "    out.push({ cx: l.x, cy: l.y, r: BOUNTY_RING_R, label: lodeLabel(l, nowS, { oreName, clock }) });",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

@@ -7,7 +7,10 @@
 /** The map pixel under scene point `p`, off terrain `t0`'s own (`edge` its side, the mod's terrainEdge): map x grows with
  *  the scene's x, map y against its z.
  *  @param {{ mapPixelX: number, mapPixelY: number, position: ArrayLike<number> }} t0 @param {ArrayLike<number>} p @param {number} edge */
-export const pixelUnderOn = (t0, p, edge) => ({ X: t0.mapPixelX + Math.floor((p[0] - t0.position[0]) / edge), Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / edge) });
+export const pixelUnderOn = (t0, p, edge) => ({
+  X: t0.mapPixelX + Math.floor((p[0] - t0.position[0]) / edge),
+  Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / edge),
+});
 
 /**
  * A boat's map pixel: her own, else the one under her off the player's terrain (kept on her), else - indoors, a dungeon's

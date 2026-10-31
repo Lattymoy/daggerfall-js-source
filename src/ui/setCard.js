@@ -16,10 +16,19 @@
 // brief - sigilSets.js BRIEF_MAX), the sentence under the pointer; a set piece's card was 1,000 px tall in a 660 px
 // window, the three sentences alone 250 of it. The INFO box asks `{ full: true }` and says everything: the Prince and
 // the role, the stage's whole line, every tier's sentence and its Ascendant numbers.
-import { setCardView, setSleepText, wornSets, wornSetPieces, setIdOf, setById, SET_PLACES, catchUpText } from '../systems/sigil/sigilSets.js';
+import {
+  setCardView,
+  setSleepText,
+  wornSets,
+  wornSetPieces,
+  setIdOf,
+  setById,
+  SET_PLACES,
+  catchUpText,
+} from '../systems/sigil/sigilSets.js';
 import { SIGIL_STAGES } from '../systems/sigil/sigil.js';
 import { sigilRuneTileUrl } from './sigilRune.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -31,23 +40,53 @@ const el = (tag, cls = null, text = null) => {
 /** The set's colour and its light and shade, as the block's custom properties (the kit's bevel: lit top-left,
  *  shaded bottom-right) - written from the set's record, so the sheet names no set. */
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-const mix = (hex, to, t) => `#${rgbOf(hex).map((c, i) => Math.round(c + (to[i] - c) * t).toString(16).padStart(2, '0')).join('')}`;
+const mix = (hex, to, t) =>
+  `#${rgbOf(hex)
+    .map((c, i) =>
+      Math.round(c + (to[i] - c) * t)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
 export function setShades(colour) {
   const c = /^#[0-9a-f]{6}$/i.test(String(colour)) ? String(colour).toLowerCase() : '#b9ab93';
-  return { '--set': c, '--set-hi': mix(c, [255, 255, 255], 0.45), '--set-lo': mix(c, [0, 0, 0], 0.55), '--set-rgb': rgbOf(c).join(',') };
+  return {
+    '--set': c,
+    '--set-hi': mix(c, [255, 255, 255], 0.45),
+    '--set-lo': mix(c, [0, 0, 0], 0.55),
+    '--set-rgb': rgbOf(c).join(','),
+  };
 }
 /** @param {any} node @param {string} colour */
-const dress = (node, colour) => { for (const [k, v] of Object.entries(setShades(colour))) node.style?.setProperty?.(k, v); return node; };
+const dress = (node, colour) => {
+  for (const [k, v] of Object.entries(setShades(colour))) node.style?.setProperty?.(k, v);
+  return node;
+};
 /** A picture's frame marked for its set - `data-set` and the corner rune's picture in the set's colour (the Plus sheet's
  *  rule reads --set-rune) - or unmarked, for a frame that outlives its item (the hotbar's slot, the diamond's cell). */
 export function markSetFrame(node, item) {
   const set = setById(setIdOf(item));
-  if (set) { node.dataset.set = set.id; node.style?.setProperty?.('--set-rune', sigilRuneTileUrl(set.colour)); }
-  else { delete node.dataset.set; node.style?.removeProperty?.('--set-rune'); }
+  if (set) {
+    node.dataset.set = set.id;
+    node.style?.setProperty?.('--set-rune', sigilRuneTileUrl(set.colour));
+  } else {
+    delete node.dataset.set;
+    node.style?.removeProperty?.('--set-rune');
+  }
   return node;
 }
 /** The nine places in words, in SET_PLACES' order - a socket's hover. */
-export const SET_PLACE_WORDS = Object.freeze(['Head', 'Right arm', 'Left arm', 'Chest', 'Hands', 'Legs', 'Feet', 'Shield', 'Weapon']);
+export const SET_PLACE_WORDS = Object.freeze([
+  'Head',
+  'Right arm',
+  'Left arm',
+  'Chest',
+  'Hands',
+  'Legs',
+  'Feet',
+  'Shield',
+  'Weapon',
+]);
 
 /** What the set's stage line says: its stage and what holds it, why it sleeps, or what would wake it. CARD-FIT: the
  *  card's (`compact`) leaves the stage's own name to the block's head and says only what would raise it - nothing at
@@ -60,7 +99,9 @@ export function setStageText(v, nameOf = (it) => String(it?.name ?? 'piece'), { 
     if (!next) return compact ? '' : v.stageName;
     // AUDIT SET U7: what it asks, as things to do - "your Boots grows" read wrong for every plural piece (boots,
     // gauntlets, greaves), and a verb that agrees with a player's own item name is no verb to trust
-    const piece = v.heldPiece ? `grow your ${nameOf(v.heldPiece)}${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}` : null;   // SET-CATCHUP: the price, and how fast it is paid
+    const piece = v.heldPiece
+      ? `grow your ${nameOf(v.heldPiece)}${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}`
+      : null; // SET-CATCHUP: the price, and how fast it is paid
     if (piece && v.renownNext) return `${at}${next}: ${piece}, reach Renown ${v.renownNext}`;
     if (piece) return `${at}${next}: ${piece}`;
     if (v.renownNext) return `${at}${next} at Renown ${v.renownNext}`;
@@ -80,7 +121,7 @@ export function setStageText(v, nameOf = (it) => String(it?.name ?? 'piece'), { 
 export function setCard(item, wearer, nameOf = undefined, { full = false } = {}) {
   const v = setCardView(item, wearer);
   if (!v || typeof document === 'undefined') return null;
-  noteFirstUse('sigil-sets');   // TUT1: the first set piece read
+  noteFirstUse('sigil-sets'); // TUT1: the first set piece read
   const box = el('section', full ? 'setbox' : 'setbox compact');
   box.dataset.set = v.id;
   box.dataset.stage = v.stage < 0 ? 'asleep' : String(v.stage);
@@ -88,7 +129,10 @@ export function setCard(item, wearer, nameOf = undefined, { full = false } = {})
   box.setAttribute('aria-label', `${v.name}, ${v.count} of ${v.of} worn`);
   const head = el('div', 'set-head');
   // the card's head carries the stage too, so the stage line can say only what would raise it
-  head.append(el('span', 'set-name', v.name), el('span', 'set-count', full || v.stage < 0 ? `${v.count}/${v.of}` : `${v.count}/${v.of} · ${v.stageName}`));
+  head.append(
+    el('span', 'set-name', v.name),
+    el('span', 'set-count', full || v.stage < 0 ? `${v.count}/${v.of}` : `${v.count}/${v.of} · ${v.stageName}`),
+  );
   box.append(head);
   if (full) box.append(el('p', 'set-role', `${v.prince} · ${v.role}${v.aetheric ? ' · Aetheric' : ''}`));
   // the nine places, lit where a piece of the set is worn
@@ -111,7 +155,11 @@ export function setCard(item, wearer, nameOf = undefined, { full = false } = {})
     body.append(el('span', 'set-tier-name', t.name));
     // the card's recovery: its own tag on the name's line, in the dashed frame a recovering power wears on the HUD (the
     // sentence says it in words)
-    if (!full && t.recover != null) { const tag = el('span', 'set-tier-every', `${t.recover}s`); tag.title = `Recovers in ${t.recover} s`; body.append(tag); }
+    if (!full && t.recover != null) {
+      const tag = el('span', 'set-tier-every', `${t.recover}s`);
+      tag.title = `Recovers in ${t.recover} s`;
+      body.append(tag);
+    }
     body.append(el('span', 'set-tier-text', full ? t.text : t.brief));
     row.append(body);
     const whole = full ? '' : t.text;
@@ -133,7 +181,7 @@ export function setStrip(wearer, { onPick = null } = {}) {
   if (!sets.length) return null;
   const pieces = wornSetPieces(wearer);
   const strip = el('div', 'setstrip');
-  strip.setAttribute('role', 'group');   // AUDIT SET U14: a label names a group, not a bare div
+  strip.setAttribute('role', 'group'); // AUDIT SET U14: a label names a group, not a bare div
   strip.setAttribute('aria-label', 'Sets worn');
   for (const st of sets) {
     const b = el('button', 'setline');
@@ -146,7 +194,11 @@ export function setStrip(wearer, { onPick = null } = {}) {
     b.append(pips, el('span', 'setline-stage', st.stage < 0 ? 'Asleep' : st.stageName));
     b.title = st.tiers.map((t) => `${t.at}: ${t.name}${t.awake ? '' : ' (inactive)'}`).join('\n');
     const first = pieces.get(st.id)?.[0] ?? null;
-    if (onPick && first) b.onclick = (e) => { e.stopPropagation(); onPick(first); };
+    if (onPick && first)
+      b.onclick = (e) => {
+        e.stopPropagation();
+        onPick(first);
+      };
     strip.append(b);
   }
   return strip;

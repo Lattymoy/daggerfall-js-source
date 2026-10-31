@@ -2,274 +2,352 @@
   {
     "name": "AUDIT-PVP-EASE-L1-1-the-window-by-carrying",
     "file": "server-account/src/wild.js",
-    "old": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();",
-    "new": ".bind(charId, killer, ctx.nowS - WILD_REPEAT_S, ctx.nowS + WILD_REPEAT_S).first();",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    .bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S)",
+    "new": "    .bind(charId, killer, ctx.nowS - WILD_REPEAT_S, ctx.nowS + WILD_REPEAT_S)",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-1-one-side-of-the-window",
     "file": "server-account/src/wild.js",
-    "old": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();",
-    "new": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + 1).first();",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    .bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S)",
+    "new": "    .bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + 1)",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-1-the-kill-time-unwritten",
     "file": "server-account/src/wild.js",
-    "old": "wg, JSON.stringify(tk), fallAt),",
-    "new": "wg, JSON.stringify(tk), ctx.nowS),",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "        fallAt,",
+    "new": "        ctx.nowS,",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-3-every-carried-policy-spent",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
-    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "      would.taken",
+    "new": "      (Array.isArray(entity?.items) ? entity.items : [])",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-3-the-pick-saves-nothing",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const would = takeWildDeath(copy, w, keep, wt, { letters, bag });",
     "new": "  const would = takeWildDeath(copy, -1, keep, wt, { letters, bag });",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-2-the-lapse-unwritten",
     "file": "server-account/src/wildInsure.js",
     "old": "    lapsed = [...held].filter((k) => !wildPolicyHeld(save, k));",
     "new": "    lapsed = [];",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-2-every-active-counted",
     "file": "server-account/src/wildInsure.js",
     "old": "    if (held.size - lapsed.length + keys.length > WILD_INSURE_MAX) return 'insure-full';",
     "new": "    if (held.size + keys.length > WILD_INSURE_MAX) return 'insure-full';",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-2-held-the-pack-alone",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  return text.includes(JSON.stringify(key));",
     "new": "  return JSON.stringify(save?.items ?? []).includes(JSON.stringify(key));",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L4-1-never-read-again",
     "file": "src/net/wild/wildInsureBook.js",
     "old": "      book.fresh();\n      const p = book.policyOf(item);",
     "new": "      const p = book.policyOf(item);",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L4-4-a-lost-answer-forgotten",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "      else { readAt = -Infinity; book.read(); }",
-    "new": "      else { readAt = -Infinity; }",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "        book.read();\n      } // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back",
+    "new": "      } // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L4-5-the-device-clock",
     "file": "src/scenes/world.js",
     "old": ", now: () => Date.now() + _sharedOffsetMs });   // AUDIT PVP-EASE L4-1, L4-5",
     "new": " });   // AUDIT PVP-EASE L4-1, L4-5",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-SET-D6-the-pack-loads-the-item-law",
     "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "import { wildInsureBook } from '../../net/wild/wildInsureSlot.js';",
     "new": "import { wildInsureBook } from '../../net/wild/wildInsureBook.js';",
-    "tests": ["test/systems/auditset_c.test.js"]
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-fight-uncarried",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);\n  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi; // PVP-VILLAIN: the meter, of any age (it never decays)",
+    "new": "  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi; // PVP-VILLAIN: the meter, of any age (it never decays)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-in-unread",
     "file": "src/net/wild/wildRef.js",
     "old": "  x.outAt = carry.in === 1 ? now : Math.max(x.outAt, carry.at);",
     "new": "  x.outAt = Math.max(x.outAt, carry.at);",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-carry-aged-whole",
     "file": "src/net/wild/wildRef.js",
     "old": "  if (!carry || !Number.isFinite(carry.at)) return;",
     "new": "  if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < WILD_REF.mendMs)) return;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-hub-newest-wins-alone",
     "file": "server/src/index.js",
     "old": "    if (had?.in === 1 && c.in !== 1 && had.lr && c.lr && had.lr !== c.lr) return json({ ok: true });\n",
     "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-entry-unput",
     "file": "server/src/index.js",
     "old": "    if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));",
     "new": "    void 0;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-leave-unput",
     "file": "server/src/index.js",
     "old": "this._wildLeaveCarry(a, Date.now()); }",
     "new": "}",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-5-the-end-unput",
     "file": "server/src/index.js",
     "old": "if (res.graceEnded) { this._wildGraceSay(a, 0); this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key)); }",
     "new": "if (res.graceEnded) { this._wildGraceSay(a, 0); }",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "PVP-DEATH-a-foes-death-an-entry",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
-    "new": "if (false) x.diedAt = -Infinity;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
+    "new": "    if (false) x.diedAt = -Infinity;",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-6-dd-uncarried",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);\n  if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return; // the bar and the fall: a word of a moment ago alone",
+    "new": "  if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return; // the bar and the fall: a word of a moment ago alone",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-6-the-death-unmarked",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!z && died && !x.down) x.diedAt = now;",
-    "new": "  void 0;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (!z && died && !x.down) x.diedAt = now; // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)",
+    "new": "  void 0; // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "PVP-DEATH-a-foes-death-graced",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
-    "new": "if (!x.down && x.diedAt > -Infinity) { x.graceUntil = now + WILD_GRACE.ms; x.diedAt = -Infinity; }",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;\n    else if (",
+    "new": "    if (!x.down && x.diedAt > -Infinity) {\n      x.graceUntil = now + WILD_GRACE.ms;\n      x.diedAt = -Infinity;\n    } else if (",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-4-a-take-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  x.graceUntil = -Infinity;\n  return true;\n}",
-    "new": "  return true;\n}",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  x.graceUntil = -Infinity;\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-4-the-relay-take-unsaid",
     "file": "server/src/index.js",
     "old": "this._wildGraceTake(a, now);   // AUDIT PVP-EASE L3-4 (the owner: \"Any take ends passage\"): its own remains or another's",
     "new": "void 0;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-3-a-graced-ship-shot",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (x.graceUntil > now) return { ...no('grace'), graceEnded };\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (x.graceUntil > now) return { ...no('grace'), graceEnded };\n  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM)",
+    "new": "  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-3-the-shooter-kept",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (graceEnded) a.graceUntil = -Infinity;\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (graceEnded) a.graceUntil = -Infinity;\n  if (x.graceUntil > now) return { ...no('grace'), graceEnded };",
+    "new": "  if (x.graceUntil > now) return { ...no('grace'), graceEnded };",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-3-a-gunfight-no-fight",
     "file": "src/net/sea/seaRef.js",
-    "old": "  a.fightAt = now; x.fightAt = now;",
-    "new": "  void 0;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  a.fightAt = now;\n  x.fightAt = now; // AUDIT PVP-EASE L3-3: a gunfight is a fight, for an entry's ask (wildRef.js wildZone)",
+    "new": "  void 0; // AUDIT PVP-EASE L3-3: a gunfight is a fight, for an entry's ask (wildRef.js wildZone)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-7-out-of-the-zone-said",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      if (!inZone) { if (mine || until.size) this.clear(); return; }\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "      if (!inZone) {\n        if (mine || until.size) this.clear();\n        return;\n      }\n      const at = now();",
+    "new": "      const at = now();",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L3-7-the-host-frames-blind",
     "file": "src/scenes/world.js",
     "old": "    wildGrace.frame(here);",
     "new": "    wildGrace.frame();",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-lock-length",
     "file": "src/systems/wild/wildStoreLock.js",
     "old": "export const WILD_STORE_LOCK_MS = 60_000;",
     "new": "export const WILD_STORE_LOCK_MS = 6_000;",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-blow-unnoted",
     "file": "src/scenes/world.js",
     "old": "    noteWildBlow();   // AUDIT PVP-EASE L2-1",
     "new": "    void 0;   // AUDIT PVP-EASE L2-1",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-gunfight-unnoted",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      if (g.to === me || g.by === me) noteWildBlow(now());\n",
-    "new": "",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "old": "      if (g.to === me || g.by === me) noteWildBlow(now());\n      if (g.to === me) {",
+    "new": "      if (g.to === me) {",
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-fall-unlocked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS);",
-    "new": "  noteWildBlow(Date.now());",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "old": "  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
+    "new": "  noteWildBlow(Date.now()); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-window-unasked",
     "file": "src/systems/inventorySession.js",
     "old": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();",
     "new": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : null;",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-ground-locked",
     "file": "src/systems/inventorySession.js",
     "old": "  if (state.chooseOne || (!state.usingWagon && deps.loot?.storage !== true)) return null;",
     "new": "  if (state.chooseOne) return null;",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-store-unread",
     "file": "src/systems/item/itemTransfer.js",
     "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };\n",
     "new": "",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-gold-unread",
     "file": "src/systems/item/itemTransfer.js",
     "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null };",
     "new": "  void 0;",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-kit-unlocked",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "gearRefusal(r, item, { kindName }) ?? wildStoreRefusal();",
-    "new": "gearRefusal(r, item, { kindName });",
-    "tests": ["test/systems/wild/combatlock.test.js"]
+    "old": "  const why = gearRefusal(r, item, { kindName }) ?? wildStoreRefusal(); // AUDIT PVP-EASE L2-1: a sworn one's kit is storage no zone death takes - the combat lock",
+    "new": "  const why = gearRefusal(r, item, { kindName }); // AUDIT PVP-EASE L2-1: a sworn one's kit is storage no zone death takes - the combat lock",
+    "tests": [
+      "test/systems/wild/combatlock.test.js"
+    ]
   }
 ]

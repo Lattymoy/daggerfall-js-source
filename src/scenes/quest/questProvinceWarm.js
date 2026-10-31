@@ -43,8 +43,14 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
   /** The rows of `region` nearest the questor first (a tie by row). @param {any} region */
   const orderOf = (region) => {
     const o = origin();
-    const at = (/** @type {any} */ row) => { const p = longitudeLatitudeToMapPixel(row.longitude, row.latitude); return o ? Math.max(Math.abs(p.x - o.x), Math.abs(p.y - o.y)) : 0; };
-    return region.mapTable.map((row, i) => [i, at(row)]).sort((a, b) => a[1] - b[1] || a[0] - b[0]).map((x) => x[0]);
+    const at = (/** @type {any} */ row) => {
+      const p = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
+      return o ? Math.max(Math.abs(p.x - o.x), Math.abs(p.y - o.y)) : 0;
+    };
+    return region.mapTable
+      .map((row, i) => [i, at(row)])
+      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
+      .map((x) => x[0]);
   };
   /** One tick: up to WARM_PER_TICK rows of the questor's province not stood before, stood. Answers how many it stood. */
   function tick() {
@@ -59,7 +65,7 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
       if (!row || warmed.has(row.mapId)) continue;
       warmed.add(row.mapId);
       provinces.getLocation(r, i);
-      provinces.sliceIndexAt?.(row.px, row.py);   // R2-5f: a capital slice's sites by kind, read while it is warm
+      provinces.sliceIndexAt?.(row.px, row.py); // R2-5f: a capital slice's sites by kind, read while it is warm
       if (++stood >= WARM_PER_TICK) break;
     }
     return stood;
@@ -71,7 +77,11 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
     if (stopped || !schedule || id !== liveWarm) return;
     schedule(() => {
       let n = 0;
-      try { n = tick(); } catch (e) { console.warn('[quest] province warm:', e); }
+      try {
+        n = tick();
+      } catch (e) {
+        console.warn('[quest] province warm:', e);
+      }
       if (n > 0) loop();
       else globalThis.setTimeout?.(loop, WARM_WAIT_MS);
     });
@@ -79,9 +89,19 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
   return {
     tick,
     /** Whether every row of the questor's province's table is stood. */
-    done() { const r = regionNow(); const region = isProvinceRegion(r) ? provinces.getRegion(r) : null; return !region || region.mapTable.every((/** @type {any} */ row) => warmed.has(row.mapId)); },
-    start() { stopped = false; id = ++liveWarm; loop(); },
-    stop() { stopped = true; },
+    done() {
+      const r = regionNow();
+      const region = isProvinceRegion(r) ? provinces.getRegion(r) : null;
+      return !region || region.mapTable.every((/** @type {any} */ row) => warmed.has(row.mapId));
+    },
+    start() {
+      stopped = false;
+      id = ++liveWarm;
+      loop();
+    },
+    stop() {
+      stopped = true;
+    },
   };
 }
 
@@ -89,7 +109,9 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
  *  else a timer. @returns {((tick: () => void) => void) | null} */
 export function idleSchedule() {
   const g = /** @type {any} */ (globalThis);
-  if (typeof g.requestIdleCallback === 'function') return (fn) => g.requestIdleCallback(fn, { timeout: WARM_WAIT_MS * 4 });
-  if (typeof g.setTimeout === 'function' && typeof g.window !== 'undefined') return (fn) => g.setTimeout(fn, WARM_WAIT_MS);
+  if (typeof g.requestIdleCallback === 'function')
+    return (fn) => g.requestIdleCallback(fn, { timeout: WARM_WAIT_MS * 4 });
+  if (typeof g.setTimeout === 'function' && typeof g.window !== 'undefined')
+    return (fn) => g.setTimeout(fn, WARM_WAIT_MS);
   return null;
 }

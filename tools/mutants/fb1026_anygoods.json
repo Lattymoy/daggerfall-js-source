@@ -32,8 +32,8 @@
   {
     "name": "ANY-GOODS-station-unsaid",
     "file": "src/net/craftWritLaw.js",
-    "old": "'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count'",
-    "new": "'Brew {n, number} more yourself - found or bought bottles do not count'",
+    "old": "      return t(\n        'prof.craftWrit.shortBrew',\n        'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count',\n        { n: w.qty - h.made },\n      );",
+    "new": "      return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself - found or bought bottles do not count', {\n        n: w.qty - h.made,\n      });",
     "tests": [
       "test/net/fb1026_anygoods.test.js"
     ],

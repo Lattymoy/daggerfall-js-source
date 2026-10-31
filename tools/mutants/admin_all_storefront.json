@@ -2,8 +2,8 @@
   {
     "name": "ADMIN-SF-effects-left-to-what-was-bought",
     "file": "server-account/src/titles.js",
-    "old": "const own = new Set(holdsAll(player, env) ? effectKeys(slot) : [...shopKeys(player, slot), ...passKeys(player, slot)]);",
-    "new": "const own = new Set([...shopKeys(player, slot), ...passKeys(player, slot)]);",
+    "old": "    const own = new Set(\n      holdsAll(player, env) ? effectKeys(slot) : [...shopKeys(player, slot), ...passKeys(player, slot)],\n    );",
+    "new": "    const own = new Set([...shopKeys(player, slot), ...passKeys(player, slot)]);",
     "tests": [
       "test/server/admin_all_storefront.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ADMIN-SF-the-folios-glyphs-left-out",
     "file": "server-account/src/titles.js",
-    "old": " || passKeysOf(PASS_ALL_GRANTS, 'glyph').includes(g)));",
-    "new": "));",
+    "old": "    (Object.values(TIER_GLYPH).includes(g) ||\n      SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g) ||\n      passKeysOf(PASS_ALL_GRANTS, 'glyph').includes(g)),",
+    "new": "    (Object.values(TIER_GLYPH).includes(g) || SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g)),",
     "tests": [
       "test/server/admin_all_storefront.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ADMIN-SF-a-pack-held",
     "file": "server-account/src/shop.js",
-    "old": "shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
-    "new": "shopOwns(player, w.id) || holdsAll(player, env);",
+    "old": "  shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
+    "new": "  shopOwns(player, w.id) || holdsAll(player, env);",
     "tests": [
       "test/server/admin_all_storefront.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ADMIN-SF-a-ware-sold-to-an-admin",
     "file": "server-account/src/shop.js",
-    "old": "shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
-    "new": "shopOwns(player, w.id);",
+    "old": "  shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
+    "new": "  shopOwns(player, w.id);",
     "tests": [
       "test/server/admin_all_storefront.test.js"
     ]

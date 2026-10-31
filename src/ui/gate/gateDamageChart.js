@@ -21,7 +21,7 @@
 // screen it takes the share's place. The ranking is the damage's still.
 //
 // Not a DFU member. Ledger A (WB).
-import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
+import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js'; // WB13c: the classic face, loaded by the gate's own screens
 
 /** The chart stands from this long after the fall was first seen on this screen (his body's fall and the spoils' burst
  *  first), for DAMAGE_CHART_MS, fading out over its last DAMAGE_CHART_FADE_MS. */
@@ -41,8 +41,8 @@ export const DAMAGE_CHART_TEXT = Object.freeze({
   title: 'Damage Dealt',
   sub: (boss, n) => `${boss} has fallen - ${n} ${n === 1 ? 'challenger' : 'challengers'}`,
   head: Object.freeze(['#', 'Challenger', 'Damage', 'Share', 'Blows', 'Best', 'Crystals', 'Falls']),
-  host: 'Host',   // WB11c: the column of his host's share - a Legion-Lord's court's alone
-  heal: 'Healed',   // GATE-HEAL: the column of what each healed in others - a court someone healed another in alone
+  host: 'Host', // WB11c: the column of his host's share - a Legion-Lord's court's alone
+  heal: 'Healed', // GATE-HEAL: the column of what each healed in others - a court someone healed another in alone
   level: (lv) => `Lv ${lv}`,
   you: '(you)',
   more: (k) => `and ${k} more`,
@@ -56,7 +56,11 @@ export const chartShare = (part, whole) => {
   const p = (part / whole) * 100;
   return p < 1 ? '<1%' : `${Math.round(p)}%`;
 };
-const sameName = (a, b) => typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase() && a.trim() !== '';
+const sameName = (a, b) =>
+  typeof a === 'string' &&
+  typeof b === 'string' &&
+  a.trim().toLowerCase() === b.trim().toLowerCase() &&
+  a.trim() !== '';
 
 /**
  * What the chart shows now, or null (nothing to show). `fell` the court's fall (net/gate/gateLink.js - its `dm` the relay's
@@ -69,19 +73,32 @@ const sameName = (a, b) => typeof a === 'string' && typeof b === 'string' && a.t
  * Hearts), `theme` a look of the chart's own (`brass`, the Hour's). Pure.
  * @param {any} fell @param {{ boss?: string, me?: string|null, since?: number, now?: number, crystals?: string, theme?: string|null }} [o]
  */
-export function damageChartModel(fell, { boss = 'The Warden', me = null, since = 0, now = 0, crystals = DAMAGE_CHART_TEXT.head[6], theme = null } = {}) {
+export function damageChartModel(
+  fell,
+  { boss = 'The Warden', me = null, since = 0, now = 0, crystals = DAMAGE_CHART_TEXT.head[6], theme = null } = {},
+) {
   const dm = Array.isArray(fell?.dm) ? fell.dm : null;
   if (!dm || !dm.length) return null;
   const age = now - since;
   if (!(age >= DAMAGE_CHART_DELAY_MS) || age >= DAMAGE_CHART_DELAY_MS + DAMAGE_CHART_MS) return null;
   const shown = age - DAMAGE_CHART_DELAY_MS;
   const alpha = Math.min(1, shown / 250, (DAMAGE_CHART_MS - shown) / DAMAGE_CHART_FADE_MS);
-  const whole = dm.reduce((s, r) => s + (r.d > 0 ? r.d : 0), 0), most = dm[0].d > 0 ? dm[0].d : 0;
-  const hosted = dm.some((r) => r.a !== undefined);   // WB11c: his host stood in this court
-  const healed = dm.some((r) => r.hl !== undefined);   // GATE-HEAL: someone healed another in it
+  const whole = dm.reduce((s, r) => s + (r.d > 0 ? r.d : 0), 0),
+    most = dm[0].d > 0 ? dm[0].d : 0;
+  const hosted = dm.some((r) => r.a !== undefined); // WB11c: his host stood in this court
+  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it
   const row = (r, i) => ({
-    rank: i + 1, name: r.n, level: DAMAGE_CHART_TEXT.level(r.l), damage: chartNumber(r.d), frac: most > 0 ? Math.max(0, Math.min(1, r.d / most)) : 0,
-    share: chartShare(r.d, whole), blows: chartNumber(r.h), best: chartNumber(r.b), crystals: chartNumber(r.x), falls: chartNumber(r.f), mine: sameName(r.n, me),
+    rank: i + 1,
+    name: r.n,
+    level: DAMAGE_CHART_TEXT.level(r.l),
+    damage: chartNumber(r.d),
+    frac: most > 0 ? Math.max(0, Math.min(1, r.d / most)) : 0,
+    share: chartShare(r.d, whole),
+    blows: chartNumber(r.h),
+    best: chartNumber(r.b),
+    crystals: chartNumber(r.x),
+    falls: chartNumber(r.f),
+    mine: sameName(r.n, me),
     ...(hosted ? { host: chartNumber(r.a ?? 0) } : {}),
     ...(healed ? { heal: chartNumber(r.hl ?? 0) } : {}),
   });
@@ -92,11 +109,26 @@ export function damageChartModel(fell, { boss = 'The Warden', me = null, since =
   const more = n - rows.length - (mine ? 1 : 0);
   return {
     key: `${crystals}:${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,
-    alpha: Math.round(alpha * 100) / 100, entering: shown < CHART_IN_MS,
-    title: DAMAGE_CHART_TEXT.title, sub: DAMAGE_CHART_TEXT.sub(boss, n), hosted, healed,
-    head: ((h) => (healed ? [...h, hosted ? DAMAGE_CHART_TEXT.host : '', DAMAGE_CHART_TEXT.heal] : hosted ? [...h, DAMAGE_CHART_TEXT.host] : h))(crystals === DAMAGE_CHART_TEXT.head[6] ? DAMAGE_CHART_TEXT.head : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c))),
-    theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null,   // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's
-    rows, mine, more: more > 0 ? DAMAGE_CHART_TEXT.more(more) : '',
+    alpha: Math.round(alpha * 100) / 100,
+    entering: shown < CHART_IN_MS,
+    title: DAMAGE_CHART_TEXT.title,
+    sub: DAMAGE_CHART_TEXT.sub(boss, n),
+    hosted,
+    healed,
+    head: ((h) =>
+      healed
+        ? [...h, hosted ? DAMAGE_CHART_TEXT.host : '', DAMAGE_CHART_TEXT.heal]
+        : hosted
+          ? [...h, DAMAGE_CHART_TEXT.host]
+          : h)(
+      crystals === DAMAGE_CHART_TEXT.head[6]
+        ? DAMAGE_CHART_TEXT.head
+        : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c)),
+    ),
+    theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null, // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's
+    rows,
+    mine,
+    more: more > 0 ? DAMAGE_CHART_TEXT.more(more) : '',
   };
 }
 
@@ -205,10 +237,15 @@ ${Array.from({ length: DAMAGE_CHART_ROWS + 3 }, (_, i) => `.wb-dmg-in > :nth-chi
  *  for a court his host stood in; GATE-HEAL: the healed, last, shown only for a court someone healed in. */
 const CELLS = Object.freeze(['rank', 'who', 'damage', 'share', 'blows', 'best', 'cx', 'falls', 'host', 'heal']);
 
-let root = null, parts = null;
+let root = null,
+  parts = null;
 let shown = { vis: '', key: '', alpha: -1, sub: '' };
 
-function div(doc, cls) { const n = doc.createElement('div'); n.className = cls; return n; }
+function div(doc, cls) {
+  const n = doc.createElement('div');
+  n.className = cls;
+  return n;
+}
 
 function rowNodes(doc, head) {
   const n = div(doc, head ? 'wb-dmg-row wb-dmg-head' : 'wb-dmg-row');
@@ -216,10 +253,16 @@ function rowNodes(doc, head) {
   n.append(...cells);
   if (head) return { n, cells };
   const who = cells[1];
-  const line = div(doc, 'wb-dmg-line'), name = doc.createElement('span'), lv = doc.createElement('span'), you = doc.createElement('span');
-  name.className = 'wb-dmg-name'; lv.className = 'wb-dmg-lv'; you.className = 'wb-dmg-you';
+  const line = div(doc, 'wb-dmg-line'),
+    name = doc.createElement('span'),
+    lv = doc.createElement('span'),
+    you = doc.createElement('span');
+  name.className = 'wb-dmg-name';
+  lv.className = 'wb-dmg-lv';
+  you.className = 'wb-dmg-you';
   line.append(name, lv, you);
-  const track = div(doc, 'wb-dmg-track'), fill = div(doc, 'wb-dmg-fill');
+  const track = div(doc, 'wb-dmg-track'),
+    fill = div(doc, 'wb-dmg-fill');
   track.append(fill);
   who.append(line, track);
   cells[2].className += ' wb-dmg-num';
@@ -232,11 +275,12 @@ function build(doc) {
     st.id = DAMAGE_CHART_STYLE_ID;
     st.textContent = DAMAGE_CHART_CSS;
     (doc.head ?? doc.body)?.append(st);
-    if (doc.head) injectEnhancedFonts(doc);   // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
+    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
   }
   root = div(doc, 'wb-dmg-chart');
-  root.setAttribute?.('aria-hidden', 'true');   // a readout over the game: the chat says the kill
-  const title = div(doc, 'wb-dmg-title'), sub = div(doc, 'wb-dmg-sub');
+  root.setAttribute?.('aria-hidden', 'true'); // a readout over the game: the chat says the kill
+  const title = div(doc, 'wb-dmg-title'),
+    sub = div(doc, 'wb-dmg-sub');
   const head = rowNodes(doc, true);
   const rows = Array.from({ length: DAMAGE_CHART_ROWS }, () => rowNodes(doc, false));
   const gap = div(doc, 'wb-dmg-gap');
@@ -249,7 +293,10 @@ function build(doc) {
 
 /** Write one row - a fighter's rank, name, level, bar and numbers - or hide it (no fighter for it). */
 function writeRow(r, m) {
-  if (!m) { r.n.style.display = 'none'; return; }
+  if (!m) {
+    r.n.style.display = 'none';
+    return;
+  }
   r.n.style.display = '';
   r.n.className = m.mine ? 'wb-dmg-row wb-dmg-mine' : 'wb-dmg-row';
   r.cells[0].textContent = String(m.rank);
@@ -263,8 +310,8 @@ function writeRow(r, m) {
   r.cells[5].textContent = m.best;
   r.cells[6].textContent = m.crystals;
   r.cells[7].textContent = m.falls;
-  r.cells[8].textContent = m.host ?? '';   // WB11c
-  r.cells[9].textContent = m.heal ?? '';   // GATE-HEAL
+  r.cells[8].textContent = m.host ?? ''; // WB11c
+  r.cells[9].textContent = m.heal ?? ''; // GATE-HEAL
 }
 
 /** Draw the chart for a model (null hides it); `hidden` is the HUD's own hide. */
@@ -275,7 +322,10 @@ export function drawGateDamageChart(model, { hidden = false, doc = globalThis.do
     build(doc);
   }
   const vis = want ? 'on' : 'off';
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
+  if (vis !== shown.vis) {
+    shown.vis = vis;
+    root.style.display = want ? '' : 'none';
+  }
   if (!want || !model) return;
   // WB11c: the host's column shown or not; GATE-HEAL: the healed; WB13c: entering
   const cls = `wb-dmg-chart${model.hosted ? ' wb-dmg-hosted' : ''}${model.healed ? ' wb-dmg-healed' : ''}${model.entering ? ' wb-dmg-in' : ''}${model.theme ? ` wb-dmg-${model.theme}` : ''}`;
@@ -283,20 +333,29 @@ export function drawGateDamageChart(model, { hidden = false, doc = globalThis.do
   if (model.key !== shown.key) {
     shown.key = model.key;
     parts.title.textContent = model.title;
-    parts.head.cells.forEach((c, i) => { c.textContent = model.head[i] ?? ''; });
+    parts.head.cells.forEach((c, i) => {
+      c.textContent = model.head[i] ?? '';
+    });
     parts.rows.forEach((r, i) => writeRow(r, model.rows[i] ?? null));
     parts.gap.style.display = model.mine ? '' : 'none';
     writeRow(parts.mine, model.mine);
     parts.more.textContent = model.more;
     parts.more.style.display = model.more ? '' : 'none';
   }
-  if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }
-  if (model.alpha !== shown.alpha) { shown.alpha = model.alpha; root.style.opacity = String(model.alpha); }
+  if (model.sub !== shown.sub) {
+    shown.sub = model.sub;
+    parts.sub.textContent = model.sub;
+  }
+  if (model.alpha !== shown.alpha) {
+    shown.alpha = model.alpha;
+    root.style.opacity = String(model.alpha);
+  }
 }
 
 /** The page is going (a test's reset): the node leaves with it. */
 export function destroyGateDamageChart() {
   root?.remove?.();
-  root = null; parts = null;
+  root = null;
+  parts = null;
   shown = { vis: '', key: '', alpha: -1, sub: '' };
 }

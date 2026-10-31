@@ -24,28 +24,50 @@
 // them at the end of finishChargen, PROPAGATING, exactly as
 // BiogFile.cs:339 does.
 
-import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js';   // E4: the GP command writes the counter
+import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js'; // E4: the GP command writes the counter
 import { itemBaseValue, templateByIndex, templateFor, mintCondition } from './item/itemTemplates.js';
-import { createWeapon } from '../combat/enemyEquipment.js';   // DISC21-A: ItemBuilder.CreateWeapon's one home - the condition mints with it
+import { createWeapon } from '../combat/enemyEquipment.js'; // DISC21-A: ItemBuilder.CreateWeapon's one home - the condition mints with it
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
 import { ensureReactionState } from './talk/talk.js';
-import { createRandomBook } from './books.js';   // A2: ItemBuilder.CreateRandomBook, one member
-import { expandTalkMacros, MACRO_SYMBOLS } from './talk/talkMacros.js';   // AUDIT 64 F29: MacroHelper.ExpandMacros' walk, one home
-import { getMacroValue } from './quest/questMacros.js';              // AUDIT 64 F29: MacroHelper.GetValue's ladder
-import { setSeed, rand } from '../formats/dfRandom.js';              // AUDIT 64 F29: DFRandom.Seed / rand() the four name macros ride
+import { createRandomBook } from './books.js'; // A2: ItemBuilder.CreateRandomBook, one member
+import { expandTalkMacros, MACRO_SYMBOLS } from './talk/talkMacros.js'; // AUDIT 64 F29: MacroHelper.ExpandMacros' walk, one home
+import { getMacroValue } from './quest/questMacros.js'; // AUDIT 64 F29: MacroHelper.GetValue's ladder
+import { setSeed, rand } from '../formats/dfRandom.js'; // AUDIT 64 F29: DFRandom.Seed / rand() the four name macros ride
 import { GENDERS, getNameBank, fullName } from '../characters/nameHelper.js';
-import { localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedTable } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
-  0: 'Drugs', 1: 'UselessItems1', 2: 'Armor', 3: 'Weapons', 4: 'MagicItems',
-  5: 'Artifacts', 6: 'MensClothing', 7: 'Books', 8: 'Furniture', 9: 'UselessItems2',
-  10: 'ReligiousItems', 11: 'Maps', 12: 'WomensClothing', 13: 'Paintings', 14: 'Gems',
-  15: 'PlantIngredients1', 16: 'PlantIngredients2', 17: 'CreatureIngredients1',
-  18: 'CreatureIngredients2', 19: 'CreatureIngredients3', 20: 'MiscellaneousIngredients1',
-  21: 'MetalIngredients', 22: 'MiscellaneousIngredients2', 23: 'Transportation',
-  24: 'Deeds', 25: 'Jewellery', 26: 'QuestItems', 27: 'MiscItems', 28: 'Currency',
+  0: 'Drugs',
+  1: 'UselessItems1',
+  2: 'Armor',
+  3: 'Weapons',
+  4: 'MagicItems',
+  5: 'Artifacts',
+  6: 'MensClothing',
+  7: 'Books',
+  8: 'Furniture',
+  9: 'UselessItems2',
+  10: 'ReligiousItems',
+  11: 'Maps',
+  12: 'WomensClothing',
+  13: 'Paintings',
+  14: 'Gems',
+  15: 'PlantIngredients1',
+  16: 'PlantIngredients2',
+  17: 'CreatureIngredients1',
+  18: 'CreatureIngredients2',
+  19: 'CreatureIngredients3',
+  20: 'MiscellaneousIngredients1',
+  21: 'MetalIngredients',
+  22: 'MiscellaneousIngredients2',
+  23: 'Transportation',
+  24: 'Deeds',
+  25: 'Jewellery',
+  26: 'QuestItems',
+  27: 'MiscItems',
+  28: 'Currency',
 });
 
 /** WeaponToArmorMaterialType (BiogFile.cs:490-517): the same NAME on
@@ -112,8 +134,14 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
   // SKILL: a leading integer is a skill id, tokens[1] the modifier
   if (Number.isInteger(n) && /^-?\d+$/.test(tokens[0])) {
     const mod = Number.parseInt(tokens[1], 10);
-    if (!Number.isInteger(mod)) { console.warn(`[biog] invalid skill adjustment: ${effect}`); return null; }
-    if (n < 0 || n >= SKILL_COUNT) { console.warn(`[biog] skill id out of range: ${effect}`); return null; }
+    if (!Number.isInteger(mod)) {
+      console.warn(`[biog] invalid skill adjustment: ${effect}`);
+      return null;
+    }
+    if (n < 0 || n >= SKILL_COUNT) {
+      console.warn(`[biog] skill id out of range: ${effect}`);
+      return null;
+    }
     if (Array.isArray(entity.skills)) entity.skills[n] = (entity.skills[n] ?? 0) + mod;
     return 'skill';
   }
@@ -122,7 +150,10 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     // amount" (:271-275) - "+ 500" is one argument, not two
     const arg = tokens.length > 2 ? tokens[1] + tokens[2] : tokens[1];
     const v = Number.parseInt(arg, 10);
-    if (!Number.isFinite(v)) { console.warn(`[biog] GP - invalid argument: ${effect}`); return null; }
+    if (!Number.isFinite(v)) {
+      console.warn(`[biog] GP - invalid argument: ${effect}`);
+      return null;
+    }
     // E4: `playerEntity.GoldPieces +=/-= parseResult` (:283-289) - the
     // COUNTER, which is what BiogFile writes. The MINUS arm stays the
     // port's own (Ledger A): DFU double-negates the already-signed
@@ -134,20 +165,32 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
   }
   if (effect.startsWith('IT')) {
     const [g, gi, mat] = [tokens[1], tokens[2], tokens[3]].map((t) => Number.parseInt(t, 10));
-    if (![g, gi, mat].every(Number.isFinite)) { console.warn(`[biog] IT - invalid argument(s): ${effect}`); return null; }
+    if (![g, gi, mat].every(Number.isFinite)) {
+      console.warn(`[biog] IT - invalid argument(s): ${effect}`);
+      return null;
+    }
     const group = ITEM_GROUP_BY_ID[g];
     const item = group ? mintItem(group, gi, mat, rolls) : null;
-    if (!item) { console.warn(`[biog] IT - no template for ${effect}`); return null; }
+    if (!item) {
+      console.warn(`[biog] IT - no template for ${effect}`);
+      return null;
+    }
     entity.items = entity.items ?? [];
     addItem(entity.items, item);
     return 'item';
   }
   if (effect.startsWith('r')) {
     const amount = Number.parseInt(tokens[1], 10);
-    if (!Number.isFinite(amount)) { console.warn(`[biog] r - invalid argument: ${effect}`); return null; }
+    if (!Number.isFinite(amount)) {
+      console.warn(`[biog] r - invalid argument: ${effect}`);
+      return null;
+    }
     if (effect[1] === 'f') {
       const id = Number.parseInt(tokens[0].split('f')[1], 10);
-      if (!Number.isFinite(id)) { console.warn(`[biog] rf - invalid argument: ${effect}`); return null; }
+      if (!Number.isFinite(id)) {
+        console.warn(`[biog] rf - invalid argument: ${effect}`);
+        return null;
+      }
       // parked for attachFactionRep (S25) - the store does not exist
       // yet at this point in the flow
       entity.pendingFactionRep = entity.pendingFactionRep ?? [];
@@ -156,27 +199,38 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     }
     const id = Number.parseInt(tokens[0].split('r')[1], 10);
     if (!Number.isFinite(id) || id < 0 || id >= entity.sGroupReputations.length) {
-      console.warn(`[biog] r - invalid argument: ${effect}`); return null;
+      console.warn(`[biog] r - invalid argument: ${effect}`);
+      return null;
     }
     entity.sGroupReputations[id] += amount;
     return 'socialRep';
   }
   // the six single-field biography modifiers - each ASSIGNS, it does
   // not accumulate (:351-423 all read `= parseResult`)
-  const MODS = { RP: 'biographyResistPoisonMod', FT: 'biographyFatigueMod', RR: 'biographyReactionMod', RD: 'biographyResistDiseaseMod', MR: 'biographyResistMagicMod', TH: 'biographyAvoidHitMod' };
+  const MODS = {
+    RP: 'biographyResistPoisonMod',
+    FT: 'biographyFatigueMod',
+    RR: 'biographyReactionMod',
+    RD: 'biographyResistDiseaseMod',
+    MR: 'biographyResistMagicMod',
+    TH: 'biographyAvoidHitMod',
+  };
   for (const [cmd, field] of Object.entries(MODS)) {
     if (!effect.startsWith(cmd)) continue;
     const v = Number.parseInt(tokens[1], 10);
-    if (!Number.isFinite(v)) { console.warn(`[biog] ${cmd} - invalid argument: ${effect}`); return null; }
+    if (!Number.isFinite(v)) {
+      console.warn(`[biog] ${cmd} - invalid argument: ${effect}`);
+      return null;
+    }
     entity[field] = v;
     return cmd;
   }
   if (isTextEffect(effect)) return 'text';
   if (effect.startsWith('AE') || effect.startsWith('AF') || effect.startsWith('AO')) {
-    console.log(`[biog] ${effect.slice(0, 2)} - command unimplemented`);   // verbatim: DFU has not implemented these either
+    console.log(`[biog] ${effect.slice(0, 2)} - command unimplemented`); // verbatim: DFU has not implemented these either
     return 'unimplemented';
   }
-  console.warn(`[biog] Invalid command - ${effect}`);   // the bare '&' lands here, as it does in DFU
+  console.warn(`[biog] Invalid command - ${effect}`); // the bare '&' lands here, as it does in DFU
   return null;
 }
 
@@ -186,7 +240,9 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
 export function digestRepChanges(effects, groups = 5) {
   const changed = new Array(groups).fill(0);
   for (const e of effects ?? []) {
-    const tokens = String(e).split(/\s+/).filter((x) => x.length);
+    const tokens = String(e)
+      .split(/\s+/)
+      .filter((x) => x.length);
     // the `e[1] === 'f'` arm is DEFENSIVE in DFU and redundant in
     // practice - "rf42".split('r')[1] is "f42", which never parses -
     // so it is ported but carries no pin of its own
@@ -224,33 +280,56 @@ export function digestRepChanges(effects, groups = 5) {
  *  verbatim over it: base for %bn and %imp, base+123 for %fn,
  *  base+9543 for %mn, each RESEEDING before its single draw, so the
  *  three names stay distinct exactly as DFU's are. */
-const HOME_PROVINCE = localizedTable({   // HomeProvinceName (:87-115)
-  Argonian: ['blackMarsh', 'Black Marsh'], Breton: ['highRock', 'High Rock'], DarkElf: ['morrowind', 'Morrowind'],
-  HighElf: ['sumurset', 'Sumurset'], Khajiit: ['elsweyr', 'Elsweyr'], Nord: ['skyrim', 'Skyrim'],
-  Redguard: ['hammerfell', 'Hammerfell'], WoodElf: ['valenwood', 'Valenwood'],
+const HOME_PROVINCE = localizedTable({
+  // HomeProvinceName (:87-115)
+  Argonian: ['blackMarsh', 'Black Marsh'],
+  Breton: ['highRock', 'High Rock'],
+  DarkElf: ['morrowind', 'Morrowind'],
+  HighElf: ['sumurset', 'Sumurset'],
+  Khajiit: ['elsweyr', 'Elsweyr'],
+  Nord: ['skyrim', 'Skyrim'],
+  Redguard: ['hammerfell', 'Hammerfell'],
+  WoodElf: ['valenwood', 'Valenwood'],
 });
-const GEOGRAPHICAL_FEATURE = localizedTable({   // GeographicalFeature (:117-141)
-  Argonian: ['swamps', 'swamps'], Breton: ['rollingHills', 'rolling hills'], DarkElf: ['mountains', 'mountains'],
-  HighElf: ['shores', 'shores'], Khajiit: ['desertLand', 'desertland'], Nord: ['mountains', 'mountains'],
-  Redguard: ['desertLand', 'desertland'], WoodElf: ['forests', 'forests'],
+const GEOGRAPHICAL_FEATURE = localizedTable({
+  // GeographicalFeature (:117-141)
+  Argonian: ['swamps', 'swamps'],
+  Breton: ['rollingHills', 'rolling hills'],
+  DarkElf: ['mountains', 'mountains'],
+  HighElf: ['shores', 'shores'],
+  Khajiit: ['desertLand', 'desertland'],
+  Nord: ['mountains', 'mountains'],
+  Redguard: ['desertLand', 'desertland'],
+  WoodElf: ['forests', 'forests'],
 });
 /** ImperialName (:618-624) - the literal table, NOT SaveVars'
  *  emperorSonNames, despite %imp reading those elsewhere. */
-const IMPERIAL_NAMES = Object.freeze(
-  ['Pelagius', 'Cephorus', 'Uriel', 'Cassynder', 'Voragiel', 'Trabbatus']);
+const IMPERIAL_NAMES = Object.freeze(['Pelagius', 'Cephorus', 'Uriel', 'Cassynder', 'Voragiel', 'Trabbatus']);
 
 export function biogMacroSource(raceKey, seed) {
-  const bank = () => getNameBank(raceKey);   // MacroHelper.GetNameBank (:344-366)
+  const bank = () => getNameBank(raceKey); // MacroHelper.GetNameBank (:344-366)
   return {
     homeProvinceName: () => HOME_PROVINCE[raceKey] ?? null,
     geographicalFeature: () => GEOGRAPHICAL_FEATURE[raceKey] ?? null,
     // Name %bn (:143-148)
-    name() { setSeed(seed); return fullName(bank(), GENDERS.Male); },
+    name() {
+      setSeed(seed);
+      return fullName(bank(), GENDERS.Male);
+    },
     // ImperialName %imp (:618-624)
-    imperialName() { setSeed(seed); return IMPERIAL_NAMES[rand() % 6]; },
+    imperialName() {
+      setSeed(seed);
+      return IMPERIAL_NAMES[rand() % 6];
+    },
     // FemaleName %fn (:626-632) / MaleName %mn (:633-638)
-    femaleName() { setSeed(seed + 123); return fullName(bank(), GENDERS.Female); },
-    maleName() { setSeed(seed + 9543); return fullName(bank(), GENDERS.Male); },
+    femaleName() {
+      setSeed(seed + 123);
+      return fullName(bank(), GENDERS.Female);
+    },
+    maleName() {
+      setSeed(seed + 9543);
+      return fullName(bank(), GENDERS.Male);
+    },
   };
 }
 
@@ -281,7 +360,10 @@ export function generateBackstory(textRsc, backstoryId, effects, ctx = {}) {
     if (!isTextEffect(e)) continue;
     const [command, index] = String(e).split(' ');
     const q = Number.parseInt(index, 10);
-    if (!Number.isFinite(q)) { console.warn('[biog] GenerateBackstory: Invalid question index.'); continue; }
+    if (!Number.isFinite(q)) {
+      console.warn('[biog] GenerateBackstory: Invalid question index.');
+      continue;
+    }
     const id = Number.parseInt(command.slice(1), 10);
     if (!Number.isFinite(id)) continue;
     (perQuestion[q] = perQuestion[q] ?? []).push(id);
@@ -322,7 +404,7 @@ export function generateBackstory(textRsc, backstoryId, effects, ctx = {}) {
   // (test/systems/biography.test.js); it is not re-decided here. Everything
   // ELSE rides the real ladder, sentinels and all.
   const mcp = { source: biogMacroSource(ctx.raceKey ?? null, ctx.seed ?? 0) };
-  const hooks = { playerRaceName: () => ctx.raceName ?? null };   // %ra, MacroHelper.cs:942-945
+  const hooks = { playerRaceName: () => ctx.raceName ?? null }; // %ra, MacroHelper.cs:942-945
   const handlers = {};
   for (const symbol of MACRO_SYMBOLS) handlers[symbol] = () => getMacroValue(symbol, mcp, hooks);
   for (let n = 1; n <= 12; n++) {
@@ -350,9 +432,12 @@ export function applyBiographyEffects(entity, effects, opts = {}) {
 export function biographySkillBonuses(effects) {
   const out = new Array(SKILL_COUNT).fill(0);
   for (const e of effects ?? []) {
-    const t = String(e).split(/\s+/).filter((x) => x.length);
+    const t = String(e)
+      .split(/\s+/)
+      .filter((x) => x.length);
     if (!/^-?\d+$/.test(t[0] ?? '')) continue;
-    const id = Number.parseInt(t[0], 10), mod = Number.parseInt(t[1], 10);
+    const id = Number.parseInt(t[0], 10),
+      mod = Number.parseInt(t[1], 10);
     if (Number.isInteger(id) && id >= 0 && id < SKILL_COUNT && Number.isFinite(mod)) out[id] += mod;
   }
   return out;
@@ -360,5 +445,4 @@ export function biographySkillBonuses(effects) {
 
 /** AddEffect (:234-244): the text commands are tagged with the
  *  question index so the backstory generator can order them. */
-export const tagEffect = (effect, questionIndex) =>
-  (isTextEffect(effect) ? `${effect} ${questionIndex}` : effect);
+export const tagEffect = (effect, questionIndex) => (isTextEffect(effect) ? `${effect} ${questionIndex}` : effect);

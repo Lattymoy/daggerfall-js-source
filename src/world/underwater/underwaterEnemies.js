@@ -15,22 +15,42 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { DEPTH_EDGE_SOFTNESS } from '../passiveFish.js';
-import { rangeInt, rangeFloat } from '../../systems/unleveledLoot.js';   // Random.Range(int, int) and (float, float)
-import { roundToInt } from '../../systems/mathf.js';                   // Mathf.RoundToInt
+import { rangeInt, rangeFloat } from '../../systems/unleveledLoot.js'; // Random.Range(int, int) and (float, float)
+import { roundToInt } from '../../systems/mathf.js'; // Mathf.RoundToInt
 import { MOBILE_TYPES as MOBILE } from '../../characters/mobile/mobileTypes.js';
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** DepthAquaticTable: the type, its weight and the band of the sea's depth it keeps to. */
-export const DEPTH_AQUATIC_TABLE = Object.freeze([
-  [MOBILE.Slaughterfish, 60, 0, 0.7], [MOBILE.Lamia, 18, 0, 0.45], [MOBILE.Nymph, 10, 0, 0.55], [MOBILE.Dreugh, 25, 0.15, 1],
-  [MOBILE.Zombie, 6, 0.4, 1], [MOBILE.SkeletalWarrior, 7, 0.45, 1], [MOBILE.Ghost, 7, 0.5, 1], [MOBILE.Wraith, 5, 0.6, 1],
-  [MOBILE.IceAtronach, 4, 0.7, 1], [MOBILE.Vampire, 3, 0.75, 1], [MOBILE.Lich, 2, 0.85, 1],
-].map(([type, weight, lo, hi]) => Object.freeze({ type, weight, minDepthFraction: f32(lo), maxDepthFraction: f32(hi) })));
+export const DEPTH_AQUATIC_TABLE = Object.freeze(
+  [
+    [MOBILE.Slaughterfish, 60, 0, 0.7],
+    [MOBILE.Lamia, 18, 0, 0.45],
+    [MOBILE.Nymph, 10, 0, 0.55],
+    [MOBILE.Dreugh, 25, 0.15, 1],
+    [MOBILE.Zombie, 6, 0.4, 1],
+    [MOBILE.SkeletalWarrior, 7, 0.45, 1],
+    [MOBILE.Ghost, 7, 0.5, 1],
+    [MOBILE.Wraith, 5, 0.6, 1],
+    [MOBILE.IceAtronach, 4, 0.7, 1],
+    [MOBILE.Vampire, 3, 0.75, 1],
+    [MOBILE.Lich, 2, 0.85, 1],
+  ].map(([type, weight, lo, hi]) =>
+    Object.freeze({ type, weight, minDepthFraction: f32(lo), maxDepthFraction: f32(hi) }),
+  ),
+);
 
 /** RareTypes (the treasure guards): Ghost, Skeletal Warrior, Wraith, Zombie, Ice Atronach, Vampire, Lich. */
-export const RARE_TYPES = Object.freeze([MOBILE.Ghost, MOBILE.SkeletalWarrior, MOBILE.Wraith, MOBILE.Zombie, MOBILE.IceAtronach, MOBILE.Vampire, MOBILE.Lich]);
+export const RARE_TYPES = Object.freeze([
+  MOBILE.Ghost,
+  MOBILE.SkeletalWarrior,
+  MOBILE.Wraith,
+  MOBILE.Zombie,
+  MOBILE.IceAtronach,
+  MOBILE.Vampire,
+  MOBILE.Lich,
+]);
 /** BossTypes: the Ancient Lich and the Vampire Ancient. */
 export const BOSS_TYPES = Object.freeze([MOBILE.AncientLich, MOBILE.VampireAncient]);
 /** TreasureGuardTeam: MobileTeams 13. */
@@ -58,14 +78,18 @@ export const DEFAULT_ENEMY_CAP = 8;
 /** GetEnemyRoster: every type the deep can stand, the table's first, then the rare, then the bosses, each once. */
 export function enemyRoster() {
   const out = [];
-  for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...RARE_TYPES, ...BOSS_TYPES]) if (!out.includes(t)) out.push(t);
+  for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...RARE_TYPES, ...BOSS_TYPES])
+    if (!out.includes(t)) out.push(t);
   return out;
 }
 
 /** DepthBandWeight: the weight inside the band, falling off over DepthEdgeSoftness past either edge. */
 export function depthBandWeight(e, depthFraction) {
   if (depthFraction >= e.minDepthFraction && depthFraction <= e.maxDepthFraction) return f32(e.weight);
-  const off = depthFraction < e.minDepthFraction ? f32(e.minDepthFraction - depthFraction) : f32(depthFraction - e.maxDepthFraction);
+  const off =
+    depthFraction < e.minDepthFraction
+      ? f32(e.minDepthFraction - depthFraction)
+      : f32(depthFraction - e.maxDepthFraction);
   return f32(e.weight * clamp01(f32(1 - f32(off / f32(DEPTH_EDGE_SOFTNESS)))));
 }
 
@@ -96,10 +120,20 @@ export function pickEnemyForDepth(depthFraction, roll) {
 }
 
 /** PickTreasureGuardType: the boss first when one is due, else a rare one. */
-export const pickTreasureGuardType = (includeBoss, bossSpawned, roll) => (includeBoss && !bossSpawned ? pickBoss(roll) : pickRare(roll));
+export const pickTreasureGuardType = (includeBoss, bossSpawned, roll) =>
+  includeBoss && !bossSpawned ? pickBoss(roll) : pickRare(roll);
 
 /** MustSpawnOnFloor: the walkers of the roster stand on the sea floor. */
-const FLOOR_TYPES = new Set([MOBILE.Zombie, MOBILE.SkeletalWarrior, MOBILE.IceAtronach, MOBILE.Nymph, MOBILE.Lich, MOBILE.AncientLich, MOBILE.Vampire, MOBILE.VampireAncient]);
+const FLOOR_TYPES = new Set([
+  MOBILE.Zombie,
+  MOBILE.SkeletalWarrior,
+  MOBILE.IceAtronach,
+  MOBILE.Nymph,
+  MOBILE.Lich,
+  MOBILE.AncientLich,
+  MOBILE.Vampire,
+  MOBILE.VampireAncient,
+]);
 export const mustSpawnOnFloor = (type) => FLOOR_TYPES.has(type);
 
 /**
@@ -147,11 +181,21 @@ export function rollCount(scaledCount, roll) {
 
 /** RollTreasureGuardCount: RollCount(5 x the frequency over 0.6, clamped to 1), clamped to 0..5. */
 export const rollTreasureGuardCount = (frequency, roll) =>
-  Math.min(MAX_TREASURE_GUARD_COUNT, Math.max(0, rollCount(f32(MAX_TREASURE_GUARD_COUNT * clamp01(f32(frequency) / ENEMY_FREQUENCY_FOR_MAX_TREASURE_GUARDS)), roll)));
+  Math.min(
+    MAX_TREASURE_GUARD_COUNT,
+    Math.max(
+      0,
+      rollCount(
+        f32(MAX_TREASURE_GUARD_COUNT * clamp01(f32(frequency) / ENEMY_FREQUENCY_FOR_MAX_TREASURE_GUARDS)),
+        roll,
+      ),
+    ),
+  );
 
 /** DeepWaterWorld.PickRingDistance: Sqrt(Lerp(min^2, max^2, Random.value)) - uniform over the ring's area. */
 export const pickRingDistance = (min, max, roll) => {
-  const a = f32(min * min), b = f32(max * max);
+  const a = f32(min * min),
+    b = f32(max * max);
   return Math.sqrt(f32(a + f32(f32(b - a) * f32(roll()))));
 };
 
@@ -162,9 +206,11 @@ export const pickRingDistance = (min, max, roll) => {
  * @param {number[]} p @param {number[]} playerPos @param {number[]} camForward
  */
 export function isBehindPlayerHeading(p, playerPos, camForward) {
-  const fx = camForward[0], fz = camForward[2];
+  const fx = camForward[0],
+    fz = camForward[2];
   if (fx * fx + fz * fz < 0.001) return false;
-  const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2];
+  const dx = p[0] - playerPos[0],
+    dz = p[2] - playerPos[2];
   if (dx * dx + dz * dz < 144) return false;
   return fx * dx + fz * dz < 0;
 }
@@ -185,8 +231,11 @@ export function isOutsideImmediateView(p, playerPos, visibleDistance, margin, vi
   if (isBehindPlayerHeading(p, playerPos, view.forward)) return false;
   const v = view.viewport(p);
   if (v[2] <= 0) return true;
-  const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2], flatSq = dx * dx + dz * dz;
-  if (v[0] >= -margin && v[0] <= 1 + margin && v[1] >= -margin && v[1] <= 1 + margin) return flatSq > view.revealDistance * view.revealDistance;
+  const dx = p[0] - playerPos[0],
+    dz = p[2] - playerPos[2],
+    flatSq = dx * dx + dz * dz;
+  if (v[0] >= -margin && v[0] <= 1 + margin && v[1] >= -margin && v[1] <= 1 + margin)
+    return flatSq > view.revealDistance * view.revealDistance;
   if (flatSq > visibleDistance * visibleDistance) return true;
   if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return v[1] > 1 + margin;
   return true;

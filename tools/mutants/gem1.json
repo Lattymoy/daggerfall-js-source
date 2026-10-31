@@ -238,8 +238,8 @@
   {
     "name": "GEM1-law6-the-blow-unheld",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  return readLines(item).filter((a) => a?.id === id && validAffix(a));",
-    "new": "  return item.affixes.filter((a) => a?.id === id && validAffix(a));",
+    "old": "  return readLines(item).filter((a) => a?.id === id && validAffix(a)); // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)",
+    "new": "  return item.affixes.filter((a) => a?.id === id && validAffix(a)); // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "GEM1-the-kit-no-weapon-sockets",
     "file": "src/systems/foeLootCap.js",
-    "old": "  weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)\n",
-    "new": "",
+    "old": "  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)\n  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)",
+    "new": "  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "GEM2-no-ingredient",
     "file": "src/systems/gems.js",
-    "old": "    isIngredient: true,\n",
-    "new": "    isIngredient: false,\n",
+    "old": "        isIngredient: true,",
+    "new": "        isIngredient: false,",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "GEM2-the-wrong-art",
     "file": "src/systems/gems.js",
-    "old": "    worldTextureRecord: dfu.worldTextureRecord,\n",
-    "new": "    worldTextureRecord: k,\n",
+    "old": "        worldTextureRecord: dfu.worldTextureRecord,",
+    "new": "        worldTextureRecord: k,",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "GEM2-a-boss-no-more",
     "file": "src/systems/gems.js",
-    "old": "  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);\n  return Math.max(0, Math.min(GEM_FIND.cap,",
-    "new": "  const mult = SOURCE_MULT[kind] ?? 1;\n  return Math.max(0, Math.min(GEM_FIND.cap,",
+    "old": "  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);",
+    "new": "  const mult = SOURCE_MULT[kind] ?? 1;",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "GEM2-luck-ignored",
     "file": "src/systems/gems.js",
-    "old": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)));",
-    "new": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult));",
+    "old": "  return Math.max(\n    0,\n    Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)),\n  );",
+    "new": "  return Math.max(0, Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult));",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "GEM2-a-boss-a-rat-s-grade",
     "file": "src/systems/gems.js",
-    "old": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem(BOSS_GEM_SOURCE, rolls);",
-    "new": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem({ tier: 0 }, rolls);",
+    "old": "    const g = rollGem(BOSS_GEM_SOURCE, rolls);",
+    "new": "    const g = rollGem({ tier: 0 }, rolls);",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "GEM1-extract-shatters",
     "file": "src/systems/reforge.js",
-    "old": "  addItem(player.items, stone);\n",
-    "new": "",
+    "old": "  addItem(player.items, stone);\n  refold(item, player);",
+    "new": "  refold(item, player);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "GEM1-extract-free",
     "file": "src/systems/reforge.js",
-    "old": "  deductGold(player, price);\n  const stone",
-    "new": "  const stone",
+    "old": "  deductGold(player, price);\n  const stone = /** @type {any} */ (mintGem(gem));",
+    "new": "  const stone = /** @type {any} */ (mintGem(gem));",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -536,7 +536,7 @@
   {
     "name": "GEM1-a-worn-piece-unfolded",
     "file": "src/systems/reforge.js",
-    "old": "const refold = (item, player) => { if (isEquipped(item)) notifyEquipChange(player); };",
+    "old": "const refold = (item, player) => {\n  if (isEquipped(item)) notifyEquipChange(player);\n};",
     "new": "const refold = () => {};",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -581,8 +581,8 @@
   {
     "name": "GEM3-the-wells-ignore-the-switch",
     "file": "src/ui/socketWells.js",
-    "old": "  if (!lootRarityOn()) return null;\n  const list = socketsOf(item);\n  if (!list.length) return null;",
-    "new": "  const list = socketsOf(item);\n  if (!list.length) return null;",
+    "old": "  if (!lootRarityOn()) return null;\n  const list = socketsOf(item);",
+    "new": "  const list = socketsOf(item);",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-GEM-salvage-breaks-the-gem",
     "file": "src/systems/reforge.js",
-    "old": "  if (socketGems(item).length) return 'gems';",
-    "new": "  if (false) return 'gems';",
+    "old": "  if (socketGems(item).length) return 'gems'; // AUDIT GEM: a set gem is never broken with its piece - extracted or unset first (a Magic weapon holds one since GEM1, and the bulk salvage swept it)",
+    "new": "  if (false) return 'gems'; // AUDIT GEM: a set gem is never broken with its piece - extracted or unset first (a Magic weapon holds one since GEM1, and the bulk salvage swept it)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "AUDIT-GEM-boss-gems-off",
     "file": "src/systems/gems.js",
-    "old": "  if (!lootRarityOn()) return [];   // AUDIT GEM (law 3)",
-    "new": "  // AUDIT GEM (law 3)",
+    "old": "  if (!lootRarityOn()) return []; // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves",
+    "new": "  // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -693,8 +693,8 @@
   {
     "name": "AUDIT-GEM-an-enchanted-stone",
     "file": "src/systems/reforge.js",
-    "old": " && !isEquipped(it) && !isEnchanted(it);",
-    "new": " && !isEquipped(it);",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]

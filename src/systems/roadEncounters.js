@@ -39,7 +39,7 @@ export const ROAD_PARTY_MAX = 4;
  * @param {number} mobileType @param {number} playerLevel
  */
 export function trivialOnRoad(mobileType, playerLevel) {
-  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level;   // none for a class foe (built at the traveller's level)
+  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level; // none for a class foe (built at the traveller's level)
   if (!Number.isFinite(lv) || !Number.isFinite(playerLevel)) return false;
   return lv * TRIVIAL_LEVEL_RATIO <= playerLevel;
 }

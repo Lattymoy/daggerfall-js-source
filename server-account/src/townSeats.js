@@ -44,13 +44,22 @@ import { accountKind, overRate } from './accounts.js';
 import { isDeveloper } from './titles.js';
 import { witnessedFact, factConfirmed, WITNESS } from '../../src/net/nodeLaw.js';
 import {
-  seatsSwitchOf, seatReportOf, seatReportText, parseSeatReport, seatIgnoredAccounts, seatKeyOk, seatWeekOf,
-  SEAT_WITNESS_REPORTS_HOUR, SEAT_WITNESSES_AUDIT, seasonFloor, seasonZeroOf,
+  seatsSwitchOf,
+  seatReportOf,
+  seatReportText,
+  parseSeatReport,
+  seatIgnoredAccounts,
+  seatKeyOk,
+  seatWeekOf,
+  SEAT_WITNESS_REPORTS_HOUR,
+  SEAT_WITNESSES_AUDIT,
+  seasonFloor,
+  seasonZeroOf,
 } from '../../src/net/townSeatLaw.js';
-import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js';   // AUDIT-SEATS S4: a struck Charter's fee refunded
-import { fortsLapsedStatements } from './seatForts.js';   // AUDIT SEATS-2 S5: a struck Charter's building projects fall with it
-import { DB_ROOT, replicaDb, d1Overloaded, bookmarkOf } from './service.js';   // STORM-SHED: the binding a request's counted Proxy wraps; SEAT-REPLICA: the kept read's session
-import { exactRows, witnessRow, strikeWitness, LEAN_ROWS } from './leanWitness.js';   // LEAN-WITNESS
+import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js'; // AUDIT-SEATS S4: a struck Charter's fee refunded
+import { fortsLapsedStatements } from './seatForts.js'; // AUDIT SEATS-2 S5: a struck Charter's building projects fall with it
+import { DB_ROOT, replicaDb, d1Overloaded, bookmarkOf } from './service.js'; // STORM-SHED: the binding a request's counted Proxy wraps; SEAT-REPLICA: the kept read's session
+import { exactRows, witnessRow, strikeWitness, LEAN_ROWS } from './leanWitness.js'; // LEAN-WITNESS
 
 /** Whether the seats are open to this account: the switch, and at `dev` the developers alone. */
 export function seatsOpenFor(player, env) {
@@ -59,7 +68,8 @@ export function seatsOpenFor(player, env) {
 }
 /** An account a week registered may witness (SEAT0 3.2), as a harvest's and a hub's do - and a guild hall's (CHAP2a,
  *  npcHalls.js reads this one). */
-export const witnessOf = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;
+export const witnessOf = (player, nowS) =>
+  Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;
 
 /** Whether a seat's key was struck (a history row), so it is never witnessed again. */
 async function struck(db, key) {
@@ -92,12 +102,18 @@ export function seatFacts(rows, nowS) {
     const f = /** @type {any} */ (witnessedFact(kept, parseSeatReport));
     if (f.state === 'none') continue;
     const agreeing = f.seat ? kept.filter((r) => r.report === seatReportText(f.seat)) : [];
-    out.push({ key: Number(k), fact: f, witnesses: new Set(kept.map((r) => r.account)).size, agreeing: agreeing.map((r) => r.account) });
+    out.push({
+      key: Number(k),
+      fact: f,
+      witnesses: new Set(kept.map((r) => r.account)).size,
+      agreeing: agreeing.map((r) => r.account),
+    });
   }
   // THE AUDIT (SEAT0 3.2): "a seat confirmed by exactly three witnesses whom nobody else ever joins" - its confirmation
   // still resting on the bare three, no fourth ever agreeing; AUDIT-SEATS T2 (3.2: a disputed row "goes on the audit list
   // at once"): and every disputed seat, however many agree on what it stands as
-  for (const s of out) s.audit = (factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';
+  for (const s of out)
+    s.audit = (factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';
   return { seats: out, ignored };
 }
 
@@ -137,8 +153,11 @@ export const SEAT_ROWS_KEPT_S = 60;
 export const SEAT_ROWS_FROM = 'first-unconstrained';
 /** The database binding -> what this isolate last read of it, and the read asked now, and its writes counted; and
  *  (SEAT-REPLICA) the bookmark its last kept read ended at, and whether it has written since. */
-const seatRowsKept = new WeakMap(), seatRowsAsking = new WeakMap(), seatRowWrites = new WeakMap();
-const seatRowsMark = new WeakMap(), seatRowsWritten = new WeakSet();
+const seatRowsKept = new WeakMap(),
+  seatRowsAsking = new WeakMap(),
+  seatRowWrites = new WeakMap();
+const seatRowsMark = new WeakMap(),
+  seatRowsWritten = new WeakSet();
 const seatRowsRoot = (/** @type {any} */ db) => db?.[DB_ROOT] ?? db;
 
 /** STORM-SHED: the seats' witness rows as this isolate keeps them - read at most once in SEAT_ROWS_KEPT_S, every ask of
@@ -157,17 +176,31 @@ async function seatRowsOf(db, nowS) {
   // DISPLAY-REPLICA: a request already on a session (a replica route's - a market's or a pixel's read asking a seat) has
   // none of its own to open; the binding opens this read's, so the read after a write here is still the primary's
   const opener = typeof db?.withSession === 'function' ? db : root;
-  try { session = replicaDb(opener, from); } catch { /* a bookmark D1 refuses: the request's database */ }
-  const ask = judgedSeatRows(session, nowS).then((rows) => {   // LEAN-WITNESS
-    if ((seatRowWrites.get(root) ?? 0) === gen) {
-      seatRowsKept.set(root, { at: nowS, rows });
-      const mark = bookmarkOf(session);
-      if (mark) seatRowsMark.set(root, mark);
-      if (wrote) seatRowsWritten.delete(root);
-    }
-    return rows;
-  }, (e) => { if (seatRowsMark.get(root) === from) seatRowsMark.delete(root); throw e; })   // a read that failed from a bookmark: the next starts from none (never a newer read's)
-    .finally(() => { if (seatRowsAsking.get(root) === ask) seatRowsAsking.delete(root); });
+  try {
+    session = replicaDb(opener, from);
+  } catch {
+    /* a bookmark D1 refuses: the request's database */
+  }
+  const ask = judgedSeatRows(session, nowS)
+    .then(
+      (rows) => {
+        // LEAN-WITNESS
+        if ((seatRowWrites.get(root) ?? 0) === gen) {
+          seatRowsKept.set(root, { at: nowS, rows });
+          const mark = bookmarkOf(session);
+          if (mark) seatRowsMark.set(root, mark);
+          if (wrote) seatRowsWritten.delete(root);
+        }
+        return rows;
+      },
+      (e) => {
+        if (seatRowsMark.get(root) === from) seatRowsMark.delete(root);
+        throw e;
+      },
+    ) // a read that failed from a bookmark: the next starts from none (never a newer read's)
+    .finally(() => {
+      if (seatRowsAsking.get(root) === ask) seatRowsAsking.delete(root);
+    });
   seatRowsAsking.set(root, ask);
   return ask;
 }
@@ -179,7 +212,7 @@ function forgetSeatRows(db, nowS) {
   seatRowsAsking.delete(root);
   seatRowWrites.set(root, (seatRowWrites.get(root) ?? 0) + 1);
   seatRowsWritten.add(root);
-  seatWroteAt.set(root, nowS);   // SEAT-FACTS: no kept row from before it answers here again (keptSeatFacts)
+  seatWroteAt.set(root, nowS); // SEAT-FACTS: no kept row from before it answers here again (keptSeatFacts)
 }
 
 /** SEAT-FACTS (2026-10-13, after SEAT-REPLICA; the owner: "1, 2 and 3"; bible/11-Multiplayer/Scale-Arc.md SEAT-FACTS):
@@ -194,17 +227,26 @@ export const SEAT_FACTS_FRESH_S = 180;
 const SEAT_FACTS_SQL = 'SELECT at, facts FROM seat_facts_kept WHERE id = 1';
 /** SEAT-FACTS: the database binding -> the kept facts this isolate read (or that none fit, a minute), the read asked
  *  now, and its last write's clock. A row is an answer only while it is fresh and newer than that write. */
-const seatFactsKept = new WeakMap(), seatFactsAsking = new WeakMap(), seatWroteAt = new WeakMap();
+const seatFactsKept = new WeakMap(),
+  seatFactsAsking = new WeakMap(),
+  seatWroteAt = new WeakMap();
 
 /** SEAT-FACTS: the facts as the clock keeps them - the seats that stand by key, state and report, and the ignored. */
 export function seatFactsText(/** @type {{ seats: any[], ignored: Set<string> }} */ { seats, ignored }) {
-  return JSON.stringify({ seats: seats.filter((x) => factConfirmed(x.fact)).map((x) => [x.key, x.fact.state, seatReportText(x.fact.seat)]), ignored: [...ignored].sort() });
+  return JSON.stringify({
+    seats: seats.filter((x) => factConfirmed(x.fact)).map((x) => [x.key, x.fact.state, seatReportText(x.fact.seat)]),
+    ignored: [...ignored].sort(),
+  });
 }
 /** SEAT-FACTS: the kept text read back as seatFacts answers - `{ seats: [{ key, fact }], ignored }` - or null for any
  *  text that is not the clock's. */
 export function seatFactsOfText(/** @type {unknown} */ text) {
   let o;
-  try { o = JSON.parse(String(text)); } catch { return null; }
+  try {
+    o = JSON.parse(String(text));
+  } catch {
+    return null;
+  }
   if (!o || !Array.isArray(o.seats) || !Array.isArray(o.ignored)) return null;
   const seats = [];
   for (const e of o.seats) {
@@ -219,18 +261,31 @@ export function seatFactsOfText(/** @type {unknown} */ text) {
 /** SEAT-FACTS: THE CLOCK'S MINUTE - every seat row read on the binding (the primary: the facts no older than any write
  *  before them) and what they say kept in the one row. 1, the facts kept. */
 export async function keepSeatFacts(/** @type {any} */ db, /** @type {number} */ nowS) {
-  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS);   // LEAN-WITNESS
-  await db.prepare('INSERT INTO seat_facts_kept (id, at, facts) VALUES (1, ?1, ?2) ON CONFLICT (id) DO UPDATE SET at = excluded.at, facts = excluded.facts')
-    .bind(nowS, seatFactsText(facts)).run();
+  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS); // LEAN-WITNESS
+  await db
+    .prepare(
+      'INSERT INTO seat_facts_kept (id, at, facts) VALUES (1, ?1, ?2) ON CONFLICT (id) DO UPDATE SET at = excluded.at, facts = excluded.facts',
+    )
+    .bind(nowS, seatFactsText(facts))
+    .run();
   return 1;
 }
 /** SEAT-FACTS: the kept row, read on a session of its own (any instance's: the row says how old it is), or null - none,
  *  another shape, or a table not there. An overload is the overload's, as every read's is. */
 async function seatFactsRow(db, root) {
   let session = db;
-  try { session = replicaDb(typeof db?.withSession === 'function' ? db : root, SEAT_ROWS_FROM); } catch { /* the request's database */ }
+  try {
+    session = replicaDb(typeof db?.withSession === 'function' ? db : root, SEAT_ROWS_FROM);
+  } catch {
+    /* the request's database */
+  }
   let row;
-  try { row = await session.prepare(SEAT_FACTS_SQL).first(); } catch (e) { if (d1Overloaded(e)) throw e; return null; }
+  try {
+    row = await session.prepare(SEAT_FACTS_SQL).first();
+  } catch (e) {
+    if (d1Overloaded(e)) throw e;
+    return null;
+  }
   const of = Number(row?.at);
   if (!Number.isSafeInteger(of)) return null;
   const facts = seatFactsOfText(row.facts);
@@ -241,15 +296,18 @@ async function seatFactsRow(db, root) {
  *  the rows (seatRowsOf), as before. */
 async function keptSeatFacts(db, nowS) {
   const root = seatRowsRoot(db);
-  const fresh = (/** @type {{ of: number }} */ k) => k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;
+  const fresh = (/** @type {{ of: number }} */ k) =>
+    k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;
   const kept = seatFactsKept.get(root);
   if (kept && nowS - kept.at < SEAT_ROWS_KEPT_S) {
     if (kept.facts && fresh(kept)) return kept.facts;
-    if (!kept.facts) return seatFacts(await seatRowsOf(db, nowS), nowS);   // no fit row a moment ago: the rows, not another ask
+    if (!kept.facts) return seatFacts(await seatRowsOf(db, nowS), nowS); // no fit row a moment ago: the rows, not another ask
   }
   let asking = seatFactsAsking.get(root);
   if (!asking) {
-    asking = seatFactsRow(db, root).finally(() => { if (seatFactsAsking.get(root) === asking) seatFactsAsking.delete(root); });
+    asking = seatFactsRow(db, root).finally(() => {
+      if (seatFactsAsking.get(root) === asking) seatFactsAsking.delete(root);
+    });
     seatFactsAsking.set(root, asking);
   }
   const row = await asking;
@@ -257,7 +315,7 @@ async function keptSeatFacts(db, nowS) {
     seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });
     return row.facts;
   }
-  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null });   // none fit to answer: the rows a minute, and asked again after
+  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null }); // none fit to answer: the rows a minute, and asked again after
   return seatFacts(await seatRowsOf(db, nowS), nowS);
 }
 
@@ -272,15 +330,26 @@ export async function listSeats({ db, nowS }, player, env) {
   const dev = isDeveloper(player, env);
   // STORM-SHED: a player's list is the isolate's kept rows; a developer's reads the table as it stands - the audit names a
   // disputed seat at once (AUDIT-SEATS T2), whichever isolate took its reports
-  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
+  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts
   const view = (s) => ({ ...s.fact.seat, state: s.fact.state });
   return {
-    seats: seats.filter((s) => factConfirmed(s.fact)).map(view).sort((a, b) => a.key - b.key),
+    seats: seats
+      .filter((s) => factConfirmed(s.fact))
+      .map(view)
+      .sort((a, b) => a.key - b.key),
     me: { witness: witnessOf(player, nowS) && !ignored.has(player.id), developer: dev },
-    ...(dev ? {
-      unconfirmed: seats.filter((s) => !factConfirmed(s.fact) && s.fact.seat).map((s) => ({ ...view(s), witnesses: s.witnesses })).sort((a, b) => a.key - b.key),
-      audit: seats.filter((s) => s.audit).map((s) => s.key).sort((a, b) => a - b),
-    } : {}),
+    ...(dev
+      ? {
+          unconfirmed: seats
+            .filter((s) => !factConfirmed(s.fact) && s.fact.seat)
+            .map((s) => ({ ...view(s), witnesses: s.witnesses }))
+            .sort((a, b) => a.key - b.key),
+          audit: seats
+            .filter((s) => s.audit)
+            .map((s) => s.key)
+            .sort((a, b) => a - b),
+        }
+      : {}),
   };
 }
 
@@ -301,8 +370,10 @@ export async function listSeats({ db, nowS }, player, env) {
  * @param {{ fresh?: boolean }} [opts]
  */
 export async function confirmedSeats(db, nowS, { fresh = false } = {}) {
-  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
-  return new Map(seats.filter((s) => factConfirmed(s.fact)).map((s) => [s.key, { ...s.fact.seat, state: s.fact.state }]));
+  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts
+  return new Map(
+    seats.filter((s) => factConfirmed(s.fact)).map((s) => [s.key, { ...s.fact.seat, state: s.fact.state }]),
+  );
 }
 
 /** DOMAIN3: the accounts the seats' law ignores this week (seatIgnoredAccounts), off the service's kept facts - a seat
@@ -320,13 +391,18 @@ export async function witnessSeat({ db, nowS }, player, env, { seat } = {}) {
   if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };
   const s = seatReportOf(seat);
   if (!s) return { error: 'bad-seat' };
-  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR, 3600)) return { error: 'seats-rate' };
+  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR, 3600))
+    return { error: 'seats-rate' };
   if (await struck(db, s.key)) return { error: 'seat-struck' };
   if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };
-  const { ignored } = await keptSeatFacts(db, nowS);   // STORM-SHED: the isolate's kept rows; SEAT-FACTS: the service's kept facts
+  const { ignored } = await keptSeatFacts(db, nowS); // STORM-SHED: the isolate's kept rows; SEAT-FACTS: the service's kept facts
   if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };
-  const put = await db.prepare("INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)")
-    .bind(String(s.key), player.id, seatReportText(s), s.region, nowS).run();
+  const put = await db
+    .prepare(
+      "INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)",
+    )
+    .bind(String(s.key), player.id, seatReportText(s), s.region, nowS)
+    .run();
   // STORM-SHED: this report is the rows' news - asked afresh here. SEAT-REPLICA: unless the table already held it (a
   // witness's first answer stands, so the same witness's report again writes nothing, and cost the next ask a whole
   // read of the rows all the same)
@@ -350,26 +426,46 @@ export async function strikeSeat({ db, nowS }, dev, env, { key } = {}) {
   // (townSeatLaw.js seasonFloor), what the treasury has room for; its proclaimed Edict void; a battle there void (its
   // Sellswords' escrow goes home at the Turning, seatTurning.js); the hold gone - so no token wears it, no pledge counts
   // through it, and the guild may pledge in the region again
-  const h = await db.prepare('SELECT h.guild_id, g.name, g.tag FROM town_seat_holds h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.key = ?').bind(key).first();
+  const h = await db
+    .prepare(
+      'SELECT h.guild_id, g.name, g.tag FROM town_seat_holds h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.key = ?',
+    )
+    .bind(key)
+    .first();
   const rid = `strike-${key}`;
   const [, , , , late, , rest] = await db.batch([
-    db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
+    db
+      .prepare(
+        `INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
       SELECT 'mint', NULL, 'guild', h.guild_id, 'seat-strike-refund', MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0)),
         ?2, ?3, 'seats', 'The registry', ?4
       FROM town_seat_holds h JOIN marks_ledger l ON l.actor = 'seats' AND l.kind = 'seat-claim' AND l.src_id = h.guild_id
         AND l.rid IN ('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-' || h.since_week || '-' || h.key)
       WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)
         AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) < ${MARKS_MAX}
-      LIMIT 1`).bind(key, utcDay(nowS), nowS, rid, seasonFloor(week, seasonZeroOf(env?.SEASON_ZERO_WEEK))),
+      LIMIT 1`,
+      )
+      .bind(key, utcDay(nowS), nowS, rid, seasonFloor(week, seasonZeroOf(env?.SEASON_ZERO_WEEK))),
     db.prepare("UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'").bind(key),
-    db.prepare("UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'").bind(key, week),
+    db
+      .prepare("UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'")
+      .bind(key, week),
     db.prepare('DELETE FROM town_seat_holds WHERE key = ?').bind(key),
-    ...strikeWitness(db, 'seat', 'key = ?1', String(key)),   // LEAN-WITNESS: its rows and its confirmation (0135's triggers take the key's row with its last answer)
-    db.prepare(`INSERT INTO town_seat_history (key, week, kind, data, at)
-      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`)
-      .bind(key, week, JSON.stringify({ by: dev.handle ?? null, ...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {}) }), nowS, rid),
-    ...fortsLapsedStatements(db, key, nowS),   // AUDIT SEATS-2 S5: a building project falls with the Charter
+    ...strikeWitness(db, 'seat', 'key = ?1', String(key)), // LEAN-WITNESS: its rows and its confirmation (0135's triggers take the key's row with its last answer)
+    db
+      .prepare(
+        `INSERT INTO town_seat_history (key, week, kind, data, at)
+      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,
+      )
+      .bind(
+        key,
+        week,
+        JSON.stringify({ by: dev.handle ?? null, ...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {}) }),
+        nowS,
+        rid,
+      ),
+    ...fortsLapsedStatements(db, key, nowS), // AUDIT SEATS-2 S5: a building project falls with the Charter
   ]);
-  forgetSeatRows(db, nowS);   // STORM-SHED: the struck seat's reports are gone - asked afresh here
+  forgetSeatRows(db, nowS); // STORM-SHED: the struck seat's reports are gone - asked afresh here
   return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };
 }

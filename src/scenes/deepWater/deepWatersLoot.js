@@ -39,14 +39,43 @@
 import { TransientObjectTracker } from '../../world/deepWater/deepWaterTransients.js';
 import { isOutsideImmediateView } from '../../world/underwater/underwaterEnemies.js';
 import {
-  LOOT_PULSE_DISTANCE, MIN_PULSE_INTERVAL_SECONDS, FAILED_PULSE_RETRY_SECONDS, DESPAWN_DISTANCE, SHORE_LOOT_PULSE_MULTIPLIER,
-  NEARBY_WATER_PROBE_DIRECTIONS, NEARBY_WATER_GATE_CHECK_INTERVAL, NEARBY_WATER_MINIMUM_DEPTH, DEEP_WATER_PULSE_DEPTH,
-  DEFAULT_LOOT_MIN_SPAWN_DISTANCE, DEFAULT_LOOT_MAX_SPAWN_DISTANCE, FOG_AHEAD_MAX_DISTANCE, SPAWN_SPOT_ATTEMPTS, SPAWN_CELL_SIZE,
-  MAX_REMEMBERED_SPAWN_CELLS, LOOSE_LOOT_DEBRIS_SPOT_ATTEMPTS, LOOT_VIEWPORT_MARGIN,
-  worldCellKey, depthSpawnMultiplier, shouldSpawnTreasureCluster, rollStrayLootCount, pickSpawnAngle, tryPickFogAheadPoint,
-  resolveSeafloorAt, isDeepEnoughForWreck, pickClusterLootSpot, pickClusterDebrisPoint, pickLooseDebrisPoint, clusterDebrisCount,
-  rollClusterTreasureCount, rollClusterItemCount, rollLooseDebrisCount, pickTreasurePileRecord, pickRubbleRecord,
-  pickRubbleRecordExcept, pickRandomItemKind, pruneLiveClusters,
+  LOOT_PULSE_DISTANCE,
+  MIN_PULSE_INTERVAL_SECONDS,
+  FAILED_PULSE_RETRY_SECONDS,
+  DESPAWN_DISTANCE,
+  SHORE_LOOT_PULSE_MULTIPLIER,
+  NEARBY_WATER_PROBE_DIRECTIONS,
+  NEARBY_WATER_GATE_CHECK_INTERVAL,
+  NEARBY_WATER_MINIMUM_DEPTH,
+  DEEP_WATER_PULSE_DEPTH,
+  DEFAULT_LOOT_MIN_SPAWN_DISTANCE,
+  DEFAULT_LOOT_MAX_SPAWN_DISTANCE,
+  FOG_AHEAD_MAX_DISTANCE,
+  SPAWN_SPOT_ATTEMPTS,
+  SPAWN_CELL_SIZE,
+  MAX_REMEMBERED_SPAWN_CELLS,
+  LOOSE_LOOT_DEBRIS_SPOT_ATTEMPTS,
+  LOOT_VIEWPORT_MARGIN,
+  worldCellKey,
+  depthSpawnMultiplier,
+  shouldSpawnTreasureCluster,
+  rollStrayLootCount,
+  pickSpawnAngle,
+  tryPickFogAheadPoint,
+  resolveSeafloorAt,
+  isDeepEnoughForWreck,
+  pickClusterLootSpot,
+  pickClusterDebrisPoint,
+  pickLooseDebrisPoint,
+  clusterDebrisCount,
+  rollClusterTreasureCount,
+  rollClusterItemCount,
+  rollLooseDebrisCount,
+  pickTreasurePileRecord,
+  pickRubbleRecord,
+  pickRubbleRecordExcept,
+  pickRandomItemKind,
+  pruneLiveClusters,
 } from '../../world/underwater/underwaterLoot.js';
 import { pickRingDistance } from '../../world/underwater/underwaterEnemies.js';
 
@@ -75,31 +104,54 @@ import { pickRingDistance } from '../../world/underwater/underwaterEnemies.js';
  * @param {(kind: string) => ?object} deps.makeItem - FillRandomItem's ItemBuilder call for a kind (see pickRandomItemKind)
  * @param {() => number} [deps.roll] - the unseeded UnityEngine.Random (Port-Ledger A, the engine-PRNG rule)
  */
-export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterContext, playerPosition, column, hasNearbyColumn, inOrAboveDeepWater,
-  view, playerForward, vision, pixelOrigin, spawnContainer, spawnRubble, spawnGuards, makeItem, roll = Math.random }) {
+export function createUnderwaterLoot({
+  settings,
+  canRunHeavy,
+  exteriorWaterContext,
+  playerPosition,
+  column,
+  hasNearbyColumn,
+  inOrAboveDeepWater,
+  view,
+  playerForward,
+  vision,
+  pixelOrigin,
+  spawnContainer,
+  spawnRubble,
+  spawnGuards,
+  makeItem,
+  roll = Math.random,
+}) {
   const tracked = new TransientObjectTracker();
   /** recentSpawnCells and recentSpawnCellOrder */
   const recentCells = new Set();
   const recentOrder = [];
   /** liveClusterCentres */
   const clusters = [];
-  let anchor = null;             // lastPulseAnchor (hasPulseAnchor: not null)
+  let anchor = null; // lastPulseAnchor (hasPulseAnchor: not null)
   let nextAllowedPulseTime = 0;
-  let nextGateTime = 0;          // nextNearbyWaterGateCheckTime
-  let gateCached = false;        // hasNearbyWaterGateCache
-  let gateResult = false;        // lastNearbyWaterGateResult
-  let time = 0;                  // the frame's Time.time
+  let nextGateTime = 0; // nextNearbyWaterGateCheckTime
+  let gateCached = false; // hasNearbyWaterGateCache
+  let gateResult = false; // lastNearbyWaterGateResult
+  let time = 0; // the frame's Time.time
 
   /** CanRunLootPulse: the player's position, or null. */
   function canRunLootPulse() {
     if (!canRunHeavy()) return null;
     const s = settings();
-    if (s.rate <= 0 && s.clusterRate <= 0) return null;   // bgt.un twice (IL_1a776, IL_1a787): the C#'s own form
+    if (s.rate <= 0 && s.clusterRate <= 0) return null; // bgt.un twice (IL_1a776, IL_1a787): the C#'s own form
     if (!exteriorWaterContext()) return null;
     const pos = playerPosition();
     if (!pos) return null;
     if (gateCached && time < nextGateTime) return gateResult ? pos : null;
-    gateResult = hasNearbyColumn(pos[0], pos[2], DEFAULT_LOOT_MIN_SPAWN_DISTANCE, DEFAULT_LOOT_MAX_SPAWN_DISTANCE, NEARBY_WATER_PROBE_DIRECTIONS, NEARBY_WATER_MINIMUM_DEPTH);
+    gateResult = hasNearbyColumn(
+      pos[0],
+      pos[2],
+      DEFAULT_LOOT_MIN_SPAWN_DISTANCE,
+      DEFAULT_LOOT_MAX_SPAWN_DISTANCE,
+      NEARBY_WATER_PROBE_DIRECTIONS,
+      NEARBY_WATER_MINIMUM_DEPTH,
+    );
     gateCached = true;
     nextGateTime = time + NEARBY_WATER_GATE_CHECK_INTERVAL;
     return gateResult ? pos : null;
@@ -120,8 +172,14 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
     const v = view();
     for (let i = 0; i < SPAWN_SPOT_ATTEMPTS; i++) {
       let x, z;
-      const ahead = roll() < 0.5 ? tryPickFogAheadPoint(pos, FOG_AHEAD_MAX_DISTANCE, v?.forward ?? null, v?.revealDistance ?? vision(), roll) : null;
-      if (ahead) { x = ahead[0]; z = ahead[2]; } else {
+      const ahead =
+        roll() < 0.5
+          ? tryPickFogAheadPoint(pos, FOG_AHEAD_MAX_DISTANCE, v?.forward ?? null, v?.revealDistance ?? vision(), roll)
+          : null;
+      if (ahead) {
+        x = ahead[0];
+        z = ahead[2];
+      } else {
         const angle = pickSpawnAngle(v?.forward ?? null, playerForward(), roll);
         const d = pickRingDistance(minDistance, maxDistance, roll);
         x = pos[0] + Math.cos(angle) * d;
@@ -141,7 +199,10 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
   /** QueueRubbleSprite: the placement, off its terrain's origin, in its terrain's list. @param {Map<object, Array<{archive: number, record: number, local: number[]}>>} lists */
   function queueRubble(p, entry, lists, rec) {
     let list = lists.get(entry);
-    if (!list) { list = []; lists.set(entry, list); }
+    if (!list) {
+      list = [];
+      lists.set(entry, list);
+    }
     const o = pixelOrigin(entry);
     list.push({ archive: rec.archive, record: rec.record, local: [p[0] - o[0], p[1] - o[1], p[2] - o[2]] });
   }
@@ -171,9 +232,10 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
     const n = rollLooseDebrisCount(settings().cove, roll);
     if (n === 0) return 0;
     const lists = new Map();
-    const used = new Set();   // usedRubbleRecordsScratch
+    const used = new Set(); // usedRubbleRecordsScratch
     for (let i = 0; i < n; i++) {
-      for (let k = 0; k < LOOSE_LOOT_DEBRIS_SPOT_ATTEMPTS; k++) {   // QueueLooseLootDebris
+      for (let k = 0; k < LOOSE_LOOT_DEBRIS_SPOT_ATTEMPTS; k++) {
+        // QueueLooseLootDebris
         const p = pickLooseDebrisPoint(pos, roll);
         const floor = resolveSeafloorAt(column(p[0], p[2]));
         if (!floor) continue;
@@ -218,7 +280,7 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
   function spawnClusterTreasure(centre) {
     const cove = settings().cove;
     const n = rollClusterTreasureCount(cove, roll);
-    const spots = [];   // clusterLootSpotsScratch
+    const spots = []; // clusterLootSpotsScratch
     let placed = 0;
     for (let i = 0; i < n; i++) {
       const p = pickClusterLootSpot(centre, spots, roll);
@@ -229,7 +291,7 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
       const c = spawnContainer({ pos: p, record: pickTreasurePileRecord(roll), entry: floor.entry });
       if (!c) continue;
       tracked.add(c);
-      const items = rollClusterItemCount(cove, roll);   // FillClusterContainer
+      const items = rollClusterItemCount(cove, roll); // FillClusterContainer
       for (let k = 0; k < items; k++) fillRandomItem(c);
       spots.push(p);
       placed++;
@@ -258,32 +320,55 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
     tracked.prune(pos, DESPAWN_DISTANCE, s.maxLive);
     pruneLiveClusters(clusters, pos);
     if (tracked.count >= s.maxLive) return;
-    let cluster = false, stray = false;
+    let cluster = false,
+      stray = false;
     const shore = inOrAboveDeepWater(DEEP_WATER_PULSE_DEPTH) ? 1 : SHORE_LOOT_PULSE_MULTIPLIER;
-    const depth = () => depthSpawnMultiplier(column(pos[0], pos[2]), s.waterDepth);   // DepthSpawnMultiplier, at the player
-    if (shouldSpawnTreasureCluster({ rate: s.clusterRate, liveClusters: clusters.length, maxLiveClusters: s.maxClusters, cove: s.cove, shore, depthMultiplier: depth() }, roll)) {
+    const depth = () => depthSpawnMultiplier(column(pos[0], pos[2]), s.waterDepth); // DepthSpawnMultiplier, at the player
+    if (
+      shouldSpawnTreasureCluster(
+        {
+          rate: s.clusterRate,
+          liveClusters: clusters.length,
+          maxLiveClusters: s.maxClusters,
+          cove: s.cove,
+          shore,
+          depthMultiplier: depth(),
+        },
+        roll,
+      )
+    ) {
       cluster = trySpawnTreasureCluster(pos, DEFAULT_LOOT_MIN_SPAWN_DISTANCE, DEFAULT_LOOT_MAX_SPAWN_DISTANCE);
     }
-    const n = rollStrayLootCount({ clusterSpawned: cluster, cove: s.cove, rate: s.rate, shore, depthMultiplier: depth() }, roll);
-    for (let i = 0; i < n; i++) if (trySpawnStrayLoot(pos, DEFAULT_LOOT_MIN_SPAWN_DISTANCE, DEFAULT_LOOT_MAX_SPAWN_DISTANCE)) stray = true;
+    const n = rollStrayLootCount(
+      { clusterSpawned: cluster, cove: s.cove, rate: s.rate, shore, depthMultiplier: depth() },
+      roll,
+    );
+    for (let i = 0; i < n; i++)
+      if (trySpawnStrayLoot(pos, DEFAULT_LOOT_MIN_SPAWN_DISTANCE, DEFAULT_LOOT_MAX_SPAWN_DISTANCE)) stray = true;
     nextAllowedPulseTime = time + (cluster || stray ? MIN_PULSE_INTERVAL_SECONDS : FAILED_PULSE_RETRY_SECONDS);
   }
 
   return {
     tracked,
-    get clusterCount() { return clusters.length; },
+    get clusterCount() {
+      return clusters.length;
+    },
 
     /** Pump (DeepWaters.Update, after PassiveFishBehaviour.PumpAll). @param {{time: number}} f - Time.time */
     pump(f) {
       time = f.time;
       const pos = canRunLootPulse();
-      if (!pos) { anchor = null; return; }
+      if (!pos) {
+        anchor = null;
+        return;
+      }
       if (!anchor) {
         anchor = [pos[0], pos[1], pos[2]];
         tryRunLootPulse(true, pos);
         return;
       }
-      const dx = pos[0] - anchor[0], dz = pos[2] - anchor[2];
+      const dx = pos[0] - anchor[0],
+        dz = pos[2] - anchor[2];
       if (dx * dx + dz * dz < LOOT_PULSE_DISTANCE * LOOT_PULSE_DISTANCE) return;
       anchor = [pos[0], pos[1], pos[2]];
       tryRunLootPulse(false, pos);
@@ -306,6 +391,13 @@ export function createUnderwaterLoot({ settings, canRunHeavy, exteriorWaterConte
       clusters.length = 0;
     },
 
-    get debug() { return { tracked: tracked.count, wrecks: clusters.length, cells: recentCells.size, nextPulse: nextAllowedPulseTime }; },
+    get debug() {
+      return {
+        tracked: tracked.count,
+        wrecks: clusters.length,
+        cells: recentCells.size,
+        nextPulse: nextAllowedPulseTime,
+      };
+    },
   };
 }

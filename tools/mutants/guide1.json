@@ -13,8 +13,8 @@
   {
     "name": "GUIDE1-quiet-read-draws-the-quest-rolls",
     "file": "src/ui/quest/questLens.js",
-    "old": "    quest.rolls = QUIET_ROLL;\n",
-    "new": "    quest.rolls = quest.rolls;\n",
+    "old": "    quest.rolls = QUIET_ROLL;",
+    "new": "    quest.rolls = quest.rolls;",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "GUIDE1-message-default-reveal-off",
     "file": "src/systems/quest/message.js",
-    "old": "getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = true) {",
-    "new": "getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = false) {",
+    "old": "  getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = true) {",
+    "new": "  getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = false) {",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "GUIDE1-town-named-unsaid",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "old": "  const named =\n    onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "new": "  const named = true;",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
@@ -130,7 +130,7 @@
   {
     "name": "GUIDE1-town-underfoot-unnamed",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "old": "  const named =\n    onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "new": "  const named = onMap === true || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "GUIDE1-region-said-ignored",
     "file": "src/ui/quest/questLens.js",
-    "old": "    regionName: onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4) ? (",
-    "new": "    regionName: onMap === true || here || moved ? (",
+    "old": "    regionName:\n      onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4)\n        ? (REGION_NAMES[regionIndex] ?? site.regionName ?? null)\n        : null,",
+    "new": "    regionName: onMap === true || here || moved ? (REGION_NAMES[regionIndex] ?? site.regionName ?? null) : null,",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "GUIDE1-find-where-you-stand",
     "file": "src/ui/quest/questLens.js",
-    "old": "    find: onMap === true && !hereByName ? {",
-    "new": "    find: onMap === true ? {",
+    "old": "      onMap === true && !hereByName",
+    "new": "      onMap === true",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "GUIDE1-find-off-the-map",
     "file": "src/ui/quest/questLens.js",
-    "old": "    find: onMap === true && !hereByName ? {",
-    "new": "    find: !hereByName ? {",
+    "old": "    find:\n      onMap === true && !hereByName\n        ? {\n            regionIndex: site.regionIndex ?? 0,\n            regionName: site.regionName ?? '',\n            locationName: site.locationName,\n            ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}),\n          }\n        : null,",
+    "new": "    find: !hereByName\n      ? {\n          regionIndex: site.regionIndex ?? 0,\n          regionName: site.regionName ?? '',\n          locationName: site.locationName,\n          ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}),\n        }\n      : null,",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "GUIDE1-any-symbol-says-it",
     "file": "src/ui/quest/questLens.js",
-    "old": "      if (macro.symbol === symbolName && macro.type >= MACRO_TYPES.NameMacro1",
-    "new": "      if (macro.type >= MACRO_TYPES.NameMacro1",
+    "old": "      if (macro.symbol === symbolName && macro.type >= MACRO_TYPES.NameMacro1 && macro.type <= MACRO_TYPES.NameMacro4)\n        said.add(macro.type);",
+    "new": "      if (macro.type >= MACRO_TYPES.NameMacro1 && macro.type <= MACRO_TYPES.NameMacro4) said.add(macro.type);",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "GUIDE1-first-look-speaks",
     "file": "src/ui/quest/questLens.js",
-    "old": "    this._last = null;         // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
-    "new": "    this._last = new Map();    // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
+    "old": "    this._last = null; // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
+    "new": "    this._last = new Map(); // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "GUIDE1-an-ending-with-no-verdict-said",
     "file": "src/ui/quest/questLens.js",
-    "old": "      if (!verdict) continue;",
-    "new": "      if (!verdict) { events.push({ type: 'ended', id, title: was.title, main: was.main }); continue; }",
+    "old": "      if (!verdict) continue; // gone without an ending (a repair, a dropped share): nothing to say",
+    "new": "      if (!verdict) {\n        events.push({ type: 'ended', id, title: was.title, main: was.main });\n        continue;\n      } // gone without an ending (a repair, a dropped share): nothing to say",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "GUIDE1-order-tie-reversed",
     "file": "src/ui/quest/questRail.js",
-    "old": "at(a) === at(b) ? a - b :",
-    "new": "at(a) === at(b) ? b - a :",
+    "old": "  return order.sort((a, b) => (at(a) === at(b) ? a - b : at(a) < at(b) ? -1 : 1));",
+    "new": "  return order.sort((a, b) => (at(a) === at(b) ? b - a : at(a) < at(b) ? -1 : 1));",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "GUIDE1-order-read-as-written",
     "file": "src/ui/quest/questRail.js",
-    "old": "  const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);",
-    "new": "  const written = writtenOrder(q).map((j) => ({ ...read[j], lines: readLines(q.messages[j], q.steps?.[j] ?? null, q) ?? [] })).filter((e) => e.lines.length);",
+    "old": "    .map((j) => read[j])",
+    "new": "    .map((j) => ({ ...read[j], lines: readLines(q.messages[j], q.steps?.[j] ?? null, q) ?? [] }))",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]

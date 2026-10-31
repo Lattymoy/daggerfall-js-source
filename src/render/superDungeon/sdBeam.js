@@ -28,7 +28,9 @@ const HEAD = `#version 300 es
 precision highp float;
 `;
 /** One strip a beam: x across it (-1..1), y along it (0 at the hand, 1 at its far end). */
-export const SD_BEAM_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const SD_BEAM_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform vec3 uA;         // the hand
 uniform vec3 uB;         // its far end
@@ -54,7 +56,9 @@ void main() {
   vLen = length(along);
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const SD_BEAM_FS = HEAD + `in vec2 vP;
+export const SD_BEAM_FS =
+  HEAD +
+  `in vec2 vP;
 in vec3 vWorld;
 in float vLen;
 uniform vec3 uCore;
@@ -97,7 +101,8 @@ void main() {
 export function sdBeamVertices(steps = 8) {
   const v = [];
   for (let i = 0; i < steps; i++) {
-    const y0 = i / steps, y1 = (i + 1) / steps;
+    const y0 = i / steps,
+      y1 = (i + 1) / steps;
     v.push(-1, y0, 1, y0, 1, y1, -1, y0, 1, y1, -1, y1);
   }
   return new Float32Array(v);
@@ -108,7 +113,24 @@ export class SdBeamRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, SD_BEAM_VS, SD_BEAM_FS, 'sd beam');
     this.u = {};
-    for (const n of ['uVP', 'uA', 'uB', 'uW', 'uMinRad', 'uEye', 'uCore', 'uGlow', 'uAlpha', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFlat']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uA',
+      'uB',
+      'uW',
+      'uMinRad',
+      'uEye',
+      'uCore',
+      'uGlow',
+      'uAlpha',
+      'uTime',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFlat',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = sdBeamVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -116,7 +138,8 @@ export class SdBeamRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** the beams the last draw lit, for the stats and the tests */
@@ -136,7 +159,8 @@ export class SdBeamRenderer {
     let first = null;
     for (let i = 0; i < n && !first; i++) if (drawable(beams[i])) first = beams[i];
     if (!first) return false;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
@@ -151,7 +175,8 @@ export class SdBeamRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? at);
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {
@@ -182,7 +207,8 @@ export class SdBeamRenderer {
 }
 
 /** A point the pass can place: three finite numbers. */
-const point3 = (p) => Array.isArray(p) && p.length === 3 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]);
+const point3 = (p) =>
+  Array.isArray(p) && p.length === 3 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]);
 /** A beam the pass draws: its hand and its far end placed, its light not out. */
 const drawable = (g) => !!g && point3(g.a) && point3(g.b) && !(g.alpha <= 0.001);
 

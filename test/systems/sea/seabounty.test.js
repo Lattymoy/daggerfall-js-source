@@ -363,8 +363,8 @@ test('SEA-BOUNTY the seams by source: the relay passes the room and signs it wit
   assert.match(relay, /wildBlow\(st, a\.sub, tb\.sub, \{ d: d\.d, r, held, wa: a\.wa \?\? null, kin, rid, room: a\.key, el: d\.el \?\? null, c: d\.c \?\? null \}, now\)/);   // PIN MOVED (PVP-VITALS): and the cast's number
   assert.match(relay, /mintWildReceipt\(\{ f: fall\.fallen, c: fall\.ci, k: fall\.killer, r: fall\.r, w: fall\.w, wt: fall\.wt, m: fall\.m, kc: fall\.kc, g: fallenGone, vp: fall\.vp \}/);   // PIN MOVED (WILD-REJOIN): and whether its fallen had gone from the room; PIN MOVED (PVP-VILLAIN): and the kill's villain points
   const ref = src('src/net/wild/wildRef.js');
-  assert.match(ref, /killerId: a\.id, kc: a\.ci \|\| '', m: typeof room === 'string' \? room : '',/);
-  assert.match(ref, /kc: typeof v\.kc === 'string' \? v\.kc : '', m: typeof v\.m === 'string' \? v\.m : '',/);
+  assert.match(ref, /killerId: a\.id,\n\s*kc: a\.ci \|\| '',\n\s*m: typeof room === 'string' \? room : '',/);
+  assert.match(ref, /kc: typeof v\.kc === 'string' \? v\.kc : '',\n\s*m: typeof v\.m === 'string' \? v\.m : '',/);
   const wild = src('server-account/src/wild.js');
   assert.match(wild, /sea = c;/);
   assert.match(wild, /\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\.\.\.villainFallSteps\(ctx\.db, sea\),[^\n]*\n {4}\/\/ WILD-INSURE: each policy that kept its piece, spent in the batch that kept it\n {4}\.\.\.spent\.map\(/);   // PIN MOVED (WILD-INSURE, 2026-10-26): the kill's bounties, then the policies the fall spent - one batch
@@ -373,7 +373,7 @@ test('SEA-BOUNTY the seams by source: the relay passes the room and signs it wit
   assert.match(idx, /'\/v1\/sea\/bounty\/board': async \(\) => seaBountyBoard\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/post': async \(\) => seaBountyPost\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/collect': async \(\) => seaBountyCollect\(sctx, who\.player, body\),/);
-  assert.match(src('server-account/src/service.js'), /'\/v1\/sea\/bounty\/board', '\/v1\/sea\/bounty\/post', '\/v1\/sea\/bounty\/collect',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/sea\/bounty\/board',\n\s*'\/v1\/sea\/bounty\/post',\n\s*'\/v1\/sea\/bounty\/collect',/);
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/sea\/seaBountyLaw\.js"/);
   const w = src('src/scenes/world.js');
   assert.match(w, /session: realmSession, checkpoint: onlineCheckpoint, wallet: realmWallet, region: _questRegionIndex,/);

@@ -36,23 +36,57 @@ const API_URL = 'https://api.anthropic.com/v1/messages';
 
 /** The English each table is drafted from, and what its rows are (told to the model). */
 export const SOURCES = Object.freeze({
-  Port_Strings: { path: 'locales/en/Port_Strings.csv', kind: 'icu', about: 'the web port\'s own interface: menus, settings, the online game. Values are ICU MessageFormat patterns.' },
-  Internal_Strings: { path: 'vendor/dfu-text/Internal_Strings.csv', kind: 'dfu', about: 'Daggerfall\'s interface and game messages (FALL.EXE\'s strings and Daggerfall Unity\'s own).' },
-  Internal_RSC: { path: 'vendor/dfu-text/Internal_RSC.csv', kind: 'dfu', about: 'TEXT.RSC: message boxes, dialogue, character creation, guild and shop text, in Daggerfall Unity\'s markup.' },
-  Internal_Flats: { path: 'vendor/dfu-text/Internal_Flats.csv', kind: 'dfu', about: 'the names of people and creatures shown in the world.' },
+  Port_Strings: {
+    path: 'locales/en/Port_Strings.csv',
+    kind: 'icu',
+    about: "the web port's own interface: menus, settings, the online game. Values are ICU MessageFormat patterns.",
+  },
+  Internal_Strings: {
+    path: 'vendor/dfu-text/Internal_Strings.csv',
+    kind: 'dfu',
+    about: "Daggerfall's interface and game messages (FALL.EXE's strings and Daggerfall Unity's own).",
+  },
+  Internal_RSC: {
+    path: 'vendor/dfu-text/Internal_RSC.csv',
+    kind: 'dfu',
+    about: "TEXT.RSC: message boxes, dialogue, character creation, guild and shop text, in Daggerfall Unity's markup.",
+  },
+  Internal_Flats: {
+    path: 'vendor/dfu-text/Internal_Flats.csv',
+    kind: 'dfu',
+    about: 'the names of people and creatures shown in the world.',
+  },
   Internal_Locations: { path: 'vendor/dfu-text/Internal_Locations.csv', kind: 'dfu', about: 'place names, by map id.' },
-  Internal_Settings: { path: 'vendor/dfu-text/Internal_Settings.csv', kind: 'dfu', about: 'the settings window\'s labels.' },
+  Internal_Settings: {
+    path: 'vendor/dfu-text/Internal_Settings.csv',
+    kind: 'dfu',
+    about: "the settings window's labels.",
+  },
   Internal_Spells: { path: 'vendor/dfu-text/Internal_Spells.csv', kind: 'dfu', about: 'spell names.' },
   Internal_Items: { path: 'vendor/dfu-text/Internal_Items.csv', kind: 'dfu', about: 'item names.' },
-  Internal_MagicItems: { path: 'vendor/dfu-text/Internal_MagicItems.csv', kind: 'dfu', about: 'the names of magic items and artifacts.' },
-  Internal_Factions: { path: 'vendor/dfu-text/Internal_Factions.csv', kind: 'dfu', about: 'faction, guild, temple and noble house names.' },
+  Internal_MagicItems: {
+    path: 'vendor/dfu-text/Internal_MagicItems.csv',
+    kind: 'dfu',
+    about: 'the names of magic items and artifacts.',
+  },
+  Internal_Factions: {
+    path: 'vendor/dfu-text/Internal_Factions.csv',
+    kind: 'dfu',
+    about: 'faction, guild, temple and noble house names.',
+  },
 });
 
 // ─── the placeholders a draft must keep ────────────────────────────────────────────────────────────────────────────
 /** The ICU arguments a pattern names, once each, sorted. Throws on a pattern parseMessage cannot read. */
 function icuArguments(pattern) {
   const out = new Set();
-  const walk = (nodes) => { for (const n of nodes) if (typeof n === 'object' && n.arg) { out.add(n.arg); if (n.options) for (const b of n.options.values()) walk(b); } };
+  const walk = (nodes) => {
+    for (const n of nodes)
+      if (typeof n === 'object' && n.arg) {
+        out.add(n.arg);
+        if (n.options) for (const b of n.options.values()) walk(b);
+      }
+  };
   walk(parseMessage(pattern));
   return [...out].sort();
 }
@@ -70,10 +104,23 @@ export function checkDraft(english, draft, kind) {
   const problems = [];
   if (typeof draft !== 'string' || !draft.trim()) return ['no text'];
   let want, got;
-  try { want = protectedTokens(english, kind); } catch (err) { return [`the English does not read: ${err.message}`]; }
-  try { got = protectedTokens(draft, kind); } catch (err) { return [`does not read as a pattern: ${err.message}`]; }
-  const missing = [...want], extra = [];
-  for (const t of got) { const i = missing.indexOf(t); if (i >= 0) missing.splice(i, 1); else extra.push(t); }
+  try {
+    want = protectedTokens(english, kind);
+  } catch (err) {
+    return [`the English does not read: ${err.message}`];
+  }
+  try {
+    got = protectedTokens(draft, kind);
+  } catch (err) {
+    return [`does not read as a pattern: ${err.message}`];
+  }
+  const missing = [...want],
+    extra = [];
+  for (const t of got) {
+    const i = missing.indexOf(t);
+    if (i >= 0) missing.splice(i, 1);
+    else extra.push(t);
+  }
   if (missing.length) problems.push(`missing ${missing.join(' ')}`);
   if (extra.length) problems.push(`not in the English: ${extra.join(' ')}`);
   if (/^[\r\n]|[\r\n]$/.test(draft)) problems.push('begins or ends with a line break');
@@ -95,8 +142,11 @@ export function planRun(english, rows, meta = {}, { retranslate = false } = {}) 
   for (const [key, en] of english) {
     const have = rows.get(key);
     const m = meta[key];
-    if (have === undefined) { out.draft.push(key); continue; }
-    const byPerson = m ? m.by === 'human' || hash(have) !== m.tr : true;   // a row the pipeline never wrote is a person's
+    if (have === undefined) {
+      out.draft.push(key);
+      continue;
+    }
+    const byPerson = m ? m.by === 'human' || hash(have) !== m.tr : true; // a row the pipeline never wrote is a person's
     if (byPerson) {
       out.human.push(key);
       if (m && m.en !== hash(en)) out.stale.push(key);
@@ -110,7 +160,8 @@ export function planRun(english, rows, meta = {}, { retranslate = false } = {}) 
 }
 
 /** The rows in batches of `size`. */
-export const batchesOf = (keys, size) => Array.from({ length: Math.ceil(keys.length / size) }, (_, i) => keys.slice(i * size, (i + 1) * size));
+export const batchesOf = (keys, size) =>
+  Array.from({ length: Math.ceil(keys.length / size) }, (_, i) => keys.slice(i * size, (i + 1) * size));
 
 // ─── the request ───────────────────────────────────────────────────────────────────────────────────────────────────
 /** The system prompt for a language and table, with the glossary. */
@@ -124,8 +175,8 @@ export function systemPrompt({ code, table, glossary = {} }) {
     'Write it as a published translation of the game would: natural, idiomatic, in the dark medieval-fantasy tone of the original; the forms of address and register a player of this genre expects in your language; interface labels short.',
     'Keep every placeholder exactly as written and in a place that reads naturally: %macros (%s, %loc, %di, %1bs...), [/markup] tags ([/left], [/center], [/newline], [/record], [/end], [/pos:x=..,y=..], [/font=..]), {0}-style arguments, and quest symbols (_name_, =name_, __name_, ___name_). Do not add any that are not in the English.',
     src?.kind === 'icu'
-      ? 'Values are ICU MessageFormat patterns: keep every {argument} and its name; in {n, plural, ...}, {n, selectordinal, ...} and {x, select, ...} keep the keywords, translate only the words inside the branches, and use your language\'s own plural categories (zero, one, two, few, many, other - always other). Write a literal brace as \'{\'.'
-      : 'Keep the markup\'s line structure: the same number of [/left], [/center] and [/newline] breaks, and [/record] between the same variants.',
+      ? "Values are ICU MessageFormat patterns: keep every {argument} and its name; in {n, plural, ...}, {n, selectordinal, ...} and {x, select, ...} keep the keywords, translate only the words inside the branches, and use your language's own plural categories (zero, one, two, few, many, other - always other). Write a literal brace as '{'."
+      : "Keep the markup's line structure: the same number of [/left], [/center] and [/newline] breaks, and [/record] between the same variants.",
     'Names of people, places, gods, factions and artifacts: use the form the glossary gives; otherwise keep them as they are in Latin-script languages, and transliterate them in others, the same way every time.',
     'Answer through the submit_translations tool: every key you were given, and no other.',
   ];
@@ -137,18 +188,27 @@ export function systemPrompt({ code, table, glossary = {} }) {
 export const TOOL = Object.freeze({
   name: 'submit_translations',
   description: 'Submit the translation of every row, by key.',
-  input_schema: { type: 'object', properties: { translations: { type: 'object', additionalProperties: { type: 'string' } } }, required: ['translations'] },
+  input_schema: {
+    type: 'object',
+    properties: { translations: { type: 'object', additionalProperties: { type: 'string' } } },
+    required: ['translations'],
+  },
 });
 
 /** One request to the Messages API: the system prompt cached (every batch of a run shares it), the tool forced.
  *  Retries a rate limit or an overload with backoff. Answers { key: text }. */
 export async function callClaude({ apiKey, model, system, rows, fix = null, fetchImpl = globalThis.fetch, tries = 5 }) {
   const content = [`Translate these rows (key -> English):\n${JSON.stringify(Object.fromEntries(rows), null, 1)}`];
-  if (fix) content.push(`Your previous answer for these rows broke a rule:\n${fix}\nKeep every placeholder of the English exactly.`);
+  if (fix)
+    content.push(
+      `Your previous answer for these rows broke a rule:\n${fix}\nKeep every placeholder of the English exactly.`,
+    );
   const body = {
-    model, max_tokens: 16000,
+    model,
+    max_tokens: 16000,
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-    tools: [TOOL], tool_choice: { type: 'tool', name: TOOL.name },
+    tools: [TOOL],
+    tool_choice: { type: 'tool', name: TOOL.name },
     messages: [{ role: 'user', content: content.join('\n\n') }],
   };
   for (let attempt = 1; ; attempt++) {
@@ -171,7 +231,13 @@ export async function callClaude({ apiKey, model, system, rows, fix = null, fetc
 }
 
 // ─── a run ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-const readJson = (p, fallback) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return fallback; } };
+const readJson = (p, fallback) => {
+  try {
+    return JSON.parse(readFileSync(p, 'utf8'));
+  } catch {
+    return fallback;
+  }
+};
 /** A table's rows as DFU loads them (LoadCSV: the BOM a StreamReader strips, stripped - DFU's masters and a pack's
  *  files carry one, and a kept BOM makes the header a row). */
 const readRows = (p) => (existsSync(p) ? new Map(loadStringTableCsv(readFileSync(p, 'utf8')) ?? []) : new Map());
@@ -182,10 +248,23 @@ const tidy = (s) => String(s).replace(/^[\r\n]+|[\r\n]+$/g, '');
  * Draft `table` for `code`. `model(rows, fix, system)` answers { key: text } for [key, english] rows (the API in a
  * real run, a stand-in in the tests). Writes the table and its meta unless `dryRun`. Answers the run's account.
  */
-export async function translateTable({ code, table, root = ROOT, model, modelId = DEFAULT_MODEL, batch = 40, jobs = 4, limit = Infinity, retranslate = false, dryRun = false, log = () => {} }) {
+export async function translateTable({
+  code,
+  table,
+  root = ROOT,
+  model,
+  modelId = DEFAULT_MODEL,
+  batch = 40,
+  jobs = 4,
+  limit = Infinity,
+  retranslate = false,
+  dryRun = false,
+  log = () => {},
+}) {
   const src = SOURCES[table];
   if (!src) throw new Error(`no source for ${table} (known: ${Object.keys(SOURCES).join(', ')})`);
-  if (!catalogLocale(code) || code === 'en' || catalogLocale(code).hidden) throw new Error(`${code} is not a language the catalog drafts`);
+  if (!catalogLocale(code) || code === 'en' || catalogLocale(code).hidden)
+    throw new Error(`${code} is not a language the catalog drafts`);
   const englishPath = join(root, src.path);
   if (!existsSync(englishPath)) throw new Error(`${src.path} is not there - the English source comes first`);
   const english = readRows(englishPath);
@@ -194,7 +273,17 @@ export async function translateTable({ code, table, root = ROOT, model, modelId 
   const rows = readRows(outPath);
   const plan = planRun(english, rows, readJson(metaPath, {}), { retranslate });
   const owed = plan.draft.slice(0, limit);
-  const account = { table, code, rows: english.size, drafted: 0, kept: plan.human.length, stale: plan.stale, done: plan.done.length, owed: owed.length, rejected: [] };
+  const account = {
+    table,
+    code,
+    rows: english.size,
+    drafted: 0,
+    kept: plan.human.length,
+    stale: plan.stale,
+    done: plan.done.length,
+    owed: owed.length,
+    rejected: [],
+  };
   const system = systemPrompt({ code, table, glossary: readJson(join(root, 'locales', code, 'glossary.json'), {}) });
   const groups = batchesOf(owed, batch);
   if (dryRun) {
@@ -209,14 +298,19 @@ export async function translateTable({ code, table, root = ROOT, model, modelId 
     let answer = await model(pairs, null, system);
     const bad = pairs.filter(([k, en]) => checkDraft(en, tidy(answer[k] ?? ''), src.kind).length);
     if (bad.length) {
-      const fix = bad.map(([k, en]) => `${k}: ${checkDraft(en, tidy(answer[k] ?? ''), src.kind).join('; ')}`).join('\n');
+      const fix = bad
+        .map(([k, en]) => `${k}: ${checkDraft(en, tidy(answer[k] ?? ''), src.kind).join('; ')}`)
+        .join('\n');
       const again = await model(bad, fix, system);
       answer = { ...answer, ...again };
     }
     for (const [k, en] of pairs) {
       const text = tidy(answer[k] ?? '');
       const problems = checkDraft(en, text, src.kind);
-      if (problems.length) { account.rejected.push(`${k}: ${problems.join('; ')}`); continue; }
+      if (problems.length) {
+        account.rejected.push(`${k}: ${problems.join('; ')}`);
+        continue;
+      }
       drafted.set(k, text);
       meta[k] = { en: hash(en), tr: hash(text), by: modelId };
     }
@@ -232,7 +326,11 @@ export async function translateTable({ code, table, root = ROOT, model, modelId 
   }
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, formatStringTableCsv(out));
-  writeFileSync(metaPath, JSON.stringify(Object.fromEntries(Object.entries(meta).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))), null, 1) + '\n');
+  writeFileSync(
+    metaPath,
+    JSON.stringify(Object.fromEntries(Object.entries(meta).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))), null, 1) +
+      '\n',
+  );
   return account;
 }
 
@@ -251,7 +349,10 @@ export function parseArgs(argv) {
     else if (a === '--dry-run') o.dryRun = true;
     else throw new Error(`unknown option ${a}`);
   }
-  if (!o.code || !o.table) throw new Error('usage: node tools/translate.mjs --lang <tag> --table <table> [--model id] [--batch n] [--jobs n] [--limit n] [--retranslate] [--dry-run]');
+  if (!o.code || !o.table)
+    throw new Error(
+      'usage: node tools/translate.mjs --lang <tag> --table <table> [--model id] [--batch n] [--jobs n] [--limit n] [--retranslate] [--dry-run]',
+    );
   return o;
 }
 
@@ -261,7 +362,18 @@ if (isMain(import.meta.url)) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!o.dryRun && !apiKey) throw new Error('ANTHROPIC_API_KEY is not set (or pass --dry-run)');
     const model = (rows, fix, system) => callClaude({ apiKey, model: o.model, system, rows, fix });
-    const account = await translateTable({ code: o.code, table: o.table, model, modelId: o.model, batch: o.batch, jobs: o.jobs, limit: o.limit, retranslate: o.retranslate, dryRun: o.dryRun, log: (s) => console.log(s) });
+    const account = await translateTable({
+      code: o.code,
+      table: o.table,
+      model,
+      modelId: o.model,
+      batch: o.batch,
+      jobs: o.jobs,
+      limit: o.limit,
+      retranslate: o.retranslate,
+      dryRun: o.dryRun,
+      log: (s) => console.log(s),
+    });
     console.log(JSON.stringify({ ...account, rejected: account.rejected.length }, null, 1));
     for (const r of account.rejected) console.error(`rejected ${r}`);
     for (const k of account.stale) console.error(`stale (a person's row; its English changed): ${k}`);

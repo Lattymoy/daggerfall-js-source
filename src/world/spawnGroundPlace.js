@@ -17,8 +17,8 @@
 import { CLIMATES } from '../formats/mapsTables.js';
 import { inEther } from './ethericSea.js';
 import { spawnsDungeon, pathFreePixel, WORLD_SALT } from './spawnedDungeons.js';
-import { wildInside } from '../systems/wild/wildZone.js';   // AUDIT RELEASE R3-7: the zone's mask is the host's (zoneMask) - main's wildMaskOf, the Bay's zone off the maps, is gone with WW-C2
-import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: past the Bay a place stands first
+import { wildInside } from '../systems/wild/wildZone.js'; // AUDIT RELEASE R3-7: the zone's mask is the host's (zoneMask) - main's wildMaskOf, the Bay's zone off the maps, is gone with WW-C2
+import { inBay } from './tamriel/tamrielFrame.js'; // SPAWN-WORLD: past the Bay a place stands first
 
 /**
  * What the host holds that the law reads.
@@ -46,7 +46,17 @@ import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: past the Ba
  * @param {SpawnGroundHandles} handles
  */
 export function createSpawnGroundPlace(handles) {
-  const { maps, online, etherSea, plateauDry, terrainGen, cloneAt, spawnGone, zoneMask, placeAt = () => false } = handles;
+  const {
+    maps,
+    online,
+    etherSea,
+    plateauDry,
+    terrainGen,
+    cloneAt,
+    spawnGone,
+    zoneMask,
+    placeAt = () => false,
+  } = handles;
 
   /** Is the open zone's mask on this pixel? The zone stands its own halls, never the spawner's roll. */
   function inOpenZone(px, py) {

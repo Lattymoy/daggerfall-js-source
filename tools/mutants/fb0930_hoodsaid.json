@@ -38,8 +38,8 @@
   {
     "name": "HOOD-SAID-a-hood-on-anything",
     "file": "src/systems/survival/temperature.js",
-    "old": "export const hoodCapable = (item) => CASUAL_CLOAKS.has(item?.templateIndex)",
-    "new": "export const hoodCapable = (item) => !!item || CASUAL_CLOAKS.has(item?.templateIndex)",
+    "old": "  CASUAL_CLOAKS.has(item?.templateIndex) ||",
+    "new": "  !!item ||\n  CASUAL_CLOAKS.has(item?.templateIndex) ||",
     "tests": [
       "test/systems/fb0930_hoodsaid.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HOOD-SAID-the-robes-forgotten",
     "file": "src/systems/survival/temperature.js",
-    "old": "\n  || HOODED_ROBES.has(item?.templateIndex);",
-    "new": ";",
+    "old": "export const hoodCapable = (item) =>\n  CASUAL_CLOAKS.has(item?.templateIndex) ||\n  FORMAL_CLOAKS.has(item?.templateIndex) ||\n  HOODED_ROBES.has(item?.templateIndex);",
+    "new": "export const hoodCapable = (item) => CASUAL_CLOAKS.has(item?.templateIndex) || FORMAL_CLOAKS.has(item?.templateIndex);",
     "tests": [
       "test/systems/fb0930_hoodsaid.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "HOOD-SAID-every-piece-read-as-a-shirt",
     "file": "src/systems/survival/temperature.js",
-    "old": "  return cloakState({ [HOODED_ROBES.has(item.templateIndex) ? EQUIP_SLOTS.ChestClothes : EQUIP_SLOTS.Cloak1]: item }).hood;",
+    "old": "  return cloakState({ [HOODED_ROBES.has(item.templateIndex) ? EQUIP_SLOTS.ChestClothes : EQUIP_SLOTS.Cloak1]: item })\n    .hood;",
     "new": "  return cloakState({ [EQUIP_SLOTS.ChestClothes]: item }).hood;",
     "tests": [
       "test/systems/fb0930_hoodsaid.test.js"

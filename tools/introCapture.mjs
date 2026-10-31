@@ -14,38 +14,121 @@ const out = process.argv[2] ?? 'test-harness/intro';
 const frames = `${out}/frames`;
 // INTRO4: the film runs to bar 16 and its landing (~53 s), twice INTRO2's, and a software renderer draws each of its
 // frames in seconds - at 8 frames a second and 960 x 540, so the whole film is drawn inside the job
-const fps = 8, duration = Math.ceil(TITLE_READY_TIME + 2);
+const fps = 8,
+  duration = Math.ceil(TITLE_READY_TIME + 2);
 mkdirSync(frames, { recursive: true });
 const server = await createServer({ server: { port: 5202, strictPort: true }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: [
-  '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-  '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-  '--disable-backgrounding-occluded-windows',
-] });
+const browser = await chromium.launch({
+  args: [
+    '--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader',
+    '--disable-renderer-backgrounding',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+  ],
+});
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
   page.setDefaultTimeout(180000);
   await page.goto('http://localhost:5202/play/?introdebug&introat=0');
   // MAIN-RED (2026-10-26): a dev-server page is its whole graph before the intro runs - two minutes, as introProbe's ready
-  await page.waitForFunction(() => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady, null, { timeout: 120000 });
+  await page.waitForFunction(
+    () => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady,
+    null,
+    { timeout: 120000 },
+  );
   for (let i = 0; i < duration * fps; i++) {
     const t = i / fps;
     // TITLE-DOOR (2026-10-27): the film lands at the mark's rest and then holds its own frame - a seek past it draws
     // nothing - so every later frame is the landed title as it stands, the menu over it
     if (await page.evaluate(() => window.__intro.state.phase !== 'landed')) {
-      const n = await page.evaluate(t => window.__intro.seek(t), t);
-      await page.waitForFunction(({ n, t }) => window.__intro.state.frames > n && window.__intro.state.time === t, { n, t });
+      const n = await page.evaluate((t) => window.__intro.seek(t), t);
+      await page.waitForFunction(({ n, t }) => window.__intro.state.frames > n && window.__intro.state.time === t, {
+        n,
+        t,
+      });
     }
     await page.screenshot({ path: `${frames}/${String(i).padStart(5, '0')}.png` });
     if (i % fps === 0) console.log(`preview ${i / fps}/${duration}s`);
   }
-  assert.equal(readdirSync(frames).filter(name => name.endsWith('.png')).length, duration * fps,
-    'the preview must contain every frame');
-  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', String(fps), '-i', `${frames}/%05d.png`, '-i', 'src/assets/intro/theme.mp3', '-t', String(duration), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-af', 'volume=0.82', '-movflags', '+faststart', `${out}/daggerfall-intro-preview.mp4`]);
-  const media = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,start_time,duration', '-of', 'json', `${out}/daggerfall-intro-preview.mp4`], { encoding: 'utf8' }));
-  assert.deepEqual(media.streams.map(stream => stream.codec_type).sort(), ['audio', 'video']);
-  assert.ok(media.streams.every(stream => Number(stream.start_time) === 0), 'picture and source score start together');
+  assert.equal(
+    readdirSync(frames).filter((name) => name.endsWith('.png')).length,
+    duration * fps,
+    'the preview must contain every frame',
+  );
+  execFileSync('ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-framerate',
+    String(fps),
+    '-i',
+    `${frames}/%05d.png`,
+    '-i',
+    'src/assets/intro/theme.mp3',
+    '-t',
+    String(duration),
+    '-c:v',
+    'libx264',
+    '-preset',
+    'medium',
+    '-crf',
+    '18',
+    '-pix_fmt',
+    'yuv420p',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '192k',
+    '-af',
+    'volume=0.82',
+    '-movflags',
+    '+faststart',
+    `${out}/daggerfall-intro-preview.mp4`,
+  ]);
+  const media = JSON.parse(
+    execFileSync(
+      'ffprobe',
+      [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration:stream=codec_type,start_time,duration',
+        '-of',
+        'json',
+        `${out}/daggerfall-intro-preview.mp4`,
+      ],
+      { encoding: 'utf8' },
+    ),
+  );
+  assert.deepEqual(media.streams.map((stream) => stream.codec_type).sort(), ['audio', 'video']);
+  assert.ok(
+    media.streams.every((stream) => Number(stream.start_time) === 0),
+    'picture and source score start together',
+  );
   assert.ok(Math.abs(Number(media.format.duration) - duration) < 1 / fps, 'the preview has the authored duration');
-  writeFileSync(`${out}/preview-method.json`, JSON.stringify({ type: 'deterministic-rendered-preview', fps, duration, audioOffset: 0, titleImpactTime: TITLE_IMPACT_TIME, firstLandedFrame: Math.ceil(TITLE_IMPACT_TIME * fps), handoff: 'The landing (the menu over the held title) and the duck at the first press verified separately in browser-report.json', hardwareClaim: 'None: see live-timing.json for live browser measurements' }, null, 2));
-} finally { await browser.close(); await server.close(); rmSync(frames, { recursive: true, force: true }); }
+  writeFileSync(
+    `${out}/preview-method.json`,
+    JSON.stringify(
+      {
+        type: 'deterministic-rendered-preview',
+        fps,
+        duration,
+        audioOffset: 0,
+        titleImpactTime: TITLE_IMPACT_TIME,
+        firstLandedFrame: Math.ceil(TITLE_IMPACT_TIME * fps),
+        handoff:
+          'The landing (the menu over the held title) and the duck at the first press verified separately in browser-report.json',
+        hardwareClaim: 'None: see live-timing.json for live browser measurements',
+      },
+      null,
+      2,
+    ),
+  );
+} finally {
+  await browser.close();
+  await server.close();
+  rmSync(frames, { recursive: true, force: true });
+}

@@ -15,13 +15,13 @@
 // MIDI.BSA is 1.2MB and already survives the ingest diet (the .BSA arm),
 // so there is nothing to add to KEEP for this.
 
-import { audio, decodableCopy } from './audio.js';   // AUDIT 39: one decode door, one slice law
+import { audio, decodableCopy } from './audio.js'; // AUDIT 39: one decode door, one slice law
 import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './song/songManager.js';
-import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './song/songPlayer.js';   // M-EXT: the replacement's player shares the volume law
-import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
-import { onSettingChange } from './settings/settings.js';   // 2026-08-27: MusicVolume applies live
-import { MidiOutSongPlayer, midiOutName, findMidiOutput, onMidiOutChange } from './midiOut.js';   // MIDI-OUT1: a device as the voice
+import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './song/songPlayer.js'; // M-EXT: the replacement's player shares the volume law
+import { hasReplacement, replacementBytes } from './musicReplacement.js'; // M-EXT: SoundReplacement.TryImportSong
+import { onSettingChange } from './settings/settings.js'; // 2026-08-27: MusicVolume applies live
+import { MidiOutSongPlayer, midiOutName, findMidiOutput, onMidiOutChange } from './midiOut.js'; // MIDI-OUT1: a device as the voice
 
 /** DISC20-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
  *  between tracks"): A SWITCH FADES. DFU cuts - DaggerfallSongPlayer.Play calls Stop first, and Stop is
@@ -40,7 +40,7 @@ export class MusicService {
   constructor() {
     this.archive = null;
     this.player = null;
-    this._audio = null;   // M-EXT: the replacement player, built lazily like `player`
+    this._audio = null; // M-EXT: the replacement player, built lazily like `player`
     this.enabled = false;
     // null, NOT false: `ensure` memoises with `??=`, which assigns only
     // over null/undefined. A `false` here is neither, so _boot was never
@@ -49,9 +49,9 @@ export class MusicService {
     // live boot probe, not by the suite (AUDIT 19).
     this._booted = null;
     this._current = null;
-    this._switch = null;   // DISC20-B: { from, to, timer } while a song fades out before the next
-    this._made = new Map();   // WB7: songs made in code (systems/gate/gateScore.js), by their own names beside MIDI.BSA's
-    this._later = (fn, ms) => setTimeout(fn, ms);   // DISC20-B: the fade's clock, a seam for the tests
+    this._switch = null; // DISC20-B: { from, to, timer } while a song fades out before the next
+    this._made = new Map(); // WB7: songs made in code (systems/gate/gateScore.js), by their own names beside MIDI.BSA's
+    this._later = (fn, ms) => setTimeout(fn, ms); // DISC20-B: the fade's clock, a seam for the tests
     this._cancelLater = (id) => clearTimeout(id);
     // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
     // tier - both players this service owns re-level the moment it is
@@ -59,7 +59,7 @@ export class MusicService {
     this._unsubscribe = onSettingChange((section, key) => {
       if (section === 'Controls' && key === 'MusicVolume') this.resyncGain();
     });
-    this._midiOut = null;   // MIDI-OUT1: the MIDIOutput the songs play on, null for the synth
+    this._midiOut = null; // MIDI-OUT1: the MIDIOutput the songs play on, null for the synth
     this._midiAsk = 0;
     this._unsubscribeMidi = onMidiOutChange(() => this.adoptMidiOut());
   }
@@ -72,7 +72,11 @@ export class MusicService {
   async adoptMidiOut() {
     const ask = ++this._midiAsk;
     let output = null;
-    try { output = await findMidiOutput(midiOutName()); } catch (e) { console.warn('[music] MIDI out unavailable:', e?.message ?? e); }
+    try {
+      output = await findMidiOutput(midiOutName());
+    } catch (e) {
+      console.warn('[music] MIDI out unavailable:', e?.message ?? e);
+    }
     if (ask !== this._midiAsk || output === this._midiOut) return;
     this._midiOut = output;
     const again = this.player?.playing && !this._switch ? this._current : null;
@@ -84,11 +88,15 @@ export class MusicService {
   }
 
   /** MIDI-OUT1: is the music on a device? */
-  get midiOut() { return this._midiOut; }
+  get midiOut() {
+    return this._midiOut;
+  }
 
   /** EG-G2 (bible/11-Multiplayer/Elite-Gates.md section 26, THE SPIRE MIX): duck what sounds `db` decibels for `seconds`
    *  (systems/song/songPlayer.js SongPlayer.duck - a MIDI device or a replacement track is not ducked). */
-  duck(db, seconds) { this.player?.duck?.(db, seconds); }
+  duck(db, seconds) {
+    this.player?.duck?.(db, seconds);
+  }
 
   /** Re-level whatever is sounding to the MusicVolume setting. */
   resyncGain() {
@@ -113,7 +121,9 @@ export class MusicService {
     this.resyncGain();
   }
 
-  get muted() { return isMusicMuted(); }
+  get muted() {
+    return isMusicMuted();
+  }
 
   /** The one bootstrap. Safe to call from every host, every entry.
    *
@@ -147,7 +157,7 @@ export class MusicService {
       // from "music never started" during AUDIT 19.
       this.bootError = e?.message ?? String(e);
     }
-    if (midiOutName()) this.adoptMidiOut();   // MIDI-OUT1: the device picked last time - fire-and-forget, the synth plays until it answers
+    if (midiOutName()) this.adoptMidiOut(); // MIDI-OUT1: the device picked last time - fire-and-forget, the synth plays until it answers
     if (typeof window !== 'undefined') this.attachGestureStart();
   }
 
@@ -192,9 +202,9 @@ export class MusicService {
     // AUDIT WBX W2: a song made in code needs no archive - the court's score played nothing where MIDI.BSA did not load
     if (!this.enabled && !made) return null;
     if (this.player) return this.player;
-    if (this._midiOut) return (this.player = new MidiOutSongPlayer(this._midiOut));   // MIDI-OUT1: a device needs no AudioContext
+    if (this._midiOut) return (this.player = new MidiOutSongPlayer(this._midiOut)); // MIDI-OUT1: a device needs no AudioContext
     if (!audio.ctx) return null;
-    this.player = new SongPlayer(audio.ctx, audio.listenerBus?.() ?? null, audio.reverbSend?.() ?? null);   // DW-D: through the listener, so a filter on it takes the music too
+    this.player = new SongPlayer(audio.ctx, audio.listenerBus?.() ?? null, audio.reverbSend?.() ?? null); // DW-D: through the listener, so a filter on it takes the music too
     return this.player;
   }
 
@@ -215,13 +225,21 @@ export class MusicService {
     // DISC20-B: a switch under way lands on the latest request, and the song fading out, asked for again, comes back
     // up from where its fade stands
     if (this._switch) {
-      if (name === this._switch.from) { this._cancelSwitch(); this._current = name; this._fadeSounding(1, MUSIC_FADE_IN_S); return true; }
+      if (name === this._switch.from) {
+        this._cancelSwitch();
+        this._current = name;
+        this._fadeSounding(1, MUSIC_FADE_IN_S);
+        return true;
+      }
       this._switch.to = name;
       this._current = name;
       return true;
     }
     if (this._current === name && this.playing) return true;
-    if (this.playing && this._current !== null) { this._beginSwitch(name); return true; }   // DISC20-B: out, then in
+    if (this.playing && this._current !== null) {
+      this._beginSwitch(name);
+      return true;
+    } // DISC20-B: out, then in
     return this._start(name);
   }
 
@@ -251,7 +269,7 @@ export class MusicService {
       this._switch = null;
       this.player?.stop();
       this._audio?.stop();
-      if (!this._start(sw.to) && this._current === sw.to) this._current = null;   // a song that will not start leaves nothing claimed
+      if (!this._start(sw.to) && this._current === sw.to) this._current = null; // a song that will not start leaves nothing claimed
     }, MUSIC_FADE_OUT_S * 1000);
   }
 
@@ -260,8 +278,15 @@ export class MusicService {
    *  back up from where the fade stands. */
   fadeOut(seconds = MUSIC_FADE_OUT_S) {
     this._pending = null;
-    if (this._switch) { this._switch.to = null; this._current = null; return; }
-    if (!this.playing || this._current === null) { this.stop(); return; }
+    if (this._switch) {
+      this._switch.to = null;
+      this._current = null;
+      return;
+    }
+    if (!this.playing || this._current === null) {
+      this.stop();
+      return;
+    }
     const sw = { from: this._current, to: null, timer: null };
     this._current = null;
     this._switch = sw;
@@ -292,10 +317,10 @@ export class MusicService {
   _playBuiltIn(name) {
     const player = this._ensurePlayer(this._made.has(name));
     if (!player) return false;
-    this._audio?.stop();   // a replacement must not sound underneath
-    let song = this._made.get(name) ?? null;   // WB7: a song made in code answers for its own name
+    this._audio?.stop(); // a replacement must not sound underneath
+    let song = this._made.get(name) ?? null; // WB7: a song made in code answers for its own name
     if (!song) {
-      if (!this.archive) return false;   // AUDIT WBX W2: no archive, no song of its
+      if (!this.archive) return false; // AUDIT WBX W2: no archive, no song of its
       const index = this.archive.getSongIndex(name);
       if (index === null || index === undefined || index < 0) {
         console.warn(`[music] no song named ${name} in MIDI.BSA`);
@@ -316,7 +341,10 @@ export class MusicService {
     // fade it holds then, so a fade still up struck the first notes at full before the rise began
     if (fresh) player.fadeTo?.(0, 0);
     const ok = player.play(song);
-    if (ok && fresh) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }   // DISC20-B: it rises in
+    if (ok && fresh) {
+      player.fadeTo?.(0, 0);
+      player.fadeTo?.(1, MUSIC_FADE_IN_S);
+    } // DISC20-B: it rises in
     return ok;
   }
 
@@ -343,8 +371,8 @@ export class MusicService {
   async _startReplacement(name) {
     const player = this._ensureAudioPlayer();
     if (!player) return;
-    this.player?.stop();          // the MIDI player must not sound underneath
-    player.playing = true;        // commit BEFORE the await - see above
+    this.player?.stop(); // the MIDI player must not sound underneath
+    player.playing = true; // commit BEFORE the await - see above
     let buffer = null;
     try {
       const bytes = await replacementBytes(name);
@@ -357,8 +385,15 @@ export class MusicService {
       console.warn(`[music] replacement for ${name} would not decode:`, e?.message ?? e);
     }
     if (this._current !== name) return;
-    if (!buffer) { player.playing = false; this._playBuiltIn(name); return; }
-    if (player.play(buffer)) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }   // DISC20-B: it rises in
+    if (!buffer) {
+      player.playing = false;
+      this._playBuiltIn(name);
+      return;
+    }
+    if (player.play(buffer)) {
+      player.fadeTo?.(0, 0);
+      player.fadeTo?.(1, MUSIC_FADE_IN_S);
+    } // DISC20-B: it rises in
   }
 
   /** Pick from one of songManager's verbatim playlists and play it. */
@@ -371,7 +406,9 @@ export class MusicService {
   /** Is a song sounding right now? The director asks each frame - it is
    *  the port's stand-in for DFU's `songPlayer.IsPlaying`, which drives
    *  both the re-evaluation and the replay in UpdateSong. */
-  get playing() { return Boolean(this.player?.playing || this._audio?.playing); }
+  get playing() {
+    return Boolean(this.player?.playing || this._audio?.playing);
+  }
 
   stop() {
     // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
@@ -381,11 +418,13 @@ export class MusicService {
     this._current = null;
     this._pending = null;
     this.player?.stop();
-    this._audio?.stop();   // M-EXT: both players, or a replacement outlives the stop
-    this._cancelSwitch();   // DISC20-B: a stop mid-fade starts nothing after it
+    this._audio?.stop(); // M-EXT: both players, or a replacement outlives the stop
+    this._cancelSwitch(); // DISC20-B: a stop mid-fade starts nothing after it
   }
 
-  get current() { return this._current; }
+  get current() {
+    return this._current;
+  }
 }
 
 export const music = new MusicService();

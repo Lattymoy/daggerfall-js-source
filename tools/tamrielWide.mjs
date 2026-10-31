@@ -35,29 +35,33 @@ const ARG_BOUND = String.raw`\(\s*${ARG_COORD}\s*,\s*(?:0\s*,\s*)?(?:999|499)\s*
 export const IDIOMS = Object.freeze([
   {
     id: 'pixel-id',
-    re: new RegExp([
-      String.raw`\b${Y}\s*\)?\s*\*\s*${WIDE}\s*\)?\s*\+\s*\(?\s*${X}\b`,
-      String.raw`\b${X}\s*\+\s*\(?\s*${Y}\s*\*\s*${WIDE}\b`,
-      String.raw`\b${X}\s*\+\s*\(?\s*${WIDE}\s*\*\s*${Y}\b`,
-      String.raw`\b${WIDE}\s*\*\s*${Y}\s*\)?\s*\+\s*${X}\b`,
-    ].join('|')),
-    use: 'worldPixelKey (world/worldWide/worldGrid.js): MapsFile\'s y * 1000 + x is unique on the Bay alone',
+    re: new RegExp(
+      [
+        String.raw`\b${Y}\s*\)?\s*\*\s*${WIDE}\s*\)?\s*\+\s*\(?\s*${X}\b`,
+        String.raw`\b${X}\s*\+\s*\(?\s*${Y}\s*\*\s*${WIDE}\b`,
+        String.raw`\b${X}\s*\+\s*\(?\s*${WIDE}\s*\*\s*${Y}\b`,
+        String.raw`\b${WIDE}\s*\*\s*${Y}\s*\)?\s*\+\s*${X}\b`,
+      ].join('|'),
+    ),
+    use: "worldPixelKey (world/worldWide/worldGrid.js): MapsFile's y * 1000 + x is unique on the Bay alone",
   },
   {
     id: 'pixel-mask',
     re: /&\s*0x0*[fF]{5}\b(?!f)|%\s*0x100000\b/,
-    use: 'discoveryKeyOf (systems/discovery.js): a MapId\'s low 20 bits name one place on the Bay alone',
+    use: "discoveryKeyOf (systems/discovery.js): a MapId's low 20 bits name one place on the Bay alone",
   },
   {
     id: 'region-count',
     re: /(?:<|>=|<=|>)\s*\(?\s*[\w.?]*\bregionCount\b/,
-    use: 'the places registry (world/worldWide/worldPlaces.js): MAPS.BSA\'s regions hold no place past the Bay',
+    use: "the places registry (world/worldWide/worldPlaces.js): MAPS.BSA's regions hold no place past the Bay",
   },
   {
     id: 'bay-bound',
     // a coordinate against the Bay's edge, either way round - not one that is a difference (a time, a height)
-    re: new RegExp(String.raw`(?<![-+*/%.]\s*)\b${AT}\s*${CMP}\s*${EDGE}(?!\s*[-+*/])\b|\b${EDGE}\s*${CMP}\s*${AT}\b|${ARG_BOUND}`),
-    use: 'worldPixelOk (net/wire.js) for a bound, inBay (world/tamriel/tamrielFrame.js) for the Bay\'s own data',
+    re: new RegExp(
+      String.raw`(?<![-+*/%.]\s*)\b${AT}\s*${CMP}\s*${EDGE}(?!\s*[-+*/])\b|\b${EDGE}\s*${CMP}\s*${AT}\b|${ARG_BOUND}`,
+    ),
+    use: "worldPixelOk (net/wire.js) for a bound, inBay (world/tamriel/tamrielFrame.js) for the Bay's own data",
   },
   {
     id: 'bay-clamp',
@@ -84,7 +88,8 @@ export function codeOf(line) {
 const MARKED = new RegExp(String.raw`(?:\/\/|\/\*|^\s*\*).*${BAY_OWN}(?:\s*\S){3}`);
 /** Whether line `i` is the Bay's own on purpose: the marker on it, or on a comment line just above - a code line's
  *  marker is its own line's alone. */
-const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && /^\s*(?:\/\/|\/\*|\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));
+const ownedAt = (lines, i) =>
+  MARKED.test(lines[i]) || (i > 0 && /^\s*(?:\/\/|\/\*|\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));
 
 /** Counts of each idiom in one source text: `{ id: n }`, idioms with none left out. */
 export function countIn(text) {
@@ -111,8 +116,12 @@ export function linesIn(text) {
   return out;
 }
 
-const sourceFiles = (root) => SOURCE_DIRS.filter((d) => existsSync(join(root, d))).flatMap((d) =>
-  readdirSync(join(root, d), { recursive: true }).map((f) => `${d}/${String(f).split('\\').join('/')}`).filter((f) => /\.m?js$/.test(f)));
+const sourceFiles = (root) =>
+  SOURCE_DIRS.filter((d) => existsSync(join(root, d))).flatMap((d) =>
+    readdirSync(join(root, d), { recursive: true })
+      .map((f) => `${d}/${String(f).split('\\').join('/')}`)
+      .filter((f) => /\.m?js$/.test(f)),
+  );
 
 /** The tree's counts: `{ idiom: { file: n } }`, every idiom present, files sorted. */
 export function measure(root = ROOT) {
@@ -125,19 +134,31 @@ export function measure(root = ROOT) {
 
 /** Against `base`: a file past its count for an idiom (none for one not listed), and a count now lower than written. */
 export function verdict(now, base) {
-  const over = [], stale = [];
+  const over = [],
+    stale = [];
   for (const { id } of IDIOMS) {
-    const b = base[id] ?? {}, n0 = now[id] ?? {};
+    const b = base[id] ?? {},
+      n0 = now[id] ?? {};
     for (const [f, n] of Object.entries(n0)) if (n > (b[f] ?? 0)) over.push(`${id} ${f}: ${n} (allowed ${b[f] ?? 0})`);
-    for (const [f, n] of Object.entries(b)) if ((n0[f] ?? 0) < n) stale.push(`${id} ${f}: ${n0[f] ?? 0} (baseline ${n})`);
+    for (const [f, n] of Object.entries(b))
+      if ((n0[f] ?? 0) < n) stale.push(`${id} ${f}: ${n0[f] ?? 0} (baseline ${n})`);
   }
   return { over, stale };
 }
 
 /** The baseline lowered to `now`: never raised, an entry at zero dropped. */
 export function lowered(base, now) {
-  return Object.fromEntries(IDIOMS.map(({ id }) => [id, Object.fromEntries(Object.entries(base[id] ?? {})
-    .map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)]).filter(([, n]) => n > 0).sort(([x], [y]) => x.localeCompare(y)))]));
+  return Object.fromEntries(
+    IDIOMS.map(({ id }) => [
+      id,
+      Object.fromEntries(
+        Object.entries(base[id] ?? {})
+          .map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)])
+          .filter(([, n]) => n > 0)
+          .sort(([x], [y]) => x.localeCompare(y)),
+      ),
+    ]),
+  );
 }
 
 if (isMain(import.meta.url)) {
@@ -145,7 +166,8 @@ if (isMain(import.meta.url)) {
   const base = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : {};
   if (process.argv.includes('--where')) {
     for (const f of sourceFiles(ROOT).sort()) {
-      for (const { id, line, text } of linesIn(readFileSync(join(ROOT, f), 'utf8'))) console.log(`${id}  ${f}:${line}  ${text}`);
+      for (const { id, line, text } of linesIn(readFileSync(join(ROOT, f), 'utf8')))
+        console.log(`${id}  ${f}:${line}  ${text}`);
     }
   } else if (process.argv.includes('--lower')) {
     writeFileSync(path, `${JSON.stringify(lowered(base, measure()), null, 1)}\n`);

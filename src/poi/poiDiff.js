@@ -15,7 +15,9 @@ import { POI_PIXEL_M } from './poiLaw.js';
 import { quatMultiply } from '../world/quat.js';
 
 /** A spot's distance under which it has not moved, in metres; a turn's, in degrees; a size's ratio. */
-const MOVE_EPS = 0.005, TURN_EPS = 0.05, SIZE_EPS = 1e-4;
+const MOVE_EPS = 0.005,
+  TURN_EPS = 0.05,
+  SIZE_EPS = 1e-4;
 
 const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 /**
@@ -48,7 +50,8 @@ export function poiDiff(before, after) {
   // the tags themselves (AUDIT POI U13, the lead's join): the reader's language lists them (poiText.js diffText), never an
   // English ', '
   if (!same(before.tags ?? [], after.tags ?? [])) out.push({ code: 'tags', tags: [...(after.tags ?? [])] });
-  const p0 = before.place, p1 = after.place;
+  const p0 = before.place,
+    p1 = after.place;
   const moved = dist3(mapSpot(p0), mapSpot(p1));
   if (moved > MOVE_EPS) out.push({ code: 'moved', m: Math.round(moved * 100) / 100 });
   if (p0.ground !== p1.ground) out.push({ code: 'ground', to: p1.ground });
@@ -61,7 +64,10 @@ export function poiDiff(before, after) {
   for (const [key, q] of now) {
     const old = was.get(key);
     const name = q.name || key;
-    if (!old) { out.push({ code: 'part-added', name }); continue; }
+    if (!old) {
+      out.push({ code: 'part-added', name });
+      continue;
+    }
     const what = [];
     if (old.mesh !== q.mesh) what.push('model');
     // AUDIT POI P12: a part's offset is in its POI's frame, under the POI's size - measured in the world, where the
@@ -75,7 +81,9 @@ export function poiDiff(before, after) {
     if (what.length) out.push({ code: 'part-changed', name, what });
   }
   for (const [key, q] of was) if (!now.has(key)) out.push({ code: 'part-removed', name: q.name || key });
-  if (!same(before.lights ?? [], after.lights ?? [])) out.push({ code: 'lights', from: before.lights?.length ?? 0, to: after.lights?.length ?? 0 });
-  if (!same(before.marker ?? { show: false }, after.marker ?? { show: false })) out.push({ code: 'marker', show: !!after.marker?.show, label: after.marker?.label ?? '' });
+  if (!same(before.lights ?? [], after.lights ?? []))
+    out.push({ code: 'lights', from: before.lights?.length ?? 0, to: after.lights?.length ?? 0 });
+  if (!same(before.marker ?? { show: false }, after.marker ?? { show: false }))
+    out.push({ code: 'marker', show: !!after.marker?.show, label: after.marker?.label ?? '' });
   return out;
 }

@@ -2,7 +2,7 @@
 //
 // DaggerfallHUD.Update polls five DaggerfallShortcut bindings every
 // frame (DaggerfallHUD.cs:295-326). The port had the whole binding
-// TABLE (systems/dialogShortcuts.js:"'Pause', 'LargeHUDToggle'," lists them, systems/dialogShortcuts.js:"Pause: 'Shift-Escape'," gives the
+// TABLE (systems/dialogShortcuts.js:"'Pause'," lists them, systems/dialogShortcuts.js:"Pause: 'Shift-Escape'," gives the
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //
@@ -42,7 +42,7 @@
 
 import { getBool, setValue } from '../../systems/settings/settings.js';
 import { hotkeyHit } from '../../systems/dialogShortcuts.js';
-import { toggleRetroPostprocessing } from '../../systems/retroMode.js';   // RETRO1: a systems leaf, as the rule above asks
+import { toggleRetroPostprocessing } from '../../systems/retroMode.js'; // RETRO1: a systems leaf, as the rule above asks
 
 // DaggerfallHUD.cs:47 `bool renderHUD = true;`
 let _renderHud = true;
@@ -58,7 +58,9 @@ export function toggleHudRender() {
 }
 
 /** Tests only: put the flag back where a fresh HUD starts (:47). */
-export function _resetHudRender() { _renderHud = true; }
+export function _resetHudRender() {
+  _renderHud = true;
+}
 
 /**
  * The three shortcut arms of DaggerfallHUD.Update, for one keydown.

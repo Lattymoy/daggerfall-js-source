@@ -17,5 +17,9 @@ export const inClassicScope = () => depth > 0;
 /** Run `fn` with the enhanced hooks stood down. */
 export function classicScope(fn) {
   depth++;
-  try { return fn(); } finally { depth--; }
+  try {
+    return fn();
+  } finally {
+    depth--;
+  }
 }

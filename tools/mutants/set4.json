@@ -2,8 +2,8 @@
   {
     "name": "SET4-a-chance-of-its-own",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  if (rolls() * 1000 >= sigilChance(party)) return null;\n  return { set: rollWorldSet(rolls), party: sigilParty(party), xp: 0 };",
-    "new": "  if (rolls() * 1000 >= 200) return null;\n  return { set: rollWorldSet(rolls), party: sigilParty(party), xp: 0 };",
+    "old": "  if (rolls() * 1000 >= sigilChance(party)) return null;",
+    "new": "  if (rolls() * 1000 >= 200) return null;",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SET4-the-aetheric-rolled",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "WORLD_SET_IDS[Math.min(WORLD_SET_IDS.length - 1, Math.floor(rolls() * WORLD_SET_IDS.length))]",
-    "new": "SIGIL_SET_IDS[Math.min(SIGIL_SET_IDS.length - 1, Math.floor(rolls() * SIGIL_SET_IDS.length))]",
+    "old": "  WORLD_SET_IDS[Math.min(WORLD_SET_IDS.length - 1, Math.floor(rolls() * WORLD_SET_IDS.length))];",
+    "new": "  SIGIL_SET_IDS[Math.min(SIGIL_SET_IDS.length - 1, Math.floor(rolls() * SIGIL_SET_IDS.length))];",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SET4-the-join-every-time",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "(rolls() * SET_WEAPON_JOIN_IN < 1 ? rollWorldSet(rolls) : null)",
-    "new": "rollWorldSet(rolls)",
+    "old": "export const rollSetJoin = (rolls = Math.random) => (rolls() * SET_WEAPON_JOIN_IN < 1 ? rollWorldSet(rolls) : null);",
+    "new": "export const rollSetJoin = (rolls = Math.random) => rollWorldSet(rolls);",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SET4-the-rise-read-off-the-highest-piece",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "pieces.reduce((low, p) => Math.min(low, sigilRank(p.sigil)), SET_STAGE_MAX)",
-    "new": "pieces.reduce((low, p) => Math.max(low, sigilRank(p.sigil)), 0)",
+    "old": "const lowestRank = (pieces) => pieces.reduce((low, p) => Math.min(low, sigilRank(p.sigil)), SET_STAGE_MAX);",
+    "new": "const lowestRank = (pieces) => pieces.reduce((low, p) => Math.max(low, sigilRank(p.sigil)), 0);",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SET4-the-weapon-in-hand-drinking-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "for (const p of pieces) if (p !== held) drinkSigil(p, drink(p));",
-    "new": "for (const p of pieces) drinkSigil(p, drink(p));",
+    "old": "  for (const pieces of worn.values()) for (const p of pieces) if (p !== held) drinkSigil(p, drink(p));",
+    "new": "  for (const pieces of worn.values()) for (const p of pieces) drinkSigil(p, drink(p));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SET4-the-pieces-drinking-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "const worn = awake ? wornSetPieces(entity) : new Map();",
-    "new": "const worn = wornSetPieces(entity);",
+    "old": "  const worn = awake ? wornSetPieces(entity) : new Map();",
+    "new": "  const worn = wornSetPieces(entity);",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SET4-the-weapons-line-said-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "if (rank != null && !risen.some(([id]) => id === heldSet)) lines.push(",
-    "new": "if (rank != null) lines.push(",
+    "old": "  if (rank != null && !risen.some(([id]) => id === heldSet)) lines.push(sigilRiseLine(nameOf(held), rank));",
+    "new": "  if (rank != null) lines.push(sigilRiseLine(nameOf(held), rank));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SET4-the-sets-rank-read-after-the-weapon-drank",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // SET-CATCHUP: each set's reach, recorded as the drink finds it; a piece below it drinks faster until it gets there\n  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));\n",
-    "new": "  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n",
+    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // SET-CATCHUP: each set's reach, recorded as the drink finds it; a piece below it drinks faster until it gets there\n  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => {\n    const id = setIdOf(p);\n    return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp;\n  };\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));",
+    "new": "  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => {\n    const id = setIdOf(p);\n    return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp;\n  };\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SET4-rose-never-told",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return { lines: lines.filter(Boolean), rose: risen.length > 0 };",
-    "new": "return { lines: lines.filter(Boolean), rose: false };",
+    "old": "  return { lines: lines.filter(Boolean), rose: risen.length > 0 };",
+    "new": "  return { lines: lines.filter(Boolean), rose: false };",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SET4-the-renowns-hold-unsaid",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`;   // AUDIT SETS L2: never \"Your The Broken Oath\"\n  const cap = renownSigilStage(sigilRenown());\n  if (cap < 0 || cap >= rank) return line;",
-    "new": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`;   // AUDIT SETS L2: never \"Your The Broken Oath\"\n  const cap = renownSigilStage(sigilRenown());\n  if (cap < 0 || cap >= rank || true) return line;",
+    "old": "  if (cap < 0 || cap >= rank) return line;",
+    "new": "  if (cap < 0 || cap >= rank || true) return line;",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SET4-a-sets-weapon-drinking-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));",
-    "new": "const rank = drinkSigil(held, drink(held));",
+    "old": "  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));",
+    "new": "  const rank = drinkSigil(held, drink(held));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]

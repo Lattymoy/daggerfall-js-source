@@ -162,8 +162,8 @@
   {
     "name": "WWAUDIT-F2-pupil-lit",
     "file": "src/characters/werewolfSkin.js",
-    "old": "      const q = 0.25 + 0.75 * Math.min(1, l / 0.6);",
-    "new": "      const q = 1;",
+    "old": "      const q = 0.25 + 0.75 * Math.min(1, l / 0.6); // the eye's light: its glow burns, its pupil stays dark",
+    "new": "      const q = 1; // the eye's light: its glow burns, its pupil stays dark",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "WWAUDIT-F7-fringe-never-wraps",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  const cx = tapsOf(w, 1, wrapS), cy = tapsOf(h, 1, wrapT);",
-    "new": "  const cx = tapsOf(w, 1, false), cy = tapsOf(h, 1, false);",
+    "old": "  const cx = tapsOf(w, 1, wrapS),\n    cy = tapsOf(h, 1, wrapT);",
+    "new": "  const cx = tapsOf(w, 1, false),\n    cy = tapsOf(h, 1, false);",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "WWAUDIT-F7-mean-with-the-holes",
     "file": "src/characters/werewolfSkin.js",
-    "old": "        if (A[j] >= 128) { s += L[j]; c++; }",
-    "new": "        s += L[j]; c++;",
+    "old": "        if (A[j] >= 128) {\n          s += L[j];\n          c++;\n        }",
+    "new": "        s += L[j];\n        c++;",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "WWAUDIT-F13-short-level-zero-filled",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  if (mips.some((m) => !m?.rgba || m.rgba.length < m.width * m.height * 4)) return mips;\n",
-    "new": "",
+    "old": "  if (mips.some((m) => !m?.rgba || m.rgba.length < m.width * m.height * 4)) return mips;\n  const clamp = Number.isInteger(u.clamp) ? u.clamp & 3 : 3;",
+    "new": "  const clamp = Number.isInteger(u.clamp) ? u.clamp & 3 : 3;",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "WWAUDIT-E1-the-look-in-the-wolf",
     "file": "src/net/peer/peerBodies.js",
-    "old": "`wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
-    "new": "`wolf|${lookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
+    "old": "  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
+    "new": "  return peerIsWolf(shown) ? `wolf|${lookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "WWAUDIT-E2-the-refusal-retried",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (b.wolf && res && !res.ok && res.stage === 'skeleton') this._wolfRefused = { reason };\n",
-    "new": "",
+    "old": "    if (b.wolf && res && !res.ok && res.stage === 'skeleton') this._wolfRefused = { reason };\n    this._fail(b, reason);",
+    "new": "    this._fail(b, reason);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "WWAUDIT-E3-the-flip-unthrottled",
     "file": "src/net/peer/peerBodies.js",
-    "old": "          if (b.byForm && now - b.born < BODY_REBUILD_MS) this._formWait.set(id, b.born + BODY_REBUILD_MS);\n",
-    "new": "",
+    "old": "          if (b.byForm && now - b.born < BODY_REBUILD_MS) this._formWait.set(id, b.born + BODY_REBUILD_MS);\n          this._flipped.add(id);",
+    "new": "          this._flipped.add(id);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "WWAUDIT-C4-a-man-in-a-cnam",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    const body = (female && ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
-    "new": "    const body = (ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
+    "old": "    const body = (female && ref.female ? pick(ref.female) : null) ?? pick(ref.male);",
+    "new": "    const body = (ref.female ? pick(ref.female) : null) ?? pick(ref.male);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "WWAUDIT-B8-a-list-outside-the-vocabulary",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'SHADOW_FANG_HANDLES'",
-    "new": "shadowfangs: 'SHADOW_FANG_HANDLES'",
+    "old": "  shadowfang: 'SHADOW_FANG_HANDLES',",
+    "new": "  shadowfangs: 'SHADOW_FANG_HANDLES',",
     "tests": [
       "test/net/titlen.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "WWAUDIT-A1-the-card-wide-title",
     "file": "src/ui/profileWindow.js",
-    "old": "  width: fit-content; max-width: 100%; margin-inline: auto; }",
-    "new": "  }",
+    "old": "  width: fit-content; max-width: 100%; margin-inline: auto; }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */",
+    "new": "  }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -392,7 +392,7 @@
   {
     "name": "WWAUDIT-A2-ids-stripped",
     "file": "src/ui/windowMotion.js",
-    "old": "  for (const el of els) if (el.id) { renamed.set(el.id, el.id + tag); el.id += tag; }",
+    "old": "  for (const el of els)\n    if (el.id) {\n      renamed.set(el.id, el.id + tag);\n      el.id += tag;\n    }",
     "new": "  for (const el of els) if (el.id) el.id = '';",
     "tests": [
       "test/ui/shadowfang.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "WWAUDIT-A7-the-nose-cut",
     "file": "src/ui/playerBadge.js",
-    "old": "    svg.setAttribute('overflow', 'visible');",
-    "new": "",
+    "old": "    svg.setAttribute('overflow', 'visible'); // AUDIT A7: the edge round a shape that meets the box's side (the wolf's nose) is drawn, not cut",
+    "new": "    // AUDIT A7: the edge round a shape that meets the box's side (the wolf's nose) is drawn, not cut",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -412,7 +412,7 @@
   {
     "name": "WWAUDIT-A10-colour-diffed-against-a-read-back",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.inked !== ink) { tag.inked = ink; tag.name.style.color = ink; }",
+    "old": "        if (tag.inked !== ink) {\n          tag.inked = ink;\n          tag.name.style.color = ink;\n        }",
     "new": "        tag.name.style.color = ink;",
     "tests": [
       "test/ui/shadowfang.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "WWAUDIT-A4-the-edge-on-the-letters",
     "file": "src/ui/playerBadge.js",
-    "old": "    out.fontWeight = '500';",
-    "new": "    out.fontWeight = '700'; out.webkitTextStroke = `0.5px ${edge}`;",
+    "old": "    out.webkitTextFillColor = 'transparent';\n    out.fontWeight = '500';",
+    "new": "    out.webkitTextFillColor = 'transparent';\n    out.fontWeight = '700';\n    out.webkitTextStroke = `0.5px ${edge}`;",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "WWAUDIT-B7-letter-glyphs-by-hand",
     "file": "src/net/mail.js",
-    "old": "slice(0, GLYPHS_MAX)",
-    "new": "slice(0, 8)",
+    "old": "const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, GLYPHS_MAX) : []); // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)",
+    "new": "const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, 8) : []); // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

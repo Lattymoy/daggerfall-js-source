@@ -20,8 +20,8 @@
   {
     "name": "CRAFT-HALL-kin-read-as-recipe",
     "file": "src/net/recipeLaw.js",
-    "old": "for (const id of made.crafts ?? []) { const k = firstCraftKey(recipeById(id));",
-    "new": "for (const id of made.crafts ?? []) { const k = id;",
+    "old": "    const k = firstCraftKey(recipeById(id));",
+    "new": "    const k = id;",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CRAFT-HALL-null-read-as-empty",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (!made) return null;\n  const mine = new Set(firstMakesOf(track));",
-    "new": "  if (!made) made = {};\n  const mine = new Set(firstMakesOf(track));",
+    "old": "  if (!made) return null;",
+    "new": "  if (!made) made = {};",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CRAFT-HALL-track-filter-gone",
     "file": "src/net/recipeLaw.js",
-    "old": "if (k && mine.has(k)) out.add(k); }",
-    "new": "if (k) out.add(k); }",
+    "old": "    if (k && mine.has(k)) out.add(k);",
+    "new": "    if (k) out.add(k);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CRAFT-HALL-clean-unread",
     "file": "src/ui/professions/craftHall.js",
-    "old": "clean(harvestXp(tier, rank, false), harvestXp(tier, rank, true), tier)",
-    "new": "clean(harvestXp(tier, rank, false), harvestXp(tier, rank, false), tier)",
+    "old": "    clean(harvestXp(tier, rank, false), harvestXp(tier, rank, true), tier);",
+    "new": "    clean(harvestXp(tier, rank, false), harvestXp(tier, rank, false), tier);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CRAFT-HALL-share-another-track",
     "file": "src/ui/professions/craftHall.js",
-    "old": "const share = /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[id] ?? 0;",
-    "new": "const share = FIRST_MAKE_SHARE.smithing;",
+    "old": "  const share = /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[id] ?? 0;",
+    "new": "  const share = FIRST_MAKE_SHARE.smithing;",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CRAFT-HALL-bar-floor-nought",
     "file": "src/ui/professions/craftHall.js",
-    "old": "  const floor = xpForRank(track.rank), next = xpForRank(track.rank + 1);",
-    "new": "  const floor = 0, next = xpForRank(track.rank + 1);",
+    "old": "  const floor = xpForRank(track.rank),",
+    "new": "  const floor = 0,",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CRAFT-HALL-owed-spent-listed",
     "file": "src/ui/professions/craftHall.js",
-    "old": "    if (spent.has(key)) continue;\n    const kin",
-    "new": "    const kin",
+    "old": "    if (spent.has(key)) continue;\n    const kin = KIN_OF.get(key) ?? [];",
+    "new": "    const kin = KIN_OF.get(key) ?? [];",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CRAFT-HALL-owed-order",
     "file": "src/ui/professions/craftHall.js",
-    "old": "return out.sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));",
-    "new": "return out.sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));",
+    "old": "  return out.sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));",
+    "new": "  return out.sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CRAFT-HALL-spent-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "  if (owed === false) return capLine(profession, pay, xp) ||",
-    "new": "  if (owed !== true) return capLine(profession, pay, xp) ||",
+    "old": "  if (owed === false)",
+    "new": "  if (owed !== true)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CRAFT-HALL-owed-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "    return capLine(profession, pay, xp + more) || (owed === true\n",
-    "new": "    return capLine(profession, pay, xp + more) || (owed !== false\n",
+    "old": "      (owed === true",
+    "new": "      (owed !== false",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "CRAFT-HALL-A1-vein-at-rank-top",
     "file": "src/ui/professions/craftHall.js",
-    "old": "gathered(GATHER_TOPS.mining)",
-    "new": "harvest(top)",
+    "old": "      rows.push([t('prof.hall.src.vein', 'Mining a vein or boulder'), gathered(GATHER_TOPS.mining)]);",
+    "new": "      rows.push([t('prof.hall.src.vein', 'Mining a vein or boulder'), harvest(top)]);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "CRAFT-HALL-A1-tree-at-rank-top",
     "file": "src/ui/professions/craftHall.js",
-    "old": "gathered(GATHER_TOPS.logging)",
-    "new": "harvest(top)",
+    "old": "      rows.push([t('prof.hall.src.tree', 'Felling a tree'), gathered(GATHER_TOPS.logging)]);",
+    "new": "      rows.push([t('prof.hall.src.tree', 'Felling a tree'), harvest(top)]);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "CRAFT-HALL-A1-hide-at-rank-top",
     "file": "src/ui/professions/craftHall.js",
-    "old": "gathered(GATHER_TOPS.hunting)",
-    "new": "harvest(top)",
+    "old": "      rows.push([t('prof.hall.src.skin', 'Skinning a kill'), gathered(GATHER_TOPS.hunting)]);",
+    "new": "      rows.push([t('prof.hall.src.skin', 'Skinning a kill'), harvest(top)]);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "CRAFT-HALL-A1-loom-at-rank-top",
     "file": "src/ui/professions/craftHall.js",
-    "old": "piece(['outfitting'])",
-    "new": "at(craftXp(top, rank), top)",
+    "old": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), piece(['outfitting'])]);",
+    "new": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), at(craftXp(top, rank), top)]);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "CRAFT-HALL-A1-bench-at-rank-top",
     "file": "src/ui/professions/craftHall.js",
-    "old": "piece(['carpentry'])",
-    "new": "at(craftXp(top, rank), top)",
+    "old": "      rows.push([t('prof.hall.src.bench', 'A piece at the workbench'), piece(['carpentry'])]);",
+    "new": "      rows.push([t('prof.hall.src.bench', 'A piece at the workbench'), at(craftXp(top, rank), top)]);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "CRAFT-HALL-A1-patterns-rank-unread",
     "file": "src/ui/professions/craftHall.js",
-    "old": "professions.includes(r.profession) && recipeOpen(r, rank)",
-    "new": "professions.includes(r.profession)",
+    "old": "  Math.max(1, ...RECIPES.filter((r) => professions.includes(r.profession) && recipeOpen(r, rank)).map((r) => r.tier));",
+    "new": "  Math.max(1, ...RECIPES.filter((r) => professions.includes(r.profession)).map((r) => r.tier));",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "CRAFT-HALL-A1-common-herb-clean",
     "file": "src/ui/professions/craftHall.js",
-    "old": "tierOpen(rank, 2) ? harvest(herbXpTier(rank))",
-    "new": "true ? harvest(herbXpTier(rank))",
+    "old": "        tierOpen(rank, 2) ? harvest(herbXpTier(rank)) : at(harvestXp(herbXpTier(rank), rank, false), herbXpTier(rank)),",
+    "new": "        true ? harvest(herbXpTier(rank)) : at(harvestXp(herbXpTier(rank), rank, false), herbXpTier(rank)),",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "CRAFT-HALL-A1-court-gems",
     "file": "src/ui/professions/craftHall.js",
-    "old": "'Court writ for ore or stone'",
-    "new": "'Court writ for ore, stone or gems'",
+    "old": "      rows.push([t('prof.hall.src.courtOre', 'Court writ for ore or stone'), twice()]); // AUDIT HORIZONTAL A1: a Court never asks a gem (nodeLaw regionWritTable)",
+    "new": "      rows.push([t('prof.hall.src.courtOre', 'Court writ for ore, stone or gems'), twice()]); // AUDIT HORIZONTAL A1: a Court never asks a gem (nodeLaw regionWritTable)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "CRAFT-HALL-A1-stars-on-writs",
     "file": "src/ui/professions/craftHall.js",
-    "old": "not on writs or first-time bonuses",
-    "new": "not on first-time bonuses",
+    "old": "      t('prof.hall.src.starsPct', '+{pct}%, not on writs or first-time bonuses', { pct }),",
+    "new": "      t('prof.hall.src.starsPct', '+{pct}%, not on first-time bonuses', { pct }),",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "CRAFT-HALL-A1-smelt-note-gone",
     "file": "src/ui/professions/craftHall.js",
-    "old": "if (id === 'smithing') return t(",
-    "new": "if (false) return t(",
+    "old": "  if (id === 'smithing')",
+    "new": "  if (false)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "CRAFT-HALL-A2-closed-badge-offered",
     "file": "src/ui/professions/craftHall.js",
-    "old": "|| closedTo(made, track)) return null;",
-    "new": ") return null;",
+    "old": "  if (!key || !firstMakesOf(track).includes(key) || closedTo(made, track)) return null;",
+    "new": "  if (!key || !firstMakesOf(track).includes(key)) return null;",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -384,8 +384,8 @@
   {
     "name": "CRAFT-HALL-A2-closed-owed-listed",
     "file": "src/ui/professions/craftHall.js",
-    "old": "if (!spent || closedTo(made, track)) return [];",
-    "new": "if (!spent) return [];",
+    "old": "  if (!spent || closedTo(made, track)) return [];",
+    "new": "  if (!spent) return [];",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "CRAFT-HALL-A2-room-misread",
     "file": "src/ui/professions/craftHall.js",
-    "old": "craftLimitOf(list, id).room <= 0",
-    "new": "craftLimitOf(list, id).room < 0",
+    "old": "  return { ...made, closed: CRAFT_TRACKS.filter((id) => craftLimitOf(list, id).room <= 0) };",
+    "new": "  return { ...made, closed: CRAFT_TRACKS.filter((id) => craftLimitOf(list, id).room < 0) };",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "CRAFT-HALL-A2-closed-line-gone",
     "file": "src/ui/professions/craftHall.js",
-    "old": "if (standing.closed) return t(",
-    "new": "if (false) return t(",
+    "old": "  if (standing.closed)",
+    "new": "  if (false)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ],

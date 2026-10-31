@@ -1,247 +1,247 @@
 [
- {
-  "name": "TF-the-outline-unread",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
-  "new": "  if (false) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-clearance-unread",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
-  "new": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= 0;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-stand-the-rect",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "  if (locationRect && natureCleared(locationRect, x, y)) return null;",
-  "new": "  if (locationRect && natureCleared({ ...locationRect, shape: null }, x, y)) return null;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-square-unlaid",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "        const own = town && ownTile?.(x, y, opts.climateType);",
-  "new": "        const own = null;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-tile-law-the-rect",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "    if (loc?.shape ? natureCleared(loc, x, y) : grown",
-  "new": "    if (false ? natureCleared(loc, x, y) : grown",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-clearing-past-the-rect-unkept",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "      if (town && natureCleared(town, x, y)) continue;",
-  "new": "",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-forests-clearing-the-rect",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "    if (clear.some((r) => natureCleared(r, x, y))) return null;",
-  "new": "    if (clear.some((r) => natureCleared({ ...r, shape: null }, x, y))) return null;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-pull-from-the-rect",
-  "file": "src/world/terrain/terrainNature.js",
-  "old": "    const far = p.shape ? outlineDistance(p.shape)[y * WORLD_MAP_TILE_DIM + x] : Math.sqrt(dx * dx + dy * dy);",
-  "new": "    const far = Math.sqrt(dx * dx + dy * dy);",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-jungle-clearing-the-rect",
-  "file": "src/world/terrain/jungleNature.js",
-  "old": "      if (clear.some((r) => natureCleared(r, x, y))) continue;",
-  "new": "      if (clear.some((r) => natureCleared({ ...r, shape: null }, x, y))) continue;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-origin-unread",
-  "file": "src/world/townShape.js",
-  "old": "  const ty = tilePos.y + (gy >> 2);",
-  "new": "  const ty = (gy >> 2);",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ],
-  "note": "TOWN-BOARDS: re-aimed by content - shutOffGround reads the one tile law, world/townShape.js onTownTile (the fabric plans on its ground and its painted roads by it too)."
- },
- {
-  "name": "TF-the-rows-turned",
-  "file": "src/world/townShape.js",
-  "old": "      if (!onTownTile(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;",
-  "new": "      if (!onTownTile(ground, tilePos, gx, nav.height - 1 - gy)) nav.grid[gy * nav.width + gx] = 0;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ],
-  "note": "TOWN-BOARDS: re-aimed by content - the rows turned where shutOffGround asks the one tile law (world/townShape.js onTownTile)."
- },
- {
-  "name": "TF-the-ground-unhanded",
-  "file": "src/world/terrain/terrainGen.js",
-  "old": "    townGround: locationRect?.mask ?? null,",
-  "new": "    townGround: null,",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-walkers-unshut",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "        walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)",
-  "new": "",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-wall-unwired",
-  "file": "src/world/townWalls.js",
-  "old": "    shutTownWall(nav, yards ? townWallYardCellsOf(dfLocation) : townWallCellsOf(dfLocation));\n    if (relief) shutRelief(nav, relief);\n  };",
-  "new": "    if (relief) shutRelief(nav, relief);\n  };",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-length-and-thickness-swapped",
-  "file": "src/world/townWalls.js",
-  "old": "    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
-  "new": "    const ht = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, hl = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-turn-unread",
-  "file": "src/world/townWalls.js",
-  "old": "    const [wx, wz] = p.out, ux = wz, uz = -wx, r = Math.hypot(hl, ht);",
-  "new": "    const [wx, wz] = [0, 1], ux = wz, uz = -wx, r = Math.hypot(hl, ht);",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-a-tower-unsquared",
-  "file": "src/world/townWalls.js",
-  "old": "    const tower = p.model === WALL_MODELS.tower;\n    const hl",
-  "new": "    const tower = false;\n    const hl",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-map-rows-unturned",
-  "file": "src/world/townWalls.js",
-  "old": "      if (!cells[(b.y * S + S - 1 - y) * W + b.x * S + x]) continue;",
-  "new": "      if (!cells[(b.y * S + y) * W + b.x * S + x]) continue;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-bytes-in-place",
-  "file": "src/world/townWalls.js",
-  "old": "      bytes ??= Uint8Array.from(b.autoMap ?? new Uint8Array(S * S));",
-  "new": "      bytes ??= b.autoMap ?? new Uint8Array(S * S);",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-wall-walked",
-  "file": "src/world/townWalls.js",
-  "old": "  if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;",
-  "new": "",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-cells-unkept",
-  "file": "src/world/townWalls.js",
-  "old": "  return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;",
-  "new": "  return wall ? townWallCells(wall, kept.w, kept.h) : null;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-an-unwalled-town-walled",
-  "file": "src/world/townWalls.js",
-  "old": "  if (!kept || !dfLocation.outline?.walled) return null;",
-  "new": "  if (!kept) return null;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-wall-unremembered",
-  "file": "src/world/townWalls.js",
-  "old": "  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'",
-  "new": "",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-map-unwired",
-  "file": "src/scenes/exteriorAutomapToggle.js",
-  "old": ", townWallCellsOf(dfLoc), dfLoc.exterior.exteriorData.width),",
-  "new": ", null, dfLoc.exterior.exteriorData.width),",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-cut-unread",
-  "file": "src/world/townWalls.js",
-  "old": "split = k > 1 && cutIn(done, k) > (o.sag ?? TOWN_WALL.sag);",
-  "new": "split = false;",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-cut-measured-outward",
-  "file": "src/world/townWalls.js",
-  "old": "worst = Math.max(worst, ((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
-  "new": "worst = Math.max(worst, -((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- },
- {
-  "name": "TF-the-ground-unshut",
-  "file": "src/world/townWalls.js",
-  "old": "    if (ground) shutOffGround(nav, ground, origin);",
-  "new": "",
-  "tests": [
-   "test/world/townfollow.test.js"
-  ]
- }
+  {
+    "name": "TF-the-outline-unread",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
+    "new": "  if (false) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-clearance-unread",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;",
+    "new": "  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= 0;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-stand-the-rect",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  if (locationRect && natureCleared(locationRect, x, y)) return null;",
+    "new": "  if (locationRect && natureCleared({ ...locationRect, shape: null }, x, y)) return null;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-square-unlaid",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "        const own = town && ownTile?.(x, y, opts.climateType);",
+    "new": "        const own = null;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-tile-law-the-rect",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "    if (loc?.shape ? natureCleared(loc, x, y) : grown",
+    "new": "    if (false ? natureCleared(loc, x, y) : grown",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-clearing-past-the-rect-unkept",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "      if (town && natureCleared(town, x, y)) continue;",
+    "new": "",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-forests-clearing-the-rect",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "    if (clear.some((r) => natureCleared(r, x, y))) return null;",
+    "new": "    if (clear.some((r) => natureCleared({ ...r, shape: null }, x, y))) return null;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-pull-from-the-rect",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "    const far = p.shape ? outlineDistance(p.shape)[y * WORLD_MAP_TILE_DIM + x] : Math.sqrt(dx * dx + dy * dy);",
+    "new": "    const far = Math.sqrt(dx * dx + dy * dy);",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-jungle-clearing-the-rect",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      if (clear.some((r) => natureCleared(r, x, y))) continue;",
+    "new": "      if (clear.some((r) => natureCleared({ ...r, shape: null }, x, y))) continue;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-origin-unread",
+    "file": "src/world/townShape.js",
+    "old": "  const ty = tilePos.y + (gy >> 2);",
+    "new": "  const ty = gy >> 2;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ],
+    "note": "TOWN-BOARDS: re-aimed by content - shutOffGround reads the one tile law, world/townShape.js onTownTile (the fabric plans on its ground and its painted roads by it too)."
+  },
+  {
+    "name": "TF-the-rows-turned",
+    "file": "src/world/townShape.js",
+    "old": "      if (!onTownTile(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;",
+    "new": "      if (!onTownTile(ground, tilePos, gx, nav.height - 1 - gy)) nav.grid[gy * nav.width + gx] = 0;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ],
+    "note": "TOWN-BOARDS: re-aimed by content - the rows turned where shutOffGround asks the one tile law (world/townShape.js onTownTile)."
+  },
+  {
+    "name": "TF-the-ground-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    townGround: locationRect?.mask ?? null,",
+    "new": "    townGround: null,",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-walkers-unshut",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)",
+    "new": "",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-wall-unwired",
+    "file": "src/world/townWalls.js",
+    "old": "    shutTownWall(nav, yards ? townWallYardCellsOf(dfLocation) : townWallCellsOf(dfLocation));\n    if (relief) shutRelief(nav, relief);\n  };",
+    "new": "    if (relief) shutRelief(nav, relief);\n  };",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-length-and-thickness-swapped",
+    "file": "src/world/townWalls.js",
+    "old": "    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
+    "new": "    const ht = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, hl = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-turn-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    const [wx, wz] = p.out, ux = wz, uz = -wx, r = Math.hypot(hl, ht);",
+    "new": "    const [wx, wz] = [0, 1], ux = wz, uz = -wx, r = Math.hypot(hl, ht);",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-a-tower-unsquared",
+    "file": "src/world/townWalls.js",
+    "old": "    const tower = p.model === WALL_MODELS.tower;\n    const hl",
+    "new": "    const tower = false;\n    const hl",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-map-rows-unturned",
+    "file": "src/world/townWalls.js",
+    "old": "      if (!cells[(b.y * S + S - 1 - y) * W + b.x * S + x]) continue;",
+    "new": "      if (!cells[(b.y * S + y) * W + b.x * S + x]) continue;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-bytes-in-place",
+    "file": "src/world/townWalls.js",
+    "old": "      bytes ??= Uint8Array.from(b.autoMap ?? new Uint8Array(S * S));",
+    "new": "      bytes ??= b.autoMap ?? new Uint8Array(S * S);",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-wall-walked",
+    "file": "src/world/townWalls.js",
+    "old": "  if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;",
+    "new": "",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-cells-unkept",
+    "file": "src/world/townWalls.js",
+    "old": "  return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;",
+    "new": "  return wall ? townWallCells(wall, kept.w, kept.h) : null;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-an-unwalled-town-walled",
+    "file": "src/world/townWalls.js",
+    "old": "  if (!kept || !dfLocation.outline?.walled) return null;",
+    "new": "  if (!kept) return null;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-wall-unremembered",
+    "file": "src/world/townWalls.js",
+    "old": "  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'",
+    "new": "",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-map-unwired",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": ", townWallCellsOf(dfLoc), dfLoc.exterior.exteriorData.width),",
+    "new": ", null, dfLoc.exterior.exteriorData.width),",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-cut-unread",
+    "file": "src/world/townWalls.js",
+    "old": "split = k > 1 && cutIn(done, k) > (o.sag ?? TOWN_WALL.sag);",
+    "new": "split = false;",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-cut-measured-outward",
+    "file": "src/world/townWalls.js",
+    "old": "worst = Math.max(worst, ((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
+    "new": "worst = Math.max(worst, -((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  },
+  {
+    "name": "TF-the-ground-unshut",
+    "file": "src/world/townWalls.js",
+    "old": "    if (ground) shutOffGround(nav, ground, origin);",
+    "new": "",
+    "tests": [
+      "test/world/townfollow.test.js"
+    ]
+  }
 ]

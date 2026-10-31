@@ -52,8 +52,8 @@
   {
     "name": "STAR-PLATE-classic-own-literal",
     "file": "src/ui/exteriorAutomapWindow.js",
-    "old": "drawText(renderer, font, r.replaced ? STAR_PLATE : p.text,",
-    "new": "drawText(renderer, font, r.replaced ? '*' : p.text,",
+    "old": "        drawText(renderer, font, r.replaced ? STAR_PLATE : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);",
+    "new": "        drawText(renderer, font, r.replaced ? '*' : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);",
     "tests": [
       "test/ui/ink/fb1020c_starplate.test.js"
     ],

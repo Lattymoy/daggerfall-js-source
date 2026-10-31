@@ -11,7 +11,7 @@
   {
     "name": "INSURE-ALL-a-stack-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
+    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1))\n    return false;",
     "new": "  if (item.bound === true || item.questItem === true) return false;",
     "tests": [
       "test/systems/wild/insureall.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "INSURE-ALL-a-bound-or-quest-piece-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
+    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1))\n    return false;",
     "new": "  if (Number.isInteger(item.stackCount) && item.stackCount > 1) return false;",
     "tests": [
       "test/systems/wild/insureall.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "INSURE-ALL-the-policy-pick-by-the-ledger-key",
     "file": "src/systems/wild/pvpReward.js",
-    "old": "offer.filter((it) => insured(it)).map(insureKeyOf)",
-    "new": "offer.filter((it) => insured(it)).map((it) => it.provenance ?? null)",
+    "old": "        .map(insureKeyOf)",
+    "new": "        .map((it) => it.provenance ?? null)",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "INSURE-ALL-the-book-mints-no-id",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "      const key = wildInsureKey(item), gold = wildPremium(item), at = region();",
-    "new": "      const key = insureKeyOf(item), gold = wildPremium(item), at = region();",
+    "old": "      const key = wildInsureKey(item),",
+    "new": "      const key = insureKeyOf(item),",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "INSURE-ALL-the-service-version",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct235';",
-    "new": "export const ACCOUNT_VERSION = 'acct216';",
+    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "new": "export const ACCOUNT_VERSION = 'acct216'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
     "tests": [
       "test/server/realm1.test.js"
     ]

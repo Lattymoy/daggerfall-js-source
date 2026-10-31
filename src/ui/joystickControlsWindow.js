@@ -79,21 +79,51 @@ import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import {
-  getAxisBinding, getJoystickUIBinding, getAxisInversion, setAxisBinding, setJoystickUIBinding, setAxisInversion, saveKeyBinds,
+  getAxisBinding,
+  getJoystickUIBinding,
+  getAxisInversion,
+  setAxisBinding,
+  setJoystickUIBinding,
+  setAxisInversion,
+  saveKeyBinds,
 } from '../systems/inputActions.js';
 import { AXIS_ACTIONS, JOYSTICK_UI_ACTIONS, parseAxisKeyName, axisOfKey } from '../systems/gamepad.js';
 import { getDuplicates, buttonText, ELONGATED_TEXT, INTERNAL_DUPE_COLOR } from '../systems/controlsConfig.js';
 import {
-  makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderScroll,
-  sliderThumb, indicatorText, SLIDER_HEIGHT, SLIDER_INDICATOR_OFFSET, TROUGH_COLOR, TINT,
+  makeSlider,
+  setScrollIndex,
+  sliderClick,
+  sliderDrag,
+  sliderGetValue,
+  sliderScroll,
+  sliderThumb,
+  indicatorText,
+  SLIDER_HEIGHT,
+  SLIDER_INDICATOR_OFFSET,
+  TROUGH_COLOR,
+  TINT,
 } from './horizontalSlider.js';
 import { ToolTip } from './toolTip.js';
 import { getBool, getFloat, setValue, saveSettings } from '../systems/settings/settings.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { MOUSE_PANEL, PANEL_COLOR, KEYBIND_BG, CONTINUE_BG, CONTINUE_RECT, TITLE_Y, ROW_SIZE, ROW_LABEL, ROW_BUTTON, SLIDER_PANEL, CHECK_SIZE, CHECK_TEXT_OFFSET, toNative } from './mouseControlsWindow.js';
-import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { gameSettingsText } from '../systems/textDatabases.js';   // L10N3f: DFU's GameSettings text database, a pack's in its language
+import {
+  MOUSE_PANEL,
+  PANEL_COLOR,
+  KEYBIND_BG,
+  CONTINUE_BG,
+  CONTINUE_RECT,
+  TITLE_Y,
+  ROW_SIZE,
+  ROW_LABEL,
+  ROW_BUTTON,
+  SLIDER_PANEL,
+  CHECK_SIZE,
+  CHECK_TEXT_OFFSET,
+  toNative,
+} from './mouseControlsWindow.js';
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { gameSettingsText } from '../systems/textDatabases.js'; // L10N3f: DFU's GameSettings text database, a pack's in its language
 
 /** The same 318x170 panel at the same place (:115-118) - and so the
  *  mouse window's toNative is this window's (AUDIT 24: one home). */
@@ -105,34 +135,152 @@ export { toNative };
  *  own constant, which is DFU's row byte for byte. */
 export const TITLE = 'Configure Joystick Controls';
 /** The four UI actions' STAGING KEYS (:32-35) - "These are key name for bindings - do not translate". */
-export const UI_KEYS = Object.freeze({ LeftClick: 'Left-Click', MiddleClick: 'Middle-Click', RightClick: 'Right-Click', Back: 'Back' });
+export const UI_KEYS = Object.freeze({
+  LeftClick: 'Left-Click',
+  MiddleClick: 'Middle-Click',
+  RightClick: 'Right-Click',
+  Back: 'Back',
+});
 
 /** AddOption(x, y, GetText("invert")) (:145-154) - the four inversion boxes' one word. */
-const invertBox = (x, y) => Object.freeze({ x, y, get label() { return gameSettingsText('invert', 'Invert'); } });
+const invertBox = (x, y) =>
+  Object.freeze({
+    x,
+    y,
+    get label() {
+      return gameSettingsText('invert', 'Invert');
+    },
+  });
 /** SetupAxisKeybindButton (:144-154) and SetupUIKeybindButton (:156-159): the rows, labelled by the
  *  GetText ladder at :296-303. */
 export const AXIS_ROWS = Object.freeze([
-  { action: 'MovementHorizontal', get label() { return gameSettingsText('movementH', 'Movement H.'); }, x: 20, y: 40, invert: invertBox(63, 60) },
-  { action: 'MovementVertical', get label() { return gameSettingsText('movementV', 'Movement V.'); }, x: 20, y: 80, invert: invertBox(63, 100) },
-  { action: 'CameraHorizontal', get label() { return gameSettingsText('cameraH', 'Camera H.'); }, x: 115, y: 40, invert: invertBox(158, 60) },
-  { action: 'CameraVertical', get label() { return gameSettingsText('cameraV', 'Camera V.'); }, x: 115, y: 80, invert: invertBox(158, 100) },
+  {
+    action: 'MovementHorizontal',
+    get label() {
+      return gameSettingsText('movementH', 'Movement H.');
+    },
+    x: 20,
+    y: 40,
+    invert: invertBox(63, 60),
+  },
+  {
+    action: 'MovementVertical',
+    get label() {
+      return gameSettingsText('movementV', 'Movement V.');
+    },
+    x: 20,
+    y: 80,
+    invert: invertBox(63, 100),
+  },
+  {
+    action: 'CameraHorizontal',
+    get label() {
+      return gameSettingsText('cameraH', 'Camera H.');
+    },
+    x: 115,
+    y: 40,
+    invert: invertBox(158, 60),
+  },
+  {
+    action: 'CameraVertical',
+    get label() {
+      return gameSettingsText('cameraV', 'Camera V.');
+    },
+    x: 115,
+    y: 80,
+    invert: invertBox(158, 100),
+  },
 ]);
 export const UI_ROWS = Object.freeze([
-  { action: 'LeftClick', get label() { return gameSettingsText('leftClickString', 'Left-Click'); }, x: 210, y: 40 },
-  { action: 'MiddleClick', get label() { return gameSettingsText('middleClickString', 'Middle-Click'); }, x: 210, y: 60 },
-  { action: 'RightClick', get label() { return gameSettingsText('rightClickString', 'Right-Click'); }, x: 210, y: 80 },
-  { action: 'Back', get label() { return gameSettingsText('backString', 'Back'); }, x: 210, y: 100 },
+  {
+    action: 'LeftClick',
+    get label() {
+      return gameSettingsText('leftClickString', 'Left-Click');
+    },
+    x: 210,
+    y: 40,
+  },
+  {
+    action: 'MiddleClick',
+    get label() {
+      return gameSettingsText('middleClickString', 'Middle-Click');
+    },
+    x: 210,
+    y: 60,
+  },
+  {
+    action: 'RightClick',
+    get label() {
+      return gameSettingsText('rightClickString', 'Right-Click');
+    },
+    x: 210,
+    y: 80,
+  },
+  {
+    action: 'Back',
+    get label() {
+      return gameSettingsText('backString', 'Back');
+    },
+    x: 210,
+    y: 100,
+  },
 ]);
 /** CreateSlider's four (:161-167). */
 export const JOY_SLIDERS = Object.freeze([
-  { id: 'lookSensitivity', key: 'JoystickLookSensitivity', get label() { return gameSettingsText('lookSensitivity', 'Look Sensitivity'); }, x: 15, y: 120, min: 0.1, max: 4.0 },
-  { id: 'cursorSensitivity', key: 'JoystickCursorSensitivity', get label() { return gameSettingsText('uiMouseSensitivity', 'UI Mouse Sensitivity'); }, x: 115, y: 120, min: 0.1, max: 5.0 },
-  { id: 'movementThreshold', key: 'JoystickMovementThreshold', get label() { return gameSettingsText('maximumMovementThreshold', 'Maximum Movement Threshold'); }, x: 215, y: 120, min: 0.0, max: 1.0 },
-  { id: 'deadzone', key: 'JoystickDeadzone', get label() { return gameSettingsText('deadzone', 'Deadzone'); }, x: 15, y: 140, min: 0.0, max: 0.9 },
+  {
+    id: 'lookSensitivity',
+    key: 'JoystickLookSensitivity',
+    get label() {
+      return gameSettingsText('lookSensitivity', 'Look Sensitivity');
+    },
+    x: 15,
+    y: 120,
+    min: 0.1,
+    max: 4.0,
+  },
+  {
+    id: 'cursorSensitivity',
+    key: 'JoystickCursorSensitivity',
+    get label() {
+      return gameSettingsText('uiMouseSensitivity', 'UI Mouse Sensitivity');
+    },
+    x: 115,
+    y: 120,
+    min: 0.1,
+    max: 5.0,
+  },
+  {
+    id: 'movementThreshold',
+    key: 'JoystickMovementThreshold',
+    get label() {
+      return gameSettingsText('maximumMovementThreshold', 'Maximum Movement Threshold');
+    },
+    x: 215,
+    y: 120,
+    min: 0.0,
+    max: 1.0,
+  },
+  {
+    id: 'deadzone',
+    key: 'JoystickDeadzone',
+    get label() {
+      return gameSettingsText('deadzone', 'Deadzone');
+    },
+    x: 15,
+    y: 140,
+    min: 0.0,
+    max: 0.9,
+  },
 ]);
 /** AddOption(20, 20, GetText("enableController")) (:140). */
-export const ENABLE_BOX = Object.freeze({ x: 20, y: 20, get label() { return gameSettingsText('enableController', 'Enable Controller'); } });
-const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...';   // ui/enhanced/enhancedControls.js's line; not a second export (AUDIT 24)
+export const ENABLE_BOX = Object.freeze({
+  x: 20,
+  y: 20,
+  get label() {
+    return gameSettingsText('enableController', 'Enable Controller');
+  },
+});
+const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...'; // ui/enhanced/enhancedControls.js's line; not a second export (AUDIT 24)
 
 const TEXT_COLOR = [0.9, 0.9, 0.75, 1];
 const WHITE = [1, 1, 1, 1];
@@ -148,7 +296,7 @@ export function createJoystickUnsaved(store) {
 }
 export function resetJoystickUnsaved(store, u) {
   u.keybinds.clear();
-  for (const a of JOYSTICK_UI_ACTIONS) u.keybinds.set(UI_KEYS[a], getJoystickUIBinding(store, a));   // GetKeyString(None) is "None"; null here
+  for (const a of JOYSTICK_UI_ACTIONS) u.keybinds.set(UI_KEYS[a], getJoystickUIBinding(store, a)); // GetKeyString(None) is "None"; null here
   for (const a of AXIS_ACTIONS) u.keybinds.set(a, getAxisBinding(store, a));
   u.settings = {
     enableController: getBool('Controls', 'EnableController'),
@@ -186,7 +334,8 @@ export function saveJoystickSettings(store, u) {
 }
 
 /** CheckDuplicates' list (:421): every staged string, axes and keys together. */
-export const joystickDuplicates = (u) => getDuplicates([...u.keybinds.values()].map((v) => (v == null || v === '' ? null : v)));
+export const joystickDuplicates = (u) =>
+  getDuplicates([...u.keybinds.values()].map((v) => (v == null || v === '' ? null : v)));
 
 export class JoystickControlsWindow {
   /**
@@ -198,28 +347,36 @@ export class JoystickControlsWindow {
     this.hooks = hooks;
     this.done = false;
     this.isChoiceWindow = true;
-    this.capture = null;        // waitingForInput (:66): the row's action, and whether it is an axis
-    this.top = null;            // 'multiple' - the ClickAnywhereToClose box (:449-455)
+    this.capture = null; // waitingForInput (:66): the row's action, and whether it is an axis
+    this.top = null; // 'multiple' - the ClickAnywhereToClose box (:449-455)
     this.tip = new ToolTip();
     this._drag = null;
     this._mouse = [0, 0];
     this._font = null;
     this.sliders = {};
-    for (const s of JOY_SLIDERS) this.sliders[s.id] = makeSlider({ mode: 'float', min: s.min, max: s.max, start: unsaved.settings[s.id] });
+    for (const s of JOY_SLIDERS)
+      this.sliders[s.id] = makeSlider({ mode: 'float', min: s.min, max: s.max, start: unsaved.settings[s.id] });
     this.checks = { enableController: unsaved.settings.enableController, ...unsaved.settings.invert };
     this.dupes = joystickDuplicates(this.unsaved);
   }
 
-  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+  _click() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+  }
   /** AllowCancel (:425, :446): no duplicates, and not waiting. */
-  get allowCancel() { return this.dupes.size === 0 && !this.capture; }
-  _refresh() { this.dupes = joystickDuplicates(this.unsaved); }
+  get allowCancel() {
+    return this.dupes.size === 0 && !this.capture;
+  }
+  _refresh() {
+    this.dupes = joystickDuplicates(this.unsaved);
+  }
 
   /** OnPush -> OnReturn (:181-190): UpdateControlsToUnsavedSettings
    *  (:379-400) + CheckDuplicates - the controls read the staging. */
   onPush() {
     this.done = false;
-    for (const s of JOY_SLIDERS) setScrollIndex(this.sliders[s.id], Math.round(this.unsaved.settings[s.id] * 10) - this.sliders[s.id].min);
+    for (const s of JOY_SLIDERS)
+      setScrollIndex(this.sliders[s.id], Math.round(this.unsaved.settings[s.id] * 10) - this.sliders[s.id].min);
     this.checks.enableController = this.unsaved.settings.enableController;
     for (const a of AXIS_ACTIONS) this.checks[a] = this.unsaved.settings.invert[a];
     this._refresh();
@@ -241,24 +398,36 @@ export class JoystickControlsWindow {
     this.tip.update(dt);
   }
 
-  static rowButtonRect(row) { return [row.x + ROW_BUTTON.x, row.y + ROW_BUTTON.y, ROW_BUTTON.w, ROW_BUTTON.h]; }
-  static sliderTroughRect(s) { return [s.x, s.y + SLIDER_PANEL.troughY, SLIDER_PANEL.w, SLIDER_HEIGHT]; }
+  static rowButtonRect(row) {
+    return [row.x + ROW_BUTTON.x, row.y + ROW_BUTTON.y, ROW_BUTTON.w, ROW_BUTTON.h];
+  }
+  static sliderTroughRect(s) {
+    return [s.x, s.y + SLIDER_PANEL.troughY, SLIDER_PANEL.w, SLIDER_HEIGHT];
+  }
   static checkboxRect(c, fnt) {
     if (!fnt) return [c.x, c.y, CHECK_SIZE, CHECK_SIZE];
-    return [c.x, c.y, CHECK_SIZE + CHECK_TEXT_OFFSET[0] + measureText(fnt, c.label), Math.max(CHECK_SIZE, fnt.fixedHeight ?? 6)];
+    return [
+      c.x,
+      c.y,
+      CHECK_SIZE + CHECK_TEXT_OFFSET[0] + measureText(fnt, c.label),
+      Math.max(CHECK_SIZE, fnt.fixedHeight ?? 6),
+    ];
   }
 
   /** The staged text a row shows (SetupKeybindButton :248-263). */
   rowLabel(row, axis) {
     if (this.capture?.action === row.action) return '';
     const v = this.unsaved.keybinds.get(axis ? row.action : UI_KEYS[row.action]);
-    return axis ? (v || '') : buttonText(v ?? null);
+    return axis ? v || '' : buttonText(v ?? null);
   }
 
   /** WaitForKeyPress (:549-602), the next key down. */
   input(code, e = null) {
     void e;
-    if (this.top === 'multiple') { this.top = null; return; }   // ClickAnywhereToClose: any key
+    if (this.top === 'multiple') {
+      this.top = null;
+      return;
+    } // ClickAnywhereToClose: any key
     if (this.capture) {
       const { action, axis } = this.capture;
       const axisKey = parseAxisKeyName(code);
@@ -268,7 +437,8 @@ export class JoystickControlsWindow {
         if (name) this.unsaved.keybinds.set(action, name);
       } else {
         // GetAnyKeyDownIgnoreAxisBinds: an axis key of a BOUND axis is not a key here
-        const bound = axisKey != null && [...AXIS_ACTIONS].some((a) => this.unsaved.keybinds.get(a) === axisOfKey(axisKey));
+        const bound =
+          axisKey != null && [...AXIS_ACTIONS].some((a) => this.unsaved.keybinds.get(a) === axisOfKey(axisKey));
         if (bound) return;
         this.unsaved.keybinds.set(UI_KEYS[action], code);
       }
@@ -278,21 +448,33 @@ export class JoystickControlsWindow {
     }
     if (code === 'Escape') {
       // the back door obeys CONTINUE's gate (:91-94, :512-519)
-      if (!this.allowCancel) { this.top = 'multiple'; return; }
+      if (!this.allowCancel) {
+        this.top = 'multiple';
+        return;
+      }
       this._click();
       this._close();
     }
   }
 
-  _close() { this.done = true; this.hooks.onBack?.(); }   // CancelWindow (:518)
+  _close() {
+    this.done = true;
+    this.hooks.onBack?.();
+  } // CancelWindow (:518)
 
   hover(vx, vy) {
     this._mouse = [vx, vy];
-    if (this.capture || this.top) { this.tip.hide(); return; }
+    if (this.capture || this.top) {
+      this.tip.hide();
+      return;
+    }
     for (const row of UI_ROWS) {
       if (inRect(toNative(JoystickControlsWindow.rowButtonRect(row)), vx, vy)) {
         const code = this.unsaved.keybinds.get(UI_KEYS[row.action]) ?? null;
-        if (buttonText(code) !== ELONGATED_TEXT) { this.tip.hide(); return; }   // "The left/right click buttons have tooltips, axis buttons do not" (:430)
+        if (buttonText(code) !== ELONGATED_TEXT) {
+          this.tip.hide();
+          return;
+        } // "The left/right click buttons have tooltips, axis buttons do not" (:430)
         this.tip.show(buttonText(code, true), vx, vy);
         return;
       }
@@ -303,23 +485,39 @@ export class JoystickControlsWindow {
     if (!this._drag) return;
     sliderDrag(this.sliders[this._drag.id], SLIDER_PANEL.w, vx - this._drag.fromX, this._drag.fromIndex);
   }
-  release() { this._drag = null; }
+  release() {
+    this._drag = null;
+  }
   wheel(dir) {
     if (this.capture || this.top) return;
     const [vx, vy] = this._mouse;
     for (const spec of JOY_SLIDERS) {
-      if (inRect(toNative(JoystickControlsWindow.sliderTroughRect(spec)), vx, vy)) { sliderScroll(this.sliders[spec.id], dir); return; }
+      if (inRect(toNative(JoystickControlsWindow.sliderTroughRect(spec)), vx, vy)) {
+        sliderScroll(this.sliders[spec.id], dir);
+        return;
+      }
     }
   }
 
   click(vx, vy) {
     if (this.capture) return true;
-    if (this.top === 'multiple') { this.top = null; return true; }   // ClickAnywhereToClose
+    if (this.top === 'multiple') {
+      this.top = null;
+      return true;
+    } // ClickAnywhereToClose
     for (const row of AXIS_ROWS) {
-      if (inRect(toNative(JoystickControlsWindow.rowButtonRect(row)), vx, vy)) { this._click(); this.capture = { action: row.action, axis: true }; return true; }
+      if (inRect(toNative(JoystickControlsWindow.rowButtonRect(row)), vx, vy)) {
+        this._click();
+        this.capture = { action: row.action, axis: true };
+        return true;
+      }
     }
     for (const row of UI_ROWS) {
-      if (inRect(toNative(JoystickControlsWindow.rowButtonRect(row)), vx, vy)) { this._click(); this.capture = { action: row.action, axis: false }; return true; }
+      if (inRect(toNative(JoystickControlsWindow.rowButtonRect(row)), vx, vy)) {
+        this._click();
+        this.capture = { action: row.action, axis: false };
+        return true;
+      }
     }
     for (const spec of JOY_SLIDERS) {
       const rect = toNative(JoystickControlsWindow.sliderTroughRect(spec));
@@ -327,7 +525,8 @@ export class JoystickControlsWindow {
         const s = this.sliders[spec.id];
         const local = vx - rect[0];
         const thumb = sliderThumb([0, 0, SLIDER_PANEL.w, SLIDER_HEIGHT], s.scrollIndex, s.totalUnits, s.displayUnits);
-        if (thumb && local >= thumb[0] && local <= thumb[0] + thumb[2]) this._drag = { id: spec.id, fromX: vx, fromIndex: s.scrollIndex };
+        if (thumb && local >= thumb[0] && local <= thumb[0] + thumb[2])
+          this._drag = { id: spec.id, fromX: vx, fromIndex: s.scrollIndex };
         else sliderClick(s, [0, 0, SLIDER_PANEL.w, SLIDER_HEIGHT], local);
         return true;
       }
@@ -339,7 +538,10 @@ export class JoystickControlsWindow {
       return true;
     }
     for (const row of AXIS_ROWS) {
-      if (inRect(toNative(JoystickControlsWindow.checkboxRect(row.invert, this._font?.fnt)), vx, vy)) { this.checks[row.action] = !this.checks[row.action]; return true; }
+      if (inRect(toNative(JoystickControlsWindow.checkboxRect(row.invert, this._font?.fnt)), vx, vy)) {
+        this.checks[row.action] = !this.checks[row.action];
+        return true;
+      }
     }
     if (inRect(toNative(CONTINUE_RECT), vx, vy)) {
       // ContinueButton_OnMouseClick (:505-520)
@@ -357,28 +559,59 @@ export class JoystickControlsWindow {
     drawMenuBackdrop(renderer, canvas);
     const [px, py, pw, ph] = JOY_PANEL;
     drawRect(renderer, m, px, py, pw, ph, PANEL_COLOR);
-    for (const [ox, oy, ow, oh] of [[px, py, pw, 1], [px, py + ph - 1, pw, 1], [px, py, 1, ph], [px + pw - 1, py, 1, ph]]) drawRect(renderer, m, ox, oy, ow, oh, WHITE);
+    for (const [ox, oy, ow, oh] of [
+      [px, py, pw, 1],
+      [px, py + ph - 1, pw, 1],
+      [px, py, 1, ph],
+      [px + pw - 1, py, 1, ph],
+    ])
+      drawRect(renderer, m, ox, oy, ow, oh, WHITE);
     const at = (x, y) => [m.ox + (px + x) * m.s, m.oy + (py + y) * m.s];
-    const put = (text, x, y, color = TEXT_COLOR) => { const [sx, sy] = at(x, y); drawText(renderer, font, text, sx, sy, m.s, color); };
+    const put = (text, x, y, color = TEXT_COLOR) => {
+      const [sx, sy] = at(x, y);
+      drawText(renderer, font, text, sx, sy, m.s, color);
+    };
     const glyphH = font.fnt?.fixedHeight ?? 6;
-    const title = gameSettingsText('configureJoystickControls', TITLE);   // L10N3f: GetText (:128)
+    const title = gameSettingsText('configureJoystickControls', TITLE); // L10N3f: GetText (:128)
     put(title, Math.round((pw - measureText(font.fnt, title)) / 2), TITLE_Y);
-    drawRect(renderer, m, px + CONTINUE_RECT[0], py + CONTINUE_RECT[1], CONTINUE_RECT[2], CONTINUE_RECT[3], CONTINUE_BG);
-    const cont = gameSettingsText('continue', 'CONTINUE');   // L10N3f: GetText (:133)
-    put(cont, CONTINUE_RECT[0] + Math.round((CONTINUE_RECT[2] - measureText(font.fnt, cont)) / 2), CONTINUE_RECT[1] + Math.round((CONTINUE_RECT[3] - glyphH) / 2));
+    drawRect(
+      renderer,
+      m,
+      px + CONTINUE_RECT[0],
+      py + CONTINUE_RECT[1],
+      CONTINUE_RECT[2],
+      CONTINUE_RECT[3],
+      CONTINUE_BG,
+    );
+    const cont = gameSettingsText('continue', 'CONTINUE'); // L10N3f: GetText (:133)
+    put(
+      cont,
+      CONTINUE_RECT[0] + Math.round((CONTINUE_RECT[2] - measureText(font.fnt, cont)) / 2),
+      CONTINUE_RECT[1] + Math.round((CONTINUE_RECT[3] - glyphH) / 2),
+    );
     const drawRow = (row, axis) => {
-      put(row.label, row.x + ROW_LABEL.w - measureText(font.fnt, row.label), row.y + Math.round((ROW_SIZE.h - glyphH) / 2));
+      put(
+        row.label,
+        row.x + ROW_LABEL.w - measureText(font.fnt, row.label),
+        row.y + Math.round((ROW_SIZE.h - glyphH) / 2),
+      );
       const [bx, by, bw, bh] = JoystickControlsWindow.rowButtonRect(row);
       drawRect(renderer, m, px + bx, py + by, bw, bh, KEYBIND_BG);
       const label = this.rowLabel(row, axis);
       const staged = this.unsaved.keybinds.get(axis ? row.action : UI_KEYS[row.action]);
-      const color = staged && this.dupes.has(staged) ? INTERNAL_DUPE_COLOR : TEXT_COLOR;   // CheckDuplicates' red (:437)
+      const color = staged && this.dupes.has(staged) ? INTERNAL_DUPE_COLOR : TEXT_COLOR; // CheckDuplicates' red (:437)
       put(label, bx + Math.round((bw - measureText(font.fnt, label)) / 2), by + Math.round((bh - glyphH) / 2), color);
     };
     for (const row of AXIS_ROWS) drawRow(row, true);
     for (const row of UI_ROWS) drawRow(row, false);
     const drawCheck = (c, on) => {
-      for (const [ox, oy, ow, oh] of [[c.x, c.y, CHECK_SIZE, 1], [c.x, c.y + CHECK_SIZE - 1, CHECK_SIZE, 1], [c.x, c.y, 1, CHECK_SIZE], [c.x + CHECK_SIZE - 1, c.y, 1, CHECK_SIZE]]) drawRect(renderer, m, px + ox, py + oy, ow, oh, TEXT_COLOR);
+      for (const [ox, oy, ow, oh] of [
+        [c.x, c.y, CHECK_SIZE, 1],
+        [c.x, c.y + CHECK_SIZE - 1, CHECK_SIZE, 1],
+        [c.x, c.y, 1, CHECK_SIZE],
+        [c.x + CHECK_SIZE - 1, c.y, 1, CHECK_SIZE],
+      ])
+        drawRect(renderer, m, px + ox, py + oy, ow, oh, TEXT_COLOR);
       if (on) drawRect(renderer, m, px + c.x + 2, py + c.y + 2, CHECK_SIZE - 4, CHECK_SIZE - 4, TEXT_COLOR);
       const [, , cw] = JoystickControlsWindow.checkboxRect(c, font.fnt);
       put(c.label, c.x + cw - measureText(font.fnt, c.label), c.y + CHECK_TEXT_OFFSET[1]);
@@ -396,9 +629,10 @@ export class JoystickControlsWindow {
     }
     if (this.capture) put(this.capture.axis ? 'Move an axis...' : 'Press a key...', 4, ph - 12);
     if (this.top === 'multiple') {
-      const said = localizedText('multipleAssignments', MULTIPLE_ASSIGNMENTS);   // :452
+      const said = localizedText('multipleAssignments', MULTIPLE_ASSIGNMENTS); // :452
       const box = layoutMessageBox(font, [said], []);
-      if (!drawMessageBox(renderer, m, font, box)) drawText(renderer, font, said, m.ox + 20 * m.s, m.oy + 20 * m.s, m.s, TEXT_COLOR);
+      if (!drawMessageBox(renderer, m, font, box))
+        drawText(renderer, font, said, m.ox + 20 * m.s, m.oy + 20 * m.s, m.s, TEXT_COLOR);
     }
     this.tip.draw(renderer, m, font);
   }

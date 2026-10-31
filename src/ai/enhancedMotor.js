@@ -111,12 +111,12 @@ import { EnemyAI } from '../characters/enemy/enemyMotor.js';
 import { findPath } from './nav/navmesh.js';
 
 // ── project-final enemyShared.js:7-12, verbatim ────────────────────
-export const REPATH_INT = 0.4;     // s between findPath refreshes toward the (moving) player
-export const REPATH_FAIL = 0.5;    // s: back-off before retrying findPath after it returned null (unreachable goal). Without it a never-reachable goal (player off-mesh / on an island) re-paths every frame - bounded by the budget but a constant drain. The boss crawler already backs off the same way
-export const STUCK_T = 0.6;        // s of no forward progress while path-following before the unstick fires
+export const REPATH_INT = 0.4; // s between findPath refreshes toward the (moving) player
+export const REPATH_FAIL = 0.5; // s: back-off before retrying findPath after it returned null (unreachable goal). Without it a never-reachable goal (player off-mesh / on an island) re-paths every frame - bounded by the budget but a constant drain. The boss crawler already backs off the same way
+export const STUCK_T = 0.6; // s of no forward progress while path-following before the unstick fires
 export const STUCK_EPS2 = 0.02 * 0.02; // (m)^2: squared per-tick movement at/below which counts as no progress (~1/3 of a normal step)
-export const STUCK_NUDGE = 0.35;   // m: the perpendicular side-step the unstick takes
-export const WP_REACH = 0.45;      // m: a waypoint counts as reached within this
+export const STUCK_NUDGE = 0.35; // m: the perpendicular side-step the unstick takes
+export const WP_REACH = 0.45; // m: a waypoint counts as reached within this
 // ── project-final enemy.js:402, verbatim ───────────────────────────
 export const PATH_BUDGET_PER_FRAME = 3; // cap findPath (poly A* + funnel) calls per frame. A wave spawns all its enemies at once with repathT 0 and path null, so without this every enemy paths on the same first tick - N heavy pathfinds in one frame = the spawn lag spike. Enemies past the cap keep path null (stand a frame) and retry next frame; the burst spreads over a few frames instead of one. Tunable
 
@@ -129,7 +129,8 @@ export const PROJECT_MARGIN = 0.05;
  *  a walkable, regioned span (or its bit is set in a hydrated map's
  *  walkmask). */
 export function navWalkable(chf, x, z) {
-  const ix = Math.floor((x - chf.xmin) / chf.cs), iz = Math.floor((z - chf.zmin) / chf.cs);
+  const ix = Math.floor((x - chf.xmin) / chf.cs),
+    iz = Math.floor((z - chf.zmin) / chf.cs);
   if (ix < 0 || iz < 0 || ix >= chf.nx || iz >= chf.nz) return false;
   const i = ix + iz * chf.nx;
   if (chf.walkmask) return (chf.walkmask[i >> 3] & (1 << (i & 7))) !== 0;
@@ -160,12 +161,17 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.nav = opts.nav ?? (() => null);
     this.navWorld = opts.navWorld ?? makeNavWorld();
     this.navSeed = (opts.navSeed ?? 0) >>> 0;
-    this.navGoal = opts.navGoal ?? null;   // INDOOR-WATCH W1: (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
+    this.navGoal = opts.navGoal ?? null; // INDOOR-WATCH W1: (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
     // his movement scratch (enemy.js:64), re-homed
-    this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;
-    this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.pathEpoch = undefined;
+    this.stuckT = 0;
+    this.lastX = feet[0];
+    this.lastZ = feet[2];
     this.navBroken = false;
-    this._wasFollowing = false;   // AUDIT CC-B5: the route's goal - the leader's or the foe's
+    this._wasFollowing = false; // AUDIT CC-B5: the route's goal - the leader's or the foe's
     /** observational, his stuckStats pattern - probes and tests only */
     this.navStats = { repaths: 0, fails: 0, stuckFires: 0, offMesh: 0 };
   }
@@ -177,18 +183,29 @@ export class EnhancedEnemyAI extends EnemyAI {
    *  feet-space [x, y, z], like this.feet. */
   _repathToward(chf, goal, dt) {
     const world = this.navWorld;
-    if (this.path && world.navEpoch !== undefined && this.pathEpoch !== world.navEpoch) { this.path = null; this.repathT = 0; }
+    if (this.path && world.navEpoch !== undefined && this.pathEpoch !== world.navEpoch) {
+      this.path = null;
+      this.repathT = 0;
+    }
     if ((this.repathT -= dt) > 0) return false;
     if (world.pathBudget-- <= 0) return false;
-    const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
+    const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal); // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
     this.navStats.repaths++;
-    if (np) { this.path = np; this.pathI = 1; this.repathT = REPATH_INT; this.pathEpoch = world.navEpoch; }
-    else { this.path = null; this.repathT = REPATH_FAIL; this.navStats.fails++; }
+    if (np) {
+      this.path = np;
+      this.pathI = 1;
+      this.repathT = REPATH_INT;
+      this.pathEpoch = world.navEpoch;
+    } else {
+      this.path = null;
+      this.repathT = REPATH_FAIL;
+      this.navStats.fails++;
+    }
     return true;
   }
 
   /** FIELD BUGS 2026-10-16b INDOOR-WATCH, AUDIT W1: a goal findPath cannot place - off the mesh past its locate's
-   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best : -1;"), a player between two shelves 0.8 m deep or in a
+   *  half-metre snap (navmesh.js:"return bestD <= 2"), a player between two shelves 0.8 m deep or in a
    *  closet the erosion kept no floor of. The host's `navGoal` names the mesh's point a route there ends at (the room's
    *  meshPointNear, never through a wall); the route runs to it and its last leg is the straight walk in. No hook, or
    *  no point, or no route to it: null, the classic line. Departure from his repathToward, named: it answered null. */
@@ -205,15 +222,23 @@ export class EnhancedEnemyAI extends EnemyAI {
    *  the nudge resolved by the collider (adaptation 2). (hx, hz) is the
    *  heading the foe was walking. Call once per step, AFTER the move. */
   _stuckWatch(chf, hx, hz, dt) {
-    const dx = this.feet[0] - this.lastX, dz = this.feet[2] - this.lastZ;
-    this.lastX = this.feet[0]; this.lastZ = this.feet[2];
-    if (dx * dx + dz * dz > STUCK_EPS2) { this.stuckT = 0; return false; }
+    const dx = this.feet[0] - this.lastX,
+      dz = this.feet[2] - this.lastZ;
+    this.lastX = this.feet[0];
+    this.lastZ = this.feet[2];
+    if (dx * dx + dz * dz > STUCK_EPS2) {
+      this.stuckT = 0;
+      return false;
+    }
     if ((this.stuckT += dt) < STUCK_T) return false;
     this.stuckT = 0;
-    const hl = Math.hypot(hx, hz) || 1, side = ((this.navSeed >>> 7) & 1) ? 1 : -1;
+    const hl = Math.hypot(hx, hz) || 1,
+      side = (this.navSeed >>> 7) & 1 ? 1 : -1;
     for (const s of [side, -side]) {
-      const ox = (-hz / hl) * s, oz = (hx / hl) * s;
-      const nx = this.feet[0] + ox * STUCK_NUDGE, nz = this.feet[2] + oz * STUCK_NUDGE;
+      const ox = (-hz / hl) * s,
+        oz = (hx / hl) * s;
+      const nx = this.feet[0] + ox * STUCK_NUDGE,
+        nz = this.feet[2] + oz * STUCK_NUDGE;
       if (!navWalkable(chf, nx, nz)) continue;
       // adaptation 4: classic's own drop test, on the nudge's heading.
       // WITH THE OBSTACLE FLAGS CLEARED FOR THE PROBE. _fallCheck returns
@@ -223,18 +248,26 @@ export class EnhancedEnemyAI extends EnemyAI {
       // definition. AUDIT 55 found the check answering false in exactly
       // the case it was added for. The flags are the classic tick's to
       // own; they are put back as they were.
-      const od = this.obstacleDetected, us = this.foundUpwardSlope, fd = this.foundDoor;
-      this.obstacleDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
+      const od = this.obstacleDetected,
+        us = this.foundUpwardSlope,
+        fd = this.foundDoor;
+      this.obstacleDetected = false;
+      this.foundUpwardSlope = false;
+      this.foundDoor = false;
       this._fallCheck([ox, 0, oz]);
       const drop = this.fallDetected;
-      this.obstacleDetected = od; this.foundUpwardSlope = us; this.foundDoor = fd; this.fallDetected = false;
+      this.obstacleDetected = od;
+      this.foundUpwardSlope = us;
+      this.foundDoor = fd;
+      this.fallDetected = false;
       if (drop) continue;
-      const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.controllerHeight);   // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2); DOOR-JAM: at the controller's own height
+      const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.controllerHeight); // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2); DOOR-JAM: at the controller's own height
       this.isGrounded = moveResult.grounded;
-      this.collidedSides = !!moveResult.sides;   // DOOR-JAM: and its CollidedSides, for HeightAdjust
+      this.collidedSides = !!moveResult.sides; // DOOR-JAM: and its CollidedSides, for HeightAdjust
       break;
     }
-    this.path = null; this.repathT = 0;
+    this.path = null;
+    this.repathT = 0;
     this.navStats.stuckFires++;
     return true;
   }
@@ -243,7 +276,10 @@ export class EnhancedEnemyAI extends EnemyAI {
     super._step(dt, playerFeet, senses, paralyzed, paused);
     if (this.navBroken) return;
     const chf = this.nav();
-    if (!chf) { this.path = null; return; }
+    if (!chf) {
+      this.path = null;
+      return;
+    }
     try {
       // The route lives only while the classic tick would be
       // pursuing: CanAct, not given up, and a position to head for -
@@ -251,20 +287,39 @@ export class EnhancedEnemyAI extends EnemyAI {
       // is the classic destination's own target, the predicted position.
       // CREW-COMPANIONS: a follower's route is _followGoal's (repathed there, toward the leader); only the watchdog here
       // AUDIT CC-B5: a route is to one goal - the leader's or the foe's; turning from one to the other, it goes
-      if (this._following !== this._wasFollowing) { this._wasFollowing = this._following; this.path = null; this.repathT = 0; }
+      if (this._following !== this._wasFollowing) {
+        this._wasFollowing = this._following;
+        this.path = null;
+        this.repathT = 0;
+      }
       if (this._following) {
         if (this.path && this.moving) this._stuckWatch(chf, Math.sin(this.yaw), Math.cos(this.yaw), dt);
-        else { this.stuckT = 0; this.lastX = this.feet[0]; this.lastZ = this.feet[2]; }
+        else {
+          this.stuckT = 0;
+          this.lastX = this.feet[0];
+          this.lastZ = this.feet[2];
+        }
         return;
       }
       const pursuing = this.canAct && this.giveUpTimer > 0 && this.predictedTargetPos !== null;
-      if (!pursuing) { this.path = null; this.stuckT = 0; this.lastX = this.feet[0]; this.lastZ = this.feet[2]; return; }
+      if (!pursuing) {
+        this.path = null;
+        this.stuckT = 0;
+        this.lastX = this.feet[0];
+        this.lastZ = this.feet[2];
+        return;
+      }
       this._repathToward(chf, this.predictedTargetPos, dt);
       if (this.path && this.moving) {
         this._stuckWatch(chf, Math.sin(this.yaw), Math.cos(this.yaw), dt);
-      } else { this.stuckT = 0; this.lastX = this.feet[0]; this.lastZ = this.feet[2]; }
+      } else {
+        this.stuckT = 0;
+        this.lastX = this.feet[0];
+        this.lastZ = this.feet[2];
+      }
     } catch (e) {
-      this.navBroken = true; this.path = null;
+      this.navBroken = true;
+      this.path = null;
       console.warn('[enhanced-ai] motor fell back to classic:', e?.message ?? e);
     }
   }
@@ -278,21 +333,29 @@ export class EnhancedEnemyAI extends EnemyAI {
       return super._getDestination(targetFeet);
     }
     let wp = this.path[this.pathI];
-    while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
+    while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH)
+      wp = this.path[++this.pathI];
     const last = this.pathI === this.path.length - 1;
     // INDOOR-WATCH AUDIT W1 - adaptation 1's other half: in sight, the classic stop is measured to the TARGET
     // (EnemyMotor.cs:479-482), and a foe it stops turns to its destination - so one stopped within reach of the target
     // with a corner still ahead (the mouth of the aisle it was walked in by) faced the corner, and the swing's 22.5
     // degree gate (enemyAttack.js ATTACK_YAW_DEG) never opened. Stopped on the target, it faces the target.
     const p = this.predictedTargetPos;
-    if (!last && p && this.inSight && this._dist <= this.stopDistance) { this.destination = [p[0], this._aimY(p[1]), p[2]]; return; }
+    if (!last && p && this.inSight && this._dist <= this.stopDistance) {
+      this.destination = [p[0], this._aimY(p[1]), p[2]];
+      return;
+    }
     // adaptation 3: the goal's y is classic's own aim at the goal
     // (EnemyAI._aimY, the clear-path arm's vertical), a corner's is the foe's
     const y = last ? this._aimY(this.predictedTargetPos[1]) : this.feet[1];
-    const dx = wp[0] - this.feet[0], dz = wp[2] - this.feet[2];
+    const dx = wp[0] - this.feet[0],
+      dz = wp[2] - this.feet[2];
     const d = Math.hypot(dx, dz);
     const reach = this.stopDistance + PROJECT_MARGIN;
-    if (last || d <= 1e-6 || d >= reach) { this.destination = [wp[0], y, wp[2]]; return; }
+    if (last || d <= 1e-6 || d >= reach) {
+      this.destination = [wp[0], y, wp[2]];
+      return;
+    }
     const k = reach / d;
     this.destination = [this.feet[0] + dx * k, y, this.feet[2] + dz * k];
   }
@@ -307,16 +370,21 @@ export class EnhancedEnemyAI extends EnemyAI {
     if (trail) return trail;
     if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;
     const chf = this.nav();
-    if (!chf) { this.path = null; return this._nearestCrumb() ?? leader; }
+    if (!chf) {
+      this.path = null;
+      return this._nearestCrumb() ?? leader;
+    }
     try {
       this._repathToward(chf, leader, dt);
       if (!this.path) return this._nearestCrumb() ?? leader;
       if (this.pathI >= this.path.length - 1) return leader;
       let wp = this.path[this.pathI];
-      while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
+      while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH)
+        wp = this.path[++this.pathI];
       return this.pathI === this.path.length - 1 ? leader : wp;
     } catch (e) {
-      this.navBroken = true; this.path = null;
+      this.navBroken = true;
+      this.path = null;
       console.warn('[enhanced-ai] follow fell back to classic:', e?.message ?? e);
       return leader;
     }
@@ -328,14 +396,24 @@ export class EnhancedEnemyAI extends EnemyAI {
    *  shorter one, and a watchman crouched at the wall that stopped him was stood crouched) - and the route and the
    *  stuck clocks with it. */
   standAt(feet) {
-    this.feet[0] = feet[0]; this.feet[1] = feet[1]; this.feet[2] = feet[2];
+    this.feet[0] = feet[0];
+    this.feet[1] = feet[1];
+    this.feet[2] = feet[2];
     this._standAfresh();
-    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.stuckT = 0;
+    this.lastX = feet[0];
+    this.lastZ = feet[2];
   }
 
   /** WORLD2: the base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */
   resumeLive() {
     super.resumeLive();
-    this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.pathEpoch = undefined;
   }
 }

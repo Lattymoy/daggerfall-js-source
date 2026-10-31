@@ -42,7 +42,11 @@ export function skyLawOf(segments) {
   /** Each segment's first classic minute: the event clock's at the first switch, and each later one where the segment
    *  before it stood at its own switch - the walk that makes every switch continuous. */
   const starts = segments.reduce((/** @type {number[]} */ out, s, i) => {
-    out.push(i === 0 ? sharedClassicMinutes(s.fromMs) : out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * segments[i - 1].minutesPerMs);
+    out.push(
+      i === 0
+        ? sharedClassicMinutes(s.fromMs)
+        : out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * segments[i - 1].minutesPerMs,
+    );
     return out;
   }, []);
   /** The segment an instant stands in (its index), or -1 before the first switch. */
@@ -58,7 +62,8 @@ export function skyLawOf(segments) {
   /** The inverse: the relay-clock millisecond at which the sky reads a classic minute. */
   const wallMsAt = (classicMinutes) => {
     for (let i = segments.length - 1; i >= 0; i--) {
-      if (classicMinutes >= starts[i]) return segments[i].fromMs + (classicMinutes - starts[i]) / segments[i].minutesPerMs;
+      if (classicMinutes >= starts[i])
+        return segments[i].fromMs + (classicMinutes - starts[i]) / segments[i].minutesPerMs;
     }
     return wallMsForClassicMinutes(classicMinutes);
   };
@@ -89,7 +94,11 @@ export const skyMinutesPerMsAt = (nowMs) => LAW.rateAt(nowMs);
  * without its last row to MOVE that row (a merge that lands after it). The tool (tools/skyCutover.mjs) and the pin
  * share it.
  */
-export function alignedSkySwitches(minutesPerMs, afterMs, { count = 6, withinMs = 24 * 3600 * 1000, segments = SKY_SEGMENTS } = {}) {
+export function alignedSkySwitches(
+  minutesPerMs,
+  afterMs,
+  { count = 6, withinMs = 24 * 3600 * 1000, segments = SKY_SEGMENTS } = {},
+) {
   const law = segments === SKY_SEGMENTS ? LAW : skyLawOf(segments);
   const dayMs = 1440 / minutesPerMs;
   /** The new schedule's minute of the day at an instant less the sky's as it stands, as a signed gap within half a day. */

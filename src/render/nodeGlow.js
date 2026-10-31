@@ -57,10 +57,13 @@ export const NODE_GLOW_FORM = Object.freeze([1, 1, 1]);
 /** The clock, wrapped: whole cycles of every rate over its period, so no stutter at the wrap. Pure. */
 export const nodeGlowClock = (seconds) => ((seconds % NODE_GLOW_PERIOD) + NODE_GLOW_PERIOD) % NODE_GLOW_PERIOD;
 /** Every rate is whole over the period - the last mote's included. Pure. */
-export const nodeGlowRatesWhole = () => [
-  NODE_GLOW_RATES.breath, NODE_GLOW_RATES.shimmer, NODE_GLOW_RATES.twinkle,
-  ...Array.from({ length: NODE_GLOW_MOTES }, (_, i) => NODE_GLOW_RATES.mote + i * NODE_GLOW_RATES.moteStep),
-].every((r) => Math.abs(r * NODE_GLOW_PERIOD - Math.round(r * NODE_GLOW_PERIOD)) < 1e-9);
+export const nodeGlowRatesWhole = () =>
+  [
+    NODE_GLOW_RATES.breath,
+    NODE_GLOW_RATES.shimmer,
+    NODE_GLOW_RATES.twinkle,
+    ...Array.from({ length: NODE_GLOW_MOTES }, (_, i) => NODE_GLOW_RATES.mote + i * NODE_GLOW_RATES.moteStep),
+  ].every((r) => Math.abs(r * NODE_GLOW_PERIOD - Math.round(r * NODE_GLOW_PERIOD)) < 1e-9);
 
 /** A node's seed (0..1) from its key - each node its own breath and its own motes, the same every frame. Pure. */
 export function nodeGlowSeed(key) {
@@ -69,7 +72,10 @@ export function nodeGlowSeed(key) {
   return ((h >>> 0) % 1009) / 1009;
 }
 
-const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const smooth = (a, b, x) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 /** AUDIT NODE-MARKS (the independent pass): a place is any three numbers - the renderer's camera is a Float32Array
  *  (`_camPos`), which `Array.isArray` refuses, and nothing was ever lit for it. */
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
@@ -79,7 +85,8 @@ const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
  * @typedef {{ nodes: Map<string, { kindle: number, seen: number, seed: number }>, frame: number, lastS: number|null, pool: NodeGlow[] }} NodeGlowState
  */
 /** A fresh state for `nodeGlows` - each node's kindling, by its key, and the records `out` is refilled from. */
-export const createNodeGlowState = () => /** @type {NodeGlowState} */ ({ nodes: new Map(), frame: 0, lastS: null, pool: [] });
+export const createNodeGlowState = () =>
+  /** @type {NodeGlowState} */ ({ nodes: new Map(), frame: 0, lastS: null, pool: [] });
 
 /**
  * WHO GLOWS THIS FRAME, AND HOW BRIGHT: of the gathering host's `marks` (`{ key, profession, at, w, h }`, nearest first),
@@ -104,18 +111,43 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       const d = Math.hypot(m.at[0] - eye[0], m.at[1] - eye[1], m.at[2] - eye[2]);
       if (!(d <= NODE_GLOW_M)) continue;
       let n = state.nodes.get(m.key);
-      if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = m.quiet === true ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S) : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);   // AUDIT NODE-GLINT: a quiet mark dims as it kindled
+      if (!n) {
+        n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) };
+        state.nodes.set(m.key, n);
+      } else
+        n.kindle =
+          m.quiet === true
+            ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S)
+            : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S); // AUDIT NODE-GLINT: a quiet mark dims as it kindled
       n.seen = frame;
       // SENSE1: a mark may carry its own colour (`rgb`) and a gain over its kindling (`gain`, 0..1 - the sense pulse's
       // fade); a node carries neither and is lit as it always was
-      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
+      const alpha =
+        n.kindle *
+        (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) *
+        (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
       if (!(alpha > 0.001)) continue;
       const rgb = m.rgb ?? nodeMarkRgb(m.profession);
-      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL, mark: m };
-      g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
-      g.mark = m;   // NODE-OUTLINE: the mark it is - its pictures, which the glint lights (render/nodeGlint.js)
-      g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;   // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)
-      g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
+      const g = (state.pool[out.length] ??= {
+        at: m.at,
+        w: 0,
+        h: 0,
+        rgb,
+        alpha: 0,
+        seed: 0,
+        form: NODE_GLOW_FORM,
+        pull: NODE_GLOW_PULL,
+        mark: m,
+      });
+      g.at = m.at;
+      g.w = m.w;
+      g.h = m.h;
+      g.rgb = rgb;
+      g.alpha = alpha;
+      g.seed = n.seed;
+      g.mark = m; // NODE-OUTLINE: the mark it is - its pictures, which the glint lights (render/nodeGlint.js)
+      g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL; // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)
+      g.form = m.form ?? NODE_GLOW_FORM; // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
       out.push(g);
     }
   }
@@ -129,7 +161,9 @@ precision highp int;
 `;
 const f = (x) => x.toFixed(4);
 /** One quad a node: x across (-1..1), y up (0 at its base, 1 at its crown). */
-export const NODE_GLOW_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const NODE_GLOW_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform vec3 uAt;       // the node's base
 uniform vec2 uSize;     // across, up (m)
@@ -149,7 +183,9 @@ void main() {
   vWorld = p;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const NODE_GLOW_FS = HEAD + `in vec2 vM;
+export const NODE_GLOW_FS =
+  HEAD +
+  `in vec2 vM;
 in vec3 vWorld;
 uniform vec2 uSize;
 uniform vec3 uColor;
@@ -204,10 +240,12 @@ export function nodeGlowVertices() {
 }
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
-const NO_FOCUS = new Float32Array(4);   // no travel view - w 0, the fog measures from the camera
-const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+const NO_FOCUS = new Float32Array(4); // no travel view - w 0, the fog measures from the camera
+const NO_HAZE = new Float32Array(8); // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 function mat4Multiply(out, a, b) {
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   return out;
 }
 
@@ -216,7 +254,26 @@ export class NodeGlowRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, NODE_GLOW_VS, NODE_GLOW_FS, 'node glow');
     this.u = {};
-    for (const n of ['uVP', 'uAt', 'uSize', 'uEye', 'uPull', 'uColor', 'uAlpha', 'uSeed', 'uTime', 'uStill', 'uForm', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uAt',
+      'uSize',
+      'uEye',
+      'uPull',
+      'uColor',
+      'uAlpha',
+      'uSeed',
+      'uTime',
+      'uStill',
+      'uForm',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = nodeGlowVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -224,7 +281,8 @@ export class NodeGlowRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** how many nodes the last draw lit, for the stats and the tests */
@@ -240,22 +298,24 @@ export class NodeGlowRenderer {
   draw(list, proj, view, eye, seconds, fog = null, still = false) {
     this.drawn = 0;
     if (!Array.isArray(list) || !list.length || !eye) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform1f(U.uTime, nodeGlowClock(seconds));
     gl.uniform1f(U.uStill, still ? 1 : 0);
     gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);
-    let pull = NaN;   // AUDIT BANTHA1 TREE-3: the card's pull a glow's own, sent as it changes
+    let pull = NaN; // AUDIT BANTHA1 TREE-3: the card's pull a glow's own, sent as it changes
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     for (const g of list) {
@@ -263,7 +323,10 @@ export class NodeGlowRenderer {
       if (!g || !isVec3(g.at) || !(g.alpha > 0.001)) continue;
       gl.uniform3f(U.uAt, g.at[0], g.at[1], g.at[2]);
       gl.uniform2f(U.uSize, g.w, g.h);
-      if (g.pull !== pull) { pull = g.pull ?? NODE_GLOW_PULL; gl.uniform1f(U.uPull, pull); }
+      if (g.pull !== pull) {
+        pull = g.pull ?? NODE_GLOW_PULL;
+        gl.uniform1f(U.uPull, pull);
+      }
       gl.uniform3f(U.uColor, g.rgb[0], g.rgb[1], g.rgb[2]);
       gl.uniform1f(U.uAlpha, Math.min(1, g.alpha));
       gl.uniform1f(U.uSeed, Number.isFinite(g.seed) ? g.seed : 0);
@@ -282,21 +345,34 @@ export class NodeGlowRenderer {
    *  its dungeon (the world host's lives as long as the page). */
   dispose() {
     const gl = this.gl;
-    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);
-    this.program = null; this.vao = null; this.vbo = null;
+    gl.deleteProgram(this.program);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteBuffer(this.vbo);
+    this.program = null;
+    this.vao = null;
+    this.vbo = null;
   }
 }
 
 /** AUDIT NODE-MARKS: the system's reduced motion, asked once a second at most - ui/professions/profHud.js's own reading. */
 function reducedMotionReader() {
-  let at = -Infinity, reduced = false;
+  let at = -Infinity,
+    reduced = false;
   return (nowS) => {
-    if (nowS - at > 1) { at = nowS; try { reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { reduced = false; } }
+    if (nowS - at > 1) {
+      at = nowS;
+      try {
+        reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      } catch {
+        reduced = false;
+      }
+    }
     return reduced;
   };
 }
 /** PERF-WARM's idle wait (render/warmPrograms.js): a compile is moved to time the browser was going to spend idle. */
-const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
+const idleCall = (fn) =>
+  globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0);
 
 /**
  * THE WORLD HOST'S PASS: the gathering host's marks lit each frame under the camera and the fog the renderer drew the
@@ -309,22 +385,66 @@ const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdl
  * @param {any} renderer
  * @param {{ now?: () => number, build?: (gl: any) => NodeGlowRenderer, idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean }} [o]
  */
-export function createNodeGlowPass(renderer, { now = () => performance.now() / 1000, build = (gl) => new NodeGlowRenderer(gl), idle = idleCall, reduced = reducedMotionReader() } = {}) {
-  const state = createNodeGlowState(), list = /** @type {NodeGlow[]} */ ([]);
-  let pass = /** @type {NodeGlowRenderer|null} */ (null), asked = false, dead = false;
-  const make = () => { if (dead) return; try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\' glow would not build', e?.message ?? e); pass = null; } };   // SENSE1: an idle build after the end builds nothing
+export function createNodeGlowPass(
+  renderer,
+  {
+    now = () => performance.now() / 1000,
+    build = (gl) => new NodeGlowRenderer(gl),
+    idle = idleCall,
+    reduced = reducedMotionReader(),
+  } = {},
+) {
+  const state = createNodeGlowState(),
+    list = /** @type {NodeGlow[]} */ ([]);
+  let pass = /** @type {NodeGlowRenderer|null} */ (null),
+    asked = false,
+    dead = false;
+  const make = () => {
+    if (dead) return;
+    try {
+      pass = build(renderer.gl);
+    } catch (e) {
+      console.warn("[prof] the nodes' glow would not build", e?.message ?? e);
+      pass = null;
+    }
+  }; // SENSE1: an idle build after the end builds nothing
   return {
     /** @param {Parameters<typeof nodeGlows>[0]} marks */
     draw(marks) {
-      const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;   // the frame's camera, the world's own
+      const proj = renderer._proj,
+        view = renderer._view,
+        eye = renderer._camPos; // the frame's camera, the world's own
       const t = now();
-      if (!asked && marks?.length) { asked = true; idle(make); }   // the first node marked: the compile, at idle
+      if (!asked && marks?.length) {
+        asked = true;
+        idle(make);
+      } // the first node marked: the compile, at idle
       if (!nodeGlows(marks, eye, t, state, list).length || !proj || !view || !pass) return 0;
-      pass.draw(list, proj, view, eye, t, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze }, reduced(t));
+      pass.draw(
+        list,
+        proj,
+        view,
+        eye,
+        t,
+        {
+          mode: renderer._fogMode,
+          density: renderer._fogDensity,
+          range: renderer._fogRange,
+          camPos: renderer._camPos,
+          focus: renderer._focus,
+          haze: renderer._haze,
+        },
+        reduced(t),
+      );
       renderer.markForeignPass();
       return pass.drawn;
     },
     /** SENSE1: the pass's end - its program freed, and never built again (an idle build still waiting builds nothing). */
-    dispose() { dead = true; asked = true; pass?.dispose?.(); pass = null; },
+    dispose() {
+      dead = true;
+      asked = true;
+      pass?.dispose?.();
+      pass = null;
+    },
   };
 }

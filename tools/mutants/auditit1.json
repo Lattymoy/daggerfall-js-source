@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-IT1-G1-one-slot-kept",
     "file": "tools/immersiveTravelPatches.mjs",
-    "old": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
-    "new": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
+    "old": "    for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
+    "new": "    for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-IT1-G1-the-scales-not-set",
     "file": "tools/immersiveTravelPatches.mjs",
-    "old": "    for (const k of MODEL_SCALES) if (k in rmb.Misc3dObjectRecords[i])",
-    "new": "    for (const k of MODEL_SCALES.slice(1)) if (k in rmb.Misc3dObjectRecords[i])",
+    "old": "    for (const k of MODEL_SCALES)",
+    "new": "    for (const k of MODEL_SCALES.slice(1))",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-IT1-G1-a-classic-insert-laid",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n",
-    "new": "",
+    "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n    out[path[1]].push(value);",
+    "new": "    out[path[1]].push(value);",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -165,7 +165,7 @@
     "name": "AUDIT-IT1-G2-an-op-refused",
     "file": "src/world/immersiveTravelGates.js",
     "old": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) continue;",
-    "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) throw new Error('cannot lay');",
+    "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1]))\n      throw new Error('cannot lay');",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "AUDIT-IT1-G2-the-install-unguarded",
     "file": "src/scenes/modWorldData.js",
-    "old": "    try { installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
+    "old": "    try {\n      installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);\n    } catch (e) {\n      console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`);\n    }",
     "new": "    installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);",
     "tests": [
       "test/systems/auditit1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-IT1-G3-the-patch-reads-the-switch",
     "file": "src/scenes/modWorldData.js",
-    "old": "      const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
-    "new": "      const isOn = () => modSetting(vendor, 'Enabled') === true;",
+    "old": "        const isOn =\n          vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
+    "new": "        const isOn = () => modSetting(vendor, 'Enabled') === true;",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-IT1-W4-no-latch",
     "file": "src/systems/immersiveTravel.js",
-    "old": "export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
-    "new": "export const immersiveTravelLoaded = () => (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
+    "old": "export const immersiveTravelLoaded = () =>\n  modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
+    "new": "export const immersiveTravelLoaded = () => modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-IT1-W1-the-sell-label",
     "file": "src/ui/merchant/merchantServiceDoor.js",
-    "old": "          { label: hooks.label ?? merchantServiceLabel(hooks.service), onClick:",
-    "new": "          { label: merchantServiceLabel(hooks.service), onClick:",
+    "old": "            label: hooks.label ?? merchantServiceLabel(hooks.service),",
+    "new": "            label: merchantServiceLabel(hooks.service),",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

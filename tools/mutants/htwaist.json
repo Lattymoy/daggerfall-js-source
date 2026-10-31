@@ -2,8 +2,8 @@
   {
     "name": "HT-WAIST-ON-the-key-ships-off",
     "file": "src/systems/modSettings.js",
-    "old": "'Handling.LanternsAtWaist': Object.freeze({ default: true,",
-    "new": "'Handling.LanternsAtWaist': Object.freeze({ default: false,",
+    "old": "      'Handling.LanternsAtWaist': Object.freeze({\n        default: true,",
+    "new": "      'Handling.LanternsAtWaist': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HT-WAIST-loadsettings-never-reads-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "lanternsAtWaist: !!s['Handling.LanternsAtWaist'],",
-    "new": "lanternsAtWaist: false,",
+    "old": "    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
+    "new": "    lanternsAtWaist: false, // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
     "tests": [
       "test/systems/htwaist_setting.test.js",
       "test/systems/htwaist_handlaw.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "HT-WAIST-predicate-ignores-the-mod-switch",
     "file": "src/systems/playerTorch.js",
-    "old": "return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
-    "new": "return modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
+    "old": "  return (\n    modSetting('handheld-torches', 'Enabled') === true &&\n    modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true\n  );",
+    "new": "  return modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "HT-WAIST-predicate-any-light",
     "file": "src/systems/playerTorch.js",
-    "old": "if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;",
-    "new": "if (!item) return false;",
+    "old": "  if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;",
+    "new": "  if (!item) return false;",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "HT-WAIST-no-waist-press",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;\n",
-    "new": "",
+    "old": "    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;\n    if (w.s.lanternRelaxed) {",
+    "new": "    if (w.s.lanternRelaxed) {",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "HT-WAIST-the-throw-douses-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null);",
-    "new": "if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null);",
+    "old": "          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
+    "new": "          if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HT-WAIST-the-hand-frames-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
-    "new": "w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
+    "old": "      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
+    "new": "      w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HT-WAIST-the-hand-draws-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (atWaist(held)) return false;",
-    "new": "",
+    "old": "    if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
+    "new": "    // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "HT-WAIST-the-light-ignores-the-waist",
     "file": "src/systems/playerTorch.js",
-    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
-    "new": "const o = _offsetOverride ?? TORCH_OFFSET;",
+    "old": "  const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "  const o = _offsetOverride ?? TORCH_OFFSET;",
     "tests": [
       "test/systems/htwaist_handlaw.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "HT-WAIST-the-override-beats-the-hip",
     "file": "src/systems/playerTorch.js",
-    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
-    "new": "const o = _offsetOverride ?? (lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : TORCH_OFFSET);",
+    "old": "  const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "  const o = _offsetOverride ?? (lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : TORCH_OFFSET);",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HT-WAIST-the-hip-on-the-left",
     "file": "src/systems/playerTorch.js",
-    "old": "export const LANTERN_HIP = Object.freeze({ left: -0.2,",
-    "new": "export const LANTERN_HIP = Object.freeze({ left: 0.2,",
+    "old": "export const LANTERN_HIP = Object.freeze({ left: -0.2, up: 1.0, forward: 0.1 });",
+    "new": "export const LANTERN_HIP = Object.freeze({ left: 0.2, up: 1.0, forward: 0.1 });",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "HT-WAIST-swing-leads-the-hip",
     "file": "src/systems/lanternSwing.js",
-    "old": "    const aF = P.drive * (s.vFore - pf) / step + swayF;",
-    "new": "    const aF = -P.drive * (s.vFore - pf) / step + swayF;",
+    "old": "    const aF = (P.drive * (s.vFore - pf)) / step + swayF;",
+    "new": "    const aF = (-P.drive * (s.vFore - pf)) / step + swayF;",
     "tests": [
       "test/systems/htwaist_swing.test.js",
       "test/combat/htwaist_mwbody.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "HT-WAIST-swing-no-gravity",
     "file": "src/systems/lanternSwing.js",
-    "old": "    s.foreVel += (-w2 * Math.sin(s.fore)",
-    "new": "    s.foreVel += (-0 * Math.sin(s.fore)",
+    "old": "    s.foreVel += (-w2 * Math.sin(s.fore) - (aF / P.length) * Math.cos(s.fore) - P.damping * s.foreVel) * step;",
+    "new": "    s.foreVel += (-0 * Math.sin(s.fore) - (aF / P.length) * Math.cos(s.fore) - P.damping * s.foreVel) * step;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "HT-WAIST-swing-no-damping",
     "file": "src/systems/lanternSwing.js",
-    "old": " - P.damping * s.sideVel) * step;",
-    "new": ") * step;",
+    "old": "    s.sideVel += (-w2 * Math.sin(s.side) - (aS / P.length) * Math.cos(s.side) - P.damping * s.sideVel) * step;",
+    "new": "    s.sideVel += (-w2 * Math.sin(s.side) - (aS / P.length) * Math.cos(s.side)) * step;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "HT-WAIST-swing-no-turn",
     "file": "src/systems/lanternSwing.js",
-    "old": " - yr * yr * P.turnRadius)",
-    "new": ")",
+    "old": "    const aS = P.drive * ((s.vSide - ps) / step - yr * yr * P.turnRadius) + swayS;",
+    "new": "    const aS = P.drive * ((s.vSide - ps) / step) + swayS;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "HT-WAIST-swing-no-clamp",
     "file": "src/systems/lanternSwing.js",
-    "old": "    if (s.fore > P.maxAngle) { s.fore = P.maxAngle; if (s.foreVel > 0) s.foreVel = 0; }\n    else if (s.fore < -P.maxAngle) { s.fore = -P.maxAngle; if (s.foreVel < 0) s.foreVel = 0; }\n",
-    "new": "",
+    "old": "    if (s.fore > P.maxAngle) {\n      s.fore = P.maxAngle;\n      if (s.foreVel > 0) s.foreVel = 0;\n    } else if (s.fore < -P.maxAngle) {\n      s.fore = -P.maxAngle;\n      if (s.foreVel < 0) s.foreVel = 0;\n    }\n    if (s.side > P.maxAngle) {",
+    "new": "    if (s.side > P.maxAngle) {",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "HT-WAIST-swing-matrix-sign",
     "file": "src/systems/lanternSwing.js",
-    "old": "out[5] = -sf * cs;",
-    "new": "out[5] = sf * cs;",
+    "old": "  out[5] = -sf * cs;",
+    "new": "  out[5] = sf * cs;",
     "tests": [
       "test/systems/htwaist_swing.test.js",
       "test/combat/htwaist_mwbody.test.js"
@@ -413,8 +413,8 @@
   {
     "name": "HT-WAIST-the-lane-never-stands-it-down",
     "file": "src/player/mwView.js",
-    "old": "  eotbBody.standDown();\n",
-    "new": "",
+    "old": "  eotbBody.standDown();\n  // RIDE-POV: the saddle first, before any queued notch can cross out of the head - COATS3D: unless the body sits a",
+    "new": "  // RIDE-POV: the saddle first, before any queued notch can cross out of the head - COATS3D: unless the body sits a",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "HT-WAIST-the-sprite-lantern-never-regrown",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "  if (l.batch && l.batchH !== l.fullH) dropSpriteLantern(l, renderer);\n",
-    "new": "",
+    "old": "  if (l.batch && l.batchH !== l.fullH) dropSpriteLantern(l, renderer);\n  if (!l.batch) {",
+    "new": "  if (!l.batch) {",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "HT-WAIST-the-remembered-torch-lit-over-the-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (atWaist(l)) { w.lastLightSource = null; return; }\n",
-    "new": "",
+    "old": "    if (atWaist(l)) {\n      w.lastLightSource = null;\n      return;\n    }\n    if (!hasFreeHand() && l && !isLantern(l)) {",
+    "new": "    if (!hasFreeHand() && l && !isLantern(l)) {",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "HT-WAIST-BACK-the-rule-every-view",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "  if (!Number.isInteger(orientation)) return false;\n",
-    "new": "  return true;\n",
+    "old": "  if (!Number.isInteger(orientation)) return false;",
+    "new": "  return true;",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js",
       "test/systems/htwaist_eotb.test.js"
@@ -608,8 +608,8 @@
   {
     "name": "HT-WAIST-BACK-the-art-asked-every-frame",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "      art = p;\n      return null;\n",
-    "new": "      return null;\n",
+    "old": "      art = p;\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]

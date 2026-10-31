@@ -146,7 +146,7 @@ test('ETHER-PORTS by source: a port isle answers as a port to the Come Sail Away
   assert.match(src, /const etherPortOf = \(i\) => \(\{ key: `\$\{i\.px\},\$\{i\.py\}`, name: i\.name, px: i\.px, py: i\.py, region: ETHER_REGION, crown: null, ether: true \}\);/);
   assert.match(src, /return i && i\.kind === 'port' && i\.px === x && i\.py === y \? i : null;/);
   assert.match(src, /const isle = etherSea && inEther\(p\.x, p\.y\) \? etherPortNear\(p\.x, p\.y\) : null;/);
-  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\) add\(\{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \}\);/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore; PIN MOVED (RPT1026-WORLD FAR-QUAY): one of every port town near; PIN MOVED (the fourth merge of main into #1184): each town once (`add`)
+  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\)\n\s*add\(\{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \}\);/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore; PIN MOVED (RPT1026-WORLD FAR-QUAY): one of every port town near; PIN MOVED (the fourth merge of main into #1184): each town once (`add`)
   assert.match(src, /_navalPortHereAt = \{ key, port: isle \? etherPortOf\(isle\) : null \};/);
   assert.match(src, /etherSea && inEther\(p\.x, p\.y\) \? null : navalCrownOf\(/);
   assert.match(src, /if \(port\?\.ether\) \{ const o = etherHost\.office\(port\);/);

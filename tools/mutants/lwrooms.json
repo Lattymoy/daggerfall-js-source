@@ -2,8 +2,8 @@
   {
     "name": "LW-ROOMS-same-place",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    if (at !== home && (at !== it.at || !OUTDOOR.has(it.kind))) {\n      if (start - cursor > walkMinutes(at, home, mpm)",
-    "new": "    if (at !== home && at !== it.at) {\n      if (start - cursor > walkMinutes(at, home, mpm)",
+    "old": "    if (at !== home && (at !== it.at || !OUTDOOR.has(it.kind))) {",
+    "new": "    if (at !== home && at !== it.at) {",
     "tests": [
       "test/systems/livingWorld/lwrooms_tavern.test.js"
     ]

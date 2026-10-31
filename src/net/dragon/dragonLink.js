@@ -15,11 +15,34 @@ import { DRAGON_BLOWS_KEPT, BLOW_KEEP_MS } from './dragonBrain.js';
  */
 /** Nothing heard yet. @type {Readonly<DragonState>} */
 export const DRAGON_STATE_EMPTY = Object.freeze({
-  w: null, b: 0, sx: 0, sz: 0, ph: 1, hp: 0, max: 0, md: 0, ma: 0, mu: 0, sh: 0, legs: [], blows: [], n: 0, lv: 0, op: 0, fell: null, gone: null, heardAt: 0,
+  w: null,
+  b: 0,
+  sx: 0,
+  sz: 0,
+  ph: 1,
+  hp: 0,
+  max: 0,
+  md: 0,
+  ma: 0,
+  mu: 0,
+  sh: 0,
+  legs: [],
+  blows: [],
+  n: 0,
+  lv: 0,
+  op: 0,
+  fell: null,
+  gone: null,
+  heardAt: 0,
 });
 
 /** Is a word of this site (its native point to the whole unit)? @param {{sx: number, sz: number}|null} a @param {any} b */
-export const sameDragonSite = (a, b) => !!a && !!b && Number.isFinite(b.sx) && Number.isFinite(b.sz) && dragonSiteKey(a.sx, a.sz) === dragonSiteKey(b.sx, b.sz);
+export const sameDragonSite = (a, b) =>
+  !!a &&
+  !!b &&
+  Number.isFinite(b.sx) &&
+  Number.isFinite(b.sz) &&
+  dragonSiteKey(a.sx, a.sz) === dragonSiteKey(b.sx, b.sz);
 /** A blow kept while it can still land or linger. */
 const keep = (blows, now) => blows.filter((q) => now < q.at + (q.sp ?? 0) + BLOW_KEEP_MS).slice(-DRAGON_BLOWS_KEPT);
 
@@ -32,19 +55,65 @@ const keep = (blows, now) => blows.filter((q) => now < q.at + (q.sp ?? 0) + BLOW
 export function foldDragon(s, w, now) {
   if (!w) return s;
   if (w.k === 'st') {
-    return { w: w.w, b: w.b, sx: w.sx, sz: w.sz, ph: w.ph, hp: w.h, max: w.m, md: w.md, ma: Number.isFinite(w.ma) ? w.ma : s.w === w.w && s.md === w.md ? s.ma : 0, mu: w.mu, sh: w.sh,
-      legs: [...w.legs], blows: keep(w.blows, now), n: w.n, lv: w.lv, op: w.op, fell: w.fell, gone: w.gone, heardAt: now };
+    return {
+      w: w.w,
+      b: w.b,
+      sx: w.sx,
+      sz: w.sz,
+      ph: w.ph,
+      hp: w.h,
+      max: w.m,
+      md: w.md,
+      ma: Number.isFinite(w.ma) ? w.ma : s.w === w.w && s.md === w.md ? s.ma : 0,
+      mu: w.mu,
+      sh: w.sh,
+      legs: [...w.legs],
+      blows: keep(w.blows, now),
+      n: w.n,
+      lv: w.lv,
+      op: w.op,
+      fell: w.fell,
+      gone: w.gone,
+      heardAt: now,
+    };
   }
   if (s.w === null || w.w !== s.w) return s;
   switch (w.k) {
-    case 'mv': return { ...s, legs: [...w.legs], heardAt: now };
-    case 'atk': return s.blows.some((q) => q.i === w.i) ? s : { ...s, blows: keep([...s.blows, { i: w.i, a: w.a, at: w.at, wu: w.wu, s: w.s, ...(w.sp ? { sp: w.sp } : {}) }], now), heardAt: now };
-    case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };
-    case 'ph': return { ...s, ph: w.n, sh: w.until, heardAt: now };
-    case 'md': return { ...s, md: w.m, ma: w.at, mu: w.until, heardAt: now };
-    case 'fell': return s.fell ? (w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm } } : s) : { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, hp: 0, blows: [], heardAt: now };
-    case 'gone': return { ...s, gone: w.at, blows: [], heardAt: now };
-    default: return s;
+    case 'mv':
+      return { ...s, legs: [...w.legs], heardAt: now };
+    case 'atk':
+      return s.blows.some((q) => q.i === w.i)
+        ? s
+        : {
+            ...s,
+            blows: keep(
+              [...s.blows, { i: w.i, a: w.a, at: w.at, wu: w.wu, s: w.s, ...(w.sp ? { sp: w.sp } : {}) }],
+              now,
+            ),
+            heardAt: now,
+          };
+    case 'hp':
+      return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };
+    case 'ph':
+      return { ...s, ph: w.n, sh: w.until, heardAt: now };
+    case 'md':
+      return { ...s, md: w.m, ma: w.at, mu: w.until, heardAt: now };
+    case 'fell':
+      return s.fell
+        ? w.dm && !s.fell.dm
+          ? { ...s, fell: { ...s.fell, dm: w.dm } }
+          : s
+        : {
+            ...s,
+            fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) },
+            hp: 0,
+            blows: [],
+            heardAt: now,
+          };
+    case 'gone':
+      return { ...s, gone: w.at, blows: [], heardAt: now };
+    default:
+      return s;
   }
 }
 
@@ -63,8 +132,22 @@ export function createDragonLink({ now, say = () => {}, onReceipt = () => {}, si
     /** A word from the cell or the hub. */
     word(w) {
       if (!w) return;
-      if (w.k === 'no') { if (!refused.has(w.m)) { refused.add(w.m); say(w.m); } return; }
-      if (w.k === 'rcpt') { const c = readDragonReceipt(w.r), k = c ? `${c.q}|${c.p ?? -1}` : null; if (k && !receipts.has(k)) { receipts.set(k, w.r); onReceipt(w.r); } return; }   // DRAGON-EACH: one a dragon
+      if (w.k === 'no') {
+        if (!refused.has(w.m)) {
+          refused.add(w.m);
+          say(w.m);
+        }
+        return;
+      }
+      if (w.k === 'rcpt') {
+        const c = readDragonReceipt(w.r),
+          k = c ? `${c.q}|${c.p ?? -1}` : null;
+        if (k && !receipts.has(k)) {
+          receipts.set(k, w.r);
+          onReceipt(w.r);
+        }
+        return;
+      } // DRAGON-EACH: one a dragon
       const mine = site();
       if (!mine || w.w !== mine.w || !sameDragonSite(mine, w)) return;
       state = foldDragon(state, w, now());
@@ -72,6 +155,9 @@ export function createDragonLink({ now, say = () => {}, onReceipt = () => {}, si
     state: () => state,
     receipt: (w, p = -1) => receipts.get(`${w}|${p}`) ?? null,
     /** Out of its fight: the state forgotten, a refusal said again next time. */
-    leave() { state = DRAGON_STATE_EMPTY; refused.clear(); },
+    leave() {
+      state = DRAGON_STATE_EMPTY;
+      refused.clear();
+    },
   };
 }

@@ -19,7 +19,18 @@
 //     --random N     random games (default 3000; 0 skips them)
 //     --regulars N   games a temper of hand plays a grade's regulars (default 1200; 0 skips them)
 import { ILIAC_CARDS, ILIAC_TIERS, STARTER_DECK } from '../src/net/iliac/iliacCards.js';
-import { newGame, commit, reveal, result, legalPlays, playsRefusal, deckValid, ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX } from '../src/net/iliac/iliacHand.js';
+import {
+  newGame,
+  commit,
+  reveal,
+  result,
+  legalPlays,
+  playsRefusal,
+  deckValid,
+  ILIAC_DECK_SIZE,
+  ILIAC_COPIES_MAX,
+  ILIAC_LEGENDARY_COPIES_MAX,
+} from '../src/net/iliac/iliacHand.js';
 import { patronPlays, patronDeck, seededUnit, ILIAC_TEMPER_NAMES } from '../src/systems/iliac/iliacPatrons.js';
 import { iliacTemperOf } from '../src/scenes/iliacTableGame.js';
 import { isMain } from './lib/isMain.mjs';
@@ -31,7 +42,7 @@ const GRADE_SAID = Object.freeze(['village', 'town', 'city']);
 /** A uint32 source over a [0,1) unit. */
 const rand32Of = (unit) => () => Math.floor(unit() * 4294967296) >>> 0;
 /** A seed of its own for each (part, a, b), mixed from the run's seed. */
-const mix = (...xs) => xs.reduce((h, x) => (Math.imul(h ^ (x >>> 0), 0x9E3779B1) + 0x7F4A7C15) >>> 0, 0x2545F491);
+const mix = (...xs) => xs.reduce((h, x) => (Math.imul(h ^ (x >>> 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491);
 
 /** One game to its end: `choose(state, p)` gives each seat's commit; a commit the rules refuse is a pass. */
 export function playGame(decks, rand32, choose) {
@@ -47,10 +58,12 @@ export function playGame(decks, rand32, choose) {
 /** A random deck the rules take: cards drawn from every card a deck may hold, each kept while its copies stay within
  *  the deck's law (two of a card, one of a legendary or rarer), until thirty stand - checked whole by deckValid. */
 export function randomDeck(unit) {
-  const deck = [], held = new Map();
+  const deck = [],
+    held = new Map();
   while (deck.length < ILIAC_DECK_SIZE) {
     const c = ILIAC_CARDS[Math.floor(unit() * ILIAC_CARDS.length)];
-    const most = ILIAC_TIERS.indexOf(c.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
+    const most =
+      ILIAC_TIERS.indexOf(c.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
     if ((held.get(c.id) ?? 0) >= most) continue;
     held.set(c.id, (held.get(c.id) ?? 0) + 1);
     deck.push(c.id);
@@ -62,7 +75,10 @@ export function randomDeck(unit) {
 /** A random line of legal plays: the single plays in a random order, each kept while the whole stays lawful. */
 export function randomPlays(state, p, unit) {
   const singles = legalPlays(state, p);
-  for (let i = singles.length - 1; i > 0; i--) { const j = Math.floor(unit() * (i + 1)); [singles[i], singles[j]] = [singles[j], singles[i]]; }
+  for (let i = singles.length - 1; i > 0; i--) {
+    const j = Math.floor(unit() * (i + 1));
+    [singles[i], singles[j]] = [singles[j], singles[i]];
+  }
   const chosen = [];
   for (const one of singles) {
     if (chosen.some((x) => x.card === one.card)) continue;
@@ -78,7 +94,8 @@ export function measureRandom(n, seed) {
     const unit = seededUnit(mix(seed, 1, i));
     const decks = [randomDeck(unit), randomDeck(unit)];
     const r = playGame(decks, rand32Of(unit), (st, p) => randomPlays(st, p, unit));
-    if (r.winner === null) out.drawn++; else out.won[r.winner]++;
+    if (r.winner === null) out.drawn++;
+    else out.won[r.winner]++;
     out.by[r.by]++;
   }
   return out;
@@ -90,14 +107,17 @@ export function measureRegulars(n, seed) {
   for (const temper of ILIAC_TEMPER_NAMES) {
     out[temper] = [];
     for (let grade = 0; grade < 3; grade++) {
-      let won = 0, drawn = 0;
+      let won = 0,
+        drawn = 0;
       for (let i = 0; i < n; i++) {
-        const regSeed = mix(seed, 2, grade, i);   // the same regulars for every temper of hand
+        const regSeed = mix(seed, 2, grade, i); // the same regulars for every temper of hand
         const regTemper = iliacTemperOf(regSeed);
         const unit = seededUnit(mix(seed, 3, grade, i));
-        const r = playGame([STARTER_DECK, patronDeck(regSeed, regTemper, grade)], rand32Of(unit),
-          (st, p) => (p === 0 ? patronPlays(st, 0, temper, 2, unit) : patronPlays(st, 1, regTemper, grade, unit)));
-        if (r.winner === 0) won++; else if (r.winner === null) drawn++;
+        const r = playGame([STARTER_DECK, patronDeck(regSeed, regTemper, grade)], rand32Of(unit), (st, p) =>
+          p === 0 ? patronPlays(st, 0, temper, 2, unit) : patronPlays(st, 1, regTemper, grade, unit),
+        );
+        if (r.winner === 0) won++;
+        else if (r.winner === null) drawn++;
       }
       out[temper].push({ games: n, won, drawn, rate: n ? won / n : 0 });
     }
@@ -108,8 +128,13 @@ export function measureRegulars(n, seed) {
 const pct = (a, b) => `${b ? ((100 * a) / b).toFixed(1) : '0.0'}%`;
 
 if (isMain(import.meta.url)) {
-  const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? Number(process.argv[i + 1]) : dflt; };
-  const seed = arg('--seed', 20261013) >>> 0, nRandom = arg('--random', 3000), nRegulars = arg('--regulars', 1200);
+  const arg = (name, dflt) => {
+    const i = process.argv.indexOf(name);
+    return i >= 0 ? Number(process.argv[i + 1]) : dflt;
+  };
+  const seed = arg('--seed', 20261013) >>> 0,
+    nRandom = arg('--random', 3000),
+    nRegulars = arg('--regulars', 1200);
   const random = nRandom > 0 ? measureRandom(nRandom, seed) : null;
   const regulars = nRegulars > 0 ? measureRegulars(nRegulars, seed) : null;
   const set = { cards: ILIAC_CARDS.length };
@@ -119,12 +144,19 @@ if (isMain(import.meta.url)) {
     console.log(`Iliac Hand's set: ${set.cards} cards (seed ${seed})`);
     if (random) {
       const g = random.games;
-      console.log(`THE RANDOM GAMES (${g}): seat 0 won ${random.won[0]} (${pct(random.won[0], g)}), seat 1 won ${random.won[1]} (${pct(random.won[1], g)}), drawn ${random.drawn} (${pct(random.drawn, g)}); decided on the holdings ${pct(random.by.holdings, g)}, on power ${pct(random.by.power, g)}`);
+      console.log(
+        `THE RANDOM GAMES (${g}): seat 0 won ${random.won[0]} (${pct(random.won[0], g)}), seat 1 won ${random.won[1]} (${pct(random.won[1], g)}), drawn ${random.drawn} (${pct(random.drawn, g)}); decided on the holdings ${pct(random.by.holdings, g)}, on power ${pct(random.by.power, g)}`,
+      );
     }
     if (regulars) {
-      console.log(`THE REGULARS (${nRegulars} games a temper and a grade): the starter deck's win rate, greedy, no slip`);
+      console.log(
+        `THE REGULARS (${nRegulars} games a temper and a grade): the starter deck's win rate, greedy, no slip`,
+      );
       console.log(`  ${''.padEnd(9)}${GRADE_SAID.map((x) => x.padStart(9)).join('')}`);
-      for (const temper of ILIAC_TEMPER_NAMES) console.log(`  ${TEMPER_SAID[temper].padEnd(9)}${regulars[temper].map((r) => pct(r.won, r.games).padStart(9)).join('')}`);
+      for (const temper of ILIAC_TEMPER_NAMES)
+        console.log(
+          `  ${TEMPER_SAID[temper].padEnd(9)}${regulars[temper].map((r) => pct(r.won, r.games).padStart(9)).join('')}`,
+        );
     }
   }
 }

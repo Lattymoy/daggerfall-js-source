@@ -127,7 +127,7 @@ test('AUDIT-RR F26: TrainingSkillPicker_OnItemPicked\'s `(float)skillValue / tra
 });
 
 test('AUDIT-RR F10: an ENEMY_BASICS row the mod cannot write is said, not skipped in silence', () => {
-  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /if \(!target \|\| Object\.isFrozen\(target\)\) \{ if \(target\) console\.warn\(`\[rr\] enemyAppearance: ENEMY_BASICS row \$\{id\} is frozen/);
+  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /if \(!target \|\| Object\.isFrozen\(target\)\) \{\n\s*if \(target\)\n\s*console\.warn\(`\[rr\] enemyAppearance: ENEMY_BASICS row \$\{id\} is frozen/);
 });
 
 test('AUDIT-RR F13: the sprite-variant race reads the location\'s climate SETTINGS\' worldClimate (223-232), not the climate type 0-3 that fell to the Breton arm everywhere', () => {
@@ -233,8 +233,8 @@ test('AUDIT-RR F32/F35: WorldDataVariants\' last key is THIS location\'s before 
 
 test('AUDIT-RR F33/F34/F36/F37/F38/F39: the locationnew resolver is wired at install, place.js seeds the merge with the location index, no phantom discovery record, a duplicate location throws, a stored replacement block is read again, a new game clears the variants', () => {
   assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /export function installWorldDataReplacement\(\) \{[\s\S]{0,200}setNewLocationIndexResolver\(getNewDFLocationIndex\);/);
-  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapIdLookup\.has\(dfLocation\.mapTableData\.mapId\)\) throw new Error/);
-  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapNameLookup\.has\(dfLocation\.name\)\) throw new Error/);
+  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapIdLookup\.has\(dfLocation\.mapTableData\.mapId\)\)\n\s*throw new Error/);
+  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapNameLookup\.has\(dfLocation\.name\)\)\n\s*throw new Error/);
   assert.match(rd('src/systems/quest/place.js'), /mergeNamedBuildings\(location\.exterior\.buildings, blocks\.filter\(\(b\) => b\.dfBlock\), \{ locationIndex: location\.locationIndex \?\? 0 \}\)/);
   assert.match(hostText('src/scenes/world.js'), /const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s+if \(arm && armRec\) discoverBuilding\(/);
   assert.match(rd('src/formats/blocksFile.js'), /if \(this\._blocks\[block\] !== null && this\._blocks\[block\]\.bytes !== null\) return true;\s+\/\/ AUDIT-RR F38/);
@@ -266,7 +266,7 @@ test('AUDIT-RR (RRI) F3/F5/F6/F7/F8/F9/F10: shops stock the registered custom it
   // F3: the shelf's second loop
   const shop = rd('src/systems/shopStock.js');
   assert.match(shop, /const customs = customItemsForGroup\(group\);\s+let customChanceMod = chanceMod;\s+if \(customChanceMod === 0 && group === 'Transportation'\) customChanceMod = 20;/);
-  assert.match(shop, /const stockChance = Math\.trunc\(customChanceMod \* 5 \* \(21 - t\.rarity\) \/ 100\);\s+if \(!dice100\(stockChance, rolls\(\)\)\) continue;\s+if \(group === 'Weapons'\) add\(\{ group, templateIndex, material: randomMaterial\(level, rolls\), flags: 0 \}\);\s+else if \(group === 'Armor'\) add\(\{ group, templateIndex, material: randomArmorMaterial\(level, rolls\) \}\);/);
+  assert.match(shop, /const stockChance = Math\.trunc\(\(customChanceMod \* 5 \* \(21 - t\.rarity\)\) \/ 100\);\n\s*if \(!dice100\(stockChance, rolls\(\)\)\) continue;\n\s*if \(group === 'Weapons'\) add\(\{ group, templateIndex, material: randomMaterial\(level, rolls\), flags: 0 \}\);\n\s*else if \(group === 'Armor'\) add\(\{ group, templateIndex, material: randomArmorMaterial\(level, rolls\) \}\);/);
   // F6: random armor minted through setItemFields (named); F9: a mod spell serialised whole; F10: loot items converted too
   assert.match(rd('src/systems/loot/loot.js'), /AUDIT-RR F6: the class ctor names the item from its template BEFORE SetVariant/);
   assert.ok(!/rriVariantFields/.test(rd('src/systems/loot/loot.js')), 'the mint runs the variant fold, not the loot');

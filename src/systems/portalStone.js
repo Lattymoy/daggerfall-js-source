@@ -29,15 +29,22 @@
 //
 // Not a DFU member - Ledger A.
 // ═══════════════════════════════════════════════════════════════════
-import { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, portalStones, isPortalStone, isWelkyndShard } from './gate/gateSpoils.js';
+import {
+  PORTAL_STONE,
+  PORTAL_STONE_TEMPLATE,
+  PORTAL_STONE_SHARDS,
+  portalStones,
+  isPortalStone,
+  isWelkyndShard,
+} from './gate/gateSpoils.js';
 import { shardsHeld, spendShards, shardsText } from './reforge.js';
 import { addItem, findExistingStack } from './inventory.js';
-import { LOOT_STACK_MAX } from './loot/loot.js';   // PORTAL-BULK: the most one stack holds (itemLaw.js flags a stack past it)
+import { LOOT_STACK_MAX } from './loot/loot.js'; // PORTAL-BULK: the most one stack holds (itemLaw.js flags a stack past it)
 import { t } from './textManager.js';
-import { eventGroundAt } from './eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
+import { eventGroundAt } from './eventGround.js'; // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 import { registerItemUseHandler } from './item/itemTemplates.js';
 import { POSE_BOUND, POSE_Y_BOUND, worldPixelOk } from '../net/wire.js';
-import { nativePointOk, nativeOnPixel } from './portalBook.js';   // PORTAL-BOOK: a portal's landing at a kept door
+import { nativePointOk, nativeOnPixel } from './portalBook.js'; // PORTAL-BOOK: a portal's landing at a kept door
 
 export { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, isPortalStone };
 
@@ -70,12 +77,19 @@ const ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
 export const PORTAL_TEXT = Object.freeze({
   row: `Portal Stone (${PORTAL_STONE_SHARDS} shards)`,
   /** PORTAL-BULK: the offer - `n` stones at `n` prices, `held` the shards the purse may spend. */
-  ask: (n, held) => t('portal.buy.ask', '{n, plural, one {Buy a Portal Stone} other {Buy # Portal Stones}} for {price, plural, one {# Welkynd Shard} other {# Welkynd Shards}}? You carry {held}.', { n, price: n * PORTAL_STONE_SHARDS, held }),
-  bought: (n) => t('portal.buy.bought', '{n, plural, one {You buy a Portal Stone.} other {You buy # Portal Stones.}}', { n }),
+  ask: (n, held) =>
+    t(
+      'portal.buy.ask',
+      '{n, plural, one {Buy a Portal Stone} other {Buy # Portal Stones}} for {price, plural, one {# Welkynd Shard} other {# Welkynd Shards}}? You carry {held}.',
+      { n, price: n * PORTAL_STONE_SHARDS, held },
+    ),
+  bought: (n) =>
+    t('portal.buy.bought', '{n, plural, one {You buy a Portal Stone.} other {You buy # Portal Stones.}}', { n }),
   /** PORTAL-BULK: the stack the stones land on holds no more (LOOT_STACK_MAX). */
   full: (max) => t('portal.buy.full', 'Your stack of Portal Stones holds no more than {max, number}.', { max }),
   /** `held` the shards the purse may spend, `kept` the rest (locked, or worn as a crystal). */
-  shards: (held, kept = 0) => `A ${PORTAL_STONE.name} costs ${shardsText(PORTAL_STONE_SHARDS)}. You carry ${held}${kept > 0 ? ` you may spend (${kept} more are locked or worn)` : ''}.`,
+  shards: (held, kept = 0) =>
+    `A ${PORTAL_STONE.name} costs ${shardsText(PORTAL_STONE_SHARDS)}. You carry ${held}${kept > 0 ? ` you may spend (${kept} more are locked or worn)` : ''}.`,
   notHere: 'A portal can only be opened under the open sky.',
   noStreet: 'A portal cannot be opened on this street.',
   water: 'You cannot open a portal in the water.',
@@ -85,7 +99,9 @@ export const PORTAL_TEXT = Object.freeze({
   room: 'There is no room here for a portal.',
   ground: 'There is no ground here for a portal to stand on.',
   /** RPT1026-EVENTS GATE-WAY (systems/eventGround.js): the place stands on an event's gate's ground. */
-  get event() { return t('portal.refused.event', 'A portal cannot open this close to an event\'s gate.'); },
+  get event() {
+    return t('portal.refused.event', "A portal cannot open this close to an event's gate.");
+  },
   gone: `The ${PORTAL_STONE.name} is no longer where you kept it.`,
   opened: (name) => `A portal to ${name} tears open. Step through before it closes.`,
   /** PORTAL-GIFT (gateSpoils.js givePortalGift): said once the world stands. */
@@ -103,7 +119,14 @@ export const PORTAL_HOLD_TEXT = Object.freeze({
   journey: 'You cannot use a portal while you travel.',
 });
 /** The first hold that stands, or null. */
-export function portalHold({ dead = false, busy = false, duel = false, siege = false, enemies = false, journey = false } = {}) {
+export function portalHold({
+  dead = false,
+  busy = false,
+  duel = false,
+  siege = false,
+  enemies = false,
+  journey = false,
+} = {}) {
   if (dead || busy) return 'busy';
   if (duel) return 'duel';
   if (siege) return 'siege';
@@ -120,7 +143,9 @@ export const portalStoneLines = () => [
 
 // ---- the counter ---------------------------------------------------
 /** The shards in a pack the purse may NOT spend - locked, or worn (reforge.js shardsHeld's other half). */
-export const shardsKept = (items) => (Array.isArray(items) ? items : []).reduce((n, it) => n + (isWelkyndShard(it) ? (it.stackCount ?? 1) : 0), 0) - shardsHeld(items);
+export const shardsKept = (items) =>
+  (Array.isArray(items) ? items : []).reduce((n, it) => n + (isWelkyndShard(it) ? (it.stackCount ?? 1) : 0), 0) -
+  shardsHeld(items);
 /** PORTAL-BULK: THE ROOM ON THE STACK - how many stones the stack a sale lands on may still take. The sale's addItem
  *  merges into inventory.js findExistingStack's answer (the pack's unlocked stack of stones; a LOCKED stack is never
  *  merged into, so a fresh stack starts beside it, as the gift's does), and no stack holds more than LOOT_STACK_MAX
@@ -163,7 +188,9 @@ export const buyPortalStone = (items) => buyPortalStones(items, 1);
 /** What the counter says when a sale is refused - `reason` portalStoneRefusal's ('stack' a full stack's words; any
  *  other the purse's, its locked and worn shards named). */
 export function portalStoneRefusalText(items, reason) {
-  return reason === 'stack' ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items));
+  return reason === 'stack'
+    ? PORTAL_TEXT.full(LOOT_STACK_MAX)
+    : PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items));
 }
 
 // ---- the use -------------------------------------------------------
@@ -194,7 +221,8 @@ export function portalPlace(feet, yaw, { ground = null, wall = null } = {}) {
   const hit = wall ? wall([feet[0], top, feet[2]], dir, PORTAL_AHEAD + PORTAL_WALL_GAP) : null;
   if (Number.isFinite(hit)) ahead = Math.min(ahead, /** @type {number} */ (hit) - PORTAL_WALL_GAP);
   if (ahead < PORTAL_MIN_AHEAD) return { refused: 'room' };
-  const x = feet[0] + dir[0] * ahead, z = feet[2] + dir[2] * ahead;
+  const x = feet[0] + dir[0] * ahead,
+    z = feet[2] + dir[2] * ahead;
   const d = ground ? ground([x, top, z], [0, -1, 0], PORTAL_GROUND_PROBE) : null;
   if (!Number.isFinite(d) || /** @type {number} */ (d) > PORTAL_GROUND_PROBE) return { refused: 'ground' };
   return { at: [x, top - /** @type {number} */ (d), z] };
@@ -226,8 +254,14 @@ const q2 = (v) => Math.round(v * 100) / 100;
  *  each receiver reads it off its own map. */
 export const portalWire = (gate, nowMs = 0) => {
   const p = gate.native;
-  const a = gate.dest.at;   // PORTAL-BOOK: a kept house's door - where a step in lands, on the destination's pixel
-  return { i: gate.id, p: [q2(p[0]), q2(p[1]), q2(p[2])], d: [gate.dest.pixel.x, gate.dest.pixel.y], r: Math.max(0, Math.round(gate.until - nowMs)), ...(a ? { a: [q2(a[0]), q2(a[1]), q2(a[2])] } : {}) };
+  const a = gate.dest.at; // PORTAL-BOOK: a kept house's door - where a step in lands, on the destination's pixel
+  return {
+    i: gate.id,
+    p: [q2(p[0]), q2(p[1]), q2(p[2])],
+    d: [gate.dest.pixel.x, gate.dest.pixel.y],
+    r: Math.max(0, Math.round(gate.until - nowMs)),
+    ...(a ? { a: [q2(a[0]), q2(a[1]), q2(a[2])] } : {}),
+  };
 };
 /** The record projected, or null: a field outside its law refuses the record WHOLE (wire.js's rule). */
 export function validPortalRecord(r) {
@@ -240,6 +274,12 @@ export function validPortalRecord(r) {
   // the wire's own bound
   if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;
   if (!Number.isFinite(r.r) || r.r <= 0 || r.r > PORTAL_OPEN_MS) return null;
-  if (r.a !== undefined && !(nativePointOk(r.a) && nativeOnPixel(r.a, r.d))) return null;   // PORTAL-BOOK: a landing off the destination's pixel refuses the record
-  return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r, ...(r.a !== undefined ? { a: [r.a[0], r.a[1], r.a[2]] } : {}) };
+  if (r.a !== undefined && !(nativePointOk(r.a) && nativeOnPixel(r.a, r.d))) return null; // PORTAL-BOOK: a landing off the destination's pixel refuses the record
+  return {
+    i: r.i,
+    p: [r.p[0], r.p[1], r.p[2]],
+    d: [r.d[0], r.d[1]],
+    r: r.r,
+    ...(r.a !== undefined ? { a: [r.a[0], r.a[1], r.a[2]] } : {}),
+  };
 }

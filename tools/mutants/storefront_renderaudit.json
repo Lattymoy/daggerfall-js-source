@@ -2,8 +2,8 @@
   {
     "name": "RENDERAUDIT-the-view-unread",
     "file": "src/scenes/portalFx.js",
-    "old": "  if (view) { rx = -view[0]; rz = -view[8]; }",
-    "new": "  if (false) { rx = -view[0]; rz = -view[8]; }",
+    "old": "  if (view) {",
+    "new": "  if (false) {",
     "tests": [
       "test/scenes/portalskins.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RENDERAUDIT-the-arch-toward-the-eye",
     "file": "src/scenes/portalFx.js",
-    "old": "  out.back[0] = -rz; out.back[1] = 0; out.back[2] = rx;",
-    "new": "  out.back[0] = rz; out.back[1] = 0; out.back[2] = -rx;",
+    "old": "  out.back[0] = -rz;\n  out.back[1] = 0;\n  out.back[2] = rx;",
+    "new": "  out.back[0] = rz;\n  out.back[1] = 0;\n  out.back[2] = -rx;",
     "tests": [
       "test/scenes/portalskins.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RENDERAUDIT-an-opening-with-no-facing",
     "file": "src/scenes/portalFx.js",
-    "old": "{ h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, dir: facing(at) }",
-    "new": "{ h: PORTAL_SIZE.h, w: PORTAL_SIZE.w }",
+    "old": "        playerDoor()?.burst?.(look.open, [at[0], at[1] + 0.05, at[2]], {\n          h: PORTAL_SIZE.h,\n          w: PORTAL_SIZE.w,\n          dir: facing(at),\n        });",
+    "new": "        playerDoor()?.burst?.(look.open, [at[0], at[1] + 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w });",
     "tests": [
       "test/scenes/portalskins.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RENDERAUDIT-a-breath-with-no-facing",
     "file": "src/scenes/portalFx.js",
-    "old": "{ h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, dir: [back[0], back[2]] }",
-    "new": "{ h: PORTAL_SIZE.h, w: PORTAL_SIZE.w }",
+    "old": "          dir: [back[0], back[2]],\n        });",
+    "new": "        });",
     "tests": [
       "test/scenes/portalskins.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "RENDERAUDIT-a-size-a-piece",
     "file": "src/scenes/portalFx.js",
-    "old": "      q.batch.size.w = q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1); q.batch.size.h = q.d.size.h * pl.scale;",
+    "old": "      q.batch.size.w = q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1);\n      q.batch.size.h = q.d.size.h * pl.scale;",
     "new": "      q.batch.size = { w: q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1), h: q.d.size.h * pl.scale };",
     "tests": [
       "test/render/killfx.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "RENDERAUDIT-the-batches-flat-mapped",
     "file": "src/scenes/portalFx.js",
-    "old": "      let n = 0;   // written by index: a length set to 0 lets the list's room go, and the pushes after it take it again\n",
-    "new": "      return list.flatMap((p) => [p.batch, ...(p.dress ?? []).map((q) => q.batch)]);\n      let n = 0;\n",
+    "old": "      let n = 0; // written by index: a length set to 0 lets the list's room go, and the pushes after it take it again",
+    "new": "      return list.flatMap((p) => [p.batch, ...(p.dress ?? []).map((q) => q.batch)]);\n      let n = 0;",
     "tests": [
       "test/render/killfx.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RENDERAUDIT-the-hypot-a-frame",
     "file": "src/scenes/portalFx.js",
-    "old": "  const L = Math.sqrt(rx * rx + rz * rz);",
-    "new": "  const L = Math.hypot(rx, rz);",
+    "old": "  const L = Math.sqrt(rx * rx + rz * rz); // never Math.hypot a frame: a call it does not inline boxes its numbers",
+    "new": "  const L = Math.hypot(rx, rz); // never Math.hypot a frame: a call it does not inline boxes its numbers",
     "tests": [
       "test/render/killfx.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "RENDERAUDIT-the-profile-stage-handed-a-fixed-answer",
     "file": "src/render/characterStage.js",
-    "old": "createEffectStage(gl, { reduced: () => prefersReducedMotion(),",
-    "new": "createEffectStage(gl, { reduced: prefersReducedMotion(),",
+    "old": "  const effects = createEffectStage(gl, { reduced: () => prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) }); // less motion followed mid-session",
+    "new": "  const effects = createEffectStage(gl, { reduced: prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) }); // less motion followed mid-session",
     "tests": [
       "test/render/killfx.test.js"
     ]

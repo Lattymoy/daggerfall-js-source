@@ -15,7 +15,7 @@ export const CABIN_ARCHIVE = 38192;
 /** How much of the stain lies over the room's pictures. */
 export const CABIN_STAIN = 0.55;
 
-const _records = new Map();   // `${key}|${paint}` -> record
+const _records = new Map(); // `${key}|${paint}` -> record
 let _next = 0;
 
 /**
@@ -30,20 +30,29 @@ export function cabinRestyle(paint) {
   return async (texRemap, lists, { renderer, getTexture, palette }) => {
     if (!renderer?.uploadTexture) return;
     const seen = new Set();
-    for (const list of lists) for (const sm of list ?? []) {
-      const own = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (seen.has(own)) continue;
-      seen.add(own);
-      const key = texRemap.get(own) ?? own;
-      if (renderer.windowMasks?.has?.(key) || renderer.glassMasks?.has?.(key)) continue;   // glass: lit as built
-      const [archive, record] = key.split('_').map(Number);
-      const pic = await classicPictureOf(getTexture, palette, archive, record);
-      if (!pic) continue;
-      const k = `${key}|${paint}`;
-      let rec = _records.get(k);
-      if (rec == null) { rec = _next++; _records.set(k, rec); }
-      renderer.uploadTexture(CABIN_ARCHIVE, rec, toColor32(dfLook(tintPicture(pic, rgb, CABIN_STAIN), lookSeed(archive, record))), { opaque: true });
-      texRemap.set(own, `${CABIN_ARCHIVE}_${rec}`);
-    }
+    for (const list of lists)
+      for (const sm of list ?? []) {
+        const own = `${sm.textureArchive}_${sm.textureRecord}`;
+        if (seen.has(own)) continue;
+        seen.add(own);
+        const key = texRemap.get(own) ?? own;
+        if (renderer.windowMasks?.has?.(key) || renderer.glassMasks?.has?.(key)) continue; // glass: lit as built
+        const [archive, record] = key.split('_').map(Number);
+        const pic = await classicPictureOf(getTexture, palette, archive, record);
+        if (!pic) continue;
+        const k = `${key}|${paint}`;
+        let rec = _records.get(k);
+        if (rec == null) {
+          rec = _next++;
+          _records.set(k, rec);
+        }
+        renderer.uploadTexture(
+          CABIN_ARCHIVE,
+          rec,
+          toColor32(dfLook(tintPicture(pic, rgb, CABIN_STAIN), lookSeed(archive, record))),
+          { opaque: true },
+        );
+        texRemap.set(own, `${CABIN_ARCHIVE}_${rec}`);
+      }
   };
 }

@@ -177,8 +177,8 @@
   {
     "name": "AUDIT-WATCH1-A5-exactLevel-is-ignored",
     "file": "src/characters/enemy/enemyEntity.js",
-    "old": "    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4);",
-    "new": "    if (mobileType === KNIGHT_CITYWATCH_ID) level += 3 + Math.floor(rollFn() * 4);",
+    "old": "    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4); // Range(3, 7)",
+    "new": "    if (mobileType === KNIGHT_CITYWATCH_ID) level += 3 + Math.floor(rollFn() * 4); // Range(3, 7)",
     "tests": [
       "test/characters/enemy/watch1.test.js"
     ]

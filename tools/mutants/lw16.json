@@ -2,8 +2,8 @@
   {
     "name": "LW16-window",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
-    "new": "if (!(v.inT <= t && t - v.inT <= NEWS_DAYS * DAY_MIN)) continue;",
+    "old": "    if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "new": "    if (!(v.inT <= t && t - v.inT <= NEWS_DAYS * DAY_MIN)) continue;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW16-in",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
-    "new": "if (!(t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "old": "    if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "new": "    if (!(t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW16-set-out",
     "file": "src/systems/livingWorld/carried.js",
-    "old": ".filter((it) => it.t <= w.outT0);",
-    "new": ";",
+    "old": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)].filter((it) => it.t <= w.outT0);",
+    "new": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)];",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW16-own",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
-    "new": "if ((best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "old": "      if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "new": "      if ((best.get(key)?.t ?? Infinity) <= v.inT) continue;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW16-first",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
-    "new": "if (ownKeys.has(key)) continue;",
+    "old": "      if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "new": "      if (ownKeys.has(key)) continue;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW16-deeds",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "...deedsAt(w.from, w.outT0)]",
-    "new": "...deedsAt(w.from, Infinity)]",
+    "old": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)].filter((it) => it.t <= w.outT0);",
+    "new": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, Infinity)].filter((it) => it.t <= w.outT0);",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW16-hop-before",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue;",
-    "new": "if (!(v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "old": "        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
+    "new": "        if (!(v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW16-hop-days",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue;",
-    "new": "if (!(r.inT <= v.outT0)) continue;",
+    "old": "        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
+    "new": "        if (!(r.inT <= v.outT0)) continue; // heard at home before the courier set out",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW16-hop-from",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT",
-    "new": "key: carriedKey(it), from: it.from || (v.from?.name ?? ''), t: r.inT",
+    "old": "          items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });",
+    "new": "          items.push({ ...it, key: carriedKey(it), from: it.from || (v.from?.name ?? ''), t: r.inT });",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW16-hop-key",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "items.push({ ...it, key: carriedKey(it), from:",
-    "new": "items.push({ ...it, from:",
+    "old": "        for (const it of toldAt(r))\n          items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });",
+    "new": "        for (const it of toldAt(r)) items.push({ ...it, from: it.from || (r.from?.name ?? ''), t: r.inT });",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW16-saved",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (item.kind === 'home') return 'saved';",
-    "new": "if (item.kind === 'homes') return 'saved';",
+    "old": "  if (item.kind === 'home') return 'saved';",
+    "new": "  if (item.kind === 'homes') return 'saved';",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "LW16-routed",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (item.kind === 'routed') return 'routed';",
+    "old": "  if (item.kind === 'routed') return 'routed';",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "LW16-robbed",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (item.kind === 'held') return 'robbed';",
+    "old": "  if (item.kind === 'held') return 'robbed';",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "LW16-slain-seen",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (item.kind === 'slain') return item.seen ? 'slain' : null;",
-    "new": "if (item.kind === 'slain') return 'slain';",
+    "old": "  if (item.kind === 'slain') return item.seen ? 'slain' : null;",
+    "new": "  if (item.kind === 'slain') return 'slain';",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW16-helped",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "return item.helped ? 'helped' : null;",
-    "new": "return 'helped';",
+    "old": "  return item.helped ? 'helped' : null;",
+    "new": "  return 'helped';",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW16-kin",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "if (!item || item.kin) return null;",
-    "new": "if (!item) return null;",
+    "old": "  if (!item || item.kin) return null;",
+    "new": "  if (!item) return null;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LW16-bound-min",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum))",
-    "new": "Math.min(REPUTE_MAX, sum)",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.min(REPUTE_MAX, sum), deeds: deeds.sort((a, b) => b.t - a.t) };",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW16-bound-max",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum))",
-    "new": "Math.max(REPUTE_MIN, sum)",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.max(REPUTE_MIN, sum), deeds: deeds.sort((a, b) => b.t - a.t) };",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW16-order",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "deeds: deeds.sort((a, b) => b.t - a.t) };",
-    "new": "deeds: deeds.sort((a, b) => a.t - b.t) };",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => a.t - b.t) };",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LW16-stranger",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "(known ? own : repute);",
-    "new": "(repute);",
+    "old": "export const regardWithRepute = (known, own, repute) => (known ? own : repute);",
+    "new": "export const regardWithRepute = (known, own, repute) => repute;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW16-share",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "((seed >>> 0) % 1000) / 1000 >= HEARD_SHARE",
-    "new": "((seed >>> 0) % 1000) / 1000 >= 1",
+    "old": "  if (!deeds?.length || ((seed >>> 0) % 1000) / 1000 >= HEARD_SHARE) return null;",
+    "new": "  if (!deeds?.length || ((seed >>> 0) % 1000) / 1000 >= 1) return null;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW16-repute-saved",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "saved: 4, helped: 2,",
-    "new": "saved: 5, helped: 2,",
+    "old": "export const REPUTE = Object.freeze({ saved: 4, helped: 2, routed: 5, slain: -8, robbed: -5 });",
+    "new": "export const REPUTE = Object.freeze({ saved: 5, helped: 2, routed: 5, slain: -8, robbed: -5 });",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LW16-none-carried",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const list = carried.length && (!own.length || seededRng(",
-    "new": "const list = (!own.length || seededRng(",
+    "old": "  const list =\n    carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own; // 'CARR'",
+    "new": "  const list = !own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own; // 'CARR'",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ],
@@ -237,8 +237,8 @@
   {
     "name": "LW16-own-alone",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const own = carried.length ? news.filter((n) => !n.carried) : news;",
-    "new": "const own = news;",
+    "old": "  const own = carried.length ? news.filter((n) => !n.carried) : news;",
+    "new": "  const own = news;",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "LW16-opener",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "script: item.carried ? carriedScript(",
-    "new": "script: false ? carriedScript(",
+    "old": "  return { item, script: item.carried ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };",
+    "new": "  return { item, script: false ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "LW16-same-array",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));",
-    "new": "return Object.freeze([CARRIED_OPENERS[o], ...script]);",
+    "old": "  return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));",
+    "new": "  return Object.freeze([CARRIED_OPENERS[o], ...script]);",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "LW16-held-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.kind === 'held' ? HELD_NEWS   // LW16: a party the player robbed\n",
-    "new": "",
+    "old": "                  : item.kind === 'held'\n                    ? HELD_NEWS // LW16: a party the player robbed\n                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      : item.sea\n                        ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "                  : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    : item.sea\n                      ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "LW16-from-fallback",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "guild: 'the guild', from: 'the next town' });",
-    "new": "guild: 'the guild' });",
+    "old": "  from: 'the next town',\n}); // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call",
+    "new": "}); // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "LW16-tale",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
-    "new": "if (alive && rep.who && rep.region >= 0) r.turn(",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (alive && rep.who && rep.region >= 0)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "LW16-tale-void",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
-    "new": "if (rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) r.turn(",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "LW16-tale-written",
     "file": "src/scenes/caravanHost.js",
-    "old": "r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });",
-    "new": "void 0;",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)\n          r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });",
+    "new": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) void 0;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "LW16-robbed-goods",
     "file": "src/scenes/caravanHost.js",
-    "old": "        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? '');",
-    "new": "        report(trip, deps.clock(), CRIMES.Theft, '');",
+    "old": "        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, deps.clock(), CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "LW16-robbed-holdup",
     "file": "src/scenes/caravanHost.js",
-    "old": "        report(trip, t, CRIMES.Theft, trip.leader?.name ?? '');",
-    "new": "        report(trip, t, CRIMES.Theft, '');",
+    "old": "        report(trip, t, CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, t, CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "LW16-robbed-purse",
     "file": "src/scenes/caravanHost.js",
-    "old": "report(trip, t, CRIMES.Pickpocketing, res.name ?? '')",
-    "new": "report(trip, t, CRIMES.Pickpocketing, '')",
+    "old": "      return trip ? report(trip, t, CRIMES.Pickpocketing, res.name ?? '') : false;",
+    "new": "      return trip ? report(trip, t, CRIMES.Pickpocketing, '') : false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -604,8 +604,8 @@
   {
     "name": "LW16-AUDIT-B8-come-back",
     "file": "src/systems/livingWorld/carried.js",
-    "old": "        if (here != null && (r.from?.mapId ?? null) === here) continue;   // AUDIT LW-II B8: its own word come back\n",
-    "new": "",
+    "old": "        if (here != null && (r.from?.mapId ?? null) === here) continue; // AUDIT LW-II B8: its own word come back\n        for (const it of toldAt(r))",
+    "new": "        for (const it of toldAt(r))",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "LW16-AUDIT-B10-carried-only",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const list = carried.length && (!own.length || seededRng(",
-    "new": "const list = carried.length && (seededRng(",
+    "old": "  const list =\n    carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own; // 'CARR'",
+    "new": "  const list = carried.length && seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own; // 'CARR'",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "QN-hook-never-called",
     "file": "src/systems/quest/foe.js",
-    "old": "    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);",
-    "new": "",
+    "old": "    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/questnote.test.js"
     ]

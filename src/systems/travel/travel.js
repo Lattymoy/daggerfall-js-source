@@ -11,7 +11,7 @@
 
 import { CLIMATES } from '../../formats/mapsFile.js';
 import { MINUTES_PER_HOUR, MINUTES_PER_DAY } from '../gameDate.js';
-import { isOnShip } from '../ship.js';   // TransportManager.IsOnShip, the origin rule's whole test
+import { isOnShip } from '../ship.js'; // TransportManager.IsOnShip, the origin rule's whole test
 
 // TravelTimeCalculator.cs:30 - indexed by (climate - Ocean); also the
 // dungeon-texture climate index table.
@@ -28,24 +28,34 @@ export const TERRAIN_MOVEMENT_MODIFIERS = Object.freeze([240, 220, 200, 200, 230
  *  is the classic longest-axis walk, NOT true Bresenham: the
  *  increment compares with > not >=, kept exactly. */
 export function walkTravelPath(start, end) {
-  let px = start.x, py = start.y;
-  const dx = end.x - px, dy = end.y - py;
-  const adx = Math.abs(dx), ady = Math.abs(dy);
+  let px = start.x,
+    py = start.y;
+  const dx = end.x - px,
+    dy = end.y - py;
+  const adx = Math.abs(dx),
+    ady = Math.abs(dy);
   const furthest = adx <= ady ? ady : adx;
   const sx = dx >= 0 ? 1 : -1;
   const sy = dy >= 0 ? 1 : -1;
 
   const path = [];
-  let moves = 0, inc = 0;
+  let moves = 0,
+    inc = 0;
   while (moves < furthest) {
     if (furthest === adx) {
       px += sx;
       inc += ady;
-      if (inc > adx) { inc -= adx; py += sy; }
+      if (inc > adx) {
+        inc -= adx;
+        py += sy;
+      }
     } else {
       py += sy;
       inc += adx;
-      if (inc > ady) { inc -= ady; px += sx; }
+      if (inc > ady) {
+        inc -= ady;
+        px += sx;
+      }
     }
     path.push({ x: px, y: py });
     ++moves;
@@ -68,18 +78,19 @@ export function walkTravelPath(start, end) {
  * is the C# loop body, the >>8 idiom throughout as the source has it,
  * and one arm of the port's own: a dragon's pixel is FLOWN (DRAGON6).
  */
-export function travelPixelMinutes(terrain, transportModifier, {
-  travelShip = false, sleepModeInn = false, flying = false,
-} = {}) {
+export function travelPixelMinutes(
+  terrain,
+  transportModifier,
+  { travelShip = false, sleepModeInn = false, flying = false } = {},
+) {
   let thisMove;
   if (flying) {
-    thisMove = (102 * transportModifier) >> 8;   // DRAGON6: the land's charge where nothing hinders, ((256 - 256 + 256) >> 8) - the sea's and the peaks' too
+    thisMove = (102 * transportModifier) >> 8; // DRAGON6: the land's charge where nothing hinders, ((256 - 256 + 256) >> 8) - the sea's and the peaks' too
   } else if (terrain === CLIMATES.Ocean) {
     thisMove = travelShip ? 51 : 255;
   } else {
     const idx = CLIMATE_INDICES[terrain - CLIMATES.Ocean];
-    thisMove = (((102 * transportModifier) >> 8)
-      * (256 - TERRAIN_MOVEMENT_MODIFIERS[idx] + 256)) >> 8;
+    thisMove = (((102 * transportModifier) >> 8) * (256 - TERRAIN_MOVEMENT_MODIFIERS[idx] + 256)) >> 8;
   }
   if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;
   return thisMove;
@@ -95,7 +106,9 @@ export const DRAGON_TRANSPORT_MODIFIER = 64;
  *  land's Tide), null offline, where every voyage is DFU's own. Every reckoning reads it (the travel window, the maps,
  *  the quest clock, the party's fare), so the time shown is the time taken. */
 let seaTide = null;
-export function setSeaTide(fn) { seaTide = typeof fn === 'function' ? fn : null; }
+export function setSeaTide(fn) {
+  seaTide = typeof fn === 'function' ? fn : null;
+}
 const seaTideAt = (end) => (seaTide && end ? seaTide(end) : 1);
 
 /** GetPlayerTravelPosition (:47-56) - the ONE origin every travel
@@ -131,18 +144,33 @@ export function playerTravelPosition(player, boardShipPosition, currentPixel) {
  *  pixel `path` and a `roadAt` class lookup - and both went with it
  *  (2026-08-29). What is left is the verbatim port: the classic
  *  longest-axis walk, priced pixel by pixel. */
-export function calculateTravelTime(start, end, {
-  speedCautious = false, sleepModeInn = false, travelShip = false,
-  hasHorse = false, hasCart = false, hasDragon = false, seaMult = seaTideAt(end),
-} = {}, getClimateIndex) {
-  const transportModifier = hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse ? 128 : hasCart ? 192 : 256;   // DRAGON6: a dragon flies
+export function calculateTravelTime(
+  start,
+  end,
+  {
+    speedCautious = false,
+    sleepModeInn = false,
+    travelShip = false,
+    hasHorse = false,
+    hasCart = false,
+    hasDragon = false,
+    seaMult = seaTideAt(end),
+  } = {},
+  getClimateIndex,
+) {
+  const transportModifier = hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse ? 128 : hasCart ? 192 : 256; // DRAGON6: a dragon flies
 
-  let minutes = 0, oceanPixels = 0;
+  let minutes = 0,
+    oceanPixels = 0;
   for (const { x, y } of walkTravelPath(start, end)) {
     const terrain = getClimateIndex(x, y);
     if (terrain === CLIMATES.Ocean) ++oceanPixels;
-    const m = travelPixelMinutes(terrain, transportModifier, { travelShip: travelShip && !hasDragon, sleepModeInn, flying: hasDragon });
-    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;   // SEASON1 part two: a Storm Season's sea - flown over
+    const m = travelPixelMinutes(terrain, transportModifier, {
+      travelShip: travelShip && !hasDragon,
+      sleepModeInn,
+      flying: hasDragon,
+    });
+    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over
   }
 
   if (!speedCautious) minutes = minutes >> 1;
@@ -157,18 +185,20 @@ export function calculateTravelTime(start, end, {
  *  to a parameter because this module owns no GuildManager; every
  *  caller supplies it (AUDIT 39 F101/F115 - it defaulted false on
  *  every trip, so a knight paid the inn nights DFU waives). */
-export function calculateTripCost(travelTimeMinutes, oceanPixels, {
-  sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false, hasDragon = false,
-} = {}) {
+export function calculateTripCost(
+  travelTimeMinutes,
+  oceanPixels,
+  { sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false, hasDragon = false } = {},
+) {
   const hours = Math.trunc((travelTimeMinutes + 59) / 60);
   let piecesCost = 0;
   if (sleepModeInn && !freeTavernRooms) {
     piecesCost = 5 * Math.trunc((hours - oceanPixels) / 24);
-    if (piecesCost < 0) piecesCost = 0;   // DFU's guard - absent from classic, kept (negative cost otherwise)
-    piecesCost += 5;                      // always at least one stay at an inn
+    if (piecesCost < 0) piecesCost = 0; // DFU's guard - absent from classic, kept (negative cost otherwise)
+    piecesCost += 5; // always at least one stay at an inn
   }
   let totalCost = piecesCost;
-  if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1);   // DRAGON6: a dragon takes no ship
+  if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1); // DRAGON6: a dragon takes no ship
   return { piecesCost, totalCost };
 }
 
@@ -184,7 +214,7 @@ export function arrivalClampMinutes(classicMinutes, { speedCautious = false, sun
   const hour = Math.trunc(classicMinutes / MINUTES_PER_HOUR) % 24;
   const minute = classicMinutes % MINUTES_PER_HOUR;
   if (sunAverse) {
-    if (hour >= 6 && hour < 18) return (18 - hour) * MINUTES_PER_HOUR;   // DuskHour - hour, whole hours
+    if (hour >= 6 && hour < 18) return (18 - hour) * MINUTES_PER_HOUR; // DuskHour - hour, whole hours
     return 0;
   }
   if (!speedCautious) return 0;

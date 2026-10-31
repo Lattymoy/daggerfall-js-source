@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-QUESTS-ABANDON-ALWAYS-any-questor",
     "file": "src/systems/quest/machine.js",
-    "old": "some((r) => r?.isPerson && r.isQuestor && boundByClick(r));",
-    "new": "some((r) => r?.isPerson && r.isQuestor);",
+    "old": "  [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isPerson && r.isQuestor && boundByClick(r));",
+    "new": "  [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isPerson && r.isQuestor);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-self-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "if (!s || s === self || !s.batch ||",
-    "new": "if (!s || !s.batch ||",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-undrawn-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "s === self || !s.batch || s.dead",
-    "new": "s === self || s.dead",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-dead-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| s.dead || s.active",
-    "new": "|| s.active",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-hidden-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| s.active === false || !s.behaviour",
-    "new": "|| !s.behaviour",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.dead || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-items-crowd",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| !s.behaviour?.targetResource?.isPerson) continue;",
-    "new": ") continue;",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.dead || s.active === false) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-beside-never-asked",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "return besideSpot(at, collider, lift, w, crowd) ?? at;",
-    "new": "return at;",
+    "old": "  return besideSpot(at, collider, lift, w, crowd) ?? at;",
+    "new": "  return at;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-floor-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": " || Math.abs((p[1] + lift - hit) - floor) > BESIDE_FLOOR_M) continue;",
-    "new": ") continue;",
+    "old": "      if (!Number.isFinite(hit) || Math.abs(p[1] + lift - hit - floor) > BESIDE_FLOOR_M) continue;",
+    "new": "      if (!Number.isFinite(hit)) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-wall-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (Number.isFinite(wall) && wall < d) continue;\n",
-    "new": "",
+    "old": "      if (Number.isFinite(wall) && wall < d) continue;\n      if (!crowdingPerson(p, w, crowd)) return p;",
+    "new": "      if (!crowdingPerson(p, w, crowd)) return p;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-crowd-unread-beside",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (!crowdingPerson(p, w, crowd)) return p;\n",
-    "new": "      return p;\n",
+    "old": "      if (!crowdingPerson(p, w, crowd)) return p;",
+    "new": "      return p;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "RPT1026-QUESTS-NO-GIVES-BACK-verdict-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "gives ? { no: gives, clears: false, gives: true } : null",
-    "new": "null",
+    "old": "    verdicts.set(\n      prompt,\n      inert\n        ? { no: inert, clears: false }\n        : clears\n          ? { no: clears, clears: true }\n          : gives\n            ? { no: gives, clears: false, gives: true }\n            : null,\n    );",
+    "new": "    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : null);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js",
       "test/systems/quest/fb1013e_noasks.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "RPT1026-QUESTS-NO-GIVES-BACK-cleared-before-back",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;",
-    "new": "",
+    "old": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue; // NO-GIVES-BACK: its item back in the pack first",
+    "new": "      // NO-GIVES-BACK: its item back in the pack first",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -235,8 +235,8 @@
   {
     "name": "RPT1026-QUESTS-ARENA-ORDER-guard-dropped",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }\n",
-    "new": "",
+    "old": "    if (claims.ladderKept?.()) {\n      void claims.flush();\n      return { ok: false, text: O.stillRecording };\n    }\n    const next = nextLadderBout(L);",
+    "new": "    const next = nextLadderBout(L);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "RPT1026-QUESTS-ARENA-ORDER-no-flush",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ void claims.flush(); return { ok: false, text: O.stillRecording }; }",
-    "new": "{ return { ok: false, text: O.stillRecording }; }",
+    "old": "      void claims.flush();\n      return { ok: false, text: O.stillRecording };",
+    "new": "      return { ok: false, text: O.stillRecording };",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],

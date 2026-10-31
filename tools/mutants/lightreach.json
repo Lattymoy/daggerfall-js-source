@@ -1,73 +1,647 @@
 [
-  {"name": "LR-box-half-axis-unsized", "file": "src/render/lightClusters.js", "old": "    ex += Math.abs(view[0] * ax + view[4] * ay + view[8] * az);", "new": "    ex += view[0] * ax + view[4] * ay + view[8] * az;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-box-depth-as-width", "file": "src/render/lightClusters.js", "old": "  vb[0] = vx - ex; vb[1] = vx + ex; vb[2] = vy - ey; vb[3] = vy + ey; vb[4] = -vz - ez; vb[5] = -vz + ez;", "new": "  vb[0] = vx - ex; vb[1] = vx + ex; vb[2] = vy - ey; vb[3] = vy + ey; vb[4] = -vz - ex; vb[5] = -vz + ex;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-box-sphere-depth", "file": "src/render/lightClusters.js", "old": "  vb[0] = vx - r; vb[1] = vx + r; vb[2] = vy - r; vb[3] = vy + r; vb[4] = -vz - r; vb[5] = -vz + r;", "new": "  vb[0] = vx - r; vb[1] = vx + r; vb[2] = vy - r; vb[3] = vy + r; vb[4] = -vz - r; vb[5] = -vz + 0.5 * r;", "tests": ["test/render/lightreach.test.js", "test/render/lc1_clusters.test.js"]},
-  {"name": "LR-slice-not-narrowed", "file": "src/render/lightClusters.js", "old": "  out[0] = Math.max(out[0], tile(minX, CLUSTER_X)); out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));", "new": "  out[0] = Math.max(out[0], 0); out[1] = Math.min(out[1], CLUSTER_X - 1);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-slice-circle-as-sphere", "file": "src/render/lightClusters.js", "old": "  const rs = Math.sqrt(r * r - dz * dz), dA =", "new": "  const rs = r, dA =", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-slice-cross-section-too-thin", "file": "src/render/lightClusters.js", "old": "  const rs = Math.sqrt(r * r - dz * dz), dA =", "new": "  const rs = Math.sqrt(r * r - dz * dz) * 0.8, dA =", "tests": ["test/render/lightreach.test.js", "test/render/lc1_clusters.test.js"]},
-  {"name": "LR-window-box-no-spread", "file": "src/render/windowLight.js", "old": "      const k = (n1 - pn) / -pn;", "new": "      const k = 1;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-window-box-no-soft-edge", "file": "src/render/windowLight.js", "old": "  aLo -= edge; aHi += edge; bLo -= edge; bHi += edge;", "new": "  aLo -= 0; aHi += 0; bLo -= 0; bHi += 0;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-window-box-half-glow", "file": "src/render/windowLight.js", "old": "  const S = spill ? WL_SPILL_REACH : 0;", "new": "  const S = spill ? WL_SPILL_REACH / 2 : 0;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-window-box-sun-short", "file": "src/render/windowLight.js", "old": "    const T = l.reach + l.halfDiag, s0 = l.src[0]", "new": "    const T = 0.5 * l.reach, s0 = l.src[0]", "tests": ["test/render/lightreach.test.js", "test/render/wl1_windowlight.test.js"]},
-  {"name": "LR-row-twin-tile-step", "file": "src/render/windowLight.js", "old": "  const a0 = dot(w0, r1), stp = (1 - tt) / r3[3], code", "new": "  const a0 = dot(w0, r1), stp = 1 / r3[3], code", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-twin-tt", "file": "src/render/windowLight.js", "old": "  const tt = s / (s - sl), w0 =", "new": "  const tt = s / (s - 2 * sl), w0 =", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-dark-tile-lit", "file": "src/render/windowLight.js", "old": "  js.forEach((j, i) => { if (t.street[j]) {", "new": "  js.forEach((j, i) => { if (t.street[j] || i === 0) {", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-curtain-edge", "file": "src/render/windowLight.js", "old": "export const WL_ROW_CURTAIN = Object.freeze([ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN_EDGE[1] / 2,", "new": "export const WL_ROW_CURTAIN = Object.freeze([ROOM_CURTAIN_EDGE[0],", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-box-not-carried", "file": "src/render/windowLight.js", "old": "    const ha = Math.hypot(b[3], b[4], b[5]), grow = 0.5 * n1 * Math.hypot(PU[0], PU[1], PU[2]);", "new": "    const ha = Math.hypot(b[3], b[4], b[5]), grow = 0;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-runs-unbounded", "file": "src/render/windowLight.js", "old": "txOf(j) === txOf(run[run.length - 1]) + 1 && run.length < WL_ROW_TILES)", "new": "txOf(j) === txOf(run[run.length - 1]) + 1 && run.length < 2 * WL_ROW_TILES)", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-twin-no-complement", "file": "src/render/windowLight.js", "old": "    const wt = (1 - fadeN(dq)) * fadeF(dq);", "new": "    const wt = fadeF(dq);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-twin-no-far-fade", "file": "src/render/windowLight.js", "old": "  const fadeF = (d) => Math.max(0, Math.min(1, (frame[7] - d) / (frame[7] * (1 - WL_FADE_FROM))));", "new": "  const fadeF = () => 1;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-row-coverage-offset-lost", "file": "src/render/windowLight.js", "old": "    rec[24] = t.cent[3 * j0] - l.c[0]; rec[25] = t.cent[3 * j0 + 1] - l.c[1];", "new": "    rec[24] = 0; rec[25] = 0;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-far-rows-unfiltered", "file": "src/render/windowLight.js", "old": "    for (let i = 0; i < this._farUsed; i++) if (pool[i].dMax > from) keys[n++]", "new": "    for (let i = 0; i < this._farUsed; i++) if (pool[i].dMax > -1) keys[n++]", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-far-cap-past-block", "file": "src/render/windowLight.js", "old": "    const keep = Math.min(n, WL_FAR_MAX);", "new": "    const keep = Math.min(n, WL_FAR_MAX + 1);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-far-words-cut", "file": "src/render/windowLight.js", "old": "    F[h] = eye[0]; F[h + 1] = eye[1]; F[h + 2] = eye[2]; F[h + 3] = cut;", "new": "    F[h] = eye[0]; F[h + 1] = eye[1]; F[h + 2] = eye[2]; F[h + 3] = cutF;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-far-lamp-gate", "file": "src/render/windowLight.js", "old": "    const asked = kind === 'street' && lampC ? this._farFrame(", "new": "    const asked = kind === 'street' ? this._farFrame(", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-far-band-stale", "file": "src/render/windowLight.js", "old": "    if (!fit) buildLightClusterBoxes(boxes, 0, view, proj, space);", "new": "    if (!fit && false) buildLightClusterBoxes(boxes, 0, view, proj, space);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-glsl-far-band-row", "file": "src/render/windowLight.js", "old": "  highp uvec2 fcell = texelFetch(uClusterGrid, ivec2(tc.x + tc.y * ${CLUSTER_X}, zc + ${WL_FAR_GRID_ROW}), 0).rg;", "new": "  highp uvec2 fcell = texelFetch(uClusterGrid, ivec2(tc.x + tc.y * ${CLUSTER_X}, zc + ${WL_GRID_ROW}), 0).rg;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-glsl-tile-step", "file": "src/render/windowLight.js", "old": "  float a0 = dot(w0, r1.xyz), stp = (1.0 - tt) / r3.w;", "new": "  float a0 = dot(w0, r1.xyz), stp = 1.0 / r3.w;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-renderer-far-band-row", "file": "src/render/renderer.js", "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }", "new": "{ sp: this._wl.farSpace, row: WL_GRID_ROW, base: WL_FAR_LIST_BASE }", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-renderer-far-list-base", "file": "src/render/renderer.js", "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }", "new": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_LIST_BASE }", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-renderer-far-block-unbound", "file": "src/render/renderer.js", "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]", "new": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_UBO_BINDING]]", "tests": ["test/render/wl1_windowlight.test.js"]},
-  {"name": "LR-street-reach", "file": "src/world/city/cityLights.js", "old": "export const STREET_LIGHT_REACH = 1.5;", "new": "export const STREET_LIGHT_REACH = 1.6;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-street-reach-classic", "file": "src/world/city/cityLights.js", "old": "export const streetLightRange = (lane) => CITY_LIGHT_RANGE * streetLightReach(lane);", "new": "export const streetLightRange = (lane) => CITY_LIGHT_RANGE * STREET_LIGHT_REACH;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-street-flicker-variance", "file": "src/world/city/cityLights.js", "old": "  a.variance *= k; a.speed *= k;", "new": "  a.speed *= k;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-street-flicker-step", "file": "src/world/city/cityLights.js", "old": "  a.variance *= k; a.speed *= k;", "new": "  a.variance *= k;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-world-host-prefab-range", "file": "src/scenes/world.js", "old": "  const worldLightAnimator = streetLanternAnimator(4096, lightingOn);", "new": "  const worldLightAnimator = streetLanternAnimator(4096, false);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-bench-host-prefab-range", "file": "src/scenes/exterior.js", "old": "  const lightAnimator = streetLanternAnimator(cityLights.length, lightingOn);", "new": "  const lightAnimator = streetLanternAnimator(cityLights.length, false);", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-backface-skip-after-shadow", "file": "src/render/enhancedLighting.js", "old": "    if (dot(n, Ln) <= 0.0) continue;\n    int k = uCasterOf[i];", "new": "    int k = uCasterOf[i];\n    if (dot(n, Ln) <= 0.0) continue;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-window-reach", "file": "src/render/windowLight.js", "old": "export const WL_LAMP_RANGE = 12;", "new": "export const WL_LAMP_RANGE = 8;", "tests": ["test/render/lightreach.test.js"]},
-  {"name": "LR-yard-candle-by-prefab", "file": "src/scenes/homeYards.js", "old": "    e.range = animRanges[l.slot % animRanges.length] * l.range / (l.candle ? start : CITY_LIGHT_RANGE);", "new": "    e.range = animRanges[l.slot % animRanges.length] * l.range / CITY_LIGHT_RANGE;", "tests": ["test/scenes/yardlight.test.js"]},
-  {"name": "LR-yard-candle-classic-start", "file": "src/scenes/homeYards.js", "old": "  const start = streetLightRange(on);", "new": "  const start = streetLightRange(false);", "tests": ["test/scenes/yardlight.test.js"]},
-  {"name": "LR-audit-fit-old-cut", "file": "src/render/windowLight.js", "old": "      cut = this._ld[fit];\n", "new": "      void this._ld[fit];\n", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-no-refade", "file": "src/render/windowLight.js", "old": "      for (let i = 0; i < fit; i++) scaleWindowLight(this.data, i, wlFade(this._ld[i], cut) / this._lf[i]);\n", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-near-cap-unclamped", "file": "src/render/windowLight.js", "old": "    if (n < cand.length) this._cuts[kind] = Math.min(this._cuts[kind], cand[n].d);\n", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-far-cap-unclamped", "file": "src/render/windowLight.js", "old": "    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin);", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-far-fit-word", "file": "src/render/windowLight.js", "old": "      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-no-hold", "file": "src/render/windowLight.js", "old": "  _held(kind, now) { return now - this._fitAt[kind] < WL_FIT_HOLD_MS ? this._fitCut[kind] : Infinity; }", "new": "  _held(kind, now) { return Infinity; }", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-row-box-whole", "file": "src/render/windowLight.js", "old": "  if (!(row.ha > 0)) { ja = 0; jb = n1; }", "new": "  ja = 0; jb = n1;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-row-from-cut", "file": "src/render/windowLight.js", "old": "!rowBox(c.row, eye, from, cutF, this.farBoxes, w * LC_BOX)", "new": "!rowBox(c.row, eye, cut, cutF, this.farBoxes, w * LC_BOX)", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-row-to-gather", "file": "src/render/windowLight.js", "old": "    if (d > from && d < to) { if (ja < 0) ja = j; jb = j; }", "new": "    if (d > from && d < 0.9 * to) { if (ja < 0) ja = j; jb = j; }", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-row-box-dark", "file": "src/render/windowLight.js", "old": "    if (Math.floor(row.states / p3) % 3 === 0) continue;   // a dark tile", "new": "    if (Math.floor(row.states / p3) % 3 !== 0) continue;   // a dark tile", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-gather-near-reach", "file": "src/render/windowLight.js", "old": "    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER;", "new": "    const reach = WL_GATHER;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-no-far-alone", "file": "src/render/windowLight.js", "old": "    if (!w && !wf) return 0;", "new": "    if (!w) return 0;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-dark-rows", "file": "src/render/windowLight.js", "old": "      if (!row.lit) continue;\n", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-shift-keeps-rows", "file": "src/render/windowLight.js", "old": "          for (const r of t.rows) r.mask = null;", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-far-gather-120", "file": "src/render/windowLight.js", "old": "export const WL_FAR_GATHER = 160;", "new": "export const WL_FAR_GATHER = 120;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-far-max-100", "file": "src/render/windowLight.js", "old": "export const WL_FAR_MAX = 127;", "new": "export const WL_FAR_MAX = 100;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-row-tiles-8", "file": "src/render/windowLight.js", "old": "export const WL_ROW_TILES = 10;", "new": "export const WL_ROW_TILES = 8;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-lamp-in-gap", "file": "src/render/windowLight.js", "old": "    lampOf(whole ? whole.c : l.c, l.nf, l.V, l.src);", "new": "    lampOf(l.c, l.nf, l.V, l.src);", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-partial-in-run", "file": "src/render/windowLight.js", "old": "    if (ap[k + 14] > 1e-4 || ap[k + 16] < 1 - 1e-4) { rows.push(rowOf([j], t)); continue; }", "new": "", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-mips-before-far", "file": "src/render/windowLight.js", "old": "    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar; this._fitAt.far = now;\n    });\n    if (this._mipsDirty) {   // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }\n", "new": "    if (this._mipsDirty) {   // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }\n    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar; this._fitAt.far = now;\n    });\n", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-glsl-layer-mask", "file": "src/render/windowLight.js", "old": "layer = float(int(r5.w + 0.5) & 255), r = r0.w;", "new": "layer = float(int(r5.w + 0.5)), r = r0.w;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-glsl-weight", "file": "src/render/windowLight.js", "old": "    acc += uWinFrame[1].rgb * (m * ndl * (${atten}) * wt);", "new": "    acc += uWinFrame[1].rgb * (m * ndl * (${atten}));", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-glsl-j0-floor", "file": "src/render/windowLight.js", "old": "  int j0 = int(clamp(ceil((a0 - 0.5 - pa) / stp), 0.0, float(cnt)))", "new": "  int j0 = int(clamp(floor((a0 - 0.5 - pa) / stp), 0.0, float(cnt)))", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-box-depth-boxed", "file": "src/render/windowLight.js", "old": "nHi = Math.max(0, S);", "new": "nHi = S;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-box-hypot", "file": "src/render/windowLight.js", "old": "  const ul = len3(u0, u1, u2) || 1;", "new": "  const ul = Math.hypot(u0, u1, u2) || 1;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-last-slice-bounded", "file": "src/render/lightClusters.js", "old": "(k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001)", "new": "(CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001)", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-quay-classic", "file": "src/scenes/world.js", "old": "range: l.range * streetLightReach(lightingOn), color: CITY_LIGHT_COLOR_F32 }, l));", "new": "range: l.range, color: CITY_LIGHT_COLOR_F32 }, l));", "tests": ["test/render/audit_lightreach.test.js", "test/render/lightreach.test.js"]},
-  {"name": "LR-audit-port-classic", "file": "src/scenes/portHost.js", "old": "L.range = LAMP_RANGE * reach; }", "new": "L.range = LAMP_RANGE; }", "tests": ["test/render/audit_lightreach.test.js", "test/render/lightreach.test.js"]},
-  {"name": "LR-audit-reach-lane-unread", "file": "src/world/city/cityLights.js", "old": "export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);", "new": "export const streetLightReach = (lane) => STREET_LIGHT_REACH;", "tests": ["test/render/audit_lightreach.test.js", "test/render/lightreach.test.js"]},
-  {"name": "LR-audit-release-keeps-free", "file": "src/render/windowLight.js", "old": "this.masks.clear(); this._layers = 0; this._free.length = 0; this._holder.length = 0;", "new": "this.masks.clear(); this._layers = 0;", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-office-classic", "file": "src/scenes/portHost.js", "old": "L.range = OFFICE_LAMP_RANGE * reach; }", "new": "L.range = OFFICE_LAMP_RANGE; }", "tests": ["test/render/audit_lightreach.test.js"]},
-  {"name": "LR-audit-port-host-classic", "file": "src/scenes/world.js", "old": "for (const l of portHost.lights(streetLightReach(lightingOn))) {", "new": "for (const l of portHost.lights()) {", "tests": ["test/render/audit_lightreach.test.js"]}
+  {
+    "name": "LR-box-half-axis-unsized",
+    "file": "src/render/lightClusters.js",
+    "old": "    ex += Math.abs(view[0] * ax + view[4] * ay + view[8] * az);",
+    "new": "    ex += view[0] * ax + view[4] * ay + view[8] * az;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-box-depth-as-width",
+    "file": "src/render/lightClusters.js",
+    "old": "  vb[4] = -vz - ez;\n  vb[5] = -vz + ez;",
+    "new": "  vb[4] = -vz - ex;\n  vb[5] = -vz + ex;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-box-sphere-depth",
+    "file": "src/render/lightClusters.js",
+    "old": "  vb[5] = -vz + r;",
+    "new": "  vb[5] = -vz + 0.5 * r;",
+    "tests": [
+      "test/render/lightreach.test.js",
+      "test/render/lc1_clusters.test.js"
+    ]
+  },
+  {
+    "name": "LR-slice-not-narrowed",
+    "file": "src/render/lightClusters.js",
+    "old": "  out[0] = Math.max(out[0], tile(minX, CLUSTER_X));\n  out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));",
+    "new": "  out[0] = Math.max(out[0], 0);\n  out[1] = Math.min(out[1], CLUSTER_X - 1);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-slice-circle-as-sphere",
+    "file": "src/render/lightClusters.js",
+    "old": "  const rs = Math.sqrt(r * r - dz * dz),",
+    "new": "  const rs = r,",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-slice-cross-section-too-thin",
+    "file": "src/render/lightClusters.js",
+    "old": "  const rs = Math.sqrt(r * r - dz * dz),",
+    "new": "  const rs = Math.sqrt(r * r - dz * dz) * 0.8,",
+    "tests": [
+      "test/render/lightreach.test.js",
+      "test/render/lc1_clusters.test.js"
+    ]
+  },
+  {
+    "name": "LR-window-box-no-spread",
+    "file": "src/render/windowLight.js",
+    "old": "      const k = (n1 - pn) / -pn;",
+    "new": "      const k = 1;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-window-box-no-soft-edge",
+    "file": "src/render/windowLight.js",
+    "old": "  aLo -= edge;\n  aHi += edge;\n  bLo -= edge;\n  bHi += edge;",
+    "new": "  aLo -= 0;\n  aHi += 0;\n  bLo -= 0;\n  bHi += 0;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-window-box-half-glow",
+    "file": "src/render/windowLight.js",
+    "old": "  const S = spill ? WL_SPILL_REACH : 0;",
+    "new": "  const S = spill ? WL_SPILL_REACH / 2 : 0;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-window-box-sun-short",
+    "file": "src/render/windowLight.js",
+    "old": "    const T = l.reach + l.halfDiag,",
+    "new": "    const T = 0.5 * l.reach,",
+    "tests": [
+      "test/render/lightreach.test.js",
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-twin-tile-step",
+    "file": "src/render/windowLight.js",
+    "old": "    stp = (1 - tt) / r3[3],",
+    "new": "    stp = 1 / r3[3],",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-twin-tt",
+    "file": "src/render/windowLight.js",
+    "old": "  const tt = s / (s - sl),",
+    "new": "  const tt = s / (s - 2 * sl),",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-dark-tile-lit",
+    "file": "src/render/windowLight.js",
+    "old": "    if (t.street[j]) {",
+    "new": "    if (t.street[j] || i === 0) {",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-curtain-edge",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_ROW_CURTAIN = Object.freeze([\n  ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN_EDGE[1] / 2,\n  ROOM_CURTAIN_EDGE[2] - ROOM_CURTAIN_EDGE[3] / 2,\n]);",
+    "new": "export const WL_ROW_CURTAIN = Object.freeze([ROOM_CURTAIN_EDGE[0], ROOM_CURTAIN_EDGE[2] - ROOM_CURTAIN_EDGE[3] / 2]);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-box-not-carried",
+    "file": "src/render/windowLight.js",
+    "old": "      grow = 0.5 * n1 * Math.hypot(PU[0], PU[1], PU[2]);",
+    "new": "      grow = 0;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-runs-unbounded",
+    "file": "src/render/windowLight.js",
+    "old": "      if (j !== undefined && txOf(j) === txOf(run[run.length - 1]) + 1 && run.length < WL_ROW_TILES) {",
+    "new": "      if (j !== undefined && txOf(j) === txOf(run[run.length - 1]) + 1 && run.length < 2 * WL_ROW_TILES) {",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-twin-no-complement",
+    "file": "src/render/windowLight.js",
+    "old": "    const wt = (1 - fadeN(dq)) * fadeF(dq);",
+    "new": "    const wt = fadeF(dq);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-twin-no-far-fade",
+    "file": "src/render/windowLight.js",
+    "old": "  const fadeF = (d) => Math.max(0, Math.min(1, (frame[7] - d) / (frame[7] * (1 - WL_FADE_FROM))));",
+    "new": "  const fadeF = () => 1;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-row-coverage-offset-lost",
+    "file": "src/render/windowLight.js",
+    "old": "    rec[24] = t.cent[3 * j0] - l.c[0];\n    rec[25] = t.cent[3 * j0 + 1] - l.c[1];",
+    "new": "    rec[24] = 0;\n    rec[25] = 0;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-far-rows-unfiltered",
+    "file": "src/render/windowLight.js",
+    "old": "      if (pool[i].dMax > from) keys[n++] = Math.floor(pool[i].dMin * WL_FAR_KEY) * WL_FAR_KEY_N + i;",
+    "new": "      if (pool[i].dMax > -1) keys[n++] = Math.floor(pool[i].dMin * WL_FAR_KEY) * WL_FAR_KEY_N + i;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-far-cap-past-block",
+    "file": "src/render/windowLight.js",
+    "old": "    const keep = Math.min(n, WL_FAR_MAX);",
+    "new": "    const keep = Math.min(n, WL_FAR_MAX + 1);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-far-words-cut",
+    "file": "src/render/windowLight.js",
+    "old": "    F[h + 3] = cut;",
+    "new": "    F[h + 3] = cutF;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-far-lamp-gate",
+    "file": "src/render/windowLight.js",
+    "old": "    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;",
+    "new": "    const asked = kind === 'street' ? this._farFrame(eye, cut, lampC, now, dt) : 0;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-far-band-stale",
+    "file": "src/render/windowLight.js",
+    "old": "    if (!fit) buildLightClusterBoxes(boxes, 0, view, proj, space);",
+    "new": "    if (!fit && false) buildLightClusterBoxes(boxes, 0, view, proj, space);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-glsl-far-band-row",
+    "file": "src/render/windowLight.js",
+    "old": "  highp uvec2 fcell = texelFetch(uClusterGrid, ivec2(tc.x + tc.y * ${CLUSTER_X}, zc + ${WL_FAR_GRID_ROW}), 0).rg;",
+    "new": "  highp uvec2 fcell = texelFetch(uClusterGrid, ivec2(tc.x + tc.y * ${CLUSTER_X}, zc + ${WL_GRID_ROW}), 0).rg;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-glsl-tile-step",
+    "file": "src/render/windowLight.js",
+    "old": "  float a0 = dot(w0, r1.xyz), stp = (1.0 - tt) / r3.w;   // tile j's a is a0 - j stp (u* . PU is 1 / span-u)",
+    "new": "  float a0 = dot(w0, r1.xyz), stp = 1.0 / r3.w;   // tile j's a is a0 - j stp (u* . PU is 1 / span-u)",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-renderer-far-band-row",
+    "file": "src/render/renderer.js",
+    "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }",
+    "new": "{ sp: this._wl.farSpace, row: WL_GRID_ROW, base: WL_FAR_LIST_BASE }",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-renderer-far-list-base",
+    "file": "src/render/renderer.js",
+    "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }",
+    "new": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_LIST_BASE }",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-renderer-far-block-unbound",
+    "file": "src/render/renderer.js",
+    "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]",
+    "new": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_UBO_BINDING]]",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "LR-street-reach",
+    "file": "src/world/city/cityLights.js",
+    "old": "export const STREET_LIGHT_REACH = 1.5;",
+    "new": "export const STREET_LIGHT_REACH = 1.6;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-street-reach-classic",
+    "file": "src/world/city/cityLights.js",
+    "old": "export const streetLightRange = (lane) => CITY_LIGHT_RANGE * streetLightReach(lane);",
+    "new": "export const streetLightRange = (lane) => CITY_LIGHT_RANGE * STREET_LIGHT_REACH;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-street-flicker-variance",
+    "file": "src/world/city/cityLights.js",
+    "old": "  a.variance *= k; a.speed *= k;",
+    "new": "  a.speed *= k;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-street-flicker-step",
+    "file": "src/world/city/cityLights.js",
+    "old": "  a.variance *= k; a.speed *= k;",
+    "new": "  a.variance *= k;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-world-host-prefab-range",
+    "file": "src/scenes/world.js",
+    "old": "  const worldLightAnimator = streetLanternAnimator(4096, lightingOn);",
+    "new": "  const worldLightAnimator = streetLanternAnimator(4096, false);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-bench-host-prefab-range",
+    "file": "src/scenes/exterior.js",
+    "old": "  const lightAnimator = streetLanternAnimator(cityLights.length, lightingOn);",
+    "new": "  const lightAnimator = streetLanternAnimator(cityLights.length, false);",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-backface-skip-after-shadow",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    if (dot(n, Ln) <= 0.0) continue;\n    int k = uCasterOf[i];   // EL8: the light's caster slot in one lookup",
+    "new": "    int k = uCasterOf[i];\n    if (dot(n, Ln) <= 0.0) continue;   // EL8: the light's caster slot in one lookup",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-window-reach",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_LAMP_RANGE = 12;",
+    "new": "export const WL_LAMP_RANGE = 8;",
+    "tests": [
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-yard-candle-by-prefab",
+    "file": "src/scenes/homeYards.js",
+    "old": "    e.range = animRanges[l.slot % animRanges.length] * l.range / (l.candle ? start : CITY_LIGHT_RANGE);",
+    "new": "    e.range = animRanges[l.slot % animRanges.length] * l.range / CITY_LIGHT_RANGE;",
+    "tests": [
+      "test/scenes/yardlight.test.js"
+    ]
+  },
+  {
+    "name": "LR-yard-candle-classic-start",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const start = streetLightRange(on);",
+    "new": "  const start = streetLightRange(false);",
+    "tests": [
+      "test/scenes/yardlight.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-fit-old-cut",
+    "file": "src/render/windowLight.js",
+    "old": "      cut = this._ld[fit];",
+    "new": "      void this._ld[fit];",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-no-refade",
+    "file": "src/render/windowLight.js",
+    "old": "      for (let i = 0; i < fit; i++) scaleWindowLight(this.data, i, wlFade(this._ld[i], cut) / this._lf[i]);\n      this._fitCut[kind] = cut;",
+    "new": "      this._fitCut[kind] = cut;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-near-cap-unclamped",
+    "file": "src/render/windowLight.js",
+    "old": "    if (n < cand.length) this._cuts[kind] = Math.min(this._cuts[kind], cand[n].d);\n    let cut = Math.min(this._cuts[kind], WL_GATHER);",
+    "new": "    let cut = Math.min(this._cuts[kind], WL_GATHER);",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-far-cap-unclamped",
+    "file": "src/render/windowLight.js",
+    "old": "    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin); // AUDIT LIGHT-REACH W2: as the near cut's",
+    "new": "    // AUDIT LIGHT-REACH W2: as the near cut's",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-far-fit-word",
+    "file": "src/render/windowLight.js",
+    "old": "      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;",
+    "new": "      this._fitCut.far = this._cutFar;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-no-hold",
+    "file": "src/render/windowLight.js",
+    "old": "    return now - this._fitAt[kind] < WL_FIT_HOLD_MS ? this._fitCut[kind] : Infinity;",
+    "new": "    return Infinity;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-row-box-whole",
+    "file": "src/render/windowLight.js",
+    "old": "  if (!(row.ha > 0)) {\n    ja = 0;\n    jb = n1;\n  }",
+    "new": "  ja = 0;\n  jb = n1;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-row-from-cut",
+    "file": "src/render/windowLight.js",
+    "old": "        !rowBox(c.row, eye, from, cutF, this.farBoxes, w * LC_BOX)",
+    "new": "        !rowBox(c.row, eye, cut, cutF, this.farBoxes, w * LC_BOX)",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-row-to-gather",
+    "file": "src/render/windowLight.js",
+    "old": "    if (d > from && d < to) {",
+    "new": "    if (d > from && d < 0.9 * to) {",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-row-box-dark",
+    "file": "src/render/windowLight.js",
+    "old": "    if (Math.floor(row.states / p3) % 3 === 0) continue; // a dark tile",
+    "new": "    if (Math.floor(row.states / p3) % 3 !== 0) continue; // a dark tile",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-gather-near-reach",
+    "file": "src/render/windowLight.js",
+    "old": "    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER; // LIGHT-REACH: a street's rows reach past its tiles",
+    "new": "    const reach = WL_GATHER; // LIGHT-REACH: a street's rows reach past its tiles",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-no-far-alone",
+    "file": "src/render/windowLight.js",
+    "old": "    if (!w && !wf) return 0;",
+    "new": "    if (!w) return 0;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-dark-rows",
+    "file": "src/render/windowLight.js",
+    "old": "      if (!row.lit) continue;\n      const a = row.js[0] * 3,",
+    "new": "      const a = row.js[0] * 3,",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-shift-keeps-rows",
+    "file": "src/render/windowLight.js",
+    "old": "                    for (const r of t.rows) r.mask = null; // LIGHT-REACH: a row's record is in the world - made again",
+    "new": "                    // LIGHT-REACH: a row's record is in the world - made again",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-far-gather-120",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_FAR_GATHER = 160;",
+    "new": "export const WL_FAR_GATHER = 120;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-far-max-100",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_FAR_MAX = 127;",
+    "new": "export const WL_FAR_MAX = 100;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-row-tiles-8",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_ROW_TILES = 10;",
+    "new": "export const WL_ROW_TILES = 8;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-lamp-in-gap",
+    "file": "src/render/windowLight.js",
+    "old": "    lampOf(whole ? whole.c : l.c, l.nf, l.V, l.src);",
+    "new": "    lampOf(l.c, l.nf, l.V, l.src);",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-partial-in-run",
+    "file": "src/render/windowLight.js",
+    "old": "    if (ap[k + 14] > 1e-4 || ap[k + 16] < 1 - 1e-4) {\n      rows.push(rowOf([j], t));\n      continue;\n    }",
+    "new": "",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-mips-before-far",
+    "file": "src/render/windowLight.js",
+    "old": "    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });\n    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }",
+    "new": "    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }\n    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-glsl-layer-mask",
+    "file": "src/render/windowLight.js",
+    "old": "  float lod = log2(max(max(pa * r3.w, pb * r4.w) * ${WL_MASK_SIZE}.0, 1.0)), layer = float(int(r5.w + 0.5) & 255), r = r0.w;",
+    "new": "  float lod = log2(max(max(pa * r3.w, pb * r4.w) * ${WL_MASK_SIZE}.0, 1.0)), layer = float(int(r5.w + 0.5)), r = r0.w;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-glsl-weight",
+    "file": "src/render/windowLight.js",
+    "old": "    acc += uWinFrame[1].rgb * (m * ndl * (${atten}) * wt);",
+    "new": "    acc += uWinFrame[1].rgb * (m * ndl * (${atten}));",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-glsl-j0-floor",
+    "file": "src/render/windowLight.js",
+    "old": "  int j0 = int(clamp(ceil((a0 - 0.5 - pa) / stp), 0.0, float(cnt))), j1 = int(clamp(floor((a0 + 0.5 + pa) / stp), -1.0, float(cnt - 1)));",
+    "new": "  int j0 = int(clamp(floor((a0 - 0.5 - pa) / stp), 0.0, float(cnt))), j1 = int(clamp(floor((a0 + 0.5 + pa) / stp), -1.0, float(cnt - 1)));",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-box-depth-boxed",
+    "file": "src/render/windowLight.js",
+    "old": "    nHi = Math.max(0, S);",
+    "new": "    nHi = S;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-box-hypot",
+    "file": "src/render/windowLight.js",
+    "old": "  const ul = len3(u0, u1, u2) || 1;",
+    "new": "  const ul = Math.hypot(u0, u1, u2) || 1;",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-last-slice-bounded",
+    "file": "src/render/lightClusters.js",
+    "old": "const SLICE_HI = Float64Array.from({ length: CLUSTER_Z }, (_, k) =>\n  k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001,",
+    "new": "const SLICE_HI = Float64Array.from(\n  { length: CLUSTER_Z },\n  (_, k) => CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001,",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-quay-classic",
+    "file": "src/scenes/world.js",
+    "old": "range: l.range * streetLightReach(lightingOn), color: CITY_LIGHT_COLOR_F32 }, l));",
+    "new": "range: l.range, color: CITY_LIGHT_COLOR_F32 }, l));",
+    "tests": [
+      "test/render/audit_lightreach.test.js",
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-port-classic",
+    "file": "src/scenes/portHost.js",
+    "old": "L.range = LAMP_RANGE * reach; }",
+    "new": "L.range = LAMP_RANGE; }",
+    "tests": [
+      "test/render/audit_lightreach.test.js",
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-reach-lane-unread",
+    "file": "src/world/city/cityLights.js",
+    "old": "export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);",
+    "new": "export const streetLightReach = (lane) => STREET_LIGHT_REACH;",
+    "tests": [
+      "test/render/audit_lightreach.test.js",
+      "test/render/lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-release-keeps-free",
+    "file": "src/render/windowLight.js",
+    "old": "    this._free.length = 0;\n    this._holder.length = 0;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-office-classic",
+    "file": "src/scenes/portHost.js",
+    "old": "L.range = OFFICE_LAMP_RANGE * reach; }",
+    "new": "L.range = OFFICE_LAMP_RANGE; }",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  },
+  {
+    "name": "LR-audit-port-host-classic",
+    "file": "src/scenes/world.js",
+    "old": "for (const l of portHost.lights(streetLightReach(lightingOn))) {",
+    "new": "for (const l of portHost.lights()) {",
+    "tests": [
+      "test/render/audit_lightreach.test.js"
+    ]
+  }
 ]

@@ -38,8 +38,8 @@
   {
     "name": "GUIDE3-rank-inverted",
     "file": "src/ui/quest/questHerald.js",
-    "old": "      const keeps = was && RANK[was.type] > RANK[event.type] &&",
-    "new": "      const keeps = was && RANK[was.type] < RANK[event.type] &&",
+    "old": "      const keeps = was && RANK[was.type] > RANK[event.type] && !(was.type === 'urgent' && view && !underADay(view));",
+    "new": "      const keeps = was && RANK[was.type] < RANK[event.type] && !(was.type === 'urgent' && view && !underADay(view));",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUIDE3-rank-ending-routine",
     "file": "src/ui/quest/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 0, ended: 3 });",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 }); // QL2: an objective done outranks a routine entry",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 0, ended: 3 }); // QL2: an objective done outranks a routine entry",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GUIDE3-rank-deadline-over-new",
     "file": "src/ui/quest/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 2, started: 1, completed: 3, ended: 3 });",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 }); // QL2: an objective done outranks a routine entry",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 2, started: 1, completed: 3, ended: 3 }); // QL2: an objective done outranks a routine entry",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "GUIDE3-ending-says-a-line",
     "file": "src/ui/quest/questHerald.js",
-    "old": "  return '';\n}\n",
-    "new": "  return entryOpening(view?.latest?.lines) || 'The journal is closed.';\n}\n",
+    "old": "  return '';",
+    "new": "  return entryOpening(view?.latest?.lines) || 'The journal is closed.';",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "GUIDE3-clock-runs-hidden",
     "file": "src/ui/quest/questHerald.js",
-    "old": "  if (!hidden) {\n    if (wasHidden) questHerald.refresh();   // AUDIT GUIDE H6: back from under a window - the count as it stands now\n    questHerald.tick(dt);",
-    "new": "  questHerald.tick(dt);\n  if (!hidden) {\n    if (wasHidden) questHerald.refresh();   // AUDIT GUIDE H6: back from under a window - the count as it stands now",
+    "old": "  if (!hidden) {\n    if (wasHidden) questHerald.refresh(); // AUDIT GUIDE H6: back from under a window - the count as it stands now\n    questHerald.tick(dt);",
+    "new": "  questHerald.tick(dt);\n  if (!hidden) {\n    if (wasHidden) questHerald.refresh(); // AUDIT GUIDE H6: back from under a window - the count as it stands now",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "GUIDE3-hide-door-skipped",
     "file": "src/ui/quest/questHerald.js",
-    "old": "    releaseEnhancedToasts(HERALD_OWNER);\n    dropLive();\n    return [];",
-    "new": "    dropLive();\n    return [];",
+    "old": "    releaseEnhancedToasts(HERALD_OWNER);\n    dropLive();",
+    "new": "    dropLive();",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "GUIDE3-queue-kept-off",
     "file": "src/ui/quest/questHerald.js",
-    "old": "    if (questHerald.rows.length) questHerald.clear();\n",
-    "new": "",
+    "old": "    if (questHerald.rows.length) questHerald.clear();\n    releaseEnhancedToasts(HERALD_OWNER);",
+    "new": "    releaseEnhancedToasts(HERALD_OWNER);",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "GUIDE3-shown-while-hidden",
     "file": "src/ui/quest/questHerald.js",
-    "old": "visible: !hidden, silent: true }, doc, HERALD_OWNER);",
-    "new": "visible: true, silent: true }, doc, HERALD_OWNER);",
+    "old": "  return drawEnhancedToasts({ ...questHerald.frame(), visible: !hidden, silent: true }, doc, HERALD_OWNER);",
+    "new": "  return drawEnhancedToasts({ ...questHerald.frame(), visible: true, silent: true }, doc, HERALD_OWNER);",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "GUIDE3-sentence-any-stop",
     "file": "src/ui/quest/questRail.js",
-    "old": "(?=\\s+[\"'\\u201c\\u2018(\\[]*\\p{Lu}|$)/gu;",
-    "new": "(?=\\s|$)/gu;",
+    "old": "const SENTENCE_END = /[.!?]+[\"'\\u201d\\u2019)\\]]*(?=\\s+[\"'\\u201c\\u2018(\\[]*\\p{Lu}|$)/gu;",
+    "new": "const SENTENCE_END = /[.!?]+[\"'\\u201d\\u2019)\\]]*(?=\\s|$)/gu;",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "GUIDE3-small-word-kept",
     "file": "src/ui/quest/questRail.js",
-    "old": "  while (TRAILING_SMALL_WORD.test(kept)) kept = edge(kept.replace(TRAILING_SMALL_WORD, ''));\n",
-    "new": "",
+    "old": "  while (TRAILING_SMALL_WORD.test(kept)) kept = edge(kept.replace(TRAILING_SMALL_WORD, ''));\n  return `${kept}\\u2026`;",
+    "new": "  return `${kept}\\u2026`;",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]

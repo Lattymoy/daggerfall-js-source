@@ -44,9 +44,23 @@
 // their home since the Thunderlock became a real weapon, and the lab
 // reads them from there.
 export {
-  SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect,
+  SHEET_GRID,
+  FIRE_FRAMES,
+  cellRect,
+  keyBackground,
+  contentBox,
+  unionBox,
+  unionDrawRect,
 } from '../combat/gun/gunSheet.js';
-import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect } from '../combat/gun/gunSheet.js';
+import {
+  SHEET_GRID,
+  FIRE_FRAMES,
+  cellRect,
+  keyBackground,
+  contentBox,
+  unionBox,
+  unionDrawRect,
+} from '../combat/gun/gunSheet.js';
 
 // ONE HOME: the alignment enum is FPSWeapon's own, imported rather
 // than restated, so an offset tuned in the lab means in the lab
@@ -65,9 +79,12 @@ import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox,
 // the game resembles - it is a thing the game runs.
 export { placeSprite } from '../combat/gun/gunPlacement.js';
 export {
-  createGunRig as createWidgetRig, gunRigStep as widgetRigStep,
-  gunMotion as labMotion, gunWidgetSettings as labWidgetSettings,
-  widgetDefaults, gunFrameRect,
+  createGunRig as createWidgetRig,
+  gunRigStep as widgetRigStep,
+  gunMotion as labMotion,
+  gunWidgetSettings as labWidgetSettings,
+  widgetDefaults,
+  gunFrameRect,
 } from '../combat/gun/gunViewmodel.js';
 export { ALIGN } from '../combat/weapon/weaponAlign.js';
 import { ALIGN } from '../combat/weapon/weaponAlign.js';
@@ -76,12 +93,17 @@ import { placeSprite } from '../combat/gun/gunPlacement.js';
 // THE MOD'S OWN MODULES (WW1's 1:1 port of FPSWeaponClone) - run, not
 // imitated. The arrow points one way, as it does for ALIGN.
 import {
-  WEAPON_WIDGET_VENDOR, readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
+  WEAPON_WIDGET_VENDOR,
+  readWidgetSettings,
+  offsetStep,
+  bobStep,
+  inertiaStep,
+  widgetTransformRect,
 } from '../combat/weapon/weaponWidgetMotion.js';
 import { MOD_SETTINGS } from '../systems/modSettings.js';
-import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
-export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN6: the one home
-export { MUZZLE_CURVE, muzzleGlow } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
+import { walkSpeed, runSpeed } from '../player/motor.js'; // GetBaseSpeed's walk arm, the bob's baseSpeed
+export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gun/gunFeel.js'; // FIELD-GUN6: the one home
+export { MUZZLE_CURVE, muzzleGlow } from '../combat/gun/gunFeel.js'; // FIELD-GUN13: the flash's curve, the same way
 import { muzzleGlow, THUNDERLOCK_MUZZLE_CURVE } from '../combat/gun/gunFeel.js';
 export { widgetTransformRect };
 
@@ -96,7 +118,7 @@ export { createGunMachine } from '../combat/gun/gunMachine.js';
 // (combat/thunderlockArt.js), and lights the room on the Thunderlock's own curve (gunFeel.js THUNDERLOCK_MUZZLE_CURVE).
 export { thunderlockFrames, THUNDERLOCK_STRIP } from '../combat/thunderlockArt.js';
 /** The room's light off the strip's flash: the Thunderlock's curve while the page's machine fires, 0 otherwise. */
-export const labThunderlockLight = (state, frame) => (state === 'Firing' ? THUNDERLOCK_MUZZLE_CURVE[frame] ?? 0 : 0);
+export const labThunderlockLight = (state, frame) => (state === 'Firing' ? (THUNDERLOCK_MUZZLE_CURVE[frame] ?? 0) : 0);
 
 /**
  * The muzzle light. The flash is on frames 1-2 of the sheet
@@ -221,10 +243,12 @@ export const SFX_CANDIDATES = Object.freeze({
  * (playbackRate here, ±`vary`). Zero it and the clip is the file.
  */
 export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {}) {
-  const buffers = new Map();   // name -> AudioBuffer (or a pending promise)
+  const buffers = new Map(); // name -> AudioBuffer (or a pending promise)
   let ctx = null;
   const p = {
-    vary, volume, enabled: true,
+    vary,
+    volume,
+    enabled: true,
     /** A gesture is what a browser wants before it will make noise. */
     resume() {
       ctx ??= new (globalThis.AudioContext ?? globalThis.webkitAudioContext)();
@@ -238,15 +262,24 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
       const pending = fetch(url)
         .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${r.status} ${name}`))))
         .then((b) => c.decodeAudioData(b))
-        .then((buf) => { buffers.set(name, buf); return buf; })
-        .catch((e) => { buffers.delete(name); throw e; });
+        .then((buf) => {
+          buffers.set(name, buf);
+          return buf;
+        })
+        .catch((e) => {
+          buffers.delete(name);
+          throw e;
+        });
       buffers.set(name, pending);
       return pending;
     },
     play(name, gain = 1) {
       if (!p.enabled || !name) return false;
       const buf = buffers.get(name);
-      if (!buf || typeof buf.then === 'function') { p.load(name).catch(() => {}); return false; }
+      if (!buf || typeof buf.then === 'function') {
+        p.load(name).catch(() => {});
+        return false;
+      }
       const c = p.resume();
       const src = c.createBufferSource();
       src.buffer = buf;
@@ -321,11 +354,6 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  *     rises, so it cannot be a position channel.
  */
 export const WIDGET_VENDOR = WEAPON_WIDGET_VENDOR;
-
-
-
-
-
 
 /**
  * THE ANCHOR, and the second half of the alignment story unionBox

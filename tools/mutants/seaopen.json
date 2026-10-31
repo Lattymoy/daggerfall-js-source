@@ -2,8 +2,8 @@
   {
     "name": "FISH-the-rolls-top",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "const n = FISH_ROLL[0] + Math.floor(r() * (FISH_ROLL[1] - FISH_ROLL[0] + 1));",
-    "new": "const n = FISH_ROLL[0] + Math.floor(r() * (FISH_ROLL[1] - FISH_ROLL[0]));",
+    "old": "  const n = FISH_ROLL[0] + Math.floor(r() * (FISH_ROLL[1] - FISH_ROLL[0] + 1));",
+    "new": "  const n = FISH_ROLL[0] + Math.floor(r() * (FISH_ROLL[1] - FISH_ROLL[0]));",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FISH-the-smacks-share",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "classId: fishRng(seed)() < FISH_SMACK_SHARE ? 'fishingSmack' : 'fishingSkiff'",
-    "new": "classId: fishRng(seed)() > FISH_SMACK_SHARE ? 'fishingSmack' : 'fishingSkiff'",
+    "old": "    out.push({ i, seed, classId: fishRng(seed)() < FISH_SMACK_SHARE ? 'fishingSmack' : 'fishingSkiff' });",
+    "new": "    out.push({ i, seed, classId: fishRng(seed)() > FISH_SMACK_SHARE ? 'fishingSmack' : 'fishingSkiff' });",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FISH-the-skiff-given-sails-way",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    if (ship.hull === HULL.Rowboat) best = 0;",
-    "new": "    if (ship.hull === HULL.Rowboat) best = best + 0;",
+    "old": "    if (ship.hull === HULL.Rowboat) best = 0; // FISH-BOATS: no canvas - a skiff's way is her oars' alone (ship.sweeps)",
+    "new": "    if (ship.hull === HULL.Rowboat) best = best + 0; // FISH-BOATS: no canvas - a skiff's way is her oars' alone (ship.sweeps)",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FISH-the-skiff-tacked",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (ship.hull === HULL.Rowboat) { ship.tack = null; return want; }",
-    "new": "  if (ship.hull === -1) { ship.tack = null; return want; }",
+    "old": "  if (ship.hull === HULL.Rowboat) {",
+    "new": "  if (ship.hull === -1) {",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FISH-the-skiff-unpulled",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (ship.hull === HULL.Rowboat) ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare());",
-    "new": "  if (ship.hull === -1) ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare());",
+    "old": "  if (ship.hull === HULL.Rowboat)\n    ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare()); // FISH-BOATS: a skiff pulled at the plan's stroke",
+    "new": "  if (ship.hull === -1) ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare()); // FISH-BOATS: a skiff pulled at the plan's stroke",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FISH-a-fisher-drawn-by-weight",
     "file": "src/systems/naval/navalShips.js",
-    "old": "minLevel: FISHER_LEVEL, weight: 0, boarders: 2, fisher: true",
-    "new": "minLevel: 1, weight: 5, boarders: 2, fisher: true",
+    "old": "    cargo: 1,\n    minLevel: FISHER_LEVEL,\n    weight: 0,\n    boarders: 2,",
+    "new": "    cargo: 1,\n    minLevel: 1,\n    weight: 5,\n    boarders: 2,",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FISH-the-name-forms-a-merchantmans",
     "file": "src/systems/naval/navalShips.js",
-    "old": "  const name = shipClass.fisher ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown);",
-    "new": "  const name = false ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown);",
+    "old": "  const name = shipClass.fisher ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown); // FISH-BOATS: a fishing boat's own forms",
+    "new": "  const name = false ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown); // FISH-BOATS: a fishing boat's own forms",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FISH-the-side",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "side = i % 2 ? -1 : 1,",
-    "new": "side = 1,",
+    "old": "    side = i % 2 ? -1 : 1,",
+    "new": "    side = 1,",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FISH-the-spacing",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "span.hi + FISH_BERTH_CLEAR + k * FISH_SPACING",
-    "new": "span.hi + FISH_BERTH_CLEAR",
+    "old": "  const a = side > 0 ? span.hi + FISH_BERTH_CLEAR + k * FISH_SPACING : span.lo - FISH_BERTH_CLEAR - k * FISH_SPACING;",
+    "new": "  const a = side > 0 ? span.hi + FISH_BERTH_CLEAR : span.lo - FISH_BERTH_CLEAR - k * FISH_SPACING;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FISH-the-grounds-spread",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "(r() * 2 - 1) * FISH_GROUND_SPREAD, d =",
-    "new": "(r() * 2 - 1) * FISH_GROUND_SPREAD * 3, d =",
+    "old": "    const a = Math.atan2(n[0], n[1]) + (r() * 2 - 1) * FISH_GROUND_SPREAD,",
+    "new": "    const a = Math.atan2(n[0], n[1]) + (r() * 2 - 1) * FISH_GROUND_SPREAD * 3,",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FISH-the-grounds-reach",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "d = FISH_GROUND_M[0] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);",
-    "new": "d = FISH_GROUND_M[1] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);",
+    "old": "      d = FISH_GROUND_M[0] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);",
+    "new": "      d = FISH_GROUND_M[1] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FISH-the-days-turn-out",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "    if (!lit) { turn('fish'); return stepFishing(ship, dt, ctx, { here, plan, way }); }\n    if (dist2(here, e.to) > FISH_ANCHOR_M * 2)",
-    "new": "    if (lit) { turn('fish'); return stepFishing(ship, dt, ctx, { here, plan, way }); }\n    if (dist2(here, e.to) > FISH_ANCHOR_M * 2)",
+    "old": "  if (e.kind === 'anchor') {\n    if (!lit) {",
+    "new": "  if (e.kind === 'anchor') {\n    if (lit) {",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FISH-the-days-turn-home",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "    if (lit) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }\n    if (e.ringing && !e.path)",
-    "new": "    if (false) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }\n    if (e.ringing && !e.path)",
+    "old": "    if (lit) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FISH-the-sweeps-home",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "sweeps: SWEEP_WAY, sailable: true, berthing: !!e.path && e.i === e.path.length - 1 };",
-    "new": "berthing: !!e.path && e.i === e.path.length - 1 };",
+    "old": "      sweeps: SWEEP_WAY,\n      sailable: true,\n      berthing: !!e.path && e.i === e.path.length - 1,",
+    "new": "      berthing: !!e.path && e.i === e.path.length - 1,",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FISH-the-last-legs-swing",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "berthing: !!e.path && e.i === e.path.length - 1 };",
-    "new": "berthing: false };",
+    "old": "      berthing: !!e.path && e.i === e.path.length - 1,",
+    "new": "      berthing: false,",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "FISH-the-hold-at-anchor",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "    if (dist2(here, e.to) > FISH_ANCHOR_M * 2) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }   // moved off her mooring (a fight)\n    return { hold: { pos: [e.to[0], e.to[1]], yaw: e.yaw } };",
-    "new": "    if (dist2(here, e.to) > FISH_ANCHOR_M * 2) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }   // moved off her mooring (a fight)\n    return null;",
+    "old": "    } // moved off her mooring (a fight)\n    return { hold: { pos: [e.to[0], e.to[1]], yaw: e.yaw } };",
+    "new": "    } // moved off her mooring (a fight)\n    return null;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "FISH-the-director-counting-them",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "if (f?.ship.cls.fisher) { x.berthed = true; x.engaged ||= !!f.fisher && !x.theirs; }",
-    "new": "if (f?.ship.cls.fisher) { x.engaged ||= !!f.fisher && !x.theirs; }",
+    "old": "      x.berthed = true;\n      x.engaged ||= !!f.fisher && !x.theirs;",
+    "new": "      x.engaged ||= !!f.fisher && !x.theirs;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "FISH-the-lost-not-kept",
     "file": "src/scenes/naval/fishingFleet.js",
-    "old": "if (e.fisher && !e.owner && !afloat(e)) lostOf(e.fisher, day).add(e.ship.seed);",
-    "new": "if (e.fisher && !e.owner && !afloat(e)) lostOf(e.fisher, day);",
+    "old": "    for (const e of h.sea.values()) if (e.fisher && !e.owner && !afloat(e)) lostOf(e.fisher, day).add(e.ship.seed); // sunk or struck: not stood again today",
+    "new": "    for (const e of h.sea.values()) if (e.fisher && !e.owner && !afloat(e)) lostOf(e.fisher, day); // sunk or struck: not stood again today",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "FISH-the-catchs-top",
     "file": "src/systems/naval/fishingBoats.js",
-    "old": "return { count: range[0] + Math.floor(r() * (range[1] - range[0] + 1)) };",
-    "new": "return { count: range[0] + Math.floor(r() * (range[1] - range[0])) };",
+    "old": "  return { count: range[0] + Math.floor(r() * (range[1] - range[0] + 1)) };",
+    "new": "  return { count: range[0] + Math.floor(r() * (range[1] - range[0])) };",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "FISH-a-fishers-casks",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "  if (shipClass?.fisher) return [];\n",
-    "new": "",
+    "old": "  if (shipClass?.fisher) return [];\n  const keys = holdKeys(shipClass, seed);",
+    "new": "  const keys = holdKeys(shipClass, seed);",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "FISH-C4-a-fisher-on-s",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(cls < NAVAL_WIRE_OLD_CLASSES ? s : h).push([sh.n | 0,",
-    "new": "(cls < NAVAL_WIRE_OLD_CLASSES + 2 ? s : h).push([sh.n | 0,",
+    "old": "    (cls < NAVAL_WIRE_OLD_CLASSES ? s : h).push([",
+    "new": "    (cls < NAVAL_WIRE_OLD_CLASSES + 2 ? s : h).push([",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "FISH-C4-her-wreckage-on-w",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const old = cls < NAVAL_WIRE_OLD_CLASSES;",
-    "new": "const old = cls <= NAVAL_WIRE_OLD_CLASSES;",
+    "old": "    const old = cls < NAVAL_WIRE_OLD_CLASSES; // AUDIT HORIZONTAL C4: a later class's on `j`",
+    "new": "    const old = cls <= NAVAL_WIRE_OLD_CLASSES; // AUDIT HORIZONTAL C4: a later class's on `j`",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "FISH-C4-h-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (h.length) out.h = h;\n",
-    "new": "",
+    "old": "  if (h.length) out.h = h;\n  if (j.length) out.j = j;",
+    "new": "  if (j.length) out.j = j;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "FISH-C4-h-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "b = raw.b ?? [], later = raw.h ?? [];",
-    "new": "b = raw.b ?? [], later = [];",
+    "old": "    later = raw.h ?? [];",
+    "new": "    later = [];",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "FISH-C4-j-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "wrecks = raw.w ?? [], later2 = raw.j ?? [];",
-    "new": "wrecks = raw.w ?? [], later2 = [];",
+    "old": "    later2 = raw.j ?? [];",
+    "new": "    later2 = [];",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "FISH-C4-the-doors-ships",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (s.length + later.length > NAVAL_WIRE_SHIPS ||",
-    "new": "if (s.length > NAVAL_WIRE_SHIPS ||",
+    "old": "  if (s.length + later.length > NAVAL_WIRE_SHIPS || v.length > NAVAL_WIRE_VOLLEYS || b.length > NAVAL_WIRE_BARRELS)\n    return null;",
+    "new": "  if (s.length > NAVAL_WIRE_SHIPS || v.length > NAVAL_WIRE_VOLLEYS || b.length > NAVAL_WIRE_BARRELS) return null;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "FISH-C4-the-shared-casks",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS",
-    "new": "(salvage ? w : f).length >= NAVAL_WIRE_CASKS",
+    "old": "    if ((salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS) continue;",
+    "new": "    if ((salvage ? w : f).length >= NAVAL_WIRE_CASKS) continue;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "FISH-C4-a-lot-on-w",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!wrecks.every((w) => w?.length === 5)",
-    "new": "!wrecks.every((w) => w?.length >= 5)",
+    "old": "  if (!lots.every((w) => w?.length === 6) || !wrecks.every((w) => w?.length === 5)) return null;",
+    "new": "  if (!lots.every((w) => w?.length === 6) || !wrecks.every((w) => w?.length >= 5)) return null;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "FISH-C6-a-fishers-quarry-chased",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher",
-    "new": "y.engaged && !y.theirs",
+    "old": "  const chased = new Set(\n    ships\n      .filter((y) => y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher)\n      .map((y) => entryOf(y.id)?.ship.target),\n  );",
+    "new": "  const chased = new Set(ships.filter((y) => y.engaged && !y.theirs).map((y) => entryOf(y.id)?.ship.target));",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "FISH-C6-F27-lost",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "  for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;\n",
-    "new": "",
+    "old": "  for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;\n  return ships;",
+    "new": "  return ships;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "QUAY-the-reach",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "if (Math.hypot(hb.mouth[0] - at[0], hb.mouth[1] - at[2]) > BRING_IN_M) continue;",
-    "new": "if (Math.hypot(hb.mouth[0] - at[0], hb.mouth[1] - at[2]) > BRING_IN_M * 2) continue;",
+    "old": "      if (Math.hypot(hb.mouth[0] - at[0], hb.mouth[1] - at[2]) > BRING_IN_M) continue;",
+    "new": "      if (Math.hypot(hb.mouth[0] - at[0], hb.mouth[1] - at[2]) > BRING_IN_M * 2) continue;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "QUAY-the-approach-unsailed",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "const a = grid.path([at[0], at[2]], b.approach), c = a ? grid.path(b.approach, end) : null;",
-    "new": "const a = [[at[0], at[2]]], c = [[at[0], at[2]], end];",
+    "old": "    const a = grid.path([at[0], at[2]], b.approach),\n      c = a ? grid.path(b.approach, end) : null;",
+    "new": "    const a = [[at[0], at[2]]],\n      c = [[at[0], at[2]], end];",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "QUAY-the-ways-pace",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "const way = left > TOW_EASE_M ? TOW_WAY : TOW_SLOW",
-    "new": "const way = left > TOW_EASE_M ? TOW_WAY * 2 : TOW_SLOW",
+    "old": "    const way = left > TOW_EASE_M ? TOW_WAY : TOW_SLOW + (TOW_WAY - TOW_SLOW) * (left / TOW_EASE_M);",
+    "new": "    const way = left > TOW_EASE_M ? TOW_WAY * 2 : TOW_SLOW + (TOW_WAY - TOW_SLOW) * (left / TOW_EASE_M);",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "QUAY-the-charter-unread",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "if (!host.enabled() || !rec || !boat?.GameObject || tow?.boat === boat) return false;",
-    "new": "if (!host.enabled() || !boat?.GameObject || tow?.boat === boat) return false;",
+    "old": "    if (!host.enabled() || !rec || !boat?.GameObject || tow?.boat === boat) return false;",
+    "new": "    if (!host.enabled() || !boat?.GameObject || tow?.boat === boat) return false;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "QUAY-the-port-unmatched",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "if (!hb?.berths?.length || h.name !== rec.to.name || refused.has(h.key)) continue;",
-    "new": "if (!hb?.berths?.length || refused.has(h.key)) continue;",
+    "old": "      if (!hb?.berths?.length || h.name !== rec.to.name || refused.has(h.key)) continue;",
+    "new": "      if (!hb?.berths?.length || refused.has(h.key)) continue;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "QUAY-the-refusal-forgotten",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "{ refused.add(tow.key); tow = { ...tow, gaveUp: true }; return null; }",
-    "new": "{ tow = { ...tow, gaveUp: true }; return null; }",
+    "old": "        refused.add(tow.key);\n        tow = { ...tow, gaveUp: true };",
+    "new": "        tow = { ...tow, gaveUp: true };",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "QUAY-the-bring-in-unasked",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "      if (deps.naval?.()?.bringIn?.(boat)) { stopJourney(); said = null; say(PASSAGE_TEXT.comesIn(rec.ship, rec.to.name)); }",
-    "new": "      if (false) { stopJourney(); said = null; say(PASSAGE_TEXT.comesIn(rec.ship, rec.to.name)); }",
+    "old": "      if (deps.naval?.()?.bringIn?.(boat)) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "QUAY-the-journey-not-ended",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "      if (deps.naval?.()?.bringIn?.(boat)) { stopJourney(); said = null;",
-    "new": "      if (deps.naval?.()?.bringIn?.(boat)) { said = null;",
+    "old": "        stopJourney();\n        said = null;",
+    "new": "        said = null;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "QUAY-the-helm-kept",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "if (r.isSailing() && r.state?.CurrentBoat === boat) r.StopSailing(); say(PASSAGE_TEXT.madeFast(",
-    "new": "if (r.isSailing() && r.state?.CurrentBoat === boat) say(PASSAGE_TEXT.madeFast(",
+    "old": "        if (r.isSailing() && r.state?.CurrentBoat === boat) r.StopSailing();\n        say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name));",
+    "new": "        if (r.isSailing() && r.state?.CurrentBoat === boat) say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name));",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "QUAY-the-gangway-unsaid",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "r.StopSailing(); say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name)); }",
-    "new": "r.StopSailing(); }",
+    "old": "        say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name));\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "QUAY-C3-the-way-on-her-centreline",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "grid = createWaterGrid({ isWater: beamWater(host.isWater, boat.hull), hull: boat.hull });",
-    "new": "grid = createWaterGrid({ isWater: host.isWater, hull: boat.hull });",
+    "old": "      grid = createWaterGrid({ isWater: beamWater(host.isWater, boat.hull), hull: boat.hull });",
+    "new": "      grid = createWaterGrid({ isWater: host.isWater, hull: boat.hull });",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "QUAY-C3-way-while-she-swings",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "Math.abs(wrapAngle(want - head)) <= TOW_SWING ? Math.min(d, way * dt) : 0;",
-    "new": "Math.min(d, way * dt);",
+    "old": "    const s = there\n      ? Math.min(d, TOW_SLOW * dt)\n      : Math.abs(wrapAngle(want - head)) <= TOW_SWING\n        ? Math.min(d, way * dt)\n        : 0;",
+    "new": "    const s = there ? Math.min(d, TOW_SLOW * dt) : Math.min(d, way * dt);",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "QUAY-C3-the-land-unread",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "    if (!fits(next.pos, head) && fits([p[0], p[2]], yaw)) return held(fits([p[0], p[2]], head) ? head : yaw);\n",
-    "new": "",
+    "old": "    if (!fits(next.pos, head) && fits([p[0], p[2]], yaw)) return held(fits([p[0], p[2]], head) ? head : yaw);\n    tow.foul = 0;",
+    "new": "    tow.foul = 0;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "QUAY-C10-the-way-unread",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "return held(head, hull.way >= HULL_LEAD_MIN_MPS);",
-    "new": "return held(head);",
+    "old": "    if (hull.d < TOW_FOUL_M) return held(head, hull.way >= HULL_LEAD_MIN_MPS);",
+    "new": "    if (hull.d < TOW_FOUL_M) return held(head);",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "QUAY-C10-the-wait-unbounded",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "if (tow.foul >= TOW_FOUL_S || tow.held >= TOW_WAIT_S)",
-    "new": "if (tow.foul >= TOW_FOUL_S)",
+    "old": "      if (tow.foul >= TOW_FOUL_S || tow.held >= TOW_WAIT_S) {",
+    "new": "      if (tow.foul >= TOW_FOUL_S) {",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "QUAY-C10-the-wait-never-started-again",
     "file": "src/scenes/naval/passageQuay.js",
-    "old": "    tow.foul = 0; tow.held = 0;",
-    "new": "    tow.foul = 0;",
+    "old": "    tow.held = 0;\n    return next;",
+    "new": "    return next;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "QUAY-C10-the-hulls-way-unsaid",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "if (t < d) { d = t; way = Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0); }",
-    "new": "if (t < d) { d = t; way = 0; }",
+    "old": "        way = Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0);",
+    "new": "        way = 0;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "QUAY-C10-the-host-look-unled",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "const t = hullAlong(p, dx, dz, far, ledHulls(box, v));",
-    "new": "const t = hullAlong(p, dx, dz, far, []);",
+    "old": "      const t = hullAlong(p, dx, dz, far, ledHulls(box, v));",
+    "new": "      const t = hullAlong(p, dx, dz, far, []);",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "ALDBRUGH-the-corners-unsounded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "{ e.harbour = sound(far) ?? sound(far, true); e.far = true; }",
-    "new": "{ e.harbour = sound(far); e.far = true; }",
+    "old": "      e.harbour = sound(far) ?? sound(far, true);",
+    "new": "      e.harbour = sound(far);",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "ALDBRUGH-the-square-read-round",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
-    "new": "      if ((square ? Math.hypot(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
+    "new": "      if ((square ? Math.hypot(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "ALDBRUGH-the-corners-sounded-first",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "{ e.harbour = sound(far) ?? sound(far, true); e.far = true; }",
-    "new": "{ e.harbour = sound(far, true) ?? sound(far); e.far = true; }",
+    "old": "      e.harbour = sound(far) ?? sound(far, true);",
+    "new": "      e.harbour = sound(far, true) ?? sound(far);",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "CREW-the-release-unowned",
     "file": "server-account/src/crewSigns.js",
-    "old": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4'",
-    "new": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND (player = ?4 OR 1)'",
+    "old": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4')",
+    "new": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND (player = ?4 OR 1)')",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "CREW-the-cap",
     "file": "server-account/src/crewSigns.js",
-    "old": "AND day = ?2) < ?8`)",
-    "new": "AND day = ?2) <= ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) <= ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "CREW-the-fresh-unsaid",
     "file": "server-account/src/crewSigns.js",
-    "old": "  if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: true };",
-    "new": "  if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: false };",
+    "old": "    if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: true };",
+    "new": "    if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: false };",
     "tests": [
       "test/server/crewsigned.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -804,8 +804,8 @@
   {
     "name": "CREW-mine-read-as-taken",
     "file": "server-account/src/crewSigns.js",
-    "old": "(r.player === who ? mine : taken)",
-    "new": "(r.player !== who ? mine : taken)",
+    "old": "    if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player === who ? mine : taken).push(r.slot);",
+    "new": "    if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player !== who ? mine : taken).push(r.slot);",
     "tests": [
       "test/server/crewsigned.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -814,8 +814,8 @@
   {
     "name": "CREW-the-keep",
     "file": "server-account/src/crewSigns.js",
-    "old": "crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,",
-    "new": "crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS + 1,",
+    "old": "    crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,",
+    "new": "    crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS + 1,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "CREW-the-span",
     "file": "src/net/crewSignLaw.js",
-    "old": "Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;",
-    "new": "Math.abs(day - crewDayAt(nowMs)) < CREW_SIGN_DAY_SPAN;",
+    "old": "  Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;",
+    "new": "  Math.abs(day - crewDayAt(nowMs)) < CREW_SIGN_DAY_SPAN;",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "CREW-the-shared-day",
     "file": "src/net/crewSignLaw.js",
-    "old": "Math.floor(sharedClassicMinutes(nowMs) / 1440);",
-    "new": "Math.floor(sharedClassicMinutes(nowMs) / 1441);",
+    "old": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1440);",
+    "new": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1441);",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "CREW-the-hall-unread",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      .filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));",
-    "new": "      .filter(() => true);",
+    "old": "    }).filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));",
+    "new": "    }).filter(() => true);",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -887,8 +887,8 @@
   {
     "name": "CREW-the-pay-offs",
     "file": "src/scenes/shipyardHost.js",
-    "old": "        letGo(r.hand);\n",
-    "new": "",
+    "old": "        letGo(r.hand);\n        return said(",
+    "new": "        return said(",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "CREW-the-swaps",
     "file": "src/scenes/shipyardHost.js",
-    "old": "        letGo(r.out);\n",
-    "new": "",
+    "old": "          letGo(r.out);\n          return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));",
+    "new": "          return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "CREW-the-sales",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h);",
-    "new": "      if (false) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h);",
+    "old": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
+    "new": "      if (false) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "CREW-the-old-service-a-refusal",
     "file": "src/scenes/crewSignBook.js",
-    "old": "    if (r?.error === 'not-found') { off = true; return { ok: true, fresh: false }; }",
-    "new": "    if (r?.error === 'not-found') { off = true; return { ok: false, text: CREW_SIGN_TEXT.unread }; }",
+    "old": "      return { ok: true, fresh: false };",
+    "new": "      return { ok: false, text: CREW_SIGN_TEXT.unread };",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -950,8 +950,8 @@
   {
     "name": "CREW-C2-the-cap-unwritten",
     "file": "server-account/src/crewSigns.js",
-    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`)",
-    "new": "      WHERE ?6 <> ?7 OR ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE ?6 <> ?7 OR ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "CREW-C8-the-cap-a-characters",
     "file": "server-account/src/crewSigns.js",
-    "old": "WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`)",
-    "new": "WHERE (SELECT COUNT(*) FROM crew_signed WHERE player = ?4 AND ?6 <> ?7 AND day = ?2) < ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player = ?4 AND ?6 <> ?7 AND day = ?2) < ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -995,8 +995,8 @@
   {
     "name": "CREW-C8-the-release-the-accounts",
     "file": "server-account/src/crewSigns.js",
-    "old": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4'",
-    "new": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND substr(player, 1, instr(player, \\':\\')) = substr(?4, 1, instr(?4, \\':\\'))'",
+    "old": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4')",
+    "new": "    .prepare(\n      \"DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND substr(player, 1, instr(player, ':')) = substr(?4, 1, instr(?4, ':'))\",\n    )",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -1022,8 +1022,8 @@
   {
     "name": "CREW-C8-the-hosts-book-unaimed",
     "file": "src/scenes/shipyardHost.js",
-    "old": "character: () => deps.online?.() || null });",
-    "new": "character: () => null });",
+    "old": "  const signs =\n    deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => deps.online?.() || null });",
+    "new": "  const signs = deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => null });",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -1040,8 +1040,8 @@
   {
     "name": "VEIL-the-window",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "rode.off > VEIL_FOLLOW_MS ||",
-    "new": "rode.off > VEIL_FOLLOW_MS * 100 ||",
+    "old": "      if (owner || moved || rode.off > VEIL_FOLLOW_MS || !!across(here.x, here.y) !== rode.side) rode = null;",
+    "new": "      if (owner || moved || rode.off > VEIL_FOLLOW_MS * 100 || !!across(here.x, here.y) !== rode.side) rode = null;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1058,8 +1058,8 @@
   {
     "name": "VEIL-the-wait",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "!!across(row.p.px, row.p.py) === rode.side || !deps.ready()) return;",
-    "new": "!!across(row.p.px, row.p.py) === rode.side) return;",
+    "old": "    if (!row || !memberPresent(row) || !!across(row.p.px, row.p.py) === rode.side || !deps.ready()) return;",
+    "new": "    if (!row || !memberPresent(row) || !!across(row.p.px, row.p.py) === rode.side) return;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1067,8 +1067,8 @@
   {
     "name": "VEIL-the-days",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "    computed: { minutes: CROSS_DAYS * 1440, totalCost: 0,",
-    "new": "    computed: { minutes: 1440, totalCost: 0,",
+    "old": "    computed: { minutes: CROSS_DAYS * 1440, totalCost: 0, piecesCost: 0, oceanPixels: 0 },",
+    "new": "    computed: { minutes: 1440, totalCost: 0, piecesCost: 0, oceanPixels: 0 },",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1076,8 +1076,8 @@
   {
     "name": "VEIL-the-fare",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "minutes: CROSS_DAYS * 1440, totalCost: 0, piecesCost: 0,",
-    "new": "minutes: CROSS_DAYS * 1440, totalCost: 100, piecesCost: 0,",
+    "old": "    computed: { minutes: CROSS_DAYS * 1440, totalCost: 0, piecesCost: 0, oceanPixels: 0 },",
+    "new": "    computed: { minutes: CROSS_DAYS * 1440, totalCost: 100, piecesCost: 0, oceanPixels: 0 },",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1085,8 +1085,8 @@
   {
     "name": "VEIL-the-veil-unsaid",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "      pixel: { x: to.x, y: to.y }, name, veil: true,",
-    "new": "      pixel: { x: to.x, y: to.y }, name, veil: false,",
+    "old": "      veil: true,",
+    "new": "      veil: false,",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1094,8 +1094,8 @@
   {
     "name": "VEIL-the-beside-unread",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "besideTargetOf(r.p, to.x, to.y) : null;",
-    "new": "besideTargetOf(r.p, to.x + 1, to.y) : null;",
+    "old": "        return r && memberPresent(r) ? besideTargetOf(r.p, to.x, to.y) : null;",
+    "new": "        return r && memberPresent(r) ? besideTargetOf(r.p, to.x + 1, to.y) : null;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1103,8 +1103,8 @@
   {
     "name": "VEIL-the-missed-unsaid",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "      deps.say(VEIL_PARTY_TEXT.missed(name));\n",
-    "new": "",
+    "old": "        deps.say(VEIL_PARTY_TEXT.missed(name));\n        // sent back where she left me: she may have sailed on from that pixel, so her next one is followed in the window",
+    "new": "        // sent back where she left me: she may have sailed on from that pixel, so her next one is followed in the window",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1121,8 +1121,8 @@
   {
     "name": "VEIL-the-skip-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "r.slot === slot && !skip?.(id)) n++;",
-    "new": "r.slot === slot) n++;",
+    "old": "    for (const [id, r] of riders) if (r.owner === owner && r.slot === slot && !skip?.(id)) n++;",
+    "new": "    for (const [id, r] of riders) if (r.owner === owner && r.slot === slot) n++;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1167,8 +1167,8 @@
   {
     "name": "VEIL-C1-the-place-unkept",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "const moved = Math.max(Math.abs(here.x - rode.x), Math.abs(here.y - rode.y)) > VEIL_STAY_PX;",
-    "new": "const moved = false;",
+    "old": "      const moved = Math.max(Math.abs(here.x - rode.x), Math.abs(here.y - rode.y)) > VEIL_STAY_PX;",
+    "new": "      const moved = false;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1185,8 +1185,8 @@
   {
     "name": "VEIL-C1-anothers-deck",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "if (owner || moved ||",
-    "new": "if (moved ||",
+    "old": "      if (owner || moved || rode.off > VEIL_FOLLOW_MS || !!across(here.x, here.y) !== rode.side) rode = null;",
+    "new": "      if (moved || rode.off > VEIL_FOLLOW_MS || !!across(here.x, here.y) !== rode.side) rode = null;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1194,8 +1194,8 @@
   {
     "name": "VEIL-C5-the-window-unrun",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "rode.off += Math.max(0, Number(dt) || 0) * 1000;",
-    "new": "rode.off += 0;",
+    "old": "      rode.off += Math.max(0, Number(dt) || 0) * 1000;",
+    "new": "      rode.off += 0;",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1212,8 +1212,8 @@
   {
     "name": "VEIL-C1-sent-back-forgotten",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "      rode = { ...left, tried: to };\n",
-    "new": "",
+    "old": "        rode = { ...left, tried: to };\n      });",
+    "new": "      });",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1221,8 +1221,8 @@
   {
     "name": "VEIL-C1-the-failed-landing-asked-again",
     "file": "src/scenes/naval/veilParty.js",
-    "old": "if (rode.tried && rode.tried.x === row.p.px && rode.tried.y === row.p.py) return;",
-    "new": "if (false) return;",
+    "old": "    if (rode.tried && rode.tried.x === row.p.px && rode.tried.y === row.p.py) return; // the landing that failed, not asked again",
+    "new": "    if (false) return; // the landing that failed, not asked again",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]
@@ -1230,8 +1230,8 @@
   {
     "name": "VEIL-C7-the-words",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "The crossing waits until only your party is aboard.'",
-    "new": "The crossing waits until no one else is aboard.'",
+    "old": "      'Only your party can cross the Veil with you. The crossing waits until only your party is aboard.',",
+    "new": "      'Only your party can cross the Veil with you. The crossing waits until no one else is aboard.',",
     "tests": [
       "test/systems/naval/veilparty.test.js"
     ]

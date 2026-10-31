@@ -17,17 +17,21 @@ export function eventKinds() {
   ENEMY_NAMES.forEach((name, i) => {
     const id = i <= 42 ? i : 128 + (i - 43);
     if (STAFF_EVENT_KINDS_BARRED.includes(id)) return;
-    groups[id >= 128 ? 'People' : 'Monsters'].push([id, id === 40 ? 'Dragonling (alternate)' : name]);   // MobileTypes' second Dragonling
+    groups[id >= 128 ? 'People' : 'Monsters'].push([id, id === 40 ? 'Dragonling (alternate)' : name]); // MobileTypes' second Dragonling
   });
-  for (const [id, e] of dexRead({ log: () => {}, mudex: false }).enemies) groups[id >= 384 ? 'Expansion people' : 'Expansion monsters'].push([id, e.props.name]);
-  groups.Monsters.push([DWARVEN_DRAGON_ID, DWARVEN_DRAGON_NAME]);   // DWARVEN-DRAGON: the game's own, for staff
+  for (const [id, e] of dexRead({ log: () => {}, mudex: false }).enemies)
+    groups[id >= 384 ? 'Expansion people' : 'Expansion monsters'].push([id, e.props.name]);
+  groups.Monsters.push([DWARVEN_DRAGON_ID, DWARVEN_DRAGON_NAME]); // DWARVEN-DRAGON: the game's own, for staff
   return Object.entries(groups).map(([group, kinds]) => ({ group, kinds }));
 }
 
 if (isMain(import.meta.url)) {
   const q = (s) => (s.includes("'") ? JSON.stringify(s) : `'${s}'`);
-  const lines = eventKinds().map((g) => `  { group: ${q(g.group)}, kinds: [${g.kinds.map(([i, n]) => `[${i}, ${q(n)}]`).join(', ')}] },`);
-  process.stdout.write(`// STAFF-EVENT: EVERY MONSTER THE GAME STANDS, by its number (src/characters/enemy/enemyBasics.js ENEMY_NAMES: MobileTypes 0-42
+  const lines = eventKinds().map(
+    (g) => `  { group: ${q(g.group)}, kinds: [${g.kinds.map(([i, n]) => `[${i}, ${q(n)}]`).join(', ')}] },`,
+  );
+  process.stdout
+    .write(`// STAFF-EVENT: EVERY MONSTER THE GAME STANDS, by its number (src/characters/enemy/enemyBasics.js ENEMY_NAMES: MobileTypes 0-42
 // the monsters, 128-145 the classes; src/systems/enemyExpansion: Enemy Expansion's 256-290 and 384-398, which the game
 // registers on every load). Horse_Invalid (39) and the City Watch (146) are left out: the event law refuses them
 // (src/net/staffEvent/staffEventLaw.js STAFF_EVENT_KINDS_BARRED). Made by tools/eventKinds.mjs in the game repo - run it again

@@ -11,8 +11,8 @@
   {
     "name": "DRAGON-CELL-the-box-one-side",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;",
-    "new": "span = DRAGON_CELL_PX + DRAGON_TELL_PX;",
+    "old": "    span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;",
+    "new": "    span = DRAGON_CELL_PX + DRAGON_TELL_PX;",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "DRAGON-CELL-the-site-any-cell",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx && sz === c.sz;",
+    "old": "  return (\n    Math.floor(px / DRAGON_CELL_PX) === cell.cx &&\n    Math.floor(py / DRAGON_CELL_PX) === cell.cy &&\n    sx === c.sx &&\n    sz === c.sz\n  );",
     "new": "  return sx === c.sx && sz === c.sz;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "DRAGON-CELL-the-omens-unspaced",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2; })) continue;",
-    "new": "return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) < 0; })) continue;",
+    "old": "        return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2;",
+    "new": "        return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) < 0;",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DRAGON-CELL-the-omen-the-watchs-seed",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "    const c = { w: o.w, s: o.seeds[i] >>> 0 }, cell = dragonCellOf(c);",
-    "new": "    const c = { w: o.w, s: o.seeds[0] >>> 0 }, cell = dragonCellOf(c);",
+    "old": "    const c = { w: o.w, s: o.seeds[i] >>> 0 },",
+    "new": "    const c = { w: o.w, s: o.seeds[0] >>> 0 },",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "DRAGON-CELL-the-cover-unread",
     "file": "server/src/dragonFights.js",
-    "old": "(isCellRoom(a.key) && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))",
-    "new": "isCellRoom(a.key)",
+    "old": "  a?.pose &&\n  !a.pose.dd &&\n  (isBattleRoom(a.key) || (isCellRoom(a.key) && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z))))\n    ? mapPixelOfWire(a.pose.x, a.pose.z)\n    : null;",
+    "new": "  a?.pose && !a.pose.dd && (isBattleRoom(a.key) || isCellRoom(a.key)) ? mapPixelOfWire(a.pose.x, a.pose.z) : null;",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "DRAGON-CELL-the-far-never-told",
     "file": "server/src/dragonFights.js",
-    "old": "  if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });",
-    "new": "",
+    "old": "  if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });\n}",
+    "new": "}",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "DRAGON-CELL-the-in-any-site",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "dragonCandidates(o).find((c) => dragonSiteOk(c, sx, sz)) ?? null;",
-    "new": "dragonCandidates(o)[0] ?? null;",
+    "old": "export const dragonCandidateOf = (o, sx, sz) => dragonCandidates(o).find((c) => dragonSiteOk(c, sx, sz)) ?? null;",
+    "new": "export const dragonCandidateOf = (o, sx, sz) => dragonCandidates(o)[0] ?? null;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "DRAGON-CELL-the-site-a-pixel-outside",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "        if (inCell(x, y)) ground.push(",
-    "new": "        if (inCell(x, y) || x >= 0) ground.push(",
+    "old": "        if (inCell(x, y)) ground.push([worldPixelKey(x, y), scan.towns[scan.townAt[id]]?.name ?? '']);",
+    "new": "        if (inCell(x, y) || x >= 0) ground.push([worldPixelKey(x, y), scan.towns[scan.townAt[id]]?.name ?? '']);",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "DRAGON-CELL-the-site-the-first",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "ground[dragonSitePick(o) % ground.length]",
-    "new": "ground[0]",
+    "old": "  const [k, near] = ground[dragonSitePick(o) % ground.length];",
+    "new": "  const [k, near] = ground[0];",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]

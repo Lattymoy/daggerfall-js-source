@@ -298,7 +298,7 @@ test('KNIGHT-HOUSE the hosts, by source: the door never prices the knight\'s own
   assert.match(w, /void moveArenaHomesOnline\(\);[^\n]*\n\s*void homesBoot\.holdDeeds\(\);/, 'held once the homes\' towns land');
   const bootHost = src('src/scenes/homesBootHost.js');
   const boot = bootHost.slice(bootHost.indexOf('async function holdDeeds() {'), bootHost.indexOf('async function sweepGone() {'));
-  assert.match(boot, /if \(!await standing\(\)\) \{ deedsAsked = false; return null; \}/, 'never the boot\'s stand-in character');
+  assert.match(boot, /if \(!\(await standing\(\)\)\) \{\n\s*deedsAsked = false;\n\s*return null;\n\s*\}/, 'never the boot\'s stand-in character');
   assert.match(bootHost, /async function standing\(\) \{\n\s*for \(let i = 0; !\(loaded\(\) && stands\(\)\) && i < STAND_LOOKS; i\+\+\) await wait\(STAND_LOOK_MS\);\n\s*return loaded\(\);/);
   // PIN MOVED (AUDIT BAY-LEFT, its packages merged): the readiness one function of world.js's, the start's and START2's too
   assert.match(w, /const _worldReady = \(\) => playerSpawned && _bootLoaded && !_loading;\n\s*const homesBoot = createHomesBoot\(\{\n[^\n]*\n\s*loaded: _worldReady, stands: \(\) => !!modes,/);

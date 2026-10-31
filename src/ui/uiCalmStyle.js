@@ -20,7 +20,7 @@
 // scale, small to large: a label 12, a line 14, a name 16, a head 18 - presses in the line's size, so the words a
 // player reads outweigh the buttons beside them.
 import { PIXEL_STACK } from './pixelifyFive.js';
-import { WINDOW_FRAME } from './enhanced/enhancedFrame.js';   // UI-CALM II: the walk's panels wear a window's frame
+import { WINDOW_FRAME } from './enhanced/enhancedFrame.js'; // UI-CALM II: the walk's panels wear a window's frame
 
 export const UI_CALM_STYLE_ID = 'dagger-ui-calm';
 

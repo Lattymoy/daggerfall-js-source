@@ -46,55 +46,108 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { PROP_MODEL_TYPE, DOOR_MODEL_BASE_ID, DOOR_MODEL_COUNT } from '../../world/interior/interiorLayout.js';
-import { isDoorModel } from './decorDoorways.js';   // HOME-DOORS
+import { isDoorModel } from './decorDoorways.js'; // HOME-DOORS
 import { EDITOR_FLATS_ARCHIVE, isNatureArchive } from '../../world/rmbFlats.js';
 import { LADDER_MODEL_ID } from '../../player/enterExit.js';
 import { BED_MODELS } from '../roleplayRealism/rrRealism.js';
 import { isHouseContainerModel } from '../containers.js';
 import { isShopShelfModel } from '../shopStock.js';
 import { HOUSE_CONTAINER_NAMES } from '../worldTooltips.js';
-import { IIL_FIREPLACE_MODELS } from '../improvedInteriorLighting.js';   // AUDIT DECOR-USE D4: a fireplace named so
+import { IIL_FIREPLACE_MODELS } from '../improvedInteriorLighting.js'; // AUDIT DECOR-USE D4: a fireplace named so
 import { interiorLightProperties } from '../../world/interior/interiorLights.js';
 import { decorPrice } from '../../net/decorLaw.js';
-import { localizedStrings } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { BULLETIN_BOARD_MODEL_ID, WINDMILL_MODEL_ID, isCityGate } from '../../world/rmbLayout.js';   // GUILD1e: the hall's board is Daggerfall's own; DECOR-OUTDOOR: the mill and the gates are no street pieces
-import { CLIMATE_NATURE } from '../../formats/mapsFile.js';   // DECOR-OUTDOOR: the climates' nature sets
+import { localizedStrings } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { BULLETIN_BOARD_MODEL_ID, WINDMILL_MODEL_ID, isCityGate } from '../../world/rmbLayout.js'; // GUILD1e: the hall's board is Daggerfall's own; DECOR-OUTDOOR: the mill and the gates are no street pieces
+import { CLIMATE_NATURE } from '../../formats/mapsFile.js'; // DECOR-OUTDOOR: the climates' nature sets
 import { isTreeRecord } from '../../world/terrain/terrainNature.js';
-import { isNudeFlat, showNudity } from '../../characters/nudeFlats.js';   // NUDE-DECOR: no nude figure offered while Show Nudity is off
-import { rdbObjects, rdbModelActs, isActionDoor, isNpcFlat } from '../../world/rdbLayout.js';   // DECOR-DUNGEON: the dungeon's own walk, its acting and its doors
+import { isNudeFlat, showNudity } from '../../characters/nudeFlats.js'; // NUDE-DECOR: no nude figure offered while Show Nudity is off
+import { rdbObjects, rdbModelActs, isActionDoor, isNpcFlat } from '../../world/rdbLayout.js'; // DECOR-DUNGEON: the dungeon's own walk, its acting and its doors
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
 
 /** A piece's KIND - the panel's filter - and what it reads as. */
 export const DECOR_KINDS = Object.freeze({
-  bed: 'Beds', storage: 'Storage', shelf: 'Shelves', furniture: 'Furniture', door: 'Doors',   // HOME-DOORS
-  light: 'Lights', clothing: 'Clothing', boxes: 'Boxes and bottles', arms: 'Arms and armor',
-  books: 'Books and scrolls', misc: 'Odds and ends', treasure: 'Treasure', decor: 'Decorations',
+  bed: 'Beds',
+  storage: 'Storage',
+  shelf: 'Shelves',
+  furniture: 'Furniture',
+  door: 'Doors', // HOME-DOORS
+  light: 'Lights',
+  clothing: 'Clothing',
+  boxes: 'Boxes and bottles',
+  arms: 'Arms and armor',
+  books: 'Books and scrolls',
+  misc: 'Odds and ends',
+  treasure: 'Treasure',
+  decor: 'Decorations',
   // DECOR-KINDS (FIELD BUGS 2026-10-29f): what a piece IS, wherever Daggerfall stood it (decorWhatKind)
-  statues: 'Statues', tools: 'Tools', animals: 'Animals', remains: 'Remains',
-  people: 'Vendors',   // HOME-VENDOR (Mac: "People category sounds wrong call it vendors"): the people Daggerfall stands in its rooms - a home's trader is one of them, made the vendor station
-  dungeon: 'Dungeon pieces',   // DECOR-DUNGEON: what Daggerfall stands in its dungeons and nowhere in a house - a cage, a coffin, a chain (DECOR-KINDS: its tables and statues filed as what they are)
-  outdoor: 'Outdoors',   // DECOR-OUTDOOR: what Daggerfall stands in its streets and nowhere inside - a fence, a well, a fountain, a cart
-  nature: 'Trees and plants',   // DECOR-OUTDOOR: the climate's own nature - a yard's own climate's; DECOR-KINDS: and the potted plants, crops and flowers
-  mods: "Town mods' furnishings",   // DECOR-MODS: what the town mods furnish, as the port stands it in
+  statues: 'Statues',
+  tools: 'Tools',
+  animals: 'Animals',
+  remains: 'Remains',
+  people: 'Vendors', // HOME-VENDOR (Mac: "People category sounds wrong call it vendors"): the people Daggerfall stands in its rooms - a home's trader is one of them, made the vendor station
+  dungeon: 'Dungeon pieces', // DECOR-DUNGEON: what Daggerfall stands in its dungeons and nowhere in a house - a cage, a coffin, a chain (DECOR-KINDS: its tables and statues filed as what they are)
+  outdoor: 'Outdoors', // DECOR-OUTDOOR: what Daggerfall stands in its streets and nowhere inside - a fence, a well, a fountain, a cart
+  nature: 'Trees and plants', // DECOR-OUTDOOR: the climate's own nature - a yard's own climate's; DECOR-KINDS: and the potted plants, crops and flowers
+  mods: "Town mods' furnishings", // DECOR-MODS: what the town mods furnish, as the port stands it in
 });
 /** A kind's own word for one piece of it, where the game gives none. */
 const KIND_ONE = Object.freeze({
-  bed: 'Bed', storage: 'Cupboard', shelf: 'Shelves', furniture: 'Furniture', door: 'Door', light: 'Light', clothing: 'Clothing',
-  boxes: 'Box', arms: 'Arms', books: 'Books', misc: 'Odds and ends', treasure: 'Treasure', decor: 'Decoration', people: 'Vendor',
-  dungeon: 'Dungeon piece', outdoor: 'Outdoor piece', nature: 'Plant', mods: 'Furnishing',
-  statues: 'Statue', tools: 'Tool', animals: 'Animal', remains: 'Remains',
+  bed: 'Bed',
+  storage: 'Cupboard',
+  shelf: 'Shelves',
+  furniture: 'Furniture',
+  door: 'Door',
+  light: 'Light',
+  clothing: 'Clothing',
+  boxes: 'Box',
+  arms: 'Arms',
+  books: 'Books',
+  misc: 'Odds and ends',
+  treasure: 'Treasure',
+  decor: 'Decoration',
+  people: 'Vendor',
+  dungeon: 'Dungeon piece',
+  outdoor: 'Outdoor piece',
+  nature: 'Plant',
+  mods: 'Furnishing',
+  statues: 'Statue',
+  tools: 'Tool',
+  animals: 'Animal',
+  remains: 'Remains',
 });
 /** The flat archives Daggerfall files its interior dressing under (lootDataTables.js DROP_ICON_ARCHIVES names five of
  *  them for the inventory's drop icons; 210 is the lights, 216 the treasure piles). Any other is a decoration. */
-const FLAT_ARCHIVE_KIND = Object.freeze({ 204: 'clothing', 205: 'boxes', 207: 'arms', 209: 'books', 210: 'light', 211: 'misc', 216: 'treasure' });
+const FLAT_ARCHIVE_KIND = Object.freeze({
+  204: 'clothing',
+  205: 'boxes',
+  207: 'arms',
+  209: 'books',
+  210: 'light',
+  211: 'misc',
+  216: 'treasure',
+});
 export const LIGHTS_ARCHIVE = 210;
 /** TEXTURE.210's records as Daggerfall Unity's own light table names them (world/interior/interiorLights.js). */
 const LIGHT_NAMES = Object.freeze({
-  0: 'Bowl with fire', 1: 'Campfire', 2: 'Skull candle',   // AUDIT DECOR-USE D4: the camp flame (survival/hearth.js HEARTH_RECORDS) was "Light 1"
-  3: 'Candle', 4: 'Candle with base', 5: 'Candleholder with three candles',
-  6: 'Skull torch', 8: 'Turquoise lamp', 9: 'Chandelier with candles', 11: 'Candle in lamp', 13: 'Round lamp',
-  17: 'Mounted torch', 20: 'Brazier torch', 21: 'Standing candle', 22: 'Round lantern', 24: 'Lantern with long chain',
-  25: 'Lantern with medium chain', 26: 'Lantern with short chain', 27: 'Lantern',
+  0: 'Bowl with fire',
+  1: 'Campfire',
+  2: 'Skull candle', // AUDIT DECOR-USE D4: the camp flame (survival/hearth.js HEARTH_RECORDS) was "Light 1"
+  3: 'Candle',
+  4: 'Candle with base',
+  5: 'Candleholder with three candles',
+  6: 'Skull torch',
+  8: 'Turquoise lamp',
+  9: 'Chandelier with candles',
+  11: 'Candle in lamp',
+  13: 'Round lamp',
+  17: 'Mounted torch',
+  20: 'Brazier torch',
+  21: 'Standing candle',
+  22: 'Round lantern',
+  24: 'Lantern with long chain',
+  25: 'Lantern with medium chain',
+  26: 'Lantern with short chain',
+  27: 'Lantern',
 });
 
 /** DECOR-KINDS (FIELD BUGS 2026-10-29f; #feature-feedback, the housing thread's item 2: "a lot of plants are located in
@@ -104,14 +157,43 @@ const LIGHT_NAMES = Object.freeze({
  *  statues, 203 columns, 208 instruments, 212 street fixtures, 213 potted plants, 214 tools, 218 pots, 300 rock, 301
  *  crops and flowers). Where a piece is none of these, the place it was found says its kind, as before. */
 const FLAT_WHAT = Object.freeze({
-  53: 'outdoor', 96: 'remains', 97: 'statues', 98: 'statues', 100: 'dungeon', 190: 'dungeon', 200: 'decor', 201: 'animals',
-  202: 'statues', 203: 'statues', 206: 'remains', 208: 'decor', 212: 'outdoor', 213: 'nature', 214: 'tools', 218: 'boxes',
-  300: 'dungeon', 301: 'nature',
+  53: 'outdoor',
+  96: 'remains',
+  97: 'statues',
+  98: 'statues',
+  100: 'dungeon',
+  190: 'dungeon',
+  200: 'decor',
+  201: 'animals',
+  202: 'statues',
+  203: 'statues',
+  206: 'remains',
+  208: 'decor',
+  212: 'outdoor',
+  213: 'nature',
+  214: 'tools',
+  218: 'boxes',
+  300: 'dungeon',
+  301: 'nature',
 });
 /** AUDIT FB1029f C4: the two mixed archives, record by record - TEXTURE.100's skulls, bones and bodies are remains (its
  *  chains, cage, stakes and vines the dungeon's), TEXTURE.190's gargoyle and columns statues (its fires give no light). */
 const FLAT_RECORD_WHAT = Object.freeze({
-  100: Object.freeze({ 9: 'remains', 10: 'remains', 11: 'remains', 12: 'remains', 17: 'remains', 18: 'remains', 23: 'remains', 24: 'remains', 25: 'remains', 26: 'remains', 27: 'remains', 28: 'remains', 29: 'remains' }),
+  100: Object.freeze({
+    9: 'remains',
+    10: 'remains',
+    11: 'remains',
+    12: 'remains',
+    17: 'remains',
+    18: 'remains',
+    23: 'remains',
+    24: 'remains',
+    25: 'remains',
+    26: 'remains',
+    27: 'remains',
+    28: 'remains',
+    29: 'remains',
+  }),
   190: Object.freeze({ 10: 'statues', 11: 'statues', 12: 'statues' }),
 });
 /** AUDIT FB1029f C2: a re-filed archive's own word for one piece, as Daggerfall describes it ("Plants", "Crops", "Pots
@@ -120,10 +202,32 @@ const FLAT_BASE = Object.freeze({ 213: 'Houseplant', 301: 'Crop', 218: 'Pot' });
 /** DECOR-KINDS: the free-standing pieces (DECOR_FREE_STANDING, each named there) that are statues, columns or pedestals,
  *  arms, or hangings. The rest of them - boulders, beams, coffins, the cage, the pavilion - stay a dungeon's. */
 const MODEL_WHAT = Object.freeze({
-  62317: 'statues', 62323: 'statues', 62324: 'statues', 62325: 'statues', 62326: 'statues', 62327: 'statues', 62328: 'statues',
-  62329: 'statues', 62330: 'statues', 74009: 'statues', 74201: 'statues', 74082: 'statues', 74086: 'statues', 74091: 'statues',
-  74237: 'statues', 74221: 'arms', 74224: 'arms', 74225: 'arms', 74226: 'arms', 74227: 'arms', 74228: 'arms', 99800: 'arms',
-  74800: 'decor', 74804: 'decor', 74806: 'decor', 75800: 'decor',
+  62317: 'statues',
+  62323: 'statues',
+  62324: 'statues',
+  62325: 'statues',
+  62326: 'statues',
+  62327: 'statues',
+  62328: 'statues',
+  62329: 'statues',
+  62330: 'statues',
+  74009: 'statues',
+  74201: 'statues',
+  74082: 'statues',
+  74086: 'statues',
+  74091: 'statues',
+  74237: 'statues',
+  74221: 'arms',
+  74224: 'arms',
+  74225: 'arms',
+  74226: 'arms',
+  74227: 'arms',
+  74228: 'arms',
+  99800: 'arms',
+  74800: 'decor',
+  74804: 'decor',
+  74806: 'decor',
+  75800: 'decor',
 });
 /** DECOR-KINDS: Daggerfall's exterior family - its fences, wells, carts and stalls (ARCH3D 43000-43999). */
 const EXTERIOR_FIRST = 43000;
@@ -140,12 +244,14 @@ export function decorWhatKind(what) {
     return what.model >= EXTERIOR_FIRST && what.model <= EXTERIOR_LAST ? 'outdoor' : null;
   }
   if (!Array.isArray(what?.flat)) return null;
-  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;
+  return (
+    FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null
+  );
 }
 
 /** A model's kind. */
 export function modelKind(model) {
-  if (isDoorModel(model)) return 'door';   // HOME-DOORS: hung in a doorway, never stood on a floor
+  if (isDoorModel(model)) return 'door'; // HOME-DOORS: hung in a doorway, never stood on a floor
   if (BED_MODELS.includes(model)) return 'bed';
   if (isShopShelfModel(model)) return 'shelf';
   if (isHouseContainerModel(model)) return 'storage';
@@ -182,29 +288,60 @@ export const DECOR_FURNITURE_LAST = 43999;
  *  gave its reference (BLOCKS.BSA's model list), with how many times it stands still there - test/systems/decor/decordungeon.test.js
  *  measures both again over the player's own blocks. */
 export const DECOR_FREE_STANDING = Object.freeze([
-  60512, 60520,   // the boulders (ST1 1, ST9 1)
-  62317,   // the marble arch (XA2 3)
-  62318, 62319, 62321,   // the wooden beams (BM0 5, BM0 30, BM1 12)
-  62323, 62324, 62325, 62326, 62327, 62328, 62329, 62330,   // the statues - a figure standing and one seated, small and large, in pale stone and in dark (ST0-ST3 26, 14, 5, 3, 6, 7, 8, 6)
-  74009, 74201,   // the marble columns (CLM 18, 19)
-  74069,   // the stone casket (CAS 1)
-  74071, 74072, 74073,   // the marble coffins, open, and their lid (BCH 2, BCX 9, LID 1)
-  74082, 74086, 74091, 74237,   // the pedestals - wood and marble, marble, stone, wooden (TRP 1, TSP 1, HT3 1, PED 1)
-  74094,   // the domed pavilion (MAN 1)
-  74221, 74224, 74225, 74226, 74227, 74228,   // the great crossbow, a sword, an axe, the knight's armour, a sword, a crossbow (BOW 1, SWD 7, AXE 7, AMR 10, SWD 10, BW2 5)
-  74229,   // the arcane cage (ARC 15)
-  74800, 74804, 74806, 75800,   // the hangings - large and small (LRG 5, 1, 5; SRG 2)
-  99800,   // an arrow (ARW 2) - the archers' own shot (combat/arrowFlight.js), lying where Daggerfall left it
+  60512,
+  60520, // the boulders (ST1 1, ST9 1)
+  62317, // the marble arch (XA2 3)
+  62318,
+  62319,
+  62321, // the wooden beams (BM0 5, BM0 30, BM1 12)
+  62323,
+  62324,
+  62325,
+  62326,
+  62327,
+  62328,
+  62329,
+  62330, // the statues - a figure standing and one seated, small and large, in pale stone and in dark (ST0-ST3 26, 14, 5, 3, 6, 7, 8, 6)
+  74009,
+  74201, // the marble columns (CLM 18, 19)
+  74069, // the stone casket (CAS 1)
+  74071,
+  74072,
+  74073, // the marble coffins, open, and their lid (BCH 2, BCX 9, LID 1)
+  74082,
+  74086,
+  74091,
+  74237, // the pedestals - wood and marble, marble, stone, wooden (TRP 1, TSP 1, HT3 1, PED 1)
+  74094, // the domed pavilion (MAN 1)
+  74221,
+  74224,
+  74225,
+  74226,
+  74227,
+  74228, // the great crossbow, a sword, an axe, the knight's armour, a sword, a crossbow (BOW 1, SWD 7, AXE 7, AMR 10, SWD 10, BW2 5)
+  74229, // the arcane cage (ARC 15)
+  74800,
+  74804,
+  74806,
+  75800, // the hangings - large and small (LRG 5, 1, 5; SRG 2)
+  99800, // an arrow (ARW 2) - the archers' own shot (combat/arrowFlight.js), lying where Daggerfall left it
 ]);
 const FREE_STANDING = new Set(DECOR_FREE_STANDING);
 /** DECOR-DUNGEON: whether a dungeon's model is a furnishing - of the furniture families (the ladder aside, as in a room)
  *  or one of the free-standing pieces. */
-export const isDungeonFurnishing = (id) => Number.isSafeInteger(id) && id !== LADDER_MODEL_ID
-  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));
+export const isDungeonFurnishing = (id) =>
+  Number.isSafeInteger(id) &&
+  id !== LADDER_MODEL_ID &&
+  ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));
 /** DECOR-OUTDOOR: whether a town block's own model is a street piece - all but a mill (its sails turn), a city's gate,
  *  the town's board (GUILD1e: the hall's own piece) and the ladder. */
-export const isStreetPiece = (id) => Number.isSafeInteger(id) && id > 0 && id !== LADDER_MODEL_ID && id !== WINDMILL_MODEL_ID
-  && id !== BULLETIN_BOARD_MODEL_ID && !isCityGate(id);
+export const isStreetPiece = (id) =>
+  Number.isSafeInteger(id) &&
+  id > 0 &&
+  id !== LADDER_MODEL_ID &&
+  id !== WINDMILL_MODEL_ID &&
+  id !== BULLETIN_BOARD_MODEL_ID &&
+  !isCityGate(id);
 /** DECOR-OUTDOOR: the climates' nature sets (their summer archives - formats/mapsFile.js getWorldClimateSettings) and the
  *  records Daggerfall stands of each: 1 to 31, every one the wilderness lays (terrainNature.js layoutNature's
  *  nextIntRange(1, 32)) and the towns' ground scenery draws from (record 0 is a marker). A piece stores its climate's
@@ -240,7 +377,8 @@ export function collectDecor(dfBlocks, into = new Map()) {
     const key = decorKey(what);
     const had = out.get(key);
     if (!had) out.set(key, { ...what, count: 1, from });
-    else if ((DECOR_FROM[from] ?? 0) < (DECOR_FROM[had.from] ?? 0)) out.set(key, { ...what, count: had.count + 1, from });
+    else if ((DECOR_FROM[from] ?? 0) < (DECOR_FROM[had.from] ?? 0))
+      out.set(key, { ...what, count: had.count + 1, from });
     else had.count++;
   };
   for (const b of dfBlocks ?? []) {
@@ -284,7 +422,14 @@ export function collectDecor(dfBlocks, into = new Map()) {
     const streetFlat = (f) => {
       const a = f?.textureArchive;
       const r = f?.textureRecord;
-      if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || isNatureArchive(a)) return;
+      if (
+        !Number.isSafeInteger(a) ||
+        !Number.isSafeInteger(r) ||
+        r < 0 ||
+        a === EDITOR_FLATS_ARCHIVE ||
+        isNatureArchive(a)
+      )
+        return;
       add({ model: null, flat: [a, r], ...(isNpcFlat(a) ? { person: true } : {}) }, 'street');
     };
     for (const f of rmb?.miscFlatObjectRecords ?? []) streetFlat(f);
@@ -305,7 +450,15 @@ export function collectDecor(dfBlocks, into = new Map()) {
           const fr = obj.resources?.flatResource;
           const a = fr?.textureArchive;
           const r = fr?.textureRecord;
-          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || fr.action > 0 || isNatureArchive(a)) continue;
+          if (
+            !Number.isSafeInteger(a) ||
+            !Number.isSafeInteger(r) ||
+            r < 0 ||
+            a === EDITOR_FLATS_ARCHIVE ||
+            fr.action > 0 ||
+            isNatureArchive(a)
+          )
+            continue;
           add({ model: null, flat: [a, r], ...(isNpcFlat(a) ? { person: true } : {}) }, 'dungeon');
         }
       }
@@ -336,33 +489,61 @@ export function decorCatalogue(collected) {
   for (const [key, c] of collected ?? []) {
     // DECOR-MODS: a mod's piece is filed as what it stands in as (`as` - a coloured bed as its classic bed, a mod's flat as
     // the classic flat it stands in for)
-    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]);   // HOME-VENDOR
+    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR
     // the game files it as nothing more (a bed, a chest, a shelf, a light or a treasure stays one)
     const plain = kind === 'furniture' || kind === 'decor';
     // DECOR-KINDS: then what it is - a dungeon's table is furniture, a street's sunflower a plant (decorWhatKind)
-    const what = plain && c.from !== 'mod' ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] }) : null;
+    const what =
+      plain && c.from !== 'mod'
+        ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] })
+        : null;
     if (what) kind = what;
     // DECOR-DUNGEON: what Daggerfall stands in a dungeon and in no house, and is nothing named, is a dungeon's piece
     else if (c.from === 'dungeon' && plain) kind = 'dungeon';
     // DECOR-OUTDOOR: and what stands in a street and nowhere inside is an outdoor piece - but a light, a crate, a person,
     // as the game files them; the climate's nature is its trees and plants
-    else if ((c.from === 'street' || c.from === 'modstreet') && plain) kind = 'outdoor';   // DECOR-MODS: a mod's street's too
-    else if (c.from === 'mod' && plain) kind = 'mods';   // DECOR-MODS: and a mod's room's is its furnishing
+    else if ((c.from === 'street' || c.from === 'modstreet') && plain)
+      kind = 'outdoor'; // DECOR-MODS: a mod's street's too
+    else if (c.from === 'mod' && plain) kind = 'mods'; // DECOR-MODS: and a mod's room's is its furnishing
     if (c.nature != null) kind = 'nature';
     const light = c.flat ? decorFlatLight(c.flat) : null;
-    const own = c.base ?? (c.model != null   // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)
-      ? (kind === 'storage' ? HOUSE_CONTAINER_NAMES[c.model] : kind === 'bed' ? 'Bed' : IIL_FIREPLACE_MODELS.has(c.model) ? 'Fireplace' : null)   // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were "Furniture 26" and "27"
-      : (kind === 'light' ? LIGHT_NAMES[c.flat[1]] : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));   // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant
+    const own =
+      c.base ??
+      (c.model != null // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)
+        ? kind === 'storage'
+          ? HOUSE_CONTAINER_NAMES[c.model]
+          : kind === 'bed'
+            ? 'Bed'
+            : IIL_FIREPLACE_MODELS.has(c.model)
+              ? 'Fireplace'
+              : null // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were "Furniture 26" and "27"
+        : kind === 'light'
+          ? LIGHT_NAMES[c.flat[1]]
+          : kind === 'nature' && isTreeRecord(c.nature, c.flat[1])
+            ? 'Tree'
+            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant
     // DECOR-OUTDOOR: a street's piece the game files as nothing more may stand in a room too (DECOR-KINDS: whatever it is);
     // the climate's nature is a yard's by its own set (decorRoomEntries)
     const inRoom = !OUTSIDE.has(c.from ?? 'room') || plain;
-    entries.push({ key, model: c.model, flat: c.flat, kind, base: own ?? KIND_ONE[kind], count: c.count, storage: kind === 'storage', light, radius: null, from: c.from ?? 'room', inRoom,
-      ...(c.nature != null ? { nature: c.nature } : {}) });   // DECOR-OUTDOOR: its climate's set
+    entries.push({
+      key,
+      model: c.model,
+      flat: c.flat,
+      kind,
+      base: own ?? KIND_ONE[kind],
+      count: c.count,
+      storage: kind === 'storage',
+      light,
+      radius: null,
+      from: c.from ?? 'room',
+      inRoom,
+      ...(c.nature != null ? { nature: c.nature } : {}),
+    }); // DECOR-OUTDOOR: its climate's set
   }
   // a name shared is numbered, in id order (stable for the same game data)
   const byBase = new Map();
   for (const e of entries) {
-    const group = e.nature != null ? `${e.base}|${e.nature}` : e.base;   // DECOR-OUTDOOR: a climate's trees numbered among its own - a yard sees its set alone
+    const group = e.nature != null ? `${e.base}|${e.nature}` : e.base; // DECOR-OUTDOOR: a climate's trees numbered among its own - a yard sees its set alone
     const list = byBase.get(group) ?? [];
     list.push(e);
     byBase.set(group, list);
@@ -386,16 +567,26 @@ export function decorCatalogue(collected) {
     }
   }
   const kindOrder = Object.keys(DECOR_KINDS);
-  entries.sort((a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind) || b.count - a.count || idOrder(a) - idOrder(b));
-  return entries.map((e) => Object.freeze({
-    key: e.key, model: e.model, flat: e.flat ? Object.freeze([...e.flat]) : null, kind: e.kind, name: e.name,
-    count: e.count, storage: e.storage, light: e.light ? Object.freeze({ ...e.light, color: Object.freeze([...e.light.color]) }) : null,
-    from: e.from,   // DECOR-DUNGEON: where Daggerfall stands it (DECOR_FROM)
-    outside: OUTSIDE.has(e.from),   // DECOR-OUTDOOR: a street's or the climate's - a yard's alone
-    inRoom: e.inRoom,   // DECOR-KINDS: whether a room is offered it - its own, or a street's the game files as nothing more
-    nude: !!e.flat && isNudeFlat(e.flat[0], e.flat[1]),   // NUDE-DECOR (AUDIT 05b A7): asked once here, never a frame
-    ...(e.nature != null ? { nature: e.nature } : {}),   // DECOR-OUTDOOR: the climate's set it is of (its summer archive)
-  }));
+  entries.sort(
+    (a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind) || b.count - a.count || idOrder(a) - idOrder(b),
+  );
+  return entries.map((e) =>
+    Object.freeze({
+      key: e.key,
+      model: e.model,
+      flat: e.flat ? Object.freeze([...e.flat]) : null,
+      kind: e.kind,
+      name: e.name,
+      count: e.count,
+      storage: e.storage,
+      light: e.light ? Object.freeze({ ...e.light, color: Object.freeze([...e.light.color]) }) : null,
+      from: e.from, // DECOR-DUNGEON: where Daggerfall stands it (DECOR_FROM)
+      outside: OUTSIDE.has(e.from), // DECOR-OUTDOOR: a street's or the climate's - a yard's alone
+      inRoom: e.inRoom, // DECOR-KINDS: whether a room is offered it - its own, or a street's the game files as nothing more
+      nude: !!e.flat && isNudeFlat(e.flat[0], e.flat[1]), // NUDE-DECOR (AUDIT 05b A7): asked once here, never a frame
+      ...(e.nature != null ? { nature: e.nature } : {}), // DECOR-OUTDOOR: the climate's set it is of (its summer archive)
+    }),
+  );
 }
 
 /**
@@ -406,8 +597,15 @@ export function decorCatalogue(collected) {
  * (scenes/worldModes.js activateDecor). Priced by its size, as every piece.
  */
 export const HALL_BOARD_ENTRY = Object.freeze({
-  key: `m${BULLETIN_BOARD_MODEL_ID}`, model: BULLETIN_BOARD_MODEL_ID, flat: null, kind: 'furniture', name: 'Notice Board',
-  count: 0, storage: false, light: null, hall: true,
+  key: `m${BULLETIN_BOARD_MODEL_ID}`,
+  model: BULLETIN_BOARD_MODEL_ID,
+  flat: null,
+  kind: 'furniture',
+  name: 'Notice Board',
+  count: 0,
+  storage: false,
+  light: null,
+  hall: true,
 });
 /** The catalogue a room offers: a hall's board in a hall's room alone; HOME-YARD: no door in a yard. NUDE-DECOR: and no
  *  nude figure while Show Nudity is off (`show`, the setting unless told) - one chosen would stand as that figure to
@@ -420,13 +618,18 @@ export const HALL_BOARD_ENTRY = Object.freeze({
  *  turned on was never offered until the game was loaded again. The panel asks every frame: a field read a piece. */
 export function decorRoomEntries(entries, room, show = null, mods = null) {
   const nude = !(show ?? showNudity());
-  return entries?.filter((e) => (!e.hall || (!!room?.hall && !room?.yard))
-    && !(e.guild != null && room?.seat)   // AUDIT GUILD-SHOP R6: a guild's own pieces in its hall, never a palace's Charter Room
-    && !(room?.yard && e.kind === 'door')
-    && !(nude && e.nude)
-    && (!e.outside || !!room?.yard || !!e.inRoom)   // DECOR-KINDS: the street's plain pieces, filed now as what they are
-    && (e.nature == null || e.nature === room?.natureBase)
-    && (!MOD_FROM.has(e.from) || !!mods?.has(e.key))) ?? null;
+  return (
+    entries?.filter(
+      (e) =>
+        (!e.hall || (!!room?.hall && !room?.yard)) &&
+        !(e.guild != null && room?.seat) && // AUDIT GUILD-SHOP R6: a guild's own pieces in its hall, never a palace's Charter Room
+        !(room?.yard && e.kind === 'door') &&
+        !(nude && e.nude) &&
+        (!e.outside || !!room?.yard || !!e.inRoom) && // DECOR-KINDS: the street's plain pieces, filed now as what they are
+        (e.nature == null || e.nature === room?.natureBase) &&
+        (!MOD_FROM.has(e.from) || !!mods?.has(e.key)),
+    ) ?? null
+  );
 }
 
 /** A piece's SIZE band, by its radius in metres - the panel's size filter. */
@@ -447,11 +650,24 @@ export function decorSize(radiusMetres) {
  * @param {{ kinds?: Iterable<string>|null, text?: string, size?: string|null, storage?: boolean|null,
  *   light?: boolean|null, favourite?: Set<string>|null, sort?: string, radiusOf?: (entry: any) => (number|null) }} [opts]
  */
-export function filterDecor(entries, {
-  kinds = null, text = '', size = null, storage = null, light = null, favourite = null, sort = 'common', radiusOf = () => null,
-} = {}) {
+export function filterDecor(
+  entries,
+  {
+    kinds = null,
+    text = '',
+    size = null,
+    storage = null,
+    light = null,
+    favourite = null,
+    sort = 'common',
+    radiusOf = () => null,
+  } = {},
+) {
   const want = kinds && [...kinds].length ? new Set(kinds) : null;
-  const words = String(text ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+  const words = String(text ?? '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
   const out = (entries ?? []).filter((e) => {
     if (want && !want.has(e.kind)) return false;
     if (favourite && !favourite.has(e.key)) return false;

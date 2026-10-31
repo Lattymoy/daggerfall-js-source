@@ -18,8 +18,8 @@ export const ARMORY_SLOT_TEXT = Object.freeze({
 export const ARMORY_LINE_TEXT = Object.freeze({
   dagonfire: () => t('armory.line.dagonfire', 'Dagonfire'),
   eternal: () => t('armory.line.eternal', 'Eternal'),
-  guild: () => t('armory.line.guild', 'Guild'),   // GUILD-SHOP
-  crystal: () => t('armory.line.crystal', 'Crystal'),   // THANKS-POST
+  guild: () => t('armory.line.guild', 'Guild'), // GUILD-SHOP
+  crystal: () => t('armory.line.crystal', 'Crystal'), // THANKS-POST
 });
 /** Each piece's name. */
 export const ARMORY_TEXT = Object.freeze({
@@ -33,34 +33,92 @@ export const ARMORY_TEXT = Object.freeze({
   eternalarmlets: () => t('armory.name.eternalarmlets', 'Eternal Armlets'),
   eternalgreaves: () => t('armory.name.eternalgreaves', 'Eternal Greaves'),
   eternaledge: () => t('armory.name.eternaledge', 'Eternal Edge'),
-  insigniaarmlet: () => t('armory.name.insigniaarmlet', 'Insignia Armlet'),   // GUILD-SHOP
-  crystalspurs: () => t('armory.name.crystalspurs', 'Crystal Spurs'),   // THANKS-POST
+  insigniaarmlet: () => t('armory.name.insigniaarmlet', 'Insignia Armlet'), // GUILD-SHOP
+  crystalspurs: () => t('armory.name.crystalspurs', 'Crystal Spurs'), // THANKS-POST
 });
 /** What each piece looks like, in a sentence or two. */
 export const ARMORY_LOOK = Object.freeze({
-  burningcrown: () => t('armory.look.burningcrown', 'A circlet of molten iron, with horns of flame and a door of white fire at the brow. Embers lift off the points.'),
-  emberheart: () => t('armory.look.emberheart', 'A cracked coal burns in the chest and beats like a heart. Fire runs out along its veins with every beat.'),
-  ashbound: () => t('armory.look.ashbound', 'A chain of glowing iron winds round the arms, from the shoulders to the wrists. Ash falls from it.'),
-  cinderstride: () => t('armory.look.cinderstride', 'Low flames lick up the shins from a ring of coal at each ankle. Each step leaves an ember on the ground that burns out.'),
-  breachbrand: () => t('armory.look.breachbrand', 'Fire runs along the weapon from the grip to the point, and drips from the tip.'),
-  eternalhalo: () => t('armory.look.eternalhalo', 'A band of blue-violet fire turns over the head, runes round it and the Origin\'s spark at its front.'),
-  eternalsigil: () => t('armory.look.eternalsigil', 'The Origin\'s dragon of light circles the spark on the chest, biting its own tail. A slow light runs round it.'),
-  eternalarmlets: () => t('armory.look.eternalarmlets', 'Engraved bands of blue-violet fire circle the upper arms and the wrists. Flames lick up off them.'),
-  eternalgreaves: () => t('armory.look.eternalgreaves', 'Blue-violet fire wraps the legs from the knee to the foot, under a lattice of light. Sparks rise as you walk.'),
-  eternaledge: () => t('armory.look.eternaledge', 'A blade of blue-violet light runs along the weapon\'s edge. Sparks trail from it when you swing.'),
-  insigniaarmlet: () => t('armory.look.insigniaarmlet', 'A gilt band round the left upper arm, enamelled in your guild\'s colors, with its arms on a shield of beaten gold.'),   // GUILD-SHOP
-  crystalspurs: () => t('armory.look.crystalspurs', 'Small spurs of crystal along both arms, each a different size. Their colors shift slowly from amethyst to aqua to rose.'),   // THANKS-POST
+  burningcrown: () =>
+    t(
+      'armory.look.burningcrown',
+      'A circlet of molten iron, with horns of flame and a door of white fire at the brow. Embers lift off the points.',
+    ),
+  emberheart: () =>
+    t(
+      'armory.look.emberheart',
+      'A cracked coal burns in the chest and beats like a heart. Fire runs out along its veins with every beat.',
+    ),
+  ashbound: () =>
+    t(
+      'armory.look.ashbound',
+      'A chain of glowing iron winds round the arms, from the shoulders to the wrists. Ash falls from it.',
+    ),
+  cinderstride: () =>
+    t(
+      'armory.look.cinderstride',
+      'Low flames lick up the shins from a ring of coal at each ankle. Each step leaves an ember on the ground that burns out.',
+    ),
+  breachbrand: () =>
+    t('armory.look.breachbrand', 'Fire runs along the weapon from the grip to the point, and drips from the tip.'),
+  eternalhalo: () =>
+    t(
+      'armory.look.eternalhalo',
+      "A band of blue-violet fire turns over the head, runes round it and the Origin's spark at its front.",
+    ),
+  eternalsigil: () =>
+    t(
+      'armory.look.eternalsigil',
+      "The Origin's dragon of light circles the spark on the chest, biting its own tail. A slow light runs round it.",
+    ),
+  eternalarmlets: () =>
+    t(
+      'armory.look.eternalarmlets',
+      'Engraved bands of blue-violet fire circle the upper arms and the wrists. Flames lick up off them.',
+    ),
+  eternalgreaves: () =>
+    t(
+      'armory.look.eternalgreaves',
+      'Blue-violet fire wraps the legs from the knee to the foot, under a lattice of light. Sparks rise as you walk.',
+    ),
+  eternaledge: () =>
+    t(
+      'armory.look.eternaledge',
+      "A blade of blue-violet light runs along the weapon's edge. Sparks trail from it when you swing.",
+    ),
+  insigniaarmlet: () =>
+    t(
+      'armory.look.insigniaarmlet',
+      "A gilt band round the left upper arm, enamelled in your guild's colors, with its arms on a shield of beaten gold.",
+    ), // GUILD-SHOP
+  crystalspurs: () =>
+    t(
+      'armory.look.crystalspurs',
+      'Small spurs of crystal along both arms, each a different size. Their colors shift slowly from amethyst to aqua to rose.',
+    ), // THANKS-POST
 });
 /** A SET's name and look (the shop's Eternal Set, its five pieces at once). */
 export const ARMORY_SET_TEXT = Object.freeze({ eternalset: () => t('armory.name.eternalset', 'The Eternal Set') });
 export const ARMORY_SET_LOOK = Object.freeze({
-  eternalset: () => t('armory.look.eternalset', 'All five Eternal pieces at once: the Halo, the Sigil, the Armlets, the Greaves and the Edge.'),
+  eternalset: () =>
+    t(
+      'armory.look.eternalset',
+      'All five Eternal pieces at once: the Halo, the Sigil, the Armlets, the Greaves and the Edge.',
+    ),
 });
 /** A piece's name - or a set's - by its key, or the key for one that is neither. */
-export const armoryPieceName = (/** @type {string} */ key) => (ARMORY_TEXT[/** @type {keyof typeof ARMORY_TEXT} */ (key)] ?? ARMORY_SET_TEXT[/** @type {keyof typeof ARMORY_SET_TEXT} */ (key)])?.() ?? key;
+export const armoryPieceName = (/** @type {string} */ key) =>
+  (
+    ARMORY_TEXT[/** @type {keyof typeof ARMORY_TEXT} */ (key)] ??
+    ARMORY_SET_TEXT[/** @type {keyof typeof ARMORY_SET_TEXT} */ (key)]
+  )?.() ?? key;
 /** PROFILE-SLOTS: a line's name by its key. */
-export const armoryLineName = (/** @type {string} */ line) => ARMORY_LINE_TEXT[/** @type {keyof typeof ARMORY_LINE_TEXT} */ (line)]?.() ?? line;
+export const armoryLineName = (/** @type {string} */ line) =>
+  ARMORY_LINE_TEXT[/** @type {keyof typeof ARMORY_LINE_TEXT} */ (line)]?.() ?? line;
 /** A slot's name by its key. */
-export const armorySlotName = (/** @type {string} */ slot) => ARMORY_SLOT_TEXT[/** @type {keyof typeof ARMORY_SLOT_TEXT} */ (slot)]?.() ?? slot;
+export const armorySlotName = (/** @type {string} */ slot) =>
+  ARMORY_SLOT_TEXT[/** @type {keyof typeof ARMORY_SLOT_TEXT} */ (slot)]?.() ?? slot;
 /** A piece's slot's name, or ''. */
-export const armoryPieceSlotName = (/** @type {string} */ key) => { const p = armoryPieceOf(key); return p ? armorySlotName(p.slot) : ''; };
+export const armoryPieceSlotName = (/** @type {string} */ key) => {
+  const p = armoryPieceOf(key);
+  return p ? armorySlotName(p.slot) : '';
+};

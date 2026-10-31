@@ -369,7 +369,7 @@ real relay instance, so the key is a service-side balance and the item is its fa
   restacked (AUDIT EG IV).
 - It is bound to the account, never traded, and never lost to a death.
 - **The face is the pack's alone** (FIELD BUGS 2026-10-19f KEY-FACE). The restack reads the pack and nothing else
-  (`weirKey.js:"  const held = items.filter(isWeirKey);"`), so a face anywhere else is a key it cannot see. The row was
+  (`weirKey.js:"const held = items.filter"`), so a face anywhere else is a key it cannot see. The row was
   bound and not pack-only, and a bound piece goes to the wagon and the player's own storage (`itemBound.js`
   `BOUND_KEEPS`): a face stowed there left the pack showing none, the next answer gave it a new one, and the stowed ones,
   carried back, showed keys the account never held - every one of them rust at the next use (a player's private report:
@@ -2597,7 +2597,7 @@ Losing the whole company still costs the run.
   Unfallen* and a flame on its board row (section 20). AS BUILT (AUDIT COLLECTIONS-II, 2026-10-22,
   `01-Overview/audits/Audit-Collections-II.md` L1-4): the fall counted is the member's own - a Redoubt receipt's `fl`
   is its member's falls (`egBrain.js:"fl: m.falls ?? 0"`) and egHonourBitsOf grants on it
-  (`egHonours.js:"c.fl === 0 && c.ew === 0"`) - so a member who never fell holds the title whoever else in the company fell. The
+  (`egHonours.js:"if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0 && c.ew === 0)"`) - so a member who never fell holds the title whoever else in the company fell. The
   Collections page says what is built; which is meant is the owner's to decide.
 - **The Lone Beacon**: a Court felled by one living member, in a company of four or more, gives that member the title
   *the Lone Beacon* and a herald line (section 20).
@@ -9945,7 +9945,7 @@ ways are proven gap by gap, the running leap is refused and the press is DFU's p
     `parkourDeps` is the rule's reader, and asks no made level itself.
   - THE SWEEP'S PILOT (`tools/egSpanSolve.mjs` `pilotOf`) now crosses with the online page's parkour on in every frame, as
     the game does - it had it on for a riser and a climb alone, so it never met the running leap - with the leap refused as
-    the Spire refuses it (`tools/egSpanSolve.mjs:"const parkour = { enabled: () => true, leap: () => madeLevelRule('spire', 'runLeap') !== 'refused',"`).
+    the Spire refuses it (`tools/egSpanSolve.mjs:"const parkour = {"`).
     At the branch's head, 3 seeds a band (every fix below in): 20, 19, 23 and 21 courses, every one of 83 crossed.
 - **THE COLLAPSING TUBE'S CLOCK IN A ROUTED HALL** (`src/net/eliteGates/egFair.js:"export function egTubeEdgeIn(spec, hw, tm, tMs) {"`;
   section 11.3).

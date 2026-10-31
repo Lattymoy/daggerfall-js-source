@@ -69,8 +69,8 @@
   {
     "name": "MACR3-an-empty-hand-with-no-light-says-the-old-line",
     "file": "src/systems/quickslots.js",
-    "old": "    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
-    "new": "    say?.(QUICKSLOT_TEXT.noLight); if (typeof switchHand !== 'function') { return { kind: 'none' }; }",
+    "old": "    if (typeof switchHand !== 'function') {\n      say?.(QUICKSLOT_TEXT.noLight);",
+    "new": "    say?.(QUICKSLOT_TEXT.noLight);\n    if (typeof switchHand !== 'function') {",
     "tests": [
       "test/ui/enhanced/macr_fixes.test.js"
     ]
@@ -98,7 +98,7 @@
     "name": "MACR3-the-rigs-refusal-reads-as-a-switch",
     "file": "src/systems/quickslots.js",
     "old": "    return switchHand() === true ? { kind: 'hand' } : { kind: 'refused' };",
-    "new": "    switchHand(); return { kind: 'hand' };",
+    "new": "    switchHand();\n    return { kind: 'hand' };",
     "tests": [
       "test/ui/enhanced/macr_fixes.test.js"
     ]

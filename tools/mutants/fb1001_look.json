@@ -29,7 +29,7 @@
   {
     "name": "LOOK-STALE-the-older-answer-believed",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        if (writesTo(id) !== gen) return towns.has(id);",
+    "old": "          if (writesTo(id) !== gen) return towns.has(id);",
     "new": "",
     "tests": [
       "test/net/fb1001_look.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "LOOK-STALE-a-write-never-counted",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    writes.set(id, writesTo(id) + 1);",
-    "new": "",
+    "old": "    writes.set(id, writesTo(id) + 1); // FB1001 LOOK-STALE: an ask already out answers the town from before this",
+    "new": "    // FB1001 LOOK-STALE: an ask already out answers the town from before this",
     "tests": [
       "test/net/fb1001_look.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "LOOK-STALE-the-forced-ask-dropped-behind-the-flight",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return flying;",
     "tests": [
       "test/net/fb1001_look.test.js",
@@ -57,7 +57,7 @@
   {
     "name": "LOOK-STALE-every-forced-ask-chained",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return !force ? flying : afterFlight(id, flying);",
     "tests": [
       "test/net/fb1001_look.test.js",
@@ -85,8 +85,8 @@
   {
     "name": "LOOK-STALE-a-landed-flights-count-kept",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      .finally(() => { asking.delete(id); askedAt.delete(id); forcedFlight.delete(id); });",
-    "new": "      .finally(() => { asking.delete(id); forcedFlight.delete(id); });",
+    "old": "        askedAt.delete(id);\n        forcedFlight.delete(id);",
+    "new": "        forcedFlight.delete(id);",
     "tests": [
       "test/net/fb1001_look.test.js",
       "test/net/homelook.test.js",
@@ -107,7 +107,7 @@
   {
     "name": "FB1001-FORCED-a-write-under-a-forced-flight-unasked",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return !force || forcedFlight.has(id) ? flying : afterFlight(id, flying);",
     "tests": [
       "test/net/fb1001_look.test.js",
@@ -117,7 +117,7 @@
   {
     "name": "FB1001-FORCED-a-plain-flight-answers-a-forced-ask",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return !force || askedAt.get(id) === writesTo(id) ? flying : afterFlight(id, flying);",
     "tests": [
       "test/net/fb1001_look.test.js",
@@ -127,8 +127,8 @@
   {
     "name": "FB1001-FORCED-no-flight-is-marked-forced",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (force) forcedFlight.add(id);\n",
-    "new": "",
+    "old": "    if (force) forcedFlight.add(id);\n    return p;",
+    "new": "    return p;",
     "tests": [
       "test/net/fb1001_look.test.js",
       "test/systems/fb1001_rent.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "FB1001-FORCED-a-landed-flight-stays-forced",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      .finally(() => { asking.delete(id); askedAt.delete(id); forcedFlight.delete(id); });",
-    "new": "      .finally(() => { asking.delete(id); askedAt.delete(id); });",
+    "old": "        forcedFlight.delete(id);\n      });",
+    "new": "      });",
     "tests": [
       "test/net/fb1001_look.test.js",
       "test/systems/fb1001_rent.test.js"

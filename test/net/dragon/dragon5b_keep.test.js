@@ -258,7 +258,7 @@ test('DRAGON5b the saddlebags are held: the judge\'s and the ledger\'s lists and
 test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key go through the keep; the Stable card says where it is; the host wires its pick, race, press, plaque and words (mutants: the row mounts from afar)', () => {
   assert.match(src('src/player/mountRig.js'), /if \(mode === TRANSPORT_MODES\.Dragon && dragonKeepDoor\(\)\) \{ dragonKeepDoor\(\)\.ride\(\); return; \}/);
   assert.match(src('src/player/mountRig.js'), /setDragonMounter\(\(\) => setMode\(TRANSPORT_MODES\.Dragon\)\);/);
-  assert.match(src('src/systems/horse/horseCart.js'), /function handleSummonTransport\(\) \{ const d = dragonKeepDoor\(\); if \(d\?\.summonsFirst\(\)\) \{ d\.call\(\); return; \} say\(summonTransport\(\)\.text\); \}/);
+  assert.match(src('src/systems/horse/horseCart.js'), /function handleSummonTransport\(\) \{\n\s*const d = dragonKeepDoor\(\);\n\s*if \(d\?\.summonsFirst\(\)\) \{\n\s*d\.call\(\);\n\s*return;\n\s*\}\n\s*say\(summonTransport\(\)\.text\);\n\s*\}/);
   assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Ridden }).state, 'Riding');
   assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Waiting, coming: true }).state, 'Coming');
   assert.match(dragonCardWords({ where: DRAGON_WHERE.Waiting, far: 42 }).line, /42 m away/);

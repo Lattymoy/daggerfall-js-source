@@ -2,8 +2,8 @@
   {
     "name": "AUDITLWII2-S1-takes-mark",
     "file": "src/net/patronLaw.js",
-    "old": "\n  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;",
-    "new": "\n  && item.stolen !== true;",
+    "old": "  item[PATRON_COUNTER_MARK] !== true &&\n  item.stolen !== true;",
+    "new": "  item.stolen !== true;",
     "note": "STOLEN-GOODS AUDIT S6 (re-aimed by content): the stolen mark joined the counter's on the line - the mutant drops the counter's alone",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "AUDITLWII2-S1-no-price",
     "file": "src/net/patronLaw.js",
-    "old": "if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return 0;",
-    "new": "if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return Infinity;",
+    "old": "  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return 0;",
+    "new": "  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) return Infinity;",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-online",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!online) return 0;\n  const lot = (items ?? []).filter(",
-    "new": "  const lot = (items ?? []).filter(",
+    "old": "  if (!online) return 0;\n  const lot = (items ?? []).filter((it) => it && typeof it === 'object');",
+    "new": "  const lot = (items ?? []).filter((it) => it && typeof it === 'object');",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-mark",
     "file": "src/systems/tradeModes.js",
-    "old": "    it[PATRON_COUNTER_MARK] = true;\n    if (paid)",
-    "new": "    if (paid)",
+    "old": "    it[PATRON_COUNTER_MARK] = true;\n    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));",
+    "new": "    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDITLWII2-S1-field",
     "file": "src/systems/item/itemFields.js",
-    "old": "  counterBought: bool(),\n",
-    "new": "  counterBought: int(),\n",
+    "old": "  counterBought: bool(),",
+    "new": "  counterBought: int(),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -130,8 +130,8 @@
     "name": "AUDITLWII2-S2-copy",
     "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "    db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,\n      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`).bind(key, claim, nowS),\n",
-    "new": "",
+    "old": "    db\n      .prepare(\n        `INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,\n      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`,\n      )\n      .bind(key, claim, nowS),\n    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
+    "new": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -140,8 +140,8 @@
     "name": "AUDITLWII2-S2-charge",
     "file": "server-account/src/ledger.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the claimant is found contested, no strike; the finding is what the pin reads",
-    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n",
-    "new": "",
+    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n    db",
+    "new": "    db",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "AUDITLWII2-S2-gone",
     "file": "server-account/src/ledger.js",
-    "old": "SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
-    "new": "SET claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
+    "old": "        \"UPDATE item_uids SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2\",",
+    "new": "        \"UPDATE item_uids SET claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2\",",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDITLWII2-S2-unclaimed",
     "file": "server-account/src/ledger.js",
-    "old": "if (!claim) return [db.prepare(\"DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL\").bind(key)];",
-    "new": "if (!claim) return [];",
+    "old": "  if (!claim)\n    return [db.prepare(\"DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL\").bind(key)];",
+    "new": "  if (!claim) return [];",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "AUDITLWII2-S3-shut-marks",
     "file": "server-account/src/cron.js",
-    "old": ".sold : markPatronsShut(ctx))]",
-    "new": ".sold : 0)]",
+    "old": "  [\n    'patrons',\n    async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx)),\n  ],",
+    "new": "  ['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)],",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "AUDITLWII2-S6-faucets",
     "file": "server-account/src/review.js",
-    "old": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };",
-    "new": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands };",
+    "old": "  return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };",
+    "new": "  return { days, config, isDefault: config === BUDGET_DEFAULT, bands };",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDITLWII2-S6-window",
     "file": "server-account/src/review.js",
-    "old": "FROM realm_faucets WHERE hour >= ?1 GROUP BY kind",
-    "new": "FROM realm_faucets WHERE hour >= ?1 - 1000 GROUP BY kind",
+    "old": "    .prepare('SELECT kind, SUM(gold) AS gold, SUM(n) AS n FROM realm_faucets WHERE hour >= ?1 GROUP BY kind')",
+    "new": "    .prepare('SELECT kind, SUM(gold) AS gold, SUM(n) AS n FROM realm_faucets WHERE hour >= ?1 - 1000 GROUP BY kind')",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AUDITLWII2-S6-tool",
     "file": "tools/realmReview.mjs",
-    "old": "  if (!Array.isArray(body?.faucets)) return [];\n  return body.faucets.map(",
-    "new": "  if (!Array.isArray(body?.faucets)) return [];\n  return [].map(",
+    "old": "  return body.faucets.map(",
+    "new": "  return [].map(",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "AUDITLWII2-S9-recipe",
     "file": "src/systems/loot/loot.js",
-    "old": "&& item.potionRecipeKey != null) return potionValue(item.potionRecipeKey, item);",
-    "new": "&& item.potionRecipeKey != null) return itemBaseValue(item);",
+    "old": "    return potionValue(item.potionRecipeKey, item);",
+    "new": "    return itemBaseValue(item);",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDITLWII2-S9-others",
     "file": "src/systems/loot/loot.js",
-    "old": "  return itemBaseValue(item);\n};",
-    "new": "  return 1;\n};",
+    "old": "  return itemBaseValue(item);",
+    "new": "  return 1;",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

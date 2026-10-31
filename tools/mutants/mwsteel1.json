@@ -20,8 +20,8 @@
   {
     "name": "MWSTEEL1-gauntlet-bares-the-forearm",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),",
-    "new": "part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist']),",
+    "old": "        part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),",
+    "new": "        part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist']),",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MWSTEEL1-helm-in-the-head-slot",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
-    "new": "const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif', ['head'])]);",
+    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
+    "new": "  const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MWSTEEL1-hides-dropped",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, add);\n",
-    "new": "",
+    "old": "        for (const h of p.hides ?? [])\n          claim(\n            ARMO_PART.findIndex((r) => r.name === h),\n            prio,\n            null,\n            add,\n          );\n      }",
+    "new": "      }",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MWSTEEL1-styles-ignored",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      const ownParts = ownArmorParts(own, { helmStyle });",
-    "new": "      const ownParts = own.parts;",
+    "old": "      const ownParts = ownArmorParts(own, { helmStyle }); // MW-STEEL1: the style the Steel Helm switch asks for",
+    "new": "      const ownParts = own.parts; // MW-STEEL1: the style the Steel Helm switch asks for",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MWSTEEL1-census-retail-for-steel",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      if (own) { out.push({ kind: 'own', item: aName, material: mName, via: 'armor', own: 'ownArmorModels', index: tmpl, model: ownModelsOf(own).join(' + ') }); continue; }\n",
-    "new": "",
+    "old": "      if (own) {\n        out.push({\n          kind: 'own',\n          item: aName,\n          material: mName,\n          via: 'armor',\n          own: 'ownArmorModels',\n          index: tmpl,\n          model: ownModelsOf(own).join(' + '),\n        });\n        continue;\n      }\n      const hasRow = tmpl in DF_ARMOR_ROWS;",
+    "new": "      const hasRow = tmpl in DF_ARMOR_ROWS;",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MWSTEEL1-strip-takes-shared",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (parents.length && parents.every((p) => gone.has(p))) { gone.add(id); grew = true; }",
-    "new": "      if (parents.length && parents.some((p) => gone.has(p))) { gone.add(id); grew = true; }",
+    "old": "      if (parents.length && parents.every((p) => gone.has(p))) {",
+    "new": "      if (parents.length && parents.some((p) => gone.has(p))) {",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]

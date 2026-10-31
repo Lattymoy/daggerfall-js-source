@@ -94,8 +94,8 @@
   {
     "name": "SEAT-LIVE-bound",
     "file": "src/net/seatLive.js",
-    "old": "now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
-    "new": "now - Math.max(seatHeardAt(a), othersIn) >= FOES_STALE_MS;",
+    "old": "  othersIn != null && Number.isFinite(othersIn) && now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
+    "new": "  othersIn != null && Number.isFinite(othersIn) && now - Math.max(seatHeardAt(a), othersIn) >= FOES_STALE_MS;",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "SEAT-LIVE-not-owed",
     "file": "src/net/seatLive.js",
-    "old": "now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
-    "new": "now - seatHeardAt(a) > FOES_STALE_MS;",
+    "old": "  othersIn != null && Number.isFinite(othersIn) && now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
+    "new": "  othersIn != null && Number.isFinite(othersIn) && now - seatHeardAt(a) > FOES_STALE_MS;",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "SEAT-LIVE-every-room",
     "file": "src/net/seatLive.js",
-    "old": "isWorldRoom(key) && String(key).startsWith('dungeon:');",
-    "new": "isWorldRoom(key);",
+    "old": "export const seatStreams = (/** @type {any} */ key) => isWorldRoom(key) && String(key).startsWith('dungeon:');",
+    "new": "export const seatStreams = (/** @type {any} */ key) => isWorldRoom(key);",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "SEAT-LIVE-ask-every-frame",
     "file": "src/net/seatLive.js",
-    "old": "s.now - s.askedAt >= FOES_FULL_MS",
-    "new": "s.now - s.askedAt >= 0",
+    "old": "  !!(\n    s.streams &&\n    s.ok &&\n    s.open &&\n    s.host &&\n    !s.mine &&\n    s.now - s.heardAt >= FOES_STALE_MS &&\n    s.now - s.askedAt >= FOES_FULL_MS\n  );",
+    "new": "  !!(s.streams && s.ok && s.open && s.host && !s.mine && s.now - s.heardAt >= FOES_STALE_MS && s.now - s.askedAt >= 0);",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "SEAT-LIVE-gap-unread",
     "file": "src/net/seatLive.js",
-    "old": "if (frameAt != null && now - frameAt >= staleMs) heardAt = Math.max(heardAt, now);",
-    "new": "",
+    "old": "      if (frameAt != null && now - frameAt >= staleMs) heardAt = Math.max(heardAt, now);\n      frameAt = now;",
+    "new": "      frameAt = now;",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "SEAT-LIVE-gap-bound",
     "file": "src/net/seatLive.js",
-    "old": "if (frameAt != null && now - frameAt >= staleMs)",
-    "new": "if (frameAt != null && now - frameAt > staleMs)",
+    "old": "      if (frameAt != null && now - frameAt >= staleMs) heardAt = Math.max(heardAt, now);",
+    "new": "      if (frameAt != null && now - frameAt > staleMs) heardAt = Math.max(heardAt, now);",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],
@@ -217,8 +217,8 @@
   {
     "name": "SEAT-LIVE-foes-unheard",
     "file": "src/net/seatLive.js",
-    "old": " || message.startsWith(FOES_PREFIX) ||",
-    "new": " ||",
+    "old": "    message.startsWith(FOES_PREFIX) ||\n    message.startsWith(OWN_PREFIX) ||",
+    "new": "    message.startsWith(OWN_PREFIX) ||",
     "tests": [
       "test/net/fb1018d_seatlive.test.js",
       "test/scenes/fb1018d_seatloop.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "SEAT-LIVE-own-lane-unheard",
     "file": "src/net/seatLive.js",
-    "old": " || message.startsWith(OWN_PREFIX) ||",
-    "new": " ||",
+    "old": "    message.startsWith(OWN_PREFIX) ||\n    message.startsWith(WORLD_PREFIX));",
+    "new": "    message.startsWith(WORLD_PREFIX));",
     "tests": [
       "test/net/fb1018d_seatlive.test.js",
       "test/scenes/fb1018d_seatloop.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "SEAT-LIVE-any-frame-heard",
     "file": "src/net/seatLive.js",
-    "old": "export const seatTraffic = (/** @type {any} */ message) => typeof message === 'string'\n  && (",
-    "new": "export const seatTraffic = (/** @type {any} */ message) => typeof message === 'string'\n  || (",
+    "old": "  typeof message === 'string' &&\n  (message.startsWith(HELLO_PREFIX) ||\n    message.startsWith(POSE_PREFIX) ||\n    message.startsWith(FOES_PREFIX) ||\n    message.startsWith(OWN_PREFIX) ||\n    message.startsWith(WORLD_PREFIX));",
+    "new": "  typeof message === 'string' ||\n  message.startsWith(HELLO_PREFIX) ||\n  message.startsWith(POSE_PREFIX) ||\n  message.startsWith(FOES_PREFIX) ||\n  message.startsWith(OWN_PREFIX) ||\n  message.startsWith(WORLD_PREFIX);",
     "tests": [
       "test/net/fb1018d_seatlive.test.js",
       "test/scenes/fb1018d_seatloop.test.js"
@@ -305,8 +305,8 @@
   {
     "name": "SEAT-LIVE-ask-every-room",
     "file": "src/net/seatLive.js",
-    "old": "  !!(s.streams && s.ok && s.open",
-    "new": "  !!(s.ok && s.open",
+    "old": ") =>\n  !!(\n    s.streams &&\n    s.ok &&\n    s.open &&\n    s.host &&\n    !s.mine &&\n    s.now - s.heardAt >= FOES_STALE_MS &&\n    s.now - s.askedAt >= FOES_FULL_MS\n  );",
+    "new": ") => !!(s.ok && s.open && s.host && !s.mine && s.now - s.heardAt >= FOES_STALE_MS && s.now - s.askedAt >= FOES_FULL_MS);",
     "tests": [
       "test/net/fb1018d_seatlive.test.js",
       "test/scenes/fb1018d_seatloop.test.js"

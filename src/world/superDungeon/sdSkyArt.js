@@ -13,13 +13,17 @@ export const SD_SKY_SIGN_GRID = 11;
 /** The strip: the six signs side by side, SD_SKY_SIGN_GRID square each - R8, 255 where a sign fills its cell, 128 where it
  *  half-fills (an eye, a sail's shadow), 0 elsewhere. */
 export function sdSkySigns() {
-  const N = SD_SKY_SIGN_GRID, W = N * SD_SIGNS.length, data = new Uint8Array(W * N);
+  const N = SD_SKY_SIGN_GRID,
+    W = N * SD_SIGNS.length,
+    data = new Uint8Array(W * N);
   SD_SIGNS.forEach((sign, i) => {
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      const u = ((x + 0.5) / N) * 2 - 1, v = 1 - ((y + 0.5) / N) * 2;   // v up, as the stones paint it
-      const m = sign(u / 0.9, v / 0.9);
-      data[y * W + i * N + x] = m >= 1 ? 255 : m > 0 ? 128 : 0;
-    }
+    for (let y = 0; y < N; y++)
+      for (let x = 0; x < N; x++) {
+        const u = ((x + 0.5) / N) * 2 - 1,
+          v = 1 - ((y + 0.5) / N) * 2; // v up, as the stones paint it
+        const m = sign(u / 0.9, v / 0.9);
+        data[y * W + i * N + x] = m >= 1 ? 255 : m > 0 ? 128 : 0;
+      }
   });
   return { width: W, height: N, data };
 }
@@ -32,7 +36,20 @@ export const SD_GLYPHS = Object.freeze({
   X: Object.freeze({ w: 5, rows: Object.freeze([17, 17, 10, 4, 10, 17, 17]) }),
 });
 /** The twelve hours as written, XII first (the hour at the top). */
-export const SD_HOUR_NUMERALS = Object.freeze(['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']);
+export const SD_HOUR_NUMERALS = Object.freeze([
+  'XII',
+  'I',
+  'II',
+  'III',
+  'IV',
+  'V',
+  'VI',
+  'VII',
+  'VIII',
+  'IX',
+  'X',
+  'XI',
+]);
 /** A numeral's width in cells - its glyphs and a cell between each. */
 export const numeralWidth = (s) => [...s].reduce((n, ch) => n + SD_GLYPHS[ch].w, 0) + s.length - 1;
 /** Whether cell (cx, cy) of numeral `s` is lit - cx from its left edge, cy from its top row (0..6). Pure; the paint's

@@ -39,22 +39,31 @@ export const WATCH_WAIT = 600;
 export function watchStep(turned, guards, { resolve = () => null, localOf = (_town, feet) => feet } = {}) {
   for (const g of guards) {
     if (!g?.livingFrom || g.livingFollowed) continue;
-    g.livingFollowed = true;   // followed once, whatever its end - a body lying in the list is never a second deed
+    g.livingFollowed = true; // followed once, whatever its end - a body lying in the list is never a second deed
     const from = g.livingFrom;
     turned.push({ guard: g, from, res: from.res ?? null, town: from.town ?? null, lent: false, waited: 0 });
   }
   for (let i = turned.length - 1; i >= 0; i--) {
     const w = turned[i];
-    if (!w.res || !w.town) { const got = resolve(w.from.id); if (got) { w.res = got.res; w.town = got.town; } }
-    if (!w.lent && w.res && w.town) { w.town.lend(w.res); w.lent = true; }
+    if (!w.res || !w.town) {
+      const got = resolve(w.from.id);
+      if (got) {
+        w.res = got.res;
+        w.town = got.town;
+      }
+    }
+    if (!w.lent && w.res && w.town) {
+      w.town.lend(w.res);
+      w.lent = true;
+    }
     const g = w.guard;
     const ended = !!g.dead || !guards.includes(g);
     if (!ended) {
-      if (!w.lent && ++w.waited > WATCH_WAIT) turned.splice(i, 1);   // a load's guard whose resident is never found: let be
+      if (!w.lent && ++w.waited > WATCH_WAIT) turned.splice(i, 1); // a load's guard whose resident is never found: let be
       continue;
     }
     turned.splice(i, 1);
-    if (!w.lent) continue;   // nobody was lent to it
+    if (!w.lent) continue; // nobody was lent to it
     if (g.dead && g.corpse && w.res.guard) {
       const person = { living: { id: w.res.id, res: w.res, town: w.town }, pos: localOf(w.town, g.ai?.feet ?? null) };
       if (g.killedBy === 'player') w.town.slain(person);

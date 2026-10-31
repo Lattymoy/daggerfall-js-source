@@ -12,8 +12,8 @@
   {
     "name": "EL-DISTANCE-the-far-ring-blends-the-fog-in-linear-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
-    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze",
+    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));   // BANTHA1: and the jungle's haze",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "EL-DISTANCE-the-lanterns-glow-in-the-fog-is-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n",
-    "new": "",
+    "old": "    if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n  }",
+    "new": "    }",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "EL-DISTANCE-the-glow-is-added-in-display-space",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
-    "new": "  col += glow;",
+    "old": "    if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
+    "new": "    col += glow;",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"

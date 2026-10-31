@@ -68,8 +68,8 @@
   {
     "name": "AUDIT29-A17-motherlode-sense-chosen",
     "file": "src/net/professionLaw.js",
-    "old": "(s) => s.id === specId && !s.later)",
-    "new": "(s) => s.id === specId)",
+    "old": "  !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId && !s.later);",
+    "new": "  !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId);",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js",
@@ -409,8 +409,8 @@
   {
     "name": "AUDIT29-C9-the-basket-mashed",
     "file": "src/systems/herbAct.js",
-    "old": "          if (!gentle && attack && st.find < BASKET_ACT.finds) st.early = true;\n",
-    "new": "",
+    "old": "          if (!gentle && attack && st.find < BASKET_ACT.finds) st.early = true;\n          st.gap -= step;",
+    "new": "          st.gap -= step;",
     "tests": [
       "test/scenes/audit29_host.test.js"
     ]
@@ -454,7 +454,7 @@
   },
   {
     "name": "AUDIT29-B3-the-fee-skipped-on-repeat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "new": "          if (f.fee > 0 && !r.data?.repeat) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "tests": [

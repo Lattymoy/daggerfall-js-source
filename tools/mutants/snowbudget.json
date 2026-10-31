@@ -2,8 +2,8 @@
   {
     "name": "SB-the-deadline-only-between-steps",
     "file": "src/systems/weather/snowpack.js",
-    "old": "      if (k > 0 && now() >= deadline) { this._partial = `${spin ? 's' : 'm'}${t0}`; return false; }   // SNOW-BUDGET: the rest the next call's\n",
-    "new": "",
+    "old": "      if (k > 0 && now() >= deadline) {\n        this._partial = `${spin ? 's' : 'm'}${t0}`;\n        return false;\n      } // SNOW-BUDGET: the rest the next call's\n      const pt = due[k];",
+    "new": "      const pt = due[k];",
     "tests": [
       "test/systems/weather/snowbudget.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SB-the-next-frame-no-budget",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "    if (w - spendFrom >= SNOW_COVER.frameMs) { spendFrom = w; spent = 0; }",
-    "new": "    if (spendFrom === -Infinity) { spendFrom = w; spent = 0; }",
+    "old": "    if (w - spendFrom >= SNOW_COVER.frameMs) {",
+    "new": "    if (spendFrom === -Infinity) {",
     "tests": [
       "test/systems/weather/snowbudget.test.js"
     ]

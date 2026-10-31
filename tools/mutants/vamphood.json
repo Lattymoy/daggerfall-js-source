@@ -86,8 +86,8 @@
   {
     "name": "VAMPHOOD-the-robes-drawn-wrong",
     "file": "src/systems/survival/temperature.js",
-    "old": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 1) hood = true;",
-    "new": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 0) hood = true;",
+    "old": "  if (!hood && chest && HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 1) hood = true;",
+    "new": "  if (!hood && chest && HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 0) hood = true;",
     "tests": [
       "test/systems/fb0929_vampirehood.test.js"
     ]

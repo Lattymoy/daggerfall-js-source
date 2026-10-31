@@ -47,9 +47,9 @@ import { isShop, isRepairShop } from '../systems/shopStock.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShelved } from '../systems/quest/quest.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { createGuildForGroup } from '../systems/guild/guildVariants.js';   // L3: the guild openGuildService opens
-import { arenaGatePersonOf } from '../world/arena/arenaCity.js';   // L5: the arena's gate officers
-import { ACTION_FLAGS } from '../world/rdbLayout.js';   // L4: a ShowText action's person is the action's
+import { createGuildForGroup } from '../systems/guild/guildVariants.js'; // L3: the guild openGuildService opens
+import { arenaGatePersonOf } from '../world/arena/arenaCity.js'; // L5: the arena's gate officers
+import { ACTION_FLAGS } from '../world/rdbLayout.js'; // L4: a ShowText action's person is the action's
 
 /** How far from the eye a mark stands (metres) - the people lane's Near range (characters/npcBodies.js NPC_BODY_TIERS). */
 export const NPC_MARKS_REACH = 30;
@@ -72,18 +72,21 @@ export const npcMarksOn = () => getPref('npcMarks') !== false;
  */
 export function staticNpcRouteIn({ npcFactionId, dict, building = null }) {
   const buildingFactionId = building?.factionId ?? 0;
-  return staticNpcRoute(/** @type {any} */ ({   // its defaults type its doors `() => false`
-    npcFactionId,
-    npcFaction: dict?.get(npcFactionId) ?? null,
-    buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,
-    buildingType: building?.buildingType ?? -1,
-    insideBuilding: !!building,
-    isShop,
-    isRepairShop,
-    isBank: (t) => t === BUILDING_TYPES.Bank,
-    isTavern: (t) => t === BUILDING_TYPES.Tavern,
-    hasCustomMerchantService,   // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)
-  }));
+  return staticNpcRoute(
+    /** @type {any} */ ({
+      // its defaults type its doors `() => false`
+      npcFactionId,
+      npcFaction: dict?.get(npcFactionId) ?? null,
+      buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,
+      buildingType: building?.buildingType ?? -1,
+      insideBuilding: !!building,
+      isShop,
+      isRepairShop,
+      isBank: (t) => t === BUILDING_TYPES.Bank,
+      isTavern: (t) => t === BUILDING_TYPES.Tavern,
+      hasCustomMerchantService, // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)
+    }),
+  );
 }
 
 /** The mark a route earns: a merchant's coin, a guild's or the coven's gem, none for talk. A guild-service route marks
@@ -92,7 +95,8 @@ export function staticNpcRouteIn({ npcFactionId, dict, building = null }) {
  *  response."). @param {any} route @param {any} [dict] */
 export function routeMark(route, dict = null) {
   if (route?.kind === 'merchant') return 'merchant';
-  if (route?.kind === 'guildService') return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;
+  if (route?.kind === 'guildService')
+    return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;
   if (route?.kind === 'witchesCoven') return 'service';
   return null;
 }
@@ -100,7 +104,9 @@ export function routeMark(route, dict = null) {
 /** L5: the arena's officers, whose press opens their own window before any route (worldModes.js activateStaticNpc). */
 const ARENA_OFFICES = new Set(['herald', 'redRecruiter', 'blueRecruiter', 'bookmaker', 'pitMaster', 'hallKeeper']);
 /** Whether this person holds an arena office. @param {any} holder */
-export const arenaOfficer = (holder) => ARENA_OFFICES.has(holder?.arenaRole) || (holder?.position != null && ARENA_OFFICES.has(arenaGatePersonOf(holder)?.role));
+export const arenaOfficer = (holder) =>
+  ARENA_OFFICES.has(holder?.arenaRole) ||
+  (holder?.position != null && ARENA_OFFICES.has(arenaGatePersonOf(holder)?.role));
 
 /** L4: whether the click can reach this person at all - dungeonContext.js npcTargets' law: a person with no width takes
  *  no ray, and one riding a ShowText action is the action's. A record that carries no width (a quest's stand) is not
@@ -130,16 +136,19 @@ export function markKindOf(holder, ctx) {
   if (!holder || holder.active === false || holder.dead || !clickable(holder)) return null;
   if (arenaOfficer(holder)) return 'service';
   if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';
-  if (holder.factionID == null) return null;   // a quest's stand carries no faction of its own: it is the quest's or no one's
+  if (holder.factionID == null) return null; // a quest's stand carries no faction of its own: it is the quest's or no one's
   const custom = hasCustomMerchantService(holder.factionID);
   if (holder._mwMarkRoute === undefined || holder._mwMarkCustom !== custom) {
     const dict = ctx?.dict ?? null;
-    if (!dict?.get(holder.factionID)) return null;   // L1: never before the faction's row is in - asked again, nothing kept
-    holder._mwMarkRoute = routeMark(staticNpcRouteIn({ npcFactionId: holder.factionID, dict, building: ctx?.building ?? null }), dict);
+    if (!dict?.get(holder.factionID)) return null; // L1: never before the faction's row is in - asked again, nothing kept
+    holder._mwMarkRoute = routeMark(
+      staticNpcRouteIn({ npcFactionId: holder.factionID, dict, building: ctx?.building ?? null }),
+      dict,
+    );
     holder._mwMarkCustom = custom;
   }
   if (holder._mwMarkRoute) return holder._mwMarkRoute;
-  return ctx?.offersWork?.(holder) ? 'quest' : null;   // L2: the talk arm's first door
+  return ctx?.offersWork?.(holder) ? 'quest' : null; // L2: the talk arm's first door
 }
 
 /** A small stable phase for a holder's bob (0..1), off its lane id - so a room's marks do not rise as one. */
@@ -151,9 +160,17 @@ const phaseOf = (id) => {
 };
 
 const reducedMotionReader = () => {
-  let at = -Infinity, reduced = false;
+  let at = -Infinity,
+    reduced = false;
   return (nowS) => {
-    if (nowS - at > 1) { at = nowS; try { reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { reduced = false; } }
+    if (nowS - at > 1) {
+      at = nowS;
+      try {
+        reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      } catch {
+        reduced = false;
+      }
+    }
     return reduced;
   };
 };
@@ -165,7 +182,12 @@ const takePass = (gl, build) => {
   let e = SHARED.get(gl);
   if (!e) {
     let pass = null;
-    try { pass = build(gl); } catch (err) { console.warn('[npc-marks] the pass would not build', /** @type {any} */ (err)?.message ?? err); pass = null; }
+    try {
+      pass = build(gl);
+    } catch (err) {
+      console.warn('[npc-marks] the pass would not build', /** @type {any} */ (err)?.message ?? err);
+      pass = null;
+    }
     SHARED.set(gl, (e = { pass, users: 0 }));
   }
   e.users++;
@@ -194,22 +216,35 @@ export function createNpcMarks(gl, { build = (g) => new NpcMarkRenderer(g), redu
   const marks = Array.from({ length: NPC_MARKS_MAX }, () => ({ at: [0, 0, 0], kind: 'quest', alpha: 0, d: 0 }));
   let shown = 0;
   /** The candidates let go - after each draw, so a room left behind is held by no pool. */
-  const release = () => { for (let i = 0; i < n; i++) holders[i] = null; n = 0; };
+  const release = () => {
+    for (let i = 0; i < n; i++) holders[i] = null;
+    n = 0;
+  };
   return {
     /** A frame begins: any candidates not drawn let go. */
-    begin() { release(); },
+    begin() {
+      release();
+    },
     /** One person the host offers the people lane. @param {any} holder @param {{ dict: any, building?: any }} ctx */
     consider(holder, ctx) {
       if (!pass || n >= NPC_MARKS_CANDIDATES || !npcMarksOn()) return;
       const kind = markKindOf(holder, ctx);
       if (!kind) return;
-      holders[n] = holder; kinds[n] = kind; n++;
+      holders[n] = holder;
+      kinds[n] = kind;
+      n++;
     },
     /** Each of a list. @param {Iterable<any> | null | undefined} list @param {{ dict: any, building?: any }} ctx */
-    considerAll(list, ctx) { if (list && pass && npcMarksOn()) for (const h of list) this.consider(h, ctx); },
+    considerAll(list, ctx) {
+      if (list && pass && npcMarksOn()) for (const h of list) this.consider(h, ctx);
+    },
     /** A frame's people in one call: `begin`, then each of `people` and of `stands` (a host's quest stands).
      *  @param {{ dict: any, building?: any }} ctx @param {Iterable<any> | null | undefined} people @param {Iterable<any> | null} [stands] */
-    gather(ctx, people, stands = null) { this.begin(); this.considerAll(people, ctx); this.considerAll(stands, ctx); },
+    gather(ctx, people, stands = null) {
+      this.begin();
+      this.considerAll(people, ctx);
+      this.considerAll(stands, ctx);
+    },
     /**
      * The marks over the bodies `lane` stands (a population lane: `heightOf(id)`), nearest first - after the host's
      * billboards. Answers whether it drew one (the host marks its foreign pass when it did).
@@ -218,23 +253,34 @@ export function createNpcMarks(gl, { build = (g) => new NpcMarkRenderer(g), redu
      */
     draw(proj, view, eye, lane, seconds) {
       shown = 0;
-      if (!pass || !n || !lane?.heightOf || !npcMarksOn()) { release(); return false; }
+      if (!pass || !n || !lane?.heightOf || !npcMarksOn()) {
+        release();
+        return false;
+      }
       const still = reduced(seconds);
       for (let i = 0; i < n; i++) {
-        const h = holders[i], id = h._mwActor?.id, feet = h._mwFeet;
+        const h = holders[i],
+          id = h._mwActor?.id,
+          feet = h._mwFeet;
         if (id == null || !feet) continue;
         const height = lane.heightOf(id);
-        if (!(height > 0)) continue;   // no body stands for them: their own picture is their mark
+        if (!(height > 0)) continue; // no body stands for them: their own picture is their mark
         const d = Math.hypot(feet[0] - eye[0], feet[1] + height - eye[1], feet[2] - eye[2]);
         if (!(d <= NPC_MARKS_REACH)) continue;
         // the nearest NPC_MARKS_MAX, kept sorted as they come: a free slot, or the farthest kept's, taken and moved in
         if (shown === NPC_MARKS_MAX && marks[shown - 1].d <= d) continue;
         let at = shown < NPC_MARKS_MAX ? shown++ : NPC_MARKS_MAX - 1;
         const m = marks[at];
-        while (at > 0 && marks[at - 1].d > d) { marks[at] = marks[at - 1]; at--; }
+        while (at > 0 && marks[at - 1].d > d) {
+          marks[at] = marks[at - 1];
+          at--;
+        }
         marks[at] = m;
-        m.d = d; m.kind = kinds[i];
-        m.at[0] = feet[0]; m.at[1] = feet[1] + height + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still); m.at[2] = feet[2];
+        m.d = d;
+        m.kind = kinds[i];
+        m.at[0] = feet[0];
+        m.at[1] = feet[1] + height + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still);
+        m.at[2] = feet[2];
         const fadeFrom = NPC_MARKS_REACH * (1 - NPC_MARKS_FADE);
         m.alpha = d <= fadeFrom ? 1 : Math.max(0, (NPC_MARKS_REACH - d) / (NPC_MARKS_REACH - fadeFrom));
       }
@@ -244,9 +290,15 @@ export function createNpcMarks(gl, { build = (g) => new NpcMarkRenderer(g), redu
       return pass.drawn > 0;
     },
     /** The marks the last draw stood, nearest first (for the tests). */
-    shown() { return marks.slice(0, shown).map(({ at, kind, alpha }) => ({ at: [...at], kind, alpha })); },
+    shown() {
+      return marks.slice(0, shown).map(({ at, kind, alpha }) => ({ at: [...at], kind, alpha }));
+    },
     /** EVERY ALLOCATION HAS AN OWNER: this host lets go of the shared pass (the last to go frees it) and its people. A
      *  host's life is its page today (the title menu reloads it - scenes/shared.js), as the loot lines' is. */
-    dispose() { release(); if (pass && gl) letPassGo(gl); pass = null; },
+    dispose() {
+      release();
+      if (pass && gl) letPassGo(gl);
+      pass = null;
+    },
   };
 }

@@ -12,8 +12,17 @@
 // one opens the gems the pack holds, a set one asks first and shatters its gem. The facts and the presses are
 // systems/loot/lootRarity.js's and systems/reforge.js's; this file draws them, and owns its sheet (one style tag, both
 // skins), so no other dress has to know a socket exists.
-import { socketsOf, gemLine, affixLabel, GEM_NAMES, SOCKET_EMPTY, gemGrade, gemKindOf, lootRarityOn } from '../systems/loot/lootRarity.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import {
+  socketsOf,
+  gemLine,
+  affixLabel,
+  GEM_NAMES,
+  SOCKET_EMPTY,
+  gemGrade,
+  gemKindOf,
+  lootRarityOn,
+} from '../systems/loot/lootRarity.js';
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -24,9 +33,17 @@ const el = (tag, cls = null, text = null) => {
 };
 
 /** Each grade's ring - the poorer greys, DFU's own plain stone in bone, the two the port adds above it in ice and gold. */
-export const GEM_GRADE_COLOURS = Object.freeze({ chipped: '#7d776c', flawed: '#b3ab98', plain: '#e9e4d9', flawless: '#7fe0ff', perfect: '#ffd24a' });
+export const GEM_GRADE_COLOURS = Object.freeze({
+  chipped: '#7d776c',
+  flawed: '#b3ab98',
+  plain: '#e9e4d9',
+  flawless: '#7fe0ff',
+  perfect: '#ffd24a',
+});
 export const SOCKET_WELLS_STYLE_ID = 'gem-socket-wells';
-const gradeRules = Object.entries(GEM_GRADE_COLOURS).map(([g, c]) => `[data-gem-grade="${g}"] { --gem-ring: ${c}; }`).join('\n');
+const gradeRules = Object.entries(GEM_GRADE_COLOURS)
+  .map(([g, c]) => `[data-gem-grade="${g}"] { --gem-ring: ${c}; }`)
+  .join('\n');
 export const SOCKET_WELLS_CSS = `/* GEM3: the card's wells, the chooser, and the tile's pips (ui/socketWells.js) */
 ${gradeRules}
 .sock-wells { display: flex; justify-content: center; gap: 8px; margin: 6px 0 8px; }
@@ -87,7 +104,10 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
   row.setAttribute('role', 'group');
   row.setAttribute('aria-label', list.length === 1 ? 'Socket' : `${list.length} sockets`);
   list.forEach((v, at) => {
-    const w = el(onWell ? 'button' : 'span', `sock-well${v === SOCKET_EMPTY ? ' empty' : ' set'}${onWell ? ' press' : ''}`);
+    const w = el(
+      onWell ? 'button' : 'span',
+      `sock-well${v === SOCKET_EMPTY ? ' empty' : ' set'}${onWell ? ' press' : ''}`,
+    );
     w.dataset.socket = String(at);
     if (v !== SOCKET_EMPTY) {
       w.dataset.gem = v;
@@ -95,14 +115,18 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
       const pic = picture?.(v) ?? null;
       if (pic) w.append(pic);
     }
-    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)}. Click again to shatter it` : wellText(item, v);
+    const said =
+      asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)}. Click again to shatter it` : wellText(item, v);
     w.setAttribute('title', said);
     w.setAttribute('aria-label', said);
     if (asking === at && v !== SOCKET_EMPTY) w.dataset.asking = '';
     if (open === at && v === SOCKET_EMPTY) w.dataset.open = '';
     if (onWell) {
       w.setAttribute('type', 'button');
-      w.onclick = (e) => { e?.stopPropagation?.(); onWell(at, v); };
+      w.onclick = (e) => {
+        e?.stopPropagation?.();
+        onWell(at, v);
+      };
     }
     row.append(w);
   });
@@ -115,9 +139,14 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
  * @param {any} item @param {{ id: string, count: number }[]} choices @param {(id: string) => void} onPick
  */
 export function socketChooser(item, choices, onPick) {
-  noteFirstUse('gem-sockets');   // TUT1
+  noteFirstUse('gem-sockets'); // TUT1
   ensureStyle(globalThis.document);
-  if (!choices.length) return el('p', 'sock-none', 'No gem in your pack to set. Any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber will do.');
+  if (!choices.length)
+    return el(
+      'p',
+      'sock-none',
+      'No gem in your pack to set. Any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber will do.',
+    );
   const ul = el('ul', 'sock-choose');
   for (const { id, count } of choices) {
     const li = el('li');
@@ -126,9 +155,15 @@ export function socketChooser(item, choices, onPick) {
     b.dataset.gem = id;
     b.dataset.gemGrade = /** @type {string} */ (gemGrade(id));
     const line = gemLine(item, id);
-    b.append(el('span', 'sock-gem', `${GEM_NAMES[id]}${count > 1 ? ` (${count})` : ''}`), el('span', null, line ? affixLabel(/** @type {any} */ (line)) : ''));
+    b.append(
+      el('span', 'sock-gem', `${GEM_NAMES[id]}${count > 1 ? ` (${count})` : ''}`),
+      el('span', null, line ? affixLabel(/** @type {any} */ (line)) : ''),
+    );
     b.setAttribute('aria-label', `Set the ${GEM_NAMES[id]}: ${line ? affixLabel(/** @type {any} */ (line)) : ''}`);
-    b.onclick = (e) => { e?.stopPropagation?.(); onPick(id); };
+    b.onclick = (e) => {
+      e?.stopPropagation?.();
+      onPick(id);
+    };
     li.append(b);
     ul.append(li);
   }
@@ -141,7 +176,11 @@ export function socketChooser(item, choices, onPick) {
 export function markSocketFrame(node, item) {
   if (!node || !lootRarityOn()) return node;
   const gem = gemKindOf(item);
-  if (gem) { node.dataset.gemGrade = /** @type {string} */ (gemGrade(gem)); ensureStyle(globalThis.document); return node; }
+  if (gem) {
+    node.dataset.gemGrade = /** @type {string} */ (gemGrade(gem));
+    ensureStyle(globalThis.document);
+    return node;
+  }
   const list = socketsOf(item);
   if (!list.length) return node;
   ensureStyle(globalThis.document);

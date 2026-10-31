@@ -36,7 +36,9 @@ export const HOME_LOOK_BUILD_WAIT_MS = 1_500;
 export const HOME_LOOK_ROOFS = 69;
 export const HOME_LOOK_DOORS = 74;
 /** The building sets a wall face is read from - each family IsExteriorWindow names, and its winter one. */
-export const HOME_LOOK_WALL_FAMILIES = Object.freeze(new Set([9, 10, 12, 13, 14, 15, 26, 27, 35, 36, 38, 39, 42, 43, 58, 59, 61, 62, 64, 65]));
+export const HOME_LOOK_WALL_FAMILIES = Object.freeze(
+  new Set([9, 10, 12, 13, 14, 15, 26, 27, 35, 36, 38, 39, 42, 43, 58, 59, 61, 62, 64, 65]),
+);
 
 /** The climate bases a family's archives stand at (world/climateSwaps.js BASE). */
 const HOME_LOOK_BASES = new Set(/** @type {number[]} */ (Object.values(HOME_LOOK_CLIMATES)));
@@ -92,9 +94,13 @@ export async function homeLookRemap(subMeshes, base, look, season, { getTexture,
     const t = want ? homeLookTarget(sm.textureArchive, sm.textureRecord, want, season) : null;
     if (t) {
       let tex = null;
-      try { tex = await getTexture(t[0]); } catch { tex = null; }
+      try {
+        tex = await getTexture(t[0]);
+      } catch {
+        tex = null;
+      }
       if (tex && t[1] < tex.recordCount) {
-        uploadRecord(t[0], t[1], { opaque: true });   // a mesh material, as the climate swap uploads it (texRemap.js)
+        uploadRecord(t[0], t[1], { opaque: true }); // a mesh material, as the climate swap uploads it (texRemap.js)
         out.set(key, `${t[0]}_${t[1]}`);
         continue;
       }
@@ -110,7 +116,11 @@ export async function homeLookRecords(part, climate, season, getTexture) {
   const base = HOME_LOOK_CLIMATES[climate];
   const family = part === 'roof' ? HOME_LOOK_ROOFS : part === 'door' ? HOME_LOOK_DOORS : null;
   if (family == null || base == null) return 0;
-  try { return (await getTexture(applyClimate(family, 0, base, season)))?.recordCount ?? 0; } catch { return 0; }
+  try {
+    return (await getTexture(applyClimate(family, 0, base, season)))?.recordCount ?? 0;
+  } catch {
+    return 0;
+  }
 }
 /** THE SWATCH a part's choice shows in the painter - the archive and record its faces would wear (a wall's by its first
  *  record), or null. */

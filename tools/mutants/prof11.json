@@ -31,8 +31,8 @@
   {
     "name": "PROF11-mortar-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "...PARTS, ...MASONRY_TEMPLATES, RAM_KIT, ...REAGENTS",
-    "new": "...PARTS, RAM_KIT, ...REAGENTS",
+    "old": "    ...MASONRY_TEMPLATES,\n    RAM_KIT,",
+    "new": "    RAM_KIT,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "PROF11-mortar-row-heavier",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 2, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
+    "old": "      baseWeight: 1,",
+    "new": "      baseWeight: 2,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "PROF11-mortar-row-dearer",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 3,",
+    "old": "      basePrice: 2,",
+    "new": "      basePrice: 3,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "PROF11-mortars",
     "file": "src/systems/professions/profItems.js",
-    "old": "  'Mortar',   // PROF11 (FOUND by its pin)",
-    "new": "  // PROF11 (FOUND by its pin)",
+    "old": "  'Mortar', // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
+    "new": "  // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
     "tests": [
       "test/systems/prof11_client.test.js"
     ],
@@ -141,8 +141,8 @@
   {
     "name": "PROF11-work-asks-no-rank",
     "file": "src/net/professionLaw.js",
-    "old": "tier, rank: TIER_RANKS[tier - 1], act: 'chisel',",
-    "new": "tier, rank: 0, act: 'chisel',",
+    "old": "    rank: TIER_RANKS[tier - 1],",
+    "new": "    rank: 0,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "PROF11-work-no-chisel",
     "file": "src/net/professionLaw.js",
-    "old": "tier, rank: TIER_RANKS[tier - 1], act: 'chisel',",
-    "new": "tier, rank: TIER_RANKS[tier - 1], act: null,",
+    "old": "    act: 'chisel',",
+    "new": "    act: null,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "PROF11-mix-without-lead",
     "file": "src/net/professionLaw.js",
-    "old": "[['metal:sulphur', 1], ['metal:lead', 1], [ROUGH_STONE.key, 5]]",
-    "new": "[['metal:sulphur', 1], [ROUGH_STONE.key, 5]]",
+    "old": "      ['metal:lead', 1],\n      [ROUGH_STONE.key, 5],",
+    "new": "      [ROUGH_STONE.key, 5],",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "PROF11-mix-four-stone",
     "file": "src/net/professionLaw.js",
-    "old": "['metal:lead', 1], [ROUGH_STONE.key, 5]]",
-    "new": "['metal:lead', 1], [ROUGH_STONE.key, 4]]",
+    "old": "      [ROUGH_STONE.key, 5],",
+    "new": "      [ROUGH_STONE.key, 4],",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "PROF11-mix-at-rank-0",
     "file": "src/net/professionLaw.js",
-    "old": "[ROUGH_STONE.key, 5]], MORTAR.tier,",
-    "new": "[ROUGH_STONE.key, 5]], 1,",
+    "old": "    MORTAR.tier,",
+    "new": "    1,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -214,8 +214,8 @@
   {
     "name": "PROF11-works-unlisted",
     "file": "src/net/professionLaw.js",
-    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
-    "new": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...TRANSMUTE_RECIPES]",
+    "old": "  ...MASON_RECIPES,\n  ...TRANSMUTE_RECIPES,",
+    "new": "  ...TRANSMUTE_RECIPES,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "PROF11-column-another-model",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 696, model: 62315, cut: 12,",
-    "new": "templateIndex: 696, model: 62314, cut: 12,",
+    "old": "    model: 62315,",
+    "new": "    model: 62314,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "PROF11-column-less-stone",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 696, model: 62315, cut: 12,",
-    "new": "templateIndex: 696, model: 62315, cut: 10,",
+    "old": "    cut: 12,",
+    "new": "    cut: 10,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -404,8 +404,8 @@
   {
     "name": "PROF11-font-another-model",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 698, model: 41220,",
-    "new": "templateIndex: 698, model: 41221,",
+    "old": "    model: 41220,",
+    "new": "    model: 41221,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -414,8 +414,8 @@
   {
     "name": "PROF11-plinth-marble",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 699, model: 74091,",
-    "new": "templateIndex: 699, model: 74086,",
+    "old": "    model: 74091,",
+    "new": "    model: 74086,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "PROF11-decor-not-furniture",
     "file": "src/net/recipeLaw.js",
-    "old": "product: d.id, name: d.name, kind: 'furniture', family: 'stonework',",
-    "new": "product: d.id, name: d.name, kind: 'decor', family: 'stonework',",
+    "old": "      name: d.name,\n      kind: 'furniture',",
+    "new": "      name: d.name,\n      kind: 'decor',",
     "tests": [
       "test/systems/prof11_client.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "PROF11-decor-a-carpenters-furniture",
     "file": "src/net/recipeLaw.js",
-    "old": "product: d.id, name: d.name, kind: 'furniture', family: 'stonework',",
-    "new": "product: d.id, name: d.name, kind: 'furniture', family: 'furniture',",
+    "old": "      family: 'stonework',",
+    "new": "      family: 'furniture',",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "PROF11-decor-at-rank-100",
     "file": "src/net/recipeLaw.js",
-    "old": "rank: TIER_RANKS[CUT_STONE.tier - 1], spec: SCULPTOR,",
-    "new": "rank: 100, spec: SCULPTOR,",
+    "old": "      rank: TIER_RANKS[CUT_STONE.tier - 1],",
+    "new": "      rank: 100,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "PROF11-decor-asks-no-sculptor",
     "file": "src/net/recipeLaw.js",
-    "old": "rank: TIER_RANKS[CUT_STONE.tier - 1], spec: SCULPTOR,",
-    "new": "rank: TIER_RANKS[CUT_STONE.tier - 1],",
+    "old": "      spec: SCULPTOR,\n      pattern: d.name,",
+    "new": "      pattern: d.name,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -484,8 +484,8 @@
   {
     "name": "PROF11-decor-unlisted",
     "file": "src/net/recipeLaw.js",
-    "old": "...OUTFITTING_RECIPES, ...MASONRY_RECIPES, ...COOKING_RECIPES, ...JEWELCRAFTING_RECIPES]",
-    "new": "...OUTFITTING_RECIPES, ...COOKING_RECIPES, ...JEWELCRAFTING_RECIPES]",
+    "old": "  ...MASONRY_RECIPES,\n  ...COOKING_RECIPES,",
+    "new": "  ...COOKING_RECIPES,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -517,8 +517,8 @@
   {
     "name": "PROF11-decor-rows-stack",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: false,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
-    "new": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
+    "old": "      playerTextureRecord: 0,\n      stackable: false,\n    }),",
+    "new": "      playerTextureRecord: 0,\n      stackable: true,\n    }),",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "PROF11-decor-rows-wood-hard",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: d.weight, hitPoints: 200,",
-    "new": "baseWeight: d.weight, hitPoints: 100,",
+    "old": "      hitPoints: 200,",
+    "new": "      hitPoints: 100,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "PROF11-no-mason-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'cooking', 'music', 'loom', 'jeweller', 'vendor']);",
+    "old": "  'mason',\n  'jeweller',",
+    "new": "  'jeweller',",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/ui/homestations.test.js",
@@ -601,8 +601,8 @@
   {
     "name": "PROF11-mason-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "loom: 50_000, mason: 5_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "  mason: 50_000,",
+    "new": "  mason: 5_000,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/ui/homestations.test.js"
@@ -611,8 +611,8 @@
   {
     "name": "PROF11-mason-station-unnamed",
     "file": "src/net/decorLaw.js",
-    "old": "mason: 'Mason\\'s bench', jeweller:",
-    "new": "mason: 'Bench', jeweller:",
+    "old": "  mason: \"Mason's bench\",",
+    "new": "  mason: 'Bench',",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "PROF11-chisel-four-lines",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze({ lines: 5, strikes: 4, carveStrikes: 7,",
-    "new": "Object.freeze({ lines: 4, strikes: 4, carveStrikes: 7,",
+    "old": "  lines: 5,",
+    "new": "  lines: 4,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -630,8 +630,8 @@
   {
     "name": "PROF11-chisel-three-strikes",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze({ lines: 5, strikes: 4, carveStrikes: 7,",
-    "new": "Object.freeze({ lines: 5, strikes: 3, carveStrikes: 7,",
+    "old": "  strikes: 4,",
+    "new": "  strikes: 3,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -640,8 +640,8 @@
   {
     "name": "PROF11-chisel-carving-five",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze({ lines: 5, strikes: 4, carveStrikes: 7,",
-    "new": "Object.freeze({ lines: 5, strikes: 4, carveStrikes: 5,",
+    "old": "  carveStrikes: 7,",
+    "new": "  carveStrikes: 5,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -650,8 +650,8 @@
   {
     "name": "PROF11-chisel-mark-one-second",
     "file": "src/net/recipeLaw.js",
-    "old": "markS: 1.2, masterMarkS: 2.0, gapS: 0.45 });",
-    "new": "markS: 1.0, masterMarkS: 2.0, gapS: 0.45 });",
+    "old": "  markS: 1.2,",
+    "new": "  markS: 1.0,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "PROF11-chisel-master-mark-short",
     "file": "src/net/recipeLaw.js",
-    "old": "markS: 1.2, masterMarkS: 2.0, gapS: 0.45 });",
-    "new": "markS: 1.2, masterMarkS: 1.6, gapS: 0.45 });",
+    "old": "  masterMarkS: 2.0,",
+    "new": "  masterMarkS: 1.6,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "PROF11-chisel-quick-mallet",
     "file": "src/net/recipeLaw.js",
-    "old": "markS: 1.2, masterMarkS: 2.0, gapS: 0.45 });",
-    "new": "markS: 1.2, masterMarkS: 2.0, gapS: 0.35 });",
+    "old": "  gapS: 0.45,",
+    "new": "  gapS: 0.35,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "PROF11-act-time-over-lost",
     "file": "src/systems/chiselAct.js",
-    "old": "st.markLeft = left + st.markS; }",
-    "new": "st.markLeft = st.markS; }",
+    "old": "        st.markLeft = left + st.markS;",
+    "new": "        st.markLeft = st.markS;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -843,8 +843,8 @@
   {
     "name": "PROF11-act-set-down-moves",
     "file": "src/systems/chiselAct.js",
-    "old": "function aim(i) { if (!st.done && Number.isInteger(i))",
-    "new": "function aim(i) { if (Number.isInteger(i))",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "PROF11-act-off-the-stone",
     "file": "src/systems/chiselAct.js",
-    "old": "st.at = Math.max(0, Math.min(lines - 1, i)); }",
-    "new": "st.at = Math.min(lines - 1, i); }",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (!st.done && Number.isInteger(i)) st.at = Math.min(lines - 1, i);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]

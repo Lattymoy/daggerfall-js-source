@@ -2,8 +2,8 @@
   {
     "name": "OW-SEAT-the-mark-kept-in-a-table-again",
     "file": "src/scenes/floraSeat.js",
-    "old": "export const standsOnGround = (c) => { c[ON_GROUND] = true; };",
-    "new": "const MARKED = new WeakSet(); export const standsOnGround = (c) => { MARKED.add(c); };",
+    "old": "export const standsOnGround = (c) => {\n  c[ON_GROUND] = true;",
+    "new": "const MARKED = new WeakSet();\nexport const standsOnGround = (c) => {\n  MARKED.add(c);",
     "tests": [
       "test/scenes/ow_wide.test.js"
     ],

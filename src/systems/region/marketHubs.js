@@ -44,13 +44,21 @@ export function provinceHubOf(region, { seats = null, places = null } = {}) {
   const key = seats?.powers?.get(region);
   const seat = key == null ? null : seats?.byMapId?.get(key);
   if (seat?.tier === 'crown' && seat.region === region) return [seat.pixel[0], seat.pixel[1]];
-  let best = null, claim = null;
+  let best = null,
+    claim = null;
   for (const p of places?.all() ?? []) {
     if (p.region !== region) continue;
     const kind = settlementRank(p.type);
     if (!kind) continue;
     const c = [kind, p.blocks, -(p.mapId >>> 0)];
-    if (!claim || c[0] > claim[0] || (c[0] === claim[0] && (c[1] > claim[1] || (c[1] === claim[1] && c[2] > claim[2])))) { best = p; claim = c; }
+    if (
+      !claim ||
+      c[0] > claim[0] ||
+      (c[0] === claim[0] && (c[1] > claim[1] || (c[1] === claim[1] && c[2] > claim[2])))
+    ) {
+      best = p;
+      claim = c;
+    }
   }
   return best ? [best.px, best.py] : null;
 }
@@ -63,7 +71,9 @@ export function provinceHubOf(region, { seats = null, places = null } = {}) {
  */
 export function marketHubsOf({ regionHubs = null, seats = null, places = null } = {}) {
   /** @type {Record<number, [number, number]>} */
-  const out = Object.fromEntries([...(regionHubs?.byRegion?.values?.() ?? [])].map((h) => [h.regionIndex, [h.pixel.x, h.pixel.y]]));
+  const out = Object.fromEntries(
+    [...(regionHubs?.byRegion?.values?.() ?? [])].map((h) => [h.regionIndex, [h.pixel.x, h.pixel.y]]),
+  );
   for (const r of PROVINCE_HUB_REGIONS) {
     const at = provinceHubOf(r, { seats, places });
     if (at) out[r] = at;
@@ -77,10 +87,14 @@ export function marketHubsOf({ regionHubs = null, seats = null, places = null } 
  * @param {{ regionHubs?: any, seats?: { version?: number } | null, places?: { generation?: () => number } | null }} o
  */
 export function createMarketHubs({ regionHubs = null, seats = null, places = null } = {}) {
-  let made = null, at = '';
+  let made = null,
+    at = '';
   return () => {
     const stamp = `${seats?.version ?? -1}|${places?.generation?.() ?? -1}`;
-    if (!made || stamp !== at) { made = Object.freeze(marketHubsOf({ regionHubs, seats, places })); at = stamp; }
+    if (!made || stamp !== at) {
+      made = Object.freeze(marketHubsOf({ regionHubs, seats, places }));
+      at = stamp;
+    }
     return made;
   };
 }

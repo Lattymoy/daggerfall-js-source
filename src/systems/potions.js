@@ -46,9 +46,13 @@ import { templateByIndex } from './item/itemTemplates.js';
 // bundle. One home still: this file re-exports them, and every
 // reader's import stands.
 import {
-  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,
+  POTION_RECIPES,
+  POTION_DEFAULT_TEXTURE_RECORD,
+  potionRecipeKey,
+  potionKeyFromCauldron,
+  setPotionDisplayNames,
 } from './potionRecipes.js';
-import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedStrings } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 export { POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron };
 
 /** L10N3d: PotionRecipe.GetDisplayName (:225-236) is
@@ -58,11 +62,25 @@ export { POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionK
  *  so it is handed the table here; the account service, which bundles
  *  the leaf alone, reads the recipe's English. */
 const POTION_NAME_TEXT = localizedStrings({
-  resistFire: 'Resist Fire', resistFrost: 'Resist Frost', resistShock: 'Resist Shock', resistPoison: 'Resist Poison',
-  slowFalling: 'Slow Falling', waterBreathing: 'Water Breathing', chameleonForm: 'Chameleon Form',
-  invisibility: 'Invisibility', shadowForm: 'Shadow Form', cureDisease: 'Cure Disease', purification: 'Purification',
-  curePoison: 'Cure Poison', orcStrength: 'Orc Strength', freeAction: 'Free Action', stamina: 'Stamina',
-  healing: 'Healing', healTrue: 'Heal True', restorePower: 'Restore Power', levitation: 'Levitation',
+  resistFire: 'Resist Fire',
+  resistFrost: 'Resist Frost',
+  resistShock: 'Resist Shock',
+  resistPoison: 'Resist Poison',
+  slowFalling: 'Slow Falling',
+  waterBreathing: 'Water Breathing',
+  chameleonForm: 'Chameleon Form',
+  invisibility: 'Invisibility',
+  shadowForm: 'Shadow Form',
+  cureDisease: 'Cure Disease',
+  purification: 'Purification',
+  curePoison: 'Cure Poison',
+  orcStrength: 'Orc Strength',
+  freeAction: 'Free Action',
+  stamina: 'Stamina',
+  healing: 'Healing',
+  healTrue: 'Heal True',
+  restorePower: 'Restore Power',
+  levitation: 'Levitation',
   waterWalking: 'Water Walking',
 });
 setPotionDisplayNames(POTION_NAME_TEXT);
@@ -79,7 +97,8 @@ const _byKey = new Map(POTION_RECIPES.map((r) => [potionRecipeKey(r.ingredients)
 const _recipeOverrides = new Map();
 export function overridePotionRecipes(rows) {
   _recipeOverrides.clear();
-  for (const r of rows ?? []) _recipeOverrides.set(potionRecipeKey(r.ingredients), Object.isFrozen(r) ? r : Object.freeze(r));
+  for (const r of rows ?? [])
+    _recipeOverrides.set(potionRecipeKey(r.ingredients), Object.isFrozen(r) ? r : Object.freeze(r));
 }
 export const potionRecipeByKey = (key) => _recipeOverrides.get(key) ?? _byKey.get(key) ?? null;
 
@@ -109,15 +128,13 @@ export function potionBundle(recipeKey) {
     const slot = { ...BLANK_EFFECT_SETTINGS, ...settings };
     // A classic "type,subType" pair, or a DFU-only string key.
     const pair = /^\d+,\d+$/.test(id) ? id.split(',').map(Number) : null;
-    return pair
-      ? { type: pair[0], subType: pair[1], ...slot }
-      : { type: -1, subType: -1, key: id, ...slot };
+    return pair ? { type: pair[0], subType: pair[1], ...slot } : { type: -1, subType: -1, key: id, ...slot };
   };
   return {
     name: recipe.displayName,
-    rangeType: 0,     // TargetTypes.CasterOnly (:937)
-    element: 4,       // ElementTypes.Magic - the cast sound's (:946)
-    bundleType: 'potion',   // BundleTypes.Potion (:936)
+    rangeType: 0, // TargetTypes.CasterOnly (:937)
+    element: 4, // ElementTypes.Magic - the cast sound's (:946)
+    bundleType: 'potion', // BundleTypes.Potion (:936)
     effects: [entry(recipe.effect), ...(recipe.secondary ?? []).map(entry)],
   };
 }
@@ -125,12 +142,19 @@ export function potionBundle(recipeKey) {
 /** DefaultEffectSettings (EntityEffect.cs:946-968): all eleven at 1.
  *  A recipe's `settings` names only what differs. */
 const BLANK_EFFECT_SETTINGS = Object.freeze({
-  durationBase: 1, durationMod: 1, durationPerLevel: 1,
-  chanceBase: 1, chanceMod: 1, chancePerLevel: 1,
-  magnitudeBaseLow: 1, magnitudeBaseHigh: 1,
-  magnitudeLevelBase: 1, magnitudeLevelHigh: 1, magnitudePerLevel: 1,
+  durationBase: 1,
+  durationMod: 1,
+  durationPerLevel: 1,
+  chanceBase: 1,
+  chanceMod: 1,
+  chancePerLevel: 1,
+  magnitudeBaseLow: 1,
+  magnitudeBaseHigh: 1,
+  magnitudeLevelBase: 1,
+  magnitudeLevelHigh: 1,
+  magnitudePerLevel: 1,
 });
-export const potionRecipeKeys = () => [...(_byKey.keys())];
+export const potionRecipeKeys = () => [..._byKey.keys()];
 
 /** MixCauldron (:311-345) as a decision. Answers
  *    { kind: 'mixed', recipe, key } - a potion is created
@@ -162,7 +186,9 @@ export const isIngredient = (item) => !!templateByIndex(item?.templateIndex)?.is
  *  this a key. De-duping the KEYS is DFU's object de-dupe: key -> recipe
  *  is 1:1 through _byKey. */
 export const knownRecipes = (recipeKeys = []) =>
-  [...new Set(recipeKeys)].map((k) => potionRecipeByKey(k)).filter(Boolean)
+  [...new Set(recipeKeys)]
+    .map((k) => potionRecipeByKey(k))
+    .filter(Boolean)
     .sort((a, b) => (a.displayName < b.displayName ? -1 : a.displayName > b.displayName ? 1 : 0));
 
 // ── the cauldron (DaggerfallPotionMakerWindow) ────────────────────
@@ -208,10 +234,14 @@ export function consumeCauldron(cauldron, { takeFromPack, takeFromWagon }) {
  *  (:297-301); only an empty `missing` fills the pot. */
 export function gatherRecipe(recipe, availableTemplateIndices) {
   const pool = [...availableTemplateIndices];
-  const found = [], missing = [];
+  const found = [],
+    missing = [];
   for (const id of recipe.ingredients) {
     const at = pool.indexOf(id);
-    if (at < 0) { missing.push(id); continue; }
+    if (at < 0) {
+      missing.push(id);
+      continue;
+    }
     pool.splice(at, 1);
     found.push(id);
   }

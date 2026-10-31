@@ -1,18 +1,164 @@
 [
-  {"name": "BRIDGE-ENDS-none", "file": "src/world/capitalAlinor.js", "old": "    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0], [R.z1 + BANK_TILE, R.z1]]) {", "new": "    for (const [zs, ze] of []) {", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "the report: the bridge's ends over the bank's slope to the water"},
-  {"name": "BRIDGE-ENDS-north-alone", "file": "src/world/capitalAlinor.js", "old": "    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0], [R.z1 + BANK_TILE, R.z1]]) {", "new": "    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0]]) {", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "the south bank's end open"},
-  {"name": "BRIDGE-ENDS-short", "file": "src/world/capitalAlinor.js", "old": "    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0], [R.z1 + BANK_TILE, R.z1]]) {", "new": "    for (const [zs, ze] of [[R.z0 - BANK_TILE / 2, R.z0], [R.z1 + BANK_TILE / 2, R.z1]]) {", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "the abutment half the tile: the street's side of the slope open"},
-  {"name": "BRIDGE-ENDS-ledge", "file": "src/world/capitalAlinor.js", "old": "const ABUT_FOOT = -0.03;", "new": "const ABUT_FOOT = 0.3;", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "AUDIT A1: its top a ledge at the deck's end height - the walker's step-up stalls at it"},
-  {"name": "BRIDGE-ENDS-sunk", "file": "src/world/capitalAlinor.js", "old": "const ABUT_FOOT = -0.03;", "new": "const ABUT_FOOT = -0.3;", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "its foot under the street - a step down onto the ramp"},
-  {"name": "BRIDGE-ENDS-skirts-short", "file": "src/world/capitalAlinor.js", "old": "      span(x, zs, ze, (z) => ABUT_FOOT + ((0.3 - ABUT_FOOT) * (z - zs)) / (ze - zs), 1, null, -2);", "new": "      span(x, zs, ze, (z) => ABUT_FOOT + ((0.3 - ABUT_FOOT) * (z - zs)) / (ze - zs), 1, 0.3, null);", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "its sides not down to the ground - the slope seen under them"},
-  {"name": "BRIDGE-ENDS-foot-open", "file": "src/world/capitalAlinor.js", "old": "      mb.quad(BRIDGE, [x - hw, -2, zs], [x + hw, -2, zs], [x + hw, ABUT_FOOT, zs], [x - hw, ABUT_FOOT, zs], out);", "new": "", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "its street end open"},
-  {"name": "BRIDGE-ENDS-parapet-open", "file": "src/world/capitalAlinor.js", "old": "      for (const s of [1, -1]) mb.quad(MARBLE, [x + s * hw, ABUT_FOOT, zs], [x + s * (hw - 0.6), ABUT_FOOT, zs]", "new": "      for (const s of []) mb.quad(MARBLE, [x + s * hw, ABUT_FOOT, zs], [x + s * (hw - 0.6), ABUT_FOOT, zs]", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "its parapets' ends open to the street"},
-  {"name": "BRIDGE-ENDS-river-open", "file": "src/world/capitalAlinor.js", "old": "      mb.quad(BRIDGE, [x - hw, -2, ze], [x + hw, -2, ze], [x + hw, 0.3 - 1.2, ze], [x - hw, 0.3 - 1.2, ze], [0, 0, -out[2]]);", "new": "", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "open under the deck's end, to the water - the report's black band"},
-  {"name": "BRIDGE-ENDS-deep-in-block", "file": "src/world/capitalAlinor.js", "old": "  [x - A.bridgeW / 2, A.river.z0 - BANK_TILE, x + A.bridgeW / 2, A.river.z0],", "new": "  [x - A.bridgeW / 2, A.river.z0 - 3 * BANK_TILE, x + A.bridgeW / 2, A.river.z0],", "tests": ["test/world/fb1029_bridgeends.test.js", "test/audit_tesa.test.js"], "why": "the abutments' rects - A6-3's leave - three tiles into the bank's block"},
-  {"name": "BRIDGE-ENDS-a63-rects", "file": "test/audit_tesa.test.js", "old": "const abut = id === CAPITAL_MODELS.alinorBridges ? alinorAbutments() : [];", "new": "const abut = id === CAPITAL_MODELS.alinorBridges ? [[-1e9, -1e9, 1e9, 1e9]] : [];", "tests": ["test/audit_tesa.test.js"], "equivalent": true, "why": "a pin's own leave widened to the whole model: the bridges stand nowhere else in a block today, so A6-3 cannot tell - recorded so a widening is a decision, not a drift"},
-  {"name": "WALKS-none-shut", "file": "src/world/capitalWalks.js", "old": "const SHUT = Object.freeze({ alinor: () => alinorAbutments() });", "new": "const SHUT = Object.freeze({});", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "AUDIT A2: the walkers under the abutments again"},
-  {"name": "WALKS-frame-block-off", "file": "src/world/capitalWalks.js", "old": "oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1]) * BLOCK_M;", "new": "oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1] - 1) * BLOCK_M;", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "the carve a block south of the abutments"},
-  {"name": "WALKS-edge-round", "file": "src/world/capitalWalks.js", "old": "hi = (v) => Math.ceil(v / NAV_CELL - 1e-6);", "new": "hi = (v) => Math.ceil(v / NAV_CELL);", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "a rect's edge on a cell's line closes a row past it"},
-  {"name": "WALKS-build-unwired", "file": "src/scenes/pixelBuild.js", "old": "        carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS", "new": "        // carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "the build never carves"},
-  {"name": "BRIDGE-ENDS-parapet-height", "file": "src/world/capitalAlinor.js", "old": "const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16, ph = A.parapet;", "new": "const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16, ph = A.parapet + 0.3;", "tests": ["test/world/fb1029_bridgeends.test.js"], "why": "AUDIT C-M2: the parapets another height than the record's"}
+  {
+    "name": "BRIDGE-ENDS-none",
+    "file": "src/world/capitalAlinor.js",
+    "old": "    for (const [zs, ze] of [\n      [R.z0 - BANK_TILE, R.z0],\n      [R.z1 + BANK_TILE, R.z1],\n    ]) {",
+    "new": "    for (const [zs, ze] of []) {",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "the report: the bridge's ends over the bank's slope to the water"
+  },
+  {
+    "name": "BRIDGE-ENDS-north-alone",
+    "file": "src/world/capitalAlinor.js",
+    "old": "    for (const [zs, ze] of [\n      [R.z0 - BANK_TILE, R.z0],\n      [R.z1 + BANK_TILE, R.z1],\n    ]) {",
+    "new": "    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0]]) {",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "the south bank's end open"
+  },
+  {
+    "name": "BRIDGE-ENDS-short",
+    "file": "src/world/capitalAlinor.js",
+    "old": "      [R.z0 - BANK_TILE, R.z0],\n      [R.z1 + BANK_TILE, R.z1],",
+    "new": "      [R.z0 - BANK_TILE / 2, R.z0],\n      [R.z1 + BANK_TILE / 2, R.z1],",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "the abutment half the tile: the street's side of the slope open"
+  },
+  {
+    "name": "BRIDGE-ENDS-ledge",
+    "file": "src/world/capitalAlinor.js",
+    "old": "const ABUT_FOOT = -0.03;",
+    "new": "const ABUT_FOOT = 0.3;",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "AUDIT A1: its top a ledge at the deck's end height - the walker's step-up stalls at it"
+  },
+  {
+    "name": "BRIDGE-ENDS-sunk",
+    "file": "src/world/capitalAlinor.js",
+    "old": "const ABUT_FOOT = -0.03;",
+    "new": "const ABUT_FOOT = -0.3;",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "its foot under the street - a step down onto the ramp"
+  },
+  {
+    "name": "BRIDGE-ENDS-skirts-short",
+    "file": "src/world/capitalAlinor.js",
+    "old": "      span(x, zs, ze, (z) => ABUT_FOOT + ((0.3 - ABUT_FOOT) * (z - zs)) / (ze - zs), 1, null, -2);",
+    "new": "      span(x, zs, ze, (z) => ABUT_FOOT + ((0.3 - ABUT_FOOT) * (z - zs)) / (ze - zs), 1, 0.3, null);",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "its sides not down to the ground - the slope seen under them"
+  },
+  {
+    "name": "BRIDGE-ENDS-foot-open",
+    "file": "src/world/capitalAlinor.js",
+    "old": "      mb.quad(BRIDGE, [x - hw, -2, zs], [x + hw, -2, zs], [x + hw, ABUT_FOOT, zs], [x - hw, ABUT_FOOT, zs], out); // its foot's face, in the ground",
+    "new": "      // its foot's face, in the ground",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "its street end open"
+  },
+  {
+    "name": "BRIDGE-ENDS-parapet-open",
+    "file": "src/world/capitalAlinor.js",
+    "old": "      mb.quad(BRIDGE, [x - hw, -2, zs], [x + hw, -2, zs], [x + hw, ABUT_FOOT, zs], [x - hw, ABUT_FOOT, zs], out); // its foot's face, in the ground\n      for (const s of [1, -1])",
+    "new": "      mb.quad(BRIDGE, [x - hw, -2, zs], [x + hw, -2, zs], [x + hw, ABUT_FOOT, zs], [x - hw, ABUT_FOOT, zs], out); // its foot's face, in the ground\n      for (const s of [])",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "its parapets' ends open to the street"
+  },
+  {
+    "name": "BRIDGE-ENDS-river-open",
+    "file": "src/world/capitalAlinor.js",
+    "old": "      mb.quad(\n        BRIDGE,\n        [x - hw, -2, ze],\n        [x + hw, -2, ze],\n        [x + hw, 0.3 - 1.2, ze],\n        [x - hw, 0.3 - 1.2, ze],\n        [0, 0, -out[2]],\n      ); // under the deck's end, to the water",
+    "new": "      // under the deck's end, to the water",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "open under the deck's end, to the water - the report's black band"
+  },
+  {
+    "name": "BRIDGE-ENDS-deep-in-block",
+    "file": "src/world/capitalAlinor.js",
+    "old": "    [x - A.bridgeW / 2, A.river.z0 - BANK_TILE, x + A.bridgeW / 2, A.river.z0],",
+    "new": "    [x - A.bridgeW / 2, A.river.z0 - 3 * BANK_TILE, x + A.bridgeW / 2, A.river.z0],",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js",
+      "test/audit_tesa.test.js"
+    ],
+    "why": "the abutments' rects - A6-3's leave - three tiles into the bank's block"
+  },
+  {
+    "name": "BRIDGE-ENDS-a63-rects",
+    "file": "test/audit_tesa.test.js",
+    "old": "const abut = id === CAPITAL_MODELS.alinorBridges ? alinorAbutments() : [];",
+    "new": "const abut = id === CAPITAL_MODELS.alinorBridges ? [[-1e9, -1e9, 1e9, 1e9]] : [];",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ],
+    "equivalent": true,
+    "why": "a pin's own leave widened to the whole model: the bridges stand nowhere else in a block today, so A6-3 cannot tell - recorded so a widening is a decision, not a drift"
+  },
+  {
+    "name": "WALKS-none-shut",
+    "file": "src/world/capitalWalks.js",
+    "old": "const SHUT = Object.freeze({ alinor: () => alinorAbutments() });",
+    "new": "const SHUT = Object.freeze({});",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "AUDIT A2: the walkers under the abutments again"
+  },
+  {
+    "name": "WALKS-frame-block-off",
+    "file": "src/world/capitalWalks.js",
+    "old": "    oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1]) * BLOCK_M;",
+    "new": "    oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1] - 1) * BLOCK_M;",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "the carve a block south of the abutments"
+  },
+  {
+    "name": "WALKS-edge-round",
+    "file": "src/world/capitalWalks.js",
+    "old": "    hi = (v) => Math.ceil(v / NAV_CELL - 1e-6); // a rect's edge on a cell's line closes no cell past it",
+    "new": "    hi = (v) => Math.ceil(v / NAV_CELL); // a rect's edge on a cell's line closes no cell past it",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "a rect's edge on a cell's line closes a row past it"
+  },
+  {
+    "name": "WALKS-build-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS",
+    "new": "        // carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "the build never carves"
+  },
+  {
+    "name": "BRIDGE-ENDS-parapet-height",
+    "file": "src/world/capitalAlinor.js",
+    "old": "    ph = A.parapet;",
+    "new": "    ph = A.parapet + 0.3;",
+    "tests": [
+      "test/world/fb1029_bridgeends.test.js"
+    ],
+    "why": "AUDIT C-M2: the parapets another height than the record's"
+  }
 ]

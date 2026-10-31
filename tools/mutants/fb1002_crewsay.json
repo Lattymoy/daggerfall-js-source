@@ -2,8 +2,8 @@
   {
     "name": "SAY-chorus-each",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    if (g) g.n++; else said.set(key, { key, p, n: 1, at: said.size });",
-    "new": "    said.set(`${key}\\u0000${said.size}`, { key: `${key}\\u0000${said.size}`, p, n: 1, at: said.size });",
+    "old": "    if (g) g.n++;\n    else said.set(key, { key, p, n: 1, at: said.size }); // nearest first: a chorus stands over its nearest singer",
+    "new": "    said.set(`${key}\\u0000${said.size}`, { key: `${key}\\u0000${said.size}`, p, n: 1, at: said.size }); // nearest first: a chorus stands over its nearest singer",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "SAY-no-lift",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      bottom = under.top - CREW_SAY_GAP * scale;   // over the one it would cover",
+    "old": "      bottom = under.top - CREW_SAY_GAP * scale; // over the one it would cover",
     "new": "      break;",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "SAY-no-gap",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      bottom = under.top - CREW_SAY_GAP * scale;   // over the one it would cover",
+    "old": "      bottom = under.top - CREW_SAY_GAP * scale; // over the one it would cover",
     "new": "      bottom = under.top;",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "SAY-lift-rounded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9));",
-    "new": "    let lift = Math.max(0, Math.round(foot - bottom));",
+    "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9)); // whole pixels (the face's crispness), rounded UP: the gap whole",
+    "new": "    let lift = Math.max(0, Math.round(foot - bottom)); // whole pixels (the face's crispness), rounded UP: the gap whole",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SAY-lift-fractional",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9));",
-    "new": "    let lift = Math.max(0, foot - bottom);",
+    "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9)); // whole pixels (the face's crispness), rounded UP: the gap whole",
+    "new": "    let lift = Math.max(0, foot - bottom); // whole pixels (the face's crispness), rounded UP: the gap whole",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SAY-placed-unlifted",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    placed.push({ x: p.x, w, top: foot - lift - h, bottom: foot - lift });",
-    "new": "    placed.push({ x: p.x, w, top: foot - h, bottom: foot });",
+    "old": "    placed.push({ x: p.x, w, top: foot - lift - h, bottom: foot - lift }); // the box as it is drawn",
+    "new": "    placed.push({ x: p.x, w, top: foot - h, bottom: foot }); // the box as it is drawn",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SAY-drawn-unlifted",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('at', `translate(${Math.round(p.x)}px, ${Math.round(p.y - p.lift)}px) scale(${scale})",
-    "new": "    set('at', `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) scale(${scale})",
+    "old": "      `translate(${Math.round(p.x)}px, ${Math.round(p.y - p.lift)}px) scale(${scale}) translate(-50%, calc(-100% - ${CREW_SAY_LIFT}px))`,",
+    "new": "      `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) scale(${scale}) translate(-50%, calc(-100% - ${CREW_SAY_LIFT}px))`,",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js",
       "test/systems/naval/livingcrew.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "SAY-farthest-on-top",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('z', String(CREW_SAY_MAX - i), (v) => { slot.n.style.zIndex = v; });",
-    "new": "    set('z', String(i), (v) => { slot.n.style.zIndex = v; });",
+    "old": "    set('z', String(CREW_SAY_MAX - i), (v) => {",
+    "new": "    set('z', String(i), (v) => {",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SAY-lift-old",
     "file": "src/ui/naval/navalHud.js",
-    "old": "export const CREW_SAY_LIFT = 26;",
-    "new": "export const CREW_SAY_LIFT = 6;",
+    "old": "export const CREW_SAY_LIFT = 26; // a mate's bar (5) + its gap (2) + his name (10, its outline 2) + the bubble's tail (5) + 2",
+    "new": "export const CREW_SAY_LIFT = 6; // a mate's bar (5) + its gap (2) + his name (10, its outline 2) + the bubble's tail (5) + 2",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js",
       "test/systems/naval/livingcrew.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "SAY-box-capped-whole",
     "file": "src/ui/naval/navalHud.js",
-    "old": "w: (Math.min(CREW_SAY_W, run) + CREW_SAY_PAD_W + 2 * CREW_SAY_RING) * scale",
-    "new": "w: Math.min(CREW_SAY_W, run + CREW_SAY_PAD_W) * scale",
+    "old": "    w: (Math.min(CREW_SAY_W, run) + CREW_SAY_PAD_W + 2 * CREW_SAY_RING) * scale,",
+    "new": "    w: Math.min(CREW_SAY_W, run + CREW_SAY_PAD_W) * scale,",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "SAY-box-no-ring",
     "file": "src/ui/naval/navalHud.js",
-    "old": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale",
-    "new": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H) * scale",
+    "old": "    h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale,",
+    "new": "    h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H) * scale,",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "SAY-box-unscaled",
     "file": "src/ui/naval/navalHud.js",
-    "old": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale",
-    "new": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING)",
+    "old": "    h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale,",
+    "new": "    h: lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING,",
     "tests": [
       "test/systems/naval/fb1002_crewsay.test.js"
     ]

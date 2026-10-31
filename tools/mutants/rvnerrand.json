@@ -47,8 +47,8 @@
   {
     "name": "RVN-ERRAND-odds-base-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "ODDS: Object.freeze({ BASE: 0.55,",
-    "new": "ODDS: Object.freeze({ BASE: 0.6,",
+    "old": "  ODDS: Object.freeze({ BASE: 0.55, PER: 0.1, MIN: 0.3, MAX: 0.95, DEVOTED: 0.05 }),",
+    "new": "  ODDS: Object.freeze({ BASE: 0.6, PER: 0.1, MIN: 0.3, MAX: 0.95, DEVOTED: 0.05 }),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN-ERRAND-odds-min-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "PER: 0.1, MIN: 0.3, MAX: 0.95,",
-    "new": "PER: 0.1, MIN: 0.25, MAX: 0.95,",
+    "old": "  ODDS: Object.freeze({ BASE: 0.55, PER: 0.1, MIN: 0.3, MAX: 0.95, DEVOTED: 0.05 }),",
+    "new": "  ODDS: Object.freeze({ BASE: 0.55, PER: 0.1, MIN: 0.25, MAX: 0.95, DEVOTED: 0.05 }),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN-ERRAND-units-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "UNITS: Object.freeze({ BASE: 3, PER_DANGER: 2,",
-    "new": "UNITS: Object.freeze({ BASE: 4, PER_DANGER: 2,",
+    "old": "  UNITS: Object.freeze({ BASE: 3, PER_DANGER: 2, FINE_TIER: 5, FINE_A_DAY: 1 }),",
+    "new": "  UNITS: Object.freeze({ BASE: 4, PER_DANGER: 2, FINE_TIER: 5, FINE_A_DAY: 1 }),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN-ERRAND-fine-uncapped",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "if (goodsTier(k) >= U.FINE_TIER && fine-- <= 0)",
-    "new": "if (false)",
+    "old": "      if (goodsTier(k) >= U.FINE_TIER && fine-- <= 0) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN-ERRAND-tier-rates-back",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "LEGENDARY: Object.freeze([0.005, 0.004, 0.003])",
-    "new": "LEGENDARY: Object.freeze([0.02, 0.015, 0.01])",
+    "old": "    LEGENDARY: Object.freeze([0.005, 0.004, 0.003]),",
+    "new": "    LEGENDARY: Object.freeze([0.02, 0.015, 0.01]),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN-ERRAND-raise-charged",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const lived = Math.min(Math.max(own - (raised > 0 ? raised : 0), 0), ERRAND.STEP_MAX);",
-    "new": "const lived = Math.min(own, ERRAND.STEP_MAX);",
+    "old": "  const lived = Math.min(Math.max(own - (raised > 0 ? raised : 0), 0), ERRAND.STEP_MAX);",
+    "new": "  const lived = Math.min(own, ERRAND.STEP_MAX);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN-ERRAND-step-unbounded",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "(raised > 0 ? raised : 0), 0), ERRAND.STEP_MAX);",
-    "new": "(raised > 0 ? raised : 0), 0), Infinity);",
+    "old": "  const lived = Math.min(Math.max(own - (raised > 0 ? raised : 0), 0), ERRAND.STEP_MAX);",
+    "new": "  const lived = Math.min(Math.max(own - (raised > 0 ? raised : 0), 0), Infinity);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN-ERRAND-sample-at-send-gone",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  _errandClock ??= { own: ownMinutes(), raised: raisedMinutes() };",
-    "new": "  void _errandClock;",
+    "old": "  _errandClock ??= { own: ownMinutes(), raised: raisedMinutes() }; // AUDIT RVN F1: the clock read from its first minute, a raise before the next wake charged as one",
+    "new": "  void _errandClock; // AUDIT RVN F1: the clock read from its first minute, a raise before the next wake charged as one",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN-ERRAND-loyalty-paid-twice",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    if (!paid) c.paid = [...(Array.isArray(c.paid) ? c.paid : []), e.seed].slice(-PAID_KEEP);\n",
-    "new": "",
+    "old": "    if (!paid) c.paid = [...(Array.isArray(c.paid) ? c.paid : []), e.seed].slice(-PAID_KEEP);\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN-ERRAND-road-rest-rewarded",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.rested = !c.worn; c.worn = false;",
-    "new": "c.rested = true; c.worn = false;",
+    "old": "            c.rested = !c.worn;",
+    "new": "            c.rested = true;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RVN-ERRAND-recall-free",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.state = 'resting'; c.errand = null; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.worn = true;",
-    "new": "c.state = 'away'; c.errand = null;",
+    "old": "    c.state = 'resting';\n    c.errand = null;\n    c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN);\n    c.worn = true;",
+    "new": "    c.state = 'away';\n    c.errand = null;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN-ERRAND-kit-given-abroad",
     "file": "src/systems/revenant/revenantGear.js",
-    "old": "  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad',",
-    "new": "  if (false) return t('rvn.gear.no.abroad',",
+    "old": "  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.'); // AUDIT RVN F10",
+    "new": "  if (false) return t('rvn.gear.no.abroad', 'It is abroad with its kit.'); // AUDIT RVN F10",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN-ERRAND-kit-taken-abroad",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "!r?.sworn || stateOf(r) === 'errand' || !isGearKey(key)",
-    "new": "!r?.sworn || !isGearKey(key)",
+    "old": "  if (!_player || !r?.sworn || stateOf(r) === 'errand' || !isGearKey(key) || !r.companion?.gear?.[key]) return []; // AUDIT RVN F10: abroad, its kit goes with it",
+    "new": "  if (!_player || !r?.sworn || !isGearKey(key) || !r.companion?.gear?.[key]) return []; // AUDIT RVN F10: abroad, its kit goes with it",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN-ERRAND-bag-names-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "what: materialCountLabel(key, n) }",
-    "new": "what: key }",
+    "old": "  for (const [key, n] of haul?.units ?? [])\n    parts.push(t('rvn.errand.haul.goods', '{n} {what}', { n, what: materialCountLabel(key, n) })); // AUDIT RVN D5: the bag's names, counted",
+    "new": "  for (const [key, n] of haul?.units ?? []) parts.push(t('rvn.errand.haul.goods', '{n} {what}', { n, what: key })); // AUDIT RVN D5: the bag's names, counted",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RVN-ERRAND-place-names-gone",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "get BlackMarsh() { return t('rvn.errand.place.blackMarsh', 'Black Marsh'); }",
-    "new": "get BlackMarsh() { return 'Black Marsh'; }",
+    "old": "    return t('rvn.errand.place.blackMarsh', 'Black Marsh');",
+    "new": "    return 'Black Marsh';",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RVN-ERRAND-recall-unasked",
     "file": "src/ui/companionRoster.js",
-    "old": "back.onclick = () => { _notice = null; _recall = r.id; rerender(); };",
-    "new": "back.onclick = () => { _notice = null; recallFromErrand(r.id); rerender(); };",
+    "old": "      _recall = r.id;",
+    "new": "      recallFromErrand(r.id);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RVN-ERRAND-lived-said-offline",
     "file": "src/ui/companionRoster.js",
-    "old": "  if (sharedClockOn()) box.append(",
-    "new": "  if (true) box.append(",
+    "old": "  if (sharedClockOn())",
+    "new": "  if (true)",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RVN-ERRAND-hard-share-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "{ pct: Math.round(ERRAND.HARD_SHARE * 100), n: ERRAND.MAX }",
-    "new": "{ pct: 50 + 1, n: ERRAND.MAX }",
+    "old": "        { pct: Math.round(ERRAND.HARD_SHARE * 100), n: ERRAND.MAX },",
+    "new": "        { pct: 50 + 1, n: ERRAND.MAX },",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RVN-ERRAND-tiers-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "TIERS: Object.freeze({ MAGIC: 0.5,",
-    "new": "TIERS: Object.freeze({ MAGIC: 0.6,",
+    "old": "    MAGIC: 0.5,",
+    "new": "    MAGIC: 0.6,",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RVN-ERRAND-lean-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "'Loot first'); }, gold: 0.4,",
-    "new": "'Loot first'); }, gold: 0.5,",
+    "old": "    gold: 0.4,",
+    "new": "    gold: 0.5,",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RVN-ERRAND-days-moved",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "place('Skyrim', 2, 3,",
-    "new": "place('Skyrim', 3, 3,",
+    "old": "  place('Skyrim', 2, 3, ['metal:iron', 'ore:orichalcum', 'hide:bear', 'hide:tiger', 'log:pine', 'gem:sapphire']),",
+    "new": "  place('Skyrim', 3, 3, ['metal:iron', 'ore:orichalcum', 'hide:bear', 'hide:tiger', 'log:pine', 'gem:sapphire']),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RVN-ERRAND-good-misspelt",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "'ore:orichalcum'",
-    "new": "'ore:orichalkum'",
+    "old": "  place('Skyrim', 2, 3, ['metal:iron', 'ore:orichalcum', 'hide:bear', 'hide:tiger', 'log:pine', 'gem:sapphire']),",
+    "new": "  place('Skyrim', 2, 3, ['metal:iron', 'ore:orichalkum', 'hide:bear', 'hide:tiger', 'log:pine', 'gem:sapphire']),",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "RVN-ERRAND-kit-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.max(1, r?.rank | 0) + gearPower(r) + skyOf(r, e).odds;",
-    "new": "Math.max(1, r?.rank | 0) + 0 + skyOf(r, e).odds;",
+    "old": "export const errandPower = (r, e = null) => Math.max(1, r?.rank | 0) + gearPower(r) + skyOf(r, e).odds;",
+    "new": "export const errandPower = (r, e = null) => Math.max(1, r?.rank | 0) + 0 + skyOf(r, e).odds;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RVN-ERRAND-clamp-gone",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.max(O.MIN, Math.min(O.MAX, odds))",
-    "new": "odds",
+    "old": "  return Math.round(Math.max(O.MIN, Math.min(O.MAX, odds)) * 1000) / 1000;",
+    "new": "  return Math.round(odds * 1000) / 1000;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "RVN-ERRAND-devoted-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "(isDevoted(r?.companion?.loyalty) ? O.DEVOTED : 0)",
-    "new": "0",
+    "old": "  const odds = O.BASE + O.PER * (errandPower(r, e) - p.danger) + (isDevoted(r?.companion?.loyalty) ? O.DEVOTED : 0);",
+    "new": "  const odds = O.BASE + O.PER * (errandPower(r, e) - p.danger) + 0;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "RVN-ERRAND-older-clock-unclamped",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "return Number.isFinite(now) && e.until - now > most ? now + most : e.until;",
-    "new": "return e.until;",
+    "old": "  return Number.isFinite(now) && e.until - now > most ? now + most : e.until;",
+    "new": "  return e.until;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "RVN-ERRAND-bad-errand-kept",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "if (!e || typeof e !== 'object' || !errandPlace(e.place) || !isVenture(e.venture)) return null;",
-    "new": "if (!e || typeof e !== 'object') return null;",
+    "old": "  if (!e || typeof e !== 'object' || !errandPlace(e.place) || !isVenture(e.venture)) return null;",
+    "new": "  if (!e || typeof e !== 'object') return null;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RVN-ERRAND-seed-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const rolls = idStream(`${r?.id}`, `errand:${e.seed >>> 0}`);",
-    "new": "const rolls = Math.random;",
+    "old": "  const rolls = idStream(`${r?.id}`, `errand:${e.seed >>> 0}`);",
+    "new": "  const rolls = Math.random;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "RVN-ERRAND-share-skipped",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const share = won ? 1 : sky.bold ? 0 : ERRAND.HARD_SHARE;",
-    "new": "const share = 1;",
+    "old": "  const share = won ? 1 : sky.bold ? 0 : ERRAND.HARD_SHARE; // AUDIT RVN-STARS S5: Fortune's Road - a hard road brings back nothing",
+    "new": "  const share = 1; // AUDIT RVN-STARS S5: Fortune's Road - a hard road brings back nothing",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "RVN-ERRAND-units-lean-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "* p.days * v.units * share;",
-    "new": "* p.days * share;",
+    "old": "  const goods = (U.BASE + U.PER_DANGER * p.danger) * p.days * v.units * share;",
+    "new": "  const goods = (U.BASE + U.PER_DANGER * p.danger) * p.days * share;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "RVN-ERRAND-pieces-a-day-gone",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "v.items === 'many' ? days :",
-    "new": "v.items === 'many' ? 1 + Math.floor((p.days + p.danger) / 3) :",
+    "old": "  const want = v.items === 'many' ? days : rolls() < Number(v.items) ? 1 : 0; // AUDIT RVN-STARS S14: a piece a day of its own road",
+    "new": "  const want = v.items === 'many' ? 1 + Math.floor((p.days + p.danger) / 3) : rolls() < Number(v.items) ? 1 : 0; // AUDIT RVN-STARS S14: a piece a day of its own road",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "RVN-ERRAND-rarity-switch-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const tier = rarity ? pieceTier(p.danger, rank, rolls) : 'common';",
-    "new": "const tier = pieceTier(p.danger, rank, rolls);",
+    "old": "    const tier = rarity ? pieceTier(p.danger, rank, rolls) : 'common';",
+    "new": "    const tier = pieceTier(p.danger, rank, rolls);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "RVN-ERRAND-never-leaves",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.state = 'errand'; c.errand = e;",
-    "new": "c.state = 'away'; c.errand = e;",
+    "old": "    c.state = 'errand';",
+    "new": "    c.state = 'away';",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "RVN-ERRAND-words-under-the-menu",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  _errandWords.push(revenantMomentEvent('dismiss'",
-    "new": "  sayErrand(revenantMomentEvent('dismiss'",
+    "old": "  const where = e.city ? t('rvn.errand.cityIn', '{city}, in {province}', { city: e.city, province: p?.name }) : p?.name;\n  _errandWords.push(",
+    "new": "  const where = e.city ? t('rvn.errand.cityIn', '{city}, in {province}', { city: e.city, province: p?.name }) : p?.name;\n  sayErrand(",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "RVN-ERRAND-back-early",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "r.companion.errand && now >= r.companion.errand.until) returnFromErrand(r.id, now);",
-    "new": "r.companion.errand && now >= r.companion.errand.at) returnFromErrand(r.id, now);",
+    "old": "        if (stateOf(r) === 'errand' && r.companion.errand && now >= r.companion.errand.until)\n          returnFromErrand(r.id, now); // RVN-ERRAND: back from abroad",
+    "new": "        if (stateOf(r) === 'errand' && r.companion.errand && now >= r.companion.errand.at) returnFromErrand(r.id, now); // RVN-ERRAND: back from abroad",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "RVN-ERRAND-haul-never-handed",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  deliverHaul(_player, haul);\n",
-    "new": "",
+    "old": "  deliverHaul(_player, haul);\n  const p = errandPlace(e.place);",
+    "new": "  const p = errandPlace(e.place);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RVN-ERRAND-loyalty-unmoved",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "      if (!paid) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);\n",
-    "new": "",
+    "old": "      if (!paid) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);\n    } else {",
+    "new": "    } else {",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RVN-ERRAND-hard-read-as-won",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    if (haul.won) {\n      c.state = 'away'; c.worn = false;",
-    "new": "    if (true) {\n      c.state = 'away'; c.worn = false;",
+    "old": "    if (haul.won) {",
+    "new": "    if (true) {",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RVN-ERRAND-rest-skipped",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    } else { c.state = 'resting'; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.health = null; c.worn = true; }",
-    "new": "    } else { c.state = 'away'; }",
+    "old": "      c.state = 'resting';\n      c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN);\n      c.health = null;\n      c.worn = true;",
+    "new": "      c.state = 'away';",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "RVN-ERRAND-call-while-abroad",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (stateOf(r) === 'errand') return t('rvn.errand.callAbroad'",
-    "new": "  if (false) return t('rvn.errand.callAbroad'",
+    "old": "  if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';\n  if (stateOf(r) === 'errand')",
+    "new": "  if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';\n  if (false)",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "RVN-ERRAND-release-while-abroad",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (stateOf(r) === 'errand') return null;   // RVN-ERRAND: abroad",
-    "new": "  if (false) return null;   // RVN-ERRAND: abroad",
+    "old": "  if (stateOf(r) === 'errand') return null; // RVN-ERRAND: abroad - recalled first, its oath given back to its face",
+    "new": "  if (false) return null; // RVN-ERRAND: abroad - recalled first, its oath given back to its face",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "RVN-ERRAND-past-the-most",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "if (revenantsAbroad().length >= ERRAND.MAX) return",
-    "new": "if (false) return",
+    "old": "  if (revenantsAbroad().length >= ERRAND.MAX)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "RVN-ERRAND-odds-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "    name.append(el('span', ODDS_CLASS[oddsKind(odds)], t('rvn.roster.odds', '{word} {pct}%', { word: oddsWord(odds), pct: Math.round(odds * 100) })));\n",
-    "new": "",
+    "old": "    name.append(\n      el(\n        'span',\n        ODDS_CLASS[oddsKind(odds)],\n        t('rvn.roster.odds', '{word} {pct}%', { word: oddsWord(odds), pct: Math.round(odds * 100) }),\n      ),\n    );\n    const go = keyed(",
+    "new": "    const go = keyed(",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "RVN-ERRAND-release-left-abroad",
     "file": "src/ui/companionRoster.js",
-    "old": "  } else if (state === 'errand') {   // RVN-ERRAND",
-    "new": "  } else if (false) {   // RVN-ERRAND",
+    "old": "  } else if (state === 'errand') {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "RVN-ERRAND-card-edges-gone",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-errand { border-left-color: #4f7fa8; }\n",
-    "new": "",
+    "old": "body .rvncard.is-errand { border-left-color: #4f7fa8; }\nbody .rvncard.is-errand .rvncard-kicker { color: #9fc2e8; }",
+    "new": "body .rvncard.is-errand .rvncard-kicker { color: #9fc2e8; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]

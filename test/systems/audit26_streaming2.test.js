@@ -132,7 +132,7 @@ test('audit26 F192: the travel popup asks OwnsShip || FreeShipTravel', () => {
 });
 
 test('audit26 F192: and a ship is what stops the 25-gold-per-24-pixels ocean charge', () => {
-  // travel.js:"if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon) totalCost" - `if (oceanPixels > 0 && !hasShip && travelShip)` (PIN MOVED, DRAGON6: and no dragon - flown over)
+  // travel.js:"if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon)" - `if (oceanPixels > 0 && !hasShip && travelShip)` (PIN MOVED, DRAGON6: and no dragon - flown over)
   assert.equal(calculateTripCost(1000, 30, { travelShip: true, hasShip: false }).totalCost, 25 * (Math.trunc(30 / 24) + 1));
   assert.equal(calculateTripCost(1000, 30, { travelShip: true, hasShip: true }).totalCost, 0);
 });

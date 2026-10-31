@@ -12,8 +12,8 @@
   {
     "name": "AEOW-C1-2-bay-adopt-unbounded",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    if (last !== null) this._keep((last % this.frame.w) + this.frame.x0, Math.floor(last / this.frame.w) + this.frame.y0);",
-    "new": "",
+    "old": "    if (last !== null)\n      this._keep((last % this.frame.w) + this.frame.x0, Math.floor(last / this.frame.w) + this.frame.y0);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AEOW-C1-2-evict-frame-x0",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
-    "new": "        const x = (i % w), y = Math.floor(i / w) + y0;",
+    "old": "        const x = (i % w) + x0,",
+    "new": "        const x = i % w,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AEOW-C1-2-evict-frame-y0",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
-    "new": "        const x = (i % w) + x0, y = Math.floor(i / w);",
+    "old": "          y = Math.floor(i / w) + y0;",
+    "new": "          y = Math.floor(i / w);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AEOW-C1-2-classes-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls]; }",
-    "new": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea]; }",
+    "old": "    return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls];",
+    "new": "    return [this._fine, this._full, this._dist, this._edge, this._sea];",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AEOW-C1-3-ether-holds-all",
     "file": "src/world/etherWatersBake.js",
-    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
-    "new": "",
+    "old": "    for (const [x, y] of [\n      [px, py],\n      [px - 1, py],\n      [px + 1, py],\n      [px, py - 1],\n      [px, py + 1],\n    ])\n      if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "AEOW-C1-3-ether-holds-own",
     "file": "src/world/etherWatersBake.js",
-    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
+    "old": "    for (const [x, y] of [\n      [px, py],\n      [px - 1, py],\n      [px + 1, py],\n      [px, py - 1],\n      [px, py + 1],\n    ])\n      if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
     "new": "    for (const [x, y] of [[px, py]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AEOW-C1-3-pair-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  holdsSea(px, py) { return this.of(px, py).holdsSea(px, py); }",
-    "new": "  holdsSea(px, py) { return this.bay.holdsSea(px, py); }",
+    "old": "    return this.of(px, py).holdsSea(px, py);",
+    "new": "    return this.bay.holdsSea(px, py);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "AEOW-C2-1-watch-world",
     "file": "src/net/watchReceipt.js",
-    "old": "\n  && !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);",
-    "new": ";",
+    "old": "  Number.isSafeInteger(x) &&\n  Number.isSafeInteger(y) &&\n  worldPixelOk(x) &&\n  worldPixelOk(y) &&\n  !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);",
+    "new": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],
@@ -162,9 +162,9 @@
   },
   {
     "name": "AEOW-C2-3-board-across",
-    "file": "src/scenes/world.js",
-    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
-    "new": "    if (!playerEntity.boardShipPosition && veilRefused(null) && false) return;",
+    "file": "src/scenes/shipBoardHost.js",
+    "old": "    if (!playerEntity.boardShipPosition && host.veilRefused(t.go)) return;",
+    "new": "    if (!playerEntity.boardShipPosition && host.veilRefused(null) && false) return;",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],
@@ -172,9 +172,9 @@
   },
   {
     "name": "AEOW-C2-3-leave-refused",
-    "file": "src/scenes/world.js",
-    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
-    "new": "    if (veilRefused(t.go)) return;",
+    "file": "src/scenes/shipBoardHost.js",
+    "old": "    if (!playerEntity.boardShipPosition && host.veilRefused(t.go)) return;",
+    "new": "    if (host.veilRefused(t.go)) return;",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "AEOW-T-chaser-z-unread",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE));",
+    "old": "  Number.isInteger(x) &&\n  Number.isInteger(z) &&\n  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&\n  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "AEOW-T-chaser-z-any-number",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  Number.isInteger(x) &&\n  Number.isInteger(z) &&\n  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&\n  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  Number.isInteger(x) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "AEOW-T-chaser-x-trunc",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.trunc(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&",
+    "new": "  worldPixelOk(Math.trunc(x / PIXEL_NATIVE)) &&",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "AEOW-T-chaser-z-500",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(500 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  worldPixelOk(500 - Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "AEOW-T-chaser-z-row-unflipped",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  worldPixelOk(Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "AEOW-T-rows-circle-open",
     "file": "src/world/etherPlaces.js",
-    "old": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)",
-    "new": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) < reach)",
+    "old": "    .filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)",
+    "new": "    .filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) < reach)",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "AEOW-T-evict-ether-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "old": "    this.ether?.evictOutside(px, py, radius);\n    this.tamriel?.evictOutside(px, py, radius);",
+    "new": "    this.tamriel?.evictOutside(px, py, radius);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "AEOW-T-evict-bay-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "old": "    this.bay.evictOutside(px, py, radius);\n    this.ether?.evictOutside(px, py, radius);",
+    "new": "    this.ether?.evictOutside(px, py, radius);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "AEOW-T-local-edge-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
-    "new": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.bay.sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
+    "old": "    return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz);",
+    "new": "    return this.bay.sampleLocalEdgeDistanceMeters(x, y, fx, fz);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "AEOW-T-cardinal-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
-    "new": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.bay.mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
+    "old": "    return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y);",
+    "new": "    return this.bay.mapPixelOrCardinalNeighborHasWaterCells(x, y);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "AEOW-T-landcells-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  mapPixelHasLandCells(x, y) { return this.of(x, y).mapPixelHasLandCells(x, y); }",
-    "new": "  mapPixelHasLandCells(x, y) { return this.bay.mapPixelHasLandCells(x, y); }",
+    "old": "    return this.of(x, y).mapPixelHasLandCells(x, y);",
+    "new": "    return this.bay.mapPixelHasLandCells(x, y);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -413,8 +413,8 @@
   {
     "name": "AEOW-T-tile-global-x-edge",
     "file": "src/world/deepWater/deepWaterTileData.js",
-    "old": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX >= f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
-    "new": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX > f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
+    "old": "    } else if (mapPixelX >= f.x0 + f.w) {",
+    "new": "    } else if (mapPixelX > f.x0 + f.w) {",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "AEOW-T-rects-ruins-as-towns",
     "file": "src/world/etherWatersBake.js",
-    "old": "ruins: rows(templates?.ruins), bases };",
-    "new": "ruins: rows(templates?.towns), bases };",
+    "old": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
+    "new": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.towns), bases };",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "AEOW-T-rects-towns-as-ruins",
     "file": "src/world/etherWatersBake.js",
-    "old": "towns: rows(templates?.towns),",
-    "new": "towns: rows(templates?.ruins),",
+    "old": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
+    "new": "  return { towns: rows(templates?.ruins), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -453,8 +453,8 @@
   {
     "name": "AEOW-T-pits-ether-only",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
-    "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {",
+    "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ],

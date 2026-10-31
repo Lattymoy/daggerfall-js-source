@@ -1,402 +1,402 @@
 [
- {
-  "name": "LAYERED-SHIELD-chain-is-leather",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "isChain(m) ? 'c' :",
-  "new": "false ? 'c' :",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a chain shield drawn as leather"
- },
- {
-  "name": "LAYERED-SHIELD-plate-metal-off-by-one",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "m - 0x200 : 'l'",
-  "new": "m - 0x1ff : 'l'",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a steel shield drawn in the next metal"
- },
- {
-  "name": "LAYERED-SHIELD-weapon-group-shield",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "(it.group != null && it.group !== 'Armor') ||",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a weapon of a shield's template carried as one"
- },
- {
-  "name": "LAYERED-SHIELD-outfit-no-shield",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "${shield ? `^${shield}` : ''}`;\n};",
-  "new": "`;\n};",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the equip table's shield never reaches the outfit"
- },
- {
-  "name": "LAYERED-SHIELD-no-stage-parsed",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "(?:!([0-4])([0-3])?)?$/;",
-  "new": "(?:!([0-4]))?$/;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a cast's held throw read as no code at all"
- },
- {
-  "name": "LAYERED-SHIELD-shield-at-the-loose",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "pieces.shield && record < 20 &&",
-  "new": "pieces.shield && record < 25 &&",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the shield drawn into the loose's bow frames"
- },
- {
-  "name": "LAYERED-SHIELD-shield-beside-pair",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "record < 20 && !look?.offhand &&",
-  "new": "record < 20 &&",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a shield and a pair's second weapon in one hand"
- },
- {
-  "name": "LAYERED-SHIELD-shield-beside-bow",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": " && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield",
-  "new": " && !look?.sheathed ? pieces.shield",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a shield on the bow hand"
- },
- {
-  "name": "LAYERED-SHIELD-two-handed-swing",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "(shield && shieldCutOf(striking, offset)) || swingCutOf",
-  "new": "swingCutOf",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the shield-bearer swings the two-handed frames"
- },
- {
-  "name": "LAYERED-SHIELD-gun-crosses",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "Math.min(shield ? SHIELD_GUN[offset] : GUN_FIRE_FRAME, n - 1)",
-  "new": "Math.min(GUN_FIRE_FRAME, n - 1)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a shot from the frame that crosses to the shield"
- },
- {
-  "name": "LAYERED-SHIELD-cast-crosses",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "Math.min(shield ? SHIELD_CAST[offset][stage] : fc, n - 1)",
-  "new": "Math.min(fc, n - 1)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the cast's last frame crosses to the shield"
- },
- {
-  "name": "LAYERED-SHIELD-stage-lost",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "${look.cast}${stage !== fr ? stage : ''}`",
-  "new": "${look.cast}`",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a held throw draws the throw again, not its scatter"
- },
- {
-  "name": "LAYERED-SHIELD-bare-twin-turns",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "const bare = weapon === '0' && !shield;",
-  "new": "const bare = weapon === '0';",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the shield jumps to the other arm for a step"
- },
- {
-  "name": "LAYERED-SHIELD-arm-stays",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;",
-  "new": "const arm = null;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the swing stays two-handed"
- },
- {
-  "name": "LAYERED-SHIELD-no-marks-mask",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "    if (drawn) res.shield = drawn.drawn;",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the body's marks read off its shield"
- },
- {
-  "name": "LAYERED-SHIELD-clipped",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "return drawn ? padFrame(res, drawn.spill) : res;",
-  "new": "return res;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a shield past the canvas cut off at its edge"
- },
- {
-  "name": "LAYERED-SHIELD-pad-one-side",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "const W = w + 2 * side, H = h + top",
-  "new": "const W = w + side, H = h + top",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the body slides aside as the canvas grows"
- },
- {
-  "name": "LAYERED-SHIELD-behind-drawn-over",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "if (on && !V.over && d[i + 3]) continue;",
-  "new": "if (false) continue;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "from behind, the shield over the body"
- },
- {
-  "name": "LAYERED-SHIELD-inside-unturned",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "if (!V.face) u = W - u;",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "from behind, the inside the face's way round"
- },
- {
-  "name": "LAYERED-SHIELD-no-squeeze",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "kx = cm * (sh[2] ?? V.squeeze)",
-  "new": "kx = cm",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a shield seen edge on as wide as face on"
- },
- {
-  "name": "LAYERED-SHIELD-drawn-is-all",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "    if (!d[i + 3]) drawn[y * w + x] = 1;",
-  "new": "    drawn[y * w + x] = 1;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the body the shield covers read as no body"
- },
- {
-  "name": "LAYERED-SHIELD-unjoined-kept",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "if ((m[i] && !joined[i]) || (k >= 0",
-  "new": "if ((false) || (k >= 0",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a fill no body joins left black in the air"
- },
- {
-  "name": "LAYERED-SHIELD-scraps-kept",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "near[k] && sizes[k] <= ARM_SCRAP)",
-  "new": "near[k] && sizes[k] < 0)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the arm's edge left floating"
- },
- {
-  "name": "LAYERED-SHIELD-marks-unmirrored",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "out[(h - 1 - y) * w + (mirror ? w - 1 - x : x)] = 0;",
-  "new": "out[(h - 1 - y) * w + x] = 0;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a flipped body's marks opened on the wrong side"
- },
- {
-  "name": "LAYERED-SHIELD-kite-grip-middle",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "k: 0.42, t: 0.45",
-  "new": "k: 0.5, t: 0.45",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a kite gripped at its middle, its point at the knee"
- },
- {
-  "name": "LAYERED-SHIELD-late-shield-final",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": " || late(weapon.shieldPic, pieces.shield, shieldPictureExpected)))",
-  "new": ")) ",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a frame drawn before the shield's picture came stays without it"
- },
- {
-  "name": "LAYERED-SHIELD-view1-square",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "export const SHIELD_CUTS = Object.freeze([SQUARE_CUTS, FRONT_CUTS, null,",
-  "new": "export const SHIELD_CUTS = Object.freeze([SQUARE_CUTS, SQUARE_CUTS, null,",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "three quarters before loses the follow-through"
- },
- {
-  "name": "LAYERED-SHIELD-side-cut",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "FRONT_CUTS, null, SQUARE_CUTS",
-  "new": "FRONT_CUTS, SQUARE_CUTS, SQUARE_CUTS",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "from aside, the swing cut short though the shield is behind"
- },
- {
-  "name": "LAYERED-SHIELD-graft-none",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "const laid = arm && hand.graft ? graftArm(res, hand.graft) : null;",
-  "new": "const laid = null;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "from before, the shield-bearer's left arm stays gone"
- },
- {
-  "name": "LAYERED-SHIELD-graft-unshifted",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "const j = y * R.width + x, X = x - ax, Y = y - ay;",
-  "new": "const j = y * R.width + x, X = x, Y = y;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the idle's arm laid where the idle's canvas has it, off the shoulder"
- },
- {
-  "name": "LAYERED-SHIELD-idle-never-composed",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "    if (idle?.sp) {\n      try {",
-  "new": "    if (false) {\n      try {",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the graft's idle never fetched"
- },
- {
-  "name": "LAYERED-SHIELD-wrong-idle",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "`LA:${body}:${combo}:${sg[0]}:${pieces.head}",
-  "new": "`LA:${body}:${combo}:15-0:${pieces.head}",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "three quarters before takes the front idle's arm"
- },
- {
-  "name": "LAYERED-SHIELD-arm-sources-unused",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "removeWeapon(out, m, 0, from && from.length === w * h ? from : null);",
-  "new": "removeWeapon(out, m, 0, null);",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the arm's hole a smear where the frame's own body was to hand"
- },
- {
-  "name": "LAYERED-SHIELD-arm-strip-never-fetched",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]);",
-  "new": "if (au) weapon.armFrom = undefined;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the arm's sources never read"
- },
- {
-  "name": "LAYERED-SHIELD-shoulder-never-laid",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
-  "new": "outlineMask(img, idle.sp)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the swing's raised shoulder out, the idle's never back: a hole at the shoulder"
- },
- {
-  "name": "LAYERED-SHIELD-shoulder-always-laid",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
-  "new": "outlineMask(img, Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "a second pauldron over the frame's own (female 5-2)"
- },
- {
-  "name": "DONOR-FILL-never",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "if (arm && hand.donor) fillFromDonor(res, arm, hand.donor);",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the chest the arm crossed left to the inpaint's noise"
- },
- {
-  "name": "DONOR-FILL-shift-backwards",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "X = x + dx, Y = y + dy;\n    if (donor.within",
-  "new": "X = x - dx, Y = y - dy;\n    if (donor.within",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the idle's px from the wrong place"
- },
- {
-  "name": "DONOR-FILL-past-outlines",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "if (donor.within && !donor.within.some((P) => inPolygon(x + 0.5, y + 0.5, P))) continue;",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "male 6-3's idle waist laid over the crouch"
- },
- {
-  "name": "DONOR-FILL-air-filled",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "if (!hole[i] || !out.data[i * 4 + 3]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
-  "new": "if (!hole[i]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the arm's open air given the idle's body"
- }
+  {
+    "name": "LAYERED-SHIELD-chain-is-leather",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "isChain(m) ? 'c' :",
+    "new": "false ? 'c' :",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a chain shield drawn as leather"
+  },
+  {
+    "name": "LAYERED-SHIELD-plate-metal-off-by-one",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "m - 0x200 : 'l'",
+    "new": "m - 0x1ff : 'l'",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a steel shield drawn in the next metal"
+  },
+  {
+    "name": "LAYERED-SHIELD-weapon-group-shield",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "(it.group != null && it.group !== 'Armor') ||",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a weapon of a shield's template carried as one"
+  },
+  {
+    "name": "LAYERED-SHIELD-outfit-no-shield",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  return `${pieceCode(slots?.[OUTFIT_SLOTS.head])}${pieceCode(slots?.[OUTFIT_SLOTS.top])}${pieceCode(slots?.[OUTFIT_SLOTS.legs])}${cloak == null ? '' : `~${cloak}`}${shield ? `^${shield}` : ''}`;",
+    "new": "  return `${pieceCode(slots?.[OUTFIT_SLOTS.head])}${pieceCode(slots?.[OUTFIT_SLOTS.top])}${pieceCode(slots?.[OUTFIT_SLOTS.legs])}${cloak == null ? '' : `~${cloak}`}`;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the equip table's shield never reaches the outfit"
+  },
+  {
+    "name": "LAYERED-SHIELD-no-stage-parsed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:\\^([brkt][lc0-9]))?(?:@(0|[a-z]{2}[0-9])(?:\\+([a-z]{2}[0-9]))?)?(?:!([0-4])([0-3])?)?$/;",
+    "new": "  /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:\\^([brkt][lc0-9]))?(?:@(0|[a-z]{2}[0-9])(?:\\+([a-z]{2}[0-9]))?)?(?:!([0-4]))?$/;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a cast's held throw read as no code at all"
+  },
+  {
+    "name": "LAYERED-SHIELD-shield-at-the-loose",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed",
+    "new": "    pieces.shield && record < 25 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the shield drawn into the loose's bow frames"
+  },
+  {
+    "name": "LAYERED-SHIELD-shield-beside-pair",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const shield =\n    pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed\n      ? pieces.shield\n      : null;",
+    "new": "  const shield = pieces.shield && record < 20 && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a shield and a pair's second weapon in one hand"
+  },
+  {
+    "name": "LAYERED-SHIELD-shield-beside-bow",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const shield =\n    pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed\n      ? pieces.shield\n      : null;",
+    "new": "  const shield = pieces.shield && record < 20 && !look?.offhand && !look?.sheathed ? pieces.shield : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a shield on the bow hand"
+  },
+  {
+    "name": "LAYERED-SHIELD-two-handed-swing",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length\n      ? (shield && shieldCutOf(striking, offset)) || swingCutOf(striking, left && !square)\n      : null;",
+    "new": "    table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? swingCutOf(striking, left && !square) : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the shield-bearer swings the two-handed frames"
+  },
+  {
+    "name": "LAYERED-SHIELD-gun-crosses",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    ? Math.min(shield ? SHIELD_GUN[offset] : GUN_FIRE_FRAME, n - 1) // LAYERED-WEAPONS: a shot, from the hip",
+    "new": "    ? Math.min(GUN_FIRE_FRAME, n - 1) // LAYERED-WEAPONS: a shot, from the hip",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a shot from the frame that crosses to the shield"
+  },
+  {
+    "name": "LAYERED-SHIELD-cast-crosses",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "        ? Math.min(shield ? SHIELD_CAST[offset][stage] : fc, n - 1)",
+    "new": "        ? Math.min(fc, n - 1)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the cast's last frame crosses to the shield"
+  },
+  {
+    "name": "LAYERED-SHIELD-stage-lost",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      ? `!${look.cast}${stage !== fr ? stage : ''}`",
+    "new": "      ? `!${look.cast}`",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a held throw draws the throw again, not its scatter"
+  },
+  {
+    "name": "LAYERED-SHIELD-bare-twin-turns",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const bare = weapon === '0' && !shield;",
+    "new": "  const bare = weapon === '0';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the shield jumps to the other arm for a step"
+  },
+  {
+    "name": "LAYERED-SHIELD-arm-stays",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    const arm =\n      hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;",
+    "new": "    const arm = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the swing stays two-handed"
+  },
+  {
+    "name": "LAYERED-SHIELD-no-marks-mask",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (drawn) res.shield = drawn.drawn; // ARMORY: the body's marks are read without it",
+    "new": "    // ARMORY: the body's marks are read without it",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the body's marks read off its shield"
+  },
+  {
+    "name": "LAYERED-SHIELD-clipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    return drawn ? padFrame(res, drawn.spill) : res; // LAYERED-SHIELD: a shield past the canvas widens it",
+    "new": "    return res; // LAYERED-SHIELD: a shield past the canvas widens it",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a shield past the canvas cut off at its edge"
+  },
+  {
+    "name": "LAYERED-SHIELD-pad-one-side",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "const W = w + 2 * side, H = h + top",
+    "new": "const W = w + side, H = h + top",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the body slides aside as the canvas grows"
+  },
+  {
+    "name": "LAYERED-SHIELD-behind-drawn-over",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "if (on && !V.over && d[i + 3]) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "from behind, the shield over the body"
+  },
+  {
+    "name": "LAYERED-SHIELD-inside-unturned",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "if (!V.face) u = W - u;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "from behind, the inside the face's way round"
+  },
+  {
+    "name": "LAYERED-SHIELD-no-squeeze",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "kx = cm * (sh[2] ?? V.squeeze)",
+    "new": "kx = cm",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a shield seen edge on as wide as face on"
+  },
+  {
+    "name": "LAYERED-SHIELD-drawn-is-all",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "    if (!d[i + 3]) drawn[y * w + x] = 1;",
+    "new": "    drawn[y * w + x] = 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the body the shield covers read as no body"
+  },
+  {
+    "name": "LAYERED-SHIELD-unjoined-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "if ((m[i] && !joined[i]) || (k >= 0",
+    "new": "if ((false) || (k >= 0",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a fill no body joins left black in the air"
+  },
+  {
+    "name": "LAYERED-SHIELD-scraps-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "near[k] && sizes[k] <= ARM_SCRAP)",
+    "new": "near[k] && sizes[k] < 0)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the arm's edge left floating"
+  },
+  {
+    "name": "LAYERED-SHIELD-marks-unmirrored",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "out[(h - 1 - y) * w + (mirror ? w - 1 - x : x)] = 0;",
+    "new": "out[(h - 1 - y) * w + x] = 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a flipped body's marks opened on the wrong side"
+  },
+  {
+    "name": "LAYERED-SHIELD-kite-grip-middle",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "k: 0.42, t: 0.45",
+    "new": "k: 0.5, t: 0.45",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a kite gripped at its middle, its point at the knee"
+  },
+  {
+    "name": "LAYERED-SHIELD-late-shield-final",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      (late(weapon.pic, pieces.weapon, heldPictureExpected) ||\n        late(weapon.offPic, pieces.offhand, heldPictureExpected) ||\n        late(weapon.shieldPic, pieces.shield, shieldPictureExpected))",
+    "new": "      (late(weapon.pic, pieces.weapon, heldPictureExpected) || late(weapon.offPic, pieces.offhand, heldPictureExpected))",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a frame drawn before the shield's picture came stays without it"
+  },
+  {
+    "name": "LAYERED-SHIELD-view1-square",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "export const SHIELD_CUTS = Object.freeze([SQUARE_CUTS, FRONT_CUTS, null,",
+    "new": "export const SHIELD_CUTS = Object.freeze([SQUARE_CUTS, SQUARE_CUTS, null,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "three quarters before loses the follow-through"
+  },
+  {
+    "name": "LAYERED-SHIELD-side-cut",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "FRONT_CUTS, null, SQUARE_CUTS",
+    "new": "FRONT_CUTS, SQUARE_CUTS, SQUARE_CUTS",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "from aside, the swing cut short though the shield is behind"
+  },
+  {
+    "name": "LAYERED-SHIELD-graft-none",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    const laid = arm && hand.graft ? graftArm(res, hand.graft) : null; // from before, the idle's arm back, the shield in its hand",
+    "new": "    const laid = null; // from before, the idle's arm back, the shield in its hand",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "from before, the shield-bearer's left arm stays gone"
+  },
+  {
+    "name": "LAYERED-SHIELD-graft-unshifted",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "const j = y * R.width + x, X = x - ax, Y = y - ay;",
+    "new": "const j = y * R.width + x, X = x, Y = y;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the idle's arm laid where the idle's canvas has it, off the shoulder"
+  },
+  {
+    "name": "LAYERED-SHIELD-idle-never-composed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (idle?.sp) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the graft's idle never fetched"
+  },
+  {
+    "name": "LAYERED-SHIELD-wrong-idle",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "          `LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`,",
+    "new": "          `LA:${body}:${combo}:15-0:${pieces.head}${pieces.top}${pieces.legs}@0`,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "three quarters before takes the front idle's arm"
+  },
+  {
+    "name": "LAYERED-SHIELD-arm-sources-unused",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "removeWeapon(out, m, 0, from && from.length === w * h ? from : null);",
+    "new": "removeWeapon(out, m, 0, null);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the arm's hole a smear where the frame's own body was to hand"
+  },
+  {
+    "name": "LAYERED-SHIELD-arm-strip-never-fetched",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "        if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]);",
+    "new": "        if (au) weapon.armFrom = undefined;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the arm's sources never read"
+  },
+  {
+    "name": "LAYERED-SHIELD-shoulder-never-laid",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "        weapon.graft = {\n          img,\n          arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp),\n          at: [sg[1], sg[2]],\n        };",
+    "new": "        weapon.graft = { img, arm: outlineMask(img, idle.sp), at: [sg[1], sg[2]] };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the swing's raised shoulder out, the idle's never back: a hole at the shoulder"
+  },
+  {
+    "name": "LAYERED-SHIELD-shoulder-always-laid",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "          arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp),",
+    "new": "          arm: outlineMask(img, Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp),",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "a second pauldron over the frame's own (female 5-2)"
+  },
+  {
+    "name": "DONOR-FILL-never",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (arm && hand.donor) fillFromDonor(res, arm, hand.donor); // DONOR-FILL: the chest the arm crossed, the idle's own",
+    "new": "    // DONOR-FILL: the chest the arm crossed, the idle's own",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the chest the arm crossed left to the inpaint's noise"
+  },
+  {
+    "name": "DONOR-FILL-shift-backwards",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "X = x + dx, Y = y + dy;\n    if (donor.within",
+    "new": "X = x - dx, Y = y - dy;\n    if (donor.within",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the idle's px from the wrong place"
+  },
+  {
+    "name": "DONOR-FILL-past-outlines",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "if (donor.within && !donor.within.some((P) => inPolygon(x + 0.5, y + 0.5, P))) continue;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "male 6-3's idle waist laid over the crouch"
+  },
+  {
+    "name": "DONOR-FILL-air-filled",
+    "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+    "old": "if (!hole[i] || !out.data[i * 4 + 3]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
+    "new": "if (!hole[i]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_shield.test.js"
+    ],
+    "why": "the arm's open air given the idle's body"
+  }
 ]

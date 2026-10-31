@@ -11,24 +11,30 @@
 // file answers null, the window draws its words, and nothing throws.
 
 import { inventoryItemImage } from '../../systems/item/itemTemplates.js';
-import { itemLongName } from '../../systems/item/itemInfo.js';   // RF6: the one resolver - the name every other enhanced list reads
+import { itemLongName } from '../../systems/item/itemInfo.js'; // RF6: the one resolver - the name every other enhanced list reads
 import { requestIcon, requestFittedPicture } from '../textureCanvas.js';
 import { SPELL_ICON_COUNT, SPELL_ICON_ROW_COUNT } from '../spell/spellIcons.js';
-import { screenDpr } from '../iconFit.js';   // UI2: a spell's icon fitted to its slot
+import { screenDpr } from '../iconFit.js'; // UI2: a spell's icon fitted to its slot
 
 /** An item's icon as a data URL (null until it has loaded), and its name. */
 export function itemIconUrl(item, identity = undefined) {
   const img = item ? inventoryItemImage(item, identity) : null;
-  return img?.archive != null ? requestIcon(img.archive, img.record, { scale: 2, dye: img.dye, dyeTarget: img.dyeTarget }) : null;
+  return img?.archive != null
+    ? requestIcon(img.archive, img.record, { scale: 2, dye: img.dye, dyeTarget: img.dyeTarget })
+    : null;
 }
 export function itemName(item) {
-  try { return itemLongName(item) || 'Item'; } catch { return 'Item'; }
+  try {
+    return itemLongName(item) || 'Item';
+  } catch {
+    return 'Item';
+  }
 }
 
 // ── A SHEET IMG, CUT ───────────────────────────────────────────────
-const sheets = new Map();   // name -> Promise<HTMLCanvasElement|null>
-const cuts = new Map();     // `${name}:${x},${y},${w},${h}` -> dataURL | null
-const cutWaiting = new Map();   // UI2: the same key -> the screens waiting on it, while its sheet loads
+const sheets = new Map(); // name -> Promise<HTMLCanvasElement|null>
+const cuts = new Map(); // `${name}:${x},${y},${w},${h}` -> dataURL | null
+const cutWaiting = new Map(); // UI2: the same key -> the screens waiting on it, while its sheet loads
 const CUT_WAKE_MAX = 8;
 
 function loadSheet(name) {
@@ -36,8 +42,10 @@ function loadSheet(name) {
   const p = (async () => {
     try {
       const [{ ImgFile }, { DFPalette }, { getBytes }, { bitmapToColor32 }] = await Promise.all([
-        import('../../formats/imgFile.js'), import('../../formats/dfPalette.js'),
-        import('../../scenes/dataSource.js'), import('../../formats/color32Order.js'),
+        import('../../formats/imgFile.js'),
+        import('../../formats/dfPalette.js'),
+        import('../../scenes/dataSource.js'),
+        import('../../formats/color32Order.js'),
       ]);
       const pal = new DFPalette();
       pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
@@ -45,7 +53,8 @@ function loadSheet(name) {
       if (!img.load(await getBytes(name), name, pal)) return null;
       const { width, height, colors } = bitmapToColor32(img.getDFBitmap(), pal);
       const cv = document.createElement('canvas');
-      cv.width = width; cv.height = height;
+      cv.width = width;
+      cv.height = height;
       cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(colors.buffer), width, height), 0, 0);
       return cv;
     } catch (e) {
@@ -76,12 +85,19 @@ export function sheetCutUrl(name, [x, y, w, h], scale = 2, onReady = null) {
     cutWaiting.delete(key);
     if (!sheet) return;
     const out = document.createElement('canvas');
-    out.width = w * scale; out.height = h * scale;
+    out.width = w * scale;
+    out.height = h * scale;
     const ctx = out.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(sheet, x, y, w, h, 0, 0, out.width, out.height);
     cuts.set(key, out.toDataURL('image/png'));
-    for (const f of wake) { try { f(); } catch (e) { console.warn('[port] a screen would not repaint', e); } }
+    for (const f of wake) {
+      try {
+        f();
+      } catch (e) {
+        console.warn('[port] a screen would not repaint', e);
+      }
+    }
   });
   return null;
 }
@@ -99,7 +115,12 @@ function spellIconRect(index) {
 export function spellIconPicture(index, { box, dpr = screenDpr(), onReady = null } = /** @type {any} */ ({})) {
   const rect = spellIconRect(index);
   if (!rect) return null;
-  return requestFittedPicture(`spellicon${index}`, (wake) => sheetCutUrl('ICON00I0.IMG', rect, 1, wake), { box, dpr, trim: false, onReady });
+  return requestFittedPicture(`spellicon${index}`, (wake) => sheetCutUrl('ICON00I0.IMG', rect, 1, wake), {
+    box,
+    dpr,
+    trim: false,
+    onReady,
+  });
 }
 
 /** Spell icon `index` from ICON00I0 (20 to a row, square - the classic
@@ -116,6 +137,13 @@ export function paintFrame(cv, frame) {
   cv._frame = frame;
   if (cv.width !== frame.width) cv.width = frame.width;
   if (cv.height !== frame.height) cv.height = frame.height;
-  const bytes = frame.colors instanceof Uint8ClampedArray ? frame.colors : new Uint8ClampedArray(frame.colors.buffer ?? frame.colors);
-  try { cv.getContext('2d').putImageData(new ImageData(bytes, frame.width, frame.height), 0, 0); } catch { /* a malformed frame stays unpainted */ }
+  const bytes =
+    frame.colors instanceof Uint8ClampedArray
+      ? frame.colors
+      : new Uint8ClampedArray(frame.colors.buffer ?? frame.colors);
+  try {
+    cv.getContext('2d').putImageData(new ImageData(bytes, frame.width, frame.height), 0, 0);
+  } catch {
+    /* a malformed frame stays unpainted */
+  }
 }

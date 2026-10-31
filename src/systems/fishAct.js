@@ -21,7 +21,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { FISH_ACT, fishBand, tugWindow, waitMult, throwM } from '../net/professionLaw.js';
-import { firmActMult } from './firmamentLive.js';   // FIRM1: the Firmament's patient line (act.fishing)
+import { firmActMult } from './firmamentLive.js'; // FIRM1: the Firmament's patient line (act.fishing)
 
 /** How long the net is in the air, seconds. */
 export const FLY_S = 0.6;
@@ -34,24 +34,53 @@ export const WIND_HOLD_S = 4;
  *   attribute band's widening (professionLaw actBand); `hour` the game clock's hour at the cast; `schoolAt(m)` - which
  *   of the day's schools a cast of `m` metres lands in, or null; `onTug` - the floats dip (the host's buzz, TI2)
  */
-export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, storm = false, gentle = false, rng = Math.random, schoolAt = null, onTug = null }) {
+export function createFishAct({
+  rank = 0,
+  band = 1,
+  angler = false,
+  hour = 12,
+  storm = false,
+  gentle = false,
+  rng = Math.random,
+  schoolAt = null,
+  onTug = null,
+}) {
   const width = Math.min(0.9, fishBand(rank) * band);
   const st = {
     kind: /** @type {'fish'} */ ('fish'),
     phase: /** @type {'wind'|'fly'|'wait'|'tug'|'haul'} */ ('wind'),
-    t: 0, done: false, cancelled: false,
+    t: 0,
+    done: false,
+    cancelled: false,
     /** the wind held, 0 to 1 of its range, and the throw it made (m) */
-    wind: 0, windS: 0, throwM: 0,
+    wind: 0,
+    windS: 0,
+    throwM: 0,
     /** the wait's length and what is left of it; the tug's window and what is left of it */
-    waitS: 0, waitLeft: 0, tugS: tugWindow(angler) * firmActMult('fishing') * band, tugLeft: 0, tugged: false,   // FIRM1: the tug's window, the Firmament's longer; AUDIT GATHER F6: and the net's attribute band's, as FORAGE0 14.4-14.5 has it ("within 600 ms x the band")
+    waitS: 0,
+    waitLeft: 0,
+    tugS: tugWindow(angler) * firmActMult('fishing') * band,
+    tugLeft: 0,
+    tugged: false, // FIRM1: the tug's window, the Firmament's longer; AUDIT GATHER F6: and the net's attribute band's, as FORAGE0 14.4-14.5 has it ("within 600 ms x the band")
     /** the haul: the weight's place and speed, the band's centre and width, the meter's fill and the slip, 0 to 1 */
-    weight: 0.5, speed: 0, bandAt: 0.2, bandW: width, fill: 0, slip: 0, haulS: 0, slipped: false,
+    weight: 0.5,
+    speed: 0,
+    bandAt: 0.2,
+    bandW: width,
+    fill: 0,
+    slip: 0,
+    haulS: 0,
+    slipped: false,
     /** the school the cast landed in, or null */
     school: /** @type {0|1|null} */ (null),
     wasHeld: true,
   };
   /** The net comes in: a full net (clean) or a plain one. */
-  const land = (clean, why = null) => { st.done = true; st.clean = clean; st.why = why; };
+  const land = (clean, why = null) => {
+    st.done = true;
+    st.clean = clean;
+    st.why = why;
+  };
   st.clean = false;
   st.why = /** @type {string|null} */ (null);
 
@@ -80,7 +109,7 @@ export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, s
     tick(dt, { held = false, attack = false } = {}) {
       if (st.done || st.cancelled) return st;
       const step = Math.max(0, Math.min(0.25, Number(dt) || 0));
-      const pressed = attack || (held && !st.wasHeld);   // an edge of E, or of attack
+      const pressed = attack || (held && !st.wasHeld); // an edge of E, or of attack
       st.wasHeld = held;
       if (st.phase === 'wind') {
         if (held && st.windS < WIND_HOLD_S) {
@@ -101,10 +130,17 @@ export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, s
       if (st.phase === 'wait') {
         st.waitLeft -= step;
         if (st.waitLeft <= 0) {
-          if (gentle) { land(false); return st; }   // no moment: the net comes in plain
+          if (gentle) {
+            land(false);
+            return st;
+          } // no moment: the net comes in plain
           st.phase = 'tug';
           st.tugLeft = st.tugS;
-          try { onTug?.(); } catch { /* the host's own */ }
+          try {
+            onTug?.();
+          } catch {
+            /* the host's own */
+          }
         }
         return st;
       }
@@ -124,27 +160,42 @@ export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, s
       st.speed += (rng() * 2 - 1) * FISH_ACT.drift * 4 * step;
       st.speed = Math.max(-FISH_ACT.drift, Math.min(FISH_ACT.drift, st.speed));
       st.weight += st.speed * step;
-      if (st.weight < 0) { st.weight = 0; st.speed = Math.abs(st.speed); }
-      if (st.weight > 1) { st.weight = 1; st.speed = -Math.abs(st.speed); }
+      if (st.weight < 0) {
+        st.weight = 0;
+        st.speed = Math.abs(st.speed);
+      }
+      if (st.weight > 1) {
+        st.weight = 1;
+        st.speed = -Math.abs(st.speed);
+      }
       st.bandAt += (held ? FISH_ACT.rise : -FISH_ACT.fall) * step;
       st.bandAt = Math.max(0, Math.min(1 - width, st.bandAt));
       const inside = st.weight >= st.bandAt && st.weight <= st.bandAt + width;
       if (inside) st.fill = Math.min(1, st.fill + step / FISH_ACT.fillS);
       else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);
       if (st.fill >= 1) land(true);
-      else if (st.slip >= 1) { st.slipped = true; land(false, 'slipped'); }
-      else if (st.haulS >= FISH_ACT.haulS) land(false, 'slow');
+      else if (st.slip >= 1) {
+        st.slipped = true;
+        land(false, 'slipped');
+      } else if (st.haulS >= FISH_ACT.haulS) land(false, 'slow');
       return st;
     },
     /** Esc: the act ends with nothing lost. */
-    cancel() { if (!st.done) st.cancelled = true; return st; },
+    cancel() {
+      if (!st.done) st.cancelled = true;
+      return st;
+    },
     /** The report a finished act's harvest carries (professions.js netOf reads it, bounded): a full net `clean`, the
      *  school it landed in; the tug's and the slip's words for the toast. Null before the end or after a cancel. */
     report() {
       if (!st.done || st.cancelled) return null;
       return {
-        clean: !gentle && st.clean === true, tugged: st.tugged, slipped: st.slipped, why: st.why,
-        ...(st.school === 0 || st.school === 1 ? { school: st.school } : {}), throwM: Math.round(st.throwM * 10) / 10,
+        clean: !gentle && st.clean === true,
+        tugged: st.tugged,
+        slipped: st.slipped,
+        why: st.why,
+        ...(st.school === 0 || st.school === 1 ? { school: st.school } : {}),
+        throwM: Math.round(st.throwM * 10) / 10,
       };
     },
   };

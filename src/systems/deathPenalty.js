@@ -29,7 +29,7 @@
 // Offline it stands wherever a death respawns - Project Legacy's own
 // switch decides that (off, the run ends, and nothing is taken).
 import { goldPiecesOf } from './inventory.js';
-import { isCasual } from './legacy/casual.js';   // CASUAL-LIFE: a Casual character's death takes nothing
+import { isCasual } from './legacy/casual.js'; // CASUAL-LIFE: a Casual character's death takes nothing
 
 /** AUDIT DEATH-TENTH: the share as a divisor - `g / 10` is exact for every whole purse, where `g * 0.1` rounds up past
  *  3 x 2^51 (0.1 is a hair over a tenth in binary) and charged a coin more than a tenth. */
@@ -50,7 +50,9 @@ export function deathGoldLoss(gold) {
  */
 let _stated = null;
 /** The death screen's word - or null to withdraw it (a Resurrect). */
-export function stateDeathLoss(lost) { _stated = Number.isSafeInteger(lost) && lost >= 0 ? lost : null; }
+export function stateDeathLoss(lost) {
+  _stated = Number.isSafeInteger(lost) && lost >= 0 ? lost : null;
+}
 /** What the screen said, if it has spoken since the last respawn (a test's seam, and the Resurrect's line). */
 export const statedDeathLoss = () => _stated;
 
@@ -58,10 +60,13 @@ export const statedDeathLoss = () => _stated;
  *  now - never more than the purse holds. Returns the gold lost (0 when there was none to take). */
 export function applyDeathPenalty(player) {
   if (!player) return 0;
-  if (isCasual(player)) { _stated = null; return 0; }   // CASUAL-LIFE: spent all the same - the next death speaks for itself
+  if (isCasual(player)) {
+    _stated = null;
+    return 0;
+  } // CASUAL-LIFE: spent all the same - the next death speaks for itself
   const purse = goldPiecesOf(player);
   const lost = Math.max(0, Math.min(purse, _stated ?? deathGoldLoss(purse)));
-  _stated = null;   // spent: the next death speaks for itself
+  _stated = null; // spent: the next death speaks for itself
   if (lost > 0) player.goldPieces = purse - lost;
   return lost;
 }

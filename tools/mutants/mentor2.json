@@ -1,29 +1,245 @@
 [
-  {"name": "MENTOR2-the-gap-at-4", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_MIN_GAP = 5;", "new": "export const MENTOR_MIN_GAP = 4;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-ratio-at-1.4", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_MIN_RATIO = 1.5;", "new": "export const MENTOR_MIN_RATIO = 1.4;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-lift-at-2", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_LEVEL_ALLOWANCE = 3;", "new": "export const MENTOR_LEVEL_ALLOWANCE = 2;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-quarter-a-fifth", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_LEVEL_SHARE = 0.25;", "new": "export const MENTOR_LEVEL_SHARE = 0.2;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-world-at-the-group", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_WORLD_ALLOWANCE = 1;", "new": "export const MENTOR_WORLD_ALLOWANCE = 0;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-blow-five-times", "file": "src/systems/mentorMode.js", "old": "export const MENTOR_MAX_DAMAGE_MULT = 2;", "new": "export const MENTOR_MAX_DAMAGE_MULT = 5;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-ratio-unread", "file": "src/systems/mentorMode.js", "old": "realLevel - Math.round(ref) >= MENTOR_MIN_GAP && realLevel >= ref * MENTOR_MIN_RATIO", "new": "realLevel - Math.round(ref) >= MENTOR_MIN_GAP", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-world-at-the-fight-level", "file": "src/systems/mentorMode.js", "old": "export const effectiveLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;", "new": "export const effectiveLevel = (entity) => entity?._mentor?.level ?? entity?.level ?? 1;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-cast-at-the-world-level", "file": "src/systems/mentorMode.js", "old": "export const castingLevel = (entity) => entity?._mentor?.level ?? entity?.level ?? 1;", "new": "export const castingLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-gate-lowered", "file": "src/systems/mentorMode.js", "old": "export const lootGateLevel = (entity) => entity?.level ?? 1;", "new": "export const lootGateLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-no-join-wait", "file": "src/systems/mentorMode.js", "old": "if (now - s.since >= MENTOR_JOIN_MS) live.push(s.level);", "new": "live.push(s.level);", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-no-linger", "file": "src/systems/mentorMode.js", "old": "if (now - s.last > MENTOR_LEAVE_MS) { seen.delete(acct); continue; }", "new": "if (now - s.last > 0) { seen.delete(acct); continue; }", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-fight-held-forever", "file": "src/systems/mentorMode.js", "old": "if (now - holdFrom < MENTOR_FIGHT_HOLD_MS) return held;", "new": "return held;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-members-unread", "file": "src/systems/mentorMode.js", "old": "if (member) for", "new": "if (false) for", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-fight-asked-with-no-change", "file": "src/systems/mentorMode.js", "old": "      if (live.length === held.length && live.every((l, i) => l === held[i])) { holdFrom = null; return held; }\n", "new": "", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-a-move-said-as-a-start", "file": "src/systems/mentorMode.js", "old": "return 'moved';", "new": "return 'on';", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-pupil-unpaid", "file": "src/systems/skills.js", "old": "entity.skillUses[skillId] += entity._pupil ? pupilUses(entity, skillId, amount) : amount;", "new": "entity.skillUses[skillId] += amount;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-real-skill-weighed", "file": "src/systems/skills.js", "old": "overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real))", "new": "overcapTallyWeight(entity, skillId, amount, real)", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-pupil-fraction-dropped", "file": "src/systems/skills.js", "old": "frac[skillId] = total - whole;\n  return whole;", "new": "frac[skillId] = 0;\n  return whole;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-a-life-star-at-a-share", "file": "src/systems/firmamentLive.js", "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))", "new": "(k === 1 ? v : Math.round(v * k))", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-combat-stars-whole", "file": "src/systems/firmamentLive.js", "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))", "new": "v", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-party-left-unread", "file": "src/scenes/mentorHost.js", "old": "if (!social?.party) presence.reset();", "new": "", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-reach-unread", "file": "src/scenes/mentorHost.js", "old": "if (mine && n.feet && Math.hypot(n.feet[0] - mine[0], n.feet[2] - mine[2]) > MENTOR_NEAR_METRES) continue;", "new": "", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-share-untold", "file": "src/scenes/mentorHost.js", "old": "setFirmamentMentorScale(mentorPowerScale(me));", "new": "", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-fight-unread", "file": "src/scenes/mentorHost.js", "old": "const fighting = () => { try { return !!deps.fighting(); } catch { return false; } };", "new": "const fighting = () => false;", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-pupil-restored", "file": "src/systems/save/save.js", "old": "  entity._pupil = null;   // MENTOR2: the pupil's side too\n", "new": "", "tests": ["test/systems/mentor2.test.js"]},
-  {"name": "MENTOR2-the-tile-names-the-real-level", "file": "src/systems/mentorText.js", "old": "foot: levelShort(m.level)", "new": "foot: levelShort(m.realLevel)", "tests": ["test/systems/mentor2.test.js"]}
+  {
+    "name": "MENTOR2-the-gap-at-4",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_MIN_GAP = 5;",
+    "new": "export const MENTOR_MIN_GAP = 4;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-ratio-at-1.4",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_MIN_RATIO = 1.5;",
+    "new": "export const MENTOR_MIN_RATIO = 1.4;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-lift-at-2",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_LEVEL_ALLOWANCE = 3;",
+    "new": "export const MENTOR_LEVEL_ALLOWANCE = 2;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-quarter-a-fifth",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_LEVEL_SHARE = 0.25;",
+    "new": "export const MENTOR_LEVEL_SHARE = 0.2;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-world-at-the-group",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_WORLD_ALLOWANCE = 1;",
+    "new": "export const MENTOR_WORLD_ALLOWANCE = 0;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-blow-five-times",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const MENTOR_MAX_DAMAGE_MULT = 2;",
+    "new": "export const MENTOR_MAX_DAMAGE_MULT = 5;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-ratio-unread",
+    "file": "src/systems/mentorMode.js",
+    "old": "  return realLevel - Math.round(ref) >= MENTOR_MIN_GAP && realLevel >= ref * MENTOR_MIN_RATIO;",
+    "new": "  return realLevel - Math.round(ref) >= MENTOR_MIN_GAP;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-world-at-the-fight-level",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const effectiveLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;",
+    "new": "export const effectiveLevel = (entity) => entity?._mentor?.level ?? entity?.level ?? 1;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-cast-at-the-world-level",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const castingLevel = (entity) => entity?._mentor?.level ?? entity?.level ?? 1;",
+    "new": "export const castingLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-gate-lowered",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const lootGateLevel = (entity) => entity?.level ?? 1;",
+    "new": "export const lootGateLevel = (entity) => entity?._mentor?.worldLevel ?? entity?.level ?? 1;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-no-join-wait",
+    "file": "src/systems/mentorMode.js",
+    "old": "        if (now - s.since >= MENTOR_JOIN_MS) live.push(s.level);",
+    "new": "        live.push(s.level);",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-no-linger",
+    "file": "src/systems/mentorMode.js",
+    "old": "        if (now - s.last > MENTOR_LEAVE_MS) {",
+    "new": "        if (now - s.last > 0) {",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-fight-held-forever",
+    "file": "src/systems/mentorMode.js",
+    "old": "        if (now - holdFrom < MENTOR_FIGHT_HOLD_MS) return held;",
+    "new": "        return held;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-members-unread",
+    "file": "src/systems/mentorMode.js",
+    "old": "      if (member) for (const acct of seen.keys()) if (!member(acct)) seen.delete(acct);",
+    "new": "      if (false) for (const acct of seen.keys()) if (!member(acct)) seen.delete(acct);",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-fight-asked-with-no-change",
+    "file": "src/systems/mentorMode.js",
+    "old": "      if (live.length === held.length && live.every((l, i) => l === held[i])) {\n        holdFrom = null;\n        return held;\n      }\n      if (typeof fighting === 'function' ? fighting() : fighting) {",
+    "new": "      if (typeof fighting === 'function' ? fighting() : fighting) {",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-a-move-said-as-a-start",
+    "file": "src/systems/mentorMode.js",
+    "old": "  if (was && next && (was.level !== next.level || was.worldLevel !== next.worldLevel)) return 'moved';",
+    "new": "  if (was && next && (was.level !== next.level || was.worldLevel !== next.worldLevel)) return 'on';",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-pupil-unpaid",
+    "file": "src/systems/skills.js",
+    "old": "  entity.skillUses[skillId] += entity._pupil ? pupilUses(entity, skillId, amount) : amount;",
+    "new": "  entity.skillUses[skillId] += amount;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-real-skill-weighed",
+    "file": "src/systems/skills.js",
+    "old": "      : overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real)); // MOVE-REAL; MENTOR2",
+    "new": "      : overcapTallyWeight(entity, skillId, amount, real); // MOVE-REAL; MENTOR2",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-pupil-fraction-dropped",
+    "file": "src/systems/skills.js",
+    "old": "  const whole = Math.floor(total + 1e-9);\n  frac[skillId] = total - whole;",
+    "new": "  const whole = Math.floor(total + 1e-9);\n  frac[skillId] = 0;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-a-life-star-at-a-share",
+    "file": "src/systems/firmamentLive.js",
+    "old": "const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));",
+    "new": "const atScale = (key, v, k) => (k === 1 ? v : Math.round(v * k));",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-combat-stars-whole",
+    "file": "src/systems/firmamentLive.js",
+    "old": "const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));",
+    "new": "const atScale = (key, v, k) => v;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-party-left-unread",
+    "file": "src/scenes/mentorHost.js",
+    "old": "    if (!social?.party) presence.reset(); // leaving the party is a deliberate act: I am myself again the same frame",
+    "new": "    // leaving the party is a deliberate act: I am myself again the same frame",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-reach-unread",
+    "file": "src/scenes/mentorHost.js",
+    "old": "      if (mine && n.feet && Math.hypot(n.feet[0] - mine[0], n.feet[2] - mine[2]) > MENTOR_NEAR_METRES) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-share-untold",
+    "file": "src/scenes/mentorHost.js",
+    "old": "    setFirmamentMentorScale(mentorPowerScale(me));",
+    "new": "",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-fight-unread",
+    "file": "src/scenes/mentorHost.js",
+    "old": "  const fighting = () => {\n    try {\n      return !!deps.fighting();\n    } catch {\n      return false;\n    }\n  };",
+    "new": "  const fighting = () => false;",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-pupil-restored",
+    "file": "src/systems/save/save.js",
+    "old": "  entity._pupil = null;   // MENTOR2: the pupil's side too\n",
+    "new": "",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  },
+  {
+    "name": "MENTOR2-the-tile-names-the-real-level",
+    "file": "src/systems/mentorText.js",
+    "old": "  if (m) return { name: t('mentor.tile.mentor', 'Mentoring'), foot: levelShort(m.level), pupil: false };",
+    "new": "  if (m) return { name: t('mentor.tile.mentor', 'Mentoring'), foot: levelShort(m.realLevel), pupil: false };",
+    "tests": [
+      "test/systems/mentor2.test.js"
+    ]
+  }
 ]

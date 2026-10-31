@@ -41,7 +41,9 @@ const BILLBOARD = COMPONENTS.find((c) => c.$type === 'DaggerfallBestiaryProject.
  *  ash stands by its centre, ASH_CENTRE over the body's foot (SetHealth: `-CorpseBillboardHeight / 2 + 0.1` from the
  *  body's centre). */
 export const TROLL_CORPSE = Object.freeze({
-  archive: BILLBOARD.Archive, record: BILLBOARD.Record, respawnTime: BILLBOARD.RespawnTime,
+  archive: BILLBOARD.Archive,
+  record: BILLBOARD.Record,
+  respawnTime: BILLBOARD.RespawnTime,
   ash: Object.freeze({ archive: BILLBOARD.AshArchive, record: BILLBOARD.AshRecord, centre: 0.1 }),
 });
 /** The prefab's SphereCollider - a trigger of radius 1 about the body's centre (Prefabs/1618_20.components.json). */
@@ -54,7 +56,14 @@ const DEFAULT_STAT = 50;
 export function trollCorpseEntity(career) {
   const s = DEFAULT_STAT;
   return {
-    isPlayer: false, isClass: false, level: 0, maxHealth: 1, health: 1, career: career ?? null, activeEffects: [], items: [],
+    isPlayer: false,
+    isClass: false,
+    level: 0,
+    maxHealth: 1,
+    health: 1,
+    career: career ?? null,
+    activeEffects: [],
+    items: [],
     stats: { strength: s, intelligence: s, willpower: s, agility: s, endurance: s, personality: s, speed: s, luck: s },
   };
 }
@@ -68,14 +77,20 @@ let _vendor = null;
 const cheat = () => _vendor != null && modSetting(_vendor, 'Cheat.DisableTrollRespawn') === true;
 
 function makeTrollCorpse(f, host) {
-  f.corpseDisabled = true;   // PostParentedSetup: no loot - every host's loot readers refuse a disabled body
-  let entity = null, ended = false, rising = false;
+  f.corpseDisabled = true; // PostParentedSetup: no loot - every host's loot readers refuse a disabled body
+  let entity = null,
+    ended = false,
+    rising = false;
   const key = host.key(f);
   const c = {
     respawnBuffer: TROLL_CORPSE.respawnTime,
-    get entity() { return entity; },
+    get entity() {
+      return entity;
+    },
     /** Still down: its foe still dead and lying in a live host (OnDestroy - a host frees a body by other roads too). */
-    get down() { return !ended && f.corpsePrefab === c && !!f.dead && !!f.corpse && host.alive(); },
+    get down() {
+      return !ended && f.corpsePrefab === c && !!f.dead && !!f.corpse && host.alive();
+    },
     /** Update: the countdown, where this machine runs the foe. */
     frame(dt) {
       if (ended || rising || !host.runs(f) || cheat()) return;
@@ -84,10 +99,17 @@ function makeTrollCorpse(f, host) {
       rising = true;
       Promise.resolve(host.rise(f)).then((stood) => {
         rising = false;
-        if (ended) return;   // let go meanwhile (the host gone, a load)
-        if (!stood) { c.respawnBuffer = TROLL_CORPSE.respawnTime; return; }
+        if (ended) return; // let go meanwhile (the host gone, a load)
+        if (!stood) {
+          c.respawnBuffer = TROLL_CORPSE.respawnTime;
+          return;
+        }
         end();
-        host.say(t('dex.troll.recovered', 'The {name} has recovered from its injuries.', { name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)) }));
+        host.say(
+          t('dex.troll.recovered', 'The {name} has recovered from its injuries.', {
+            name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)),
+          }),
+        );
       });
     },
     /** The trigger a missile meets: about the body's centre (its flat's, once it stands - its foot until then). */
@@ -101,7 +123,10 @@ function makeTrollCorpse(f, host) {
      *  career, its first round now). */
     struck(spell, casterLevel, caster) {
       if (ended || rising) return null;
-      if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }   // DEX5b: a copy's - the bundle goes to the body its runner holds
+      if (!host.runs(f)) {
+        host.send(f, spell, casterLevel);
+        return null;
+      } // DEX5b: a copy's - the bundle goes to the body its runner holds
       entity ??= trollCorpseEntity(f.entity?.career);
       const r = applySpell(spell, casterLevel, entity, sinks, Math.random, caster);
       if (entity.health <= 0) burn();
@@ -122,10 +147,16 @@ function makeTrollCorpse(f, host) {
       else host.vanish(f);
     },
     /** AUDIT DEX D2/D12: freed by another road (a load, the foe standing up again, its host gone) - no rise, no ash. */
-    release() { end(); },
+    release() {
+      end();
+    },
   };
   /** BestiaryTrollCorpseEntity.SetHealth's damage: DecreaseHealth, the one sink a harmful effect reaches. */
-  const sinks = { hurt: (n) => { if (n > 0) entity.health = Math.max(0, entity.health - n); } };
+  const sinks = {
+    hurt: (n) => {
+      if (n > 0) entity.health = Math.max(0, entity.health - n);
+    },
+  };
   function end() {
     ended = true;
     if (key != null && _down.get(key) === c) _down.delete(key);
@@ -134,12 +165,15 @@ function makeTrollCorpse(f, host) {
   function burn() {
     if (ended) return;
     end();
-    sayEnemyDied(host.say, f.mobileType);   // the corpse's entity knows its MobileID alone (GetLocalizedEnemyName(MobileID)) - no champion's name
+    sayEnemyDied(host.say, f.mobileType); // the corpse's entity knows its MobileID alone (GetLocalizedEnemyName(MobileID)) - no champion's name
     host.toAsh(f, TROLL_CORPSE.ash);
   }
   if (key != null) {
     _down.set(key, c);
-    if (_pending.has(key)) { c.respawnBuffer = _pending.get(key); _pending.delete(key); }
+    if (_pending.has(key)) {
+      c.respawnBuffer = _pending.get(key);
+      _pending.delete(key);
+    }
   }
   return c;
 }
@@ -172,8 +206,17 @@ export function installDexTroll(vendor) {
   _installed = true;
   _vendor = vendor;
   registerCorpsePrefab(TROLL_CORPSE.archive, TROLL_CORPSE.record, makeTrollCorpse);
-  registerModSaveData(vendor, { newSaveData: () => ({ activeCorpses: [] }), getSaveData: trollSaveData, restoreSaveData: restoreTrollSaveData });
+  registerModSaveData(vendor, {
+    newSaveData: () => ({ activeCorpses: [] }),
+    getSaveData: trollSaveData,
+    restoreSaveData: restoreTrollSaveData,
+  });
   return true;
 }
 /** The test seam. */
-export function _resetDexTroll() { _down.clear(); _pending.clear(); _vendor = null; _installed = false; }
+export function _resetDexTroll() {
+  _down.clear();
+  _pending.clear();
+  _vendor = null;
+  _installed = false;
+}

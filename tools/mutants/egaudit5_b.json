@@ -119,8 +119,8 @@
   {
     "name": "AUDIT EG V L1-4: Hearts Stilled by any lord's phase words",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0) }),",
-    "new": "test: (s) => !(s.relit > 0) && (s.phase ?? 0) >= 2 }),",
+    "old": "    test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0),",
+    "new": "    test: (s) => !(s.relit > 0) && (s.phase ?? 0) >= 2,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egeco_feats.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT EG V L1-5: No Ground Conceded by any object broken",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3 }),",
-    "new": "test: (s) => (s.broken ?? 0) >= 3 }),",
+    "old": "    test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3,",
+    "new": "    test: (s) => (s.broken ?? 0) >= 3,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT EG V L1-6: Together within twice the window",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS;",
-    "new": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS * 2;",
+    "old": "    T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS",
+    "new": "    T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS * 2",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egeco_feats.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT EG V L1-7: the screen's row facing unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "yaw: Number.isFinite(t[18]) ? t[18] : had?.yaw ?? 0 };",
-    "new": "yaw: had?.yaw ?? 0 };",
+    "old": "    yaw: Number.isFinite(t[18]) ? t[18] : (had?.yaw ?? 0),",
+    "new": "    yaw: had?.yaw ?? 0,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "AUDIT EG V L1-7: the screen's walk facing unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,",
-    "new": "yaw: b.yaw,",
+    "old": "                yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,",
+    "new": "                yaw: b.yaw,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "AUDIT EG V L1-9: a named blow judged by its marks (the old census)",
     "file": "src/net/bossRef.js",
-    "old": "      if (a.on) {   // AUDIT EG V (lane1 #9)",
-    "new": "      if (false) {   // AUDIT EG V (lane1 #9)",
+    "old": "      if (a.on) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AUDIT EG V L1-9: a member it does not name judged by the marks",
     "file": "src/net/bossRef.js",
-    "old": "        if (!a.on.includes(b.sub)) { a.bh.push(b.sub); continue; }",
-    "new": "        if (!a.on.includes(b.sub)) { if (egTrailReady(b.tr, a.at, now)) { a.bh.push(b.sub); if (deepShared(test, b.tr, a.at, F.h, spec, ys, free)) out.push(hit); } continue; }",
+    "old": "        if (!a.on.includes(b.sub)) {\n          a.bh.push(b.sub);",
+    "new": "        if (!a.on.includes(b.sub)) {\n          if (egTrailReady(b.tr, a.at, now)) {\n            a.bh.push(b.sub);\n            if (deepShared(test, b.tr, a.at, F.h, spec, ys, free)) out.push(hit);\n          }",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "AUDIT EG V L1-10: held whatever empties the set",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);",
-    "new": "return true;",
+    "old": "  return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);",
+    "new": "  return true;",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ],
@@ -440,8 +440,8 @@
   {
     "name": "AUDIT EG V L1-12: no WIND from the glint",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "_barks.push({ kind: STALKER_MOBILE, at: toDungeon(b.x, 1, b.z), cue: hostCue('windup', STALKER_MOBILE), critical: true });",
-    "new": "void STALKER_MOBILE;",
+    "old": "        _barks.push({\n          kind: STALKER_MOBILE,\n          at: toDungeon(b.x, 1, b.z),\n          cue: hostCue('windup', STALKER_MOBILE),\n          critical: true,\n        });",
+    "new": "        void STALKER_MOBILE;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "AUDIT EG V L1-13: the place's dark undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (darkNow > 0) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
-    "new": "    if (false) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
+    "old": "    if (darkNow > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "AUDIT EG V L1-13: the Long Night's shafts unkept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (S) for (const q of moonShafts(S, t)) sh.points.push([q[0], q[1]]);\n",
-    "new": "",
+    "old": "      if (S) for (const q of moonShafts(S, t)) sh.points.push([q[0], q[1]]);\n      sh.t = darkNow;",
+    "new": "      sh.t = darkNow;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT EG V L1-13: the dark past its end",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.min(1, (until - t) / EG_DARK_EASE_MS, (t - from) / EG_DARK_EASE_MS)",
-    "new": "Math.min(1, (t - from) / EG_DARK_EASE_MS)",
+    "old": "  EG_ECLIPSE_LOOK.deep * Math.max(0, Math.min(1, (until - t) / EG_DARK_EASE_MS, (t - from) / EG_DARK_EASE_MS));",
+    "new": "  EG_ECLIPSE_LOOK.deep * Math.max(0, Math.min(1, (t - from) / EG_DARK_EASE_MS));",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "AUDIT EG V L1-13: the Rails undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    const C = F.rail > t ? F.bodies.find(",
-    "new": "    const C = F.rail > t + 1e12 ? F.bodies.find(",
+    "old": "      F.rail > t",
+    "new": "      F.rail > t + 1e12",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "AUDIT EG V L1-13: no rim in the dark",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)",
-    "new": "egRimOf(band, b.fl | 0, lord)",
+    "old": "    setBatchGlint(d.batch, b.fellAt ? null : egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)); // EG-ZG (section 25.6): THE SHADE'S RIM LIGHT - AUDIT EG V (lane1 #13): every foe's in the place's dark; EG-PERFECT: a raised guard's glint",
+    "new": "    setBatchGlint(d.batch, b.fellAt ? null : egRimOf(band, b.fl | 0, lord)); // EG-ZG (section 25.6): THE SHADE'S RIM LIGHT - AUDIT EG V (lane1 #13): every foe's in the place's dark; EG-PERFECT: a raised guard's glint",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -577,8 +577,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline's lead unsaid",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));\n",
-    "new": "",
+    "old": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));\n  return blow;",
+    "new": "  return blow;",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egaudit5_b_client.test.js"
@@ -596,8 +596,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (t < from - (bl.ol ?? 0) || t > bl.at + span + LINGER_MS) return;",
-    "new": "    if (t < from || t > bl.at + span + LINGER_MS) return;",
+    "old": "    if (t < from - (bl.ol ?? 0) || t > bl.at + span + LINGER_MS) return; // AUDIT EG V (lane1 #18): a chained shape's dim outline from the first's word",
+    "new": "    if (t < from || t > bl.at + span + LINGER_MS) return; // AUDIT EG V (lane1 #18): a chained shape's dim outline from the first's word",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline drawn full",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": " : t < from ? EG_OUTLINE_DIM : aimedAtMe ? 1 : 0.85;",
-    "new": " : aimedAtMe ? 1 : 0.85;",
+    "old": "          : t < from\n            ? EG_OUTLINE_DIM\n            : aimedAtMe\n              ? 1\n              : 0.85;",
+    "new": "          : aimedAtMe\n            ? 1\n            : 0.85;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "AUDIT EG V L1-22: a fallen lord's bar",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0).slice(0, EG_LORD_BARS_MAX)",
-    "new": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0).slice(0, EG_LORD_BARS_MAX)",
+    "old": "    .filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0)",
+    "new": "    .filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0)",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "AUDIT EG V L1-22: one bar alone",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "{ lord: bars[0], lord2: bars[1] ?? null }",
-    "new": "{ lord: bars[0], lord2: null }",
+    "old": "  return bars[0]?.court ? { lord: bars[0], lord2: bars[1] ?? null } : { lord: null, lord2: null };",
+    "new": "  return bars[0]?.court ? { lord: bars[0], lord2: null } : { lord: null, lord2: null };",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]

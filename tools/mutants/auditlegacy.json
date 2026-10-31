@@ -163,8 +163,8 @@
   {
     "name": "AUDIT-LEGACY-F5-always-only-at-birth",
     "file": "src/systems/legacy/family.js",
-    "old": "  && (fallen.heir === true || (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always);",
-    "new": "  && fallen.heir === true;",
+    "old": "export const newbornAllowed = (family, fallen, settings = null) =>\n  !!fallen && (fallen.heir === true || (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always);",
+    "new": "export const newbornAllowed = (family, fallen, settings = null) => !!fallen && fallen.heir === true;",
     "tests": [
       "test/systems/legacy/auditlegacy.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-LEGACY-H5-artifact-heirloom",
     "file": "src/systems/legacy/heirloom.js",
-    "old": "    && !NEVER_RARITY.has(it.rarity) && !NEVER_RARITY.has(rarityOf(it)) && it.sigil == null",
-    "new": "    && !NEVER_RARITY.has(it.rarity) && it.sigil == null",
+    "old": "    !NEVER_RARITY.has(rarityOf(it)) &&\n    it.sigil == null &&",
+    "new": "    it.sigil == null &&",
     "tests": [
       "test/systems/legacy/legacy4_heirloom.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "AUDIT-LEGACY-H7-remains-gold-uncapped",
     "file": "src/systems/legacy/heirloom.js",
-    "old": "export const remainsGoldOf = (gold) => Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));",
+    "old": "export const remainsGoldOf = (gold) =>\n  Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));",
     "new": "export const remainsGoldOf = (gold) => Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE));",
     "tests": [
       "test/systems/legacy/legacy4_heirloom.test.js"
@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-LEGACY-B4-bloodline-open-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "title: 'Bloodline', locked: false,",
-    "new": "title: 'Bloodline', locked: !!online,",
+    "old": "      title: 'Bloodline',\n      locked: false,",
+    "new": "      title: 'Bloodline',\n      locked: !!online,",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ],

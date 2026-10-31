@@ -56,10 +56,27 @@
  * table starts folding real letters together and manufactures false
  * positives out of nothing.
  */
-const LEET = new Map(Object.entries({
-  0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 6: 'g', 7: 't', 8: 'b', 9: 'g',
-  '@': 'a', $: 's', '!': 'i', '|': 'i', '+': 't', '(': 'c', '<': 'c', '£': 'l',
-}));
+const LEET = new Map(
+  Object.entries({
+    0: 'o',
+    1: 'i',
+    3: 'e',
+    4: 'a',
+    5: 's',
+    6: 'g',
+    7: 't',
+    8: 'b',
+    9: 'g',
+    '@': 'a',
+    $: 's',
+    '!': 'i',
+    '|': 'i',
+    '+': 't',
+    '(': 'c',
+    '<': 'c',
+    '£': 'l',
+  }),
+);
 
 /** The letters a padded name wraps a word in. `x` is the common one
  *  (`xXnameXx`); digits and the separators come in with it - though by
@@ -101,7 +118,9 @@ export function normaliseName(name) {
   // after the `stretchable` flag. Both were written as belt-and-braces
   // and both were braces on braces; a line that cannot change an
   // answer is a line the next reader has to work out the purpose of.
-  const flat = String(name ?? '').normalize('NFKD').toLowerCase();
+  const flat = String(name ?? '')
+    .normalize('NFKD')
+    .toLowerCase();
   let out = '';
   for (const ch of flat) {
     const mapped = LEET.get(ch) ?? ch;
@@ -142,18 +161,71 @@ export const collapseRuns = (flat) => String(flat ?? '').replace(/(.)\1+/g, '$1'
  * was refused can be honest about which kind it was.
  */
 export const CRUDE = Object.freeze([
-  'anus', 'arse', 'arsehole', 'ass', 'asshole', 'bastard', 'bitch', 'bollock', 'boner', 'boob', 'bullshit', 'clit',
-  'cock', 'cum', 'cunt', 'dick', 'dickhead', 'dildo', 'dipshit', 'dumbass', 'fuck', 'jizz', 'knob', 'minge',
-  'nonce', 'penis', 'piss', 'prick', 'pussy', 'scrotum', 'semen', 'shit', 'shithead',
-  'slut', 'smegma', 'spunk', 'testicle', 'tit', 'twat', 'vagina', 'wank', 'whore',
-]);   // TEXT-F1: and the compounds a sentence reaches for, which no boundary finds in one word - `asshole`'s `ass` has `hole` after it
+  'anus',
+  'arse',
+  'arsehole',
+  'ass',
+  'asshole',
+  'bastard',
+  'bitch',
+  'bollock',
+  'boner',
+  'boob',
+  'bullshit',
+  'clit',
+  'cock',
+  'cum',
+  'cunt',
+  'dick',
+  'dickhead',
+  'dildo',
+  'dipshit',
+  'dumbass',
+  'fuck',
+  'jizz',
+  'knob',
+  'minge',
+  'nonce',
+  'penis',
+  'piss',
+  'prick',
+  'pussy',
+  'scrotum',
+  'semen',
+  'shit',
+  'shithead',
+  'slut',
+  'smegma',
+  'spunk',
+  'testicle',
+  'tit',
+  'twat',
+  'vagina',
+  'wank',
+  'whore',
+]); // TEXT-F1: and the compounds a sentence reaches for, which no boundary finds in one word - `asshole`'s `ass` has `hole` after it
 
 /** Slurs and hate terms. Held apart from CRUDE because these are not
  *  a matter of taste and the refusal should not pretend they are.
  *  Written normalised, as above. */
 export const SLURS = Object.freeze([
-  'chink', 'coon', 'dyke', 'fag', 'faggot', 'gook', 'kike', 'nig', 'nigga', 'nigger',
-  'paki', 'raghead', 'retard', 'spic', 'tard', 'tranny', 'wetback',
+  'chink',
+  'coon',
+  'dyke',
+  'fag',
+  'faggot',
+  'gook',
+  'kike',
+  'nig',
+  'nigga',
+  'nigger',
+  'paki',
+  'raghead',
+  'retard',
+  'spic',
+  'tard',
+  'tranny',
+  'wetback',
 ]);
 
 /** Impersonation: a player calling themselves the room's authority.
@@ -182,8 +254,28 @@ export const ANYWHERE = Object.freeze([
  *  and a sentence's word that IS one is never read against the lists. A name's verdict on the rest is NAME-F1's,
  *  unmoved: a name is chosen and stays, and `Cocky` was refused before. Written normalised. Never a word a list holds,
  *  and never one whose plain reading is the insult as often as not (`chink`, `knob`, `prick` stay listed). */
-export const INNOCENT = Object.freeze(['snigger', 'niggard', 'spicy', 'spiced', 'spices', 'titter', 'titters', 'titer', 'titers',
-  'booby', 'cocky', 'cocked', 'cocking', 'dicker', 'dickers', 'knobby', 'knobbed', 'pricked', 'pricking', 'spunky']);
+export const INNOCENT = Object.freeze([
+  'snigger',
+  'niggard',
+  'spicy',
+  'spiced',
+  'spices',
+  'titter',
+  'titters',
+  'titer',
+  'titers',
+  'booby',
+  'cocky',
+  'cocked',
+  'cocking',
+  'dicker',
+  'dickers',
+  'knobby',
+  'knobbed',
+  'pricked',
+  'pricking',
+  'spunky',
+]);
 /** The ANYWHERE word a normalised reading holds - either reading, its innocent words read out of it first (a space
  *  where each stood, so no word is found across the gap) - as `{ kind, word }`, or null (AUDIT 657 T1). */
 function anywhereIn(flat) {
@@ -258,7 +350,13 @@ export function checkName(name) {
   const stretched = collapseRuns(flat);
   // TEXT-F1: a word no word hides innocently, anywhere in either reading - AUDIT 657 T1: the innocent words read out first
   const any = anywhereIn(flat);
-  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as "${any.word}". Please pick another.` };
+  if (any)
+    return {
+      ok: false,
+      kind: any.kind,
+      word: any.word,
+      reason: `That name reads as "${any.word}". Please pick another.`,
+    };
   for (const { kind, words } of LISTS) {
     for (const word of words) {
       // BOTH readings - see collapseRuns for why they are two - and
@@ -275,10 +373,13 @@ export function checkName(name) {
       // changed nothing, which is how a dead guard announces itself.
       if (!standsAlone(flat, word) && !standsAlone(stretched, word)) continue;
       return {
-        ok: false, kind, word,
-        reason: kind === 'impersonation'
-          ? `"${word}" is reserved. Please pick another name.`
-          : `That name reads as "${word}". Please pick another.`,
+        ok: false,
+        kind,
+        word,
+        reason:
+          kind === 'impersonation'
+            ? `"${word}" is reserved. Please pick another name.`
+            : `That name reads as "${word}". Please pick another.`,
       };
     }
   }
@@ -368,7 +469,10 @@ const isWordChar = (ch) => /[\p{L}\p{M}\p{N}]/u.test(ch) || LEET.has(ch);
 const EDGE_HEAD = new Set(['!', '|', '(', '<', '+', '@']);
 const EDGE_TAIL = new Set(['!', '|', '+']);
 /** The lists a sentence is read against: the slurs and the crude words, never the server's words. */
-const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);
+const TEXT_LISTS = Object.freeze([
+  { kind: 'slur', words: SLURS },
+  { kind: 'crude', words: CRUDE },
+]);
 /** The longest run of letters spelled one at a time that is read as a word. */
 const SPELLED_MAX = 12;
 /** Every word a sentence's lists read (AUDIT 657 T5's pre-check). */
@@ -376,7 +480,8 @@ const SENTENCE_WORDS = Object.freeze([...ANYWHERE.flatMap((g) => g.words), ...SL
 /** AUDIT 657 T5: whether `letters` hold a word a sentence's lists read, in either reading. Every reading of a shorter
  *  run is the start of the longer run's reading, so a run that holds none has no window that is caught. */
 const mayHold = (letters) => {
-  const flat = normaliseName(letters), stretched = collapseRuns(flat);
+  const flat = normaliseName(letters),
+    stretched = collapseRuns(flat);
   return SENTENCE_WORDS.some((w) => flat.includes(w) || stretched.includes(w));
 };
 
@@ -384,11 +489,12 @@ const mayHold = (letters) => {
 function wordCaught(word) {
   if (/^\p{N}+$/u.test(word)) return null;
   const flat = normaliseName(word);
-  if (!flat || INNOCENT.includes(flat)) return null;   // AUDIT 657 T1: an ordinary word, read as itself
+  if (!flat || INNOCENT.includes(flat)) return null; // AUDIT 657 T1: an ordinary word, read as itself
   const any = anywhereIn(flat);
   if (any) return any.word;
   const stretched = collapseRuns(flat);
-  for (const { words } of TEXT_LISTS) for (const w of words) if (standsAlone(flat, w) || standsAlone(stretched, w)) return w;
+  for (const { words } of TEXT_LISTS)
+    for (const w of words) if (standsAlone(flat, w) || standsAlone(stretched, w)) return w;
   return null;
 }
 
@@ -403,7 +509,10 @@ function caughtWords(text) {
   /** @type {{from: number, to: number}[]} */
   const words = [];
   for (let i = 0; i < cps.length;) {
-    if (!isWordChar(cps[i])) { i++; continue; }
+    if (!isWordChar(cps[i])) {
+      i++;
+      continue;
+    }
     let j = i;
     while (j < cps.length && isWordChar(cps[j])) j++;
     words.push({ from: i, to: j });
@@ -422,14 +531,20 @@ function caughtWords(text) {
       ({ from, to } = w);
       word = wordCaught(cps.slice(from, to).join(''));
     }
-    if (word) { out.push({ from, to, word }); taken.add(k); }
+    if (word) {
+      out.push({ from, to, word });
+      taken.add(k);
+    }
   });
   // a word spelled a letter at a time - a run of one-letter words, each a letter (with its accents, AUDIT 657 T2), none
   // caught already
   const letterOf = (w) => cps.slice(w.from, w.to).join('');
   const single = (k) => k < words.length && !taken.has(k) && /^\p{L}\p{M}*$/u.test(letterOf(words[k]));
   for (let k = 0; k < words.length;) {
-    if (!single(k)) { k++; continue; }
+    if (!single(k)) {
+      k++;
+      continue;
+    }
     let end = k;
     while (single(end)) end++;
     for (let i = k; i < end;) {
@@ -440,7 +555,11 @@ function caughtWords(text) {
       if (mayHold(words.slice(i, last).map(letterOf).join(''))) {
         for (let j = i + 3; j <= last; j++) {
           const word = wordCaught(words.slice(i, j).map(letterOf).join(''));
-          if (word) { for (let x = i; x < j; x++) out.push({ ...words[x], word }); hit = j; break; }
+          if (word) {
+            for (let x = i; x < j; x++) out.push({ ...words[x], word });
+            hit = j;
+            break;
+          }
         }
       }
       i = hit || i + 1;

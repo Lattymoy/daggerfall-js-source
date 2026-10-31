@@ -11,8 +11,8 @@
   {
     "name": "ROAD-farthest-in-ring",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "        if (n > br || (n === br && d < bd)) { br = n; bd = d; best = { x, y }; }",
-    "new": "        if (n > br || (n === br && (bd === Infinity || d > bd))) { br = n; bd = d; best = { x, y }; }",
+    "old": "        if (n > br || (n === br && d < bd)) {",
+    "new": "        if (n > br || (n === br && (bd === Infinity || d > bd))) {",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROAD-ring-unheld",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;\n",
-    "new": "",
+    "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;\n        const x = port.px + dx,",
+    "new": "        const x = port.px + dx,",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "NET-three-neighbours",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
-    "new": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, (p.neighbours ?? LANE_NEIGHBOURS) + 1);",
+    "old": "      .slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "new": "      .slice(0, (p.neighbours ?? LANE_NEIGHBOURS) + 1); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "NET-reach-short",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort(",
-    "new": "      .filter((x) => x.d > 0 && x.d < reach).sort(",
+    "old": "      .filter((x) => x.d > 0 && x.d <= reach)",
+    "new": "      .filter((x) => x.d > 0 && x.d < reach)",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "NET-farthest-first",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
-    "new": ".sort((x, y) => y.d - x.d || x.q.id - y.q.id)",
+    "old": "      .sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
+    "new": "      .sort((x, y) => y.d - x.d || x.q.id - y.q.id)",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "NET-tie-unbroken",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
-    "new": ".sort((x, y) => x.d - y.d)",
+    "old": "      .sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
+    "new": "      .sort((x, y) => x.d - y.d)",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
@@ -69,8 +69,8 @@
   {
     "name": "NET-reader-order",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  const sea = [...ports].sort((p, q) => p.id - q.id).map(",
-    "new": "  const sea = [...ports].map(",
+    "old": "  const sea = [...ports]\n    .sort((p, q) => p.id - q.id)\n    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) }))\n    .filter((p) => p.road); // SEA-SQUARE: past the Bay the roomiest roadstead",
+    "new": "  const sea = [...ports].map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road); // SEA-SQUARE: past the Bay the roomiest roadstead",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "NET-inland-ports",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);",
-    "new": ".map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) ?? { x: p.px, y: p.py } }));",
+    "old": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) }))\n    .filter((p) => p.road); // SEA-SQUARE: past the Bay the roomiest roadstead",
+    "new": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) ?? { x: p.px, y: p.py } })); // SEA-SQUARE: past the Bay the roomiest roadstead",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "WAY-from-land",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  if (!water(from.x, from.y) || !water(to.x, to.y)) return null;\n",
-    "new": "",
+    "old": "  if (!water(from.x, from.y) || !water(to.x, to.y)) return null;\n  const key = worldPixelKey;",
+    "new": "  const key = worldPixelKey;",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "WAY-corner-cut",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "        if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue;   // no corner cut past land\n",
-    "new": "",
+    "old": "        if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue; // no corner cut past land\n        const ng = gk + (dx && dy ? Math.SQRT2 : 1);",
+    "new": "        const ng = gk + (dx && dy ? Math.SQRT2 : 1);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -159,7 +159,7 @@
   {
     "name": "WAY-length-native",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;",
+    "old": "  for (let i = 1; i < pts.length; i++)\n    len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;",
     "new": "  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
@@ -186,8 +186,8 @@
   {
     "name": "PACKET-level-one",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  let cls = classFor(faction, LANE_LEVEL, r());",
-    "new": "  let cls = classFor(faction, 1, r());",
+    "old": "  let cls = classFor(faction, LANE_LEVEL, r()); // one level for every player: her class is the lane's, never a reader's",
+    "new": "  let cls = classFor(faction, 1, r()); // one level for every player: her class is the lane's, never a reader's",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "PACKET-full-speed",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  return { seed, cls, speed: (cls?.speed ?? 4) * LANE_CRUISE,",
-    "new": "  return { seed, cls, speed: (cls?.speed ?? 4),",
+    "old": "  return {\n    seed,\n    cls,\n    speed: (cls?.speed ?? 4) * LANE_CRUISE,\n    phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1,\n  };",
+    "new": "  return { seed, cls, speed: cls?.speed ?? 4, phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1 };",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "PACKET-sisters-together",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1 };",
-    "new": "phase: mulberry32(laneSeed(lane))() % 1 };",
+    "old": "  return {\n    seed,\n    cls,\n    speed: (cls?.speed ?? 4) * LANE_CRUISE,\n    phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1,\n  };",
+    "new": "  return { seed, cls, speed: (cls?.speed ?? 4) * LANE_CRUISE, phase: mulberry32(laneSeed(lane))() % 1 };",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "CLOCK-leg-home-unreversed",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    return { ...base, phase: 'sail', from, to, port: null, at: { x: here.x, z: here.z }, dir: { x: here.dx, z: here.dz }, leg: pts, until: null };",
-    "new": "    return { ...base, phase: 'sail', from, to, port: null, at: { x: here.x, z: here.z }, dir: { x: here.dx, z: here.dz }, leg: way.pts, until: null };",
+    "old": "      leg: pts,",
+    "new": "      leg: way.pts,",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
@@ -269,8 +269,8 @@
   {
     "name": "CLOCK-dwell-until-short",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "port: lane.b, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: way.pts, until: start + leg + LANE_DWELL_S };",
-    "new": "port: lane.b, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: way.pts, until: start + leg };",
+    "old": "      until: start + leg + LANE_DWELL_S,",
+    "new": "      until: start + leg,",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "CLOCK-dwell-sails-for-itself",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    return { ...base, phase: 'dwell', from: lane.a, to: lane.a, port: lane.b,",
-    "new": "    return { ...base, phase: 'dwell', from: lane.a, to: lane.b, port: lane.b,",
+    "old": "      to: lane.a,",
+    "new": "      to: lane.b,",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "CLOCK-home-dwell-until",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "dir: { x: 0, z: 0 }, leg: rev, until: start + period };",
-    "new": "dir: { x: 0, z: 0 }, leg: rev, until: start + leg };",
+    "old": "    until: start + period,",
+    "new": "    until: start + leg,",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "FEED-way-sounded-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }",
-    "new": "      way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way);",
+    "old": "      if (way === undefined) {\n        way = onBay\n          ? laneWay(lane, bayOpen, bayOpenNative)\n          : tamrielTrace()\n            ? beyondLaneWay(lane, worldOpenNative)\n            : laneWay(lane, worldOpen, worldOpenNative);\n        ways.set(lane.key, way);\n      } // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
+    "new": "      way = onBay\n        ? laneWay(lane, bayOpen, bayOpenNative)\n        : tamrielTrace()\n          ? beyondLaneWay(lane, worldOpenNative)\n          : laneWay(lane, worldOpen, worldOpenNative);\n      ways.set(lane.key, way); // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
@@ -651,8 +651,8 @@
   {
     "name": "FEED-harbour-unnamed",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach };",
-    "new": "  return { key: `port:${t.id}`, rect, ready, reach };",
+    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach }; // SHIP-TAGS: her name, the words a ship bound there is read by",
+    "new": "  return { key: `port:${t.id}`, rect, ready, reach }; // SHIP-TAGS: her name, the words a ship bound there is read by",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],

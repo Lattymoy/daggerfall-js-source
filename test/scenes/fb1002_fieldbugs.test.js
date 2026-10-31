@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { fishKind } from '../../src/scenes/fishHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { scene } from '../csaScene.mjs';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -35,7 +36,7 @@ test('HELM-NET: the report - at sea the net\'s water is everywhere, and the cast
 });
 
 test('HELM-NET by source: the world host\'s fishing kind is busy at a helm, over laid guns and in a boarding', () => {
-  assert.match(src('src/scenes/world.js'), /busy: \(\) => !!csaRuntime\?\.isSailing\?\.\(\) \|\| !!naval\?\.aiming \|\| !!naval\?\.boarding,/);
+  assert.match(hostText('src/scenes/world.js'), /busy: \(\) => !!csaRuntime\?\.isSailing\?\.\(\) \|\| !!host\.naval\?\.aiming \|\| !!host\.naval\?\.boarding,/);
   assert.match(src('src/scenes/fishHost.js'), /if \(dungeon \|\| host\.busy\?\.\(\) \|\| !foragingToolIn\(entity, FT\.FishingNet\) \|\| !inWater\(\)\) return \[\];/);
 });
 

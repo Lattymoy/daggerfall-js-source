@@ -27,9 +27,30 @@ const u32 = (b, o) => (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 
  *  ['i', table] (a simple index) or ['c', tagBits, [tables]] (a coded
  *  index). Only the ROW SIZES matter here - the walk skips every table
  *  before 0x28 and reads that one. */
-const CA = ['MethodDef', 'Field', 'TypeRef', 'TypeDef', 'Param', 'InterfaceImpl', 'MemberRef', 'Module', 'DeclSecurity', 'Property',
-  'Event', 'StandAloneSig', 'ModuleRef', 'TypeSpec', 'Assembly', 'AssemblyRef', 'File', 'ExportedType', 'ManifestResource', 'GenericParam',
-  'GenericParamConstraint', 'MethodSpec'];
+const CA = [
+  'MethodDef',
+  'Field',
+  'TypeRef',
+  'TypeDef',
+  'Param',
+  'InterfaceImpl',
+  'MemberRef',
+  'Module',
+  'DeclSecurity',
+  'Property',
+  'Event',
+  'StandAloneSig',
+  'ModuleRef',
+  'TypeSpec',
+  'Assembly',
+  'AssemblyRef',
+  'File',
+  'ExportedType',
+  'ManifestResource',
+  'GenericParam',
+  'GenericParamConstraint',
+  'MethodSpec',
+];
 const TDR = ['TypeDef', 'TypeRef', 'TypeSpec'];
 const IMPL = ['File', 'AssemblyRef', 'ExportedType'];
 /** @type {ReadonlyArray<readonly [string, ReadonlyArray<any>]>} */
@@ -43,7 +64,13 @@ export const TABLES = Object.freeze([
   ['MethodDef', [4, 2, 2, 'S', 'B', ['i', 'Param']]],
   ['ParamPtr', [['i', 'Param']]],
   ['Param', [2, 2, 'S']],
-  ['InterfaceImpl', [['i', 'TypeDef'], ['c', 2, TDR]]],
+  [
+    'InterfaceImpl',
+    [
+      ['i', 'TypeDef'],
+      ['c', 2, TDR],
+    ],
+  ],
   ['MemberRef', [['c', 3, ['TypeDef', 'TypeRef', 'ModuleRef', 'MethodDef', 'TypeSpec']], 'S', 'B']],
   ['Constant', [2, ['c', 2, ['Field', 'Param', 'Property']], 'B']],
   ['CustomAttribute', [['c', 5, CA], ['c', 3, ['_', '_', 'MethodDef', 'MemberRef']], 'B']],
@@ -52,14 +79,33 @@ export const TABLES = Object.freeze([
   ['ClassLayout', [2, 4, ['i', 'TypeDef']]],
   ['FieldLayout', [4, ['i', 'Field']]],
   ['StandAloneSig', ['B']],
-  ['EventMap', [['i', 'TypeDef'], ['i', 'Event']]],
+  [
+    'EventMap',
+    [
+      ['i', 'TypeDef'],
+      ['i', 'Event'],
+    ],
+  ],
   ['EventPtr', [['i', 'Event']]],
   ['Event', [2, 'S', ['c', 2, TDR]]],
-  ['PropertyMap', [['i', 'TypeDef'], ['i', 'Property']]],
+  [
+    'PropertyMap',
+    [
+      ['i', 'TypeDef'],
+      ['i', 'Property'],
+    ],
+  ],
   ['PropertyPtr', [['i', 'Property']]],
   ['Property', [2, 'S', 'B']],
   ['MethodSemantics', [2, ['i', 'MethodDef'], ['c', 1, ['Event', 'Property']]]],
-  ['MethodImpl', [['i', 'TypeDef'], ['c', 1, ['MethodDef', 'MemberRef']], ['c', 1, ['MethodDef', 'MemberRef']]]],
+  [
+    'MethodImpl',
+    [
+      ['i', 'TypeDef'],
+      ['c', 1, ['MethodDef', 'MemberRef']],
+      ['c', 1, ['MethodDef', 'MemberRef']],
+    ],
+  ],
   ['ModuleRef', ['S']],
   ['TypeSpec', ['B']],
   ['ImplMap', [2, ['c', 1, ['Field', 'MethodDef']], 'S', ['i', 'ModuleRef']]],
@@ -111,7 +157,9 @@ export function readManifestResources(b) {
   const { cli, secs } = sections(b);
   if (!cli.rva) throw new Error('no CLI header: not a .NET assembly');
   const cliOff = rvaToOffset(secs, cli.rva);
-  const metaRva = u32(b, cliOff + 8), resRva = u32(b, cliOff + 24), resSize = u32(b, cliOff + 28);
+  const metaRva = u32(b, cliOff + 8),
+    resRva = u32(b, cliOff + 24),
+    resSize = u32(b, cliOff + 28);
   const meta = rvaToOffset(secs, metaRva);
   if (u32(b, meta) !== 0x424a5342) throw new Error('bad metadata signature');
   const verLen = u32(b, meta + 12);
@@ -120,24 +168,32 @@ export function readManifestResources(b) {
   p += 4;
   const streams = {};
   for (let i = 0; i < nStreams; i++) {
-    const off = u32(b, p), size = u32(b, p + 4);
-    let q = p + 8, name = '';
+    const off = u32(b, p),
+      size = u32(b, p + 4);
+    let q = p + 8,
+      name = '';
     while (b[q] !== 0) name += String.fromCharCode(b[q++]);
     q += 1;
-    p = q + ((4 - (q - meta) % 4) % 4);
+    p = q + ((4 - ((q - meta) % 4)) % 4);
     streams[name] = { off: meta + off, size };
   }
   const tab = streams['#~'] ?? streams['#-'];
   const strs = streams['#Strings'];
   if (!tab || !strs) throw new Error('no metadata table stream');
   const heapSizes = b[tab.off + 6];
-  const valid = [u32(b, tab.off + 8), u32(b, tab.off + 12)];   // low, high
+  const valid = [u32(b, tab.off + 8), u32(b, tab.off + 12)]; // low, high
   const present = (i) => (i < 32 ? (valid[0] >>> i) & 1 : (valid[1] >>> (i - 32)) & 1) === 1;
   let q = tab.off + 24;
   const rows = new Map();
-  for (let i = 0; i < 64; i++) if (present(i)) { rows.set(TABLES[i]?.[0] ?? `t${i}`, u32(b, q)); q += 4; }
+  for (let i = 0; i < 64; i++)
+    if (present(i)) {
+      rows.set(TABLES[i]?.[0] ?? `t${i}`, u32(b, q));
+      q += 4;
+    }
   const rowsOf = (name) => rows.get(name) ?? 0;
-  const S = heapSizes & 1 ? 4 : 2, G = heapSizes & 2 ? 4 : 2, B = heapSizes & 4 ? 4 : 2;
+  const S = heapSizes & 1 ? 4 : 2,
+    G = heapSizes & 2 ? 4 : 2,
+    B = heapSizes & 4 ? 4 : 2;
   const colSize = (c) => {
     if (typeof c === 'number') return c;
     if (c === 'S') return S;
@@ -145,7 +201,7 @@ export function readManifestResources(b) {
     if (c === 'B') return B;
     if (c[0] === 'i') return rowsOf(c[1]) < 65536 ? 2 : 4;
     const max = Math.max(0, ...c[2].map((t) => rowsOf(t)));
-    return max < (1 << (16 - c[1])) ? 2 : 4;
+    return max < 1 << (16 - c[1]) ? 2 : 4;
   };
   // walk to the ManifestResource table
   let off = q;
@@ -157,7 +213,12 @@ export function readManifestResources(b) {
   if (!present(MANIFEST_RESOURCE)) return [];
   const n = rowsOf('ManifestResource');
   const implSize = colSize(['c', 2, IMPL]);
-  const readStr = (idx) => { let s = '', k = strs.off + idx; while (b[k] !== 0) s += String.fromCharCode(b[k++]); return s; };
+  const readStr = (idx) => {
+    let s = '',
+      k = strs.off + idx;
+    while (b[k] !== 0) s += String.fromCharCode(b[k++]);
+    return s;
+  };
   const resOff = resSize ? rvaToOffset(secs, resRva) : 0;
   const out = [];
   for (let i = 0; i < n; i++) {
@@ -166,7 +227,10 @@ export function readManifestResources(b) {
     const impl = implSize === 4 ? u32(b, off + 8 + S) : u16(b, off + 8 + S);
     off += 8 + S + implSize;
     const name = readStr(nameIdx);
-    if (impl !== 0 || !resSize) { out.push({ name, bytes: null }); continue; }
+    if (impl !== 0 || !resSize) {
+      out.push({ name, bytes: null });
+      continue;
+    }
     const at = resOff + offset;
     const len = u32(b, at);
     out.push({ name, bytes: b.slice(at + 4, at + 4 + len) });

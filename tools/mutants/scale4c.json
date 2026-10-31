@@ -2,8 +2,8 @@
   {
     "name": "SCALE4c-mail-part-dropped",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));\n",
-    "new": "",
+    "old": "  if (body?.mail === true)\n    await part('mail', async () =>\n      accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env),\n    );\n  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
+    "new": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE4c-guest-box-opened",
     "file": "server-account/src/heartbeat.js",
-    "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)",
-    "new": "inboxOf(ctx, player, env)",
+    "old": "  if (body?.mail === true)\n    await part('mail', async () =>\n      accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env),\n    );",
+    "new": "  if (body?.mail === true) await part('mail', async () => inboxOf(ctx, player, env));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE4c-board-elsewhere",
     "file": "server-account/src/heartbeat.js",
-    "old": "() => readBoard(ctx, player, env, body.board)",
-    "new": "() => readBoard(ctx, player, env, Number(body.board) + 1)",
+    "old": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
+    "new": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, Number(body.board) + 1));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SCALE4c-riders-left",
     "file": "src/net/heartbeat.js",
-    "old": "due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS)",
-    "new": "due.some(([n]) => n === name)",
+    "old": "    const going = [...parts].filter(([name, p]) => due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS));",
+    "new": "    const going = [...parts].filter(([name, p]) => due.some(([n]) => n === name));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SCALE4c-answers-crossed",
     "file": "src/net/heartbeat.js",
-    "old": "p.take(r.ok ? partAnswer(r.data?.[name])",
-    "new": "p.take(r.ok ? partAnswer(r.data?.[sent[0][0]])",
+    "old": "          r.ok ? partAnswer(r.data?.[name]) : { ok: false, error: r.error, ...(r.status ? { status: r.status } : {}) },",
+    "new": "          r.ok\n            ? partAnswer(r.data?.[sent[0][0]])\n            : { ok: false, error: r.error, ...(r.status ? { status: r.status } : {}) },",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4c-knock-held-long",
     "file": "src/net/heartbeat.js",
-    "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
-    "new": "    : Math.min(10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
+    "old": "          BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)),",
+    "new": "          10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)),",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SCALE4c-never-again",
     "file": "src/net/heartbeat.js",
-    "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
-    "new": "      break;",
+    "old": "          if (r.ok || !RETRY.includes(r.error)) break;",
+    "new": "          break;",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SCALE4c-refusal-again",
     "file": "src/net/heartbeat.js",
-    "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
-    "new": "      if (r.ok) break;",
+    "old": "          if (r.ok || !RETRY.includes(r.error)) break;",
+    "new": "          if (r.ok) break;",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SCALE4c-session-unasked",
     "file": "src/net/heartbeat.js",
-    "old": "    const session = storedSession(storage);",
-    "new": "    const session = storedSession(storage) ?? { secret: 'anyone-at-all-000000' };",
+    "old": "      const session = storedSession(storage);",
+    "new": "      const session = storedSession(storage) ?? { secret: 'anyone-at-all-000000' };",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SCALE4c-sent-hidden",
     "file": "src/net/heartbeat.js",
-    "old": "    if (!visible()) {\n      // AUDIT SCALE B1",
-    "new": "    if (false) {\n      // AUDIT SCALE B1",
+    "old": "    if (!visible()) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SCALE4c-board-no-town",
     "file": "src/net/noticeBook.js",
-    "old": "      const map = townMap();\n      if (!boardKeyOk(map)) return false;",
-    "new": "      const map = townMap();",
+    "old": "      if (!boardKeyOk(map)) return false;\n      const e = boards.get(map);",
+    "new": "      const e = boards.get(map);",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SCALE4c-board-asked-twice",
     "file": "src/net/noticeBook.js",
-    "old": "        e.pending = new Promise((r) => { settle = r; });\n",
-    "new": "",
+    "old": "        e.pending = new Promise((r) => {\n          settle = r;\n        });\n        asking = { map, e, settle, at: nowMs() };",
+    "new": "        asking = { map, e, settle, at: nowMs() };",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "SCALE4c-refusal-unkept",
     "file": "src/net/noticeBook.js",
-    "old": "        e.error = r?.error ?? 'server';\n        e.at = a.at;\n        a.settle(",
-    "new": "        e.error = r?.error ?? 'server';\n        a.settle(",
+    "old": "        e.at = a.at;\n        a.settle({ board: e.board, error: e.error, stale: !!e.board });",
+    "new": "        a.settle({ board: e.board, error: e.error, stale: !!e.board });",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "SCALE4c-board-shut-shown",
     "file": "src/net/noticeBook.js",
-    "old": "        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it",
-    "new": "        if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11's law, as `read` keeps it",
+    "old": "          e.board = null;\n        } // AUDIT 28 N11's law, as `read` keeps it",
+    "new": "        } // AUDIT 28 N11's law, as `read` keeps it",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -222,7 +222,7 @@
   {
     "name": "SCALE4c-slower-never-early",
     "file": "src/net/heartbeat.js",
-    "old": "    const riding = Number.isFinite(pace)\n      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))\n      : going;",
+    "old": "    const riding = Number.isFinite(pace)\n      ? [...parts].filter(\n          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),\n        )\n      : going;",
     "new": "    const riding = going;",
     "tests": [
       "test/net/scale4c.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "SCALE4c-early-bound-loose",
     "file": "src/net/heartbeat.js",
-    "old": "p.soon(t, pace - RIDE_EARLY_MS)))",
-    "new": "p.soon(t, pace)))",
+    "old": "      ? [...parts].filter(\n          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),\n        )",
+    "new": "      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace)))",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "SCALE4c-faster-rides-early",
     "file": "src/net/heartbeat.js",
-    "old": "|| ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))",
-    "new": "|| (p.soon(t, pace - RIDE_EARLY_MS)))",
+    "old": "      ? [...parts].filter(\n          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),\n        )",
+    "new": "      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || p.soon(t, pace - RIDE_EARLY_MS))",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "SCALE4c-box-period-unsaid",
     "file": "src/net/mail.js",
-    "old": "      every: MAIL_POLL_MS,\n",
-    "new": "",
+    "old": "      every: MAIL_POLL_MS,\n      body: () => {",
+    "new": "      body: () => {",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SCALE4c-board-period-unsaid",
     "file": "src/net/noticeBook.js",
-    "old": "      every: BOARD_CACHE_MS,\n",
-    "new": "",
+    "old": "      every: BOARD_CACHE_MS,\n      body: () => {",
+    "new": "      body: () => {",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SCALE4c-whileLive-period-lost",
     "file": "src/net/heartbeat.js",
-    "old": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  ...part,",
-    "new": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  body: part.body, take: part.take,",
+    "old": "  ...part,",
+    "new": "  body: part.body,\n  take: part.take,",
     "tests": [
       "test/net/scale4c.test.js"
     ],

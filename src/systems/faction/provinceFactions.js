@@ -39,7 +39,13 @@
 // Pure: no FACTION.TXT, no DOM.
 // ═══════════════════════════════════════════════════════════════════
 import { FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS, FACTION_FLAGS } from '../../formats/factionFile.js';
-import { BAY_REGION_COUNT, PROVINCE_REGION_NAMES, REGION_NAMES, REGION_NAME_BANKS, isProvinceRegion } from '../../formats/mapsTables.js';
+import {
+  BAY_REGION_COUNT,
+  PROVINCE_REGION_NAMES,
+  REGION_NAMES,
+  REGION_NAME_BANKS,
+  isProvinceRegion,
+} from '../../formats/mapsTables.js';
 import { fullName, withGameNameBanks, GENDERS } from '../../characters/nameHelper.js';
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { t, withBaseText, getLocalizedRegionName, registerFactionNameText } from '../textManager.js';
@@ -52,17 +58,44 @@ import { RACES } from '../races.js';
 export const PROVINCE_FACTION_BASE = Object.freeze({ province: 6000, ruler: 6100, court: 6200, people: 6300 });
 /** A province faction's id - `kind` one of PROVINCE_FACTION_BASE's - or -1 for a region no province's.
  *  @param {'province'|'ruler'|'court'|'people'} kind @param {number} region */
-export const provinceFactionId = (kind, region) => (isProvinceRegion(region) && Object.hasOwn(PROVINCE_FACTION_BASE, kind) ? PROVINCE_FACTION_BASE[kind] + region : -1);
+export const provinceFactionId = (kind, region) =>
+  isProvinceRegion(region) && Object.hasOwn(PROVINCE_FACTION_BASE, kind) ? PROVINCE_FACTION_BASE[kind] + region : -1;
 
 /** FACTION.TXT's vampire clans (DaggerfallUnityEnums.VampireClans - the values the clans' own faction ids; infection.js
  *  VAMPIRE_CLANS, pinned equal). */
-const CLAN = Object.freeze({ Vraseth: 150, Haarvenu: 151, Thrafey: 152, Lyrezi: 153, Montalion: 154, Khulari: 155, Garlythi: 156, Anthotis: 157, Selenu: 158 });
+const CLAN = Object.freeze({
+  Vraseth: 150,
+  Haarvenu: 151,
+  Thrafey: 152,
+  Lyrezi: 153,
+  Montalion: 154,
+  Khulari: 155,
+  Garlythi: 156,
+  Anthotis: 157,
+  Selenu: 158,
+});
 /** A people's race in FACTION.TXT's own numbering (FactionFile.FactionRaces - characters/staticNpc.js factionRaceFromRace). */
-const RACE = Object.freeze(Object.fromEntries(['Nord', 'Khajiit', 'Redguard', 'Breton', 'Argonian', 'WoodElf', 'HighElf', 'DarkElf'].map((k) => [k, factionRaceFromRace(RACES[k])])));
+const RACE = Object.freeze(
+  Object.fromEntries(
+    ['Nord', 'Khajiit', 'Redguard', 'Breton', 'Argonian', 'WoodElf', 'HighElf', 'DarkElf'].map((k) => [
+      k,
+      factionRaceFromRace(RACES[k]),
+    ]),
+  ),
+);
 /** A flat as FACTION.TXT packs one (archive << 7 | record) - FLATS.CFG's nobles of archive 183. */
 const flat = (archive, record) => (archive << 7) + record;
 /** MacroHelper.GetRulerTitle's codes (buildingNames.js RULER_TITLES): odd a man's, even a woman's ((ruler + 1) % 2). */
-export const RULER = Object.freeze({ King: 1, Queen: 2, Duke: 3, Duchess: 4, HighKing: 13, HighQueen: 14, Emperor: 15, Empress: 16 });
+export const RULER = Object.freeze({
+  King: 1,
+  Queen: 2,
+  Duke: 3,
+  Duchess: 4,
+  HighKing: 13,
+  HighQueen: 14,
+  Emperor: 15,
+  Empress: 16,
+});
 
 /**
  * THE NINE, by region (the record's table - World-Wide.md PROVINCE-COURTS, the reasons there): the ruler's title code,
@@ -73,15 +106,96 @@ export const RULER = Object.freeze({ King: 1, Queen: 2, Duke: 3, Duchess: 4, Hig
  * the province is a crown's (WW7-3 - High Rock's and Hammerfell's land past the Bay is no crown's).
  */
 export const PROVINCE_COURTS = Object.freeze([
-  Object.freeze({ region: 62, ruler: RULER.Duke, power: 60, vam: CLAN.Garlythi, race: RACE.Breton, rulerFlat: flat(183, 4), face: 405, crown: false }),
-  Object.freeze({ region: 63, ruler: RULER.Duchess, power: 60, vam: CLAN.Anthotis, race: RACE.Redguard, rulerFlat: flat(183, 9), face: 407, crown: false }),
-  Object.freeze({ region: 64, ruler: RULER.HighKing, power: 80, vam: CLAN.Haarvenu, race: RACE.Nord, rulerFlat: flat(183, 6), face: 377, crown: true }),
-  Object.freeze({ region: 65, ruler: RULER.King, power: 80, vam: CLAN.Montalion, race: RACE.DarkElf, rulerFlat: flat(183, 10), face: 389, crown: true }),
-  Object.freeze({ region: 66, ruler: RULER.Queen, power: 80, vam: CLAN.Thrafey, race: RACE.HighElf, rulerFlat: flat(183, 11), face: 362, crown: true }),
-  Object.freeze({ region: 67, ruler: RULER.King, power: 70, vam: CLAN.Khulari, race: RACE.WoodElf, rulerFlat: flat(183, 13), face: 402, crown: true }),
-  Object.freeze({ region: 68, ruler: RULER.Queen, power: 70, vam: CLAN.Lyrezi, race: RACE.Khajiit, rulerFlat: flat(183, 9), face: 407, crown: true }),
-  Object.freeze({ region: 69, ruler: RULER.King, power: 65, vam: CLAN.Selenu, race: RACE.Argonian, rulerFlat: flat(183, 7), face: 377, crown: true }),
-  Object.freeze({ region: 70, ruler: RULER.Emperor, power: 90, vam: CLAN.Vraseth, race: RACE.Breton, rulerFlat: flat(183, 6), face: 377, crown: true }),
+  Object.freeze({
+    region: 62,
+    ruler: RULER.Duke,
+    power: 60,
+    vam: CLAN.Garlythi,
+    race: RACE.Breton,
+    rulerFlat: flat(183, 4),
+    face: 405,
+    crown: false,
+  }),
+  Object.freeze({
+    region: 63,
+    ruler: RULER.Duchess,
+    power: 60,
+    vam: CLAN.Anthotis,
+    race: RACE.Redguard,
+    rulerFlat: flat(183, 9),
+    face: 407,
+    crown: false,
+  }),
+  Object.freeze({
+    region: 64,
+    ruler: RULER.HighKing,
+    power: 80,
+    vam: CLAN.Haarvenu,
+    race: RACE.Nord,
+    rulerFlat: flat(183, 6),
+    face: 377,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 65,
+    ruler: RULER.King,
+    power: 80,
+    vam: CLAN.Montalion,
+    race: RACE.DarkElf,
+    rulerFlat: flat(183, 10),
+    face: 389,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 66,
+    ruler: RULER.Queen,
+    power: 80,
+    vam: CLAN.Thrafey,
+    race: RACE.HighElf,
+    rulerFlat: flat(183, 11),
+    face: 362,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 67,
+    ruler: RULER.King,
+    power: 70,
+    vam: CLAN.Khulari,
+    race: RACE.WoodElf,
+    rulerFlat: flat(183, 13),
+    face: 402,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 68,
+    ruler: RULER.Queen,
+    power: 70,
+    vam: CLAN.Lyrezi,
+    race: RACE.Khajiit,
+    rulerFlat: flat(183, 9),
+    face: 407,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 69,
+    ruler: RULER.King,
+    power: 65,
+    vam: CLAN.Selenu,
+    race: RACE.Argonian,
+    rulerFlat: flat(183, 7),
+    face: 377,
+    crown: true,
+  }),
+  Object.freeze({
+    region: 70,
+    ruler: RULER.Emperor,
+    power: 90,
+    vam: CLAN.Vraseth,
+    race: RACE.Breton,
+    rulerFlat: flat(183, 6),
+    face: 377,
+    crown: true,
+  }),
 ]);
 /** The province of a region, or null. @param {number} region */
 export const provinceCourtOf = (region) => PROVINCE_COURTS.find((p) => p.region === region) ?? null;
@@ -108,14 +222,43 @@ export function provinceRulerName(region) {
       srand(provinceFactionId('ruler', region));
       return fullName(REGION_NAME_BANKS[region], p.ruler % 2 === 1 ? GENDERS.Male : GENDERS.Female);
     });
-  } finally { setSeed(was); }
+  } finally {
+    setSeed(was);
+  }
 }
 
 /** A record of FACTION.TXT's shape (formats/factionFile.js newFaction's fields, every one). */
 const record = (o) => ({
-  id: 0, parent: 0, type: 0, name: '', rep: 0, summon: -1, region: -1, power: 0, flags: 0, ruler: 0,
-  ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0, face: -1, race: -1, flat1: 0, flat2: 0,
-  sgroup: 0, ggroup: 0, minf: 0, maxf: 0, vam: 0, rank: 0, rulerNameSeed: 0, rulerPowerBonus: 0, children: null, ...o,
+  id: 0,
+  parent: 0,
+  type: 0,
+  name: '',
+  rep: 0,
+  summon: -1,
+  region: -1,
+  power: 0,
+  flags: 0,
+  ruler: 0,
+  ally1: 0,
+  ally2: 0,
+  ally3: 0,
+  enemy1: 0,
+  enemy2: 0,
+  enemy3: 0,
+  face: -1,
+  race: -1,
+  flat1: 0,
+  flat2: 0,
+  sgroup: 0,
+  ggroup: 0,
+  minf: 0,
+  maxf: 0,
+  vam: 0,
+  rank: 0,
+  rulerNameSeed: 0,
+  rulerPowerBonus: 0,
+  children: null,
+  ...o,
 });
 
 /**
@@ -132,22 +275,96 @@ const record = (o) => ({
 export function provinceFactionRecords() {
   const out = [];
   for (const p of PROVINCE_COURTS) {
-    const region = p.region, province = REGION_NAMES[region];
-    const ids = { province: provinceFactionId('province', region), ruler: provinceFactionId('ruler', region), court: provinceFactionId('court', region), people: provinceFactionId('people', region) };
-    out.push(record({ id: ids.province, type: FACTION_TYPES.Province, name: province, region, power: p.power,
-      flags: p.crown ? 60 : FACTION_FLAGS.RulerImmune, ruler: p.ruler, race: p.race, flat1: flat(183, 6), flat2: flat(183, 8),
-      sgroup: SOCIAL_GROUPS.Nobility, ggroup: GUILD_GROUPS.Region, minf: 20, maxf: 70, vam: p.vam, children: [ids.ruler, ids.court, ids.people] }));
-    out.push(record({ id: ids.ruler, parent: ids.province, type: FACTION_TYPES.Individual, name: provinceRulerName(region), region, power: 15,
-      face: p.face, race: p.race, flat1: p.rulerFlat, flat2: p.rulerFlat, sgroup: SOCIAL_GROUPS.Nobility, ggroup: GUILD_GROUPS.None, minf: 20, maxf: 90 }));
-    out.push(record({ id: ids.court, parent: ids.province, type: FACTION_TYPES.Courts, name: withBaseText(() => courtName(province)), region, power: 25,
-      flags: 128, race: p.race, flat1: flat(182, 20), flat2: flat(182, 20), sgroup: SOCIAL_GROUPS.Nobility, ggroup: GUILD_GROUPS.Region, minf: 20, maxf: 80 }));
-    out.push(record({ id: ids.people, parent: ids.province, type: FACTION_TYPES.People, name: withBaseText(() => peopleName(province)), region, power: 5,
-      race: p.race, flat1: flat(182, 20), flat2: flat(182, 28), sgroup: SOCIAL_GROUPS.Commoners, ggroup: GUILD_GROUPS.GeneralPopulace, minf: 5, maxf: 30 }));
+    const region = p.region,
+      province = REGION_NAMES[region];
+    const ids = {
+      province: provinceFactionId('province', region),
+      ruler: provinceFactionId('ruler', region),
+      court: provinceFactionId('court', region),
+      people: provinceFactionId('people', region),
+    };
+    out.push(
+      record({
+        id: ids.province,
+        type: FACTION_TYPES.Province,
+        name: province,
+        region,
+        power: p.power,
+        flags: p.crown ? 60 : FACTION_FLAGS.RulerImmune,
+        ruler: p.ruler,
+        race: p.race,
+        flat1: flat(183, 6),
+        flat2: flat(183, 8),
+        sgroup: SOCIAL_GROUPS.Nobility,
+        ggroup: GUILD_GROUPS.Region,
+        minf: 20,
+        maxf: 70,
+        vam: p.vam,
+        children: [ids.ruler, ids.court, ids.people],
+      }),
+    );
+    out.push(
+      record({
+        id: ids.ruler,
+        parent: ids.province,
+        type: FACTION_TYPES.Individual,
+        name: provinceRulerName(region),
+        region,
+        power: 15,
+        face: p.face,
+        race: p.race,
+        flat1: p.rulerFlat,
+        flat2: p.rulerFlat,
+        sgroup: SOCIAL_GROUPS.Nobility,
+        ggroup: GUILD_GROUPS.None,
+        minf: 20,
+        maxf: 90,
+      }),
+    );
+    out.push(
+      record({
+        id: ids.court,
+        parent: ids.province,
+        type: FACTION_TYPES.Courts,
+        name: withBaseText(() => courtName(province)),
+        region,
+        power: 25,
+        flags: 128,
+        race: p.race,
+        flat1: flat(182, 20),
+        flat2: flat(182, 20),
+        sgroup: SOCIAL_GROUPS.Nobility,
+        ggroup: GUILD_GROUPS.Region,
+        minf: 20,
+        maxf: 80,
+      }),
+    );
+    out.push(
+      record({
+        id: ids.people,
+        parent: ids.province,
+        type: FACTION_TYPES.People,
+        name: withBaseText(() => peopleName(province)),
+        region,
+        power: 5,
+        race: p.race,
+        flat1: flat(182, 20),
+        flat2: flat(182, 28),
+        sgroup: SOCIAL_GROUPS.Commoners,
+        ggroup: GUILD_GROUPS.GeneralPopulace,
+        minf: 5,
+        maxf: 30,
+      }),
+    );
   }
   return out;
 }
 /** Every province faction's id, in the records' order. */
-export const PROVINCE_FACTION_IDS = Object.freeze(PROVINCE_COURTS.flatMap((p) => ['province', 'ruler', 'court', 'people'].map((k) => provinceFactionId(/** @type {any} */ (k), p.region))));
+export const PROVINCE_FACTION_IDS = Object.freeze(
+  PROVINCE_COURTS.flatMap((p) =>
+    ['province', 'ruler', 'court', 'people'].map((k) => provinceFactionId(/** @type {any} */ (k), p.region)),
+  ),
+);
 const ID_SET = new Set(PROVINCE_FACTION_IDS);
 /** Is `id` one of the provinces' factions? @param {number} id */
 export const isProvinceFactionId = (id) => ID_SET.has(id);
@@ -175,7 +392,8 @@ export function addProvinceFactions(dict, nameToId = null) {
  *  the ruler their own name; null for any other id. @param {number} id */
 export function provinceFactionShownName(id) {
   if (!isProvinceFactionId(id)) return null;
-  const kind = Math.floor(id / 100) * 100, region = id - kind;
+  const kind = Math.floor(id / 100) * 100,
+    region = id - kind;
   const shown = getLocalizedRegionName(region, (i) => REGION_NAMES[i]);
   if (kind === PROVINCE_FACTION_BASE.province) return shown;
   if (kind === PROVINCE_FACTION_BASE.court) return courtName(shown);

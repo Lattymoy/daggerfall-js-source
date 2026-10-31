@@ -20,8 +20,8 @@
   {
     "name": "SHADOWFANG-eye-the-gradients-red",
     "file": "src/ui/playerBadge.js",
-    "old": "path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_EYE }",
-    "new": "path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_CRIMSON }",
+    "old": "  shadowfang: Object.freeze({ path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_EYE }),",
+    "new": "  shadowfang: Object.freeze({ path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_CRIMSON }),",
     "tests": [
       "test/ui/shadowfang.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SHADOWFANG-mark-another-glyphs",
     "file": "src/ui/playerBadge.js",
-    "old": "  shadowfang: '>',",
-    "new": "  shadowfang: '^',",
+    "old": "  shadowfang: '>', // SHADOW-FANG: the wolf's muzzle, facing the way the glyph's does",
+    "new": "  shadowfang: '^', // SHADOW-FANG: the wolf's muzzle, facing the way the glyph's does",
     "tests": [
       "test/ui/shadowfang.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SHADOWFANG-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
-    "new": "hierophant: 'hierophant', shadowfang: 'apostle', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
+    "old": "  shadowfang: 'shadowfang',",
+    "new": "  shadowfang: 'apostle',",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "SHADOWFANG-vocabulary-without-the-glyph",
     "file": "src/net/identityToken.js",
-    "old": "'apostle', 'hierophant', 'shadowfang', 'penitent', 'herald', 'tower',",
-    "new": "'apostle', 'hierophant', 'penitent', 'herald', 'tower',",
+    "old": "  'hierophant',\n  'shadowfang',\n  'penitent',\n  'herald',",
+    "new": "  'hierophant',\n  'penitent',\n  'herald',",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "SHADOWFANG-edge-a-fixed-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
-    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
+    "old": "    path.setAttribute('fill', `url(#${id})`);\n    path.setAttribute('stroke', 'currentColor');",
+    "new": "    path.setAttribute('fill', `url(#${id})`);\n    path.setAttribute('stroke', '#d3193c');",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "SHADOWFANG-card-word-unwrapped",
     "file": "src/ui/characterSlots.js",
-    "old": "        b.append(word);\n",
-    "new": "        b.textContent = TITLE_TEXT[key] ?? key;\n",
+    "old": "        b.append(word);",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

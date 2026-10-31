@@ -47,8 +47,8 @@
   {
     "name": "SPELL-COST-PAST-the-effect-unpassed",
     "file": "src/systems/spellcost.js",
-    "old": "  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST",
-    "new": "  return { gold, sp: skillScaledCost(gold, skill, 400) };   // SPELL-COST-PAST",
+    "old": "  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) }; // SPELL-COST-PAST",
+    "new": "  return { gold, sp: skillScaledCost(gold, skill, 400) }; // SPELL-COST-PAST",
     "tests": [
       "test/systems/fb1012c_spellcost.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SPELL-COST-PAST-the-classic-unpassed",
     "file": "src/systems/spellcost.js",
-    "old": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, { online });   // SPELL-COST-PAST",
-    "new": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100);   // SPELL-COST-PAST",
+    "old": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, {\n      online,\n    }); // SPELL-COST-PAST",
+    "new": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100); // SPELL-COST-PAST",
     "tests": [
       "test/systems/fb1012c_spellcost.test.js"
     ]

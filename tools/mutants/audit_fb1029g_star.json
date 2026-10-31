@@ -1,227 +1,227 @@
 [
- {
-  "name": "AFB-STAR-F1-no-wait",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "return now() - S.lostAt >= STAR_RESTAND_MS;",
-  "new": "return true;",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the master stood again the frame it went - a Wabbajack's changed foe lands beside a fresh master, two masters"
- },
- {
-  "name": "AFB-STAR-F1-site-unread",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "    if (masterSeen(S)) { S.lostAt = NaN; return false; }\n",
-  "new": "",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a peer's copy of a master under the site holds no wait - a master of mine stood beside it"
- },
- {
-  "name": "AFB-STAR-F1-the-dead-seen",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": ".some((f) => f.site === S.sites.m && !f.dead);",
-  "new": ".some((f) => f.site === S.sites.m);",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the gone master's own record read as standing - never stood again, the star held at its master until dawn"
- },
- {
-  "name": "AFB-STAR-F1-stand-over-a-copy",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "if (L.p === P_MASTER && !S.masterStood && !masterSeen(S)) {",
-  "new": "if (L.p === P_MASTER && !S.masterStood) {",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a screen holding the star again stands its master over the heir's copy - two masters"
- },
- {
-  "name": "AFB-STAR-F2-handed-read-as-removed",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "    if (L.p === P_MASTER && S.master?._gone && !S.master.corpse && !S.mf) { handedOn(S); return; }\n",
-  "new": "",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a master handed on alive read as removed - the old owner stands a second while the heir fights the first"
- },
- {
-  "name": "AFB-STAR-F2-kept-mine",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "    dropDefense(S);\n    S.yieldAt = now();",
-  "new": "    S.yieldAt = now();",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the star kept by the screen that handed its master on - its sites and its o:1 hold the heir off"
- },
- {
-  "name": "AFB-STAR-F2-no-yield",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": " && t - S.yieldAt >= STAR_YIELD_MS) { S.awayAt = NaN; owner(S, L); }",
-  "new": ") { S.awayAt = NaN; owner(S, L); }",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the star sprung again the next frame - a master stood before the heir's copy is seen"
- },
- {
-  "name": "AFB-STAR-F2-yield-short",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "export const STAR_YIELD_MS = 2 * STAR_ORPHAN_MS;",
-  "new": "export const STAR_YIELD_MS = STAR_ORPHAN_MS / 2;",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the star taken back before the heir, hearing the old owner no more past STAR_ORPHAN_MS, could hold it"
- },
- {
-  "name": "AFB-STAR-F3-stand-unstamped",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "eventFoe: site === S.sites.m, grantKind",
-  "new": "grantKind",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "the master an event's own only at its landing - its promotion draws the Unquiet mark one time in four"
- },
- {
-  "name": "AFB-STAR-F3-pool-unstamped",
-  "file": "src/scenes/exteriorFoes.js",
-  "old": "      if (eventFoe) entity.eventFoe = true;",
-  "new": "",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js",
-   "test/systems/revenant/auditunquiet.test.js"
-  ],
-  "why": "the pool ignores the stand's word - the mark drawn on the master before anything says it is the star's"
- },
- {
-  "name": "AFB-STAR-F3-gate-open",
-  "file": "src/systems/revenant/revenant.js",
-  "old": "&& !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity)\n",
-  "new": "&& !entity.wildFoe && !entity.wildGiant && !entity.bout\n",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js",
-   "test/systems/revenant/auditunquiet.test.js"
-  ],
-  "why": "the mark's gate draws on an event's own foe - the master carries `unquiet` it can never use"
- },
- {
-  "name": "AFB-STAR-F4-boss-unsaid",
-  "file": "src/systems/raidingParties.js",
-  "old": "h.standRaider?.(mobileType, o, boss)",
-  "new": "h.standRaider?.(mobileType, o)",
-  "tests": [
-   "test/systems/staffevent_raid.test.js"
-  ],
-  "why": "a staff event's boss stood as a raider - its overworld elite draws the mark, and it runs and rises"
- },
- {
-  "name": "AFB-STAR-F4-host-unwired",
-  "file": "src/scenes/raidHost.js",
-  "old": "transient: true, eventFoe: boss })",
-  "new": "transient: true })",
-  "tests": [
-   "test/systems/revenant/auditunquiet.test.js"
-  ],
-  "why": "the host drops the boss's word - the mini boss stands marked"
- },
- {
-  "name": "AFB-STAR-F4-promote-unstamped",
-  "file": "src/systems/eliteFoes.js",
-  "old": "  entity.eventFoe = true;   // STAR-MASTER-FLED",
-  "new": "  // STAR-MASTER-FLED",
-  "tests": [
-   "test/systems/revenant/auditunquiet.test.js"
-  ],
-  "why": "a promoted boss (or a peer's copy) carries no rule - a mark drawn before it reads as Unquiet and rises"
- },
- {
-  "name": "AFB-STAR-F5-rite-unsaid",
-  "file": "src/scenes/riteHost.js",
-  "old": "transient: true, eventFoe: true }).then(landed",
-  "new": "transient: true }).then(landed",
-  "tests": [
-   "test/net/gate/wb12d_rite_host.test.js"
-  ],
-  "why": "the faithful asked of the pool as anyone's - an elite of them draws the mark before riteFoe"
- },
- {
-  "name": "AFB-STAR-F5-riteFoe-unstamped",
-  "file": "src/scenes/riteHost.js",
-  "old": "f.entity.campId = camp; f.entity.eventFoe = true; }",
-  "new": "f.entity.campId = camp; }",
-  "tests": [
-   "test/net/gate/wb12d_rite_host.test.js"
-  ],
-  "why": "a faithful taken over carries no rule - the readers see only its record's `riteRole`"
- },
- {
-  "name": "AFB-STAR-F5-world-drops-it",
-  "file": "src/scenes/world.js",
-  "old": "{ ...o, placed: true, groundAlign: { hitDist: hitDistance(hit) } }",
-  "new": "{ yaw: o.yaw, site: o.site, transient: o.transient, placed: true, groundAlign: { hitDist: hitDistance(hit) } }",
-  "tests": [
-   "test/systems/revenant/auditunquiet.test.js",
-   "test/net/gate/wb12d_rite_world.test.js"
-  ],
-  "why": "the world's deps pass the rite's old three options - `eventFoe` never reaches the pool"
- },
- {
-  "name": "AFB-STAR-F6-calls-kept",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "S.masterStood = true; S.calls = 0; S.lostAt = now();",
-  "new": "S.masterStood = true; S.lostAt = now();",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a master stood again after its calls were spent never calls its circle"
- },
- {
-  "name": "AFB-STAR-F7-fall-without-body",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "if (master?.dead && master.corpse && !Number.isFinite(S.fellAt))",
-  "new": "if (master?.dead && !Number.isFinite(S.fellAt))",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a master removed with no body marks a fall moment - the next one's real fall shows none"
- },
- {
-  "name": "AFB-STAR-F7-moment-kept",
-  "file": "src/scenes/starfall/starfallHost.js",
-  "old": "S.lostAt = NaN; S.fellAt = NaN;   // AUDIT FB1029g STAR F7",
-  "new": "S.lostAt = NaN;   // AUDIT FB1029g STAR F7",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js"
-  ],
-  "why": "a peer's copy's fall moment kept over my master - its own fall shows none"
- },
- {
-  "name": "AFB-STAR-F8-the-rule-unread",
-  "file": "src/systems/revenant/unquietMark.js",
-  "old": "export const isEventFoe = (entity) => entity?.eventFoe === true;",
-  "new": "export const isEventFoe = () => false;",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js",
-   "test/systems/revenant/auditunquiet.test.js"
-  ],
-  "why": "the report's law, every reader at once (the gate, isUnquiet, the candidate) - the master is marked, runs and rises"
- },
- {
-  "name": "AFB-STAR-F9-master-card",
-  "file": "src/systems/card/cardSources.js",
-  "old": "if (!entity || entity.revenant || entity.worldBoss) return null;",
-  "new": "if (!entity || entity.revenant) return null;",
-  "tests": [
-   "test/scenes/starfall/star5_host.test.js",
-   "test/systems/cards9_sources.test.js"
-  ],
-  "why": "the Starfall master's body drops a card - its star's spoils paid twice"
- }
+  {
+    "name": "AFB-STAR-F1-no-wait",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    return now() - S.lostAt >= STAR_RESTAND_MS;",
+    "new": "    return true;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the master stood again the frame it went - a Wabbajack's changed foe lands beside a fresh master, two masters"
+  },
+  {
+    "name": "AFB-STAR-F1-site-unread",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (masterSeen(S)) {\n      S.lostAt = NaN;\n      return false;\n    }\n    if (!Number.isFinite(S.lostAt)) S.lostAt = now();",
+    "new": "    if (!Number.isFinite(S.lostAt)) S.lostAt = now();",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a peer's copy of a master under the site holds no wait - a master of mine stood beside it"
+  },
+  {
+    "name": "AFB-STAR-F1-the-dead-seen",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "  const masterSeen = (S) => (foes?.foes ?? NONE).some((f) => f.site === S.sites.m && !f.dead);",
+    "new": "  const masterSeen = (S) => (foes?.foes ?? NONE).some((f) => f.site === S.sites.m);",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the gone master's own record read as standing - never stood again, the star held at its master until dawn"
+  },
+  {
+    "name": "AFB-STAR-F1-stand-over-a-copy",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (L.p === P_MASTER && !S.masterStood && !masterSeen(S)) {",
+    "new": "    if (L.p === P_MASTER && !S.masterStood) {",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a screen holding the star again stands its master over the heir's copy - two masters"
+  },
+  {
+    "name": "AFB-STAR-F2-handed-read-as-removed",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (L.p === P_MASTER && S.master?._gone && !S.master.corpse && !S.mf) {\n      handedOn(S);\n      return;\n    }\n    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "new": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a master handed on alive read as removed - the old owner stands a second while the heir fights the first"
+  },
+  {
+    "name": "AFB-STAR-F2-kept-mine",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    dropDefense(S);\n    S.yieldAt = now();",
+    "new": "    S.yieldAt = now();",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the star kept by the screen that handed its master on - its sites and its o:1 hold the heir off"
+  },
+  {
+    "name": "AFB-STAR-F2-no-yield",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (online && foes && S.known && inside && holds(S) && t - S.yieldAt >= STAR_YIELD_MS) {",
+    "new": "    if (online && foes && S.known && inside && holds(S)) {",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the star sprung again the next frame - a master stood before the heir's copy is seen"
+  },
+  {
+    "name": "AFB-STAR-F2-yield-short",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "export const STAR_YIELD_MS = 2 * STAR_ORPHAN_MS;",
+    "new": "export const STAR_YIELD_MS = STAR_ORPHAN_MS / 2;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the star taken back before the heir, hearing the old owner no more past STAR_ORPHAN_MS, could hold it"
+  },
+  {
+    "name": "AFB-STAR-F3-stand-unstamped",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "          eventFoe: site === S.sites.m,\n          grantKind: session()?.starGrantOk ? 'star' : undefined,",
+    "new": "          grantKind: session()?.starGrantOk ? 'star' : undefined,",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "the master an event's own only at its landing - its promotion draws the Unquiet mark one time in four"
+  },
+  {
+    "name": "AFB-STAR-F3-pool-unstamped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (eventFoe) entity.eventFoe = true;",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js",
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "the pool ignores the stand's word - the mark drawn on the master before anything says it is the star's"
+  },
+  {
+    "name": "AFB-STAR-F3-gate-open",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "&& !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity)\n",
+    "new": "&& !entity.wildFoe && !entity.wildGiant && !entity.bout\n",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js",
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "the mark's gate draws on an event's own foe - the master carries `unquiet` it can never use"
+  },
+  {
+    "name": "AFB-STAR-F4-boss-unsaid",
+    "file": "src/systems/raidingParties.js",
+    "old": "          : h.standRaider?.(mobileType, o, boss); // STAFF-EVENT PACKS: where, for a pack's",
+    "new": "          : h.standRaider?.(mobileType, o); // STAFF-EVENT PACKS: where, for a pack's",
+    "tests": [
+      "test/systems/staffevent_raid.test.js"
+    ],
+    "why": "a staff event's boss stood as a raider - its overworld elite draws the mark, and it runs and rises"
+  },
+  {
+    "name": "AFB-STAR-F4-host-unwired",
+    "file": "src/scenes/raidHost.js",
+    "old": "transient: true, eventFoe: boss })",
+    "new": "transient: true })",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "the host drops the boss's word - the mini boss stands marked"
+  },
+  {
+    "name": "AFB-STAR-F4-promote-unstamped",
+    "file": "src/systems/eliteFoes.js",
+    "old": "  entity.eventFoe = true; // STAR-MASTER-FLED: an event's own - never a revenant (revenant/unquietMark.js isEventFoe)",
+    "new": "  // STAR-MASTER-FLED: an event's own - never a revenant (revenant/unquietMark.js isEventFoe)",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "a promoted boss (or a peer's copy) carries no rule - a mark drawn before it reads as Unquiet and rises"
+  },
+  {
+    "name": "AFB-STAR-F5-rite-unsaid",
+    "file": "src/scenes/riteHost.js",
+    "old": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true, eventFoe: true })",
+    "new": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true })",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "why": "the faithful asked of the pool as anyone's - an elite of them draws the mark before riteFoe"
+  },
+  {
+    "name": "AFB-STAR-F5-riteFoe-unstamped",
+    "file": "src/scenes/riteHost.js",
+    "old": "      f.entity.eventFoe = true;\n    } // STAR-MASTER-FLED: the rite's own - never a revenant, never \"Unquiet\"",
+    "new": "    } // STAR-MASTER-FLED: the rite's own - never a revenant, never \"Unquiet\"",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "why": "a faithful taken over carries no rule - the readers see only its record's `riteRole`"
+  },
+  {
+    "name": "AFB-STAR-F5-world-drops-it",
+    "file": "src/scenes/world.js",
+    "old": "{ ...o, placed: true, groundAlign: { hitDist: hitDistance(hit) } }",
+    "new": "{ yaw: o.yaw, site: o.site, transient: o.transient, placed: true, groundAlign: { hitDist: hitDistance(hit) } }",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ],
+    "why": "the world's deps pass the rite's old three options - `eventFoe` never reaches the pool"
+  },
+  {
+    "name": "AFB-STAR-F6-calls-kept",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "      S.calls = 0;\n      S.lostAt = now(); // AUDIT FB1029g STAR F6: stood whole - its circle called afresh",
+    "new": "      S.lostAt = now(); // AUDIT FB1029g STAR F6: stood whole - its circle called afresh",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a master stood again after its calls were spent never calls its circle"
+  },
+  {
+    "name": "AFB-STAR-F7-fall-without-body",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (master?.dead && master.corpse && !Number.isFinite(S.fellAt)) S.fellAt = now(); // AUDIT FB1029g STAR F7: a fall has a body - a master gone without one fell nowhere",
+    "new": "    if (master?.dead && !Number.isFinite(S.fellAt)) S.fellAt = now(); // AUDIT FB1029g STAR F7: a fall has a body - a master gone without one fell nowhere",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a master removed with no body marks a fall moment - the next one's real fall shows none"
+  },
+  {
+    "name": "AFB-STAR-F7-moment-kept",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    S.lostAt = NaN;\n    S.fellAt = NaN; // AUDIT FB1029g STAR F7: a master taken has not fallen - no moment of one before it",
+    "new": "    S.lostAt = NaN; // AUDIT FB1029g STAR F7: a master taken has not fallen - no moment of one before it",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a peer's copy's fall moment kept over my master - its own fall shows none"
+  },
+  {
+    "name": "AFB-STAR-F8-the-rule-unread",
+    "file": "src/systems/revenant/unquietMark.js",
+    "old": "export const isEventFoe = (entity) => entity?.eventFoe === true;",
+    "new": "export const isEventFoe = () => false;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js",
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "the report's law, every reader at once (the gate, isUnquiet, the candidate) - the master is marked, runs and rises"
+  },
+  {
+    "name": "AFB-STAR-F9-master-card",
+    "file": "src/systems/card/cardSources.js",
+    "old": "  if (!entity || entity.revenant || entity.worldBoss) return null;",
+    "new": "  if (!entity || entity.revenant) return null;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js",
+      "test/systems/cards9_sources.test.js"
+    ],
+    "why": "the Starfall master's body drops a card - its star's spoils paid twice"
+  }
 ]

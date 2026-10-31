@@ -37,12 +37,14 @@
 export const INTERIOR_LIGHT_DIR = (() => {
   const d = new Float32Array([0.45, 0.8, 0.35]);
   const l = Math.hypot(d[0], d[1], d[2]);
-  d[0] /= l; d[1] /= l; d[2] /= l;
+  d[0] /= l;
+  d[1] /= l;
+  d[2] /= l;
   return d;
 })();
 
 export const INTERIOR_AMBIENT = Object.freeze([0.18, 0.18, 0.18]);
-export const INTERIOR_NIGHT_AMBIENT = Object.freeze([0.20, 0.18, 0.20]);
+export const INTERIOR_NIGHT_AMBIENT = Object.freeze([0.2, 0.18, 0.2]);
 /** PlayerAmbientLight.cs:29-30, InteriorAmbientLight_AmbientOnly and InteriorNightAmbientLight_AmbientOnly: the level DFU
  *  lights a room by when its Lit Interiors setting (AmbientLitInteriors) hangs no lamp in it. */
 export const INTERIOR_AMBIENT_ONLY = Object.freeze([0.8, 0.8, 0.8]);
@@ -80,9 +82,20 @@ const LIGHTS_ARCHIVE = 210;
 
 // Verbatim per-record light offsets (world units); absent records add 0.
 const RECORD_OFFSETS = new Map([
-  [0, -0.1], [2, 0.1], [3, 0.1], [5, 0.15], [6, 0.6], [9, 0.4],
-  [11, -0.4], [13, -0.35], [17, 0.2], [20, 0.6], [22, -0.5],
-  [24, -1.85], [25, -1.0], [27, -0.02],
+  [0, -0.1],
+  [2, 0.1],
+  [3, 0.1],
+  [5, 0.15],
+  [6, 0.6],
+  [9, 0.4],
+  [11, -0.4],
+  [13, -0.35],
+  [17, 0.2],
+  [20, 0.6],
+  [22, -0.5],
+  [24, -1.85],
+  [25, -1.0],
+  [27, -0.02],
 ]);
 
 const PREFAB_LIGHT = Object.freeze({
@@ -91,9 +104,12 @@ const PREFAB_LIGHT = Object.freeze({
   color: INTERIOR_LIGHT_COLOR,
 });
 
-const prop = (range, intensity, color) => Object.freeze({
-  range, intensity, color: color ? Object.freeze(color) : INTERIOR_LIGHT_COLOR,
-});
+const prop = (range, intensity, color) =>
+  Object.freeze({
+    range,
+    intensity,
+    color: color ? Object.freeze(color) : INTERIOR_LIGHT_COLOR,
+  });
 
 // AddLight's SECOND switch, transcribed cell for cell from
 // DaggerfallInterior.cs:1034-1151. Each arm assigns only some of
@@ -105,24 +121,24 @@ const prop = (range, intensity, color) => Object.freeze({
 // the switch has NO default arm, so both fall through unchanged.
 const RECORD_LIGHT_PROPS = new Map([
   // record                                       range        intensity  color
-  [0,  prop(20.0, 1.1, [0.95, 0.91, 0.63])],   // Bowl with fire
-  [2,  prop(15 / 3, 0.6, [1.0, 0.99, 0.82])],  // Skull candle              (range /= 3)
-  [3,  prop(15 / 3, 1, null)],                 // Candle                    (range /= 3)
-  [4,  prop(15 / 3, 1, null)],                 // Candle with base          (range /= 3)
-  [5,  prop(7.5, 0.33, [1.0, 0.89, 0.61])],    // Candleholder with 3 candles
-  [6,  prop(15.0, 0.75, [1.0, 0.93, 0.62])],   // Skull torch
-  [8,  prop(15, 1, [0.68, 1.0, 0.94])],        // Turkis lamp               (colour only)
-  [9,  prop(15.0, 0.65, [1.0, 0.92, 0.6])],    // Metallic chandelier with burning candles
-  [11, prop(5.0, 0.5, null)],                  // Candle in lamp
+  [0, prop(20.0, 1.1, [0.95, 0.91, 0.63])], // Bowl with fire
+  [2, prop(15 / 3, 0.6, [1.0, 0.99, 0.82])], // Skull candle              (range /= 3)
+  [3, prop(15 / 3, 1, null)], // Candle                    (range /= 3)
+  [4, prop(15 / 3, 1, null)], // Candle with base          (range /= 3)
+  [5, prop(7.5, 0.33, [1.0, 0.89, 0.61])], // Candleholder with 3 candles
+  [6, prop(15.0, 0.75, [1.0, 0.93, 0.62])], // Skull torch
+  [8, prop(15, 1, [0.68, 1.0, 0.94])], // Turkis lamp               (colour only)
+  [9, prop(15.0, 0.65, [1.0, 0.92, 0.6])], // Metallic chandelier with burning candles
+  [11, prop(5.0, 0.5, null)], // Candle in lamp
   [13, prop(15 * 1.2, 1.1, [0.93, 0.84, 0.49])], // Round lamp              (range *= 1.2)
-  [17, prop(15, 0.8, [1.0, 0.97, 0.87])],      // Mounted torch 1
-  [20, prop(12.0, 0.75, [1.0, 0.92, 0.72])],   // Brazier torch
-  [21, prop(15 / 3, 0.5, [1.0, 0.95, 0.67])],  // Standing candle           (range /= 3)
-  [22, prop(15, 1.5, [1.0, 0.95, 0.78])],      // Round lantern with medium chain
-  [24, prop(15, 1.4, [1.0, 0.98, 0.64])],      // Lantern with long chain
-  [25, prop(15, 1.4, [1.0, 0.98, 0.64])],      // Lantern with medium chain
-  [26, prop(15, 1.4, [1.0, 0.98, 0.64])],      // Lantern with short chain
-  [27, prop(15, 1.4, [1.0, 0.98, 0.64])],      // Lantern with no chain
+  [17, prop(15, 0.8, [1.0, 0.97, 0.87])], // Mounted torch 1
+  [20, prop(12.0, 0.75, [1.0, 0.92, 0.72])], // Brazier torch
+  [21, prop(15 / 3, 0.5, [1.0, 0.95, 0.67])], // Standing candle           (range /= 3)
+  [22, prop(15, 1.5, [1.0, 0.95, 0.78])], // Round lantern with medium chain
+  [24, prop(15, 1.4, [1.0, 0.98, 0.64])], // Lantern with long chain
+  [25, prop(15, 1.4, [1.0, 0.98, 0.64])], // Lantern with medium chain
+  [26, prop(15, 1.4, [1.0, 0.98, 0.64])], // Lantern with short chain
+  [27, prop(15, 1.4, [1.0, 0.98, 0.64])], // Lantern with no chain
 ]);
 
 /**
@@ -154,11 +170,13 @@ export function collectInteriorLights(flats, getScaledSize) {
     else if (f.record === 21) offset = h / 2.4;
     const light = interiorLightProperties(f.record);
     lights.push({
-      record: f.record,   // HEARTH1: a lantern and a brazier are one point light here and two things to the survival law (survival/hearth.js)
+      record: f.record, // HEARTH1: a lantern and a brazier are one point light here and two things to the survival law (survival/hearth.js)
       x: f.x,
       y: f.y + h / 2 + offset,
       z: f.z,
-      foot: f.y, w, h,   // FIX-D: the sprite the light hangs on (an interior flat stands on its y), for a hearth's eye box
+      foot: f.y,
+      w,
+      h, // FIX-D: the sprite the light hangs on (an interior flat stands on its y), for a hearth's eye box
       range: light.range,
       intensity: light.intensity,
       color: light.color,

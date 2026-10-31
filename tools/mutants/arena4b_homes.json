@@ -2,8 +2,8 @@
   {
     "name": "ARENA4B-CELL-XY",
     "file": "src/net/homeLaw.js",
-    "old": "&& (key >> 16) === HOME_ARENA_CELL[0] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];",
-    "new": "&& (key >> 16) === HOME_ARENA_CELL[1] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[0];",
+    "old": "  key >> 16 === HOME_ARENA_CELL[0] &&\n  ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];",
+    "new": "  key >> 16 === HOME_ARENA_CELL[1] &&\n  ((key >> 8) & 0xff) === HOME_ARENA_CELL[0];",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA4B-CELL-SHAPE",
     "file": "src/net/homeLaw.js",
-    "old": "export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && homeBuildingKeyOk(key)",
-    "new": "export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && Number.isSafeInteger(key)",
+    "old": "  homeBuildingKeyOk(key) &&",
+    "new": "  Number.isSafeInteger(key) &&",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

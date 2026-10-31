@@ -2,8 +2,8 @@
   {
     "name": "REALM3-empire-keeps-a-loan",
     "file": "src/systems/realmCustoms.js",
-    "old": "{ cap: 0, nowMinutes: Math.floor(snap.classicMinutes ?? 0) }",
-    "new": "{ cap: 1_000_000, nowMinutes: Math.floor(snap.classicMinutes ?? 0) }",
+    "old": "    { cap: 0, nowMinutes: Math.floor(snap.classicMinutes ?? 0) },",
+    "new": "    { cap: 1_000_000, nowMinutes: Math.floor(snap.classicMinutes ?? 0) },",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REALM3-purse-spared",
     "file": "src/systems/realmCustoms.js",
-    "old": "  if (excess) snap.goldPieces = Math.max(0, (snap.goldPieces ?? 0) - take(snap.goldPieces ?? 0));\n",
-    "new": "",
+    "old": "  if (excess) snap.goldPieces = Math.max(0, (snap.goldPieces ?? 0) - take(snap.goldPieces ?? 0));\n  // the records customs emptied leave their lists, in place - a list is held by its container, its pile or its piece",
+    "new": "  // the records customs emptied leave their lists, in place - a list is held by its container, its pile or its piece",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REALM3-wagon-spared",
     "file": "src/systems/realmCustoms.js",
-    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);",
-    "new": "  for (const list of lists(snap.bagItems, snap.items)) takeFrom(list);",
+    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list); // BAG1: the bag's materials too",
+    "new": "  for (const list of lists(snap.bagItems, snap.items)) takeFrom(list); // BAG1: the bag's materials too",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REALM3-letters-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": ": isLetter(it) ? Math.max(0, it?.value ?? 0) : 0);",
-    "new": ": 0);",
+    "old": "export const liquidWorthOf = (/** @type {any} */ it) =>\n  isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : isLetter(it) ? Math.max(0, it?.value ?? 0) : 0;",
+    "new": "export const liquidWorthOf = (/** @type {any} */ it) => (isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : 0);",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "REALM3-allowance-flat",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);",
-    "new": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * (void level, 1);",
+    "old": "  CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);",
+    "new": "  CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * (void level, 1);",
     "tests": [
       "test/systems/realm3.test.js"
     ]

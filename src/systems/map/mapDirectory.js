@@ -67,7 +67,7 @@ const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && 
 /** ContentReader.HasLocation(x, y, out summary) (:212-230) - the
  *  summary, or null (WW3: null off the Bay's map). */
 export function locationSummaryAt(mapDict, mapPixelX, mapPixelY) {
-  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;
+  return onMap(mapPixelX, mapPixelY) ? (mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null) : null;
 }
 
 /** ContentReader.HasLocation(x, y) (:238-252) - WW3: none off the Bay's map. */

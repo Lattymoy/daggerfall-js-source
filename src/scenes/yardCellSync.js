@@ -43,7 +43,13 @@ export const YARD_KEEP_MARGIN_M = 100;
 
 /** The page's yard cells: `api.yardCells` asks the service, `polling()` whether a poll may go, `push()` (yardPushState) the link.
  *  @param {{ api: any, now?: () => number, polling?: () => boolean, push?: () => { healthy: boolean, epoch: number }, rand?: () => number }} deps */
-export function createYardCellSync({ api, now = () => Date.now(), polling = () => true, push = () => ({ healthy: false, epoch: 0 }), rand = Math.random }) {
+export function createYardCellSync({
+  api,
+  now = () => Date.now(),
+  polling = () => true,
+  push = () => ({ healthy: false, epoch: 0 }),
+  rand = Math.random,
+}) {
   /** @type {Map<number, HeldTown>} */
   const towns = new Map();
   /** @type {Map<string, OwnWrite>} by `mapId:buildingKey` */
@@ -53,7 +59,17 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
   function townOf(/** @type {number} */ mapId) {
     let town = towns.get(mapId);
     if (!town) {
-      town = { cells: new Map(), polledAt: -Infinity, asking: false, failedAt: -Infinity, failures: 0, more: [], interval: YARD_SLOW_POLL_MS, epoch: -1, pushed: new Map() };
+      town = {
+        cells: new Map(),
+        polledAt: -Infinity,
+        asking: false,
+        failedAt: -Infinity,
+        failures: 0,
+        more: [],
+        interval: YARD_SLOW_POLL_MS,
+        epoch: -1,
+        pushed: new Map(),
+      };
       towns.set(mapId, town);
     }
     return town;
@@ -66,13 +82,17 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
     const byKey = new Map();
     for (const yard of answer.yards ?? []) {
       if (!Number.isSafeInteger(yard?.buildingKey) || !Array.isArray(yard.pieces)) continue;
-      byKey.set(yard.buildingKey, yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece)));
+      byKey.set(
+        yard.buildingKey,
+        yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece)),
+      );
     }
     return { ver: Number(answer.ver) || 0, byKey, askedTurn, ...(was?.ownVer ? { ownVer: was.ownVer } : {}) };
   }
   /** Whether the owner's write stands over the cell's answer: written after that answer was asked, or within
    *  YARD_WRITE_HOLD_MS of now (the service keeps a cell 30 s and reads it off a replica). */
-  const writeStands = (/** @type {OwnWrite} */ write, /** @type {HeldCell | undefined} */ held) => !held || write.turn > held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS;
+  const writeStands = (/** @type {OwnWrite} */ write, /** @type {HeldCell | undefined} */ held) =>
+    !held || write.turn > held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS;
 
   /** YC2: what is left of a pushed cell's word once its ask is answered - gone if the cell now holds its version, else
    *  asked again later, YARD_PUSH_TRIES asks in all. */
@@ -86,7 +106,12 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
 
   /** One request for a town: `cells` [cell, version held] nearest first; `poll` when it is the cells in reach, whose
    *  answer starts the next poll's wait. */
-  async function ask(/** @type {number} */ mapId, /** @type {HeldTown} */ town, /** @type {Array<[number, number]>} */ cells, poll = false) {
+  async function ask(
+    /** @type {number} */ mapId,
+    /** @type {HeldTown} */ town,
+    /** @type {Array<[number, number]>} */ cells,
+    poll = false,
+  ) {
     town.asking = true;
     const askedTurn = turn;
     const askedEpoch = push().epoch;
@@ -105,7 +130,7 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
       for (const cellAnswer of data.cells) {
         if (!Number.isSafeInteger(cellAnswer?.cell)) continue;
         const held = town.cells.get(cellAnswer.cell);
-        if (held && Number(cellAnswer.ver) < held.ver) continue;   // a version older than the one held never takes a cell back
+        if (held && Number(cellAnswer.ver) < held.ver) continue; // a version older than the one held never takes a cell back
         town.cells.set(cellAnswer.cell, heldOf(cellAnswer, askedTurn, held));
       }
       const answered = new Set(data.cells.map((cellAnswer) => cellAnswer?.cell));
@@ -122,7 +147,8 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
       town.more = Array.isArray(data.more) ? data.more.filter(Number.isSafeInteger) : [];
       town.failures = 0;
       // YC2: a quiet reach doubles the healthy poll's wait; anything moved sets it back
-      if (poll) town.interval = data.cells.length ? YARD_SLOW_POLL_MS : Math.min(YARD_SLOW_POLL_MAX_MS, town.interval * 2);
+      if (poll)
+        town.interval = data.cells.length ? YARD_SLOW_POLL_MS : Math.min(YARD_SLOW_POLL_MAX_MS, town.interval * 2);
       if (poll || town.polledAt === -Infinity) {
         town.polledAt = now();
         town.epoch = askedEpoch;
@@ -167,16 +193,25 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
       if (fresh.length) town.interval = YARD_SLOW_POLL_MS;
       const asked = town.polledAt !== -Infinity;
       const slow = link.healthy && town.epoch === link.epoch;
-      const broke = link.healthy && town.epoch !== link.epoch;   // welcomed again since its last poll: the gap's words are lost
-      const due = pollingNow && (now() - town.polledAt >= (slow ? town.interval : YARD_TOWN_TTL_MS) || (asked && broke));
-      const pushedDue = pollingNow ? inReach.filter((wish) => (town.pushed.get(wish.cell)?.at ?? Infinity) <= now()) : [];
+      const broke = link.healthy && town.epoch !== link.epoch; // welcomed again since its last poll: the gap's words are lost
+      const due =
+        pollingNow && (now() - town.polledAt >= (slow ? town.interval : YARD_TOWN_TTL_MS) || (asked && broke));
+      const pushedDue = pollingNow
+        ? inReach.filter((wish) => (town.pushed.get(wish.cell)?.at ?? Infinity) <= now())
+        : [];
       /** @type {Array<[number, number]>} */
       let cells = [];
       if (due) {
         cells = inReach.map((wish) => [wish.cell, town.cells.get(wish.cell)?.ver ?? 0]);
       } else if (fresh.length || town.more.length || pushedDue.length) {
-        const wanted = new Set([...fresh.map((wish) => wish.cell), ...town.more, ...pushedDue.map((wish) => wish.cell)]);
-        cells = inReach.filter((wish) => wanted.has(wish.cell)).map((wish) => [wish.cell, town.cells.get(wish.cell)?.ver ?? 0]);
+        const wanted = new Set([
+          ...fresh.map((wish) => wish.cell),
+          ...town.more,
+          ...pushedDue.map((wish) => wish.cell),
+        ]);
+        cells = inReach
+          .filter((wish) => wanted.has(wish.cell))
+          .map((wish) => [wish.cell, town.cells.get(wish.cell)?.ver ?? 0]);
       }
       if (cells.length) ask(mapId, town, cells, due);
     }
@@ -209,7 +244,7 @@ export function createYardCellSync({ api, now = () => Date.now(), polling = () =
       const held = towns.get(mapId)?.cells.get(yardCellOf(buildingKey));
       const write = writes.get(`${mapId}:${buildingKey}`);
       if (write && writeStands(write, held)) return write.list;
-      return held ? held.byKey.get(buildingKey) ?? null : null;
+      return held ? (held.byKey.get(buildingKey) ?? null) : null;
     },
     /** The owner's own write to a yard: it stands at once, and over the answers that follow it (writeStands). A write no
      *  answer is behind any more is let go. */

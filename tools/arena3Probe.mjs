@@ -16,26 +16,63 @@ mkdirSync(SHOTS, { recursive: true });
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const SKIN = process.env.SKIN ?? 'enhanced';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5241, strictPort: true, hmr: false, watch: null }, logLevel: 'silent' });
+const server = await createServer({
+  root: process.cwd(),
+  server: { port: 5241, strictPort: true, hmr: false, watch: null },
+  logLevel: 'silent',
+});
 await server.listen();
-const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({
+  headless: true,
+  args: [
+    '--use-gl=angle',
+    '--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader',
+    '--autoplay-policy=no-user-gesture-required',
+  ],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e.message)));
-page.on('console', (m) => { if (m.type() === 'error' && !/CURSOR\.IMG|status of 404/.test(m.text())) errors.push(`[console] ${m.text().slice(0, 300)}`); });
+page.on('console', (m) => {
+  if (m.type() === 'error' && !/CURSOR\.IMG|status of 404/.test(m.text()))
+    errors.push(`[console] ${m.text().slice(0, 300)}`);
+});
 
 let fails = 0;
-const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) fails++; return !!ok; };
+const check = (ok, label) => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`);
+  if (!ok) fails++;
+  return !!ok;
+};
 const ev = (fn, ...args) => page.evaluate(fn, ...args);
-const shot = async (name) => { try { await page.screenshot({ path: `${SHOTS}/${name}`, timeout: 90000 }); console.log(`  shot ${name}`); } catch (e) { console.log(`(screenshot ${name} skipped: ${e.message.split('\n')[0]})`); } };
+const shot = async (name) => {
+  try {
+    await page.screenshot({ path: `${SHOTS}/${name}`, timeout: 90000 });
+    console.log(`  shot ${name}`);
+  } catch (e) {
+    console.log(`(screenshot ${name} skipped: ${e.message.split('\n')[0]})`);
+  }
+};
 const arena = () => ev(() => window.__arena?.() ?? null);
 const league = () => ev(() => window.__arenaLeague?.() ?? null);
-const dialog = () => ev(() => [...document.querySelectorAll('.dlg-choice .dlg-btn .dlg-label')].map((n) => n.textContent));
-const dialogLines = () => ev(() => [...document.querySelectorAll('.dlg-choice .dlg-win')].map((n) => n.textContent).join(' | '));
-const waitFor = async (pred, ms, step = 500) => { for (const until = Date.now() + ms; Date.now() < until;) { const a = await arena(); if (a && pred(a)) return a; await page.waitForTimeout(step); } return arena(); };
+const dialog = () =>
+  ev(() => [...document.querySelectorAll('.dlg-choice .dlg-btn .dlg-label')].map((n) => n.textContent));
+const dialogLines = () =>
+  ev(() => [...document.querySelectorAll('.dlg-choice .dlg-win')].map((n) => n.textContent).join(' | '));
+const waitFor = async (pred, ms, step = 500) => {
+  for (const until = Date.now() + ms; Date.now() < until;) {
+    const a = await arena();
+    if (a && pred(a)) return a;
+    await page.waitForTimeout(step);
+  }
+  return arena();
+};
 const windowUp = () => ev(() => !!document.querySelector('.aw-shell'));
 
-await page.goto(`http://localhost:5241/play/?world&shot&play&region=Daggerfall&loc=Daggerfall&class=1&novideo&tod=12:02&skin=${SKIN}&touch=off`);
+await page.goto(
+  `http://localhost:5241/play/?world&shot&play&region=Daggerfall&loc=Daggerfall&class=1&novideo&tod=12:02&skin=${SKIN}&touch=off`,
+);
 let mode = null;
 for (const until = Date.now() + 300000; Date.now() < until;) {
   mode = await ev(() => (window.__mode ? window.__mode() : null));
@@ -54,12 +91,15 @@ await page.waitForTimeout(2000);
 await ev(() => window.__arenaCloseOverlays());
 
 // THE RED BANNER'S RECRUITER: his choice, then join
-check(await ev(() => window.__arenaGate.recruiter('redRecruiter')), 'the Red Banner\'s recruiter answers');
+check(await ev(() => window.__arenaGate.recruiter('redRecruiter')), "the Red Banner's recruiter answers");
 await page.waitForTimeout(3000);
 const rc = await dialog();
 console.log(`  choices: ${JSON.stringify(rc)}`);
 console.log(`  lines: ${(await dialogLines()).slice(0, 300)}`);
-check(rc.some((l) => /Join the Red Banner/.test(l)) && rc.some((l) => /The Arena window/.test(l)), 'he offers the banner and the window');
+check(
+  rc.some((l) => /Join the Red Banner/.test(l)) && rc.some((l) => /The Arena window/.test(l)),
+  'he offers the banner and the window',
+);
 await shot('1-recruiter.png');
 const gold0 = (await league()).gold;
 await page.keyboard.press('KeyJ');
@@ -74,8 +114,18 @@ await shot('2-window-team.png');
 for (const pg of ['bouts', 'ladder', 'boards', 'records', 'rules']) {
   await ev((p) => [...document.querySelectorAll('.aw-tab')].find((t) => t.dataset.page === p)?.click(), pg);
   await page.waitForTimeout(400);
-  const info = await ev(() => { const w = document.querySelector('.aw-win').getBoundingClientRect(); return { r: [w.left, w.top, w.right, w.bottom], words: document.querySelector('.aw-body').textContent.length, x: document.documentElement.scrollWidth - innerWidth }; });
-  check(info.r[0] >= 0 && info.r[2] <= 1280 && info.r[3] <= 800 && info.x <= 0 && info.words > 40, `the ${pg} page stands in the viewport (${info.words} characters)`);
+  const info = await ev(() => {
+    const w = document.querySelector('.aw-win').getBoundingClientRect();
+    return {
+      r: [w.left, w.top, w.right, w.bottom],
+      words: document.querySelector('.aw-body').textContent.length,
+      x: document.documentElement.scrollWidth - innerWidth,
+    };
+  });
+  check(
+    info.r[0] >= 0 && info.r[2] <= 1280 && info.r[3] <= 800 && info.x <= 0 && info.words > 40,
+    `the ${pg} page stands in the viewport (${info.words} characters)`,
+  );
   await shot(`3-window-${pg}.png`);
 }
 const watchWhy = await ev(() => document.querySelector('.aw-act[data-act="watch"]')?.getAttribute('title') ?? null);
@@ -86,7 +136,7 @@ check(!(await windowUp()), 'Escape puts the window away');
 
 // THE BOOKMAKER: back the first fighter, the third stake
 await ev(() => window.__arenaCloseOverlays());
-check(await ev(() => window.__arenaGate.bookmaker()), 'the bookmaker\'s stall answers');
+check(await ev(() => window.__arenaGate.bookmaker()), "the bookmaker's stall answers");
 await page.waitForTimeout(3000);
 const bc = await dialog();
 console.log(`  choices: ${JSON.stringify(bc)}`);
@@ -100,7 +150,10 @@ if (bc.some((l) => /^A - Back /.test(l))) {
   await page.waitForTimeout(800);
   L = await league();
   const w = L?.league?.book?.wagers?.[0];
-  check(!!w && w.stake === 50 && L.gold === gold0 - 50, `a wager of 50 gold placed and paid (${JSON.stringify(w && { stake: w.stake, on: w.names[w.side], price: `${w.num}/${w.den}` })}, purse ${gold0} -> ${L?.gold})`);
+  check(
+    !!w && w.stake === 50 && L.gold === gold0 - 50,
+    `a wager of 50 gold placed and paid (${JSON.stringify(w && { stake: w.stake, on: w.names[w.side], price: `${w.num}/${w.den}` })}, purse ${gold0} -> ${L?.gold})`,
+  );
 } else console.log('  (no book open this hour)');
 
 // THE HERALD: the window's door in his choice; the pause window's door once joined
@@ -110,7 +163,7 @@ await page.waitForTimeout(3000);
 const hc = await dialog();
 check(hc.includes('The Arena window'), `the Herald's choice carries the window (${JSON.stringify(hc)})`);
 await shot('6-herald.png');
-check((await league()).pauseDoor, 'the pause window\'s Arena door stands, once joined');
+check((await league()).pauseDoor, "the pause window's Arena door stands, once joined");
 
 // A LADDER BOUT UNDER THE BANNER: the pennant on the versus bar, the point for the banner
 await page.keyboard.press('KeyF');
@@ -122,9 +175,20 @@ for (const until = Date.now() + 180000; Date.now() < until;) {
 check(mode === 'dungeon', `down onto the floor's instance (mode ${mode})`);
 a = await waitFor((x) => x.phase === 'fight', 180000);
 await page.waitForTimeout(4000);
-console.log(`  the bout: ${JSON.stringify({ phase: a?.phase, stage: a?.stage, kind: a?.kind, fighters: a?.fighters?.map((f) => f.name) })}`);
-console.log(`  the HUD: ${await ev(() => { const h = document.querySelector('.arena-hud'); return h ? `display '${h.style.display}', rows ${document.querySelectorAll('.arena-ftr').length}` : 'not built'; })}`);
-const pennant = await ev(() => [...document.querySelectorAll('.arena-ftr')].filter((r) => r.style.display !== 'none').map((r) => r.dataset.team ?? ''));
+console.log(
+  `  the bout: ${JSON.stringify({ phase: a?.phase, stage: a?.stage, kind: a?.kind, fighters: a?.fighters?.map((f) => f.name) })}`,
+);
+console.log(
+  `  the HUD: ${await ev(() => {
+    const h = document.querySelector('.arena-hud');
+    return h ? `display '${h.style.display}', rows ${document.querySelectorAll('.arena-ftr').length}` : 'not built';
+  })}`,
+);
+const pennant = await ev(() =>
+  [...document.querySelectorAll('.arena-ftr')]
+    .filter((r) => r.style.display !== 'none')
+    .map((r) => r.dataset.team ?? ''),
+);
 check(pennant[0] === 'red', `my pennant on the versus bar (${JSON.stringify(pennant)})`);
 await shot('7-floor-pennant.png');
 for (let i = 0; i < 40; i++) {
@@ -135,7 +199,9 @@ for (let i = 0; i < 40; i++) {
 }
 a = await waitFor((x) => x.phase === 'done' || x.phase === 'heal', 30000);
 L = await league();
-console.log(`  bout kept: ${JSON.stringify(L?.league?.bouts?.[0] && { opp: L.league.bouts[0].opp, won: L.league.bouts[0].won, points: L.league.bouts[0].points })}, the banner's points ${JSON.stringify(L?.league?.points)}`);
+console.log(
+  `  bout kept: ${JSON.stringify(L?.league?.bouts?.[0] && { opp: L.league.bouts[0].opp, won: L.league.bouts[0].won, points: L.league.bouts[0].points })}, the banner's points ${JSON.stringify(L?.league?.points)}`,
+);
 check(L?.league?.bouts?.length >= 1, 'the bout kept for the Records page');
 check(!L?.league?.bouts?.[0]?.won || L.league.points.red >= 1, 'a win is a point for the Red Banner');
 await shot('8-floor-verdict.png');

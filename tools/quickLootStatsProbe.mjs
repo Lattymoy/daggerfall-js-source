@@ -49,11 +49,19 @@ async function serveRepo(page) {
       // A wrong MIME is a module that will not load at all: the tree
       // imports JSON with an import attribute, and Chrome enforces the
       // type strictly for module scripts.
-      const type = url.pathname.endsWith('.js') || url.pathname.endsWith('.mjs') ? 'text/javascript'
-        : url.pathname.endsWith('.json') ? 'application/json'
-        : url.pathname.endsWith('.css') ? 'text/css' : 'text/html';
+      const type =
+        url.pathname.endsWith('.js') || url.pathname.endsWith('.mjs')
+          ? 'text/javascript'
+          : url.pathname.endsWith('.json')
+            ? 'application/json'
+            : url.pathname.endsWith('.css')
+              ? 'text/css'
+              : 'text/html';
       route.fulfill({ status: 200, contentType: type, body });
-    } catch (e) { console.error('404', url.pathname); route.fulfill({ status: 404, body: 'no' }); }
+    } catch (e) {
+      console.error('404', url.pathname);
+      route.fulfill({ status: 404, body: 'no' });
+    }
   });
 }
 
@@ -64,7 +72,15 @@ mkdirSync(OUT, { recursive: true });
 const ITEMS = [
   { name: 'Dagger', group: 'Weapons', templateIndex: 121, material: 3, maxCondition: 200, currentCondition: 150 },
   { name: 'Cuirass', group: 'Armor', templateIndex: 103, material: 0x0202, maxCondition: 100, currentCondition: 62 },
-  { name: 'Arrow', group: 'Weapons', templateIndex: 131, material: 0, stackCount: 24, maxCondition: 1, currentCondition: 1 },
+  {
+    name: 'Arrow',
+    group: 'Weapons',
+    templateIndex: 131,
+    material: 0,
+    stackCount: 24,
+    maxCondition: 1,
+    currentCondition: 1,
+  },
   { name: 'Bread', group: 'UselessItems2', templateIndex: 534, maxCondition: 100, currentCondition: 100 },
 ];
 
@@ -84,10 +100,16 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8">
 
 const b = await chromium.launch();
 const shots = [];
-for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420, 780, 'phone']]) {
+for (const [W, H, label] of [
+  [1280, 720, 'desktop'],
+  [1024, 640, 'narrow'],
+  [420, 780, 'phone'],
+]) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
   const p = await ctx.newPage();
-  p.on('console', (m) => { if (m.type() === 'error') console.error('PAGE', m.text().slice(0, 200)); });
+  p.on('console', (m) => {
+    if (m.type() === 'error') console.error('PAGE', m.text().slice(0, 200));
+  });
   p.on('pageerror', (e) => console.error('PAGEERR', String(e).slice(0, 300)));
   await serveRepo(p);
   await p.goto('http://probe.local/', { waitUntil: 'load' });
@@ -95,22 +117,28 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420
   // The rows and the highlight come from the REAL modules, and the
   // plaque is raised through the real seam.
   for (let row = 0; row < ITEMS.length; row++) {
-    const side = await p.evaluate(async ({ items, row, W }) => {
-      const hv = await import('/src/systems/worldHover.js');
-      const ql = await import('/src/systems/quickLoot.js');
-      const wp = await import('/src/ui/worldPlaque.js');
-      const pf = await import('/src/systems/uiPrefs.js');
-      pf.setPref('quickLoot', true);
-      wp.destroyWorldPlaque();
-      ql.resetQuickLoot();
-      const { shown, rest, empty } = hv.hoverLines(items);
-      const f = { key: 'loot:probe', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty };
-      ql.foldQuickLoot(f);
-      for (let i = 0; i < row; i++) { ql.quickLootWheel(120); ql.foldQuickLoot(f); }
-      wp.showWorldPlaque(f, { x: W / 2, top: Math.round(window.innerHeight * 0.44) + 26 });
-      const panel = document.querySelector('.wplaque-stats');
-      return panel ? panel.dataset.side : 'none';
-    }, { items: ITEMS, row, W });
+    const side = await p.evaluate(
+      async ({ items, row, W }) => {
+        const hv = await import('/src/systems/worldHover.js');
+        const ql = await import('/src/systems/quickLoot.js');
+        const wp = await import('/src/ui/worldPlaque.js');
+        const pf = await import('/src/systems/uiPrefs.js');
+        pf.setPref('quickLoot', true);
+        wp.destroyWorldPlaque();
+        ql.resetQuickLoot();
+        const { shown, rest, empty } = hv.hoverLines(items);
+        const f = { key: 'loot:probe', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty };
+        ql.foldQuickLoot(f);
+        for (let i = 0; i < row; i++) {
+          ql.quickLootWheel(120);
+          ql.foldQuickLoot(f);
+        }
+        wp.showWorldPlaque(f, { x: W / 2, top: Math.round(window.innerHeight * 0.44) + 26 });
+        const panel = document.querySelector('.wplaque-stats');
+        return panel ? panel.dataset.side : 'none';
+      },
+      { items: ITEMS, row, W },
+    );
     const name = `${OUT}/quickloot-${label}-row${row}.png`;
     await p.screenshot({ path: name });
     shots.push({ label, row, item: ITEMS[row].name, side, name });
@@ -118,4 +146,5 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420
   await ctx.close();
 }
 await b.close();
-for (const s of shots) console.log(`${s.label.padEnd(8)} row ${s.row} ${s.item.padEnd(9)} panel:${s.side.padEnd(6)} -> ${s.name}`);
+for (const s of shots)
+  console.log(`${s.label.padEnd(8)} row ${s.row} ${s.item.padEnd(9)} panel:${s.side.padEnd(6)} -> ${s.name}`);

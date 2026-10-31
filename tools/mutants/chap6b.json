@@ -20,8 +20,8 @@
   {
     "name": "CHAP6B-DOCTRINE-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);",
-    "new": "typeof v === 'string';",
+    "old": "export const chapterDoctrineOk = (/** @type {unknown} */ v) =>\n  typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);",
+    "new": "export const chapterDoctrineOk = (/** @type {unknown} */ v) => typeof v === 'string';",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP6B-SCHISM-SALT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
-    "new": "drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), own.length)",
+    "old": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
+    "new": "  const out = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "CHAP6B-SCHISM-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
-    "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, faction), own.length)",
+    "old": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
+    "new": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, faction), own.length); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "CHAP6B-SCHISM-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
-    "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)), own.length)",
+    "old": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
+    "new": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ],
@@ -59,8 +59,8 @@
   {
     "name": "CHAP6B-SCHISM-OUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return own.filter((_, i) => i !== out);",
-    "new": "return own.filter((_, i) => i !== 0);",
+    "old": "  return own.filter((_, i) => i !== out);",
+    "new": "  return own.filter((_, i) => i !== 0);",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ],
@@ -87,8 +87,8 @@
   {
     "name": "CHAP6B-SIDES-SCHISM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
-    "new": "(event === 'schism' ? 3 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
+    "old": "  event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0;",
+    "new": "  event === 'schism' ? 3 : event === 'succession' ? SUCCESSION_CANDIDATES : 0;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "CHAP6B-SIDES-OTHER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
-    "new": "(event === 'schism' ? 2 : SUCCESSION_CANDIDATES)",
+    "old": "export const chapterSidesOf = (/** @type {unknown} */ event) =>\n  event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0;",
+    "new": "export const chapterSidesOf = (/** @type {unknown} */ event) => (event === 'schism' ? 2 : SUCCESSION_CANDIDATES);",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "CHAP6B-BACK-LOW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
-    "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "old": "  Number.isSafeInteger(side) &&\n  /** @type {number} */ (side) >= 0 &&\n  /** @type {number} */ (side) < chapterSidesOf(event);",
+    "new": "  Number.isSafeInteger(side) && /** @type {number} */ (side) < chapterSidesOf(event);",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "CHAP6B-BACK-HIGH",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
-    "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) <= chapterSidesOf(event)",
+    "old": "  /** @type {number} */ (side) < chapterSidesOf(event);",
+    "new": "  /** @type {number} */ (side) <= chapterSidesOf(event);",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "CHAP6B-BACK-WHOLE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
-    "new": "/** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
+    "old": "  Number.isSafeInteger(side) &&\n  /** @type {number} */ (side) >= 0 &&\n  /** @type {number} */ (side) < chapterSidesOf(event);",
+    "new": "  /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event);",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "CHAP6B-WIN-MORE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (a > b) return 0;\n",
-    "new": "  if (a >= b) return 0;\n",
+    "old": "  if (a > b) return 0;",
+    "new": "  if (a >= b) return 0;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "CHAP6B-WIN-TIE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return master === 0 || master === 1 ? master : null;\n",
-    "new": "  return null;\n",
+    "old": "  return master === 0 || master === 1 ? master : null;",
+    "new": "  return null;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "CHAP6B-WIN-MASTER-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return master === 0 || master === 1 ? master : null;\n",
-    "new": "  return master ?? null;\n",
+    "old": "  return master === 0 || master === 1 ? master : null;",
+    "new": "  return master ?? null;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "CHAP6B-HEIR-MASTER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
-    "new": "(master ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
+    "old": "  Number.isSafeInteger(master)\n    ? /** @type {number} */ (master)\n    : Number.isSafeInteger(top)\n      ? /** @type {number} */ (top)\n      : 0;",
+    "new": "  master ? /** @type {number} */ (master) : Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "CHAP6B-HEIR-TOP",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);",
-    "new": ": top ? /** @type {number} */ (top) : 0);",
+    "old": "  Number.isSafeInteger(master)\n    ? /** @type {number} */ (master)\n    : Number.isSafeInteger(top)\n      ? /** @type {number} */ (top)\n      : 0;",
+    "new": "  Number.isSafeInteger(master) ? /** @type {number} */ (master) : top ? /** @type {number} */ (top) : 0;",
     "tests": [
       "test/net/chap6b_backing.test.js",
       "test/net/audit_chap5.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "CHAP6B-WRIT-COUNT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);",
-    "new": "count;",
+    "old": "export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) =>\n  count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);",
+    "new": "export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) => count;",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "CHAP6B-LINE-DOCTRINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "d.event === 'schism' ? (chapterDoctrineOk(d.doctrine) ?",
-    "new": "d.event === 'schism' ? (d.doctrine ?",
+    "old": "              ? chapterDoctrineOk(d.doctrine)",
+    "new": "              ? d.doctrine",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "CHAP6B-LINE-HEIR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "d.event === 'succession' && Number.isSafeInteger(d.heir) ?",
-    "new": "d.event === 'succession' ?",
+    "old": "              : d.event === 'succession' && Number.isSafeInteger(d.heir)",
+    "new": "              : d.event === 'succession'",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "CHAP6B-ROUTE-LIST",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/chapters/back',   // CHAP6b: a member's backing in its chapter's Season\n",
-    "new": "",
+    "old": "  '/v1/chapters/back', // CHAP6b: a member's backing in its chapter's Season\n  '/v1/chapters/patron', // CHAP7a: a guild's bid for a chapter's patronage",
+    "new": "  '/v1/chapters/patron', // CHAP7a: a guild's bid for a chapter's patronage",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]

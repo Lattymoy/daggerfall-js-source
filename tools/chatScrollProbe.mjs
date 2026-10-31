@@ -16,7 +16,10 @@ import { chromium } from 'playwright';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 let fails = 0;
-const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); if (!ok) fails++; };
+const check = (name, ok, detail = '') => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+  if (!ok) fails++;
+};
 const server = await createServer({ server: { port: 5231, strictPort: true }, logLevel: 'silent' });
 await server.listen();
 const browser = await chromium.launch({ headless: true });
@@ -30,30 +33,79 @@ for (const badges of [false, true]) {
     const { createChatPanel } = await import('/src/ui/chatPanel.js');
     document.body.innerHTML = '';
     const log = new ChatLog();
-    const panel = createChatPanel({ log, onSend: () => true, overlay: () => false, touch: false,
-      badgeOf: badges ? () => ({ title: 'founder', glyphs: ['sprout', 'dev'] }) : null });
+    const panel = createChatPanel({
+      log,
+      onSend: () => true,
+      overlay: () => false,
+      touch: false,
+      badgeOf: badges ? () => ({ title: 'founder', glyphs: ['sprout', 'dev'] }) : null,
+    });
     const list = panel.root.querySelector('.dfchat-list');
     const jump = panel.root.querySelector('.dfchat-jump');
     let n = 0;
-    const say = (k) => { for (let i = 0; i < k; i++, n++) log.push('world', { id: 'pabcdefgh000' + (n % 3), name: 'Bran', text: `line ${n} - a sentence long enough to come near the edge of the box`, at: Date.now() }); panel.render({}); };
-    const at = () => ({ top: Math.round(list.scrollTop), max: Math.round(list.scrollHeight - list.clientHeight), bar: jump.textContent });
+    const say = (k) => {
+      for (let i = 0; i < k; i++, n++)
+        log.push('world', {
+          id: 'pabcdefgh000' + (n % 3),
+          name: 'Bran',
+          text: `line ${n} - a sentence long enough to come near the edge of the box`,
+          at: Date.now(),
+        });
+      panel.render({});
+    };
+    const at = () => ({
+      top: Math.round(list.scrollTop),
+      max: Math.round(list.scrollHeight - list.clientHeight),
+      bar: jump.textContent,
+    });
     const out = [];
-    say(40); panel.open(); panel.render({}); out.push(['first open', at()]);
-    panel.close(); panel.render({}); say(5); panel.open(); panel.render({}); out.push(['open after 5 lines came in while closed', at()]);
-    list.scrollTop = 0; panel.render({}); panel.close(); panel.render({}); say(2); panel.open(); panel.render({}); out.push(['open after reading history and closing', at()]);
-    say(1); out.push(['a line under a reader at the bottom', at()]);
-    list.scrollTop = 40; panel.render({}); say(3); out.push(['three lines under a reader who scrolled up', at()]);
-    jump.click(); panel.render({}); out.push(['the bar clicked', at()]);
+    say(40);
+    panel.open();
+    panel.render({});
+    out.push(['first open', at()]);
+    panel.close();
+    panel.render({});
+    say(5);
+    panel.open();
+    panel.render({});
+    out.push(['open after 5 lines came in while closed', at()]);
+    list.scrollTop = 0;
+    panel.render({});
+    panel.close();
+    panel.render({});
+    say(2);
+    panel.open();
+    panel.render({});
+    out.push(['open after reading history and closing', at()]);
+    say(1);
+    out.push(['a line under a reader at the bottom', at()]);
+    list.scrollTop = 40;
+    panel.render({});
+    say(3);
+    out.push(['three lines under a reader who scrolled up', at()]);
+    jump.click();
+    panel.render({});
+    out.push(['the bar clicked', at()]);
     return out;
   }, badges);
   const tag = badges ? ' (badged, wrapping)' : '';
   const newest = (w) => w.top >= w.max - 8;
   for (const [what, w] of steps) {
-    if (what === 'three lines under a reader who scrolled up') check(what + tag, w.top === 40 && w.bar === '3 new - jump to newest', `scrollTop ${w.top} of ${w.max}, bar "${w.bar}"`);
-    else check(what + tag, newest(w) && w.bar === '', `scrollTop ${w.top} of ${w.max}${w.bar ? `, bar "${w.bar}"` : ''}`);
+    if (what === 'three lines under a reader who scrolled up')
+      check(
+        what + tag,
+        w.top === 40 && w.bar === '3 new - jump to newest',
+        `scrollTop ${w.top} of ${w.max}, bar "${w.bar}"`,
+      );
+    else
+      check(what + tag, newest(w) && w.bar === '', `scrollTop ${w.top} of ${w.max}${w.bar ? `, bar "${w.bar}"` : ''}`);
   }
 }
-if (pageErrors.length) { console.log('pageerrors:', pageErrors.join(' | ')); fails++; }
-await browser.close(); await server.close();
+if (pageErrors.length) {
+  console.log('pageerrors:', pageErrors.join(' | '));
+  fails++;
+}
+await browser.close();
+await server.close();
 console.log(fails === 0 ? 'CHAT SCROLL PROBE: ALL GREEN' : `CHAT SCROLL PROBE: ${fails} FAILURE(S)`);
 process.exit(fails === 0 ? 0 : 1);

@@ -2,41 +2,51 @@
   {
     "name": "MASTER-THREE-third-primary-taken-back",
     "file": "src/systems/masterSkills.js",
-    "old": "Object.freeze({ primary: 3, major: 2, minor: 1 })",
-    "new": "Object.freeze({ primary: 2, major: 2, minor: 1 })",
-    "tests": ["test/systems/fb1026d_masterthree.test.js"],
+    "old": "export const MASTERY_SLOTS = Object.freeze({ primary: 3, major: 2, minor: 1 });",
+    "new": "export const MASTERY_SLOTS = Object.freeze({ primary: 2, major: 2, minor: 1 });",
+    "tests": [
+      "test/systems/fb1026d_masterthree.test.js"
+    ],
     "note": "the report's own complaint: two primaries, the third held at 100"
   },
   {
     "name": "MASTER-THREE-majors-widened",
     "file": "src/systems/masterSkills.js",
-    "old": "Object.freeze({ primary: 3, major: 2, minor: 1 })",
-    "new": "Object.freeze({ primary: 3, major: 3, minor: 1 })",
-    "tests": ["test/systems/fb1026d_masterthree.test.js"],
+    "old": "export const MASTERY_SLOTS = Object.freeze({ primary: 3, major: 2, minor: 1 });",
+    "new": "export const MASTERY_SLOTS = Object.freeze({ primary: 3, major: 3, minor: 1 });",
+    "tests": [
+      "test/systems/fb1026d_masterthree.test.js"
+    ],
     "note": "the third major opened with the third primary"
   },
   {
     "name": "MASTER-THREE-about-says-two",
     "file": "src/systems/masterSkills.js",
-    "old": "'Every skill can reach 100. You can master 3 primary,",
-    "new": "'Every skill can reach 100. You can master 2 primary,",
-    "tests": ["test/systems/fb1026d_masterthree.test.js"],
+    "old": "  'Every skill can reach 100. You can master 3 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',",
+    "new": "  'Every skill can reach 100. You can master 2 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',",
+    "tests": [
+      "test/systems/fb1026d_masterthree.test.js"
+    ],
     "note": "the skill screen still says two"
   },
   {
     "name": "MASTER-THREE-offer-says-two",
     "file": "src/systems/masterSkills.js",
-    "old": "'You can master 3 primary, 2 major and 1 minor',",
-    "new": "'You can master 2 primary, 2 major and 1 minor',",
-    "tests": ["test/systems/fb1026d_masterthree.test.js"],
+    "old": "  'You can master 3 primary, 2 major and 1 minor',",
+    "new": "  'You can master 2 primary, 2 major and 1 minor',",
+    "tests": [
+      "test/systems/fb1026d_masterthree.test.js"
+    ],
     "note": "the offline offer still says two"
   },
   {
     "name": "MASTER-THREE-info-says-two",
     "file": "src/systems/masterSkills.js",
-    "old": "'You can now master 3 primary, 2 major and',",
-    "new": "'You can now master 2 primary, 2 major and',",
-    "tests": ["test/systems/fb1026d_masterthree.test.js"],
+    "old": "  'You can now master 3 primary, 2 major and',",
+    "new": "  'You can now master 2 primary, 2 major and',",
+    "tests": [
+      "test/systems/fb1026d_masterthree.test.js"
+    ],
     "note": "the online box still says two"
   }
 ]

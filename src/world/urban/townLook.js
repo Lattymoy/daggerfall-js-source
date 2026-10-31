@@ -43,25 +43,25 @@ const look = (base, why) => Object.freeze({ base, why });
 
 /** A province's towns' building set past the Bay - its climate base (ClimateSwaps.ApplyClimate's), and why. */
 export const TOWN_LOOK = Object.freeze({
-  Skyrim: look(Mountain, 'the Nord\'s stone and timber - ashlar and rubble walls, framing over stone'),
-  HighRock: look(Temperate, 'the Breton\'s half-timbering over plaster and brick'),
-  Hammerfell: look(Desert, 'the Redguard\'s sandstone and adobe'),
-  Sumurset: look(Desert, 'the Altmer\'s pale stone and stucco under arched windows'),
-  Valenwood: look(Swamp, 'the Bosmer\'s timber under the forest\'s vines'),
-  Elsweyr: look(Desert, 'the Khajiit\'s sandstone and adobe'),
-  BlackMarsh: look(Swamp, 'the Argonian\'s timber over the marsh\'s stone, overgrown'),
-  Morrowind: look(Desert, 'the Velothi\'s stucco and sandstone'),
-  Imperial: look(Temperate, 'the Empire\'s half-timbering, brick and cut stone'),
+  Skyrim: look(Mountain, "the Nord's stone and timber - ashlar and rubble walls, framing over stone"),
+  HighRock: look(Temperate, "the Breton's half-timbering over plaster and brick"),
+  Hammerfell: look(Desert, "the Redguard's sandstone and adobe"),
+  Sumurset: look(Desert, "the Altmer's pale stone and stucco under arched windows"),
+  Valenwood: look(Swamp, "the Bosmer's timber under the forest's vines"),
+  Elsweyr: look(Desert, "the Khajiit's sandstone and adobe"),
+  BlackMarsh: look(Swamp, "the Argonian's timber over the marsh's stone, overgrown"),
+  Morrowind: look(Desert, "the Velothi's stucco and sandstone"),
+  Imperial: look(Temperate, "the Empire's half-timbering, brick and cut stone"),
 });
 
 /** The zones (world/tamriel/tamrielBiomes.js keys) whose own country is another set's than their province's. */
 export const TOWN_LOOK_ZONES = Object.freeze({
-  highRockWrothgar: look(Mountain, 'Wrothgar\'s mountain stone'),
-  morrowindAshlands: look(Mountain, 'the ash country\'s dark rubble - the Redoran\'s'),
-  morrowindRedMountain: look(Mountain, 'the ash country\'s dark rubble'),
-  morrowindVelothi: look(Mountain, 'the Velothi Mountains\' stone'),
-  cyrodiilJerall: look(Mountain, 'the Jerall\'s Nord stone - Bruma\'s'),
-  cyrodiilBlackwood: look(Swamp, 'Blackwood\'s marsh timber'),
+  highRockWrothgar: look(Mountain, "Wrothgar's mountain stone"),
+  morrowindAshlands: look(Mountain, "the ash country's dark rubble - the Redoran's"),
+  morrowindRedMountain: look(Mountain, "the ash country's dark rubble"),
+  morrowindVelothi: look(Mountain, "the Velothi Mountains' stone"),
+  cyrodiilJerall: look(Mountain, "the Jerall's Nord stone - Bruma's"),
+  cyrodiilBlackwood: look(Swamp, "Blackwood's marsh timber"),
 });
 
 /** A town's building set by its province and its zone: the zone's own where it has one, else its province's, else null

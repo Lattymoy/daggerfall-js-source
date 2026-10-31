@@ -9,7 +9,7 @@
 import { seededRng } from '../wind/wind.js';
 import { spoilsBase, magicOrBetter } from '../gate/gateSpoils.js';
 import { applyRarity, lastPass, socketPass, weaponSocketPass, techniquePass } from '../loot/lootRarity.js';
-import { STOOD_GOLD, SERPENT_SPOILS_SOURCE } from '../serpent/serpentSpoils.js';   // a stander's share and the boss's ladder, the serpent's own
+import { STOOD_GOLD, SERPENT_SPOILS_SOURCE } from '../serpent/serpentSpoils.js'; // a stander's share and the boss's ladder, the serpent's own
 import { DRAGON_SPOILS_TEXT } from './dragonWords.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
@@ -41,7 +41,8 @@ export function rollDragonSpoils(seed, level, earned = 'dealt') {
   const dealt = earned !== 'stood';
   const gold = Math.round(DRAGON_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()) * (dealt ? 1 : STOOD_GOLD));
   const pieces = [];
-  if (dealt) pieces.push(graded(spoilsBase(lv, rolls), rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
+  if (dealt)
+    pieces.push(graded(spoilsBase(lv, rolls), rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
   pieces.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls, SERPENT_SPOILS_SOURCE), rolls));
   const items = pieces.map((p) => p.item);
   lastPass(items, rolls);
@@ -54,5 +55,8 @@ export function rollDragonSpoils(seed, level, earned = 'dealt') {
 /** The hoard as the spoils pool hands it over: each item, then the gold. Pure. */
 export function dragonSpoilsList(seed, level, earned) {
   const s = rollDragonSpoils(seed, level, earned);
-  return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'gold', gold: s.gold, tier: 'common' }];
+  return [
+    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    { kind: 'gold', gold: s.gold, tier: 'common' },
+  ];
 }

@@ -129,7 +129,7 @@ test('FIRST-USE the ghosts: the Steps\' program started as the realm loads, the 
   }
   assert.match(span, /if \(renderer\?\.gl && parallelCompile\(renderer\.gl\)\) \{ startPrograms\(renderer\.gl, sdStepsPrograms\(ghostOpts\)\); startEgLookPrograms\(renderer\.gl\); \}/, 'the Spans\' and the look\'s started with the hall');
   const rite = read('src/scenes/riteHost.js');
-  assert.match(rite, /const smokeOf = gl \? compiledPass\(gl, RITE_SMOKE_PROGRAMS, \(\) => new RiteSmokeRenderer\(gl\),/);
+  assert.match(rite, /const smokeOf = gl\n\s*\? compiledPass\(\n\s*gl,\n\s*RITE_SMOKE_PROGRAMS,\n\s*\(\) => new RiteSmokeRenderer\(gl\),/);
   assert.match(rite, /if \(!smokePass && smokeOf && smokeFade\(t\) > 0\) smokePass = smokeOf\(\);/, 'never asked as needed');
-  assert.match(read('src/scenes/starfall/starfallHost.js'), /void warmPrograms\(\[\{ start: \(\) => startPrograms\(renderer\.gl, STARFALL_PROGRAMS\), run: ensurePass, need: \(\) => !pass && !passTried \}\]\);/);
+  assert.match(read('src/scenes/starfall/starfallHost.js'), /void warmPrograms\(\[\n\s*\{ start: \(\) => startPrograms\(renderer\.gl, STARFALL_PROGRAMS\), run: ensurePass, need: \(\) => !pass && !passTried \},\n\s*\]\);/);
 });

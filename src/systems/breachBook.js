@@ -10,7 +10,8 @@ import { isSigilStone } from './gate/gateSpoils.js';
 import { createBook } from './books.js';
 import { BURNING_DOORS_ID } from './portBooks.js';
 
-export const BREACH_BOOK_TEXT = "A Mages Guild courier finds you: 'On the Burning Doors', with the Guild's compliments.";
+export const BREACH_BOOK_TEXT =
+  "A Mages Guild courier finds you: 'On the Burning Doors', with the Guild's compliments.";
 
 /** The save's slot for the record (systems/modSaveData.js), under this name. */
 export const BREACH_BOOK_SAVE_VENDOR = 'BreachBook';
@@ -30,5 +31,7 @@ export function breachBookFor(item) {
 registerModSaveData(BREACH_BOOK_SAVE_VENDOR, {
   newSaveData: () => ({ given: false }),
   getSaveData: () => ({ given: _given }),
-  restoreSaveData: (r) => { _given = r?.given === true; },
+  restoreSaveData: (r) => {
+    _given = r?.given === true;
+  },
 });

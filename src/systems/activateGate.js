@@ -78,9 +78,7 @@
 /** Time.realtimeSinceStartup, in seconds. Injectable at every reader
  *  below so the pins are frame sequences and not sleeps. */
 const nowSeconds = () =>
-  (typeof performance !== 'undefined' && performance.now
-    ? performance.now()
-    : Date.now()) / 1000;
+  (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) / 1000;
 
 /** The per-host frame state: currentActions/previousActions reduced to
  *  the one action, plus PlayerActivate's castPending (:71) and its
@@ -115,10 +113,17 @@ export function setClickDelay(gate, delay = 0.3, now = nowSeconds()) {
  * that; the port's own arms that are not DFU's (the plaque's verbs on a
  * player - a touch heal on a party mate) must not also fire on it.
  */
-export function activateFrame(gate, {
-  down = false, hasReadySpell = false, touchSpell = false,
-  hudBlocked = false, paused = false, now = nowSeconds(),
-} = {}) {
+export function activateFrame(
+  gate,
+  {
+    down = false,
+    hasReadySpell = false,
+    touchSpell = false,
+    hudBlocked = false,
+    paused = false,
+    now = nowSeconds(),
+  } = {},
+) {
   // Fact 5. InputManager.Update (:486-503): while paused the action
   // set is never populated, so the button is not down for anybody -
   // and the delay is armed for the frame the last window pops, which
@@ -129,13 +134,13 @@ export function activateFrame(gate, {
     return { cast: false, activate: false };
   }
 
-  const started = down && !gate.down;      // ActionStarted (:626-629)
-  const complete = !down && gate.down;     // ActionComplete (:634-637)
+  const started = down && !gate.down; // ActionStarted (:626-629)
+  const complete = !down && gate.down; // ActionComplete (:634-637)
   gate.down = down;
 
   // Fact 6. The window's own click cannot become a world click.
   if (gate.clickDelay > 0 && now < gate.clickDelayStart + gate.clickDelay) {
-    if (started) gate.pressCast = false;   // AUDIT 68 S24-gate-stale-presscast: a press begun here cast nothing - its release must not report the last press's cast
+    if (started) gate.pressCast = false; // AUDIT 68 S24-gate-stale-presscast: a press begun here cast nothing - its release must not report the last press's cast
     return { cast: false, activate: false };
   }
   gate.clickDelay = 0;

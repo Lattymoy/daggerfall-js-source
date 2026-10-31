@@ -137,8 +137,8 @@
   {
     "name": "LEGACY7W-delete-keeps-union",
     "file": "server-account/src/realm.js",
-    "old": "    endUnionsOf(db, id, nowS, 'gone'),",
-    "new": "",
+    "old": "    endUnionsOf(db, id, nowS, 'gone'), // LEGACY7 part three: a union ends with the character",
+    "new": "    // LEGACY7 part three: a union ends with the character",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -291,7 +291,7 @@
   {
     "name": "LEGACY7W-yes-without-half",
     "file": "src/net/wedSession.js",
-    "old": "      try { r = await half(a.s, a.sub, a.sc); } catch { r = { ok: false, error: 'offline' }; }",
+    "old": "      try {\n        r = await half(a.s, a.sub, a.sc);\n      } catch {\n        r = { ok: false, error: 'offline' };\n      }",
     "new": "      r = { ok: true, wed: false };",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "LEGACY7W-reask-prompts",
     "file": "src/net/wedSession.js",
-    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s, why: 'declined' }); return; }\n",
-    "new": "",
+    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) {\n            answer(from, { k: 'no', to: from, s: d.s, why: 'declined' });\n            return;\n          }\n          if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= WED_REASK_MS) quiet.delete(p);",
+    "new": "          if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= WED_REASK_MS) quiet.delete(p);",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "LEGACY7W-crossed-both-take-up",
     "file": "src/net/wedSession.js",
-    "old": "            if (from < selfId()) { outgoing = null;",
-    "new": "            if (true) { outgoing = null;",
+    "old": "            if (from < selfId()) {",
+    "new": "            if (true) {",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "LEGACY7W-crafted-yes-silent",
     "file": "src/net/wedSession.js",
-    "old": "            if (r?.ok && r.wed) { wedNow(r.union, from); once({ k: 'done', to: from, s }); }",
-    "new": "            if (r?.ok) { wedNow(r.union, from); once({ k: 'done', to: from, s }); }",
+    "old": "            if (r?.ok && r.wed) {",
+    "new": "            if (r?.ok) {",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "LEGACY7W-busy-prompts-again",
     "file": "src/net/wedSession.js",
-    "old": "          if (waiting || closing) { if ((waiting ?? closing)?.peer !== from) answer(from, { k: 'no', to: from, s: d.s, why: 'busy' }); return; }\n",
-    "new": "",
+    "old": "          if (waiting || closing) {\n            if ((waiting ?? closing)?.peer !== from) answer(from, { k: 'no', to: from, s: d.s, why: 'busy' });\n            return;\n          }\n          const no = can();",
+    "new": "          const no = can();",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "LEGACY7W-lapse-silent",
     "file": "src/net/wedSession.js",
-    "old": "        once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'timeout' });\n",
-    "new": "",
+    "old": "        once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'timeout' });\n        outgoing = null;",
+    "new": "        outgoing = null;",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "LEGACY7W-withdraw-silent",
     "file": "src/net/wedSession.js",
-    "old": "      once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'cancelled' });\n      outgoing = null;\n      changed();\n      return { ok: true };",
-    "new": "      outgoing = null;\n      changed();\n      return { ok: true };",
+    "old": "      once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'cancelled' });\n      outgoing = null;",
+    "new": "      outgoing = null;",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "LEGACY7W-house-never-asked",
     "file": "src/net/wedSession.js",
-    "old": "      if (!peerCan(peer)) return { ok: false, why: 'house' };\n",
-    "new": "",
+    "old": "      if (!peerCan(peer)) return { ok: false, why: 'house' };\n      const s = mint();",
+    "new": "      const s = mint();",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "LEGACY7W-asked-side-reason-lost",
     "file": "src/net/wedSession.js",
-    "old": "          if (no) { answer(from, { k: 'no', to: from, s: d.s, why: no }); return; }\n",
-    "new": "",
+    "old": "          if (no) {\n            answer(from, { k: 'no', to: from, s: d.s, why: no });\n            return;\n          }\n          if (!peerCan(from)) {",
+    "new": "          if (!peerCan(from)) {",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -516,7 +516,7 @@
   {
     "name": "LEGACY7W-no-propose",
     "file": "src/ui/profileWindow.js",
-    "old": "    wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,",
+    "old": "    wed:\n      wed && typeof wed.label === 'string'\n        ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) }\n        : null,",
     "new": "    wed: null,",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"

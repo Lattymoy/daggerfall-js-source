@@ -15,59 +15,123 @@
 //     gift), the starter deck laid in the binder as its first deck - "a starter deck comes with the first binder".
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from '../item/itemTemplates.js';
+import {
+  registerCustomTemplates,
+  setItemFields,
+  mintCondition,
+  registerItemUseHandler,
+} from '../item/itemTemplates.js';
 import { validBinderDeck, BINDER_DECK_NAME_MAX } from '../item/itemFields.js';
 import { addItem } from '../inventory.js';
 import { cardById, STARTER_DECK } from '../../net/iliac/iliacCards.js';
-import { cardRules, cardFlavor } from './iliacCardWords.js';   // KG-SET: a card's rules and flavor, in the player's language
-import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE, cardWorth } from '../../net/card/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service; AUDIT CARDS-6 A1: and the pack's number
+import { cardRules, cardFlavor } from './iliacCardWords.js'; // KG-SET: a card's rules and flavor, in the player's language
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE, cardWorth } from '../../net/card/cardWorthLaw.js'; // CARDS9: the card's worth, one home with the service; AUDIT CARDS-6 A1: and the pack's number
 
 /** The card's and the binder's templates - the port's own, beside the Wallet's 580 and below the professions' 600.
  *  CARDS9: the card's number is the law's (net/card/cardWorthLaw.js - the account service reads it there). */
-export { ILIAC_CARD_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
+export { ILIAC_CARD_TEMPLATE }; // the law's own, handed on (one declaration - audit24's ratchet)
 export const CARD_BINDER_TEMPLATE = 582;
 /** CARDS9 (section 32): the tavern's sealed pack of cards (systems/card/cardSources.js opens it). AUDIT CARDS-6 A1: its number
  *  is the law's too (net/card/cardWorthLaw.js - the cards' customs counts a pack, and the account service reads it there). */
-export { CARD_PACK_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
+export { CARD_PACK_TEMPLATE }; // the law's own, handed on (one declaration - audit24's ratchet)
 const GROUP = 'UselessItems2';
 /** The rows. Rarity 20: no shelf and no loot table rolls either. The card wears DFU's Parchment picture (TEXTURE.209
  *  record 8), the binder its Spellbook's (record 4) - the item's own picture; the card's face is painted in code
  *  (render/iliacCardFaces.js). */
 export const ILIAC_CARD_ROW = Object.freeze({
-  index: ILIAC_CARD_TEMPLATE, name: 'Card', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 1,
-  enchantmentPoints: 0, rarity: 20, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,
-  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,
+  index: ILIAC_CARD_TEMPLATE,
+  name: 'Card',
+  baseWeight: 0,
+  hitPoints: 0,
+  capacityOrTarget: 0,
+  basePrice: 1,
+  enchantmentPoints: 0,
+  rarity: 20,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 209,
+  worldTextureRecord: 8,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: true,
+  hasNoEncumbrance: true,
 });
 export const CARD_BINDER_ROW = Object.freeze({
-  index: CARD_BINDER_TEMPLATE, name: 'Card Binder', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 1,
-  enchantmentPoints: 0, rarity: 20, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 4,
-  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,
-  bound: true, packOnly: true,
+  index: CARD_BINDER_TEMPLATE,
+  name: 'Card Binder',
+  baseWeight: 0,
+  hitPoints: 0,
+  capacityOrTarget: 0,
+  basePrice: 1,
+  enchantmentPoints: 0,
+  rarity: 20,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 209,
+  worldTextureRecord: 4,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
+  hasNoEncumbrance: true,
+  bound: true,
+  packOnly: true,
 });
 /** CARDS9: the pack - stackable (packs are alike until opened), weightless, sold at the tavern's counter for its price
  *  (systems/card/cardSources.js cardPackPrice); it wears DFU's Parchment picture as a card does, the pack's paper. */
 export const CARD_PACK_ROW = Object.freeze({
-  index: CARD_PACK_TEMPLATE, name: 'Card Pack', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 40,
-  enchantmentPoints: 0, rarity: 20, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,
-  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,
+  index: CARD_PACK_TEMPLATE,
+  name: 'Card Pack',
+  baseWeight: 0,
+  hitPoints: 0,
+  capacityOrTarget: 0,
+  basePrice: 40,
+  enchantmentPoints: 0,
+  rarity: 20,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 209,
+  worldTextureRecord: 8,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: true,
+  hasNoEncumbrance: true,
 });
 registerCustomTemplates([ILIAC_CARD_ROW, CARD_BINDER_ROW, CARD_PACK_ROW]);
 
 /** Whether a record IS a card of the catalog (its template, its group, a card it names). */
-export const isIliacCard = (/** @type {any} */ item) => item?.templateIndex === ILIAC_CARD_TEMPLATE && item?.group === GROUP && typeof item?.card === 'string';
+export const isIliacCard = (/** @type {any} */ item) =>
+  item?.templateIndex === ILIAC_CARD_TEMPLATE && item?.group === GROUP && typeof item?.card === 'string';
 /** CARDS9: whether a record is a sealed pack. */
-export const isCardPack = (/** @type {any} */ item) => item?.templateIndex === CARD_PACK_TEMPLATE && item?.group === GROUP;
+export const isCardPack = (/** @type {any} */ item) =>
+  item?.templateIndex === CARD_PACK_TEMPLATE && item?.group === GROUP;
 /** CARDS9: a pack's lines on its item card. */
-export const CARD_PACK_LINES = Object.freeze(['Five sealed Iliac Hand cards. One is rare or better.', 'Use it to open it.']);
+export const CARD_PACK_LINES = Object.freeze([
+  'Five sealed Iliac Hand cards. One is rare or better.',
+  'Use it to open it.',
+]);
 /** Whether a record is the binder. */
-export const isCardBinder = (/** @type {any} */ item) => item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;
+export const isCardBinder = (/** @type {any} */ item) =>
+  item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;
 /** The pack's binder, or null. */
-export const binderOf = (/** @type {any} */ items) => (Array.isArray(items) ? items.find(isCardBinder) ?? null : null);
+export const binderOf = (/** @type {any} */ items) =>
+  Array.isArray(items) ? (items.find(isCardBinder) ?? null) : null;
 /** A card's name in the pack: "Card: Rat" - the catalog's, or "Card" for one this build does not know. */
-export const iliacCardName = (/** @type {any} */ item) => { const c = cardById(item?.card); return c ? `Card: ${c.name}` : 'Card'; };
+export const iliacCardName = (/** @type {any} */ item) => {
+  const c = cardById(item?.card);
+  return c ? `Card: ${c.name}` : 'Card';
+};
 
 /** A card's lines on its item card (systems/item/itemInfo.js): what it is in the game - its tier and kind, its cost and power,
  *  its rules, its flavor. */
@@ -77,7 +141,11 @@ export function iliacCardLines(/** @type {any} */ item) {
   const kind = { unit: 'Unit', spell: 'Spell', prince: 'Prince', location: 'Location' }[c.kind] ?? c.kind;
   const tier = c.tier.charAt(0).toUpperCase() + c.tier.slice(1);
   const flavor = cardFlavor(c);
-  return [`${tier} ${kind}${c.kind === 'location' ? '' : ` - costs ${c.cost}`}${c.kind === 'unit' || c.kind === 'prince' ? `, power ${c.power}` : ''}`, cardRules(c), ...(flavor ? [flavor] : [])];
+  return [
+    `${tier} ${kind}${c.kind === 'location' ? '' : ` - costs ${c.cost}`}${c.kind === 'unit' || c.kind === 'prince' ? `, power ${c.power}` : ''}`,
+    cardRules(c),
+    ...(flavor ? [flavor] : []),
+  ];
 }
 /** The binder's card lines: what a binder is for. */
 export const BINDER_CARD_LINES = Object.freeze([
@@ -87,7 +155,7 @@ export const BINDER_CARD_LINES = Object.freeze([
 
 /** The most decks a binder keeps, and the longest name one may have (the loot clamp's string bound, itemFields.js). */
 export const BINDER_DECKS_MAX = 12;
-export const DECK_NAME_MAX = BINDER_DECK_NAME_MAX;   // AUDIT CARDS-5 C1: the item fields' own bound (itemFields.js validBinderDeck), one number
+export const DECK_NAME_MAX = BINDER_DECK_NAME_MAX; // AUDIT CARDS-5 C1: the item fields' own bound (itemFields.js validBinderDeck), one number
 
 /** `count` cards of catalog id `id`, one stack - or null for an id the catalog does not know. */
 export function mintIliacCard(/** @type {string} */ id, count = 1) {
@@ -95,7 +163,7 @@ export function mintIliacCard(/** @type {string} */ id, count = 1) {
   const it = mintCondition(setItemFields({ group: GROUP, templateIndex: ILIAC_CARD_TEMPLATE }));
   it.card = id;
   it.stackCount = count;
-  it.value = cardWorth(id);   // CARDS9: its tier's worth (net/card/cardWorthLaw.js CARD_WORTH) - a coin no longer
+  it.value = cardWorth(id); // CARDS9: its tier's worth (net/card/cardWorthLaw.js CARD_WORTH) - a coin no longer
   return it;
 }
 /** CARDS9: a sealed pack. */
@@ -114,13 +182,15 @@ export function mintBinder(/** @type {{name: string, cards: string[]}[]} */ deck
 /** The pack's collection: catalog id -> how many the pack holds (its stacks summed). */
 export function collectionOf(/** @type {any} */ items) {
   const out = new Map();
-  for (const it of Array.isArray(items) ? items : []) if (isIliacCard(it)) out.set(it.card, (out.get(it.card) ?? 0) + Math.max(1, it.stackCount ?? 1));
+  for (const it of Array.isArray(items) ? items : [])
+    if (isIliacCard(it)) out.set(it.card, (out.get(it.card) ?? 0) + Math.max(1, it.stackCount ?? 1));
   return out;
 }
 /** Why a deck cannot be kept in this binder - or null: more copies of a card than the pack holds ('not held'). The
  *  rules' own law (net/iliac/iliacHand.js deckValid) is the caller's to ask first. */
 export function deckHeldRefusal(/** @type {string[]} */ cards, /** @type {any} */ items) {
-  const have = collectionOf(items), need = new Map();
+  const have = collectionOf(items),
+    need = new Map();
   for (const id of cards) need.set(id, (need.get(id) ?? 0) + 1);
   for (const [id, n] of need) if ((have.get(id) ?? 0) < n) return 'not held';
   return null;
@@ -134,17 +204,26 @@ export function binderDecks(/** @type {any} */ binder) {
  *  CARDS9: and every card worth its tier's worth - a card minted before CARDS9 carried a coin's. */
 export function cleanBinders(/** @type {any} */ items) {
   for (const it of Array.isArray(items) ? items : []) {
-    if (isIliacCard(it)) { const w = cardWorth(it.card); if (w > 0 && it.value !== w) it.value = w; continue; }
+    if (isIliacCard(it)) {
+      const w = cardWorth(it.card);
+      if (w > 0 && it.value !== w) it.value = w;
+      continue;
+    }
     if (!isCardBinder(it)) continue;
     const ok = binderDecks(it);
     if (!Array.isArray(it.decks) || ok.length !== it.decks.length) it.decks = ok;
   }
 }
 /** The binder's deck `i` replaced (or added at the end, `i` past them), the list replaced whole. False when it cannot. */
-export function setBinderDeck(/** @type {any} */ binder, /** @type {number} */ i, /** @type {{name: string, cards: string[]}} */ deck) {
+export function setBinderDeck(
+  /** @type {any} */ binder,
+  /** @type {number} */ i,
+  /** @type {{name: string, cards: string[]}} */ deck,
+) {
   if (!isCardBinder(binder)) return false;
   const decks = binderDecks(binder);
-  if (!(Number.isInteger(i) && i >= 0 && i <= decks.length) || (i === decks.length && decks.length >= BINDER_DECKS_MAX)) return false;
+  if (!(Number.isInteger(i) && i >= 0 && i <= decks.length) || (i === decks.length && decks.length >= BINDER_DECKS_MAX))
+    return false;
   decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };
   binder.decks = decks;
   return true;
@@ -165,7 +244,10 @@ export function giveBinder(/** @type {any} */ entity) {
   addItem(entity.items, mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }]));
   const n = new Map();
   for (const id of STARTER_DECK) n.set(id, (n.get(id) ?? 0) + 1);
-  for (const [id, count] of n) { const c = mintIliacCard(id, count); if (c) addItem(entity.items, c); }
+  for (const [id, count] of n) {
+    const c = mintIliacCard(id, count);
+    if (c) addItem(entity.items, c);
+  }
   return 1;
 }
 /** The gift's mark: a save whose `binderGift` is below this gives every character its binder once (the Wallet's way). */

@@ -92,7 +92,7 @@ test('CARDS-BAY the back is the Bay\'s medallion: all four charges round it', ()
   // every charge paints, and the back calls on all four
   for (const s of SUIT_CROWNS) { const r = recorder(); paintCharge(r.ctx, s.charge, 20, s.colour); assert.ok(r.log.paths >= 4, `${s.charge} has a shape`); charges.push(s.charge); }
   paintBack(ctx, 128, 180);
-  assert.match(src, /for \(const \[s, x, y\] of \[\[3, 0, -1\], \[2, 1, 0\], \[1, 0, 1\], \[0, -1, 0\]\]\)/, 'Daggerfall north, Wayrest east, Sentinel south, Orsinium west');
+  assert.match(src, /for \(const \[s, x, y\] of \[\n\s*\[3, 0, -1\],\n\s*\[2, 1, 0\],\n\s*\[1, 0, 1\],\n\s*\[0, -1, 0\],\n\s*\]\)/, 'Daggerfall north, Wayrest east, Sentinel south, Orsinium west');
   assert.deepEqual(charges, ['axe', 'sun', 'rose', 'dagger']);
 });
 

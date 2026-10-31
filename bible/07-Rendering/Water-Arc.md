@@ -1348,7 +1348,7 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
 **The law** (`world/terrain/groundEdge.js`, its GLSL twin `render/groundEdgeGlsl.js`):
 
 - **A transition tile is its two kinds' own ground.** Its corners are read back off its byte
-  (`groundEdge.js:"export function buildGroundKindTable() {"`, from the march's own table; the river painter's shore
+  (`groundEdge.js:"export function buildGroundKindTable"`, from the march's own table; the river painter's shore
   twins by the water-dirt column; a saddle half turned as itself). The second kind's share is the corners' bilinear, moved by a wander of three
   octaves of ROAD-LOOK's lattice noise on its own salt (32, 128 and 512 cells a pixel at 0.16, 0.08 and 0.04) and drawn
   across a rim 0.08 wide each way. The point draws the two kinds' base records (0-3, the pure tiles' pictures) at their
@@ -1359,15 +1359,15 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
   as its own), each kind takes ECOTONE1's neighbours by its own record and PRECIP4's winter twin by the same. Every
   other tile is drawn as before.
 - **The water's edge is the same line.** The sheet's shore is the coverage less the same wander where the ground blends
-  (`waterSurface.js:"coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"`); the sheet's water is
+  (`waterSurface.js:"edge = smoothstep"`); the sheet's water is
   the land's share's complement. The silt takes it too, and a blended tile's painted water is no fringe (SHORE-SILT): its
   art is not drawn. A record whose art reads as water (WATER-DRAW2's corners, the docks) keeps the art's line.
-- **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt(cutAt, x, y) {"`). A clipped tile's point
+- **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt"`). A clipped tile's point
   is cut where the share of clipped cells about it (the dual square's bilinear) plus the wander passes 0.875. A kept
   point draws the nearest kept tile's picture, mirrored about its own square: the beach runs out under the sea. A kept
   tile's seam reads at most 0.75 and a quadrant of clipped tiles 1, so the wander is carried at 0.12 either way and the
   line stays inside (0.75, 1): never into a kept tile, never along its seam, never a notch.
-- **The cull keeps the coast's ring for it.** `clippedTerrainIndices` (`deepWaterCap.js:"function wholeCut(bytes, dim) {"`) drops a clipped quad only when it and the eight tiles about it are clipped; the clip program cuts the rest
+- **The cull keeps the coast's ring for it.** `clippedTerrainIndices` (`deepWaterCap.js:"function wholeCut"`) drops a clipped quad only when it and the eight tiles about it are clipped; the clip program cuts the rest
   (`renderer.js:"if (uGroundEdge > 0.0 ? coastCut("`). The streaming host passes the renderer's switch, its one line.
 
 **What does not move.** The player swims and the town walks by DFU's corner table (`WATER_MASK_TABLE`). The shadow pass

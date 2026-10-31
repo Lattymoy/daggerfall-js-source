@@ -32,7 +32,7 @@
   {
     "name": "OW-THEME-bar-unthemed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.tview-bar', '.tview-side',",
+    "old": "    '.tview-bar',\n    '.tview-side',",
     "new": "    '.tview-side',",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
@@ -42,7 +42,7 @@
   {
     "name": "OW-THEME-return-unthemed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.tview-back', '.tview-mode',",
+    "old": "    '.tview-back',\n    '.tview-mode',",
     "new": "    '.tview-mode',",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "OW-THEME-compass-unthemed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.tview-compass',\n",
-    "new": "",
+    "old": "    '.tview-compass',\n    // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits",
+    "new": "    // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "OW-BIG-never-grown",
     "file": "src/player/travelCamera.js",
-    "old": "export const tvOwnGrow = (dist) => Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));",
+    "old": "export const tvOwnGrow = (dist) =>\n  Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));",
     "new": "export const tvOwnGrow = (dist) => 1;",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "OW-BIG-no-step",
     "file": "src/scenes/travelView.js",
-    "old": "      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])),",
-    "new": "      grow: 1,",
+    "old": "      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])), // OW-BIG: the traveller's sprite, grown with the eye's distance",
+    "new": "      grow: 1, // OW-BIG: the traveller's sprite, grown with the eye's distance",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],

@@ -39,10 +39,13 @@ export function createBundlePool({ size = 2, workerFactory = defaultWorkerFactor
           if (!p) return;
           lane.pending.delete(m.id);
           if (p.decode) lane.inFlight--;
-          if (m.t === 'error') p.reject(new Error(m.message)); else p.resolve(m);
+          if (m.t === 'error') p.reject(new Error(m.message));
+          else p.resolve(m);
           pump(lane);
         };
-      } catch (e) { lane.dead = e; }
+      } catch (e) {
+        lane.dead = e;
+      }
       lanes[i] = lane;
     }
     return lanes[i];
@@ -54,24 +57,51 @@ export function createBundlePool({ size = 2, workerFactory = defaultWorkerFactor
     lane.pending.clear();
     for (const q of lane.queue) q.resolve(null);
     lane.queue = [];
-    try { lane.w?.terminate?.(); } catch { /* gone */ }
+    try {
+      lane.w?.terminate?.();
+    } catch {
+      /* gone */
+    }
   };
-  const send = (lane, msg, transfer = [], decode = false) => new Promise((resolve, reject) => {
-    if (lane.dead) { reject(lane.dead); return; }
-    const id = nextId++;
-    lane.pending.set(id, { resolve, reject, decode });
-    if (decode) lane.inFlight++;
-    try { lane.w.postMessage({ ...msg, id }, transfer); } catch (e) { lane.pending.delete(id); if (decode) lane.inFlight--; reject(e); }
-  });
+  const send = (lane, msg, transfer = [], decode = false) =>
+    new Promise((resolve, reject) => {
+      if (lane.dead) {
+        reject(lane.dead);
+        return;
+      }
+      const id = nextId++;
+      lane.pending.set(id, { resolve, reject, decode });
+      if (decode) lane.inFlight++;
+      try {
+        lane.w.postMessage({ ...msg, id }, transfer);
+      } catch (e) {
+        lane.pending.delete(id);
+        if (decode) lane.inFlight--;
+        reject(e);
+      }
+    });
   /** Send the next ask still worth doing; one decode at a time per worker. */
   const pump = (lane) => {
     while (!lane.dead && lane.inFlight === 0 && lane.queue.length) {
       const q = lane.queue.shift();
-      if (q.deadline && Date.now() > q.deadline) { q.resolve(null); continue; }   // nobody is waiting for it any more
-      send(lane, q.msg, [], true).then((m) => q.resolve(q.msg.t === 'layers' ? (m.images ?? null) : (m.image ?? null)), () => q.resolve(null));
+      if (q.deadline && Date.now() > q.deadline) {
+        q.resolve(null);
+        continue;
+      } // nobody is waiting for it any more
+      send(lane, q.msg, [], true).then(
+        (m) => q.resolve(q.msg.t === 'layers' ? (m.images ?? null) : (m.image ?? null)),
+        () => q.resolve(null),
+      );
     }
   };
-  const live = () => { const out = []; for (let i = 0; i < Math.max(1, size); i++) { const l = laneOf(i); if (!l.dead) out.push(l); } return out; };
+  const live = () => {
+    const out = [];
+    for (let i = 0; i < Math.max(1, size); i++) {
+      const l = laneOf(i);
+      if (!l.dead) out.push(l);
+    }
+    return out;
+  };
 
   return {
     /** Open a bundle in every worker. Rejects only when no worker can hold it. */
@@ -80,9 +110,16 @@ export function createBundlePool({ size = 2, workerFactory = defaultWorkerFactor
       const isBlob = typeof Blob !== 'undefined' && src instanceof Blob;
       const ls = live();
       if (!ls.length) throw new Error('no bundle worker could start');
-      const results = await Promise.allSettled(ls.map((lane) => send(lane, isBlob
-        ? { t: 'open', bid, blob: src, maxTextureSize, knownTextures, quiet: true }
-        : { t: 'open', bid, bytes: src.slice(), maxTextureSize, knownTextures, quiet: true })));
+      const results = await Promise.allSettled(
+        ls.map((lane) =>
+          send(
+            lane,
+            isBlob
+              ? { t: 'open', bid, blob: src, maxTextureSize, knownTextures, quiet: true }
+              : { t: 'open', bid, bytes: src.slice(), maxTextureSize, knownTextures, quiet: true },
+          ),
+        ),
+      );
       const held = ls.filter((_, i) => results[i].status === 'fulfilled');
       if (!held.length) throw results[0].reason;
       return {
@@ -102,13 +139,28 @@ export function createBundlePool({ size = 2, workerFactory = defaultWorkerFactor
           const ready = held.filter((l) => !l.dead);
           if (!ready.length) return Promise.resolve(null);
           const lane = ready.reduce((a, b) => (a.queue.length + a.inFlight <= b.queue.length + b.inFlight ? a : b));
-          return new Promise((resolve) => { lane.queue.push({ msg: { t: 'layers', bid, name }, deadline: 0, resolve }); pump(lane); });
+          return new Promise((resolve) => {
+            lane.queue.push({ msg: { t: 'layers', bid, name }, deadline: 0, resolve });
+            pump(lane);
+          });
         },
-        close() { for (const l of held) { if (!l.dead) try { l.w.postMessage({ t: 'close', bid }); } catch { /* gone */ } } },
+        close() {
+          for (const l of held) {
+            if (!l.dead)
+              try {
+                l.w.postMessage({ t: 'close', bid });
+              } catch {
+                /* gone */
+              }
+          }
+        },
       };
     },
     /** How many asks are waiting or decoding, over every worker. */
     busy: () => lanes.reduce((n, l) => n + (l ? l.queue.length + l.inFlight : 0), 0),
-    close() { for (const l of lanes) if (l) kill(l, 'bundle pool closed'); lanes.length = 0; },
+    close() {
+      for (const l of lanes) if (l) kill(l, 'bundle pool closed');
+      lanes.length = 0;
+    },
   };
 }

@@ -30,13 +30,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn } from './loot/lootRarity.js';
-import { foeTitle } from './foeTitle.js';   // FOE-TITLE: the names' one home
+import { foeTitle } from './foeTitle.js'; // FOE-TITLE: the names' one home
 import { registerPlayerStruckListener, registerPlayerStrikeListener } from '../combat/formulas.js';
 import { hurtPlayer } from '../characters/playerEntity.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
-import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // LOOT7-CHECK CHAMP-SAID: the name the death line says
-import { popupMessage } from './notify.js';   // LOOT7-CHECK CHAMP-SAID: DaggerfallUI.PopupMessage, the live host's line
-import { markUnquiet } from './revenant/unquietMark.js';   // UNQUIET (Revenants.md section 46): one champion in four carries the mark - its own, never a puppet's
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js'; // LOOT7-CHECK CHAMP-SAID: the name the death line says
+import { popupMessage } from './notify.js'; // LOOT7-CHECK CHAMP-SAID: DaggerfallUI.PopupMessage, the live host's line
+import { markUnquiet } from './revenant/unquietMark.js'; // UNQUIET (Revenants.md section 46): one champion in four carries the mark - its own, never a puppet's
 
 /** Per mille of the foes that may be one that stand as a champion (CHAMP-RATE, 2026-10-03, Mac: "buff champion rates
  *  slightly": 70, was 50 - about one in fourteen, was one in twenty). */
@@ -50,10 +50,25 @@ export const CHAMPION_DAMAGE = 1.25;
 /** The traits, in the wire's order (`cp` is the index). @type {ReadonlyArray<Readonly<ChampionTrait>>} */
 export const CHAMPION_TRAITS = Object.freeze([
   Object.freeze({ id: 'mighty', name: 'Mighty', text: 'Its blows hit 50% harder', damage: 1.5 }),
-  Object.freeze({ id: 'stalwart', name: 'Stalwart', text: 'It has 50% more health, on top of a champion\'s double', health: 1.5 }),
-  Object.freeze({ id: 'swift', name: 'Swift', text: 'It has 30 more Speed, so it closes in and attacks sooner', speed: 30 }),
+  Object.freeze({
+    id: 'stalwart',
+    name: 'Stalwart',
+    text: "It has 50% more health, on top of a champion's double",
+    health: 1.5,
+  }),
+  Object.freeze({
+    id: 'swift',
+    name: 'Swift',
+    text: 'It has 30 more Speed, so it closes in and attacks sooner',
+    speed: 30,
+  }),
   Object.freeze({ id: 'vampiric', name: 'Vampiric', text: 'It heals for half the damage it deals you', drink: 50 }),
-  Object.freeze({ id: 'thorned', name: 'Thorned', text: 'Your hits on it hurt you for a seventh of their damage', thorns: 7 }),
+  Object.freeze({
+    id: 'thorned',
+    name: 'Thorned',
+    text: 'Your hits on it hurt you for a seventh of their damage',
+    thorns: 7,
+  }),
 ]);
 export const championTrait = (id) => CHAMPION_TRAITS.find((t) => t.id === id) ?? null;
 export const championIndex = (id) => CHAMPION_TRAITS.findIndex((t) => t.id === id);
@@ -78,7 +93,11 @@ function mix(...ns) {
   let h = 0x811c9dc5;
   for (const n of ns) {
     let v = Math.trunc(Number(n) || 0) >>> 0;
-    for (let i = 0; i < 4; i++) { h ^= v & 0xff; h = Math.imul(h, 0x01000193) >>> 0; v >>>= 8; }
+    for (let i = 0; i < 4; i++) {
+      h ^= v & 0xff;
+      h = Math.imul(h, 0x01000193) >>> 0;
+      v >>>= 8;
+    }
   }
   return h >>> 0;
 }
@@ -90,7 +109,10 @@ export function markDungeonChampions(records, locationKey) {
   records.forEach((e, i) => {
     if (!e || e.allied || e.champion != null) return;
     const h = mix(locationKey, i, 0x10071);
-    if (h % 1000 < CHAMPION_PER_MILLE) { e.champion = (h >>> 10) % CHAMPION_TRAITS.length; n++; }
+    if (h % 1000 < CHAMPION_PER_MILLE) {
+      e.champion = (h >>> 10) % CHAMPION_TRAITS.length;
+      n++;
+    }
   });
   return n;
 }
@@ -101,11 +123,19 @@ export function markDungeonChampions(records, locationKey) {
 let _streetN = 0;
 export function rollStreetChampion(feet = null, mobileType = 0) {
   if (!lootRarityOn()) return null;
-  const h = mix(Math.round((Number(feet?.[0]) || 0) * 64), Math.round((Number(feet?.[2]) || 0) * 64), mobileType, ++_streetN, 0x57ee7);
+  const h = mix(
+    Math.round((Number(feet?.[0]) || 0) * 64),
+    Math.round((Number(feet?.[2]) || 0) * 64),
+    mobileType,
+    ++_streetN,
+    0x57ee7,
+  );
   return h % 1000 < CHAMPION_PER_MILLE ? (h >>> 10) % CHAMPION_TRAITS.length : null;
 }
 /** Tests only: the street's count back to none. */
-export function _resetStreetChampionsForTests() { _streetN = 0; }
+export function _resetStreetChampionsForTests() {
+  _streetN = 0;
+}
 
 /** The trait a champion's mark stands as on this entity, or null - applyChampion's gate: no trait, a foe under
  *  CHAMPION_MIN_LEVEL, the city watch, an ally, or the switch off. CHAMP-BASE (bible/01-Overview/bugs/Field-Bugs-2026-10-25b.md):
@@ -115,7 +145,8 @@ export function championTraitFor(entity, traitIndex) {
   if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return null;
   const t = CHAMPION_TRAITS[traitIndex];
   if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return null;
-  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;
+  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly')
+    return null;
   return t;
 }
 
@@ -133,10 +164,11 @@ export function applyChampion(entity, traitIndex, { own = true } = {}) {
   const hp = CHAMPION_HEALTH * (t.health ?? 1);
   entity.maxHealth = Math.max(1, Math.round((entity.maxHealth ?? 1) * hp));
   entity.health = entity.maxHealth;
-  entity.healthMult = (entity.healthMult ?? 1) * hp;   // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
-  entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);
+  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
+  entity.damageScale =
+    (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);
   if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);
-  if (own) markUnquiet(entity);   // UNQUIET: the mark that lets it rise
+  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise
   return true;
 }
 
@@ -145,7 +177,10 @@ export function applyChampion(entity, traitIndex, { own = true } = {}) {
 export function championStruck(attacker, target, damage) {
   const t = championOf(attacker);
   if (!t?.drink || !(damage > 0) || !target?.isPlayer || !(attacker.health > 0)) return;
-  attacker.health = Math.min(attacker.maxHealth ?? attacker.health, attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)));
+  attacker.health = Math.min(
+    attacker.maxHealth ?? attacker.health,
+    attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)),
+  );
 }
 /** THORNED: my blow that landed on a champion (formulas.js's strike tail) hurts me a seventh of it, through my one
  *  damage door - a hurt as any other, never a blow of a foe's. */
@@ -186,5 +221,9 @@ export function sayChampion(entity, say = popupMessage) {
 }
 export const CHAMPIONS_SAID = 'champions-said';
 // its blow that reached ME (never a peer's copy: another player's screen is theirs), and mine that landed on it
-registerPlayerStruckListener(CHAMPIONS_SAID, (attacker, target, damage) => { if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker); });
-registerPlayerStrikeListener(CHAMPIONS_SAID, (attacker, target, damage) => { if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target); });
+registerPlayerStruckListener(CHAMPIONS_SAID, (attacker, target, damage) => {
+  if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker);
+});
+registerPlayerStrikeListener(CHAMPIONS_SAID, (attacker, target, damage) => {
+  if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target);
+});

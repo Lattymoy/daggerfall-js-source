@@ -205,8 +205,8 @@
   {
     "name": "LW2-no-reset",
     "file": "src/characters/residentWalker.js",
-    "old": "if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; this.stir = null; this._stirT = 0; this._stirNext = 0; }",
-    "new": "if (st !== this.state) { this.state = st; this.stir = null; this._stirT = 0; this._stirNext = 0; }",
+    "old": "      this.frame = 0;\n      this._timer = 0;\n      this.stir = null;",
+    "new": "      this.stir = null;",
     "tests": [
       "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "LW2-switch-skin-unread",
     "file": "src/systems/livingWorld/livingSwitch.js",
-    "old": "(isEnhanced() && getPref(LIVING_WORLD_KEY) !== false)",
-    "new": "(getPref(LIVING_WORLD_KEY) !== false)",
+    "old": "export const livingWorldOn = () =>\n  LIVING_WORLD_TUNING.override ?? (isEnhanced() && getPref(LIVING_WORLD_KEY) !== false);",
+    "new": "export const livingWorldOn = () => LIVING_WORLD_TUNING.override ?? getPref(LIVING_WORLD_KEY) !== false;",
     "tests": [
       "test/systems/livingWorld/lw2_livingTown.test.js"
     ]

@@ -73,7 +73,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R, quarterWash, quarterInk,
+  PEN,
+  HALO_PEN,
+  NAME_FACE,
+  toPaper,
+  paintCaret,
+  paintPartyCarets,
+  CARET_R,
+  quarterWash,
+  quarterInk,
 } from './inkMap.js';
 import { QUARTERS, CLASSIC_ARGB, argbChannels, quarterOf } from '../town/townQuarters.js';
 
@@ -95,11 +103,11 @@ export { QUARTERS, quarterOf, quarterOfType } from '../town/townQuarters.js';
  *  the dungeon's is. A colour written out here would be the first thing
  *  to give away that these are three sheets and not one map. */
 export const TOWN_PEN = Object.freeze({
-  wall: PEN.line,      // the outline of the built-up pixels
-  wash: PEN.wash,      // MAP-FIELD's own shade, still the fallback ground
-  name: PEN.name,      // a discovered building's name, quarter unknown
-  quest: PEN.select,   // a residence a quest has marked
-  lead: PEN.soft,      // EM8: a displaced plate's line back to its building
+  wall: PEN.line, // the outline of the built-up pixels
+  wash: PEN.wash, // MAP-FIELD's own shade, still the fallback ground
+  name: PEN.name, // a discovered building's name, quarter unknown
+  quest: PEN.select, // a residence a quest has marked
+  lead: PEN.soft, // EM8: a displaced plate's line back to its building
   caret: PEN.player,
   halo: PEN.halo,
   // TOWN-MARKS (ui/town/townMapMarks.js): a player's house the player owns is filled in the player's own ink, as the caret
@@ -118,12 +126,12 @@ export const TOWN_PEN = Object.freeze({
  * it is still some string, and a change to either law moves all four
  * together.
  */
-export const QUARTER_WASH = Object.freeze(Object.fromEntries(
-  QUARTERS.map((q) => [q, quarterWash(argbChannels(CLASSIC_ARGB[q]))]),
-));
-export const QUARTER_INK = Object.freeze(Object.fromEntries(
-  QUARTERS.map((q) => [q, quarterInk(argbChannels(CLASSIC_ARGB[q]))]),
-));
+export const QUARTER_WASH = Object.freeze(
+  Object.fromEntries(QUARTERS.map((q) => [q, quarterWash(argbChannels(CLASSIC_ARGB[q]))])),
+);
+export const QUARTER_INK = Object.freeze(
+  Object.fromEntries(QUARTERS.map((q) => [q, quarterInk(argbChannels(CLASSIC_ARGB[q]))])),
+);
 
 export const TOWN_WALL_PEN = 1.3;
 export const TOWN_WALL_PEN_MIN = 0.8;
@@ -205,7 +213,7 @@ export function townBytes(gridW, gridH, blocks) {
     // together are `H-1-anchorRow` - the shipped window's own
     // composition (exteriorAutomapWindow.js:"colors[(h - 1 - worldRow) * w + b.x * BLOCK_PX + x]"), derived above.
     const by = (gh - 1 - (b.y ?? 0)) * BLOCK_PX;
-    if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid
+    if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue; // a block off its own grid
     for (let y = 0; y < BLOCK_PX; y++) {
       const dst = (by + y) * w + bx;
       const srcRow = y * BLOCK_PX;
@@ -224,7 +232,7 @@ export function townBytes(gridW, gridH, blocks) {
  *  same law composed at the source.
  *  @param {number} fieldH the field's height in layout pixels
  *  @param {number} anchorY */
-export const sheetY = (fieldH, anchorY) => (fieldH - 1) - anchorY;
+export const sheetY = (fieldH, anchorY) => fieldH - 1 - anchorY;
 
 /** Is this byte a built-up pixel? DERIVED off the one ladder rather
  *  than kept as a second set beside it: a byte is built-up exactly when
@@ -235,7 +243,10 @@ export const sheetY = (fieldH, anchorY) => (fieldH - 1) - anchorY;
 export const isBuilt = (byte) => quarterOf(byte) !== null;
 /** Is this byte a place a player can walk into? Also derived: every
  *  quarter but the houses is a door you can open. */
-export const isEnterable = (byte) => { const q = quarterOf(byte); return q !== null && q !== 'house'; };
+export const isEnterable = (byte) => {
+  const q = quarterOf(byte);
+  return q !== null && q !== 'house';
+};
 /** The reader for one quarter, by name. */
 export const isQuarter = (name) => (byte) => quarterOf(byte) === name;
 
@@ -245,7 +256,7 @@ export const isQuarter = (name) => (byte) => quarterOf(byte) === name;
  * for the wall, one quarter's own for its wash.
  */
 export function townReader(field, pick = isBuilt) {
-  return (x, y) => (x >= 0 && y >= 0 && x < field.w && y < field.h) && pick(field.bytes[y * field.w + x]);
+  return (x, y) => x >= 0 && y >= 0 && x < field.w && y < field.h && pick(field.bytes[y * field.w + x]);
 }
 
 /**
@@ -317,7 +328,12 @@ export function paintTownStatic(ctx, plan, view, opts) {
       let first = true;
       for (const p of chain) {
         const [x, y] = toPaper(view, p.x, p.y);
-        if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }
+        if (first) {
+          ctx.moveTo(x, y);
+          first = false;
+        } else {
+          ctx.lineTo(x, y);
+        }
       }
       ctx.closePath();
     }
@@ -418,7 +434,7 @@ export function paintTownOverlay(ctx, view, opts) {
         ctx.lineTo(p.x, p.y + (ay > p.y ? p.size * 0.6 : -p.size * 0.6));
         ctx.stroke();
       }
-      if (p.marked) continue;   // TOWN-MARKS: the building's glyph is its tick
+      if (p.marked) continue; // TOWN-MARKS: the building's glyph is its tick
       ctx.fillStyle = ink;
       ctx.beginPath();
       ctx.arc(p.x, ay, ANCHOR_R, 0, Math.PI * 2);
@@ -438,10 +454,14 @@ export function paintTownOverlay(ctx, view, opts) {
 
   // DISC23-A: the party in the streets, over the names and under the player's own caret
   if (opts.party?.length && opts.partyFill) {
-    paintPartyCarets(ctx, opts.party.map((m) => {
-      const [x, y] = toPaper(view, m.x, m.y);
-      return { x, y, yaw: m.yaw, name: m.name };
-    }), { fill: opts.partyFill, halo: TOWN_PEN.halo });
+    paintPartyCarets(
+      ctx,
+      opts.party.map((m) => {
+        const [x, y] = toPaper(view, m.x, m.y);
+        return { x, y, yaw: m.yaw, name: m.name };
+      }),
+      { fill: opts.partyFill, halo: TOWN_PEN.halo },
+    );
   }
 
   if (opts.player) {
@@ -458,9 +478,17 @@ function paintMarkShape(ctx, pts, fill) {
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
     ctx.closePath();
   };
-  path(); ctx.strokeStyle = TOWN_PEN.halo; ctx.lineWidth = 3.5; ctx.stroke();
-  path(); ctx.fillStyle = fill; ctx.fill();
-  path(); ctx.strokeStyle = TOWN_PEN.wall; ctx.lineWidth = 1.2; ctx.stroke();
+  path();
+  ctx.strokeStyle = TOWN_PEN.halo;
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+  path();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  path();
+  ctx.strokeStyle = TOWN_PEN.wall;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
 }
 
 /**
@@ -473,12 +501,28 @@ export function paintHomeMark(ctx, x, y, own = false, vendor = false) {
   const t = TOWN_MARK_HALF;
   ctx.save();
   ctx.setLineDash?.([]);
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  paintMarkShape(ctx, [[x - 5, y + t], [x - 5, y], [x - 7, y], [x, y - t],
-    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  paintMarkShape(
+    ctx,
+    [
+      [x - 5, y + t],
+      [x - 5, y],
+      [x - 7, y],
+      [x, y - t],
+      [x + 7, y],
+      [x + 5, y],
+      [x + 5, y + t],
+    ],
+    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,
+  );
   ctx.fillStyle = own || vendor ? TOWN_PEN.halo : TOWN_PEN.wall;
   ctx.beginPath();
-  ctx.moveTo(x - 1.4, y + t); ctx.lineTo(x - 1.4, y + 2); ctx.lineTo(x + 1.4, y + 2); ctx.lineTo(x + 1.4, y + t);
-  ctx.closePath(); ctx.fill();
+  ctx.moveTo(x - 1.4, y + t);
+  ctx.lineTo(x - 1.4, y + 2);
+  ctx.lineTo(x + 1.4, y + 2);
+  ctx.lineTo(x + 1.4, y + t);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
 }

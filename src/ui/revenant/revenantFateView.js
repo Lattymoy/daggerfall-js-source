@@ -87,7 +87,8 @@ export function fateColumn(fate, picked, { el, trophyTile = null, portrait = nul
     if (o.id === 'kill' && fate.trophy && trophyTile) trophyTile(row, fate.trophy);
     else {
       const face = el('span', 'fate-face');
-      if (!(portrait && portrait(face, fate.portrait))) face.append(el('span', 'fate-glyph', o.id === 'kill' ? '☠' : '✦'));
+      if (!(portrait && portrait(face, fate.portrait)))
+        face.append(el('span', 'fate-glyph', o.id === 'kill' ? '☠' : '✦'));
       row.append(face);
     }
     const mid = el('span', 'itemname');
@@ -103,8 +104,12 @@ export function fateColumn(fate, picked, { el, trophyTile = null, portrait = nul
     } else mid.append(el('small', null, o.detail));
     row.append(mid);
     row.append(el('span', 'fate-key', o.key));
-    if (!(o.id === 'kill' && fate.trophy && trophyTile)) row.title = o.detail;   // the trophy's row has its item card on the hover
-    row.onclick = () => { if (o.disabled) return; if (picked === o.id) onChoose(o.id); else onPick(o.id); };
+    if (!(o.id === 'kill' && fate.trophy && trophyTile)) row.title = o.detail; // the trophy's row has its item card on the hover
+    row.onclick = () => {
+      if (o.disabled) return;
+      if (picked === o.id) onChoose(o.id);
+      else onPick(o.id);
+    };
     list.append(row);
   }
   col.append(list);
@@ -121,7 +126,17 @@ export function fateColumn(fate, picked, { el, trophyTile = null, portrait = nul
     box.append(acts);
     col.append(box);
   }
-  col.append(el('p', 'fate-keys', fate.options.filter((o) => !o.disabled).map((o) => `${o.key} ${o.label.toLowerCase()}`).concat('Esc leave it kneeling').join(' · ')));   // a key it cannot take is not offered
+  col.append(
+    el(
+      'p',
+      'fate-keys',
+      fate.options
+        .filter((o) => !o.disabled)
+        .map((o) => `${o.key} ${o.label.toLowerCase()}`)
+        .concat('Esc leave it kneeling')
+        .join(' · '),
+    ),
+  ); // a key it cannot take is not offered
   return col;
 }
 
@@ -132,9 +147,19 @@ export function fateColumn(fate, picked, { el, trophyTile = null, portrait = nul
 export function fateKey(e, fate, picked, { onPick, onChoose }) {
   const k = String(e?.key ?? '').toLowerCase();
   const byKey = fate.options.find((o) => o.key.toLowerCase() === k && !o.disabled);
-  if (byKey) { if (picked === byKey.id) onChoose(byKey.id); else onPick(byKey.id); return true; }
+  if (byKey) {
+    if (picked === byKey.id) onChoose(byKey.id);
+    else onPick(byKey.id);
+    return true;
+  }
   // AUDIT (2026-10-02): Enter on a focused button is that button's (Back, the other row) - never the pick's confirmation
-  if (k === 'enter' && picked && !e?.target?.closest?.('button')) { onChoose(picked); return true; }
-  if (k === 'escape' && picked) { onPick(null); return true; }
+  if (k === 'enter' && picked && !e?.target?.closest?.('button')) {
+    onChoose(picked);
+    return true;
+  }
+  if (k === 'escape' && picked) {
+    onPick(null);
+    return true;
+  }
   return false;
 }

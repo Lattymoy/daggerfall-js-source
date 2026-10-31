@@ -26,38 +26,114 @@ const tier = (marks, ...pairs) => Object.freeze({ marks, needs: need(...pairs) }
  * seats with tier 3 Walls gain a gate of their own"); 'coast' (coastal seats only).
  */
 export const FORT_WORKS = Object.freeze([
-  Object.freeze({ id: 'walls', name: 'Walls', where: 'any', tiers: Object.freeze([
-    tier(1000, ['stone:cut', 400], ['plank:oak', 100]), tier(3000, ['stone:cut', 800], ['ingot:iron', 200]), tier(8000, ['stone:cut', 1600], ['ingot:steel', 200])]) }),
-  Object.freeze({ id: 'gatehouse', name: 'Gatehouse', where: 'gate', tiers: Object.freeze([
-    tier(2000, ['stone:cut', 300], ['ingot:iron', 200]), tier(5000, ['stone:cut', 600], ['ingot:steel', 200]), tier(12000, ['stone:cut', 1000], ['ingot:mithril', 100])]) }),
-  Object.freeze({ id: 'watchtowers', name: 'Watchtowers', where: 'any', tiers: Object.freeze([
-    tier(800, ['stone:cut', 200], ['plank:pine', 200]), tier(2000, ['stone:cut', 400], ['ingot:iron', 100])]) }),
-  Object.freeze({ id: 'barracks', name: 'Barracks', where: 'any', tiers: Object.freeze([
-    tier(1500, ['plank:oak', 300], ['ingot:iron', 100]), tier(4000, ['plank:oak', 600], ['ingot:steel', 200]), tier(9000, ['plank:teak', 800], ['ingot:mithril', 100])]) }),
-  Object.freeze({ id: 'market', name: 'Market Hall', where: 'any', tiers: Object.freeze([
-    tier(1000, ['plank:oak', 200], ['stone:cut', 100]), tier(2500, ['plank:cherry', 400], ['stone:cut', 200]), tier(6000, ['plank:mahogany', 400], ['metal:gold', 50])]) }),
-  Object.freeze({ id: 'shrine', name: 'Shrine', where: 'any', tiers: Object.freeze([
-    tier(1000, ['stone:cut', 100], ['metal:silver', 20]), tier(3000, ['stone:cut', 200], ['gem:pearl', 10])]) }),
-  Object.freeze({ id: 'forge', name: 'Forge', where: 'any', tiers: Object.freeze([
-    tier(1000, ['stone:cut', 200], ['ingot:iron', 100]), tier(2500, ['stone:cut', 300], ['ingot:steel', 100])]) }),
-  Object.freeze({ id: 'workshop', name: 'Workshop', where: 'any', tiers: Object.freeze([
-    tier(1000, ['plank:oak', 200], ['ingot:iron', 50]), tier(2500, ['plank:teak', 300], ['ingot:steel', 50])]) }),
-  Object.freeze({ id: 'apothecary', name: 'Apothecary', where: 'any', tiers: Object.freeze([
-    tier(1000, ['stone:cut', 100], ['plank:oak', 100]), tier(2500, ['stone:cut', 200], ['gem:pearl', 20])]) }),
-  Object.freeze({ id: 'harbour', name: 'Harbor', where: 'coast', tiers: Object.freeze([
-    tier(2000, ['plank:oak', 400], ['stone:cut', 200]), tier(5000, ['plank:teak', 800], ['stone:cut', 400])]) }),
+  Object.freeze({
+    id: 'walls',
+    name: 'Walls',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['stone:cut', 400], ['plank:oak', 100]),
+      tier(3000, ['stone:cut', 800], ['ingot:iron', 200]),
+      tier(8000, ['stone:cut', 1600], ['ingot:steel', 200]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'gatehouse',
+    name: 'Gatehouse',
+    where: 'gate',
+    tiers: Object.freeze([
+      tier(2000, ['stone:cut', 300], ['ingot:iron', 200]),
+      tier(5000, ['stone:cut', 600], ['ingot:steel', 200]),
+      tier(12000, ['stone:cut', 1000], ['ingot:mithril', 100]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'watchtowers',
+    name: 'Watchtowers',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(800, ['stone:cut', 200], ['plank:pine', 200]),
+      tier(2000, ['stone:cut', 400], ['ingot:iron', 100]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'barracks',
+    name: 'Barracks',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1500, ['plank:oak', 300], ['ingot:iron', 100]),
+      tier(4000, ['plank:oak', 600], ['ingot:steel', 200]),
+      tier(9000, ['plank:teak', 800], ['ingot:mithril', 100]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'market',
+    name: 'Market Hall',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['plank:oak', 200], ['stone:cut', 100]),
+      tier(2500, ['plank:cherry', 400], ['stone:cut', 200]),
+      tier(6000, ['plank:mahogany', 400], ['metal:gold', 50]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'shrine',
+    name: 'Shrine',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['stone:cut', 100], ['metal:silver', 20]),
+      tier(3000, ['stone:cut', 200], ['gem:pearl', 10]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'forge',
+    name: 'Forge',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['stone:cut', 200], ['ingot:iron', 100]),
+      tier(2500, ['stone:cut', 300], ['ingot:steel', 100]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'workshop',
+    name: 'Workshop',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['plank:oak', 200], ['ingot:iron', 50]),
+      tier(2500, ['plank:teak', 300], ['ingot:steel', 50]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'apothecary',
+    name: 'Apothecary',
+    where: 'any',
+    tiers: Object.freeze([
+      tier(1000, ['stone:cut', 100], ['plank:oak', 100]),
+      tier(2500, ['stone:cut', 200], ['gem:pearl', 20]),
+    ]),
+  }),
+  Object.freeze({
+    id: 'harbour',
+    name: 'Harbor',
+    where: 'coast',
+    tiers: Object.freeze([
+      tier(2000, ['plank:oak', 400], ['stone:cut', 200]),
+      tier(5000, ['plank:teak', 800], ['stone:cut', 400]),
+    ]),
+  }),
 ]);
 const BY_ID = new Map(FORT_WORKS.map((w) => [/** @type {string} */ (w.id), w]));
 /** Every material a work's tier asks - what a seat writ may ask for its stockpile or a Siege Camp (Professions-Arc 11:
  *  "A seat's writs build its fortifications"). */
-export const FORT_MATERIALS = Object.freeze([...new Set(FORT_WORKS.flatMap((w) => w.tiers.flatMap((t) => t.needs.map(([k]) => k))))].sort());
+export const FORT_MATERIALS = Object.freeze(
+  [...new Set(FORT_WORKS.flatMap((w) => w.tiers.flatMap((t) => t.needs.map(([k]) => k))))].sort(),
+);
 export const fortMaterialOk = (key) => FORT_MATERIALS.includes(key);
 /** A work by its id, or null. */
-export const fortWork = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? null : null);
+export const fortWork = (id) => (typeof id === 'string' ? (BY_ID.get(id) ?? null) : null);
 /** A work's highest tier (2 or 3), or 0 for none. */
 export const fortMaxTier = (id) => fortWork(id)?.tiers.length ?? 0;
 /** Tier `t`'s row of a work (1-based), or null. */
-export const fortTierRow = (id, t) => (Number.isSafeInteger(t) && t >= 1 ? fortWork(id)?.tiers[t - 1] ?? null : null);
+export const fortTierRow = (id, t) => (Number.isSafeInteger(t) && t >= 1 ? (fortWork(id)?.tiers[t - 1] ?? null) : null);
 
 /**
  * WHETHER A SEAT MAY RAISE A WORK (7.5): `seat` `{ tier: 'palace'|'crown', coastal, walls }` - its tier, whether its
@@ -102,10 +178,13 @@ export function fortNeeds(id, t, { builder = false } = {}) {
 export const SIEGEWRIGHT_DAYS = 1;
 /** When a project of tier `t` stands: its last delivery (s) and the tier's days (7.5) - a day fewer where a Siegewright
  *  began it - or null. */
-export const fortStandsAt = (lastDeliveryS, t, { siegewright = false } = {}) => (Number.isFinite(lastDeliveryS) && t >= 1 && t <= 3
-  ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400 : null);
+export const fortStandsAt = (lastDeliveryS, t, { siegewright = false } = {}) =>
+  Number.isFinite(lastDeliveryS) && t >= 1 && t <= 3
+    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400
+    : null;
 /** How much of each need is still wanting, given what the project holds (`held`: material -> units). */
-export const fortWanting = (needs, held) => (needs ?? []).map(([k, n]) => [k, Math.max(0, n - Math.max(0, Number(held?.get?.(k) ?? held?.[k] ?? 0)))]);
+export const fortWanting = (needs, held) =>
+  (needs ?? []).map(([k, n]) => [k, Math.max(0, n - Math.max(0, Number(held?.get?.(k) ?? held?.[k] ?? 0)))]);
 /** Whether every need is met. */
 export const fortMet = (needs, held) => fortWanting(needs, held).every(([, n]) => n === 0);
 
@@ -121,21 +200,25 @@ export const fortDropped = (t) => Math.max(0, Math.floor(Number(t) || 0) - 1);
  */
 export function fortsAfterCapture(forts, { fortifier = false } = {}) {
   const out = {};
-  for (const [id, t] of Object.entries(forts ?? {})) out[id] = id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t);
+  for (const [id, t] of Object.entries(forts ?? {}))
+    out[id] = id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t);
   return out;
 }
 /** A Season's end (9.1): every work a tier down. */
-export const fortsAfterSeason = (forts) => Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, fortDropped(t)]));
+export const fortsAfterSeason = (forts) =>
+  Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, fortDropped(t)]));
 
 // ─── WHAT A TIER DOES (7.5, "Effect per tier") ────────────────────────
 
 /** The Walls: the defenders' respawn wave 3 s faster a tier, never under 5 s. */
 export const WALLS_WAVE_STEP_MS = 3000;
 export const WALLS_WAVE_MIN_MS = 5000;
-export const defendersWaveMs = (baseMs, walls) => Math.max(WALLS_WAVE_MIN_MS, baseMs - WALLS_WAVE_STEP_MS * Math.max(0, Math.min(3, Number(walls) || 0)));
+export const defendersWaveMs = (baseMs, walls) =>
+  Math.max(WALLS_WAVE_MIN_MS, baseMs - WALLS_WAVE_STEP_MS * Math.max(0, Math.min(3, Number(walls) || 0)));
 /** The Gatehouse (6.2): vitality 20,000, +50% a tier; a fighter's blow deals a tenth of its damage to it. */
 export const GATEHOUSE = Object.freeze({ vitality: 20000, perTier: 0.5, blowShare: 0.1 });
-export const gatehouseVitality = (t) => Math.round(GATEHOUSE.vitality * (1 + GATEHOUSE.perTier * Math.max(0, Math.min(3, Number(t) || 0))));
+export const gatehouseVitality = (t) =>
+  Math.round(GATEHOUSE.vitality * (1 + GATEHOUSE.perTier * Math.max(0, Math.min(3, Number(t) || 0))));
 /** A Ram (6.2): vitality 3,000 (a Siegewright's +50%, Professions-Arc 3.3), 500 every 10 s to the Gatehouse while two
  *  of its side stand within 3 m; one a side at a time; a destroyed Ram is gone. */
 export const RAM = Object.freeze({ vitality: 3000, damage: 500, everyMs: 10000, crew: 2, crewM: 3, siegewright: 0.5 });
@@ -154,16 +237,19 @@ export function towersSee(standings, { holder, defence, t }) {
   const share = watchtowerShare(t);
   if (share == null || !(Number(defence) > 0)) return [];
   const line = Number(defence) * share;
-  return (standings ?? []).filter((s) => s && s.guild !== holder && Number(s.influence) >= line)
+  return (standings ?? [])
+    .filter((s) => s && s.guild !== holder && Number(s.influence) >= line)
     .map((s) => ({ guild: s.guild, influence: Number(s.influence), share }))
     .sort((a, b) => b.influence - a.influence || (a.guild < b.guild ? -1 : 1));
 }
 /** The holder's word from its Watchtowers: "The Watchtowers of Anticlere see the Iron Circle <IC> past half our defence." */
-export const towersText = (seatName, guildName, share) => `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defense.`;
+export const towersText = (seatName, guildName, share) =>
+  `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defense.`;
 /** The Barracks: the relay-run town guards that fight for the holder - 2, 4, 6. */
 export const barracksGuards = (t) => [0, 2, 4, 6][Math.max(0, Math.min(3, Number(t) || 0))];
 /** The Market Hall: the town's boards list a quarter more a tier; the Tithe's cap a point more a tier. */
-export const marketHallListings = (base, t) => Math.floor(base * (1 + 0.25 * Math.max(0, Math.min(3, Number(t) || 0))) + 1e-9);
+export const marketHallListings = (base, t) =>
+  Math.floor(base * (1 + 0.25 * Math.max(0, Math.min(3, Number(t) || 0))) + 1e-9);
 export const marketHallTitheCap = (baseCap, t) => baseCap + Math.max(0, Math.min(3, Number(t) || 0));
 /** The Shrine: Standing +1 a week a tier; each gate felled in the region +50 influence a tier to the holder. */
 export const SHRINE_GATE_INFLUENCE = 50;
@@ -179,7 +265,8 @@ export const STATION_PROFESSIONS = Object.freeze({
 /** The steps a seat's works give a craft in `profession`, over its works' tiers (`{ [id]: tier }`). */
 export function stationSteps(profession, forts) {
   let steps = 0;
-  for (const [id, profs] of Object.entries(STATION_PROFESSIONS)) if (profs.includes(profession)) steps += Math.max(0, Number(forts?.[id] ?? 0) || 0);
+  for (const [id, profs] of Object.entries(STATION_PROFESSIONS))
+    if (profs.includes(profession)) steps += Math.max(0, Number(forts?.[id] ?? 0) || 0);
   return steps;
 }
 /**
@@ -190,7 +277,7 @@ export function stationSteps(profession, forts) {
  */
 export function hallStepsFor(seat, guild, profession) {
   const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;
-  return { steps, seat: steps > 0 ? seat.key ?? null : null };
+  return { steps, seat: steps > 0 ? (seat.key ?? null) : null };
 }
 /** The Harbour: a port for members (the Travel Options' port) at tier 1 or more. */
 export const harbourPort = (t) => Number(t) >= 1;
@@ -217,13 +304,15 @@ export const SEA_RING = 2;
  *  (world/portSites.js seaBearing), so a town it bears on has a seaward edge to stand its places on. Pure. */
 export function seaBears(px, py, isSea) {
   if (typeof isSea !== 'function') return false;
-  for (let dy = -SEA_RING; dy <= SEA_RING; dy++) for (let dx = -SEA_RING; dx <= SEA_RING; dx++) if (isSea(px + dx, py + dy)) return true;
+  for (let dy = -SEA_RING; dy <= SEA_RING; dy++)
+    for (let dx = -SEA_RING; dx <= SEA_RING; dx++) if (isSea(px + dx, py + dy)) return true;
   return false;
 }
 /** SEAT2b part two: whether `seat` (the seats' list's - its holder and its works' tiers, `forts`) is a Travel Options port
  *  for a character of guild `guild`: a Harbour standing there and the guild its holder (7.5: "the town is a Travel
  *  Options port for members"). */
-export const harbourPortFor = (seat, guild) => !!guild && seat?.holder?.guild?.id === guild && harbourPort(seat?.forts?.harbour ?? 0);
+export const harbourPortFor = (seat, guild) =>
+  !!guild && seat?.holder?.guild?.id === guild && harbourPort(seat?.forts?.harbour ?? 0);
 
 // ─── THE SIEGE CAMP (4.2, 5.2 step 7) ─────────────────────────────────
 
@@ -262,32 +351,46 @@ export const revoltDue = (standing) => Number(standing) <= 0;
 export const FORT_EFFECT_WORDS = Object.freeze({
   walls: (t) => `the defenders' wave ${(WALLS_WAVE_STEP_MS / 1000) * t} s faster`,
   gatehouse: (t) => `its vitality ${gatehouseVitality(t).toLocaleString('en-US')}`,
-  watchtowers: (t) => `the holder is warned when a challenger gets past ${t >= 2 ? 'a quarter' : 'half'} of its defense`,
+  watchtowers: (t) =>
+    `the holder is warned when a challenger gets past ${t >= 2 ? 'a quarter' : 'half'} of its defense`,
   barracks: (t) => `${barracksGuards(t)} town guards fight for the holder`,
   market: (t) => `the town's boards list ${25 * t}% more, the Tithe's cap ${t} ${t === 1 ? 'point' : 'points'} higher`,
-  shrine: (t) => `Standing +${shrineStanding(t)} a week, +${shrineGateInfluence(t)} influence for each gate felled in the region`,
+  shrine: (t) =>
+    `Standing +${shrineStanding(t)} a week, +${shrineGateInfluence(t)} influence for each gate felled in the region`,
   forge: (t) => `members smithing here ${t === 1 ? 'a quality step' : `${t} quality steps`} better`,
-  workshop: (t) => `members' carpentry, outfitting and masonry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better`,
+  workshop: (t) =>
+    `members' carpentry, outfitting and masonry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better`,
   // AUDIT PROF12 P1: a step each its own - a piece of jewellery's quality (the Forge's law), a dish's XP half again
   // (recipeLaw cookXp), a brew's Potent chance +10 (alchemyLaw POTENT.apothecary)
-  apothecary: (t) => `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,
-  harbour: () => 'a port for the holder\'s members',
+  apothecary: (t) =>
+    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,
+  harbour: () => "a port for the holder's members",
 });
 /**
  * A WORK'S LINE on the Seat tab - `w` its row as the service reads it (`{ tier, building, standsAt, needs, held }`):
  * "Walls: tier 1 - the defenders' wave 3 s faster. Raising tier 2: 320 Cut Stone, 200 Iron Ingots still wanted." -
  * `nameOf` a material's name for a count, `whenOf` a moment's words (ms).
  */
-export function fortWorkLine(id, w, { nameOf = (k, n) => `${k}`, whenOf = (ms) => new Date(ms).toISOString(), seatTier = null } = {}) {
+export function fortWorkLine(
+  id,
+  w,
+  { nameOf = (k, n) => `${k}`, whenOf = (ms) => new Date(ms).toISOString(), seatTier = null } = {},
+) {
   const work = fortWork(id);
   if (!work) return '';
   const t = Math.max(0, Number(w?.tier ?? 0) || 0);
   // AUDIT SEATS-2 L3 (6.2: "a crown's Gatehouse stands from the first"): a crown's stands at tier 0, its vitality said
-  const head = t > 0 ? `${work.name}: tier ${t} - ${FORT_EFFECT_WORDS[id](t)}.`
-    : id === 'gatehouse' && seatTier === 'crown' ? `${work.name}: standing - ${FORT_EFFECT_WORDS.gatehouse(0)}.` : `${work.name}: none raised.`;
+  const head =
+    t > 0
+      ? `${work.name}: tier ${t} - ${FORT_EFFECT_WORDS[id](t)}.`
+      : id === 'gatehouse' && seatTier === 'crown'
+        ? `${work.name}: standing - ${FORT_EFFECT_WORDS.gatehouse(0)}.`
+        : `${work.name}: none raised.`;
   if (w?.building == null) return head;
   if (w.standsAt != null) return `${head} Tier ${w.building} stands ${whenOf(Number(w.standsAt) * 1000)}.`;
   const held = new Map(w.held ?? []);
-  const wanted = fortWanting(w.needs ?? [], held).filter(([, n]) => n > 0).map(([k, n]) => `${n.toLocaleString('en-US')} ${nameOf(k, n)}`);
+  const wanted = fortWanting(w.needs ?? [], held)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${n.toLocaleString('en-US')} ${nameOf(k, n)}`);
   return `${head} Raising tier ${w.building}: ${wanted.length ? `${wanted.join(', ')} still wanted` : 'every need met'}.`;
 }

@@ -50,11 +50,37 @@ const BLADE = Object.freeze(['sweep', 'lunge']);
  *  GiantScorpion 20, Dragonling 34 and its alternate 40, Centaur 8; Giant 16, OrcWarlord 24, Daedroth 27, DaedraLord 31,
  *  IronAtronach 36, FleshAtronach 37, Gargoyle 22, Dreugh 41; Orc 7, OrcSergeant 12, SkeletalWarrior 15, Mummy 19,
  *  Vampire 28, VampireAncient 30, FrostDaedra 25, FireDaedra 26, DaedraSeducer 29, Lamia 42). */
-export const BLOW_FAMILY = Object.freeze(new Map([
-  [4, BEAST], [5, BEAST], [6, BEAST], [9, BEAST], [14, BEAST], [20, BEAST], [34, BEAST], [40, BEAST], [8, BLADE],
-  [16, BRUTE], [24, BRUTE], [27, BRUTE], [31, BRUTE], [36, BRUTE], [37, BRUTE], [22, BRUTE], [41, BRUTE],
-  [7, BLADE], [12, BLADE], [15, BLADE], [19, BLADE], [28, BLADE], [30, BLADE], [25, BLADE], [26, BLADE], [29, BLADE], [42, BLADE],
-]));
+export const BLOW_FAMILY = Object.freeze(
+  new Map([
+    [4, BEAST],
+    [5, BEAST],
+    [6, BEAST],
+    [9, BEAST],
+    [14, BEAST],
+    [20, BEAST],
+    [34, BEAST],
+    [40, BEAST],
+    [8, BLADE],
+    [16, BRUTE],
+    [24, BRUTE],
+    [27, BRUTE],
+    [31, BRUTE],
+    [36, BRUTE],
+    [37, BRUTE],
+    [22, BRUTE],
+    [41, BRUTE],
+    [7, BLADE],
+    [12, BLADE],
+    [15, BLADE],
+    [19, BLADE],
+    [28, BLADE],
+    [30, BLADE],
+    [25, BLADE],
+    [26, BLADE],
+    [29, BLADE],
+    [42, BLADE],
+  ]),
+);
 /** The casters among the classes - Mage 128, Sorcerer 131, Healer 132 - throw none. */
 export const BLOW_CASTERS = Object.freeze(new Set([128, 131, 132]));
 /** MobileTypes.None. */
@@ -62,7 +88,7 @@ const NONE = 65535;
 /** The kind's family's own shapes (TACT4's one or two). */
 function familyShapes(mobileType) {
   if (BLOW_FAMILY.has(mobileType)) return BLOW_FAMILY.get(mobileType);
-  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;   // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)
+  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE; // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)
   return [];
 }
 /** TELL5 (bible/12-Enhanced-AI/Feud-Arc.md 7): the kind's family - 'beast', 'brute' or 'blade' (null: none throws a
@@ -106,20 +132,34 @@ export function blowShapesOf(mobileType, entity = null) {
 /** Is the point (px, pz) inside the blow's shape (`{ kind, origin: [x, y, z], yaw }`, yaw atan2(dx, dz))? The verdict
  *  at the landing. */
 export function inBlow(b, px, pz) {
-  const fx = Math.sin(b.yaw), fz = Math.cos(b.yaw);
-  const rx = px - b.origin[0], rz = pz - b.origin[2];
-  const along = rx * fx + rz * fz, across = -rx * fz + rz * fx;
-  if (b.kind === 'lunge' || b.kind === 'charge') { const P = BLOW[b.kind]; return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW; }   // TELL6: the charge's lane is a lunge's, longer and wider
+  const fx = Math.sin(b.yaw),
+    fz = Math.cos(b.yaw);
+  const rx = px - b.origin[0],
+    rz = pz - b.origin[2];
+  const along = rx * fx + rz * fz,
+    across = -rx * fz + rz * fx;
+  if (b.kind === 'lunge' || b.kind === 'charge') {
+    const P = BLOW[b.kind];
+    return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW;
+  } // TELL6: the charge's lane is a lunge's, longer and wider
   if (b.kind === 'sweep') {
-    const P = BLOW.sweep, d = Math.hypot(rx, rz);
+    const P = BLOW.sweep,
+      d = Math.hypot(rx, rz);
     if (d > P.r) return false;
-    if (d < 0.5) return true;   // at its feet
+    if (d < 0.5) return true; // at its feet
     return Math.acos(Math.max(-1, Math.min(1, along / d))) <= P.halfArc;
   }
-  if (b.kind === 'slam') { const P = BLOW.slam; return Math.hypot(along - P.ahead, across) <= P.r; }
-  if (b.kind === 'ring') { const P = BLOW.ring, d = Math.hypot(rx, rz); return d >= P.rIn && d <= P.rOut; }   // TELL6: safe at its feet
-  if (b.kind === 'leap') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r;   // TELL6: a disc at its point
-  if (b.kind === 'aimed') return along >= -0.3 && along <= (b.ahead ?? 0) && Math.abs(across) <= BLOW.aimed.halfW;   // TELL6: its line to its target
-  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;   // RVN5: a disc at its target's feet
+  if (b.kind === 'slam') {
+    const P = BLOW.slam;
+    return Math.hypot(along - P.ahead, across) <= P.r;
+  }
+  if (b.kind === 'ring') {
+    const P = BLOW.ring,
+      d = Math.hypot(rx, rz);
+    return d >= P.rIn && d <= P.rOut;
+  } // TELL6: safe at its feet
+  if (b.kind === 'leap') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r; // TELL6: a disc at its point
+  if (b.kind === 'aimed') return along >= -0.3 && along <= (b.ahead ?? 0) && Math.abs(across) <= BLOW.aimed.halfW; // TELL6: its line to its target
+  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r; // RVN5: a disc at its target's feet
   return false;
 }

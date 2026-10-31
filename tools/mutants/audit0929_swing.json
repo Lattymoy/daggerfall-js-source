@@ -29,8 +29,8 @@
   {
     "name": "AUDIT0929-S3-rr-weightless",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling",
-    "new": "  return swingFrameSeconds(blend, { handling",
+    "old": "  return swingFrameSeconds(blend, {\n    heft: swingHeft(weight, liveStrength),\n    handling: swingHandling(weaponType, hands === 'Both', shortBlade),\n  });",
+    "new": "  return swingFrameSeconds(blend, { handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
     "tests": [
       "test/systems/rr1_realism.test.js",
       "test/systems/swinglaw.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "AUDIT0929-S5-the-reader-unregistered",
     "file": "src/combat/swingLaw.js",
-    "old": "export function installSwingLaw() { registerSwingReader(readSwing); }\ninstallSwingLaw();",
-    "new": "export function installSwingLaw() { registerSwingReader(readSwing); }",
+    "old": "installSwingLaw();\n",
+    "new": "",
     "tests": [
       "test/systems/audit0929_swing.test.js",
       "test/systems/swinglaw.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "AUDIT0929-S6-the-reader-grows-the-table",
     "file": "src/combat/swingLaw.js",
-    "old": "const handItem = (entity, ctx) => entity.equip?.slots?.[",
-    "new": "const handItem = (entity, ctx) => (entity.equip ??= { slots: {} }).slots?.[",
+    "old": "  entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "  (entity.equip ??= { slots: {} }).slots?.[\n    ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand\n  ] ?? null;",
     "tests": [
       "test/systems/audit0929_swing.test.js",
       "test/combat/weapon/weaponrig.test.js"

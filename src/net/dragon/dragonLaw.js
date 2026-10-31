@@ -25,7 +25,8 @@ export const DRAGON_REMAINS_MS = 10 * 60_000;
 /** One dragon in this many is the Aetherbright (section 11). */
 export const DRAGON_SHINY_ONE_IN = 20;
 /** Is `o` a watch's omen - its number and the relay's seed for it, a whole 32-bit number? @param {any} o */
-export const dragonOmenOk = (o) => !!o && Number.isSafeInteger(o.w) && o.w >= 0 && Number.isSafeInteger(o.s) && o.s >= 0 && o.s <= 0xffffffff;
+export const dragonOmenOk = (o) =>
+  !!o && Number.isSafeInteger(o.w) && o.w >= 0 && Number.isSafeInteger(o.s) && o.s >= 0 && o.s <= 0xffffffff;
 /** Roll `k` of an omen, a whole number in [0, 2^32). @param {{w: number, s: number}} o @param {number} k */
 export const dragonRoll = (o, k) => gateHash(o.s, o.w, k);
 /** The watch a relay-clock instant stands in. */
@@ -51,13 +52,27 @@ export const dragonQuietAt = (w) => w * DRAGON_WATCH_MS + DRAGON_LAND_SPAN_MS;
 export const dragonAskEnd = (w) => dragonQuietAt(w) + DRAGON_STAY_MS + DRAGON_CLIMB_MS + DRAGON_REMAINS_MS;
 /** May omen `o`'s seed be told at `nowMs` - its dragon landed, or for a quiet watch its latest landing past; never a
  *  watch to come, never a landing ahead. Null `o` (no secret here) is told as quiet. @param {any} o @param {number} w @param {number} nowMs */
-export const dragonSeedTold = (o, w, nowMs) => Number.isSafeInteger(w) && w >= 0 && (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));
+export const dragonSeedTold = (o, w, nowMs) =>
+  Number.isSafeInteger(w) &&
+  w >= 0 &&
+  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));
 /** The watches a screen may still see a dragon of at `nowMs`: this one and the last (its remains may lie past it). */
-export const dragonWatchesAbout = (nowMs) => { const w = dragonWatchAt(nowMs); return w > 0 ? [w, w - 1] : [w]; };
+export const dragonWatchesAbout = (nowMs) => {
+  const w = dragonWatchAt(nowMs);
+  return w > 0 ? [w, w - 1] : [w];
+};
 /** May a fight with this omen's dragon begin now - from its landing until it climbs away? @param {any} o @param {number} nowMs */
-export const dragonAdmits = (o, nowMs) => { if (!isDragonOmen(o)) return false; const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt; };
+export const dragonAdmits = (o, nowMs) => {
+  if (!isDragonOmen(o)) return false;
+  const t = dragonTimes(o);
+  return nowMs >= t.landAt && nowMs < t.leaveAt;
+};
 /** May a fighter already in it be in it now (a reconnect after a blip) - until its climb is over? @param {any} o @param {number} nowMs */
-export const dragonHolds = (o, nowMs) => { if (!isDragonOmen(o)) return false; const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt + DRAGON_CLIMB_MS; };
+export const dragonHolds = (o, nowMs) => {
+  if (!isDragonOmen(o)) return false;
+  const t = dragonTimes(o);
+  return nowMs >= t.landAt && nowMs < t.leaveAt + DRAGON_CLIMB_MS;
+};
 
 // THE CELL (DRAGON-CELL; a player read every dragon's pixel off the omen the relay told the whole world at its landing).
 // The seed picks one of the relay's world cells (wire.js WORLD_CELL) in a box the relay knows with no map, and the relay
@@ -82,13 +97,18 @@ export function dragonCellOf(o) {
 export const DRAGON_PLACES = DRAGON_CELLS.cols * DRAGON_CELLS.rows;
 /** A site's place, or -1 outside DRAGON_CELLS. @param {number} sx @param {number} sz */
 export function dragonPlaceOf(sx, sz) {
-  const [px, py] = mapPixelOfWire(sx, sz), cx = Math.floor(px / DRAGON_CELL_PX) - DRAGON_CELLS.cx0, cy = Math.floor(py / DRAGON_CELL_PX) - DRAGON_CELLS.cy0;
+  const [px, py] = mapPixelOfWire(sx, sz),
+    cx = Math.floor(px / DRAGON_CELL_PX) - DRAGON_CELLS.cx0,
+    cy = Math.floor(py / DRAGON_CELL_PX) - DRAGON_CELLS.cy0;
   return cx >= 0 && cy >= 0 && cx < DRAGON_CELLS.cols && cy < DRAGON_CELLS.rows ? cy * DRAGON_CELLS.cols + cx : -1;
 }
 /** Is map pixel (px, py) within DRAGON_TELL_PX of an omen's cell - may a player standing there be told it?
  *  @param {{w: number, s: number}} o @param {number} px @param {number} py */
 export function dragonToldAt(o, px, py) {
-  const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX - DRAGON_TELL_PX, y0 = cy * DRAGON_CELL_PX - DRAGON_TELL_PX, span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;
+  const { cx, cy } = dragonCellOf(o),
+    x0 = cx * DRAGON_CELL_PX - DRAGON_TELL_PX,
+    y0 = cy * DRAGON_CELL_PX - DRAGON_TELL_PX,
+    span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;
   return Number.isInteger(px) && Number.isInteger(py) && px >= x0 && py >= y0 && px < x0 + span && py < y0 + span;
 }
 /** DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3): how many cells one account is judged
@@ -100,8 +120,18 @@ export const dragonJudgedCell = (px, py) => `${Math.floor(px / DRAGON_CELL_PX)},
 /** AUDIT DRAGON-CELL III G4: every cell whose omen a player on pixel (px, py) may be told (dragonToldAt), as the hub's words:
  *  one, two or four. @param {number} px @param {number} py */
 export function dragonReachCells(px, py) {
-  const xs = [...new Set([Math.floor((px - DRAGON_TELL_PX) / DRAGON_CELL_PX), Math.floor((px + DRAGON_TELL_PX) / DRAGON_CELL_PX)])];
-  const ys = [...new Set([Math.floor((py - DRAGON_TELL_PX) / DRAGON_CELL_PX), Math.floor((py + DRAGON_TELL_PX) / DRAGON_CELL_PX)])];
+  const xs = [
+    ...new Set([
+      Math.floor((px - DRAGON_TELL_PX) / DRAGON_CELL_PX),
+      Math.floor((px + DRAGON_TELL_PX) / DRAGON_CELL_PX),
+    ]),
+  ];
+  const ys = [
+    ...new Set([
+      Math.floor((py - DRAGON_TELL_PX) / DRAGON_CELL_PX),
+      Math.floor((py + DRAGON_TELL_PX) / DRAGON_CELL_PX),
+    ]),
+  ];
   return ys.flatMap((cy) => xs.map((cx) => `${cx},${cy}`));
 }
 /** How many omens a watch holds. On the freeware (tools/dragonCellProbe.mjs) at most 27.7% of DRAGON_CELLS hold ground,
@@ -113,8 +143,15 @@ export const DRAGON_CELLS_A_WATCH = 4;
 export function dragonCandidates(o) {
   /** @type {Array<{w: number, s: number}>} */ const out = [];
   for (let i = 0; i < DRAGON_CELLS_A_WATCH; i++) {
-    const c = { w: o.w, s: o.seeds[i] >>> 0 }, cell = dragonCellOf(c);
-    if (out.some((d) => { const e = dragonCellOf(d); return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2; })) continue;
+    const c = { w: o.w, s: o.seeds[i] >>> 0 },
+      cell = dragonCellOf(c);
+    if (
+      out.some((d) => {
+        const e = dragonCellOf(d);
+        return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2;
+      })
+    )
+      continue;
     out.push(c);
   }
   return out;
@@ -130,8 +167,15 @@ export const pixelCentreNative = (px, py) => ({ sx: (px + 0.5) * PIXEL_UNITS, sz
 /** Could an omen's dragon stand at this site, as far as a relay with no map can judge - a pixel's centre in its cell.
  *  @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
 export function dragonSiteOk(o, sx, sz) {
-  const [px, py] = mapPixelOfWire(sx, sz), c = pixelCentreNative(px, py), cell = dragonCellOf(o);
-  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx && sz === c.sz;
+  const [px, py] = mapPixelOfWire(sx, sz),
+    c = pixelCentreNative(px, py),
+    cell = dragonCellOf(o);
+  return (
+    Math.floor(px / DRAGON_CELL_PX) === cell.cx &&
+    Math.floor(py / DRAGON_CELL_PX) === cell.cy &&
+    sx === c.sx &&
+    sz === c.sz
+  );
 }
 
 /** Native units to the metre (wire.js PIXEL_UNITS over gateLaw.js PIXEL_M - pinned equal, serpentLaw.js's own). */
@@ -145,4 +189,4 @@ export const DRAGON_SITES_MAX = 3;
 
 /** The brain's law a client fights by: the relay tells an older game to reload (the gate's GATE-RELOAD law). */
 export const DRAGON_BRAIN_V = 3;
-export const DRAGON_BRAIN_MIN = 3;   // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload; DRAGON-CELL: one that finds a site off a lane
+export const DRAGON_BRAIN_MIN = 3; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload; DRAGON-CELL: one that finds a site off a lane

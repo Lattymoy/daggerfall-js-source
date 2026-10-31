@@ -214,7 +214,7 @@ writes it): the body's offer and the pick (`world.js` wildBodyArrived, wildBodyC
 pick's place and what it showed), the account service's take (`wildDropLaw.js` takeWildDeath - the piece off the record
 first, `wildRecord` stripping the receiver's marks, `equipSlot` among them), the fallen's game taking out exactly that
 (wildTakeTook, unequipped first), the remains laid on the service's order (`wk`, `wi`: the killer's), the killer's own
-book asking for it (`wildRemains.js:"const askMine = "`) and the room's `got` minted into the pack (`loot.js`
+book asking for it (`wildRemains.js:"const askMine = (/** @type {any} */ rec)"`) and the room's `got` minted into the pack (`loot.js`
 validLootList, the receiver's marks stripped again). For a killer who is a stranger every step holds: the piece lands,
 unequipped. The break was the room's take. `_wildWord` asked the PVPDUNGEONS friend law ("Party/guildmembers cant pick it
 up" - a fallen's remains are theirs and their foes', never their party's or their guild's) before takeFrom, of EVERY
@@ -269,7 +269,7 @@ DECIDED (Mac, 2026-10-14), asked what this fix left open:
   mutants at 201 and 204 dead).
 
 THE FOUR HOSTS, the escrow. `scenes/world.js` WIRED - the fall's and the seizure's `collect`, the killer's collect
-carried and the fallen's piece taken back on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame = () =>"`), the death
+carried and the fallen's piece taken back on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame"`), the death
 screen's word on it; `scenes/dungeonContext.js` and `scenes/worldModes.js` name no piece (above), so they hold none in
 escrow; `scenes/exterior.js`, offline, NOT WIRED on purpose.
 

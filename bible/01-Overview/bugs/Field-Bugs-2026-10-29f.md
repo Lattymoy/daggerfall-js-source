@@ -35,7 +35,7 @@ dungeon's piece was "Dungeon furniture", a street's "Outdoors". Over the freewar
 benches (ARCH3D 42500-42571) and 66 pieces of the house family were dungeon furniture, and the potted plants
 (TEXTURE.213) and the crops and flowers (TEXTURE.301) were decorations or outdoor pieces.
 
-FIXED. `systems/decor/decorCatalogue.js:"export function decorWhatKind(what) {"` files a piece by what it is first: each
+FIXED. `systems/decor/decorCatalogue.js:"export function decorWhatKind"` files a piece by what it is first: each
 picture archive the catalogue holds was looked at whole and named (FLAT_WHAT), the free-standing models by their editor's
 tags (MODEL_WHAT), a model of the furniture families as furniture and of the exterior family as an outdoor piece. Four
 kinds more: Statues, Tools, Animals, Remains. The plants join Trees and plants, as Houseplant and Crop (Daggerfall's
@@ -54,7 +54,7 @@ FOUND. A house held DECOR_CAP, 200 pieces, whatever its size. The freeware's hou
 996 m2; Sentinel's widest are 655 and 983.
 
 DECIDED. A room holds DECOR_CAP to 200 m2 of ground and as much more for each as much more, in tens, to DECOR_CAP_MAX
-(600): `net/decorLaw.js:"export function decorCapOf(groundM2) {"`. The ground is HOME-PRICE's measure, the one the
+(600): `net/decorLaw.js:"export function decorCapOf"`. The ground is HOME-PRICE's measure, the one the
 price is set from. The service measures nothing (it has no ARENA2), so a claim's ground is kept only where the price is
 the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). The price and the blocks are the
 client's word, as HOME-PRICE's price always was, so a forged client can name a wider ground (AUDIT FB1029f A2):
@@ -72,7 +72,7 @@ PINS: `test/server/decorroomy_service.test.js`, `test/systems/decor/decorroomy.t
 FIXED. The owner's bar in their own online home has a chip, "Who may rest", that steps through Me, Friends, Party and
 Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0196), set and read as a
 chest's is (`server-account/src/decorAccess.js`). A guest the row names is told so with the room's grants, and the
-rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest = (mapId, buildingKey) =>"`.
+rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest"`.
 A guild's hall keeps its own law; its members already rest there. A home's rows end with it: a sale or a character's
 delete clears them, a claim clears what no home holds, an arena move carries the rest row (AUDIT FB1029f A1).
 
@@ -86,7 +86,7 @@ FOUND. A swing door taken out (HOME-DOORS) was kept in the owner's save alone. O
 saw it gone, and the service's list refused the door's name.
 
 FIXED. A door's name rides the room's one list of what is taken out (`net/decorLaw.js` DECOR_BASE_KEY_RE takes
-`intdoor:<record>`), stood whole by `scenes/decor/decorBase.js:"export function standRoomHidden(base, list) {"`. The
+`intdoor:<record>`), stood whole by `scenes/decor/decorBase.js:"export function standRoomHidden"`. The
 decorator writes the doors and the furniture in one write. The list sets the doors exactly, and an online home's save
 record is never stood, so a door put back on one device is back on every one (AUDIT FB1029f A3).
 
@@ -106,7 +106,7 @@ PINS: `test/scenes/yardlight.test.js`, `test/world/audityardlight.test.js` (move
 ## 6. NUDGE - sideways steps, and some clipping
 
 FIXED. Four bar buttons and Numpad 4, 6, 8 and 2 push a piece along the level axis nearest the eye's left, right, away
-and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {"`).
+and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep"`).
 The push is applied after WALL-CLEAR's clearance, so a piece may sit into a wall or another piece as far as its owner
 chooses (item 14). A hung piece slides along its surface.
 
@@ -199,7 +199,7 @@ FOUND. Since MAKER-RARE the item maker took an identified Rare, but a Gilded pie
 only its element.
 
 FIXED. A Gilded piece is the item maker's, as a Rare is: its record's lines stay as minted, the maker's own rows are
-laid beside them, and it keeps its name (`systems/enchanting.js:"export function gildedKeeps(item) {"`). A Gilded weapon
+laid beside them, and it keeps its name (`systems/enchanting.js:"export function gildedKeeps"`). A Gilded weapon
 wears a crimson look of its own over its element, the Aura Armory's piece and the arcane look (weapon glow law 8,
 `05-Combat/Weapon-Glow.md`; `06-Systems/Gilded.md` section 11). ITEM_LAW_VERSION 16, the account service acct225, the relay
 world291 (law 15, acct220 to acct223 and world286 to world290 on its branch, renumbered at the merges of main). No line, rung or power number moves.
@@ -225,7 +225,7 @@ a second weapon's free hand, an H swap, a drop on L-Hand - was never swung: the 
 the classic lane swung fists, training Hand-to-Hand.
 
 FIXED. When what the hands hold changes, an empty hand in use gives way to a lone weapon in the other
-(`combat/playerWeapon.js:"if (changed && !restored) this.followHeldHand();"`). H still picks the bare hand after, and a
+(`combat/playerWeapon.js:"if (changed && !restored)"`). H still picks the bare hand after, and a
 hand restored from a save is kept - one saved before this follows once. The swap key sets the hand where the
 weapon lands, never toggles it, and its bare hands stay bare (AUDIT FB1029f D1, D2, D4).
 

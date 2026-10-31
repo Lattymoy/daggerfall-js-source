@@ -2,8 +2,8 @@
   {
     "name": "LETTERS-DROP-the-letter-kept",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (item.group === 'MiscItems' && item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem) return tradeableRecord({ ...item, equipSlot: undefined });\n",
-    "new": "",
+    "old": "  if (item.group === 'MiscItems' && item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem)\n    return tradeableRecord({ ...item, equipSlot: undefined });\n  if (",
+    "new": "  if (",
     "tests": [
       "test/systems/wild1_zone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KEEP-WALLET-the-wallets-guard-gone",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (isWalletItem(item) || walletHolds(item)) return false;\n",
-    "new": "",
+    "old": "  if (isWalletItem(item) || walletHolds(item)) return false;\n  // INT9: a classic save's piece is its character's for good (systems/item/itemLaw.js classicPiece - \"Keep all, can't sell\"):",
+    "new": "  // INT9: a classic save's piece is its character's for good (systems/item/itemLaw.js classicPiece - \"Keep all, can't sell\"):",
     "tests": [
       "test/systems/wild1_zone.test.js"
     ],

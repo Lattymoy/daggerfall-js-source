@@ -320,7 +320,7 @@ test('AUDIT 39 F134: a count-1 plate whose only collider was placed is PLACED, n
   assert.deepEqual(out.map((r) => r.offY), [0, -0.5, -9, 8.5, 0], 'the other four are unmoved by the arm');
   assert.equal(out[4].replaced, false, 'the plate keeps its name');
   assert.equal(out.filter((r) => r.replaced).length, 0);
-  assert.match(read('src/ui/nameplateLayout.js'), /if \(!q\) \{ p\.count = 0; p\.placed = true; continue; \}/);
+  assert.match(read('src/ui/nameplateLayout.js'), /if \(!q\) \{\n\s*p\.count = 0;\n\s*p\.placed = true;\n\s*continue;\n\s*\}/);
 });
 
 // ---------------------------------------------------------------

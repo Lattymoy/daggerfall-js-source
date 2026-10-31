@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B4-purse-unsaid",
     "file": "src/ui/pickupFeed.js",
-    "old": "c.lodeHeld.textContent = w.lode.held ?? '';",
-    "new": "c.lodeHeld.textContent = '';",
+    "old": "    c.lodeHeld.textContent = w.lode.held ?? '';",
+    "new": "    c.lodeHeld.textContent = '';",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-A1-hidden-read-as-first",
     "file": "src/ui/pickupFeed.js",
-    "old": "heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);",
-    "new": "heights.push(r?.height ?? first?.height ?? 0);",
+    "old": "    heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);",
+    "new": "    heights.push(r?.height ?? first?.height ?? 0);",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-A2-note-unwrapped",
     "file": "src/ui/pickupFeed.js",
-    "old": "font-size: 13px; padding-left: 10px; white-space: normal; }",
-    "new": "font-size: 13px; padding-left: 10px; }",
+    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
+    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px; padding-left: 10px; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-A5-note-veil-its-own",
     "file": "src/ui/pickupFeed.js",
-    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px;",
-    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; background-color: rgba(10,12,17,0.8); font-size: 13px;",
+    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
+    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; background-color: rgba(10,12,17,0.8); font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-A5-note-dim",
     "file": "src/ui/pickupFeed.js",
-    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi};",
-    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneLit};",
+    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
+    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneLit}; font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-A5-coin-kept",
     "file": "src/ui/pickupFeed.js",
-    "old": " c.lodeCoin.hidden = !w.lode.silver; }",
-    "new": " }",
+    "old": "    c.lodeCoin.hidden = !w.lode.silver;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C2-card-width-unscaled",
     "file": "src/ui/pickupFeed.js",
-    "old": "max-width: min(440px, calc(88vw / var(--hud-scale, 1)));",
-    "new": "max-width: min(440px, 88vw);",
+    "old": ".pickfeed-card { display: flex; align-items: center; gap: 6px; box-sizing: border-box; max-width: min(440px, calc(88vw / var(--hud-scale, 1)));",
+    "new": ".pickfeed-card { display: flex; align-items: center; gap: 6px; box-sizing: border-box; max-width: min(440px, 88vw);",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C2-feed-width-unscaled",
     "file": "src/ui/pickupFeed.js",
-    "old": "max-width: calc(92vw / var(--hud-scale, 1));",
-    "new": "max-width: 92vw;",
+    "old": "  display: flex; flex-direction: column; align-items: stretch; gap: ${PICKUP_CARD_GAP}px; width: max-content; min-width: 168px; max-width: calc(92vw / var(--hud-scale, 1));",
+    "new": "  display: flex; flex-direction: column; align-items: stretch; gap: ${PICKUP_CARD_GAP}px; width: max-content; min-width: 168px; max-width: 92vw;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C3-sub-not-first",
     "file": "src/ui/pickupFeed.js",
-    "old": ".haul-sub { flex: 0 1000 auto; min-width: 0;",
-    "new": ".haul-sub {",
+    "old": ".haul-sub { flex: 0 1000 auto; min-width: 0; font-size: 11px; color: ${T.stoneHi}; overflow: hidden; text-overflow: ellipsis; }   /* AUDIT HAUL-CARDS C3/C5: the sub gives way first */",
+    "new": ".haul-sub { font-size: 11px; color: ${T.stoneHi}; overflow: hidden; text-overflow: ellipsis; }   /* AUDIT HAUL-CARDS C3/C5: the sub gives way first */",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C3-silver-word-gives",
     "file": "src/ui/pickupFeed.js",
-    "old": ".pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-treasury .pickfeed-name { flex-shrink: 0; }\n",
-    "new": "",
+    "old": ".pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-treasury .pickfeed-name { flex-shrink: 0; }\n.haul-sub:empty, .haul-end:empty, .haul-tag:empty { display: none; }",
+    "new": ".haul-sub:empty, .haul-end:empty, .haul-tag:empty { display: none; }",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

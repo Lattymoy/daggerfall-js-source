@@ -72,8 +72,8 @@
   {
     "name": "PASSAUDIT-3-the-find-no-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
-    "new": "",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n  '/v1/festival/find': Object.freeze(['festival', false]),",
+    "new": "  '/v1/festival/find': Object.freeze(['festival', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -81,8 +81,8 @@
   {
     "name": "PASSAUDIT-3-the-silver-finds-stream",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
-    "new": "  '/v1/pass/find': Object.freeze(['find', false]),\n",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),",
+    "new": "  '/v1/pass/find': Object.freeze(['find', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "PASSAUDIT-3-spent-as-profession-xp",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
-    "new": "    case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
+    "old": "    case '/v1/pass/find':\n    case '/v1/festival/find':",
+    "new": "    case '/v1/festival/find':",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "PASSAUDIT-3-a-stored-line-dropped-for-a-new-stream",
     "file": "server-account/src/progress.js",
-    "old": "  try { c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null'))); } catch { c = null; }",
-    "new": "  try { c = progressConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }",
+    "old": "    c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null')));",
+    "new": "    c = progressConfigOf(JSON.parse(row?.value ?? 'null'));",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "PASSAUDIT-2f-the-festival-never-reads-again",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) { _rest.unheard(); return 0; }   // a shut word read again\n",
-    "new": "",
+    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) {\n      _rest.unheard();\n      return 0;\n    } // a shut word read again\n    if (festivalState().open === false) return 0;",
+    "new": "    if (festivalState().open === false) return 0;",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "PASSAUDIT-3f-the-festival-find-no-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
-    "new": "",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the",
+    "new": "  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PASSAUDIT-3f-the-pass-stream",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
-    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),\n",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),",
+    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "PASSAUDIT-3f-the-festival-refusal-unheard",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (!r?.ok) _rest.refused(r?.error);\n",
-    "new": "",
+    "old": "    if (!r?.ok) _rest.refused(r?.error);\n    const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too",
+    "new": "    const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "PASSAUDIT-3f-the-queued-finds-past-a-refusal",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (_rest.resting()) return 0;   // a refusal ahead of it in the queue stood the page back\n",
-    "new": "",
+    "old": "    if (_rest.resting()) return 0; // a refusal ahead of it in the queue stood the page back\n    // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer",
+    "new": "    // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]

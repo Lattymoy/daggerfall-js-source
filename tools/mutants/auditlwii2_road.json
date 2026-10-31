@@ -137,8 +137,8 @@
   {
     "name": "AUDITLWII2-R3-minute",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    for (t0 = Math.ceil(t0); t0 < end && partyAt(trip, t0).inn; t0++);\n",
-    "new": "",
+    "old": "    for (t0 = Math.ceil(t0); t0 < end && partyAt(trip, t0).inn; t0++);\n    s = partyAt(trip, t0).s ?? s; // where it stands as it sets out - the inn's place, its walk come up to it",
+    "new": "    s = partyAt(trip, t0).s ?? s; // where it stands as it sets out - the inn's place, its walk come up to it",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITLWII2-R3-place",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    s = partyAt(trip, t0).s ?? s;",
-    "new": "",
+    "old": "    s = partyAt(trip, t0).s ?? s; // where it stands as it sets out - the inn's place, its walk come up to it",
+    "new": "    // where it stands as it sets out - the inn's place, its walk come up to it",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "AUDITLWII2-D3-inside-cut",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    return { ...trip, enc, fallen, turned: false, backT0, backT1: whenWalked(backT0, walk), dive: { t0: /** @type {any} */ (trip.dive).t0, t1: backT0 } };",
+    "old": "    return {\n      ...trip,\n      enc,\n      fallen,\n      turned: false,\n      backT0,\n      backT1: whenWalked(backT0, walk),\n      dive: { t0: /** @type {any} */ (trip.dive).t0, t1: backT0 },\n    };",
     "new": "    return { ...trip, enc, fallen, turned: false, backT0, backT1: whenWalked(backT0, walk) };",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "AUDITLWII2-P17-LW9P-retainer-level",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 12); }",
-    "new": "  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 20); }",
+    "old": "    level = rollInt(rng, 4, 12);",
+    "new": "    level = rollInt(rng, 4, 20);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "AUDITLWII2-P17-LW9P-hunter-level",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 8); }",
-    "new": "  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 18); }",
+    "old": "    cls = pickOf(rng, HUNTER_CLASSES);\n    level = rollInt(rng, 2, 8);",
+    "new": "    cls = pickOf(rng, HUNTER_CLASSES);\n    level = rollInt(rng, 2, 18);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"
     ],
@@ -370,7 +370,7 @@
   {
     "name": "AUDITLWII2-P17-LW9P-inn-trouble-walk-minute",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    wm = walkWm; t0 = walkT0; camp = false;",
+    "old": "    wm = walkWm;\n    t0 = walkT0;\n    camp = false;",
     "new": "    camp = false;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_road.test.js"

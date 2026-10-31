@@ -33,9 +33,10 @@ export function mapUiScale(height, pref = 'auto') {
 }
 
 /** The Maps row's word for a choice, the scale auto resolves to beside it. */
-export const mapScaleLabel = (pref, height) => (pref === 'auto' || pref == null
-  ? `Auto (${mapUiScale(height).toFixed(2)}×)`
-  : `${mapUiScale(height, pref).toFixed(2)}×`);
+export const mapScaleLabel = (pref, height) =>
+  pref === 'auto' || pref == null
+    ? `Auto (${mapUiScale(height).toFixed(2)}×)`
+    : `${mapUiScale(height, pref).toFixed(2)}×`;
 
 /** The next choice from `pref` by `dir` (+1, -1), held at the ends (a range, not a ring). */
 export function nextMapScale(pref, dir) {

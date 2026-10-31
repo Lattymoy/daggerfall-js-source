@@ -21,20 +21,41 @@ let _mentorScale = 1;
 /** The combat channels at a scale, by scale - remade when the tree or the scale moves. */
 let _scaled = new Map();
 const _listeners = new Set();
-const tell = () => { for (const fn of _listeners) { try { fn(); } catch { /* a listener is not the tree's problem */ } } };
+const tell = () => {
+  for (const fn of _listeners) {
+    try {
+      fn();
+    } catch {
+      /* a listener is not the tree's problem */
+    }
+  }
+};
 
 /** The host's word: the tree this character plays under (the book's), or null for none. */
 export function setFirmamentTree(tree) {
   _tree = tree?.start ? { start: tree.start, keys: [...(tree.keys ?? [])] } : EMPTY_TREE;
   _stats = treeStats(_tree);
   _scaled = new Map();
-  for (const fn of _listeners) { try { fn(); } catch { /* a listener is not the tree's problem */ } }
+  for (const fn of _listeners) {
+    try {
+      fn();
+    } catch {
+      /* a listener is not the tree's problem */
+    }
+  }
 }
 /** The host's word: this page plays online (the tree in force) or not. */
 export function setFirmamentOnline(on) {
   const was = _online;
   _online = !!on;
-  if (was !== _online) for (const fn of _listeners) { try { fn(); } catch { /* as above */ } }
+  if (was !== _online)
+    for (const fn of _listeners) {
+      try {
+        fn();
+      } catch {
+        /* as above */
+      }
+    }
 }
 /** MENTOR2: the host's word - the share the combat stars act at while I mentor (mentorMode.js mentorPowerScale), 1
  *  when I do not. The fold and the layer move at once (AUDIT UICALM-FIRM1 L1 L2: never a round late). */
@@ -49,7 +70,10 @@ export const firmamentMentorScale = () => _mentorScale;
 /** One channel's value at scale `k`: a life channel whole, a combat channel at its whole share of `k`. */
 const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));
 /** Told whenever the tree or the online word changes (the powers fold the entity again, the layer moves). */
-export function onFirmamentChange(fn) { if (typeof fn === 'function') _listeners.add(fn); return () => _listeners.delete(fn); }
+export function onFirmamentChange(fn) {
+  if (typeof fn === 'function') _listeners.add(fn);
+  return () => _listeners.delete(fn);
+}
 
 /** The tree as the host last handed it in. */
 export const firmamentTree = () => _tree;
@@ -93,10 +117,17 @@ export const firmActMult = (profession) => 1 + firmStat(`act.${profession}`) / 1
 export function firmamentStatus({ read, dueling }) {
   if (!_online) return 'seat';
   if (!_tree.start) return read ? 'no-sign' : 'unread';
-  if (dueling) return 'duel';   // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them
+  if (dueling) return 'duel'; // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them
   if (_mentorScale < 1) return 'mentoring';
   return 'active';
 }
 
 /** Tests only: no tree, offline, no listeners. */
-export function _resetFirmamentLiveForTests() { _tree = EMPTY_TREE; _stats = NONE; _online = false; _mentorScale = 1; _scaled = new Map(); _listeners.clear(); }
+export function _resetFirmamentLiveForTests() {
+  _tree = EMPTY_TREE;
+  _stats = NONE;
+  _online = false;
+  _mentorScale = 1;
+  _scaled = new Map();
+  _listeners.clear();
+}

@@ -505,7 +505,7 @@ test('AUDIT LEGACY III O7: A TOMBSTONE IS NEVER DELETED - nor undone: it is the 
   // the record rewritten without the death: the person is still the played one's
   await A.write({ people: ysolde });
   assert.equal((await A.call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A.fam, person: 1 })).body.error, 'lineage-played');
-  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \};   \/\/ AUDIT LEGACY III O7/);
+  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \}; \/\/ AUDIT LEGACY III O7/);
 });
 
 test('AUDIT LEGACY III O8/O9: AN ACCOUNT\'S UNIONS, THE LATEST WORD FIRST, READ BY ITS OWN INDEXES - listed newest-wed first, a union older than fifty others was never listed again and its end never reached the house; and every read scanned the whole table', async () => {

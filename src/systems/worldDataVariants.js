@@ -11,31 +11,38 @@
 // the key's law has one home: `(locationIndex * 100) + regionIndex`.
 
 export const NO_VARIANT = '';
-export const ANY_LOCATION_KEY = -8;   // "Cos 8 looks like infinity and also on keyboards has * symbol" (:49)
+export const ANY_LOCATION_KEY = -8; // "Cos 8 looks like infinity and also on keyboards has * symbol" (:49)
 
 let lastLocationKey = 0;
-let newLocationVariants = [];             // List<int>
-let locationVariants = new Map();         // locationKey -> variant
-let blockVariants = new Map();            // `${locationKey}|${blockName}` -> variant
-let buildingVariants = new Map();         // `${locationKey}|${blockName}|${recordIndex}` -> variant
+let newLocationVariants = []; // List<int>
+let locationVariants = new Map(); // locationKey -> variant
+let blockVariants = new Map(); // `${locationKey}|${blockName}` -> variant
+let buildingVariants = new Map(); // `${locationKey}|${blockName}|${recordIndex}` -> variant
 
 /** WorldDataReplacement.MakeLocationKey (:484-487). */
-export const makeLocationKey = (regionIndex, locationIndex) => (locationIndex * 100) + regionIndex;
+export const makeLocationKey = (regionIndex, locationIndex) => locationIndex * 100 + regionIndex;
 const blockKey = (locationKey, blockName) => `${locationKey}|${blockName}`;
 const buildingKey = (locationKey, blockName, recordIndex) => `${locationKey}|${blockName}|${recordIndex}`;
 
 /** RMBLayout.ClearLocationCache, the C#'s side effect on every set - the
  *  host that caches laid-out locations hangs its clear here. */
 let _onChanged = null;
-export function setVariantChangedHook(fn) { _onChanged = typeof fn === 'function' ? fn : null; }
+export function setVariantChangedHook(fn) {
+  _onChanged = typeof fn === 'function' ? fn : null;
+}
 /** WorldDataReplacement.GetNewDFLocationIndex (:106-125) - RR3b's door;
  *  until it stands, a new location is unknown (-1) and SetNewLocationVariant
  *  logs its failure, as the C# does for a name it cannot find. */
 let _newLocationIndex = () => -1;
-export function setNewLocationIndexResolver(fn) { _newLocationIndex = typeof fn === 'function' ? fn : () => -1; }
+export function setNewLocationIndexResolver(fn) {
+  _newLocationIndex = typeof fn === 'function' ? fn : () => -1;
+}
 
 /** SetLastLocationKeyTo (:64-67). */
-export function setLastLocationKeyTo(regionIndex, locationIndex) { lastLocationKey = makeLocationKey(regionIndex, locationIndex); readingLocationKey = null; }
+export function setLastLocationKeyTo(regionIndex, locationIndex) {
+  lastLocationKey = makeLocationKey(regionIndex, locationIndex);
+  readingLocationKey = null;
+}
 export const lastLocationKeyOf = () => lastLocationKey;
 
 /**
@@ -47,7 +54,9 @@ export const lastLocationKeyOf = () => lastLocationKey;
  * variants keep DFU's last location and never read this.
  */
 let readingLocationKey = null;
-export function noteReadingLocation(regionIndex, locationIndex) { readingLocationKey = makeLocationKey(regionIndex, locationIndex); }
+export function noteReadingLocation(regionIndex, locationIndex) {
+  readingLocationKey = makeLocationKey(regionIndex, locationIndex);
+}
 export const readingLocationKeyOf = () => readingLocationKey ?? lastLocationKey;
 
 // ---- setters (:78-162) ----------------------------------------------------------
@@ -100,14 +109,18 @@ export function setBuildingVariant(blockName, recordIndex, variant, locationKey 
  *  { variant, newLocation }. */
 export function getLocationVariant(locationKey) {
   lastLocationKey = locationKey;
-  readingLocationKey = null;   // WD3: a location just read is the town its blocks come from
+  readingLocationKey = null; // WD3: a location just read is the town its blocks come from
   const v = locationVariants.get(locationKey);
-  return { variant: v ?? NO_VARIANT, newLocation: v !== undefined && newLocationVariants.includes(locationKey) };   // AUDIT-RR2 G15: `newLocation` only inside the TryGetValue arm (:176-182)
+  return { variant: v ?? NO_VARIANT, newLocation: v !== undefined && newLocationVariants.includes(locationKey) }; // AUDIT-RR2 G15: `newLocation` only inside the TryGetValue arm (:176-182)
 }
 /** GetBlockVariant(blockName) (:190-206): the last location's, else any's. */
 export function getBlockVariantHere(blockName) {
-  if (lastLocationKey < 0) return NO_VARIANT;   // AUDIT-RR F35: `if (lastLocationKey >= 0)` (:192) - a negative key asks nothing, not even AnyLocationKey
-  return blockVariants.get(blockKey(lastLocationKey, blockName)) ?? blockVariants.get(blockKey(ANY_LOCATION_KEY, blockName)) ?? NO_VARIANT;
+  if (lastLocationKey < 0) return NO_VARIANT; // AUDIT-RR F35: `if (lastLocationKey >= 0)` (:192) - a negative key asks nothing, not even AnyLocationKey
+  return (
+    blockVariants.get(blockKey(lastLocationKey, blockName)) ??
+    blockVariants.get(blockKey(ANY_LOCATION_KEY, blockName)) ??
+    NO_VARIANT
+  );
 }
 /** FIRST-VISIT: whether any block variant is set - a kept answer about served blocks (world/terrain/groundTilesKept.js)
  *  is read only while none is, since a variant serves another file under the block's name. */
@@ -116,7 +129,11 @@ export const anyBlockVariant = () => blockVariants.size > 0;
  *  with NO variant yet; the last location's, else any's. */
 export function getBuildingVariantHere(blockName, recordIndex, currentVariant = NO_VARIANT) {
   if (currentVariant !== NO_VARIANT) return NO_VARIANT;
-  return buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ?? buildingVariants.get(buildingKey(ANY_LOCATION_KEY, blockName, recordIndex)) ?? NO_VARIANT;
+  return (
+    buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ??
+    buildingVariants.get(buildingKey(ANY_LOCATION_KEY, blockName, recordIndex)) ??
+    NO_VARIANT
+  );
 }
 /** GetBlockVariant(regionIndex, locationIndex, blockName) (:245-250): the
  *  variant set for that location, or null. */
@@ -131,7 +148,10 @@ export function getBuildingVariant(regionIndex, locationIndex, blockName, record
 // ---- save, load & clear (:272-306) ------------------------------------------
 /** Clear (:272-278). */
 export function clearWorldDataVariants() {
-  newLocationVariants = []; locationVariants = new Map(); blockVariants = new Map(); buildingVariants = new Map();
+  newLocationVariants = [];
+  locationVariants = new Map();
+  blockVariants = new Map();
+  buildingVariants = new Map();
 }
 /** GetWorldVariationSaveData (:280-290): WorldVariationData_v1. */
 export function getWorldVariationSaveData() {
@@ -146,7 +166,8 @@ export function getWorldVariationSaveData() {
 export function restoreWorldVariationData(data) {
   if (!data) return;
   if (data.newLocationVariants != null) newLocationVariants = [...data.newLocationVariants];
-  if (data.locationVariants != null) locationVariants = new Map(Object.entries(data.locationVariants).map(([k, v]) => [Number(k), v]));
+  if (data.locationVariants != null)
+    locationVariants = new Map(Object.entries(data.locationVariants).map(([k, v]) => [Number(k), v]));
   if (data.blockVariants != null) blockVariants = new Map(Object.entries(data.blockVariants));
   if (data.buildingVariants != null) buildingVariants = new Map(Object.entries(data.buildingVariants));
 }

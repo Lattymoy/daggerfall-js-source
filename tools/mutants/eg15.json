@@ -2,8 +2,8 @@
   {
     "name": "EG15-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);",
-    "new": "'numidium', 'wyrd', 'starspun', 'eltheric']);",
+    "old": "  'panoply',\n  'wyrd',",
+    "new": "  'wyrd',",
     "why": "the set no sigil may name: every Panoply piece refused",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "EG15-a-world-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "colour: '#5c7cc4', aetheric: true,",
-    "new": "colour: '#5c7cc4', aetheric: false,",
+    "old": "    colour: '#5c7cc4',\n    aetheric: true,",
+    "new": "    colour: '#5c7cc4',\n    aetheric: false,",
     "why": "the Broker and every win would roll it",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "EG15-another-blue",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "colour: '#5c7cc4',",
-    "new": "colour: '#5c7cc5',",
+    "old": "    colour: '#5c7cc4',",
+    "new": "    colour: '#5c7cc5',",
     "why": "not Battlemage blue",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "EG15-bearing-resist",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ resist: [5, 15], magicka: [10, 30] }",
-    "new": "{ resist: [6, 15], magicka: [10, 30] }",
+    "old": "        { resist: [5, 15], magicka: [10, 30] },",
+    "new": "        { resist: [6, 15], magicka: [10, 30] },",
     "why": "a number off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "EG15-bearing-magicka",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ resist: [5, 15], magicka: [10, 30] }",
-    "new": "{ resist: [5, 15], magicka: [10, 25] }",
+    "old": "        { resist: [5, 15], magicka: [10, 30] },",
+    "new": "        { resist: [5, 15], magicka: [10, 25] },",
     "why": "a number off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "EG15-discipline-armed",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ armed: [20, 50], refund: [5, 15] }",
-    "new": "{ armed: [25, 50], refund: [5, 15] }",
+    "old": "        { armed: [20, 50], refund: [5, 15] },",
+    "new": "        { armed: [25, 50], refund: [5, 15] },",
     "why": "a number off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "EG15-discipline-refund",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ armed: [20, 50], refund: [5, 15] }",
-    "new": "{ armed: [20, 50], refund: [5, 10] }",
+    "old": "        { armed: [20, 50], refund: [5, 15] },",
+    "new": "        { armed: [20, 50], refund: [5, 10] },",
     "why": "a number off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "EG15-reprieve-shield",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ shield: [15, 40], recover: [240, 120] }",
-    "new": "{ shield: [15, 35], recover: [240, 120] }",
+    "old": "        { shield: [15, 40], recover: [240, 120] },",
+    "new": "        { shield: [15, 35], recover: [240, 120] },",
     "why": "a number off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "EG15-reprieve-recover",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ shield: [15, 40], recover: [240, 120] }",
-    "new": "{ shield: [15, 40], recover: [180, 120] }",
+    "old": "        { shield: [15, 40], recover: [240, 120] },",
+    "new": "        { shield: [15, 40], recover: [180, 120] },",
     "why": "a recovery off the design",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "EG15-magicka-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "    out.magicka += m.magicka | 0;   // EG15: whole points\n",
-    "new": "",
+    "old": "    out.magicka += m.magicka | 0; // EG15: whole points\n  }",
+    "new": "  }",
     "why": "the channel folds nothing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "EG15-magicka-fractional",
     "file": "src/systems/entityMods.js",
-    "old": "out.magicka += m.magicka | 0;",
-    "new": "out.magicka += Number(m.magicka) || 0;",
+    "old": "    out.magicka += m.magicka | 0; // EG15: whole points",
+    "new": "    out.magicka += Number(m.magicka) || 0; // EG15: whole points",
     "why": "a fraction of a point on the maximum",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "EG15-fold-unread",
     "file": "src/systems/chargen.js",
-    "old": "+ renownMpOf(this) + foldMpOf(this);",
-    "new": "+ renownMpOf(this);",
+    "old": "      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this) + foldMpOf(this);",
+    "new": "      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this);",
     "why": "the live maximum never reads the Bearing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "EG15-save-keeps-the-bearing",
     "file": "src/systems/renownLayer.js",
-    "old": "const hp = renownHpOf(entity), mp = onlineMpOf(entity);",
-    "new": "const hp = renownHpOf(entity), mp = renownMpOf(entity);",
+    "old": "    mp = onlineMpOf(entity); // EG15: and the folds' magicka (the Battlemage's Bearing)",
+    "new": "    mp = renownMpOf(entity); // EG15: and the folds' magicka (the Battlemage's Bearing)",
     "why": "a save keeps the Bearing's magicka",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "EG15-magery-of-the-bearing",
     "file": "src/systems/passiveSpecials.js",
-    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));",
-    "new": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - (entity.renownMp | 0));",
+    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
+    "new": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - (entity.renownMp | 0)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
     "why": "the magery takes a third of the Bearing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -302,7 +302,7 @@
   {
     "name": "EG15-mana-uncapped",
     "file": "src/systems/playerHeal.js",
-    "old": "  if (whole > 0) entity.magicka = Math.min(Number.isFinite(entity.maxMagicka) ? entity.maxMagicka : entity.magicka + whole, entity.magicka + whole);",
+    "old": "  if (whole > 0)\n    entity.magicka = Math.min(\n      Number.isFinite(entity.maxMagicka) ? entity.maxMagicka : entity.magicka + whole,\n      entity.magicka + whole,\n    );",
     "new": "  if (whole > 0) entity.magicka = entity.magicka + whole;",
     "why": "magicka past the maximum",
     "tests": [
@@ -322,8 +322,8 @@
   {
     "name": "EG15-mana-reset-keeps",
     "file": "src/systems/playerHeal.js",
-    "old": "{ _healOwed = 0; _manaOwed = 0; }",
-    "new": "{ _healOwed = 0; }",
+    "old": "  _manaOwed = 0;\n}",
+    "new": "}",
     "why": "a test's reset keeps the last fraction",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -352,7 +352,7 @@
   {
     "name": "EG15-cast-throw-stops",
     "file": "src/systems/playerCasts.js",
-    "old": "  for (const fn of _listeners.values()) { try { fn(entity, spell, spent); } catch { /* a set is not the cast's problem */ } }",
+    "old": "  for (const fn of _listeners.values()) {\n    try {\n      fn(entity, spell, spent);\n    } catch {\n      /* a set is not the cast's problem */\n    }\n  }",
     "new": "  for (const fn of _listeners.values()) fn(entity, spell, spent);",
     "why": "a throwing listener stops the rest, and the cast",
     "tests": [
@@ -372,7 +372,7 @@
   {
     "name": "EG15-cast-unregistered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerCastListener(SIGIL_SETS_POWER, setCast);   // EG15\n",
+    "old": "registerPlayerCastListener(SIGIL_SETS_POWER, setCast); // EG15\n",
     "new": "",
     "why": "the Discipline never hears a cast",
     "tests": [
@@ -382,8 +382,8 @@
   {
     "name": "EG15-bearing-element-missed",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "for (const el of RESIST_ELEMENTS) add(m().resist, el, bearing.resist);",
-    "new": "for (const el of RESIST_ELEMENTS.slice(1)) add(m().resist, el, bearing.resist);",
+    "old": "    for (const el of RESIST_ELEMENTS) add(m().resist, el, bearing.resist);",
+    "new": "    for (const el of RESIST_ELEMENTS.slice(1)) add(m().resist, el, bearing.resist);",
     "why": "fire missed",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "EG15-bearing-magicka-lost",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": " m().magicka += bearing.magicka; }",
-    "new": " }",
+    "old": "    m().magicka += bearing.magicka;\n  }",
+    "new": "  }",
     "why": "no magicka",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "EG15-arm-never-spent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ pct += disc.armed * elementShare(target, _s.armed); if (keep) _s.armed = -1; }",
-    "new": "{ pct += disc.armed * elementShare(target, _s.armed); }",
+    "old": "    if (keep) _s.armed = -1;\n  } // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe",
+    "new": "  } // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe",
     "why": "every blow after a cast armed",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "EG15-the-share-whole",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "pct += disc.armed * elementShare(target, _s.armed);",
-    "new": "pct += disc.armed;",
+    "old": "    pct += disc.armed * elementShare(target, _s.armed);",
+    "new": "    pct += disc.armed;",
     "why": "an immune foe takes the element",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "EG15-fists-armed",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (disc && weapon && _s.armed >= 0)",
-    "new": "if (disc && _s.armed >= 0)",
+    "old": "  if (disc && weapon && _s.armed >= 0) {",
+    "new": "  if (disc && _s.armed >= 0) {",
     "why": "a fist spends the weapon's blow",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -442,8 +442,8 @@
   {
     "name": "EG15-the-wrong-flag",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "[EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]",
-    "new": "[EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Magic]",
+    "old": "  EFFECT_FLAGS.Poison,\n  EFFECT_FLAGS.Shock,",
+    "new": "  EFFECT_FLAGS.Shock,\n  EFFECT_FLAGS.Poison,",
     "why": "poison read as shock",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "EG15-element-unbounded",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (Number.isInteger(el) && el >= 0 && el < ELEMENT_FLAGS.length) _s.armed = el;",
-    "new": "if (Number.isInteger(el)) _s.armed = el;",
+    "old": "  if (Number.isInteger(el) && el >= 0 && el < ELEMENT_FLAGS.length) _s.armed = el;",
+    "new": "  if (Number.isInteger(el)) _s.armed = el;",
     "why": "an element outside the five arms",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "EG15-cost-not-kept",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.lastCost = Number.isFinite(cost) && cost > 0 ? cost : 0;\n",
-    "new": "",
+    "old": "  _s.lastCost = Number.isFinite(cost) && cost > 0 ? cost : 0;\n}",
+    "new": "}",
     "why": "the cost never kept",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "EG15-return-share",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (v) manaMine(attacker, (_s.lastCost * v.refund) / 100);",
-    "new": "if (v) manaMine(attacker, (_s.lastCost * v.armed) / 100);",
+    "old": "  if (v) manaMine(attacker, (_s.lastCost * v.refund) / 100);",
+    "new": "  if (v) manaMine(attacker, (_s.lastCost * v.armed) / 100);",
     "why": "the wrong share returned",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "EG15-return-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n",
-    "new": "",
+    "old": "  if (info?.blow !== false) returned(attacker); // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
+    "new": "  if (ranged(weapon)) return;",
     "why": "no blow returns anything",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "EG15-return-off-hand",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (info?.blow !== false) returned(attacker);",
-    "new": "  returned(attacker);",
+    "old": "  if (info?.blow !== false) returned(attacker); // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
+    "new": "  returned(attacker); // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
     "why": "an off-hand blow that does not count whole returns magicka - a pair of weapons doubles the per-blow charge TWO-HANDS (AUDIT 2) holds to a whole blow",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "EG15-shield-soaks-nothing",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.reprieve -= took;\n    d -= took;",
-    "new": "    _s.reprieve -= took;",
+    "old": "    _s.reprieve -= took;\n    d -= took;\n  }",
+    "new": "    _s.reprieve -= took;\n  }",
     "why": "a shield that soaks nothing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -532,8 +532,8 @@
   {
     "name": "EG15-shield-past-window",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (_s.reprieve > 0 && d > 0 && _now() < _s.reprieveUntil && tierOf(entity, 'panoply', 2))",
-    "new": "if (_s.reprieve > 0 && d > 0 && tierOf(entity, 'panoply', 2))",
+    "old": "  if (_s.reprieve > 0 && d > 0 && _now() < _s.reprieveUntil && tierOf(entity, 'panoply', 2)) {",
+    "new": "  if (_s.reprieve > 0 && d > 0 && tierOf(entity, 'panoply', 2)) {",
     "why": "a shield past its 6 s",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "EG15-reprieve-on-a-kill",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'panoply', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  const v = tierOf(entity, 'panoply', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || saved) return;",
+    "old": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * REPRIEVE_BELOW;",
+    "new": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || saved) return;\n  const line = max * REPRIEVE_BELOW;",
     "why": "a killing blow raises it",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -562,8 +562,8 @@
   {
     "name": "EG15-reprieve-saved",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'panoply', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  const v = tierOf(entity, 'panoply', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
+    "old": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * REPRIEVE_BELOW;",
+    "new": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;\n  const line = max * REPRIEVE_BELOW;",
     "why": "a saved killing blow raises it on top of the save",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -572,8 +572,8 @@
   {
     "name": "EG15-reprieve-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!recovered('reprieve', now)) return;\n",
-    "new": "",
+    "old": "  if (!recovered('reprieve', now)) return;\n  _s.reprieveReady = now + v.recover;",
+    "new": "  _s.reprieveReady = now + v.recover;",
     "why": "a shield every crossing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -582,8 +582,8 @@
   {
     "name": "EG15-reprieve-recovery-unset",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.reprieveReady = now + v.recover;\n",
-    "new": "",
+    "old": "  _s.reprieveReady = now + v.recover;\n  spireHold('reprieve');",
+    "new": "  spireHold('reprieve');",
     "why": "it never recovers",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -592,8 +592,8 @@
   {
     "name": "EG15-reprieve-points",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const points = Math.max(1, Math.round((max * v.shield) / 100));",
-    "new": "const points = Math.max(1, Math.round((max * v.shield) / 50));",
+    "old": "  const points = Math.max(1, Math.round((max * v.shield) / 100));",
+    "new": "  const points = Math.max(1, Math.round((max * v.shield) / 50));",
     "why": "the shield off its share",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -602,8 +602,8 @@
   {
     "name": "EG15-reprieve-window-long",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_s.reprieveUntil = now + REPRIEVE_SECONDS;",
-    "new": "_s.reprieveUntil = now + REPRIEVE_SECONDS + 1;",
+    "old": "  _s.reprieveUntil = now + REPRIEVE_SECONDS;",
+    "new": "  _s.reprieveUntil = now + REPRIEVE_SECONDS + 1;",
     "why": "a window past 6 s",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -612,8 +612,8 @@
   {
     "name": "EG15-states-shield-past-window",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "reprieve: now < _s.reprieveUntil ? _s.reprieve : 0,",
-    "new": "reprieve: _s.reprieve,",
+    "old": "    reprieve: now < _s.reprieveUntil ? _s.reprieve : 0,",
+    "new": "    reprieve: _s.reprieve,",
     "why": "the HUD shows a shield past its window",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -622,8 +622,8 @@
   {
     "name": "EG15-reprieve-chip-active",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (st.reprieve) out.push({ key: 'reprieve',",
-    "new": "    if (st.reprieve < 0) out.push({ key: 'reprieve',",
+    "old": "    if (st.reprieve)",
+    "new": "    if (st.reprieve < 0)",
     "why": "the shield never shown",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -632,8 +632,8 @@
   {
     "name": "EG15-reprieve-unsaid",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  say(shared ? `Battlemage's Reprieve! A ${points}-point shield, and ${shared} ${shared === 1 ? 'ally' : 'allies'} shielded.` : `Battlemage's Reprieve! A ${points}-point shield.`);\n",
-    "new": "",
+    "old": "  say(\n    shared\n      ? `Battlemage's Reprieve! A ${points}-point shield, and ${shared} ${shared === 1 ? 'ally' : 'allies'} shielded.`\n      : `Battlemage's Reprieve! A ${points}-point shield.`,\n  );\n  sound('reprieve');",
+    "new": "  sound('reprieve');",
     "why": "the shield unsaid",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -642,8 +642,8 @@
   {
     "name": "EG15-reprieve-unsounded",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  sound('reprieve');\n",
-    "new": "",
+    "old": "  sound('reprieve');\n}",
+    "new": "}",
     "why": "the shield unheard",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -652,8 +652,8 @@
   {
     "name": "EG15-allies-whole-shield",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "shieldAllies(Math.round(points * REPRIEVE_ALLY_SHARE))",
-    "new": "shieldAllies(points)",
+    "old": "  const shared = shieldAllies(Math.round(points * REPRIEVE_ALLY_SHARE));",
+    "new": "  const shared = shieldAllies(points);",
     "why": "each ally the whole shield",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -662,8 +662,8 @@
   {
     "name": "EG15-allies-reach",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_allies.near(REPRIEVE_METRES)",
-    "new": "_allies.near(15)",
+    "old": "    near = _allies.near(REPRIEVE_METRES) ?? [];",
+    "new": "    near = _allies.near(15) ?? [];",
     "why": "the allies asked for past 8 m",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -672,8 +672,8 @@
   {
     "name": "EG15-allies-count-all",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (_allies.shield(ally, reprieveBundle(points))) n++;",
-    "new": "_allies.shield(ally, reprieveBundle(points)); n++;",
+    "old": "      if (_allies.shield(ally, reprieveBundle(points))) n++;",
+    "new": "      _allies.shield(ally, reprieveBundle(points));\n      n++;",
     "why": "a cast that never left counted",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -682,7 +682,7 @@
   {
     "name": "EG15-ally-throw-stops",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  for (const ally of near) { try { if (_allies.shield(ally, reprieveBundle(points))) n++; } catch { /* one ally is not the shield's problem */ } }",
+    "old": "  for (const ally of near) {\n    try {\n      if (_allies.shield(ally, reprieveBundle(points))) n++;\n    } catch {\n      /* one ally is not the shield's problem */\n    }\n  }",
     "new": "  for (const ally of near) if (_allies.shield(ally, reprieveBundle(points))) n++;",
     "why": "one ally's throw stops the rest",
     "tests": [
@@ -692,7 +692,7 @@
   {
     "name": "EG15-near-throw",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  try { near = _allies.near(REPRIEVE_METRES) ?? []; } catch { return 0; }",
+    "old": "  try {\n    near = _allies.near(REPRIEVE_METRES) ?? [];\n  } catch {\n    return 0;\n  }",
     "new": "  near = _allies.near(REPRIEVE_METRES) ?? [];",
     "why": "a host's throw takes the Reprieve's word with it",
     "tests": [
@@ -702,8 +702,8 @@
   {
     "name": "EG15-rounds",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS) + 1,",
-    "new": "durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS),",
+    "old": "      durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS) + 1,",
+    "new": "      durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS),",
     "why": "an ally's shield ending before 6 s",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -712,8 +712,8 @@
   {
     "name": "EG15-byte",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "magnitudeBaseLow: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)), magnitudeBaseHigh",
-    "new": "magnitudeBaseLow: Math.max(1, Math.round(points) || 0), magnitudeBaseHigh",
+    "old": "      magnitudeBaseLow: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)),",
+    "new": "      magnitudeBaseLow: Math.max(1, Math.round(points) || 0),",
     "why": "a frame every door refuses",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "EG15-a-level-term",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,",
-    "new": "magnitudeLevelBase: 1, magnitudeLevelHigh: 1, magnitudePerLevel: 1,",
+    "old": "      magnitudeLevelBase: 0,\n      magnitudeLevelHigh: 0,",
+    "new": "      magnitudeLevelBase: 1,\n      magnitudeLevelHigh: 1,",
     "why": "a receiver's pool grown by the caster's level",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "EG15-door-half-open",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_allies = typeof door?.near === 'function' && typeof door?.shield === 'function' ?",
-    "new": "_allies = typeof door?.near === 'function' ?",
+    "old": "  _allies =\n    typeof door?.near === 'function' && typeof door?.shield === 'function'\n      ? { near: door.near, shield: door.shield }\n      : null;",
+    "new": "  _allies = typeof door?.near === 'function' ? { near: door.near, shield: door.shield } : null;",
     "why": "a door with no shield kept open",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -742,7 +742,7 @@
   {
     "name": "EG15-spire-ignored",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const spireHeld = (k) => { const room = _s.spireHeld.get(k); return room !== undefined && room === spireRoom(); };",
+    "old": "const spireHeld = (k) => {\n  const room = _s.spireHeld.get(k);\n  return room !== undefined && room === spireRoom();\n};",
     "new": "const spireHeld = (k) => !k;",
     "why": "no breach holds a death save",
     "tests": [
@@ -752,8 +752,8 @@
   {
     "name": "EG15-hold-outlives-breach",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return room !== undefined && room === spireRoom();",
-    "new": "return room !== undefined && spireRoom() != null;",
+    "old": "  return room !== undefined && room === spireRoom();",
+    "new": "  return room !== undefined && spireRoom() != null;",
     "why": "a hold in every breach",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -762,8 +762,8 @@
   {
     "name": "EG15-hold-never-set",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "function spireHold(k) { const room = spireRoom(); if (room != null) _s.spireHeld.set(k, room); else _s.spireHeld.delete(k); }",
-    "new": "function spireHold(k) { void k; }",
+    "old": "  const room = spireRoom();\n  if (room != null) _s.spireHeld.set(k, room);\n  else _s.spireHeld.delete(k);",
+    "new": "  void k;",
     "why": "nothing ever held",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -772,8 +772,8 @@
   {
     "name": "EG15-host-throw",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const spireRoom = () => { try { const r = _spireRoom(); return r == null || r === false ? null : r; } catch { return null; } };",
-    "new": "const spireRoom = () => { const r = _spireRoom(); return r == null || r === false ? null : r; };",
+    "old": "  try {\n    const r = _spireRoom();\n    return r == null || r === false ? null : r;\n  } catch {\n    return null;\n  }",
+    "new": "  const r = _spireRoom();\n  return r == null || r === false ? null : r;",
     "why": "a host's throw breaks the powers",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -782,8 +782,8 @@
   {
     "name": "EG15-false-is-a-breach",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return r == null || r === false ? null : r;",
-    "new": "return r == null ? null : r;",
+    "old": "    return r == null || r === false ? null : r;",
+    "new": "    return r == null ? null : r;",
     "why": "a host answering false holds as a breach",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -792,8 +792,8 @@
   {
     "name": "EG15-redoubt-not-recovering",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  for (const field of Object.values(SPIRE_SAVES)) _s[field] = 0;\n",
-    "new": "",
+    "old": "  for (const field of Object.values(SPIRE_SAVES)) _s[field] = 0;\n  _s.spireHeld.clear();",
+    "new": "  _s.spireHeld.clear();",
     "why": "a Redoubt inside the timer recovers nothing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -802,8 +802,8 @@
   {
     "name": "EG15-redoubt-holds-stay",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.spireHeld.clear();\n",
-    "new": "",
+    "old": "  _s.spireHeld.clear();\n  for (const fn of _spireRedoubts.values()) {",
+    "new": "  for (const fn of _spireRedoubts.values()) {",
     "why": "the Redoubt leaves the holds",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -812,8 +812,8 @@
   {
     "name": "EG15-round-says-held",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (now < r.at() || spireHeld(k)) continue;",
-    "new": "if (now < r.at()) continue;",
+    "old": "    if (now < r.at() || spireHeld(k)) continue; // EG15: a death save the Spire holds is said at its Redoubt",
+    "new": "    if (now < r.at()) continue; // EG15: a death save the Spire holds is said at its Redoubt",
     "why": "the round says a held save is ready",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -822,8 +822,8 @@
   {
     "name": "EG15-chip-not-redoubt",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const wait = (k, n) => (held.has(k) ? 'Redoubt' : time(n));",
-    "new": "const wait = (k, n) => time(n);",
+    "old": "  const wait = (k, n) => (held.has(k) ? 'Redoubt' : time(n));",
+    "new": "  const wait = (k, n) => time(n);",
     "why": "the chip never reads Redoubt",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -832,8 +832,8 @@
   {
     "name": "EG15-unbroken-chip-hidden",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "else if (st.unbrokenLeft || held.has('unbroken'))",
-    "new": "else if (st.unbrokenLeft)",
+    "old": "    else if (st.unbrokenLeft || held.has('unbroken'))",
+    "new": "    else if (st.unbrokenLeft)",
     "why": "a held Unbroken shows no chip",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -842,8 +842,8 @@
   {
     "name": "EG15-unbroken-on-its-timer",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!recovered('unbroken', now)) return false;   // EG15: and in the Spire, not before its next Redoubt\n",
-    "new": "  if (now < _s.unbrokenReady) return false;\n",
+    "old": "  if (!recovered('unbroken', now)) return false; // EG15: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.unbrokenReady) return false;",
     "why": "Unbroken a timer in the Spire",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -852,8 +852,8 @@
   {
     "name": "EG15-hour-on-its-timer",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!recovered('hour', now)) return false;   // EG15: and in the Spire, not before its next Redoubt\n",
-    "new": "  if (now < _s.hourReady) return false;\n",
+    "old": "  if (!recovered('hour', now)) return false; // EG15: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.hourReady) return false;",
     "why": "The Hour Turns a timer in the Spire",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -862,8 +862,8 @@
   {
     "name": "EG15-shed-on-its-timer",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!recovered('shed', now)) return;   // EG15: and in the Spire, not before its next Redoubt\n",
-    "new": "  if (now < _s.shedReady) return;\n",
+    "old": "  if (!recovered('shed', now)) return; // EG15: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.shedReady) return;",
     "why": "Shed Skin a timer in the Spire",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -872,8 +872,8 @@
   {
     "name": "EG15-unbroken-unheld",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  spireHold('unbroken');\n",
-    "new": "",
+    "old": "  spireHold('unbroken');\n  _s.halvedUntil = now + v.halved;",
+    "new": "  _s.halvedUntil = now + v.halved;",
     "why": "Unbroken never held",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -882,8 +882,8 @@
   {
     "name": "EG15-hour-unheld",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  spireHold('hour');\n",
-    "new": "",
+    "old": "  spireHold('hour');\n  _s.hourHeal = v.heal;",
+    "new": "  _s.hourHeal = v.heal;",
     "why": "The Hour Turns never held",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -892,8 +892,8 @@
   {
     "name": "EG15-shed-unheld",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  spireHold('shed');\n",
-    "new": "",
+    "old": "  spireHold('shed');\n  _s.recovering.add('shed');",
+    "new": "  _s.recovering.add('shed');",
     "why": "Shed Skin never held",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -902,8 +902,8 @@
   {
     "name": "EG15-reprieve-unheld",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  spireHold('reprieve');\n",
-    "new": "",
+    "old": "  spireHold('reprieve');\n  _s.recovering.add('reprieve');",
+    "new": "  _s.recovering.add('reprieve');",
     "why": "the Reprieve never held",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"

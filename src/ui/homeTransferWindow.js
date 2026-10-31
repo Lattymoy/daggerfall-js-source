@@ -25,15 +25,26 @@ export function openHomeTransfer(mapId, buildingKey, host, say, refusal, giving 
   const tell = typeof say === 'function' ? say : () => {};
   const word = typeof refusal === 'function' ? refusal : (c) => String(c ?? '');
   const mount = typeof show === 'function' ? show : () => {};
-  if (!host?.onlineHomes?.transfer) { tell(t('housing.transfer.signedOut', 'You are not signed in.')); return false; }
+  if (!host?.onlineHomes?.transfer) {
+    tell(t('housing.transfer.signedOut', 'You are not signed in.'));
+    return false;
+  }
   if (giving) {
-    mount(new ChoiceWindow({
-      lines: [t('housing.transfer.offerOut', 'An offer for this house is already out.')],
-      options: [
-        { code: 'KeyW', label: t('housing.transfer.withdraw', 'W - withdraw the offer'), action: () => { void send(host, { op: 'cancel', id: giving, mapId, buildingKey }, tell, word); } },
-        { code: 'Escape', label: t('housing.transfer.leaveIt', 'Esc - leave it'), action: () => {} },
-      ],
-    }));
+    mount(
+      new ChoiceWindow({
+        lines: [t('housing.transfer.offerOut', 'An offer for this house is already out.')],
+        options: [
+          {
+            code: 'KeyW',
+            label: t('housing.transfer.withdraw', 'W - withdraw the offer'),
+            action: () => {
+              void send(host, { op: 'cancel', id: giving, mapId, buildingKey }, tell, word);
+            },
+          },
+          { code: 'Escape', label: t('housing.transfer.leaveIt', 'Esc - leave it'), action: () => {} },
+        ],
+      }),
+    );
     return true;
   }
   askName(mapId, buildingKey, host, tell, word, mount);
@@ -49,75 +60,123 @@ export function answerHomeTransfer(mapId, buildingKey, home, accept, host, say, 
   const mount = typeof show === 'function' ? show : () => {};
   const price = Math.max(0, Math.floor(Number(offer.price) || 0));
   const kept = `${offer.keepDecor ? t('housing.transfer.furnishingsStay', 'The furnishings stay.') : t('housing.transfer.furnishingsGo', 'The furnishings do not stay.')}${offer.keepItems ? t('housing.transfer.goodsStay', ' The goods stay.') : ''}`;
-  const line = accept ? (price > 0 ? t('housing.transfer.takePriced', 'Take this house for {price} gold? {kept}', { price, kept }) : t('housing.transfer.takeFree', 'Take this house? {kept}', { kept })) : t('housing.transfer.declineAsk', 'Decline this house?');
+  const line = accept
+    ? price > 0
+      ? t('housing.transfer.takePriced', 'Take this house for {price} gold? {kept}', { price, kept })
+      : t('housing.transfer.takeFree', 'Take this house? {kept}', { kept })
+    : t('housing.transfer.declineAsk', 'Decline this house?');
   const op = accept ? 'accept' : 'decline';
-  mount(new ChoiceWindow({
-    lines: [line],
-    options: [
-      { code: 'KeyY', label: accept ? 'Y - accept' : 'Y - decline', action: () => { void send(host, { op, id: offer.id, mapId, buildingKey }, tell, word, accept ? { price, wallet } : null); } },
-      { code: 'Escape', label: t('housing.transfer.notNow', 'Esc - not now'), action: () => {} },
-    ],
-  }));
+  mount(
+    new ChoiceWindow({
+      lines: [line],
+      options: [
+        {
+          code: 'KeyY',
+          label: accept ? 'Y - accept' : 'Y - decline',
+          action: () => {
+            void send(host, { op, id: offer.id, mapId, buildingKey }, tell, word, accept ? { price, wallet } : null);
+          },
+        },
+        { code: 'Escape', label: t('housing.transfer.notNow', 'Esc - not now'), action: () => {} },
+      ],
+    }),
+  );
   return true;
 }
 
 function askName(mapId, buildingKey, host, tell, word, mount) {
-  mount(new InputMessageBoxWindow({
-    lines: [t('housing.transfer.title', 'Transfer this house')],
-    label: t('housing.transfer.toAccount', 'To account: '),
-    maxCharacters: 16,
-    onSubmit: (raw) => {
-      const to = String(raw ?? '').trim();
-      if (!NAME_RE.test(to)) { tell(t('housing.transfer.badName', 'That is not an account name.')); askName(mapId, buildingKey, host, tell, word, mount); return; }
-      askPrice(mapId, buildingKey, host, tell, word, mount, to);
-    },
-  }));
+  mount(
+    new InputMessageBoxWindow({
+      lines: [t('housing.transfer.title', 'Transfer this house')],
+      label: t('housing.transfer.toAccount', 'To account: '),
+      maxCharacters: 16,
+      onSubmit: (raw) => {
+        const to = String(raw ?? '').trim();
+        if (!NAME_RE.test(to)) {
+          tell(t('housing.transfer.badName', 'That is not an account name.'));
+          askName(mapId, buildingKey, host, tell, word, mount);
+          return;
+        }
+        askPrice(mapId, buildingKey, host, tell, word, mount, to);
+      },
+    }),
+  );
 }
 
 function askPrice(mapId, buildingKey, host, tell, word, mount, to) {
-  mount(new InputMessageBoxWindow({
-    lines: [t('housing.transfer.offerTo', 'Offer the house to {to}.', { to })],
-    label: t('housing.transfer.price', 'Price in gold (0 is a gift): '),
-    numeric: true,
-    maxCharacters: 9,
-    onSubmit: (raw) => {
-      const price = Math.max(0, Math.min(PRICE_MAX, Math.floor(Number(raw) || 0)));
-      askKeep(mapId, buildingKey, host, tell, word, mount, to, price);
-    },
-  }));
+  mount(
+    new InputMessageBoxWindow({
+      lines: [t('housing.transfer.offerTo', 'Offer the house to {to}.', { to })],
+      label: t('housing.transfer.price', 'Price in gold (0 is a gift): '),
+      numeric: true,
+      maxCharacters: 9,
+      onSubmit: (raw) => {
+        const price = Math.max(0, Math.min(PRICE_MAX, Math.floor(Number(raw) || 0)));
+        askKeep(mapId, buildingKey, host, tell, word, mount, to, price);
+      },
+    }),
+  );
 }
 
 function askKeep(mapId, buildingKey, host, tell, word, mount, to, price) {
-  mount(new ChoiceWindow({
-    lines: [t('housing.transfer.leaveFurnishings', 'Leave the furnishings with the house?')],
-    options: [
-      { code: 'KeyY', label: t('housing.transfer.yesLeave', 'Y - leave them'), action: () => askGoods(mapId, buildingKey, host, tell, word, mount, to, price) },
-      { code: 'KeyN', label: t('housing.transfer.noTake', 'N - take them back'), action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, false, false) },
-      { code: 'Escape', label: 'Esc - cancel', action: () => {} },
-    ],
-  }));
+  mount(
+    new ChoiceWindow({
+      lines: [t('housing.transfer.leaveFurnishings', 'Leave the furnishings with the house?')],
+      options: [
+        {
+          code: 'KeyY',
+          label: t('housing.transfer.yesLeave', 'Y - leave them'),
+          action: () => askGoods(mapId, buildingKey, host, tell, word, mount, to, price),
+        },
+        {
+          code: 'KeyN',
+          label: t('housing.transfer.noTake', 'N - take them back'),
+          action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, false, false),
+        },
+        { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+      ],
+    }),
+  );
 }
 
 function askGoods(mapId, buildingKey, host, tell, word, mount, to, price) {
-  mount(new ChoiceWindow({
-    lines: [t('housing.transfer.leaveGoods', 'Leave the goods in its chests and stalls?')],
-    options: [
-      { code: 'KeyY', label: t('housing.transfer.yesGoods', 'Y - leave the goods'), action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, true, true) },
-      { code: 'KeyN', label: t('housing.transfer.noGoods', 'N - keep the goods'), action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, true, false) },
-      { code: 'Escape', label: 'Esc - cancel', action: () => {} },
-    ],
-  }));
+  mount(
+    new ChoiceWindow({
+      lines: [t('housing.transfer.leaveGoods', 'Leave the goods in its chests and stalls?')],
+      options: [
+        {
+          code: 'KeyY',
+          label: t('housing.transfer.yesGoods', 'Y - leave the goods'),
+          action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, true, true),
+        },
+        {
+          code: 'KeyN',
+          label: t('housing.transfer.noGoods', 'N - keep the goods'),
+          action: () => confirm(mapId, buildingKey, host, tell, word, mount, to, price, true, false),
+        },
+        { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+      ],
+    }),
+  );
 }
 
 function confirm(mapId, buildingKey, host, tell, word, mount, to, price, keepDecor, keepItems) {
   const kept = `${keepDecor ? 'furnishings stay' : 'furnishings return'}${keepItems ? t('housing.transfer.goodsAlso', ', goods stay') : ''}`;
-  mount(new ChoiceWindow({
-    lines: [t('housing.transfer.confirm', 'Offer this house to {to} for {price} gold. {kept}.', { to, price, kept })],
-    options: [
-      { code: 'KeyY', label: t('housing.transfer.yesOffer', 'Y - offer it'), action: () => { void send(host, { op: 'offer', mapId, buildingKey, to, price, keepDecor, keepItems }, tell, word); } },
-      { code: 'Escape', label: 'Esc - cancel', action: () => {} },
-    ],
-  }));
+  mount(
+    new ChoiceWindow({
+      lines: [t('housing.transfer.confirm', 'Offer this house to {to} for {price} gold. {kept}.', { to, price, kept })],
+      options: [
+        {
+          code: 'KeyY',
+          label: t('housing.transfer.yesOffer', 'Y - offer it'),
+          action: () => {
+            void send(host, { op: 'offer', mapId, buildingKey, to, price, keepDecor, keepItems }, tell, word);
+          },
+        },
+        { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+      ],
+    }),
+  );
 }
 
 async function send(host, body, tell, word, pay = null) {
@@ -125,18 +184,24 @@ async function send(host, body, tell, word, pay = null) {
   const act = host.realmAct;
   const price = Math.max(0, Math.floor(Number(pay?.price) || 0));
   const wallet = pay?.wallet ?? null;
-  if (body.op === 'accept' && price > 0 && !(wallet?.gold >= price)) { tell(word('realm-gold')); return { ok: false, error: 'realm-gold' }; }
+  if (body.op === 'accept' && price > 0 && !(wallet?.gold >= price)) {
+    tell(word('realm-gold'));
+    return { ok: false, error: 'realm-gold' };
+  }
   const held = body.op === 'accept' && price > 0 ? walletReserve(wallet, price) : null;
   let r;
   try {
-    r = !act || body.op !== 'accept'
-      ? await homes.transfer(body)
-      : await act({
-        needsAnswer: true,
-        reserve: held?.reserve ?? null,
-        apply: (res) => { if (res?.repeat || res?.data?.repeat) held?.back(); },
-        call: (at) => homes.transfer({ ...body, realm: at }),
-      });
+    r =
+      !act || body.op !== 'accept'
+        ? await homes.transfer(body)
+        : await act({
+            needsAnswer: true,
+            reserve: held?.reserve ?? null,
+            apply: (res) => {
+              if (res?.repeat || res?.data?.repeat) held?.back();
+            },
+            call: (at) => homes.transfer({ ...body, realm: at }),
+          });
   } catch {
     tell(t('housing.transfer.unsent', 'The offer could not be sent.'));
     return { ok: false, error: 'server' };

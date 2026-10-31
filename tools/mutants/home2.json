@@ -2,8 +2,8 @@
   {
     "name": "HOME2-house5-left-out",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "|| t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
-    "new": "|| t === BUILDING_TYPES.House6;",
+    "old": "  return (\n    t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6\n  );",
+    "new": "  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House6;",
     "tests": [
       "test/systems/home2.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HOME2-house6-left-out",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "|| t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
-    "new": "|| t === BUILDING_TYPES.House5;",
+    "old": "  return (\n    t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6\n  );",
+    "new": "  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5;",
     "tests": [
       "test/systems/home2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HOME2-the-buy-row-first",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  { id: HOME_VERB.enter, label: 'Go in' },\n  { id: HOME_VERB.buy, label: armed ?",
-    "new": "  { id: HOME_VERB.buy, label: armed ?",
+    "old": "  { id: HOME_VERB.enter, label: 'Go in' },\n  { id: HOME_VERB.buy, label: armed ? `Click again to buy: ${gold(price)} gold` : `Buy it: ${gold(price)} gold` },",
+    "new": "  { id: HOME_VERB.buy, label: armed ? `Click again to buy: ${gold(price)} gold` : `Buy it: ${gold(price)} gold` },",
     "tests": [
       "test/systems/home2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HOME2-the-arm-unsaid",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "label: armed ? `Click again to buy: ${gold(price)} gold` : `Buy it: ${gold(price)} gold` },",
-    "new": "label: `Buy it: ${gold(price)} gold` },",
+    "old": "  { id: HOME_VERB.buy, label: armed ? `Click again to buy: ${gold(price)} gold` : `Buy it: ${gold(price)} gold` },",
+    "new": "  { id: HOME_VERB.buy, label: `Buy it: ${gold(price)} gold` },",
     "tests": [
       "test/systems/home2.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "HOME2-the-entry-stuck",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];",
-    "new": "HOME_ENTRIES[Math.max(0, HOME_ENTRIES.indexOf(entry))];",
+    "old": "export const homeNextEntry = (entry) =>\n  HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];",
+    "new": "export const homeNextEntry = (entry) => HOME_ENTRIES[Math.max(0, HOME_ENTRIES.indexOf(entry))];",
     "tests": [
       "test/systems/home2.test.js"
     ]

@@ -21,7 +21,7 @@
 //
 // PURE, and all three ends import it. Not a DFU member. Ledger A (SERPENT1).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from '../identityToken.js';
-import { bodyMeasureValid } from '../bossBody.js';   // INT14: the count's measure, carried
+import { bodyMeasureValid } from '../bossBody.js'; // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. */
 export const SERPENT_RECEIPT_V = 'l1';
@@ -45,7 +45,16 @@ const dec = new TextDecoder();
  */
 export function serpentReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
-  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.w !== undefined || c.y !== undefined || c.r !== undefined) return false;
+  if (
+    c.n !== undefined ||
+    c.k !== undefined ||
+    c.t !== undefined ||
+    c.o !== undefined ||
+    c.w !== undefined ||
+    c.y !== undefined ||
+    c.r !== undefined
+  )
+    return false;
   if (!Number.isSafeInteger(c.d) || c.d < 0) return false;
   if (typeof c.b !== 'string' || !BOSS_RE.test(c.b)) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
@@ -53,7 +62,7 @@ export function serpentReceiptValid(c) {
   if (!SERPENT_EARNED.includes(c.x)) return false;
   if (!Number.isInteger(c.h) || c.h < -1 || c.h > 4) return false;
   if (!Number.isSafeInteger(c.l) || c.l < 1 || c.l > SERPENT_RECEIPT_LV_MAX) return false;
-  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SERPENT_RECEIPT_TTL_S) return false;
   return true;
@@ -72,7 +81,9 @@ export async function mintSerpentReceipt({ d, b, s, c, x, h, l, m }, privateKey,
   if (!serpentReceiptValid(claims)) throw new TypeError('mintSerpentReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${SERPENT_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${SERPENT_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${SERPENT_RECEIPT_V}.${body}`)),
+  );
   return `${SERPENT_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -88,7 +99,11 @@ export function readSerpentReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return serpentReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -112,10 +127,18 @@ export async function verifySerpentReceipt(r, publicKey, { subtle, nowS, skewS =
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!serpentReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

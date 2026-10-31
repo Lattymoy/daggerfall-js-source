@@ -52,8 +52,8 @@
   {
     "name": "HOME-CROSSED-the-mark-dropped-by-the-client",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "            crossed: h.crossed === true,   // HOME-CROSSED: mine, carried in through customs - no sale\n",
-    "new": "",
+    "old": "              crossed: h.crossed === true, // HOME-CROSSED: mine, carried in through customs - no sale\n              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "new": "              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
     "tests": [
       "test/systems/online/fb0930_homecrossed.test.js"
     ]
@@ -97,8 +97,8 @@
   {
     "name": "HOME-CROSSED-the-sale-guard-gone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (selling.has(house)) return { ok: false, error: HOME_SALE_OUT };\n",
-    "new": "",
+    "old": "  if (selling.has(house)) return { ok: false, error: HOME_SALE_OUT };\n  selling.add(house);",
+    "new": "  selling.add(house);",
     "tests": [
       "test/systems/online/fb0930_homecrossed.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "HOME-CROSSED-the-sale-guard-never-let-go",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    return await sellOut(homes, { mapId, buildingKey, credit, realm });\n  } finally {\n    selling.delete(house);\n  }",
-    "new": "    return await sellOut(homes, { mapId, buildingKey, credit, realm });\n  } finally {\n    void house;\n  }",
+    "old": "    selling.delete(house);",
+    "new": "    void house;",
     "tests": [
       "test/systems/online/fb0930_homecrossed.test.js"
     ]

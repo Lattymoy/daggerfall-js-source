@@ -2,8 +2,8 @@
   {
     "name": "ARENA4b-TRUST-CL-UNCHECKED",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n",
-    "new": "",
+    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
+    "new": "  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA4b-TRUST-CL-FRACTION",
     "file": "src/net/identityToken.js",
-    "old": "export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) &&",
-    "new": "export const characterLevelIssuable = (cl) => Number.isFinite(cl) &&",
+    "old": "  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "  Number.isFinite(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA4b-TRUST-CL-UNMINTED",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
-    "new": "  void who?.cl;",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "new": "  void who?.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA4b-TRUST-CLAIM-BELIEVED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
-    "new": "cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : arenaLv(lv);",
+    "old": "  const level = Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
+    "new": "  const level =\n    Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : arenaLv(lv);",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA4b-TRUST-UNCAPPED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
-    "new": "return ladderVitalityAt(Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? Math.min(level, ladderLevelCap(tier)) : level);",
+    "old": "  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "  return ladderVitalityAt(\n    Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX\n      ? Math.min(level, ladderLevelCap(tier))\n      : level,\n  );",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA4b-TRUST-CAP-TIER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "for (const b of ARENA_LADDER_SPEC[tier] ?? []) for (const [m, l] of b)",
-    "new": "for (const b of ARENA_LADDER_SPEC[0] ?? []) for (const [m, l] of b)",
+    "old": "  for (const b of ARENA_LADDER_SPEC[tier] ?? [])",
+    "new": "  for (const b of ARENA_LADDER_SPEC[0] ?? [])",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA4b-TRUST-CAP-BEAST",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);",
-    "new": "top = Math.max(top, l ?? 1);",
+    "old": "  for (const b of ARENA_LADDER_SPEC[tier] ?? [])\n    for (const [m, l] of b) top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);",
+    "new": "  for (const b of ARENA_LADDER_SPEC[tier] ?? []) for (const [m, l] of b) top = Math.max(top, l ?? 1);",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA4b-TRUST-VITALITY-SLOPE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1,",
-    "new": "Math.min(PVE_HP_MAX, 25 + 25 * Math.max(1,",
+    "old": "  Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1, Math.floor(Number(level) || 1))));",
+    "new": "  Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 25 * Math.max(1, Math.floor(Number(level) || 1))));",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ARENA4b-TRUST-VITALITY-LEVEL",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "maxHealth: st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(x.cl, x.lv, st.tier),",
-    "new": "maxHealth: st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(null, x.lv, st.tier),",
+    "old": "      st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(x.cl, x.lv, st.tier),",
+    "new": "      st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(null, x.lv, st.tier),",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ARENA4b-TRUST-BRAIN-CL-LOST",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "lv: x.lv ?? 1, cl: x.cl ?? null,",
-    "new": "lv: x.lv ?? 1, cl: null,",
+    "old": "      cl: x.cl ?? null,",
+    "new": "      cl: null,",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "ARENA4b-TRUST-IN-HEALTH",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket",
-    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)), ...myBanner(), ...(bout.ticket",
+    "old": "                  ...myBanner(),",
+    "new": "                  mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)),\n                  ...myBanner(),",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]

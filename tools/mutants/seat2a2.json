@@ -32,8 +32,8 @@
   {
     "name": "SEAT2a2-law-throne-palace",
     "file": "src/net/siege/siegeRef.js",
-    "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
-    "new": "palace: Object.freeze({ banners: 3, holdS: 120 })",
+    "old": "  palace: Object.freeze({ banners: 2, holdS: 120 }),",
+    "new": "  palace: Object.freeze({ banners: 3, holdS: 120 }),",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SEAT2a2-law-throne-hold",
     "file": "src/net/siege/siegeRef.js",
-    "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
-    "new": "palace: Object.freeze({ banners: 2, holdS: 90 })",
+    "old": "  palace: Object.freeze({ banners: 2, holdS: 120 }),",
+    "new": "  palace: Object.freeze({ banners: 2, holdS: 90 }),",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "SEAT2a2-law-throne-crown",
     "file": "src/net/siege/siegeRef.js",
-    "old": "crown: Object.freeze({ banners: 3, holdS: 180 })",
-    "new": "crown: Object.freeze({ banners: 2, holdS: 180 })",
+    "old": "  crown: Object.freeze({ banners: 3, holdS: 180 }),",
+    "new": "  crown: Object.freeze({ banners: 2, holdS: 180 }),",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "SEAT2a2-law-lengths",
     "file": "src/net/siege/siegeRef.js",
-    "old": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-    "new": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 30 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
+    "old": "  crown: 45 * 60_000,",
+    "new": "  crown: 30 * 60_000,",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "SEAT2a2-law-field-order",
     "file": "src/net/siege/siegeRef.js",
-    "old": "camps: { attack: [sf[n + 1][0], sf[n + 1][1]], defend: [sf[n + 2][0], sf[n + 2][1]] } };",
-    "new": "camps: { attack: [sf[n + 2][0], sf[n + 2][1]], defend: [sf[n + 1][0], sf[n + 1][1]] } };",
+    "old": "    camps: { attack: [sf[n + 1][0], sf[n + 1][1]], defend: [sf[n + 2][0], sf[n + 2][1]] },",
+    "new": "    camps: { attack: [sf[n + 2][0], sf[n + 2][1]], defend: [sf[n + 1][0], sf[n + 1][1]] },",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "SEAT2a2-law-start-side",
     "file": "src/net/siege/siegeRef.js",
-    "old": "field.banners.map(() => ({ side: kind === 'tourney' ? null : 'defend', raise: 0, by: null })),",
-    "new": "field.banners.map(() => ({ side: null, raise: 0, by: null })),",
+    "old": "    banners:\n      kind === 'revolt'\n        ? []\n        : field.banners.map(() => ({ side: kind === 'tourney' ? null : 'defend', raise: 0, by: null })),",
+    "new": "    banners: kind === 'revolt' ? [] : field.banners.map(() => ({ side: null, raise: 0, by: null })),",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "SEAT2a2-law-tourney-length",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const length = kind === 'tourney' ? SIEGE_LENGTH_MS.tourney : kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
+    "old": "  const length =\n    kind === 'tourney'\n      ? SIEGE_LENGTH_MS.tourney\n      : kind === 'revolt'\n        ? SIEGE_LENGTH_MS.revolt\n        : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
     "new": "  const length = kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
     "tests": [
       "test/net/seat2a_battle.test.js",
@@ -172,8 +172,8 @@
   {
     "name": "SEAT2a2-law-stood",
     "file": "src/net/siege/siegeRef.js",
-    "old": "    f.stood = (f.stood ?? 0) + dt;",
-    "new": "    f.stood = (f.stood ?? 0) + 1;",
+    "old": "    f.stood = (f.stood ?? 0) + dt; // Honours' half (6.8): its seconds in the room since the start",
+    "new": "    f.stood = (f.stood ?? 0) + 1; // Honours' half (6.8): its seconds in the room since the start",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "SEAT2a2-law-freeze",
     "file": "src/net/siege/siegeRef.js",
-    "old": "    if (p.attack && p.defend) return;   // contested: frozen",
-    "new": "    if (p.attack && p.defend && false) return;   // contested: frozen",
+    "old": "    if (p.attack && p.defend) return; // contested: frozen",
+    "new": "    if (p.attack && p.defend && false) return; // contested: frozen",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "SEAT2a2-law-reset",
     "file": "src/net/siege/siegeRef.js",
-    "old": "      if (bn.by !== alone) { bn.by = alone; bn.raise = 0; }",
-    "new": "      if (bn.by !== alone) { bn.by = alone; }",
+    "old": "        bn.raise = 0;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "SEAT2a2-law-throne-tourney",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (b.kind === 'siege') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
-    "new": "  if (b.kind !== 'nothing') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
+    "old": "  if (b.kind === 'siege') {",
+    "new": "  if (b.kind !== 'nothing') {",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "SEAT2a2-law-forfeit-kind",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
-    "new": "  if (!b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
+    "old": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)\n    return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
+    "new": "  if (!b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS) return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "SEAT2a2-law-absent",
     "file": "src/net/siege/siegeRef.js",
-    "old": "return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
-    "new": "return end(b, 'forfeit', out);",
+    "old": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)\n    return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
+    "new": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS) return end(b, 'forfeit', out);",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "SEAT2a2-law-honour-felled",
     "file": "src/net/siege/siegeRef.js",
-    "old": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 0 ||",
-    "new": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 1 ||",
+    "old": "  b.kind !== 'revolt' && ((f.felled ?? 0) > 0 || (f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
+    "new": "  b.kind !== 'revolt' && ((f.felled ?? 0) > 1 || (f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "SEAT2a2-law-honour-half",
     "file": "src/net/siege/siegeRef.js",
-    "old": "(f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
-    "new": "(f.stood ?? 0) * 1000 > (Math.max(b.at, b.startMs) - b.startMs) / 2);",
+    "old": "  b.kind !== 'revolt' && ((f.felled ?? 0) > 0 || (f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
+    "new": "  b.kind !== 'revolt' && ((f.felled ?? 0) > 0 || (f.stood ?? 0) * 1000 > (Math.max(b.at, b.startMs) - b.startMs) / 2);",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "SEAT2a2-law-camp-y",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  return { x: c[0], y: Number.isFinite(was?.y) ? was.y : 0, z: c[1],",
-    "new": "  return { x: c[0], y: 0, z: c[1],",
+    "old": "  return {\n    x: c[0],\n    y: Number.isFinite(was?.y) ? was.y : 0,\n    z: c[1],\n    yaw: Number.isFinite(was?.yaw) ? was.yaw : 0,\n    pitch: 0,\n  };",
+    "new": "  return { x: c[0], y: 0, z: c[1], yaw: Number.isFinite(was?.yaw) ? was.yaw : 0, pitch: 0 };",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "SEAT2a2-law-frame-floor",
     "file": "src/net/siege/siegeRef.js",
-    "old": "th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier]",
-    "new": "th: Math.min(Math.round(b.throne), (SIEGE_THRONE[b.tier]",
+    "old": "  th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier] ?? SIEGE_THRONE.palace).holdS),",
+    "new": "  th: Math.min(Math.round(b.throne), (SIEGE_THRONE[b.tier] ?? SIEGE_THRONE.palace).holdS),",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "SEAT2a2-pass-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'siege',\n  'stake',",
+    "new": "  'stake',",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -412,7 +412,7 @@
   {
     "name": "SEAT2a2-pass-sk",
     "file": "src/net/identityToken.js",
-    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)\n    return false;",
     "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
     "tests": [
       "test/net/seat2a_battle.test.js",
@@ -422,7 +422,7 @@
   {
     "name": "SEAT2a2-pass-sw",
     "file": "src/net/identityToken.js",
-    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)\n    return false;",
     "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw)) return false;",
     "tests": [
       "test/net/seat2a_battle.test.js",
@@ -442,8 +442,8 @@
   {
     "name": "SEAT2a2-pass-tier",
     "file": "src/net/identityToken.js",
-    "old": "(c.st !== 'palace' && c.st !== 'crown')",
-    "new": "(c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle')",
+    "old": "    (c.st !== 'palace' && c.st !== 'crown') ||",
+    "new": "    (c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle') ||",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "SEAT2a2-pass-se",
     "file": "src/net/identityToken.js",
-    "old": "c.se <= c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
-    "new": "c.se < c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
+    "old": "    c.se <= c.sb ||",
+    "new": "    c.se < c.sb ||",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "SEAT2a2-rc-foreign",
     "file": "src/net/siege/siegeReceipt.js",
-    "old": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l'];",
-    "new": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'l'];",
+    "old": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l']; // CROWN1 part two: and a bout's loser",
+    "new": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'l']; // CROWN1 part two: and a bout's loser",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -513,7 +513,7 @@
     "name": "SEAT2a2-rc-flags",
     "file": "src/net/siege/siegeReceipt.js",
     "old": "  if ((c.a !== 0 && c.a !== 1) || (c.h !== 0 && c.h !== 1)) return false;",
-    "new": "  if ((c.a !== 0 && c.a !== 1)) return false;",
+    "new": "  if (c.a !== 0 && c.a !== 1) return false;",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"

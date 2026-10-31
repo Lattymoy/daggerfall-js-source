@@ -56,8 +56,8 @@
   {
     "name": "SD20C-V2-the-band-turned-to-the-eye",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "  if (uFlat == 1) across = vec3(along.z, 0.0, -along.x);   // the band: level across the floor\n",
-    "new": "",
+    "old": "  if (uFlat == 1) across = vec3(along.z, 0.0, -along.x);   // the band: level across the floor\n  float l = length(across);",
+    "new": "  float l = length(across);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD20C-V2-the-band-reversed",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "toDungeon(d.f0, g.f0); toDungeon(d.f1, g.f1);",
-    "new": "toDungeon(d.f0, g.f1); toDungeon(d.f1, g.f0);",
+    "old": "    toDungeon(d.f0, g.f0);\n    toDungeon(d.f1, g.f1);",
+    "new": "    toDungeon(d.f0, g.f1);\n    toDungeon(d.f1, g.f0);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20C-V2-precisions-differ",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "uniform highp int uFlat;",
-    "new": "uniform int uFlat;",
+    "old": "uniform highp int uFlat;   // highp: the vertex stage's own (a uniform's precision is one across the program)",
+    "new": "uniform int uFlat;   // highp: the vertex stage's own (a uniform's precision is one across the program)",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD20C-V6-turned-in-a-frame",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "    else if (facing[k] !== p.yw) facing[k] = p.yw = sdTurnToward(facing[k], p.yw, dt);",
-    "new": "    else facing[k] = p.yw;",
+    "old": "    else if (facing[k] !== p.yw) facing[k] = p.yw = sdTurnToward(facing[k], p.yw, dt); // a body at rest calls nothing (AUDIT SD II, L2 F9)",
+    "new": "    else facing[k] = p.yw; // a body at rest calls nothing (AUDIT SD II, L2 F9)",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD20C-V6-the-long-way-round",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "  const d = wrapYaw(to - was), step = rate * Math.max(0, dt || 0);",
-    "new": "  const d = to - was, step = rate * Math.max(0, dt || 0);",
+    "old": "  const d = wrapYaw(to - was),",
+    "new": "  const d = to - was,",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD20C-V12-the-bearing-unread",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "ct = Math.cos(yaw - Math.PI / 2), st = Math.sin(yaw - Math.PI / 2);",
-    "new": "ct = Math.cos(-Math.PI / 2), st = Math.sin(-Math.PI / 2);",
+    "old": "    ct = Math.cos(yaw - Math.PI / 2),\n    st = Math.sin(yaw - Math.PI / 2);",
+    "new": "    ct = Math.cos(-Math.PI / 2),\n    st = Math.sin(-Math.PI / 2);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD20C-V12-spun-backward",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "const c = Math.cos(-spin), s = Math.sin(-spin), ct",
-    "new": "const c = Math.cos(spin), s = Math.sin(spin), ct",
+    "old": "  const c = Math.cos(-spin),\n    s = Math.sin(-spin),",
+    "new": "  const c = Math.cos(spin),\n    s = Math.sin(spin),",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD20C-V12-the-flight-bearing-off",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "      g.yaw = Math.atan2(q[0] - fx, q[1] - fz);",
-    "new": "      g.yaw = Math.atan2(q[1] - fz, q[0] - fx);",
+    "old": "      g.yaw = Math.atan2(q[0] - fx, q[1] - fz); // AUDIT SD III (V12): its flight's bearing",
+    "new": "      g.yaw = Math.atan2(q[1] - fz, q[0] - fx); // AUDIT SD III (V12): its flight's bearing",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD20C-V12-the-set-unturned",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw);",
-    "new": "gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix);",
+    "old": "        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw);",
+    "new": "        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD20C-V14-the-beams-end-reversed",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "  float ends = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.985, 1.0, y));",
-    "new": "  float ends = smoothstep(0.0, 0.015, y) * smoothstep(1.0, 0.985, y);",
+    "old": "  float ends = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.985, 1.0, y));   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL",
+    "new": "  float ends = smoothstep(0.0, 0.015, y) * smoothstep(1.0, 0.985, y);   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD20C-V14-the-clock-ring-reversed",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "float r = length(p), seen = smoothstep(-0.06, 0.02, e);",
-    "new": "float r = length(p), seen = smoothstep(0.02, -0.06, e);",
+    "old": "    float r = length(p), seen = smoothstep(-0.06, 0.02, e);",
+    "new": "    float r = length(p), seen = smoothstep(0.02, -0.06, e);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD20C-V15-a-list-at-nought",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "(!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array(",
-    "new": "(false ? rgb : new Float32Array(",
+    "old": "  !(w > 0) && rgb instanceof Float32Array\n    ? rgb\n    : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));",
+    "new": "  false ? rgb : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SD20C-V5-the-sweep-arc",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "  const u = H.sw * (r - Math.PI) + H.arc / 2;\n  if (!(u + half >= H.a0",
-    "new": "  const u = H.sw * (r - Math.PI) + H.arc;\n  if (!(u + half >= H.a0",
+    "old": "  if (r < 0) r += 2 * Math.PI;\n  const u = H.sw * (r - Math.PI) + H.arc / 2;",
+    "new": "  if (r < 0) r += 2 * Math.PI;\n  const u = H.sw * (r - Math.PI) + H.arc;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SD20C-V5-the-sweep-width",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "out.w2 = S.width / 2;",
-    "new": "out.w2 = S.width;",
+    "old": "  out.w2 = S.width / 2;",
+    "new": "  out.w2 = S.width;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SD20C-V5-a-slab-of-a-pillar",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "      const a = (pz - w - oz) / dz, b = (pz + w - oz) / dz;",
-    "new": "      const a = (pz - w - oz) / dz, b = (pz + 2 * w - oz) / dz;",
+    "old": "        b = (pz + w - oz) / dz;",
+    "new": "        b = (pz + 2 * w - oz) / dz;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SD20C-V5-a-step-of-the-marks-walk",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "      if (!inside) { bm = m; bx = dx; bz = dz; break; }",
-    "new": "      if (!inside) { bm = m + SD_PERIL_STEP_M; bx = dx; bz = dz; break; }",
+    "old": "      if (!inside) {\n        bm = m;\n        bx = dx;",
+    "new": "      if (!inside) {\n        bm = m + SD_PERIL_STEP_M;\n        bx = dx;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SD20C-V5-the-arena-unsquared",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad);",
-    "new": "x * x + z * z <= SD_ARENA.r + pad;",
+    "old": "export const inArena = (x, z, pad = 0) =>\n  Number.isFinite(x) && Number.isFinite(z) && x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad); // AUDIT SD III (V5): squared - Math.hypot's builtin boxes its numbers, and a frame asks it",
+    "new": "export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && x * x + z * z <= SD_ARENA.r + pad; // AUDIT SD III (V5): squared - Math.hypot's builtin boxes its numbers, and a frame asks it",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SD20C-V5-the-keep-made",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  const d = Math.sqrt(x * x + z * z), o = out ?? [0, 0];",
-    "new": "  const d = Math.sqrt(x * x + z * z), o = [0, 0];",
+    "old": "    o = out ?? [0, 0];",
+    "new": "    o = [0, 0];",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "SD20C-V5-the-marks-walk-stepped",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "    for (let k = 1; k <= PERIL_STEPS; k++) {\n      const m = k * SD_PERIL_STEP_M;\n      if (m >= bm) break;\n      const x = fx + dx * m, z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
-    "new": "    for (let m = SD_PERIL_STEP_M; m <= SD_PERIL_REACH_M && m < bm; m += SD_PERIL_STEP_M) {\n      const x = fx + dx * m, z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
+    "old": "  for (let b = 0; b < SD_PERIL_BEARINGS; b++) {\n    const a = (b / SD_PERIL_BEARINGS) * Math.PI * 2,\n      dx = Math.sin(a),\n      dz = Math.cos(a);\n    for (let k = 1; k <= PERIL_STEPS; k++) {\n      const m = k * SD_PERIL_STEP_M;\n      if (m >= bm) break;\n      const x = fx + dx * m,\n        z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
+    "new": "  for (let b = 0; b < SD_PERIL_BEARINGS; b++) {\n    const a = (b / SD_PERIL_BEARINGS) * Math.PI * 2,\n      dx = Math.sin(a),\n      dz = Math.cos(a);\n    for (let m = SD_PERIL_STEP_M; m <= SD_PERIL_REACH_M && m < bm; m += SD_PERIL_STEP_M) {\n      const x = fx + dx * m,\n        z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SD20C-V5-a-body-made",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "  const o = out ?? [0, 0];\n  if (!B) {",
-    "new": "  const o = [0, 0];\n  if (!B) {",
+    "old": "  const o = out ?? [0, 0];",
+    "new": "  const o = [0, 0];",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SD20C-V14-the-veils-sparks-reversed",
     "file": "src/render/gate/gateVeil.js",
-    "old": "(1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5)))",
-    "new": "smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5))",
+    "old": "  float spark = step(0.993, vh(floor(sc))) * (1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5))) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);",
+    "new": "  float spark = step(0.993, vh(floor(sc))) * smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5)) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SD20C-V14-the-sun-babys-horns-reversed",
     "file": "src/world/sunbabySky.js",
-    "old": "(0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc)))",
-    "new": "(0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc))",
+    "old": "      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc))), evil * sbFill(horn, px));",
+    "new": "      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc)), evil * sbFill(horn, px));",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

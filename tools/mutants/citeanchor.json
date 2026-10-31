@@ -12,8 +12,8 @@
   {
     "name": "CITEANCHOR-edge-no-whitespace",
     "file": "tools/citeAnchor.mjs",
-    "old": "  return /\\s/.test(raw[e]) || (/[\\w$]/.test(raw[e - 1])",
-    "new": "  return (/[\\w$]/.test(raw[e - 1])",
+    "old": "    /\\s/.test(raw[e]) ||\n    (/[\\w$]/.test(raw[e - 1]) && /[([)\\]},;:]/.test(raw[e])) ||\n    (/[)\\]]/.test(raw[e - 1]) && !/[\\w$]/.test(raw[e]))",
+    "new": "    (/[\\w$]/.test(raw[e - 1]) && /[([)\\]},;:]/.test(raw[e])) || (/[)\\]]/.test(raw[e - 1]) && !/[\\w$]/.test(raw[e]))",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CITEANCHOR-edge-no-callee",
     "file": "tools/citeAnchor.mjs",
-    "old": "/[([)\\]},;:]/.test(raw[e])",
-    "new": "/[)\\]},;:]/.test(raw[e])",
+    "old": "    (/[\\w$]/.test(raw[e - 1]) && /[([)\\]},;:]/.test(raw[e])) ||",
+    "new": "    (/[\\w$]/.test(raw[e - 1]) && /[)\\]},;:]/.test(raw[e])) ||",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CITEANCHOR-edge-no-close",
     "file": "tools/citeAnchor.mjs",
-    "old": " || (/[)\\]]/.test(raw[e - 1]) && !/[\\w$]/.test(raw[e]));",
-    "new": ";",
+    "old": "  return (\n    /\\s/.test(raw[e]) ||\n    (/[\\w$]/.test(raw[e - 1]) && /[([)\\]},;:]/.test(raw[e])) ||\n    (/[)\\]]/.test(raw[e - 1]) && !/[\\w$]/.test(raw[e]))\n  );",
+    "new": "  return /\\s/.test(raw[e]) || (/[\\w$]/.test(raw[e - 1]) && /[([)\\]},;:]/.test(raw[e]));",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CITEANCHOR-edge-inside-tokens",
     "file": "tools/citeAnchor.mjs",
-    "old": "  return /\\s/.test(raw[e]) || (/[\\w$]/.test(raw[e - 1])",
-    "new": "  return !(/[\\w$]/.test(raw[e - 1]) && /[\\w$]/.test(raw[e])) || (/[\\w$]/.test(raw[e - 1])",
+    "old": "    /\\s/.test(raw[e]) ||",
+    "new": "    !(/[\\w$]/.test(raw[e - 1]) && /[\\w$]/.test(raw[e])) ||",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -62,7 +62,7 @@
   {
     "name": "CITEANCHOR-no-avoid",
     "file": "tools/citeAnchor.mjs",
-    "old": "  return (avoid != null ? quoteRun(fileText, lines, n, forbid, avoid, braces) : null) ?? quoteRun(fileText, lines, n, forbid, null, braces);",
+    "old": "  return (\n    (avoid != null ? quoteRun(fileText, lines, n, forbid, avoid, braces) : null) ??\n    quoteRun(fileText, lines, n, forbid, null, braces)\n  );",
     "new": "  return quoteRun(fileText, lines, n, forbid, null, braces);",
     "tests": [
       "test/tooling/citeanchor.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "CITEANCHOR-after-twin-ignored",
     "file": "tools/citeAnchor.mjs",
-    "old": "if (afterText(lines[j - 1], line) === line) { if (j === n) return { quote: q, line }; break; }",
-    "new": "if (afterText(lines[j - 1], line) === line && j === n) return { quote: q, line };",
+    "old": "      if (afterText(lines[j - 1], line) === line) {\n        if (j === n) return { quote: q, line };\n        break;\n      }",
+    "new": "      if (afterText(lines[j - 1], line) === line && j === n) return { quote: q, line };",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CITEANCHOR-resolve-ambiguous-passes",
     "file": "tools/citeAnchor.mjs",
-    "old": "  if (fileText.indexOf(quote, at + 1) >= 0) return { error: 'ambiguous' };\n",
-    "new": "",
+    "old": "  if (fileText.indexOf(quote, at + 1) >= 0) return { error: 'ambiguous' };\n  const k = fileText.slice(0, at).split('\\n').length;",
+    "new": "  const k = fileText.slice(0, at).split('\\n').length;",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "CITEANCHOR-row-takes-a-pipe",
     "file": "tools/citeAnchor.mjs",
-    "old": "${/^\\s*\\|/.test(line) ? '|\\\\|' : ''}",
-    "new": "",
+    "old": "    return new RegExp(`[\"\\`\\\\\\\\]${/^\\s*\\|/.test(line) ? '|\\\\|' : ''}${inSpan ? '' : '|\\\\*'}`);",
+    "new": "    return new RegExp(`[\"\\`\\\\\\\\]${inSpan ? '' : '|\\\\*'}`);",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -123,7 +123,7 @@
     "name": "CITEANCHOR-span-not-carried",
     "file": "tools/citeAnchor.mjs",
     "old": "    const inSpan = ((open ? 1 : 0) + (line.slice(0, col).match(/`/g) ?? []).length) % 2 === 1;",
-    "new": "    const inSpan = ((line.slice(0, col).match(/`/g) ?? []).length) % 2 === 1;",
+    "new": "    const inSpan = (line.slice(0, col).match(/`/g) ?? []).length % 2 === 1;",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "CITEANCHOR-blank-keeps-span",
     "file": "tools/citeAnchor.mjs",
-    "old": "    if (!l.trim()) { out.push(false); open = false; continue; }",
-    "new": "    if (!l.trim()) { out.push(open); continue; }",
+    "old": "      out.push(false);\n      open = false;",
+    "new": "      out.push(open);",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "CITEANCHOR-fence-not-code",
     "file": "tools/citeAnchor.mjs",
-    "old": "    if (/^\\s*```/.test(l)) { out.push(true); fence = !fence; open = false; continue; }\n    if (fence) { out.push(true); continue; }\n",
-    "new": "",
+    "old": "    if (/^\\s*```/.test(l)) {\n      out.push(true);\n      fence = !fence;\n      open = false;\n      continue;\n    }\n    if (fence) {\n      out.push(true);\n      continue;\n    }\n    if (!l.trim()) {",
+    "new": "    if (!l.trim()) {",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "CITEANCHOR-strike-unpaired-not-held",
     "file": "tools/citeAnchor.mjs",
-    "old": "  if (at.length % 2) return null;\n",
-    "new": "",
+    "old": "  if (at.length % 2) return null;\n  const out = [];",
+    "new": "  const out = [];",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -192,7 +192,7 @@
   {
     "name": "CITEANCHOR-chain-glued",
     "file": "tools/citeAnchor.mjs",
-    "old": "        if (before === false && it.sep.startsWith('/')) { push({ to: null, status: 'chain', file: r.file, n: it.n }); continue; }",
+    "old": "        if (before === false && it.sep.startsWith('/')) {\n          push({ to: null, status: 'chain', file: r.file, n: it.n });\n          continue;\n        }",
     "new": "",
     "tests": [
       "test/tooling/citeanchor.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "CITEANCHOR-launcher-not-foreign",
     "file": "tools/citeAnchor.mjs",
-    "old": "  ['bible/10-UI/Settings-Screen-Spec.md', 'launcher.js'],\n",
-    "new": "",
+    "old": "  ['bible/10-UI/Settings-Screen-Spec.md', 'launcher.js'],\n]);",
+    "new": "]);",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "CITEANCHOR-continuation-slash-is-root",
     "file": "tools/citeAnchor.mjs",
-    "old": "    const p = spelled.replace(/^\\/+/, '').replace(/^(\\.\\.?\\/)+/, '');",
-    "new": "    const p = spelled.replace(/^(\\.\\.?\\/)+/, '');",
+    "old": "    const p = spelled.replace(/^\\/+/, '').replace(/^(\\.\\.?\\/)+/, ''); // a continuation's slash (`a\"/world.js:\"b\"`) is no root",
+    "new": "    const p = spelled.replace(/^(\\.\\.?\\/)+/, ''); // a continuation's slash (`a\"/world.js:\"b\"`) is no root",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "CITEANCHOR-unclear-other-file-ignored",
     "file": "tools/citeAnchor.mjs",
-    "old": "  for (const m of between.matchAll(NAMED_FILE)) if (m[1] !== own) return false;\n",
-    "new": "",
+    "old": "  for (const m of between.matchAll(NAMED_FILE)) if (m[1] !== own) return false;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "CITEANCHOR-unclear-own-file-counts",
     "file": "tools/citeAnchor.mjs",
-    "old": "if (m[1] !== own) return false;",
-    "new": "return false;",
+    "old": "  for (const m of between.matchAll(NAMED_FILE)) if (m[1] !== own) return false;",
+    "new": "  for (const m of between.matchAll(NAMED_FILE)) return false;",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "CITEANCHOR-unclear-unwired",
     "file": "tools/citeAnchor.mjs",
-    "old": "        if (!headOwns(l.slice(from, it.col), r.file)) { push({ to: null, status: 'unclear', file: r.file, n: it.n }); continue; }   // a head's own slice is empty\n",
-    "new": "",
+    "old": "        if (!headOwns(l.slice(from, it.col), r.file)) {\n          push({ to: null, status: 'unclear', file: r.file, n: it.n });\n          continue;\n        } // a head's own slice is empty\n        // a slash's continuation after a number that stays a number would read as that number's directory",
+    "new": "        // a slash's continuation after a number that stays a number would read as that number's directory",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "CITEANCHOR-brace-uncounted",
     "file": "tools/citeAnchor.mjs",
-    "old": "    else if (braces && c === '{') brace++;\n    else if (braces && c === '}' && --brace < 0) return false;\n",
-    "new": "",
+    "old": "    else if (braces && c === '{') brace++;\n    else if (braces && c === '}' && --brace < 0) return false;\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "CITEANCHOR-opener-quote-balanced",
     "file": "tools/citeAnchor.mjs",
-    "old": "(open ? balanced(q + '}', true) : balanced(q, braces))",
-    "new": "balanced(q, braces)",
+    "old": "      if (\n        (open ? balanced(q + '}', true) : balanced(q, braces)) &&\n        standing(fileText, q) === 1 &&\n        (absentFrom == null || !absentFrom.includes(q))\n      )",
+    "new": "      if (balanced(q, braces) && standing(fileText, q) === 1 && (absentFrom == null || !absentFrom.includes(q)))",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "CITEANCHOR-chain-not-walked",
     "file": "tools/citeAnchor.mjs",
-    "old": "k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null",
-    "new": "k = null",
+    "old": "    for (let k = openerOf(lines, n); k != null; k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null) {",
+    "new": "    for (let k = openerOf(lines, n); k != null; k = null) {",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -402,8 +402,8 @@
   {
     "name": "CITEANCHOR-closer-any-line",
     "file": "tools/citeAnchor.mjs",
-    "old": "    if (!balanced('{' + t, true)) return null;\n",
-    "new": "",
+    "old": "    if (!balanced('{' + t, true)) return null;\n    for (let k = openerOf(lines, n); k != null; k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null) {",
+    "new": "    for (let k = openerOf(lines, n); k != null; k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null) {",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "CITEANCHOR-takes-braces-free",
     "file": "tools/citeAnchor.mjs",
-    "old": "quoteFor(text, lines, k, forbid, null, braces) != null",
-    "new": "quoteFor(text, lines, k, forbid) != null",
+    "old": "    (quoteFor(text, lines, k, forbid, null, braces) != null || afterFor(text, lines, k, forbid, null, braces) != null); // whether a line takes one at all: `avoid` only chooses among them",
+    "new": "    (quoteFor(text, lines, k, forbid) != null || afterFor(text, lines, k, forbid, null, braces) != null); // whether a line takes one at all: `avoid` only chooses among them",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "CITEANCHOR-braces-unwired-settle",
     "file": "tools/citeAnchor.mjs",
-    "old": ", a.file === a.doc ? null : maskAnchors(texts.get(a.doc)), bracesAt(a.doc));",
-    "new": ", a.file === a.doc ? null : maskAnchors(texts.get(a.doc)));",
+    "old": "        bracesAt(a.doc),\n      );",
+    "new": "      );",
     "tests": [
       "test/tooling/citeanchor.test.js"
     ],

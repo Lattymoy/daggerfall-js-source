@@ -394,8 +394,8 @@
   {
     "name": "LOOT16-the-kit-never-cursed",
     "file": "src/systems/foeLootCap.js",
-    "old": "  cursePass(kit, opts.rolls ?? Math.random);",
-    "new": "  void cursePass;",
+    "old": "  cursePass(kit, opts.rolls ?? Math.random); // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it",
+    "new": "  void cursePass; // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "LOOT16-the-wire-unchecked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one\n",
-    "new": "",
+    "old": "  if (!validCurse(out)) return null; // LOOT16: a curse only as a door's pass makes one\n  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one",
+    "new": "  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "LOOT16-a-price-for-nothing",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (!isCursed(item)) return null;\n  const value",
-    "new": "  const value",
+    "old": "  if (!isCursed(item)) return null;\n  const value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
+    "new": "  const value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -448,7 +448,7 @@
   {
     "name": "LOOT16-the-temple-sees-the-unknown",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));",
+    "old": "export const cursedKnown = (items) =>\n  (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));",
     "new": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it));",
     "tests": [
       "test/systems/loot16_curses.test.js"
@@ -484,8 +484,8 @@
   {
     "name": "LOOT16-lift-worn",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (isEquipped(item)) return 'worn';\n",
-    "new": "",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';",
+    "new": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "LOOT16-lift-unpaid-check",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';\n",
-    "new": "",
+    "old": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "LOOT16-the-mark-stays",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  delete item.cursed;\n",
-    "new": "",
+    "old": "  delete item.cursed;\n  deductGold(player, price);",
+    "new": "  deductGold(player, price);",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "LOOT16-lifted-for-free",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  deductGold(player, price);\n",
-    "new": "",
+    "old": "  deductGold(player, price);\n  return { ok: true, price };",
+    "new": "  return { ok: true, price };",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "LOOT16-the-guild-shows-the-temple",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]);",
-    "new": "  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]);",
+    "old": "  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]); // LOOT16: the guild's four unless the host names its own",
+    "new": "  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]); // LOOT16: the guild's four unless the host names its own",
     "tests": [
       "test/systems/loot10_codex.test.js",
       "test/systems/loot16_curses.test.js"
@@ -548,8 +548,8 @@
   {
     "name": "LOOT16-the-page-unrouted",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16\n",
-    "new": "",
+    "old": "    if (page === 'lift') {\n      renderLift(items, payer, have, picture);\n      return;\n    } // LOOT16\n    if (page === 'scry') {",
+    "new": "    if (page === 'scry') {",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "LOOT16-the-page-lists-all",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    const rows = cursedKnown(items);\n",
-    "new": "    const rows = items;\n",
+    "old": "    const rows = cursedKnown(items);",
+    "new": "    const rows = items;",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "LOOT16-a-refusal-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, LIFT_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
-    "new": "",
+    "old": "      if (why) refusePress(btn, LIFT_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
+    "new": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "LOOT16-popup-no-key",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;",
-    "new": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === 'KeyQ';",
+    "old": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY; // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)",
+    "new": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === 'KeyQ'; // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -602,7 +602,7 @@
   {
     "name": "LOOT16-popup-key-over-dfu",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);",
+    "old": "    const hit = healKey\n      ? 'HealCurse'\n      : reforgeKey\n        ? 'Reforge'\n        : (firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null));",
     "new": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : liftKey ? 'Lift' : firstHotkey(buttons, code, e);",
     "tests": [
       "test/systems/loot16_curses.test.js"
@@ -611,8 +611,8 @@
   {
     "name": "LOOT16-popup-key-unrouted",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "      case 'Lift': this._lift(); return;   // LOOT16\n",
-    "new": "",
+    "old": "      case 'Lift':\n        this._lift();\n        return; // LOOT16\n      case 'HealCurse':",
+    "new": "      case 'HealCurse':",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

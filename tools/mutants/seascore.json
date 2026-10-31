@@ -2,8 +2,8 @@
   {
     "name": "SEA-SCORE-a-song-unmade",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "fight: fight() }));",
-    "new": "fight: storm() }));",
+    "old": "    fight: fight(),",
+    "new": "    fight: storm(),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SEA-SCORE-a-tempo-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "calm: Object.freeze({ bpm: 84, bars: 64, beats: 3 }),",
-    "new": "calm: Object.freeze({ bpm: 86, bars: 64, beats: 3 }),",
+    "old": "  calm: Object.freeze({ bpm: 84, bars: 64, beats: 3 }),",
+    "new": "  calm: Object.freeze({ bpm: 86, bars: 64, beats: 3 }),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEA-SCORE-a-bar-length-lost",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "night: Object.freeze({ bpm: 66, bars: 32, beats: 3 }),",
-    "new": "night: Object.freeze({ bpm: 66, bars: 31, beats: 3 }),",
+    "old": "  night: Object.freeze({ bpm: 66, bars: 32, beats: 3 }),",
+    "new": "  night: Object.freeze({ bpm: 66, bars: 31, beats: 3 }),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SEA-SCORE-the-end-unclamped",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "duration = Math.max(1, Math.min(length - t, Math.round(beats * SCORE_TPQ)));",
-    "new": "duration = Math.max(1, Math.round(beats * SCORE_TPQ));",
+    "old": "        duration = Math.max(1, Math.min(length - t, Math.round(beats * SCORE_TPQ)));",
+    "new": "        duration = Math.max(1, Math.round(beats * SCORE_TPQ));",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SEA-SCORE-a-level-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.8,",
-    "new": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.6,",
+    "old": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.8, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });",
+    "new": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.6, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SEA-SCORE-a-voice-unset",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "    events.push({ tick: 0, type: 'programChange', channel, program: SEA_PROGRAMS[/** @type {keyof typeof SEA_PROGRAMS} */ (voice)] });\n",
-    "new": "",
+    "old": "    events.push({\n      tick: 0,\n      type: 'programChange',\n      channel,\n      program: SEA_PROGRAMS[/** @type {keyof typeof SEA_PROGRAMS} */ (voice)],\n    });\n    events.push({ tick: 0, type: 'controller', channel, controller: 7, value: lv });",
+    "new": "    events.push({ tick: 0, type: 'controller', channel, controller: 7, value: lv });",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEA-SCORE-a-doubled-note-struck-twice",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }",
-    "new": "if (false) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }",
+    "old": "      if (was) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEA-SCORE-the-fiddle-plucked",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "  fiddle: 40, flute: 73,",
-    "new": "  fiddle: 110, flute: 73,",
+    "old": "  fiddle: 40,",
+    "new": "  fiddle: 110,",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEA-SCORE-the-reeds-in-tune",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "accordion: Object.freeze({ unison: 2, cents: 14, spread: 0.3 }),",
-    "new": "accordion: Object.freeze({ unison: 2, cents: 0, spread: 0.3 }),",
+    "old": "  accordion: Object.freeze({ unison: 2, cents: 14, spread: 0.3 }),",
+    "new": "  accordion: Object.freeze({ unison: 2, cents: 0, spread: 0.3 }),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEA-SCORE-the-dorian-sixth-flattened",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "calmA: tune('A4:1.5 D5:.5 C5:.5 A4:.5 | B4:1",
-    "new": "calmA: tune('A4:1.5 D5:.5 C5:.5 A4:.5 | Bb4:1",
+    "old": "    'A4:1.5 D5:.5 C5:.5 A4:.5 | B4:1 A4:.5 G4:1 A4:.5 | F4:1.5 E4:.5 D4:.5 E4:.5 | G4:1 E4:.5 C4:1.5 | A4:1.5 C5:1 A4:.5 | G4:1 E4:.5 G4:1 C5:.5 | B4:1.5 A4:.5 G4:.5 B4:.5 | A4:3' +",
+    "new": "    'A4:1.5 D5:.5 C5:.5 A4:.5 | Bb4:1 A4:.5 G4:1 A4:.5 | F4:1.5 E4:.5 D4:.5 E4:.5 | G4:1 E4:.5 C4:1.5 | A4:1.5 C5:1 A4:.5 | G4:1 E4:.5 G4:1 C5:.5 | B4:1.5 A4:.5 G4:.5 B4:.5 | A4:3' +",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-SCORE-the-shanty-seventh-sharpened",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "C5:1 A4:.5 C5:.5 F5:1 E5:.5 D5:.5",
-    "new": "C5:1 A4:.5 C5:.5 F#5:1 E5:.5 D5:.5",
+    "old": "      ' | D4:.5 G4:1 G4:.5 G4:.5 A4:.5 B4:1 | C5:1 A4:.5 C5:.5 F5:1 E5:.5 D5:.5 | D5:1 A4:1 B4:.5 A4:.5 F#4:1 | G4:3 r:1',",
+    "new": "      ' | D4:.5 G4:1 G4:.5 G4:.5 A4:.5 B4:1 | C5:1 A4:.5 C5:.5 F#5:1 E5:.5 D5:.5 | D5:1 A4:1 B4:.5 A4:.5 F#4:1 | G4:3 r:1',",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-SCORE-the-storm-b-natural",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "F4:1 D4:1 Bb3:2",
-    "new": "F4:1 D4:1 B3:2",
+    "old": "    'D4:2 A4:1.5 G4:.5 | F4:1 D4:1 Bb3:2 | C4:1 E4:1 G4:1.5 F4:.5 | E4:1 D4:3 | D4:1 F4:1 A4:1 D5:1 | Bb4:2 A4:1 G4:1 | F4:1.5 G4:.5 A4:1 Bb4:1 | A4:4',",
+    "new": "    'D4:2 A4:1.5 G4:.5 | F4:1 D4:1 B3:2 | C4:1 E4:1 G4:1.5 F4:.5 | E4:1 D4:3 | D4:1 F4:1 A4:1 D5:1 | Bb4:2 A4:1 G4:1 | F4:1.5 G4:.5 A4:1 Bb4:1 | A4:4',",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-SCORE-the-night-f-natural",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "G5:1.5 F#5:.5 E5:1",
-    "new": "G5:1.5 F5:.5 E5:1",
+    "old": "      ' | C5:2 B4:1 | D5:3 | E5:2 A5:1 | G5:1.5 F#5:.5 E5:1 | F#5:2 E5:1 | D5:1 C5:1 B4:1 | B4:1.5 A4:.5 G4:1 | A4:3',",
+    "new": "      ' | C5:2 B4:1 | D5:3 | E5:2 A5:1 | G5:1.5 F5:.5 E5:1 | F#5:2 E5:1 | D5:1 C5:1 B4:1 | B4:1.5 A4:.5 G4:1 | A4:3',",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SEA-SCORE-a-beat-lost-from-a-bar",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "E5:1 C#5:.5 A4:1.5'",
-    "new": "E5:1 C#5:.5 A4:1'",
+    "old": "    'A4:.5 F#4:.5 A4:.5 D5:1 A4:.5 | B4:.5 G4:.5 B4:.5 D5:.5 B4:.5 G4:.5 | A4:.5 F#4:.5 A4:.5 D5:.5 E5:.5 F#5:.5 | E5:1 C#5:.5 A4:1.5' +",
+    "new": "    'A4:.5 F#4:.5 A4:.5 D5:1 A4:.5 | B4:.5 G4:.5 B4:.5 D5:.5 B4:.5 G4:.5 | A4:.5 F#4:.5 A4:.5 D5:.5 E5:.5 F#5:.5 | E5:1 C#5:.5 A4:1' +",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SEA-SCORE-a-chord-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "stormB: Object.freeze(['F', 'C', 'Dm', 'Bb', 'Gm', 'Dm', 'A', 'A']),",
-    "new": "stormB: Object.freeze(['F', 'C', 'Dm', 'Bb', 'Gm', 'Dm', 'A', 'Dm']),",
+    "old": "  stormB: Object.freeze(['F', 'C', 'Dm', 'Bb', 'Gm', 'Dm', 'A', 'A']),",
+    "new": "  stormB: Object.freeze(['F', 'C', 'Dm', 'Bb', 'Gm', 'Dm', 'A', 'Dm']),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-SCORE-the-strings-early",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (bar >= 16) for (const n of voicing(c, 62)) w.note('strings', bar, 0, 2.9,",
-    "new": "if (bar >= 8) for (const n of voicing(c, 62)) w.note('strings', bar, 0, 2.9,",
+    "old": "      if (bar >= 16) for (const n of voicing(c, 62)) w.note('strings', bar, 0, 2.9, n, bar >= 32 && bar < 48 ? 60 : 50);",
+    "new": "      if (bar >= 8) for (const n of voicing(c, 62)) w.note('strings', bar, 0, 2.9, n, bar >= 32 && bar < 48 ? 60 : 50);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEA-SCORE-the-harp-roll-thinned",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "[s[0], s[2], s[3], s[4], s[3], s[2]].forEach",
-    "new": "[s[0], s[2], s[3], s[4], s[3]].forEach",
+    "old": "      [s[0], s[2], s[3], s[4], s[3], s[2]].forEach((n, i) =>",
+    "new": "      [s[0], s[2], s[3], s[4], s[3]].forEach((n, i) =>",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SEA-SCORE-the-third-a-second",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "map: (n) => under(n, 2, D_MAJOR)",
-    "new": "map: (n) => under(n, 1, D_MAJOR)",
+    "old": "      lay(w, 'fiddle', 32 + i * 8, t, 82, { legato: 0.82, accent: 8, map: (n) => under(n, 2, D_MAJOR) });",
+    "new": "      lay(w, 'fiddle', 32 + i * 8, t, 82, { legato: 0.82, accent: 8, map: (n) => under(n, 1, D_MAJOR) });",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SEA-SCORE-a-bell-rung-loud",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "w.note('bells', 0, 0, 6, 'A3', 40);",
-    "new": "w.note('bells', 0, 0, 6, 'A3', 90);",
+    "old": "    w.note('bells', 0, 0, 6, 'A3', 40);",
+    "new": "    w.note('bells', 0, 0, 6, 'A3', 90);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-SCORE-the-backbeat-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "w.hit('snare', bar, 1, 92);",
-    "new": "w.hit('snare', bar, 1.5, 92);",
+    "old": "      w.hit('snare', bar, 1, 92);",
+    "new": "      w.hit('snare', bar, 1.5, 92);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SEA-SCORE-the-calm-line-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (!(Number(ctx.way) >= SEA_CALM_WAY)",
-    "new": "if (!(Number(ctx.way) > SEA_CALM_WAY)",
+    "old": "  if (!(Number(ctx.way) >= SEA_CALM_WAY) || ctx.weather === 'fog') return SEA_SONGS.calm;",
+    "new": "  if (!(Number(ctx.way) > SEA_CALM_WAY) || ctx.weather === 'fog') return SEA_SONGS.calm;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SEA-SCORE-the-fog-unheard",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "|| ctx.weather === 'fog') return SEA_SONGS.calm;",
-    "new": ") return SEA_SONGS.calm;",
+    "old": "  if (!(Number(ctx.way) >= SEA_CALM_WAY) || ctx.weather === 'fog') return SEA_SONGS.calm;",
+    "new": "  if (!(Number(ctx.way) >= SEA_CALM_WAY)) return SEA_SONGS.calm;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SEA-SCORE-the-rain-a-storm",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (ctx.weather === 'thunder') return SEA_SONGS.storm;",
-    "new": "if (ctx.weather === 'thunder' || ctx.weather === 'rain') return SEA_SONGS.storm;",
+    "old": "  if (ctx.weather === 'thunder') return SEA_SONGS.storm;",
+    "new": "  if (ctx.weather === 'thunder' || ctx.weather === 'rain') return SEA_SONGS.storm;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SEA-SCORE-the-hold-a-tick-late",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (now - since >= Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current))",
-    "new": "if (now - since > Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current))",
+    "old": "      if (now - since >= Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current)) && now - pendingSince >= SEA_SCORE_SETTLE_MS)",
+    "new": "      if (now - since > Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current)) && now - pendingSince >= SEA_SCORE_SETTLE_MS)",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SEA-SCORE-the-storm-held-out",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (current === null || (law === SEA_SONGS.storm && current !== law)) return take(law, now);",
-    "new": "if (current === null) return take(law, now);",
+    "old": "      if (current === null || (law === SEA_SONGS.storm && current !== law)) return take(law, now);",
+    "new": "      if (current === null) return take(law, now);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SEA-SCORE-the-fight-tail-cut",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (now - fightOverAt < SEA_FIGHT_TAIL_MS) return current;",
-    "new": "if (false) return current;",
+    "old": "        if (now - fightOverAt < SEA_FIGHT_TAIL_MS) return current;",
+    "new": "        if (false) return current;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "SEA-SCORE-the-helm-memory-kept",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "      if (law === null) { take(null, -Infinity); return null; }",
+    "old": "      if (law === null) {\n        take(null, -Infinity);\n        return null;\n      }",
     "new": "      if (law === null) return null;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "SEA-SCORE-the-tail-from-its-first-word",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (law === SEA_SONGS.fight) { fightOverAt = null; pending = null;",
-    "new": "if (law === SEA_SONGS.fight) { pending = null;",
+    "old": "        fightOverAt = null;\n        pending = null;",
+    "new": "        pending = null;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M1-the-boarding-the-directors",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "  if (ctx?.aboard && ctx.fight) return SEA_SONGS.fight;\n",
-    "new": "",
+    "old": "  if (ctx?.aboard && ctx.fight) return SEA_SONGS.fight;\n  if (!ctx?.sailing) return null;",
+    "new": "  if (!ctx?.sailing) return null;",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M1-the-tail-lost-off-the-helm",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "if (current === SEA_SONGS.fight && (law !== null || ctx?.aboard)) {",
-    "new": "if (current === SEA_SONGS.fight && law !== null) {",
+    "old": "      if (current === SEA_SONGS.fight && (law !== null || ctx?.aboard)) {",
+    "new": "      if (current === SEA_SONGS.fight && law !== null) {",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M3-the-song-cut-at-the-timer",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current)) && now",
-    "new": "SEA_SCORE_HOLD_MS && now",
+    "old": "      if (now - since >= Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current)) && now - pendingSince >= SEA_SCORE_SETTLE_MS)\n        take(law, now);",
+    "new": "      if (now - since >= SEA_SCORE_HOLD_MS && now - pendingSince >= SEA_SCORE_SETTLE_MS) take(law, now);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M3-the-settle-unread",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": " && now - pendingSince >= SEA_SCORE_SETTLE_MS) take(law, now);",
-    "new": ") take(law, now);",
+    "old": "      if (now - since >= Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current)) && now - pendingSince >= SEA_SCORE_SETTLE_MS)\n        take(law, now);",
+    "new": "      if (now - since >= Math.max(SEA_SCORE_HOLD_MS, seaSongMs(current))) take(law, now);",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M5-a-key-re-struck-under-itself",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "    for (let i = 0; i + 1 < list.length; i++) list[i].duration = Math.max(1, Math.min(list[i].duration, list[i + 1].tick - list[i].tick));\n",
-    "new": "",
+    "old": "    for (let i = 0; i + 1 < list.length; i++)\n      list[i].duration = Math.max(1, Math.min(list[i].duration, list[i + 1].tick - list[i].tick));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M5-the-drive-on-the-cellos-slow-bow",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "drive: Object.freeze({ attack: 0.012, decay: 0.08,",
-    "new": "drive: Object.freeze({ attack: 0.07, decay: 0.3,",
+    "old": "  drive: Object.freeze({ attack: 0.012, decay: 0.08, sustain: 0.75, release: 0.05, unison: 2, cents: 6, spread: 0.2 }),",
+    "new": "  drive: Object.freeze({ attack: 0.07, decay: 0.3, sustain: 0.75, release: 0.05, unison: 2, cents: 6, spread: 0.2 }),",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-M5-the-storms-drive-back-on-the-cello",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "        w.note('drive', bar, i * 0.5, 0.42, n,",
-    "new": "        w.note('cello', bar, i * 0.5, 0.42, n,",
+    "old": "        w.note('drive', bar, i * 0.5, 0.42, n, (i % 2 === 0 ? 88 : 72) + (i === 0 ? 10 : 0) - (breath ? 18 : 0));",
+    "new": "        w.note('cello', bar, i * 0.5, 0.42, n, (i % 2 === 0 ? 88 : 72) + (i === 0 ? 10 : 0) - (breath ? 18 : 0));",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]

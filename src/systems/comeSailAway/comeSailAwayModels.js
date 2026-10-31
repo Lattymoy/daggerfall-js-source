@@ -58,10 +58,10 @@
 // and one with more draws its last submesh again with each extra one -
 // Unity's rule.
 
-import { galleonPrefab, GALLEON_PREFAB_ID } from '../../world/ships/galleonModel.js';   // GALLEON: Mac's ship stands in for hull 2
-import { carrackPrefab, CARRACK_PREFAB_ID } from '../../world/ships/carrackModel.js';   // SHIPS-2: and his carrack for hull 4,
-import { largeBoatPrefab, LARGE_BOAT_PREFAB_ID } from '../../world/ships/largeBoatModel.js';   // his Tiny Ship for hull 1
-import { shipBuildKey, shipBuildScope, isShipBuild } from './shipBuildsKept.js';   // FIRST-VISIT: the builds kept across launches
+import { galleonPrefab, GALLEON_PREFAB_ID } from '../../world/ships/galleonModel.js'; // GALLEON: Mac's ship stands in for hull 2
+import { carrackPrefab, CARRACK_PREFAB_ID } from '../../world/ships/carrackModel.js'; // SHIPS-2: and his carrack for hull 4,
+import { largeBoatPrefab, LARGE_BOAT_PREFAB_ID } from '../../world/ships/largeBoatModel.js'; // his Tiny Ship for hull 1
+import { shipBuildKey, shipBuildScope, isShipBuild } from './shipBuildsKept.js'; // FIRST-VISIT: the builds kept across launches
 import { derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
 
 /** Where the extractor's files are served (a pin reads them off the disk). */
@@ -86,21 +86,45 @@ export const LARGE_BOAT_MODEL_URL = new URL('../../assets/ships/largeBoat.json',
  * Each one's answer is its own: one ship's model missing or broken stands that hull as the mod's own, never another.
  */
 export const PORT_SHIPS = Object.freeze([
-  Object.freeze({ key: 'galleon', hull: 2, id: GALLEON_PREFAB_ID, title: 'galleon', reads: Object.freeze([GALLEON_PREFAB_ID]), build: (bake, csa) => galleonPrefab(bake, csa) }),
-  Object.freeze({ key: 'carrack', hull: 4, id: CARRACK_PREFAB_ID, title: 'carrack', reads: Object.freeze([CARRACK_PREFAB_ID, GALLEON_PREFAB_ID]), build: (bake, csa, base) => carrackPrefab(bake, csa, base) }),
-  Object.freeze({ key: 'largeBoat', hull: 1, id: LARGE_BOAT_PREFAB_ID, title: 'large boat', reads: Object.freeze([LARGE_BOAT_PREFAB_ID, GALLEON_PREFAB_ID]), build: (bake, csa, base) => largeBoatPrefab(bake, csa, base) }),
+  Object.freeze({
+    key: 'galleon',
+    hull: 2,
+    id: GALLEON_PREFAB_ID,
+    title: 'galleon',
+    reads: Object.freeze([GALLEON_PREFAB_ID]),
+    build: (bake, csa) => galleonPrefab(bake, csa),
+  }),
+  Object.freeze({
+    key: 'carrack',
+    hull: 4,
+    id: CARRACK_PREFAB_ID,
+    title: 'carrack',
+    reads: Object.freeze([CARRACK_PREFAB_ID, GALLEON_PREFAB_ID]),
+    build: (bake, csa, base) => carrackPrefab(bake, csa, base),
+  }),
+  Object.freeze({
+    key: 'largeBoat',
+    hull: 1,
+    id: LARGE_BOAT_PREFAB_ID,
+    title: 'large boat',
+    reads: Object.freeze([LARGE_BOAT_PREFAB_ID, GALLEON_PREFAB_ID]),
+    build: (bake, csa, base) => largeBoatPrefab(bake, csa, base),
+  }),
 ]);
 const MOD_TITLES = Object.freeze({ galleon: 'galleon', carrack: 'carrack', largeBoat: 'large boat' });
 
 /** CSA-E: the wind widget's pictures as Start imports them - TryImportTexture(112395, 1, i), frame i of the 24. */
-export const windWidgetFrameUrl = (/** @type {number} */ i) => new URL(`../../../vendor/come-sail-away/Textures/112395_1-${i}.png`, import.meta.url).href;
+export const windWidgetFrameUrl = (/** @type {number} */ i) =>
+  new URL(`../../../vendor/come-sail-away/Textures/112395_1-${i}.png`, import.meta.url).href;
 /** CSA-F: the waves' frames as recipes (Textures/derived.json: each frame's paint, scroll and tile over TEXTURE.303
  *  record 1) and the author's paints they name - the frames are rebuilt from the player's ARENA2, never shipped. */
 export const waveDerivedUrl = new URL('../../../vendor/come-sail-away/Textures/derived.json', import.meta.url).href;
-export const wavePaintUrl = (/** @type {string} */ name) => new URL(`../../../vendor/come-sail-away/Textures/${name}`, import.meta.url).href;
+export const wavePaintUrl = (/** @type {string} */ name) =>
+  new URL(`../../../vendor/come-sail-away/Textures/${name}`, import.meta.url).href;
 /** CSA-G: the five clips Start loads (audioClips, 1022-1029) as the tool carried them - each its Ogg of the bundle's
  *  own Vorbis packets (Sounds/sounds.json). */
-export const soundUrl = (/** @type {string} */ name) => new URL(`../../../vendor/come-sail-away/Sounds/${name}.ogg`, import.meta.url).href;
+export const soundUrl = (/** @type {string} */ name) =>
+  new URL(`../../../vendor/come-sail-away/Sounds/${name}.ogg`, import.meta.url).href;
 
 /**
  * The five files, fetched. NEVER TRAPS: a file that will not load is the
@@ -114,8 +138,14 @@ export const soundUrl = (/** @type {string} */ name) => new URL(`../../../vendor
  * own, said once, and every other ship stands as it would. FIRST-VISIT: `store` keeps the build (shipBuildsKept.js).
  * @returns {Promise<ReturnType<typeof comeSailAwayModels> | null>}
  */
-export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = CSA_MODEL_URLS, log = console, galleonUrl = GALLEON_MODEL_URL,
-  shipUrls = { carrack: CARRACK_MODEL_URL, largeBoat: LARGE_BOAT_MODEL_URL }, store = derivedValueStore()) {
+export async function loadComeSailAwayModels(
+  fetchFn = globalThis.fetch,
+  urls = CSA_MODEL_URLS,
+  log = console,
+  galleonUrl = GALLEON_MODEL_URL,
+  shipUrls = { carrack: CARRACK_MODEL_URL, largeBoat: LARGE_BOAT_MODEL_URL },
+  store = derivedValueStore(),
+) {
   if (!fetchFn) return null;
   try {
     const get = async (/** @type {string} */ url, /** @type {boolean} */ binary) => {
@@ -125,10 +155,20 @@ export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = 
     };
     // GALLEON: her answer is her own - her model failing never fails the five, and is said only once they stand
     // (SHIPS-2: each port ship's the same)
-    const own = (url) => (url ? get(url, false).then((json) => ({ ok: true, json, error: null }), (error) => ({ ok: false, json: null, error })) : null);
+    const own = (url) =>
+      url
+        ? get(url, false).then(
+            (json) => ({ ok: true, json, error: null }),
+            (error) => ({ ok: false, json: null, error }),
+          )
+        : null;
     const shipAt = { galleon: galleonUrl, carrack: shipUrls?.carrack ?? null, largeBoat: shipUrls?.largeBoat ?? null };
     const [prefabs, meshes, bin, materials, animation, ...answers] = await Promise.all([
-      get(urls.prefabs, false), get(urls.meshes, false), get(urls.bin, true), get(urls.materials, false), get(urls.animation, false),
+      get(urls.prefabs, false),
+      get(urls.meshes, false),
+      get(urls.bin, true),
+      get(urls.materials, false),
+      get(urls.animation, false),
       ...PORT_SHIPS.map((ship) => own(shipAt[ship.key])),
     ]);
     // GALLEON: the new galleon over hull 2 - and, its model not answering, the mod's own galleon, said once (a ship
@@ -140,14 +180,20 @@ export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = 
       const answer = answers[k];
       if (!answer) continue;
       const standsAs = `hull ${ship.hull} stands as the mod's own ${MOD_TITLES[ship.key]}`;
-      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); continue; }
-      try { base += (await keptShipBuilt(ship, answer.json, prefabs, base, store)).components.length; ships[ship.key] = answer.json; } catch (e) {
+      if (!answer.ok) {
+        log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);
+        continue;
+      }
+      try {
+        base += (await keptShipBuilt(ship, answer.json, prefabs, base, store)).components.length;
+        ships[ship.key] = answer.json;
+      } catch (e) {
         log?.warn?.(`[come-sail-away] the new ${ship.title} would not build - ${standsAs}`, e);
       }
     }
     return comeSailAwayModels({ prefabs, meshes, bin, materials, animation, ...ships });
   } catch (e) {
-    log?.warn?.('[come-sail-away] the boats\' models did not load - no boat can stand', e);
+    log?.warn?.("[come-sail-away] the boats' models did not load - no boat can stand", e);
     return null;
   }
 }
@@ -165,9 +211,21 @@ export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = 
  * too, as they were).
  * @param {{ prefabs: { prefabs: Record<string, any>, components: any[] }, meshes: Record<string, any>, bin: Uint8Array, materials: Record<string, any>, animation: any, galleon?: any, carrack?: any, largeBoat?: any }} files
  */
-export function comeSailAwayModels({ prefabs, meshes, bin, materials, animation, galleon = null, carrack = null, largeBoat = null }) {
+export function comeSailAwayModels({
+  prefabs,
+  meshes,
+  bin,
+  materials,
+  animation,
+  galleon = null,
+  carrack = null,
+  largeBoat = null,
+}) {
   const decoded = new Map();
-  let prefabTable = prefabs.prefabs, components = prefabs.components, meshTable = meshes, anim = animation;
+  let prefabTable = prefabs.prefabs,
+    components = prefabs.components,
+    meshTable = meshes,
+    anim = animation;
   const bakes = { galleon, carrack, largeBoat };
   const standing = PORT_SHIPS.filter((ship) => bakes[ship.key]);
   if (standing.length) {
@@ -182,7 +240,10 @@ export function comeSailAwayModels({ prefabs, meshes, bin, materials, animation,
       added.push(...g.components);
       base += g.components.length;
       for (const [key, geo] of Object.entries(g.meshes)) {
-        meshTable[key] = ship.key === 'galleon' ? { vertexCount: geo.vertexCount, aabb: geo.aabb, galleon: true, port: ship.key } : { vertexCount: geo.vertexCount, aabb: geo.aabb, port: ship.key };
+        meshTable[key] =
+          ship.key === 'galleon'
+            ? { vertexCount: geo.vertexCount, aabb: geo.aabb, galleon: true, port: ship.key }
+            : { vertexCount: geo.vertexCount, aabb: geo.aabb, port: ship.key };
         decoded.set(key, geo);
       }
       Object.assign(anim.overrides, g.animation.overrides);
@@ -221,12 +282,14 @@ export function comeSailAwayModels({ prefabs, meshes, bin, materials, animation,
  *  components by copy (world/prefabNode.js instantiatePrefab), and her meshes are drawn, baked and stood on, never changed
  *  (test/world/ships/auditgalleon2_prefab.test.js PF4). SHIPS-2: every port ship's so, each its own entry - keyed too by the place in
  *  the table its components take (`base`: the galleon's before them) and every mod prefab its builder reads. */
-const _built = new Map();   // ship key -> { sha256, bake, base, old, built }
+const _built = new Map(); // ship key -> { sha256, bake, base, old, built }
 function shipBuilt(ship, json, prefabs, base) {
-  const bake = JSON.stringify(json), old = JSON.stringify(ship.reads.map((id) => prefabs.prefabs[String(id)] ?? null));
+  const bake = JSON.stringify(json),
+    old = JSON.stringify(ship.reads.map((id) => prefabs.prefabs[String(id)] ?? null));
   const was = _built.get(ship.key);
   if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;
-  if (ship.key === 'galleon' && base !== prefabs.components.length) throw new Error('come-sail-away: the galleon\'s components come first');
+  if (ship.key === 'galleon' && base !== prefabs.components.length)
+    throw new Error("come-sail-away: the galleon's components come first");
   const built = ship.build(json, prefabs, base);
   _built.set(ship.key, { sha256: json.sha256, bake, base, old, built });
   return built;
@@ -234,9 +297,11 @@ function shipBuilt(ship, json, prefabs, base) {
 /** FIRST-VISIT: shipBuilt, with the build kept across launches in `store` (shipBuildsKept.js) - read back when it was
  *  kept over this bake, these mod prefabs and this base; built and kept when not. */
 async function keptShipBuilt(ship, json, prefabs, base, store) {
-  const bake = JSON.stringify(json), old = JSON.stringify(ship.reads.map((id) => prefabs.prefabs[String(id)] ?? null));
+  const bake = JSON.stringify(json),
+    old = JSON.stringify(ship.reads.map((id) => prefabs.prefabs[String(id)] ?? null));
   const was = _built.get(ship.key);
-  if (!store || (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old)) return shipBuilt(ship, json, prefabs, base);
+  if (!store || (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old))
+    return shipBuilt(ship, json, prefabs, base);
   const key = shipBuildKey(ship.key, json.sha256, bake, base, old);
   const kept = await store.get(key);
   if (isShipBuild(kept)) {
@@ -267,7 +332,8 @@ export function matrixFromUnityRows(m) {
  */
 export function decodeMeshGeometry(entry, bin) {
   const n = entry.vertexCount;
-  const at = (/** @type {any} */ a, count) => new Float32Array(bin.buffer.slice(bin.byteOffset + a.offset, bin.byteOffset + a.offset + count * 4));
+  const at = (/** @type {any} */ a, count) =>
+    new Float32Array(bin.buffer.slice(bin.byteOffset + a.offset, bin.byteOffset + a.offset + count * 4));
   const positions = at(entry.attributes.position, n * 3);
   const nd = entry.attributes.normal?.dim ?? 3;
   const rawNormals = entry.attributes.normal ? at(entry.attributes.normal, n * nd) : null;
@@ -279,9 +345,10 @@ export function decodeMeshGeometry(entry, bin) {
   if (!normals) normals = new Float32Array(n * 3);
   const uvs = entry.attributes.uv0 ? at(entry.attributes.uv0, n * 2) : new Float32Array(n * 2);
   const ix = entry.indices;
-  const raw = ix.type === 'u32'
-    ? new Uint32Array(bin.buffer.slice(bin.byteOffset + ix.offset, bin.byteOffset + ix.offset + ix.count * 4))
-    : new Uint16Array(bin.buffer.slice(bin.byteOffset + ix.offset, bin.byteOffset + ix.offset + ix.count * 2));
+  const raw =
+    ix.type === 'u32'
+      ? new Uint32Array(bin.buffer.slice(bin.byteOffset + ix.offset, bin.byteOffset + ix.offset + ix.count * 4))
+      : new Uint16Array(bin.buffer.slice(bin.byteOffset + ix.offset, bin.byteOffset + ix.offset + ix.count * 2));
   const indices = new Uint32Array(ix.count);
   const subMeshes = [];
   for (const s of entry.submeshes) {
@@ -289,10 +356,16 @@ export function decodeMeshGeometry(entry, bin) {
     subMeshes.push({ startIndex: s.start, primitiveCount: s.count / 3 });
   }
   const bi = entry.attributes.blendIndices;
-  const blendIndices = bi ? new Uint16Array(bin.buffer.slice(bin.byteOffset + bi.offset, bin.byteOffset + bi.offset + n * 2)) : null;
+  const blendIndices = bi
+    ? new Uint16Array(bin.buffer.slice(bin.byteOffset + bi.offset, bin.byteOffset + bi.offset + n * 2))
+    : null;
   return {
     vertexCount: n,
-    positions, normals, uvs, indices, subMeshes,
+    positions,
+    normals,
+    uvs,
+    indices,
+    subMeshes,
     blendIndices,
     bindPoses: entry.bindPoses ? entry.bindPoses.map(matrixFromUnityRows) : null,
     aabb: entry.aabb,
@@ -326,16 +399,22 @@ export function applyRuntimeMaterials(node) {
   for (const c of node.components) {
     if (c.type !== 'MonoBehaviour' || c.m_Script?.script !== 'RuntimeMaterials') continue;
     if (!c.Materials?.length || c.hasAppliedMaterials) continue;
-    const materials = [...renderer.materials];   // meshRenderer.sharedMaterials: a copy
+    const materials = [...renderer.materials]; // meshRenderer.sharedMaterials: a copy
     let n = 0;
     let inRange = true;
     for (const m of c.Materials) {
-      if (!(m.Index >= 0 && m.Index < materials.length)) { inRange = false; break; }
+      if (!(m.Index >= 0 && m.Index < materials.length)) {
+        inRange = false;
+        break;
+      }
       materials[m.Index] = dfMaterial(m.Archive, m.Record);
       n++;
     }
-    if (inRange) { renderer.materials = materials; written += n; }   // meshRenderer.sharedMaterials = materials, past the loop
-    c.hasAppliedMaterials = 1;   // finally
+    if (inRange) {
+      renderer.materials = materials;
+      written += n;
+    } // meshRenderer.sharedMaterials = materials, past the loop
+    c.hasAppliedMaterials = 1; // finally
   }
   return written;
 }
@@ -351,7 +430,8 @@ export function gameTextureFromName(name) {
   const i = name.indexOf('_');
   if (i < 0) return null;
   const toInt = (/** @type {string} */ s) => (/^\s*[+-]?\d+\s*$/.test(s) ? Number.parseInt(s.trim(), 10) : null);
-  const archive = toInt(name.substring(0, i)), record = toInt(name.substring(i + 1));
+  const archive = toInt(name.substring(0, i)),
+    record = toInt(name.substring(i + 1));
   return archive == null || record == null ? null : dfMaterial(archive, record);
 }
 
@@ -371,7 +451,12 @@ export function rendererModel(g, slots) {
     if (!isDfMaterial(s)) continue;
     const sm = g.subMeshes[Math.min(k, g.subMeshes.length - 1)];
     if (!sm.primitiveCount) continue;
-    subMeshes.push({ textureArchive: s.archive, textureRecord: s.record, startIndex: sm.startIndex, primitiveCount: sm.primitiveCount });
+    subMeshes.push({
+      textureArchive: s.archive,
+      textureRecord: s.record,
+      startIndex: sm.startIndex,
+      primitiveCount: sm.primitiveCount,
+    });
   }
   if (!subMeshes.length) return null;
   return { positions: g.positions, normals: g.normals, uvs: g.uvs, indices: g.indices, subMeshes, doors: [] };

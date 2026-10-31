@@ -38,8 +38,8 @@
   {
     "name": "FB1020c-BAG-COOK-into-unread",
     "file": "src/systems/survival/camp.js",
-    "old": "    (Array.isArray(into) ? into : list).push(cooked);",
-    "new": "    list.push(cooked);",
+    "old": "    (Array.isArray(into) ? into : list).push(cooked); // FB1020c BAG-COOK: into the pack, never the bag",
+    "new": "    list.push(cooked); // FB1020c BAG-COOK: into the pack, never the bag",
     "tests": [
       "test/systems/fb1020c_bagcook.test.js"
     ]

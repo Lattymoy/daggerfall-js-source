@@ -25,21 +25,31 @@ export const TIMES_FILE = 'tools/testTimes.json';
 /** The suite's files - every `*.test.js` under test/, its folders' among them - sorted. */
 export function testFiles(root = ROOT) {
   // TIDY5: every test file under test/, its area's folder and its feature's (bible/01-Overview/Code-Map.md)
-  return readdirSync(join(root, 'test'), { recursive: true }).map((f) => f.split('\\').join('/')).filter((f) => f.endsWith('.test.js')).sort().map((f) => `test/${f}`);
+  return readdirSync(join(root, 'test'), { recursive: true })
+    .map((f) => f.split('\\').join('/'))
+    .filter((f) => f.endsWith('.test.js'))
+    .sort()
+    .map((f) => `test/${f}`);
 }
 
 /** The recorded times (file -> ms), or none. */
 export function readTimes(root = ROOT) {
   const p = join(root, TIMES_FILE);
   if (!existsSync(p)) return {};
-  try { const t = JSON.parse(readFileSync(p, 'utf8')); return t && typeof t === 'object' ? t : {}; } catch { return {}; }
+  try {
+    const t = JSON.parse(readFileSync(p, 'utf8'));
+    return t && typeof t === 'object' ? t : {};
+  } catch {
+    return {};
+  }
 }
 
 /** `i/n` -> {index, total}, or null for anything else (1 <= i <= n). */
 export function parseShard(s) {
   const m = /^(\d+)\/(\d+)$/.exec(String(s ?? ''));
   if (!m) return null;
-  const index = Number(m[1]), total = Number(m[2]);
+  const index = Number(m[1]),
+    total = Number(m[2]);
   return total >= 1 && index >= 1 && index <= total ? { index, total } : null;
 }
 
@@ -52,7 +62,10 @@ export function parseShard(s) {
  * @returns {{files: string[], ms: number}[]}
  */
 export function shardsOf(files, n, times = {}) {
-  const known = files.map((f) => times[f]).filter((v) => Number.isFinite(v) && v >= 0).sort((a, b) => a - b);
+  const known = files
+    .map((f) => times[f])
+    .filter((v) => Number.isFinite(v) && v >= 0)
+    .sort((a, b) => a - b);
   const median = known.length ? known[Math.floor(known.length / 2)] : 1;
   const weight = (f) => (Number.isFinite(times[f]) && times[f] >= 0 ? times[f] : median);
   const order = [...new Set(files)].sort((a, b) => weight(b) - weight(a) || (a < b ? -1 : a > b ? 1 : 0));
@@ -97,18 +110,40 @@ export function shardsOf(files, n, times = {}) {
  * @param {string[]} files
  */
 export const WIN32_ARGV_BUDGET = 30000;
-export function runTests(files, { root = ROOT, times = readTimes(root), cores = availableParallelism(), spawn = spawnSync, extra = [],
-  budget = process.platform === 'win32' ? WIN32_ARGV_BUDGET : Infinity, summary = true, record = '' } = {}) {
+export function runTests(
+  files,
+  {
+    root = ROOT,
+    times = readTimes(root),
+    cores = availableParallelism(),
+    spawn = spawnSync,
+    extra = [],
+    budget = process.platform === 'win32' ? WIN32_ARGV_BUDGET : Infinity,
+    summary = true,
+    record = '',
+  } = {},
+) {
   if (!files.length) return 0;
   const ordered = shardsOf(files, 1, times)[0].files;
-  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : []), ...extra];
+  const head = [
+    '--test',
+    `--test-concurrency=${Math.max(1, cores | 0)}`,
+    ...(summary || record ? summaryReporters(root) : []),
+    ...extra,
+  ];
   const env = record ? { ...process.env, TEST_TIMES_RECORD: resolve(record) } : undefined;
-  const base = process.execPath.length + head.reduce((n, a) => n + a.length + 3, 0);   // a space and two quotes an argument
+  const base = process.execPath.length + head.reduce((n, a) => n + a.length + 3, 0); // a space and two quotes an argument
   const runs = [];
-  let run = [], used = base;
+  let run = [],
+    used = base;
   for (const f of ordered) {
-    if (run.length && used + f.length + 3 > budget) { runs.push(run); run = []; used = base; }
-    run.push(f); used += f.length + 3;
+    if (run.length && used + f.length + 3 > budget) {
+      runs.push(run);
+      run = [];
+      used = base;
+    }
+    run.push(f);
+    used += f.length + 3;
   }
   runs.push(run);
   let status = 0;
@@ -124,8 +159,10 @@ export function runTests(files, { root = ROOT, times = readTimes(root), cores = 
 /** CI-FAST: the runner's two reporters - its own, as it would choose it (spec on a terminal, TAP elsewhere), and the
  *  failures' summary (tools/failSummary.mjs) - both to stdout. */
 export const summaryReporters = (root = ROOT, tty = !!process.stdout.isTTY) => [
-  `--test-reporter=${tty ? 'spec' : 'tap'}`, '--test-reporter-destination=stdout',
-  `--test-reporter=${pathToFileURL(join(root, 'tools/failSummary.mjs')).href}`, '--test-reporter-destination=stdout',
+  `--test-reporter=${tty ? 'spec' : 'tap'}`,
+  '--test-reporter-destination=stdout',
+  `--test-reporter=${pathToFileURL(join(root, 'tools/failSummary.mjs')).href}`,
+  '--test-reporter-destination=stdout',
 ];
 
 /** AUDIT FAST-SUITE F7: the runner's own flags among a tool's arguments (`--test-name-pattern=x`, `--test-only`, ...),
@@ -136,17 +173,31 @@ function main(argv) {
   if (argv[0] === '--plan') {
     const n = Number(argv[1]) || 4;
     const shards = shardsOf(testFiles(), n, readTimes());
-    shards.forEach((s, k) => console.log(`shard ${k + 1}/${n}: ${s.files.length} files, ${(s.ms / 1000).toFixed(1)} s recorded`));
+    shards.forEach((s, k) =>
+      console.log(`shard ${k + 1}/${n}: ${s.files.length} files, ${(s.ms / 1000).toFixed(1)} s recorded`),
+    );
     return 0;
   }
   const shard = parseShard(argv[0]);
-  if (!shard) { console.error('usage: node tools/testShards.mjs <i>/<n> [--list] [--record <times.json>] | --plan <n>'); return 2; }
+  if (!shard) {
+    console.error('usage: node tools/testShards.mjs <i>/<n> [--list] [--record <times.json>] | --plan <n>');
+    return 2;
+  }
   const times = readTimes();
   const { files } = shardsOf(testFiles(), shard.total, times)[shard.index - 1];
-  if (argv.includes('--list')) { for (const f of files) console.log(f); return 0; }
-  const at = argv.indexOf('--record'), record = at > 0 ? argv[at + 1] ?? '' : '';
-  if (at > 0 && !record) { console.error('--record wants the file to write the times to'); return 2; }
-  console.log(`shard ${shard.index}/${shard.total}: ${files.length} files (split by ${Object.keys(times).length} recorded times)`);
+  if (argv.includes('--list')) {
+    for (const f of files) console.log(f);
+    return 0;
+  }
+  const at = argv.indexOf('--record'),
+    record = at > 0 ? (argv[at + 1] ?? '') : '';
+  if (at > 0 && !record) {
+    console.error('--record wants the file to write the times to');
+    return 2;
+  }
+  console.log(
+    `shard ${shard.index}/${shard.total}: ${files.length} files (split by ${Object.keys(times).length} recorded times)`,
+  );
   return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });
 }
 

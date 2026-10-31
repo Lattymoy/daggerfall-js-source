@@ -80,18 +80,30 @@
 // host forgives the player's stray ball on her (navalHost.js ALLY_STRAY_SHARE). And the bay is gentler: a quarter of
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
-import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, shipBatteryWeight, flatHull, flatGap } from './navalShips.js';
-import { mulberry32 } from '../../combat/blood/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
+import {
+  classById,
+  batteryOf,
+  hullBuild,
+  GUNS,
+  HULL,
+  SHIP_CLASSES,
+  buildsStamp,
+  SHIP_TOUGHNESS,
+  shipBatteryWeight,
+  flatHull,
+  flatGap,
+} from './navalShips.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js'; // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
 import { NAVAL_DEG, rangeAt, SHOT_GRAVITY } from './navalBallistics.js';
 import { BERTH_GAP } from './navalBoarding.js';
-import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
-import { steerage, HULL_HELM, HELM_WAY, WIND_RATED, WIND_SHARE, windShare } from '../helmWay.js';   // HELM-WAY: the player's own helm, the captains' too; SAIL-FREE: and the wind's share, one home
-import { stepErrand, MOOR_EASE_S } from './shipLife.js';   // SHIP-LIFE: a ship going somewhere
-import { nightSight } from './shipWatch.js';   // SHIP-WATCH: by night a lit ship is seen far, a dark one close
-import { legendOfClass, LEGEND_RELOAD_K } from './etherShips.js';   // ETHER-LEGENDS: a `gunnery` legend's quicker guns
-import { shotGun, naturalShot } from './shotKinds.js';   // SHOT-KINDS: a captain's loads
+import { wrapAngle } from '../../world/mat4.js'; // ONCRASH1: the port's one angle wrap, which cannot loop
+import { steerage, HULL_HELM, HELM_WAY, WIND_RATED, WIND_SHARE, windShare } from '../helmWay.js'; // HELM-WAY: the player's own helm, the captains' too; SAIL-FREE: and the wind's share, one home
+import { stepErrand, MOOR_EASE_S } from './shipLife.js'; // SHIP-LIFE: a ship going somewhere
+import { nightSight } from './shipWatch.js'; // SHIP-WATCH: by night a lit ship is seen far, a dark one close
+import { legendOfClass, LEGEND_RELOAD_K } from './etherShips.js'; // ETHER-LEGENDS: a `gunnery` legend's quicker guns
+import { shotGun, naturalShot } from './shotKinds.js'; // SHOT-KINDS: a captain's loads
 
 /** A galley's oars: its least way, as a share of its best. */
 export const OARS_FLOOR = 0.55;
@@ -351,25 +363,62 @@ export function windFactor(offRun) {
  * A new ship at sea. `spec` - `{ id, seed, classId, variant, pos, yaw, names, owner, temper, errand }`; the class decides
  * the rest - SEA-PEACE: her temper her seed's (temperOf) unless one is named; SHIP-LIFE: her errand, if she has one.
  */
-export function createSeaShip({ id, seed, classId, variant = 0, pos, yaw = 0, names = null, owner = null, temper = null, errand = null }) {
+export function createSeaShip({
+  id,
+  seed,
+  classId,
+  variant = 0,
+  pos,
+  yaw = 0,
+  names = null,
+  owner = null,
+  temper = null,
+  errand = null,
+}) {
   const cls = classById(classId);
   if (!cls) throw new Error(`navalAI: no ship class '${classId}'`);
   const damage = createShipDamage({ hullHp: cls.hullHp, sailHp: cls.sailHp, crew: cls.crew });
   const ship = {
-    id: String(id), seed: seed >>> 0, cls, hull: cls.hull, variant, names, owner,
-    pos: [...pos], yaw: wrapAngle(yaw), speed: 0, turnNow: 0, sails: 1, heel: 0, settle: 0,
+    id: String(id),
+    seed: seed >>> 0,
+    cls,
+    hull: cls.hull,
+    variant,
+    names,
+    owner,
+    pos: [...pos],
+    yaw: wrapAngle(yaw),
+    speed: 0,
+    turnNow: 0,
+    sails: 1,
+    heel: 0,
+    settle: 0,
     /** AUDIT NAV1: the helm's rate (rad/s), the heel's (degrees a second), the sail she wants, her own clock (s) */
-    yawRate: 0, heelVel: 0, sailsWant: 1, clock: 0,
-    mode: 'cruise', target: null, waypoint: null, damage,
+    yawRate: 0,
+    heelVel: 0,
+    sailsWant: 1,
+    clock: 0,
+    mode: 'cruise',
+    target: null,
+    waypoint: null,
+    damage,
     /** SEA-PEACE: her temper (temperOf - the host makes a raider bold), the prize she lies lashed to while the host takes
      *  her ({ id } | null), and the gunfire she answers ({ pos, at } | null) */
-    temper: Object.values(TEMPERS).includes(temper) ? temper : temperOf(cls, seed), lashed: null, heard: null, runOn: null,   // AUDIT WK-N3
+    temper: Object.values(TEMPERS).includes(temper) ? temper : temperOf(cls, seed),
+    lashed: null,
+    heard: null,
+    runOn: null, // AUDIT WK-N3
     /** NAV-R: a raider's own lookout (m; null: ENGAGE_RANGE) and the course it sails ([x, z]; null: a waypoint of its own) */
-    sight: null, course: null,
+    sight: null,
+    course: null,
     /** SHIP-LIFE: what she is about when no fight is hers (shipLife.js errandFor: moored, depart, voyage, arrive, patrol,
      *  lurk; null: her own cruise) */
     errand,
-    guns: createGunDeck(cls.hull, { crewed: true, crewShare: () => damage.crewShare(), reloadScale: () => (legendOfClass(cls.id)?.trait === 'gunnery' ? LEGEND_RELOAD_K : 1) }),   // AUDIT CAPTAIN'S SEA D11: the Pale Regent's gunners (LEGEND_RELOAD_K had no reader)
+    guns: createGunDeck(cls.hull, {
+      crewed: true,
+      crewShare: () => damage.crewShare(),
+      reloadScale: () => (legendOfClass(cls.id)?.trait === 'gunnery' ? LEGEND_RELOAD_K : 1),
+    }), // AUDIT CAPTAIN'S SEA D11: the Pale Regent's gunners (LEGEND_RELOAD_K had no reader)
     /** attacker id -> the time of its last blow */
     provoked: new Map(),
     /** contact id -> seconds it has lain still */
@@ -380,16 +429,26 @@ export function createSeaShip({ id, seed, classId, variant = 0, pos, yaw = 0, na
      *  the side she presents, the wreck she watches, the side she berths on, the seconds she lies aground, and the turn
      *  through the wind's eye she has committed to (tack or wear) */
     avoid: { swing: 0, heading: null, clearFor: 0, at: -Infinity, dir: 0 },
-    tack: null, chase: null, tvel: null, present: null, wreck: null, berthSide: 0, aground: 0, turnWay: null,
+    tack: null,
+    chase: null,
+    tvel: null,
+    present: null,
+    wreck: null,
+    berthSide: 0,
+    aground: 0,
+    turnWay: null,
     /** AUDIT NAV2 F22: a boarding's tally ({ id, since, best } - her way to the berth) and her way round the land to it
      *  ({ goal, wp, at, lost }) */
-    approach: null, route: null,
+    approach: null,
+    route: null,
     /** AUDIT NAV1 (online #10): the way her sweeps give her while she is pulled alongside (m/s; 0 under sail alone) */
     sweeps: 0,
     /** AUDIT NAV1 (the guns): the heading she steered for last step, and its rate - the presented helm's lead */
-    wantPrev: null, wantRate: 0,
+    wantPrev: null,
+    wantRate: 0,
     /** AUDIT NAV1 (the guns): side -> her clock when that battery began to run out; side -> the clock it was run in */
-    runOut: new Map(), runIn: new Map(),
+    runOut: new Map(),
+    runIn: new Map(),
     boarded: false,
     /** a prize cast adrift: she drifts downwind */
     adrift: false,
@@ -400,7 +459,10 @@ export function createSeaShip({ id, seed, classId, variant = 0, pos, yaw = 0, na
 }
 
 /** The world velocity of a ship: its way along its heading. */
-export const velocityOf = (ship) => { const f = forwardOfYaw(ship.yaw); return [f[0] * ship.speed, 0, f[2] * ship.speed]; };
+export const velocityOf = (ship) => {
+  const f = forwardOfYaw(ship.yaw);
+  return [f[0] * ship.speed, 0, f[2] * ship.speed];
+};
 
 /**
  * Whether faction `a`'s ship takes `b` (a contact: `{ kind: 'ship'|'player', faction?, id }`) for an enemy - a player
@@ -414,12 +476,12 @@ export const velocityOf = (ship) => { const f = forwardOfYaw(ship.yaw); return [
  */
 export function hostile(ship, contact, { notoriety = () => 0, now = 0 } = {}) {
   const f = ship.cls.faction;
-  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;   // a blow, answered by every temper
+  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true; // a blow, answered by every temper
   if (contact.kind === 'player') {
     if (f === 'pirate') return takesPrize(ship, contact);
     // AUDIT NAV1 (online #6): a player by their own notoriety - a peer's contact carries it, else the law handed in
     if (f === 'navy') return (contact.notoriety ?? notoriety)(ship.names?.crown ?? null) >= NAVY_HUNTS;
-    return false;   // a merchant: only who fired on it
+    return false; // a merchant: only who fired on it
   }
   const g = contact.faction;
   if (f === 'pirate') return (g === 'merchant' || g === 'navy') && takesPrize(ship, contact);
@@ -448,7 +510,9 @@ export function outguns(threat, ship) {
 function sizeUp(c) {
   const p = c.power ?? (c.ship ? shipPower(c.ship) : null);
   if (typeof p !== 'number') return p;
-  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1, player: true });   // a player's boat's word
+  return c.hull == null
+    ? null
+    : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1, player: true }); // a player's boat's word
 }
 
 /**
@@ -483,27 +547,69 @@ export function temperOf(cls, seed, { bold = BOLD_SHARE } = {}) {
  * @param {{ hull: number, hullHp: number, hullShare?: number, crewShare?: number, crew?: number, strikes?: boolean,
  *   skill?: number, range?: number | null, turn?: number | null, crewed?: boolean, tactic?: string, player?: boolean }} o
  */
-export function fightingPower({ hull, hullHp, hullShare = 1, crewShare = 1, crew = 0, strikes = false, skill = PLAYER_GUN_SKILL, range = null, turn = null, crewed = true, tactic = null, player = false }) {
+export function fightingPower({
+  hull,
+  hullHp,
+  hullShare = 1,
+  crewShare = 1,
+  crew = 0,
+  strikes = false,
+  skill = PLAYER_GUN_SKILL,
+  range = null,
+  turn = null,
+  crewed = true,
+  tactic = null,
+  player = false,
+}) {
   return Object.freeze({
-    hull, hullHp: Math.max(0, hullHp), hullShare: clamp(hullShare, 0, 1), crewShare: clamp(crewShare, 0, 1), crew: Math.max(0, crew), strikes: !!strikes,
-    skill, range: range ?? rangeOfHull(hull), turn: turn ?? turnOfHull(hull), crewed: !!crewed, tactic: tactic ?? (hull === HULL.LargeGalley ? 'bow' : 'broadside'),
+    hull,
+    hullHp: Math.max(0, hullHp),
+    hullShare: clamp(hullShare, 0, 1),
+    crewShare: clamp(crewShare, 0, 1),
+    crew: Math.max(0, crew),
+    strikes: !!strikes,
+    skill,
+    range: range ?? rangeOfHull(hull),
+    turn: turn ?? turnOfHull(hull),
+    crewed: !!crewed,
+    tactic: tactic ?? (hull === HULL.LargeGalley ? 'bow' : 'broadside'),
     player: !!player,
   });
 }
 /** SEA-PEACE: a sea ship's own fighting power, as she stands. */
-export const shipPower = (ship) => fightingPower({
-  hull: ship.hull, hullHp: ship.damage.maxHull, hullShare: ship.damage.hullShare(), crewShare: ship.damage.crewShare(), crew: ship.damage.crew,
-  strikes: ship.damage.maxCrew > 0, skill: ship.cls.skill, range: ship.cls.range, turn: turnRateAt(ship, ship.cls.speed) / DEG, tactic: ship.cls.tactic,
-});
+export const shipPower = (ship) =>
+  fightingPower({
+    hull: ship.hull,
+    hullHp: ship.damage.maxHull,
+    hullShare: ship.damage.hullShare(),
+    crewShare: ship.damage.crewShare(),
+    crew: ship.damage.crew,
+    strikes: ship.damage.maxCrew > 0,
+    skill: ship.cls.skill,
+    range: ship.cls.range,
+    turn: turnRateAt(ship, ship.cls.speed) / DEG,
+    tactic: ship.cls.tactic,
+  });
 /** SEA-PEACE: a class's power fresh from port - what the director pairs a staged encounter by. */
-export const classPower = (cls) => fightingPower({
-  hull: cls.hull, hullHp: cls.hullHp, crew: cls.crew, strikes: cls.crew > 0, skill: cls.skill, range: cls.range,
-  turn: turnRateAt({ hull: cls.hull, cls }, cls.speed) / DEG, tactic: cls.tactic,
-});
+export const classPower = (cls) =>
+  fightingPower({
+    hull: cls.hull,
+    hullHp: cls.hullHp,
+    crew: cls.crew,
+    strikes: cls.crew > 0,
+    skill: cls.skill,
+    range: cls.range,
+    turn: turnRateAt({ hull: cls.hull, cls }, cls.speed) / DEG,
+    tactic: cls.tactic,
+  });
 /** AUDIT NAV2 F25: a boat with no class of her own (a player's) fights at the nearest range any captain of her hull
  *  does, and turns at her hull's own helm at the steerage's peak (the oars' floor for a galley's). */
-export const rangeOfHull = (hull) => { const on = SHIP_CLASSES.filter((c) => c.hull === hull); return Math.min(...(on.length ? on : SHIP_CLASSES).map((c) => c.range)); };
-export const turnOfHull = (hull) => Math.max(hull === HULL.LargeGalley ? OARS_TURN : TURN_FLOOR, (HULL_HELM[hull] ?? 1) * steerage(HELM_WAY.steerPeakV));
+export const rangeOfHull = (hull) => {
+  const on = SHIP_CLASSES.filter((c) => c.hull === hull);
+  return Math.min(...(on.length ? on : SHIP_CLASSES).map((c) => c.range));
+};
+export const turnOfHull = (hull) =>
+  Math.max(hull === HULL.LargeGalley ? OARS_TURN : TURN_FLOOR, (HULL_HELM[hull] ?? 1) * steerage(HELM_WAY.steerPeakV));
 /**
  * AUDIT NAV2 F25 - THE TIME ONE SHIP NEEDS TO MAKE ANOTHER STRIKE (s): her hull to STRUCK_AT, or - one that strikes when
  * her hands are down - her last man, whichever her fire does first. Her fire: her broadside (a galley's great guns and
@@ -515,25 +621,30 @@ export const turnOfHull = (hull) => Math.max(hull === HULL.LargeGalley ? OARS_TU
  */
 export function strikeTime(a, b) {
   const sides = a.tactic === 'bow' ? ['bow', 'starboard'] : ['starboard'];
-  let hull = 0, men = 0;
+  let hull = 0,
+    men = 0;
   for (const side of sides) {
     const bat = batteryOf(a.hull, side);
     if (!bat || layMin(a.hull, side, b.hull) > b.range) continue;
     const g = GUNS[bat.gun];
-    const balls = bat.muzzles.length / sides.length / (reloadSeconds(bat.gun, a.crewShare, a.crewed) + TURN_PER_VOLLEY / Math.max(1, a.turn));
+    const balls =
+      bat.muzzles.length /
+      sides.length /
+      (reloadSeconds(bat.gun, a.crewShare, a.crewed) + TURN_PER_VOLLEY / Math.max(1, a.turn));
     const hits = balls * hitShare(bat, a.skill, b.hull);
-    const w = shipBatteryWeight(a.hull, side, !!a.player);   // GALLEON-WEIGHT: a player's galleon's broadside, six guns' weight (SHIPS-2: a carrack's, the mod's seven)
-    hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));   // a low hull is holed at the waterline
-    men += (hits * g.crew) / SHIP_TOUGHNESS;   // TOUGHER-SHIPS: a ball's men (navalDamage.js ballMen), as her hull's points
+    const w = shipBatteryWeight(a.hull, side, !!a.player); // GALLEON-WEIGHT: a player's galleon's broadside, six guns' weight (SHIPS-2: a carrack's, the mod's seven)
+    hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top)); // a low hull is holed at the waterline
+    men += (hits * g.crew) / SHIP_TOUGHNESS; // TOUGHER-SHIPS: a ball's men (navalDamage.js ballMen), as her hull's points
   }
-  const byHull = hull > 0 ? b.hullHp * Math.max(0, b.hullShare - STRUCK_AT) / hull : Infinity;
+  const byHull = hull > 0 ? (b.hullHp * Math.max(0, b.hullShare - STRUCK_AT)) / hull : Infinity;
   const byMen = b.strikes && men > 0 ? b.crew / men : Infinity;
   return Math.min(byHull, byMen);
 }
 /** AUDIT NAV2 F25: `a`'s odds against `b` - how many times sooner she makes `b` strike than `b` makes her (>1: she
  *  outguns her). The wary pirate's WARY_ODDS, the flight from a stronger ship and the director's plunder read it. */
 export function odds(a, b) {
-  const mine = strikeTime(a, b), theirs = strikeTime(b, a);
+  const mine = strikeTime(a, b),
+    theirs = strikeTime(b, a);
   if (mine === theirs) return 1;
   return mine === 0 || theirs === Infinity ? Infinity : theirs / mine;
 }
@@ -548,8 +659,12 @@ export function hitShare(bat, skill, targetHull) {
   const key = `${bat.gun}:${bat.muzzles[0][1]}:${skill}:${targetHull}`;
   let s = HIT_SHARE.get(key);
   if (s !== undefined) return s;
-  const g = GUNS[bat.gun], b = hullBuild(targetHull), k = clamp(1.5 - skill, 0.4, 1.5), R = DUEL_RANGE;
-  const t = R / g.speed, aimY = b.top * AIM_FREEBOARD;
+  const g = GUNS[bat.gun],
+    b = hullBuild(targetHull),
+    k = clamp(1.5 - skill, 0.4, 1.5),
+    R = DUEL_RANGE;
+  const t = R / g.speed,
+    aimY = b.top * AIM_FREEBOARD;
   const fall = Math.max(0.02, (0.5 * SHOT_GRAVITY * t + (bat.muzzles[0][1] - aimY) / t) / g.speed);
   const deep = b.top / fall + 2 * b.halfWidth;
   const err = R * Math.hypot(0.5 * LAY_ERR * (1 - skill), Math.tan(g.pitchSpread * k * DEG) / fall);
@@ -564,15 +679,26 @@ const HIT_SHARE = new Map();
  *  setGalleonStanding): reckoned for the new galleon, the mod's galleon fallen back kept her numbers (her broadside's
  *  dead zone on a Large Boat 11 m against its own 26). */
 let keptFor = -1;
-function buildsKept() { if (keptFor !== buildsStamp()) { keptFor = buildsStamp(); HIT_SHARE.clear(); LAY_MIN.clear(); } }
+function buildsKept() {
+  if (keptFor !== buildsStamp()) {
+    keptFor = buildsStamp();
+    HIT_SHARE.clear();
+    LAY_MIN.clear();
+  }
+}
 
 /** A blow from `by` at `now`: the ship remembers who struck it. */
-export function provoke(ship, by, now) { if (by != null) ship.provoked.set(String(by), now); }
+export function provoke(ship, by, now) {
+  if (by != null) ship.provoked.set(String(by), now);
+}
 
 // ── the hull's handling ────────────────────────────────────────────────────────────────────────────────────────────
 
 /** A hull's length off its build (m). */
-export const hullLength = (hull) => { const b = hullBuild(hull); return b.bowZ - b.aftZ; };
+export const hullLength = (hull) => {
+  const b = hullBuild(hull);
+  return b.bowZ - b.aftZ;
+};
 /** The most she turns at `v` m/s (rad/s): HELM-WAY's steerage times her hull's helm, never under the floor, never past
  *  her class's handiness. */
 export function turnRateAt(ship, v) {
@@ -584,7 +710,8 @@ export const maxTurnRate = (ship) => turnRateAt(ship, ship.speed);
 /** The circle she turns on at her class's own way (radius, m: that way over her rate at it; never under half her own
  *  length) - the room the lookout keeps and a side's course is sounded over, whatever way she has on now: a ship lying
  *  still is about to gather it. */
-export const turnRadius = (ship) => Math.max(hullLength(ship.hull) * 0.5, ship.cls.speed / turnRateAt(ship, ship.cls.speed));
+export const turnRadius = (ship) =>
+  Math.max(hullLength(ship.hull) * 0.5, ship.cls.speed / turnRateAt(ship, ship.cls.speed));
 
 // ── the land ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -601,11 +728,14 @@ export function courseClear(pos, yaw, dist, isWater, { half = 10, from = 0, near
   // AUDIT BAY A21: a reach or a start that is no number - a way gone NaN - is no clear course: the soundings stepped
   // for ever toward it and the sea's frame never returned
   if (!Number.isFinite(dist) || !Number.isFinite(from) || !(step > 0)) return false;
-  const f = forwardOfYaw(yaw), r = [f[2], 0, -f[0]];
+  const f = forwardOfYaw(yaw),
+    r = [f[2], 0, -f[0]];
   let s = Math.max(0, from);
   for (;;) {
-    const x = pos[0] + f[0] * s, z = pos[2] + f[2] * s;
-    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half)) return false;
+    const x = pos[0] + f[0] * s,
+      z = pos[2] + f[2] * s;
+    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half))
+      return false;
     if (s >= dist) return true;
     s = Math.min(dist, s + (s < near ? step : step * 2));
   }
@@ -615,9 +745,17 @@ export function courseClear(pos, yaw, dist, isWater, { half = 10, from = 0, near
 function lookout(ship) {
   const b = hullBuild(ship.hull);
   const rTurn = turnRadius(ship);
-  return { from: b.bowZ * 0.5, near: b.bowZ + rTurn, dist: b.bowZ + rTurn + Math.max(LOOKAHEAD_MIN, ship.speed * LOOKAHEAD_S), half: b.halfWidth + SCAN_MARGIN };
+  return {
+    from: b.bowZ * 0.5,
+    near: b.bowZ + rTurn,
+    dist: b.bowZ + rTurn + Math.max(LOOKAHEAD_MIN, ship.speed * LOOKAHEAD_S),
+    half: b.halfWidth + SCAN_MARGIN,
+  };
 }
-const soundCourse = (ship, yaw, isWater) => { const l = lookout(ship); return courseClear(ship.pos, yaw, l.dist, isWater, { half: l.half, from: l.from, near: l.near }); };
+const soundCourse = (ship, yaw, isWater) => {
+  const l = lookout(ship);
+  return courseClear(ship.pos, yaw, l.dist, isWater, { half: l.half, from: l.from, near: l.near });
+};
 
 /**
  * The course nearest `want` that is clear (AVOID_SWINGS), or the reciprocal of the heading when none is. Sounded
@@ -642,7 +780,13 @@ export function avoidLand(ship, want, isWater, wind = null) {
  *  out to her turning circle's reach. */
 function roomEither(ship, isWater) {
   const l = lookout(ship);
-  const count = (side) => { let n = 0; for (const k of [45, 90, 135]) if (courseClear(ship.pos, wrapAngle(ship.yaw + side * k * DEG), l.near, isWater, { half: l.half, from: l.from })) n++; return n; };
+  const count = (side) => {
+    let n = 0;
+    for (const k of [45, 90, 135])
+      if (courseClear(ship.pos, wrapAngle(ship.yaw + side * k * DEG), l.near, isWater, { half: l.half, from: l.from }))
+        n++;
+    return n;
+  };
   return { right: count(1), left: count(-1) };
 }
 function avoidLandSounded(ship, want, isWater, wind, since) {
@@ -652,22 +796,39 @@ function avoidLandSounded(ship, want, isWater, wind, since) {
     if (wantClear) return want;
   } else {
     a.clearFor = wantClear ? a.clearFor + since : 0;
-    if (a.clearFor >= AVOID_HOLD_S) { a.swing = 0; a.heading = null; a.clearFor = 0; return want; }
-    if (a.heading == null && soundCourse(ship, wrapAngle(want + a.swing * DEG), isWater)) return wrapAngle(want + a.swing * DEG);
-    if (wantClear) { a.swing = 0; a.heading = null; a.clearFor = 0; return want; }   // the swing is foul and the course clear again
+    if (a.clearFor >= AVOID_HOLD_S) {
+      a.swing = 0;
+      a.heading = null;
+      a.clearFor = 0;
+      return want;
+    }
+    if (a.heading == null && soundCourse(ship, wrapAngle(want + a.swing * DEG), isWater))
+      return wrapAngle(want + a.swing * DEG);
+    if (wantClear) {
+      a.swing = 0;
+      a.heading = null;
+      a.clearFor = 0;
+      return want;
+    } // the swing is foul and the course clear again
   }
   // the nearest clear swing she can sail (a galley rows any), else the nearest clear one at all
   for (const any of [false, true]) {
     for (const s of AVOID_SWINGS) {
       const y = wrapAngle(want + s * DEG);
       if (!any && wind && sailable(ship, y, wind) !== y) continue;
-      if (soundCourse(ship, y, isWater)) { a.swing = s; a.heading = null; a.clearFor = 0; return y; }
+      if (soundCourse(ship, y, isWater)) {
+        a.swing = s;
+        a.heading = null;
+        a.clearFor = 0;
+        return y;
+      }
     }
   }
   // boxed in: about - round toward the side with the more open water, never swinging the stem across the land
   const r = roomEither(ship, isWater);
   const side = r.right >= r.left ? 1 : -1;
-  a.swing = 0; a.clearFor = 0;
+  a.swing = 0;
+  a.clearFor = 0;
   a.heading = wrapAngle(ship.yaw + side * (Math.PI - 1e-3));
   return a.heading;
 }
@@ -676,7 +837,8 @@ function avoidLandSounded(ship, want, isWater, wind, since) {
 
 /** The bearing of a point off a ship's bow (radians, + starboard) and its distance on the flat. */
 export function bearingTo(ship, p) {
-  const dx = p[0] - ship.pos[0], dz = p[2] - ship.pos[2];
+  const dx = p[0] - ship.pos[0],
+    dz = p[2] - ship.pos[2];
   return { bearing: wrapAngle(Math.atan2(dx, dz) - ship.yaw), dist: Math.hypot(dx, dz) };
 }
 
@@ -688,7 +850,7 @@ export function leadPoint(from, target, rel, speed) {
   let p = [...target];
   for (let i = 0; i < 3; i++) {
     const d = Math.hypot(p[0] - from[0], p[2] - from[2]);
-    const t = d / Math.max(1, speed * 0.97);   // the flight: the ball's way along the flat (cos of a laid gun ~0.97)
+    const t = d / Math.max(1, speed * 0.97); // the flight: the ball's way along the flat (cos of a laid gun ~0.97)
     p = [target[0] + rel[0] * t, target[1], target[2] + rel[2] * t];
   }
   return p;
@@ -699,9 +861,12 @@ export function leadPoint(from, target, rel, speed) {
  * when it outruns us, a pursuit leading it by at most PURSUIT_LEAD_S. Answers `{ heading, point, t }`.
  */
 export function intercept(from, speed, target, vel) {
-  const P = [target[0] - from[0], target[2] - from[2]], V = [vel?.[0] ?? 0, vel?.[2] ?? 0];
+  const P = [target[0] - from[0], target[2] - from[2]],
+    V = [vel?.[0] ?? 0, vel?.[2] ?? 0];
   const s = Math.max(0.5, speed);
-  const a = V[0] * V[0] + V[1] * V[1] - s * s, b = 2 * (P[0] * V[0] + P[1] * V[1]), c = P[0] * P[0] + P[1] * P[1];
+  const a = V[0] * V[0] + V[1] * V[1] - s * s,
+    b = 2 * (P[0] * V[0] + P[1] * V[1]),
+    c = P[0] * P[0] + P[1] * P[1];
   let t = null;
   if (Math.abs(a) < 1e-9) t = b < 0 ? -c / b : null;
   else {
@@ -732,16 +897,25 @@ function offRunOf(yaw, wind) {
  */
 export function tackCourse(ship, want, goal, wind) {
   const wl = Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0);
-  if (ship.hull === HULL.Rowboat) { ship.tack = null; return want; }   // FISH-BOATS: a skiff is pulled, any course
-  if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) { ship.tack = null; return want; }
+  if (ship.hull === HULL.Rowboat) {
+    ship.tack = null;
+    return want;
+  } // FISH-BOATS: a skiff is pulled, any course
+  if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) {
+    ship.tack = null;
+    return want;
+  }
   const eye = wrapAngle(Math.atan2(wind[0], wind[2]) + Math.PI);
   const g = goal ?? [ship.pos[0] + Math.sin(want) * 1000, 0, ship.pos[2] + Math.cos(want) * 1000];
   const a = wrapAngle(headingTo(ship.pos, g) - eye);
   const flip = TACK_FLIP * DEG;
   if (!ship.tack) {
-    const side = Math.abs(a) > flip ? Math.sign(a) : (wrapAngle(ship.yaw - eye) >= 0 ? 1 : -1);
+    const side = Math.abs(a) > flip ? Math.sign(a) : wrapAngle(ship.yaw - eye) >= 0 ? 1 : -1;
     ship.tack = { side, since: ship.clock };
-  } else if (ship.clock - ship.tack.since >= TACK_MIN_S && ((ship.tack.side > 0 && a < -flip) || (ship.tack.side < 0 && a > flip))) {
+  } else if (
+    ship.clock - ship.tack.since >= TACK_MIN_S &&
+    ((ship.tack.side > 0 && a < -flip) || (ship.tack.side < 0 && a > flip))
+  ) {
     ship.tack = { side: -ship.tack.side, since: ship.clock };
   }
   return wrapAngle(eye + ship.tack.side * (180 - CLOSE_HAULED) * DEG);
@@ -751,7 +925,7 @@ export function tackCourse(ship, want, goal, wind) {
  *  any course). */
 export function sailable(ship, want, wind) {
   const wl = Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0);
-  if (ship.hull === HULL.Rowboat) return want;   // FISH-BOATS: a skiff is pulled, any course
+  if (ship.hull === HULL.Rowboat) return want; // FISH-BOATS: a skiff is pulled, any course
   if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) return want;
   const eye = wrapAngle(Math.atan2(wind[0], wind[2]) + Math.PI);
   return wrapAngle(eye + (wrapAngle(want - eye) >= 0 ? 1 : -1) * (180 - CLOSE_HAULED) * DEG);
@@ -760,7 +934,10 @@ export function sailable(ship, want, wind) {
 // ── other hulls ────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** A hull's reach for passing clear: between its half beam and its half length. */
-const passReach = (hull) => { const b = hullBuild(hull); return 0.5 * (b.halfWidth + (b.bowZ - b.aftZ) / 2); };
+const passReach = (hull) => {
+  const b = hullBuild(hull);
+  return 0.5 * (b.halfWidth + (b.bowZ - b.aftZ) / 2);
+};
 
 /**
  * `want` bent clear of the hulls about her (`contacts` with a `hull`): each that will pass within both reaches and
@@ -784,7 +961,7 @@ export function trafficCourse(ship, want, contacts, except = null) {
     if (dca >= reach) continue;
     const urgency = (1 - dca / reach) * (1 - tca / AVOID_SHIP_S);
     const brg = wrapAngle(Math.atan2(p[0], p[1]) - ship.yaw);
-    const side = wrapAngle(Math.atan2(p[0] + v[0] * tca, p[1] + v[1] * tca) - ship.yaw);   // where she lies at the closest
+    const side = wrapAngle(Math.atan2(p[0] + v[0] * tca, p[1] + v[1] * tca) - ship.yaw); // where she lies at the closest
     const dir = Math.abs(brg) < AVOID_HEAD_ON * DEG ? 1 : side > 0 ? -1 : 1;
     bend += dir * urgency * AVOID_SHIP_SWING * DEG;
   }
@@ -808,9 +985,14 @@ export function stepCaptain(ship, world) {
   const isWater = (x, z) => world.isWater(x, z, ship.hull);
   ship.guns.step(dt);
   if (st !== SHIP_STATES.afloat || ship.boarded) {
-    ship.runOut.clear();   // a ship that no longer fights runs her guns in
+    ship.runOut.clear(); // a ship that no longer fights runs her guns in
     // AUDIT NAV2 F23: and fights no one - two struck to each other each held the other's prize "come for" for ever
-    ship.target = null; ship.berthSide = 0; ship.present = null; ship.chase = null; ship.approach = null; ship.route = null;
+    ship.target = null;
+    ship.berthSide = 0;
+    ship.present = null;
+    ship.chase = null;
+    ship.approach = null;
+    ship.route = null;
   }
   if (st === SHIP_STATES.sinking || st === SHIP_STATES.sunk) {
     ship.speed = Math.max(0, ship.speed - DECEL * dt);
@@ -843,31 +1025,59 @@ export function stepCaptain(ship, world) {
 
   // who is out there, and who is an enemy - the one she fights kept until it is past DISENGAGE of its reach
   const sight = lookoutOf(ship);
-  let enemy = null, enemyD = Infinity, threat = null, threatD = Infinity, prize = null, prizeD = Infinity;
-  const aids = standsBy(ship, world);   // SEA-EASE: the players a crown's ship stands by
+  let enemy = null,
+    enemyD = Infinity,
+    threat = null,
+    threatD = Infinity,
+    prize = null,
+    prizeD = Infinity;
+  const aids = standsBy(ship, world); // SEA-EASE: the players a crown's ship stands by
   // SHIP-WATCH: who showed themselves by their guns' flashes lately (by night, seen as a lit ship is)
-  const flashed = world.night ? new Set((world.gunfire ?? []).filter((g) => world.now - g.at <= GUNS_SEEN_S).map((g) => g.by)) : null;
+  const flashed = world.night
+    ? new Set((world.gunfire ?? []).filter((g) => world.now - g.at <= GUNS_SEEN_S).map((g) => g.by))
+    : null;
   for (const c of world.contacts ?? []) {
     if (c.id === ship.id || c.gone) continue;
     const { dist } = bearingTo(ship, c.pos);
     // SEA-PEACE: a ship struck to HER is her prize to board - nobody's enemy, nobody's threat (AUDIT NAV2 F22: one she
     // gave up, left be)
-    if (c.struck) { if (c.struckTo === ship.id && dist < prizeD && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) { prize = c; prizeD = dist; } continue; }
+    if (c.struck) {
+      if (c.struckTo === ship.id && dist < prizeD && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) {
+        prize = c;
+        prizeD = dist;
+      }
+      continue;
+    }
     const held = c.id === ship.target && (ship.mode === 'engage' || ship.mode === 'board');
     const lit = !!c.lit || !!flashed?.has(c.id);
-    const see = nightSight(sight, { night: !!world.night, lit });   // SHIP-WATCH: by night, by her lanterns (or her guns)
+    const see = nightSight(sight, { night: !!world.night, lit }); // SHIP-WATCH: by night, by her lanterns (or her guns)
     // NAV-COST (2026-10-12): her sight asked FIRST - `hostile` (a wary pirate sizing a quarry up: shipPower, fightingPower)
     // was asked of every ship in the sea, every frame, for each of mine, and nearly all of them hundreds of km off. Both
     // halves read nothing they change, so the answer is the one it was.
-    if (dist < (held ? see * DISENGAGE : see) && hostile(ship, c, world) && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) {
+    if (
+      dist < (held ? see * DISENGAGE : see) &&
+      hostile(ship, c, world) &&
+      !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)
+    ) {
       // SEA-EASE: a pirate fighting a player she stands by is hers first
       const rank = (held ? dist * 0.8 : dist) * (aids && fightsAny(c, aids) ? AID_PRIORITY : 1);
-      if (rank < enemyD) { enemy = c; enemyD = rank; }
+      if (rank < enemyD) {
+        enemy = c;
+        enemyD = rank;
+      }
     }
     // a threat is anything hostile that would take US - SEA-PEACE: sized up by her own power, and a player who fired on
     // her a threat to a pirate too (a wary one runs from a stronger one; a bold one fights it out, as she did)
-    if (dist < threatD && dist < nightSight(FLEE_RANGE, { night: !!world.night, lit })
-      && (c.kind === 'ship' ? c.ship && hostile(c.ship, { kind: 'ship', faction: ship.cls.faction, id: ship.id, ship }, world) : (ship.provoked.get(c.id) ?? -Infinity) > world.now - PROVOKED_S)) { threat = c; threatD = dist; }   // SHIP-WATCH: a threat seen
+    if (
+      dist < threatD &&
+      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit }) &&
+      (c.kind === 'ship'
+        ? c.ship && hostile(c.ship, { kind: 'ship', faction: ship.cls.faction, id: ship.id, ship }, world)
+        : (ship.provoked.get(c.id) ?? -Infinity) > world.now - PROVOKED_S)
+    ) {
+      threat = c;
+      threatD = dist;
+    } // SHIP-WATCH: a threat seen
   }
   if (enemy) enemyD = bearingTo(ship, enemy.pos).dist;
   for (const c of world.contacts ?? []) {
@@ -880,16 +1090,20 @@ export function stepCaptain(ship, world) {
   enemy = leaveTheWreck(ship, enemy, boards);
   if (!enemy) enemyD = Infinity;
 
-  const runs = (ship.cls.faction === 'merchant' && (threat || enemy))
-    || (ship.cls.faction === 'pirate' && !ship.cls.flagship && ship.damage.hullShare() < PIRATE_RUNS_AT && (threat || enemy))
-    || (ship.cls.faction === 'pirate' && ship.temper === TEMPERS.wary && !!threat && outguns(threat, ship));   // SEA-PEACE: a wary pirate runs from a stronger ship
-  if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null;   // AUDIT WK-N3: the run's end, or the day
+  const runs =
+    (ship.cls.faction === 'merchant' && (threat || enemy)) ||
+    (ship.cls.faction === 'pirate' &&
+      !ship.cls.flagship &&
+      ship.damage.hullShare() < PIRATE_RUNS_AT &&
+      (threat || enemy)) ||
+    (ship.cls.faction === 'pirate' && ship.temper === TEMPERS.wary && !!threat && outguns(threat, ship)); // SEA-PEACE: a wary pirate runs from a stronger ship
+  if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null; // AUDIT WK-N3: the run's end, or the day
   let plan;
   if (runs) {
     const from = threat ?? enemy;
     ship.mode = 'flee';
     ship.target = from.id;
-    ship.runOn = { id: from.id, pos: [from.pos[0], from.pos[1], from.pos[2]], until: world.now + RUN_ON_S };   // AUDIT WK-N3: by night (the day clears it)
+    ship.runOn = { id: from.id, pos: [from.pos[0], from.pos[1], from.pos[2]], until: world.now + RUN_ON_S }; // AUDIT WK-N3: by night (the day clears it)
     plan = fleeCourse(ship, from, world.wind);
   } else if (ship.runOn && !enemy) {
     // AUDIT WK-N3: by night she runs on, dark, from where she last saw it
@@ -902,8 +1116,15 @@ export function stepCaptain(ship, world) {
     if (boards) {
       ship.mode = 'board';
       plan = boardCourse(ship, enemy, world.wind, isWater);
-      if (!plan) { plan = giveUp(ship, enemy); enemy = null; }   // AUDIT NAV2 F22: a boarding that gains nothing - she leaves the boat be
-    } else { ship.mode = 'engage'; ship.berthSide = 0; plan = engageCourse(ship, enemy, enemyD, world, isWater); }
+      if (!plan) {
+        plan = giveUp(ship, enemy);
+        enemy = null;
+      } // AUDIT NAV2 F22: a boarding that gains nothing - she leaves the boat be
+    } else {
+      ship.mode = 'engage';
+      ship.berthSide = 0;
+      plan = engageCourse(ship, enemy, enemyD, world, isWater);
+    }
   } else if (prize && ship.damage.crew > 0 && ship.cls.faction !== 'merchant') {
     // SEA-PEACE: the end of her fight - alongside the ship that struck to her, to take her: she has surrendered, so any
     // men to send will do (GRAPPLE_CREW is for carrying a deck that fights - a player's). AUDIT NAV2 F30 (Mac: "No, they
@@ -911,7 +1132,10 @@ export function stepCaptain(ship, world) {
     ship.mode = 'board';
     ship.target = prize.id;
     plan = boardCourse(ship, prize, world.wind, isWater);
-    if (!plan) { plan = giveUp(ship, prize); prize = null; }   // AUDIT NAV2 F22: and one she cannot come at - spared
+    if (!plan) {
+      plan = giveUp(ship, prize);
+      prize = null;
+    } // AUDIT NAV2 F22: and one she cannot come at - spared
   } else {
     ship.target = null;
     ship.berthSide = 0;
@@ -929,35 +1153,66 @@ export function stepCaptain(ship, world) {
       if (life?.hold) return moor(ship, life.hold, dt, out);
       // into a harbour or out of it with the wind in her teeth: warped on her sweeps, as a boarding's pirate is pulled
       // alongside (a coaster beat for forty minutes in the lee of a headland and never came in)
-      if (life && (ship.errand?.kind === 'arrive' || ship.errand?.kind === 'depart') && sailable(ship, life.want, world.wind) !== life.want) { life.sweeps = SWEEP_WAY; life.sailable = true; }
-      plan = life ?? { want: cruiseCourse(ship, world.wind, isWater, world.random ?? Math.random), goal: ship.course ? [ship.course[0], 0, ship.course[1]] : ship.waypoint ? [ship.waypoint[0], 0, ship.waypoint[1]] : null, sails: 1 };
+      if (
+        life &&
+        (ship.errand?.kind === 'arrive' || ship.errand?.kind === 'depart') &&
+        sailable(ship, life.want, world.wind) !== life.want
+      ) {
+        life.sweeps = SWEEP_WAY;
+        life.sailable = true;
+      }
+      plan = life ?? {
+        want: cruiseCourse(ship, world.wind, isWater, world.random ?? Math.random),
+        goal: ship.course
+          ? [ship.course[0], 0, ship.course[1]]
+          : ship.waypoint
+            ? [ship.waypoint[0], 0, ship.waypoint[1]]
+            : null,
+        sails: 1,
+      };
     }
   }
-  if (ship.mode !== 'board') { ship.approach = null; ship.route = null; }   // AUDIT NAV2 F22: a boarding's tally and way are its own
-  ship.sweeps = plan.sweeps ?? 0;   // AUDIT NAV1 (online #10): her sweeps out, or in
-  if (ship.hull === HULL.Rowboat) ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare());   // FISH-BOATS: a skiff pulled at the plan's stroke
+  if (ship.mode !== 'board') {
+    ship.approach = null;
+    ship.route = null;
+  } // AUDIT NAV2 F22: a boarding's tally and way are its own
+  ship.sweeps = plan.sweeps ?? 0; // AUDIT NAV1 (online #10): her sweeps out, or in
+  if (ship.hull === HULL.Rowboat)
+    ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare()); // FISH-BOATS: a skiff pulled at the plan's stroke
   let want = plan.sailable ? plan.want : tackCourse(ship, plan.want, plan.goal, world.wind);
   want = trafficCourse(ship, want, world.contacts, ship.mode === 'board' ? ship.target : null);
-  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind);   // SHIP-LIFE: the last leg into a sounded berth
+  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind); // SHIP-LIFE: the last leg into a sounded berth
 
   // the sail, the helm and the way - boxed in by the land she shortens sail and pivots
   ship.sailsWant = ship.avoid.heading != null ? Math.min(plan.sails, BOXED_SAILS) : plan.sails;
   ship.sails = clamp(ship.sails + clamp(ship.sailsWant - ship.sails, -0.5 * dt, 0.4 * dt), 0, 1);
-  helm(ship, want, dt, world, 1, plan.track ? trackRate(ship, want, dt) : (ship.wantPrev = null, ship.wantRate = 0));
+  helm(
+    ship,
+    want,
+    dt,
+    world,
+    1,
+    plan.track ? trackRate(ship, want, dt) : ((ship.wantPrev = null), (ship.wantRate = 0)),
+  );
   moveShip(ship, dt, isWater);
 
   // the guns - held at a wreck, and all but the chasers while she comes alongside - SHOT-KINDS: unless her broadsides
   // hold grape, which sweeps the deck she means to take and leaves its timbers whole (captainLoads)
   captainLoads(ship, enemy);
   if (!ship.guns.braced && !(enemy?.crippled && enemy.kind === 'player')) {
-    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, { broadsides: boarderBroadsides(ship) });
+    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, {
+      broadsides: boarderBroadsides(ship),
+    });
   } else ship.runOut.clear();
 
   // the grapple: a pirate with men to send, alongside a crippled, holed or stopped boat - GRAPPLE_GAP of water between
   // the hulls where both are known, else within GRAPPLE_RANGE
   if (ship.mode === 'board') {
-    const q = enemy ?? prize;   // SEA-PEACE: or the prize she comes alongside
-    const close = q.hull != null && Number.isFinite(q.yaw) ? hullGap(ship.pos, ship.yaw, ship.hull, q.pos, q.yaw, q.hull) <= GRAPPLE_GAP : bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;
+    const q = enemy ?? prize; // SEA-PEACE: or the prize she comes alongside
+    const close =
+      q.hull != null && Number.isFinite(q.yaw)
+        ? hullGap(ship.pos, ship.yaw, ship.hull, q.pos, q.yaw, q.hull) <= GRAPPLE_GAP
+        : bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;
     if (close) out.grapple = q.id;
   }
   return out;
@@ -982,7 +1237,8 @@ const CAPTAIN_GROUPS = Object.freeze(['starboard', 'bow']);
 export function captainLoads(ship, enemy = null) {
   const d = enemy?.pos ? Math.hypot(enemy.pos[0] - ship.pos[0], enemy.pos[2] - ship.pos[2]) : Infinity;
   const boards = ship.cls.faction === 'pirate' && ship.mode === 'board';
-  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);
+  const done =
+    !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);
   for (const side of CAPTAIN_GROUPS) {
     const bat = batteryOf(ship.hull, side);
     if (!bat || bat.gun === 'barrel') continue;
@@ -999,11 +1255,13 @@ export const boarderBroadsides = (ship) => ship.mode !== 'board' || ship.guns.lo
 function standsBy(ship, world) {
   if (ship.cls.faction !== 'navy') return null;
   let ids = null;
-  for (const c of world.contacts ?? []) if (c.kind === 'player' && !hostile(ship, c, world)) (ids ??= new Set()).add(c.id);
+  for (const c of world.contacts ?? [])
+    if (c.kind === 'player' && !hostile(ship, c, world)) (ids ??= new Set()).add(c.id);
   return ids;
 }
 /** SEA-EASE: whether a contact is a ship fighting one of `ids` - in her fight with them, or coming alongside them. */
-export const fightsAny = (c, ids) => c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');
+export const fightsAny = (c, ids) =>
+  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');
 
 /** SHIP-LIFE: moored - her way off, her sails stowed, eased onto her berth over MOOR_EASE_S (shipLife.js): no helm, no
  *  way, nothing she steers round; her guns run in. */
@@ -1012,7 +1270,10 @@ function moor(ship, hold, dt, out) {
   ship.pos[0] += (hold.pos[0] - ship.pos[0]) * k;
   ship.pos[2] += (hold.pos[1] - ship.pos[2]) * k;
   ship.yaw = wrapAngle(ship.yaw + wrapAngle(hold.yaw - ship.yaw) * k);
-  ship.speed = 0; ship.turnNow = 0; ship.yawRate = 0; ship.sweeps = 0;
+  ship.speed = 0;
+  ship.turnNow = 0;
+  ship.yawRate = 0;
+  ship.sweeps = 0;
   ship.sailsWant = 0;
   ship.sails = Math.max(0, ship.sails - dt * 0.5);
   ship.runOut.clear();
@@ -1026,12 +1287,14 @@ function heardGuns(ship, world) {
   // AUDIT WK-N2: half the lookout she sees by - by night a dark ship's (she stopped answering at half her day's, and
   // turned from a fight her night's lookout could not see)
   const near = nightSight(lookoutOf(ship), { night: !!world.night, lit: false }) * 0.5;
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const g of world.gunfire ?? []) {
     if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;
     const d = Math.hypot(g.pos[0] - ship.pos[0], g.pos[2] - ship.pos[2]);
     if (d > HEAR_GUNS_M || d < near || d >= bestD) continue;
-    best = g; bestD = d;
+    best = g;
+    bestD = d;
   }
   return best;
 }
@@ -1040,14 +1303,24 @@ function heardGuns(ship, world) {
  *  board them (the grapple theirs to take her over by) - men to send, the Boarders setting on, and the boat crippled,
  *  holed or lying still. */
 function boardsHer(ship, enemy, world) {
-  if (ship.cls.faction !== 'pirate' || enemy.kind !== 'player' || (enemy.peer ? enemy.boarders === false : world.boarders === false)) return false;
+  if (
+    ship.cls.faction !== 'pirate' ||
+    enemy.kind !== 'player' ||
+    (enemy.peer ? enemy.boarders === false : world.boarders === false)
+  )
+    return false;
   if (ship.damage.crew < GRAPPLE_CREW || ship.damage.hullShare() < PIRATE_RUNS_AT) return false;
-  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S;
+  return (
+    !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S
+  );
 }
 
 /** A wreck no one here will board is not fought: after WRECK_SPARE_S watching it she leaves it be. */
 function leaveTheWreck(ship, enemy, boards) {
-  if (!enemy || boards || !(enemy.crippled && enemy.kind === 'player')) { if (!enemy || ship.wreck?.id !== enemy.id) ship.wreck = null; return enemy; }
+  if (!enemy || boards || !(enemy.crippled && enemy.kind === 'player')) {
+    if (!enemy || ship.wreck?.id !== enemy.id) ship.wreck = null;
+    return enemy;
+  }
   if (ship.wreck?.id !== enemy.id) ship.wreck = { id: enemy.id, since: ship.clock };
   if (ship.clock - ship.wreck.since < WRECK_SPARE_S) return enemy;
   ship.spare.set(enemy.id, ship.clock + SPARE_S);
@@ -1060,13 +1333,16 @@ function leaveTheWreck(ship, enemy, boards) {
  *  lain in the last CHASE_GIVE_UP_S (her marks, one every CHASE_MARK_S) - against the best she ever did, a chase that
  *  lost ground and was closing again was given up. */
 function chaseOrGiveUp(ship, enemy, d) {
-  if (!enemy) { ship.chase = null; return null; }
+  if (!enemy) {
+    ship.chase = null;
+    return null;
+  }
   if (ship.chase?.id !== enemy.id) ship.chase = { id: enemy.id, since: ship.clock, marks: [] };
   const c = ship.chase;
   if (!c.marks.length || ship.clock - c.marks[c.marks.length - 1][0] >= CHASE_MARK_S) c.marks.push([ship.clock, d]);
   while (c.marks.length > 1 && ship.clock - c.marks[0][0] > CHASE_GIVE_UP_S) c.marks.shift();
   const far = c.marks.reduce((m, k) => Math.max(m, k[1]), d);
-  if (d < far * (1 - CHASE_GAIN) || d <= ship.cls.range * CLOSE_FROM) c.since = ship.clock;   // closing, or in the fight
+  if (d < far * (1 - CHASE_GAIN) || d <= ship.cls.range * CLOSE_FROM) c.since = ship.clock; // closing, or in the fight
   if (ship.clock - ship.chase.since > CHASE_GIVE_UP_S && d > ship.cls.range * CLOSE_FROM) {
     ship.spare.set(enemy.id, ship.clock + SPARE_S);
     ship.chase = null;
@@ -1078,7 +1354,10 @@ function chaseOrGiveUp(ship, enemy, d) {
 /** The enemy's way, smoothed over TARGET_VEL_TAU - its turns read as turns, not as each frame's jitter. */
 function trackTarget(ship, enemy, dt) {
   const v = enemy.vel ?? [0, 0, 0];
-  if (ship.tvel?.id !== enemy.id) { ship.tvel = { id: enemy.id, v: [v[0], 0, v[2]] }; return; }
+  if (ship.tvel?.id !== enemy.id) {
+    ship.tvel = { id: enemy.id, v: [v[0], 0, v[2]] };
+    return;
+  }
   const k = 1 - Math.exp(-dt / TARGET_VEL_TAU);
   ship.tvel.v[0] += (v[0] - ship.tvel.v[0]) * k;
   ship.tvel.v[2] += (v[2] - ship.tvel.v[2]) * k;
@@ -1086,10 +1365,17 @@ function trackTarget(ship, enemy, dt) {
 
 /** The rate her wanted heading turns at (rad/s), read smoothed over TRACK_TAU - a jump past TRACK_JUMP a new course. */
 function trackRate(ship, want, dt) {
-  if (ship.wantPrev == null || !(dt > 0)) { ship.wantPrev = want; ship.wantRate = 0; return 0; }
+  if (ship.wantPrev == null || !(dt > 0)) {
+    ship.wantPrev = want;
+    ship.wantRate = 0;
+    return 0;
+  }
   const step = wrapAngle(want - ship.wantPrev);
   ship.wantPrev = want;
-  if (Math.abs(step) > TRACK_JUMP * DEG) { ship.wantRate = 0; return 0; }
+  if (Math.abs(step) > TRACK_JUMP * DEG) {
+    ship.wantRate = 0;
+    return 0;
+  }
   ship.wantRate += (step / dt - ship.wantRate) * (1 - Math.exp(-dt / TRACK_TAU));
   return ship.wantRate;
 }
@@ -1113,20 +1399,28 @@ function helm(ship, want, dt, world, power, lead = 0) {
     const through = Math.sign(toEye) === Math.sign(err) && Math.abs(toEye) < Math.abs(err);
     const off = offRunOf(ship.yaw, wind);
     // a tack is over once she can sail again past the eye; a wear once she is round
-    if (ship.turnWay && (Math.abs(err) < 20 * DEG || (!through && ship.turnWay.kind === 'tack' && off <= CLOSE_HAULED * DEG))) ship.turnWay = null;
+    if (
+      ship.turnWay &&
+      (Math.abs(err) < 20 * DEG || (!through && ship.turnWay.kind === 'tack' && off <= CLOSE_HAULED * DEG))
+    )
+      ship.turnWay = null;
     if (!ship.turnWay && through) {
-      ship.turnWay = ship.speed >= WEAR_BELOW * paceOf(ship, wind) && off >= TACK_FROM * DEG ? { kind: 'tack', rate: maxRate } : { kind: 'wear' };
+      ship.turnWay =
+        ship.speed >= WEAR_BELOW * paceOf(ship, wind) && off >= TACK_FROM * DEG
+          ? { kind: 'tack', rate: maxRate }
+          : { kind: 'wear' };
     }
     if (ship.turnWay?.kind === 'wear' && through) err -= Math.sign(err) * 2 * Math.PI;
-    if (ship.turnWay?.kind === 'tack') maxRate = Math.max(maxRate, Math.min(ship.cls.turn * DEG, TACK_CARRY * ship.turnWay.rate));
+    if (ship.turnWay?.kind === 'tack')
+      maxRate = Math.max(maxRate, Math.min(ship.cls.turn * DEG, TACK_CARRY * ship.turnWay.rate));
     // in irons she pays off, the bow swung from the eye whichever way the helm asks
     if (Math.abs(toEye) < IRONS_DEG * DEG && ship.speed < IRONS_WAY) maxRate = Math.max(maxRate, PAYOFF_TURN * DEG);
   } else ship.turnWay = null;
   if (ship.avoid.heading != null || ship.aground > 0) {
-    maxRate = Math.max(maxRate, PAYOFF_TURN * DEG);   // boxed in or aground: warped round where she lies
+    maxRate = Math.max(maxRate, PAYOFF_TURN * DEG); // boxed in or aground: warped round where she lies
     ship.turnWay = null;
   }
-  if (power > 0 && ship.sweeps > 0) maxRate = Math.max(maxRate, SWEEP_TURN * DEG);   // AUDIT NAV1 (online #10): pulled round on her sweeps
+  if (power > 0 && ship.sweeps > 0) maxRate = Math.max(maxRate, SWEEP_TURN * DEG); // AUDIT NAV1 (online #10): pulled round on her sweeps
   // a big turn under the land goes round on the side the lookout found open (avoidLand's `dir`)
   if (ship.avoid.dir) {
     if (Math.abs(err) < 30 * DEG) ship.avoid.dir = 0;
@@ -1141,19 +1435,26 @@ function helm(ship, want, dt, world, power, lead = 0) {
     const wl = wl0;
     let best = ship.cls.speed * windFactor(offRunOf(ship.yaw, wind)) * windShare(wl) * ship.damage.wayShare();
     if (ship.hull === HULL.LargeGalley) best = Math.max(best, ship.cls.speed * OARS_FLOOR);
-    if (ship.hull === HULL.Rowboat) best = 0;   // FISH-BOATS: no canvas - a skiff's way is her oars' alone (ship.sweeps)
+    if (ship.hull === HULL.Rowboat) best = 0; // FISH-BOATS: no canvas - a skiff's way is her oars' alone (ship.sweeps)
     const helmShare = maxRate > 0 ? Math.min(1, Math.abs(ship.yawRate) / maxRate) : 0;
     const sailed = best * ship.sails * (1 - TURN_SPEED_LOSS * helmShare);
-    const target = Math.max(sailed, ship.sweeps) * (ship.aground > 0 ? AGROUND_WAY : 1);   // AUDIT NAV1 (online #10): her sweeps' way where the wind gives less
+    const target = Math.max(sailed, ship.sweeps) * (ship.aground > 0 ? AGROUND_WAY : 1); // AUDIT NAV1 (online #10): her sweeps' way where the wind gives less
     // AUDIT NAV2 F28: gathered and lost at her hull's own rates, the player's (the prefab's `sailWay` on both) - the
     // Carrack gathered way at half the player's Carrack, and a galley lost hers at twice the player's galley's coast
     const way = wayOf(ship);
-    ship.speed = ship.speed < target ? Math.min(target, ship.speed + ACCEL * way * dt) : Math.max(target, ship.speed - DECEL * way * dt);
+    ship.speed =
+      ship.speed < target
+        ? Math.min(target, ship.speed + ACCEL * way * dt)
+        : Math.max(target, ship.speed - DECEL * way * dt);
   }
   ship.aground = Math.max(0, ship.aground - dt);
   // the heel: into the turn with her way, to leeward with the wind on her beam, on a spring
-  const cross = (wind?.[0] ?? 0) * Math.cos(ship.yaw) - (wind?.[2] ?? 0) * Math.sin(ship.yaw);   // the wind across her, + blowing to starboard
-  const want2 = clamp(-HEEL_TURN * ship.speed * (ship.yawRate / DEG) + HEEL_WIND * (cross / WIND_RATED) * ship.sails, -HEEL_MAX, HEEL_MAX);
+  const cross = (wind?.[0] ?? 0) * Math.cos(ship.yaw) - (wind?.[2] ?? 0) * Math.sin(ship.yaw); // the wind across her, + blowing to starboard
+  const want2 = clamp(
+    -HEEL_TURN * ship.speed * (ship.yawRate / DEG) + HEEL_WIND * (cross / WIND_RATED) * ship.sails,
+    -HEEL_MAX,
+    HEEL_MAX,
+  );
   for (let t = dt; t > 1e-9;) {
     const h = Math.min(t, 0.05);
     ship.heelVel += (HEEL_OMEGA * HEEL_OMEGA * (want2 - ship.heel) - 2 * HEEL_ZETA * HEEL_OMEGA * ship.heelVel) * h;
@@ -1169,12 +1470,15 @@ function moveShip(ship, dt, isWater) {
   const step = ship.speed * dt;
   if (isWater && step > 0) {
     const b = hullBuild(ship.hull);
-    const nx = ship.pos[0] + f[0] * step, nz = ship.pos[2] + f[2] * step;
+    const nx = ship.pos[0] + f[0] * step,
+      nz = ship.pos[2] + f[2] * step;
     const r = [f[2], -f[0]];
-    const sh = b.bowZ * 0.55, w = b.halfWidth;
-    const clear = isWater(nx + f[0] * b.bowZ, nz + f[2] * b.bowZ)
-      && isWater(nx + f[0] * sh + r[0] * w, nz + f[2] * sh + r[1] * w)
-      && isWater(nx + f[0] * sh - r[0] * w, nz + f[2] * sh - r[1] * w);
+    const sh = b.bowZ * 0.55,
+      w = b.halfWidth;
+    const clear =
+      isWater(nx + f[0] * b.bowZ, nz + f[2] * b.bowZ) &&
+      isWater(nx + f[0] * sh + r[0] * w, nz + f[2] * sh + r[1] * w) &&
+      isWater(nx + f[0] * sh - r[0] * w, nz + f[2] * sh - r[1] * w);
     if (!clear) {
       ship.speed = Math.min(ship.speed, AGROUND_WAY * ship.cls.speed);
       ship.aground = AGROUND_S;
@@ -1190,9 +1494,13 @@ function moveShip(ship, dt, isWater) {
 function drift(ship, dt, wind, isWater) {
   const wl = Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0);
   if (wl < 1e-6) return;
-  const s = ADRIFT_SPEED * dt / wl;
-  const x = ship.pos[0] + wind[0] * s, z = ship.pos[2] + wind[2] * s;
-  if (isWater(x, z)) { ship.pos[0] = x; ship.pos[2] = z; }
+  const s = (ADRIFT_SPEED * dt) / wl;
+  const x = ship.pos[0] + wind[0] * s,
+    z = ship.pos[2] + wind[2] * s;
+  if (isWater(x, z)) {
+    ship.pos[0] = x;
+    ship.pos[2] = z;
+  }
 }
 
 /** Past this many times its fighting range (or past its guns' reach) a captain closes on an intercept. */
@@ -1205,7 +1513,7 @@ export const BOW_SWING = 60;
 export function batteryReach(ship, side, seaY = 0) {
   const bat = batteryOf(ship.hull, side);
   if (!bat || bat.gun === 'barrel') return 0;
-  const g = shotGun(bat.gun, GUNS[bat.gun], ship.guns?.load?.(side) ?? null);   // SHOT-KINDS: as she is loaded
+  const g = shotGun(bat.gun, GUNS[bat.gun], ship.guns?.load?.(side) ?? null); // SHOT-KINDS: as she is loaded
   return rangeAt(g.maxEl * DEG, g.speed, bat.muzzles[0][1] + (ship.pos[1] - seaY));
 }
 export const broadsideReach = (ship, seaY = 0) => batteryReach(ship, 'starboard', seaY);
@@ -1236,8 +1544,14 @@ export function layMin(hull, side, targetHull = HULL.LargeBoat) {
     m = reach;
     for (let r = LAY_MIN_STEP; r < reach; r += LAY_MIN_STEP) {
       const at = [dir[0] * r, 0, dir[1] * r];
-      const sol = aimSolution(pose, /** @type {'starboard'|'port'|'bow'|'stern'} */ (side), null, 0, { target: at, targetY: aimY });
-      if (sol && layPasses(sol, at, band)) { m = r; break; }
+      const sol = aimSolution(pose, /** @type {'starboard'|'port'|'bow'|'stern'} */ (side), null, 0, {
+        target: at,
+        targetY: aimY,
+      });
+      if (sol && layPasses(sol, at, band)) {
+        m = r;
+        break;
+      }
     }
   }
   LAY_MIN.set(key, m);
@@ -1248,7 +1562,8 @@ const LAY_MIN = new Map();
 export const LAY_MIN_STEP = 1;
 
 /** The best way she makes on no particular point of sail - the intercept's own pace. */
-const paceOf = (ship, wind) => ship.cls.speed * windShare(Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0)) * ship.damage.wayShare();
+const paceOf = (ship, wind) =>
+  ship.cls.speed * windShare(Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0)) * ship.damage.wayShare();
 /** AUDIT NAV2 F28: her hull's share of ACCEL and DECEL - the prefab's sail modifier (navalShips.js `sailWay`), the
  *  player's own hull's. */
 const wayOf = (ship) => hullBuild(ship.hull).sailWay ?? 1;
@@ -1279,7 +1594,7 @@ function engageCourse(ship, enemy, d, world, isWater) {
   const { bearing } = bearingTo(ship, enemy.pos);
   const my = velocityOf(ship);
   const rel = [vel[0] - my[0], 0, vel[2] - my[2]];
-  const away = (vel[0] * (enemy.pos[0] - ship.pos[0]) + vel[2] * (enemy.pos[2] - ship.pos[2])) / Math.max(1e-6, d);   // her way along our line of sight, away
+  const away = (vel[0] * (enemy.pos[0] - ship.pos[0]) + vel[2] * (enemy.pos[2] - ship.pos[2])) / Math.max(1e-6, d); // her way along our line of sight, away
   // SEA-PEACE: A STERN CHASE is closed up her quarter - she runs from us (her way along our line of sight, away, over
   // CHASE_AWAY of OUR pace: a quarry that slow is presented to as ever) and we lie abaft her beam (more than ABAFT_DEG
   // off her bow): a side turned to her there gives
@@ -1289,12 +1604,14 @@ function engageCourse(ship, enemy, d, world, isWater) {
   // her range off our side of the quarry's beam, to present from abeam. AUDIT NAV2 F21: and a ship in FLIGHT is run
   // down however slow she runs (a wary sloop at 0.45 of a cutter's pace was presented to and got away, 7 in 11)
   const ev = Math.hypot(vel[0], vel[2]);
-  if (ev > 0.3) {   // at any range: astern of her, a side turned to her only opens it (she wove 93-113 m off her stern)
+  if (ev > 0.3) {
+    // at any range: astern of her, a side turned to her only opens it (she wove 93-113 m off her stern)
     const eYaw = Math.atan2(vel[0], vel[2]);
     const offBow = Math.abs(wrapAngle(headingTo(enemy.pos, ship.pos) - eYaw));
     if (((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * own) && offBow > ABAFT_DEG * DEG) {
-      const f = forwardOfYaw(eYaw), r = [f[2], 0, -f[0]];
-      const onSide = ((ship.pos[0] - enemy.pos[0]) * r[0] + (ship.pos[2] - enemy.pos[2]) * r[2]) >= 0 ? 1 : -1;
+      const f = forwardOfYaw(eYaw),
+        r = [f[2], 0, -f[0]];
+      const onSide = (ship.pos[0] - enemy.pos[0]) * r[0] + (ship.pos[2] - enemy.pos[2]) * r[2] >= 0 ? 1 : -1;
       const out = d > range * CHASE_SHEER ? 0 : range;
       ship.present = null;
       // AUDIT NAV2 F21: run down with her chasers loaded, she steers for THEIR lead - on her own intercept point a runner
@@ -1310,7 +1627,12 @@ function engageCourse(ship, enemy, d, world, isWater) {
   // it turns its bow on where its guns must be laid - the enemy's lead for their flight. AUDIT NAV2 F24: only outside
   // their dead zone (layMin) - inside it she stood on at a Large Boat to point-blank and never laid a gun
   const bowReach = batteryReach(ship, 'bow', world.seaY);
-  if (ship.cls.tactic === 'bow' && ship.guns.ready('bow') && d <= bowReach * PRESENT_WITHIN && Math.abs(bearing) <= BOW_SWING * DEG) {
+  if (
+    ship.cls.tactic === 'bow' &&
+    ship.guns.ready('bow') &&
+    d <= bowReach * PRESENT_WITHIN &&
+    Math.abs(bearing) <= BOW_SWING * DEG
+  ) {
     const bow = batteryOf(ship.hull, 'bow');
     const lead = leadPoint(ship.pos, enemy.pos, rel, GUNS[bow.gun].speed);
     if (Math.hypot(lead[0] - ship.pos[0], lead[2] - ship.pos[2]) >= layMin(ship.hull, 'bow', eh)) {
@@ -1328,15 +1650,24 @@ function engageCourse(ship, enemy, d, world, isWater) {
   const holdsLead = (side) => {
     const l = leadPoint(ship.pos, enemy.pos, rel, GUNS[batteryOf(ship.hull, side).gun].speed);
     const ld = Math.hypot(l[0] - ship.pos[0], l[2] - ship.pos[2]);
-    if (ship.present?.side === side && ship.present.lays) return ld <= reach * RUN_OUT_REACH;   // laying it: held while it is in reach
+    if (ship.present?.side === side && ship.present.lays) return ld <= reach * RUN_OUT_REACH; // laying it: held while it is in reach
     const abeam = wrapAngle(headingTo(ship.pos, l) - (side === 'starboard' ? 1 : -1) * 90 * DEG);
     // round to it at her rate, settled over her helm's own ease (4 TURN_TAU), and run out
-    const round = Math.abs(wrapAngle(abeam - ship.yaw)) / Math.max(maxTurnRate(ship), TURN_FLOOR * DEG) + 4 * (TURN_TAU[ship.hull] ?? 1) + RUN_OUT_S;
+    const round =
+      Math.abs(wrapAngle(abeam - ship.yaw)) / Math.max(maxTurnRate(ship), TURN_FLOOR * DEG) +
+      4 * (TURN_TAU[ship.hull] ?? 1) +
+      RUN_OUT_S;
     return ld + Math.max(0, away) * round <= reach * RUN_OUT_REACH;
   };
   const closeIn = away > 0 ? Math.asin(clamp((away + CHASE_MARGIN * own) / Math.max(0.5, ship.speed), 0, 1)) : 0;
   const bendOf = (side) => {
-    if (ship.guns.ready(side) && d <= reach * PRESENT_WITHIN && d >= Math.max(range * POINT_BLANK, deadZone) && holdsLead(side)) return 0;
+    if (
+      ship.guns.ready(side) &&
+      d <= reach * PRESENT_WITHIN &&
+      d >= Math.max(range * POINT_BLANK, deadZone) &&
+      holdsLead(side)
+    )
+      return 0;
     if (d < deadZone) return -2 * RANGE_BEND * DEG;
     const b = clamp((d - range) / range, -1, 1) * RANGE_BEND * DEG;
     return d > range ? Math.max(b, closeIn) : b;
@@ -1347,8 +1678,14 @@ function engageCourse(ship, enemy, d, world, isWater) {
     const sign = side === 'starboard' ? 1 : -1;
     return wrapAngle(headingTo(ship.pos, lead) - sign * (90 * DEG - bendOf(side)));
   };
-  const sides = ['starboard', 'port'].filter((s) => { const b = batteryOf(ship.hull, s); return b && b.gun !== 'barrel'; });
-  if (!sides.length) { ship.present = null; return { want: headingTo(ship.pos, enemy.pos), goal: enemy.pos, sails: 1 }; }
+  const sides = ['starboard', 'port'].filter((s) => {
+    const b = batteryOf(ship.hull, s);
+    return b && b.gun !== 'barrel';
+  });
+  if (!sides.length) {
+    ship.present = null;
+    return { want: headingTo(ship.pos, enemy.pos), goal: enemy.pos, sails: 1 };
+  }
   if (!ship.present || ship.clock - ship.present.at >= NAV_EVERY_S || !sides.includes(ship.present.side)) {
     const rate = Math.max(maxTurnRate(ship), TURN_FLOOR * DEG);
     const l = lookout(ship);
@@ -1360,28 +1697,40 @@ function engageCourse(ship, enemy, d, world, isWater) {
       const off = Math.abs(wrapAngle(ideal - h)) / DEG;
       // AUDIT NAV1 (the guns): the wind holding the lead outside the fire's window - she would sail on unfired
       const bat = batteryOf(ship.hull, side);
-      const noBear = off > fireWindow(ship, enemy, leadPoint(ship.pos, enemy.pos, rel, GUNS[bat.gun].speed), bat.gun, BEAR_DEG) ? NO_BEAR_S : 0;
-      const foul = courseClear(ship.pos, h, l.near, isWater, { half: l.half, from: l.from }) ? 0 : 1e4;   // her turning circle's reach
+      const noBear =
+        off > fireWindow(ship, enemy, leadPoint(ship.pos, enemy.pos, rel, GUNS[bat.gun].speed), bat.gun, BEAR_DEG)
+          ? NO_BEAR_S
+          : 0;
+      const foul = courseClear(ship.pos, h, l.near, isWater, { half: l.half, from: l.from }) ? 0 : 1e4; // her turning circle's reach
       cost[side] = Math.max(turnS, ship.guns.left(side)) + off * BEAR_COST_S + noBear + foul;
     }
     const held = ship.present && sides.includes(ship.present.side) ? ship.present.side : null;
     let best = held ?? sides[0];
-    for (const side of sides) if (cost[side] + (side === held ? 0 : held ? SIDE_HOLD_S : 0) < cost[best] + (best === held ? 0 : held ? SIDE_HOLD_S : 0)) best = side;
+    for (const side of sides)
+      if (
+        cost[side] + (side === held ? 0 : held ? SIDE_HOLD_S : 0) <
+        cost[best] + (best === held ? 0 : held ? SIDE_HOLD_S : 0)
+      )
+        best = side;
     ship.present = { side: best, at: ship.clock, lays: best === held && !!ship.present?.lays };
   }
   const side = ship.present.side;
   const ideal = headingFor(side);
-  ship.present.lays = bendOf(side) === 0;   // AUDIT NAV2 F21: laying her lead abeam - held to while it stays in reach (holdsLead)
+  ship.present.lays = bendOf(side) === 0; // AUDIT NAV2 F21: laying her lead abeam - held to while it stays in reach (holdsLead)
   const want = sailable(ship, ideal, world.wind);
   const bat = batteryOf(ship.hull, side);
   const lead = leadPoint(ship.pos, enemy.pos, rel, GUNS[bat.gun].speed);
   // presented: loaded, in reach, on her heading - and a heading the wind lets lay the lead inside the fire's window
-  const presented = ship.guns.ready(side) && d <= reach * PRESENT_WITHIN && Math.abs(wrapAngle(want - ship.yaw)) < 30 * DEG
-    && Math.abs(wrapAngle(ideal - want)) / DEG <= fireWindow(ship, enemy, lead, bat.gun, BEAR_DEG);
+  const presented =
+    ship.guns.ready(side) &&
+    d <= reach * PRESENT_WITHIN &&
+    Math.abs(wrapAngle(want - ship.yaw)) < 30 * DEG &&
+    Math.abs(wrapAngle(ideal - want)) / DEG <= fireWindow(ship, enemy, lead, bat.gun, BEAR_DEG);
   if (!presented) return { want, goal: null, sails: 1, sailable: true, track: true };
   // station: her way matched to the enemy's along her course, closing on the lead drawn ahead or astern of her beam
   const f = forwardOfYaw(ship.yaw);
-  const pace = (vel[0] * f[0] + vel[2] * f[2]) + PRESENT_GAIN * ((lead[0] - ship.pos[0]) * f[0] + (lead[2] - ship.pos[2]) * f[2]);
+  const pace =
+    vel[0] * f[0] + vel[2] * f[2] + PRESENT_GAIN * ((lead[0] - ship.pos[0]) * f[0] + (lead[2] - ship.pos[2]) * f[2]);
   const best = Math.max(0.5, paceOf(ship, world.wind) * windFactor(offRunOf(ship.yaw, world.wind)));
   return { want, goal: null, sails: clamp(pace / best, PRESENT_SAILS, 1), sailable: true, track: true };
 }
@@ -1406,21 +1755,33 @@ function chaserLead(ship, enemy, rel, eh, seaY) {
  */
 function boardCourse(ship, enemy, wind, isWater) {
   const v = enemy.vel ?? [0, 0, 0];
-  const eYaw = Number.isFinite(enemy.yaw) ? enemy.yaw : Math.hypot(v[0], v[2]) > 0.3 ? Math.atan2(v[0], v[2]) : ship.yaw;
-  const f = forwardOfYaw(eYaw), r = [f[2], 0, -f[0]];
+  const eYaw = Number.isFinite(enemy.yaw)
+    ? enemy.yaw
+    : Math.hypot(v[0], v[2]) > 0.3
+      ? Math.atan2(v[0], v[2])
+      : ship.yaw;
+  const f = forwardOfYaw(eYaw),
+    r = [f[2], 0, -f[0]];
   // the side she comes up on: the one she is on when she means to board - her approach never crosses the boat
-  if (!ship.berthSide) ship.berthSide = ((ship.pos[0] - enemy.pos[0]) * r[0] + (ship.pos[2] - enemy.pos[2]) * r[2]) >= 0 ? 1 : -1;
+  if (!ship.berthSide)
+    ship.berthSide = (ship.pos[0] - enemy.pos[0]) * r[0] + (ship.pos[2] - enemy.pos[2]) * r[2] >= 0 ? 1 : -1;
   const gap = hullBuild(ship.hull).halfWidth + hullBuild(enemy.hull ?? HULL.LargeBoat).halfWidth + BERTH_GAP;
   const berthOn = (side) => [enemy.pos[0] + r[0] * side * gap, 0, enemy.pos[2] + r[2] * side * gap];
-  if (!berthOpen(ship, berthOn(ship.berthSide), f, r, ship.berthSide, isWater) && berthOpen(ship, berthOn(-ship.berthSide), f, r, -ship.berthSide, isWater)) ship.berthSide = -ship.berthSide;
+  if (
+    !berthOpen(ship, berthOn(ship.berthSide), f, r, ship.berthSide, isWater) &&
+    berthOpen(ship, berthOn(-ship.berthSide), f, r, -ship.berthSide, isWater)
+  )
+    ship.berthSide = -ship.berthSide;
   const berth = berthOn(ship.berthSide);
   const wp = routeTo(ship, berth, isWater);
   // her way there: straight, or by the waypoint round the land
-  const d = wp ? Math.hypot(wp[0] - ship.pos[0], wp[2] - ship.pos[2]) + Math.hypot(berth[0] - wp[0], berth[2] - wp[2]) : Math.hypot(berth[0] - ship.pos[0], berth[2] - ship.pos[2]);
+  const d = wp
+    ? Math.hypot(wp[0] - ship.pos[0], wp[2] - ship.pos[2]) + Math.hypot(berth[0] - wp[0], berth[2] - wp[2])
+    : Math.hypot(berth[0] - ship.pos[0], berth[2] - ship.pos[2]);
   if (boardingGivenUp(ship, enemy.id, d)) return null;
   // the pace that stops her BOARD_SAILS.from short of the berth, and the boat's own way on top
   const along = Math.max(0, v[0] * f[0] + v[2] * f[2]);
-  const pace = Math.sqrt(2 * DECEL * wayOf(ship) * Math.max(0, d - BOARD_SAILS.from)) + along;   // AUDIT NAV2 F28: her hull's own coast
+  const pace = Math.sqrt(2 * DECEL * wayOf(ship) * Math.max(0, d - BOARD_SAILS.from)) + along; // AUDIT NAV2 F28: her hull's own coast
   const best = Math.max(0.5, paceOf(ship, wind));
   const sails = clamp(pace / best, BOARD_SAILS.min, 1);
   // AUDIT NAV1 (online #10): to a boat lying still, straight for the berth - her stern is no course to match (with it
@@ -1432,10 +1793,12 @@ function boardCourse(ship, enemy, wind, isWater) {
   // (routeTo: no way round wanted), within her lookout's reach of it, she comes in on it as a moored ship berths
   // (shipLife.js), never swung off it by the lookout's LOOKAHEAD_MIN past the berth: the new galleon's narrower hull lies
   // closer in to the boat she boards, and the land 31 m beyond a prize held her off the grapple's reach for good
-  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;
+  const berthing =
+    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;
   if (d < 8) return { want: eYaw, goal: berth, sails, sweeps, sailable: sweeps > 0, berthing };
   // up from astern to match a boat under way
-  const lead = still ? 0 : Math.min(60, d) * 0.8, ahead = Math.min(10, d / Math.max(1, ship.speed));
+  const lead = still ? 0 : Math.min(60, d) * 0.8,
+    ahead = Math.min(10, d / Math.max(1, ship.speed));
   const aim = [berth[0] - f[0] * lead + v[0] * ahead, 0, berth[2] - f[2] * lead + v[2] * ahead];
   return { want: headingTo(ship.pos, aim), goal: aim, sails, sweeps, sailable: sweeps > 0, berthing };
 }
@@ -1449,7 +1812,8 @@ export const __boardCourse = boardCourse;
 function berthOpen(ship, berth, f, r, side, isWater) {
   const b = hullBuild(ship.hull);
   for (const z of [b.bowZ, 0, b.aftZ]) {
-    for (const x of [0, b.halfWidth + SCAN_MARGIN]) if (!isWater(berth[0] + f[0] * z + r[0] * side * x, berth[2] + f[2] * z + r[2] * side * x)) return false;
+    for (const x of [0, b.halfWidth + SCAN_MARGIN])
+      if (!isWater(berth[0] + f[0] * z + r[0] * side * x, berth[2] + f[2] * z + r[2] * side * x)) return false;
   }
   return true;
 }
@@ -1458,7 +1822,13 @@ function berthOpen(ship, berth, f, r, side, isWater) {
  *  either side of it. */
 function legClear(ship, a, b, isWater) {
   const d = Math.hypot(b[0] - a[0], b[2] - a[2]);
-  return d < 1 || courseClear(a, headingTo(a, b), d, isWater, { half: hullBuild(ship.hull).halfWidth + SCAN_MARGIN, step: ROUTE_STEP });
+  return (
+    d < 1 ||
+    courseClear(a, headingTo(a, b), d, isWater, {
+      half: hullBuild(ship.hull).halfWidth + SCAN_MARGIN,
+      step: ROUTE_STEP,
+    })
+  );
 }
 
 /**
@@ -1468,7 +1838,12 @@ function legClear(ship, a, b, isWater) {
  */
 function routeTo(ship, goal, isWater) {
   const r = ship.route;
-  if (r && Math.hypot(r.goal[0] - goal[0], r.goal[2] - goal[2]) < ROUTE_SLIP && ship.clock - r.at < (r.lost ? ROUTE_RETRY_S : ROUTE_EVERY_S)) return r.wp;
+  if (
+    r &&
+    Math.hypot(r.goal[0] - goal[0], r.goal[2] - goal[2]) < ROUTE_SLIP &&
+    ship.clock - r.at < (r.lost ? ROUTE_RETRY_S : ROUTE_EVERY_S)
+  )
+    return r.wp;
   const open = legClear(ship, ship.pos, goal, isWater);
   const wp = open ? null : wayRound(ship, goal, isWater, r?.wp ?? null);
   ship.route = { goal: [goal[0], 0, goal[2]], wp, at: ship.clock, lost: !open && !wp };
@@ -1483,8 +1858,18 @@ function wayRound(ship, goal, isWater, was) {
   const toward = headingTo(ship.pos, goal);
   const sideOf = (p) => Math.sign(Math.sin(headingTo(ship.pos, p) - toward));
   const keep = was ? sideOf(was) : 0;
-  const ways = was ? [{ p: was, cost: Math.hypot(was[0] - ship.pos[0], was[2] - ship.pos[2]) + Math.hypot(goal[0] - was[0], goal[2] - was[2]) }] : [];
-  for (const [o, from] of [[ship.pos, toward], [goal, toward + Math.PI]]) {
+  const ways = was
+    ? [
+        {
+          p: was,
+          cost: Math.hypot(was[0] - ship.pos[0], was[2] - ship.pos[2]) + Math.hypot(goal[0] - was[0], goal[2] - was[2]),
+        },
+      ]
+    : [];
+  for (const [o, from] of [
+    [ship.pos, toward],
+    [goal, toward + Math.PI],
+  ]) {
     for (const dist of ROUTE_DISTS) {
       for (let k = -180 + ROUTE_TURN; k <= 180; k += ROUTE_TURN) {
         const a = from + k * DEG;
@@ -1495,7 +1880,9 @@ function wayRound(ship, goal, isWater, was) {
     }
   }
   ways.sort((x, y) => x.cost - y.cost);
-  for (const w of ways) if (isWater(w.p[0], w.p[2]) && legClear(ship, w.p, goal, isWater) && legClear(ship, ship.pos, w.p, isWater)) return w.p;
+  for (const w of ways)
+    if (isWater(w.p[0], w.p[2]) && legClear(ship, w.p, goal, isWater) && legClear(ship, ship.pos, w.p, isWater))
+      return w.p;
   return null;
 }
 
@@ -1503,8 +1890,14 @@ function wayRound(ship, goal, isWater, was) {
  *  CHASE_GIVE_UP_S, she gives the boarding up (the prize branch never did: circling a spit, for ever). */
 function boardingGivenUp(ship, id, way) {
   const a = ship.approach;
-  if (a?.id !== id) { ship.approach = { id, since: ship.clock, best: way }; return false; }
-  if (way < a.best * (1 - CHASE_GAIN)) { a.best = way; a.since = ship.clock; }
+  if (a?.id !== id) {
+    ship.approach = { id, since: ship.clock, best: way };
+    return false;
+  }
+  if (way < a.best * (1 - CHASE_GAIN)) {
+    a.best = way;
+    a.since = ship.clock;
+  }
   return ship.clock - a.since > CHASE_GIVE_UP_S;
 }
 
@@ -1512,24 +1905,32 @@ function boardingGivenUp(ship, id, way) {
  *  her course this step. */
 function giveUp(ship, target) {
   ship.spare.set(target.id, ship.clock + SPARE_S);
-  ship.mode = 'cruise'; ship.target = null; ship.berthSide = 0; ship.approach = null; ship.route = null;
+  ship.mode = 'cruise';
+  ship.target = null;
+  ship.berthSide = 0;
+  ship.approach = null;
+  ship.route = null;
   return { want: ship.yaw, goal: null, sails: 1 };
 }
 
 /** The open water between two hulls on the flat (m): the widest gap along any of their four axes - 0 or less when
  *  they touch. Hulls off their builds; `hull` null is a Large Boat. */
 export function hullGap(aPos, aYaw, aHull, bPos, bYaw, bHull) {
-  return flatGap(flatHull(aPos, aYaw, aHull ?? HULL.LargeBoat), flatHull(bPos, bYaw ?? 0, bHull ?? HULL.LargeBoat));   // BOARD-MAGNET: navalShips.js's one flat hull
+  return flatGap(flatHull(aPos, aYaw, aHull ?? HULL.LargeBoat), flatHull(bPos, bYaw ?? 0, bHull ?? HULL.LargeBoat)); // BOARD-MAGNET: navalShips.js's one flat hull
 }
 
 /** Running: the fastest point of sail within FLEE_SPREAD of dead away from what she runs from. */
 function fleeCourse(ship, from, wind) {
   const away = headingTo(from.pos, ship.pos);
-  let best = away, bestV = -Infinity;
+  let best = away,
+    bestV = -Infinity;
   for (let k = -FLEE_SPREAD; k <= FLEE_SPREAD; k += 15) {
     const h = wrapAngle(away + k * DEG);
     const v = windFactor(offRunOf(h, wind)) * Math.cos(k * DEG);
-    if (v > bestV + 1e-9) { bestV = v; best = h; }
+    if (v > bestV + 1e-9) {
+      bestV = v;
+      best = h;
+    }
   }
   return { want: best, goal: null, sails: 1 };
 }
@@ -1545,17 +1946,25 @@ function cruiseCourse(ship, wind, isWater, r) {
     for (let i = 0; i < WAYPOINT_TRIES; i++) {
       const a = r() * Math.PI * 2;
       const dist = WAYPOINT_DIST[0] + r() * (WAYPOINT_DIST[1] - WAYPOINT_DIST[0]);
-      if (ship.hull !== HULL.LargeGalley && offRunOf(a, wind) > CLOSE_HAULED * DEG) continue;   // a galley rows to windward
+      if (ship.hull !== HULL.LargeGalley && offRunOf(a, wind) > CLOSE_HAULED * DEG) continue; // a galley rows to windward
       const p = [ship.pos[0] + Math.sin(a) * dist, ship.pos[2] + Math.cos(a) * dist];
       let clear = true;
-      for (let s = WAYPOINT_SOUND; s < dist && clear; s += WAYPOINT_SOUND) clear = isWater(ship.pos[0] + Math.sin(a) * s, ship.pos[2] + Math.cos(a) * s);
-      if (clear && isWater(p[0], p[1])) { ship.waypoint = p; break; }
+      for (let s = WAYPOINT_SOUND; s < dist && clear; s += WAYPOINT_SOUND)
+        clear = isWater(ship.pos[0] + Math.sin(a) * s, ship.pos[2] + Math.cos(a) * s);
+      if (clear && isWater(p[0], p[1])) {
+        ship.waypoint = p;
+        break;
+      }
     }
     // none found (a channel, a bight): back the way she came, as far as it is open
     if (!ship.waypoint) {
       const a = wrapAngle(ship.yaw + Math.PI);
       let s = 0;
-      while (s + WAYPOINT_SOUND <= WAYPOINT_DIST[0] && isWater(ship.pos[0] + Math.sin(a) * (s + WAYPOINT_SOUND), ship.pos[2] + Math.cos(a) * (s + WAYPOINT_SOUND))) s += WAYPOINT_SOUND;
+      while (
+        s + WAYPOINT_SOUND <= WAYPOINT_DIST[0] &&
+        isWater(ship.pos[0] + Math.sin(a) * (s + WAYPOINT_SOUND), ship.pos[2] + Math.cos(a) * (s + WAYPOINT_SOUND))
+      )
+        s += WAYPOINT_SOUND;
       if (s >= WAYPOINT_REACHED * 2) ship.waypoint = [ship.pos[0] + Math.sin(a) * s, ship.pos[2] + Math.cos(a) * s];
     }
   }
@@ -1571,7 +1980,10 @@ function cruiseCourse(ship, wind, isWater, r) {
  * close under the stern. `broadsides` false holds the broadsides (a pirate coming alongside keeps her prize whole).
  */
 function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
-  if (!enemy) { ship.runOut.clear(); return; }
+  if (!enemy) {
+    ship.runOut.clear();
+    return;
+  }
   const { bearing, dist } = bearingTo(ship, enemy.pos);
   const deg = bearing / DEG;
   const pose = { position: ship.pos, rotation: quatOfYaw(ship.yaw), velocity: velocityOf(ship), hull: ship.hull };
@@ -1582,8 +1994,11 @@ function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
   const build = hullBuild(enemy.hull ?? HULL.LargeBoat);
   const battery = (side, bearingWant, arc, bear) => {
     const bat = batteryOf(ship.hull, side);
-    if (!bat || bat.gun === 'barrel' || (!broadsides && (side === 'starboard' || side === 'port'))) { ship.runOut.delete(side); return; }
-    const shot = ship.guns.load(side);   // SHOT-KINDS: laid and led for her load (captainLoads)
+    if (!bat || bat.gun === 'barrel' || (!broadsides && (side === 'starboard' || side === 'port'))) {
+      ship.runOut.delete(side);
+      return;
+    }
+    const shot = ship.guns.load(side); // SHOT-KINDS: laid and led for her load (captainLoads)
     const g = shotGun(bat.gun, GUNS[bat.gun], shot);
     const lead = leadPoint(ship.pos, enemy.pos, rel, g.speed);
     const toLead = bearingTo(ship, lead);
@@ -1595,15 +2010,27 @@ function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
     const rig = shot === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;
     const band = rig ?? [world.seaY, world.seaY + build.top];
     const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY + build.top * AIM_FREEBOARD;
-    const lay = (k) => aimSolution(pose, side, null, world.seaY, { target: [ship.pos[0] + (lead[0] - ship.pos[0]) * k, lead[1], ship.pos[2] + (lead[2] - ship.pos[2]) * k], targetY: aimY, shot });
+    const lay = (k) =>
+      aimSolution(pose, side, null, world.seaY, {
+        target: [ship.pos[0] + (lead[0] - ship.pos[0]) * k, lead[1], ship.pos[2] + (lead[2] - ship.pos[2]) * k],
+        targetY: aimY,
+        shot,
+      });
     const clear = !lineFoul(ship, bat, lead, enemy, world);
-    const strikes = () => { const sol = lay(1); return !!sol && layPasses(sol, lead, band); };
+    const strikes = () => {
+      const sol = lay(1);
+      return !!sol && layPasses(sol, lead, band);
+    };
     const window = fireWindow(ship, enemy, lead, bat.gun, bear);
     const since = ship.runOut.get(side);
     if (since == null) {
       if ((ship.runIn.get(side) ?? -Infinity) > ship.clock - RUN_IN_S) return;
-      const soon = err <= window || bearsWithin(ship, lead, enemy, side === 'bow' ? 0 : bearingWant, window) <= RUN_OUT_S;
-      if (loaded && toLead.dist <= reach * RUN_OUT_REACH && err <= arc && soon && clear && strikes()) { ship.runOut.set(side, ship.clock); out.runOuts.push(side); }
+      const soon =
+        err <= window || bearsWithin(ship, lead, enemy, side === 'bow' ? 0 : bearingWant, window) <= RUN_OUT_S;
+      if (loaded && toLead.dist <= reach * RUN_OUT_REACH && err <= arc && soon && clear && strikes()) {
+        ship.runOut.set(side, ship.clock);
+        out.runOuts.push(side);
+      }
       return;
     }
     if (!loaded || !inReach || err > RUN_IN_DEG || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {
@@ -1629,7 +2056,10 @@ function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
     const bat = batteryOf(ship.hull, 'stern');
     if (bat?.gun === 'barrel') {
       const solution = aimSolution(pose, 'stern', null, world.seaY);
-      if (solution) { out.barrels.push(solution); ship.guns.fired('stern'); }
+      if (solution) {
+        out.barrels.push(solution);
+        ship.guns.fired('stern');
+      }
     }
   }
 }
@@ -1649,7 +2079,10 @@ export function fireWindow(ship, enemy, at, gun, bear) {
   const v = enemy.vel ?? [0, 0, 0];
   const eyaw = Number.isFinite(enemy.yaw) ? enemy.yaw : Math.hypot(v[0], v[2]) > 0.3 ? Math.atan2(v[0], v[2]) : null;
   const halfLen = (b.bowZ - b.aftZ) / 2;
-  const extent = eyaw == null ? (halfLen + b.halfWidth) * 2 / Math.PI : halfLen * Math.abs(Math.sin(eyaw - los)) + b.halfWidth * Math.abs(Math.cos(eyaw - los));
+  const extent =
+    eyaw == null
+      ? ((halfLen + b.halfWidth) * 2) / Math.PI
+      : halfLen * Math.abs(Math.sin(eyaw - los)) + b.halfWidth * Math.abs(Math.cos(eyaw - los));
   const miss = extent * (FIRE_EXTENT_K + FIRE_EXTENT_SKILL * (1 - ship.cls.skill));
   const spread = (GUNS[gun]?.yawSpread ?? 1) * clamp(1.5 - ship.cls.skill, 0.4, 1.5);
   return Math.min(bear, Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG));
@@ -1661,17 +2094,19 @@ export function fireWindow(ship, enemy, at, gun, bear) {
  * turn. 0 already in it, Infinity opening or standing.
  */
 export function bearsWithin(ship, lead, enemy, want, window) {
-  const dx = lead[0] - ship.pos[0], dz = lead[2] - ship.pos[2];
+  const dx = lead[0] - ship.pos[0],
+    dz = lead[2] - ship.pos[2];
   const d2 = dx * dx + dz * dz;
   if (d2 < 1) return 0;
   const err = wrapAngle(Math.atan2(dx, dz) - ship.yaw - want * DEG) / DEG;
   if (Math.abs(err) <= window) return 0;
-  const v = ship.tvel?.id === enemy.id ? ship.tvel.v : enemy.vel ?? [0, 0, 0];
+  const v = ship.tvel?.id === enemy.id ? ship.tvel.v : (enemy.vel ?? [0, 0, 0]);
   const my = velocityOf(ship);
-  const rx = v[0] - my[0], rz = v[2] - my[2];
+  const rx = v[0] - my[0],
+    rz = v[2] - my[2];
   // d(atan2(dx, dz))/dt = (dz rx - dx rz) / d2 - the world bearing's rate; less her own yaw rate
   const rate = ((dz * rx - dx * rz) / d2 - (ship.yawRate ?? 0)) / DEG;
-  if (Math.sign(rate) === Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity;   // opening, or standing
+  if (Math.sign(rate) === Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity; // opening, or standing
   return (Math.abs(err) - window) / Math.abs(rate);
 }
 
@@ -1679,8 +2114,12 @@ export function bearsWithin(ship, lead, enemy, want, window) {
  *  under her own roof - the Small Ship's canvas hangs below hers (her course, her gaff sail's foot, her jib), and a
  *  chain lay through that band strikes her hull's box first; every other hull's rig stands over its roof. */
 export function rigBand(build) {
-  let lo = Infinity, hi = -Infinity;
-  for (const [mn, mx] of build.rig) { lo = Math.min(lo, mn[1]); hi = Math.max(hi, mx[1]); }
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const [mn, mx] of build.rig) {
+    lo = Math.min(lo, mn[1]);
+    hi = Math.max(hi, mx[1]);
+  }
   return [Math.max(lo, build.top), hi];
 }
 
@@ -1705,32 +2144,55 @@ export function layPasses(solution, at, band) {
  * flat box off its build, FRIEND_CLEAR grown) the line from her guns out past the lead crosses.
  */
 export function lineFoul(ship, bat, lead, enemy, world) {
-  const f = forwardOfYaw(ship.yaw), rr = [f[2], 0, -f[0]];
+  const f = forwardOfYaw(ship.yaw),
+    rr = [f[2], 0, -f[0]];
   const m = bat.muzzles[bat.muzzles.length >> 1];
   const a = [ship.pos[0] + rr[0] * m[0] + f[0] * m[2], 0, ship.pos[2] + rr[2] * m[0] + f[2] * m[2]];
   const len = Math.hypot(lead[0] - a[0], lead[2] - a[2]);
   if (len < 1e-6) return false;
   const over = hullLength(enemy.hull ?? HULL.LargeBoat) / 2;
-  const b = [a[0] + (lead[0] - a[0]) / len * (len + over), 0, a[2] + (lead[2] - a[2]) / len * (len + over)];
+  const b = [a[0] + ((lead[0] - a[0]) / len) * (len + over), 0, a[2] + ((lead[2] - a[2]) / len) * (len + over)];
   for (const c of world.contacts ?? []) {
     if (c.id === ship.id || c.id === enemy.id || c.gone || hostile(ship, c, world)) continue;
     const hb = hullBuild(c.hull ?? HULL.LargeBoat);
     const yaw = Number.isFinite(c.yaw) ? c.yaw : 0;
-    const cf = [Math.sin(yaw), Math.cos(yaw)], cr = [cf[1], -cf[0]];
+    const cf = [Math.sin(yaw), Math.cos(yaw)],
+      cr = [cf[1], -cf[0]];
     const mid = (hb.bowZ + hb.aftZ) / 2;
     const cc = [c.pos[0] + cf[0] * mid, c.pos[2] + cf[1] * mid];
-    const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR, hw = hb.halfWidth + FRIEND_CLEAR;
+    const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR,
+      hw = hb.halfWidth + FRIEND_CLEAR;
     // the segment in her box's frame, slab-tested
-    const to = (p) => { const d = [p[0] - cc[0], p[2] - cc[1]]; return [d[0] * cr[0] + d[1] * cr[1], d[0] * cf[0] + d[1] * cf[1]]; };
-    const pa = to(a), pb = to(b);
-    let t0 = 0, t1 = 1, crosses = true;
-    for (const [i, h] of [[0, hw], [1, hl]]) {
+    const to = (p) => {
+      const d = [p[0] - cc[0], p[2] - cc[1]];
+      return [d[0] * cr[0] + d[1] * cr[1], d[0] * cf[0] + d[1] * cf[1]];
+    };
+    const pa = to(a),
+      pb = to(b);
+    let t0 = 0,
+      t1 = 1,
+      crosses = true;
+    for (const [i, h] of [
+      [0, hw],
+      [1, hl],
+    ]) {
       const d = pb[i] - pa[i];
-      if (Math.abs(d) < 1e-9) { if (Math.abs(pa[i]) > h) { crosses = false; break; } continue; }
-      let u = (-h - pa[i]) / d, w = (h - pa[i]) / d;
+      if (Math.abs(d) < 1e-9) {
+        if (Math.abs(pa[i]) > h) {
+          crosses = false;
+          break;
+        }
+        continue;
+      }
+      let u = (-h - pa[i]) / d,
+        w = (h - pa[i]) / d;
       if (u > w) [u, w] = [w, u];
-      t0 = Math.max(t0, u); t1 = Math.min(t1, w);
-      if (t0 > t1) { crosses = false; break; }
+      t0 = Math.max(t0, u);
+      t1 = Math.min(t1, w);
+      if (t0 > t1) {
+        crosses = false;
+        break;
+      }
     }
     if (crosses) return true;
   }
@@ -1740,8 +2202,16 @@ export function lineFoul(ship, bat, lead, enemy, world) {
 /** What the wire says of a ship (NAV-G) and a save keeps of nothing - a sea ship lives in a room, not a save. */
 export function shipWireState(ship) {
   return {
-    id: ship.id, seed: ship.seed, cls: ship.cls.id, variant: ship.variant,
-    pos: ship.pos, yaw: ship.yaw, speed: ship.speed, sails: ship.sails, heel: ship.heel,
-    mode: ship.mode, damage: ship.damage.snapshot(),
+    id: ship.id,
+    seed: ship.seed,
+    cls: ship.cls.id,
+    variant: ship.variant,
+    pos: ship.pos,
+    yaw: ship.yaw,
+    speed: ship.speed,
+    sails: ship.sails,
+    heel: ship.heel,
+    mode: ship.mode,
+    damage: ship.damage.snapshot(),
   };
 }

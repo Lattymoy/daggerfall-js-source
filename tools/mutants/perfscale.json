@@ -184,8 +184,8 @@
   {
     "name": "PERF-SCALE-the-counter-reads-while-hidden",
     "file": "src/ui/fpsCounter.js",
-    "old": "        const i = on ? info?.() : null;",
-    "new": "        const i = info?.();",
+    "old": "        const i = on ? info?.() : null; // PERF-SCALE: the GPU and the size, while shown",
+    "new": "        const i = info?.(); // PERF-SCALE: the GPU and the size, while shown",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "PERF-SCALE-no-GPU-line",
     "file": "src/ui/fpsCounter.js",
-    "old": "\n          + (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '') + (size ? `\\n${size}` : '');",
-    "new": "\n          + (size ? `\\n${size}` : '');",
+    "old": "            (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '') +\n            (size ? `\\n${size}` : '');",
+    "new": "            (size ? `\\n${size}` : '');",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "PERF-SCALE-no-size-line",
     "file": "src/ui/fpsCounter.js",
-    "old": " + (size ? `\\n${size}` : '');",
-    "new": ";",
+    "old": "            (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '') +\n            (size ? `\\n${size}` : '');",
+    "new": "            (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '');",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "PERF-SCALE-the-probe-read-bare",
     "file": "src/ui/fpsCounter.js",
-    "old": "globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);",
-    "new": "globalThis.window.__fpsStats = () => last;",
+    "old": "  if (typeof globalThis.window !== 'undefined' && globalThis.window)\n    globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);",
+    "new": "  if (typeof globalThis.window !== 'undefined' && globalThis.window) globalThis.window.__fpsStats = () => last;",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "PERF-SCALE-review-the-slot-held",
     "file": "src/render/airPass.js",
-    "old": "    this._frames[slot] = null;\n",
-    "new": "",
+    "old": "    this._frames[slot] = null;\n    if (this.frame === kept) {",
+    "new": "    if (this.frame === kept) {",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "PERF-SCALE-review-a-freed-frame-still-the-frame",
     "file": "src/render/airPass.js",
-    "old": "    if (this.frame === kept) { this.frame = null; this.prevValid = false; }\n",
-    "new": "",
+    "old": "    if (this.frame === kept) {\n      this.frame = null;\n      this.prevValid = false;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "PERF-SCALE-review-the-probe-never-says-retro",
     "file": "src/ui/fpsCounter.js",
-    "old": "retro: !!i.retro }",
-    "new": "retro: false }",
+    "old": "          retro: !!i.retro,",
+    "new": "          retro: false,",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "PERF-SCALE-review-no-gpu-no-line",
     "file": "src/ui/fpsCounter.js",
-    "old": "(i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '')",
-    "new": "(i?.gpu ? `\\ngpu ${i.gpu}` : '')",
+    "old": "            (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '') +",
+    "new": "            (i?.gpu ? `\\ngpu ${i.gpu}` : '') +",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PS-A4-the-box-uncapped",
     "file": "src/ui/fpsCounter.js",
-    "old": "    + 'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;'\n",
-    "new": "",
+    "old": "    'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;' +\n    'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;' +",
+    "new": "    'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;' +",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PS-A4-a-long-line-never-wraps",
     "file": "src/ui/fpsCounter.js",
-    "old": "white-space:pre-wrap;overflow-wrap:anywhere;",
-    "new": "white-space:pre;",
+    "old": "    '-webkit-user-select:none;user-select:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:right;display:none';",
+    "new": "    '-webkit-user-select:none;user-select:none;white-space:pre;text-align:right;display:none';",
     "tests": [
       "test/systems/perfscale.test.js"
     ]

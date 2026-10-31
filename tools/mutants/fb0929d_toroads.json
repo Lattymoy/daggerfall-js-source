@@ -112,8 +112,8 @@
   {
     "name": "TO-ROADS-default-on",
     "file": "src/systems/modSettings.js",
-    "old": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: false,",
-    "new": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: true,",
+    "old": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({\n        default: false,",
+    "new": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/travel/fb0929d_toroads.test.js"
     ],

@@ -25,11 +25,16 @@ const _iconUrls = new WeakMap();
 export function modelIconUrl(item, size, armMod) {
   if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
   let img = null;
-  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
+  try {
+    img = armMod.itemIcon(item, { size });
+  } catch {
+    img = null;
+  }
   if (!img || !img.width) return null;
   if (_iconUrls.has(img)) return _iconUrls.get(img);
   const cv = document.createElement('canvas');
-  cv.width = img.width; cv.height = img.height;
+  cv.width = img.width;
+  cv.height = img.height;
   cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
   const url = cv.toDataURL('image/png');
   _iconUrls.set(img, url);

@@ -29,8 +29,8 @@
   {
     "name": "PLEA-LOOP-a-push-holds-nothing",
     "file": "src/ui/windowStack.js",
-    "old": "    windows.splice(at, 0, win);\n    hold(win);",
-    "new": "    windows.splice(at, 0, win);",
+    "old": "    hold(win);\n    win.onPush?.();",
+    "new": "    win.onPush?.();",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLEA-LOOP-a-pop-keeps-its-window",
     "file": "src/ui/windowStack.js",
-    "old": "      windows.pop();\n      unhold(oldWindow);",
-    "new": "      windows.pop();",
+    "old": "      unhold(oldWindow);\n      oldWindow.onPop?.();",
+    "new": "      oldWindow.onPop?.();",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLEA-LOOP-keepOnly-keeps-its-drained",
     "file": "src/ui/windowStack.js",
-    "old": "        windows.splice(i, 1);\n        unhold(w);",
-    "new": "        windows.splice(i, 1);",
+    "old": "        unhold(w);\n        onDrop?.(w);",
+    "new": "        onDrop?.(w);",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLEA-LOOP-a-replacement-holds-nothing",
     "file": "src/ui/windowStack.js",
-    "old": "      unhold(t);\n      hold(live);",
-    "new": "      unhold(t);",
+    "old": "      hold(live);\n      if (pauseWhileOpen(live)) gamePaused = true;",
+    "new": "      if (pauseWhileOpen(live)) gamePaused = true;",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PLEA-LOOP-the-box-answers-twice",
     "file": "src/ui/talkWindow.js",
-    "old": "    if (this.done) return;\n    if (!this.options.length && (code === 'back'",
-    "new": "    if (!this.options.length && (code === 'back'",
+    "old": "    if (this.done) return;\n    if (",
+    "new": "    if (",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ONE-BAD-BODY-the-place-taken-as-it-came",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!(Number.isFinite(f?.[0]) && Number.isFinite(f[1]) && Number.isFinite(f[2]))) { this._notFinite('place', peer.shown); return; }\n",
-    "new": "",
+    "old": "    if (!(Number.isFinite(f?.[0]) && Number.isFinite(f[1]) && Number.isFinite(f[2]))) {\n      this._notFinite('place', peer.shown);\n      return;\n    }\n    // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint.",
+    "new": "    // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint.",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ONE-BAD-BODY-the-yaw-taken-as-it-came",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!Number.isFinite(want)) this._notFinite('yaw', peer.shown);   // ONE-BAD-BODY: the yaw it had stands\n    else b.yaw",
-    "new": "    b.yaw",
+    "old": "    if (!Number.isFinite(want))\n      this._notFinite('yaw', peer.shown); // ONE-BAD-BODY: the yaw it had stands\n    else\n      b.yaw = Number.isFinite(b.yaw)\n        ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1)\n        : want; // ...and one born on a bad one takes the first good one",
+    "new": "    b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want; // ...and one born on a bad one takes the first good one",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ONE-BAD-BODY-the-bad-yaw-kept",
     "file": "src/net/peer/peerBodies.js",
-    "old": "else b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want;",
-    "new": "else b.yaw = b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);",
+    "old": "    else\n      b.yaw = Number.isFinite(b.yaw)\n        ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1)\n        : want; // ...and one born on a bad one takes the first good one",
+    "new": "    else b.yaw = b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1); // ...and one born on a bad one takes the first good one",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ONE-BAD-BODY-said-every-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (this._notFiniteSaid) return;\n",
-    "new": "",
+    "old": "    if (this._notFiniteSaid) return;\n    this._notFiniteSaid = true;",
+    "new": "    this._notFiniteSaid = true;",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]

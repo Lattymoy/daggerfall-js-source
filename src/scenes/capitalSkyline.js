@@ -23,8 +23,11 @@ export const SKYLINE_BUDGET_MS = 3;
 const R = (IMPERIAL_SPAN - 1) / 2;
 const CITY = CAPITALS.findIndex((c) => c.family);
 /** The slices, the centre's first and outward. */
-const BY_CENTRE = Array.from({ length: IMPERIAL_SPAN * IMPERIAL_SPAN }, (_, s) => s)
-  .sort((a, b) => Math.hypot((a % IMPERIAL_SPAN) - R, Math.floor(a / IMPERIAL_SPAN) - R) - Math.hypot((b % IMPERIAL_SPAN) - R, Math.floor(b / IMPERIAL_SPAN) - R));
+const BY_CENTRE = Array.from({ length: IMPERIAL_SPAN * IMPERIAL_SPAN }, (_, s) => s).sort(
+  (a, b) =>
+    Math.hypot((a % IMPERIAL_SPAN) - R, Math.floor(a / IMPERIAL_SPAN) - R) -
+    Math.hypot((b % IMPERIAL_SPAN) - R, Math.floor(b / IMPERIAL_SPAN) - R),
+);
 
 /** A slice's mesh lifted onto the city's ground (`y`, the world's height - the centre's) - a copy; the made mesh stays the
  *  cache's. AUDIT RELEASE R1-4: its feet (every corner at its ground, y 0 - a wall's, a mass's side's; the far view lays no
@@ -52,43 +55,91 @@ function cityGround(fr, centre) {
 function lowestAround(fr, px, py) {
   if (fr.groundAt(px, py) == null) return null;
   let lo = Infinity;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const g = fr.groundAt(px + dx, py + dy); if (g != null && g < lo) lo = g; }
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const g = fr.groundAt(px + dx, py + dy);
+      if (g != null && g < lo) lo = g;
+    }
   return lo;
 }
 
 /** @param {{ farRing: any, state: any }} host @param {{ now?: () => number, centre?: () => ?{ px: number, py: number } }} [o] the
  *  clock (milliseconds) and the city's centre pixel on the live fit and land (the capitals' own) - the pins' fakes */
-export function createCapitalSkyline(host, { now = () => performance.now(), centre: centreOf = () => (CITY >= 0 ? capitalCentrePixel(CITY) : null) } = {}) {
+export function createCapitalSkyline(
+  host,
+  { now = () => performance.now(), centre: centreOf = () => (CITY >= 0 ? capitalCentrePixel(CITY) : null) } = {},
+) {
   /** @type {Map<number, ?ReturnType<typeof imperialLandmarkMesh>>} */
-  const made = new Map();   // slice -> its mesh (null: nothing stands there), made once
+  const made = new Map(); // slice -> its mesh (null: nothing stands there), made once
   /** @type {Map<number, { remove: () => void, landmark: any }>} */
   const handles = new Map();
-  let ring = null, at = null, /** @type {number[]} */ owed = [], /** @type {number[]} */ waiting = [], waitBase = '';
-  let /** @type {?{ y: number, known: boolean }} */ stood = null, groundBase = '';   // R1-4: the city's ground the slices stand at, and the ring's base it was read on
-  const drop = () => { for (const h of handles.values()) h.remove(); handles.clear(); owed = []; waiting = []; at = null; stood = null; groundBase = ''; };
+  let ring = null,
+    at = null,
+    /** @type {number[]} */ owed = [],
+    /** @type {number[]} */ waiting = [],
+    waitBase = '';
+  let /** @type {?{ y: number, known: boolean }} */ stood = null,
+    groundBase = ''; // R1-4: the city's ground the slices stand at, and the ring's base it was read on
+  const drop = () => {
+    for (const h of handles.values()) h.remove();
+    handles.clear();
+    owed = [];
+    waiting = [];
+    at = null;
+    stood = null;
+    groundBase = '';
+  };
   /** Every slice owed, the nearest the traveller first. */
   const owe = (centre, cur) => {
-    owed = Array.from({ length: IMPERIAL_SPAN * IMPERIAL_SPAN }, (_, s) => s)
-      .sort((a, b) => Math.hypot(centre.px + (a % IMPERIAL_SPAN) - R - cur.x, centre.py + Math.floor(a / IMPERIAL_SPAN) - R - cur.y) - Math.hypot(centre.px + (b % IMPERIAL_SPAN) - R - cur.x, centre.py + Math.floor(b / IMPERIAL_SPAN) - R - cur.y));
+    owed = Array.from({ length: IMPERIAL_SPAN * IMPERIAL_SPAN }, (_, s) => s).sort(
+      (a, b) =>
+        Math.hypot(centre.px + (a % IMPERIAL_SPAN) - R - cur.x, centre.py + Math.floor(a / IMPERIAL_SPAN) - R - cur.y) -
+        Math.hypot(centre.px + (b % IMPERIAL_SPAN) - R - cur.x, centre.py + Math.floor(b / IMPERIAL_SPAN) - R - cur.y),
+    );
   };
   /** The frame's sweep: the landmarks let go or handed in, a budget's worth. */
   function sweep() {
     let fr = null;
-    try { fr = host.farRing ?? null; } catch { fr = null; }   // the ring is made after the sweeps' wiring
-    const cur = host.state?.current, centre = fr && cur ? centreOf() : null;
+    try {
+      fr = host.farRing ?? null;
+    } catch {
+      fr = null;
+    } // the ring is made after the sweeps' wiring
+    const cur = host.state?.current,
+      centre = fr && cur ? centreOf() : null;
     const within = !!centre && Math.max(Math.abs(cur.x - centre.px), Math.abs(cur.y - centre.py)) <= SKYLINE_REACH;
     const first = handles.values().next().value;
     // let go: out of reach, the capitals gone, the ring another or its landmarks disposed with it, the city moved
-    if (fr !== ring || !within || (first && !first.landmark.vao) || (at && centre && (at.px !== centre.px || at.py !== centre.py))) { if (handles.size || owed.length) drop(); ring = fr; }
+    if (
+      fr !== ring ||
+      !within ||
+      (first && !first.landmark.vao) ||
+      (at && centre && (at.px !== centre.px || at.py !== centre.py))
+    ) {
+      if (handles.size || owed.length) drop();
+      ring = fr;
+    }
     if (!within || !centre) return;
-    if (!at) { at = { px: centre.px, py: centre.py }; owe(centre, cur); }
+    if (!at) {
+      at = { px: centre.px, py: centre.py };
+      owe(centre, cur);
+    }
     const base = `${fr.baseX},${fr.baseY}`;
-    if (waiting.length && base !== waitBase) { owed.push(...waiting); waiting = []; }   // the ring rebuilt round another base
-    if (base !== groundBase || !stood) {   // R1-4: the city's ground read once a base; an estimate's slices stood again once it is known
+    if (waiting.length && base !== waitBase) {
+      owed.push(...waiting);
+      waiting = [];
+    } // the ring rebuilt round another base
+    if (base !== groundBase || !stood) {
+      // R1-4: the city's ground read once a base; an estimate's slices stood again once it is known
       const g = cityGround(fr, centre);
       groundBase = base;
       if (!g) return;
-      if (stood && !stood.known && g.known && g.y !== stood.y) { for (const h of handles.values()) h.remove(); handles.clear(); waiting = []; owe(centre, cur); }
+      if (stood && !stood.known && g.known && g.y !== stood.y) {
+        for (const h of handles.values()) h.remove();
+        handles.clear();
+        waiting = [];
+        owe(centre, cur);
+      }
       if (!stood || (!stood.known && g.known)) stood = g;
     }
     const cityY = stood.y;
@@ -98,10 +149,28 @@ export function createCapitalSkyline(host, { now = () => performance.now(), cent
       if (!made.has(s)) made.set(s, imperialLandmarkMesh(s));
       const mesh = made.get(s);
       if (!mesh) continue;
-      const px = centre.px + (s % IMPERIAL_SPAN) - R, py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R, lo = lowestAround(fr, px, py);
-      if (lo == null) { waiting.push(s); waitBase = base; continue; }   // off the ring's grid (or before its build): asked again when it moves
+      const px = centre.px + (s % IMPERIAL_SPAN) - R,
+        py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R,
+        lo = lowestAround(fr, px, py);
+      if (lo == null) {
+        waiting.push(s);
+        waitBase = base;
+        continue;
+      } // off the ring's grid (or before its build): asked again when it moves
       handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));
     }
   }
-  return { sweep, drop, get count() { return handles.size; }, get owed() { return owed.length; }, get waiting() { return waiting.length; } };
+  return {
+    sweep,
+    drop,
+    get count() {
+      return handles.size;
+    },
+    get owed() {
+      return owed.length;
+    },
+    get waiting() {
+      return waiting.length;
+    },
+  };
 }

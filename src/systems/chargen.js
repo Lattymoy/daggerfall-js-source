@@ -1,9 +1,9 @@
 import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS, levelUpSkillSum } from './skills.js';
-import { spellPointsFor } from '../combat/formulas.js';   // U10
-import { mintCharacterId } from './characterId.js';   // CHARID1
-import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
-import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
-import { renownHpOf, renownMpOf, foldMpOf, spireHpOf } from './renownLayer.js';   // RENOWN1: Renown's online health and magicka, on top of both live maximums; EG15: and the folds' magicka; EG-ZR: and the Spire's Stoneskin
+import { spellPointsFor } from '../combat/formulas.js'; // U10
+import { mintCharacterId } from './characterId.js'; // CHARID1
+import { CLASSIC_GAME_START_TIME } from './gameDate.js'; // AUDIT 23: the skill-check anchor
+import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js'; // wave 28: MaxMagicka reads LiveIntelligence
+import { renownHpOf, renownMpOf, foldMpOf, spireHpOf } from './renownLayer.js'; // RENOWN1: Renown's online health and magicka, on top of both live maximums; EG15: and the folds' magicka; EG-ZR: and the Spire's Stoneskin
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -37,26 +37,37 @@ import { renownHpOf, renownMpOf, foldMpOf, spireHpOf } from './renownLayer.js'; 
 // pool exhausted so the character stays classic-legal) survives only
 // as the documented degraded paths named at spendPoolLowest.
 
-
 export const CLASS_CAREERS = Object.freeze([
-  'Mage', 'Spellsword', 'Battlemage', 'Sorcerer', 'Healer',
-  'Nightblade', 'Bard', 'Burglar', 'Rogue', 'Acrobat', 'Thief',
-  'Assassin', 'Monk', 'Archer', 'Ranger', 'Barbarian', 'Warrior',
+  'Mage',
+  'Spellsword',
+  'Battlemage',
+  'Sorcerer',
+  'Healer',
+  'Nightblade',
+  'Bard',
+  'Burglar',
+  'Rogue',
+  'Acrobat',
+  'Thief',
+  'Assassin',
+  'Monk',
+  'Archer',
+  'Ranger',
+  'Barbarian',
+  'Warrior',
   'Knight',
 ]);
-
-
 
 // ---- StatsRollout constants + Reroll, verbatim ----
 export const STAT_MIN_BONUS_ROLL = 0;
 export const STAT_MAX_BONUS_ROLL = 10;
 export const STAT_MIN_BONUS_POOL = 6;
 export const STAT_MAX_BONUS_POOL = 14;
-export { STAT_KEYS_ORDER };   // AUDIT 68 S24-stat-keys-duplicate: statMods.js owns DFCareer.Stats order; the UI imports it here
+export { STAT_KEYS_ORDER }; // AUDIT 68 S24-stat-keys-duplicate: statMods.js owns DFCareer.Stats order; the UI imports it here
 const STAT_KEYS = STAT_KEYS_ORDER;
 
 export function rollStats(career, rolls = Math.random) {
-  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // inclusive, per the source comment
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo)); // inclusive, per the source comment
   const stats = {};
   for (const k of STAT_KEYS) stats[k] = career[k] + range(STAT_MIN_BONUS_ROLL, STAT_MAX_BONUS_ROLL);
   const bonusPool = range(STAT_MIN_BONUS_POOL, STAT_MAX_BONUS_POOL);
@@ -91,7 +102,14 @@ export function rollSkills(career, rolls = Math.random) {
   for (const id of career.primarySkills) skills[id] = PRIMARY_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
   for (const id of career.majorSkills) skills[id] = MAJOR_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
   for (const id of career.minorSkills) skills[id] = MINOR_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
-  return { skills, groupPools: { primary: BONUS_POOL_PER_SKILL_GROUP, major: BONUS_POOL_PER_SKILL_GROUP, minor: BONUS_POOL_PER_SKILL_GROUP } };
+  return {
+    skills,
+    groupPools: {
+      primary: BONUS_POOL_PER_SKILL_GROUP,
+      major: BONUS_POOL_PER_SKILL_GROUP,
+      minor: BONUS_POOL_PER_SKILL_GROUP,
+    },
+  };
 }
 
 // ---- Starting spells (S6), verbatim ----
@@ -102,13 +120,13 @@ export function rollSkills(career, rolls = Math.random) {
 // with the builder's other laws (systems/customClass.js
 // customSpellSetIndex) and finishChargen picks the set through it.
 export const STARTING_SPELL_SETS = Object.freeze({
-  0: [1, 37, 2, 97, 8],    // Mage: Fenrik's Door Jam, Slowfalling, Buoyancy, Balyna's Balm, Shock
-  1: [8, 44, 37],          // Spellsword: Shock, Chameleon, Slowfalling
-  2: [8, 2, 37],           // Battlemage
-  3: [1, 37, 2, 97, 8],    // Sorcerer (the Mage set)
-  4: [97, 2, 1, 37],       // Healer
-  5: [44, 2],              // Nightblade
-  6: [37],                 // Bard
+  0: [1, 37, 2, 97, 8], // Mage: Fenrik's Door Jam, Slowfalling, Buoyancy, Balyna's Balm, Shock
+  1: [8, 44, 37], // Spellsword: Shock, Chameleon, Slowfalling
+  2: [8, 2, 37], // Battlemage
+  3: [1, 37, 2, 97, 8], // Sorcerer (the Mage set)
+  4: [97, 2, 1, 37], // Healer
+  5: [44, 2], // Nightblade
+  6: [37], // Bard
 });
 
 /** HEAL1 (2026-09-23, co-op): THE HEALER'S SECOND HEAL - the class
@@ -127,16 +145,16 @@ export const STARTING_SPELL_SETS = Object.freeze({
  *  spellmaker mints from -1 down, so a check for "already has it" is one
  *  compare and the quick slot keys it like any other spell. */
 export const HEALER_CAREER_INDEX = 4;
-export const HEAL_OTHER_SOURCE_SPELL = 97;   // Balyna's Balm
+export const HEAL_OTHER_SOURCE_SPELL = 97; // Balyna's Balm
 export const HEAL_OTHER_INDEX = -1000;
 export const HEAL_OTHER_NAME = "Balyna's Healing Touch";
 export function healOtherSpell(spellsByIndex) {
   const src = spellsByIndex?.get?.(HEAL_OTHER_SOURCE_SPELL);
   if (!src || !Array.isArray(src.effects)) return null;
   return {
-    effects: src.effects.map((e) => ({ ...e })),   // the Balm's own numbers, empty slots and all
+    effects: src.effects.map((e) => ({ ...e })), // the Balm's own numbers, empty slots and all
     element: src.element,
-    rangeType: 1,                                   // ByTouch: another player, or a foe, in arm's reach
+    rangeType: 1, // ByTouch: another player, or a foe, in arm's reach
     cost: 0,
     name: HEAL_OTHER_NAME,
     icon: src.icon,
@@ -156,7 +174,9 @@ export function healOtherSpell(spellsByIndex) {
  *  A registered assigner answers the list from the CAREER (its skills),
  *  or null to let SetStartingSpells' set answer. */
 let _spellsAssigner = null;
-export function setStartingSpellsAssigner(fn) { _spellsAssigner = typeof fn === 'function' ? fn : null; }
+export function setStartingSpellsAssigner(fn) {
+  _spellsAssigner = typeof fn === 'function' ? fn : null;
+}
 export function assignStartingSpells(careerIndex, spellsByIndex, career = null) {
   return _spellsAssigner?.(career, spellsByIndex) ?? startingSpells(careerIndex, spellsByIndex);
 }
@@ -183,7 +203,7 @@ export function startingSpells(careerIndex, spellsByIndex) {
 // FormulaHelper.SpellPoints = floor(INT x multiplier).
 export const SPELL_POINT_MULTIPLIERS = Object.freeze({ 0: 3.0, 4: 2.0, 8: 1.75, 12: 1.5, 16: 1.0, 20: 0.5 });
 export function spellPointMultiplier(abilityFlagsAndSpellPointsBitfield) {
-  return SPELL_POINT_MULTIPLIERS[(abilityFlagsAndSpellPointsBitfield & 0x1C00) >> 8] ?? 1.0;
+  return SPELL_POINT_MULTIPLIERS[(abilityFlagsAndSpellPointsBitfield & 0x1c00) >> 8] ?? 1.0;
 }
 // U10 / ONE DFU MEMBER, ONE EXPORT: FormulaHelper.SpellPoints lives
 // with the other six derived stats; re-exported under the name the
@@ -197,7 +217,7 @@ export const rollMaxHealthLevel1 = (career) => 25 + career.hitPointsPerLevel;
 export function hitPointsPerLevelUp(career, endurance, rolls = Math.random) {
   const minRoll = Math.trunc(career.hitPointsPerLevel / 2);
   const maxRoll = career.hitPointsPerLevel;
-  let add = minRoll + Math.floor(rolls() * (maxRoll + 1 - minRoll));   // random_range_inclusive
+  let add = minRoll + Math.floor(rolls() * (maxRoll + 1 - minRoll)); // random_range_inclusive
   add += hitPointsModifier(endurance);
   return add < 1 ? 1 : add;
 }
@@ -228,7 +248,7 @@ export function spendPoolLowest(values, keysOrIds, pool) {
  */
 export function createCharacter(playerEntity, career, careerIndex, { rolls = Math.random, name = career.name } = {}) {
   const { stats, bonusPool } = rollStats(career, rolls);
-  spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // headless policy; U2b's hand-distribution shipped and owns the live path
+  spendPoolLowest(stats, STAT_KEYS, bonusPool); // headless policy; U2b's hand-distribution shipped and owns the live path
   const { skills, groupPools } = rollSkills(career, rolls);
   spendPoolLowest(skills, career.primarySkills, groupPools.primary);
   spendPoolLowest(skills, career.majorSkills, groupPools.major);
@@ -239,13 +259,21 @@ export function createCharacter(playerEntity, career, careerIndex, { rolls = Mat
 /** Apply FINISHED chargen values (the U2b flow's hand-distributed
  *  stats/skills, or the headless roll above) onto the shared entity -
  *  the health/magicka/sum derivations live here ONCE. */
-export function applyCharacter(playerEntity, career, careerIndex, { name = career.name, gender, race, raceId, faceIndex, stats, skills, rolls = Math.random } = {}) {
+export function applyCharacter(
+  playerEntity,
+  career,
+  careerIndex,
+  { name = career.name, gender, race, raceId, faceIndex, stats, skills, rolls = Math.random } = {},
+) {
   const maxHealth = rollMaxHealthLevel1(career);
-  const maxMagicka = spellPoints(stats.intelligence, spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000));   // absent bitfield -> x1.00
+  const maxMagicka = spellPoints(
+    stats.intelligence,
+    spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000),
+  ); // absent bitfield -> x1.00
   Object.assign(playerEntity, {
     maxMagicka,
     magicka: maxMagicka,
-    fatigue: (stats.strength + stats.endurance) * FATIGUE_MULTIPLIER,   // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
+    fatigue: (stats.strength + stats.endurance) * FATIGUE_MULTIPLIER, // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
     name,
     gender: gender ?? playerEntity.gender ?? 'male',
     // S3c/U9: the IDENTITY the paperdoll and the race tables read
@@ -261,7 +289,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     health: maxHealth,
     stats,
     skills,
-    skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (S3b consumes them)
+    skillUses: new Array(SKILL_COUNT).fill(0), // TallySkill counters (S3b consumes them)
     // PlayerEntity.skillsRecentlyRaised (:70): the uint[2] the char
     // sheet highlights raised skills from, minted with the character
     // exactly as the tally counters above are. A4: minted fresh HERE
@@ -276,14 +304,14 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     // full 360-minute interval instead of passing immediately at 0.
     lastSkillCheckTime: CLASSIC_GAME_START_TIME,
     chargenDone: true,
-    characterId: mintCharacterId(),   // CHARID1: born with an id - a namesake can never write over this character's slot
+    characterId: mintCharacterId(), // CHARID1: born with an id - a namesake can never write over this character's slot
   });
   // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
   // over the starting skills = the starting sum, verbatim).
-  playerEntity.startingLevelUpSkillSum = levelUpSkillSum(playerEntity);   // AUDIT 68 S24-levelup-sum-duplicate: the one home, not an inline copy
+  playerEntity.startingLevelUpSkillSum = levelUpSkillSum(playerEntity); // AUDIT 68 S24-levelup-sum-duplicate: the one home, not an inline copy
   playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
   defineLiveMaxMagicka(playerEntity);
-  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied
+  defineLiveMaxHealth(playerEntity); // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied
   return playerEntity;
 }
 
@@ -308,7 +336,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
  *  a level-up adds to, and what the save keeps (SerializablePlayer.cs:118). */
 export function defineLiveMaxHealth(entity) {
   const desc = Object.getOwnPropertyDescriptor(entity, 'maxHealth');
-  if (desc && desc.get) return entity;   // already live
+  if (desc && desc.get) return entity; // already live
   let stored = desc ? desc.value : 0;
   Object.defineProperty(entity, 'maxHealth', {
     configurable: true,
@@ -321,16 +349,22 @@ export function defineLiveMaxHealth(entity) {
       // Renown 50 werewolf at 247 of 247 fell to 100 of 100. The limiter caps Daggerfall's own maximum; the layer
       // rides above whatever Daggerfall allows ("On top").
       const limiter = this.maxHealthLimiter;
-      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // "Limiter must be 1 or greater"
-      return own + renownHpOf(this) + spireHpOf(this);   // EG-ZR: and the Spire's Stoneskin, on the same terms
+      const own = limiter >= 1 && limiter < stored ? limiter : stored; // "Limiter must be 1 or greater"
+      return own + renownHpOf(this) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms
     },
-    set(v) { stored = v; },
+    set(v) {
+      stored = v;
+    },
   });
   Object.defineProperty(entity, 'rawMaxHealth', {
     configurable: true,
-    enumerable: false,   // a view on the stored value, not a second field to serialize
-    get() { return stored; },
-    set(v) { stored = v; },
+    enumerable: false, // a view on the stored value, not a second field to serialize
+    get() {
+      return stored;
+    },
+    set(v) {
+      stored = v;
+    },
   });
   return entity;
 }
@@ -360,7 +394,7 @@ export function defineLiveMaxHealth(entity) {
  *  the non-player arm (enemies are "set by level elsewhere", :487). */
 export function defineLiveMaxMagicka(entity) {
   const desc = Object.getOwnPropertyDescriptor(entity, 'maxMagicka');
-  if (desc && desc.get) return entity;   // already live
+  if (desc && desc.get) return entity; // already live
   let stored = desc ? desc.value : 0;
   Object.defineProperty(entity, 'maxMagicka', {
     configurable: true,
@@ -368,8 +402,10 @@ export function defineLiveMaxMagicka(entity) {
     get() {
       const career = this.career;
       const raw = career
-        ? spellPoints(liveStat(this, 'intelligence'),
-          spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000))
+        ? spellPoints(
+            liveStat(this, 'intelligence'),
+            spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000),
+          )
         : stored;
       // RENOWN1: and Renown's online magicka, a term of the sum the magic round never rewrites
       // (systems/renownLayer.js) - inside the floor, so a magery that makes the character unable still leaves 0.
@@ -377,8 +413,9 @@ export function defineLiveMaxMagicka(entity) {
       const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this) + foldMpOf(this);
       return effective < 0 ? 0 : effective;
     },
-    set(v) { stored = v; },
+    set(v) {
+      stored = v;
+    },
   });
   return entity;
 }
-

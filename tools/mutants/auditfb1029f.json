@@ -2,8 +2,8 @@
   {
     "name": "AUDITFB1029F-A1-delete-keeps-rows",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare(`DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id\n      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),\n",
-    "new": "",
+    "old": "    db\n      .prepare(\n        `DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id\n      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`,\n      )\n      .bind(playerId, id),\n    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),",
     "tests": [
       "test/server/restorphans.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITFB1029F-A5-rest-a-piece",
     "file": "src/net/decorLaw.js",
-    "old": "!DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null;",
-    "new": "!DECOR_ID_RE.test(raw.id)) return null;",
+    "old": "  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null; // AUDIT FB1029f A5: the home's rest row's id is no piece's",
+    "new": "  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id)) return null; // AUDIT FB1029f A5: the home's rest row's id is no piece's",
     "tests": [
       "test/systems/decor/restguest.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITFB1029F-A6-asked-again",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "    if (res?.ok === false) refused.add(key);\n",
-    "new": "",
+    "old": "      if (res?.ok === false) refused.add(key);\n      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')",
+    "new": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "AUDITFB1029F-D1-toggled",
     "file": "src/systems/quickslots.js",
-    "old": "  if (hand && landed != null) { if (hand.useHand) hand.useHand(landed); else if (landed !== inUse) hand.switchHand?.(); }",
+    "old": "  if (hand && landed != null) {\n    if (hand.useHand) hand.useHand(landed);\n    else if (landed !== inUse) hand.switchHand?.();\n  }",
     "new": "  if (hand && landed != null && landed !== inUse) hand.switchHand?.();",
     "tests": [
       "test/combat/quickslotfollow.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "AUDITFB1029F-D2-bare-follows",
     "file": "src/systems/quickslots.js",
-    "old": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n",
-    "new": "",
+    "old": "    door?.keepHand?.(); // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    billEquipDelayOnClose(entity, snap);",
     "tests": [
       "test/combat/quickslotfollow.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITFB1029F-C2-one-plant-word",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
-    "new": "'Tree' : null));",
+    "old": "            : (FLAT_BASE[c.as ?? c.flat[0]] ?? null)); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
+    "new": "            : null); // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITFB1029F-C3-mod-street-unfiled",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const what = plain && c.from !== 'mod' ? decorWhatKind(",
-    "new": "    const what = plain && !MOD_FROM.has(c.from) ? decorWhatKind(",
+    "old": "      plain && c.from !== 'mod'",
+    "new": "      plain && !MOD_FROM.has(c.from)",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDITFB1029F-C4-records-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
-    "new": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
+    "old": "  return (\n    FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null\n  );",
+    "new": "  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITFB1029F-C4-pots-tools",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "214: 'tools', 218: 'boxes',",
-    "new": "214: 'tools', 218: 'tools',",
+    "old": "  218: 'boxes',",
+    "new": "  218: 'tools',",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDITFB1029F-D4-old-pose-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "w.handRestored = pose.handKept === true; }",
-    "new": "w.handRestored = true; }",
+    "old": "    w.handRestored = pose.handKept === true;",
+    "new": "    w.handRestored = true;",
     "tests": [
       "test/combat/handfollows.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITFB1029F-D4-pose-unmarked",
     "file": "src/combat/playerWeapon.js",
-    "old": "usingRightHand: w.usingRightHand, handKept: true } : null);",
-    "new": "usingRightHand: w.usingRightHand } : null);",
+    "old": "export const weaponPoseOf = (w) =>\n  w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null; // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS",
+    "new": "export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null); // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS",
     "tests": [
       "test/combat/handfollows.test.js"
     ]

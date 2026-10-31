@@ -104,8 +104,8 @@
   {
     "name": "STAFF-PANEL-SPEED-strikes-history-apart",
     "file": "server-account/src/sanctions.js",
-    "old": "const [strikes, acts] = await Promise.all([strikesOf(db, row.id, nowS),",
-    "new": "const [strikes, acts] = await Promise.all([await strikesOf(db, row.id, nowS),",
+    "old": "    strikesOf(db, row.id, nowS),",
+    "new": "    await strikesOf(db, row.id, nowS),",
     "why": "a look's strikes counted, then its history read (a trip more on the panel's and the game's strikes and case doors)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -114,8 +114,8 @@
   {
     "name": "STAFF-PANEL-SPEED-game-case-reads-apart",
     "file": "server-account/src/safety.js",
-    "old": "const [lines, reports] = await Promise.all(caseReads(db, c.id).map(async (st) => (await st.all())?.results ?? []));",
-    "new": "const [lines, reports] = [(await caseReads(db, c.id)[0].all())?.results ?? [], (await caseReads(db, c.id)[1].all())?.results ?? []];",
+    "old": "  const [lines, reports] = await Promise.all(caseReads(db, c.id).map(async (st) => (await st.all())?.results ?? [])); // STAFF-PANEL-SPEED: one trip",
+    "new": "  const [lines, reports] = [\n    (await caseReads(db, c.id)[0].all())?.results ?? [],\n    (await caseReads(db, c.id)[1].all())?.results ?? [],\n  ]; // STAFF-PANEL-SPEED: one trip",
     "why": "the game's case read: its lines, then its reports (a trip more)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"

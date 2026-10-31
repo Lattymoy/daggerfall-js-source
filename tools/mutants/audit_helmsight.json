@@ -1,13 +1,113 @@
 [
-  {"name": "AUDIT-HELM-SIGHT-A1-no-let-go", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();\n", "new": "", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "a party's jump to a pixel this client does not stream lets nothing go: the helm pins the player back at the departure"},
-  {"name": "AUDIT-HELM-SIGHT-A1-set-down-afar", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (!afar) deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);", "new": "    deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "the let-go from afar sets the player down at her far helm: the departure all the same"},
-  {"name": "AUDIT-HELM-SIGHT-A1-let-go-in-the-wait", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (paused) { state.wasPaused = true; return; }", "new": "    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();\n    if (paused) { state.wasPaused = true; return; }", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "the helm let go while a party's landing is pending: a landing that fails has no helm to come back to"},
-  {"name": "AUDIT-HELM-SIGHT-A1-wait-unheld", "file": "src/scenes/world.js", "old": "const paused = gamePaused() || _loading || _partyArrivalPending || _etherCrossing;", "new": "const paused = gamePaused() || _loading || _etherCrossing;", "tests": ["test/scenes/audit_helmsight_world.test.js"], "why": "the mod's frame runs through a party's wait: its let-go comes before the landing's word"},
-  {"name": "AUDIT-HELM-SIGHT-A2-one-pixel-near", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;", "new": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1;", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "a landing one pixel off stamps the landing's pixel on her"},
-  {"name": "AUDIT-HELM-SIGHT-C2-one-axis", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;", "new": "Math.abs(deps.currentMapPixel().X - boat.MapPixel.X) > 0;", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "a landing north or south of her is not afar: the landing's pixel stamped, she stays in sight and heard"},
-  {"name": "AUDIT-HELM-SIGHT-A3-disembark-held", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);", "new": "      if (boat !== state.CurrentBoat) UpdateBoatVisibilityOf(boat);", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "a disembark in flight keeps her in sight thirty pixels off, her loop playing, the flag stuck on her"},
-  {"name": "AUDIT-HELM-SIGHT-A4-heard-afar", "file": "src/scenes/csaAudio.js", "old": "if (!src.isPlaying || !node?.activeInHierarchy || boat.helmAfar) {", "new": "if (!src.isPlaying || !node?.activeInHierarchy) {", "tests": ["test/scenes/audit_helmsight_world.test.js"], "why": "her loops heard from the departure while a party's landing is pending"},
-  {"name": "AUDIT-HELM-SIGHT-C1-packable-gate", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    const afar = !!boat.helmAfar;", "new": "    const afar = !!boat.helmAfar && !boat.packable;", "tests": ["test/systems/comeSailAway/fb1027_helmsight.test.js", "test/systems/comeSailAway/audit_helmsight.test.js"], "why": "every hull is minted packable: a ship PackBoat refuses is let go with the landing's pixel and left in sight"},
-  {"name": "AUDIT-HELM-SIGHT-C5-flag-kept", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    currentBoat.helmAfar = false;\n", "new": "", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "the flag outlives the helm: the world host never plays her loops again"},
-  {"name": "AUDIT-HELM-SIGHT-C5-delayed-flag-kept", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "      co.boatlast.helmAfar = false;   // HELM-SIGHT: the helm let go\n", "new": "", "tests": ["test/systems/comeSailAway/audit_helmsight.test.js"], "why": "a disembark from afar leaves the flag on her: the world host never plays her loops again"}
+  {
+    "name": "AUDIT-HELM-SIGHT-A1-no-let-go",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "a party's jump to a pixel this client does not stream lets nothing go: the helm pins the player back at the departure"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A1-set-down-afar",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!afar) deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);",
+    "new": "    deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "the let-go from afar sets the player down at her far helm: the departure all the same"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A1-let-go-in-the-wait",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (paused) { state.wasPaused = true; return; }",
+    "new": "    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();\n    if (paused) { state.wasPaused = true; return; }",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "the helm let go while a party's landing is pending: a landing that fails has no helm to come back to"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A1-wait-unheld",
+    "file": "src/scenes/world.js",
+    "old": "const paused = gamePaused() || _loading || _partyArrivalPending || _etherCrossing;",
+    "new": "const paused = gamePaused() || _loading || _etherCrossing;",
+    "tests": [
+      "test/scenes/audit_helmsight_world.test.js"
+    ],
+    "why": "the mod's frame runs through a party's wait: its let-go comes before the landing's word"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A2-one-pixel-near",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;",
+    "new": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1;",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "a landing one pixel off stamps the landing's pixel on her"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-C2-one-axis",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;",
+    "new": "Math.abs(deps.currentMapPixel().X - boat.MapPixel.X) > 0;",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "a landing north or south of her is not afar: the landing's pixel stamped, she stays in sight and heard"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A3-disembark-held",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);",
+    "new": "      if (boat !== state.CurrentBoat) UpdateBoatVisibilityOf(boat);",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "a disembark in flight keeps her in sight thirty pixels off, her loop playing, the flag stuck on her"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-A4-heard-afar",
+    "file": "src/scenes/csaAudio.js",
+    "old": "          if (!src.isPlaying || !node?.activeInHierarchy || boat.helmAfar) {",
+    "new": "          if (!src.isPlaying || !node?.activeInHierarchy) {",
+    "tests": [
+      "test/scenes/audit_helmsight_world.test.js"
+    ],
+    "why": "her loops heard from the departure while a party's landing is pending"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-C1-packable-gate",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const afar = !!boat.helmAfar;",
+    "new": "    const afar = !!boat.helmAfar && !boat.packable;",
+    "tests": [
+      "test/systems/comeSailAway/fb1027_helmsight.test.js",
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "every hull is minted packable: a ship PackBoat refuses is let go with the landing's pixel and left in sight"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-C5-flag-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    currentBoat.helmAfar = false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "the flag outlives the helm: the world host never plays her loops again"
+  },
+  {
+    "name": "AUDIT-HELM-SIGHT-C5-delayed-flag-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      co.boatlast.helmAfar = false;   // HELM-SIGHT: the helm let go\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_helmsight.test.js"
+    ],
+    "why": "a disembark from afar leaves the flag on her: the world host never plays her loops again"
+  }
 ]

@@ -12,8 +12,8 @@
   {
     "name": "REALM-DOOR-rc-any-account",
     "file": "server-account/src/realm.js",
-    "old": "WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
-    "new": "WHERE r.id = ? AND ? IS NOT NULL').bind(id, playerId).first();",
+    "old": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?',",
+    "new": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND ? IS NOT NULL',",
     "tests": [
       "test/net/realmdoor.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "REALM-DOOR-claims-take-any-rc",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;\n",
-    "new": "",
+    "old": "  if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;\n  // AUDIT LEGACY III O1: the realm character itself - beside the realm's yes alone, and of the realm's own id's shape",
+    "new": "  // AUDIT LEGACY III O1: the realm character itself - beside the realm's yes alone, and of the realm's own id's shape",
     "tests": [
       "test/net/realmdoor.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "REALM-DOOR-minter-drops-a-zero",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.rc !== undefined) claims.rc = who.rc;",
-    "new": "  if (who?.rc) claims.rc = who.rc;",
+    "old": "  if (who?.rc !== undefined) claims.rc = who.rc; // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal",
+    "new": "  if (who?.rc) claims.rc = who.rc; // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal",
     "tests": [
       "test/net/realmdoor.test.js"
     ]

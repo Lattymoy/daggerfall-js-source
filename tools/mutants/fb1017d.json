@@ -62,8 +62,8 @@
   {
     "name": "CURSE-CARRY-door-dropped",
     "file": "src/net/npcRollTracker.js",
-    "old": "      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity));",
-    "new": "",
+    "old": "      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity)); // CURSE-CARRY: before the read, not at the next activeMemberships",
+    "new": "      // CURSE-CARRY: before the read, not at the next activeMemberships",
     "tests": [
       "test/systems/guild/fb1017d_cursecarry.test.js"
     ],

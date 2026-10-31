@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GN2-PF1-snap-left-for-the-next-update",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }",
-    "new": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); }",
+    "old": "        a.update(0);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js",
       "test/systems/naval/auditgalleon_guns.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GN2-GN2-a-lay-not-kept-settling",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }",
-    "new": "if (s) s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);",
+    "old": "      if (s) {\n        s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);\n        settling.add(boat);\n      }",
+    "new": "      if (s) s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-GN2-GN2-a-shot-not-kept-settling",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "      settling.add(boat);\n",
-    "new": "",
+    "old": "      settling.add(boat);\n      if (!(index >= 0 && index < s.firedAt.length)) return;",
+    "new": "      if (!(index >= 0 && index < s.firedAt.length)) return;",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-GN2-GN2-only-the-named-stepped",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "for (const boat of [...boats, ...settling]) {",
-    "new": "for (const boat of boats) {",
+    "old": "      for (const boat of [...boats, ...settling]) {",
+    "new": "      for (const boat of boats) {",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-GN2-GN2-at-rest-with-her-guns-still-out",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "if (s.x[i] !== s.inX[i] || kick > 0) rest = false;",
-    "new": "if (kick > 0) rest = false;",
+    "old": "        if (s.x[i] !== s.inX[i] || kick > 0) rest = false;",
+    "new": "        if (kick > 0) rest = false;",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-GN2-GN5-guns-left-out",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": " s.x = [...s.inX]; }",
-    "new": " }",
+    "old": "          s.x = [...s.inX];\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-GN2-GN5-nothing-stood",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "        stand(r, lastNow, 0);\n",
-    "new": "",
+    "old": "        stand(r, lastNow, 0);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-GN2-GN6-the-old-gun-deck",
     "file": "src/systems/naval/navalShips.js",
-    "old": "her gun deck at 1.0829 - so",
-    "new": "her gun deck at 1.085 - so",
+    "old": "  // 1.56 to 2.93 m over the sea, her gun deck at 1.0829 - so a broadside leaves her through the holes it is fired from;",
+    "new": "  // 1.56 to 2.93 m over the sea, her gun deck at 1.085 - so a broadside leaves her through the holes it is fired from;",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-GN2-TS1-port-guns-to-starboard",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "const sign = side === 'starboard' ? 1 : -1;",
-    "new": "const sign = 1;",
+    "old": "        const sign = side === 'starboard' ? 1 : -1;",
+    "new": "        const sign = 1;",
     "tests": [
       "test/systems/naval/auditgalleon2_guns.test.js"
     ]

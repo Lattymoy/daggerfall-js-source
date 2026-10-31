@@ -14,7 +14,7 @@ const F32 = new Float32Array(1);
 const U32 = new Uint32Array(F32.buffer);
 
 function wangHash(n) {
-  n = ((n ^ 61) ^ (n >>> 16)) >>> 0;
+  n = (n ^ 61 ^ (n >>> 16)) >>> 0;
   n = (n * 9) >>> 0;
   n = (n ^ (n >>> 4)) >>> 0;
   n = Math.imul(n, 0x27d4eb2d) >>> 0;

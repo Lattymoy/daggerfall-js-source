@@ -48,14 +48,15 @@ export function catchUpXp(xp, have, reach) {
   if (was >= to) return gain;
   const fast = gain * CATCH_UP_MULT;
   if (was + fast <= to) return fast;
-  return (to - was) + Math.max(0, gain - Math.ceil((to - was) / CATCH_UP_MULT));
+  return to - was + Math.max(0, gain - Math.ceil((to - was) / CATCH_UP_MULT));
 }
 
 /** The save's slot (systems/modSaveData.js), under this name. */
 export const SET_REACH_SAVE_VENDOR = 'SigilSetReach';
 /** A record off a save: each named set's reach, a stage 0..4; anything else dropped. */
 export function validReachRecord(r) {
-  const m = r && typeof r === 'object' && r.reach && typeof r.reach === 'object' && !Array.isArray(r.reach) ? r.reach : {};
+  const m =
+    r && typeof r === 'object' && r.reach && typeof r.reach === 'object' && !Array.isArray(r.reach) ? r.reach : {};
   /** @type {Record<string, number>} */
   const out = {};
   for (const id of SIGIL_SET_IDS) if (Number.isInteger(m[id]) && m[id] >= 0 && m[id] <= STAGE_MAX) out[id] = m[id];
@@ -64,8 +65,12 @@ export function validReachRecord(r) {
 registerModSaveData(SET_REACH_SAVE_VENDOR, {
   newSaveData: () => ({ reach: {} }),
   getSaveData: () => ({ reach: { ..._reach } }),
-  restoreSaveData: (r) => { _reach = validReachRecord(r); },
+  restoreSaveData: (r) => {
+    _reach = validReachRecord(r);
+  },
 });
 
 /** Tests only: forget every reach. */
-export function _resetSetReachForTests() { _reach = {}; }
+export function _resetSetReachForTests() {
+  _reach = {};
+}

@@ -38,8 +38,8 @@
   {
     "name": "DISC14-C-the-arms-back-on-the-sprite-position",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "withOffset: false, position: w.armsPosition });",
-    "new": "withOffset: false });",
+    "old": "    return transformRect(base, { flip: false, scaleIt: true, withOffset: false, position: w.armsPosition }); // DISC14-C: on the plain bob",
+    "new": "    return transformRect(base, { flip: false, scaleIt: true, withOffset: false }); // DISC14-C: on the plain bob",
     "tests": [
       "test/combat/weapon/disc14.test.js",
       "test/combat/weapon/auditdw.test.js",
@@ -49,8 +49,8 @@
   {
     "name": "DISC14-C-the-arms-bob-takes-the-doubled-shape",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: false,",
-    "new": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
+    "old": "          doubleScaleIdle: false,",
+    "new": "          doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
     "tests": [
       "test/combat/weapon/disc14.test.js",
       "test/combat/weapon/auditdw.test.js",
@@ -60,8 +60,8 @@
   {
     "name": "DISC14-C-the-bob-gate-back-to-the-module-alone",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),",
-    "new": "doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
+    "old": "          doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),",
+    "new": "          doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
     "tests": [
       "test/combat/weapon/disc14.test.js",
       "test/combat/weapon/auditdw.test.js",
@@ -71,8 +71,8 @@
   {
     "name": "DISC14-C-the-arms-miss-the-inertia",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]];   // DISC14-C: the arms lag the look as the sprite does\n",
-    "new": "",
+    "old": "      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]]; // DISC14-C: the arms lag the look as the sprite does\n    }",
+    "new": "    }",
     "tests": [
       "test/combat/weapon/disc14.test.js",
       "test/combat/weapon/auditdw.test.js",

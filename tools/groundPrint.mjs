@@ -28,10 +28,14 @@ import { writeFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
-import { locationShapeField } from '../src/world/terrain/terrainTiles.js';   // FB1028: a town's outline
-import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../src/world/terrain/terrainSampler.js';
+import { locationShapeField } from '../src/world/terrain/terrainTiles.js'; // FB1028: a town's outline
+import {
+  MAX_TERRAIN_HEIGHT,
+  STREAMING_TERRAIN_SCALE,
+  HEIGHTMAP_DIMENSION,
+} from '../src/world/terrain/terrainSampler.js';
 import { landformSites, landformSitesBeyond } from '../src/world/landforms.js';
-import { groundWoods, dropGroundCache } from '../src/world/tamriel/tamrielGround.js';   // BAY-LEFT-GROUND: the continent round the synthetic world
+import { groundWoods, dropGroundCache } from '../src/world/tamriel/tamrielGround.js'; // BAY-LEFT-GROUND: the continent round the synthetic world
 import { tamrielTrace, setTamrielTrace } from '../src/world/tamriel/tamrielLand.js';
 import { tamrielFit, setTamrielFit } from '../src/world/tamriel/tamrielFrame.js';
 import { CLIMATES } from '../src/formats/mapsTables.js';
@@ -44,10 +48,16 @@ export const GROUND_PRINT_STEP = 8;
  *  far off its feet is not seen to float. */
 export const GROUND_PRINT_TOLERANCE_M = 0.5;
 /** The pixels read in each land: by the network's road, track and river; on the mountain's flank by its site. */
-export const GROUND_PRINT_PIXELS = Object.freeze([[300, 250], [399, 250]]);
+export const GROUND_PRINT_PIXELS = Object.freeze([
+  [300, 250],
+  [399, 250],
+]);
 /** BAY-LEFT-GROUND: the pixels read past the Bay - a town's (its site past the Bay, 6 x 6 blocks) and its east
  *  neighbour's - on the continent the authored shape stands east of the Bay (Morrowind's land). */
-export const GROUND_PRINT_BEYOND = Object.freeze([[3840, 759], [3841, 759]]);
+export const GROUND_PRINT_BEYOND = Object.freeze([
+  [3840, 759],
+  [3841, 759],
+]);
 /** FB1028: the town read, its outline a 4 x 4 grid of blocks, its ground a hillside rising 20 bytes a pixel east. */
 export const GROUND_PRINT_TOWN = Object.freeze([420, 270]);
 /** FB1029 ACROSS-EDGE: the town over its sea - 6 x 6 blocks on land 30 bytes high, the three rows north of it the sea's. */
@@ -60,12 +70,22 @@ export const GROUND_PRINT_FILE = new URL('../test/fixtures/groundPrint.json', im
 /** FB1028: the town's rect and outline - a house on each block's middle, its tiles stamped (the 4 x 4 grid's tiles 32-95,
  *  DFU's clearance of 2 round them). FB1029: `blocks` a side (6: tiles 16-111). */
 function printTownRect(blocks = 4) {
-  const groundTiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2, tileBitfield: 2 })));
+  const groundTiles = Array.from({ length: 16 }, () =>
+    Array.from({ length: 16 }, () => ({ textureRecord: 2, tileBitfield: 2 })),
+  );
   const am = new Uint8Array(64 * 64);
   for (let r = 16; r < 48; r++) for (let c = 16; c < 48; c++) am[r * 64 + c] = 5;
-  const rmb = { fldHeader: { autoMapData: am, groundData: { groundTiles } }, misc3dObjectRecords: [], miscFlatObjectRecords: [] };
-  const loc = { exterior: { exteriorData: { width: blocks, height: blocks, blockNames: Array(blocks * blocks).fill('T.RMB') } }, mapTableData: { mapId: 270420, locationType: 2 } };
-  const lo = 64 - blocks * 8 - 2, hi = 64 + blocks * 8 + 1;
+  const rmb = {
+    fldHeader: { autoMapData: am, groundData: { groundTiles } },
+    misc3dObjectRecords: [],
+    miscFlatObjectRecords: [],
+  };
+  const loc = {
+    exterior: { exteriorData: { width: blocks, height: blocks, blockNames: Array(blocks * blocks).fill('T.RMB') } },
+    mapTableData: { mapId: 270420, locationType: 2 },
+  };
+  const lo = 64 - blocks * 8 - 2,
+    hi = 64 + blocks * 8 + 1;
   return { xMin: lo, xMax: hi, yMin: lo, yMax: hi, shape: locationShapeField(loc, () => rmb) };
 }
 /** FB1029 ROAD-DRY: the sea everywhere - every byte 0, so every sample stands at the ocean's clamp. */
@@ -76,8 +96,11 @@ const SEA_WOODS = Object.freeze({
 });
 /** A pixel's samples as the print reads them, decimetres. @param {ArrayLike<number>} samples */
 const printed = (samples) => {
-  const out = [], metres = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
-  for (let y = 0; y < HEIGHTMAP_DIMENSION; y += GROUND_PRINT_STEP) for (let x = 0; x < HEIGHTMAP_DIMENSION; x += GROUND_PRINT_STEP) out.push(Math.round(samples[y * HEIGHTMAP_DIMENSION + x] * metres * 10));
+  const out = [],
+    metres = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
+  for (let y = 0; y < HEIGHTMAP_DIMENSION; y += GROUND_PRINT_STEP)
+    for (let x = 0; x < HEIGHTMAP_DIMENSION; x += GROUND_PRINT_STEP)
+      out.push(Math.round(samples[y * HEIGHTMAP_DIMENSION + x] * metres * 10));
   return out;
 };
 
@@ -86,62 +109,173 @@ export function groundPrint() {
   const woods = new WoodsFile();
   woods.load(syntheticWoodsBytes());
   const roads = network();
-  const sites = landformSites([{ px: 400, py: 250, loc: { exterior: { exteriorData: { width: 3, height: 3 } }, mapTableData: { locationType: 0 } } }]);
+  const sites = landformSites([
+    {
+      px: 400,
+      py: 250,
+      loc: { exterior: { exteriorData: { width: 3, height: 3 } }, mapTableData: { locationType: 0 } },
+    },
+  ]);
   /** @type {Record<string, number[]>} */
   const cells = {};
   for (const [land, climateType] of Object.entries(CLIMATES)) {
     const climates = new Uint8Array(MAP_WIDTH * MAP_HEIGHT).fill(climateType);
     for (const [px, py] of GROUND_PRINT_PIXELS) {
-      cells[`${land}@${px},${py}`] = printed(generatePixelTerrain({ woods, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType, roads, sites, climates, landform: true }).samples);
+      cells[`${land}@${px},${py}`] = printed(
+        generatePixelTerrain({
+          woods,
+          px,
+          py,
+          stride: 1,
+          tilemap: new Uint8Array(128 * 128),
+          climateType,
+          roads,
+          sites,
+          climates,
+          landform: true,
+        }).samples,
+      );
     }
   }
   // FB1028: a town's ground, in the woodlands, on its own copy of the world with the hillside stamped
-  const [tx, ty] = GROUND_PRINT_TOWN, hill = new WoodsFile();
+  const [tx, ty] = GROUND_PRINT_TOWN,
+    hill = new WoodsFile();
   hill.load(syntheticWoodsBytes());
-  for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) hill.heightMapBuffer[(ty + dy) * MAP_WIDTH + tx + dx] = 60 + 20 * dx;
-  const woodlands = new Uint8Array(MAP_WIDTH * MAP_HEIGHT).fill(CLIMATES.Woodlands), townRect = printTownRect();
-  const town = generatePixelTerrain({ woods: hill, px: tx, py: ty, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, climates: woodlands, landform: true, locationRect: townRect, hasLocation: true, about: [{ px: tx, py: ty, shape: townRect.shape }] });
+  for (let dy = -3; dy <= 3; dy++)
+    for (let dx = -3; dx <= 3; dx++) hill.heightMapBuffer[(ty + dy) * MAP_WIDTH + tx + dx] = 60 + 20 * dx;
+  const woodlands = new Uint8Array(MAP_WIDTH * MAP_HEIGHT).fill(CLIMATES.Woodlands),
+    townRect = printTownRect();
+  const town = generatePixelTerrain({
+    woods: hill,
+    px: tx,
+    py: ty,
+    stride: 1,
+    tilemap: new Uint8Array(128 * 128),
+    climateType: CLIMATES.Woodlands,
+    roads,
+    sites,
+    climates: woodlands,
+    landform: true,
+    locationRect: townRect,
+    hasLocation: true,
+    about: [{ px: tx, py: ty, shape: townRect.shape }],
+  });
   cells[`Town@${tx},${ty}`] = printed(town.samples);
   // FB1029 ACROSS-EDGE: a town on a cliff over its sea, and the sea north of it its meet raises
-  const [mx, my] = GROUND_PRINT_MEET, cliff = new WoodsFile();
+  const [mx, my] = GROUND_PRINT_MEET,
+    cliff = new WoodsFile();
   cliff.load(syntheticWoodsBytes());
-  for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) cliff.heightMapBuffer[(my + dy) * MAP_WIDTH + mx + dx] = dy < 0 ? 0 : 30;
-  const meetRect = printTownRect(6), about = [{ px: mx, py: my, shape: meetRect.shape }];
-  for (const [px, py] of [[mx, my], [mx, my - 1]]) {
+  for (let dy = -3; dy <= 3; dy++)
+    for (let dx = -3; dx <= 3; dx++) cliff.heightMapBuffer[(my + dy) * MAP_WIDTH + mx + dx] = dy < 0 ? 0 : 30;
+  const meetRect = printTownRect(6),
+    about = [{ px: mx, py: my, shape: meetRect.shape }];
+  for (const [px, py] of [
+    [mx, my],
+    [mx, my - 1],
+  ]) {
     const own = px === mx && py === my ? { locationRect: { ...meetRect }, hasLocation: true } : {};
-    cells[`Meet@${px},${py}`] = printed(generatePixelTerrain({ woods: cliff, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, climates: woodlands, landform: true, about, ...own }).samples);
+    cells[`Meet@${px},${py}`] = printed(
+      generatePixelTerrain({
+        woods: cliff,
+        px,
+        py,
+        stride: 1,
+        tilemap: new Uint8Array(128 * 128),
+        climateType: CLIMATES.Woodlands,
+        roads,
+        sites,
+        climates: woodlands,
+        landform: true,
+        about,
+        ...own,
+      }).samples,
+    );
   }
   // FB1029 ROAD-DRY: the road down to the beach across a pixel of open sea
   const [rx, ry] = GROUND_PRINT_ROAD;
-  cells[`Road@${rx},${ry}`] = printed(generatePixelTerrain({ woods: SEA_WOODS, px: rx, py: ry, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, climates: woodlands, landform: true }).samples);
+  cells[`Road@${rx},${ry}`] = printed(
+    generatePixelTerrain({
+      woods: SEA_WOODS,
+      px: rx,
+      py: ry,
+      stride: 1,
+      tilemap: new Uint8Array(128 * 128),
+      climateType: CLIMATES.Woodlands,
+      roads,
+      sites,
+      climates: woodlands,
+      landform: true,
+    }).samples,
+  );
   // BAY-LEFT-GROUND: past the Bay, on the authored shape whatever the caller has landed (the trace and the fit put back)
-  const trace = tamrielTrace(), fit = tamrielFit();
-  setTamrielTrace(null); setTamrielFit(null); dropGroundCache();
+  const trace = tamrielTrace(),
+    fit = tamrielFit();
+  setTamrielTrace(null);
+  setTamrielFit(null);
+  dropGroundCache();
   try {
     const continent = groundWoods(woods);
     const [tx, ty] = GROUND_PRINT_BEYOND[0];
-    const beyond = landformSitesBeyond([{ px: tx, py: ty, loc: { exterior: { exteriorData: { width: 6, height: 6, blockNames: ['X'] } }, mapTableData: { locationType: 2 } } }]);
+    const beyond = landformSitesBeyond([
+      {
+        px: tx,
+        py: ty,
+        loc: {
+          exterior: { exteriorData: { width: 6, height: 6, blockNames: ['X'] } },
+          mapTableData: { locationType: 2 },
+        },
+      },
+    ]);
     for (const [px, py] of GROUND_PRINT_BEYOND) {
-      cells[`Beyond@${px},${py}`] = printed(generatePixelTerrain({ woods: continent, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, beyond, climates: null, landform: true }).samples);
+      cells[`Beyond@${px},${py}`] = printed(
+        generatePixelTerrain({
+          woods: continent,
+          px,
+          py,
+          stride: 1,
+          tilemap: new Uint8Array(128 * 128),
+          climateType: CLIMATES.Woodlands,
+          roads,
+          sites,
+          beyond,
+          climates: null,
+          landform: true,
+        }).samples,
+      );
     }
-  } finally { setTamrielTrace(trace); setTamrielFit(fit); dropGroundCache(); }
+  } finally {
+    setTamrielTrace(trace);
+    setTamrielFit(fit);
+    dropGroundCache();
+  }
   return { law: GROUND_LAW, step: GROUND_PRINT_STEP, cells };
 }
 
 /** How far the ground moved from a recorded print, metres, and where most: `{ most, at }` (`at` null when no cell moved). */
 export function groundMoved(recorded, now) {
-  let most = 0, at = null;
+  let most = 0,
+    at = null;
   for (const [k, cell] of Object.entries(now.cells)) {
     const was = recorded.cells?.[k];
     if (!Array.isArray(was) || was.length !== cell.length) return { most: Infinity, at: k };
-    for (let i = 0; i < cell.length; i++) { const d = Math.abs(cell[i] - was[i]) / 10; if (d > most) { most = d; at = k; } }
+    for (let i = 0; i < cell.length; i++) {
+      const d = Math.abs(cell[i] - was[i]) / 10;
+      if (d > most) {
+        most = d;
+        at = k;
+      }
+    }
   }
-  if (Object.keys(recorded.cells ?? {}).length !== Object.keys(now.cells).length) return { most: Infinity, at: 'the cells read' };
+  if (Object.keys(recorded.cells ?? {}).length !== Object.keys(now.cells).length)
+    return { most: Infinity, at: 'the cells read' };
   return { most, at };
 }
 
 if (isMain(import.meta.url)) {
-  if (!process.argv.includes('--write')) { console.log('node tools/groundPrint.mjs --write records the print under GROUND_LAW'); process.exit(0); }
+  if (!process.argv.includes('--write')) {
+    console.log('node tools/groundPrint.mjs --write records the print under GROUND_LAW');
+    process.exit(0);
+  }
   const print = groundPrint();
   writeFileSync(GROUND_PRINT_FILE, `${JSON.stringify(print)}\n`);
   console.log(`the ground's print recorded under GROUND_LAW ${print.law}: ${Object.keys(print.cells).length} cells`);

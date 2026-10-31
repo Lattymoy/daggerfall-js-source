@@ -56,8 +56,8 @@
   {
     "name": "AUDITTESA2R-R9-the-gate-held",
     "file": "src/world/arenaRoads.js",
-    "old": "if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
-    "new": "if (!inBay(x, y)) out.push({ x, y });",
+    "old": "  for (const { run, gate } of joins)\n    for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
+    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y)) out.push({ x, y });",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITTESA2R-R9-a-bay-pixel-held",
     "file": "src/world/arenaRoads.js",
-    "old": "  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y) && ",
-    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (",
+    "old": "  for (const { run, gate } of joins)\n    for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
+    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (x !== gate[0] || y !== gate[1]) out.push({ x, y });",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDITTESA2R-R3-one-task-for-all",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "        askLanding();\n        pump();",
-    "new": "        landSome();\n        pump();",
+    "old": "        askLanding();",
+    "new": "        landSome();",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "AUDITTESA2R-R4-the-pool-never-made-again",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    for (const s of pool) { try { s.w.terminate?.(); } catch { /* gone */ } }\n    pool = [];",
-    "new": "    for (const s of pool) { try { s.w.terminate?.(); } catch { /* gone */ } }",
+    "old": "    pool = [];\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDITTESA2R-R8-a-superseded-region-given-back",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region);",
-    "new": "    if (busy && live) queue.unshift(busy.region);",
+    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region); // R8: given back only to the build it was of",
+    "new": "    if (busy && live) queue.unshift(busy.region); // R8: given back only to the build it was of",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "AUDITTESA2R-R8-the-dead-kept",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    deaths++;\n    try { slot.w.terminate?.(); } catch { /* gone */ }",
-    "new": "    deaths++;",
+    "old": "    try {\n      slot.w.terminate?.();\n    } catch {\n      /* gone */\n    }\n    const busy = slot.busy;",
+    "new": "    const busy = slot.busy;",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "AUDITTESA2R-R8-the-step-budget-unread",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "      if (now() - t0 >= budgetMs) { askHere(); return; }",
-    "new": "      void askHere;",
+    "old": "      if (now() - t0 >= budgetMs) {\n        askHere();\n        return;\n      } // the task's budget spent: the next task goes on",
+    "new": "      void askHere; // the task's budget spent: the next task goes on",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "AUDITTESA2R-R8-the-here-run-unchecked",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    if (!live || b.run !== live.run) { here.busy = null; buildHere(); return; }",
-    "new": "    if (!live) { here.busy = null; buildHere(); return; }",
+    "old": "    if (!live || b.run !== live.run) {",
+    "new": "    if (!live) {",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AUDITTESA2R-R8-said-every-time",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "  const sayOnce = (k, ...msg) => { if (!said.has(k)) { said.add(k); log.warn(...msg); } };",
-    "new": "  const sayOnce = (k, ...msg) => { log.warn(...msg); };",
+    "old": "    if (!said.has(k)) {\n      said.add(k);\n      log.warn(...msg);\n    }",
+    "new": "    log.warn(...msg);",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "AUDITTESA2R-R8-the-page-installs",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "{ t: 'init', ...live.inputs, inThread: true }",
-    "new": "{ t: 'init', ...live.inputs, trace: null }",
+    "old": "      here.state.handle({ t: 'init', ...live.inputs, inThread: true }, () => {});",
+    "new": "      here.state.handle({ t: 'init', ...live.inputs, trace: null }, () => {});",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDITTESA2R-R10-no-eviction",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "{ evict: [[prefix, `${prefix}\\uffff`], LEGACY_REGION_KEYS] }",
-    "new": "{ evict: [] }",
+    "old": "      cache.set(\n        asked.key,\n        { layer: m.layer, places: m.places, land: m.land ?? null },\n        { evict: [[prefix, `${prefix}\\uffff`], LEGACY_REGION_KEYS] },\n      ),",
+    "new": "      cache.set(asked.key, { layer: m.layer, places: m.places, land: m.land ?? null }, { evict: [] }),",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AUDITTESA2R-R10-the-store-evicts-nothing",
     "file": "src/world/roadsCache.js",
-    "old": "          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));\n",
-    "new": "",
+    "old": "          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));\n          s.put(value, key);",
+    "new": "          s.put(value, key);",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "AUDITTESA2R-R10-a-failed-keep-unsaid",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "      .then((ok) => { if (ok == null) sayOnce(",
-    "new": "      .then((ok) => { if (false) sayOnce(",
+    "old": "        if (ok == null)",
+    "new": "        if (false)",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]

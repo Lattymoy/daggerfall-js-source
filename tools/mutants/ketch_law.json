@@ -29,8 +29,8 @@
   {
     "name": "KTL-the-sighting-late",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
-    "new": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - KT_EPOCH_MS) / KT_EVERY_MS);",
+    "old": "  const n = Math.floor(\n    (t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS,\n  );",
+    "new": "  const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - KT_EPOCH_MS) / KT_EVERY_MS);",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTL-the-station-end-inclusive",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "t < v.departAt ? 'docked'",
-    "new": "t <= v.departAt ? 'docked'",
+    "old": "  const phase = t < v.at ? 'sighted' : t < v.departAt ? 'docked' : 'departing';",
+    "new": "  const phase = t < v.at ? 'sighted' : t <= v.departAt ? 'docked' : 'departing';",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTL-away-naming-the-voyage-gone",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (t >= v.endAt) return { ...ketchVoyageOf(base + n + 1), phase: 'away' };",
-    "new": "if (t >= v.endAt) return { ...ketchVoyageOf(base + n), phase: 'away' };",
+    "old": "  if (t >= v.endAt) return { ...ketchVoyageOf(base + n + 1), phase: 'away' };",
+    "new": "  if (t >= v.endAt) return { ...ketchVoyageOf(base + n), phase: 'away' };",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTL-boarding-through-the-last-minutes",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };",
-    "new": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt;",
+    "new": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt;",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTL-holding-before-the-arrival",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };",
-    "new": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.sightAt && now < v.endAt; };",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt;",
+    "new": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.sightAt && now < v.endAt;",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTL-the-voyage-in-decimal",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "n.toString(16).padStart(KT_VOYAGE_HEX, '0')",
-    "new": "n.toString(10).padStart(KT_VOYAGE_HEX, '0')",
+    "old": "  return `kt:${n.toString(16).padStart(KT_VOYAGE_HEX, '0')}.${owner}`;",
+    "new": "  return `kt:${n.toString(10).padStart(KT_VOYAGE_HEX, '0')}.${owner}`;",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "KTL-minting-a-gone-voyage",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "export const ketchRoomHolds = (key, now) => { const r = ketchRoomOf(key); return !!r && ketchHolds(r.n, now); };",
-    "new": "export const ketchRoomHolds = (key, now) => { const r = ketchRoomOf(key); return !!r && now === now; };",
+    "old": "  return !!r && ketchHolds(r.n, now);",
+    "new": "  return !!r && now === now;",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "KTL-the-ninth-let-in",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (crew.length >= KT_CREW_MAX) return 'full';",
-    "new": "if (crew.length > KT_CREW_MAX) return 'full';",
+    "old": "  if (crew.length >= KT_CREW_MAX) return 'full'; // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)",
+    "new": "  if (crew.length > KT_CREW_MAX) return 'full'; // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "KTL-a-member-refused-in-the-last-minutes",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (crew.includes(sub)) return null;",
-    "new": "if (crew.includes(sub) && ketchBoards(r.n, now)) return null;",
+    "old": "  if (crew.includes(sub)) return null;",
+    "new": "  if (crew.includes(sub) && ketchBoards(r.n, now)) return null;",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "KTL-a-newcomer-while-she-weighs-anchor",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (!ketchBoards(r.n, now)) return 'closed';",
-    "new": "if (!ketchHolds(r.n, now)) return 'closed';",
+    "old": "  if (!ketchBoards(r.n, now)) return 'closed';",
+    "new": "  if (!ketchHolds(r.n, now)) return 'closed';",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "KTL-no-right-let-in",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (!right) return 'crew';",
-    "new": "if (right === 'none') return 'crew';",
+    "old": "  if (!right) return 'crew';",
+    "new": "  if (right === 'none') return 'crew';",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTL-staff-the-ninth",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "  if (crew.length >= KT_CREW_MAX) return 'full';",
-    "new": "  if (crew.length >= KT_CREW_MAX && right !== 'staff') return 'full';",
+    "old": "  if (crew.length >= KT_CREW_MAX) return 'full'; // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)",
+    "new": "  if (crew.length >= KT_CREW_MAX && right !== 'staff') return 'full'; // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]

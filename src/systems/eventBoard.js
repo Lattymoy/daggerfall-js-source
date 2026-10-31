@@ -41,7 +41,7 @@ import { serpentTimes, serpentBossOf } from '../net/serpent/serpentLaw.js';
 import { starTimes } from '../net/starfall/starfallLaw.js';
 import { STAR_WARN_MS } from './starfall/starfallClient.js';
 import { t } from './textManager.js';
-import { EVENT_KINDS, EVENT_KIND_ORDER } from './features.js';   // EVENTS2: the kinds' one home
+import { EVENT_KINDS, EVENT_KIND_ORDER } from './features.js'; // EVENTS2: the kinds' one home
 
 /** The kinds the board carries as rows: the world's shared events (EVENT_KINDS' `row`; the festival is news alone). The
  *  resets, the seat week and a company's Elite Breach stay the Timers window's alone - they are schedules, not places
@@ -81,7 +81,9 @@ export const EVENT_SEED_GRACE_MS = 5000;
 
 /** A card's heading per kind - what the event is, before what it says (EVENTS2: the kind's own name, EVENT_KINDS'
  *  `label` - the same words its chip wears). */
-export const EVENT_KIND_TEXT = Object.freeze(Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label])));
+export const EVENT_KIND_TEXT = Object.freeze(
+  Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label])),
+);
 /** AUDIT EVENTS1 W2: a raiding party in the player's language (systems/raidingParties.js raidTypeName's words). */
 export const EVENT_PARTY_TEXT = Object.freeze({
   orcs: () => t('events.party.orcs', 'Orcs'),
@@ -104,8 +106,8 @@ export const EVENT_BOARD_TEXT = Object.freeze({
   /** AUDIT EVENTS1 W3: where the gate, the serpent and the Abyss Dungeon stand, and what each row says. */
   near: (place) => t('events.where.near', 'Near {place}', { place }),
   off: (place) => t('events.where.off', 'Off {place}', { place }),
-  gateOpens: () => t('events.gate.opens', 'Dagon\'s Breach opens'),
-  gateOpen: () => t('events.gate.open', 'Dagon\'s Breach is open'),
+  gateOpens: () => t('events.gate.opens', "Dagon's Breach opens"),
+  gateOpen: () => t('events.gate.open', "Dagon's Breach is open"),
   gateSoon: () => t('events.gate.soon', 'Its omen burns in the sky'),
   gateLive: () => t('events.gate.live', 'It seals when this runs out'),
   serpentRises: (boss) => t('events.serpent.rises', '{boss} rises', { boss }),
@@ -116,7 +118,7 @@ export const EVENT_BOARD_TEXT = Object.freeze({
   superLive: () => t('events.super.live', 'It fades away unbeaten when this runs out'),
   /** A raid's rows. */
   raid: (town) => t('events.raid.title', 'Raid on {town}', { town }),
-  raidKind: (kind, town) => t('events.raid.titleKind', '{kind}: {town}', { kind, town }),   // AUDIT WORLD-EVENTS L5-13: a raid of a kind (RAID5)
+  raidKind: (kind, town) => t('events.raid.titleKind', '{kind}: {town}', { kind, town }), // AUDIT WORLD-EVENTS L5-13: a raid of a kind (RAID5)
   raidComing: (party) => t('events.raid.coming', '{party} gather to attack', { party }),
   raidLive: (party) => t('events.raid.live', '{party} attacking', { party }),
   raidCount: (n, of) => t('events.raid.count', 'Raiders down: {n} of {of}', { n, of }),
@@ -125,8 +127,14 @@ export const EVENT_BOARD_TEXT = Object.freeze({
 });
 /** The eight ways, clockwise from north. */
 const DIRS = Object.freeze([
-  () => t('events.dir.n', 'N'), () => t('events.dir.ne', 'NE'), () => t('events.dir.e', 'E'), () => t('events.dir.se', 'SE'),
-  () => t('events.dir.s', 'S'), () => t('events.dir.sw', 'SW'), () => t('events.dir.w', 'W'), () => t('events.dir.nw', 'NW'),
+  () => t('events.dir.n', 'N'),
+  () => t('events.dir.ne', 'NE'),
+  () => t('events.dir.e', 'E'),
+  () => t('events.dir.se', 'SE'),
+  () => t('events.dir.s', 'S'),
+  () => t('events.dir.sw', 'SW'),
+  () => t('events.dir.w', 'W'),
+  () => t('events.dir.nw', 'NW'),
 ]);
 
 /** Live first, then coming; each soonest first (the Timers window's order). */
@@ -147,10 +155,11 @@ const idNumber = (id) => Number(String(id).split(':')[1]);
  */
 export function eventWay(from, to) {
   if (!from || !Number.isFinite(from.x) || !Number.isFinite(from.y) || !isPixel(to)) return null;
-  const dx = (/** @type {any} */ (to).px - from.x) * PIXEL_M, dy = (/** @type {any} */ (to).py - from.y) * PIXEL_M;
+  const dx = /** @type {any} */ (to.px - from.x) * PIXEL_M,
+    dy = /** @type {any} */ (to.py - from.y) * PIXEL_M;
   const m = Math.hypot(dx, dy);
   if (m < 1) return { m: 0, dir: '', text: EVENT_BOARD_TEXT.here() };
-  const deg = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;   // 0 north, clockwise (y runs south)
+  const deg = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360; // 0 north, clockwise (y runs south)
   const dir = DIRS[Math.round(deg / 45) % 8]();
   const tenths = Math.round(m / 100) / 10;
   const km = tenths < 10 ? tenths : Math.round(m / 1000);
@@ -164,14 +173,23 @@ function raidRow(r, now, src, soonMs) {
   const type = String(r.type ?? '');
   const party = EVENT_PARTY_TEXT[type]?.() ?? (capital(type) || null);
   const live = r.startMs <= now;
-  const counted = live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0 ? EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg) : null;
-  const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted;   // RAID5: its kind's objective first (systems/raidingParties.js raidTimerList)
-  const kindOn = live && r.obj && r.kind;   // AUDIT WORLD-EVENTS L5-13: the kind in the row's title, its objective alone before the count (the detail line ran out of room)
+  const counted =
+    live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0
+      ? EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg)
+      : null;
+  const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted; // RAID5: its kind's objective first (systems/raidingParties.js raidTimerList)
+  const kindOn = live && r.obj && r.kind; // AUDIT WORLD-EVENTS L5-13: the kind in the row's title, its objective alone before the count (the detail line ran out of room)
   return {
-    id: r.key ? `raid:${r.key}` : `raid:${r.name}:${r.startMs}`, kind: 'raid', title: kindOn ? EVENT_BOARD_TEXT.raidKind(r.kind, r.name) : EVENT_BOARD_TEXT.raid(r.name), where: r.region || null,
+    id: r.key ? `raid:${r.key}` : `raid:${r.name}:${r.startMs}`,
+    kind: 'raid',
+    title: kindOn ? EVENT_BOARD_TEXT.raidKind(r.kind, r.name) : EVENT_BOARD_TEXT.raid(r.name),
+    where: r.region || null,
     detail: count ?? (party ? (live ? EVENT_BOARD_TEXT.raidLive(party) : EVENT_BOARD_TEXT.raidComing(party)) : null),
-    live, at: live ? r.endMs : r.startMs, way, since: live ? r.startMs : r.startMs - soonMs,
-    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),   // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province
+    live,
+    at: live ? r.endMs : r.startMs,
+    way,
+    since: live ? r.startMs : r.startMs - soonMs,
+    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M), // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province
   };
 }
 
@@ -182,25 +200,66 @@ function raidRow(r, now, src, soonMs) {
  * or its opening, the serpent's bells or its rising, a star's warning or its fall, the Hollow's find).
  */
 function timerRow(r, src) {
-  const row = { id: r.id, kind: r.kind, title: r.title, where: r.where, detail: r.detail, live: r.live, at: r.at, way: null, since: NaN, announce: true };
+  const row = {
+    id: r.id,
+    kind: r.kind,
+    title: r.title,
+    where: r.where,
+    detail: r.detail,
+    live: r.live,
+    at: r.at,
+    way: null,
+    since: NaN,
+    announce: true,
+  };
   if (r.kind === 'gate') {
     // WW2: a lane past the Bay's gate is its own source's (`gates`, found by its number), the Bay's the one it always was
-    const n = idNumber(r.id), g = gateLaneOf(n) ? src?.gates?.find((x) => x?.site?.day === n) : src?.gate;
-    const T = gateTimes(n), site = g?.site;
-    Object.assign(row, { title: r.live ? EVENT_BOARD_TEXT.gateOpen() : EVENT_BOARD_TEXT.gateOpens(), detail: r.live ? EVENT_BOARD_TEXT.gateLive() : EVENT_BOARD_TEXT.gateSoon(), since: r.live ? T.openAt : T.omenAt });
-    if (r.where && g?.place) { row.where = EVENT_BOARD_TEXT.near(g.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
+    const n = idNumber(r.id),
+      g = gateLaneOf(n) ? src?.gates?.find((x) => x?.site?.day === n) : src?.gate;
+    const T = gateTimes(n),
+      site = g?.site;
+    Object.assign(row, {
+      title: r.live ? EVENT_BOARD_TEXT.gateOpen() : EVENT_BOARD_TEXT.gateOpens(),
+      detail: r.live ? EVENT_BOARD_TEXT.gateLive() : EVENT_BOARD_TEXT.gateSoon(),
+      since: r.live ? T.openAt : T.omenAt,
+    });
+    if (r.where && g?.place) {
+      row.where = EVENT_BOARD_TEXT.near(g.place);
+      row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;
+    }
   } else if (r.kind === 'serpent') {
-    const day = idNumber(r.id), T = serpentTimes(day), boss = serpentBossOf(day).name, site = src?.serpent?.site;
-    Object.assign(row, { title: r.live ? EVENT_BOARD_TEXT.serpentHunts(boss) : EVENT_BOARD_TEXT.serpentRises(boss), detail: r.live ? EVENT_BOARD_TEXT.serpentLive() : EVENT_BOARD_TEXT.serpentSoon(), since: r.live ? T.riseAt : T.omenAt });
-    if (r.where && src?.serpent?.place) { row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
+    const day = idNumber(r.id),
+      T = serpentTimes(day),
+      boss = serpentBossOf(day).name,
+      site = src?.serpent?.site;
+    Object.assign(row, {
+      title: r.live ? EVENT_BOARD_TEXT.serpentHunts(boss) : EVENT_BOARD_TEXT.serpentRises(boss),
+      detail: r.live ? EVENT_BOARD_TEXT.serpentLive() : EVENT_BOARD_TEXT.serpentSoon(),
+      since: r.live ? T.riseAt : T.omenAt,
+    });
+    if (r.where && src?.serpent?.place) {
+      row.where = EVENT_BOARD_TEXT.off(src.serpent.place);
+      row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;
+    }
   } else if (r.kind === 'super') {
     // WW5: a province's Hollow is its own lane's (`sd.lanes`, found by its slot), the Bay's the one it always was
-    const s = idNumber(r.id), sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;
-    const site = sd?.site, place = sd?.place ?? site?.cityName ?? null, rec = sd?.rec;
-    Object.assign(row, { title: EVENT_BOARD_TEXT.superStands(sd?.name || EVENT_KIND_TEXT.super()), detail: EVENT_BOARD_TEXT.superLive(), since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN });
-    if (r.where && place) { row.where = EVENT_BOARD_TEXT.near(place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
+    const s = idNumber(r.id),
+      sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;
+    const site = sd?.site,
+      place = sd?.place ?? site?.cityName ?? null,
+      rec = sd?.rec;
+    Object.assign(row, {
+      title: EVENT_BOARD_TEXT.superStands(sd?.name || EVENT_KIND_TEXT.super()),
+      detail: EVENT_BOARD_TEXT.superLive(),
+      since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN,
+    });
+    if (r.where && place) {
+      row.where = EVENT_BOARD_TEXT.near(place);
+      row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;
+    }
   } else if (r.kind === 'star') {
-    const [n, k] = String(r.id).slice(5).split('.').map(Number), T = starTimes(n, k);
+    const [n, k] = String(r.id).slice(5).split('.').map(Number),
+      T = starTimes(n, k);
     row.since = r.live ? T.fallAt : T.fallAt - STAR_WARN_MS;
     row.way = r.where && isPixel(r) ? eventWay(src?.pixel, /** @type {any} */ (r)) : null;
   }
@@ -223,7 +282,10 @@ function timerRow(r, src) {
  * @param {any} src
  * @param {{ soonMs?: number, max?: number, raids?: number, shown?: (kind: string) => boolean }} [o]
  */
-export function eventBoardModel(src, { soonMs = EVENT_SOON_MS, max = EVENT_BOARD_ROWS, raids = EVENT_BOARD_RAIDS, shown = EVERY_EVENT_KIND } = {}) {
+export function eventBoardModel(
+  src,
+  { soonMs = EVENT_SOON_MS, max = EVENT_BOARD_ROWS, raids = EVENT_BOARD_RAIDS, shown = EVERY_EVENT_KIND } = {},
+) {
   const now = Number(src?.now);
   if (!Number.isFinite(now)) return { rows: [], more: 0, all: [], every: [], now: NaN };
   // a coming event is on the board once it says where - the gate's omen, the serpent's bells, a star's warning - so the
@@ -235,7 +297,16 @@ export function eventBoardModel(src, { soonMs = EVENT_SOON_MS, max = EVENT_BOARD
     timers.push(timerRow(r, src));
   }
   const raidRows = (Array.isArray(src?.raids) ? src.raids : [])
-    .filter((r) => r && typeof r.name === 'string' && Number.isFinite(r.startMs) && Number.isFinite(r.endMs) && !r.done && r.endMs > now && r.startMs - now <= soonMs)
+    .filter(
+      (r) =>
+        r &&
+        typeof r.name === 'string' &&
+        Number.isFinite(r.startMs) &&
+        Number.isFinite(r.endMs) &&
+        !r.done &&
+        r.endMs > now &&
+        r.startMs - now <= soonMs,
+    )
     .map((r) => raidRow(r, now, src, soonMs))
     // the nearest where the player's place is known, else the soonest
     .sort((a, b) => (a.way && b.way ? a.way.m - b.way.m : a.at - b.at));
@@ -274,7 +345,8 @@ export function eventAnnouncements(rows, seen, watchFrom, shown = EVERY_EVENT_KI
     seen.set(r.id, !!r.live);
     if (!watching || !r.announce || !shown(r.kind)) continue;
     if (was === undefined) {
-      if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS) out.push({ id: r.id, kind: r.kind, phase: r.live ? 'begun' : 'soon' });
+      if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS)
+        out.push({ id: r.id, kind: r.kind, phase: r.live ? 'begun' : 'soon' });
     } else if (!was && r.live) out.push({ id: r.id, kind: r.kind, phase: 'begun' });
   }
   // a row gone is let go - so the caller hands EVERY row it read (the model's `every`): one cut by the board's `max`,
@@ -295,7 +367,12 @@ export function eventAnnouncements(rows, seen, watchFrom, shown = EVERY_EVENT_KI
  * and its frame (`step`).
  * @param {{ lifeMs?: number, shown?: number, kept?: number, notes?: number }} [o]
  */
-export function createEventToasts({ lifeMs = EVENT_TOAST_MS, shown = EVENT_TOASTS_SHOWN, kept = EVENT_TOASTS_KEPT, notes = EVENT_TOAST_NOTES } = {}) {
+export function createEventToasts({
+  lifeMs = EVENT_TOAST_MS,
+  shown = EVENT_TOASTS_SHOWN,
+  kept = EVENT_TOASTS_KEPT,
+  notes = EVENT_TOAST_NOTES,
+} = {}) {
   /** @type {Array<{ key: number, kind: string, id: string|null, phase: string|null, notes: string[], age: number }>} */
   let list = [];
   let nextKey = 1;
@@ -317,8 +394,13 @@ export function createEventToasts({ lifeMs = EVENT_TOAST_MS, shown = EVENT_TOAST
   return {
     /** An announcement (`announce`) or an event's line (`note`). */
     announce({ id, kind, phase }) {
-      const c = list.find((x) => x.id === id) ?? (single(kind) ? list.find((x) => x.kind === kind && x.id === null) : null);
-      if (c) { c.id = id; c.phase = phase; return c; }
+      const c =
+        list.find((x) => x.id === id) ?? (single(kind) ? list.find((x) => x.kind === kind && x.id === null) : null);
+      if (c) {
+        c.id = id;
+        c.phase = phase;
+        return c;
+      }
       return make(kind, id, phase, null);
     },
     note(kind, text, nowMs = 0, id = null) {
@@ -343,11 +425,18 @@ export function createEventToasts({ lifeMs = EVENT_TOAST_MS, shown = EVENT_TOAST
       list = list.filter((c) => c.age < lifeMs);
     },
     /** The shown card taken whole (said elsewhere - ui/eventBoard.js, where the board has no room for it). */
-    take(key) { list = list.filter((c) => c.key !== key); },
+    take(key) {
+      list = list.filter((c) => c.key !== key);
+    },
     /** EVENTS2: every card of a kind the player turned off let go, shown or waiting (its lines are in the journal). */
-    drop(kind) { list = list.filter((c) => c.kind !== kind); },
+    drop(kind) {
+      list = list.filter((c) => c.kind !== kind);
+    },
     cards: () => list.slice(0, shown),
     waiting: () => Math.max(0, list.length - shown),
-    clear() { list = []; said.clear(); },
+    clear() {
+      list = [];
+      said.clear();
+    },
   };
 }

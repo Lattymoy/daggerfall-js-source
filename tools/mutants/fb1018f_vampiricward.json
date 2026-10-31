@@ -2,8 +2,8 @@
   {
     "name": "VAMPIRIC-WARD-ward-unread",
     "file": "src/systems/enchantments.js",
-    "old": "      if (param !== 1 || target?.warded) return null;",
-    "new": "      if (param !== 1) return null;",
+    "old": "        if (param !== 1 || target?.warded) return null;",
+    "new": "        if (param !== 1) return null;",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js",
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "VAMPIRIC-WARD-heals-on-any-blow",
     "file": "src/systems/enchantments.js",
-    "old": "      if (param !== 1 || target?.warded) return null;",
-    "new": "      if (target?.warded) return null;",
+    "old": "        if (param !== 1 || target?.warded) return null;",
+    "new": "        if (target?.warded) return null;",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "VAMPIRIC-WARD-mace-ward-unread",
     "file": "src/systems/artifactEffects.js",
-    "old": "if (!entity || !target || damage === 0 || target.warded) return null;",
-    "new": "if (!entity || !target || damage === 0) return null;",
+    "old": "        if (!entity || !target || damage === 0 || target.warded) return null; // AUDIT FB1018f L1-2: a ward lands nothing, so it gives nothing (VAMPIRIC-WARD's law)",
+    "new": "        if (!entity || !target || damage === 0) return null; // AUDIT FB1018f L1-2: a ward lands nothing, so it gives nothing (VAMPIRIC-WARD's law)",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "VAMPIRIC-WARD-arcane-riders-blind",
     "file": "src/systems/arcanePowers.js",
-    "old": "if (!id || !r || reflected || target?.warded) return;",
-    "new": "if (!id || !r || reflected) return;",
+    "old": "  if (!id || !r || reflected || target?.warded) return;",
+    "new": "  if (!id || !r || reflected) return;",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "VAMPIRIC-WARD-cast-when-strikes-blind",
     "file": "src/systems/enchantments.js",
-    "old": "if (!target || damage === 0 || target.warded) return null;",
-    "new": "if (!target || damage === 0) return null;",
+    "old": "        if (!target || damage === 0 || target.warded) return null;",
+    "new": "        if (!target || damage === 0) return null;",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "VAMPIRIC-WARD-sets-strike-blind",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!(damage > 0) || !weapon || target?.warded) return;",
-    "new": "if (!(damage > 0) || !weapon) return;",
+    "old": "  if (!(damage > 0) || !weapon || target?.warded) return; // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)",
+    "new": "  if (!(damage > 0) || !weapon) return; // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],

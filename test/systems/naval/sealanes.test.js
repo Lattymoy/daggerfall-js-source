@@ -452,7 +452,7 @@ test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, ever
   const f = feedOn({ clock });
   assert.deepEqual(f.laneNet().map((l) => [l.key, l.a.name, l.b.name, l.a.region]), [['199200-199225', 'Glenpoint', 'Wayrest', 1]], 'the map\'s ports: the far harbour too far for a lane, the lake\'s towns none (its water no ocean\'s)');
   // PIN MOVED (WW3, bible/03-World/World-Wide.md): past the Bay the registry's port, its id the world's key (worldPorts.js portIdOf)
-  assert.match(hostText('src/scenes/world.js'), /add\(\{ id: summary \? summary\.id : portIdOf\(beyond\), loc, x: p\.x \+ dx, y: p\.y \+ dy, name: summary \? maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null : beyond\.name \}\);/, 'the harbour\'s town by its name');   // PIN MOVED (PORT-SHIPS): scenes/harbourHost.js, the host read whole   // PIN MOVED (RPT1026-WORLD FAR-QUAY): every port town near, each once
+  assert.match(hostText('src/scenes/world.js'), /add\(\{\n\s*id: summary \? summary\.id : portIdOf\(beyond\),\n\s*loc,\n\s*x: p\.x \+ dx,\n\s*y: p\.y \+ dy,\n\s*name: summary \? \(maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null\) : beyond\.name,\n\s*\}\);/, 'the harbour\'s town by its name');   // PIN MOVED (PORT-SHIPS): scenes/harbourHost.js, the host read whole   // PIN MOVED (RPT1026-WORLD FAR-QUAY): every port town near, each once
   f.laneShips();
   assert.equal(f.calls.liners.length, 1);
   const { list } = f.calls.liners[0];   // AUDIT BAY A6 PIN MOVED: her phase on the clock sails her - the clock's second was the host's to time a dwell by

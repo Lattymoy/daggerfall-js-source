@@ -29,7 +29,12 @@ let inBucket = null;
 const ears = new Set();
 
 /** The hub link's welcome: `send(frame)` answers whether the frame went down the socket. */
-export function yardLinkWelcomed(/** @type {any} */ session, /** @type {any} */ welcome, /** @type {(frame: string) => boolean} */ send, now = Date.now()) {
+export function yardLinkWelcomed(
+  /** @type {any} */ session,
+  /** @type {any} */ welcome,
+  /** @type {(frame: string) => boolean} */ send,
+  now = Date.now(),
+) {
   link = { session, send };
   healthy = welcome?.[YARD_WELCOME_FIELD] === 1;
   epoch++;
@@ -88,14 +93,20 @@ export function hearYardFrame(/** @type {any} */ session, /** @type {any} */ m, 
   inBucket = g.bucket;
   if (!g.pass) return;
   for (const ear of [...ears]) {
-    try { ear(words); } catch { /* an ear's fault is never the link's */ }
+    try {
+      ear(words);
+    } catch {
+      /* an ear's fault is never the link's */
+    }
   }
 }
 
 /** An ear for the hub's yard words; answers its removal. */
 export function onYardWords(/** @type {(words: number[][]) => void} */ ear) {
   ears.add(ear);
-  return () => { ears.delete(ear); };
+  return () => {
+    ears.delete(ear);
+  };
 }
 
 /** The tests' clean slate. */

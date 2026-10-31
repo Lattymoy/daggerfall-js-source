@@ -16,7 +16,13 @@ export const BAY_FIT_SCOPE = 'fv-bayfit:';
 /** The key of the fit over these inputs. @param {(x: number, y: number) => boolean} bayLand @param {{ w: number, h: number, land: ArrayLike<number> }} trace */
 export function bayFitKey(bayLand, trace) {
   const bay = new Uint8Array(Math.ceil((BAY_W * BAY_H) / 8));
-  for (let y = 0; y < BAY_H; y++) for (let x = 0; x < BAY_W; x++) if (bayLand(x, y)) { const i = y * BAY_W + x; bay[i >>> 3] |= 1 << (i & 7); }
+  // BAY-OWN: the fit's key reads the Bay's own grid, a bit a pixel (the formatter put its two loops on two lines)
+  for (let y = 0; y < BAY_H; y++)
+    for (let x = 0; x < BAY_W; x++)
+      if (bayLand(x, y)) {
+        const i = y * BAY_W + x;
+        bay[i >>> 3] |= 1 << (i & 7);
+      }
   const land = trace.land instanceof Uint8Array ? trace.land : Uint8Array.from(trace.land);
   return `${BAY_FIT_SCOPE}${firstVisitPin('bayFit')}:${trace.w}x${trace.h}:${fnv1a(land).toString(36)}:${fnv1a(bay).toString(36)}`;
 }
@@ -30,6 +36,12 @@ const isFit = (v) => !!v && ['ox', 'oy', 'ppu', 'score', 'cells', 'seam', 'edge'
  */
 export async function keptBayFit({ bayLand, trace }, store = derivedValueStore()) {
   if (!store) return fitBayToPicture({ bayLand, trace });
-  const { value } = await keptAnswer({ key: bayFitKey(bayLand, trace), scope: BAY_FIT_SCOPE, build: () => fitBayToPicture({ bayLand, trace }), accept: isFit, store });
+  const { value } = await keptAnswer({
+    key: bayFitKey(bayLand, trace),
+    scope: BAY_FIT_SCOPE,
+    build: () => fitBayToPicture({ bayLand, trace }),
+    accept: isFit,
+    store,
+  });
   return value;
 }

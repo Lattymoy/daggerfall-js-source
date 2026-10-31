@@ -12,7 +12,7 @@ import { itemIsIdentified } from '../tradeModes.js';
 import { itemStatRows } from './itemInfo.js';
 import { lootRarityOn, rarityLines } from '../loot/lootRarity.js';
 import { magicPowersLines } from './itemPowers.js';
-import { isStolen, stolenLine } from '../stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece's look says so
+import { isStolen, stolenLine } from '../stolenGoods.js'; // RPT1026-LEDGERLAW: a stolen piece's look says so
 
 /**
  * A piece's look: `{ rows, magic, stolen }` - each row "Label: text" (or the text alone), each magic line as the card writes
@@ -22,13 +22,25 @@ import { isStolen, stolenLine } from '../stolenGoods.js';   // RPT1026-LEDGERLAW
  */
 export function itemLookRows(it) {
   if (!it || typeof it !== 'object') return null;
-  let rows = [], magic = [];
-  try { rows = itemStatRows(it).map((r) => (r.label ? `${r.label}: ${r.text}` : r.text)); } catch { rows = []; }
-  try { magic = rarityLines(it, { sigil: true, set: true, lore: false }); } catch { magic = []; }
+  let rows = [],
+    magic = [];
+  try {
+    rows = itemStatRows(it).map((r) => (r.label ? `${r.label}: ${r.text}` : r.text));
+  } catch {
+    rows = [];
+  }
+  try {
+    magic = rarityLines(it, { sigil: true, set: true, lore: false });
+  } catch {
+    magic = [];
+  }
   try {
     if (!(it.rarity && lootRarityOn()) && isEnchanted(it)) {
-      for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) })) if (t && !magic.includes(t)) magic.push(t);
+      for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) }))
+        if (t && !magic.includes(t)) magic.push(t);
     }
-  } catch { /* a piece whose powers cannot be read says none */ }
+  } catch {
+    /* a piece whose powers cannot be read says none */
+  }
   return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };
 }

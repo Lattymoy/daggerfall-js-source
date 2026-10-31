@@ -47,8 +47,8 @@
   {
     "name": "CHARGENPHONE-crash-message-discarded",
     "file": "src/ui/crashText.js",
-    "old": "(err == null ? (event?.message ?? '') : String(err))",
-    "new": "(err == null ? '' : String(err))",
+    "old": "  const message = isObj ? (err.message ?? '') : err == null ? (event?.message ?? '') : String(err);",
+    "new": "  const message = isObj ? (err.message ?? '') : err == null ? '' : String(err);",
     "tests": [
       "test/ui/enhanced/chargenphone.test.js",
       "test/scenes/crashreport.test.js"

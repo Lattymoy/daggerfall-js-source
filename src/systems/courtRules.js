@@ -50,14 +50,20 @@ let _bodyCarry = new WeakMap();
 export function setCourtRules(on, nowMs = performance.now()) {
   _on = !!on;
   _now = nowMs;
-  if (!_on) { _carry.clear(); _bodyCarry = new WeakMap(); }
+  if (!_on) {
+    _carry.clear();
+    _bodyCarry = new WeakMap();
+  }
 }
 /** AUDIT WORLD-EVENTS L1-10: the player's hurt, at its door - the pause begins (exported for the pins). */
 export function courtRulesHurt(hurt) {
   if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;
 }
 /** The pins' fresh start: off, no pause, nothing carried. */
-export function _resetCourtRulesForTests() { setCourtRules(false, 0); _hurtAt = -Infinity; }
+export function _resetCourtRulesForTests() {
+  setCourtRules(false, 0);
+  _hurtAt = -Infinity;
+}
 
 /** Whether a made level holds regeneration here now. */
 export const regenHeldNow = () => _on;
@@ -75,7 +81,10 @@ export function regenShare(n, source, body = null) {
   const onPlayer = !body || !!body.isPlayer;
   if (onPlayer && regenPausedMs() > 0) return 0;
   let carry = _carry;
-  if (!onPlayer) { carry = _bodyCarry.get(body) ?? new Map(); _bodyCarry.set(body, carry); }
+  if (!onPlayer) {
+    carry = _bodyCarry.get(body) ?? new Map();
+    _bodyCarry.set(body, carry);
+  }
   const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;
   const out = Math.floor(c + 1e-9);
   carry.set(source, c - out);

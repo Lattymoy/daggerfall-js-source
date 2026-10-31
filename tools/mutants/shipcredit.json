@@ -56,8 +56,8 @@
   {
     "name": "SCW-a-claim-stamped-at-the-counter",
     "file": "src/systems/fleet.js",
-    "old": "  if (port) r.port = port;\n  return r;\n}",
-    "new": "  if (port) r.port = port;\n  if (arguments[1]?.credit) r.credit = { ...arguments[1].credit };\n  return r;\n}",
+    "old": "  if (port) r.port = port;\n  return r;",
+    "new": "  if (port) r.port = port;\n  if (arguments[1]?.credit) r.credit = { ...arguments[1].credit };\n  return r;",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]

@@ -12,8 +12,8 @@
   {
     "name": "LEVEL-45-sum-unread",
     "file": "src/systems/advancement.js",
-    "old": ": Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum",
-    "new": ": Math.min(Infinity, calculatePlayerLevel(entity.startingLevelUpSkillSum",
+    "old": "      : Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));",
+    "new": "      : Math.min(Infinity, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "LEVEL-45-latched-level-applied",
     "file": "src/systems/advancement.js",
-    "old": "  if (atLevelCap(entity)) {\n    entity.readyToLevelUp = false;",
-    "new": "  if (false) {\n    entity.readyToLevelUp = false;",
+    "old": "  if (atLevelCap(entity)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "LEVEL-45-virtue-bar-unread",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
-    "new": "",
+    "old": "  if (atLevelCap(entity)) {\n    releaseCapLatch(entity);\n    return false;\n  } // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
+    "new": "  // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "LEVEL-45-virtue-commit-unread",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { entity.readyToLevelUp = false; entity.pendingLevel = null; return false; }",
+    "old": "  if (atLevelCap(entity)) {\n    entity.readyToLevelUp = false;\n    entity.pendingLevel = null;\n    return false;\n  }",
     "new": "",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "LEVEL-45-bar-measures-a-next-level",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  if (atLevelCap(e)) return { now: 1, max: 1,",
-    "new": "  if (false) return { now: 1, max: 1,",
+    "old": "  if (atLevelCap(e))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LEVEL-45-sum-check-holds-the-latch",
     "file": "src/systems/advancement.js",
-    "old": "  releaseCapLatch(entity);\n  const calculated",
-    "new": "  const calculated",
+    "old": "  releaseCapLatch(entity);\n  const calculated =",
+    "new": "  const calculated =",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LEVEL-45-virtue-check-holds-the-latch",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
-    "new": "  if (atLevelCap(entity)) return false;",
+    "old": "  if (atLevelCap(entity)) {\n    releaseCapLatch(entity);\n    return false;\n  } // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
+    "new": "  if (atLevelCap(entity)) return false; // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "LEVEL-45-crossing-holds-the-latch",
     "file": "src/systems/realmCustoms.js",
-    "old": "  releaseCapLatch(snap);   // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either\n",
-    "new": "",
+    "old": "  releaseCapLatch(snap); // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either\n  const target = snap.readyToLevelUp === true ? level + 1 : level;",
+    "new": "  const target = snap.readyToLevelUp === true ? level + 1 : level;",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

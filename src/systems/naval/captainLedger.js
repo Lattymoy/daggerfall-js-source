@@ -25,9 +25,17 @@
 
 import { CROWNS } from './navalShips.js';
 import { LEAGUE_M, inEtherLaw, ETHER_WORD } from '../../world/ethericSea.js';
-import { HARBOUR_CONTRACT_KINDS, CONTRACTS_MAX, STANDING_FAILED, STANDING_ABANDONED, advance, expired, restoreContract } from './harbourBoard.js';
-import { captainOf, heldStars, starStats } from './captainTree.js';   // CAPTAIN-TREE: a captain's level off the log, and the stars held
-import { seaSeasonOfDay, SEA_DEEPEST_MAX } from '../../net/sea/seaSeasonLaw.js';   // SEA-SEASON: the season's figures, the service's to read
+import {
+  HARBOUR_CONTRACT_KINDS,
+  CONTRACTS_MAX,
+  STANDING_FAILED,
+  STANDING_ABANDONED,
+  advance,
+  expired,
+  restoreContract,
+} from './harbourBoard.js';
+import { captainOf, heldStars, starStats } from './captainTree.js'; // CAPTAIN-TREE: a captain's level off the log, and the stars held
+import { seaSeasonOfDay, SEA_DEEPEST_MAX } from '../../net/sea/seaSeasonLaw.js'; // SEA-SEASON: the season's figures, the service's to read
 
 export const CAPTAIN_SAVE_VENDOR = 'Captain';
 export const CAPTAIN_SAVE_VERSION = 1;
@@ -71,7 +79,10 @@ export const RANK_PERKS = Object.freeze([
 /** A crown whose notoriety in its waters stands this high (one of the plate's anchors) keeps no favours for the captain. */
 export const PERKS_REFUSED_AT = 25;
 /** What a rank brings, or nothing while the crown hunts the captain (`notoriety` in its waters). */
-export const perksOf = (rank, notoriety = 0) => ((Number(notoriety) || 0) >= PERKS_REFUSED_AT ? RANK_PERKS[0] : RANK_PERKS[Math.max(0, Math.min(RANK_PERKS.length - 1, rank | 0))]);
+export const perksOf = (rank, notoriety = 0) =>
+  (Number(notoriety) || 0) >= PERKS_REFUSED_AT
+    ? RANK_PERKS[0]
+    : RANK_PERKS[Math.max(0, Math.min(RANK_PERKS.length - 1, rank | 0))];
 /** A pirate's end in a crown's waters, times her size (her class's cargo, 1-4): sunk, taken by boarding, or her boarders
  *  thrown back off the captain's own deck. */
 export const DEED_STANDING = Object.freeze({ sunk: 2, taken: 3, repelled: 2 });
@@ -107,20 +118,46 @@ export const ETHER_CHARTED_MAX = 4096;
 export const ETHER_HARVEST_KEEP = 128;
 /** ETHER-SEA: a new Eltheric record - nothing charted, ended or gathered, no crossing made; SEA-SEASON: no season's
  *  figures (`season`: `{ n, deepest, legends }` - net/sea/seaSeasonLaw.js). */
-export const newEther = () => ({ charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [], season: null, fleets: [], wrack: [] });
+export const newEther = () => ({
+  charted: [],
+  legends: {},
+  harvested: {},
+  from: null,
+  crossings: 0,
+  heard: [],
+  season: null,
+  fleets: [],
+  wrack: [],
+});
 /** AUDIT SEA VENTURES D2, D4: the treasure fleet's sailings whose flagship the captain ended, the newest kept - one is
  *  three hours' sailing, so the last four are more than a sailing's whole life. */
 export const ETHER_FLEETS_KEEP = 4;
 /** AUDIT SEA VENTURES D6: the storm's wrack casks hauled, the newest kept - a cask floats only in its own ninety seconds. */
 export const ETHER_WRACK_KEEP = 16;
 /** SEA-SEASON: a season's figures as a save may keep them - a season, a depth the sea has and a count - else null. */
-export const restoreSeason = (/** @type {any} */ v) => (v && Number.isSafeInteger(v.n) && v.n >= 1 && Number.isSafeInteger(v.deepest) && v.deepest >= 0 && v.deepest <= SEA_DEEPEST_MAX
-  && Number.isSafeInteger(v.legends) && v.legends >= 0 ? { n: v.n, deepest: v.deepest, legends: v.legends } : null);
+export const restoreSeason = (/** @type {any} */ v) =>
+  v &&
+  Number.isSafeInteger(v.n) &&
+  v.n >= 1 &&
+  Number.isSafeInteger(v.deepest) &&
+  v.deepest >= 0 &&
+  v.deepest <= SEA_DEEPEST_MAX &&
+  Number.isSafeInteger(v.legends) &&
+  v.legends >= 0
+    ? { n: v.n, deepest: v.deepest, legends: v.legends }
+    : null;
 /** ETHER-CROSSING: a way out as the ledger keeps it - a whole pixel of the world's grid, never one in the Eltheric Ocean's
  *  law (AUDIT CAPTAIN'S SEA X2: a stale Yes kept the sea itself as the way out, and every way home landed back in it) -
  *  else null (the way home then the open Abecean's). */
-export const wayOutOf = (at) => (at && Number.isFinite(at.px) && Number.isFinite(at.py) && Math.abs(at.px) < 8192 && Math.abs(at.py) < 8192 && !inEtherLaw(at.px, at.py)
-  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);
+export const wayOutOf = (at) =>
+  at &&
+  Number.isFinite(at.px) &&
+  Number.isFinite(at.py) &&
+  Math.abs(at.px) < 8192 &&
+  Math.abs(at.py) < 8192 &&
+  !inEtherLaw(at.px, at.py)
+    ? { px: Math.floor(at.px), py: Math.floor(at.py) }
+    : null;
 
 const size = (cls) => Math.max(1, Math.min(4, (cls?.cargo ?? 1) | 0));
 /**
@@ -132,32 +169,65 @@ const size = (cls) => Math.max(1, Math.min(4, (cls?.cargo ?? 1) | 0));
 export function standingFor(act, cls, { marque = false } = {}) {
   if (!cls) return 0;
   if (cls.faction === 'pirate') {
-    const k = act === 'sink' ? DEED_STANDING.sunk : act === 'board' ? DEED_STANDING.taken : act === 'repel' ? DEED_STANDING.repelled : 0;
+    const k =
+      act === 'sink'
+        ? DEED_STANDING.sunk
+        : act === 'board'
+          ? DEED_STANDING.taken
+          : act === 'repel'
+            ? DEED_STANDING.repelled
+            : 0;
     return k * size(cls);
   }
   if (cls.faction === 'merchant' || cls.faction === 'navy') {
-    if (marque) return act === 'sink' ? MARQUE_STANDING.sink * size(cls) : act === 'board' ? MARQUE_STANDING.board * size(cls) : 0;
+    if (marque)
+      return act === 'sink'
+        ? MARQUE_STANDING.sink * size(cls)
+        : act === 'board'
+          ? MARQUE_STANDING.board * size(cls)
+          : 0;
     return PIRACY_STANDING[act] ?? 0;
   }
   return 0;
 }
 
 const crownNames = () => CROWNS.map((c) => c.name);
-const whole = (v, max = Number.MAX_SAFE_INTEGER) => (Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0);
+const whole = (v, max = Number.MAX_SAFE_INTEGER) =>
+  Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0;
 const zeros = (keys) => Object.fromEntries(keys.map((k) => [k, 0]));
 /** A new log: every count none. FIELD BUGS 2026-10-21b VOYAGE-HOLD: `departed` the port a voyage is counted from and the
  *  way logged when she lay there (scenes/harbourOffice.js PORT_VOYAGE_M) - kept with the log, so a load between two ports
  *  (a relog, a reload, a crash) keeps the voyage. */
 export function newLog() {
   return {
-    sunk: zeros(LOG_TRADES), taken: zeros(LOG_TRADES), repelled: 0, claimed: 0, plunder: 0,
-    contracts: zeros(LOG_CONTRACTS), earned: 0, traded: 0, sailed: 0, maps: 0, islands: 0, deepest: 0,
-    legends: [], best: null, departed: null,
+    sunk: zeros(LOG_TRADES),
+    taken: zeros(LOG_TRADES),
+    repelled: 0,
+    claimed: 0,
+    plunder: 0,
+    contracts: zeros(LOG_CONTRACTS),
+    earned: 0,
+    traded: 0,
+    sailed: 0,
+    maps: 0,
+    islands: 0,
+    deepest: 0,
+    legends: [],
+    best: null,
+    departed: null,
   };
 }
 /** VOYAGE-HOLD: a saved departure as the log may keep it - a port's key and a way no further than the log's - else null. */
-export const restoreDeparted = (/** @type {any} */ d, /** @type {number} */ sailed) => (d && typeof d.port === 'string' && d.port.length > 0 && d.port.length <= 64
-  && Number.isFinite(d.sailed) && d.sailed >= 0 && d.sailed <= sailed ? { port: d.port, sailed: d.sailed } : null);
+export const restoreDeparted = (/** @type {any} */ d, /** @type {number} */ sailed) =>
+  d &&
+  typeof d.port === 'string' &&
+  d.port.length > 0 &&
+  d.port.length <= 64 &&
+  Number.isFinite(d.sailed) &&
+  d.sailed >= 0 &&
+  d.sailed <= sailed
+    ? { port: d.port, sailed: d.sailed }
+    : null;
 
 /**
  * THE LEDGER. `deed(act, cls, { crown, marque, trade, legend })` a ship's fate at the captain's hands - logged by
@@ -206,7 +276,7 @@ export function createCaptainLedger() {
   const rankChanges = [];
   /** A crown's regard moved by `n`, kept in its band - the rank it crossed into said back (a promotion or a fall). */
   function regard(crown, n) {
-    if (typeof crown !== 'string' || !Object.hasOwn(standing, crown) || !Number.isFinite(n) || n === 0) return null;   // AUDIT CAPTAIN'S SEA L8: never 'constructor'
+    if (typeof crown !== 'string' || !Object.hasOwn(standing, crown) || !Number.isFinite(n) || n === 0) return null; // AUDIT CAPTAIN'S SEA L8: never 'constructor'
     const before = crownRankOf(standing[crown]);
     standing[crown] = Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(standing[crown] + n)));
     const after = crownRankOf(standing[crown]);
@@ -216,11 +286,20 @@ export function createCaptainLedger() {
     return change;
   }
   const ledger = {
-    get log() { return log; },
+    get log() {
+      return log;
+    },
     standing: (crown) => standingOf(crown),
     rank: (crown) => crownRankOf(standingOf(crown)),
     /** Every crown's standing and rank, in CROWNS' order. */
-    crowns: () => CROWNS.map((c) => ({ crown: c.name, ruler: c.ruler, standing: standing[c.name] ?? 0, rank: crownRankOf(standing[c.name] ?? 0), next: nextRankOf(standing[c.name] ?? 0) })),
+    crowns: () =>
+      CROWNS.map((c) => ({
+        crown: c.name,
+        ruler: c.ruler,
+        standing: standing[c.name] ?? 0,
+        rank: crownRankOf(standing[c.name] ?? 0),
+        next: nextRankOf(standing[c.name] ?? 0),
+      })),
     regard,
     /**
      * A SHIP'S FATE AT THE CAPTAIN'S HANDS: logged by her trade ('ether'/'legend' for the Eltheric Ocean's - `legend` her
@@ -238,24 +317,36 @@ export function createCaptainLedger() {
       if (legend && (act === 'sink' || act === 'board') && !log.legends.includes(legend)) {
         log.legends.push(legend);
         if (log.legends.length > LOG_LIST_MAX) log.legends.shift();
-        for (const c of crownNames()) { const ch = regard(c, LEGEND_STANDING); if (ch) changes.push(ch); }
+        for (const c of crownNames()) {
+          const ch = regard(c, LEGEND_STANDING);
+          if (ch) changes.push(ch);
+        }
         return changes;
       }
-      if (trade === 'ether') return changes;   // the Eltheric Ocean knows no crown
+      if (trade === 'ether') return changes; // the Eltheric Ocean knows no crown
       const n = standingFor(act, cls, { marque: !!under });
       const to = under ?? crown;
-      if (to && n) { const ch = regard(to, n); if (ch) changes.push(ch); }
+      if (to && n) {
+        const ch = regard(to, n);
+        if (ch) changes.push(ch);
+      }
       return changes;
     },
     /** A count of the log's moved: `repelled`, `claimed`, `plunder` (gold worth), `earned` (a contract's purse), `traded`
      *  (the exchange's gold), `maps`, `islands`; a contract's kind under `contracts`. */
     note(field, n = 1) {
       if (!Number.isFinite(n) || n <= 0) return;
-      if (LOG_CONTRACTS.includes(field)) { log.contracts[field] += Math.floor(n); return; }
-      if (field in log && typeof log[field] === 'number' && field !== 'deepest' && field !== 'sailed') log[field] = whole(log[field] + n);
+      if (LOG_CONTRACTS.includes(field)) {
+        log.contracts[field] += Math.floor(n);
+        return;
+      }
+      if (field in log && typeof log[field] === 'number' && field !== 'deepest' && field !== 'sailed')
+        log[field] = whole(log[field] + n);
     },
     /** The way made at a helm (metres). */
-    sailed(m) { if (Number.isFinite(m) && m > 0 && m < 1e5) log.sailed += m; },
+    sailed(m) {
+      if (Number.isFinite(m) && m > 0 && m < 1e5) log.sailed += m;
+    },
     /** The deepest an Eltheric voyage has gone (leagues past the Veil - ETHER-SEA, scenes/etherHost.js sight) - and
      *  SEA-SEASON: the deepest in the season of world day `day`. */
     deepest(d, day) {
@@ -265,14 +356,23 @@ export function createCaptainLedger() {
       if (s) s.deepest = Math.max(s.deepest, Math.min(SEA_DEEPEST_MAX, Math.floor(d)));
     },
     /** The richest prize: kept while none richer is taken. */
-    prize(name, worth) { if (Number.isFinite(worth) && worth > 0 && (!log.best || worth > log.best.worth)) log.best = { name: String(name ?? 'a prize').slice(0, 48), worth: Math.floor(worth) }; },
+    prize(name, worth) {
+      if (Number.isFinite(worth) && worth > 0 && (!log.best || worth > log.best.worth))
+        log.best = { name: String(name ?? 'a prize').slice(0, 48), worth: Math.floor(worth) };
+    },
     /** The rank changes since the last read, read once (the host says them). */
     takeRankChanges: () => rankChanges.splice(0),
     // ── the letter of marque ──
     /** The letter held while `now` (the captain's own clock, minutes) is before its end - `{ crown, until }` - or null. */
     marque: (now) => (marque && Number.isFinite(now) && now < marque.until ? { ...marque } : null),
-    setMarque(crown, until) { if (crownNames().includes(crown) && Number.isFinite(until)) marque = { crown, until: Math.floor(until) }; },
-    tearMarque() { const was = marque; marque = null; return was; },
+    setMarque(crown, until) {
+      if (crownNames().includes(crown) && Number.isFinite(until)) marque = { crown, until: Math.floor(until) };
+    },
+    tearMarque() {
+      const was = marque;
+      marque = null;
+      return was;
+    },
     // ── CAPT-BOARD: the contracts ──
     /** The contracts held. */
     contracts: () => contracts.slice(),
@@ -294,7 +394,10 @@ export function createCaptainLedger() {
      * failed, moved, voided }` (`moved` the ones come further) for the host to pay and say.
      */
     contractEvent(ev) {
-      const done = [], failed = [], moved = [], voided = [];
+      const done = [],
+        failed = [],
+        moved = [],
+        voided = [];
       // AUDIT CAPTAIN'S SEA B7: A DEED IS ONE CONTRACT'S - a ship ended, studied or a cask hauled moves the one it is
       // most the deed of (a bounty's own quarry hers, else the soonest due): three hunts of a crown were all done by the
       // same three kills. A berth and a wreck are every delivery's in that hold.
@@ -304,7 +407,16 @@ export function createCaptainLedger() {
       for (const c of order) {
         const was = c.done | 0;
         const r = advance(c, ev);
-        if (r === 'done') { finish(c, true); done.push(c); } else if (r === 'failed') { finish(c, false); failed.push(c); } else if (r === 'void') { contracts = contracts.filter((x) => x !== c); voided.push(c); } else if ((c.done | 0) !== was) moved.push(c);
+        if (r === 'done') {
+          finish(c, true);
+          done.push(c);
+        } else if (r === 'failed') {
+          finish(c, false);
+          failed.push(c);
+        } else if (r === 'void') {
+          contracts = contracts.filter((x) => x !== c);
+          voided.push(c);
+        } else if ((c.done | 0) !== was) moved.push(c);
         if (one && (r || (c.done | 0) !== was)) break;
       }
       return { done, failed, moved, voided };
@@ -328,7 +440,8 @@ export function createCaptainLedger() {
     charts: () => charts.slice(),
     /** A chart read, marked - never one twice, never past CHARTS_MAX. */
     markChart(c) {
-      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX) return false;
+      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX)
+        return false;
       charts.push({ ...c });
       return true;
     },
@@ -346,7 +459,8 @@ export function createCaptainLedger() {
     // ── CAPT-TRADE: the exchange's dealing ──
     /** The captain's dealing at `port`'s exchange on `day` - `{ bought, sold }`, none on another day. */
     dealtAt(port, day) {
-      const at = dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;
+      const at =
+        dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;
       return at ? { bought: { ...at.bought }, sold: { ...at.sold } } : { bought: {}, sold: {} };
     },
     /** `n` of a good bought from (`side` 'bought') or sold to ('sold') `port`'s exchange on `day` - another day's dealing
@@ -412,14 +526,23 @@ export function createCaptainLedger() {
     },
     gatheredDay: (key) => (Number.isFinite(ether.harvested[key]) ? ether.harvested[key] : null),
     /** The Bay's waters the last crossing out set sail from `{ px, py }` (the way home makes landfall there), or null. */
-    setCrossedFrom(at) { ether.from = wayOutOf(at); },
+    setCrossedFrom(at) {
+      ether.from = wayOutOf(at);
+    },
     crossedFrom: () => (ether.from ? { ...ether.from } : null),
     /** A crossing made (either way); the count. */
-    crossed() { ether.crossings = whole(ether.crossings + 1); },
+    crossed() {
+      ether.crossings = whole(ether.crossings + 1);
+    },
     /** A legend heard of (a harbourmaster's rumour): her haunt on the captain's charts from now. */
-    hearLegend(id) { if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX) ether.heard.push(id); },
+    hearLegend(id) {
+      if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX)
+        ether.heard.push(id);
+    },
     heard: () => ether.heard.slice(),
-    get crossings() { return ether.crossings; },
+    get crossings() {
+      return ether.crossings;
+    },
     /** SEA-SEASON: the season's figures kept - `{ n, deepest, legends }` - or null. */
     season: () => (ether.season ? { ...ether.season } : null),
     // ── CAPTAIN-TREE: the captain's level and sky ──
@@ -429,12 +552,40 @@ export function createCaptainLedger() {
     tree: () => tree.slice(),
     /** The sky set (the window's confirm): through the law - the Helm, known stars each joined to it, no more than the
      *  captain's points. Answers the stars held. */
-    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },
+    setTree(ids) {
+      tree = heldStars(ids, captainOf(log).points);
+      stats = starStats(tree);
+      return tree.slice();
+    },
     /** What the stars held do (captainTree.js CAPTAIN_STATS, each a share) - frozen, the seams' to read. */
     stats: () => stats,
     // ── the save ──
-    newSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: newLog(), standing: zeros(crownNames()), marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: newEther(), tree: ['helm'] }),
-    getSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: JSON.parse(JSON.stringify(log)), standing: { ...standing }, marque: marque ? { ...marque } : null, contracts: JSON.parse(JSON.stringify(contracts)), taken: taken.slice(), dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null, charts: JSON.parse(JSON.stringify(charts)), raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)), tree: tree.slice() }),   // CAPTAIN-TREE: her stars
+    newSaveData: () => ({
+      v: CAPTAIN_SAVE_VERSION,
+      log: newLog(),
+      standing: zeros(crownNames()),
+      marque: null,
+      contracts: [],
+      taken: [],
+      dealt: null,
+      charts: [],
+      raised: [],
+      ether: newEther(),
+      tree: ['helm'],
+    }),
+    getSaveData: () => ({
+      v: CAPTAIN_SAVE_VERSION,
+      log: JSON.parse(JSON.stringify(log)),
+      standing: { ...standing },
+      marque: marque ? { ...marque } : null,
+      contracts: JSON.parse(JSON.stringify(contracts)),
+      taken: taken.slice(),
+      dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null,
+      charts: JSON.parse(JSON.stringify(charts)),
+      raised: raised.slice(),
+      ether: JSON.parse(JSON.stringify(ether)),
+      tree: tree.slice(),
+    }), // CAPTAIN-TREE: her stars
     restoreSaveData(r) {
       log = newLog();
       standing = zeros(crownNames());
@@ -451,44 +602,110 @@ export function createCaptainLedger() {
       stats = starStats(tree);
       if (!r || typeof r !== 'object') return;
       const l = r.log && typeof r.log === 'object' ? r.log : {};
-      for (const k of LOG_TRADES) { log.sunk[k] = whole(l.sunk?.[k]); log.taken[k] = whole(l.taken?.[k]); }
+      for (const k of LOG_TRADES) {
+        log.sunk[k] = whole(l.sunk?.[k]);
+        log.taken[k] = whole(l.taken?.[k]);
+      }
       for (const k of LOG_CONTRACTS) log.contracts[k] = whole(l.contracts?.[k]);
-      for (const k of ['repelled', 'claimed', 'plunder', 'earned', 'traded', 'maps', 'islands', 'deepest']) log[k] = whole(l[k]);
-      log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0;   // AUDIT CAPTAIN'S SEA L8
-      log.legends = Array.isArray(l.legends) ? l.legends.filter((n) => typeof n === 'string').map((n) => n.slice(0, 48)).slice(-LOG_LIST_MAX) : [];
-      log.best = l.best && typeof l.best.name === 'string' && Number.isFinite(l.best.worth) ? { name: l.best.name.slice(0, 48), worth: whole(l.best.worth) } : null;
-      log.departed = restoreDeparted(l.departed, log.sailed);   // VOYAGE-HOLD
+      for (const k of ['repelled', 'claimed', 'plunder', 'earned', 'traded', 'maps', 'islands', 'deepest'])
+        log[k] = whole(l[k]);
+      log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0; // AUDIT CAPTAIN'S SEA L8
+      log.legends = Array.isArray(l.legends)
+        ? l.legends
+            .filter((n) => typeof n === 'string')
+            .map((n) => n.slice(0, 48))
+            .slice(-LOG_LIST_MAX)
+        : [];
+      log.best =
+        l.best && typeof l.best.name === 'string' && Number.isFinite(l.best.worth)
+          ? { name: l.best.name.slice(0, 48), worth: whole(l.best.worth) }
+          : null;
+      log.departed = restoreDeparted(l.departed, log.sailed); // VOYAGE-HOLD
       for (const c of crownNames()) {
         const v = Number(r.standing?.[c]);
-        standing[c] = Number.isFinite(v) ? Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(v))) : 0;
+        standing[c] = Number.isFinite(v)
+          ? Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(v)))
+          : 0;
       }
-      if (r.marque && crownNames().includes(r.marque.crown) && Number.isFinite(r.marque.until)) marque = { crown: r.marque.crown, until: Math.floor(Math.min(MARQUE_UNTIL_MAX, r.marque.until)) };   // AUDIT CAPTAIN'S SEA L8: bounded
+      if (r.marque && crownNames().includes(r.marque.crown) && Number.isFinite(r.marque.until))
+        marque = { crown: r.marque.crown, until: Math.floor(Math.min(MARQUE_UNTIL_MAX, r.marque.until)) }; // AUDIT CAPTAIN'S SEA L8: bounded
       // AUDIT CAPTAIN'S SEA L8: a contract once (by its id), and charts the same - a save's twins paid twice
       const once = (list) => list.filter((c, i) => list.findIndex((x) => x.id === c.id) === i);
-      contracts = once((Array.isArray(r.contracts) ? r.contracts : []).map(restoreContract).filter((c) => c && crownNames().includes(c.crown))).slice(0, CONTRACTS_MAX);
+      contracts = once(
+        (Array.isArray(r.contracts) ? r.contracts : [])
+          .map(restoreContract)
+          .filter((c) => c && crownNames().includes(c.crown)),
+      ).slice(0, CONTRACTS_MAX);
       taken = (Array.isArray(r.taken) ? r.taken : []).filter((id) => typeof id === 'string').slice(-BOARD_TAKEN_MAX);
       const d = r.dealt;
-      const counts = (o) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([, n]) => Number.isFinite(n) && n > 0).map(([k, n]) => [k, Math.floor(n)]));
+      const counts = (o) =>
+        Object.fromEntries(
+          Object.entries(o && typeof o === 'object' ? o : {})
+            .filter(([, n]) => Number.isFinite(n) && n > 0)
+            .map(([k, n]) => [k, Math.floor(n)]),
+        );
       if (d && Number.isFinite(d.day) && d.at && typeof d.at === 'object') {
         dealt = { day: Math.floor(d.day), at: Object.create(null) };
-        for (const [port, x] of Object.entries(d.at).slice(-DEALT_PORTS_MAX)) dealt.at[port] = { bought: counts(x?.bought), sold: counts(x?.sold) };
-      } else if (d && typeof d.port === 'string' && Number.isFinite(d.day)) dealt = { day: Math.floor(d.day), at: Object.assign(Object.create(null), { [d.port]: { bought: counts(d.bought), sold: counts(d.sold) } }) };   // an older save's one port's
-      charts = once((Array.isArray(r.charts) ? r.charts : []).filter((c) => c && typeof c.id === 'string' && Number.isFinite(c.px) && Number.isFinite(c.py) && Number.isFinite(c.seed))
-        .map((c) => ({ id: c.id, seed: c.seed >>> 0, px: Math.floor(c.px), py: Math.floor(c.py), near: String(c.near ?? ''), words: String(c.words ?? '') }))).slice(0, CHARTS_MAX);
-      raised = [...new Set((Array.isArray(r.raised) ? r.raised : []).filter((id) => typeof id === 'string' && id.length <= 64))].slice(-CHARTS_RAISED_KEEP);
+        for (const [port, x] of Object.entries(d.at).slice(-DEALT_PORTS_MAX))
+          dealt.at[port] = { bought: counts(x?.bought), sold: counts(x?.sold) };
+      } else if (d && typeof d.port === 'string' && Number.isFinite(d.day))
+        dealt = {
+          day: Math.floor(d.day),
+          at: Object.assign(Object.create(null), { [d.port]: { bought: counts(d.bought), sold: counts(d.sold) } }),
+        }; // an older save's one port's
+      charts = once(
+        (Array.isArray(r.charts) ? r.charts : [])
+          .filter(
+            (c) =>
+              c &&
+              typeof c.id === 'string' &&
+              Number.isFinite(c.px) &&
+              Number.isFinite(c.py) &&
+              Number.isFinite(c.seed),
+          )
+          .map((c) => ({
+            id: c.id,
+            seed: c.seed >>> 0,
+            px: Math.floor(c.px),
+            py: Math.floor(c.py),
+            near: String(c.near ?? ''),
+            words: String(c.words ?? ''),
+          })),
+      ).slice(0, CHARTS_MAX);
+      raised = [
+        ...new Set((Array.isArray(r.raised) ? r.raised : []).filter((id) => typeof id === 'string' && id.length <= 64)),
+      ].slice(-CHARTS_RAISED_KEEP);
       const e = r.ether && typeof r.ether === 'object' ? r.ether : {};
-      const days = (o, keep) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k, d]) => typeof k === 'string' && Number.isFinite(d)).map(([k, d]) => [k, Math.floor(d)]).slice(-keep));
-      ether.charted = [...new Set((Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string' && /^\d{1,4},\d{1,4}$/.test(k)))].slice(0, ETHER_CHARTED_MAX);
+      const days = (o, keep) =>
+        Object.fromEntries(
+          Object.entries(o && typeof o === 'object' ? o : {})
+            .filter(([k, d]) => typeof k === 'string' && Number.isFinite(d))
+            .map(([k, d]) => [k, Math.floor(d)])
+            .slice(-keep),
+        );
+      ether.charted = [
+        ...new Set(
+          (Array.isArray(e.charted) ? e.charted : []).filter(
+            (k) => typeof k === 'string' && /^\d{1,4},\d{1,4}$/.test(k),
+          ),
+        ),
+      ].slice(0, ETHER_CHARTED_MAX);
       chartedSet = new Set(ether.charted);
       ether.legends = days(e.legends, LOG_LIST_MAX);
       ether.harvested = days(e.harvested, ETHER_HARVEST_KEEP);
       ether.from = wayOutOf(e.from);
       ether.crossings = whole(e.crossings);
-      ether.heard = [...new Set((Array.isArray(e.heard) ? e.heard : []).filter((id) => typeof id === 'string' && id.length <= 24))].slice(0, LOG_LIST_MAX);
-      ether.season = restoreSeason(e.season);   // SEA-SEASON
-      ether.fleets = [...new Set((Array.isArray(e.fleets) ? e.fleets : []).filter((n) => Number.isSafeInteger(n) && n >= 0))].slice(-ETHER_FLEETS_KEEP);   // AUDIT SEA VENTURES D2, D4
-      ether.wrack = [...new Set((Array.isArray(e.wrack) ? e.wrack : []).filter((id) => typeof id === 'string' && id.length <= 48))].slice(-ETHER_WRACK_KEEP);   // AUDIT SEA VENTURES D6
-      tree = heldStars(r.tree, captainOf(log).points);   // CAPTAIN-TREE: her stars as the law and her log allow (an older save's: the Helm)
+      ether.heard = [
+        ...new Set((Array.isArray(e.heard) ? e.heard : []).filter((id) => typeof id === 'string' && id.length <= 24)),
+      ].slice(0, LOG_LIST_MAX);
+      ether.season = restoreSeason(e.season); // SEA-SEASON
+      ether.fleets = [
+        ...new Set((Array.isArray(e.fleets) ? e.fleets : []).filter((n) => Number.isSafeInteger(n) && n >= 0)),
+      ].slice(-ETHER_FLEETS_KEEP); // AUDIT SEA VENTURES D2, D4
+      ether.wrack = [
+        ...new Set((Array.isArray(e.wrack) ? e.wrack : []).filter((id) => typeof id === 'string' && id.length <= 48)),
+      ].slice(-ETHER_WRACK_KEEP); // AUDIT SEA VENTURES D6
+      tree = heldStars(r.tree, captainOf(log).points); // CAPTAIN-TREE: her stars as the law and her log allow (an older save's: the Helm)
       stats = starStats(tree);
     },
   };
@@ -496,7 +713,10 @@ export function createCaptainLedger() {
    *  crown's regard lost. */
   function finish(c, ok) {
     contracts = contracts.filter((x) => x !== c);
-    if (!ok) { regard(c.crown, STANDING_FAILED); return; }
+    if (!ok) {
+      regard(c.crown, STANDING_FAILED);
+      return;
+    }
     regard(c.crown, c.standing);
     ledger.note(c.kind);
     ledger.note('earned', c.pay);
@@ -514,7 +734,10 @@ export const leagueWords = (m) => `${(Math.max(0, Number(m) || 0) / LEAGUE_M).to
 export function logLines(log) {
   const sum = (o) => Object.values(o ?? {}).reduce((s, v) => s + (v | 0), 0);
   const gold = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
-  const byTrade = (o) => LOG_TRADES.filter((k) => o[k]).map((k) => `${o[k]} ${(o[k] === 1 ? TRADE_WORD : TRADE_WORDS)[k]}`).join(', ');   // AUDIT CAPTAIN'S SEA L11: "1 pirate"
+  const byTrade = (o) =>
+    LOG_TRADES.filter((k) => o[k])
+      .map((k) => `${o[k]} ${(o[k] === 1 ? TRADE_WORD : TRADE_WORDS)[k]}`)
+      .join(', '); // AUDIT CAPTAIN'S SEA L11: "1 pirate"
   const lines = [
     ['Ships sunk', sum(log.sunk) ? `${sum(log.sunk)} - ${byTrade(log.sunk)}` : 'none'],
     ['Ships taken', sum(log.taken) ? `${sum(log.taken)} - ${byTrade(log.taken)}` : 'none'],
@@ -525,18 +748,52 @@ export function logLines(log) {
   if (log.plunder) lines.push(['Plunder hauled', gold(log.plunder)]);
   if (log.best) lines.push(['Richest prize', `${log.best.name} (${gold(log.best.worth)})`]);
   const done = sum(log.contracts);
-  if (done) lines.push(['Contracts done', `${done} - ${LOG_CONTRACTS.filter((k) => log.contracts[k]).map((k) => `${log.contracts[k]} ${(log.contracts[k] === 1 ? CONTRACT_WORD : CONTRACT_WORDS)[k]}`).join(', ')}`]);
+  if (done)
+    lines.push([
+      'Contracts done',
+      `${done} - ${LOG_CONTRACTS.filter((k) => log.contracts[k])
+        .map((k) => `${log.contracts[k]} ${(log.contracts[k] === 1 ? CONTRACT_WORD : CONTRACT_WORDS)[k]}`)
+        .join(', ')}`,
+    ]);
   if (log.earned) lines.push(['Contract purses', gold(log.earned)]);
   if (log.traded) lines.push(['Sold at the exchange', gold(log.traded)]);
   if (log.maps) lines.push(['Treasure found', `${log.maps} ${log.maps === 1 ? 'cache' : 'caches'}`]);
   if (log.islands) lines.push([`${ETHER_WORD} isles charted`, `${log.islands}`]);
-  if (log.deepest) lines.push([`Deepest ${ETHER_WORD} waters`, `${log.deepest} ${log.deepest === 1 ? 'league' : 'leagues'} past the Veil`]);
+  if (log.deepest)
+    lines.push([
+      `Deepest ${ETHER_WORD} waters`,
+      `${log.deepest} ${log.deepest === 1 ? 'league' : 'leagues'} past the Veil`,
+    ]);
   if (log.legends.length) lines.push(['Legends ended', log.legends.join(', ')]);
   return lines;
 }
 /** The trades' words in the log - one, and many. */
-export const TRADE_WORD = Object.freeze({ pirate: 'pirate', merchant: 'merchantman', navy: 'crown\'s ship', ether: `${ETHER_WORD} ship`, legend: 'legend' });
-export const TRADE_WORDS = Object.freeze({ pirate: 'pirates', merchant: 'merchantmen', navy: 'crown\'s ships', ether: `${ETHER_WORD} ships`, legend: 'legends' });
+export const TRADE_WORD = Object.freeze({
+  pirate: 'pirate',
+  merchant: 'merchantman',
+  navy: "crown's ship",
+  ether: `${ETHER_WORD} ship`,
+  legend: 'legend',
+});
+export const TRADE_WORDS = Object.freeze({
+  pirate: 'pirates',
+  merchant: 'merchantmen',
+  navy: "crown's ships",
+  ether: `${ETHER_WORD} ships`,
+  legend: 'legends',
+});
 /** The contracts' kinds in the log - one, and many (AUDIT CAPTAIN'S SEA L11: "2 bounty"). */
-export const CONTRACT_WORD = Object.freeze({ bounty: 'bounty', hunt: 'hunt', delivery: 'delivery', salvage: 'salvage', survey: 'survey' });
-export const CONTRACT_WORDS = Object.freeze({ bounty: 'bounties', hunt: 'hunts', delivery: 'deliveries', salvage: 'salvages', survey: 'surveys' });
+export const CONTRACT_WORD = Object.freeze({
+  bounty: 'bounty',
+  hunt: 'hunt',
+  delivery: 'delivery',
+  salvage: 'salvage',
+  survey: 'survey',
+});
+export const CONTRACT_WORDS = Object.freeze({
+  bounty: 'bounties',
+  hunt: 'hunts',
+  delivery: 'deliveries',
+  salvage: 'salvages',
+  survey: 'surveys',
+});

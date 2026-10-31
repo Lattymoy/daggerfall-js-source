@@ -34,8 +34,8 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
-import { localizedText, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { localizedText, t } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { firstHotkey } from '../systems/dialogShortcuts.js'; // A8: the DaggerfallShortcut table
 
 /** DaggerfallUI.cs:693's localized key, and the English DFU ships. */
 export const CANNOT_CHANGE_INDOORS = 'You cannot change transportation indoors.';
@@ -49,7 +49,11 @@ export const TRANSPORT_DISABLED_IMG = 'MOVE01I0.IMG';
  *  (:98-137) - Panel.ProcessHotkeySequences walks its buttons in that
  *  order and returns on the first Handled (:215-235). */
 export const TRANSPORT_BUTTONS = Object.freeze([
-  'TransportFoot', 'TransportHorse', 'TransportCart', 'TransportShip', 'TransportExit',
+  'TransportFoot',
+  'TransportHorse',
+  'TransportCart',
+  'TransportShip',
+  'TransportExit',
 ]);
 
 /** Panel-child rects (:20-23) and the disabled SHEET rects (:16-18). */
@@ -81,7 +85,9 @@ export async function preloadTransportArt(deps) {
       base: await loadImg(deps, TRANSPORT_BASE_IMG),
       disabled: await loadImg(deps, TRANSPORT_DISABLED_IMG),
     };
-  } catch { console.warn('[transport] MOVE00I0/MOVE01I0 unavailable; the transport window stays closed'); }
+  } catch {
+    console.warn('[transport] MOVE00I0/MOVE01I0 unavailable; the transport window stays closed');
+  }
 }
 export const transportArtLoaded = () => !!_art;
 
@@ -108,11 +114,14 @@ export class TransportWindow {
       horse: !!hooks.hasHorse,
       cart: !!hooks.hasCart,
       ship: !!hooks.shipAvailable,
-      dragon: !!hooks.hasDragon,   // DRAGON5: no row at all without one
+      dragon: !!hooks.hasDragon, // DRAGON5: no row at all without one
     });
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    this.hooks.onClose?.();
+  }
 
   /** Every mode handler: set the mode, then close (:199-235). */
   _pick(mode) {
@@ -125,7 +134,11 @@ export class TransportWindow {
     // Escape/Enter are the port host's close keys, not DFU buttons
     // (AllowCancel is false here, so DFU closes only on the Transport
     // key's release - the toggle the port host owns).
-    if (code === 'Escape' || code === 'Enter') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return; }
+    if (code === 'Escape' || code === 'Enter') {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return;
+    }
     // ROAD-G G7: the five Hotkeys, FROM THE TABLE, in DFU's button ADD
     // order (:98-137). The comment that stood here claimed "the port's
     // own letters (Ledger A - DFU reads its keybind table)" and both
@@ -142,27 +155,58 @@ export class TransportWindow {
     // and the letter does nothing - which is why the enable test rides
     // the button here rather than the pick.
     switch (firstHotkey(TRANSPORT_BUTTONS, code, e)) {
-      case 'TransportFoot': this._pick(TRANSPORT_MODES.Foot); return;
-      case 'TransportHorse': if (this.enabled.horse) this._pick(TRANSPORT_MODES.Horse); return;
-      case 'TransportCart': if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart); return;
-      case 'TransportShip': if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship); return;
-      case 'TransportExit': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return;
-      default: break;   // DFU hangs no other accelerator on this window
+      case 'TransportFoot':
+        this._pick(TRANSPORT_MODES.Foot);
+        return;
+      case 'TransportHorse':
+        if (this.enabled.horse) this._pick(TRANSPORT_MODES.Horse);
+        return;
+      case 'TransportCart':
+        if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart);
+        return;
+      case 'TransportShip':
+        if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship);
+        return;
+      case 'TransportExit':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._close();
+        return;
+      default:
+        break; // DFU hangs no other accelerator on this window
     }
   }
 
   click(vx, vy) {
     const origin = transportPanelOrigin(_art);
-    const hit = ([rx, ry, rw, rh]) => vx >= rx + origin.x && vy >= ry + origin.y
-      && vx < rx + origin.x + rw && vy < ry + origin.y + rh;
-    if (hit(TRANSPORT_RECTS.foot)) { this._pick(TRANSPORT_MODES.Foot); return true; }
+    const hit = ([rx, ry, rw, rh]) =>
+      vx >= rx + origin.x && vy >= ry + origin.y && vx < rx + origin.x + rw && vy < ry + origin.y + rh;
+    if (hit(TRANSPORT_RECTS.foot)) {
+      this._pick(TRANSPORT_MODES.Foot);
+      return true;
+    }
     // A disabled row has NO click handler in DFU - the button exists
     // and does nothing (:82-91), so the click is eaten here too.
-    if (hit(TRANSPORT_RECTS.horse)) { if (this.enabled.horse) this._pick(TRANSPORT_MODES.Horse); return true; }
-    if (hit(TRANSPORT_RECTS.cart)) { if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart); return true; }
-    if (hit(TRANSPORT_RECTS.ship)) { if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship); return true; }
-    if (hit(TRANSPORT_RECTS.exit)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
-    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) { this._pick(TRANSPORT_MODES.Dragon); return true; }
+    if (hit(TRANSPORT_RECTS.horse)) {
+      if (this.enabled.horse) this._pick(TRANSPORT_MODES.Horse);
+      return true;
+    }
+    if (hit(TRANSPORT_RECTS.cart)) {
+      if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart);
+      return true;
+    }
+    if (hit(TRANSPORT_RECTS.ship)) {
+      if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship);
+      return true;
+    }
+    if (hit(TRANSPORT_RECTS.exit)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
+    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) {
+      this._pick(TRANSPORT_MODES.Dragon);
+      return true;
+    }
     return true;
   }
 
@@ -198,7 +242,9 @@ export function drawTransportDisabledRow(renderer, sheet, m, [sx, sy, sw, sh], [
   // DFU's Rect is bottom-up in Unity space and ImageReader flips it.
   const v0 = sy / DISABLED_SHEET.height;
   const v1 = (sy + sh) / DISABLED_SHEET.height;
-  renderer.drawScreenQuad(sheet.tex,
+  renderer.drawScreenQuad(
+    sheet.tex,
     { x: m.ox + dx * m.s, y: m.oy + dy * m.s, w: sw * m.s, h: sh * m.s },
-    { u0, v0, u1, v1 });
+    { u0, v0, u1, v1 },
+  );
 }

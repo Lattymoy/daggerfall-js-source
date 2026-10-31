@@ -20,17 +20,34 @@ export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70,
 /** The four guilds that are one guild each - their factionId (FightersGuild.cs, MagesGuild.cs, ThievesGuild.cs,
  *  DarkBrotherhood.cs; guilds.js GUILDS reads them). */
 export const GUILD_FACTION_IDS = Object.freeze({
-  FightersGuild: 41, MagesGuild: 40, ThievesGuild: 42, DarkBrotherhood: 108,
+  FightersGuild: 41,
+  MagesGuild: 40,
+  ThievesGuild: 42,
+  DarkBrotherhood: 108,
 });
 
 /** Temple.Divines (:49-59) - value = factionId. */
 export const DIVINES = Object.freeze({
-  Akatosh: 26, Arkay: 21, Dibella: 29, Julianos: 27,
-  Kynareth: 35, Mara: 24, Stendarr: 33, Zenithar: 22,
+  Akatosh: 26,
+  Arkay: 21,
+  Dibella: 29,
+  Julianos: 27,
+  Kynareth: 35,
+  Mara: 24,
+  Stendarr: 33,
+  Zenithar: 22,
 });
 
 /** KnightlyOrder.Orders (:49-61) - value = factionId. */
 export const ORDERS = Object.freeze({
-  Horn: 411, Dragon: 368, Flame: 410, Hawk: 417, Owl: 413,
-  Rose: 409, Wheel: 415, Candle: 408, Raven: 414, Scarab: 416,
+  Horn: 411,
+  Dragon: 368,
+  Flame: 410,
+  Hawk: 417,
+  Owl: 413,
+  Rose: 409,
+  Wheel: 415,
+  Candle: 408,
+  Raven: 414,
+  Scarab: 416,
 });

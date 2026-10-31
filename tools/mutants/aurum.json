@@ -178,8 +178,8 @@
   {
     "name": "AURUM-window-daily-while-closed",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "if (flow?.aurum?.open && flow.aurum.daily?.wares?.length)",
-    "new": "if (flow?.aurum?.daily?.wares?.length)",
+    "old": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
+    "new": "  if (flow?.aurum?.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "AURUM-window-daily-first",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
-    "new": "out.splice(0, 0, 'daily');",
+    "old": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
+    "new": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(0, 0, 'daily');",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -205,7 +205,7 @@
   {
     "name": "AURUM-window-one-press-spends",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "        if (armed?.id !== w.id) { armed = { id: w.id, at: now() }; draw(); return; }",
+    "old": "          if (armed?.id !== w.id) {\n            armed = { id: w.id, at: now() };\n            draw();\n            return;\n          }",
     "new": "",
     "tests": [
       "test/ui/aurum_shop.test.js"
@@ -223,8 +223,8 @@
   {
     "name": "AURUM-window-get-aurum-nowhere",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => pick('aurum'))",
-    "new": "button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => {})",
+    "old": "      return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => pick('aurum'));",
+    "new": "      return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => {});",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "AURUM-window-icon-worn-as-glyph",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    else if (w.kind === 'icon') fl.wearIcon?.(w.key);   // AURUM: in the portrait well",
-    "new": "",
+    "old": "    else if (w.kind === 'icon')\n      fl.wearIcon?.(w.key); // AURUM: in the portrait well\n    else fl.toggleGlyph?.(w.key);",
+    "new": "    else fl.toggleGlyph?.(w.key);",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AURUM-window-pack-share-unsaid",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "      if (bonus) stage.append(el('div', 'sh-bonus', t('shop.aurum.bonus', '{pct}% more Aurum', { pct: bonus })));",
-    "new": "",
+    "old": "      if (bonus) stage.append(el('div', 'sh-bonus', t('shop.aurum.bonus', '{pct}% more Aurum', { pct: bonus })));\n    } else if (w.kind === 'mount') {",
+    "new": "    } else if (w.kind === 'mount') {",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -250,7 +250,7 @@
   {
     "name": "AURUM-flow-card-never-read",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.aurum = aurumCardOf(r.data.aurum);   // AURUM: the Aurum's card, or none",
+    "old": "    self.aurum = aurumCardOf(r.data.aurum); // AURUM: the Aurum's card, or none",
     "new": "    self.aurum = null;",
     "tests": [
       "test/ui/aurum_shop.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "AURUM-flow-answer-card-ignored",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;\n      self.busy = false;\n      self.note = t('account.flow.aurumBought'",
-    "new": "      self.aurum = self.aurum;\n      self.busy = false;\n      self.note = t('account.flow.aurumBought'",
+    "old": "      };\n      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;\n      self.busy = false;",
+    "new": "      };\n      self.aurum = self.aurum;\n      self.busy = false;",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "AURUM-flow-pack-never-said",
     "file": "src/ui/accountFlow.js",
-    "old": "pack ? (self.aurum?.balance ?? -Infinity) > (self.shopWaitingFrom ?? Infinity)",
-    "new": "pack ? false",
+    "old": "    if (\n      self.shopWaiting &&\n      (pack\n        ? (self.aurum?.balance ?? -Infinity) > (self.shopWaitingFrom ?? Infinity)\n        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))\n    ) {",
+    "new": "    if (self.shopWaiting && (pack ? false : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))) {",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-A2-credit-trusted",
     "file": "server-account/src/shop.js",
-    "old": "w.gives.length > 0 && shopCreditOf(row, w.id).join(' ') !== String(order.credit ?? '')",
-    "new": "false",
+    "old": "const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) =>\n  w.gives.length > 0 && shopCreditOf(row, w.id).join(' ') !== String(order.credit ?? '');",
+    "new": "const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) => false;",
     "tests": [
       "test/server/storefront_audit2_pay.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-A2-restore-gives-refunded-credit",
     "file": "server-account/src/shop.js",
-    "old": "if (!had.includes(c) && !toks.includes(`-${c}`)) toks.push(`-${c}`);",
-    "new": "if (false) toks.push(`-${c}`);",
+    "old": "    if (!had.includes(c) && !toks.includes(`-${c}`)) toks.push(`-${c}`);",
+    "new": "    if (false) toks.push(`-${c}`);",
     "tests": [
       "test/server/storefront_audit2_pay.test.js"
     ]
@@ -313,7 +313,7 @@
   {
     "name": "AUDIT-STOREFRONT-II-A3-refund-on-disputed-ignored",
     "file": "server-account/src/shop.js",
-    "old": "    if (why !== 'refunded') return { ok: true, applied: 0 };   // a second dispute on a payment already held by one: its word is kept",
+    "old": "    if (why !== 'refunded') return { ok: true, applied: 0 }; // a second dispute on a payment already held by one: its word is kept",
     "new": "    return { ok: true, applied: 0 };",
     "tests": [
       "test/server/storefront_audit2_pay.test.js"
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-A4-stale-attempt-refunds",
     "file": "server-account/src/shop.js",
-    "old": "      if (await moved(db, id, from)) return { ok: true, applied: 0 };",
-    "new": "      if (await moved(db, id, from)) return { ok: true, applied: 0, refund: 'held' };",
+    "old": "      if (await moved(db, id, from)) return { ok: true, applied: 0 }; // another word on it landed first - the guard held",
+    "new": "      if (await moved(db, id, from)) return { ok: true, applied: 0, refund: 'held' }; // another word on it landed first - the guard held",
     "tests": [
       "test/server/storefront_audit2_pay.test.js"
     ]

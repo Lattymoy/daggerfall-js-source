@@ -2,8 +2,8 @@
   {
     "name": "DISC6-quest-target-never-relinked",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "  relinkToLiveQuest() {\n",
-    "new": "  relinkToLiveQuest() {\n    return false;\n",
+    "old": "    if (this.targetQuest == null) {",
+    "new": "    return false;\n    if (this.targetQuest == null) {",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "DISC6-quest-relink-on-quest-only",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) {",
+    "old": "    if (\n      this.machine.getQuest(this.questUID) === this.targetQuest &&\n      this.targetQuest.getResource(this.targetSymbol) === this.targetResource\n    ) {",
     "new": "    if (this.machine.getQuest(this.questUID) === this.targetQuest) {",
     "tests": [
       "test/systems/disc6.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "DISC6-quest-resync-wipes-kills",
     "file": "src/systems/quest/machine.js",
-    "old": "      r.killCount = Math.max(brought, was.killCount);\n",
-    "new": "",
+    "old": "      r.killCount = Math.max(brought, was.killCount);\n      r.learnedKills = was.learned; // AUDIT QA3 E3: by the envelope's sender (Foe.creditPartnerKill)",
+    "new": "      r.learnedKills = was.learned; // AUDIT QA3 E3: by the envelope's sender (Foe.creditPartnerKill)",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC6-rain-full-in-building",
     "file": "src/systems/ambientEffects.js",
-    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
-    "new": "(deps.indoorRainSource ? 0 : 1)",
+    "old": "      this.rainGain *\n      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);",
+    "new": "      this.rainGain * (building ? (deps.indoorRainSource ? 0 : 1) : deps.underground && deps.indoorRainSource ? 0 : 1);",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISC6-rain-doubled-with-BA",
     "file": "src/systems/ambientEffects.js",
-    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
-    "new": "INDOOR_RAIN_GAIN",
+    "old": "    const rainGain =\n      this.rainGain *\n      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);",
+    "new": "    const rainGain = this.rainGain * (building ? INDOOR_RAIN_GAIN : deps.underground && deps.indoorRainSource ? 0 : 1);",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISC6-underground-is-a-building",
     "file": "src/systems/ambientEffects.js",
-    "old": "const building = !!deps.inside && !deps.underground;",
-    "new": "const building = !!deps.inside;",
+    "old": "    const building = !!deps.inside && !deps.underground;",
+    "new": "    const building = !!deps.inside;",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC8A-crickets-through-the-walls",
     "file": "src/systems/ambientEffects.js",
-    "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
-    "new": "if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
+    "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "new": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC6-birds-indoors",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (!deps.inside) this._playEffects(deps);",
-    "new": "      this._playEffects(deps);",
+    "old": "      if (!deps.inside) this._playEffects(deps); // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays",
+    "new": "      this._playEffects(deps); // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DISC6-torch-silence-noop",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
-    "new": "  function silence() { }",
+    "old": "  function silence() {\n    w.loop?.stop?.();\n    w.loop = null;\n  }",
+    "new": "  function silence() {}",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DISC6-torch-silence-keeps-handle",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
-    "new": "  function silence() { w.loop?.stop?.(); }",
+    "old": "    w.loop?.stop?.();\n    w.loop = null;\n  }",
+    "new": "    w.loop?.stop?.();\n  }",
     "tests": [
       "test/systems/disc6.test.js"
     ]

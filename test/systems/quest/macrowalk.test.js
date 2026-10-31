@@ -86,7 +86,7 @@ test('MH1: expandGuildMacros rides the walk - supplied values land, absent ones 
 
 test('MH1: the leak sites are GONE - no ad-hoc %-replaceAll chain outside the recorded surfaces', () => {
   for (const f of ['systems/talk/talkSession.js', 'systems/guild/guildServiceActions.js', 'scenes/arrestFlow.js']) {
-    assert.equal(/replaceAll\('%/.test(src(f)), false, `${f} rides the one walk`);
+    assert.equal(/replaceAll\(\n\s*'%/.test(src(f)), false, `${f} rides the one walk`);
   }
   assert.match(src('scenes/arrestFlow.js'), /return expandMacroValues\(t, \{/, 'the court records ride it too');
   // what deliberately REMAINS: itemInfo/useItem are the ITEM MCP

@@ -21,10 +21,20 @@
 // The streaming host constructs it (scenes/world.js); the other three hosts stream no pixels and walk no journey
 // through a town: scenes/exterior.js (the fixed city - no Travel Options journey crosses it), scenes/worldModes.js (a
 // building) and scenes/dungeonContext.js (a dungeon).
-import { townWayCells, townWayCellsSteps, gatePassage, carveNav, componentsOf, edgePieces, snapCell, TOWN_PACE_MAX, IMPERIAL_PACE_MAX } from '../systems/travel/townWalk.js';
+import {
+  townWayCells,
+  townWayCellsSteps,
+  gatePassage,
+  carveNav,
+  componentsOf,
+  edgePieces,
+  snapCell,
+  TOWN_PACE_MAX,
+  IMPERIAL_PACE_MAX,
+} from '../systems/travel/townWalk.js';
 import { worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { CITY_GATE_OPEN_MODEL_ID } from '../world/rmbLayout.js';
-import { capitalOnPixel } from '../world/tamrielCapitals.js';   // IC-PACE: the Imperial City's slices
+import { capitalOnPixel } from '../world/tamrielCapitals.js'; // IC-PACE: the Imperial City's slices
 
 /** IC-PACE: the most a journey's clock runs in the streets of the town on map pixel (x, y) - a town's pace, the Imperial
  *  City's own on every one of its slices (world/tamrielCapitals.js capitalOnPixel). */
@@ -44,7 +54,7 @@ export const JOURNEY_GRIDS_MAX = 4;
 /** @param {{ built: Map<string, any>, state: any }} host */
 export function createTownWalk(host) {
   const { built, state } = host;
-  const grids = new Map();   // pixel key -> { base, sig, nav, shut }
+  const grids = new Map(); // pixel key -> { base, sig, nav, shut }
   /** IC-STUTTER: the way in the making - its town, its grid's state and its point (`k`), its search's steps. */
   let making = /** @type {?{ k: string, steps: Generator<void, any, void> }} */ (null);
   /** The town at a native point: its pixel's key, grid, origin and translation, and the point's cell - or null. */
@@ -52,7 +62,8 @@ export function createTownWalk(host) {
     const px = worldCoordToMapPixel(n.x, n.z);
     const key = `${px.x},${px.y}`;
     const b = built.get(key);
-    const nav = b?.population?.nav, o = b?.locOrigin;
+    const nav = b?.population?.nav,
+      o = b?.locOrigin;
     if (!nav || !o) return null;
     const t = state.pixelTranslation(px.x, px.y);
     const [sx, sz] = state.localFromWorld(n.x, n.z);
@@ -62,14 +73,20 @@ export function createTownWalk(host) {
   /** The town's journey grid: its own with each open gate's passage carved through (`allOpen`: every gate's, as by day)
    *  - and whether any gate is shut. */
   function journeyGrid(town, allOpen = false) {
-    const gates = (town.b.cityGates ?? []).map((g) => ({ open: allOpen || g.gate?.modelId === CITY_GATE_OPEN_MODEL_ID, local: g.local }));
+    const gates = (town.b.cityGates ?? []).map((g) => ({
+      open: allOpen || g.gate?.modelId === CITY_GATE_OPEN_MODEL_ID,
+      local: g.local,
+    }));
     const sig = gates.map((g) => (g.open ? 1 : 0)).join('');
     const key = `${town.key}|${sig}`;
     const kept = grids.get(key);
     if (kept && kept.base === town.nav) return kept;
-    const passages = gates.filter((g) => g.open && g.local).map((g) => gatePassage(town.nav, town.nav.worldToNav(g.local[12] - town.o[0], g.local[14] - town.o[2]))).filter(Boolean);
+    const passages = gates
+      .filter((g) => g.open && g.local)
+      .map((g) => gatePassage(town.nav, town.nav.worldToNav(g.local[12] - town.o[0], g.local[14] - town.o[2])))
+      .filter(Boolean);
     const made = { base: town.nav, sig, nav: carveNav(town.nav, passages), shut: gates.some((g) => !g.open) };
-    for (const [k, g] of grids) if (built.get(k.split('|')[0])?.population?.nav !== g.base) grids.delete(k);   // a pixel built again or let go
+    for (const [k, g] of grids) if (built.get(k.split('|')[0])?.population?.nav !== g.base) grids.delete(k); // a pixel built again or let go
     grids.delete(key);
     grids.set(key, made);
     if (grids.size > JOURNEY_GRIDS_MAX) grids.delete(grids.keys().next().value);
@@ -93,9 +110,9 @@ export function createTownWalk(host) {
       if (!town?.inside) return null;
       const pace = paceAt(town.px.x, town.px.y);
       const pieces = edgePieces(town.nav);
-      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace;   // no walls (or none that close): the grid is the town
-      const at = snapCell(town.nav, town.cell);   // a doorstep reads as its street
-      return at && pieces.edge.has(componentsOf(town.nav)[at[1] * town.nav.width + at[0]]) ? null : pace;   // the fields' piece (the residents' grid, its gates closed) is no street of the town
+      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace; // no walls (or none that close): the grid is the town
+      const at = snapCell(town.nav, town.cell); // a doorstep reads as its street
+      return at && pieces.edge.has(componentsOf(town.nav)[at[1] * town.nav.width + at[0]]) ? null : pace; // the fields' piece (the residents' grid, its gates closed) is no street of the town
     },
     townWay(from, to) {
       const town = townAt(from);
@@ -115,8 +132,9 @@ export function createTownWalk(host) {
       const way = got.value;
       // short of its point: behind a shut gate - said, if the gates open by day would have let it through; else (a yard
       // the houses close in, its piece no street reaches) walked as far as it reaches, never blamed on the gates
-      const pace = paceAt(town.px.x, town.px.y);   // IC-PACE
-      if (!way?.reached && grid.shut && townWayCells(journeyGrid(town, true).nav, town.cell, toCell)?.reached) return { pts: [], inside: !!way?.inside, shut: true, pace };
+      const pace = paceAt(town.px.x, town.px.y); // IC-PACE
+      if (!way?.reached && grid.shut && townWayCells(journeyGrid(town, true).nav, town.cell, toCell)?.reached)
+        return { pts: [], inside: !!way?.inside, shut: true, pace };
       if (!way) return null;
       // AUDIT OW-REVISITED L1-2: the first cell kept - the walk's first run is checked from it (the pursuit takes it up
       // from where the body stands), where the line from the body to the second cell was never checked at all

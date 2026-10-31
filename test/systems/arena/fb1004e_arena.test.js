@@ -174,7 +174,7 @@ test('ARENA-TEAMS: the HUD calls a Grand Melee "each alone" between its columns,
   assert.equal(at([f('you', 0), f('a', 1), f('b', 2), f('c', 3)]).vs, ARENA_TEXT.hud.eachAlone, 'every fighter a side of its own');
   assert.equal(at([f('you', 0), f('a', 1), f('b', 1)]).vs, ARENA_TEXT.hud.vs, 'two against one: a team');
   assert.equal(at([f('you', 0), f('a', 1)]).vs, ARENA_TEXT.hud.vs, 'a duel');
-  assert.match(read('src/ui/arena/arenaHud.js'), /if \(\(model\.vs \?\? ARENA_TEXT\.hud\.vs\) !== shown\.vs\) \{ shown\.vs = model\.vs \?\? ARENA_TEXT\.hud\.vs; parts\.vs\.textContent = shown\.vs; \}/);
+  assert.match(read('src/ui/arena/arenaHud.js'), /if \(\(model\.vs \?\? ARENA_TEXT\.hud\.vs\) !== shown\.vs\) \{\n\s*shown\.vs = model\.vs \?\? ARENA_TEXT\.hud\.vs;\n\s*parts\.vs\.textContent = shown\.vs;\n\s*\}/);
 });
 
 // ── CURSE-OFF-SAND ──────────────────────────────────────────────────────────────────────────────────────────────────

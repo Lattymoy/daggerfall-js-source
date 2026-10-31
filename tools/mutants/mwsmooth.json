@@ -85,8 +85,8 @@
   {
     "name": "MWSMOOTH-the-garment-drops-its-normals",
     "file": "src/formats/morrowind/mwSkinTransfer.js",
-    "old": "      positions, normals, uvs, colors: null, material: garment.material ?? null,",
-    "new": "      positions, normals: null, uvs, colors: null, material: garment.material ?? null,",
+    "old": "      normals,",
+    "new": "      normals: null,",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ]

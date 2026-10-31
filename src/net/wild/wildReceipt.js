@@ -61,7 +61,27 @@ export const WILD_WORN_MAX = 16;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 /** Every other receipt's own fields (a gate's, a siege's, a Royal Tourney's, an arena's, a duel's): never in a fall's. */
-const WILD_FOREIGN = ['s', 'l', 'sk', 'sw', 'sd', 'a', 'h', 'th', 't', 'o', 'd', 'b', 'x', 'y', 'j', 'q', 'u', 'z', 'n'];
+const WILD_FOREIGN = [
+  's',
+  'l',
+  'sk',
+  'sw',
+  'sd',
+  'a',
+  'h',
+  'th',
+  't',
+  'o',
+  'd',
+  'b',
+  'x',
+  'y',
+  'j',
+  'q',
+  'u',
+  'z',
+  'n',
+];
 /** SEA-BOUNTY: a room's key as a fall names it (`m` - net/wire.js's rooms: `world:<cx>,<cy>`, `dungeon:m<id>`, ...). */
 export const WILD_ROOM_RE = /^[a-z]{1,12}:[\x21-\x7e]{1,80}$/;
 
@@ -76,31 +96,70 @@ const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g', 'vp'];
 export function wildReceiptValid(/** @type {any} */ c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (WILD_FOREIGN.some((f) => c[f] !== undefined)) return false;
-  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k) return false;
+  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)
+    return false;
   if (typeof c.c !== 'string' || (c.c !== '' && !REALM_CHARACTER_RE.test(c.c))) return false;
   if (typeof c.r !== 'string' || !WILD_REMAINS_RE.test(c.r)) return false;
   if (!Number.isInteger(c.w) || c.w < -1 || c.w >= WILD_WORN_MAX) return false;
-  if (c.wt !== undefined && !(Array.isArray(c.wt) && c.wt.length === 2 && c.wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))) return false;
-  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;   // SEA-BOUNTY: the room
-  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false;   // SEA-BOUNTY: the killer's character
-  if (c.g !== undefined && c.g !== 1) return false;   // WILD-REJOIN: the fallen gone from the room, or unsaid
-  if (c.vp !== undefined && !(Number.isSafeInteger(c.vp) && c.vp > 0 && c.vp <= WILD_VILLAIN_MAX)) return false;   // PVP-VILLAIN
+  if (
+    c.wt !== undefined &&
+    !(Array.isArray(c.wt) && c.wt.length === 2 && c.wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))
+  )
+    return false;
+  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false; // SEA-BOUNTY: the room
+  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false; // SEA-BOUNTY: the killer's character
+  if (c.g !== undefined && c.g !== 1) return false; // WILD-REJOIN: the fallen gone from the room, or unsaid
+  if (c.vp !== undefined && !(Number.isSafeInteger(c.vp) && c.vp > 0 && c.vp <= WILD_VILLAIN_MAX)) return false; // PVP-VILLAIN
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > WILD_RECEIPT_TTL_S) return false;
   return true;
 }
 /** MINT - the relay's half; unsigned (`f1.<body>.`) with no key, which the service declines. */
-export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string, g?: number, vp?: number }} */ { f, c, k, r, w, wt = null, m = '', kc = '', g = 0, vp = 0 }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintWildReceipt(
+  /** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string, g?: number, vp?: number }} */ {
+    f,
+    c,
+    k,
+    r,
+    w,
+    wt = null,
+    m = '',
+    kc = '',
+    g = 0,
+    vp = 0,
+  },
+  /** @type {CryptoKey|null} */ privateKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintWildReceipt needs an integer epoch-seconds clock');
   const fallenGone = g === 1 ? { g: 1 } : {};
-  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), ...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
+  const claims = {
+    f,
+    c,
+    k,
+    r,
+    w,
+    ...(w >= 0 && wt ? { wt } : {}),
+    ...(m ? { m } : {}),
+    ...(kc ? { kc } : {}),
+    ...fallenGone,
+    ...(vp > 0 ? { vp } : {}),
+    i: nowS,
+    e: nowS + WILD_RECEIPT_TTL_S,
+  };
   if (!wildReceiptValid(claims)) throw new TypeError('mintWildReceipt refused a claim set it could not verify');
   return mintAs(WILD_RECEIPT_V, claims, privateKey, subtle);
 }
 /** READ - the client's half: the claims, signed or not, never a verdict; null for anything else. */
 export const readWildReceipt = (/** @type {unknown} */ r) => readAs(WILD_RECEIPT_V, wildReceiptValid, r);
 /** A signed shape's rungs, one home for both: `{ ok: true, claims }` or `{ ok: false, why }`. */
-async function verifyAs(/** @type {string} */ V, /** @type {(c: any) => boolean} */ valid, /** @type {unknown} */ r, /** @type {CryptoKey} */ publicKey, /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ { subtle, nowS, skewS = SKEW_S }) {
+async function verifyAs(
+  /** @type {string} */ V,
+  /** @type {(c: any) => boolean} */ valid,
+  /** @type {unknown} */ r,
+  /** @type {CryptoKey} */ publicKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ { subtle, nowS, skewS = SKEW_S },
+) {
   if (typeof r !== 'string' || r.length > WILD_RECEIPT_MAX) return { ok: false, why: 'shape' };
   const parts = r.split('.');
   if (parts.length !== 3) return { ok: false, why: 'shape' };
@@ -112,10 +171,18 @@ async function verifyAs(/** @type {string} */ V, /** @type {(c: any) => boolean}
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!valid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
@@ -123,7 +190,12 @@ async function verifyAs(/** @type {string} */ V, /** @type {(c: any) => boolean}
   return { ok: true, claims };
 }
 /** A signed shape minted: unsigned (`<V>.<body>.`) with no key. */
-async function mintAs(/** @type {string} */ V, /** @type {any} */ claims, /** @type {CryptoKey|null} */ privateKey, /** @type {SubtleCrypto} */ subtle) {
+async function mintAs(
+  /** @type {string} */ V,
+  /** @type {any} */ claims,
+  /** @type {CryptoKey|null} */ privateKey,
+  /** @type {SubtleCrypto} */ subtle,
+) {
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${V}.${body}.`;
   const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${V}.${body}`)));
@@ -137,24 +209,38 @@ function readAs(/** @type {string} */ V, /** @type {(c: any) => boolean} */ vali
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return valid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
 /** VERIFY - the account service's half, the other receipts' rungs: `{ ok: true, claims }` or `{ ok: false, why }`. */
-export const verifyWildReceipt = (/** @type {unknown} */ r, /** @type {CryptoKey} */ publicKey, /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o) => verifyAs(WILD_RECEIPT_V, wildReceiptValid, r, publicKey, o);
+export const verifyWildReceipt = (
+  /** @type {unknown} */ r,
+  /** @type {CryptoKey} */ publicKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o,
+) => verifyAs(WILD_RECEIPT_V, wildReceiptValid, r, publicKey, o);
 
 /** MAC (2026-10-14): everything a well-formed collect's claims must be. */
 export function wildCollectValid(/** @type {any} */ c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (COLLECT_FOREIGN.some((f) => c[f] !== undefined)) return false;
-  if (typeof c.r !== 'string' || !WILD_REMAINS_RE.test(c.r) || typeof c.k !== 'string' || !ID_RE.test(c.k)) return false;
+  if (typeof c.r !== 'string' || !WILD_REMAINS_RE.test(c.r) || typeof c.k !== 'string' || !ID_RE.test(c.k))
+    return false;
   if (typeof c.c !== 'string' || !REALM_CHARACTER_RE.test(c.c)) return false;
-  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e) || c.e <= c.i || c.e - c.i > WILD_COLLECT_TTL_S) return false;
+  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e) || c.e <= c.i || c.e - c.i > WILD_COLLECT_TTL_S)
+    return false;
   return true;
 }
 /** MINT A COLLECT - the room's half: killer `k` takes remains `r`'s named piece into realm character `c`. */
-export async function mintWildCollect(/** @type {{ r: string, k: string, c: string }} */ { r, k, c }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintWildCollect(
+  /** @type {{ r: string, k: string, c: string }} */ { r, k, c },
+  /** @type {CryptoKey|null} */ privateKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintWildCollect needs an integer epoch-seconds clock');
   const claims = { r, k, c, i: nowS, e: nowS + WILD_COLLECT_TTL_S };
   if (!wildCollectValid(claims)) throw new TypeError('mintWildCollect refused a claim set it could not verify');
@@ -163,7 +249,11 @@ export async function mintWildCollect(/** @type {{ r: string, k: string, c: stri
 /** READ A COLLECT - the client's half. */
 export const readWildCollect = (/** @type {unknown} */ r) => readAs(WILD_COLLECT_V, wildCollectValid, r);
 /** VERIFY A COLLECT - the account service's half. */
-export const verifyWildCollect = (/** @type {unknown} */ r, /** @type {CryptoKey} */ publicKey, /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o) => verifyAs(WILD_COLLECT_V, wildCollectValid, r, publicKey, o);
+export const verifyWildCollect = (
+  /** @type {unknown} */ r,
+  /** @type {CryptoKey} */ publicKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o,
+) => verifyAs(WILD_COLLECT_V, wildCollectValid, r, publicKey, o);
 
 // ═══ SHIP-PVP (2026-10-22, the owner: "Build ever single bit of this and dont return until its perfected" - broadsides
 // between captains in the open sea; bible/03-World/Eltheric-Ocean.md SHIP-PVP): A SHIP WRECKED AT ANOTHER CAPTAIN'S GUNS,
@@ -195,8 +285,15 @@ const WRECK_FOREIGN = [...WILD_FOREIGN.filter((f) => f !== 'u' && f !== 'b'), 'w
 export function seaWreckValid(/** @type {any} */ c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (WRECK_FOREIGN.some((f) => c[f] !== undefined)) return false;
-  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f) return false;   // never her own guns
-  if (typeof c.c !== 'string' || !REALM_CHARACTER_RE.test(c.c) || typeof c.kc !== 'string' || !REALM_CHARACTER_RE.test(c.kc)) return false;
+  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f)
+    return false; // never her own guns
+  if (
+    typeof c.c !== 'string' ||
+    !REALM_CHARACTER_RE.test(c.c) ||
+    typeof c.kc !== 'string' ||
+    !REALM_CHARACTER_RE.test(c.kc)
+  )
+    return false;
   if (typeof c.r !== 'string' || !WILD_REMAINS_RE.test(c.r)) return false;
   if (!Number.isSafeInteger(c.u) || c.u < 1 || c.u > SEA_BOAT_UID_MAX) return false;
   if (c.b !== 0 && c.b !== 1) return false;
@@ -206,7 +303,20 @@ export function seaWreckValid(/** @type {any} */ c) {
   return true;
 }
 /** MINT A WRECK - the relay's half; unsigned (`n1.<body>.`) with no key, which the service declines. */
-export async function mintSeaWreck(/** @type {{ f: string, c: string, k: string, kc: string, r: string, u: number, b: number, m: string }} */ { f, c, k, kc, r, u, b, m }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintSeaWreck(
+  /** @type {{ f: string, c: string, k: string, kc: string, r: string, u: number, b: number, m: string }} */ {
+    f,
+    c,
+    k,
+    kc,
+    r,
+    u,
+    b,
+    m,
+  },
+  /** @type {CryptoKey|null} */ privateKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintSeaWreck needs an integer epoch-seconds clock');
   const claims = { f, c, k, kc, r, u, b, m, i: nowS, e: nowS + SEA_WRECK_TTL_S };
   if (!seaWreckValid(claims)) throw new TypeError('mintSeaWreck refused a claim set it could not verify');
@@ -215,4 +325,8 @@ export async function mintSeaWreck(/** @type {{ f: string, c: string, k: string,
 /** READ A WRECK - the client's half. */
 export const readSeaWreck = (/** @type {unknown} */ r) => readAs(SEA_WRECK_V, seaWreckValid, r);
 /** VERIFY A WRECK - the account service's half. */
-export const verifySeaWreck = (/** @type {unknown} */ r, /** @type {CryptoKey} */ publicKey, /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o) => verifyAs(SEA_WRECK_V, seaWreckValid, r, publicKey, o);
+export const verifySeaWreck = (
+  /** @type {unknown} */ r,
+  /** @type {CryptoKey} */ publicKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ o,
+) => verifyAs(SEA_WRECK_V, seaWreckValid, r, publicKey, o);

@@ -41,7 +41,13 @@
 
 import { verifyStarReceipt } from '../../src/net/starfall/starReceipt.js';
 import { starTimes } from '../../src/net/starfall/starfallLaw.js';
-import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
+import {
+  renownForXp,
+  renownRaidXp,
+  RENOWN_XP_MAX,
+  RENOWN_XP_HOUR_MAX,
+  RENOWN_TRACKS_MAX,
+} from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 import { spoilsGrantStatement } from './budget.js';
 
@@ -62,7 +68,9 @@ export const starDayOf = (n, k) => Math.floor(starTimes(n, k).fallAt / DAY_MS);
  *  `spoils` is that row's cid being its own (the raid's AUDIT RAID R4: the relay hands a receipt to every socket of an
  *  account, so a second browser would roll the spoils again). */
 const spoilsOf = (db, star, account, cid, nowS) => [
-  db.prepare('INSERT OR IGNORE INTO star_spoils (star, account, cid, at) VALUES (?1, ?2, ?3, ?4)').bind(star, account, cid, nowS),
+  db
+    .prepare('INSERT OR IGNORE INTO star_spoils (star, account, cid, at) VALUES (?1, ?2, ?3, ?4)')
+    .bind(star, account, cid, nowS),
   db.prepare('SELECT cid FROM star_spoils WHERE star = ?1 AND account = ?2').bind(star, account),
 ];
 const spoilsAnswer = (res, cid) => res?.results?.[0]?.cid === cid;
@@ -95,7 +103,13 @@ export async function starRecordOf({ db }, playerId) {
  * @param {{ strike?: ((key: string, nonce: string) => any)|null }} [silver] the star's silver - a statement its batch runs
  *   by its own row (marks.js starStrikeStatement), null where Marks are not this account's
  */
-export async function claimStar({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null } = {}) {
+export async function claimStar(
+  { db, nowS, subtle, rand },
+  player,
+  { receipt, character, name = null, cid = null },
+  publicKey,
+  { strike = null } = {},
+) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyStarReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -104,7 +118,8 @@ export async function claimStar({ db, nowS, subtle, rand }, player, { receipt, c
   const [n, k] = c.sf;
   const key = starKeyOf(n, k);
   const thanks = typeof cid === 'string' && STAR_CID_RE.test(cid);
-  if (!player.handle) {   // a guest: never counted - but given the spoils, once a device
+  if (!player.handle) {
+    // a guest: never counted - but given the spoils, once a device
     const spoils = thanks ? spoilsAnswer((await db.batch(spoilsOf(db, key, player.id, cid, nowS)))[1], cid) : false;
     return { recorded: false, why: 'guest', ...(await starRecordOf({ db }, player.id)), spoils };
   }
@@ -126,37 +141,48 @@ export async function claimStar({ db, nowS, subtle, rand }, player, { receipt, c
   const res = await db.batch([
     // THE ROW, under the day's bound, stamped with this claim's nonce and the device's claim id (B3: whose row a `claimed`
     // retry finds) - RETURNING it only when it was written
-    db.prepare(
-      `INSERT OR IGNORE INTO stars_held (star, account, day, char_id, xp, nonce, at, cid)
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO stars_held (star, account, day, char_id, xp, nonce, at, cid)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?9
        WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8
        RETURNING nonce`,
-    ).bind(key, player.id, day, character, xp, nonce, nowS, STAR_CLAIMS_DAY_MAX, thanks ? cid : null),
+      )
+      .bind(key, player.id, day, character, xp, nonce, nowS, STAR_CLAIMS_DAY_MAX, thanks ? cid : null),
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone; every SET reads the row as it WAS
-    db.prepare(
-      `UPDATE players SET
+    db
+      .prepare(
+        `UPDATE players SET
          renown_last_credit = ${credit},
          renown_hour_xp = CASE WHEN ${mine} THEN (CASE WHEN renown_hour >= ?8 THEN renown_hour_xp + ${credit} ELSE ${credit} END) ELSE renown_hour_xp END,
          renown_hour = CASE WHEN ${mine} THEN MAX(renown_hour, ?8) ELSE renown_hour END
        WHERE id = ?1
        RETURNING renown_last_credit AS credit`,
-    ).bind(player.id, character, key, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX),
+      )
+      .bind(player.id, character, key, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX),
     // THE TRACK THAT EXISTS grows by the credit (never past the cap's total) - by THIS claim's row alone
-    db.prepare(
-      `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
+    db
+      .prepare(
+        `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
        WHERE player = ?1 AND char_id = ?2 AND ${mine}`,
-    ).bind(player.id, character, key, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
+      )
+      .bind(player.id, character, key, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
     // A NEW TRACK, with Renown to hold and under the bound - by THIS claim's row alone
-    db.prepare(
-      `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
+    db
+      .prepare(
+        `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
          AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
-    ).bind(player.id, character, key, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
+      )
+      .bind(player.id, character, key, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the star is worth)
-    db.prepare(`UPDATE stars_held SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE star = ?3 AND account = ?1 AND nonce = ?4`)
+    db
+      .prepare(
+        `UPDATE stars_held SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE star = ?3 AND account = ?1 AND nonce = ?4`,
+      )
       .bind(player.id, character, key, nonce),
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM stars_held WHERE account = ?1').bind(player.id),
@@ -166,14 +192,24 @@ export async function claimStar({ db, nowS, subtle, rand }, player, { receipt, c
     ...(mint ? [mint] : []),
     // INT5's FILL - a signed win's spoils, the playing character's bucket - by THIS claim's row alone, IN the batch (B3: run
     // after it, as index.js ran it, an answer lost between the two lost the fill for good)
-    spoilsGrantStatement(db, player.id, 0, `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce),
+    spoilsGrantStatement(
+      db,
+      player.id,
+      0,
+      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`,
+      key,
+      nonce,
+    ),
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? spoilsAnswer(res[8], cid) : false;
   const struck = !!mint && Number(res[7 + (thanks ? 2 : 0)]?.meta?.changes ?? 0) > 0;
   const held = int(count?.results?.[0]?.n);
   if (!row?.results?.length) {
-    const had = await db.prepare('SELECT char_id, xp, cid FROM stars_held WHERE star = ?1 AND account = ?2').bind(key, player.id).first();
+    const had = await db
+      .prepare('SELECT char_id, xp, cid FROM stars_held WHERE star = ?1 AND account = ?2')
+      .bind(key, player.id)
+      .first();
     if (!had) return { recorded: false, why: 'day-full', held, spoils };
     // B3: THIS DEVICE'S OWN ROW - its claim id on it - answered with what its lost answer said: the row's character, what
     // the row credited it, and its track as it stands (the device adopts it once, starClaims.js - never on an answer it heard)
@@ -181,18 +217,39 @@ export async function claimStar({ db, nowS, subtle, rand }, player, { receipt, c
     const now = await renownTrackOf({ db }, player.id, String(had.char_id));
     const paid = int(had.xp);
     return {
-      recorded: false, why: 'claimed', held, spoils, own: true,
+      recorded: false,
+      why: 'claimed',
+      held,
+      spoils,
+      own: true,
       renown: now
-        ? { character: String(had.char_id), xp: now.xp, level: renownForXp(now.xp), credited: paid, rose: renownForXp(now.xp) > renownForXp(Math.max(0, now.xp - paid)) }
+        ? {
+            character: String(had.char_id),
+            xp: now.xp,
+            level: renownForXp(now.xp),
+            credited: paid,
+            rose: renownForXp(now.xp) > renownForXp(Math.max(0, now.xp - paid)),
+          }
         : { character: String(had.char_id), xp: null, level: null, credited: 0, rose: false },
     };
   }
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, held, spoils, key, struck,
-    renown: total === null
-      ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
-      : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },
+    recorded: true,
+    held,
+    spoils,
+    key,
+    struck,
+    renown:
+      total === null
+        ? { character, xp: null, level: null, credited: 0, rose: false } // no place for a new track: counted, paid nothing
+        : {
+            character,
+            xp: total,
+            level: renownForXp(total),
+            credited: Math.max(0, int(decided?.results?.[0]?.credit)),
+            rose: renownForXp(total) > renownForXp(was),
+          },
   };
 }

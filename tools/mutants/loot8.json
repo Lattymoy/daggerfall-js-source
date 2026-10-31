@@ -29,8 +29,8 @@
   {
     "name": "LOOT8-no-floor",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP)",
-    "new": "1 + DROUGHT_STEP_MULT * (Math.max(0, Number(d) || 0) / DROUGHT_STEP)",
+    "old": "  Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP));",
+    "new": "  Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * (Math.max(0, Number(d) || 0) / DROUGHT_STEP));",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT8-uncapped",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "=> Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT",
-    "new": "=> (1 + DROUGHT_STEP_MULT",
+    "old": "  Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP));",
+    "new": "  1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP);",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LOOT8-mark-kept",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  delete item.untaken;\n",
-    "new": "  void 0;\n",
+    "old": "  delete item.untaken;",
+    "new": "  void 0;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LOOT8-counts-off",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  if (!lootRarityOn()) return false;\n  if (isGarment(item)",
-    "new": "  if (isGarment(item)",
+    "old": "  if (!lootRarityOn()) return false;\n  if (isGarment(item) && !legendariesFor(item).length) return false;",
+    "new": "  if (isGarment(item) && !legendariesFor(item).length) return false;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "LOOT8-legendary-never-empties",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "_drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 :",
-    "new": "_drought = false ? 0 :",
+    "old": "  _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);",
+    "new": "  _drought = false ? 0 : Math.min(DROUGHT_MAX, _drought + 1);",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "LOOT8-rare-empties",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "_drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 :",
-    "new": "_drought = rarityRank(item) >= RARITIES.rare.rank ? 0 :",
+    "old": "  _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);",
+    "new": "  _drought = rarityRank(item) >= RARITIES.rare.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "LOOT8-no-ceiling",
     "file": "src/systems/loot/lootDrought.js",
-    "old": ": Math.min(DROUGHT_MAX, _drought + 1);",
-    "new": ": _drought + 1;",
+    "old": "  _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);",
+    "new": "  _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : _drought + 1;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "LOOT8-record-negative",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "return Number.isSafeInteger(d) && d >= 0 ?",
-    "new": "return Number.isSafeInteger(d) ?",
+    "old": "  return Number.isSafeInteger(d) && d >= 0 ? Math.min(DROUGHT_MAX, d) : 0;",
+    "new": "  return Number.isSafeInteger(d) ? Math.min(DROUGHT_MAX, d) : 0;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "LOOT8-record-fraction",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "return Number.isSafeInteger(d) && d >= 0 ?",
-    "new": "return Number.isFinite(d) && d >= 0 ?",
+    "old": "  return Number.isSafeInteger(d) && d >= 0 ? Math.min(DROUGHT_MAX, d) : 0;",
+    "new": "  return Number.isFinite(d) && d >= 0 ? Math.min(DROUGHT_MAX, d) : 0;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "LOOT8-record-past-the-ceiling",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "? Math.min(DROUGHT_MAX, d) : 0;",
-    "new": "? d : 0;",
+    "old": "  return Number.isSafeInteger(d) && d >= 0 ? Math.min(DROUGHT_MAX, d) : 0;",
+    "new": "  return Number.isSafeInteger(d) && d >= 0 ? d : 0;",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]
@@ -138,7 +138,7 @@
   {
     "name": "LOOT8-load-forgets",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  restoreSaveData: (r) => { _drought = validDroughtRecord(r); },",
+    "old": "  restoreSaveData: (r) => {\n    _drought = validDroughtRecord(r);\n  },",
     "new": "  restoreSaveData: () => {},",
     "tests": [
       "test/systems/loot8_drought.test.js"
@@ -246,8 +246,8 @@
   {
     "name": "LOOT8-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  untaken: bool(),",
-    "new": "  untakenX: bool(),",
+    "old": "  untaken: bool(), // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought",
+    "new": "  untakenX: bool(), // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought",
     "tests": [
       "test/systems/loot8_drought.test.js"
     ]

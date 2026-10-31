@@ -29,7 +29,7 @@
 // title is its quest's DisplayName in English (test/systems/questlines/ql12_lines.test.js holds the two to one word).
 import { t } from '../textManager.js';
 import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
-import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTLINES LINES-3: the Renown a revenant comes at, in the window's words
+import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js'; // AUDIT QUESTLINES LINES-3: the Renown a revenant comes at, in the window's words
 
 /**
  * @typedef {{ quest: string, title: () => string, needs?: ReadonlyArray<LineNeed> }} LineStep
@@ -58,14 +58,28 @@ import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTL
  */
 
 /** @param {Line} l @returns {Readonly<Line>} */
-const line = (l) => Object.freeze({ ...l, opens: Object.freeze({ ...l.opens }), steps: Object.freeze(l.steps.map((s) => Object.freeze({ ...s, ...(s.needs ? { needs: Object.freeze([...s.needs]) } : {}) }))) });
+const line = (l) =>
+  Object.freeze({
+    ...l,
+    opens: Object.freeze({ ...l.opens }),
+    steps: Object.freeze(
+      l.steps.map((s) => Object.freeze({ ...s, ...(s.needs ? { needs: Object.freeze([...s.needs]) } : {}) })),
+    ),
+  });
 
 /** The lines, in the window's order: the Cycle, the Hour, the Ketch, the Coil, the Festival's, then the introductions. */
 export const QL_LINES = Object.freeze([
   line({
-    id: 'burningDoors', group: 'cycle', tier: 3, post: 'magery',
+    id: 'burningDoors',
+    group: 'cycle',
+    tier: 3,
+    post: 'magery',
     title: () => t('ql.line.burningDoors', 'The Burning Doors'),
-    lead: () => t('ql.line.burningDoors.lead', 'Someone is opening Dagon’s Breaches on purpose. A Master Conjurer of the Mages Guild wants to know who, and how.'),
+    lead: () =>
+      t(
+        'ql.line.burningDoors.lead',
+        'Someone is opening Dagon’s Breaches on purpose. A Master Conjurer of the Mages Guild wants to know who, and how.',
+      ),
     giver: () => t('ql.line.burningDoors.giver', 'Ysolde Marnhel, Master Conjurer of the Mages Guild of Wayrest'),
     opens: { level: 10, online: true, account: true },
     steps: [
@@ -77,9 +91,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'covensHoard', group: 'cycle', tier: 3, post: 'magery',
+    id: 'covensHoard',
+    group: 'cycle',
+    tier: 3,
+    post: 'magery',
     title: () => t('ql.line.covensHoard', 'The Covens’ Hoard'),
-    lead: () => t('ql.line.covensHoard.lead', 'Dagon’s covens hoard the Battlespire’s keys in the deep places. Their champions glow gold.'),
+    lead: () =>
+      t(
+        'ql.line.covensHoard.lead',
+        'Dagon’s covens hoard the Battlespire’s keys in the deep places. Their champions glow gold.',
+      ),
     giver: () => t('ql.line.covensHoard.giver', 'Ysolde Marnhel, Master Conjurer of the Mages Guild of Wayrest'),
     opens: { after: 'burningDoors', online: true, account: true },
     steps: [
@@ -89,9 +110,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'weirRoad', group: 'cycle', tier: 4, post: 'tavern',
+    id: 'weirRoad',
+    group: 'cycle',
+    tier: 4,
+    post: 'tavern',
     title: () => t('ql.line.weirRoad', 'The Weir Road'),
-    lead: () => t('ql.line.weirRoad.lead', 'The Battlespire fell in 3E 398. One of its last class of Battlemages has never stopped living that year.'),
+    lead: () =>
+      t(
+        'ql.line.weirRoad.lead',
+        'The Battlespire fell in 3E 398. One of its last class of Battlemages has never stopped living that year.',
+      ),
     giver: () => t('ql.line.weirRoad.giver', 'Corvane Tull, Battlemage of the Spire’s last class'),
     opens: { after: 'covensHoard', online: true, account: true },
     steps: [
@@ -102,9 +130,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'hourThatWasNot', group: 'hour', tier: 4, post: 'temple',
+    id: 'hourThatWasNot',
+    group: 'hour',
+    tier: 4,
+    post: 'temple',
     title: () => t('ql.line.hourThatWasNot', 'The Hour That Was Not'),
-    lead: () => t('ql.line.hourThatWasNot.lead', 'The priests of Akatosh feel a wound in time under the Bay, and brass where there should be stone.'),
+    lead: () =>
+      t(
+        'ql.line.hourThatWasNot.lead',
+        'The priests of Akatosh feel a wound in time under the Bay, and brass where there should be stone.',
+      ),
     giver: () => t('ql.line.hourThatWasNot.giver', 'Prior Anselm Vey of the Order of the Hour'),
     opens: { level: 12, online: true, account: true },
     steps: [
@@ -113,9 +148,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'skyKetch', group: 'ketch', tier: 4, post: 'tavern',
+    id: 'skyKetch',
+    group: 'ketch',
+    tier: 4,
+    post: 'tavern',
     title: () => t('ql.line.skyKetch', 'The Sky-Ketch'),
-    lead: () => t('ql.line.skyKetch.lead', 'Every ten hours a Rourken airship appears over Daggerfall. An antiquarian from Sentinel wants to know why.'),
+    lead: () =>
+      t(
+        'ql.line.skyKetch.lead',
+        'Every ten hours a Rourken airship appears over Daggerfall. An antiquarian from Sentinel wants to know why.',
+      ),
     giver: () => t('ql.line.skyKetch.giver', 'Imrah Bel-Tavir, Antiquarian of Sentinel'),
     opens: { level: 12, online: true, account: true },
     steps: [
@@ -126,9 +168,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'oldCoil', group: 'coil', tier: 3, post: 'tavern',
+    id: 'oldCoil',
+    group: 'coil',
+    tier: 3,
+    post: 'tavern',
     title: () => t('ql.line.oldCoil', 'The Old Coil'),
-    lead: () => t('ql.line.oldCoil.lead', 'Sentinel’s sailors say the World-Skin was shed once, and that what was shed still swims.'),
+    lead: () =>
+      t(
+        'ql.line.oldCoil.lead',
+        'Sentinel’s sailors say the World-Skin was shed once, and that what was shed still swims.',
+      ),
     giver: () => t('ql.line.oldCoil.giver', 'Hamid al-Rasheen, a packet captain of Sentinel'),
     opens: { level: 8, online: true, account: true },
     steps: [
@@ -138,10 +187,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'thirteenthFrostfall', group: 'festival', tier: 3,
+    id: 'thirteenthFrostfall',
+    group: 'festival',
+    tier: 3,
     title: () => t('ql.line.thirteenthFrostfall', 'The Thirteenth of Frostfall'),
-    lead: () => t('ql.line.thirteenthFrostfall.lead', 'At the Witches’ Festival the covens sing stars out of the sky. A witch of Glenmoril wants to know why.'),
-    giver: () => t('ql.line.thirteenthFrostfall.giver', 'Morwen, a Wyrd Sister of Glenmoril'),   // AUDIT STAR8 T1: of the Festival's Glenmoril Wyrd
+    lead: () =>
+      t(
+        'ql.line.thirteenthFrostfall.lead',
+        'At the Witches’ Festival the covens sing stars out of the sky. A witch of Glenmoril wants to know why.',
+      ),
+    giver: () => t('ql.line.thirteenthFrostfall.giver', 'Morwen, a Wyrd Sister of Glenmoril'), // AUDIT STAR8 T1: of the Festival's Glenmoril Wyrd
     opens: { level: 6, online: true, account: true, event: 'starfall' },
     steps: [
       { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },
@@ -151,11 +206,18 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introCrafts', group: 'intro', tier: 1, post: 'board',
+    id: 'introCrafts',
+    group: 'intro',
+    tier: 1,
+    post: 'board',
     title: () => t('ql.line.introCrafts', 'The Court Crafter'),
-    lead: () => t('ql.line.introCrafts.lead', 'A crafter who works for the court wants an apprentice who can find their own materials.'),
+    lead: () =>
+      t(
+        'ql.line.introCrafts.lead',
+        'A crafter who works for the court wants an apprentice who can find their own materials.',
+      ),
     giver: () => t('ql.line.introCrafts.giver', 'a court crafter'),
-    opens: { level: 2, online: true, account: true },   // the Professions' harvests and crafts are the account service's to answer - a registered account's (AUDIT QUESTLINES ACTS-2: they refuse a guest)
+    opens: { level: 2, online: true, account: true }, // the Professions' harvests and crafts are the account service's to answer - a registered account's (AUDIT QUESTLINES ACTS-2: they refuse a guest)
     steps: [
       { quest: 'QLIP01', title: () => t('ql.step.QLIP01', 'Of Rod and Root') },
       { quest: 'QLIP02', title: () => t('ql.step.QLIP02', 'Ore and Timber') },
@@ -165,9 +227,13 @@ export const QL_LINES = Object.freeze([
   // AUDIT QUESTLINES VOICE-QL: American spelling in the words (Voice.md rule 8) - armorer, harbormaster, Colors (QLIS03's
   // DisplayName with it, ql12_lines' one word); the keys stay
   line({
-    id: 'introGear', group: 'intro', tier: 1, post: 'board',
+    id: 'introGear',
+    group: 'intro',
+    tier: 1,
+    post: 'board',
     title: () => t('ql.line.introGear', 'The Smith’s Secrets'),
-    lead: () => t('ql.line.introGear.lead', 'An armorer offers to show you what a good piece of gear can still be made into.'),
+    lead: () =>
+      t('ql.line.introGear.lead', 'An armorer offers to show you what a good piece of gear can still be made into.'),
     giver: () => t('ql.line.introGear.giver', 'an armorer'),
     opens: { level: 4 },
     steps: [
@@ -176,7 +242,10 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introSea', group: 'intro', tier: 2, post: 'board',
+    id: 'introSea',
+    group: 'intro',
+    tier: 2,
+    post: 'board',
     title: () => t('ql.line.introSea', 'The Harbormaster’s Word'),
     lead: () => t('ql.line.introSea.lead', 'A harbormaster needs a captain. Any captain. Even you.'),
     giver: () => t('ql.line.introSea.giver', 'a harbormaster'),
@@ -188,9 +257,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introRoad', group: 'intro', tier: 1, post: 'board',
+    id: 'introRoad',
+    group: 'intro',
+    tier: 1,
+    post: 'board',
     title: () => t('ql.line.introRoad', 'The Merchant’s Road'),
-    lead: () => t('ql.line.introRoad.lead', 'A stable master knows a merchant yard that pays well for a wagon’s load, if someone will haul it.'),
+    lead: () =>
+      t(
+        'ql.line.introRoad.lead',
+        'A stable master knows a merchant yard that pays well for a wagon’s load, if someone will haul it.',
+      ),
     giver: () => t('ql.line.introRoad.giver', 'a stable master'),
     opens: { level: 3 },
     steps: [
@@ -199,9 +275,13 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introTables', group: 'intro', tier: 1, post: 'board',
+    id: 'introTables',
+    group: 'intro',
+    tier: 1,
+    post: 'board',
     title: () => t('ql.line.introTables', 'A Seat at the Table'),
-    lead: () => t('ql.line.introTables.lead', 'A tavern regular is looking for someone new to lose to. Or, better, to beat.'),
+    lead: () =>
+      t('ql.line.introTables.lead', 'A tavern regular is looking for someone new to lose to. Or, better, to beat.'),
     giver: () => t('ql.line.introTables.giver', 'a tavern regular'),
     opens: { level: 2 },
     steps: [
@@ -210,9 +290,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introArena', group: 'intro', tier: 2, post: 'board',
+    id: 'introArena',
+    group: 'intro',
+    tier: 2,
+    post: 'board',
     title: () => t('ql.line.introArena', 'The Herald’s Call'),
-    lead: () => t('ql.line.introArena.lead', 'The Arena’s Herald is calling for new blood, and pays the first purse in advance of glory.'),
+    lead: () =>
+      t(
+        'ql.line.introArena.lead',
+        'The Arena’s Herald is calling for new blood, and pays the first purse in advance of glory.',
+      ),
     giver: () => t('ql.line.introArena.giver', 'the Arena’s Herald'),
     opens: { level: 6, online: true },
     steps: [
@@ -221,9 +308,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introBay', group: 'intro', tier: 2, post: 'board',
+    id: 'introBay',
+    group: 'intro',
+    tier: 2,
+    post: 'board',
     title: () => t('ql.line.introBay', 'The Bay’s Troubles'),
-    lead: () => t('ql.line.introBay.lead', 'A captain of the watch has more trouble than soldiers: raiders on the roads, and the dead who will not lie down.'),
+    lead: () =>
+      t(
+        'ql.line.introBay.lead',
+        'A captain of the watch has more trouble than soldiers: raiders on the roads, and the dead who will not lie down.',
+      ),
     giver: () => t('ql.line.introBay.giver', 'a captain of the watch'),
     opens: { level: 6, online: true },
     steps: [
@@ -232,9 +326,16 @@ export const QL_LINES = Object.freeze([
     ],
   }),
   line({
-    id: 'introFirmament', group: 'intro', tier: 1, post: 'board',
+    id: 'introFirmament',
+    group: 'intro',
+    tier: 1,
+    post: 'board',
     title: () => t('ql.line.introFirmament', 'Written in the Stars'),
-    lead: () => t('ql.line.introFirmament.lead', 'An astrologer insists your fortune is written on the Firmament, and that you can write the rest yourself.'),
+    lead: () =>
+      t(
+        'ql.line.introFirmament.lead',
+        'An astrologer insists your fortune is written on the Firmament, and that you can write the rest yourself.',
+      ),
     giver: () => t('ql.line.introFirmament.giver', 'an astrologer'),
     opens: { level: 3, online: true },
     steps: [
@@ -248,7 +349,9 @@ const BY_ID = new Map(QL_LINES.map((l) => [l.id, l]));
 /** A line by its id, or null. */
 export const lineById = (id) => BY_ID.get(id) ?? null;
 
-const BY_QUEST = new Map(QL_LINES.flatMap((l) => l.steps.map((s, i) => [s.quest.toUpperCase(), { line: l, index: i }])));
+const BY_QUEST = new Map(
+  QL_LINES.flatMap((l) => l.steps.map((s, i) => [s.quest.toUpperCase(), { line: l, index: i }])),
+);
 /** The line and step a quest is, or null for a quest no line holds. */
 export const lineStepOf = (questName) => BY_QUEST.get(String(questName ?? '').toUpperCase()) ?? null;
 
@@ -281,7 +384,7 @@ export function lineOpens(l, probe) {
   if (o.account && !(probe.registered?.() ?? true)) return false;
   if (Number.isFinite(o.level) && probe.level() < /** @type {number} */ (o.level)) return false;
   if (o.after && !probe.lineDone(o.after)) return false;
-  if (o.event && !eventHolds(l, probe)) return false;   // STAR8: a seasonal line begins only while its event is staged
+  if (o.event && !eventHolds(l, probe)) return false; // STAR8: a seasonal line begins only while its event is staged
   return unmetNeeds(l, 0, probe).length === 0;
 }
 /** STAR8: a seasonal line's event staged now (`opens.event`, a need) - a line with none always. */
@@ -293,7 +396,7 @@ const NEED_WORDS = Object.freeze({
   kingsGambit: () => t('ql.line.needs.kingsGambit', 'with The King\u2019s Gambit on'),
   naval: () => t('ql.line.needs.naval', 'with Naval Combat on'),
   renown: () => t('ql.line.needs.renown', 'at Renown {n}', { n: REVENANT_MIN_RENOWN }),
-  starfall: () => t('ql.line.needs.starfall', 'during the Witches’ Festival'),   // STAR8
+  starfall: () => t('ql.line.needs.starfall', 'during the Witches’ Festival'), // STAR8
 });
 
 /**
@@ -303,10 +406,13 @@ const NEED_WORDS = Object.freeze({
 export function opensWords(l, probe, step = 0) {
   const o = l.opens;
   const parts = [];
-  if (Number.isFinite(o.level) && probe.level() < /** @type {number} */ (o.level)) parts.push(t('ql.line.opensLevel', 'at level {n}', { n: o.level }));
-  if (o.after && !probe.lineDone(o.after)) parts.push(t('ql.line.opensAfter', 'after {line}', { line: lineById(o.after)?.title() ?? o.after }));
+  if (Number.isFinite(o.level) && probe.level() < /** @type {number} */ (o.level))
+    parts.push(t('ql.line.opensLevel', 'at level {n}', { n: o.level }));
+  if (o.after && !probe.lineDone(o.after))
+    parts.push(t('ql.line.opensAfter', 'after {line}', { line: lineById(o.after)?.title() ?? o.after }));
   if (o.online && !probe.online()) parts.push(t('ql.line.opensOnline', 'online'));
-  else if (o.account && !(probe.registered?.() ?? true)) parts.push(t('ql.line.opensAccount', 'with a registered account'));
+  else if (o.account && !(probe.registered?.() ?? true))
+    parts.push(t('ql.line.opensAccount', 'with a registered account'));
   // STAR8: a seasonal line's event said once, beside the step's own needs (its first step's is the same Festival)
   const needs = new Set([...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)]);
   for (const n of needs) parts.push(NEED_WORDS[n]());

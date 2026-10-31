@@ -42,7 +42,7 @@
   {
     "name": "HOLD-ONCE-EVERY-DUNGEON",
     "file": "src/systems/startDungeon.js",
-    "old": "export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;",
+    "old": "export const isPrivateersHold = (loc) => (loc?.mapTableData?.mapId ?? 0) >>> 0 === PRIVATEERS_HOLD_MAP_ID;",
     "new": "export const isPrivateersHold = (loc) => !!loc?.mapTableData;",
     "tests": [
       "test/systems/holdonce.test.js"
@@ -51,7 +51,7 @@
   {
     "name": "HOLD-ONCE-BY-THE-SETTING",
     "file": "src/systems/startDungeon.js",
-    "old": "export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;",
+    "old": "export const isPrivateersHold = (loc) => (loc?.mapTableData?.mapId ?? 0) >>> 0 === PRIVATEERS_HOLD_MAP_ID;",
     "new": "export const isPrivateersHold = (loc) => isStartDungeon(loc);",
     "tests": [
       "test/systems/holdonce.test.js"

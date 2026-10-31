@@ -43,12 +43,23 @@
 // character's baseline is a newborn's purse (REALM_BIRTH_WEALTH_MAX); one through customs, its level's allowance.
 // ═══════════════════════════════════════════════════════════════════
 
-import { treeStats, unpackTree } from '../../src/net/firmament/firmamentLaw.js';   // AUDIT POTION-MIGHT A5: the sky, for the kit's might
-import { judgeSave, judgeProducts, judgeDragons, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf, LAW_VALUES_CUT } from './judge.js';
+import { treeStats, unpackTree } from '../../src/net/firmament/firmamentLaw.js'; // AUDIT POTION-MIGHT A5: the sky, for the kit's might
+import {
+  judgeSave,
+  judgeProducts,
+  judgeDragons,
+  STRIKES_FOR_TIMED,
+  JUDGE_VERSION,
+  FINDINGS_KEPT,
+  WEALTH_VERSION,
+  goodsOf,
+  lawValuesOf,
+  LAW_VALUES_CUT,
+} from './judge.js';
 import { ledgerStep, chargeSteps } from './ledger.js';
 import { budgetConfig, bandOf, stepBudget } from './budget.js';
 import { customsAllowance } from '../../src/net/realm/realmGoldLaw.js';
-import { censusStep } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's tally, on the hour's row and the character's latest
+import { censusStep } from './staffCensus.js'; // STAFF-PANEL4-CENSUS: the census's tally, on the hour's row and the character's latest
 
 /** INT2's cutover (Mac: "Items judged, wealth baselined"): a character whose first judged wealth stands past this many
  *  of its level's customs allowance (realmGoldLaw.js customsAllowance) is flagged for staff - flagged, never held. */
@@ -91,8 +102,8 @@ export function holdOf({ prev, law, until, nowS, over, enforce }) {
 export function lawCountOf(row, { rising, holding, nowS }) {
   const standing = row.until != null && row.until > nowS ? row.until : null;
   const faded = row.at != null && nowS - row.at >= LAW_FADE_S;
-  const struck = (faded ? 0 : row.strikes ?? 0) + (rising && standing == null ? 1 : 0);
-  const served = faded ? 0 : row.served ?? 0;
+  const struck = (faded ? 0 : (row.strikes ?? 0)) + (rising && standing == null ? 1 : 0);
+  const served = faded ? 0 : (row.served ?? 0);
   // the fade counts from the last finding that held - never from inside a timed hold, whose end is the later
   const at = holding ? Math.max(nowS, standing ?? 0) : faded ? null : row.at;
   if (struck >= STRIKES_FOR_TIMED) {
@@ -104,13 +115,14 @@ export function lawCountOf(row, { rising, holding, nowS }) {
 
 /** A law finding's SIGNATURE: what was found, on what templates - the same pieces carried on find the same signature
  *  wherever they lie in the pack. Null for none. */
-export const lawSigOf = (/** @type {any[]} */ findings) => (findings.length
-  ? [...new Set(findings.map((f) => `${f.code}:${f.t ?? ''}`))].sort().join(',').slice(0, 500) : null);
+export const lawSigOf = (/** @type {any[]} */ findings) =>
+  findings.length ? [...new Set(findings.map((f) => `${f.code}:${f.t ?? ''}`))].sort().join(',').slice(0, 500) : null;
 
 /** RPT1026-LEDGERLAW: THE EXCUSE staff's clear writes (review.js clear) - the signature standing, and the character law's
  *  values beside it where it found any (judge.js lawValuesOf): `${sig}|${values}`. A finding of pieces alone is excused by
  *  its signature, as every excuse was. */
-export const lawExcuseOf = (/** @type {string} */ sig, /** @type {string | null | undefined} */ values) => (values == null ? sig : `${sig}|${values}`);
+export const lawExcuseOf = (/** @type {string} */ sig, /** @type {string | null | undefined} */ values) =>
+  values == null ? sig : `${sig}|${values}`;
 /**
  * RPT1026-LEDGERLAW (a private report: staff's clear of one bad purse let every purse after it pass):
  * WHETHER STAFF'S EXCUSE COVERS a finding of signature `sig` over the character law's `values`. The signature names a
@@ -119,8 +131,8 @@ export const lawExcuseOf = (/** @type {string} */ sig, /** @type {string | null 
  * and all (lawExcuseOf); one written before it still covers its pieces' findings, never a character finding.
  * @param {string | null | undefined} excused @param {string | null | undefined} sig @param {string | null | undefined} values
  */
-export const lawExcused = (excused, sig, values) => excused != null && sig != null && excused === lawExcuseOf(sig, values)
-  && !(values ?? '').includes(LAW_VALUES_CUT);   // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)
+export const lawExcused = (excused, sig, values) =>
+  excused != null && sig != null && excused === lawExcuseOf(sig, values) && !(values ?? '').includes(LAW_VALUES_CUT); // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)
 
 /**
  * THE LEVEL THE REALM TRUSTS, pure: the save's `level`, never past `seen` (the last trusted) and one more for every
@@ -150,51 +162,98 @@ export function trustedLevel({ seen, at, level, played }) {
  * @param {{ mine: any, dupes: any, config: any } | null} [known] SAVE-BATCH: the ledger's reads and the config, answered in
  * the checkpoint's first batch (realm.js checkpointRealm) - null, and they are asked here
  */
-export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, seq, key }, row, save, summary, baseline = null, known = null) {
+export async function verdictOn(
+  { db, nowS, firmOpen = false },
+  { player, char, seq, key },
+  row,
+  save,
+  summary,
+  baseline = null,
+  known = null,
+) {
   const first = row.wealth == null;
   const playedS = Number.isSafeInteger(row.played_now) ? row.played_now : 0;
   const lv = trustedLevel({
-    seen: first ? baseline?.level ?? null : row.level_seen ?? null,
-    at: first ? row.played_at ?? playedS : row.level_at ?? row.played_at ?? playedS,
-    level: save?.level, played: playedS,
+    seen: first ? (baseline?.level ?? null) : (row.level_seen ?? null),
+    at: first ? (row.played_at ?? playedS) : (row.level_at ?? row.played_at ?? playedS),
+    level: save?.level,
+    played: playedS,
   });
   // AUDIT POTION-MIGHT A5: the sky the kit's might reads - the tree the checkpoint's batch read, none while it is shut
   const firm = firmOpen ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};
   const judged = judgeSave(save, summary, { level: lv.level, firm });
-  const crafts = judged.provenances.length ? await judgeProducts(db, judged.provenances, player) : { findings: [], arrived: [] };
+  const crafts = judged.provenances.length
+    ? await judgeProducts(db, judged.provenances, player)
+    : { findings: [], arrived: [] };
   const products = crafts.findings;
-  const tames = judged.dragons.length ? await judgeDragons(db, judged.dragons, player, char) : [];   // DRAGON5: a held dragon a tame made
-  const ledger = await ledgerStep(db, { player, char, seq, nowS }, judged.pieces, known);   // SAVE-BATCH: its two reads answered in the checkpoint's first batch
+  const tames = judged.dragons.length ? await judgeDragons(db, judged.dragons, player, char) : []; // DRAGON5: a held dragon a tame made
+  const ledger = await ledgerStep(db, { player, char, seq, nowS }, judged.pieces, known); // SAVE-BATCH: its two reads answered in the checkpoint's first batch
   // AUDIT AUTO-HOLD: a key on another piece names the piece it is on (its template, off its print) - "something it carries"
   // was all its holder heard, and a griefer's planted one was a piece nobody could find
   const printOf = new Map(judged.pieces.map((p) => [p.key, p.fp]));
-  const templateOfKey = (/** @type {string} */ k) => { const t = Number(String(printOf.get(k) ?? '').split(':')[0]); return Number.isSafeInteger(t) ? t : null; };
-  const lawFindings = [...judged.findings, ...products, ...tames, ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) }))];
+  const templateOfKey = (/** @type {string} */ k) => {
+    const t = Number(String(printOf.get(k) ?? '').split(':')[0]);
+    return Number.isSafeInteger(t) ? t : null;
+  };
+  const lawFindings = [
+    ...judged.findings,
+    ...products,
+    ...tames,
+    ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) })),
+  ];
   const law = judged.count + products.length + tames.length + ledger.forged.length;
   const sig = law > 0 ? lawSigOf(lawFindings) : null;
-  const values = law > 0 ? lawValuesOf(save, summary) : null;   // RPT1026-LEDGERLAW: an excuse is of the values too
+  const values = law > 0 ? lawValuesOf(save, summary) : null; // RPT1026-LEDGERLAW: an excuse is of the values too
   const lawHolds = law > 0 && !lawExcused(row.law_excused, sig, values) ? law : 0;
   // the budget: the rise since the last judgement (or the baseline) that no witness explains, against the bucket the
   // time played filled
-  const config = known?.config ?? await budgetConfig(db);   // SAVE-BATCH: and the config, where the isolate kept none
+  const config = known?.config ?? (await budgetConfig(db)); // SAVE-BATCH: and the config, where the isolate kept none
   const band = bandOf(config, lv.level);
   // the measure moved (WEALTH_VERSION): the stored record, measured again, is the base - and nothing witnessed since it
   const rebased = !first && baseline != null && baseline.wealth != null;
-  const base = first ? baseline?.wealth ?? judged.wealth : rebased ? /** @type {number} */ (baseline.wealth) : row.wealth;
+  const base = first
+    ? (baseline?.wealth ?? judged.wealth)
+    : rebased
+      ? /** @type {number} */ (baseline.wealth)
+      : row.wealth;
   // a crafted piece the service made or sold to this account, come into the record: witnessed, once (products.credited)
   const arrivedWorth = crafts.arrived.reduce((n, a) => n + a.w, 0);
-  const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0) - arrivedWorth;
+  const gain = judged.wealth - base - (first || rebased ? 0 : (row.witnessed ?? 0)) - arrivedWorth;
   const dPlayed = first || row.played_at == null ? 0 : Math.max(0, playedS - row.played_at);
-  const budget = stepBudget({ allowance: first ? null : row.allowance ?? null, played: dPlayed, gain, band, enforce: config.enforce });
+  const budget = stepBudget({
+    allowance: first ? null : (row.allowance ?? null),
+    played: dPlayed,
+    gain,
+    band,
+    enforce: config.enforce,
+  });
   // the copies this checkpoint found this record holding - found and counted on the row by chargeSteps, after the
   // verdict's write; they hold nothing (AUTO-HOLD: the pieces are locked, ledger.js)
   const fresh = ledger.copies.length;
   // AUDIT AUTO-HOLD: a key on another piece holds while it is carried, and is NO STRIKE - it is no claim to the piece it was
   // minted for (ledger.js), and a peer can hand one over a body or a chest: three planted were a week's hold for the one
   // who took them up, as a contested claim would have been
-  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid') && (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));
-  const count = lawCountOf({ strikes: row.strikes ?? null, served: row.law_holds ?? null, until: row.held_until ?? null, at: row.law_at ?? null }, { rising, holding: lawHolds > 0, nowS });
-  const held = holdOf({ prev: row.held ?? null, law: lawHolds, until: count.until, nowS, over: budget.over, enforce: config.enforce });
+  const rising =
+    lawHolds > 0 &&
+    lawFindings.some((f) => f.code !== 'uid') &&
+    (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));
+  const count = lawCountOf(
+    {
+      strikes: row.strikes ?? null,
+      served: row.law_holds ?? null,
+      until: row.held_until ?? null,
+      at: row.law_at ?? null,
+    },
+    { rising, holding: lawHolds > 0, nowS },
+  );
+  const held = holdOf({
+    prev: row.held ?? null,
+    law: lawHolds,
+    until: count.until,
+    nowS,
+    over: budget.over,
+    enforce: config.enforce,
+  });
   // the cutover's outlier: a first judgement far past its level's line is flagged for staff, and holds nothing
   const outlier = first && judged.wealth > OUTLIER_ALLOWANCES * customsAllowance(lv.level);
   const clean = law === 0 && fresh === 0;
@@ -203,16 +262,32 @@ export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, 
   if (fresh) after.push(...chargeSteps(db, char, ledger.copies, nowS));
   for (let i = 0; i < crafts.arrived.length; i += 90) {
     const part = crafts.arrived.slice(i, i + 90).map((a) => a.provenance);
-    after.push(db.prepare(`UPDATE products SET credited = 1 WHERE owner = ?1 AND provenance IN (${part.map((_, k) => `?${k + 2}`).join(', ')})`).bind(player, ...part));
+    after.push(
+      db
+        .prepare(
+          `UPDATE products SET credited = 1 WHERE owner = ?1 AND provenance IN (${part.map((_, k) => `?${k + 2}`).join(', ')})`,
+        )
+        .bind(player, ...part),
+    );
   }
-  const finding = (/** @type {string} */ kind, /** @type {any} */ detail) => after.push(db.prepare(
-    'INSERT INTO realm_findings (player, char_id, seq, at, law, kind, detail) VALUES (?, ?, ?, ?, ?, ?, ?)',
-  ).bind(player, char, seq, nowS, JUDGE_VERSION, kind, JSON.stringify(detail)));
+  const finding = (/** @type {string} */ kind, /** @type {any} */ detail) =>
+    after.push(
+      db
+        .prepare(
+          'INSERT INTO realm_findings (player, char_id, seq, at, law, kind, detail) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .bind(player, char, seq, nowS, JUDGE_VERSION, kind, JSON.stringify(detail)),
+    );
   // a finding once, as it comes or changes - a held character's every checkpoint finds the same pieces
   // RPT1026-LEDGERLAW: and once more where staff's excuse ends on the same signature - another purse, another value - the
   // hold it starts said with the values it holds on
   if (law > 0 && (sig !== row.law_sig || (rising && values !== (row.law_v ?? null)))) {
-    finding('law', { count: law, findings: lawFindings.slice(0, FINDINGS_KEPT), ...(values ? { values } : {}), ...(lawHolds ? {} : { excused: true }) });
+    finding('law', {
+      count: law,
+      findings: lawFindings.slice(0, FINDINGS_KEPT),
+      ...(values ? { values } : {}),
+      ...(lawHolds ? {} : { excused: true }),
+    });
   }
   // a GAIN that leaves the bucket short is found; a checkpoint that gained nothing while play pays a shortfall back finds
   // nothing new (the hold, under `enforce`, stands until it is paid)
@@ -220,7 +295,16 @@ export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, 
   // goodsOf - its pieces that are not gold, at the wealth's own worth), so staff read gold - the rest of it, the debt off
   // it - apart from goods in one measure (FLAW REVIEW: customs' gold beside it, the loan never off it, made the goods short)
   // - asked only when this finding is written
-  if (budget.over > 0 && gain > 0) finding(config.enforce ? 'budget' : 'measure', { gain, over: budget.over, level: lv.level, played: dPlayed, wealth: judged.wealth, goods: goodsOf(save), ...(first ? { first: true } : {}) });
+  if (budget.over > 0 && gain > 0)
+    finding(config.enforce ? 'budget' : 'measure', {
+      gain,
+      over: budget.over,
+      level: lv.level,
+      played: dPlayed,
+      wealth: judged.wealth,
+      goods: goodsOf(save),
+      ...(first ? { first: true } : {}),
+    });
   if (outlier) finding('outlier', { wealth: judged.wealth, level: lv.level });
   // the hour's measure: what no witness explains, apart by sign, against the seconds played at this level
   const hour = Math.floor(nowS / HOUR_S) * HOUR_S;
@@ -228,40 +312,55 @@ export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, 
   // only when it changes"): the census's tally rides this row - null, unchanged, and the row keeps its own - and the
   // character's latest beside it. censusStep never throws: a census that fails is no census, never a lost save
   const census = censusStep(db, { player, char, seq, nowS }, save, row.census_tally ?? null);
-  after.push(db.prepare(
-    'INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss, played_s, checkpoints, tally) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)'
-    + ' ON CONFLICT (char_id, hour) DO UPDATE SET level = excluded.level, gain = gain + excluded.gain, loss = loss + excluded.loss,'
-    + ' played_s = played_s + excluded.played_s, checkpoints = checkpoints + 1, tally = COALESCE(excluded.tally, tally)',
-  ).bind(char, hour, player, lv.level, Math.max(0, gain), Math.max(0, -gain), dPlayed, census.tally), ...census.steps);
+  after.push(
+    db
+      .prepare(
+        'INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss, played_s, checkpoints, tally) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)' +
+          ' ON CONFLICT (char_id, hour) DO UPDATE SET level = excluded.level, gain = gain + excluded.gain, loss = loss + excluded.loss,' +
+          ' played_s = played_s + excluded.played_s, checkpoints = checkpoints + 1, tally = COALESCE(excluded.tally, tally)',
+      )
+      .bind(char, hour, player, lv.level, Math.max(0, gain), Math.max(0, -gain), dPlayed, census.tally),
+    ...census.steps,
+  );
   const set = {
     judged_seq: seq,
     held,
-    held_at: held == null ? null : held === row.held ? row.held_at ?? nowS : nowS,
+    held_at: held == null ? null : held === row.held ? (row.held_at ?? nowS) : nowS,
     strikes: count.strikes,
     held_until: count.until,
     law_holds: count.served,
     law_at: count.at,
-    review: outlier ? 'outlier' : row.review ?? null,
+    review: outlier ? 'outlier' : (row.review ?? null),
     wealth: judged.wealth,
     allowance: budget.allowance,
     played_at: playedS,
-    clean_obj: clean ? key : row.clean_obj ?? null,
-    clean_seq: clean ? seq : row.clean_seq ?? null,
+    clean_obj: clean ? key : (row.clean_obj ?? null),
+    clean_seq: clean ? seq : (row.clean_seq ?? null),
     level_seen: lv.level,
     level_at: lv.at,
     law_sig: sig,
-    law_v: values,   // RPT1026-LEDGERLAW: the values the character law found, an excuse's other half
+    law_v: values, // RPT1026-LEDGERLAW: the values the character law found, an excuse's other half
     // INT7: the arms the identity mint signs - the most reach of the lawful weapons in the pack, and a lawful bow
     arms_top: judged.arms[0],
     arms_bow: judged.arms[1],
-    might: lawHolds > 0 ? null : judged.might,   // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it
+    might: lawHolds > 0 ? null : judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it
   };
   // the first thing the law found, for the tab to name the piece to its player (only when it holds) - and a TIMED hold
   // says its end, `until` (AUTO-HOLD): the piece gone or not, that is the way out (the Ring report: held still past the
   // third, and told only "something")
   const found = lawHolds ? (({ code, t }) => ({ code, t: t ?? null }))(lawFindings[0]) : null;
-  const why = held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;
-  return { steps: [verdictWrite(db, char, row, set), ...after], set, clean, law, copies: ledger.copies, over: budget.over, why, locked: ledger.locked };
+  const why =
+    held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;
+  return {
+    steps: [verdictWrite(db, char, row, set), ...after],
+    set,
+    clean,
+    law,
+    copies: ledger.copies,
+    over: budget.over,
+    why,
+    locked: ledger.locked,
+  };
 }
 
 /**
@@ -270,18 +369,43 @@ export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, 
  * @param {any} db @param {string} char @param {any} row @param {any} s
  */
 export function verdictWrite(db, char, row, s) {
-  return db.prepare(
-    'UPDATE realm_characters SET judged_seq = ?2, held = ?3, held_at = ?4, strikes = ?5, review = ?6, wealth = ?7, witnessed = 0,'
-    + ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,'
-    + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,'
-    + ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22, law_v = ?23, might = ?24,'
-    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again.
-    // AUDIT RPT1026 C2: an excuse of the character law's values (lawExcuseOf's `|`) alone - a piece staff excused stands
-    // excused as every excuse did, or one put away for a checkpoint (a vault, a listing, a trade and back) held and struck
-    // its holder again when it came back
-    + " law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END"
-    + ' WHERE id = ?1 AND judge_rev = ?16',
-  ).bind(char, s.judged_seq, s.held, s.held_at, s.strikes, s.review, s.wealth, row.allowance ?? null, s.allowance, s.played_at,
-    s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null,
-    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null, s.might ?? null);
+  return db
+    .prepare(
+      'UPDATE realm_characters SET judged_seq = ?2, held = ?3, held_at = ?4, strikes = ?5, review = ?6, wealth = ?7, witnessed = 0,' +
+        ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,' +
+        ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,' +
+        ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22, law_v = ?23, might = ?24,' +
+        // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again.
+        // AUDIT RPT1026 C2: an excuse of the character law's values (lawExcuseOf's `|`) alone - a piece staff excused stands
+        // excused as every excuse did, or one put away for a checkpoint (a vault, a listing, a trade and back) held and struck
+        // its holder again when it came back
+        " law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END" +
+        ' WHERE id = ?1 AND judge_rev = ?16',
+    )
+    .bind(
+      char,
+      s.judged_seq,
+      s.held,
+      s.held_at,
+      s.strikes,
+      s.review,
+      s.wealth,
+      row.allowance ?? null,
+      s.allowance,
+      s.played_at,
+      s.clean_obj,
+      s.clean_seq,
+      s.level_seen,
+      s.level_at,
+      s.law_sig,
+      row.judge_rev ?? 0,
+      WEALTH_VERSION,
+      s.arms_top ?? null,
+      s.arms_bow ?? null,
+      s.held_until ?? null,
+      s.law_holds ?? 0,
+      s.law_at ?? null,
+      s.law_v ?? null,
+      s.might ?? null,
+    );
 }

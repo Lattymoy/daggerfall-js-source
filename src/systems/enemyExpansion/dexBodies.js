@@ -17,59 +17,61 @@
 import { registerCreatureMatches, _resetCreatureMatches } from '../../characters/creatureBodies.js';
 import { registerPersonFoes, _resetPersonFoes } from '../../characters/foeBodies.js';
 
-const NO_RIDE = 'a rider - its horse is its sprite\'s, and no person\'s body rides';
+const NO_RIDE = "a rider - its horse is its sprite's, and no person's body rides";
 
 /** Every monster of the mod's, by its id (MonsterBase.mdb.csv): a match or a declared miss - the table is the census.
  *  @type {Readonly<Record<number, { creature?: string[], miss?: string, veil?: boolean }>>} */
 export const DEX_CREATURE_MATCH = Object.freeze({
-  256: { creature: ['goblin_grunt'] },                       // Goblin: Tribunal's goblin
-  257: { miss: 'a flyer - no homunculus flies Morrowind' },  // Homunculus (Flying)
-  258: { miss: 'a lizard man is a person - Morrowind\'s Argonian (DEX_PERSON_FOES), never a creature' },   // Lizard Man
-  259: { miss: 'a lizard man is a person' },                 // Lizard Warrior
-  260: { miss: 'no bat walks Morrowind' },                   // Bat (Flying) - the classic giant bat's
-  261: { miss: 'no medusa' },                                // Medusa
-  262: { creature: ['bm_wolf_grey'] },                       // Wolf: Bloodmoon's
-  263: { creature: ['bm_wolf_snow_unique', 'bm_wolf_grey'] },   // Snow Wolf: Bloodmoon's white wolf, else its grey
-  264: { miss: 'no hell hound' },                            // Hell Hound
-  265: { miss: 'no grotesque' },                             // Grotesque - the classic gargoyle's
-  266: { creature: ['skeleton warrior', 'skeleton'] },       // Skeletal Soldier: the classic Skeletal Warrior's row
-  267: { miss: 'no dog' },                                   // Dog
-  268: { miss: 'no nymph' },                                 // Nymph - the classic nymph's
-  269: { miss: 'no minotaur' },                              // Minotaur
-  270: { creature: ['atronach_storm'] },                     // Iron Golem: the classic Iron Atronach's stone atronach
-  271: { miss: 'no giant spider (the centurion spider is a Dwemer machine)' },   // Blood Spider - the classic spider's
-  272: { creature: ['bm_ice_troll'] },                       // Troll: Bloodmoon's grahl, Morrowind's only troll
-  273: { creature: ['ancestor_ghost'], veil: true },         // Gloom Wraith (Spectral): the classic wraith's
-  274: { creature: ['ancestor_ghost'], veil: true },         // Faded Ghost (Spectral): the classic ghost's
-  275: { miss: 'a named spectral keeps his own sprite (MWNPC13) - the body is the stock ghost\'s, and he is no stock ghost' },   // Vengeful King Lysandus
-  276: { miss: 'no fire daemon' },                           // Fire Daemon
-  277: { creature: ['bonewalker'] },                         // Ghoul: the classic zombie's walking dead
-  278: { creature: ['bm_frost_boar'] },                      // Boar: Bloodmoon's tusked bristleback
-  279: { miss: 'Morrowind\'s dreugh swims, and this one walks' },   // Land Dreugh
-  280: { miss: 'no great cat' },                             // Mountain Lion - the classic sabretooth's
-  281: { creature: ['mudcrab'] },                            // Mudcrab
-  282: { creature: ['ogrim'] },                              // Ogre: Morrowind's ogrim
-  283: { miss: 'no will-o\'-wisp' },                         // Will-o'-wisp (Spectral)
-  284: { creature: ['atronach_frost'] },                     // Ice Golem: the classic Ice Atronach's
-  285: { creature: ['dremora'] },                            // Dremora Churl
-  286: { creature: ['atronach_storm'] },                     // Stone Golem: Morrowind's stone atronach
-  287: { creature: ['bonewalker_greater', 'bonewalker'] },   // Dire Ghoul: the greater bonewalker, else the lesser
-  288: { creature: ['scamp'] },                              // Scamp
-  289: { creature: ['centurion_sphere'] },                   // Centurion Sphere
-  290: { creature: ['centurion_steam'] },                    // Steam Centurion
+  256: { creature: ['goblin_grunt'] }, // Goblin: Tribunal's goblin
+  257: { miss: 'a flyer - no homunculus flies Morrowind' }, // Homunculus (Flying)
+  258: { miss: "a lizard man is a person - Morrowind's Argonian (DEX_PERSON_FOES), never a creature" }, // Lizard Man
+  259: { miss: 'a lizard man is a person' }, // Lizard Warrior
+  260: { miss: 'no bat walks Morrowind' }, // Bat (Flying) - the classic giant bat's
+  261: { miss: 'no medusa' }, // Medusa
+  262: { creature: ['bm_wolf_grey'] }, // Wolf: Bloodmoon's
+  263: { creature: ['bm_wolf_snow_unique', 'bm_wolf_grey'] }, // Snow Wolf: Bloodmoon's white wolf, else its grey
+  264: { miss: 'no hell hound' }, // Hell Hound
+  265: { miss: 'no grotesque' }, // Grotesque - the classic gargoyle's
+  266: { creature: ['skeleton warrior', 'skeleton'] }, // Skeletal Soldier: the classic Skeletal Warrior's row
+  267: { miss: 'no dog' }, // Dog
+  268: { miss: 'no nymph' }, // Nymph - the classic nymph's
+  269: { miss: 'no minotaur' }, // Minotaur
+  270: { creature: ['atronach_storm'] }, // Iron Golem: the classic Iron Atronach's stone atronach
+  271: { miss: 'no giant spider (the centurion spider is a Dwemer machine)' }, // Blood Spider - the classic spider's
+  272: { creature: ['bm_ice_troll'] }, // Troll: Bloodmoon's grahl, Morrowind's only troll
+  273: { creature: ['ancestor_ghost'], veil: true }, // Gloom Wraith (Spectral): the classic wraith's
+  274: { creature: ['ancestor_ghost'], veil: true }, // Faded Ghost (Spectral): the classic ghost's
+  275: {
+    miss: "a named spectral keeps his own sprite (MWNPC13) - the body is the stock ghost's, and he is no stock ghost",
+  }, // Vengeful King Lysandus
+  276: { miss: 'no fire daemon' }, // Fire Daemon
+  277: { creature: ['bonewalker'] }, // Ghoul: the classic zombie's walking dead
+  278: { creature: ['bm_frost_boar'] }, // Boar: Bloodmoon's tusked bristleback
+  279: { miss: "Morrowind's dreugh swims, and this one walks" }, // Land Dreugh
+  280: { miss: 'no great cat' }, // Mountain Lion - the classic sabretooth's
+  281: { creature: ['mudcrab'] }, // Mudcrab
+  282: { creature: ['ogrim'] }, // Ogre: Morrowind's ogrim
+  283: { miss: "no will-o'-wisp" }, // Will-o'-wisp (Spectral)
+  284: { creature: ['atronach_frost'] }, // Ice Golem: the classic Ice Atronach's
+  285: { creature: ['dremora'] }, // Dremora Churl
+  286: { creature: ['atronach_storm'] }, // Stone Golem: Morrowind's stone atronach
+  287: { creature: ['bonewalker_greater', 'bonewalker'] }, // Dire Ghoul: the greater bonewalker, else the lesser
+  288: { creature: ['scamp'] }, // Scamp
+  289: { creature: ['centurion_sphere'] }, // Centurion Sphere
+  290: { creature: ['centurion_steam'] }, // Steam Centurion
 });
 
 /** The mod's mobiles the person law reads otherwise than by default (foeBodies.js registerPersonFoes): the lizard men
  *  people, the riders their sprites.
  *  @type {Readonly<Record<number, { race?: string, sprite?: string }>>} */
 export const DEX_PERSON_FOES = Object.freeze({
-  258: { race: 'Argonian' },   // Lizard Man
-  259: { race: 'Argonian' },   // Lizard Warrior
-  386: { sprite: NO_RIDE },    // Knight Rider
-  387: { sprite: NO_RIDE },    // Rogue Rider
-  392: { sprite: NO_RIDE },    // Thief Rider
-  397: { sprite: NO_RIDE },    // Spellsword Rider
-  398: { sprite: NO_RIDE },    // Archer Rider
+  258: { race: 'Argonian' }, // Lizard Man
+  259: { race: 'Argonian' }, // Lizard Warrior
+  386: { sprite: NO_RIDE }, // Knight Rider
+  387: { sprite: NO_RIDE }, // Rogue Rider
+  392: { sprite: NO_RIDE }, // Thief Rider
+  397: { sprite: NO_RIDE }, // Spellsword Rider
+  398: { sprite: NO_RIDE }, // Archer Rider
 });
 
 const rowsOf = (table) => Object.entries(table).map(([t, row]) => /** @type {[number, any]} */ ([Number(t), row]));
@@ -84,4 +86,8 @@ export function installDexBodies() {
   return true;
 }
 /** The test seam: both doors let go, and the next install registers again. */
-export function _resetDexBodies() { _resetCreatureMatches(); _resetPersonFoes(); _installed = false; }
+export function _resetDexBodies() {
+  _resetCreatureMatches();
+  _resetPersonFoes();
+  _installed = false;
+}

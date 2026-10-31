@@ -22,8 +22,8 @@
   {
     "name": "SD2-the-great-cities-any-place",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    if (r < 0 && loc.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;\n",
-    "new": "",
+    "old": "    if (r < 0 && loc.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;\n    rows.push({ loc, claim });",
+    "new": "    rows.push({ loc, claim });",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SD2-the-smallest-first",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex));",
-    "new": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? 1 : outranks(b.claim, a.claim) ? -1 : a.loc.regionIndex - b.loc.regionIndex));",
+    "old": "    outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex,",
+    "new": "    outranks(a.claim, b.claim) ? 1 : outranks(b.claim, a.claim) ? -1 : a.loc.regionIndex - b.loc.regionIndex,",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SD2-a-city-with-no-ring-ends-it",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;",
-    "new": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) return null;",
+    "old": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = sdRoll(rec.s, 4) % pixels.length;",
+    "new": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) return null;\n    const roll = sdRoll(rec.s, 4) % pixels.length;",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SD2-always-the-first-pixel",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    const roll = sdRoll(rec.s, 4) % pixels.length;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
-    "new": "    const roll = 0;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
+    "old": "    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = sdRoll(rec.s, 4) % pixels.length;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
+    "new": "    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = 0;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SD2-a-ruin-for-a-template",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    && SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) && l.exterior?.exteriorData && !l.spawned",
-    "new": "    && l.exterior?.exteriorData && !l.spawned",
+    "old": "      SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) &&\n      l.exterior?.exteriorData &&",
+    "new": "      l.exterior?.exteriorData &&",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SD2-a-wide-template",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);",
-    "new": "    );",
+    "old": "      !isMain(l.mapTableData?.mapId) &&\n      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
+    "new": "      !isMain(l.mapTableData?.mapId),",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SD2-the-main-story-cloned",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    && !isMain(l.mapTableData?.mapId)\n",
-    "new": "",
+    "old": "      !isMain(l.mapTableData?.mapId) &&\n      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
+    "new": "      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],

@@ -27,10 +27,51 @@
 
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
-import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { drawSpellBurst } from './layeredSpell.js';   // SPELL-BURST: the cast's spell in its hands
-import { layeredShieldOf, SHIELD_SLOT, shieldPictureOf, loadShieldPicture, shieldPictureExpected, removeShieldArm, fillFromDonor, graftArm, outlineMask, drawLayeredShield, padFrame, shieldCutOf, SHIELD_CAST, SHIELD_GUN } from './layeredShield.js';   // LAYERED-SHIELD: the shield on the free arm
-import { artBowPx, bowFrom, LOOSE_BOW_FROM, heldPictureExpected, weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { drawnPiece } from '../../net/appearanceLaw.js'; // APPEARANCES: a worn piece's look
+import { drawSpellBurst } from './layeredSpell.js'; // SPELL-BURST: the cast's spell in its hands
+import {
+  layeredShieldOf,
+  SHIELD_SLOT,
+  shieldPictureOf,
+  loadShieldPicture,
+  shieldPictureExpected,
+  removeShieldArm,
+  fillFromDonor,
+  graftArm,
+  outlineMask,
+  drawLayeredShield,
+  padFrame,
+  shieldCutOf,
+  SHIELD_CAST,
+  SHIELD_GUN,
+} from './layeredShield.js'; // LAYERED-SHIELD: the shield on the free arm
+import {
+  artBowPx,
+  bowFrom,
+  LOOSE_BOW_FROM,
+  heldPictureExpected,
+  weaponShownFor,
+  weaponRigOf,
+  offRigOf,
+  thrustRigOf,
+  removeWeapon,
+  drawWeapon,
+  recolourHammer,
+  maskTile,
+  fillFrom,
+  weaponLen,
+  bowLen,
+  weaponCm,
+  heldPictureOf,
+  loadHeldPicture,
+  BARE_TWINS,
+  ARMED_TWINS,
+  GUN_FIRE_FRAME,
+  isGunCode,
+  isBowCode,
+  SWING_CUTS,
+  swingCutOf,
+} from './layeredWeapon.js'; // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -42,7 +83,7 @@ export const OUTFIT_SLOTS = Object.freeze({ head: 12, top: 18, legs: 23 });
 /** CLOAK: the cloak item's equip slots (Cloak1 / Cloak2) and templates (Casual / Formal Cloak, a man's and a woman's -
  *  itemTemplates.json 154, 155, 191, 192). A worn cloak adds `~<dye>` to the outfit code (dye = DyeColors 0..9, an item
  *  with none (or one out of range) wears Light Brown - the leather cloak's own band, 64-79, as the class sprites draw it). */
-export const CLOAK_DEFAULT_DYE = 5;   // DyeColors.LightBrown
+export const CLOAK_DEFAULT_DYE = 5; // DyeColors.LightBrown
 export const CLOAK_SLOTS = Object.freeze(/** @type {number[]} */ (cloakManifest.slots));
 const CLOAK_TEMPLATES = new Set(/** @type {number[]} */ (cloakManifest.templates));
 /** The dye (0..9) of the cloak an equip table wears, or null for none. */
@@ -50,7 +91,7 @@ export function cloakOfSlots(slots) {
   for (const s of CLOAK_SLOTS) {
     const it = slots?.[s];
     if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
-    const dye = Number.isInteger(it.dye) ? it.dye : it.dyeColor;   // a garment's dye (systems/item/itemDye.js itemDyeColor's order)
+    const dye = Number.isInteger(it.dye) ? it.dye : it.dyeColor; // a garment's dye (systems/item/itemDye.js itemDyeColor's order)
     return Number.isInteger(dye) && dye >= 0 && dye <= 9 ? dye : CLOAK_DEFAULT_DYE;
   }
   return null;
@@ -59,14 +100,22 @@ export function cloakOfSlots(slots) {
 const METALS = /** @type {string[]} */ (manifest.metals);
 /** ARMOR_MATERIAL (systems/armorMaterials.js) -> the metal drawn. Silver, Elven, Dwarven: no art yet - steel. */
 const PLATE_METAL = Object.freeze({
-  0x0200: 'iron', 0x0201: 'steel', 0x0202: 'steel', 0x0203: 'steel', 0x0204: 'steel',
-  0x0205: 'mithril', 0x0206: 'adamantium', 0x0207: 'ebony', 0x0208: 'orcish', 0x0209: 'daedric',
+  0x0200: 'iron',
+  0x0201: 'steel',
+  0x0202: 'steel',
+  0x0203: 'steel',
+  0x0204: 'steel',
+  0x0205: 'mithril',
+  0x0206: 'adamantium',
+  0x0207: 'ebony',
+  0x0208: 'orcish',
+  0x0209: 'daedric',
 });
 const CHAIN = new Set([0x0100, 0x0103]);
 
 /** One slot's look: 'l' leather (or nothing worn), 'c' chain, 'p0'..'p6' plate in METALS[n]. */
 export function pieceCode(piece) {
-  const m = drawnPiece(piece)?.material;   // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's
+  const m = drawnPiece(piece)?.material; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's
   if (!Number.isInteger(m)) return 'l';
   if (CHAIN.has(m)) return 'c';
   if (m >= 0x0200) return `p${Math.max(0, METALS.indexOf(PLATE_METAL[m] ?? 'steel'))}`;
@@ -76,7 +125,8 @@ export function pieceCode(piece) {
 /** The outfit an equip table wears (`slots[EQUIP_SLOTS.x]`), as head + top + legs piece codes: 'p6cl'. LAYERED-SHIELD:
  *  and a shield in the left hand after `^` ('p6cl^k7'). */
 export const outfitOfSlots = (slots) => {
-  const cloak = cloakOfSlots(slots), shield = layeredShieldOf(slots?.[SHIELD_SLOT]);
+  const cloak = cloakOfSlots(slots),
+    shield = layeredShieldOf(slots?.[SHIELD_SLOT]);
   return `${pieceCode(slots?.[OUTFIT_SLOTS.head])}${pieceCode(slots?.[OUTFIT_SLOTS.top])}${pieceCode(slots?.[OUTFIT_SLOTS.legs])}${cloak == null ? '' : `~${cloak}`}${shield ? `^${shield}` : ''}`;
 };
 
@@ -87,17 +137,27 @@ export function outfitOfItems(items) {
   return outfitOfSlots(slots);
 }
 
-const PIECE = /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:\^([brkt][lc0-9]))?(?:@(0|[a-z]{2}[0-9])(?:\+([a-z]{2}[0-9]))?)?(?:!([0-4])([0-3])?)?$/;
+const PIECE =
+  /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:\^([brkt][lc0-9]))?(?:@(0|[a-z]{2}[0-9])(?:\+([a-z]{2}[0-9]))?)?(?:!([0-4])([0-3])?)?$/;
 const FAMILY = { l: 'leather', c: 'chain', p: 'plate' };
 /** An outfit code split into its three pieces (and the cloak's dye, or null; LAYERED-SHIELD a shield after `^`; what the
  *  hands hold, LAYERED-DUAL a pair's other weapon after `+`, and SPELL-BURST a cast's element after `!` - and its stage
  *  where the frame drawn is another's), or null. */
 export function outfitPieces(outfit) {
   const m = PIECE.exec(String(outfit ?? ''));
-  return m ? {
-    head: m[1], top: m[2], legs: m[3], cloak: m[4] == null ? null : Number(m[4]), shield: m[5] ?? null, weapon: m[6] ?? null,
-    offhand: m[7] ?? null, spell: m[8] == null ? null : Number(m[8]), stage: m[9] == null ? null : Number(m[9]),
-  } : null;
+  return m
+    ? {
+        head: m[1],
+        top: m[2],
+        legs: m[3],
+        cloak: m[4] == null ? null : Number(m[4]),
+        shield: m[5] ?? null,
+        weapon: m[6] ?? null,
+        offhand: m[7] ?? null,
+        spell: m[8] == null ? null : Number(m[8]),
+        stage: m[9] == null ? null : Number(m[9]),
+      }
+    : null;
 }
 /** The art's folder for an outfit: '<head>_<top>_<legs>' families. */
 export const outfitCombo = (p) => `${FAMILY[p.head[0]]}_${FAMILY[p.top[0]]}_${FAMILY[p.legs[0]]}`;
@@ -111,21 +171,34 @@ export const LAYERED_OWN = 3;
 
 /** LAYERED-GEAR: the body a Graphics.LayeredGear choice (or a look's `lg`) draws - 1 female, 2 male, LAYERED_OWN the
  *  character's own (`own`, its `gender`: female, else male) - or null for off. */
-export const layeredGenderOf = (choice, own = null) => (choice === 1 ? 'female' : choice === 2 ? 'male'
-  : choice === LAYERED_OWN ? bodyOf(own) : null);
+export const layeredGenderOf = (choice, own = null) =>
+  choice === 1 ? 'female' : choice === 2 ? 'male' : choice === LAYERED_OWN ? bodyOf(own) : null;
 
 /** The class-sheet record group each body table reads (classSkins.js CLASS_TABLE_BASE's law): Death the hurt pose
  *  (10-14) where the body has one, else the idle; the bow / cast (20-24) where the body has it (both do now - an
  *  outfit without them falls back to the idle stance). */
 function recordBase(table, hasRanged, hasHurt) {
   switch (table) {
-    case 'Move': case 'MoveMelee': case 'MoveRanged': case 'MoveSpell': return 0;
-    case 'AttackMelee': return 5;
-    case 'AttackRanged': return hasRanged ? 20 : 15;
-    case 'AttackSpell': return 5;   // LAYERED-WEAPONS: the swing's wind-up and throw, hands empty - the bow was no cast
-    case 'Death': return hasHurt ? 10 : 15;
-    case 'Idle': case 'IdleMelee': case 'IdleRanged': case 'IdleSpell': return 15;
-    default: return null;
+    case 'Move':
+    case 'MoveMelee':
+    case 'MoveRanged':
+    case 'MoveSpell':
+      return 0;
+    case 'AttackMelee':
+      return 5;
+    case 'AttackRanged':
+      return hasRanged ? 20 : 15;
+    case 'AttackSpell':
+      return 5; // LAYERED-WEAPONS: the swing's wind-up and throw, hands empty - the bow was no cast
+    case 'Death':
+      return hasHurt ? 10 : 15;
+    case 'Idle':
+    case 'IdleMelee':
+    case 'IdleRanged':
+    case 'IdleSpell':
+      return 15;
+    default:
+      return null;
   }
 }
 
@@ -139,7 +212,8 @@ function recordBase(table, hasRanged, hasHurt) {
 export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirror) {
   // the loose's frames hold the art's own bow: hands known to hold no bow (`weapon` named, null for none) take the ranged
   // stance, empty; a look that names no weapon keeps the art's
-  const table = tableAsked === 'AttackRanged' && look && 'weapon' in look && !isBowCode(look.weapon) ? 'IdleRanged' : tableAsked;
+  const table =
+    tableAsked === 'AttackRanged' && look && 'weapon' in look && !isBowCode(look.weapon) ? 'IdleRanged' : tableAsked;
   const worn = outfitPieces(look?.outfit ?? 'lll');
   if (!worn) return null;
   const body = bodyOf(look?.gender);
@@ -156,44 +230,70 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
   const fc = Math.min(Math.max(frame | 0, 0), t - 1);
   // SWING-CUTS: a blow plays its weapon's cut of the swing; a pair's left hand's from the front or behind is the right's
   // turned over (the picture flipped), from aside its cut run backwards. AUDIT: a shot is the striking hand's gun's
-  const left = table === 'AttackMelee' && look?.strike === 'L' && !!look?.offhand, square = offset === 0 || offset === 4;
-  const striking = left ? look.offhand : look?.weapon, gun = table === 'AttackMelee' && isGunCode(striking);
+  const left = table === 'AttackMelee' && look?.strike === 'L' && !!look?.offhand,
+    square = offset === 0 || offset === 4;
+  const striking = left ? look.offhand : look?.weapon,
+    gun = table === 'AttackMelee' && isGunCode(striking);
   // LAYERED-SHIELD: on the free arm in every frame but the loose's, never beside a pair nor a bow; its swing is one-handed.
   // BACK-SHIELD: sheathed, it is on the back (eotbBackShield.js), not the arm
-  const shield = pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield : null;
-  const cut = table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? (shield && shieldCutOf(striking, offset)) || swingCutOf(striking, left && !square) : null;
-  const stage = table === 'AttackSpell' ? Math.min(fc, 3) : null;   // SPELL-BURST: the cast's, frame for frame - a shield's from behind holds the throw
-  const f = gun ? Math.min(shield ? SHIELD_GUN[offset] : GUN_FIRE_FRAME, n - 1)   // LAYERED-WEAPONS: a shot, from the hip
-    : cut ? cut[Math.min(cut.length - 1, Math.floor((fc * cut.length) / t))]
-    : stage != null ? Math.min(shield ? SHIELD_CAST[offset][stage] : fc, n - 1) : Math.floor((fc * n) / t);   // the cast: the swing's first frames, one for one
+  const shield =
+    pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed
+      ? pieces.shield
+      : null;
+  const cut =
+    table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length
+      ? (shield && shieldCutOf(striking, offset)) || swingCutOf(striking, left && !square)
+      : null;
+  const stage = table === 'AttackSpell' ? Math.min(fc, 3) : null; // SPELL-BURST: the cast's, frame for frame - a shield's from behind holds the throw
+  const f = gun
+    ? Math.min(shield ? SHIELD_GUN[offset] : GUN_FIRE_FRAME, n - 1) // LAYERED-WEAPONS: a shot, from the hip
+    : cut
+      ? cut[Math.min(cut.length - 1, Math.floor((fc * cut.length) / t))]
+      : stage != null
+        ? Math.min(shield ? SHIELD_CAST[offset][stage] : fc, n - 1)
+        : Math.floor((fc * n) / t); // the cast: the swing's first frames, one for one
   const cloakFrames = /** @type {string[]|undefined} */ (cloakManifest[body]?.frames);
-  const cloak = pieces.cloak != null && cloakFrames?.includes(`${record}-${f}`) ? pieces.cloak : null;   // a frame with no cloak art draws without
+  const cloak = pieces.cloak != null && cloakFrames?.includes(`${record}-${f}`) ? pieces.cloak : null; // a frame with no cloak art draws without
   // LAYERED-WEAPONS: what the hands show - nothing, the weapon held, or the art as drawn (the loose's own bow; an iron
   // warhammer, which is the art's own)
   // a flinch keeps what the hands held - AUDIT: a loose's bow as its stance holds it (the hurt frame has no art bow)
-  const hands = table === 'Death' && look?.armedTable ? (look.armedTable === 'AttackRanged' ? 'IdleRanged' : look.armedTable) : table;
-  const shown = weaponRigOf(body, `${record}-${f}`) ? weaponShownFor(hands, look?.weapon ?? null, !!look?.spellHand) : null;
-  const weapon = shown;   // AUDIT: an iron warhammer keeps its code - the art's own hammer, its glow round it
+  const hands =
+    table === 'Death' && look?.armedTable
+      ? look.armedTable === 'AttackRanged'
+        ? 'IdleRanged'
+        : look.armedTable
+      : table;
+  const shown = weaponRigOf(body, `${record}-${f}`)
+    ? weaponShownFor(hands, look?.weapon ?? null, !!look?.spellHand)
+    : null;
+  const weapon = shown; // AUDIT: an iron warhammer keeps its code - the art's own hammer, its glow round it
   // LAYERED-DUAL: a pair's other weapon, in the other hand, beside a weapon of its own (a melee stance's: weaponShownFor)
-  const pair = weapon && weapon !== '0' && !isBowCode(weapon) && OFF_CODE.test(look?.offhand ?? '') ? look.offhand : null;
+  const pair =
+    weapon && weapon !== '0' && !isBowCode(weapon) && OFF_CODE.test(look?.offhand ?? '') ? look.offhand : null;
   // LAYERED-SHIELD: the bare twin is the frame turned over, the shield to the other arm - a shield-bearer's is the armed one
   const bare = weapon === '0' && !shield;
   const twin = (bare ? BARE_TWINS : weapon && weapon !== 'wh0' ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
   const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f];
-  const flip = left && square ? !mirror : twin && bare ? !mirror : mirror;   // AUDIT: turned over from as it stands
+  const flip = left && square ? !mirror : twin && bare ? !mirror : mirror; // AUDIT: turned over from as it stands
   // the art's hammer line holds the striking hand's weapon in a swing; else the right's - the left's once flipped, as the
   // flip swaps the hands
   const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);
   const held = weapon == null ? '' : pair ? `@${swap ? pair : weapon}+${swap ? weapon : pair}` : `@${weapon}`;
   // SPELL-BURST: a cast carries its element (fpsSpellCasting.js ELEMENT_TYPES), drawn in its hands
-  const spell = table === 'AttackSpell' && held && Number.isInteger(look?.cast) && look.cast >= 0 && look.cast <= 4 ? `!${look.cast}${stage !== fr ? stage : ''}` : '';
+  const spell =
+    table === 'AttackSpell' && held && Number.isInteger(look?.cast) && look.cast >= 0 && look.cast <= 4
+      ? `!${look.cast}${stage !== fr ? stage : ''}`
+      : '';
   const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${shield ? `^${shield}` : ''}${held}${spell}`;
-  const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : '';   // a flipped picture's bow is in the art's other hand: its own picture
+  const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : ''; // a flipped picture's bow is in the art's other hand: its own picture
   return {
-    archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
+    archive: LAYERED_ARCHIVE[body],
+    record: rec,
+    frame: fr,
+    mirror: flip,
     key: `LA:${body}:${combo}:${rec}-${fr}:${code}${hand}`,
     rec: `${code}_${rec}-${fr}${flip ? 'm' : ''}`,
-    pair: pair ? (swap ? 'L' : 'R') : null,   // AUDIT: the hand whose weapon is on the line (its glow the line's)
+    pair: pair ? (swap ? 'L' : 'R') : null, // AUDIT: the hand whose weapon is on the line (its glow the line's)
   };
 }
 
@@ -205,20 +305,58 @@ export const isLayeredKey = (key) => typeof key === 'string' && key.startsWith('
 const IN_BROWSER = typeof window !== 'undefined';
 /** `<gender>/<combo>/<record>-<frame>` (and the weapon rig's `weapon/...`) -> the built strip's URL - eotbSprite's law. */
 const STRIPS = IN_BROWSER
-  ? Object.fromEntries(Object.entries(import.meta.glob('../../../vendor/layered-armor/*/*/*.png', { eager: true, query: '?url', import: 'default' }))
-    .map(([p, u]) => [p.split('/').slice(-3).join('/').replace(/\.png$/, ''), /** @type {string} */ (u)]))
+  ? Object.fromEntries(
+      Object.entries(
+        import.meta.glob('../../../vendor/layered-armor/*/*/*.png', { eager: true, query: '?url', import: 'default' }),
+      ).map(([p, u]) => [
+        p
+          .split('/')
+          .slice(-3)
+          .join('/')
+          .replace(/\.png$/, ''),
+        /** @type {string} */ (u),
+      ]),
+    )
   : {};
 
 /** `<gender>/<record>-<frame>` -> the cloak strip's URL. */
 const CLOAK_STRIPS = IN_BROWSER
-  ? Object.fromEntries(Object.entries(import.meta.glob('../../../vendor/layered-armor/cloak/*/*.png', { eager: true, query: '?url', import: 'default' }))
-    .map(([p, u]) => [p.split('/').slice(-2).join('/').replace(/\.png$/, ''), /** @type {string} */ (u)]))
+  ? Object.fromEntries(
+      Object.entries(
+        import.meta.glob('../../../vendor/layered-armor/cloak/*/*.png', {
+          eager: true,
+          query: '?url',
+          import: 'default',
+        }),
+      ).map(([p, u]) => [
+        p
+          .split('/')
+          .slice(-2)
+          .join('/')
+          .replace(/\.png$/, ''),
+        /** @type {string} */ (u),
+      ]),
+    )
   : {};
 
 /** `<gender>/<combo>/<record>-<frame>` -> the hood fix strip's URL (only where the hooded frame needs one). */
 const HOODFIX_STRIPS = IN_BROWSER
-  ? Object.fromEntries(Object.entries(import.meta.glob('../../../vendor/layered-armor/hoodfix/*/*/*.png', { eager: true, query: '?url', import: 'default' }))
-    .map(([p, u]) => [p.split('/').slice(-3).join('/').replace(/\.png$/, ''), /** @type {string} */ (u)]))
+  ? Object.fromEntries(
+      Object.entries(
+        import.meta.glob('../../../vendor/layered-armor/hoodfix/*/*/*.png', {
+          eager: true,
+          query: '?url',
+          import: 'default',
+        }),
+      ).map(([p, u]) => [
+        p
+          .split('/')
+          .slice(-3)
+          .join('/')
+          .replace(/\.png$/, ''),
+        /** @type {string} */ (u),
+      ]),
+    )
   : {};
 
 const SLOT_RGB = { head: [255, 0, 0], top: [0, 255, 0], legs: [0, 0, 255] };
@@ -243,21 +381,32 @@ export const layeredPreviewUrl = (gender) => STRIPS[`${bodyOf(gender)}/leather_l
 const GREEN_LUM = /** @type {number[][]} */ (cloakManifest.ramp).map(([r, g, b]) => 0.299 * r + 0.587 * g + 0.114 * b);
 /** Is this colour the cloth's green (hue 60-165, not grey, not black)? */
 function isCloth(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  const mx = Math.max(r, g, b),
+    mn = Math.min(r, g, b),
+    d = mx - mn;
   if (d === 0 || mx < 31 || d / mx < 0.15) return false;
   let h;
-  if (mx === r) h = (60 * (g - b)) / d; else if (mx === g) h = 120 + (60 * (b - r)) / d; else return false;
+  if (mx === r) h = (60 * (g - b)) / d;
+  else if (mx === g) h = 120 + (60 * (b - r)) / d;
+  else return false;
   if (h < 0) h += 360;
   return h >= 60 && h <= 165;
 }
 /** A cloth colour in the dye's band: its luminance's place on the green ramp, the same place on the dye's. */
 export function dyeCloth(r, g, b, dye) {
-  const band = (/** @type {number[][][]} */ (cloakManifest.dyes))[dye] ?? cloakManifest.dyes[0];
-  const L = 0.299 * r + 0.587 * g + 0.114 * b, last = GREEN_LUM.length - 1;
+  const band = /** @type {number[][][]} */ (cloakManifest.dyes)[dye] ?? cloakManifest.dyes[0];
+  const L = 0.299 * r + 0.587 * g + 0.114 * b,
+    last = GREEN_LUM.length - 1;
   let t = 0;
   if (L <= GREEN_LUM[last]) t = last;
-  else if (L < GREEN_LUM[0]) { let i = 0; while (GREEN_LUM[i + 1] >= L) i++; t = i + (GREEN_LUM[i] - L) / (GREEN_LUM[i] - GREEN_LUM[i + 1]); }
-  const a = Math.floor(t), c = Math.min(last, a + 1), f = t - a;
+  else if (L < GREEN_LUM[0]) {
+    let i = 0;
+    while (GREEN_LUM[i + 1] >= L) i++;
+    t = i + (GREEN_LUM[i] - L) / (GREEN_LUM[i] - GREEN_LUM[i + 1]);
+  }
+  const a = Math.floor(t),
+    c = Math.min(last, a + 1),
+    f = t - a;
   return [0, 1, 2].map((k) => Math.round(band[a][k] * (1 - f) + band[c][k] * f));
 }
 /**
@@ -276,9 +425,15 @@ export function closeHoodFoot(d, w, h, foot) {
     if (f < 0 || f < low - 6) continue;
     let k = 1;
     while (k <= 5 && f + k < h && d[((f + k) * w + x) * 4 + 3] === 0) k++;
-    if (k === 1 || k > 5 || f + k >= h) continue;   // nothing empty, too long a run (open air), or the canvas ends
+    if (k === 1 || k > 5 || f + k >= h) continue; // nothing empty, too long a run (open air), or the canvas ends
     const s = (f * w + x) * 4;
-    for (let y = f + 1; y < f + k; y++) { const o = (y * w + x) * 4; d[o] = d[s]; d[o + 1] = d[s + 1]; d[o + 2] = d[s + 2]; d[o + 3] = 255; }
+    for (let y = f + 1; y < f + k; y++) {
+      const o = (y * w + x) * 4;
+      d[o] = d[s];
+      d[o + 1] = d[s + 1];
+      d[o + 2] = d[s + 2];
+      d[o + 3] = 255;
+    }
   }
 }
 
@@ -290,19 +445,34 @@ export function closeHoodFoot(d, w, h, foot) {
  * @param {string} [top] the worn chest piece's family: 'l', 'c' or 'p'
  */
 export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, top = 'l') {
-  const w = out.width, h = out.height, d = out.data, sw = cs.width, c = cs.data;
-  if (sw !== w * 7 || cs.height !== h) return;   // not this canvas: no cloak rather than a misplaced one
-  const TRIM = { l: 2, c: 3, p: 4 }[head] ?? 2, LOIN = 5, SHO = 6, TOP_BIT = { l: 1, c: 2, p: 4 }[top] ?? 1;
+  const w = out.width,
+    h = out.height,
+    d = out.data,
+    sw = cs.width,
+    c = cs.data;
+  if (sw !== w * 7 || cs.height !== h) return; // not this canvas: no cloak rather than a misplaced one
+  const TRIM = { l: 2, c: 3, p: 4 }[head] ?? 2,
+    LOIN = 5,
+    SHO = 6,
+    TOP_BIT = { l: 1, c: 2, p: 4 }[top] ?? 1;
   const at = (tile, x, y) => (y * sw + tile * w + x) * 4;
   const put = (o, q) => {
-    let r = c[q], g = c[q + 1], b = c[q + 2];
+    let r = c[q],
+      g = c[q + 1],
+      b = c[q + 2];
     if (isCloth(r, g, b)) [r, g, b] = dyeCloth(r, g, b, dye);
-    d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
+    d[o] = r;
+    d[o + 1] = g;
+    d[o + 2] = b;
+    d[o + 3] = 255;
   };
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {          // the loincloth: the base's green cloth takes the dye
-    const o = (y * w + x) * 4;
-    if (c[at(LOIN, x, y) + 3] && d[o + 3] && isCloth(d[o], d[o + 1], d[o + 2])) [d[o], d[o + 1], d[o + 2]] = dyeCloth(d[o], d[o + 1], d[o + 2], dye);
-  }
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      // the loincloth: the base's green cloth takes the dye
+      const o = (y * w + x) * 4;
+      if (c[at(LOIN, x, y) + 3] && d[o + 3] && isCloth(d[o], d[o + 1], d[o + 2]))
+        [d[o], d[o + 1], d[o + 2]] = dyeCloth(d[o], d[o + 1], d[o + 2], dye);
+    }
   // the worn helmet's tips in the open air beside the hood go (they stand over nothing, so nothing is left behind).
   // A trim px at the hood's foot or below it (3 px up from its lowest px in that column, along the hood's lower edge -
   // its foot within 6 px of the lowest) is the helmet's neck under the hood, not a tip: it stays, or the hood floats
@@ -311,48 +481,95 @@ export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, to
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (c[at(1, x, y) + 3]) hoodFoot[x] = y;
   let lowFoot = -1;
   for (let x = 0; x < w; x++) if (hoodFoot[x] > lowFoot) lowFoot = hoodFoot[x];
-  const neck = (x, y) => hoodFoot[x] >= 0 && hoodFoot[x] >= lowFoot - 6 && y >= hoodFoot[x] - 3;   // the lower edge, not the sides
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (c[at(TRIM, x, y) + 3] && !neck(x, y)) d[(y * w + x) * 4 + 3] = 0;
-  const keep = [];                                                    // the shoulder armour, to lay back over the cape
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = (y * w + x) * 4; const s = at(SHO, x, y); if (c[s + 3] && d[o + 3] && (c[s] === 255 || (c[s] & TOP_BIT))) keep.push(o, d[o], d[o + 1], d[o + 2]); }
+  const neck = (x, y) => hoodFoot[x] >= 0 && hoodFoot[x] >= lowFoot - 6 && y >= hoodFoot[x] - 3; // the lower edge, not the sides
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) if (c[at(TRIM, x, y) + 3] && !neck(x, y)) d[(y * w + x) * 4 + 3] = 0;
+  const keep = []; // the shoulder armour, to lay back over the cape
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      const s = at(SHO, x, y);
+      if (c[s + 3] && d[o + 3] && (c[s] === 255 || c[s] & TOP_BIT)) keep.push(o, d[o], d[o + 1], d[o + 2]);
+    }
   const drawn = noSlivers ? new Uint8Array(w * h) : null;
-  const under = noSlivers ? new Uint8Array(w * h * 4) : null;        // what each cape px covered, to give back if it goes
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {          // the cape: over the body from behind, else only in the gaps
-    const q = at(0, x, y), o = (y * w + x) * 4;
-    if (c[q + 3] && (over || d[o + 3] === 0)) {
-      if (under) { under[o] = d[o]; under[o + 1] = d[o + 1]; under[o + 2] = d[o + 2]; under[o + 3] = d[o + 3]; }
-      put(o, q); if (drawn) drawn[y * w + x] = 1;
+  const under = noSlivers ? new Uint8Array(w * h * 4) : null; // what each cape px covered, to give back if it goes
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      // the cape: over the body from behind, else only in the gaps
+      const q = at(0, x, y),
+        o = (y * w + x) * 4;
+      if (c[q + 3] && (over || d[o + 3] === 0)) {
+        if (under) {
+          under[o] = d[o];
+          under[o + 1] = d[o + 1];
+          under[o + 2] = d[o + 2];
+          under[o + 3] = d[o + 3];
+        }
+        put(o, q);
+        if (drawn) drawn[y * w + x] = 1;
+      }
     }
-  }
-  const restore = (i) => { const o = i * 4; d[o] = under[o]; d[o + 1] = under[o + 1]; d[o + 2] = under[o + 2]; d[o + 3] = under[o + 3]; };
-  if (drawn) {                                                        // a cape px with no cape px beside it on the left and the
-    const drop = [];                                                  // right, or above and below, is a 1-px line: it goes
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (!drawn[y * w + x]) continue;
-      const D = (X, Y) => X >= 0 && Y >= 0 && X < w && Y < h && drawn[Y * w + X] === 1;
-      if (!((D(x - 1, y) || D(x + 1, y)) && (D(x, y - 1) || D(x, y + 1)))) drop.push(y * w + x);
+  const restore = (i) => {
+    const o = i * 4;
+    d[o] = under[o];
+    d[o + 1] = under[o + 1];
+    d[o + 2] = under[o + 2];
+    d[o + 3] = under[o + 3];
+  };
+  if (drawn) {
+    // a cape px with no cape px beside it on the left and the
+    const drop = []; // right, or above and below, is a 1-px line: it goes
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (!drawn[y * w + x]) continue;
+        const D = (X, Y) => X >= 0 && Y >= 0 && X < w && Y < h && drawn[Y * w + X] === 1;
+        if (!((D(x - 1, y) || D(x + 1, y)) && (D(x, y - 1) || D(x, y + 1)))) drop.push(y * w + x);
+      }
+    for (const i of drop) {
+      restore(i);
+      drawn[i] = 0;
     }
-    for (const i of drop) { restore(i); drawn[i] = 0; }
     // ...and a piece of cape of <= 6 px seen through a small gap in the body (between an arm and the side) is noise
-    const seen = new Uint8Array(w * h), stack = [];
+    const seen = new Uint8Array(w * h),
+      stack = [];
     for (let i0 = 0; i0 < w * h; i0++) {
       if (!drawn[i0] || seen[i0]) continue;
-      const piece = []; stack.push(i0); seen[i0] = 1;
+      const piece = [];
+      stack.push(i0);
+      seen[i0] = 1;
       while (stack.length) {
-        const i = /** @type {number} */ (stack.pop()); piece.push(i);
-        const x = i % w, y = (i / w) | 0;
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const X = x + dx, Y = y + dy, j = Y * w + X;
-          if (X >= 0 && Y >= 0 && X < w && Y < h && drawn[j] && !seen[j]) { seen[j] = 1; stack.push(j); }
-        }
+        const i = /** @type {number} */ (stack.pop());
+        piece.push(i);
+        const x = i % w,
+          y = (i / w) | 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const X = x + dx,
+              Y = y + dy,
+              j = Y * w + X;
+            if (X >= 0 && Y >= 0 && X < w && Y < h && drawn[j] && !seen[j]) {
+              seen[j] = 1;
+              stack.push(j);
+            }
+          }
       }
       if (piece.length <= 6) for (const i of piece) restore(i);
     }
   }
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const q = at(1, x, y); if (c[q + 3]) put((y * w + x) * 4, q); }   // the hood
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const q = at(1, x, y);
+      if (c[q + 3]) put((y * w + x) * 4, q);
+    } // the hood
   closeHoodFoot(d, w, h, hoodFoot);
   // the shoulder armour, last: as the body wears it without a cloak - over the cape's corners and over the hood's foot
-  for (let n = 0; n < keep.length; n += 4) { const o = keep[n]; d[o] = keep[n + 1]; d[o + 1] = keep[n + 2]; d[o + 2] = keep[n + 3]; d[o + 3] = 255; }
+  for (let n = 0; n < keep.length; n += 4) {
+    const o = keep[n];
+    d[o] = keep[n + 1];
+    d[o + 1] = keep[n + 2];
+    d[o + 2] = keep[n + 3];
+    d[o + 3] = 255;
+  }
 }
 
 // ── HOOD FIX ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -366,28 +583,45 @@ export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, to
  * @param {{head:string,top:string,legs:string}} pieces  @param {number} dye  @param {Uint8Array|null} [skip] the hammer taken out
  */
 export function applyHoodFix(out, fs, pieces, dye, skip = null) {
-  const w = out.width, h = out.height, d = out.data, sw = fs.width, f = fs.data;
+  const w = out.width,
+    h = out.height,
+    d = out.data,
+    sw = fs.width,
+    f = fs.data;
   const tilesN = sw === w * 9 ? 9 : sw === w ? 1 : 0;
-  if (!tilesN || fs.height !== h) return;   // not this canvas: leave the picture as it is
+  if (!tilesN || fs.height !== h) return; // not this canvas: leave the picture as it is
   const slotPiece = [pieces.head, pieces.top, pieces.legs];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (skip?.[y * w + x]) continue;
-    let q = (y * sw + x) * 4;
-    if (tilesN === 9) {
-      const s = (y * sw + w + x) * 4;
-      if (f[s + 3]) {
-        const slot = f[s] ? 0 : f[s + 1] ? 1 : 2, p = slotPiece[slot];
-        if (p[0] === 'p') { const m = (y * sw + (2 + Number(p.slice(1))) * w + x) * 4; if (f[m + 3]) q = m; }
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (skip?.[y * w + x]) continue;
+      let q = (y * sw + x) * 4;
+      if (tilesN === 9) {
+        const s = (y * sw + w + x) * 4;
+        if (f[s + 3]) {
+          const slot = f[s] ? 0 : f[s + 1] ? 1 : 2,
+            p = slotPiece[slot];
+          if (p[0] === 'p') {
+            const m = (y * sw + (2 + Number(p.slice(1))) * w + x) * 4;
+            if (f[m + 3]) q = m;
+          }
+        }
       }
+      const a = f[q + 3];
+      if (!a) continue;
+      const o = (y * w + x) * 4;
+      if (a === 1) {
+        d[o] = d[o + 1] = d[o + 2] = d[o + 3] = 0;
+        continue;
+      }
+      let r = f[q],
+        g = f[q + 1],
+        b = f[q + 2];
+      if (a === 255 && isCloth(r, g, b)) [r, g, b] = dyeCloth(r, g, b, dye);
+      d[o] = r;
+      d[o + 1] = g;
+      d[o + 2] = b;
+      d[o + 3] = 255;
     }
-    const a = f[q + 3];
-    if (!a) continue;
-    const o = (y * w + x) * 4;
-    if (a === 1) { d[o] = d[o + 1] = d[o + 2] = d[o + 3] = 0; continue; }
-    let r = f[q], g = f[q + 1], b = f[q + 2];
-    if (a === 255 && isCloth(r, g, b)) [r, g, b] = dyeCloth(r, g, b, dye);
-    d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
-  }
 }
 
 /**
@@ -402,60 +636,102 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
   const pieces = outfitPieces(code);
-  const plate = pieces ? Object.entries({ head: pieces.head, top: pieces.top, legs: pieces.legs }).filter(([, p]) => p[0] === 'p') : [];
+  const plate = pieces
+    ? Object.entries({ head: pieces.head, top: pieces.top, legs: pieces.legs }).filter(([, p]) => p[0] === 'p')
+    : [];
   const tilesN = manifest.tiles.length;
   const w = plate.length && strip.width % tilesN === 0 ? strip.width / tilesN : strip.width;
-  const h = strip.height, sw = strip.width, src = strip.data;
+  const h = strip.height,
+    sw = strip.width,
+    src = strip.data;
   const out = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) out.set(src.subarray(y * sw * 4, (y * sw + w) * 4), y * w * 4);
-  const res = /** @type {{width:number,height:number,data:Uint8Array,held?:Uint8Array,shield?:Uint8Array,provisional?:boolean}} */ ({ width: w, height: h, data: out });
-  const held = pieces?.weapon ?? null, shield = pieces?.shield ?? null;
+  const res =
+    /** @type {{width:number,height:number,data:Uint8Array,held?:Uint8Array,shield?:Uint8Array,provisional?:boolean}} */ ({
+      width: w,
+      height: h,
+      data: out,
+    });
+  const held = pieces?.weapon ?? null,
+    shield = pieces?.shield ?? null;
   const hand = weapon && (held || shield) && weapon.mask.length === w * h ? weapon : null;
-  if (held) dropLoneArt(res);   // AUDIT: the art's own specks (female 9-2, male 8-4) - not the loose's dotted string
-  const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');   // the art's hammer goes
+  if (held) dropLoneArt(res); // AUDIT: the art's own specks (female 9-2, male 8-4) - not the loose's dotted string
+  const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh'); // the art's hammer goes
   const finish = () => {
     if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);
     else if (hand && held) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
     // LAYERED-SHIELD: a swing frame's free arm comes out - the sword arm swings alone
-    const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;
-    if (arm && hand.donor) fillFromDonor(res, arm, hand.donor);   // DONOR-FILL: the chest the arm crossed, the idle's own
-    const laid = arm && hand.graft ? graftArm(res, hand.graft) : null;   // from before, the idle's arm back, the shield in its hand
-    const art = hand && held && !takeOut ? out.slice() : null;   // LAYERED-GLOW: the art's own hammer, before the cloak
+    const arm =
+      hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;
+    if (arm && hand.donor) fillFromDonor(res, arm, hand.donor); // DONOR-FILL: the chest the arm crossed, the idle's own
+    const laid = arm && hand.graft ? graftArm(res, hand.graft) : null; // from before, the idle's arm back, the shield in its hand
+    const art = hand && held && !takeOut ? out.slice() : null; // LAYERED-GLOW: the art's own hammer, before the cloak
     if (cloak && pieces?.cloak != null) {
       applyCloak(res, cloak.strip, pieces.cloak, cloak.over, pieces.head[0], cloak.noSlivers === true, pieces.top[0]);
-      if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, unionOf(unionOf(hand && takeOut ? hand.mask : null, arm), laid));
+      if (cloak.fix)
+        applyHoodFix(
+          res,
+          cloak.fix,
+          pieces,
+          pieces.cloak,
+          unionOf(unionOf(hand && takeOut ? hand.mask : null, arm), laid),
+        );
     }
     // LAYERED-SHIELD: the shield, before the weapon - which passes before it, or behind it where it is behind the body
-    const drawn = hand && shield && hand.shieldPic && Array.isArray(hand.fr.sh) ? drawLayeredShield(res, hand.fr.sh, hand.shieldPic, hand.view, hand.cm ?? 0.6) : null;
-    if (drawn) res.shield = drawn.drawn;   // ARMORY: the body's marks are read without it
+    const drawn =
+      hand && shield && hand.shieldPic && Array.isArray(hand.fr.sh)
+        ? drawLayeredShield(res, hand.fr.sh, hand.shieldPic, hand.view, hand.cm ?? 0.6)
+        : null;
+    if (drawn) res.shield = drawn.drawn; // ARMORY: the body's marks are read without it
     if (hand && takeOut && held !== '0') {
-      const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null;   // SWING-CUTS: a thrust's blade forward
-      const was = out.slice(), off = pieces?.offhand ? offRigOf(thrust ?? hand.fr) : null;
+      const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null; // SWING-CUTS: a thrust's blade forward
+      const was = out.slice(),
+        off = pieces?.offhand ? offRigOf(thrust ?? hand.fr) : null;
       // LAYERED-DUAL: the pair's other weapon first, in the other hand - the line's weapon over it where they cross
-      if (off) drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, { ...hand, pic: hand.offPic ?? null, mirror: false });
+      if (off)
+        drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, {
+          ...hand,
+          pic: hand.offPic ?? null,
+          mirror: false,
+        });
       const two = off ? out.slice() : null;
       drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);
       res.held = heldPx(out, was);
-      if (two) markOff(res.held, out, two);   // AUDIT: the second weapon's px 2, each glowing its own hand's colours
+      if (two) markOff(res.held, out, two); // AUDIT: the second weapon's px 2, each glowing its own hand's colours
     } else if (art) res.held = heldPx(out, art, hand?.mask);
-    else if (hand && held) res.held = new Uint8Array(w * h);   // AUDIT: empty hands - no weapon to glow, never the whole body
+    else if (hand && held) res.held = new Uint8Array(w * h); // AUDIT: empty hands - no weapon to glow, never the whole body
     // SPELL-BURST: the cast's spell in its hands, after the weapon's own px are counted (its glow is the weapon's)
-    if (hand && held && pieces?.spell != null) drawSpellBurst(res, hand.fr, pieces.spell, pieces.stage ?? hand.frame ?? 0, hand.view, hand.cm ?? 0, hand.throwFr ?? null);
-    return drawn ? padFrame(res, drawn.spill) : res;   // LAYERED-SHIELD: a shield past the canvas widens it
+    if (hand && held && pieces?.spell != null)
+      drawSpellBurst(
+        res,
+        hand.fr,
+        pieces.spell,
+        pieces.stage ?? hand.frame ?? 0,
+        hand.view,
+        hand.cm ?? 0,
+        hand.throwFr ?? null,
+      );
+    return drawn ? padFrame(res, drawn.spill) : res; // LAYERED-SHIELD: a shield past the canvas widens it
   };
   if (w === sw) return finish();
   for (const [slot, p] of plate) {
     const metal = METALS[Number(p.slice(1))] ?? 'steel';
-    const mt = 2 + METALS.indexOf(metal), tt = manifest.trim[metal] === 'cuffs' ? 10 : 9;
+    const mt = 2 + METALS.indexOf(metal),
+      tt = manifest.trim[metal] === 'cuffs' ? 10 : 9;
     const [r, g, b] = SLOT_RGB[slot];
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        const s = (y * sw + w + x) * 4;   // tile 1, the slot map
+        const s = (y * sw + w + x) * 4; // tile 1, the slot map
         if (src[s + 3] === 0 || src[s] !== r || src[s + 1] !== g || src[s + 2] !== b) continue;
         const o = (y * w + x) * 4;
         for (const tile of [mt, tt]) {
           const q = (y * sw + tile * w + x) * 4;
-          if (src[q + 3]) { out[o] = src[q]; out[o + 1] = src[q + 1]; out[o + 2] = src[q + 2]; out[o + 3] = src[q + 3]; }
+          if (src[q + 3]) {
+            out[o] = src[q];
+            out[o + 1] = src[q + 1];
+            out[o + 2] = src[q + 2];
+            out[o + 3] = src[q + 3];
+          }
         }
       }
     }
@@ -464,21 +740,28 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
 }
 
 /** Two px masks as one (either may be null). */
-const unionOf = (a, b) => (a && b ? a.map((v, i) => v | b[i]) : a ?? b);
+const unionOf = (a, b) => (a && b ? a.map((v, i) => v | b[i]) : (a ?? b));
 /** LAYERED-GLOW: the weapon's own px of a composed picture, 1 each (top row first) - those its drawing changed (`was`
  *  the picture before it), or for the art's own hammer the mask's px the cloak left as they were. */
 /** AUDIT: an opaque px of the art with none other within 2 px - a speck the art left in the air - cleared. In place. */
 function dropLoneArt(img) {
-  const { width: w, height: h, data: d } = img, lone = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (!d[(y * w + x) * 4 + 3]) continue;
-    let near = false;
-    for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) {
-      const X = x + dx, Y = y + dy;
-      if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h && d[(Y * w + X) * 4 + 3]) { near = true; break; }
+  const { width: w, height: h, data: d } = img,
+    lone = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!d[(y * w + x) * 4 + 3]) continue;
+      let near = false;
+      for (let dy = -2; dy <= 2 && !near; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const X = x + dx,
+            Y = y + dy;
+          if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h && d[(Y * w + X) * 4 + 3]) {
+            near = true;
+            break;
+          }
+        }
+      if (!near) lone.push((y * w + x) * 4);
     }
-    if (!near) lone.push((y * w + x) * 4);
-  }
   for (const k of lone) d.fill(0, k, k + 4);
 }
 /** LAYERED-DUAL: a pair's second weapon's px in a held mask, 2: those the line's weapon did not draw over (`two` the
@@ -486,14 +769,23 @@ function dropLoneArt(img) {
 function markOff(held, now, two) {
   for (let i = 0; i < held.length; i++) {
     const k = i * 4;
-    if (held[i] && now[k] === two[k] && now[k + 1] === two[k + 1] && now[k + 2] === two[k + 2] && now[k + 3] === two[k + 3]) held[i] = 2;
+    if (
+      held[i] &&
+      now[k] === two[k] &&
+      now[k + 1] === two[k + 1] &&
+      now[k + 2] === two[k + 2] &&
+      now[k + 3] === two[k + 3]
+    )
+      held[i] = 2;
   }
 }
 function heldPx(now, was, mask = null) {
-  const n = now.length >> 2, m = new Uint8Array(n);
+  const n = now.length >> 2,
+    m = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    const k = i * 4, same = now[k] === was[k] && now[k + 1] === was[k + 1] && now[k + 2] === was[k + 2] && now[k + 3] === was[k + 3];
-    m[i] = mask ? (mask[i] && now[k + 3] && same ? 1 : 0) : (same ? 0 : 1);
+    const k = i * 4,
+      same = now[k] === was[k] && now[k + 1] === was[k + 1] && now[k + 2] === was[k + 2] && now[k + 3] === was[k + 3];
+    m[i] = mask ? (mask[i] && now[k + 3] && same ? 1 : 0) : same ? 0 : 1;
   }
   return m;
 }
@@ -502,7 +794,9 @@ function heldPx(now, was, mask = null) {
  *  behind); the bow / cast (records 20-24), where the archer turns side-on to shoot, by the frame (`overFrames`) - which
  *  also names the odd on-foot frame whose cape hangs over the back's edge (the male's side swing). */
 const cloakOver = (body, rf) => {
-  const rec = Number(rf.split('-')[0]), m = cloakManifest[body], of = m?.overFrames ?? [];
+  const rec = Number(rf.split('-')[0]),
+    m = cloakManifest[body],
+    of = m?.overFrames ?? [];
   return rec >= 20 ? of.includes(rf) : (m?.over ?? [3, 4]).includes(rec % 5) || of.includes(rf);
 };
 
@@ -513,72 +807,155 @@ const cloakOver = (body, rf) => {
  * decodes one strip - this thread's fetch and `decodePng` unless one is handed in (eotbBody's decode worker).
  * @param {string} key  @param {(bytes:Uint8Array)=>Promise<{width:number,height:number,data:Uint8Array}>} decodePng
  */
-export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k], weaponUrlOf = (k) => STRIPS[k], picture = null, heldArt = loadHeldPicture, shieldArt = loadShieldPicture } = {}) {
+export async function decodeLayered(
+  key,
+  decodePng,
+  {
+    fetchUrl = (u) => fetch(u),
+    urlOf = (k) => STRIPS[k],
+    cloakUrlOf = (k) => CLOAK_STRIPS[k],
+    hoodFixUrlOf = (k) => HOODFIX_STRIPS[k],
+    weaponUrlOf = (k) => STRIPS[k],
+    picture = null,
+    heldArt = loadHeldPicture,
+    shieldArt = loadShieldPicture,
+  } = {},
+) {
   const [, body, combo, rf, code, hand] = key.split(':');
   const url = urlOf(`${body}/${combo}/${rf}`);
   if (!url) throw new Error(`${key}: no art`);
-  const pictureOf = picture ?? (async (u) => {
-    const res = await fetchUrl(u);
-    if (!res?.ok) throw new Error(`${u}: ${res?.status}`);
-    return decodePng(new Uint8Array(await res.arrayBuffer()));
-  });
+  const pictureOf =
+    picture ??
+    (async (u) => {
+      const res = await fetchUrl(u);
+      if (!res?.ok) throw new Error(`${u}: ${res?.status}`);
+      return decodePng(new Uint8Array(await res.arrayBuffer()));
+    });
   const strip = await pictureOf(url);
   let cloak = null;
   if (outfitPieces(code)?.cloak != null) {
     const cu = cloakUrlOf(`${body}/${rf}`);
     try {
-      if (cu) cloak = { strip: await pictureOf(cu), over: cloakOver(body, rf), noSlivers: cloakManifest[body]?.noSlivers === true, fix: null };
-    } catch { cloak = null; }
-    const fu = cloak ? hoodFixUrlOf(`${body}/${combo}/${rf}`) : null;   // a hood fix that cannot be had is left off
+      if (cu)
+        cloak = {
+          strip: await pictureOf(cu),
+          over: cloakOver(body, rf),
+          noSlivers: cloakManifest[body]?.noSlivers === true,
+          fix: null,
+        };
+    } catch {
+      cloak = null;
+    }
+    const fu = cloak ? hoodFixUrlOf(`${body}/${combo}/${rf}`) : null; // a hood fix that cannot be had is left off
     if (fu) {
-      try { cloak.fix = await pictureOf(fu); } catch { /* no fix */ }
+      try {
+        cloak.fix = await pictureOf(fu);
+      } catch {
+        /* no fix */
+      }
     }
   }
   // LAYERED-WEAPONS: the frame's rig, for a code that changes what the hands hold; without it the art draws as it is
-  const pieces = outfitPieces(code), fr = pieces?.weapon || pieces?.shield ? weaponRigOf(body, rf, pieces.top[0]) : null;
-  let weapon = null, provisional = false;
+  const pieces = outfitPieces(code),
+    fr = pieces?.weapon || pieces?.shield ? weaponRigOf(body, rf, pieces.top[0]) : null;
+  let weapon = null,
+    provisional = false;
   if (fr) {
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
       const pic = wu ? await pictureOf(wu) : null;
-      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1, frame: Number(rf.split('-')[1]), mirror: hand === 'm', throwFr: weaponRigOf(body, `${rf.split('-')[0]}-2`, pieces.top[0]) };
-    } catch { weapon = null; }
+      if (pic)
+        weapon = {
+          mask: maskTile(pic, pieces.top[0]),
+          from: fillFrom(pic, pieces.top[0]),
+          fr,
+          len: weaponLen(body),
+          bow: bowLen(body),
+          cm: weaponCm(body),
+          pic: null,
+          view: Number(rf.split('-')[0]) % 5,
+          swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1,
+          frame: Number(rf.split('-')[1]),
+          mirror: hand === 'm',
+          throwFr: weaponRigOf(body, `${rf.split('-')[0]}-2`, pieces.top[0]),
+        };
+    } catch {
+      weapon = null;
+    }
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
-    if (weapon && pieces.weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
-    if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt);   // LAYERED-DUAL
-    if (weapon && pieces.shield) weapon.shieldPic = await shieldPictureOf(pieces.shield, body, shieldArt);   // LAYERED-SHIELD
+    if (weapon && pieces.weapon && pieces.weapon !== '0')
+      weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
+    if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt); // LAYERED-DUAL
+    if (weapon && pieces.shield) weapon.shieldPic = await shieldPictureOf(pieces.shield, body, shieldArt); // LAYERED-SHIELD
     // LAYERED-SHIELD: the hole the free arm leaves filled from the frame's own body (the `-arm` strip); a front swing
     // takes the idle's free arm back (the rig's `sg`) - the idle composed in this outfit - and its shoulder (`ss`) where
     // the swing's own went up with the arm
     if (weapon && pieces.shield && Array.isArray(fr.sa)) {
-      try { const au = weaponUrlOf(`weapon/${body}/${rf}-arm`); if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]); } catch { /* the blend alone */ }
+      try {
+        const au = weaponUrlOf(`weapon/${body}/${rf}-arm`);
+        if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]);
+      } catch {
+        /* the blend alone */
+      }
     }
-    const sg = weapon && pieces.shield ? fr.sg : null, idle = Array.isArray(sg) ? weaponRigOf(body, sg[0], pieces.top[0]) : null;
+    const sg = weapon && pieces.shield ? fr.sg : null,
+      idle = Array.isArray(sg) ? weaponRigOf(body, sg[0], pieces.top[0]) : null;
     if (idle?.sp) {
       try {
-        const img = await decodeLayered(`LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
-        weapon.graft = { img, arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp), at: [sg[1], sg[2]] };
-      } catch { /* the arm taken out, none back */ }
+        const img = await decodeLayered(
+          `LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`,
+          decodePng,
+          { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt },
+        );
+        weapon.graft = {
+          img,
+          arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp),
+          at: [sg[1], sg[2]],
+        };
+      } catch {
+        /* the arm taken out, none back */
+      }
     }
-    const sd = weapon && pieces.shield && Array.isArray(fr.sa) && Array.isArray(fr.sd) ? fr.sd : null;   // DONOR-FILL
+    const sd = weapon && pieces.shield && Array.isArray(fr.sa) && Array.isArray(fr.sd) ? fr.sd : null; // DONOR-FILL
     if (sd) {
       try {
-        const img = sd[0] === sg?.[0] && weapon.graft ? weapon.graft.img : await decodeLayered(`LA:${body}:${combo}:${sd[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
+        const img =
+          sd[0] === sg?.[0] && weapon.graft
+            ? weapon.graft.img
+            : await decodeLayered(
+                `LA:${body}:${combo}:${sd[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`,
+                decodePng,
+                { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt },
+              );
         weapon.donor = { img, at: [sd[1], sd[2]], within: Array.isArray(sd[3]) ? sd[3] : null };
-      } catch { /* the fill alone */ }
+      } catch {
+        /* the fill alone */
+      }
     }
     // AUDIT: a picture not had yet (its load timed out) draws the shape meanwhile - the stores decode the frame again
     const late = (pic, c, expected) => !pic && !!c && c !== '0' && expected(c, body);
-    if (weapon && (late(weapon.pic, pieces.weapon, heldPictureExpected) || late(weapon.offPic, pieces.offhand, heldPictureExpected) || late(weapon.shieldPic, pieces.shield, shieldPictureExpected))) provisional = true;
+    if (
+      weapon &&
+      (late(weapon.pic, pieces.weapon, heldPictureExpected) ||
+        late(weapon.offPic, pieces.offhand, heldPictureExpected) ||
+        late(weapon.shieldPic, pieces.shield, shieldPictureExpected))
+    )
+      provisional = true;
   }
-  const res = composeStrip(strip, code, cloak, weapon), loose = Math.floor(Number(rf.split('-')[0]) / 5) === 4;
+  const res = composeStrip(strip, code, cloak, weapon),
+    loose = Math.floor(Number(rf.split('-')[0]) / 5) === 4;
   // the loose's bow as a clean chest draws it, where this chest's render ghosts it (LOOSE_BOW_FROM)
-  const fams = combo.split('_'), clean = loose ? LOOSE_BOW_FROM[body]?.[fams[1]] : null;
+  const fams = combo.split('_'),
+    clean = loose ? LOOSE_BOW_FROM[body]?.[fams[1]] : null;
   if (clean) {
     const ru = urlOf(`${body}/${[fams[0], clean, fams[2]].join('_')}/${rf}`);
-    try { if (ru) bowFrom(res, await pictureOf(ru)); } catch { /* the bow as drawn */ }
+    try {
+      if (ru) bowFrom(res, await pictureOf(ru));
+    } catch {
+      /* the bow as drawn */
+    }
   }
-  if (!pieces?.weapon && loose) res.held = artBowPx(res);   // AUDIT: the loose's own bow
+  if (!pieces?.weapon && loose) res.held = artBowPx(res); // AUDIT: the loose's own bow
   if (provisional) res.provisional = true;
   return res;
 }

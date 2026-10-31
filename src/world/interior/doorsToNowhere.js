@@ -22,7 +22,7 @@
 // is.
 // ═══════════════════════════════════════════════════════════════════
 
-import { t } from '../../systems/textManager.js';   // the sealed door's line, in the player's language
+import { t } from '../../systems/textManager.js'; // the sealed door's line, in the player's language
 
 /** The player's line at a sealed door (world/actionSystem.js onSealedDoor), in English. */
 export const SEALED_DOOR_TEXT = 'This door will not open.';
@@ -48,8 +48,10 @@ const RAY_LIFT = 0.5;
  * @returns {[boolean, boolean]}
  */
 export function doorSidesFloored(collider, door) {
-  const p = door.cpu.positions, m = door.base;
-  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  const p = door.cpu.positions,
+    m = door.base;
+  const lo = [Infinity, Infinity, Infinity],
+    hi = [-Infinity, -Infinity, -Infinity];
   for (let i = 0; i < p.length; i += 3) {
     for (let k = 0; k < 3; k++) {
       if (p[i + k] < lo[k]) lo[k] = p[i + k];
@@ -67,14 +69,19 @@ export function doorSidesFloored(collider, door) {
   };
   const out = axis(through);
   const skip = { skip: [door.key] };
-  const floored = (side) => ACROSS.some((f) => {
-    const local = [0, lo[1], 0];
-    local[through] = (lo[through] + hi[through]) / 2;
-    local[across] = lo[across] + f * (hi[across] - lo[across]);
-    const base = at(local);
-    const origin = [base[0] + side * DOOR_SIDE_STEP * out[0], base[1] + RAY_LIFT, base[2] + side * DOOR_SIDE_STEP * out[2]];
-    return Number.isFinite(collider.raycast(origin, [0, -1, 0], DOOR_FLOOR_REACH + RAY_LIFT, skip));
-  });
+  const floored = (side) =>
+    ACROSS.some((f) => {
+      const local = [0, lo[1], 0];
+      local[through] = (lo[through] + hi[through]) / 2;
+      local[across] = lo[across] + f * (hi[across] - lo[across]);
+      const base = at(local);
+      const origin = [
+        base[0] + side * DOOR_SIDE_STEP * out[0],
+        base[1] + RAY_LIFT,
+        base[2] + side * DOOR_SIDE_STEP * out[2],
+      ];
+      return Number.isFinite(collider.raycast(origin, [0, -1, 0], DOOR_FLOOR_REACH + RAY_LIFT, skip));
+    });
   return [floored(-1), floored(1)];
 }
 

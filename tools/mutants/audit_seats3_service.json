@@ -1,247 +1,247 @@
 [
- {
-  "name": "SEATS3-A1-law-edict",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
-  "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\")\n        .bind(e.cost, e.key, next, e.guild), mustChange(db));",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A1-law-set-aside",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
-  "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict), mustChange(db));",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A1-law-mustchange",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
-  "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)));",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A1-unpaid-edict",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
-  "new": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\")\n        .bind(e.key, next, e.guild), mustChange(db));",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A1-unpaid-mustchange",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
-  "new": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)));",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A2-wear-clamp-dropped",
-  "file": "server-account/src/seatForts.js",
-  "old": "  wear.push(db.prepare(`UPDATE town_seat_holds SET tithe = ${capSql} WHERE tithe > ${capSql}`));",
-  "new": "  void capSql;",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A2-wear-cap-off-by-one",
-  "file": "server-account/src/seatForts.js",
-  "old": "THEN ${marketHallTitheCap(c, m)}`",
-  "new": "THEN ${marketHallTitheCap(c, m) + 1}`",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A2-wear-hall-tier-ignored",
-  "file": "server-account/src/seatForts.js",
-  "old": "f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} THEN",
-  "new": "f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} + 1 THEN",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A2-charged-unclamped",
-  "file": "server-account/src/seatHolding.js",
-  "old": "pct: Math.min(Number(h.tithe), marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, Number(h.market ?? 0))) }",
-  "new": "pct: Number(h.tithe) }",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A2-charged-hall-ignored",
-  "file": "server-account/src/seatHolding.js",
-  "old": "marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, Number(h.market ?? 0))) }",
-  "new": "marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, 1)) }",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A3-any-character",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
-  "new": "  if (!rostered) return { error: 'honours-character' };",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A3-roster-unasked",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
-  "new": "",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A4-break-unlimited",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (await overRate({ db, nowS }, `seat-pact-break:${a.gid}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
-  "new": "",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A4-break-keyed-by-player",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "overRate({ db, nowS }, `seat-pact-break:${a.gid}`",
-  "new": "overRate({ db, nowS }, `seat-pact-break:${player.id}`",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A4-red-unlimited",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')",
-  "new": "WHERE at > ? ORDER BY seq DESC LIMIT -1 + 0 * ?) ORDER BY seq')",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A4-red-oldest-kept",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')",
-  "new": "WHERE at > ? ORDER BY seq LIMIT ?) ORDER BY seq')",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-D1-week-1-back",
-  "file": "server-account/src/seatHolding.js",
-  "old": "h.tier === 'crown' ? await activeIn(db, week) : CROWN_SCALE.per;",
-  "new": "h.tier === 'crown' ? await activeIn(db, week - 1) : CROWN_SCALE.per;",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-D5-held-uncounted",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "\n        UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) < ?7",
-  "new": ") < ?7",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-D5-union-all",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3))",
-  "new": "UNION ALL SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3))",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-D2-read-the-constant",
-  "file": "server-account/src/market.js",
-  "old": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
-  "new": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), 30]);",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ],
-  "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
- },
- {
-  "name": "SEATS3-D2-read-board-ignored",
-  "file": "server-account/src/market.js",
-  "old": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
-  "new": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(null))]);",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ],
-  "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
- },
- {
-  "name": "SEATS3-D2-piece-the-constant",
-  "file": "server-account/src/market.js",
-  "old": "const listingsMax = vend ? VENDOR_STOCK_MAX : await listingsCapAt(db, nowS, boardOf(board));   // AUDIT SEATS-3 D2: a Market Hall",
-  "new": "const listingsMax = vend ? VENDOR_STOCK_MAX : 30;   // AUDIT SEATS-3 D2: a Market Hall",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-D2-piece-board-not-passed",
-  "file": "server-account/src/market.js",
-  "old": "hubs, rid, currency, realm, board, vendor });   // AUDIT SEATS-3 D2: and its board",
-  "new": "hubs, rid, currency, realm, vendor });   // AUDIT SEATS-3 D2: and its board",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-E2-unlink-titles-dropped",
-  "file": "server-account/src/index.js",
-  "old": "const after = { ...(await withSeatTitles(ctx, who.player, env)), patreon_user: null",
-  "new": "const after = { ...who.player, patreon_user: null",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-E2-aura-titles-dropped",
-  "file": "server-account/src/index.js",
-  "old": "const r = await equipAura(ctx, await withSeatTitles(ctx, who.player, env), env,",
-  "new": "const r = await equipAura(ctx, who.player, env,",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-E2-insignia-titles-dropped",
-  "file": "server-account/src/index.js",
-  "old": "const r = await buyInsignia(ctx, await withSeatTitles(ctx, who.player, env), env,",
-  "new": "const r = await buyInsignia(ctx, who.player, env,",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEATS3-A3-shape-unchecked",
-  "file": "server-account/src/seatSiege.js",
-  "old": "if (typeof character !== 'string' || !CHAR_ID_RE.test(character)) return { error: 'honours-character' };",
-  "new": "if (typeof character !== 'string' || !character || character.length > 64) return { error: 'honours-character' };",
-  "tests": [
-   "test/server/audit_seats3_service.test.js"
-  ]
- }
+  {
+    "name": "SEATS3-A1-law-edict",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
+    "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\")\n        .bind(e.cost, e.key, next, e.guild), mustChange(db));",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A1-law-set-aside",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
+    "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict), mustChange(db));",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A1-law-mustchange",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
+    "new": "\"UPDATE town_seat_edicts SET state = 'law', cost = ? WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.cost, e.key, next, e.guild, e.edict, askedAside(e)));",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A1-unpaid-edict",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
+    "new": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\")\n        .bind(e.key, next, e.guild), mustChange(db));",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A1-unpaid-mustchange",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)), mustChange(db));",
+    "new": "\"UPDATE town_seat_edicts SET state = 'unpaid' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed' AND edict = ? AND set_aside = ?\")\n        .bind(e.key, next, e.guild, e.edict, askedAside(e)));",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A2-wear-clamp-dropped",
+    "file": "server-account/src/seatForts.js",
+    "old": "  wear.push(db.prepare(`UPDATE town_seat_holds SET tithe = ${capSql} WHERE tithe > ${capSql}`));",
+    "new": "  void capSql;",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A2-wear-cap-off-by-one",
+    "file": "server-account/src/seatForts.js",
+    "old": "          `WHEN town_seat_holds.tier = '${t}' AND COALESCE((SELECT f.tier FROM town_seat_forts f WHERE f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} THEN ${marketHallTitheCap(c, m)}`,",
+    "new": "          `WHEN town_seat_holds.tier = '${t}' AND COALESCE((SELECT f.tier FROM town_seat_forts f WHERE f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} THEN ${marketHallTitheCap(c, m) + 1}`,",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A2-wear-hall-tier-ignored",
+    "file": "server-account/src/seatForts.js",
+    "old": "          `WHEN town_seat_holds.tier = '${t}' AND COALESCE((SELECT f.tier FROM town_seat_forts f WHERE f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} THEN ${marketHallTitheCap(c, m)}`,",
+    "new": "          `WHEN town_seat_holds.tier = '${t}' AND COALESCE((SELECT f.tier FROM town_seat_forts f WHERE f.key = town_seat_holds.key AND f.work = 'market'), 0) = ${m} + 1 THEN ${marketHallTitheCap(c, m)}`,",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A2-charged-unclamped",
+    "file": "server-account/src/seatHolding.js",
+    "old": "pct: Math.min(Number(h.tithe), marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, Number(h.market ?? 0))) }",
+    "new": "pct: Number(h.tithe) }",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A2-charged-hall-ignored",
+    "file": "server-account/src/seatHolding.js",
+    "old": "marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, Number(h.market ?? 0))) }",
+    "new": "marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, 1)) }",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A3-any-character",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
+    "new": "  if (!rostered) return { error: 'honours-character' };",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A3-roster-unasked",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
+    "new": "",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A4-break-unlimited",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (await overRate({ db, nowS }, `seat-pact-break:${a.gid}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "new": "",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A4-break-keyed-by-player",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "overRate({ db, nowS }, `seat-pact-break:${a.gid}`",
+    "new": "overRate({ db, nowS }, `seat-pact-break:${player.id}`",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A4-red-unlimited",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')",
+    "new": "WHERE at > ? ORDER BY seq DESC LIMIT -1 + 0 * ?) ORDER BY seq')",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A4-red-oldest-kept",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')",
+    "new": "WHERE at > ? ORDER BY seq LIMIT ?) ORDER BY seq')",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D1-week-1-back",
+    "file": "server-account/src/seatHolding.js",
+    "old": "h.tier === 'crown' ? await activeIn(db, week) : CROWN_SCALE.per;",
+    "new": "h.tier === 'crown' ? await activeIn(db, week - 1) : CROWN_SCALE.per;",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D5-held-uncounted",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "\n        UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) < ?7",
+    "new": ") < ?7",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D5-union-all",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3))",
+    "new": "UNION ALL SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3))",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-read-the-constant",
+    "file": "server-account/src/market.js",
+    "old": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
+    "new": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), 30]);",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "SEATS3-D2-read-board-ignored",
+    "file": "server-account/src/market.js",
+    "old": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
+    "new": "  const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(null))]);",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "SEATS3-D2-piece-the-constant",
+    "file": "server-account/src/market.js",
+    "old": "const listingsMax = vend ? VENDOR_STOCK_MAX : await listingsCapAt(db, nowS, boardOf(board));   // AUDIT SEATS-3 D2: a Market Hall",
+    "new": "const listingsMax = vend ? VENDOR_STOCK_MAX : 30;   // AUDIT SEATS-3 D2: a Market Hall",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-piece-board-not-passed",
+    "file": "server-account/src/market.js",
+    "old": "hubs, rid, currency, realm, board, vendor });   // AUDIT SEATS-3 D2: and its board",
+    "new": "hubs, rid, currency, realm, vendor });   // AUDIT SEATS-3 D2: and its board",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-E2-unlink-titles-dropped",
+    "file": "server-account/src/index.js",
+    "old": "const after = { ...(await withSeatTitles(ctx, who.player, env)), patreon_user: null",
+    "new": "const after = { ...who.player, patreon_user: null",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-E2-aura-titles-dropped",
+    "file": "server-account/src/index.js",
+    "old": "const r = await equipAura(ctx, await withSeatTitles(ctx, who.player, env), env,",
+    "new": "const r = await equipAura(ctx, who.player, env,",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-E2-insignia-titles-dropped",
+    "file": "server-account/src/index.js",
+    "old": "const r = await buyInsignia(ctx, await withSeatTitles(ctx, who.player, env), env,",
+    "new": "const r = await buyInsignia(ctx, who.player, env,",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-A3-shape-unchecked",
+    "file": "server-account/src/seatSiege.js",
+    "old": "if (typeof character !== 'string' || !CHAR_ID_RE.test(character)) return { error: 'honours-character' };",
+    "new": "if (typeof character !== 'string' || !character || character.length > 64) return { error: 'honours-character' };",
+    "tests": [
+      "test/server/audit_seats3_service.test.js"
+    ]
+  }
 ]

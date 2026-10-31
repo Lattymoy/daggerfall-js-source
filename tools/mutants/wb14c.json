@@ -12,8 +12,8 @@
   {
     "name": "WB14c-his-wake-said-while-it-holds",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const openedAt = (f) => (f?.vg && !f.vg.opened ? null : f?.openAt ?? f?.startedAt ?? null);",
-    "new": "export const openedAt = (f) => (f?.openAt ?? f?.startedAt ?? null);",
+    "old": "export const openedAt = (f) => (f?.vg && !f.vg.opened ? null : (f?.openAt ?? f?.startedAt ?? null));",
+    "new": "export const openedAt = (f) => f?.openAt ?? f?.startedAt ?? null;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "WB14c-the-wave-without-its-fighters",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (due && on.length) {\n      const W = S.waves[V.w]",
-    "new": "    if (due) {\n      const W = S.waves[V.w]",
+    "old": "    if (due && on.length) {",
+    "new": "    if (due) {",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "WB14c-the-next-wave-at-once",
     "file": "src/net/gate/gateBrain.js",
-    "old": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
-    "new": "true;",
+    "old": "    const due =\n      V.w === 0\n        ? V.due > 0 && now >= V.due\n        : H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
+    "new": "    const due = V.w === 0 ? V.due > 0 && now >= V.due : true;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "WB14c-the-clock-never-calls-the-next",
     "file": "src/net/gate/gateBrain.js",
-    "old": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
-    "new": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT);",
+    "old": "    const due =\n      V.w === 0\n        ? V.due > 0 && now >= V.due\n        : H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
+    "new": "    const due = V.w === 0 ? V.due > 0 && now >= V.due : H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT);",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "WB14c-the-health-unshared",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Math.round((total * VG_KIND_W[k]) / Math.max(1e-9, wsum))",
-    "new": "Math.round(total)",
+    "old": "    raiseHost(f, k, mine, Math.max(HOST_HP_MIN, Math.round((total * VG_KIND_W[k]) / Math.max(1e-9, wsum))), now, out);",
+    "new": "    raiseHost(f, k, mine, Math.max(HOST_HP_MIN, Math.round(total)), now, out);",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "WB14c-the-kinds-not-dealt",
     "file": "src/net/gate/gateBrain.js",
-    "old": "W.kinds[i % W.kinds.length]",
-    "new": "W.kinds[0]",
+    "old": "  const kinds = spots.map((_, i) => (W.lord ? (i === 0 ? HOST.markynaz : HOST.harrier) : W.kinds[i % W.kinds.length]));",
+    "new": "  const kinds = spots.map((_, i) => (W.lord ? (i === 0 ? HOST.markynaz : HOST.harrier) : W.kinds[0]));",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "WB14c-the-walkway-never-laid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!Number.isFinite(f.xa[S.walk])) f.xa[S.walk] = now;\n",
-    "new": "\n",
+    "old": "    if (!Number.isFinite(f.xa[S.walk])) f.xa[S.walk] = now;",
+    "new": "",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "WB14c-the-clearing-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    out.push({ k: 'vgw', e: V.s === VG_STAGES.length - 1 ? VG_WORD.broken : VG_WORD.clear, s: V.s, w: V.w, x: S.walk, at: f.xa[S.walk] });\n",
-    "new": "\n",
+    "old": "    out.push({\n      k: 'vgw',\n      e: V.s === VG_STAGES.length - 1 ? VG_WORD.broken : VG_WORD.clear,\n      s: V.s,\n      w: V.w,\n      x: S.walk,\n      at: f.xa[S.walk],\n    });",
+    "new": "",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "WB14c-the-imps-outliving-him",
     "file": "src/net/gate/gateBrain.js",
-    "old": "V.lord = 0; hostGone(f, now, out, HOST_GONE.crumbled, (a) => a.k === HOST.harrier); }",
-    "new": "V.lord = 0; }",
+    "old": "    hostGone(f, now, out, HOST_GONE.crumbled, (a) => a.k === HOST.harrier);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "WB14c-the-markynaz-never-calls",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      if (spots.length) raiseHost(f, HOST.harrier, spots, harrierHpFor(on.map((b) => f.players[b.sub].lv)), now, out);\n",
-    "new": "\n",
+    "old": "      if (spots.length) raiseHost(f, HOST.harrier, spots, harrierHpFor(on.map((b) => f.players[b.sub].lv)), now, out);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "WB14c-opened-at-the-break",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!living.some((b) => inCourt(b.x, b.z, FLOOR.first, POSE_SLACK))) return true;\n",
-    "new": "\n",
+    "old": "    if (!living.some((b) => inCourt(b.x, b.z, FLOOR.first, POSE_SLACK))) return true;\n    // broken, and a challenger before him: his opening begins - his wake OPENING_MS from now, said at once",
+    "new": "    // broken, and a challenger before him: his opening begins - his wake OPENING_MS from now, said at once",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "WB14c-his-blows-before-his-wake",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    f.openAt = now; f.nextAt = now + OPENING_MS; f.lastStateAt = -Infinity;",
-    "new": "    f.openAt = now; f.nextAt = now; f.lastStateAt = -Infinity;",
+    "old": "    f.nextAt = now + OPENING_MS;",
+    "new": "    f.nextAt = now;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "WB14c-the-meteor-clamped-to-his-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    const PC = point && atk === ATTACKS.meteor ? COURTS[nearestCourt(p[0], p[1])] : C;",
-    "new": "    const PC = C;",
+    "old": "    const PC = point && atk === ATTACKS.meteor ? COURTS[nearestCourt(p[0], p[1])] : C; // WB14c: his patience's meteor falls on the platform it is called at",
+    "new": "    const PC = C; // WB14c: his patience's meteor falls on the platform it is called at",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "WB14c-his-patience-said-every-time",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      if (!V.said) { V.said = true; out.push({ k: 'vgw', e: VG_WORD.patience",
-    "new": "      if (true) { V.said = true; out.push({ k: 'vgw', e: VG_WORD.patience",
+    "old": "      if (!V.said) {",
+    "new": "      if (true) {",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -157,7 +157,7 @@
   {
     "name": "WB14c-a-caster-rushing-in",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (d < VG_CASTER_KEEP[0] && d > 1e-6) walkHost(a, a.x + ((a.x - mark.x) / d) * 6, a.z + ((a.z - mark.z) / d) * 6, 0, now, C, moves);",
+    "old": "  if (d < VG_CASTER_KEEP[0] && d > 1e-6)\n    walkHost(a, a.x + ((a.x - mark.x) / d) * 6, a.z + ((a.z - mark.z) / d) * 6, 0, now, C, moves);",
     "new": "  if (d < VG_CASTER_KEEP[0] && d > 1e-6) walkHost(a, mark.x, mark.z, 0, now, C, moves);",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "WB14c-the-brute-at-the-farthest",
     "file": "src/net/gate/gateBrain.js",
-    "old": "function vgMeleeBeat(a, now, on, C, moves, blows) {\n  if (a.atk) { if (now < a.atk.until) return; a.atk = null; }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) < dist(mark.x, mark.z, a.x, a.z)) mark = b;",
-    "new": "function vgMeleeBeat(a, now, on, C, moves, blows) {\n  if (a.atk) { if (now < a.atk.until) return; a.atk = null; }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) > dist(mark.x, mark.z, a.x, a.z)) mark = b;",
+    "old": "  if (a.atk) {\n    if (now < a.atk.until) return;\n    a.atk = null;\n  }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) < dist(mark.x, mark.z, a.x, a.z)) mark = b;\n  if (!mark) {\n    stopHost(a, now, moves);\n    return;\n  }\n  const K = HOST_KINDS[a.k],",
+    "new": "  if (a.atk) {\n    if (now < a.atk.until) return;\n    a.atk = null;\n  }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) > dist(mark.x, mark.z, a.x, a.z)) mark = b;\n  if (!mark) {\n    stopHost(a, now, moves);\n    return;\n  }\n  const K = HOST_KINDS[a.k],",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB14c-blows-from-his-court-alone",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
-    "new": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out;",
+    "old": "  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out; // WB14c: from the floor it stands on (his court, under the Legion-Lord; the Vanguard's platform)",
+    "new": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out; // WB14c: from the floor it stands on (his court, under the Legion-Lord; the Vanguard's platform)",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WB14c-the-vanguard-s-state-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}),",
-    "new": "    ...({}),",
+    "old": "    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}), // WB14c: the Vanguard's stage and its waves risen",
+    "new": "    ...{}, // WB14c: the Vanguard's stage and its waves risen",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "WB14c-the-walkway-left-to-the-next-state",
     "file": "src/net/gate/gateLink.js",
-    "old": "if (!Number.isFinite(w[g.x])) w[g.x] = g.at; xa = w; }",
-    "new": "xa = w; }",
+    "old": "        if (!Number.isFinite(w[g.x])) w[g.x] = g.at;\n        xa = w;",
+    "new": "        xa = w;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "WB14c-the-word-lost-to-a-state",
     "file": "src/net/gate/gateLink.js",
-    "old": "vgw: same ? s.vgw ?? null : null,",
-    "new": "vgw: null,",
+    "old": "      vgw: same ? (s.vgw ?? null) : null,",
+    "new": "      vgw: null,",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WB14c-the-bar-silent",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "    host: !s.fell && s.wrath == null && s.vg && s.vg[0] < 2 ?",
-    "new": "    host: false ?",
+    "old": "    host:\n      !s.fell && s.wrath == null && s.vg && s.vg[0] < 2\n        ? s.vg[1] > 0\n          ? BOSS_BAR_TEXT.vanguard(BOSS_BAR_TEXT.stages()[s.vg[0]], s.vg[1], VG_STAGES[s.vg[0]].waves.length)\n          : BOSS_BAR_TEXT.vanguardHolds(BOSS_BAR_TEXT.stages()[s.vg[0]]) // AUDIT WB14 (TEXT-15): no wave counted before one has risen\n        : !s.fell && s.wrath == null && gaolers > 0\n          ? BOSS_BAR_TEXT.gaolers(gaolers) // WB14f: the Captive's gaolers, then his ward over the court\n          : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now)\n            ? BOSS_BAR_TEXT.ward()\n            : !s.fell && s.wrath == null && others > 0\n              ? BOSS_BAR_TEXT.host(others)\n              : null, // WB11c: the rest of his host standing; WB14c: his Vanguard's progress in its place",
+    "new": "    host: false\n      ? s.vg[1] > 0\n        ? BOSS_BAR_TEXT.vanguard(BOSS_BAR_TEXT.stages()[s.vg[0]], s.vg[1], VG_STAGES[s.vg[0]].waves.length)\n        : BOSS_BAR_TEXT.vanguardHolds(BOSS_BAR_TEXT.stages()[s.vg[0]]) // AUDIT WB14 (TEXT-15): no wave counted before one has risen\n      : !s.fell && s.wrath == null && gaolers > 0\n        ? BOSS_BAR_TEXT.gaolers(gaolers) // WB14f: the Captive's gaolers, then his ward over the court\n        : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now)\n          ? BOSS_BAR_TEXT.ward()\n          : !s.fell && s.wrath == null && others > 0\n            ? BOSS_BAR_TEXT.host(others)\n            : null, // WB11c: the rest of his host standing; WB14c: his Vanguard's progress in its place",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WB14c-each-wave-said",
     "file": "src/scenes/gate/gateVanguard.js",
-    "old": "    case VG_WORD.wave: return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;",
-    "new": "    case VG_WORD.wave: return VANGUARD_TEXT.rises();",
+    "old": "      return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;",
+    "new": "      return VANGUARD_TEXT.rises();",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-never-holds-him",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (stepVanguard(f, now, bodies, rng, out, P)) return heldBeat(f, now, out);",
-    "new": "stepVanguard(f, now, bodies, rng, out, P);",
+    "old": "  if (stepVanguard(f, now, bodies, rng, out, P)) return heldBeat(f, now, out);",
+    "new": "  stepVanguard(f, now, bodies, rng, out, P);",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js",
       "test/net/gate/audit_wb14.test.js"
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-walkways-swapped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Object.freeze({ floor: FLOOR.bridgehead, walk: WALKWAY.muster,",
-    "new": "Object.freeze({ floor: FLOOR.bridgehead, walk: WALKWAY.warden,",
+    "old": "    walk: WALKWAY.muster,",
+    "new": "    walk: WALKWAY.warden,",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -305,8 +305,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-a-kind-faster-than-a-run",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 2.8 }),",
-    "new": "Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 8 }),",
+    "old": "  Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 2.8 }),",
+    "new": "  Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 8 }),",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-the-bolt-counted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Object.freeze({ kind: 4, key: 'bolt', get name() { return t('gate.host.bolt', 'Bolt'); }, windup: 1600, active: 200, recover: 400, r: 3, pct: 0.22, base: 7, el: 'aspect' }),",
-    "new": "Object.freeze({ kind: 4, key: 'bolt', get name() { return t('gate.host.bolt', 'Bolt'); }, windup: 1600, active: 200, recover: 400, r: 3, pct: 0.22, base: 7, el: null }),",
+    "old": "    base: 7,\n    el: 'aspect',",
+    "new": "    base: 7,\n    el: null,",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-caster-first-bolt-at-once",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  for (const a of H.ads) if (a.k === HOST.caster && a.next === now) a.next = now + 1500;",
-    "new": "  void 0;",
+    "old": "  for (const a of H.ads) if (a.k === HOST.caster && a.next === now) a.next = now + 1500; // a Caster's first Bolt a breath after it has risen",
+    "new": "  void 0; // a Caster's first Bolt a breath after it has risen",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -337,8 +337,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-patience-from-the-birth",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (!V.first) { V.first = now; V.pat = now + VG_PATIENCE_MS; }",
-    "new": "if (!V.first) { V.first = now; V.pat = f.startedAt + VG_PATIENCE_MS; }",
+    "old": "          V.pat = now + VG_PATIENCE_MS;",
+    "new": "          V.pat = f.startedAt + VG_PATIENCE_MS;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -347,8 +347,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-markynaz-lord-word-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (W.lord) out.push({ k: 'vgw', e: VG_WORD.lord, s: V.s, w: V.w, at: now });",
-    "new": "void 0;",
+    "old": "        if (W.lord) out.push({ k: 'vgw', e: VG_WORD.lord, s: V.s, w: V.w, at: now });",
+    "new": "        void 0;",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],
@@ -357,8 +357,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-vanguard-broken-with-him-standing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  } else if (!H.ads.length) {\n    // the platform cleared",
-    "new": "  } else if (!H.ads.some((a) => a.k !== HOST.markynaz)) {\n    // the platform cleared",
+    "old": "  } else if (!H.ads.length) {",
+    "new": "  } else if (!H.ads.some((a) => a.k !== HOST.markynaz)) {",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ],

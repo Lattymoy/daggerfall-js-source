@@ -2,8 +2,8 @@
   {
     "name": "IC-HOMES-door-onto-shut-ground",
     "file": "src/world/imperialHomes.js",
-    "old": "    if (open(DOOR_OUT) && open(DOOR_OUT + 1.6)) return",
-    "new": "    if (true) return",
+    "old": "    if (open(DOOR_OUT) && open(DOOR_OUT + 1.6))",
+    "new": "    if (true)",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IC-HOMES-keys-in-daggerfall-range",
     "file": "src/world/imperialHomes.js",
-    "old": "|| key < FABRIC_HOME_KEY_MIN || seen.has(key)) continue;",
-    "new": "|| seen.has(key)) continue;",
+    "old": "        if (!p.out || /** @type {any} */ (p).back || key < FABRIC_HOME_KEY_MIN || seen.has(key)) continue;",
+    "new": "        if (!p.out || /** @type {any} */ (p).back || seen.has(key)) continue;",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "IC-HOMES-door-off-the-slice",
     "file": "src/world/imperialHomes.js",
-    "old": "    if (door && door[0] - ox > NAV_EDGE && door[0] - ox < 8 * B - NAV_EDGE && oz - door[1] > NAV_EDGE && oz - door[1] < 8 * B - NAV_EDGE) chosen.push",
-    "new": "    if (door) chosen.push",
+    "old": "    if (\n      door &&\n      door[0] - ox > NAV_EDGE &&\n      door[0] - ox < 8 * B - NAV_EDGE &&\n      oz - door[1] > NAV_EDGE &&\n      oz - door[1] < 8 * B - NAV_EDGE\n    )\n      chosen.push({ p: c.p, door }); // its door on the slice's own grid",
+    "new": "    if (door) chosen.push({ p: c.p, door }); // its door on the slice's own grid",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "IC-HOMES-any-capital",
     "file": "src/world/imperialHomes.js",
-    "old": "(loc?.capital && CAPITALS[loc.capital.k]?.family ?",
-    "new": "(loc?.capital ?",
+    "old": "export const cityHomesOf = (loc) =>\n  loc?.capital && CAPITALS[loc.capital.k]?.family ? fabricHomesIn(loc.capital.s) : NO_HOMES;",
+    "new": "export const cityHomesOf = (loc) => (loc?.capital ? fabricHomesIn(loc.capital.s) : NO_HOMES);",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "IC-QUARTERS-slots-shared",
     "file": "src/systems/livingWorld/census.js",
-    "old": "quarter * QUARTER_SLOTS + slot, p.job",
-    "new": "slot, p.job",
+    "old": "    mintResident(town, quarter ? 'q' : 'h', quarter * QUARTER_SLOTS + slot, p.job, {\n      home: p.home,\n      work: p.work,\n      faction: p.faction,\n    }),",
+    "new": "    mintResident(town, quarter ? 'q' : 'h', slot, p.job, { home: p.home, work: p.work, faction: p.faction }),",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "IC-QUARTERS-min-unread",
     "file": "src/systems/livingWorld/places.js",
-    "old": "id !== main && keys.size >= QUARTER_MIN)",
-    "new": "id !== main && keys.size >= 1000)",
+    "old": "    .filter(([id, keys]) => id !== main && keys.size >= QUARTER_MIN)",
+    "new": "    .filter(([id, keys]) => id !== main && keys.size >= 1000)",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "KTL-the-bolt-swapped-by-the-clock",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "const n = a.meshes.length, k = hazardStrike('arc', j, t) + j;",
-    "new": "const n = a.meshes.length, k = Math.floor(t * 16.7);",
+    "old": "          k = hazardStrike('arc', j, t) + j;",
+    "new": "          k = Math.floor(t * 16.7);",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTL-the-cage-casts",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "D.cage = draw(g(P.cage), { noShadow: true });",
-    "new": "D.cage = draw(g(P.cage));",
+    "old": "      D.cage = draw(g(P.cage), { noShadow: true });",
+    "new": "      D.cage = draw(g(P.cage));",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTL-a-lurching-section-casts",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0);",
-    "new": "d.noShadow = !(p.solid && p.dy === 0);",
+    "old": "        d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0); // a section casts only whole and still - from its warning to its return it moves (KETCH-LOOK KL0)",
+    "new": "        d.noShadow = !(p.solid && p.dy === 0); // a section casts only whole and still - from its warning to its return it moves (KETCH-LOOK KL0)",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTL-a-falling-section-casts",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0);",
-    "new": "d.noShadow = false;",
+    "old": "        d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0); // a section casts only whole and still - from its warning to its return it moves (KETCH-LOOK KL0)",
+    "new": "        d.noShadow = false; // a section casts only whole and still - from its warning to its return it moves (KETCH-LOOK KL0)",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTL-top-out-in-the-shaft",
     "file": "src/tools/ketchLabViews.js",
-    "old": "'top-out': Object.freeze({ at: Object.freeze([12.6, 17.7, 53.6]), yaw: 55, pitch: -8 }),",
-    "new": "'top-out': Object.freeze({ at: Object.freeze([9, 17.7, 57]), yaw: 55, pitch: -8 }),",
+    "old": "  'top-out': Object.freeze({ at: Object.freeze([12.6, 17.7, 53.6]), yaw: 55, pitch: -8 }),",
+    "new": "  'top-out': Object.freeze({ at: Object.freeze([9, 17.7, 57]), yaw: 55, pitch: -8 }),",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]

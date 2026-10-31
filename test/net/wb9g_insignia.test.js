@@ -695,7 +695,7 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.match(w, /insignia: insigniaRows, insigniaLoad, buyInsignia: insigniaBuy, wearInsignia: insigniaWear, insigniaBusy: \(\) => _insignia\.busy,/);
   // the service's side: the routes behind the door, the version moved, the deploy watching the law
   const svc = rd('server-account/src/service.js');
-  assert.match(svc, /'\/v1\/account\/insignia', '\/v1\/account\/aura',/);
+  assert.match(svc, /'\/v1\/account\/insignia',\n\s*'\/v1\/account\/aura',/);
   assert.match(rd('.github/workflows/account-deploy.yml'), /- "src\/net\/insignia\.js"/, 'the Worker bundles the law - a change to it deploys');
   assert.match(rd('server-account/migrations/0040_insignia.sql'), /ALTER TABLE players ADD COLUMN insignia TEXT;\nALTER TABLE players ADD COLUMN insignia_spent INTEGER NOT NULL DEFAULT 0;\nALTER TABLE players ADD COLUMN aura TEXT;/);
 });

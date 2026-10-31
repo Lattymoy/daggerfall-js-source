@@ -301,7 +301,7 @@ test('FISH-BOATS by source: the naval host wires the fleet - built once over its
   assert.match(NAVAL_HOST, /life\.lights = !!where\(\)\.cityLights;/);
   assert.match(NAVAL_HOST, /if \(ship\.cls\.fisher\) return fishers\.errandOf\(ship\);/);
   // PIN MOVED (AUDIT HORIZONTAL C6): the director's ships made whole in navalDirector.js directorShips, the host's call pinned below
-  assert.match(readFileSync(new URL('../../../src/systems/naval/navalDirector.js', import.meta.url), 'utf8'), /for \(const x of ships\) \{ const f = entryOf\(x\.id\); if \(f\?\.ship\.cls\.fisher\) \{ x\.berthed = true; x\.engaged \|\|= !!f\.fisher && !x\.theirs; \} \}/);
+  assert.match(readFileSync(new URL('../../../src/systems/naval/navalDirector.js', import.meta.url), 'utf8'), /for \(const x of ships\) \{\n\s*const f = entryOf\(x\.id\);\n\s*if \(f\?\.ship\.cls\.fisher\) \{\n\s*x\.berthed = true;\n\s*x\.engaged \|\|= !!f\.fisher && !x\.theirs;\n\s*\}\n\s*\}/);
   assert.match(NAVAL_HOST, /if \(e\.ship\.cls\.fisher\) e\.fisher = e\.ship\.errand\?\.harbour \?\? null;/);
   assert.match(NAVAL_HOST, /rolled = new WeakSet\(\); grids = new Map\(\);[^\n]*\n {4}fishers\.clear\(\);/);
 });

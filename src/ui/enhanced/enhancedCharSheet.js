@@ -72,21 +72,41 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
-import { skillAdvanceProgress } from '../../systems/advancement.js';   // SKILL-TICK: the uses toward each skill's next point
-import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, skillValueText, skillModOf } from '../../systems/skills.js';
-import { mentorPartyNote } from '../../systems/mentorText.js';   // SOFTCAP1, MENTOR2: mentoring's words, through the text core
-import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
-import { pathOf, pathPossible } from '../../systems/arcanePaths.js';   // AUDIT GROWTH LANE5-6: the specialisations' line
+import { skillAdvanceProgress } from '../../systems/advancement.js'; // SKILL-TICK: the uses toward each skill's next point
+import {
+  SKILLS,
+  SKILL_NAMES,
+  skillValue,
+  displaySkillValue,
+  realSkillValue,
+  skillValueText,
+  skillModOf,
+} from '../../systems/skills.js';
+import { mentorPartyNote } from '../../systems/mentorText.js'; // SOFTCAP1, MENTOR2: mentoring's words, through the text core
+import {
+  masterSkillsActive,
+  masterSkillsSwitchable,
+  masterSkillsBlockReason,
+  setMasterSkills,
+  MASTER_SKILLS_ABOUT,
+  MASTERY_GROUP_NAMES,
+  masterySlots,
+  masteryCandidates,
+  masteryChoiceRows,
+  masterSkill,
+  isMasteredSkill,
+} from '../../systems/masterSkills.js'; // SOFTCAP3/4
+import { pathOf, pathPossible } from '../../systems/arcanePaths.js'; // AUDIT GROWTH LANE5-6: the specialisations' line
 import { martialPathOf, martialPossible } from '../../systems/martialPaths.js';
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../../systems/statMods.js';
-import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
+import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../../combat/formulas.js'; // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
 import { carriedWeight } from '../charsheet.js';
-import { totalGoldAmount } from '../../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
-import { classSpecials } from '../../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
-import { arenaLadderRestore, ladderTitle } from '../../systems/arena/arenaLadder.js';   // ARENA2: the arena's name for you
-import { ARENA_TEXT } from '../../systems/arena/arenaText.js';   // ARENA3: the banner's name
-import { liveRaceTemplate, liveRaceName } from '../../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
-import { processGrammar } from '../../systems/textManager.js';   // L10N3g: the race label's grammar (DaggerfallCharacterSheetWindow.cs:398)
+import { totalGoldAmount } from '../../systems/court.js'; // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
+import { classSpecials } from '../../systems/specialAdvantages.js'; // MAC-G: GetClassSpecials, read back off the career's own flags
+import { arenaLadderRestore, ladderTitle } from '../../systems/arena/arenaLadder.js'; // ARENA2: the arena's name for you
+import { ARENA_TEXT } from '../../systems/arena/arenaText.js'; // ARENA3: the banner's name
+import { liveRaceTemplate, liveRaceName } from '../../systems/vampirism.js'; // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
+import { processGrammar } from '../../systems/textManager.js'; // L10N3g: the race label's grammar (DaggerfallCharacterSheetWindow.cs:398)
 
 /** ARENA2: the sheet's Arena lines - the title the ladder gives and the record ("12 won, 3 lost") - or null for a
  *  character who never fought there. ARENA3: and the banner worn (systems/arena/arenaLeague.js - "The Red Banner"), which
@@ -97,7 +117,11 @@ function arenaSheetLine(raw, league = null) {
   const L = arenaLadderRestore(raw);
   const r = L.record;
   if (!(r.wins + r.losses > 0) && !team) return null;
-  return { title: ladderTitle(L), record: `${r.wins} won, ${r.losses} lost`, banner: team ? ARENA_TEXT.teams.name[team] : null };
+  return {
+    title: ladderTitle(L),
+    record: `${r.wins} won, ${r.losses} lost`,
+    banner: team ? ARENA_TEXT.teams.name[team] : null,
+  };
 }
 
 /** The three career groups, in DFU's own order, plus the remainder.
@@ -122,11 +146,7 @@ const raceTemplateOf = (e) => liveRaceTemplate(e);
  */
 export function sheetModel(entity) {
   const e = entity ?? {};
-  const career = [
-    e.career?.primarySkills ?? [],
-    e.career?.majorSkills ?? [],
-    e.career?.minorSkills ?? [],
-  ];
+  const career = [e.career?.primarySkills ?? [], e.career?.majorSkills ?? [], e.career?.minorSkills ?? []];
   const inCareer = new Set(career.flat());
   const misc = SKILL_NAMES.map((_, id) => id).filter((id) => !inCareer.has(id));
   const strength = liveStat(e, 'strength');
@@ -134,7 +154,7 @@ export function sheetModel(entity) {
     name: e.name ?? '',
     // The classic sheet's own default when an entity carries none.
     // DISC10-D V5: RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398)
-    race: processGrammar(liveRaceName(e) || 'Breton'),   // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)
+    race: processGrammar(liveRaceName(e) || 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)
     career: e.career?.name ?? '',
     level: e.level ?? 1,
     // The classic sheet's own read: GetGoldAmount, coins plus every
@@ -176,48 +196,77 @@ export function sheetModel(entity) {
     skillReal: (id) => realSkillValue(e, id),
     skillText: (id) => skillValueText(e, id),
     // SKILL-TICK: where each skill stands against the next pass's raise (systems/advancement.js skillAdvanceProgress)
-    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }),   // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate
-    mentor: mentorPartyNote(e),   // automatic: said only while mentoring, or beside a mentor (MENTOR2)
+    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }), // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate
+    mentor: mentorPartyNote(e), // automatic: said only while mentoring, or beside a mentor (MENTOR2)
     // ARENA2: the arena's title and record (systems/arena/arenaLadder.js) - null until a bout has been fought on its sand
     arena: arenaSheetLine(e.arenaLadder, e.arenaLeague),
     // SOFTCAP3: the Master Skills switch - its state, why it cannot move right now (null when it can), what it
     // does in words, and the one door that moves it (systems/masterSkills.js setMasterSkills: { ok, text })
     master: {
       on: masterSkillsActive(e),
-      switchable: masterSkillsSwitchable(e),   // offline only - online it is always on
+      switchable: masterSkillsSwitchable(e), // offline only - online it is always on
       blocked: masterSkillsBlockReason(e),
       about: MASTER_SKILLS_ABOUT,
       toggle: () => setMasterSkills(e, !masterSkillsActive(e)),
       // SOFTCAP4: the 3/2/1 masteries (MASTER-THREE) - each group's count, the skills that can be mastered right now (with their
       // box's rows: what it does, that it is permanent, the count before and after), and the one door that masters
-      slots: Object.keys(MASTERY_GROUP_NAMES).map((g) => ({ group: g, label: MASTERY_GROUP_NAMES[g], ...masterySlots(e, g) })),
-      candidates: masteryCandidates(e).map((id) => ({ id, name: SKILL_NAMES[id], rows: masteryChoiceRows(e, id, SKILL_NAMES) })),
+      slots: Object.keys(MASTERY_GROUP_NAMES).map((g) => ({
+        group: g,
+        label: MASTERY_GROUP_NAMES[g],
+        ...masterySlots(e, g),
+      })),
+      candidates: masteryCandidates(e).map((id) => ({
+        id,
+        name: SKILL_NAMES[id],
+        rows: masteryChoiceRows(e, id, SKILL_NAMES),
+      })),
       isMastered: (id) => isMasteredSkill(e, id),
       master: (id) => masterSkill(e, id, SKILL_NAMES),
       // SCHOOLS1/MARTIAL1's specialisations moved to the Growth tab's guide (GROWTH2, ui/growth/specGuide.js specGuideModel);
       // AUDIT GROWTH LANE5-6 (AUDIT SCHOOLS L4 8's law again): the families this character can still reach (none held, the
       // slots left hold a pair) and those it holds - the page's line is drawn from them, never for a class with neither
       paths: {
-        open: [[pathOf, pathPossible], [martialPathOf, martialPossible]].filter(([held, can]) => !held(e) && can(e)).length,
+        open: [
+          [pathOf, pathPossible],
+          [martialPathOf, martialPossible],
+        ].filter(([held, can]) => !held(e) && can(e)).length,
         held: (pathOf(e) ? 1 : 0) + (martialPathOf(e) ? 1 : 0),
       },
       // SOFTCAP6: the Master Skills page - each career group with its slots and every one of its skills: the REAL
       // value, mastered or not, whether it can be mastered now (and the box's rows), and why not in a word
       groups: ['primary', 'major', 'minor'].map((g) => {
-        const ids = g === 'primary' ? e.career?.primarySkills : g === 'major' ? e.career?.majorSkills : e.career?.minorSkills;
+        const ids =
+          g === 'primary' ? e.career?.primarySkills : g === 'major' ? e.career?.majorSkills : e.career?.minorSkills;
         const slots = masterySlots(e, g);
         return {
-          group: g, label: MASTERY_GROUP_NAMES[g], ...slots,
+          group: g,
+          label: MASTERY_GROUP_NAMES[g],
+          ...slots,
           skills: (ids ?? []).map((id) => {
-            const value = Array.isArray(e.skills) ? e.skills[id] ?? 0 : 0;
+            const value = Array.isArray(e.skills) ? (e.skills[id] ?? 0) : 0;
             const mastered = isMasteredSkill(e, id);
             const candidate = !mastered && masteryCandidates(e).includes(id);
-            const why = mastered || candidate ? null : !masterSkillsActive(e) ? 'Off' : value < 100 ? `${100 - value} to 100` : 'No slot left';
-            return { id, name: SKILL_NAMES[id], value, mastered, candidate, why, rows: candidate ? masteryChoiceRows(e, id, SKILL_NAMES) : null };
+            const why =
+              mastered || candidate
+                ? null
+                : !masterSkillsActive(e)
+                  ? 'Off'
+                  : value < 100
+                    ? `${100 - value} to 100`
+                    : 'No slot left';
+            return {
+              id,
+              name: SKILL_NAMES[id],
+              value,
+              mastered,
+              candidate,
+              why,
+              rows: candidate ? masteryChoiceRows(e, id, SKILL_NAMES) : null,
+            };
           }),
         };
       }),
-    },   // AUDIT 65 CV-1: TextProvider.cs:503 - every row of GetSkillSummary is GetLiveSkillValue, so the number AND its meter move with a lycanthrope's +30
+    }, // AUDIT 65 CV-1: TextProvider.cs:503 - every row of GetSkillSummary is GetLiveSkillValue, so the number AND its meter move with a lycanthrope's +30
     // AUDIT 63 F34: ShowSkillsDialog's hand-to-hand damage line
     // (DaggerfallCharacterSheetWindow.cs:283-284, :309-318) - one
     // extra row under whichever GROUP holds HandToHand, formatted

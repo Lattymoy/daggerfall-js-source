@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water",
     "file": "src/systems/naval/shipLife.js",
-    "old": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {",
-    "new": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = hull, max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {",
+    "old": "  deep = deepestBerther(),",
+    "new": "  deep = hull,",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ],
@@ -66,7 +66,7 @@
   {
     "name": "AUDIT-GN2-PF2-the-caches-never-emptied",
     "file": "src/systems/naval/navalAI.js",
-    "old": "function buildsKept() { if (keptFor !== buildsStamp()) { keptFor = buildsStamp(); HIT_SHARE.clear(); LAY_MIN.clear(); } }",
+    "old": "function buildsKept() {\n  if (keptFor !== buildsStamp()) {\n    keptFor = buildsStamp();\n    HIT_SHARE.clear();\n    LAY_MIN.clear();\n  }\n}",
     "new": "function buildsKept() {}",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-GN2-PF2-the-dead-zones-kept",
     "file": "src/systems/naval/navalAI.js",
-    "old": "keptFor = buildsStamp(); HIT_SHARE.clear(); LAY_MIN.clear(); } }",
-    "new": "keptFor = buildsStamp(); HIT_SHARE.clear(); } }",
+    "old": "    LAY_MIN.clear();\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-GN2-PF2-the-hit-shares-kept",
     "file": "src/systems/naval/navalAI.js",
-    "old": "keptFor = buildsStamp(); HIT_SHARE.clear(); LAY_MIN.clear(); } }",
-    "new": "keptFor = buildsStamp(); LAY_MIN.clear(); } }",
+    "old": "    HIT_SHARE.clear();\n    LAY_MIN.clear();",
+    "new": "    LAY_MIN.clear();",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-GN2-PF2-the-switch-stamps-nothing",
     "file": "src/systems/naval/navalShips.js",
-    "old": "export function setShipStanding(hull, on) { if (standing[hull] !== !!on) stamp++; standing[hull] = !!on; }",
-    "new": "export function setShipStanding(hull, on) { standing[hull] = !!on; }",
+    "old": "  if (standing[hull] !== !!on) stamp++;\n  standing[hull] = !!on;",
+    "new": "  standing[hull] = !!on;",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-GN2-RG3-the-main-topsails-box-on-the-fore-topsail",
     "file": "src/systems/naval/navalShips.js",
-    "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2),",
-    "new": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 1),",
+    "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2), // the main topsail and its yard",
+    "new": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 1), // the main topsail and its yard",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-GN2-RG3-the-jibs-luff-box-on-the-gaff",
     "file": "src/systems/naval/navalShips.js",
-    "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4),",
-    "new": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 3),",
+    "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4), // the jib along its luff,",
+    "new": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 3), // the jib along its luff,",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-GN2-RG3-a-boom-box-names-no-sail",
     "file": "src/systems/naval/navalShips.js",
-    "old": "const onBoom = (k, pivot, min, max, sail, variant = null) => [min, max, { boom: k, pivot: Object.freeze(pivot), sail, ",
-    "new": "const onBoom = (k, pivot, min, max, sail, variant = null) => [min, max, { boom: k, pivot: Object.freeze(pivot), ",
+    "old": "  { boom: k, pivot: Object.freeze(pivot), sail, ...(variant == null ? {} : { variant }) },",
+    "new": "  { boom: k, pivot: Object.freeze(pivot), ...(variant == null ? {} : { variant }) },",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ]

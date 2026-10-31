@@ -20,8 +20,8 @@
   {
     "name": "LW-PERF-restart-lost",
     "file": "src/systems/livingWorld/townPaths.js",
-    "old": "      if (s.search !== id) begin();",
-    "new": "      void begin;",
+    "old": "      if (s.search !== id) begin(); // another search ran over the scratch: this one again",
+    "new": "      void begin; // another search ran over the scratch: this one again",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "LW-PERF-cells-unspent",
     "file": "src/systems/livingWorld/townPaths.js",
-    "old": "      cells -= job.search.spent; spent += job.search.spent;",
+    "old": "      cells -= job.search.spent;\n      spent += job.search.spent;",
     "new": "      spent += job.search.spent;",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "LW-PERF-soon-last",
     "file": "src/systems/livingWorld/townPaths.js",
-    "old": "    for (const q of [soon, later]) for (const [key, ends] of q)",
-    "new": "    for (const q of [later, soon]) for (const [key, ends] of q)",
+    "old": "    for (const q of [soon, later])",
+    "new": "    for (const q of [later, soon])",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "LW-PERF-run-idle",
     "file": "src/systems/livingWorld/townPaths.js",
-    "old": "    run() { pump(); },",
+    "old": "    run() {\n      pump();\n    },",
     "new": "    run() {},",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "LW-PERF-promote-lost",
     "file": "src/systems/livingWorld/townPaths.js",
-    "old": "        } else if (first && later.has(k)) { soon.set(k, /** @type {number[][]} */ (later.get(k))); later.delete(k); }",
+    "old": "        } else if (first && later.has(k)) {\n          soon.set(k, /** @type {number[][]} */ (later.get(k)));\n          later.delete(k);\n        }",
     "new": "        }",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
@@ -174,8 +174,8 @@
   {
     "name": "LW-PERF-fav-tie",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0)));",
-    "new": "    || 0));",
+    "old": "        (rank.get(a) ?? 0) - (rank.get(b) ?? 0),",
+    "new": "        0,",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "LW-PERF-places-nibble",
     "file": "src/systems/livingWorld/places.js",
-    "old": "walk[i] = grid[i] >> 4 > 0 ? 1 : 0;",
-    "new": "walk[i] = grid[i] > 0 ? 1 : 0;",
+    "old": "    for (let i = 0; i < W * H; i++) walk[i] = grid[i] >> 4 > 0 ? 1 : 0;",
+    "new": "    for (let i = 0; i < W * H; i++) walk[i] = grid[i] > 0 ? 1 : 0;",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "LW-PERF-places-sums",
     "file": "src/systems/livingWorld/places.js",
-    "old": "sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row;",
-    "new": "sums[(y + 1) * W1 + x + 1] = row;",
+    "old": "      sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row;",
+    "new": "      sums[(y + 1) * W1 + x + 1] = row;",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "LW-PERF-places-pass",
     "file": "src/systems/livingWorld/places.js",
-    "old": "        if (mid < bestMid) { bestMid = mid; best = [x, y]; }",
-    "new": "        if (mid <= bestMid) { bestMid = mid; best = [x, y]; }",
+    "old": "        if (mid < bestMid) {",
+    "new": "        if (mid <= bestMid) {",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]

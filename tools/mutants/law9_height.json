@@ -322,8 +322,8 @@
   {
     "name": "LAW9H-judge-field-storey-unasked",
     "file": "src/net/bossRef.js",
-    "old": "    if (!inStorey(spec, e, by)) continue;",
-    "new": "",
+    "old": "    if (!inStorey(spec, e, by)) continue; // THE ASCENT: the blow's own storey",
+    "new": "    // THE ASCENT: the blow's own storey",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "LAW9H-judge-blow-height-unread",
     "file": "src/net/bossRef.js",
-    "old": "    const by = egFeetY(spec, a.y), share",
-    "new": "    const by = NaN, share",
+    "old": "    const by = egFeetY(spec, a.y),",
+    "new": "    const by = NaN,",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -562,8 +562,8 @@
   {
     "name": "LAW9H-telegraph-storey-unasked",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "if (!anchorOn(floors[k], sh) || !egOneStorey(floors[k].y, by)) continue;",
-    "new": "if (!anchorOn(floors[k], sh)) continue;",
+    "old": "    if (!anchorOn(floors[k], sh) || !egOneStorey(floors[k].y, by)) continue;",
+    "new": "    if (!anchorOn(floors[k], sh)) continue;",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -582,8 +582,8 @@
   {
     "name": "LAW9H-screen-verdict-in-plan",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "onStorey(egBlowVerdict(bl, f[0], f[1], t, 400, me()), bl, f[0], fy, f[1], t)",
-    "new": "egBlowVerdict(bl, f[0], f[1], t, 400, me())",
+    "old": "          const v = onStorey(egBlowVerdict(bl, f[0], f[1], t, 400, me()), bl, f[0], fy, f[1], t); // AUDIT EG IV (lane1 #5): a failure blow that names me lands wherever I stand; THE ASCENT: on its own storey",
+    "new": "          const v = egBlowVerdict(bl, f[0], f[1], t, 400, me()); // AUDIT EG IV (lane1 #5): a failure blow that names me lands wherever I stand; THE ASCENT: on its own storey",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -592,8 +592,8 @@
   {
     "name": "LAW9H-screen-zone-any-floor",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": " || (Number.isFinite(z.y) && !egBears(z.y, egFeetY(spec, fy)))) continue;",
-    "new": ") continue;",
+    "old": "        if (!standing || !egInShape(z.s, f[0], f[1]) || (Number.isFinite(z.y) && !egBears(z.y, egFeetY(spec, fy))))\n          continue; // THE ASCENT: it holds only feet its floor bears",
+    "new": "        if (!standing || !egInShape(z.s, f[0], f[1])) continue; // THE ASCENT: it holds only feet its floor bears",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -602,8 +602,8 @@
   {
     "name": "LAW9H-screen-telegraph-no-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      sh.by = Number.isFinite(bl.y) ? bl.y : NaN;   // THE ASCENT",
-    "new": "      sh.by = NaN;   // THE ASCENT",
+    "old": "      sh.by = Number.isFinite(bl.y) ? bl.y : NaN; // THE ASCENT (Elite-Gates-Ascent.md section 2): drawn on its own storey's floors",
+    "new": "      sh.by = NaN; // THE ASCENT (Elite-Gates-Ascent.md section 2): drawn on its own storey's floors",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -642,8 +642,8 @@
   {
     "name": "LAW9H-peril-any-storey",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": " || !egOneStorey(fl.y ?? 0, Number.isFinite(b.y) ? b.y : NaN)) continue;",
-    "new": ") continue;",
+    "old": "    if (\n      !(now < b.at) ||\n      now < b.at - b.wu ||\n      !inStamps(b, f[0], f[1]) ||\n      !egOneStorey(fl.y ?? 0, Number.isFinite(b.y) ? b.y : NaN)\n    )\n      continue;",
+    "new": "    if (!(now < b.at) || now < b.at - b.wu || !inStamps(b, f[0], f[1])) continue;",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -652,8 +652,8 @@
   {
     "name": "LAW9H-screen-mine-any-storey",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "!!f && egOneStorey(st, bl.y) && bl.s.some",
-    "new": "!!f && bl.s.some",
+    "old": "          mine = bl.on\n            ? bl.on.includes(me())\n            : !!f && egOneStorey(st, bl.y) && bl.s.some((s) => egInShape(s, f[0], f[1])); // AUDIT EG IV (lane1 #5): a failure blow is mine when it names me; THE ASCENT: never one of another storey over my plan",
+    "new": "          mine = bl.on ? bl.on.includes(me()) : !!f && bl.s.some((s) => egInShape(s, f[0], f[1])); // AUDIT EG IV (lane1 #5): a failure blow is mine when it names me; THE ASCENT: never one of another storey over my plan",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],

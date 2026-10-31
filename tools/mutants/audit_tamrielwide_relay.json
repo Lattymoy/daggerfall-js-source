@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-record",
     "file": "server/src/sdCopy.js",
-    "old": "room.state.storage.get(sdLaneKey(SD_KEY, lane))",
-    "new": "room.state.storage.get(SD_KEY)",
+    "old": "  const rec = await room.state.storage.get(sdLaneKey(SD_KEY, lane));",
+    "new": "  const rec = await room.state.storage.get(SD_KEY);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-receipt",
     "file": "server/src/sdCopy.js",
-    "old": "room.state.storage.get(sdReceiptKey(c.a, lane))",
-    "new": "room.state.storage.get(sdReceiptKey(c.a))",
+    "old": "  const rc = await room.state.storage.get(sdReceiptKey(c.a, lane));",
+    "new": "  const rc = await room.state.storage.get(sdReceiptKey(c.a));",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-TW-B1-one-death-key",
     "file": "server/src/sdCopy.js",
-    "old": "(lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`)",
-    "new": "`sdac:${sub}`",
+    "old": "export const sdAcctKey = (sub, lane = 0) => (lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`);",
+    "new": "export const sdAcctKey = (sub, lane = 0) => `sdac:${sub}`;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-key-moved",
     "file": "server/src/sdCopy.js",
-    "old": "(lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`)",
-    "new": "`sdac:${sub}.${lane}`",
+    "old": "export const sdAcctKey = (sub, lane = 0) => (lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`);",
+    "new": "export const sdAcctKey = (sub, lane = 0) => `sdac:${sub}.${lane}`;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-TW-B2-the-pit-the-bays",
     "file": "src/net/staffTeleport.js",
-    "old": "!worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)",
-    "new": "!integer(a.PitMapX, 999) || !integer(a.PitMapY, 499)",
+    "old": "      !worldPixelOk(a.PitMapX) ||\n      !worldPixelOk(a.PitMapY) ||",
+    "new": "      !integer(a.PitMapX, 999) ||\n      !integer(a.PitMapY, 499) ||",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-TW-B2-the-row-unbounded",
     "file": "src/net/staffTeleport.js",
-    "old": "!worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)",
-    "new": "!worldPixelOk(a.PitMapX)",
+    "old": "      !worldPixelOk(a.PitMapY) ||\n      !integer(a.TemplateMapX, 999) ||",
+    "new": "      !integer(a.TemplateMapX, 999) ||",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-TW-E3-the-lists-order",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "scored.sort((p, q) => q.score - p.score || p.i - q.i)",
-    "new": "scored.sort((p, q) => p.i - q.i)",
+    "old": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
+    "new": "  return scored.sort((p, q) => p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-TW-E3-along-not-the-lanes",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "const f = serpentAlongAt(day, ends[0], ends[1]);",
-    "new": "const f = serpentAlongAt(day, 0, 0);",
+    "old": "    const f = serpentAlongAt(day, ends[0], ends[1]);",
+    "new": "    const f = serpentAlongAt(day, 0, 0);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-TW-E3-every-law-folded",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs)",
-    "new": "serpentSiteDayOk(m.d, nowMs)",
+    "old": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
+    "new": "export const serpentSiteWordOk = (m, nowMs) => serpentSiteDayOk(m.d, nowMs);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js",
       "test/net/serpent/serpent2_herald.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-TW-II-R5-one-end-keyed-twice",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)] : null);",
-    "new": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.a.px, lane.a.py)] : null);",
+    "old": "    ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)]",
+    "new": "    ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.a.px, lane.a.py)]",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-TW-II-R5-the-tries-unbounded",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": ".slice(0, SERPENT_LANE_TRIES);",
-    "new": ";",
+    "old": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
+    "new": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],

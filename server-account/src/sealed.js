@@ -10,13 +10,30 @@ const dec = new TextDecoder();
 const SEAL_IV_BYTES = 12;
 
 /** The key one salt and kind seal under - derived once, it seals any number of values (sealUnder). */
-export async function sealKey(/** @type {SubtleCrypto} */ subtle, /** @type {string} */ secret, /** @type {string} */ salt, /** @type {string} */ kind) {
+export async function sealKey(
+  /** @type {SubtleCrypto} */ subtle,
+  /** @type {string} */ secret,
+  /** @type {string} */ salt,
+  /** @type {string} */ kind,
+) {
   const base = await subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
-  return subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: enc.encode(salt), info: enc.encode(kind) }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  return subtle.deriveKey(
+    { name: 'HKDF', hash: 'SHA-256', salt: enc.encode(salt), info: enc.encode(kind) },
+    base,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
 }
 
 /** Seal `claims` (an object with `p`, the account, and `x`, its expiry in seconds) as one base64url run. */
-export async function sealWith(/** @type {string} */ secret, /** @type {string} */ salt, /** @type {string} */ kind, /** @type {object} */ claims, { subtle, rand }) {
+export async function sealWith(
+  /** @type {string} */ secret,
+  /** @type {string} */ salt,
+  /** @type {string} */ kind,
+  /** @type {object} */ claims,
+  { subtle, rand },
+) {
   return sealUnder(await sealKey(subtle, secret, salt, kind), claims, { subtle, rand });
 }
 /** sealWith under a key already derived (sealKey). */
@@ -30,15 +47,27 @@ export async function sealUnder(/** @type {CryptoKey} */ key, /** @type {object}
 }
 
 /** The claims a sealed value carries, or null: another secret, salt or kind, changed, malformed, or past its expiry. */
-export async function openWith(/** @type {string} */ secret, /** @type {string} */ salt, /** @type {string} */ kind, /** @type {any} */ sealed, { subtle, nowS }) {
+export async function openWith(
+  /** @type {string} */ secret,
+  /** @type {string} */ salt,
+  /** @type {string} */ kind,
+  /** @type {any} */ sealed,
+  { subtle, nowS },
+) {
   if (typeof sealed !== 'string' || sealed.length > 4096) return null;
   const bytes = _b64url.decode(sealed);
   if (!bytes || bytes.length <= SEAL_IV_BYTES + 16) return null;
   let claims;
   try {
-    const plain = await subtle.decrypt({ name: 'AES-GCM', iv: bytes.subarray(0, SEAL_IV_BYTES) }, await sealKey(subtle, secret, salt, kind), bytes.subarray(SEAL_IV_BYTES));
+    const plain = await subtle.decrypt(
+      { name: 'AES-GCM', iv: bytes.subarray(0, SEAL_IV_BYTES) },
+      await sealKey(subtle, secret, salt, kind),
+      bytes.subarray(SEAL_IV_BYTES),
+    );
     claims = JSON.parse(dec.decode(plain));
-  } catch { return null; }   // GCM's tag refuses another key, another kind, or a byte changed
+  } catch {
+    return null;
+  } // GCM's tag refuses another key, another kind, or a byte changed
   if (!claims || typeof claims !== 'object' || !Number.isSafeInteger(claims.x) || claims.x < nowS) return null;
   if (typeof claims.p !== 'string' || !claims.p) return null;
   return claims;

@@ -16,7 +16,7 @@ fix, the mutants `tools/mutants/fb1024.json` (39, all dead), and six records of 
 DFU: RegensHealth.cs:97-98 regenerates on `Params.InDarkness` (2) when `PlayerEnterExit.IsPlayerInDarkness`, which is
 `!isPlayerInSunlight` (PlayerEnterExit.cs:201, "Same as !IsPlayerInSunlight"). No departure, no Ledger row owed.
 
-THE CHANGE. `playerInDarkness` (`passiveSpecials.js:"export const playerInDarkness = (nowMinutes = null) =>"`) is
+THE CHANGE. `playerInDarkness` (`passiveSpecials.js:"export const playerInDarkness"`) is
 `!playerInSunlight` over the same host seam, and the shared ctx answers it
 (`hostEnchant.js:"inDarkness: () => playerInDarkness(),"`). The enchantment's darkness is DFU's: a roof at noon is
 dark. The career's Regenerate Health: In Darkness keeps its own law (`!day || dungeon`, PassiveSpecialsEffect.cs), as

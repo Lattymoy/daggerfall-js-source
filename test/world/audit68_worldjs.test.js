@@ -190,10 +190,10 @@ test('AUDIT 68 S22-ship-disembark-compensation: boarded after a highland recente
   // boardOrDisembark's own decision half, lifted: the transition and the landing it hands the teleport
   const arm = lift(WORLD, '    const here = playerTravelPixel();\n    const t = shipTransition(playerEntity, {', ' : null;\n');
   // PIN MOVED (AUDIT ETHER-OW C2-3, test/systems/audit_etherow.test.js): the board asks the Veil before it is taken - the Bay's
-  // dock here, never refused
-  const run = (playerEntity, here, feet, state) => new Function('shipTransition', 'shipMemory', 'shipRestorePos', 'REPOSITION', 'playerEntity', 'playerTravelPixel', 'player', 'cam', 'state', 'STREAMING_TERRAIN_SCALE', 'RECORD_GROUND_STAMP', 'groundFrameHeight', 'veilRefused',
+  // dock here, never refused. PIN MOVED (HOST-SPLIT, scenes/shipBoardHost.js): it reads the Veil through its host
+  const run = (playerEntity, here, feet, state) => new Function('shipTransition', 'shipMemory', 'shipRestorePos', 'REPOSITION', 'playerEntity', 'playerTravelPixel', 'player', 'cam', 'state', 'STREAMING_TERRAIN_SCALE', 'RECORD_GROUND_STAMP', 'groundFrameHeight', 'host',
     `${arm}\nreturn { t, localPos, legacy: typeof legacy === 'undefined' ? undefined : legacy };`)(
-    ship.shipTransition, ship.shipMemory, ship.shipRestorePos, ship.REPOSITION, playerEntity, () => here, { pos: feet }, { yaw: 0.5 }, state, STREAMING_TERRAIN_SCALE, RECORD_GROUND_STAMP, (y) => y, () => false);   // AUDIT LANDFORMS C1: the row off - DFU's frame is the ground's own
+    ship.shipTransition, ship.shipMemory, ship.shipRestorePos, ship.REPOSITION, playerEntity, () => here, { pos: feet }, { yaw: 0.5 }, state, STREAMING_TERRAIN_SCALE, RECORD_GROUND_STAMP, (y) => y, { veilRefused: () => false });   // AUDIT LANDFORMS C1: the row off - DFU's frame is the ground's own
   const knight = { ownedShip: SHIP_TYPES.Small };
   const dock = { x: 210, y: 205 };
   // session 1: the highlands raised the eye past 500 - the streamer's vertical recenter

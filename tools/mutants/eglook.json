@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-reg-touching-blocks-pass",
     "file": "src/world/eliteGates/pseudoArchives.js",
-    "old": "if (sorted[i].from <= sorted[j].to && sorted[j].from <= sorted[i].to)",
-    "new": "if (sorted[i].from < sorted[j].to && sorted[j].from < sorted[i].to)",
+    "old": "      if (sorted[i].from <= sorted[j].to && sorted[j].from <= sorted[i].to)",
+    "new": "      if (sorted[i].from < sorted[j].to && sorted[j].from < sorted[i].to)",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGLOOK-reg-owner-misses-its-last",
     "file": "src/world/eliteGates/pseudoArchives.js",
-    "old": "return PSEUDO_ARCHIVES.find((e) => n >= e.from && n <= e.to) ?? null;",
-    "new": "return PSEUDO_ARCHIVES.find((e) => n >= e.from && n < e.to) ?? null;",
+    "old": "  return PSEUDO_ARCHIVES.find((e) => n >= e.from && n <= e.to) ?? null;",
+    "new": "  return PSEUDO_ARCHIVES.find((e) => n >= e.from && n < e.to) ?? null;",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGLOOK-reg-free-blind-to-size",
     "file": "src/world/eliteGates/pseudoArchives.js",
-    "old": "const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at + size - 1);",
-    "new": "const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at);",
+    "old": "    const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at + size - 1);",
+    "new": "    const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at);",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGLOOK-tier-eg-reads-regular",
     "file": "src/systems/gateTier.js",
-    "old": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'elite';",
-    "new": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'regular';",
+    "old": "  if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'elite';",
+    "new": "  if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'regular';",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGLOOK-tier-regular-renamed",
     "file": "src/systems/gateTier.js",
-    "old": "regular: \"Dagon's Breach\"",
-    "new": "regular: \"Regular Breach\"",
+    "old": "  regular: \"Dagon's Breach\",",
+    "new": "  regular: 'Regular Breach',",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGLOOK-tier-own-company-named",
     "file": "src/systems/gateTier.js",
-    "old": "if (!mine && opener) subs.push(",
-    "new": "if (opener) subs.push(",
+    "old": "  if (!mine && opener) subs.push(`${opener}'s company`);",
+    "new": "  if (opener) subs.push(`${opener}'s company`);",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGLOOK-tier-sight-unrounded",
     "file": "src/systems/gateTier.js",
-    "old": "const m = Math.max(10, Math.round(metres / 10) * 10);",
-    "new": "const m = Math.round(metres);",
+    "old": "  const m = Math.max(10, Math.round(metres / 10) * 10);",
+    "new": "  const m = Math.round(metres);",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGLOOK-art-dress-kept-hours",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "EG_DRESS_RECORDS.includes(sm.textureRecord)) sm.textureArchive = archive;",
-    "new": "EG_DRESS_RECORDS.includes(sm.textureRecord)) sm.textureArchive = sm.textureArchive;",
+    "old": "      sm.textureArchive = archive;",
+    "new": "      sm.textureArchive = sm.textureArchive;",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js",
       "test/net/eliteGates/eglook_pieces.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "EGLOOK-art-dress-every-record",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "if (sm.textureArchive === SD_REALM_ARCHIVE && EG_DRESS_RECORDS.includes(sm.textureRecord))",
-    "new": "if (sm.textureArchive === SD_REALM_ARCHIVE)",
+    "old": "  for (const sm of model?.subMeshes ?? [])\n    if (sm.textureArchive === SD_REALM_ARCHIVE && EG_DRESS_RECORDS.includes(sm.textureRecord))\n      sm.textureArchive = archive;",
+    "new": "  for (const sm of model?.subMeshes ?? []) if (sm.textureArchive === SD_REALM_ARCHIVE) sm.textureArchive = archive;",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "EGLOOK-art-molten-past-luma",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "export const egMoltenGlow = (band) => Math.min(EG_MOLTEN_GLOW,",
-    "new": "export const egMoltenGlow = (band) => Math.max(EG_MOLTEN_GLOW,",
+    "old": "  Math.min(",
+    "new": "  Math.max(",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "EGLOOK-art-edge-unlit",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "putTexel(emission, x, y, scale(c, SD_EDGE_GLOW));",
-    "new": "putTexel(emission, x, y, scale(c, 0));",
+    "old": "      putTexel(emission, x, y, scale(c, SD_EDGE_GLOW));",
+    "new": "      putTexel(emission, x, y, scale(c, 0));",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "EGLOOK-art-brass-unlit",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "scale(step(R.metal, 4), SD_BRASS_EDGE_GLOW)",
-    "new": "scale(step(R.metal, 4), 0)",
+    "old": "      putTexel(emission, x, y, scale(step(R.metal, 4), SD_BRASS_EDGE_GLOW));",
+    "new": "      putTexel(emission, x, y, scale(step(R.metal, 4), 0));",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "EGLOOK-hall-magma-in-gold",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "quadTo(f, EG_DRESS.molten, P(d.x - r, y, d.z - r)",
-    "new": "quadTo(f, EG_DRESS.edge, P(d.x - r, y, d.z - r)",
+    "old": "      f,\n      EG_DRESS.molten,",
+    "new": "      f,\n      EG_DRESS.edge,",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "EGLOOK-hall-channels-in-gold",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "r = fire && (i === 1 || i === 3) ? EG_DRESS.molten : rec;",
-    "new": "r = fire && (i === 1 || i === 3) ? EG_DRESS.edge : rec;",
+    "old": "      r = fire && (i === 1 || i === 3) ? EG_DRESS.molten : rec;",
+    "new": "      r = fire && (i === 1 || i === 3) ? EG_DRESS.edge : rec;",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "EGLOOK-hall-circle-undressed",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const model = egBandDress(packRealmFaces(f), band);",
-    "new": "const model = packRealmFaces(f);",
+    "old": "  const model = egBandDress(packRealmFaces(f), band);",
+    "new": "  const model = packRealmFaces(f);",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "EGLOOK-hall-gate-undressed",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "model: egBandDress(packRealmFaces(f), spec.band ?? 0)",
-    "new": "model: packRealmFaces(f)",
+    "old": "  return { model: egBandDress(packRealmFaces(f), spec.band ?? 0), tris: new Float32Array(tris) };",
+    "new": "  return { model: packRealmFaces(f), tris: new Float32Array(tris) };",
     "tests": [
       "test/world/eliteGates/eglook_art.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "EGLOOK-kit-faces-in",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "if (dir) return dot(nn, out) >= 0;",
-    "new": "if (dir) return dot(nn, out) <= 0;",
+    "old": "    if (dir) return dot(nn, out) >= 0;",
+    "new": "    if (dir) return dot(nn, out) <= 0;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "EGLOOK-kit-lathe-normal-in",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "const nr = y1 - y0, ny = -(r1 - r0), out = [nr * mid, ny, nr * mids];",
-    "new": "const nr = y1 - y0, ny = r1 - r0, out = [nr * mid, ny, nr * mids];",
+    "old": "            ny = -(r1 - r0),",
+    "new": "            ny = r1 - r0,",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "EGLOOK-kit-grows-short",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "while (cap < b.v + need) cap *= 2;",
-    "new": "while (cap < b.v) cap *= 2;",
+    "old": "    while (cap < b.v + need) cap *= 2;",
+    "new": "    while (cap < b.v) cap *= 2;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "EGLOOK-kit-grows-empty",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "p.set(b.p.subarray(0, b.v * 3));",
-    "new": "p.set(b.p.subarray(0, 0));",
+    "old": "    p.set(b.p.subarray(0, b.v * 3));",
+    "new": "    p.set(b.p.subarray(0, 0));",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "EGLOOK-kit-bounds-flat",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 1] - c[1], positions[i + 2] - c[2]));",
-    "new": "r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 2] - c[2]));",
+    "old": "    r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 1] - c[1], positions[i + 2] - c[2]));",
+    "new": "    r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 2] - c[2]));",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "EGLOOK-batch-gone-pieces-shown",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "let show = !s.hidden && !!M && M[15] !== 0;",
-    "new": "let show = !s.hidden && !!M;",
+    "old": "            let show = !s.hidden && !!M && M[15] !== 0; // a pose's zeros (a gone piece) are no place",
+    "new": "            let show = !s.hidden && !!M; // a pose's zeros (a gone piece) are no place",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "EGLOOK-batch-never-culls",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (show && planes && !sphereInPlanes(planes, B.centre[0] + x,",
-    "new": "if (false && planes && !sphereInPlanes(planes, B.centre[0] + x,",
+    "old": "              show &&",
+    "new": "              false &&",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "EGLOOK-batch-no-pad",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "B.r + EG_BATCH_CULL_PAD)) { show = false; culled++; }",
-    "new": "B.r - EG_BATCH_CULL_PAD)) { show = false; culled++; }",
+    "old": "              !sphereInPlanes(planes, B.centre[0] + x, B.centre[1] + y, B.centre[2] + z, B.r + EG_BATCH_CULL_PAD)",
+    "new": "              !sphereInPlanes(planes, B.centre[0] + x, B.centre[1] + y, B.centre[2] + z, B.r - EG_BATCH_CULL_PAD)",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "EGLOOK-batch-never-moves",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (show === was && (!show || (k.at[i * 3] === x && k.at[i * 3 + 1] === y && k.at[i * 3 + 2] === z))) continue;",
-    "new": "if (show === was) continue;",
+    "old": "            if (show === was && (!show || (k.at[i * 3] === x && k.at[i * 3 + 1] === y && k.at[i * 3 + 2] === z)))\n              continue;",
+    "new": "            if (show === was) continue;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "EGLOOK-batch-uploads-every-frame",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (dirty && k.gpu) { try { renderer?.updateMeshVertices?.(",
-    "new": "if (k.gpu) { try { renderer?.updateMeshVertices?.(",
+    "old": "        if (dirty && k.gpu) {",
+    "new": "        if (k.gpu) {",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "EGLOOK-batch-empty-drawn",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (k.draw) k.draw.hidden = !any;",
-    "new": "if (k.draw) k.draw.hidden = false;",
+    "old": "        if (k.draw) k.draw.hidden = !any;",
+    "new": "        if (k.draw) k.draw.hidden = false;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "EGLOOK-batch-copies-share-verts",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "indices[at++] = m.indices[sm.startIndex + q] + vo[i];",
-    "new": "indices[at++] = m.indices[sm.startIndex + q];",
+    "old": "              for (let q = 0; q < sm.primitiveCount * 3; q++) indices[at++] = m.indices[sm.startIndex + q] + vo[i];",
+    "new": "              for (let q = 0; q < sm.primitiveCount * 3; q++) indices[at++] = m.indices[sm.startIndex + q];",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "EGLOOK-batch-casts",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "noShadow: true, texRemap: null, hidden: true }",
-    "new": "noShadow: false, texRemap: null, hidden: true }",
+    "old": "          k.draw = { gpu: k.gpu, object: { matrix: IDENTITY }, noShadow: true, texRemap: null, hidden: true };",
+    "new": "          k.draw = { gpu: k.gpu, object: { matrix: IDENTITY }, noShadow: false, texRemap: null, hidden: true };",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "EGLOOK-edge-on-walls",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "if (b.role === 'cave' || egWallBand(spec, b) || egTubeBand(b)) continue;",
-    "new": "if (b.role === 'cave') continue;",
+    "old": "      if (b.role === 'cave' || egWallBand(spec, b) || egTubeBand(b)) continue;",
+    "new": "      if (b.role === 'cave') continue;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "EGLOOK-edge-isle-discs-rimmed",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "if (egIsleDisc(spec, d)) continue;",
-    "new": "if (false) continue;",
+    "old": "      if (egIsleDisc(spec, d)) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "EGLOOK-edge-rail-track-short",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "z1 = s.z + s.amp + s.d / 2;",
-    "new": "z1 = s.z + s.d / 2;",
+    "old": "        z1 = s.z + s.amp + s.d / 2;",
+    "new": "        z1 = s.z + s.d / 2;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "EGLOOK-edge-phone-thin",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "(h > 0 && h <= EG_EDGE_LINE.phoneH ? EG_EDGE_LINE.phonePx : EG_EDGE_LINE.px)",
-    "new": "(EG_EDGE_LINE.px)",
+    "old": "export const egEdgeLinePx = (h) => (h > 0 && h <= EG_EDGE_LINE.phoneH ? EG_EDGE_LINE.phonePx : EG_EDGE_LINE.px);",
+    "new": "export const egEdgeLinePx = (h) => EG_EDGE_LINE.px;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "EGLOOK-tells-streamers-in-still-air",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "if (!_breath.dir) return 0;",
-    "new": "if (false) return 0;",
+    "old": "  if (!_breath.dir) return 0;",
+    "new": "  if (false) return 0;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "EGLOOK-mist-over-the-line",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "const top = Math.min(line, EG_MIST.rise - EG_MIST.below), r = (m.rect ??= sheetOf(m).rect),",
-    "new": "const top = EG_MIST.rise - EG_MIST.below, r = (m.rect ??= sheetOf(m).rect),",
+    "old": "    const top = Math.min(line, EG_MIST.rise - EG_MIST.below),",
+    "new": "    const top = EG_MIST.rise - EG_MIST.below,",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "EGLOOK-fog-floor-lost",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "return Math.max(f, F.floor * ease);",
-    "new": "return f;",
+    "old": "  return Math.max(f, F.floor * ease);",
+    "new": "  return f;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "EGLOOK-fill-unclamped",
     "file": "src/ui/eliteGates/egAccess.js",
-    "old": "Math.min(EG_FILL_MAX, Math.max(EG_FILL_MIN, n))",
-    "new": "n",
+    "old": "  return Number.isFinite(n) ? Math.min(EG_FILL_MAX, Math.max(EG_FILL_MIN, n)) : EG_FILL_MAX;",
+    "new": "  return Number.isFinite(n) ? n : EG_FILL_MAX;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/net/eliteGates/egpres_hud.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "EGLOOK-quiet-aimed-other-full",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "aimedOther: trial ? 0.55 : 1",
-    "new": "aimedOther: 1",
+    "old": "    aimedOther: trial ? 0.55 : 1,",
+    "new": "    aimedOther: 1,",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "EGLOOK-quiet-auras-in-trial",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "auras: trial ? 0 : 1",
-    "new": "auras: 1",
+    "old": "    auras: trial ? 0 : 1,",
+    "new": "    auras: 1,",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/scenes/eliteGates/eglook_hosts.test.js"
@@ -403,8 +403,8 @@
   {
     "name": "EGLOOK-stair-falls-reduced",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "(reduced ? 'cut' : EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil')",
-    "new": "(EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil')",
+    "old": "export const egStairOf = (h, reduced = false) => (reduced ? 'cut' : EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil');",
+    "new": "export const egStairOf = (h, reduced = false) => (EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil');",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "EGLOOK-lab-deutan-safe-like-edge",
     "file": "src/ui/eliteGates/egAccess.js",
-    "old": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([1.0, 0.86, 0.2])",
-    "new": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([0.6, 0.34, 0.95])",
+    "old": "    safety: Object.freeze([1.0, 0.86, 0.2]),",
+    "new": "    safety: Object.freeze([0.6, 0.34, 0.95]),",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/net/eliteGates/egpres_hud.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "EGLOOK-lines-track-solid",
     "file": "src/render/eliteGates/egLinePass.js",
-    "old": "{ if (fract(vAlong / ${(2 * EG_TRACK.dash).toFixed(3)}) > 0.5) discard; c = uGold * 0.85; }",
-    "new": "{ c = uGold * 0.85; }",
+    "old": "  if (vKind == ${EG_LINE_KIND.track}) { if (fract(vAlong / ${(2 * EG_TRACK.dash).toFixed(3)}) > 0.5) discard; c = uGold * 0.85; }",
+    "new": "  if (vKind == ${EG_LINE_KIND.track}) { c = uGold * 0.85; }",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "EGLOOK-lines-lost-in-fog",
     "file": "src/render/eliteGates/egLinePass.js",
-    "old": "float f = max(fogFactorAt(vWorld), kept);",
-    "new": "float f = fogFactorAt(vWorld);",
+    "old": "  float f = max(fogFactorAt(vWorld), kept);",
+    "new": "  float f = fogFactorAt(vWorld);",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "EGLOOK-mist-no-feather",
     "file": "src/render/eliteGates/egMistPass.js",
-    "old": "if (a <= 0.004) discard;",
-    "new": "if (a < 0.0) discard;",
+    "old": "  if (a <= 0.004) discard;",
+    "new": "  if (a < 0.0) discard;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "EGLOOK-sky-deep-unlit",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "col = mix(DEEP * (0.45 + 0.4 * dnoise(q * 2.5)), GLOW, heat);",
-    "new": "col = DEEP * 0.1;",
+    "old": "    col = mix(DEEP * (0.45 + 0.4 * dnoise(q * 2.5)), GLOW, heat);",
+    "new": "    col = DEEP * 0.1;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "EGLOOK-tele-spire-lost-in-fog",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "float f = uAlpha * max(fogFactorAt(vWorld), kept);",
-    "new": "float f = uAlpha * fogFactorAt(vWorld);",
+    "old": "    '  float kept = uFogFloor.x * (1.0 - smoothstep(uFogFloor.y, uFogFloor.y + uFogFloor.z, distance(vWorld, uCamPos)));\\n  float f = uAlpha * max(fogFactorAt(vWorld), kept);\\n  float keyl2 = (uLook & 1) != 0 ? (1.0 - fin) * (1.0 - smoothstep(9.0 * aa, 13.0 * aa, edge)) * smoothstep(7.0 * aa, 9.0 * aa, edge) : 0.0;\\n  float hatch = (uLook & 2) != 0 ? 0.55 + 0.45 * step(0.5, fract((vCourt.x + vCourt.y) * 1.1785)) : 1.0;\\n',",
+    "new": "    '  float kept = uFogFloor.x * (1.0 - smoothstep(uFogFloor.y, uFogFloor.y + uFogFloor.z, distance(vWorld, uCamPos)));\\n  float f = uAlpha * fogFactorAt(vWorld);\\n  float keyl2 = (uLook & 1) != 0 ? (1.0 - fin) * (1.0 - smoothstep(9.0 * aa, 13.0 * aa, edge)) * smoothstep(7.0 * aa, 9.0 * aa, edge) : 0.0;\\n  float hatch = (uLook & 2) != 0 ? 0.55 + 0.45 * step(0.5, fract((vCourt.x + vCourt.y) * 1.1785)) : 1.0;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "EGLOOK-tele-fill-unscaled",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "* inFade * uFillK * hatch;",
-    "new": "* inFade * hatch;",
+    "old": "    '  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade * uFillK * hatch;\\n',",
+    "new": "    '  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade * hatch;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "EGLOOK-tele-no-haven",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "if (uPool == 3) {",
-    "new": "if (uPool == 33) {",
+    "old": "    '  if (uPool == 3) {\\n    // EG-G2 (section 25.5): A HAVEN - gold and lit, its line bright, a dark keyline outside it, chevrons flowing in to its heart\\n    float a8 = atan(rel.x, rel.y) / 6.283185307179586 * 8.0;\\n    float chev = step(0.5, fract(s * 3.0 - abs(fract(a8) - 0.5) * 1.4 + uSince * 0.8));\\n    vec3 lit = uColor * (fin * (0.14 + 0.16 * chev) + core * 0.9 + glow * 0.15);\\n    o = vec4(lit * f, (fin * 0.1 + keyl * 0.85) * f);\\n    return;\\n  }\\n  // THE FILL - eased in behind the line',",
+    "new": "    '  if (uPool == 33) {\\n    // EG-G2 (section 25.5): A HAVEN - gold and lit, its line bright, a dark keyline outside it, chevrons flowing in to its heart\\n    float a8 = atan(rel.x, rel.y) / 6.283185307179586 * 8.0;\\n    float chev = step(0.5, fract(s * 3.0 - abs(fract(a8) - 0.5) * 1.4 + uSince * 0.8));\\n    vec3 lit = uColor * (fin * (0.14 + 0.16 * chev) + core * 0.9 + glow * 0.15);\\n    o = vec4(lit * f, (fin * 0.1 + keyl * 0.85) * f);\\n    return;\\n  }\\n  // THE FILL - eased in behind the line',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "EGLOOK-tele-single-keyline",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "+ keyl * 0.55 + keyl2 * 0.75;",
-    "new": "+ keyl * 0.55;",
+    "old": "    '  float a = fin * (0.22 + 0.18 * filled) * inFade * uFillK + keyl * 0.55 + keyl2 * 0.75;\\n',",
+    "new": "    '  float a = fin * (0.22 + 0.18 * filled) * inFade * uFillK + keyl * 0.55;\\n',",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "EGLOOK-fight-mine-not-brighter",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
-    "new": "sh.edge = pal.danger;",
+    "old": "      sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
+    "new": "      sh.edge = pal.danger;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "EGLOOK-fight-aimed-other-full",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
-    "new": "sh.fillK = fill;",
+    "old": "      sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
+    "new": "      sh.fillK = fill;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "EGLOOK-fight-haven-burns",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.fillK = 1; sh.pool = TELEGRAPH_POOL_HAVEN;",
-    "new": "sh.fillK = 1;",
+    "old": "      sh.fillK = 1;\n      sh.pool = TELEGRAPH_POOL_HAVEN; // THE HAVEN GRAMMAR (section 25.5)",
+    "new": "      sh.fillK = 1; // THE HAVEN GRAMMAR (section 25.5)",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "EGLOOK-fight-hours-pass",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "new GateTelegraphRenderer(gl, { spire: true })",
-    "new": "new GateTelegraphRenderer(gl)",
+    "old": "      () => new GateTelegraphRenderer(gl, { spire: true }),",
+    "new": "      () => new GateTelegraphRenderer(gl),",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/systems/eliteGates/eglook_score.test.js"
@@ -531,8 +531,8 @@
   {
     "name": "EGLOOK-fight-stings-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (mine && standing && !stung.has(bl.i) && t < bl.at) {",
-    "new": "if (mine && standing && t < bl.at) {",
+    "old": "        if (mine && standing && !stung.has(bl.i) && t < bl.at) {",
+    "new": "        if (mine && standing && t < bl.at) {",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "EGLOOK-fight-barks-uncapped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "mix.barks(_barks, cam(), (b) => play3(b.cue, b.at));",
-    "new": "for (const b of _barks) play3(b.cue, b.at);",
+    "old": "      mix.barks(_barks, cam(), (b) => play3(b.cue, b.at)); // EG-G2: the legion's barks, four a kind, nearest first",
+    "new": "      for (const b of _barks) play3(b.cue, b.at); // EG-G2: the legion's barks, four a kind, nearest first",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -549,8 +549,8 @@
   {
     "name": "EGLOOK-mix-critical-culled",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "if (k >= per && !b.critical) continue;",
-    "new": "if (k >= per) continue;",
+    "old": "    if (k >= per && !b.critical) continue;",
+    "new": "    if (k >= per) continue;",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "EGLOOK-mix-adds-every-blow",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "(kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs)",
-    "new": "(kind === 'add')",
+    "old": "  kind === 'lord' || kind === 'check' || (kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs);",
+    "new": "  kind === 'lord' || kind === 'check' || kind === 'add';",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "EGLOOK-mix-no-duck",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000)",
-    "new": "music?.duck?.(0, EG_MIX.duckMs / 1000)",
+    "old": "        music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000);",
+    "new": "        music?.duck?.(0, EG_MIX.duckMs / 1000);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -576,8 +576,8 @@
   {
     "name": "EGLOOK-mix-peers-full",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "peerVolume: (v) => v * egDbGain(EG_MIX.peerDb),",
-    "new": "peerVolume: (v) => v,",
+    "old": "    peerVolume: (v) => v * egDbGain(EG_MIX.peerDb),",
+    "new": "    peerVolume: (v) => v,",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "EGLOOK-player-duck-up",
     "file": "src/systems/song/songPlayer.js",
-    "old": "low = base * 10 ** (-db / 20)",
-    "new": "low = base * 10 ** (db / 20)",
+    "old": "      low = base * 10 ** (-db / 20),",
+    "new": "      low = base * 10 ** (db / 20),",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -594,8 +594,8 @@
   {
     "name": "EGLOOK-player-duck-stays",
     "file": "src/systems/song/songPlayer.js",
-    "old": "g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);",
-    "new": "g.linearRampToValueAtTime(low, now + hold + EG_DUCK_BACK_S);",
+    "old": "    g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);",
+    "new": "    g.linearRampToValueAtTime(low, now + hold + EG_DUCK_BACK_S);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -603,8 +603,8 @@
   {
     "name": "EGLOOK-music-duck-dropped",
     "file": "src/systems/music.js",
-    "old": "duck(db, seconds) { this.player?.duck?.(db, seconds); }",
-    "new": "duck(db, seconds) { }",
+    "old": "  duck(db, seconds) {\n    this.player?.duck?.(db, seconds);\n  }",
+    "new": "  duck(db, seconds) {}",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "EGLOOK-score-count-early",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "p.countLeft <= SPIRE_COUNT_WARN_MS && (fight",
-    "new": "p.countLeft <= SPIRE_COUNT_WARN_MS * 2 && (fight",
+    "old": "      p.countLeft <= SPIRE_COUNT_WARN_MS &&",
+    "new": "      p.countLeft <= SPIRE_COUNT_WARN_MS * 2 &&",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -630,8 +630,8 @@
   {
     "name": "EGLOOK-score-valk-anywhere",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "valk: fight && p.kind === 'court' && !!p.valk,",
-    "new": "valk: fight && !!p.valk,",
+    "old": "    valk: fight && p.kind === 'court' && !!p.valk,",
+    "new": "    valk: fight && !!p.valk,",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -639,8 +639,8 @@
   {
     "name": "EGLOOK-score-end-forever",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "(place.sinceEnd ?? 0) < SPIRE_END_MS ? SPIRE_SONGS.end : SPIRE_SCORE_SILENCE",
-    "new": "SPIRE_SONGS.end",
+    "old": "  if (key === 'end') return (place.sinceEnd ?? 0) < SPIRE_END_MS ? SPIRE_SONGS.end : SPIRE_SCORE_SILENCE; // AUDIT EG V (c, L7-13): a fall's end is its own SPIRE_END_MS (spireScoreKey), `sinceEnd` 0 with no end standing",
+    "new": "  if (key === 'end') return SPIRE_SONGS.end; // AUDIT EG V (c, L7-13): a fall's end is its own SPIRE_END_MS (spireScoreKey), `sinceEnd` 0 with no end standing",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -648,8 +648,8 @@
   {
     "name": "EGLOOK-score-one-order",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "return orders[(seed >>> 0) % 6];",
-    "new": "return orders[0];",
+    "old": "  return orders[(seed >>> 0) % 6];",
+    "new": "  return orders[0];",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "EGLOOK-score-lord-unhastened",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "line(w, k, motif, 'brass', 112 + phase * 2,",
-    "new": "line(w, k, motif, 'brass', 112,",
+    "old": "        line(w, k, motif, 'brass', 112 + phase * 2, String(motif[0][0][0]).endsWith('2') ? 1 : 0);",
+    "new": "        line(w, k, motif, 'brass', 112, String(motif[0][0][0]).endsWith('2') ? 1 : 0);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -666,8 +666,8 @@
   {
     "name": "EGLOOK-score-reregisters",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (k !== ctxKey) { ctxKey = k;",
-    "new": "if (true) { ctxKey = k;",
+    "old": "      if (k !== ctxKey) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "EGLOOK-score-end-from-the-cue",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (view.place.end && endAt === null) endAt = t + SCORE_STING_LEAD_MS;",
-    "new": "if (view.place.end && endAt === null) endAt = t;",
+    "old": "      if (view.place.end && endAt === null) endAt = t + SCORE_STING_LEAD_MS; // from when it sounds (AUDIT WBX W3's law)",
+    "new": "      if (view.place.end && endAt === null) endAt = t; // from when it sounds (AUDIT WBX W3's law)",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]

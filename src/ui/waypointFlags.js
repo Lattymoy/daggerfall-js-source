@@ -22,22 +22,36 @@ export const FLAG_HIT_PX = 12;
  */
 export function paintWaypointFlag(g, x, y, { color, kind = 'personal', followed = false, hover = false, scale = 1 }) {
   const css = color?.startsWith?.('#') ? color : waypointCss(color);
-  const P = FLAG_POLE_PX * scale, C = FLAG_CLOTH_PX * scale;
+  const P = FLAG_POLE_PX * scale,
+    C = FLAG_CLOTH_PX * scale;
   g.save();
   g.setLineDash?.([]);
   g.lineCap = 'round';
   g.lineJoin = 'round';
-  if (followed) {   // the followed: a ring at its foot
-    g.beginPath(); g.ellipse?.(x, y, 7 * scale, 3.5 * scale, 0, 0, Math.PI * 2);
-    g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.7)'; g.stroke();
-    g.lineWidth = 1.5; g.strokeStyle = css; g.stroke();
+  if (followed) {
+    // the followed: a ring at its foot
+    g.beginPath();
+    g.ellipse?.(x, y, 7 * scale, 3.5 * scale, 0, 0, Math.PI * 2);
+    g.lineWidth = 3;
+    g.strokeStyle = 'rgba(0,0,0,0.7)';
+    g.stroke();
+    g.lineWidth = 1.5;
+    g.strokeStyle = css;
+    g.stroke();
   }
   // the pole
-  g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - P);
-  g.lineWidth = 3.2; g.strokeStyle = 'rgba(0,0,0,0.8)'; g.stroke();
-  g.lineWidth = 1.6; g.strokeStyle = '#e9e4d9'; g.stroke();
+  g.beginPath();
+  g.moveTo(x, y);
+  g.lineTo(x, y - P);
+  g.lineWidth = 3.2;
+  g.strokeStyle = 'rgba(0,0,0,0.8)';
+  g.stroke();
+  g.lineWidth = 1.6;
+  g.strokeStyle = '#e9e4d9';
+  g.stroke();
   // the pennant - a swallow tail
-  const top = y - P, h = 9 * scale;
+  const top = y - P,
+    h = 9 * scale;
   g.beginPath();
   g.moveTo(x + 0.5, top);
   g.lineTo(x + C, top);
@@ -45,16 +59,26 @@ export function paintWaypointFlag(g, x, y, { color, kind = 'personal', followed 
   g.lineTo(x + C, top + h);
   g.lineTo(x + 0.5, top + h);
   g.closePath();
-  g.fillStyle = css; g.fill();
-  g.lineWidth = hover ? 2 : 1.2; g.strokeStyle = hover ? '#f3ef2c' : 'rgba(0,0,0,0.85)'; g.stroke();
+  g.fillStyle = css;
+  g.fill();
+  g.lineWidth = hover ? 2 : 1.2;
+  g.strokeStyle = hover ? '#f3ef2c' : 'rgba(0,0,0,0.85)';
+  g.stroke();
   // the kind's own sign on the cloth: a party's pip, a guild's bar
   if (kind === 'party') {
-    g.beginPath(); g.arc(x + C * 0.38, top + h / 2, 1.6 * scale, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,0.75)'; g.fill();
+    g.beginPath();
+    g.arc(x + C * 0.38, top + h / 2, 1.6 * scale, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(0,0,0,0.75)';
+    g.fill();
   } else if (kind === 'guild') {
-    g.fillStyle = 'rgba(0,0,0,0.75)'; g.fillRect(x + C * 0.18, top + h / 2 - 1 * scale, C * 0.42, 2 * scale);
+    g.fillStyle = 'rgba(0,0,0,0.75)';
+    g.fillRect(x + C * 0.18, top + h / 2 - 1 * scale, C * 0.42, 2 * scale);
   }
   // the foot
-  g.beginPath(); g.arc(x, y, 1.8 * scale, 0, Math.PI * 2); g.fillStyle = '#000'; g.fill();
+  g.beginPath();
+  g.arc(x, y, 1.8 * scale, 0, Math.PI * 2);
+  g.fillStyle = '#000';
+  g.fill();
   g.restore();
 }
 

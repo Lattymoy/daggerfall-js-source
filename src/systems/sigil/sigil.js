@@ -75,7 +75,7 @@
 
 import { PARTY_MAX } from '../../net/wire.js';
 import { registerWeaponBlowMod } from '../entityMods.js';
-import { blowRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product
+import { blowRoom } from '../powerCeiling.js'; // POWER-CEILING: the blow's one product
 
 /** The power band per tier, per cent at full rank: [min, max] inclusive. */
 export const SIGIL_BANDS = Object.freeze({
@@ -103,7 +103,22 @@ export const SIGIL_XP_MAX = SIGIL_STAGES[SIGIL_STAGES.length - 1].xp;
 /** SET1: the sets a sigil may name (systems/sigil/sigilSets.js SIGIL_SETS, in its order) - the four of the world, then the
  *  gate boss's own, then (RAID4b) the three the raiding parties' raids pay: the knights', the bandits', the orcs' - then
  *  (SERPENT-SET) the sea serpent's own. */
-export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);   // WITCH1: THE WYRD'S RAIMENT, the Witches' Festival's; STAR7: THE STARSPUN WEAVE, the festival's Starfall's; SEA-SET: THE ELTHERIC TIDEMAIL, the deep sea's, last; SD9d: THE BRASS OF NUMIDIUM; EG15: THE BATTLEMAGE'S PANOPLY, last
+export const SIGIL_SET_IDS = Object.freeze([
+  'malacath',
+  'dagon',
+  'nocturnal',
+  'mora',
+  'ruhn',
+  'oath',
+  'thieftaker',
+  'orcsbane',
+  'coilscale',
+  'numidium',
+  'panoply',
+  'wyrd',
+  'starspun',
+  'eltheric',
+]); // WITCH1: THE WYRD'S RAIMENT, the Witches' Festival's; STAR7: THE STARSPUN WEAVE, the festival's Starfall's; SEA-SET: THE ELTHERIC TIDEMAIL, the deep sea's, last; SD9d: THE BRASS OF NUMIDIUM; EG15: THE BATTLEMAGE'S PANOPLY, last
 
 const partyOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.min(PARTY_MAX, Math.floor(n))) : 1);
 /** A fight's size as a sigil records it: whole, 1..PARTY_MAX (SET4: a set piece's record takes it the same way). */
@@ -118,7 +133,8 @@ export function validSigil(s) {
   if (!s || typeof s !== 'object' || Array.isArray(s)) return false;
   if (!(Number.isInteger(s.party) && s.party >= 1 && s.party <= PARTY_MAX)) return false;
   if (!(Number.isInteger(s.xp) && s.xp >= 0 && s.xp <= SIGIL_XP_MAX)) return false;
-  const hasPower = s.power !== undefined, hasSet = s.set !== undefined;
+  const hasPower = s.power !== undefined,
+    hasSet = s.set !== undefined;
   if (!hasPower && !hasSet) return false;
   if (hasPower && !validPower(s.power)) return false;
   if (hasSet && !SIGIL_SET_IDS.includes(s.set)) return false;
@@ -175,7 +191,8 @@ export function rollSigil(tier, party, rolls = Math.random) {
   const band = SIGIL_BANDS[tier];
   if (!band) return null;
   if (rolls() * 1000 >= sigilChance(party)) return null;
-  const lo = sigilFloor(tier, party), hi = band[1];
+  const lo = sigilFloor(tier, party),
+    hi = band[1];
   return { power: lo + Math.floor(rolls() * (hi + 1 - lo)), party: partyOf(party), xp: 0 };
 }
 
@@ -189,12 +206,19 @@ let _renown = null;
  *  the gates that refuse a blow at a player never saw one. Every power that sleeps in a duel reads it here: the sets and
  *  the loot's powers (sigilSets.js setsDueling) and the weapon's own blow below. */
 let _dueling = false;
-export function setSigilDueling(on) { _dueling = !!on; }
+export function setSigilDueling(on) {
+  _dueling = !!on;
+}
 export const sigilDueling = () => _dueling;
 /** The host's word: this session plays online (stamps are minted) or not. */
-export function setSigilOnline(on) { _online = !!on; if (!_online) _renown = null; }
+export function setSigilOnline(on) {
+  _online = !!on;
+  if (!_online) _renown = null;
+}
 /** The host's word: the Renown the wielder has, null while unknown. Offline it is always null. */
-export function setSigilRenown(level) { _renown = _online && Number.isSafeInteger(level) && level >= 1 ? level : null; }
+export function setSigilRenown(level) {
+  _renown = _online && Number.isSafeInteger(level) && level >= 1 ? level : null;
+}
 export const sigilOnline = () => _online;
 export const sigilRenown = () => _renown;
 /** RENOWN-GATE (2026-10-12, the owner: "gate elite/revenant spawns behind renown level"; asked, offline "Unchanged
@@ -205,7 +229,8 @@ export const sigilRenown = () => _renown;
  *  revenantHeld (Renown 10) ask it (`06-Systems/Revenants.md` section 39).
  *  @param {number} min
  *  @param {{ online?: boolean, renown?: number|null }} [o] */
-export const renownOpens = (min, { online = _online, renown = _renown } = {}) => !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);
+export const renownOpens = (min, { online = _online, renown = _renown } = {}) =>
+  !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);
 
 /**
  * THE DRINK: the weapon in my hand drinks `xp`, the Renown XP I just earned with it (a kill, a quest) - online, my
@@ -242,13 +267,14 @@ let _carry = new WeakMap();
  * here, a hand without a sigil, or a session with no Renown.
  */
 export function sigilBlow(weapon, damage, attacker, target, info = null) {
-  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil
-  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
-  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil');   // POWER-CEILING: its room under the blow's one product
+  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil
+  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)
+    return damage;
+  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil'); // POWER-CEILING: its room under the blow's one product
   if (!(pct > 0)) return damage;
   const exact = (damage * pct) / 100 + (_carry.get(held) ?? 0);
   const more = Math.floor(exact + 1e-9);
-  if (!info?.estimate) _carry.set(held, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
+  if (!info?.estimate) _carry.set(held, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
   return damage + more;
 }
 registerWeaponBlowMod('sigil', sigilBlow);
@@ -269,10 +295,20 @@ export function sigilLines(item) {
   const full = blow ? `: +${s.power}% at Ascendant` : '';
   if (_renown == null) return [`Sigil (Dormant: works online only)${full}`];
   const st = sigilStageIn(s, _renown);
-  const out = [blow ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant` : `Sigil (${SIGIL_STAGES[st].name})`];
+  const out = [
+    blow
+      ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant`
+      : `Sigil (${SIGIL_STAGES[st].name})`,
+  ];
   const next = SIGIL_STAGES[rank + 1];
-  if (rank > st) out.push(`Limited to ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
-  else if (next) out.push(`${SIGIL_STAGES[rank].name}: ${s.xp.toLocaleString('en-US')} / ${next.xp.toLocaleString('en-US')} to ${next.name}`);
+  if (rank > st)
+    out.push(
+      `Limited to ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`,
+    );
+  else if (next)
+    out.push(
+      `${SIGIL_STAGES[rank].name}: ${s.xp.toLocaleString('en-US')} / ${next.xp.toLocaleString('en-US')} to ${next.name}`,
+    );
   if (s.party > 1) out.push(`Won in a fight of ${s.party}`);
   return out;
 }
@@ -301,15 +337,23 @@ export function sigilView(item) {
   const from = SIGIL_STAGES[rank].xp;
   const held = !dormant && rank > stage;
   return {
-    rank, stage, dormant, held,
+    rank,
+    stage,
+    dormant,
+    held,
     name: dormant ? 'Dormant' : SIGIL_STAGES[stage].name,
-    pct: sigilPercent(s, _renown), full: sigilHasBlow(s) ? s.power : null,
-    xp: s.xp, from, to: next ? next.xp : null, next: next ? next.name : null,
+    pct: sigilPercent(s, _renown),
+    full: sigilHasBlow(s) ? s.power : null,
+    xp: s.xp,
+    from,
+    to: next ? next.xp : null,
+    next: next ? next.name : null,
     frac: next ? Math.max(0, Math.min(1, (s.xp - from) / (next.xp - from))) : 1,
     party: s.party,
-    unlock: held ? SIGIL_STAGES[stage + 1].renown : null,   // the Renown that opens its next stage in my hand
+    unlock: held ? SIGIL_STAGES[stage + 1].renown : null, // the Renown that opens its next stage in my hand
     stages: SIGIL_STAGES.map((st, i) => ({ name: st.name, grown: i <= rank, awake: !dormant && i <= stage })),
-    blow: sigilHasBlow(s), set: sigilSetId(s),
+    blow: sigilHasBlow(s),
+    set: sigilSetId(s),
   };
 }
 /** The progress line a card writes under its bar: "7,420 / 12,500 to Bright", or that it is fully grown. */
@@ -320,4 +364,9 @@ export function sigilProgressText(v) {
 }
 
 /** Tests only: forget the session and every weapon's carried fraction. */
-export function _resetSigilForTests() { _online = false; _renown = null; _dueling = false; _carry = new WeakMap(); }
+export function _resetSigilForTests() {
+  _online = false;
+  _renown = null;
+  _dueling = false;
+  _carry = new WeakMap();
+}

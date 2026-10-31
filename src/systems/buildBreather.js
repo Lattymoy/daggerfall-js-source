@@ -75,7 +75,7 @@ export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = 
   }
   if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;
   const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;
-  if (Number.isNaN(left)) return BUILD_SLICE_MS;   // a NaN in is the old slice out, never a stall
+  if (Number.isNaN(left)) return BUILD_SLICE_MS; // a NaN in is the old slice out, never a stall
   return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));
 }
 
@@ -100,12 +100,15 @@ function nextTurn(fn) {
  * @param {(resumedBy?: unknown) => void} fn
  * @param {{ shell?: unknown, doc?: { hidden?: boolean } | undefined, raf?: (fn: () => void) => unknown, turn?: (fn: () => void) => void }} [seams]
  */
-export function breathFrame(fn, {
-  shell = globalThis.daggerShell,
-  doc = globalThis.document,
-  raf = (f) => requestAnimationFrame(f),
-  turn = nextTurn,
-} = {}) {
+export function breathFrame(
+  fn,
+  {
+    shell = globalThis.daggerShell,
+    doc = globalThis.document,
+    raf = (f) => requestAnimationFrame(f),
+    turn = nextTurn,
+  } = {},
+) {
   if (!shell) return raf(fn);
   if (doc?.hidden) return turn(() => fn(TURNED));
   // Visible now, so a frame is pending - but a window minimized before it fires gets none. The first of the frame and
@@ -117,7 +120,9 @@ export function breathFrame(fn, {
     doc?.removeEventListener?.('visibilitychange', onChange);
     fn(resumedBy);
   };
-  const onChange = () => { if (doc?.hidden) turn(() => settle(TURNED)); };
+  const onChange = () => {
+    if (doc?.hidden) turn(() => settle(TURNED));
+  };
   doc?.addEventListener?.('visibilitychange', onChange);
   raf((t) => settle(t));
 }
@@ -150,22 +155,23 @@ export function breathFrame(fn, {
  */
 export function createBreather({
   now = () => performance.now(),
-  raf = (fn) => breathFrame(fn),   // BOOT-HIDDEN: the next frame, or a turn while the desktop app's page is hidden
+  raf = (fn) => breathFrame(fn), // BOOT-HIDDEN: the next frame, or a turn while the desktop app's page is hidden
   sliceMs = BUILD_SLICE_MS,
   budget = null,
   onSlice = null,
   frames = null,
 } = {}) {
   let sliceStart = now();
-  let sliceBudget = budget ? budget() : sliceMs;   // PERF-EXT24: asked once a slice, not once a breath
+  let sliceBudget = budget ? budget() : sliceMs; // PERF-EXT24: asked once a slice, not once a breath
   const framesNow = frames ?? (() => 0);
-  let sliceFrame = null;   // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began
+  let sliceFrame = null; // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began
   // TESA-LANDS' second audit (lane C): ONE SLICE A FRAME, HOWEVER MANY WAIT. A pixel's sets load together (scenes/
   // pixelBuild.js - its own and its neighbours'), each a chain of breaths on this one clock, and every waiter's resume
   // began the slice again: four chains spent four slices in one frame (24 ms against a 6 ms slice; 80 ms under the
   // Overworld's 20). Every waiter now waits on the ONE next frame (`wake`), which begins the slice once; the chains share
   // it, each running on while it has budget.
-  let wake = null, wakeToken = null;
+  let wake = null,
+    wakeToken = null;
   const b = {
     yields: 0,
     /** Call between units of work. Resolves at once while the slice has budget; otherwise on the next frame. */
@@ -175,25 +181,36 @@ export function createBreather({
       b.yields++;
       let w = wake;
       if (!w) {
-        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter
+        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter
         const token = {};
         wakeToken = token;
-        w = new Promise((resolve) => raf((resumedBy) => {
-          if (wakeToken === token) { wakeToken = null; wake = null; }
-          sliceStart = now();
-          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for
-          sliceBudget = budget ? budget() : sliceMs;
-          resolve();
-        }));
-        if (wakeToken === token) wake = w;   // still to come: the frame's other waiters wait on it too (a raf that ran at once has begun the slice already)
+        w = new Promise((resolve) =>
+          raf((resumedBy) => {
+            if (wakeToken === token) {
+              wakeToken = null;
+              wake = null;
+            }
+            sliceStart = now();
+            sliceFrame = resumedBy === TURNED ? null : framesNow(); // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for
+            sliceBudget = budget ? budget() : sliceMs;
+            resolve();
+          }),
+        );
+        if (wakeToken === token) wake = w; // still to come: the frame's other waiters wait on it too (a raf that ran at once has begun the slice already)
       }
       await w;
     },
     /** A new build starts a fresh slice (the awaits before it were someone else's). */
-    reset() { sliceStart = now(); sliceFrame = null; sliceBudget = budget ? budget() : sliceMs; },
+    reset() {
+      sliceStart = now();
+      sliceFrame = null;
+      sliceBudget = budget ? budget() : sliceMs;
+    },
     /** AUDIT PRECIP HOST-N2: the milliseconds the slice has left - a unit of work sized to the frame (the snow's
      *  integration, scenes/snowCoverHost.js settle) asks it, never a fixed slice of its own over the frame's. */
-    left() { return Math.max(0, sliceBudget - (now() - sliceStart)); },
+    left() {
+      return Math.max(0, sliceBudget - (now() - sliceStart));
+    },
   };
   return b;
 }

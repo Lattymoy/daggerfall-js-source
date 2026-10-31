@@ -24,39 +24,72 @@
 // metres - see `SnowWorld` below.
 
 import {
-  SnowpackState, resolveSnowDepth, encodeStaticSnow, staticSnowMultiplier, snapToGrid, fullSnowMask, rasterizeTrack,
-  scrollMask, containsDeformation, snowContactRamp, PersistentTrackField, CorpseImpressions, contextOf, SNOW_EXCLUDED,
-  outsideWeight, rectWeight, pathEdgeDistance, interpolateQuad, snowfallSettings, contextInto,
+  SnowpackState,
+  resolveSnowDepth,
+  encodeStaticSnow,
+  staticSnowMultiplier,
+  snapToGrid,
+  fullSnowMask,
+  rasterizeTrack,
+  scrollMask,
+  containsDeformation,
+  snowContactRamp,
+  PersistentTrackField,
+  CorpseImpressions,
+  contextOf,
+  SNOW_EXCLUDED,
+  outsideWeight,
+  rectWeight,
+  pathEdgeDistance,
+  interpolateQuad,
+  snowfallSettings,
+  contextInto,
 } from './snowfall.js';
 import { roundToInt } from './mathf.js';
 import { dateFromClassicMinutes, seasonValue, SEASONS } from './gameDate.js';
 import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
-import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: Prepare's clamp, the world's grid
+import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: Prepare's clamp, the world's grid
 
 const f32 = Math.fround;
 
 // ---- the constants the assembly carries ---------------------------------------------------------------------------
 export const SNOW_SURFACE_OFFSET = f32(0.008);
-export const SNOW_GUARD_BAND = 12;   // LocalGuardBand: the window's grid reaches 12 m past the snow radius
+export const SNOW_GUARD_BAND = 12; // LocalGuardBand: the window's grid reaches 12 m past the snow radius
 const TERRAIN_RETRY_SECONDS = 0.25;
 const REFILL_INTERVAL_SECONDS = 0.5;
 const MAX_STATIC_MASK = 192;
-const RECENTER_SAMPLES = 1024, FULL_REBUILD_SAMPLES = 3072, CATCH_UP_SAMPLES = 4096;
+const RECENTER_SAMPLES = 1024,
+  FULL_REBUILD_SAMPLES = 3072,
+  CATCH_UP_SAMPLES = 4096;
 /** THE PORT'S PACE (Port-Ledger A, SNOWFALL1): the progressive builds - the window's recentre, the ring's, a blanket
  *  tile's - stop for the frame once the frame's snow has spent this many milliseconds, under the mod's own sample
  *  budgets (never faster than the mod, slower where JavaScript is): the mod's per-frame counts cost a C# frame a
  *  millisecond or two and a JavaScript one up to ten, and a build a frame late is a frame the old tier still stands. */
 export const SNOW_FRAME_BUDGET_MS = 2;
-const BUDGET_CHECK = 127;   // the clock asked every 128 samples
+const BUDGET_CHECK = 127; // the clock asked every 128 samples
 const clockMs = () => globalThis.performance?.now?.() ?? Date.now();
 const RETARGET_DELAY_SECONDS = 0.05;
 const MAX_PENDING_TRACKS = 256;
 const HARD_BOUNDARY_CONTACT_WIDTH = 3;
 const NPC_SAMPLE_INTERVAL_SECONDS = 0.1;
 const MAX_NPC_SEGMENT = 4;
-const MAX_NPC_TRACK_DISTANCE_SQ = 102400;   // 320 m
+const MAX_NPC_TRACK_DISTANCE_SQ = 102400; // 320 m
 /** MidDetailSnowRing. */
-export const MID = Object.freeze({ radius: 160, visible: 128, overlap: 24, mesh: 257, staticRes: 321, samples: 4096, catchUp: 8192, recenter: 20, snap: 10, history: 641, pendingMax: 512, historyUpload: 0.1, clipStart: 104 });
+export const MID = Object.freeze({
+  radius: 160,
+  visible: 128,
+  overlap: 24,
+  mesh: 257,
+  staticRes: 321,
+  samples: 4096,
+  catchUp: 8192,
+  recenter: 20,
+  snap: 10,
+  history: 641,
+  pendingMax: 512,
+  historyUpload: 0.1,
+  clipStart: 104,
+});
 /** StreamedSnowBlanketPrototype. */
 export const BLANKET = Object.freeze({ mesh: 65, staticRes: 128, samplesPerFrame: 1024, pruneSeconds: 5 });
 /** FarTrackMask. */
@@ -89,8 +122,12 @@ export const FAR = Object.freeze({ res: 641, radius: 320, recenter: 48, snap: 16
 
 const v3 = () => [0, 0, 0];
 /** Vector2.Distance, in float. */
-const distanceF = (ax, ay, bx, by) => { const dx = f32(ax - bx), dy = f32(ay - by); return f32(Math.sqrt(f32(f32(dx * dx) + f32(dy * dy)))); };
-const steepnessOf = (n) => Math.acos(Math.max(-1, Math.min(1, n[1]))) * (180 / Math.PI);   // TerrainData.GetSteepness: the normal's angle to up
+const distanceF = (ax, ay, bx, by) => {
+  const dx = f32(ax - bx),
+    dy = f32(ay - by);
+  return f32(Math.sqrt(f32(f32(dx * dx) + f32(dy * dy))));
+};
+const steepnessOf = (n) => Math.acos(Math.max(-1, Math.min(1, n[1]))) * (180 / Math.PI); // TerrainData.GetSteepness: the normal's angle to up
 
 // ---- SnowContextData's sampling ------------------------------------------------------------------------------------
 /** BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D3): Prepare's box held to THE WORLD'S metres - its
@@ -98,8 +135,10 @@ const steepnessOf = (n) => Math.acos(Math.max(-1, Math.min(1, n[1]))) * (180 / M
  *  z north from the Bay's south edge (499 - py). DFU's map is the Bay's 0..819,200 x 0..409,600, and held to it a box past
  *  the Bay stood on no ground: no deep snow, no track, no berm anywhere past it. On the Bay, away from its edge, the same box. */
 export const SNOW_WORLD_METRES = Object.freeze({
-  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2, maxX: WORLD_PIXEL_SPAN * 819.2,
-  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2, maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,
+  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2,
+  maxX: WORLD_PIXEL_SPAN * 819.2,
+  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2,
+  maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,
 });
 
 /** SnowContextData: the vanilla locations, the authored footprints and the Basic Roads tiles round a centre, and the
@@ -115,28 +154,44 @@ export class SnowContext {
     this.settings = null;
     this.settlementFeather = 0;
     this.locationFeather = 0;
-    this._tile = { tile: 0, u: 0, v: 0 };   // PathLandCoverage's tileUv (AUDIT ENVIRONS P5)
+    this._tile = { tile: 0, u: 0, v: 0 }; // PathLandCoverage's tileUv (AUDIT ENVIRONS P5)
   }
 
   /** Prepare(sceneCenter, radius, feather, loaderFeather, settings). */
   prepare(cx, cz, radius, feather, loaderFeather, s) {
-    this.settlements = []; this.roads = [];
+    this.settlements = [];
+    this.roads = [];
     this.settings = s;
     this.settlementFeather = feather;
     this.locationFeather = loaderFeather;
     const [gx, gz] = this.world.toGlobal(cx, cz);
-    this.locations = s?.locationLoaderIntegration && this.world.footprints ? this.world.footprints(gx, gz, radius + loaderFeather) : [];
+    this.locations =
+      s?.locationLoaderIntegration && this.world.footprints
+        ? this.world.footprints(gx, gz, radius + loaderFeather)
+        : [];
     const reach = s?.basicRoadsIntegration ? Math.max(s.pathBoundaryFeather, s.roadBermWidth) : 0;
     const span = Math.ceil((radius + Math.max(feather, reach)) * 40) / 40;
-    const W = SNOW_WORLD_METRES;   // BAY-LEFT-GROUND: the world's, where DFU's map was the Bay's (0..819200 x 0..409600)
-    const minGX = Math.max(W.minX, gx - span), minGZ = Math.max(W.minZ, gz - span), maxGX = Math.min(W.maxX, gx + span), maxGZ = Math.min(W.maxZ, gz + span);
+    const W = SNOW_WORLD_METRES; // BAY-LEFT-GROUND: the world's, where DFU's map was the Bay's (0..819200 x 0..409600)
+    const minGX = Math.max(W.minX, gx - span),
+      minGZ = Math.max(W.minZ, gz - span),
+      maxGX = Math.min(W.maxX, gx + span),
+      maxGZ = Math.min(W.maxZ, gz + span);
     if (s?.basicRoadsIntegration) {
-      for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {   // AUDIT ENVIRONS S1: the box's own map pixels, wherever the player stands
+      for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {
+        // AUDIT ENVIRONS S1: the box's own map pixels, wherever the player stands
         const roads = t.roads;
         if (!roads || (roads.pathTiles === 0 && roads.roadTiles === 0)) continue;
         const o = t.origin(v3());
         const [ox, oz] = this.world.toGlobal(o[0], o[2]);
-        this.roads.push({ data: roads, x: ox, z: oz, tileMetres: f32(t.size / 128), archive: t.winterArchive, mapX: t.mapX, mapY: t.mapY });
+        this.roads.push({
+          data: roads,
+          x: ox,
+          z: oz,
+          tileMetres: f32(t.size / 128),
+          archive: t.winterArchive,
+          mapX: t.mapX,
+          mapY: t.mapY,
+        });
       }
     }
     this.settlements = this.world.settlements(minGX, minGZ, maxGX, maxGZ);
@@ -145,34 +200,50 @@ export class SnowContext {
   /** Sample(scenePosition): Color32(settlement, location cap, path, berm) - the point's global place read once for the
    *  three (AUDIT ENVIRONS P5; SampleSettlement and SampleLocationCap each read it again). */
   sample(x, z, out = new Uint8Array(4), o = 0) {
-    let path = 0, berm = 0, settle = 0, cap = 0;
+    let path = 0,
+      berm = 0,
+      settle = 0,
+      cap = 0;
     const s = this.settings;
     if ((this.roads.length && s) || this.settlements.length || this.locations.length) {
-      const g = this.world.toGlobal(x, z), gx = g[0], gz = g[1];
+      const g = this.world.toGlobal(x, z),
+        gx = g[0],
+        gz = g[1];
       if (this.roads.length && s) {
         for (const r of this.roads) {
-          const tx = f32((gx - r.x) / r.tileMetres), tz = f32((gz - r.z) / r.tileMetres);
+          const tx = f32((gx - r.x) / r.tileMetres),
+            tz = f32((gz - r.z) / r.tileMetres);
           if (tx < -1 || tz < -1 || tx > 129 || tz > 129) continue;
           path = Math.max(path, r.data.samplePath(tx, tz, r.tileMetres, s.pathBoundaryFeather));
-          if (s.roadBermsEnabled && this.coverage) berm = Math.max(berm, r.data.sampleBerm(tx, tz, r.tileMetres, s.roadBermWidth, r.archive, this.coverage));
+          if (s.roadBermsEnabled && this.coverage)
+            berm = Math.max(berm, r.data.sampleBerm(tx, tz, r.tileMetres, s.roadBermWidth, r.archive, this.coverage));
         }
       }
       if (this.settlements.length) settle = rectWeight(this.settlements, gx, gz, this.settlementFeather);
       if (this.locations.length) cap = rectWeight(this.locations, gx, gz, this.locationFeather);
     }
-    out[o] = settle; out[o + 1] = cap; out[o + 2] = path; out[o + 3] = berm;
+    out[o] = settle;
+    out[o + 1] = cap;
+    out[o + 2] = path;
+    out[o + 3] = berm;
     return out;
   }
 
   /** PathTile(scenePosition, out tileUv): the track tile under a point, and the point's place in it (into `out`). */
   pathTile(x, z, out = { tile: 0, u: 0, v: 0 }) {
     if (!this.roads.length) return null;
-    const g = this.world.toGlobal(x, z), gx = g[0], gz = g[1];
+    const g = this.world.toGlobal(x, z),
+      gx = g[0],
+      gz = g[1];
     for (const r of this.roads) {
-      const tx = f32((gx - r.x) / r.tileMetres), tz = f32((gz - r.z) / r.tileMetres);
+      const tx = f32((gx - r.x) / r.tileMetres),
+        tz = f32((gz - r.z) / r.tileMetres);
       if (tx < 0 || tz < 0 || tx >= 128 || tz >= 128) continue;
-      const ix = Math.floor(tx), iz = Math.floor(tz);
-      out.tile = r.data.pathTile(ix, iz); out.u = f32(tx - ix); out.v = f32(tz - iz);
+      const ix = Math.floor(tx),
+        iz = Math.floor(tz);
+      out.tile = r.data.pathTile(ix, iz);
+      out.u = f32(tx - ix);
+      out.v = f32(tz - iz);
       return out;
     }
     return null;
@@ -196,14 +267,24 @@ export class SnowContext {
    *  same settlements' rectangles, under the same settings - and no footprint (Location Loader's are found in a circle
    *  round the centre, so two centres find different ones). A point either samples answers the same (AUDIT ENVIRONS P3). */
   sameGround(o) {
-    if (!o || o.settings !== this.settings || o.settlementFeather !== this.settlementFeather || this.locations.length || o.locations.length) return false;
+    if (
+      !o ||
+      o.settings !== this.settings ||
+      o.settlementFeather !== this.settlementFeather ||
+      this.locations.length ||
+      o.locations.length
+    )
+      return false;
     if (o.roads.length !== this.roads.length || o.settlements.length !== this.settlements.length) return false;
     for (let i = 0; i < this.roads.length; i++) {
-      const a = this.roads[i], b = o.roads[i];
-      if (a.data !== b.data || a.x !== b.x || a.z !== b.z || a.tileMetres !== b.tileMetres || a.archive !== b.archive) return false;
+      const a = this.roads[i],
+        b = o.roads[i];
+      if (a.data !== b.data || a.x !== b.x || a.z !== b.z || a.tileMetres !== b.tileMetres || a.archive !== b.archive)
+        return false;
     }
     for (let i = 0; i < this.settlements.length; i++) {
-      const a = this.settlements[i], b = o.settlements[i];
+      const a = this.settlements[i],
+        b = o.settlements[i];
       if (a.minX !== b.minX || a.minZ !== b.minZ || a.maxX !== b.maxX || a.maxZ !== b.maxZ) return false;
     }
     return true;
@@ -227,37 +308,98 @@ export class SnowContext {
 function sampleStaticSnow(world, coverage, context, s, x, z, out, o, t = world.terrainAt(x, z)) {
   if (!t || !t.tileMap || t.tileMap.length < 16384) return false;
   const og = t.origin(_o);
-  const lx = x - og[0], lz = z - og[2];
-  const u = Math.max(0, Math.min(1, f32(lx / t.size))), v = Math.max(0, Math.min(1, f32(lz / t.size)));
-  const fx = f32(128 * u), fz = f32(128 * v);
-  const ix = Math.max(0, Math.min(127, Math.trunc(fx))), iz = Math.max(0, Math.min(127, Math.trunc(fz)));
+  const lx = x - og[0],
+    lz = z - og[2];
+  const u = Math.max(0, Math.min(1, f32(lx / t.size))),
+    v = Math.max(0, Math.min(1, f32(lz / t.size)));
+  const fx = f32(128 * u),
+    fz = f32(128 * v);
+  const ix = Math.max(0, Math.min(127, Math.trunc(fx))),
+    iz = Math.max(0, Math.min(127, Math.trunc(fz)));
   const tile = t.tileMap[iz * 128 + ix];
-  let cov = t.bare?.(lx, lz) ? 0 : coverage.sample(t.winterArchive, tile, Math.max(0, Math.min(1, f32(fx - ix))), Math.max(0, Math.min(1, f32(fz - iz))));
+  let cov = t.bare?.(lx, lz)
+    ? 0
+    : coverage.sample(
+        t.winterArchive,
+        tile,
+        Math.max(0, Math.min(1, f32(fx - ix))),
+        Math.max(0, Math.min(1, f32(fz - iz))),
+      );
   if (cov === null) cov = tile >> 2 !== 0 ? 1 : 0;
   cov = Math.max(cov, context.pathLandCoverage(x, z));
   const mult = cov > 0 ? staticSnowMultiplier(cov, f32(steepnessOf(t.normal(lx, lz, _n))), s.maxSnowSlope) : 0;
   encodeStaticSnow(mult, cov, out, o);
   return true;
 }
-const _o = v3(), _n = v3();
+const _o = v3(),
+  _n = v3();
 /** A tier's uniforms (render/renderer.js drawSnow's `u`), filled in place by the runtime's own (AUDIT ENVIRONS P1). */
-export const snowUniforms = () => ({ origin: [0, 0, 0], depths: [0, 0, 0, 0], limits: [0, 0, 0, 0], dynMap: [0, 0, 0, 0], dynTexel: [0, 0, 0, 0], statMap: [0, 0, 0, 0], farMap: null, flags: [0, 0, 0, 0], radius: [0, 0, 0, 0], inner: [0, 0, 0, 0], outer: [0, 0, 0, 0], boundaryFade: 0, darkening: 0 });
-const put4 = (a, x, y, z, w) => { a[0] = x; a[1] = y; a[2] = z; a[3] = w; return a; };
+export const snowUniforms = () => ({
+  origin: [0, 0, 0],
+  depths: [0, 0, 0, 0],
+  limits: [0, 0, 0, 0],
+  dynMap: [0, 0, 0, 0],
+  dynTexel: [0, 0, 0, 0],
+  statMap: [0, 0, 0, 0],
+  farMap: null,
+  flags: [0, 0, 0, 0],
+  radius: [0, 0, 0, 0],
+  inner: [0, 0, 0, 0],
+  outer: [0, 0, 0, 0],
+  boundaryFade: 0,
+  darkening: 0,
+});
+const put4 = (a, x, y, z, w) => {
+  a[0] = x;
+  a[1] = y;
+  a[2] = z;
+  a[3] = w;
+  return a;
+};
 /** The middle ring's blend under a vertex, BlanketSamples.at's answer for one sample at a time (AUDIT ENVIRONS P5). */
-const _quad = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 };
+const _quad = {
+  height: 0,
+  normal: [0, 0, 0],
+  contextA: null,
+  contextB: null,
+  contextC: null,
+  blend: [0, 0, 0],
+  offset: 0,
+};
 
 /** The pixels of a mask a frame changed, for a partial upload (Texture2D.SetPixel before Apply): a rectangle grown by
  *  each pixel written; `full` when the whole mask changed (a scroll, a refill, a projection). */
 export class DirtyRect {
-  constructor() { this.full = true; this.x0 = Infinity; this.z0 = Infinity; this.x1 = -1; this.z1 = -1; }
-  all() { this.full = true; }
-  add(x, z) { if (x < this.x0) this.x0 = x; if (x > this.x1) this.x1 = x; if (z < this.z0) this.z0 = z; if (z > this.z1) this.z1 = z; }
-  get any() { return this.full || this.x1 >= 0; }
+  constructor() {
+    this.full = true;
+    this.x0 = Infinity;
+    this.z0 = Infinity;
+    this.x1 = -1;
+    this.z1 = -1;
+  }
+  all() {
+    this.full = true;
+  }
+  add(x, z) {
+    if (x < this.x0) this.x0 = x;
+    if (x > this.x1) this.x1 = x;
+    if (z < this.z0) this.z0 = z;
+    if (z > this.z1) this.z1 = z;
+  }
+  get any() {
+    return this.full || this.x1 >= 0;
+  }
   /** What to upload, and the rectangle cleared: null for nothing. */
   take() {
     if (!this.any) return null;
-    const out = this.full ? { full: true } : { full: false, x: this.x0, z: this.z0, w: this.x1 - this.x0 + 1, h: this.z1 - this.z0 + 1 };
-    this.full = false; this.x0 = Infinity; this.z0 = Infinity; this.x1 = -1; this.z1 = -1;
+    const out = this.full
+      ? { full: true }
+      : { full: false, x: this.x0, z: this.z0, w: this.x1 - this.x0 + 1, h: this.z1 - this.z0 + 1 };
+    this.full = false;
+    this.x0 = Infinity;
+    this.z0 = Infinity;
+    this.x1 = -1;
+    this.z1 = -1;
     return out;
   }
 }
@@ -272,7 +414,15 @@ export class SnowfallRuntime {
    * @param {number} [o.frameBudgetMs] - SNOW_FRAME_BUDGET_MS (Infinity: the mod's sample budgets alone)
    * @param {() => number} [o.clock] - milliseconds, for the budget
    */
-  constructor({ world, coverage, settings = snowfallSettings(), frameBudgetMs = SNOW_FRAME_BUDGET_MS, clock = clockMs, builds = null }) {   // builds: SNOW-THREAD, snowfall/snowBuildClient.js SnowBuildClient (none: every build on this thread)
+  constructor({
+    world,
+    coverage,
+    settings = snowfallSettings(),
+    frameBudgetMs = SNOW_FRAME_BUDGET_MS,
+    clock = clockMs,
+    builds = null,
+  }) {
+    // builds: SNOW-THREAD, snowfall/snowBuildClient.js SnowBuildClient (none: every build on this thread)
     this.world = world;
     this.builds = builds;
     this.frameBudgetMs = frameBudgetMs;
@@ -298,10 +448,14 @@ export class SnowfallRuntime {
     this.lastEnvironmentEligible = false;
     this.npcTargets = new Map();
     this.nextNpcSampleTime = 0;
-    this.npcSegmentsWritten = 0; this.npcSamplePasses = 0;
-    this.stampAttempts = 0; this.stampsWritten = 0; this.lastStampChanged = 0; this.lastStampStatus = 'not evaluated';
+    this.npcSegmentsWritten = 0;
+    this.npcSamplePasses = 0;
+    this.stampAttempts = 0;
+    this.stampsWritten = 0;
+    this.lastStampChanged = 0;
+    this.lastStampStatus = 'not evaluated';
     this.staleCancellations = 0;
-    this._midRun = { k: -1, from: -1, len: 0 };   // SNOW-THREAD (step 1): the ring's copy run in progress
+    this._midRun = { k: -1, from: -1, len: 0 }; // SNOW-THREAD (step 1): the ring's copy run in progress
     this.local = this._newLocal();
     this.mid = this._newMid();
     this.blanket = this._newBlanket();
@@ -314,15 +468,39 @@ export class SnowfallRuntime {
   }
 
   // ---- the settings ----
-  get gridRadius() { return f32(this.settings.snowRadius + SNOW_GUARD_BAND); }
-  get gridDiameter() { return f32(this.gridRadius * 2); }
-  get maskTexel() { return f32(this.gridDiameter / (this.settings.maskResolution - 1)); }
-  get staticRes() { return Math.min(Math.min(this.settings.maskResolution, this.settings.meshResolution), MAX_STATIC_MASK); }
-  get staticTexel() { return f32(this.gridDiameter / (this.staticRes - 1)); }
-  get meshCell() { return f32(this.gridDiameter / (this.settings.meshResolution - 1)); }
-  get renderedDepth() { return this.settings.debugSnowDepthOverride > 0 ? this.settings.debugSnowDepthOverride : f32(this.snowpack.wildernessDepth); }
-  get renderedSettlementDepth() { return this.settings.debugSnowDepthOverride > 0 ? this.settings.debugSnowDepthOverride : f32(this.snowpack.settlementDepth); }
-  get renderedLocationDepth() { return this.settings.debugSnowDepthOverride > 0 ? this.settings.debugSnowDepthOverride : this.settings.locationLoaderMaximumDepth; }
+  get gridRadius() {
+    return f32(this.settings.snowRadius + SNOW_GUARD_BAND);
+  }
+  get gridDiameter() {
+    return f32(this.gridRadius * 2);
+  }
+  get maskTexel() {
+    return f32(this.gridDiameter / (this.settings.maskResolution - 1));
+  }
+  get staticRes() {
+    return Math.min(Math.min(this.settings.maskResolution, this.settings.meshResolution), MAX_STATIC_MASK);
+  }
+  get staticTexel() {
+    return f32(this.gridDiameter / (this.staticRes - 1));
+  }
+  get meshCell() {
+    return f32(this.gridDiameter / (this.settings.meshResolution - 1));
+  }
+  get renderedDepth() {
+    return this.settings.debugSnowDepthOverride > 0
+      ? this.settings.debugSnowDepthOverride
+      : f32(this.snowpack.wildernessDepth);
+  }
+  get renderedSettlementDepth() {
+    return this.settings.debugSnowDepthOverride > 0
+      ? this.settings.debugSnowDepthOverride
+      : f32(this.snowpack.settlementDepth);
+  }
+  get renderedLocationDepth() {
+    return this.settings.debugSnowDepthOverride > 0
+      ? this.settings.debugSnowDepthOverride
+      : this.settings.locationLoaderMaximumDepth;
+  }
 
   /**
    * DynamicSnowMod.LoadSettings / ApplySettings: the change's rebuilds, as the mod decides them from the keys that
@@ -334,14 +512,26 @@ export class SnowfallRuntime {
     const changed = (...keys) => keys.some((k) => prev[k] !== next[k]);
     const rebuildGrid = changed('snowRadius', 'meshResolution', 'maskResolution');
     const rebuildStatic = changed('maxSnowSlope', 'basicRoadsIntegration');
-    const rebuildContext = changed('settlementBoundaryFeather', 'locationLoaderIntegration', 'locationLoaderBoundaryFeather', 'basicRoadsIntegration', 'pathBoundaryFeather', 'roadBermsEnabled', 'roadBermWidth');
+    const rebuildContext = changed(
+      'settlementBoundaryFeather',
+      'locationLoaderIntegration',
+      'locationLoaderBoundaryFeather',
+      'basicRoadsIntegration',
+      'pathBoundaryFeather',
+      'roadBermsEnabled',
+      'roadBermWidth',
+    );
     const reevaluate = changed('activationOverride');
     const resetPhase = changed('snowfallDepthStep', 'snowfallDepthHours', 'meltDepthStep', 'meltDepthHours');
     const L = this.local;
-    if (rebuildGrid || rebuildStatic || reevaluate) { L.recentering = false; L.fullRebuild = false; }
+    if (rebuildGrid || rebuildStatic || reevaluate) {
+      L.recentering = false;
+      L.fullRebuild = false;
+    }
     this.settings = next;
-    this.builds?.settings(next);   // SNOW-THREAD: the worker's builds read the same settings from its next build on
-    if (this.corpses.enabled !== next.corpseImpressionsEnabled && next.corpseImpressionsEnabled) this.corpseScanPending = true;
+    this.builds?.settings(next); // SNOW-THREAD: the worker's builds read the same settings from its next build on
+    if (this.corpses.enabled !== next.corpseImpressionsEnabled && next.corpseImpressionsEnabled)
+      this.corpseScanPending = true;
     this.corpses.enabled = next.corpseImpressionsEnabled;
     this.corpses.width = next.corpseImpressionWidth;
     if (!this.corpses.enabled) this.corpses.clear();
@@ -352,39 +542,77 @@ export class SnowfallRuntime {
     if (rebuildContext && !rebuildGrid && !rebuildStatic && !reevaluate) this._rebuildCommittedContext();
     if (rebuildContext) this.blanket.contextRevision++;
     if (rebuildStatic || reevaluate) this.mid.rebuildPending = true;
-    else if (rebuildContext) { this.mid.rebuildPending = true; this.mid.building = false; }
-    this.mid.reuse = null;   // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings (the next one's sameGround refuses a source of the old)
+    else if (rebuildContext) {
+      this.mid.rebuildPending = true;
+      this.mid.building = false;
+    }
+    this.mid.reuse = null; // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings (the next one's sameGround refuses a source of the old)
   }
 
   // ---- the local window (DynamicSnowController) ----
   _newLocal() {
-    const s = this.settings, res = s.meshResolution, mres = s.maskResolution, sres = this.staticRes;
+    const s = this.settings,
+      res = s.meshResolution,
+      mres = s.maskResolution,
+      sres = this.staticRes;
     const n = res * res;
     const L = {
-      res, mres, sres,
-      pos: new Float32Array(n * 3), nrm: new Float32Array(n * 3), uv: new Float32Array(n * 2),
-      nextPos: new Float32Array(n * 3), nextNrm: new Float32Array(n * 3),
+      res,
+      mres,
+      sres,
+      pos: new Float32Array(n * 3),
+      nrm: new Float32Array(n * 3),
+      uv: new Float32Array(n * 2),
+      nextPos: new Float32Array(n * 3),
+      nextNrm: new Float32Array(n * 3),
       index: null,
-      dynamic: fullSnowMask(mres), scroll: fullSnowMask(mres),
-      statics: new Uint8Array(sres * sres * 4), nextStatics: new Uint8Array(sres * sres * 4),
-      context: new Uint8Array(sres * sres * 4), nextContext: new Uint8Array(sres * sres * 4),
-      center: [0, 0], dynCenter: [0, 0], statCenter: [0, 0], lattice: [0, 0], baseY: 0,
-      hasCenter: false, meshReady: false, staticReady: false,
-      heightRebuild: true, staticRebuild: true, resourceRebuild: false,
-      requiresFullProjection: true, hasDeformation: false,
-      recentering: false, fullRebuild: false, outrun: false, nextCenter: [0, 0], nextDyn: [0, 0], nextStat: [0, 0],
-      meshDelta: [0, 0], statDelta: [0, 0], meshCursor: 0, statCursor: 0, nextRetry: 0,
-      lastStamp: [0, 0], hasLastStamp: false,
+      dynamic: fullSnowMask(mres),
+      scroll: fullSnowMask(mres),
+      statics: new Uint8Array(sres * sres * 4),
+      nextStatics: new Uint8Array(sres * sres * 4),
+      context: new Uint8Array(sres * sres * 4),
+      nextContext: new Uint8Array(sres * sres * 4),
+      center: [0, 0],
+      dynCenter: [0, 0],
+      statCenter: [0, 0],
+      lattice: [0, 0],
+      baseY: 0,
+      hasCenter: false,
+      meshReady: false,
+      staticReady: false,
+      heightRebuild: true,
+      staticRebuild: true,
+      resourceRebuild: false,
+      requiresFullProjection: true,
+      hasDeformation: false,
+      recentering: false,
+      fullRebuild: false,
+      outrun: false,
+      nextCenter: [0, 0],
+      nextDyn: [0, 0],
+      nextStat: [0, 0],
+      meshDelta: [0, 0],
+      statDelta: [0, 0],
+      meshCursor: 0,
+      statCursor: 0,
+      nextRetry: 0,
+      lastStamp: [0, 0],
+      hasLastStamp: false,
       pending: [],
       visible: false,
-      job: 0, fromJob: 0,   // SNOW-THREAD: the recentre out on the build worker, and the worker's job whose window this is (0: none)
+      job: 0,
+      fromJob: 0, // SNOW-THREAD: the recentre out on the build worker, and the worker's job whose window this is (0: none)
     };
     const normal = encodeStaticSnow(1, 1);
     for (let k = 0; k < sres * sres; k++) L.statics.set(normal, k * 4);
     L.context.fill(0);
     for (let i = 0; i < res; i++) {
       const v = f32(i / (res - 1));
-      for (let j = 0; j < res; j++) { const k = i * res + j; L.uv[k * 2] = f32(j / (res - 1)); L.uv[k * 2 + 1] = v; }
+      for (let j = 0; j < res; j++) {
+        const k = i * res + j;
+        L.uv[k * 2] = f32(j / (res - 1));
+        L.uv[k * 2 + 1] = v;
+      }
     }
     L.index = gridIndices(res);
     return L;
@@ -401,7 +629,10 @@ export class SnowfallRuntime {
     const s = this.settings;
     let L = this.local;
     this.frameStart = this.clock();
-    if (L.resourceRebuild) { this._rebuildGrid(); L = this.local; }   // AUDIT ENVIRONS S3: CreateGridResources - the frame goes on with the new window
+    if (L.resourceRebuild) {
+      this._rebuildGrid();
+      L = this.local;
+    } // AUDIT ENVIRONS S3: CreateGridResources - the frame goes on with the new window
     this._updateEligibility(f);
     if (this.corpseScanPending) {
       this.corpseScanPending = false;
@@ -418,24 +649,38 @@ export class SnowfallRuntime {
       this._resetNpcAnchors();
       return this.visibleTiers();
     }
-    const px = f.player.x, pz = f.player.z;
-    this.outerCenter = [px, pz];   // ApplyVisibleHandoff: the window's outer clip rides the player
+    const px = f.player.x,
+      pz = f.player.z;
+    this.outerCenter = [px, pz]; // ApplyVisibleHandoff: the window's outer clip rides the player
     if (!L.hasCenter) {
       L.center = snapToGrid(px, pz, this.meshCell, L.lattice[0], L.lattice[1]);
       L.dynCenter = snapToGrid(px, pz, this.maskTexel, L.lattice[0], L.lattice[1]);
       L.statCenter = snapToGrid(px, pz, this.staticTexel, L.lattice[0], L.lattice[1]);
       L.hasCenter = true;
-      L.heightRebuild = true; L.staticRebuild = true;
+      L.heightRebuild = true;
+      L.staticRebuild = true;
     }
-    if (L.recentering && Math.hypot(px - L.nextCenter[0], pz - L.nextCenter[1]) > Math.max(s.recenterDistance * 1.5, 9)) this._cancelForRetarget(f);
-    if (!L.recentering && (L.heightRebuild || L.staticRebuild) && f.now >= L.nextRetry) this._beginRecenter(px, pz, true);
-    else if (!L.recentering && L.meshReady && L.staticReady && f.now >= L.nextRetry && Math.hypot(px - L.center[0], pz - L.center[1]) > s.recenterDistance) this._beginRecenter(px, pz, false);
+    if (L.recentering && Math.hypot(px - L.nextCenter[0], pz - L.nextCenter[1]) > Math.max(s.recenterDistance * 1.5, 9))
+      this._cancelForRetarget(f);
+    if (!L.recentering && (L.heightRebuild || L.staticRebuild) && f.now >= L.nextRetry)
+      this._beginRecenter(px, pz, true);
+    else if (
+      !L.recentering &&
+      L.meshReady &&
+      L.staticReady &&
+      f.now >= L.nextRetry &&
+      Math.hypot(px - L.center[0], pz - L.center[1]) > s.recenterDistance
+    )
+      this._beginRecenter(px, pz, false);
     if (L.recentering) {
       if (L.job) this._localAwait(f);
       else this._processRecenter(px, pz, f);
     }
     L.visible = L.meshReady && L.staticReady;
-    if (L.meshReady && L.staticReady) { this._stampPlayer(f); this._stampNpcs(f); } else this._resetNpcAnchors();
+    if (L.meshReady && L.staticReady) {
+      this._stampPlayer(f);
+      this._stampNpcs(f);
+    } else this._resetNpcAnchors();
     if (this.corpseProjectionPending) {
       this.corpseProjectionPending = false;
       this._projectCorpsesLocal();
@@ -453,20 +698,31 @@ export class SnowfallRuntime {
 
   /** What the GL layer draws this frame, and each tier's uniforms. */
   visibleTiers() {
-    return { local: this.local.visible, mid: this.mid.visible, blanket: this.blanket.active, far: this.far.ready && this.settings.streamedBlanketPrototype && this.settings.distantTracksEnabled };
+    return {
+      local: this.local.visible,
+      mid: this.mid.visible,
+      blanket: this.blanket.active,
+      far: this.far.ready && this.settings.streamedBlanketPrototype && this.settings.distantTracksEnabled,
+    };
   }
 
   // UpdateEnvironmentEligibility
   _updateEligibility(f) {
     const s = this.settings;
     const eligible = s.activationOverride === 1 || (s.activationOverride !== 2 && !f.desert && f.winter);
-    if (!this.hasEnvironmentEligibility) { this.hasEnvironmentEligibility = true; this.lastEnvironmentEligible = eligible; return; }
+    if (!this.hasEnvironmentEligibility) {
+      this.hasEnvironmentEligibility = true;
+      this.lastEnvironmentEligible = eligible;
+      return;
+    }
     if (eligible === this.lastEnvironmentEligible) return;
     this.lastEnvironmentEligible = eligible;
     const L = this.local;
-    L.recentering = false; L.fullRebuild = false;
+    L.recentering = false;
+    L.fullRebuild = false;
     if (!eligible) this.clearDynamicMask();
-    L.staticReady = false; L.staticRebuild = true;
+    L.staticReady = false;
+    L.staticRebuild = true;
   }
 
   // ProcessSnowpack / HandleWeatherChange
@@ -484,17 +740,30 @@ export class SnowfallRuntime {
     if (f.now < this.nextRefillTime) return;
     this.nextRefillTime = f.now + REFILL_INTERVAL_SECONDS;
     const now = f.gameSeconds;
-    if (this.lastGameSeconds === 0 || now < this.lastGameSeconds) { this.lastGameSeconds = now; this.refillRemainder = 0; return; }
+    if (this.lastGameSeconds === 0 || now < this.lastGameSeconds) {
+      this.lastGameSeconds = now;
+      this.refillRemainder = 0;
+      return;
+    }
     const elapsed = now - this.lastGameSeconds;
     this.lastGameSeconds = now;
     const L = this.local;
     const deformed = L.hasDeformation || this.mid.hasDeformation || this.tracks.hasDeformation;
     if ((!deformed && !this.corpses.hasImpressions) || elapsed === 0) return;
     const hours = this.isSnowing ? this.settings.snowfallRefillHours : this.settings.passiveRefillHours;
-    const all = () => { if (deformed) this.clearDynamicMask(); this.corpseProjectionPending = this.corpses.refill(255) || this.corpseProjectionPending; };
-    if (hours <= 0) { all(); return; }
+    const all = () => {
+      if (deformed) this.clearDynamicMask();
+      this.corpseProjectionPending = this.corpses.refill(255) || this.corpseProjectionPending;
+    };
+    if (hours <= 0) {
+      all();
+      return;
+    }
     const share = f32(f32(elapsed) / f32(hours * 3600));
-    if (share >= 1) { all(); return; }
+    if (share >= 1) {
+      all();
+      return;
+    }
     this.refillRemainder = f32(this.refillRemainder + f32(share * 255));
     const step = Math.floor(this.refillRemainder);
     if (step <= 0) return;
@@ -509,7 +778,16 @@ export class SnowfallRuntime {
       if (L.hasDeformation) {
         let any = false;
         const px = L.dynamic;
-        for (let k = 0; k < px.length; k += 4) { const r = px[k]; if (r === 255) continue; const v = r + step; if (v >= 255) px[k] = 255; else { px[k] = v; any = true; } }   // a full pixel stays full: skipped
+        for (let k = 0; k < px.length; k += 4) {
+          const r = px[k];
+          if (r === 255) continue;
+          const v = r + step;
+          if (v >= 255) px[k] = 255;
+          else {
+            px[k] = v;
+            any = true;
+          }
+        } // a full pixel stays full: skipped
         this.rects.local.all();
         L.hasDeformation = any;
       }
@@ -518,7 +796,8 @@ export class SnowfallRuntime {
       this._farRefill(step);
     }
     this.corpseProjectionPending = this.corpses.refill(step) || this.corpseProjectionPending;
-    if (!L.hasDeformation && !this.mid.hasDeformation && !this.tracks.hasDeformation && !this.corpses.hasImpressions) this.refillRemainder = 0;
+    if (!L.hasDeformation && !this.mid.hasDeformation && !this.tracks.hasDeformation && !this.corpses.hasImpressions)
+      this.refillRemainder = 0;
   }
 
   /** ClearDynamicMask(clearPersistent). */
@@ -532,7 +811,8 @@ export class SnowfallRuntime {
     L.pending.length = 0;
     this._midClearHistory();
     this._farClear();
-    if (clearPersistent) this.tracks.clear(); else L.requiresFullProjection = true;
+    if (clearPersistent) this.tracks.clear();
+    else L.requiresFullProjection = true;
     this.corpseProjectionPending = true;
   }
 
@@ -540,65 +820,106 @@ export class SnowfallRuntime {
     const lattice = this.local.lattice;
     this.local = this._newLocal();
     this.local.lattice = lattice;
-    this.refillRemainder = 0;   // AUDIT ENVIRONS S8: CreateGridResources' own
-    this.dirty.localMesh = this.dirty.localStatic = true; this.rects.local.all();
+    this.refillRemainder = 0; // AUDIT ENVIRONS S8: CreateGridResources' own
+    this.dirty.localMesh = this.dirty.localStatic = true;
+    this.rects.local.all();
     this.dirty.gridRebuilt = true;
   }
 
   // BeginRecenter / BeginFullLocalRebuild
   _beginRecenter(px, pz, full) {
-    const L = this.local, s = this.settings;
+    const L = this.local,
+      s = this.settings;
     L.fullRebuild = full;
     L.nextCenter = snapToGrid(px, pz, this.meshCell, L.lattice[0], L.lattice[1]);
     L.nextDyn = snapToGrid(px, pz, this.maskTexel, L.lattice[0], L.lattice[1]);
     L.nextStat = snapToGrid(px, pz, this.staticTexel, L.lattice[0], L.lattice[1]);
-    this.context.prepare(L.nextStat[0], L.nextStat[1], this.gridRadius, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
-    if (full) { L.meshDelta = [L.res, L.res]; L.statDelta = [L.sres, L.sres]; }
-    else {
-      L.meshDelta = [roundToInt(f32(f32(L.nextCenter[0] - L.center[0]) / this.meshCell)), roundToInt(f32(f32(L.nextCenter[1] - L.center[1]) / this.meshCell))];
-      L.statDelta = [roundToInt(f32(f32(L.nextStat[0] - L.statCenter[0]) / this.staticTexel)), roundToInt(f32(f32(L.nextStat[1] - L.statCenter[1]) / this.staticTexel))];
+    this.context.prepare(
+      L.nextStat[0],
+      L.nextStat[1],
+      this.gridRadius,
+      s.settlementBoundaryFeather,
+      s.locationLoaderBoundaryFeather,
+      s,
+    );
+    if (full) {
+      L.meshDelta = [L.res, L.res];
+      L.statDelta = [L.sres, L.sres];
+    } else {
+      L.meshDelta = [
+        roundToInt(f32(f32(L.nextCenter[0] - L.center[0]) / this.meshCell)),
+        roundToInt(f32(f32(L.nextCenter[1] - L.center[1]) / this.meshCell)),
+      ];
+      L.statDelta = [
+        roundToInt(f32(f32(L.nextStat[0] - L.statCenter[0]) / this.staticTexel)),
+        roundToInt(f32(f32(L.nextStat[1] - L.statCenter[1]) / this.staticTexel)),
+      ];
     }
-    L.meshCursor = 0; L.statCursor = 0;
+    L.meshCursor = 0;
+    L.statCursor = 0;
     L.recentering = true;
-    L.job = this.builds?.postLocal(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
+    L.job = this.builds?.postLocal(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
   }
 
   // ProcessRecenter
   _processRecenter(px, pz, f) {
-    const L = this.local, s = this.settings;
+    const L = this.local,
+      s = this.settings;
     let budget = L.fullRebuild ? FULL_REBUILD_SAMPLES : RECENTER_SAMPLES;
-    if (Math.hypot(px - L.center[0], pz - L.center[1]) > s.snowRadius * 0.65) budget = Math.max(budget, CATCH_UP_SAMPLES);
-    const res = L.res, n = res * res, dia = this.gridDiameter;
+    if (Math.hypot(px - L.center[0], pz - L.center[1]) > s.snowRadius * 0.65)
+      budget = Math.max(budget, CATCH_UP_SAMPLES);
+    const res = L.res,
+      n = res * res,
+      dia = this.gridDiameter;
     while (L.meshCursor < n && budget > 0) {
       const k = L.meshCursor++;
-      const i = Math.floor(k / res), j = k - i * res;
-      const sj = j + L.meshDelta[0], si = i + L.meshDelta[1];
-      const lx = f32(f32(f32(j / (res - 1)) - 0.5) * dia), lz = f32(f32(f32(i / (res - 1)) - 0.5) * dia);
+      const i = Math.floor(k / res),
+        j = k - i * res;
+      const sj = j + L.meshDelta[0],
+        si = i + L.meshDelta[1];
+      const lx = f32(f32(f32(j / (res - 1)) - 0.5) * dia),
+        lz = f32(f32(f32(i / (res - 1)) - 0.5) * dia);
       if (sj >= 0 && sj < res && si >= 0 && si < res) {
         const from = si * res + sj;
-        L.nextPos[k * 3] = lx; L.nextPos[k * 3 + 1] = L.pos[from * 3 + 1]; L.nextPos[k * 3 + 2] = lz;
-        L.nextNrm[k * 3] = L.nrm[from * 3]; L.nextNrm[k * 3 + 1] = L.nrm[from * 3 + 1]; L.nextNrm[k * 3 + 2] = L.nrm[from * 3 + 2];   // AUDIT ENVIRONS P5: no view a vertex
+        L.nextPos[k * 3] = lx;
+        L.nextPos[k * 3 + 1] = L.pos[from * 3 + 1];
+        L.nextPos[k * 3 + 2] = lz;
+        L.nextNrm[k * 3] = L.nrm[from * 3];
+        L.nextNrm[k * 3 + 1] = L.nrm[from * 3 + 1];
+        L.nextNrm[k * 3 + 2] = L.nrm[from * 3 + 2]; // AUDIT ENVIRONS P5: no view a vertex
         continue;
       }
-      const wx = f32(L.nextCenter[0] + lx), wz = f32(L.nextCenter[1] + lz);
+      const wx = f32(L.nextCenter[0] + lx),
+        wz = f32(L.nextCenter[1] + lz);
       const t = this.world.terrainAt(wx, wz);
-      if (!t) { this._cancelForRetry(f); return; }
+      if (!t) {
+        this._cancelForRetry(f);
+        return;
+      }
       const og = t.origin(_o);
-      L.nextPos[k * 3] = lx; L.nextPos[k * 3 + 1] = og[1] + t.height(wx - og[0], wz - og[2]) - L.baseY; L.nextPos[k * 3 + 2] = lz;
+      L.nextPos[k * 3] = lx;
+      L.nextPos[k * 3 + 1] = og[1] + t.height(wx - og[0], wz - og[2]) - L.baseY;
+      L.nextPos[k * 3 + 2] = lz;
       const nr = t.normal(wx - og[0], wz - og[2], _n);
-      L.nextNrm[k * 3] = nr[0]; L.nextNrm[k * 3 + 1] = nr[1]; L.nextNrm[k * 3 + 2] = nr[2];
+      L.nextNrm[k * 3] = nr[0];
+      L.nextNrm[k * 3 + 1] = nr[1];
+      L.nextNrm[k * 3 + 2] = nr[2];
       budget--;
       if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;
     }
     if (L.meshCursor < n) return;
-    const sres = L.sres, sn = sres * sres;
+    const sres = L.sres,
+      sn = sres * sres;
     while (L.statCursor < sn && budget > 0) {
       const k = L.statCursor++;
-      const i = Math.floor(k / sres), j = k - i * sres;
-      const sj = j + L.statDelta[0], si = i + L.statDelta[1];
+      const i = Math.floor(k / sres),
+        j = k - i * sres;
+      const sj = j + L.statDelta[0],
+        si = i + L.statDelta[1];
       if (sj >= 0 && sj < sres && si >= 0 && si < sres) {
         // SNOW-THREAD (step 1): the row's whole in-range stretch from here in one copy a mask - a copy spends no budget
-        const run = Math.min(sres - j, sres - sj), from = (si * sres + sj) * 4;
+        const run = Math.min(sres - j, sres - sj),
+          from = (si * sres + sj) * 4;
         L.nextStatics.set(L.statics.subarray(from, from + run * 4), k * 4);
         L.nextContext.set(L.context.subarray(from, from + run * 4), k * 4);
         L.statCursor = k + run;
@@ -606,7 +927,10 @@ export class SnowfallRuntime {
       }
       const wx = f32(L.nextStat[0] + f32(f32(f32(j / (sres - 1)) - 0.5) * dia));
       const wz = f32(L.nextStat[1] + f32(f32(f32(i / (sres - 1)) - 0.5) * dia));
-      if (!sampleStaticSnow(this.world, this.coverage, this.context, s, wx, wz, L.nextStatics, k * 4)) { this._cancelForRetry(f); return; }
+      if (!sampleStaticSnow(this.world, this.coverage, this.context, s, wx, wz, L.nextStatics, k * 4)) {
+        this._cancelForRetry(f);
+        return;
+      }
       this.context.sample(wx, wz, L.nextContext, k * 4);
       budget--;
       if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;
@@ -617,16 +941,22 @@ export class SnowfallRuntime {
   // CommitRecenter
   _commitRecenter() {
     const L = this.local;
-    const dx = roundToInt(f32(f32(L.nextDyn[0] - L.dynCenter[0]) / this.maskTexel)), dz = roundToInt(f32(f32(L.nextDyn[1] - L.dynCenter[1]) / this.maskTexel));
+    const dx = roundToInt(f32(f32(L.nextDyn[0] - L.dynCenter[0]) / this.maskTexel)),
+      dz = roundToInt(f32(f32(L.nextDyn[1] - L.dynCenter[1]) / this.maskTexel));
     if (dx !== 0 || dz !== 0) this._scrollDynamic(dx, dz);
     this._localFinish();
-    L.fromJob = 0;   // SNOW-THREAD: built here - the build worker's copy of the window is not this one (_localAwait sets it)
+    L.fromJob = 0; // SNOW-THREAD: built here - the build worker's copy of the window is not this one (_localAwait sets it)
     this._restorePersistentTracks(dx, dz);
-    L.meshReady = true; L.staticReady = true;
-    L.heightRebuild = false; L.staticRebuild = false;
-    L.fullRebuild = false; L.recentering = false; L.outrun = false;
+    L.meshReady = true;
+    L.staticReady = true;
+    L.heightRebuild = false;
+    L.staticRebuild = false;
+    L.fullRebuild = false;
+    L.recentering = false;
+    L.outrun = false;
     L.nextRetry = 0;
-    this.dirty.localMesh = true; this.dirty.localStatic = true;
+    this.dirty.localMesh = true;
+    this.dirty.localStatic = true;
     this._replayPendingTracks();
   }
   /** The recentre's own half of the commit - the window's arrays and centres committed, its static mask ramped.
@@ -637,47 +967,74 @@ export class SnowfallRuntime {
     [L.nrm, L.nextNrm] = [L.nextNrm, L.nrm];
     [L.statics, L.nextStatics] = [L.nextStatics, L.statics];
     [L.context, L.nextContext] = [L.nextContext, L.context];
-    L.center = [...L.nextCenter]; L.dynCenter = [...L.nextDyn]; L.statCenter = [...L.nextStat];   // copies: the mod's Vector2s are values, and offsetOrigin shifts each array once
+    L.center = [...L.nextCenter];
+    L.dynCenter = [...L.nextDyn];
+    L.statCenter = [...L.nextStat]; // copies: the mod's Vector2s are values, and offsetOrigin shifts each array once
     snowContactRamp(L.statics, L.sres, L.sres, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / this.staticTexel)));
   }
   /** SNOW-THREAD: the build worker's recentre, taken the first frame it is in - committed as this thread's would be. A
    *  window that could not stand (a pixel not loaded) is _cancelForRetry's; with the worker gone the recentre goes on
    *  here, from its first sample, the next frame. */
   _localAwait(f) {
-    const L = this.local, id = L.job, r = this.builds.take(id);
+    const L = this.local,
+      id = L.job,
+      r = this.builds.take(id);
     if (!r) return;
     L.job = 0;
     if (r.down) return;
-    if (!r.ok) { this._cancelForRetry(f); return; }
+    if (!r.ok) {
+      this._cancelForRetry(f);
+      return;
+    }
     this.builds.recycle([L.nextPos, L.nextNrm, L.nextStatics, L.nextContext]);
     const a = r.arrays;
-    L.nextPos = a.pos; L.nextNrm = a.nrm; L.nextStatics = a.statics; L.nextContext = a.context;
-    L.meshCursor = L.res * L.res; L.statCursor = L.sres * L.sres;
+    L.nextPos = a.pos;
+    L.nextNrm = a.nrm;
+    L.nextStatics = a.statics;
+    L.nextContext = a.context;
+    L.meshCursor = L.res * L.res;
+    L.statCursor = L.sres * L.sres;
     this._commitRecenter();
-    L.fromJob = id;   // the worker keeps this window as its own: the next recentre copies from its copy
+    L.fromJob = id; // the worker keeps this window as its own: the next recentre copies from its copy
   }
 
   _rebuildCommittedContext() {
     const L = this.local;
     if (!L.hasCenter) return;
     this._fillContext(L.context, L.statCenter, L.sres * L.sres);
-    L.fromJob = 0;   // SNOW-THREAD: the committed context is written here - the worker's copy is not it
+    L.fromJob = 0; // SNOW-THREAD: the committed context is written here - the worker's copy is not it
     this.dirty.localStatic = true;
     if (L.recentering) this._fillContext(L.nextContext, L.nextStat, L.statCursor);
-    if (L.recentering && L.job) L.job = this.builds.postLocal(this) ?? 0;   // SNOW-THREAD: the worker's recentre asked again over the new context (this.context is prepared at its centre now)
+    if (L.recentering && L.job) L.job = this.builds.postLocal(this) ?? 0; // SNOW-THREAD: the worker's recentre asked again over the new context (this.context is prepared at its centre now)
   }
   _fillContext(px, center, count) {
-    const s = this.settings, L = this.local, dia = this.gridDiameter;
-    this.context.prepare(center[0], center[1], this.gridRadius, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
+    const s = this.settings,
+      L = this.local,
+      dia = this.gridDiameter;
+    this.context.prepare(
+      center[0],
+      center[1],
+      this.gridRadius,
+      s.settlementBoundaryFeather,
+      s.locationLoaderBoundaryFeather,
+      s,
+    );
     for (let k = 0; k < count; k++) {
-      const i = Math.floor(k / L.sres), j = k - i * L.sres;
-      this.context.sample(f32(center[0] + f32(f32(f32(j / (L.sres - 1)) - 0.5) * dia)), f32(center[1] + f32(f32(f32(i / (L.sres - 1)) - 0.5) * dia)), px, k * 4);
+      const i = Math.floor(k / L.sres),
+        j = k - i * L.sres;
+      this.context.sample(
+        f32(center[0] + f32(f32(f32(j / (L.sres - 1)) - 0.5) * dia)),
+        f32(center[1] + f32(f32(f32(i / (L.sres - 1)) - 0.5) * dia)),
+        px,
+        k * 4,
+      );
     }
   }
 
   _cancelForRetry(f) {
     const L = this.local;
-    L.recentering = false; L.fullRebuild = false;
+    L.recentering = false;
+    L.fullRebuild = false;
     L.nextRetry = f.now + TERRAIN_RETRY_SECONDS;
   }
   _cancelForRetarget(f) {
@@ -685,9 +1042,14 @@ export class SnowfallRuntime {
     // AUDIT ENVIRONS P8: a whole window the player outran goes again at the mod's own pace - its sample budget alone, not
     // the port's milliseconds - or a machine that makes fewer samples a frame than the ride asks never stands it, and
     // the ring and the blanket (which wait on it) never build round a rider either
-    if (L.fullRebuild) { L.heightRebuild = true; L.staticRebuild = true; L.outrun = true; }
+    if (L.fullRebuild) {
+      L.heightRebuild = true;
+      L.staticRebuild = true;
+      L.outrun = true;
+    }
     this.staleCancellations++;
-    L.recentering = false; L.fullRebuild = false;
+    L.recentering = false;
+    L.fullRebuild = false;
     L.nextRetry = f.now + RETARGET_DELAY_SECONDS;
   }
 
@@ -696,8 +1058,14 @@ export class SnowfallRuntime {
     const L = this.local;
     const out = scrollMask(L.dynamic, L.scroll, L.mres, dx, dz);
     this.rects.local.all();
-    if (!out) { L.dynamic.fill(255); L.hasDeformation = false; this.refillRemainder = 0; return; }
-    L.scroll = L.dynamic; L.dynamic = out;
+    if (!out) {
+      L.dynamic.fill(255);
+      L.hasDeformation = false;
+      this.refillRemainder = 0;
+      return;
+    }
+    L.scroll = L.dynamic;
+    L.dynamic = out;
     L.hasDeformation = containsDeformation(L.dynamic);
     if (!L.hasDeformation && !this.mid.hasDeformation && !this.corpses.hasImpressions) this.refillRemainder = 0;
   }
@@ -708,31 +1076,75 @@ export class SnowfallRuntime {
     if (!L.hasCenter) return;
     let p = [0, -1, 0, -1];
     const r = L.mres;
-    if (!L.requiresFullProjection && Math.abs(dx) < r && Math.abs(dz) < r) p = [Math.max(0, -dx), Math.min(r - 1, r - 1 - dx), Math.max(0, -dz), Math.min(r - 1, r - 1 - dz)];
-    const n = this.tracks.applyToMask(L.dynamic, r, L.dynCenter[0], L.dynCenter[1], this.gridDiameter, p[0], p[1], p[2], p[3]);
+    if (!L.requiresFullProjection && Math.abs(dx) < r && Math.abs(dz) < r)
+      p = [Math.max(0, -dx), Math.min(r - 1, r - 1 - dx), Math.max(0, -dz), Math.min(r - 1, r - 1 - dz)];
+    const n = this.tracks.applyToMask(
+      L.dynamic,
+      r,
+      L.dynCenter[0],
+      L.dynCenter[1],
+      this.gridDiameter,
+      p[0],
+      p[1],
+      p[2],
+      p[3],
+    );
     L.requiresFullProjection = false;
     this._projectCorpsesLocal();
-    if (n > 0) { L.hasDeformation = true; this.rects.local.all(); }
+    if (n > 0) {
+      L.hasDeformation = true;
+      this.rects.local.all();
+    }
   }
   _projectCorpsesLocal() {
     const L = this.local;
-    if (L.hasCenter && this.corpses.project(L.dynamic, L.mres, L.dynCenter[0], L.dynCenter[1], this.gridDiameter)) this.rects.local.all();
+    if (L.hasCenter && this.corpses.project(L.dynamic, L.mres, L.dynCenter[0], L.dynCenter[1], this.gridDiameter))
+      this.rects.local.all();
   }
 
   // ---- the tracks ----
   // StampPlayer
   _stampPlayer(f) {
-    const L = this.local, s = this.settings, p = f.player;
-    if (!p.grounded || p.swimming || p.levitating) { this.lastStampStatus = 'not grounded'; L.hasLastStamp = false; return; }
-    if (!L.hasLastStamp) { L.lastStamp = [p.x, p.z]; L.hasLastStamp = true; this.lastStampStatus = 'grounded anchor established'; return; }
+    const L = this.local,
+      s = this.settings,
+      p = f.player;
+    if (!p.grounded || p.swimming || p.levitating) {
+      this.lastStampStatus = 'not grounded';
+      L.hasLastStamp = false;
+      return;
+    }
+    if (!L.hasLastStamp) {
+      L.lastStamp = [p.x, p.z];
+      L.hasLastStamp = true;
+      this.lastStampStatus = 'grounded anchor established';
+      return;
+    }
     const d = distanceF(L.lastStamp[0], L.lastStamp[1], p.x, p.z);
-    if (d < s.playerStampSpacing) { this.lastStampStatus = `waiting for spacing: ${d.toFixed(3)}m`; return; }
+    if (d < s.playerStampSpacing) {
+      this.lastStampStatus = `waiting for spacing: ${d.toFixed(3)}m`;
+      return;
+    }
     this.stampAttempts++;
-    if (d > Math.max(2, s.snowRadius * 1.25)) { L.lastStamp = [p.x, p.z]; this.lastStampChanged = 0; this.lastStampStatus = `rejected teleport-sized segment: ${d.toFixed(2)}m`; return; }
+    if (d > Math.max(2, s.snowRadius * 1.25)) {
+      L.lastStamp = [p.x, p.z];
+      this.lastStampChanged = 0;
+      this.lastStampStatus = `rejected teleport-sized segment: ${d.toFixed(2)}m`;
+      return;
+    }
     const hit = { inside: false };
-    this.lastStampChanged = this._stampTrack(L.lastStamp[0], L.lastStamp[1], p.x, p.z, s.playerTrackWidth, s.playerRemainingSnow, hit);
+    this.lastStampChanged = this._stampTrack(
+      L.lastStamp[0],
+      L.lastStamp[1],
+      p.x,
+      p.z,
+      s.playerTrackWidth,
+      s.playerRemainingSnow,
+      hit,
+    );
     if (this.lastStampChanged > 0) this.stampsWritten++;
-    this.lastStampStatus = hit.inside ? `segment ${d.toFixed(2)}m changed ${this.lastStampChanged} mask pixels` : `segment ${d.toFixed(2)}m queued until local window catches up`;
+    this.lastStampStatus = hit.inside
+      ? `segment ${d.toFixed(2)}m changed ${this.lastStampChanged} mask pixels`
+      : `segment ${d.toFixed(2)}m queued until local window catches up`;
     L.lastStamp = [p.x, p.z];
   }
 
@@ -746,28 +1158,60 @@ export class SnowfallRuntime {
     const R = this.gridRadius;
     const reach = f32(R + f32(width * 0.5));
     const c = L.dynCenter;
-    hit.inside = Math.max(sx, ex) >= f32(c[0] - reach) && Math.min(sx, ex) <= f32(c[0] + reach) && Math.max(sz, ez) >= f32(c[1] - reach) && Math.min(sz, ez) <= f32(c[1] + reach);
+    hit.inside =
+      Math.max(sx, ex) >= f32(c[0] - reach) &&
+      Math.min(sx, ex) <= f32(c[0] + reach) &&
+      Math.max(sz, ez) >= f32(c[1] - reach) &&
+      Math.min(sz, ez) <= f32(c[1] + reach);
     const inner = Math.max(0, f32(R - f32(width * 0.5)));
-    const fully = Math.abs(f32(sx - c[0])) <= inner && Math.abs(f32(sz - c[1])) <= inner && Math.abs(f32(ex - c[0])) <= inner && Math.abs(f32(ez - c[1])) <= inner;
-    if (!fully) { while (L.pending.length >= MAX_PENDING_TRACKS) L.pending.shift(); L.pending.push([sx, sz, ex, ez, width, remaining]); }
+    const fully =
+      Math.abs(f32(sx - c[0])) <= inner &&
+      Math.abs(f32(sz - c[1])) <= inner &&
+      Math.abs(f32(ex - c[0])) <= inner &&
+      Math.abs(f32(ez - c[1])) <= inner;
+    if (!fully) {
+      while (L.pending.length >= MAX_PENDING_TRACKS) L.pending.shift();
+      L.pending.push([sx, sz, ex, ez, width, remaining]);
+    }
     if (!hit.inside) return 0;
     return this._rasterizeLocal(sx, sz, ex, ez, width, remaining);
   }
   _rasterizeLocal(sx, sz, ex, ez, width, remaining) {
-    const L = this.local, R = this.gridRadius;
+    const L = this.local,
+      R = this.gridRadius;
     const rect = this.rects.local;
-    const n = rasterizeTrack(L.dynamic, L.mres, f32(L.dynCenter[0] - R), f32(L.dynCenter[1] - R), f32((L.mres - 1) / this.gridDiameter), 0.5, sx, sz, ex, ez, width, remaining, (x, z) => rect.add(x, z));
+    const n = rasterizeTrack(
+      L.dynamic,
+      L.mres,
+      f32(L.dynCenter[0] - R),
+      f32(L.dynCenter[1] - R),
+      f32((L.mres - 1) / this.gridDiameter),
+      0.5,
+      sx,
+      sz,
+      ex,
+      ez,
+      width,
+      remaining,
+      (x, z) => rect.add(x, z),
+    );
     if (n > 0) L.hasDeformation = true;
     return n;
   }
   // ReplayPendingTracks
   _replayPendingTracks() {
-    const L = this.local, R = this.gridRadius, c = L.dynCenter;
+    const L = this.local,
+      R = this.gridRadius,
+      c = L.dynCenter;
     const list = L.pending.splice(0);
     let total = 0;
     for (const [sx, sz, ex, ez, w, rem] of list) {
       const reach = f32(R + f32(w * 0.5));
-      const inside = Math.max(sx, ex) >= f32(c[0] - reach) && Math.min(sx, ex) <= f32(c[0] + reach) && Math.max(sz, ez) >= f32(c[1] - reach) && Math.min(sz, ez) <= f32(c[1] + reach);
+      const inside =
+        Math.max(sx, ex) >= f32(c[0] - reach) &&
+        Math.min(sx, ex) <= f32(c[0] + reach) &&
+        Math.max(sz, ez) >= f32(c[1] - reach) &&
+        Math.min(sz, ez) <= f32(c[1] + reach);
       if (!inside) continue;
       const n = this._rasterizeLocal(sx, sz, ex, ez, w, rem);
       total += n;
@@ -779,7 +1223,10 @@ export class SnowfallRuntime {
   // StampNpcs
   _stampNpcs(f) {
     const s = this.settings;
-    if (!s.npcTracksEnabled) { this._resetNpcAnchors(); return; }
+    if (!s.npcTracksEnabled) {
+      this._resetNpcAnchors();
+      return;
+    }
     if (f.now < this.nextNpcSampleTime) return;
     this.nextNpcSampleTime = f.now + NPC_SAMPLE_INTERVAL_SECONDS;
     this.npcSamplePasses++;
@@ -787,17 +1234,35 @@ export class SnowfallRuntime {
     for (const n of f.npcs ?? []) {
       seen.add(n.id);
       let t = this.npcTargets.get(n.id);
-      if (!t) { t = { hasAnchor: false, last: [0, 0] }; this.npcTargets.set(n.id, t); }
-      if (!n.active) { t.hasAnchor = false; continue; }
-      if (!(n.citizen || n.grounded) || (n.x - f.player.x) ** 2 + (n.z - f.player.z) ** 2 > MAX_NPC_TRACK_DISTANCE_SQ) { t.hasAnchor = false; continue; }
-      if (!t.hasAnchor) { t.last = [n.x, n.z]; t.hasAnchor = true; continue; }
+      if (!t) {
+        t = { hasAnchor: false, last: [0, 0] };
+        this.npcTargets.set(n.id, t);
+      }
+      if (!n.active) {
+        t.hasAnchor = false;
+        continue;
+      }
+      if (!(n.citizen || n.grounded) || (n.x - f.player.x) ** 2 + (n.z - f.player.z) ** 2 > MAX_NPC_TRACK_DISTANCE_SQ) {
+        t.hasAnchor = false;
+        continue;
+      }
+      if (!t.hasAnchor) {
+        t.last = [n.x, n.z];
+        t.hasAnchor = true;
+        continue;
+      }
       const d = distanceF(t.last[0], t.last[1], n.x, n.z);
       if (d < s.npcStampSpacing) continue;
-      if (d > MAX_NPC_SEGMENT) { t.last = [n.x, n.z]; continue; }
+      if (d > MAX_NPC_SEGMENT) {
+        t.last = [n.x, n.z];
+        continue;
+      }
       let width = s.npcTrackWidth;
-      if (!n.citizen && n.radius > 0) width = Math.max(f32(0.3), Math.min(f32(1.4), Math.max(width, f32(n.radius * 1.2))));
+      if (!n.citizen && n.radius > 0)
+        width = Math.max(f32(0.3), Math.min(f32(1.4), Math.max(width, f32(n.radius * 1.2))));
       const hit = { inside: false };
-      if (this._stampTrack(t.last[0], t.last[1], n.x, n.z, width, s.npcRemainingSnow, hit) > 0 || !hit.inside) this.npcSegmentsWritten++;
+      if (this._stampTrack(t.last[0], t.last[1], n.x, n.z, width, s.npcRemainingSnow, hit) > 0 || !hit.inside)
+        this.npcSegmentsWritten++;
       t.last = [n.x, n.z];
     }
     for (const id of this.npcTargets.keys()) if (!seen.has(id)) this.npcTargets.delete(id);
@@ -814,35 +1279,87 @@ export class SnowfallRuntime {
 
   // ---- the middle ring (MidDetailSnowRing) ----
   _newMid() {
-    const n = MID.mesh * MID.mesh, sn = MID.staticRes * MID.staticRes;
+    const n = MID.mesh * MID.mesh,
+      sn = MID.staticRes * MID.staticRes;
     const uv = new Float32Array(n * 2);
-    for (let i = 0; i < MID.mesh; i++) for (let j = 0; j < MID.mesh; j++) { const k = i * MID.mesh + j; uv[k * 2] = f32(j / 256); uv[k * 2 + 1] = f32(i / 256); }
+    for (let i = 0; i < MID.mesh; i++)
+      for (let j = 0; j < MID.mesh; j++) {
+        const k = i * MID.mesh + j;
+        uv[k * 2] = f32(j / 256);
+        uv[k * 2 + 1] = f32(i / 256);
+      }
     return {
-      uv, index: gridIndices(MID.mesh),
-      pos: new Float32Array(n * 3), nrm: new Float32Array(n * 3),
-      nextPos: new Float32Array(n * 3), nextNrm: new Float32Array(n * 3),
-      ctxA: new Float32Array(n * 4), ctxB: new Float32Array(n * 4), ctxC: new Float32Array(n * 4), heights: new Float32Array(n * 4), bnrm: new Float32Array(n * 3),
+      uv,
+      index: gridIndices(MID.mesh),
+      pos: new Float32Array(n * 3),
+      nrm: new Float32Array(n * 3),
+      nextPos: new Float32Array(n * 3),
+      nextNrm: new Float32Array(n * 3),
+      ctxA: new Float32Array(n * 4),
+      ctxB: new Float32Array(n * 4),
+      ctxC: new Float32Array(n * 4),
+      heights: new Float32Array(n * 4),
+      bnrm: new Float32Array(n * 3),
       // AUDIT ENVIRONS P3: the blanket's channels built beside the committed ones as the mesh is (the build copies the
       // last one's), and which tile each vertex and texel was sampled on (an index into the build's `tiles`, 0 none)
-      nextCtxA: new Float32Array(n * 4), nextCtxB: new Float32Array(n * 4), nextCtxC: new Float32Array(n * 4), nextHeights: new Float32Array(n * 4), nextBnrm: new Float32Array(n * 3),
-      meshTile: new Uint8Array(n), nextMeshTile: new Uint8Array(n), statTile: new Uint8Array(sn), nextStatTile: new Uint8Array(sn),
-      tiles: [], buildTiles: [], source: null, reuse: null,
-      statics: new Uint8Array(sn * 4), nextStatics: new Uint8Array(sn * 4), context: new Uint8Array(sn * 4), nextContext: new Uint8Array(sn * 4),
-      history: fullSnowMask(MID.history), scroll: fullSnowMask(MID.history),
+      nextCtxA: new Float32Array(n * 4),
+      nextCtxB: new Float32Array(n * 4),
+      nextCtxC: new Float32Array(n * 4),
+      nextHeights: new Float32Array(n * 4),
+      nextBnrm: new Float32Array(n * 3),
+      meshTile: new Uint8Array(n),
+      nextMeshTile: new Uint8Array(n),
+      statTile: new Uint8Array(sn),
+      nextStatTile: new Uint8Array(sn),
+      tiles: [],
+      buildTiles: [],
+      source: null,
+      reuse: null,
+      statics: new Uint8Array(sn * 4),
+      nextStatics: new Uint8Array(sn * 4),
+      context: new Uint8Array(sn * 4),
+      nextContext: new Uint8Array(sn * 4),
+      history: fullSnowMask(MID.history),
+      scroll: fullSnowMask(MID.history),
       context0: new SnowContext(this.world, this.coverage),
-      center: [0, 0], buildCenter: [0, 0], lattice: [0, 0], localCenter: [0, 0], baseY: 0,
-      active: false, ready: false, building: false, rebuildPending: false, hasDeformation: false, visible: false, lastHistoryChanged: 0,
-      meshCursor: 0, staticCursor: 0, nextRetry: 0, nextHistoryUpload: 0, historyDirty: false,
-      pending: [], completed: 0, cancelled: 0, blankets: new Map(),
-      job: 0,   // SNOW-THREAD: the build out on the build worker (0: none)
+      center: [0, 0],
+      buildCenter: [0, 0],
+      lattice: [0, 0],
+      localCenter: [0, 0],
+      baseY: 0,
+      active: false,
+      ready: false,
+      building: false,
+      rebuildPending: false,
+      hasDeformation: false,
+      visible: false,
+      lastHistoryChanged: 0,
+      meshCursor: 0,
+      staticCursor: 0,
+      nextRetry: 0,
+      nextHistoryUpload: 0,
+      historyDirty: false,
+      pending: [],
+      completed: 0,
+      cancelled: 0,
+      blankets: new Map(),
+      job: 0, // SNOW-THREAD: the build out on the build worker (0: none)
     };
   }
   _midTick(shouldBeActive, player, f, allowBuild) {
-    const M = this.mid, s = this.settings;
+    const M = this.mid,
+      s = this.settings;
     M.active = shouldBeActive && s.streamedBlanketPrototype;
-    if (!M.active || !player) { M.visible = false; return false; }
+    if (!M.active || !player) {
+      M.visible = false;
+      return false;
+    }
     M.localCenter = player;
-    if (M.building && Math.hypot(player[0] - M.buildCenter[0], player[1] - M.buildCenter[1]) > 112) { M.building = false; M.cancelled++; M.nextRetry = f.now; }
+    if (M.building && Math.hypot(player[0] - M.buildCenter[0], player[1] - M.buildCenter[1]) > 112) {
+      M.building = false;
+      M.cancelled++;
+      M.nextRetry = f.now;
+    }
     const far = !M.ready || Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) > MID.recenter;
     if (!M.building && (M.rebuildPending || far) && f.now >= M.nextRetry) this._midBegin(player);
     if (M.building && allowBuild) {
@@ -853,16 +1370,26 @@ export class SnowfallRuntime {
     return M.visible;
   }
   _midBegin(player) {
-    const M = this.mid, s = this.settings;
+    const M = this.mid,
+      s = this.settings;
     M.buildCenter = snapToGrid(player[0], player[1], MID.snap, M.lattice[0], M.lattice[1]);
-    M.context0.prepare(M.buildCenter[0], M.buildCenter[1], 176, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
+    M.context0.prepare(
+      M.buildCenter[0],
+      M.buildCenter[1],
+      176,
+      s.settlementBoundaryFeather,
+      s.locationLoaderBoundaryFeather,
+      s,
+    );
     this._midStart();
-    M.job = this.builds?.postMid(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
+    M.job = this.builds?.postMid(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
   }
   /** The build begun round `buildCenter` over the prepared context - the half of _midBegin the build worker runs too. */
   _midStart() {
-    const M = this.mid, last = M.source;
-    M.meshCursor = 0; M.staticCursor = 0;
+    const M = this.mid,
+      last = M.source;
+    M.meshCursor = 0;
+    M.staticCursor = 0;
     M.blankets = new Map();
     M.buildTiles = [];
     // AUDIT ENVIRONS P3: THE LAST BUILD'S SAMPLES, WHERE THIS ONE'S FALL ON THE SAME PLACE. The ring moves by whole
@@ -870,77 +1397,150 @@ export class SnowfallRuntime {
     // the very same place (its float position, bit for bit) on the very same tile (a ground rebuilt is a new one),
     // over the same roads and settlements, takes the same sample - copied, the new strips sampled. Each copy spends the
     // sample budget a sample does, so a build completes on the mod's own frame.
-    const dx = M.buildCenter[0] - (last?.center[0] ?? 0), dz = M.buildCenter[1] - (last?.center[1] ?? 0);
-    M.reuse = last && M.context0.sameGround(last.context) && Number.isInteger(dx / 1.25) && Number.isInteger(dz / 1.25) && Number.isInteger(dx) && Number.isInteger(dz)
-      ? { ...last, mesh: [dx / 1.25, dz / 1.25], stat: [dx, dz] } : null;
+    const dx = M.buildCenter[0] - (last?.center[0] ?? 0),
+      dz = M.buildCenter[1] - (last?.center[1] ?? 0);
+    M.reuse =
+      last &&
+      M.context0.sameGround(last.context) &&
+      Number.isInteger(dx / 1.25) &&
+      Number.isInteger(dz / 1.25) &&
+      Number.isInteger(dx) &&
+      Number.isInteger(dz)
+        ? { ...last, mesh: [dx / 1.25, dz / 1.25], stat: [dx, dz] }
+        : null;
     M.building = true;
   }
   /** A tile's index among the build's (1 on). */
   _midTile(t) {
     const list = this.mid.buildTiles;
     let i = list.indexOf(t);
-    if (i < 0) { i = list.length; list.push(t); }
+    if (i < 0) {
+      i = list.length;
+      list.push(t);
+    }
     return i + 1;
   }
   _midProcess(player, f) {
-    const M = this.mid, s = this.settings, n = MID.mesh * MID.mesh, sn = MID.staticRes * MID.staticRes;
+    const M = this.mid,
+      s = this.settings,
+      n = MID.mesh * MID.mesh,
+      sn = MID.staticRes * MID.staticRes;
     let budget = Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) > 80 ? MID.catchUp : MID.samples;
-    const dia = 320, R = M.reuse;
+    const dia = 320,
+      R = M.reuse;
     // SNOW-THREAD (step 1): the copies are gathered into runs - consecutive vertices (texels) copied from consecutive
     // ones of the last build - and each run goes over in one copy an array when it breaks. The test a vertex passes,
     // and the budget it spends, are its own as before.
     const run = this._midRun;
-    run.k = -1; run.from = -1; run.len = 0;
+    run.k = -1;
+    run.from = -1;
+    run.len = 0;
     while (M.meshCursor < n && budget > 0) {
       const k = M.meshCursor++;
-      const i = Math.floor(k / 257), j = k - i * 257;
-      const lx = f32(f32(f32(j / 256) - 0.5) * dia), lz = f32(f32(f32(i / 256) - 0.5) * dia);
-      const wx = f32(M.buildCenter[0] + lx), wz = f32(M.buildCenter[1] + lz);
+      const i = Math.floor(k / 257),
+        j = k - i * 257;
+      const lx = f32(f32(f32(j / 256) - 0.5) * dia),
+        lz = f32(f32(f32(i / 256) - 0.5) * dia);
+      const wx = f32(M.buildCenter[0] + lx),
+        wz = f32(M.buildCenter[1] + lz);
       const t = this.world.terrainAt(wx, wz);
-      if (!t) { this._midFail(f); return; }
+      if (!t) {
+        this._midFail(f);
+        return;
+      }
       M.nextMeshTile[k] = this._midTile(t);
-      M.nextPos[k * 3] = lx; M.nextPos[k * 3 + 2] = lz;
+      M.nextPos[k * 3] = lx;
+      M.nextPos[k * 3 + 2] = lz;
       // a vertex's offset is dyadic ((j / 256 - 0.5) x 320, a whole number of 1.25 m cells), so a move of whole cells
       // lands each on the last build's very number: the tile is all there is to ask
-      const oj = R ? j + R.mesh[0] : -1, oi = R ? i + R.mesh[1] : -1, from = oi * 257 + oj;
+      const oj = R ? j + R.mesh[0] : -1,
+        oi = R ? i + R.mesh[1] : -1,
+        from = oi * 257 + oj;
       if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257 && R.tiles[M.meshTile[from] - 1] === t) {
-        M.nextPos[k * 3 + 1] = M.pos[from * 3 + 1];   // AUDIT ENVIRONS P3: the last build's vertex, here
+        M.nextPos[k * 3 + 1] = M.pos[from * 3 + 1]; // AUDIT ENVIRONS P3: the last build's vertex, here
         if (run.len > 0 && k === run.k + run.len && from === run.from + run.len) run.len++;
-        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }
+        else {
+          this._midCopyMesh(run);
+          run.k = k;
+          run.from = from;
+          run.len = 1;
+        }
       } else {
         const og = t.origin(_o);
         const ground = og[1] + t.height(wx - og[0], wz - og[2]);
         M.nextPos[k * 3 + 1] = ground;
         const nr = t.normal(wx - og[0], wz - og[2], _n);
-        M.nextNrm[k * 3] = nr[0]; M.nextNrm[k * 3 + 1] = nr[1]; M.nextNrm[k * 3 + 2] = nr[2];
-        const b = this._blanketSamplesFor(t, M.blankets, M.context0).at(f32((wx - og[0]) / t.size), f32((wz - og[2]) / t.size), ground - og[1], nr, _quad);
-        M.nextCtxA.set(b.contextA, k * 4); M.nextCtxB.set(b.contextB, k * 4); M.nextCtxC.set(b.contextC, k * 4);
-        M.nextHeights[k * 4] = b.height + og[1]; M.nextHeights[k * 4 + 1] = b.offset; M.nextHeights[k * 4 + 2] = b.blend[0]; M.nextHeights[k * 4 + 3] = b.blend[1];
-        M.nextBnrm[k * 3] = b.normal[0]; M.nextBnrm[k * 3 + 1] = b.normal[1]; M.nextBnrm[k * 3 + 2] = b.normal[2];
+        M.nextNrm[k * 3] = nr[0];
+        M.nextNrm[k * 3 + 1] = nr[1];
+        M.nextNrm[k * 3 + 2] = nr[2];
+        const b = this._blanketSamplesFor(t, M.blankets, M.context0).at(
+          f32((wx - og[0]) / t.size),
+          f32((wz - og[2]) / t.size),
+          ground - og[1],
+          nr,
+          _quad,
+        );
+        M.nextCtxA.set(b.contextA, k * 4);
+        M.nextCtxB.set(b.contextB, k * 4);
+        M.nextCtxC.set(b.contextC, k * 4);
+        M.nextHeights[k * 4] = b.height + og[1];
+        M.nextHeights[k * 4 + 1] = b.offset;
+        M.nextHeights[k * 4 + 2] = b.blend[0];
+        M.nextHeights[k * 4 + 3] = b.blend[1];
+        M.nextBnrm[k * 3] = b.normal[0];
+        M.nextBnrm[k * 3 + 1] = b.normal[1];
+        M.nextBnrm[k * 3 + 2] = b.normal[2];
       }
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) { this._midCopyMesh(run); return; }
+      if ((budget & BUDGET_CHECK) === 0 && this._spent()) {
+        this._midCopyMesh(run);
+        return;
+      }
     }
     this._midCopyMesh(run);
     while (M.meshCursor >= n && M.staticCursor < sn && budget > 0) {
       const k = M.staticCursor++;
-      const i = Math.floor(k / 321), j = k - i * 321;
-      const wx = f32(M.buildCenter[0] + f32(f32(f32(j / 320) - 0.5) * dia)), wz = f32(M.buildCenter[1] + f32(f32(f32(i / 320) - 0.5) * dia));
+      const i = Math.floor(k / 321),
+        j = k - i * 321;
+      const wx = f32(M.buildCenter[0] + f32(f32(f32(j / 320) - 0.5) * dia)),
+        wz = f32(M.buildCenter[1] + f32(f32(f32(i / 320) - 0.5) * dia));
       const t = this.world.terrainAt(wx, wz);
       M.nextStatTile[k] = t ? this._midTile(t) : 0;
       // a texel's offset is not (j / 320 rounds): the place itself is asked, bit for bit
-      const oj = R ? j + R.stat[0] : -1, oi = R ? i + R.stat[1] : -1, from = oi * 321 + oj;
-      if (R && t && oj >= 0 && oj < 321 && oi >= 0 && oi < 321 && R.tiles[M.statTile[from] - 1] === t
-        && f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx && f32(R.center[1] + f32(f32(f32(oi / 320) - 0.5) * dia)) === wz) {
+      const oj = R ? j + R.stat[0] : -1,
+        oi = R ? i + R.stat[1] : -1,
+        from = oi * 321 + oj;
+      if (
+        R &&
+        t &&
+        oj >= 0 &&
+        oj < 321 &&
+        oi >= 0 &&
+        oi < 321 &&
+        R.tiles[M.statTile[from] - 1] === t &&
+        f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx &&
+        f32(R.center[1] + f32(f32(f32(oi / 320) - 0.5) * dia)) === wz
+      ) {
         // ramped in r and a, which the commit's ramp makes again from b and g
         if (run.len > 0 && k === run.k + run.len && from === run.from + run.len) run.len++;
-        else { this._midCopyStatic(run); run.k = k; run.from = from; run.len = 1; }
+        else {
+          this._midCopyStatic(run);
+          run.k = k;
+          run.from = from;
+          run.len = 1;
+        }
       } else {
-        if (!sampleStaticSnow(this.world, this.coverage, M.context0, s, wx, wz, M.nextStatics, k * 4, t)) { this._midFail(f); return; }
+        if (!sampleStaticSnow(this.world, this.coverage, M.context0, s, wx, wz, M.nextStatics, k * 4, t)) {
+          this._midFail(f);
+          return;
+        }
         M.context0.sample(wx, wz, M.nextContext, k * 4);
       }
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) { this._midCopyStatic(run); return; }
+      if ((budget & BUDGET_CHECK) === 0 && this._spent()) {
+        this._midCopyStatic(run);
+        return;
+      }
     }
     this._midCopyStatic(run);
     if (M.staticCursor >= sn) this._midCommit();
@@ -948,9 +1548,14 @@ export class SnowfallRuntime {
   /** SNOW-THREAD (step 1): a run of the ring's vertices copied from the last build's, its channels one copy each. */
   _midCopyMesh(run) {
     if (run.len === 0) return;
-    const M = this.mid, a = run.from, k = run.k, b = a + run.len;
+    const M = this.mid,
+      a = run.from,
+      k = run.k,
+      b = a + run.len;
     M.nextNrm.set(M.nrm.subarray(a * 3, b * 3), k * 3);
-    M.nextCtxA.set(M.ctxA.subarray(a * 4, b * 4), k * 4); M.nextCtxB.set(M.ctxB.subarray(a * 4, b * 4), k * 4); M.nextCtxC.set(M.ctxC.subarray(a * 4, b * 4), k * 4);
+    M.nextCtxA.set(M.ctxA.subarray(a * 4, b * 4), k * 4);
+    M.nextCtxB.set(M.ctxB.subarray(a * 4, b * 4), k * 4);
+    M.nextCtxC.set(M.ctxC.subarray(a * 4, b * 4), k * 4);
     M.nextHeights.set(M.heights.subarray(a * 4, b * 4), k * 4);
     M.nextBnrm.set(M.bnrm.subarray(a * 3, b * 3), k * 3);
     run.len = 0;
@@ -958,30 +1563,45 @@ export class SnowfallRuntime {
   /** SNOW-THREAD (step 1): a run of the ring's static texels copied from the last build's. */
   _midCopyStatic(run) {
     if (run.len === 0) return;
-    const M = this.mid, a = run.from * 4, b = a + run.len * 4;
+    const M = this.mid,
+      a = run.from * 4,
+      b = a + run.len * 4;
     M.nextStatics.set(M.statics.subarray(a, b), run.k * 4);
     M.nextContext.set(M.context.subarray(a, b), run.k * 4);
     run.len = 0;
   }
-  _midFail(f) { this.mid.building = false; this.mid.nextRetry = f.now + TERRAIN_RETRY_SECONDS; }
+  _midFail(f) {
+    this.mid.building = false;
+    this.mid.nextRetry = f.now + TERRAIN_RETRY_SECONDS;
+  }
   /** The frame's snow has spent its time (SNOW_FRAME_BUDGET_MS): a progressive build stops where it stands. */
-  _spent() { return this.clock() - this.frameStart > this.frameBudgetMs; }
+  _spent() {
+    return this.clock() - this.frameStart > this.frameBudgetMs;
+  }
   _midCommit() {
     const M = this.mid;
-    const wasReady = M.ready, old = M.center;
+    const wasReady = M.ready,
+      old = M.center;
     this._midFinish();
     let p = [0, -1, 0, -1];
     if (wasReady) {
-      const dx = roundToInt(f32((M.center[0] - old[0]) / 0.5)), dz = roundToInt(f32((M.center[1] - old[1]) / 0.5));
+      const dx = roundToInt(f32((M.center[0] - old[0]) / 0.5)),
+        dz = roundToInt(f32((M.center[1] - old[1]) / 0.5));
       this._midScroll(dx, dz);
-      if (Math.abs(dx) < 641 && Math.abs(dz) < 641) p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
+      if (Math.abs(dx) < 641 && Math.abs(dz) < 641)
+        p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
     }
-    if (this.tracks.applyToMask(M.history, 641, M.center[0], M.center[1], 320, p[0], p[1], p[2], p[3]) > 0) { M.hasDeformation = true; M.historyDirty = true; }
+    if (this.tracks.applyToMask(M.history, 641, M.center[0], M.center[1], 320, p[0], p[1], p[2], p[3]) > 0) {
+      M.hasDeformation = true;
+      M.historyDirty = true;
+    }
     M.ready = true;
     this._midProjectCorpses();
-    M.building = false; M.rebuildPending = false;
+    M.building = false;
+    M.rebuildPending = false;
     M.completed++;
-    this.dirty.mid = true; this.rects.mid.all();
+    this.dirty.mid = true;
+    this.rects.mid.all();
     const list = M.pending.splice(0);
     for (const seg of list) if (this._midInside(seg) && this._midRasterize(seg) > 0) M.historyDirty = true;
   }
@@ -993,12 +1613,27 @@ export class SnowfallRuntime {
     [M.nrm, M.nextNrm] = [M.nextNrm, M.nrm];
     [M.statics, M.nextStatics] = [M.nextStatics, M.statics];
     [M.context, M.nextContext] = [M.nextContext, M.context];
-    [M.ctxA, M.nextCtxA] = [M.nextCtxA, M.ctxA]; [M.ctxB, M.nextCtxB] = [M.nextCtxB, M.ctxB]; [M.ctxC, M.nextCtxC] = [M.nextCtxC, M.ctxC];
-    [M.heights, M.nextHeights] = [M.nextHeights, M.heights]; [M.bnrm, M.nextBnrm] = [M.nextBnrm, M.bnrm];
-    [M.meshTile, M.nextMeshTile] = [M.nextMeshTile, M.meshTile]; [M.statTile, M.nextStatTile] = [M.nextStatTile, M.statTile];
-    M.tiles = M.buildTiles; M.buildTiles = [];
-    M.center = [...M.buildCenter];   // a copy (a Vector2 is a value): offsetOrigin shifts each array once
-    M.source = { center: [...M.center], tiles: M.tiles, context: { roads: M.context0.roads, settlements: M.context0.settlements, locations: M.context0.locations, settings: M.context0.settings, settlementFeather: M.context0.settlementFeather } };   // AUDIT ENVIRONS P3: the next build's to copy from
+    [M.ctxA, M.nextCtxA] = [M.nextCtxA, M.ctxA];
+    [M.ctxB, M.nextCtxB] = [M.nextCtxB, M.ctxB];
+    [M.ctxC, M.nextCtxC] = [M.nextCtxC, M.ctxC];
+    [M.heights, M.nextHeights] = [M.nextHeights, M.heights];
+    [M.bnrm, M.nextBnrm] = [M.nextBnrm, M.bnrm];
+    [M.meshTile, M.nextMeshTile] = [M.nextMeshTile, M.meshTile];
+    [M.statTile, M.nextStatTile] = [M.nextStatTile, M.statTile];
+    M.tiles = M.buildTiles;
+    M.buildTiles = [];
+    M.center = [...M.buildCenter]; // a copy (a Vector2 is a value): offsetOrigin shifts each array once
+    M.source = {
+      center: [...M.center],
+      tiles: M.tiles,
+      context: {
+        roads: M.context0.roads,
+        settlements: M.context0.settlements,
+        locations: M.context0.locations,
+        settings: M.context0.settings,
+        settlementFeather: M.context0.settlementFeather,
+      },
+    }; // AUDIT ENVIRONS P3: the next build's to copy from
     M.reuse = null;
     M.baseY = 0;
     snowContactRamp(M.statics, 321, 321, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / 1)));
@@ -1007,35 +1642,88 @@ export class SnowfallRuntime {
    *  arrays become the next ones and commit as this thread's would. A ring that could not stand (a pixel not loaded) is
    *  _midFail's; with the worker gone the build goes on here, from its first sample, the next frame. */
   _midAwait(f) {
-    const M = this.mid, r = this.builds.take(M.job);
+    const M = this.mid,
+      r = this.builds.take(M.job);
     if (!r) return;
     M.job = 0;
     if (r.down) return;
-    if (!r.ok) { this._midFail(f); return; }
-    this.builds.recycle([M.nextPos, M.nextNrm, M.nextCtxA, M.nextCtxB, M.nextCtxC, M.nextHeights, M.nextBnrm, M.nextStatics, M.nextContext, M.nextMeshTile, M.nextStatTile]);
+    if (!r.ok) {
+      this._midFail(f);
+      return;
+    }
+    this.builds.recycle([
+      M.nextPos,
+      M.nextNrm,
+      M.nextCtxA,
+      M.nextCtxB,
+      M.nextCtxC,
+      M.nextHeights,
+      M.nextBnrm,
+      M.nextStatics,
+      M.nextContext,
+      M.nextMeshTile,
+      M.nextStatTile,
+    ]);
     const a = r.arrays;
-    M.nextPos = a.pos; M.nextNrm = a.nrm; M.nextCtxA = a.ctxA; M.nextCtxB = a.ctxB; M.nextCtxC = a.ctxC; M.nextHeights = a.heights; M.nextBnrm = a.bnrm;
-    M.nextStatics = a.statics; M.nextContext = a.context; M.nextMeshTile = a.meshTile; M.nextStatTile = a.statTile;
+    M.nextPos = a.pos;
+    M.nextNrm = a.nrm;
+    M.nextCtxA = a.ctxA;
+    M.nextCtxB = a.ctxB;
+    M.nextCtxC = a.ctxC;
+    M.nextHeights = a.heights;
+    M.nextBnrm = a.bnrm;
+    M.nextStatics = a.statics;
+    M.nextContext = a.context;
+    M.nextMeshTile = a.meshTile;
+    M.nextStatTile = a.statTile;
     M.buildTiles = r.tiles;
-    M.meshCursor = MID.mesh * MID.mesh; M.staticCursor = MID.staticRes * MID.staticRes;
+    M.meshCursor = MID.mesh * MID.mesh;
+    M.staticCursor = MID.staticRes * MID.staticRes;
     this._midCommit();
   }
   _midInside([sx, sz, ex, ez, w]) {
-    const c = this.mid.center, lim = f32(160 - f32(w * 0.5));
-    return Math.abs(f32(sx - c[0])) <= lim && Math.abs(f32(sz - c[1])) <= lim && Math.abs(f32(ex - c[0])) <= lim && Math.abs(f32(ez - c[1])) <= lim;
+    const c = this.mid.center,
+      lim = f32(160 - f32(w * 0.5));
+    return (
+      Math.abs(f32(sx - c[0])) <= lim &&
+      Math.abs(f32(sz - c[1])) <= lim &&
+      Math.abs(f32(ex - c[0])) <= lim &&
+      Math.abs(f32(ez - c[1])) <= lim
+    );
   }
   _midRasterize([sx, sz, ex, ez, w, rem]) {
     const M = this.mid;
     const rect = this.rects.mid;
-    const n = rasterizeTrack(M.history, 641, f32(M.center[0] - 160), f32(M.center[1] - 160), 2, 0.75, sx, sz, ex, ez, w, rem, (x, z) => rect.add(x, z));
-    if (n > 0) { M.hasDeformation = true; M.historyDirty = true; }
+    const n = rasterizeTrack(
+      M.history,
+      641,
+      f32(M.center[0] - 160),
+      f32(M.center[1] - 160),
+      2,
+      0.75,
+      sx,
+      sz,
+      ex,
+      ez,
+      w,
+      rem,
+      (x, z) => rect.add(x, z),
+    );
+    if (n > 0) {
+      M.hasDeformation = true;
+      M.historyDirty = true;
+    }
     return n;
   }
   _midStamp(sx, sz, ex, ez, width, remaining) {
     const M = this.mid;
     if (!M.active || width <= 0) return;
     const seg = [sx, sz, ex, ez, width, remaining];
-    if (!M.ready || !this._midInside(seg)) { while (M.pending.length >= MID.pendingMax) M.pending.shift(); M.pending.push(seg); return; }
+    if (!M.ready || !this._midInside(seg)) {
+      while (M.pending.length >= MID.pendingMax) M.pending.shift();
+      M.pending.push(seg);
+      return;
+    }
     M.lastHistoryChanged = this._midRasterize(seg);
   }
   _midRefill(step) {
@@ -1043,32 +1731,57 @@ export class SnowfallRuntime {
     if (!M.hasDeformation || step <= 0) return;
     let any = false;
     const h = M.history;
-    for (let k = 0; k < h.length; k += 4) { const r = h[k]; if (r === 255) continue; const v = r + step; if (v >= 255) h[k] = 255; else { h[k] = v; any = true; } }
+    for (let k = 0; k < h.length; k += 4) {
+      const r = h[k];
+      if (r === 255) continue;
+      const v = r + step;
+      if (v >= 255) h[k] = 255;
+      else {
+        h[k] = v;
+        any = true;
+      }
+    }
     M.hasDeformation = any;
-    M.historyDirty = true; this.rects.mid.all();
+    M.historyDirty = true;
+    this.rects.mid.all();
   }
   _midClearHistory() {
     const M = this.mid;
-    M.history.fill(255); M.hasDeformation = false; M.historyDirty = true; M.pending.length = 0; M.lastHistoryChanged = 0;
+    M.history.fill(255);
+    M.hasDeformation = false;
+    M.historyDirty = true;
+    M.pending.length = 0;
+    M.lastHistoryChanged = 0;
     this.rects.mid.all();
   }
   _midProjectCorpses() {
     const M = this.mid;
-    if (M.ready && this.corpses.project(M.history, 641, M.center[0], M.center[1], 320)) { M.historyDirty = true; this.rects.mid.all(); }
+    if (M.ready && this.corpses.project(M.history, 641, M.center[0], M.center[1], 320)) {
+      M.historyDirty = true;
+      this.rects.mid.all();
+    }
   }
   _midScroll(dx, dz) {
     const M = this.mid;
     const out = scrollMask(M.history, M.scroll, 641, dx, dz);
-    if (!out) { this._midClearHistory(); return; }
-    M.scroll = M.history; M.history = out;
+    if (!out) {
+      this._midClearHistory();
+      return;
+    }
+    M.scroll = M.history;
+    M.history = out;
     M.hasDeformation = containsDeformation(M.history);
-    M.historyDirty = true; this.rects.mid.all();
+    M.historyDirty = true;
+    this.rects.mid.all();
   }
 
   /** BlanketSurfaceSamples for one terrain tile, kept for the build. */
   _blanketSamplesFor(t, cache, context) {
     let b = cache.get(t);
-    if (!b) { b = new BlanketSamples(t, this.coverage, context); cache.set(t, b); }
+    if (!b) {
+      b = new BlanketSamples(t, this.coverage, context);
+      cache.set(t, b);
+    }
     return b;
   }
 
@@ -1076,18 +1789,43 @@ export class SnowfallRuntime {
   _newBlanket() {
     const n = BLANKET.mesh * BLANKET.mesh;
     const uv = new Float32Array(n * 2);
-    for (let i = 0; i < BLANKET.mesh; i++) for (let j = 0; j < BLANKET.mesh; j++) { const k = i * BLANKET.mesh + j; uv[k * 2] = f32(j / 64); uv[k * 2 + 1] = f32(i / 64); }
-    return { uv, index: gridIndices(BLANKET.mesh), overlays: new Map(), live: new Set(), queue: [], queued: new Set(), building: null, active: false, contextRevision: 0, lastPixel: null, completed: 0, failed: 0, innerRadius: 0, handoff: [0, 0], context0: new SnowContext(this.world, this.coverage) };
+    for (let i = 0; i < BLANKET.mesh; i++)
+      for (let j = 0; j < BLANKET.mesh; j++) {
+        const k = i * BLANKET.mesh + j;
+        uv[k * 2] = f32(j / 64);
+        uv[k * 2 + 1] = f32(i / 64);
+      }
+    return {
+      uv,
+      index: gridIndices(BLANKET.mesh),
+      overlays: new Map(),
+      live: new Set(),
+      queue: [],
+      queued: new Set(),
+      building: null,
+      active: false,
+      contextRevision: 0,
+      lastPixel: null,
+      completed: 0,
+      failed: 0,
+      innerRadius: 0,
+      handoff: [0, 0],
+      context0: new SnowContext(this.world, this.coverage),
+    };
   }
   _blanketTick(shouldBeActive, handoff, f, allowBuild, innerRadius) {
-    const B = this.blanket, s = this.settings;
+    const B = this.blanket,
+      s = this.settings;
     const was = B.active;
     B.active = shouldBeActive && s.streamedBlanketPrototype && !!handoff;
     // FIELD BUGS 2026-10-21b SNOW-HOLD: SetActive(false) lets its queue go - standing again queues every visible tile anew
     // (below), and a queued tile holds its map pixel's whole entry (the host's SnowTerrain closures): an indoors, or an
     // Overworld journey under the travel view, kept every pixel the world destroyed meanwhile
     if (!B.active) {
-      if (was) { B.queue.length = 0; B.queued.clear(); }
+      if (was) {
+        B.queue.length = 0;
+        B.queued.clear();
+      }
       // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so
       // an indoors or a journey under the travel view kept every overlay of the last ring - and each its tile, and the
       // tile its map pixel's whole entry, long after the world destroyed it. The same prune, on the same schedule: a tile
@@ -1095,19 +1833,26 @@ export class SnowfallRuntime {
       // AUDIT MEM-AUDIT M4: the ring asked on the prune's own schedule, never a frame - indoors and under the travel view
       // too, which TV-SNOW took the snow's every-frame work out of. M3: and the mid ring's tiles with the blanket's
       const M = this.mid;
-      if ((B.overlays.size || B.building || M.tiles.length || M.buildTiles.length) && !(B.nextPrune && f.now < B.nextPrune)) {
+      if (
+        (B.overlays.size || B.building || M.tiles.length || M.buildTiles.length) &&
+        !(B.nextPrune && f.now < B.nextPrune)
+      ) {
         const near = this.world.terrainsNear(Math.max(1, Math.min(4, this.world.terrainDistance ?? 3)));
         this._blanketPrune(f, near);
         this._midLetGo(near);
       }
       return;
     }
-    if (!was) B.lastPixel = null;   // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them
+    if (!was) B.lastPixel = null; // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them
     B.handoff = handoff;
     B.innerRadius = innerRadius;
-    for (const o of B.overlays.values()) if (o.ready && o.contextRevision !== B.contextRevision) { this._blanketContext(o); break; }
+    for (const o of B.overlays.values())
+      if (o.ready && o.contextRevision !== B.contextRevision) {
+        this._blanketContext(o);
+        break;
+      }
     const near = this.world.terrainsNear(Math.max(1, Math.min(4, this.world.terrainDistance ?? 3)));
-    B.live = new Set(near);   // the tiles drawn: an overlay whose tile left the ring stands undrawn until it is pruned
+    B.live = new Set(near); // the tiles drawn: an overlay whose tile left the ring stands undrawn until it is pruned
     const key = near.length ? `${near[0].mapX},${near[0].mapY}` : null;
     if (key !== B.lastPixel) {
       B.lastPixel = key;
@@ -1123,12 +1868,15 @@ export class SnowfallRuntime {
     B.nextPrune = f.now + BLANKET.pruneSeconds;
     const live = new Set(near);
     for (const [t, o] of B.overlays) if (!live.has(t)) this._blanketDrop(o);
-    if (B.building && !live.has(B.building.t)) B.building = null;   // MEM-AUDIT: _blanketProcess would skip it on its next turn
-    if (!B.active) B.live = new Set([...B.live].filter((t) => live.has(t)));   // MEM-AUDIT: nothing is drawn idle; the next active frame sets it whole
+    if (B.building && !live.has(B.building.t)) B.building = null; // MEM-AUDIT: _blanketProcess would skip it on its next turn
+    if (!B.active) B.live = new Set([...B.live].filter((t) => live.has(t))); // MEM-AUDIT: nothing is drawn idle; the next active frame sets it whole
     // SNOW-HOLD: and a queued one - the queue drains only while the local tier is not recentring, and a player on the
     // move keeps it recentring, so every tile the world built and destroyed behind them stood in it (1.8 MB of JS heap a
     // map pixel, measured in the running game); _blanketProcess skips a tile no longer drawn, so letting it go is the same
-    if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }
+    if (B.queue.some((t) => !live.has(t))) {
+      B.queue = B.queue.filter((t) => live.has(t));
+      B.queued = new Set(B.queue);
+    }
   }
   /** AUDIT MEM-AUDIT M3: THE MID RING IDLE, A TILE IT SAMPLED NO LONGER STANDING - what it held of the ring's tiles goes
    *  (its tiles, its build's, its blankets' samples, the last build's source: each tile holds its map pixel's whole
@@ -1138,8 +1886,14 @@ export class SnowfallRuntime {
     const M = this.mid;
     const live = new Set(near);
     if (!M.tiles.some((t) => !live.has(t)) && !M.buildTiles.some((t) => !live.has(t))) return;
-    M.tiles = []; M.buildTiles = []; M.blankets = new Map(); M.source = null; M.reuse = null;
-    M.building = false; M.ready = false; M.rebuildPending = true;
+    M.tiles = [];
+    M.buildTiles = [];
+    M.blankets = new Map();
+    M.source = null;
+    M.reuse = null;
+    M.building = false;
+    M.ready = false;
+    M.rebuildPending = true;
   }
   /** An overlay let go: out of the map, and its GPU half freed at the surface's next sync (snowfallSurface.js `sync`'s
    *  dead arm, which reads the overlay alone). MEM-AUDIT: what it held of its tile and its arrays go now - that sync waits
@@ -1156,7 +1910,10 @@ export class SnowfallRuntime {
     const B = this.blanket;
     const o = B.overlays.get(t);
     if (o && o.ready && o.stamp === t.stamp) return;
-    if (!B.queued.has(t)) { B.queued.add(t); B.queue.push(t); }
+    if (!B.queued.has(t)) {
+      B.queued.add(t);
+      B.queue.push(t);
+    }
   }
   /** HandleTerrainPromoted: a tile's ground was rebuilt - its blanket is again to make, and the nearer tiers' builds
    *  that overlap it start over. */
@@ -1165,16 +1922,25 @@ export class SnowfallRuntime {
     if (B.building?.t === t || (replaced && B.building?.t === replaced)) B.building = null;
     const o = B.overlays.get(t);
     if (o) o.ready = false;
-    const old = replaced && B.overlays.get(replaced);   // the tile's old ground: its overlay goes with it
+    const old = replaced && B.overlays.get(replaced); // the tile's old ground: its overlay goes with it
     if (old) this._blanketDrop(old);
     if (B.active) this._blanketQueue(t);
     const og = t.origin(v3());
-    const overlaps = (cx, cz, r) => og[0] <= cx + r && og[0] + t.size >= cx - r && og[2] <= cz + r && og[2] + t.size >= cz - r;
+    const overlaps = (cx, cz, r) =>
+      og[0] <= cx + r && og[0] + t.size >= cx - r && og[2] <= cz + r && og[2] + t.size >= cz - r;
     const M = this.mid;
-    if ((M.ready || M.building) && overlaps(...(M.building ? M.buildCenter : M.center), MID.radius)) { M.building = false; M.rebuildPending = true; M.nextRetry = now; }
+    if ((M.ready || M.building) && overlaps(...(M.building ? M.buildCenter : M.center), MID.radius)) {
+      M.building = false;
+      M.rebuildPending = true;
+      M.nextRetry = now;
+    }
     const L = this.local;
     if (L.hasCenter && overlaps(L.center[0], L.center[1], this.gridRadius)) {
-      L.recentering = false; L.fullRebuild = false; L.heightRebuild = true; L.staticRebuild = true; L.nextRetry = now + RETARGET_DELAY_SECONDS;
+      L.recentering = false;
+      L.fullRebuild = false;
+      L.heightRebuild = true;
+      L.staticRebuild = true;
+      L.nextRetry = now + RETARGET_DELAY_SECONDS;
     }
   }
   _blanketProcess() {
@@ -1182,31 +1948,70 @@ export class SnowfallRuntime {
     while (!B.building && B.queue.length) {
       const t = B.queue.shift();
       B.queued.delete(t);
-      if (!B.live.has(t)) continue;   // AUDIT ENVIRONS S7: ProcessBuildQueue - a tile no longer standing in the drawn rings is not built (activeInHierarchy)
-      if (!t.tileMap || t.tileMap.length < 16384) { B.failed++; continue; }
+      if (!B.live.has(t)) continue; // AUDIT ENVIRONS S7: ProcessBuildQueue - a tile no longer standing in the drawn rings is not built (activeInHierarchy)
+      if (!t.tileMap || t.tileMap.length < 16384) {
+        B.failed++;
+        continue;
+      }
       let o = B.overlays.get(t);
-      if (!o) { o = { t, ready: false, pos: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), nrm: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), ctx: new Float32Array(BLANKET.mesh * BLANKET.mesh * 4), statics: new Uint8Array(BLANKET.staticRes * BLANKET.staticRes * 4), contextRevision: -1, stamp: null, minY: 0, maxY: 0 }; B.overlays.set(t, o); }
-      B.building = { t, o, cursor: 0, pos: new Float32Array(o.pos.length), nrm: new Float32Array(o.nrm.length), stamp: t.stamp };
+      if (!o) {
+        o = {
+          t,
+          ready: false,
+          pos: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3),
+          nrm: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3),
+          ctx: new Float32Array(BLANKET.mesh * BLANKET.mesh * 4),
+          statics: new Uint8Array(BLANKET.staticRes * BLANKET.staticRes * 4),
+          contextRevision: -1,
+          stamp: null,
+          minY: 0,
+          maxY: 0,
+        };
+        B.overlays.set(t, o);
+      }
+      B.building = {
+        t,
+        o,
+        cursor: 0,
+        pos: new Float32Array(o.pos.length),
+        nrm: new Float32Array(o.nrm.length),
+        stamp: t.stamp,
+      };
     }
     const b = B.building;
     if (!b) return;
-    const t = b.t, end = Math.min(BLANKET.mesh * BLANKET.mesh, b.cursor + BLANKET.samplesPerFrame);
+    const t = b.t,
+      end = Math.min(BLANKET.mesh * BLANKET.mesh, b.cursor + BLANKET.samplesPerFrame);
     while (b.cursor < end) {
       if ((b.cursor & BUDGET_CHECK) === 0 && b.cursor > 0 && this._spent()) break;
       const k = b.cursor++;
       const i = Math.floor(k / 65);
-      const u = f32((k - i * 65) / 64), v = f32(i / 64);
-      const lx = f32(u * t.size), lz = f32(v * t.size);
-      b.pos[k * 3] = lx; b.pos[k * 3 + 1] = t.height(lx, lz); b.pos[k * 3 + 2] = lz;
+      const u = f32((k - i * 65) / 64),
+        v = f32(i / 64);
+      const lx = f32(u * t.size),
+        lz = f32(v * t.size);
+      b.pos[k * 3] = lx;
+      b.pos[k * 3 + 1] = t.height(lx, lz);
+      b.pos[k * 3 + 2] = lz;
       const nr = t.normal(lx, lz, _n);
-      b.nrm[k * 3] = nr[0]; b.nrm[k * 3 + 1] = nr[1]; b.nrm[k * 3 + 2] = nr[2];
+      b.nrm[k * 3] = nr[0];
+      b.nrm[k * 3 + 1] = nr[1];
+      b.nrm[k * 3 + 2] = nr[2];
     }
     if (b.cursor >= BLANKET.mesh * BLANKET.mesh) {
       const o = b.o;
-      o.pos = b.pos; o.nrm = b.nrm; o.stamp = b.stamp;
-      let lo = Infinity, hi = -Infinity;   // ApplyMeshBounds: the tile's ground's span (its renderer's bounds, the frustum's cull)
-      for (let k = 1; k < b.pos.length; k += 3) { const y = b.pos[k]; if (y < lo) lo = y; if (y > hi) hi = y; }
-      o.minY = lo; o.maxY = hi;
+      o.pos = b.pos;
+      o.nrm = b.nrm;
+      o.stamp = b.stamp;
+      let lo = Infinity,
+        hi = -Infinity; // ApplyMeshBounds: the tile's ground's span (its renderer's bounds, the frustum's cull)
+      for (let k = 1; k < b.pos.length; k += 3) {
+        const y = b.pos[k];
+        if (y < lo) lo = y;
+        if (y > hi) hi = y;
+      }
+      o.minY = lo;
+      o.maxY = hi;
       this._blanketContext(o);
       o.ready = true;
       B.completed++;
@@ -1217,22 +2022,37 @@ export class SnowfallRuntime {
   /** UpdateTileContext: the tile's static mask (a tile is snow edge to edge or not, and its track tile in blue) and
    *  its vertices' contexts (excluded off the snow). */
   _blanketContext(o) {
-    const B = this.blanket, s = this.settings, t = o.t;
+    const B = this.blanket,
+      s = this.settings,
+      t = o.t;
     const og = t.origin(v3());
-    B.context0.prepare(og[0] + t.size * 0.5, og[2] + t.size * 0.5, t.size * 0.5, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
+    B.context0.prepare(
+      og[0] + t.size * 0.5,
+      og[2] + t.size * 0.5,
+      t.size * 0.5,
+      s.settlementBoundaryFeather,
+      s.locationLoaderBoundaryFeather,
+      s,
+    );
     const px = o.statics;
     // AUDIT ENVIRONS P6: the archive's table and the tile's own Basic Roads entry read once, not at every texel
-    const full = this.coverage.fullByTile(t.winterArchive), road = B.context0.roadOf(t.mapX, t.mapY), map = t.tileMap;
+    const full = this.coverage.fullByTile(t.winterArchive),
+      road = B.context0.roadOf(t.mapX, t.mapY),
+      map = t.tileMap;
     for (let k = 0; k < 16384; k++) {
       const all = full !== null && full[map[k]] === 1;
-      px[k * 4] = all ? 128 : 0; px[k * 4 + 1] = all ? 255 : 0;
+      px[k * 4] = all ? 128 : 0;
+      px[k * 4 + 1] = all ? 255 : 0;
       px[k * 4 + 2] = road ? road.data.pathTile(k % 128, Math.floor(k / 128)) : 0;
       px[k * 4 + 3] = 255;
     }
-    const tmp = new Uint8Array(4), ctx = o.ctx;
+    const tmp = new Uint8Array(4),
+      ctx = o.ctx;
     for (let k = 0; k < 4225; k++) {
-      const u = this.blanket.uv[k * 2], v = this.blanket.uv[k * 2 + 1];
-      const ix = Math.min(Math.trunc(u * 128), 127), iz = Math.min(Math.trunc(v * 128), 127);
+      const u = this.blanket.uv[k * 2],
+        v = this.blanket.uv[k * 2 + 1];
+      const ix = Math.min(Math.trunc(u * 128), 127),
+        iz = Math.min(Math.trunc(v * 128), 127);
       let covered = full !== null && full[map[iz * 128 + ix]] === 1;
       const b = px[(iz * 128 + ix) * 4 + 2];
       covered = covered || (b !== 0 && pathEdgeDistance(b, f32(f32(u * 128) - ix), f32(f32(v * 128) - iz)) <= 0);
@@ -1249,7 +2069,18 @@ export class SnowfallRuntime {
   // ---- the far track mask (FarTrackMask) ----
   /** TV-REFILL (the port's own): `deformed` - whether the mask may hold a track (its red under 255): set by every write of
    *  its red, kept through a scroll (which only moves what was there), false once a refill finds none or a clear. */
-  _newFar() { return { pixels: fullSnowMask(FAR.res), scroll: fullSnowMask(FAR.res), center: [0, 0], lattice: [0, 0], ready: false, rebuilds: 0, lastChanged: 0, deformed: false }; }
+  _newFar() {
+    return {
+      pixels: fullSnowMask(FAR.res),
+      scroll: fullSnowMask(FAR.res),
+      center: [0, 0],
+      lattice: [0, 0],
+      ready: false,
+      rebuilds: 0,
+      lastChanged: 0,
+      deformed: false,
+    };
+  }
   _farTick(active, px, pz) {
     const F = this.far;
     if (!active) return;
@@ -1257,7 +2088,7 @@ export class SnowfallRuntime {
       F.center = snapToGrid(px, pz, FAR.snap, F.lattice[0], F.lattice[1]);
       F.pixels.fill(255);
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640);
-      F.deformed = F.lastChanged > 0;   // TV-REFILL
+      F.deformed = F.lastChanged > 0; // TV-REFILL
       F.ready = true;
       this._farProjectCorpses();
       F.rebuilds++;
@@ -1265,13 +2096,18 @@ export class SnowfallRuntime {
     } else if (Math.hypot(px - F.center[0], pz - F.center[1]) > FAR.recenter) {
       const old = F.center;
       F.center = snapToGrid(px, pz, FAR.snap, F.lattice[0], F.lattice[1]);
-      const dx = roundToInt(f32(F.center[0] - old[0])), dz = roundToInt(f32(F.center[1] - old[1]));
+      const dx = roundToInt(f32(F.center[0] - old[0])),
+        dz = roundToInt(f32(F.center[1] - old[1]));
       let p = [0, -1, 0, -1];
       const out = scrollMask(F.pixels, F.scroll, 641, dx, dz);
       if (!out) F.pixels.fill(255);
-      else { F.scroll = F.pixels; F.pixels = out; p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)]; }
+      else {
+        F.scroll = F.pixels;
+        F.pixels = out;
+        p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
+      }
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640, p[0], p[1], p[2], p[3]);
-      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;   // TV-REFILL: what the scroll kept, and what the field laid
+      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid
       this._farProjectCorpses();
       F.rebuilds++;
       this.rects.far.all();
@@ -1280,22 +2116,57 @@ export class SnowfallRuntime {
   _farStamp(sx, sz, ex, ez, width, remaining) {
     const F = this.far;
     if (!F.ready || width <= 0) return;
-    const reach = f32(320 + f32(width * 0.5)), c = F.center;
-    if (!(Math.max(sx, ex) >= c[0] - reach && Math.min(sx, ex) <= c[0] + reach && Math.max(sz, ez) >= c[1] - reach && Math.min(sz, ez) <= c[1] + reach)) return;
+    const reach = f32(320 + f32(width * 0.5)),
+      c = F.center;
+    if (!(
+      Math.max(sx, ex) >= c[0] - reach &&
+      Math.min(sx, ex) <= c[0] + reach &&
+      Math.max(sz, ez) >= c[1] - reach &&
+      Math.min(sz, ez) <= c[1] + reach
+    ))
+      return;
     const rect = this.rects.far;
-    const n = rasterizeTrack(F.pixels, 641, f32(c[0] - 320), f32(c[1] - 320), 1, 0.75, sx, sz, ex, ez, width, remaining, (x, z) => rect.add(x, z));
-    if (n > 0) { F.lastChanged = n; F.deformed = true; }   // TV-REFILL
+    const n = rasterizeTrack(
+      F.pixels,
+      641,
+      f32(c[0] - 320),
+      f32(c[1] - 320),
+      1,
+      0.75,
+      sx,
+      sz,
+      ex,
+      ez,
+      width,
+      remaining,
+      (x, z) => rect.add(x, z),
+    );
+    if (n > 0) {
+      F.lastChanged = n;
+      F.deformed = true;
+    } // TV-REFILL
   }
   _farRefill(step) {
     const F = this.far;
-    if (!F.ready || step <= 0 || !F.deformed) return;   // TV-REFILL: a clean mask has nothing to fill
+    if (!F.ready || step <= 0 || !F.deformed) return; // TV-REFILL: a clean mask has nothing to fill
     let any = false;
     const p = F.pixels;
-    for (let k = 0; k < p.length; k += 4) { const r = p[k]; if (r !== 255) { p[k] = r + step >= 255 ? 255 : r + step; any = true; } }
+    for (let k = 0; k < p.length; k += 4) {
+      const r = p[k];
+      if (r !== 255) {
+        p[k] = r + step >= 255 ? 255 : r + step;
+        any = true;
+      }
+    }
     if (any) this.rects.far.all();
-    F.deformed = any;   // TV-REFILL: none found, none left
+    F.deformed = any; // TV-REFILL: none found, none left
   }
-  _farClear() { this.far.pixels.fill(255); this.far.lastChanged = 0; this.far.deformed = false; this.rects.far.all(); }
+  _farClear() {
+    this.far.pixels.fill(255);
+    this.far.lastChanged = 0;
+    this.far.deformed = false;
+    this.rects.far.all();
+  }
   _farProjectCorpses() {
     const F = this.far;
     if (F.ready && this.corpses.project(F.pixels, 641, F.center[0], F.center[1], 640)) this.rects.far.all();
@@ -1305,26 +2176,83 @@ export class SnowfallRuntime {
   /** HandleFloatingOrigin: everything the snow holds in the scene moves with it. */
   offsetOrigin(offset) {
     const [ox, oy, oz] = offset;
-    const L = this.local, M = this.mid, F = this.far;
-    for (const p of [L.lattice, L.center, L.dynCenter, L.statCenter, L.nextCenter, L.nextDyn, L.nextStat, L.lastStamp, M.lattice, M.center, M.buildCenter, M.localCenter, F.center, F.lattice]) { p[0] = f32(p[0] + ox); p[1] = f32(p[1] + oz); }
+    const L = this.local,
+      M = this.mid,
+      F = this.far;
+    for (const p of [
+      L.lattice,
+      L.center,
+      L.dynCenter,
+      L.statCenter,
+      L.nextCenter,
+      L.nextDyn,
+      L.nextStat,
+      L.lastStamp,
+      M.lattice,
+      M.center,
+      M.buildCenter,
+      M.localCenter,
+      F.center,
+      F.lattice,
+    ]) {
+      p[0] = f32(p[0] + ox);
+      p[1] = f32(p[1] + oz);
+    }
     L.baseY += oy;
     M.baseY += oy;
-    for (const seg of L.pending) { seg[0] += ox; seg[1] += oz; seg[2] += ox; seg[3] += oz; }
-    for (const seg of M.pending) { seg[0] += ox; seg[1] += oz; seg[2] += ox; seg[3] += oz; }
-    for (const t of this.npcTargets.values()) if (t.hasAnchor) { t.last[0] += ox; t.last[1] += oz; }
-    if (oy !== 0) { M.building = false; M.rebuildPending = true; }
-    M.source = null; M.reuse = null;   // AUDIT ENVIRONS P3: every place the ring sampled is another number now
-    this.builds?.offset(offset);   // SNOW-THREAD: and the worker's ring's too
+    for (const seg of L.pending) {
+      seg[0] += ox;
+      seg[1] += oz;
+      seg[2] += ox;
+      seg[3] += oz;
+    }
+    for (const seg of M.pending) {
+      seg[0] += ox;
+      seg[1] += oz;
+      seg[2] += ox;
+      seg[3] += oz;
+    }
+    for (const t of this.npcTargets.values())
+      if (t.hasAnchor) {
+        t.last[0] += ox;
+        t.last[1] += oz;
+      }
+    if (oy !== 0) {
+      M.building = false;
+      M.rebuildPending = true;
+    }
+    M.source = null;
+    M.reuse = null; // AUDIT ENVIRONS P3: every place the ring sampled is another number now
+    this.builds?.offset(offset); // SNOW-THREAD: and the worker's ring's too
   }
   /** HandleTransitionInterior / HandleTransitionExterior / InvalidateSessionPresentation: the world the snow stood on
    *  is gone (a door, a load, a fast travel) - every tier is built again where the player next stands outside. */
   worldReset({ session = false } = {}) {
-    const L = this.local, M = this.mid, B = this.blanket, F = this.far;
-    this.builds?.reset([M.building && M.job, L.recentering && L.job]);   // SNOW-THREAD: the builds out are let go
-    B.queue.length = 0; B.queued.clear(); B.building = null; B.lastPixel = null;   // the overlays are kept, undrawn until their tiles are asked again
-    this._midClearHistory(); M.ready = false; M.building = false; M.rebuildPending = true; M.nextRetry = 0; M.visible = false;
-    F.ready = false; F.lastChanged = 0;
-    L.meshReady = false; L.staticReady = false; L.recentering = false; L.fullRebuild = false; L.heightRebuild = true; L.staticRebuild = true; L.nextRetry = 0; L.visible = false;
+    const L = this.local,
+      M = this.mid,
+      B = this.blanket,
+      F = this.far;
+    this.builds?.reset([M.building && M.job, L.recentering && L.job]); // SNOW-THREAD: the builds out are let go
+    B.queue.length = 0;
+    B.queued.clear();
+    B.building = null;
+    B.lastPixel = null; // the overlays are kept, undrawn until their tiles are asked again
+    this._midClearHistory();
+    M.ready = false;
+    M.building = false;
+    M.rebuildPending = true;
+    M.nextRetry = 0;
+    M.visible = false;
+    F.ready = false;
+    F.lastChanged = 0;
+    L.meshReady = false;
+    L.staticReady = false;
+    L.recentering = false;
+    L.fullRebuild = false;
+    L.heightRebuild = true;
+    L.staticRebuild = true;
+    L.nextRetry = 0;
+    L.visible = false;
     L.hasLastStamp = false;
     this._resetNpcAnchors();
     if (session) {
@@ -1351,7 +2279,10 @@ export class SnowfallRuntime {
   completeSession(gameSeconds, snowing = false, now = 0) {
     this.worldReset({ session: true });
     this.corpseScanPending = true;
-    this.lastGameSeconds = gameSeconds; this.nextRefillTime = now + REFILL_INTERVAL_SECONDS; this.refillRemainder = 0; this.isSnowing = snowing;
+    this.lastGameSeconds = gameSeconds;
+    this.nextRefillTime = now + REFILL_INTERVAL_SECONDS;
+    this.refillRemainder = 0;
+    this.isSnowing = snowing;
     this.snowpack.resetClock(gameSeconds);
     this.dirty.depths = true;
   }
@@ -1379,16 +2310,40 @@ export class SnowfallRuntime {
   depthUniforms(u = snowUniforms()) {
     const s = this.settings;
     put4(u.depths, this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s.pathMaximumDepth);
-    put4(u.limits, s.roadBermsEnabled && s.basicRoadsIntegration ? s.roadBermRise : 0, s.wildernessMaximumDepth, s.settlementMaximumDepth, s.corpseRemainingSnowDepth);
+    put4(
+      u.limits,
+      s.roadBermsEnabled && s.basicRoadsIntegration ? s.roadBermRise : 0,
+      s.wildernessMaximumDepth,
+      s.settlementMaximumDepth,
+      s.corpseRemainingSnowDepth,
+    );
     return u;
   }
   /** The local window's material (ApplyMaterialSettings and ApplyMaskMappings). */
   localUniforms(u = snowUniforms()) {
-    const L = this.local, s = this.settings, R = this.gridRadius, mt = this.maskTexel, st = this.staticTexel;
-    u.origin[0] = L.center[0]; u.origin[1] = L.baseY; u.origin[2] = L.center[1];
-    put4(u.dynMap, f32(f32(L.dynCenter[0] - R) - f32(mt * 0.5)), f32(f32(L.dynCenter[1] - R) - f32(mt * 0.5)), f32(1 / f32(mt * L.mres)), 0);
+    const L = this.local,
+      s = this.settings,
+      R = this.gridRadius,
+      mt = this.maskTexel,
+      st = this.staticTexel;
+    u.origin[0] = L.center[0];
+    u.origin[1] = L.baseY;
+    u.origin[2] = L.center[1];
+    put4(
+      u.dynMap,
+      f32(f32(L.dynCenter[0] - R) - f32(mt * 0.5)),
+      f32(f32(L.dynCenter[1] - R) - f32(mt * 0.5)),
+      f32(1 / f32(mt * L.mres)),
+      0,
+    );
     put4(u.dynTexel, 1 / L.mres, 1 / L.mres, L.mres, L.mres);
-    put4(u.statMap, f32(f32(L.statCenter[0] - R) - f32(st * 0.5)), f32(f32(L.statCenter[1] - R) - f32(st * 0.5)), f32(1 / f32(st * L.sres)), 0);
+    put4(
+      u.statMap,
+      f32(f32(L.statCenter[0] - R) - f32(st * 0.5)),
+      f32(f32(L.statCenter[1] - R) - f32(st * 0.5)),
+      f32(1 / f32(st * L.sres)),
+      0,
+    );
     u.farMap = null;
     put4(u.flags, 1, 0, 0, s.trackImpressionStrength);
     put4(u.radius, R, 0, SNOW_SURFACE_OFFSET, s.textureWorldSize);
@@ -1400,9 +2355,13 @@ export class SnowfallRuntime {
   }
   /** The middle ring's (its ApplyMaterialSettings, ApplyHandoffSettings and ApplyMaskMapping). */
   midUniforms(u = snowUniforms()) {
-    const M = this.mid, s = this.settings;
-    const o0 = M.center[0] - 160, o1 = M.center[1] - 160;
-    u.origin[0] = M.center[0]; u.origin[1] = M.baseY; u.origin[2] = M.center[1];
+    const M = this.mid,
+      s = this.settings;
+    const o0 = M.center[0] - 160,
+      o1 = M.center[1] - 160;
+    u.origin[0] = M.center[0];
+    u.origin[1] = M.baseY;
+    u.origin[2] = M.center[1];
     put4(u.dynMap, f32(o0 - 0.25), f32(o1 - 0.25), f32(1 / (0.5 * 641)), 0);
     put4(u.dynTexel, 1 / 641, 1 / 641, 641, 641);
     put4(u.statMap, f32(o0 - 0.5), f32(o1 - 0.5), f32(1 / 321), 0);
@@ -1416,11 +2375,17 @@ export class SnowfallRuntime {
     return u;
   }
   /** FarTrackMask.Mapping. */
-  farMapping(out = [0, 0, 0, 0]) { const c = this.far.center; return put4(out, c[0] - 320, c[1] - 320, 0.0015625, 1); }
+  farMapping(out = [0, 0, 0, 0]) {
+    const c = this.far.center;
+    return put4(out, c[0] - 320, c[1] - 320, 0.0015625, 1);
+  }
   /** The blanket's (its ApplyMaterialSettings, SetDistantTrackMask and Tick; a tile's static mapping its own). */
   blanketUniforms(o, distant, u = snowUniforms()) {
-    const s = this.settings, B = this.blanket, og = o.t.origin(u.origin);
-    if (distant) this.farMapping(u.dynMap); else put4(u.dynMap, 0, 0, 1, 0);
+    const s = this.settings,
+      B = this.blanket,
+      og = o.t.origin(u.origin);
+    if (distant) this.farMapping(u.dynMap);
+    else put4(u.dynMap, 0, 0, 1, 0);
     put4(u.dynTexel, 1 / 641, 1 / 641, 641, 641);
     put4(u.statMap, og[0], og[2], 1 / Math.max(o.t.size, 0.001), 0);
     u.farMap = null;
@@ -1437,20 +2402,39 @@ export class SnowfallRuntime {
    *  the caps', the ceilings', a debug override) and the surface offset - a tile's bounds over its ground's span. */
   blanketRise() {
     const s = this.settings;
-    return Math.max(this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s.wildernessMaximumDepth, s.settlementMaximumDepth) + SNOW_SURFACE_OFFSET;
+    return (
+      Math.max(
+        this.renderedDepth,
+        this.renderedSettlementDepth,
+        this.renderedLocationDepth,
+        s.wildernessMaximumDepth,
+        s.settlementMaximumDepth,
+      ) + SNOW_SURFACE_OFFSET
+    );
   }
 
   /** The console's snow_status. */
   status(f = null, x = {}) {
-    const L = this.local, s = this.settings, M = this.mid, B = this.blanket, F = this.far;
-    const b = (v) => (v ? 'True' : 'False');   // a C# bool's ToString
-    let min = 255, deformed = 0;
-    for (let k = 0; k < L.dynamic.length; k += 4) { min = Math.min(min, L.dynamic[k]); if (L.dynamic[k] < 255) deformed++; }
-    const p = f?.rawPlayer ?? null;   // the motor's, whatever the switch (the frame's own player is the switch's)
+    const L = this.local,
+      s = this.settings,
+      M = this.mid,
+      B = this.blanket,
+      F = this.far;
+    const b = (v) => (v ? 'True' : 'False'); // a C# bool's ToString
+    let min = 255,
+      deformed = 0;
+    for (let k = 0; k < L.dynamic.length; k += 4) {
+      min = Math.min(min, L.dynamic[k]);
+      if (L.dynamic[k] < 255) deformed++;
+    }
+    const p = f?.rawPlayer ?? null; // the motor's, whatever the switch (the frame's own player is the switch's)
     let terrain = 'unavailable';
-    if (x.climate != null && f) {   // PlayerGPS.ClimateSettings and the calendar's season (WorldTime.Now.SeasonValue)
-      const cs = getWorldClimateSettings(x.climate), season = seasonValue(dateFromClassicMinutes(Math.floor(f.gameSeconds / 60)));
-      const type = Object.keys(CLIMATE_BASE_TYPES).find((k) => CLIMATE_BASE_TYPES[k] === cs.climateType) ?? String(cs.climateType);
+    if (x.climate != null && f) {
+      // PlayerGPS.ClimateSettings and the calendar's season (WorldTime.Now.SeasonValue)
+      const cs = getWorldClimateSettings(x.climate),
+        season = seasonValue(dateFromClassicMinutes(Math.floor(f.gameSeconds / 60)));
+      const type =
+        Object.keys(CLIMATE_BASE_TYPES).find((k) => CLIMATE_BASE_TYPES[k] === cs.climateType) ?? String(cs.climateType);
       const seasonName = Object.keys(SEASONS).find((k) => SEASONS[k] === season);
       terrain = `climateIndex=${x.climate} climateType=${type} season=${seasonName} expectedArchive=${cs.groundArchive + (cs.climateType !== CLIMATE_BASE_TYPES.Desert && season === SEASONS.Winter ? 1 : 0)} bundledWinterArchives=103,303,403`;
     }
@@ -1461,14 +2445,24 @@ export class SnowfallRuntime {
     for (const o of B.overlays.values()) if (o.ready) ready++;
     const visible = B.active ? [...B.overlays.values()].filter((o) => o.ready && B.live.has(o.t)).length : 0;
     const building = B.building ? `${B.building.cursor}/${BLANKET.mesh * BLANKET.mesh}` : '0/0';
-    const roads = !s.basicRoadsIntegration ? 'basicRoads=disabled'
-      : !at || f?.inside ? 'basicRoads=exterior context unavailable'
-        : (() => {   // RoadStatus: the context's read at the player, before the coverage and the tracks
-          const c = this.context.sample(at[0], at[1]);
-          const depth = resolveSnowDepth(contextOf(c[0], c[1], c[2], c[3]), this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s);
-          return `basicRoads=${x.roads ?? 'not sampled'} pathWeight=${(c[2] / 255).toFixed(2)} pathCap=${s.pathMaximumDepth.toFixed(2)}m bermWeight=${(c[3] / 255).toFixed(2)} contextDepth=${depth.toFixed(3)}m (before coverage/tracks)`;
-        })();
-    return [   // AUDIT ENVIRONS S6: GetRuntimeStatus, line for line
+    const roads = !s.basicRoadsIntegration
+      ? 'basicRoads=disabled'
+      : !at || f?.inside
+        ? 'basicRoads=exterior context unavailable'
+        : (() => {
+            // RoadStatus: the context's read at the player, before the coverage and the tracks
+            const c = this.context.sample(at[0], at[1]);
+            const depth = resolveSnowDepth(
+              contextOf(c[0], c[1], c[2], c[3]),
+              this.renderedDepth,
+              this.renderedSettlementDepth,
+              this.renderedLocationDepth,
+              s,
+            );
+            return `basicRoads=${x.roads ?? 'not sampled'} pathWeight=${(c[2] / 255).toFixed(2)} pathCap=${s.pathMaximumDepth.toFixed(2)}m bermWeight=${(c[3] / 255).toFixed(2)} contextDepth=${depth.toFixed(3)}m (before coverage/tracks)`;
+          })();
+    return [
+      // AUDIT ENVIRONS S6: GetRuntimeStatus, line for line
       'Dynamic Snow runtime',
       `active=${b(s.enabled && this.lastEnvironmentEligible)} exterior=${b(!!f && !f.inside)} meshReady=${b(L.meshReady)} staticReady=${b(L.staticReady)}`,
       `playerGrounded=${b(p?.grounded)} controllerGrounded=${b(p?.grounded)} swimming=${b(p?.swimming)} levitating=${b(p?.levitating)}`,
@@ -1500,9 +2494,14 @@ export function gridIndices(res) {
   let o = 0;
   for (let i = 0; i < res - 1; i++) {
     for (let j = 0; j < res - 1; j++) {
-      const a = i * res + j, b = a + res;
-      out[o++] = a; out[o++] = b; out[o++] = b + 1;
-      out[o++] = a; out[o++] = b + 1; out[o++] = a + 1;
+      const a = i * res + j,
+        b = a + res;
+      out[o++] = a;
+      out[o++] = b;
+      out[o++] = b + 1;
+      out[o++] = a;
+      out[o++] = b + 1;
+      out[o++] = a + 1;
     }
   }
   return out;
@@ -1513,13 +2512,16 @@ export function gridIndices(res) {
  *  barycentric blend under a point (At). */
 export class BlanketSamples {
   constructor(t, coverage, context) {
-    this.t = t; this.coverage = coverage; this.context = context;
+    this.t = t;
+    this.coverage = coverage;
+    this.context = context;
     this.samples = new Map();
   }
   /** Covered(u, v). */
   covered(u, v) {
     const t = this.t;
-    const ix = Math.max(0, Math.min(127, Math.trunc(u * 128))), iz = Math.max(0, Math.min(127, Math.trunc(v * 128)));
+    const ix = Math.max(0, Math.min(127, Math.trunc(u * 128))),
+      iz = Math.max(0, Math.min(127, Math.trunc(v * 128)));
     if (t.bare?.(f32(u * t.size), f32(v * t.size))) return false;
     if (this.coverage.isFullySnowCovered(t.winterArchive, t.tileMap[iz * 128 + ix])) return true;
     const b = this.context.pathTileAt(t.mapX, t.mapY, ix, iz);
@@ -1530,8 +2532,11 @@ export class BlanketSamples {
     const key = z * 65 + x;
     let s = this.samples.get(key);
     if (s) return s;
-    const t = this.t, u = f32(x / 64), v = f32(z / 64);
-    const lx = f32(u * t.size), lz = f32(v * t.size);
+    const t = this.t,
+      u = f32(x / 64),
+      v = f32(z / 64);
+    const lx = f32(u * t.size),
+      lz = f32(v * t.size);
     const og = t.origin(v3());
     const covered = this.covered(u, v);
     s = {
@@ -1546,17 +2551,44 @@ export class BlanketSamples {
   /** At(u, v, groundHeight, groundNormal) - into `out` when one is handed (the middle ring's, a sample at a time). */
   at(u, v, groundHeight, groundNormal, out = undefined) {
     if (!this.covered(u, v)) {
-      if (!out) return { height: groundHeight, normal: groundNormal, contextA: SNOW_EXCLUDED, contextB: SNOW_EXCLUDED, contextC: SNOW_EXCLUDED, blend: [1, 0, 0], offset: 0 };
-      out.height = groundHeight; out.normal[0] = groundNormal[0]; out.normal[1] = groundNormal[1]; out.normal[2] = groundNormal[2];
-      out.contextA = out.contextB = out.contextC = SNOW_EXCLUDED; out.blend[0] = 1; out.blend[1] = 0; out.blend[2] = 0; out.offset = 0;
+      if (!out)
+        return {
+          height: groundHeight,
+          normal: groundNormal,
+          contextA: SNOW_EXCLUDED,
+          contextB: SNOW_EXCLUDED,
+          contextC: SNOW_EXCLUDED,
+          blend: [1, 0, 0],
+          offset: 0,
+        };
+      out.height = groundHeight;
+      out.normal[0] = groundNormal[0];
+      out.normal[1] = groundNormal[1];
+      out.normal[2] = groundNormal[2];
+      out.contextA = out.contextB = out.contextC = SNOW_EXCLUDED;
+      out.blend[0] = 1;
+      out.blend[1] = 0;
+      out.blend[2] = 0;
+      out.offset = 0;
       return out;
     }
-    const x = f32(Math.max(0, Math.min(1, u)) * 64), z = f32(Math.max(0, Math.min(1, v)) * 64);
-    const ix = Math.min(Math.floor(x), 63), iz = Math.min(Math.floor(z), 63);
-    return interpolateQuad(this.vertex(ix, iz), this.vertex(ix + 1, iz), this.vertex(ix, iz + 1), this.vertex(ix + 1, iz + 1), f32(x - ix), f32(z - iz), out);
+    const x = f32(Math.max(0, Math.min(1, u)) * 64),
+      z = f32(Math.max(0, Math.min(1, v)) * 64);
+    const ix = Math.min(Math.floor(x), 63),
+      iz = Math.min(Math.floor(z), 63);
+    return interpolateQuad(
+      this.vertex(ix, iz),
+      this.vertex(ix + 1, iz),
+      this.vertex(ix, iz + 1),
+      this.vertex(ix + 1, iz + 1),
+      f32(x - ix),
+      f32(z - iz),
+      out,
+    );
   }
 }
 
 /** SnowDepthRules.Resolve over a context's four bytes, for the status line and the tests. */
-export const resolveContextBytes = (bytes, wild, settle, cap, s) => resolveSnowDepth(contextOf(bytes[0], bytes[1], bytes[2], bytes[3]), wild, settle, cap, s);
+export const resolveContextBytes = (bytes, wild, settle, cap, s) =>
+  resolveSnowDepth(contextOf(bytes[0], bytes[1], bytes[2], bytes[3]), wild, settle, cap, s);
 export { outsideWeight };

@@ -121,5 +121,5 @@ test('DISC22-C: drawHud draws it on both classic branches, and the DOM plaque st
   assert.doesNotMatch(readFileSync(join(ROOT, 'src/systems/classicLootFrame.js'), 'utf8'), /^import /m);
   const wp = readFileSync(join(ROOT, 'src/ui/worldPlaque.js'), 'utf8');
   // PIN MOVED (FIELD BUGS 2026-10-11g LOOT-SCROLL): the panel draws the plaque's window over the frame, its lit row counted from the window's top
-  assert.match(wp, /if \(dom\) showWorldPlaque\(frame, plaqueAnchor\(canvas\)\);\s*\n\s*else \{ const lit = quickLootRow\(frame\), w = windowOf\(frame, lit\); setClassicLootFrame\(w\.frame, frameMark\(\), lit >= 0 \? lit - w\.from : -1\); \}/);
+  assert.match(wp, /if \(dom\) showWorldPlaque\(frame, plaqueAnchor\(canvas\)\);\n\s*else \{ const lit = quickLootRow\(frame\), w = windowOf\(frame, lit\); setClassicLootFrame\(w\.frame, frameMark\(\), lit >= 0 \? lit - w\.from : -1\); \}/);
 });

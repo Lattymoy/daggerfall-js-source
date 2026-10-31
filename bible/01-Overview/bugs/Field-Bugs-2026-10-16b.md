@@ -319,7 +319,7 @@ stand; underground the same. A stat drained to zero killed it outright too (that
 
 CHANGED (the owner: "Stop trying to match DFU"; the reporter: "It probably shouldn't be doable to other peoples revs"):
 - A whole blow closes a revenant outright only as the owner's own - the player's blow (`fromPlayer`, never `peer`) at
-  the door that holds the record (`revenantFate.js:"export function ownersWholeKill("`); a revenant is never handed over,
+  the door that holds the record (`revenantFate.js:"export function ownersWholeKill"`); a revenant is never handed over,
   so that door is always its owner's. Both doors' last-stand and yield gates ask it.
 - Anyone else's whole blow - a party member's forwarded `z`, their strike spell, a foe's spell, a companion's, a drained
   stat's tick - is a killing blow like any other: at rank 3 and up the last stand; once stood with its will unbroken it

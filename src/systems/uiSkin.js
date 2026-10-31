@@ -30,20 +30,20 @@
 // an instruction, and the port's own settings law reads a bad value as
 // the default rather than as a new one.
 import { getPref, setPref } from './uiPrefs.js';
-import { pageParam } from './pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageParam } from './pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 export const SKINS = Object.freeze(['enhanced', 'classic']);
 export const DEFAULT_SKIN = 'enhanced';
 
 /** The label a player reads. Never the stored token. */
-export const SKIN_NAMES = Object.freeze({ enhanced: 'Enhanced Plus', classic: 'Classic' });   // PLUS-ONLY: the enhanced skin wears one dress, and this is its name
+export const SKIN_NAMES = Object.freeze({ enhanced: 'Enhanced Plus', classic: 'Classic' }); // PLUS-ONLY: the enhanced skin wears one dress, and this is its name
 
 const clean = (v) => (SKINS.includes(v) ? v : null);
 
 /** The URL's answer for this page load only, or null. Injectable so a
  *  node test can ask the question without a location. */
 export function skinOverride(search = globalThis.location?.search ?? '') {
-  return clean(pageParam('skin', search));   // PERF-URL
+  return clean(pageParam('skin', search)); // PERF-URL
 }
 
 /** The skin in effect: the URL override, else the stored choice, else
@@ -76,8 +76,16 @@ export const isEnhancedPlus = (search) => isEnhanced(search);
 export const hotbarInForce = () => isEnhanced() && (hotbarForced() || HOTBAR_STYLES.includes(getPref('quickbarStyle')));
 /** PVP-SET: the hotbar held up whatever the style while `fn()` says so - the PvP set has no other place. */
 let _hotbarForced = () => false;
-export function forceHotbar(fn) { _hotbarForced = typeof fn === 'function' ? fn : () => false; }
-export const hotbarForced = () => { try { return !!_hotbarForced(); } catch { return false; } };
+export function forceHotbar(fn) {
+  _hotbarForced = typeof fn === 'function' ? fn : () => false;
+}
+export const hotbarForced = () => {
+  try {
+    return !!_hotbarForced();
+  } catch {
+    return false;
+  }
+};
 /** DIAMOND-HB (2026-10-18): the styles that use the hotbar - 'hotbar' (ten slots in a row) and 'diamond' (slots 1-4
  *  drawn as a diamond, ui/enhanced/enhancedHotbar.js). 'quickbar' is the old QS diamond, now only used by Off. */
 export const HOTBAR_STYLES = Object.freeze(['hotbar', 'diamond']);

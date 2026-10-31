@@ -14094,7 +14094,7 @@ entirety of tamriel"): the staff reach and see past the Bay. `/tp <x> <y>` takes
 sign, as `/pos` prints it (`worldPixelOk`). `/tp 2700 187` had answered "A map pixel is x 0-999, y 0-499.", and
 `/tp 1688 -488` had searched for a place of that name. `/tp <place>` searches the world's registry's places past the
 Bay after the Bay's own, in the order it always read them, so `/tp Solitude` finds the city. The flat map (Shift+N)
-finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMapHost.js:"const COARSE = 8;"`), and
+finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMapHost.js:"const COARSE = 8"`), and
 draws it as it draws a Bay region. It had scanned the Bay's 1000 x 500 and drawn nothing.
 
 The grammar and the search are `scenes/staffTp.js`, read ahead of `net/staffCommands.js`. That file is in the relay's

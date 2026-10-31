@@ -19,8 +19,8 @@
 import { HULL } from './navalShips.js';
 import { calculateTripCost } from '../travel/travel.js';
 import { sceneCompassWord } from '../compassWords.js';
-import { VOYAGE_LANDFALL_PX } from '../travel/travelRoute.js';   // AUDIT PASSAGE A1: a port within its landfall's reach is no voyage
-import { t } from '../textManager.js';   // L10N4: every word of the passage in the player's language
+import { VOYAGE_LANDFALL_PX } from '../travel/travelRoute.js'; // AUDIT PASSAGE A1: a port within its landfall's reach is no voyage
+import { t } from '../textManager.js'; // L10N4: every word of the passage in the player's language
 
 /** The hulls a passenger is carried in: a sail to cross a sea (OWS2's law, world.js tvSeaCrosses) - never the Rowboat,
  *  whose lone rower tires a kilometre out; never the Large Galley, which never moors (shipLife.js BERTH_HULLS). */
@@ -45,17 +45,20 @@ export const PASSAGE_SLOW = 3;
 
 /** A voyage's length in map pixels: the longest axis, as Daggerfall's own travel walk counts its steps
  *  (travel.js calculateTravelTime's walkTravelPath). */
-export const passagePixels = (from, to) => Math.max(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));
+export const passagePixels = (from, to) =>
+  Math.max(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));
 
 /** THE FARE: Daggerfall's ship (CalculateTripCost's travelShip arm, travel.js calculateTripCost: 25 gold for every 24
  *  ocean pixels and 25 more), with every pixel of the voyage counted as sea - she sails the whole way, where the map's
  *  passage pays for the ocean its straight line crosses. No inn is paid: a passenger sleeps aboard. */
-export const passageFare = (from, to) => calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true }).totalCost;
+export const passageFare = (from, to) =>
+  calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true }).totalCost;
 
 /** Which way a port lies, in the eight winds (systems/compassWords.js, the one home of the eight ways): map pixels, y
  *  running south - turned into the scene's frame (+z north). '' for the same pixel. */
 export function passageWind(from, to) {
-  const dx = (to.x | 0) - (from.x | 0), dn = (from.y | 0) - (to.y | 0);
+  const dx = (to.x | 0) - (from.x | 0),
+    dn = (from.y | 0) - (to.y | 0);
   return dx || dn ? sceneCompassWord(dx, dn) : '';
 }
 
@@ -73,7 +76,7 @@ export function passageDestinations(ports, here, { hereKey = null, known = () =>
   for (const port of ports ?? []) {
     if (!port?.name || port.key === hereKey || !known(port)) continue;
     const to = { x: port.px, y: port.py };
-    if (passagePixels(here, to) <= VOYAGE_LANDFALL_PX) continue;   // a port she would put me ashore at from here is walked to
+    if (passagePixels(here, to) <= VOYAGE_LANDFALL_PX) continue; // a port she would put me ashore at from here is walked to
     out.push({ port, fare: passageFare(here, to), bearing: passageWind(here, to), pixels: passagePixels(here, to) });
   }
   return out.sort((a, b) => a.pixels - b.pixels || a.port.name.localeCompare(b.port.name));
@@ -112,10 +115,14 @@ export function charterRecord(x) {
 const ship = (name) => name ?? t('passage.theShip', 'The ship');
 /** The eight winds in the player's language (systems/compassWords.js's English words are the keys' own). */
 const WIND_TEXT = Object.freeze({
-  north: () => t('passage.wind.north', 'north'), 'north-east': () => t('passage.wind.northEast', 'north-east'),
-  east: () => t('passage.wind.east', 'east'), 'south-east': () => t('passage.wind.southEast', 'south-east'),
-  south: () => t('passage.wind.south', 'south'), 'south-west': () => t('passage.wind.southWest', 'south-west'),
-  west: () => t('passage.wind.west', 'west'), 'north-west': () => t('passage.wind.northWest', 'north-west'),
+  north: () => t('passage.wind.north', 'north'),
+  'north-east': () => t('passage.wind.northEast', 'north-east'),
+  east: () => t('passage.wind.east', 'east'),
+  'south-east': () => t('passage.wind.southEast', 'south-east'),
+  south: () => t('passage.wind.south', 'south'),
+  'south-west': () => t('passage.wind.southWest', 'south-west'),
+  west: () => t('passage.wind.west', 'west'),
+  'north-west': () => t('passage.wind.northWest', 'north-west'),
 });
 const windText = (w) => WIND_TEXT[w]?.() ?? w;
 /** The words - every one through the text core (L10N4). */
@@ -126,12 +133,18 @@ export const PASSAGE_TEXT = Object.freeze({
   // START2: an opened commission's writ of passage pays it (scenes/startsHost.js) - AUDIT STARTS U8: its row inside the
   // picker's art (ui/listPicker.js: the list at x 26 of its 200, so 174 of FONT0003) - "Daggerfall - north-west, by
   // writ" is 147; "..., the Crown's writ" had run to 189, under the scroll bar and off the art
-  row: (d) => (d.writ
-    ? (d.bearing ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })
-      : t('passage.rowWritHere', '{port} - by writ', { port: d.port.name }))
-    : d.bearing
-      ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
-      : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),
+  row: (d) =>
+    d.writ
+      ? d.bearing
+        ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })
+        : t('passage.rowWritHere', '{port} - by writ', { port: d.port.name })
+      : d.bearing
+        ? t('passage.row', '{port} - {wind}, {fare} gold', {
+            port: d.port.name,
+            wind: windText(d.bearing),
+            fare: d.fare,
+          })
+        : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare }),
   /** The question, before a coin is paid. */
   ask: (name, dest, fare, gold) => [
     t('passage.ask', 'Book passage on {ship} to {port}?', { ship: ship(name), port: dest }),
@@ -144,26 +157,68 @@ export const PASSAGE_TEXT = Object.freeze({
     t('passage.askWrit', "The Emperor's writ of passage pays your fare."),
     t('passage.askRule', 'Her master sails you there. Step off her and the passage ends.'),
   ],
-  bookedWrit: (name, dest) => t('passage.bookedWrit', "Her master reads the Emperor's writ and bows. {ship} sails for {port}.", { ship: ship(name), port: dest }),
-  booked: (name, captain, fare, dest) => (captain
-    ? t('passage.bookedCaptain', 'Captain {captain} takes your {fare} gold. {ship} sails for {port}.', { captain, fare, ship: ship(name), port: dest })
-    : t('passage.booked', 'Her master takes your {fare} gold. {ship} sails for {port}.', { fare, ship: ship(name), port: dest })),
+  bookedWrit: (name, dest) =>
+    t('passage.bookedWrit', "Her master reads the Emperor's writ and bows. {ship} sails for {port}.", {
+      ship: ship(name),
+      port: dest,
+    }),
+  booked: (name, captain, fare, dest) =>
+    captain
+      ? t('passage.bookedCaptain', 'Captain {captain} takes your {fare} gold. {ship} sails for {port}.', {
+          captain,
+          fare,
+          ship: ship(name),
+          port: dest,
+        })
+      : t('passage.booked', 'Her master takes your {fare} gold. {ship} sails for {port}.', {
+          fare,
+          ship: ship(name),
+          port: dest,
+        }),
   poor: (fare) => t('passage.poor', 'You cannot afford the fare of {fare} gold.', { fare }),
-  get none() { return t('passage.none', 'Her master knows of no port you have heard of to sail for.'); },
-  get noSail() { return t('passage.noSail', 'No ship can carry you while Come Sail Away is off.'); },
-  get booking() { return t('passage.booking', 'You have a passage booked already.'); },
-  get ether() { return t('passage.ether', 'Her master sails these isles alone - the Bay\'s ports are beyond the Veil.'); },
-  get gone() { return t('passage.gone', 'She has cast off.'); },
-  get failed() { return t('passage.failed', 'Her master cannot make ready to sail.'); },
-  get noWay() { return t('passage.noWay', 'Her master knows no way there by sea from here.'); },
-  helm: (dest) => t('passage.helm', 'Go to her helm to sail on for {port} - her master steers from there.', { port: dest }),
-  stuck: (dest) => t('passage.stuck', 'Her master can find no way on toward {port} from here - he will try again. Step ashore to end the passage.', { port: dest }),
+  get none() {
+    return t('passage.none', 'Her master knows of no port you have heard of to sail for.');
+  },
+  get noSail() {
+    return t('passage.noSail', 'No ship can carry you while Come Sail Away is off.');
+  },
+  get booking() {
+    return t('passage.booking', 'You have a passage booked already.');
+  },
+  get ether() {
+    return t('passage.ether', "Her master sails these isles alone - the Bay's ports are beyond the Veil.");
+  },
+  get gone() {
+    return t('passage.gone', 'She has cast off.');
+  },
+  get failed() {
+    return t('passage.failed', 'Her master cannot make ready to sail.');
+  },
+  get noWay() {
+    return t('passage.noWay', 'Her master knows no way there by sea from here.');
+  },
+  helm: (dest) =>
+    t('passage.helm', 'Go to her helm to sail on for {port} - her master steers from there.', { port: dest }),
+  stuck: (dest) =>
+    t(
+      'passage.stuck',
+      'Her master can find no way on toward {port} from here - he will try again. Step ashore to end the passage.',
+      { port: dest },
+    ),
   holds: (dest) => t('passage.holds', 'Her master holds his course for {port}.', { port: dest }),
-  get goods() { return t('passage.goods', 'What you put in her hold is carried off her.'); },
+  get goods() {
+    return t('passage.goods', 'What you put in her hold is carried off her.');
+  },
   /** PASSAGE-QUAY: her master brings her in to her port's quay, she is made fast there, or her way in is blocked. */
-  comesIn: (name, dest) => t('passage.comesIn', '{ship} comes in to {port}\'s quay.', { ship: ship(name), port: dest }),
-  madeFast: (name, dest) => t('passage.madeFast', '{ship} is made fast at {port}\'s quay. Take the gangway ashore.', { ship: ship(name), port: dest }),
-  get quayFoul() { return t('passage.quayFoul', 'Her way in to the quay is blocked. Her master puts you ashore instead.'); },
+  comesIn: (name, dest) => t('passage.comesIn', "{ship} comes in to {port}'s quay.", { ship: ship(name), port: dest }),
+  madeFast: (name, dest) =>
+    t('passage.madeFast', "{ship} is made fast at {port}'s quay. Take the gangway ashore.", {
+      ship: ship(name),
+      port: dest,
+    }),
+  get quayFoul() {
+    return t('passage.quayFoul', 'Her way in to the quay is blocked. Her master puts you ashore instead.');
+  },
   ended: (name) => t('passage.ended', '{ship} stands out to sea.', { ship: ship(name) }),
 });
 /** The look's word on her (navalHost.js passageHint). */

@@ -13,7 +13,7 @@
 // hunt was removed (2026-10-04); its Yes/No and result pages went with it.
 import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE3: the page's own parchment, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE3: the page's own parchment, as the enhanced panel
 
 /** The page's dots: this many at the full wait. */
 export const BUSY_DOTS = 12;
@@ -28,15 +28,25 @@ export class WaitWindow {
     this._onClosed = onClosed;
   }
 
-  get progress() { return Math.min(1, this._elapsed / this.seconds); }
+  get progress() {
+    return Math.min(1, this._elapsed / this.seconds);
+  }
   /** The page's real seconds still to run. */
-  get remaining() { return Math.max(0, this.seconds - this._elapsed); }
+  get remaining() {
+    return Math.max(0, this.seconds - this._elapsed);
+  }
   /** A wait joins the one standing - its seconds added to this page's. */
-  extend(seconds) { if (!this.done && seconds > 0) this.seconds += seconds; }
+  extend(seconds) {
+    if (!this.done && seconds > 0) this.seconds += seconds;
+  }
   /** The dots: the first at once, the last before the page ends. */
-  get dots() { return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1)); }
+  get dots() {
+    return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1));
+  }
   /** The slot taken from under the window (a death screen, a transition) ends it early. */
-  dispose() { this._end(false); }
+  dispose() {
+    this._end(false);
+  }
 
   _end(finished) {
     if (this.done) return;
@@ -52,7 +62,10 @@ export class WaitWindow {
   /** The frame's real seconds; the end at the wait's end, or early when `interruptWhen` answers. */
   tick(dt) {
     if (this.done) return;
-    if (this._interruptWhen?.()) { this._end(false); return; }   // a foe near ends it, the rest forgiven
+    if (this._interruptWhen?.()) {
+      this._end(false);
+      return;
+    } // a foe near ends it, the rest forgiven
     this._elapsed += Math.max(0, dt || 0);
     if (this._elapsed >= this.seconds) this._end(true);
   }
@@ -60,7 +73,9 @@ export class WaitWindow {
   /** No key is taken: the wait is the cost. */
   input() {}
   /** No click is taken either - swallowed, so it reaches nothing under the page. */
-  click() { return true; }
+  click() {
+    return true;
+  }
   /** AUDIT HUNT-OUT C1: the pointer's move and its release are the page's too, taken and ignored - the hunt's page had
    *  them, and townTalk answers "not mine" for a window without them, so a look still locked in the frames after the
    *  page opened (the relock grace) was banked under it and turned the camera when the wait ended. */
@@ -69,8 +84,14 @@ export class WaitWindow {
 
   draw(renderer, canvas, font) {
     const m = nativeMetrics(canvas);
-    const rows = [{ text: this.busy, center: true }, { text: this.dots, center: true }];
-    const sizing = [{ text: this.busy, center: true }, { text: '.'.repeat(BUSY_DOTS), center: true }];
+    const rows = [
+      { text: this.busy, center: true },
+      { text: this.dots, center: true },
+    ];
+    const sizing = [
+      { text: this.busy, center: true },
+      { text: '.'.repeat(BUSY_DOTS), center: true },
+    ];
     // THE PAGE IS THE PANEL'S. It is drawn with `drawMessageBox` and no
     // buttons, in the parchment's shape - but it is the PORT'S page, not
     // a DaggerfallUI.MessageBox, and it takes no click and no key. So it
@@ -80,7 +101,10 @@ export class WaitWindow {
     // A per-frame door and not noticeHold: this window IS drawn every
     // frame, so the watchdog is the honest guard - a host that drops the
     // overlay without closing it stops drawing, and the panel goes.
-    if (noticeFrame(this, rows, { hint: false })) { this._box = null; return; }
+    if (noticeFrame(this, rows, { hint: false })) {
+      this._box = null;
+      return;
+    }
     this._box = layoutMessageBox(font, rows, [], { sizingRows: sizing });
     drawMessageBox(renderer, m, font, this._box);
   }

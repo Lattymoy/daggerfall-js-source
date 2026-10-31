@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-SCALE-II-A2-cloud-after",
     "file": "src/systems/cloudSaves.js",
-    "old": "  }\n  if (writes) forgetD1Bookmark();\n  const type",
-    "new": "  }\n  const type",
+    "old": "  if (writes) forgetD1Bookmark();\n  const type = res.headers?.get?.('content-type') ?? '';",
+    "new": "  const type = res.headers?.get?.('content-type') ?? '';",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -153,7 +153,7 @@
     "name": "AUDIT-SCALE-II-A3-copy-read",
     "file": "server-account/src/metrics.js",
     "old": "  const res = await serve(request, counted, said, exec);",
-    "new": "  await request.clone().text().catch(() => '');\n  const res = await serve(request, counted, said, exec);",
+    "new": "  await request\n    .clone()\n    .text()\n    .catch(() => '');\n  const res = await serve(request, counted, said, exec);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-pick-on-session",
     "file": "server-account/src/motherlodes.js",
-    "old": "  const db = primary;\n",
-    "new": "  const db = read;\n",
+    "old": "  const db = primary;",
+    "new": "  const db = read;",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-answer-off-session",
     "file": "server-account/src/motherlodes.js",
-    "old": "  return keptOf(db);\n}",
-    "new": "  return keptOf(read);\n}",
+    "old": "  return keptOf(db);",
+    "new": "  return keptOf(read);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-primary-mark-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (db !== read && await marked(db)) return keptOf(db);\n",
-    "new": "",
+    "old": "  if (db !== read && (await marked(db))) return keptOf(db);\n  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
+    "new": "  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -313,7 +313,7 @@
     "name": "AUDIT-SCALE-II-L3-setup-past-line",
     "file": "tools/loadHarness.mjs",
     "old": "  const made = await quietly(() => guestThroughLine(bot.fetch));",
-    "new": "  const made = await quietly(() => bot.fetch(`${LOAD_SERVICE}/v1/auth/guest`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label: 'load', ...ACCEPTED }) }).then((r) => r.json()));",
+    "new": "  const made = await quietly(() =>\n    bot\n      .fetch(`${LOAD_SERVICE}/v1/auth/guest`, {\n        method: 'POST',\n        headers: { 'content-type': 'application/json' },\n        body: JSON.stringify({ label: 'load', ...ACCEPTED }),\n      })\n      .then((r) => r.json()),\n  );",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-wave-a-session",
     "file": "tools/loadHarness.mjs",
-    "old": "  const page = { wave: reconnectWave(), wire2: o.wire !== 1 };",
-    "new": "  const page = { wire2: o.wire !== 1 };",
+    "old": "  const page = { wave: reconnectWave(), wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "new": "  const page = { wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-first-wire",
     "file": "tools/loadHarness.mjs",
-    "old": "wire2: o.wire !== 1 }",
-    "new": "wire2: false }",
+    "old": "  const page = { wave: reconnectWave(), wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "new": "  const page = { wave: reconnectWave(), wire2: false }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-entries-uncounted",
     "file": "tools/loadHarness.mjs",
-    "old": "    for (const e of Array.isArray(m.l) ? m.l : []) if (Array.isArray(e)) tallySaid(tally, { t: 'pose', id: e[0], p: e[1] }, now, ws, room);\n",
-    "new": "",
+    "old": "    for (const e of Array.isArray(m.l) ? m.l : [])\n      if (Array.isArray(e)) tallySaid(tally, { t: 'pose', id: e[0], p: e[1] }, now, ws, room);\n    return;",
+    "new": "    return;",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-batch-frames-uncounted",
     "file": "tools/loadHarness.mjs",
-    "old": "    for (const x of Array.isArray(m.f) ? m.f : []) if (x?.t !== 'fb') tallySaid(tally, x, now, ws, room);\n",
-    "new": "",
+    "old": "    for (const x of Array.isArray(m.f) ? m.f : []) if (x?.t !== 'fb') tallySaid(tally, x, now, ws, room);\n    return;",
+    "new": "    return;",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-sum-dropped",
     "file": "tools/loadHarness.mjs",
-    "old": "'inByType', 'saidByType', 'outByType'",
-    "new": "'inByType', 'outByType'",
+    "old": "    for (const k of ['inByType', 'saidByType', 'outByType', 'closes', 'refusals'])",
+    "new": "    for (const k of ['inByType', 'outByType', 'closes', 'refusals'])",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-SCALE-II-L5-knob-unchecked",
     "file": "tools/loadHarness.mjs",
-    "old": "  if (out.wire !== 1 && out.wire !== 2) throw new Error(`--wire is 1 or 2, not ${out.wire}`);   // AUDIT SCALE II L5\n",
-    "new": "",
+    "old": "  if (out.wire !== 1 && out.wire !== 2) throw new Error(`--wire is 1 or 2, not ${out.wire}`); // AUDIT SCALE II L5\n  for (const k of ['ramp', 'chat-every', 'save-kb']) if (!(out[k] >= 0)) throw new Error(`--${k} cannot be negative`);",
+    "new": "  for (const k of ['ramp', 'chat-every', 'save-kb']) if (!(out[k] >= 0)) throw new Error(`--${k} cannot be negative`);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-SCALE-II-N1-docblock-gone",
     "file": "server-account/src/service.js",
-    "old": "/** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are\n *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an\n *  isolate keeps beside its database stays one store for every request. A binding with no sessions (an older runtime, a\n *  harness's fake) is answered as it stands: the primary, as before. A write in a session goes to the primary - a\n *  replica takes none - and the session's later reads see it. Until the database's read replication is turned on\n *  (account-deploy.yml) every statement of a session is the primary's anyway. */\n",
-    "new": "",
+    "old": "/** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are\n *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an\n *  isolate keeps beside its database stays one store for every request. A binding with no sessions (an older runtime, a\n *  harness's fake) is answered as it stands: the primary, as before. A write in a session goes to the primary - a\n *  replica takes none - and the session's later reads see it. Until the database's read replication is turned on\n *  (account-deploy.yml) every statement of a session is the primary's anyway. */\nexport function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
+    "new": "export function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

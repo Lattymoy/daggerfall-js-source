@@ -20,16 +20,26 @@ const BAY_ROW = 1000;
  * @returns {{ w: number, px: number, py: number, sx: number, sz: number, near: string } | null | false}
  */
 export function dragonSiteOf(o, { bayScan, theatres }) {
-  const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX, y0 = cy * DRAGON_CELL_PX, side = DRAGON_CELL_PX;
-  const inCell = (/** @type {number} */ x, /** @type {number} */ y) => x >= x0 && y >= y0 && x < x0 + side && y < y0 + side;
+  const { cx, cy } = dragonCellOf(o),
+    x0 = cx * DRAGON_CELL_PX,
+    y0 = cy * DRAGON_CELL_PX,
+    side = DRAGON_CELL_PX;
+  const inCell = (/** @type {number} */ x, /** @type {number} */ y) =>
+    x >= x0 && y >= y0 && x < x0 + side && y < y0 + side;
   /** @type {Array<[number, string]>} */ const ground = [];
-  const onBay = [[x0, y0], [x0 + side - 1, y0], [x0, y0 + side - 1], [x0 + side - 1, y0 + side - 1]].map(([x, y]) => inBay(x, y));   // a cell is far smaller than the Bay: its corners say where it lies
+  const onBay = [
+    [x0, y0],
+    [x0 + side - 1, y0],
+    [x0, y0 + side - 1],
+    [x0 + side - 1, y0 + side - 1],
+  ].map(([x, y]) => inBay(x, y)); // a cell is far smaller than the Bay: its corners say where it lies
   if (onBay.some(Boolean)) {
     const scan = bayScan();
     if (!scan) return null;
     for (const list of scan.byRegion.values()) {
       for (const id of list) {
-        const x = id % BAY_ROW, y = Math.floor(id / BAY_ROW);   // BAY-OWN: the Bay's scan's own ids
+        const x = id % BAY_ROW,
+          y = Math.floor(id / BAY_ROW); // BAY-OWN: the Bay's scan's own ids
         if (inCell(x, y)) ground.push([worldPixelKey(x, y), scan.towns[scan.townAt[id]]?.name ?? '']);
       }
     }
@@ -50,18 +60,25 @@ export function dragonSiteOf(o, { bayScan, theatres }) {
  *  D8: the land past the Bay may stand later), are asked again after `retryMs`. */
 export function createDragonSites(scans, { now = () => Date.now(), retryMs = 5000 } = {}) {
   const found = new Map();
-  let triedAt = -Infinity, tried = null;
+  let triedAt = -Infinity,
+    tried = null;
   return {
     /** @param {{w: number, s: number}} o */
     of(o) {
       const key = `${o.w}:${o.s}`;
       if (found.has(key)) return found.get(key);
       if (tried === key && now() - triedAt < retryMs) return null;
-      tried = key; triedAt = now();
+      tried = key;
+      triedAt = now();
       let s = null;
-      try { s = dragonSiteOf(o, scans); } catch (e) { console.warn('[dragon] no site', /** @type {any} */ (e)?.message ?? e); }
+      try {
+        s = dragonSiteOf(o, scans);
+      } catch (e) {
+        console.warn('[dragon] no site', /** @type {any} */ (e)?.message ?? e);
+      }
       if (!s) return null;
-      found.clear(); found.set(key, s);
+      found.clear();
+      found.set(key, s);
       return s;
     },
   };

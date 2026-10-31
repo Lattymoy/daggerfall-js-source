@@ -8,11 +8,18 @@
 
 /** The mod's two helm keys this slice reads, as the port's registry actions (KB1: one key, one action). */
 export const BOAT_ACTIONS = Object.freeze({
-  disembark: 'BoatDisembark', toggleLight: 'BoatToggleLight',
+  disembark: 'BoatDisembark',
+  toggleLight: 'BoatToggleLight',
   // CSA-E: the sails' and the trim's (Controls.ToggleSail, TrimRight, TrimLeft, TrimModifier)
-  toggleSail: 'BoatToggleSail', trimRight: 'BoatTrimRight', trimLeft: 'BoatTrimLeft', trimModifier: 'BoatTrimModifier',
+  toggleSail: 'BoatToggleSail',
+  trimRight: 'BoatTrimRight',
+  trimLeft: 'BoatTrimLeft',
+  trimModifier: 'BoatTrimModifier',
   // CSA-G: the time scale's three (Controls.IncreaseTimeScale, DecreaseTimeScale, ResetTimeScale)
-  timeScaleUp: 'BoatTimeScaleUp', timeScaleDown: 'BoatTimeScaleDown', timeScaleReset: 'BoatTimeScaleReset',
+  timeScaleUp: 'BoatTimeScaleUp',
+  timeScaleDown: 'BoatTimeScaleDown',
+  timeScaleReset: 'BoatTimeScaleReset',
   // HELM-KEYS (the port's, DECLARED): the arrows' more and less sail (MoreSail, LessSail)
-  sailUp: 'BoatSailUp', sailDown: 'BoatSailDown',
+  sailUp: 'BoatSailUp',
+  sailDown: 'BoatSailDown',
 });

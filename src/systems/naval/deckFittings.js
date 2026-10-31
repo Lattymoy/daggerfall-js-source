@@ -23,7 +23,10 @@
  *  gives them (systems/worldTooltips.js CONTAINER_NAME_GROUPS: its Crates and its Chests - the decorator's own names for
  *  them, systems/decor/decorCatalogue.js). Their order is the word's (`fittingsCode`): new ones go at the end. */
 export const DECK_FITTINGS = Object.freeze([
-  ...[41815, 41816, 41817, 41818, 41819, 41820, 41821, 41822, 41823, 41824, 41825, 41826, 41827, 41828, 41829, 41830, 41831, 41832, 41833, 41834].map((m) => Object.freeze([m, 'crate'])),
+  ...[
+    41815, 41816, 41817, 41818, 41819, 41820, 41821, 41822, 41823, 41824, 41825, 41826, 41827, 41828, 41829, 41830,
+    41831, 41832, 41833, 41834,
+  ].map((m) => Object.freeze([m, 'crate'])),
   ...[41811, 41812, 41813].map((m) => Object.freeze([m, 'chest'])),
 ]);
 const MODELS = new Map(DECK_FITTINGS.map(([m, kind], i) => [m, { i, kind }]));
@@ -56,7 +59,8 @@ export function fittingsOf(raw) {
   for (const f of Array.isArray(raw) ? raw : []) {
     if (out.length >= DECK_FITTINGS_MAX) break;
     if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;
-    const x = dm(f.x), z = dm(f.z);
+    const x = dm(f.x),
+      z = dm(f.z);
     if (Math.hypot(x, z) > FITTING_REACH) continue;
     if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;
     const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;
@@ -72,9 +76,11 @@ export function fittingsCode(list) {
 }
 /** The word's numbers as her fittings - [] for none, or numbers that are not four a fitting. */
 export function fittingsOfCode(code) {
-  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];
+  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))
+    return [];
   const raw = [];
-  for (let i = 0; i < code.length; i += 4) raw.push({ m: DECK_FITTINGS[code[i]]?.[0], x: code[i + 1] / 10, z: code[i + 2] / 10, yaw: code[i + 3] });
+  for (let i = 0; i < code.length; i += 4)
+    raw.push({ m: DECK_FITTINGS[code[i]]?.[0], x: code[i + 1] / 10, z: code[i + 2] / 10, yaw: code[i + 3] });
   return fittingsOf(raw);
 }
 /** A list's key - two lists alike are one key (the host's "has it changed"). */

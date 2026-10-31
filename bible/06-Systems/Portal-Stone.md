@@ -65,11 +65,11 @@ The players, +7: *"I hate that I have to buy portal shards one by one; it would 
 them."* The owner: *"No band aids."* So the count is the sale's own law, not a loop of single sales, and the question
 is the one DFU already asks for a count.
 
-- **ONE SALE LAW** (`portalStone.js:"export function buyPortalStones(items, n) {"`): `n` stones for exactly `n` times
+- **ONE SALE LAW** (`portalStone.js:"export function buyPortalStones"`): `n` stones for exactly `n` times
   `PORTAL_STONE_SHARDS`, all of it or none of it - `n` a whole number from 1 to the most (`'count'` else), the shards
   (`'shards'`: 5n-1 refuses n, nothing taken), the stack (`'stack'`). `buyPortalStone` is its count of one
-  (`portalStone.js:"export const buyPortalStone = (items) => buyPortalStones(items, 1);"`), never a second law.
-- **THE MOST** (`portalStone.js:"export function portalStoneMax(items) {"`): the floor of the spendable shards over
+  (`portalStone.js:"export const buyPortalStone"`), never a second law.
+- **THE MOST** (`portalStone.js:"export function portalStoneMax"`): the floor of the spendable shards over
   the price, and no more than the room left on the stack the stones land on (`portalStoneRoom`): `LOOT_STACK_MAX`
   (`loot.js`, 65,535) less that stack. `addItem` merges with no cap, and `itemLaw.js` flags a stack past
   `LOOT_STACK_MAX` (`'stack'`) - a bulk sale over it would have held an honest player's trading. The stack is read
@@ -80,7 +80,7 @@ is the one DFU already asks for a count.
   `askPortalStone` and `buyPortalStoneNow` left `createWorldModes`, its ceiling down by the 17 logical lines that left).
   The chain is the tavern's room rental's - DaggerfallTavernWindow's field then Yes/No, run by U24's
   `ServiceFlowWindow` (`guildServiceWindows.js:"export class ServiceFlowWindow {"`), as
-  `tavernWindow.js:"export const DAYS_FIELD = Object.freeze({ numeric: true, maxCharacters: 3, initial: '1' });"`
+  `tavernWindow.js:"export const DAYS_FIELD"`
   rents a room. The field is the split popup's (`itemTransfer.js:"export const HOW_MANY_ITEMS = (max) =>"`, its parse
   `parseSplitAmount`: "0", past the most and "3x" end the chain with nothing taken, as SplitStackPopup_OnGotUserInput
   moves nothing), **seeded with 1**. Escape on the field, No or Escape on the offer, take nothing. Both skins take the

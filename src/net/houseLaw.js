@@ -14,7 +14,12 @@ export const HOUSE_GEN_MAX = 20;
 export const BLOODLINE_MARK = '☠';
 
 /** A name a house or a member may carry on the wire: letters (any script), apostrophes, hyphens and single spaces. */
-const nameOk = (s, max) => typeof s === 'string' && s.length > 0 && s.length <= max && /^[\p{L}][\p{L}'\- ]*$/u.test(s) && !/ {2}|[ '-]$/.test(s);
+const nameOk = (s, max) =>
+  typeof s === 'string' &&
+  s.length > 0 &&
+  s.length <= max &&
+  /^[\p{L}][\p{L}'\- ]*$/u.test(s) &&
+  !/ {2}|[ '-]$/.test(s);
 export const houseNameOk = (s) => nameOk(s, HOUSE_NAME_MAX);
 export const houseGivenOk = (s) => nameOk(s, HOUSE_GIVEN_MAX);
 
@@ -32,17 +37,32 @@ export function houseClaimOk(c) {
  *  fit the law). */
 export function readHouse(row) {
   if (!row || row.hn === undefined || row.hn === null) return null;
-  const h = { hn: row.hn, ...(row.hc !== undefined ? { hc: row.hc } : {}), ...(row.hb !== undefined ? { hb: row.hb } : {}), ...(row.hg !== undefined ? { hg: row.hg } : {}) };
+  const h = {
+    hn: row.hn,
+    ...(row.hc !== undefined ? { hc: row.hc } : {}),
+    ...(row.hb !== undefined ? { hb: row.hb } : {}),
+    ...(row.hg !== undefined ? { hg: row.hg } : {}),
+  };
   return houseClaimOk(h) ? h : null;
 }
 
 /** @type {ReadonlyArray<[number, string]>} */
-const ROMAN = Object.freeze([[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]);
+const ROMAN = Object.freeze([
+  [10, 'X'],
+  [9, 'IX'],
+  [5, 'V'],
+  [4, 'IV'],
+  [1, 'I'],
+]);
 /** The generation's numeral, 1-20 ("II", "XIV"). */
 export function romanOf(n) {
   let left = Math.max(1, Math.min(HOUSE_GEN_MAX, Math.floor(n)));
   let out = '';
-  for (const [v, s] of ROMAN) while (left >= v) { out += s; left -= v; }
+  for (const [v, s] of ROMAN)
+    while (left >= v) {
+      out += s;
+      left -= v;
+    }
   return out;
 }
 
@@ -67,7 +87,14 @@ export function houseOfRecord(record, personId) {
   const hn = String(record.surname ?? '').trim();
   if (!houseNameOk(hn)) return null;
   const given = String(p.given ?? '').trim();
-  const before = people.filter((x) => x && x.id < p.id && (x.kind ?? 'member') === 'member' && String(x.given ?? '').trim() === given).length;
-  const h = { hn, ...(houseGivenOk(given) ? { hc: given } : {}), ...(record.model === 'bloodline' ? { hb: 1 } : {}), ...(before > 0 && houseGivenOk(given) ? { hg: Math.min(HOUSE_GEN_MAX, before + 1) } : {}) };
+  const before = people.filter(
+    (x) => x && x.id < p.id && (x.kind ?? 'member') === 'member' && String(x.given ?? '').trim() === given,
+  ).length;
+  const h = {
+    hn,
+    ...(houseGivenOk(given) ? { hc: given } : {}),
+    ...(record.model === 'bloodline' ? { hb: 1 } : {}),
+    ...(before > 0 && houseGivenOk(given) ? { hg: Math.min(HOUSE_GEN_MAX, before + 1) } : {}),
+  };
   return houseClaimOk(h) ? h : null;
 }

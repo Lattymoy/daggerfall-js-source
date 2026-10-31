@@ -2,8 +2,8 @@
   {
     "name": "WB2-a-spike-wound-inward",
     "file": "src/world/gate/gateModel.js",
-    "old": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] >= 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
-    "new": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] < 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
+    "old": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] >= 0)",
+    "new": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] < 0)",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB2-the-fire-over-the-stone",
     "file": "src/world/gate/gateModel.js",
-    "old": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] - margin) : 0;",
-    "new": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] + margin) : 0;",
+    "old": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] - margin) : 0;",
+    "new": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] + margin) : 0;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB2-the-veins-never-burn",
     "file": "src/world/gate/gateArt.js",
-    "old": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, VEIN_HEART); }",
-    "new": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, [0, 0, 0]); }",
+    "old": "        put(emission, x, y, VEIN_HEART);",
+    "new": "        put(emission, x, y, [0, 0, 0]);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB2-the-fire-writes-depth",
     "file": "src/render/gate/gatePass.js",
-    "old": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.bindVertexArray(this.column.vao);",
-    "new": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(true);\n    gl.bindVertexArray(this.column.vao);",
+    "old": "    gl.bindVertexArray(this.column.vao);",
+    "new": "    gl.depthMask(true);\n    gl.bindVertexArray(this.column.vao);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB2-a-faded-gate-drawn",
     "file": "src/render/gate/gatePass.js",
-    "old": "&& Number.isFinite(g.yaw) && g.fade > 0.001).slice(0, GATE_PASS_MAX);",
-    "new": "&& Number.isFinite(g.yaw) && g.fade >= 0).slice(0, GATE_PASS_MAX);",
+    "old": "          g.fade > 0.001,",
+    "new": "          g.fade >= 0,",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB2-the-gates-uncapped",
     "file": "src/render/gate/gatePass.js",
-    "old": "&& Number.isFinite(g.yaw) && g.fade > 0.001).slice(0, GATE_PASS_MAX);",
-    "new": "&& Number.isFinite(g.yaw) && g.fade > 0.001);",
+    "old": "    const list = (Array.isArray(gates) ? gates : [])\n      .filter(\n        (g) =>\n          g &&\n          Array.isArray(g.origin) &&\n          g.origin.length === 3 &&\n          g.origin.every(Number.isFinite) &&\n          Number.isFinite(g.yaw) &&\n          g.fade > 0.001,\n      )\n      .slice(0, GATE_PASS_MAX);",
+    "new": "    const list = (Array.isArray(gates) ? gates : []).filter(\n      (g) =>\n        g &&\n        Array.isArray(g.origin) &&\n        g.origin.length === 3 &&\n        g.origin.every(Number.isFinite) &&\n        Number.isFinite(g.yaw) &&\n        g.fade > 0.001,\n    );",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB2-the-arch-never-handed",
     "file": "src/render/gate/gatePass.js",
-    "old": "    gl.uniform1fv(this.mu.uProfile, this.profile);\n",
-    "new": "",
+    "old": "    gl.uniform1fv(this.mu.uProfile, this.profile);\n    this._fog(this.mu, fog, eye);",
+    "new": "    this._fog(this.mu, fog, eye);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WB2-the-banner-rewritten-every-frame",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "  if (want === shown) return;\n",
-    "new": "",
+    "old": "  if (want === shown) return;\n  shown = want;",
+    "new": "  shown = want;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]

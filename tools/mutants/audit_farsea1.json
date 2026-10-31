@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-FAR-SEA1-C12-the-water-keeps-its-own-fresnel",
     "file": "src/render/waterSurface.js",
-    "old": "  float F = seaFresnel(NdV, uF0);",
-    "new": "  float F = uF0 + (0.85 - uF0) * pow(1.0 - NdV, 5.0);",
+    "old": "  float F = seaFresnel(NdV, uF0);   // AUDIT FAR-SEA1 C12: the open sea's light, one text with the far ring's sea (render/horizonHaze.js)",
+    "new": "  float F = uF0 + (0.85 - uF0) * pow(1.0 - NdV, 5.0);   // AUDIT FAR-SEA1 C12: the open sea's light, one text with the far ring's sea (render/horizonHaze.js)",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"

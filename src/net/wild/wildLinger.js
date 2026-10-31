@@ -21,7 +21,13 @@ export const LINGER_AWAY = Object.freeze({ prefix: 'wildaway:', keepMs: 7 * 24 *
 export function lingerAwayWord(/** @type {any} */ rec, /** @type {any} */ x, /** @type {number} */ now) {
   if (!rec || !Number.isFinite(rec.at) || !(now - rec.at < LINGER_AWAY.keepMs)) return null;
   const left = x?.down ? Math.ceil(WILD_REF.riseMs - (now - x.downAt)) : 0;
-  return { t: 'wref', k: 'down', ms: Math.min(WILD_REF.riseMs, Math.max(LINGER_AWAY.downMs, left)), aw: 1, ...(typeof rec.n === 'string' && rec.n ? { n: rec.n } : {}) };
+  return {
+    t: 'wref',
+    k: 'down',
+    ms: Math.min(WILD_REF.riseMs, Math.max(LINGER_AWAY.downMs, left)),
+    aw: 1,
+    ...(typeof rec.n === 'string' && rec.n ? { n: rec.n } : {}),
+  };
 }
 
 /** The end of a fighter's lock at its close `now`, or 0: no body stays (out of the zone, down, or no PvP blow in the

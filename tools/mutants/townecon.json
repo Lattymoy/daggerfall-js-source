@@ -32,8 +32,8 @@
   {
     "name": "TOWNECON-cycle-amp",
     "file": "src/net/townEconLaw.js",
-    "old": "Object.freeze({ amp: 12, days: 11 })",
-    "new": "Object.freeze({ amp: 13, days: 11 })",
+    "old": "export const TOWN_CYCLE = Object.freeze([Object.freeze({ amp: 12, days: 11 }), Object.freeze({ amp: 6, days: 29 })]);",
+    "new": "export const TOWN_CYCLE = Object.freeze([Object.freeze({ amp: 13, days: 11 }), Object.freeze({ amp: 6, days: 29 })]);",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TOWNECON-cycle-days",
     "file": "src/net/townEconLaw.js",
-    "old": "Object.freeze({ amp: 6, days: 29 })",
-    "new": "Object.freeze({ amp: 6, days: 28 })",
+    "old": "export const TOWN_CYCLE = Object.freeze([Object.freeze({ amp: 12, days: 11 }), Object.freeze({ amp: 6, days: 29 })]);",
+    "new": "export const TOWN_CYCLE = Object.freeze([Object.freeze({ amp: 12, days: 11 }), Object.freeze({ amp: 6, days: 28 })]);",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TOWNECON-cycle-unphased",
     "file": "src/net/townEconLaw.js",
-    "old": "    const wave = Math.sin(2 * Math.PI * (day / w.days + fnv(`${key}:${i}`) / 4294967296));",
-    "new": "    const wave = Math.sin(2 * Math.PI * (day / w.days));",
+    "old": "    const wave = Math.sin(2 * Math.PI * (day / w.days + fnv(`${key}:${i}`) / 4294967296)); // the wave's angle, never a wrap",
+    "new": "    const wave = Math.sin(2 * Math.PI * (day / w.days)); // the wave's angle, never a wrap",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TOWNECON-edict",
     "file": "src/net/townEconLaw.js",
-    "old": "levy: -6, curfew: -4 });",
-    "new": "levy: -5, curfew: -4 });",
+    "old": "export const TOWN_EDICT_TERMS = Object.freeze({ 'market-day': 6, festival: 8, 'open-gates': 3, levy: -6, curfew: -4 });",
+    "new": "export const TOWN_EDICT_TERMS = Object.freeze({ 'market-day': 6, festival: 8, 'open-gates': 3, levy: -5, curfew: -4 });",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TOWNECON-bands",
     "file": "src/net/townEconLaw.js",
-    "old": "Object.freeze(['Thriving', 65])",
-    "new": "Object.freeze(['Thriving', 66])",
+    "old": "  /** @type {readonly [string, number]} */ (Object.freeze(['Thriving', 65])),",
+    "new": "  /** @type {readonly [string, number]} */ (Object.freeze(['Thriving', 66])),",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TOWNECON-standing",
     "file": "src/net/townEconLaw.js",
-    "old": "(h.standing - 50) / TOWN_STANDING_DIV",
-    "new": "(h.standing - 40) / TOWN_STANDING_DIV",
+    "old": "  const standing = Number.isFinite(h.standing) ? (h.standing - 50) / TOWN_STANDING_DIV : 0;",
+    "new": "  const standing = Number.isFinite(h.standing) ? (h.standing - 40) / TOWN_STANDING_DIV : 0;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TOWNECON-players-unbounded",
     "file": "src/net/townEconLaw.js",
-    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
-    "new": "  const share = Number.isNaN(n) ? 0 : Math.max(0, n);",
+    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n)); // AUDIT TOWN-ECON LAW-6: an infinite share is the most, never nothing",
+    "new": "  const share = Number.isNaN(n) ? 0 : Math.max(0, n); // AUDIT TOWN-ECON LAW-6: an infinite share is the most, never nothing",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -162,7 +162,7 @@
   {
     "name": "TOWNECON-floor-number",
     "file": "src/net/townEconLaw.js",
-    "old": "export const TOWN_FACTOR_FLOOR = 0.70;",
+    "old": "export const TOWN_FACTOR_FLOOR = 0.7;",
     "new": "export const TOWN_FACTOR_FLOOR = 0.65;",
     "tests": [
       "test/systems/townecon.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "TOWNECON-price-words",
     "file": "src/net/townEconLaw.js",
-    "old": "  if (ask > 0 && askF > 1) return t('town.econ.price.moreLess', 'Shops here ask {ask}% more and pay {pay}% less than the region\\'s usual prices.', { ask, pay });",
-    "new": "  if (ask > 0 && askF > 1) return t('town.econ.price.moreLess', 'Shops here ask {ask}% more and pay {pay}% less than the region\\'s usual prices.', { ask: pay, pay: ask });",
+    "old": "      \"Shops here ask {ask}% more and pay {pay}% less than the region's usual prices.\",\n      { ask, pay },",
+    "new": "      \"Shops here ask {ask}% more and pay {pay}% less than the region's usual prices.\",\n      { ask: pay, pay: ask },",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "TOWNECON-trend",
     "file": "src/net/townEconLaw.js",
-    "old": "(p > prev ? 'rising' : p < prev ? 'falling' : 'flat')",
-    "new": "(p > prev ? 'falling' : p < prev ? 'rising' : 'flat')",
+    "old": "export const townTrendWord = (p, prev) => (p > prev ? 'rising' : p < prev ? 'falling' : 'flat');",
+    "new": "export const townTrendWord = (p, prev) => (p > prev ? 'falling' : p < prev ? 'rising' : 'flat');",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "TOWNECON-offline-runs",
     "file": "src/systems/town/townEcon.js",
-    "old": "  const readingOf = (mapId) => {\n    if (!host.online() || ",
-    "new": "  const readingOf = (mapId) => {\n    if (",
+    "old": "  const readingOf = (mapId) => {\n    if (!host.online() || mapId == null || !Number.isFinite(Number(mapId))) return null;",
+    "new": "  const readingOf = (mapId) => {\n    if (mapId == null || !Number.isFinite(Number(mapId))) return null;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -382,7 +382,7 @@
   {
     "name": "TOWNECON-AUDIT-LAW6-edict-proto",
     "file": "src/net/townEconLaw.js",
-    "old": "  const edict = typeof h.edict === 'string' && Object.prototype.hasOwnProperty.call(TOWN_EDICT_TERMS, h.edict)\n    ? TOWN_EDICT_TERMS[/** @type {keyof typeof TOWN_EDICT_TERMS} */ (h.edict)] : 0;",
+    "old": "  const edict =\n    typeof h.edict === 'string' && Object.prototype.hasOwnProperty.call(TOWN_EDICT_TERMS, h.edict)\n      ? TOWN_EDICT_TERMS[/** @type {keyof typeof TOWN_EDICT_TERMS} */ (h.edict)]\n      : 0;",
     "new": "  const edict = TOWN_EDICT_TERMS[/** @type {keyof typeof TOWN_EDICT_TERMS} */ (h.edict)] ?? 0;",
     "tests": [
       "test/systems/townecon.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "TOWNECON-AUDIT-LAW6-infinite-share",
     "file": "src/net/townEconLaw.js",
-    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
-    "new": "  const share = !Number.isFinite(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
+    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n)); // AUDIT TOWN-ECON LAW-6: an infinite share is the most, never nothing",
+    "new": "  const share = !Number.isFinite(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n)); // AUDIT TOWN-ECON LAW-6: an infinite share is the most, never nothing",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "TOWNECON-AUDIT-UI2-english-charter",
     "file": "src/net/townEconLaw.js",
-    "old": "t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', { town: area.name, guild })",
-    "new": "t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', { town: `the Charter of ${area.name}`, guild })",
+    "old": "    ? t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', { town: area.name, guild })",
+    "new": "    ? t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', {\n        town: `the Charter of ${area.name}`,\n        guild,\n      })",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "TOWNECON-AUDIT-DOC3-bailiwick-any",
     "file": "src/systems/town/townEcon.js",
-    "old": "bailiwickOf(seats, r.town.region, [r.town.px, r.town.py])",
-    "new": "(seats[0] ?? null)",
+    "old": "    return r.seat || seats == null ? undefined : bailiwickOf(seats, r.town.region, [r.town.px, r.town.py]);",
+    "new": "    return r.seat || seats == null ? undefined : (seats[0] ?? null);",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "TOWNECON-LAW3-share-even",
     "file": "src/systems/tradeModes.js",
-    "old": "  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)));",
-    "new": "  const asks = lot.map((it) => stackOf(it));",
+    "old": "  const asks = lot.map((it) =>\n    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),\n  ); // a gold a piece at least, as a purchase asks",
+    "new": "  const asks = lot.map((it) => stackOf(it)); // a gold a piece at least, as a purchase asks",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -602,7 +602,7 @@
   {
     "name": "TOWNECON-LAW3-sellmagic-untallied",
     "file": "src/systems/tradeModes.js",
-    "old": "        sold(item, c, stack);   // LAW-3: the stack it hands over cost what it cost",
+    "old": "        sold(item, c, stack); // LAW-3: the stack it hands over cost what it cost",
     "new": "",
     "tests": [
       "test/systems/townecon.test.js"

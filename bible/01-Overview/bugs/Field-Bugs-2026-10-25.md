@@ -52,7 +52,7 @@ slice.
 
 WHAT IT WAS. At a Redoubt the rest's window opens 6 s after the fall with the Vestige offer, the next circle's decrees
 (up to four families, two cards each), the Ready and the respite together, and every question was open 10 s
-(`egRun.js:"export const EG_ASK_MS = 30_000;"`, then 10_000). A decree nobody answered took the first shown. The Ready was
+(`egRun.js:"export const EG_ASK_MS"`, then 10_000). A decree nobody answered took the first shown. The Ready was
 read when its ask closed, so a solo Ready ended the rest about 13 s after the window.
 
 CHANGED. The word is open 30 s - the top of what the thread asked, and well inside the rest's 90 s (`EG_REST_S`), so

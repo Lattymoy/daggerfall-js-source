@@ -1,322 +1,322 @@
 [
- {
-  "name": "GATHER-SPEED-answer-apart",
-  "file": "server-account/src/professions.js",
-  "old": "  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);",
-  "new": "  const rows = [...await readAll(db, decided), ...await Promise.all(answer.map(async ([, st]) => (await st.all()).results ?? []))];",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a harvest's answer read one round trip each again"
- },
- {
-  "name": "GATHER-SPEED-ground-track-apart",
-  "file": "server-account/src/professions.js",
-  "old": "    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])",
-  "new": "    Promise.all([...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)].map(async (st) => (await st.all()).results ?? []))",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the ground and the track a trip each"
- },
- {
-  "name": "GATHER-SPEED-row-read-alone",
-  "file": "server-account/src/professions.js",
-  "old": "    db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid),\n  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = rows[decided.length - 1][0] ?? null;",
-  "new": "  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the harvest's row read back in a trip of its own"
- },
- {
-  "name": "GATHER-SPEED-repeat-apart",
-  "file": "server-account/src/professions.js",
-  "old": "  return answerOf(row, readsBy(q, await readAll(db, q.map(([, st]) => st))), nowS, extra, rankBefore);",
-  "new": "  return answerOf(row, readsBy(q, await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []))), nowS, extra, rankBefore);",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a repeat's answer read one trip each"
- },
- {
-  "name": "GATHER-SPEED-carried-misnamed",
-  "file": "server-account/src/professions.js",
-  "old": "    q.push(['carried', carriedStatement(db, p, c, spec.material)]);",
-  "new": "    q.push(['carriedOwn', carriedStatement(db, p, c, spec.material)]);",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the carried count read under a name the answer never reads"
- },
- {
-  "name": "GATHER-SPEED-state-apart",
-  "file": "server-account/src/professions.js",
-  "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [",
-  "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the state's ninth read, the cloth's silver counts. the professions' state read one trip each"
- },
- {
-  "name": "GATHER-SPEED-pixels-apart",
-  "file": "server-account/src/professions.js",
-  "old": "  const [prows = [], drows = []] = await readAll(db, [...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])])",
-  "new": "  const [prows = [], drows = []] = await Promise.all([...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])].map(async (st) => (await st.all()).results ?? []))",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the pixels' and the dungeons' witnesses a trip each"
- },
- {
-  "name": "GATHER-SPEED-levy-unkept",
-  "file": "server-account/src/seatHolding.js",
-  "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
-  "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Levy's seat read off every seat row again"
- },
- {
-  "name": "MARKET-SPEED-tithe-unkept",
-  "file": "server-account/src/seatHolding.js",
-  "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
-  "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Tithe's seat read off every seat row again"
- },
- {
-  "name": "MARKET-SPEED-hall-unkept",
-  "file": "server-account/src/seatForts.js",
-  "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()]",
-  "new": "  const seat = [...(await confirmedSeats(db, nowS, { fresh: true })).values()]",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a board's Market Hall read off every seat row again"
- },
- {
-  "name": "MARKET-SPEED-settle-reads-apart",
-  "file": "server-account/src/market.js",
-  "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
-  "new": "  const first = await Promise.all([...settleReads(db, me, nowS), auctionsDueRead(db, nowS)].map(async (st) => (await st.all()).results ?? []));",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the settle's reads and the auctions due a trip each"
- },
- {
-  "name": "MARKET-SPEED-auctions-due-apart",
-  "file": "server-account/src/market.js",
-  "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
-  "new": "  const first = [...await readAll(db, settleReads(db, me, nowS)), (await auctionsDueRead(db, nowS).all()).results ?? []];",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the auctions due asked apart"
- },
- {
-  "name": "MARKET-SPEED-own-apart",
-  "file": "server-account/src/market.js",
-  "old": "    const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
-  "new": "    const [all, listingsMax] = await Promise.all([readAll(db, reads).then(async (v) => [...v, ...await Promise.all(own0.map(async (st) => (await st.all()).results ?? []))]), listingsCapAt(db, nowS, boardOf(board))]);",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the account's own read a trip each"
- },
- {
-  "name": "MARKET-SPEED-after-apart",
-  "file": "server-account/src/market.js",
-  "old": "    const got = await readAll(db, q.map(([, st]) => st));",
-  "new": "    const got = await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []));",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the couriers, the medians and the reports a trip each"
- },
- {
-  "name": "MARKET-SPEED-settle-work-apart",
-  "file": "server-account/src/market.js",
-  "old": "  if (work.length) await db.batch(work);",
-  "new": "  for (const st of work) await st.run();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a settle's rows written a statement a trip"
- },
- {
-  "name": "GATHER-SPEED-gone-taken-alone",
-  "file": "src/net/profBook.js",
-  "old": "    gone(node, kind) { return this.taken(node, kind) || this.counting(node, kind); },",
-  "new": "    gone(node, kind) { return this.taken(node, kind); },",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a node stands until the service answers"
- },
- {
-  "name": "GATHER-SPEED-act-end-stands-nothing",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (a.landing) { a.landing = false; fallNow(a); }",
-  "new": "    if (a.landing) { a.landing = false; }",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the node goes on the answer, not the act's end (GATHER-FEEL: the act's end is its last blow landing - its swing's hit frame)"
- },
- {
-  "name": "GATHER-SPEED-refusal-left-down",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (a && !a.loose && (r?.error === 'node-taken' || a.fell)) restandOf(a);",
-  "new": "    if (a && !a.loose && r?.error === 'node-taken') restandOf(a);",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a refused node left gone"
- },
- {
-  "name": "GATHER-SPEED-lapse-stands-nothing",
-  "file": "src/scenes/gatherHost.js",
-  "old": "      if (!a && nodeKeyOf) {\n        restandNode(nodeKeyOf);\n",
-  "new": "      if (!a && nodeKeyOf) {\n",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a lapsed harvest's node left gone"
- },
- {
-  "name": "GATHER-SPEED-pump-never-idle",
-  "file": "src/net/profBook.js",
-  "old": "      if (_pumpIdle.key === key && _pumpIdle.wrote === _wrote && now() < _pumpIdle.until) return null;\n",
-  "new": "",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the pump reads the kept table every frame"
- },
- {
-  "name": "GATHER-SPEED-idle-past-write",
-  "file": "src/net/profBook.js",
-  "old": "    _wrote += 1;   // GATHER-SPEED: the pump's idle read is stale\n",
-  "new": "",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the pump idles past a write"
- },
- {
-  "name": "GATHER-SPEED-counting-parses",
-  "file": "src/net/profBook.js",
-  "old": "    if (raw !== _peek.raw) _peek = { raw, table: parseKept(raw) };",
-  "new": "    _peek = { raw, table: parseKept(raw) };",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "every look parses the table"
- },
- {
-  "name": "MARKET-SPEED-fresh-forever",
-  "file": "src/net/marketBook.js",
-  "old": "return !!hit && now() - hit.at < MARKET_CACHE_MS; },",
-  "new": "return !!hit; },",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the cache fresh past its minute"
- },
- {
-  "name": "MARKET-SPEED-wait-drawn",
-  "file": "src/ui/marketTab.js",
-  "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
-  "new": "    if (!(underAct && ui.busy())) ui.rerender();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a cached view drawn twice"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G1-counting-read-each-ask",
-  "file": "src/net/profBook.js",
-  "old": "    counting(node, kind) { return countingSet().has(`${node}|${kind}`); },",
-  "new": "    counting(node, kind) { return peekHarvests().some((h) => h.node === node && h.kind === kind); },",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the storage read for every node near the player, every frame"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G1-kept-past-a-write",
-  "file": "src/net/profBook.js",
-  "old": "    if (_counting.key !== key || _counting.wrote !== _wrote || ",
-  "new": "    if (_counting.key !== key || ",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a harvest this book kept not counted until the next second"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G1-kept-for-ever",
-  "file": "src/net/profBook.js",
-  "old": "!(t >= _counting.at && t - _counting.at < PUMP_IDLE_MAX_MS)",
-  "new": "false",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "another tab's harvest never counted"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G2-fall-left",
-  "file": "src/scenes/treeHost.js",
-  "old": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { drop(falls[i].entry, falls[i].batch); falls.splice(i, 1); fell = true; }",
-  "new": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { fell = true; }",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a refused tree's fall left falling"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G2-logs-left",
-  "file": "src/scenes/treeHost.js",
-  "old": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { drop(logsLying[i].entry, logsLying[i].batch); logsLying.splice(i, 1); laid = true; }",
-  "new": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { laid = true; }",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a refused tree's logs left lying"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G2-logs-laid-after",
-  "file": "src/scenes/treeHost.js",
-  "old": "        if (unlaid.delete(n.key)) { drop(entry, logs); return; }",
-  "new": "        unlaid.delete(n.key);",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "logs laid after their tree's refusal"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G5-find-always-read",
-  "file": "server-account/src/professions.js",
-  "old": "  if (marks) findLineStatements(",
-  "new": "  if (marks || true) findLineStatements(",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "the find's reads asked of every harvest"
- },
- {
-  "name": "AUDIT-GATHER-SPEED-G7-other-act-undrawn",
-  "file": "src/ui/marketTab.js",
-  "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
-  "new": "    if (!quick && !ui.busy()) ui.rerender();",
-  "tests": [
-   "test/net/gatherspeed.test.js"
-  ],
-  "note": "a view chosen under another act draws no wait"
- }
+  {
+    "name": "GATHER-SPEED-answer-apart",
+    "file": "server-account/src/professions.js",
+    "old": "  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);",
+    "new": "  const rows = [...await readAll(db, decided), ...await Promise.all(answer.map(async ([, st]) => (await st.all()).results ?? []))];",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a harvest's answer read one round trip each again"
+  },
+  {
+    "name": "GATHER-SPEED-ground-track-apart",
+    "file": "server-account/src/professions.js",
+    "old": "    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])",
+    "new": "    Promise.all([...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)].map(async (st) => (await st.all()).results ?? []))",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the ground and the track a trip each"
+  },
+  {
+    "name": "GATHER-SPEED-row-read-alone",
+    "file": "server-account/src/professions.js",
+    "old": "    db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid),\n  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = rows[decided.length - 1][0] ?? null;",
+    "new": "  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the harvest's row read back in a trip of its own"
+  },
+  {
+    "name": "GATHER-SPEED-repeat-apart",
+    "file": "server-account/src/professions.js",
+    "old": "  return answerOf(row, readsBy(q, await readAll(db, q.map(([, st]) => st))), nowS, extra, rankBefore);",
+    "new": "  return answerOf(row, readsBy(q, await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []))), nowS, extra, rankBefore);",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a repeat's answer read one trip each"
+  },
+  {
+    "name": "GATHER-SPEED-carried-misnamed",
+    "file": "server-account/src/professions.js",
+    "old": "    q.push(['carried', carriedStatement(db, p, c, spec.material)]);",
+    "new": "    q.push(['carriedOwn', carriedStatement(db, p, c, spec.material)]);",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the carried count read under a name the answer never reads"
+  },
+  {
+    "name": "GATHER-SPEED-state-apart",
+    "file": "server-account/src/professions.js",
+    "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [",
+    "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the state's ninth read, the cloth's silver counts. the professions' state read one trip each"
+  },
+  {
+    "name": "GATHER-SPEED-pixels-apart",
+    "file": "server-account/src/professions.js",
+    "old": "  const [prows = [], drows = []] = await readAll(db, [...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])])",
+    "new": "  const [prows = [], drows = []] = await Promise.all([...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])].map(async (st) => (await st.all()).results ?? []))",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the pixels' and the dungeons' witnesses a trip each"
+  },
+  {
+    "name": "GATHER-SPEED-levy-unkept",
+    "file": "server-account/src/seatHolding.js",
+    "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
+    "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Levy's seat read off every seat row again"
+  },
+  {
+    "name": "MARKET-SPEED-tithe-unkept",
+    "file": "server-account/src/seatHolding.js",
+    "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
+    "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Tithe's seat read off every seat row again"
+  },
+  {
+    "name": "MARKET-SPEED-hall-unkept",
+    "file": "server-account/src/seatForts.js",
+    "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()].find(",
+    "new": "  const seat = [...(await confirmedSeats(db, nowS, { fresh: true })).values()].find(",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a board's Market Hall read off every seat row again"
+  },
+  {
+    "name": "MARKET-SPEED-settle-reads-apart",
+    "file": "server-account/src/market.js",
+    "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
+    "new": "  const first = await Promise.all([...settleReads(db, me, nowS), auctionsDueRead(db, nowS)].map(async (st) => (await st.all()).results ?? []));",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the settle's reads and the auctions due a trip each"
+  },
+  {
+    "name": "MARKET-SPEED-auctions-due-apart",
+    "file": "server-account/src/market.js",
+    "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
+    "new": "  const first = [...await readAll(db, settleReads(db, me, nowS)), (await auctionsDueRead(db, nowS).all()).results ?? []];",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the auctions due asked apart"
+  },
+  {
+    "name": "MARKET-SPEED-own-apart",
+    "file": "server-account/src/market.js",
+    "old": "    const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
+    "new": "    const [all, listingsMax] = await Promise.all([readAll(db, reads).then(async (v) => [...v, ...await Promise.all(own0.map(async (st) => (await st.all()).results ?? []))]), listingsCapAt(db, nowS, boardOf(board))]);",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the account's own read a trip each"
+  },
+  {
+    "name": "MARKET-SPEED-after-apart",
+    "file": "server-account/src/market.js",
+    "old": "    const got = await readAll(db, q.map(([, st]) => st));",
+    "new": "    const got = await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []));",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the couriers, the medians and the reports a trip each"
+  },
+  {
+    "name": "MARKET-SPEED-settle-work-apart",
+    "file": "server-account/src/market.js",
+    "old": "  if (work.length) await db.batch(work);",
+    "new": "  for (const st of work) await st.run();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a settle's rows written a statement a trip"
+  },
+  {
+    "name": "GATHER-SPEED-gone-taken-alone",
+    "file": "src/net/profBook.js",
+    "old": "    gone(node, kind) { return this.taken(node, kind) || this.counting(node, kind); },",
+    "new": "    gone(node, kind) { return this.taken(node, kind); },",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a node stands until the service answers"
+  },
+  {
+    "name": "GATHER-SPEED-act-end-stands-nothing",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a.landing) { a.landing = false; fallNow(a); }",
+    "new": "    if (a.landing) { a.landing = false; }",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the node goes on the answer, not the act's end (GATHER-FEEL: the act's end is its last blow landing - its swing's hit frame)"
+  },
+  {
+    "name": "GATHER-SPEED-refusal-left-down",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a && !a.loose && (r?.error === 'node-taken' || a.fell)) restandOf(a);",
+    "new": "    if (a && !a.loose && r?.error === 'node-taken') restandOf(a);",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a refused node left gone"
+  },
+  {
+    "name": "GATHER-SPEED-lapse-stands-nothing",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!a && nodeKeyOf) {\n        restandNode(nodeKeyOf);\n",
+    "new": "      if (!a && nodeKeyOf) {\n",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a lapsed harvest's node left gone"
+  },
+  {
+    "name": "GATHER-SPEED-pump-never-idle",
+    "file": "src/net/profBook.js",
+    "old": "      if (_pumpIdle.key === key && _pumpIdle.wrote === _wrote && now() < _pumpIdle.until) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the pump reads the kept table every frame"
+  },
+  {
+    "name": "GATHER-SPEED-idle-past-write",
+    "file": "src/net/profBook.js",
+    "old": "    _wrote += 1;   // GATHER-SPEED: the pump's idle read is stale\n",
+    "new": "",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the pump idles past a write"
+  },
+  {
+    "name": "GATHER-SPEED-counting-parses",
+    "file": "src/net/profBook.js",
+    "old": "    if (raw !== _peek.raw) _peek = { raw, table: parseKept(raw) };",
+    "new": "    _peek = { raw, table: parseKept(raw) };",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "every look parses the table"
+  },
+  {
+    "name": "MARKET-SPEED-fresh-forever",
+    "file": "src/net/marketBook.js",
+    "old": "      return !!hit && now() - hit.at < MARKET_CACHE_MS;",
+    "new": "      return !!hit;",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the cache fresh past its minute"
+  },
+  {
+    "name": "MARKET-SPEED-wait-drawn",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
+    "new": "    if (!(underAct && ui.busy())) ui.rerender();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a cached view drawn twice"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G1-counting-read-each-ask",
+    "file": "src/net/profBook.js",
+    "old": "    counting(node, kind) { return countingSet().has(`${node}|${kind}`); },",
+    "new": "    counting(node, kind) { return peekHarvests().some((h) => h.node === node && h.kind === kind); },",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the storage read for every node near the player, every frame"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G1-kept-past-a-write",
+    "file": "src/net/profBook.js",
+    "old": "    if (_counting.key !== key || _counting.wrote !== _wrote || ",
+    "new": "    if (_counting.key !== key || ",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a harvest this book kept not counted until the next second"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G1-kept-for-ever",
+    "file": "src/net/profBook.js",
+    "old": "!(t >= _counting.at && t - _counting.at < PUMP_IDLE_MAX_MS)",
+    "new": "false",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "another tab's harvest never counted"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G2-fall-left",
+    "file": "src/scenes/treeHost.js",
+    "old": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { drop(falls[i].entry, falls[i].batch); falls.splice(i, 1); fell = true; }",
+    "new": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { fell = true; }",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a refused tree's fall left falling"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G2-logs-left",
+    "file": "src/scenes/treeHost.js",
+    "old": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { drop(logsLying[i].entry, logsLying[i].batch); logsLying.splice(i, 1); laid = true; }",
+    "new": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { laid = true; }",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a refused tree's logs left lying"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G2-logs-laid-after",
+    "file": "src/scenes/treeHost.js",
+    "old": "        if (unlaid.delete(n.key)) { drop(entry, logs); return; }",
+    "new": "        unlaid.delete(n.key);",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "logs laid after their tree's refusal"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G5-find-always-read",
+    "file": "server-account/src/professions.js",
+    "old": "  if (marks) findLineStatements(",
+    "new": "  if (marks || true) findLineStatements(",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "the find's reads asked of every harvest"
+  },
+  {
+    "name": "AUDIT-GATHER-SPEED-G7-other-act-undrawn",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
+    "new": "    if (!quick && !ui.busy()) ui.rerender();",
+    "tests": [
+      "test/net/gatherspeed.test.js"
+    ],
+    "note": "a view chosen under another act draws no wait"
+  }
 ]

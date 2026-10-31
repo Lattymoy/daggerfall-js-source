@@ -40,10 +40,22 @@ import { buildNeutralBody, NECK_PIVOT_Y } from '../../characters/neutralBody.js'
 
 /** Our own palette, the same one paperdollPayload falls back to. */
 const BLOCKS = [
-  [200, 200, 200], [186, 176, 160], [178, 132, 84], [214, 158, 170],
-  [206, 176, 128], [150, 148, 172], [120, 160, 214], [236, 236, 232],
-  [140, 200, 200], [206, 194, 96], [150, 196, 120], [176, 108, 66],
-  [190, 202, 110], [170, 150, 200], [236, 206, 140], [222, 108, 66],
+  [200, 200, 200],
+  [186, 176, 160],
+  [178, 132, 84],
+  [214, 158, 170],
+  [206, 176, 128],
+  [150, 148, 172],
+  [120, 160, 214],
+  [236, 236, 232],
+  [140, 200, 200],
+  [206, 194, 96],
+  [150, 196, 120],
+  [176, 108, 66],
+  [190, 202, 110],
+  [170, 150, 200],
+  [236, 206, 140],
+  [222, 108, 66],
 ];
 const OUR_PAL = {
   get(i) {
@@ -51,7 +63,11 @@ const OUR_PAL = {
     const [r, g, b] = BLOCKS[(idx >> 4) & 15];
     const k = 1 - (idx & 15) / 15;
     const f = 0.24 + k * 0.86;
-    return { r: Math.min(255, Math.round(r * f)), g: Math.min(255, Math.round(g * f)), b: Math.min(255, Math.round(b * f)) };
+    return {
+      r: Math.min(255, Math.round(r * f)),
+      g: Math.min(255, Math.round(g * f)),
+      b: Math.min(255, Math.round(b * f)),
+    };
   },
 };
 
@@ -163,13 +179,18 @@ export function mountFigure(mount, opts = {}) {
     mats[mat] = span;
     zones.push({ ...z, mat });
   };
-  const B = 'body', AL = 'armL', AR = 'armR', LL = 'legL', LR = 'legR';
+  const B = 'body',
+    AL = 'armL',
+    AR = 'armR',
+    LL = 'legL',
+    LR = 'legR';
   // Only the slots that CHANGE a silhouette: a ring does not alter how a
   // figure reads at portrait size, and pretending otherwise is decoration.
   if (worn.ChestArmor) put('plate', [86, 93], { groups: [B], yLo: 1.1, yHi: 1.58, th: 0.03 });
   else if (worn.ChestClothes) put('cloth', [34, 44], { groups: [B], yLo: 1.12, yHi: 1.56, th: 0.016 });
   if (worn.Gloves) put('leather', [70, 79], { groups: [AL, AR], yLo: 0.6, yHi: 0.86, th: 0.018, arm: true });
-  if (worn.RightArm || worn.LeftArm) put('plate', [86, 93], { groups: [AL, AR], yLo: 1.12, yHi: 1.46, th: 0.022, arm: true });
+  if (worn.RightArm || worn.LeftArm)
+    put('plate', [86, 93], { groups: [AL, AR], yLo: 1.12, yHi: 1.46, th: 0.022, arm: true });
   if (worn.LegsArmor) put('plate', [86, 93], { groups: [LL, LR], yLo: 0.4, yHi: 0.96, th: 0.024, leg: true });
   else if (worn.LegsClothes) put('cloth', [34, 44], { groups: [LL, LR], yLo: 0.44, yHi: 0.96, th: 0.014, leg: true });
   if (worn.Feet) put('leather', [70, 79], { groups: [LL, LR], yLo: 0, yHi: 0.22, th: 0.02, leg: true });
@@ -192,10 +213,7 @@ export function mountFigure(mount, opts = {}) {
   }
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  const mesh = new THREE.Mesh(
-    geo,
-    new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }),
-  );
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
 
   const pivot = new THREE.Group();
   pivot.add(mesh);

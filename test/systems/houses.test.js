@@ -451,7 +451,7 @@ test('H2: a refused purchase closes the list too - the message shows over the BA
 test('H2: the bank routes BUY HOUSE to the window, and the refusals stay the law\'s', () => {
   const bank = code('ui/bankWindow.js');
   // PIN MOVED (HOUSES-3): the region's three answered in the bank's words counted to three (`lines`), nothing for sale DFU's
-  assert.match(bank, /if \(d\.kind === 'refuse'\) \{ if \(d\.lines\) this\._lines\(d\.lines\); else this\._popup\(d\.result\); return; \}/,
+  assert.match(bank, /if \(d\.kind === 'refuse'\) \{\n\s*if \(d\.lines\) this\._lines\(d\.lines\);\n\s*else this\._popup\(d\.result\);\n\s*return;\n\s*\}/,
     'the region\'s three and nothing-for-sale still answer through buyHouseDecision');
   assert.match(bank, /this\.hooks\.openPurchase\?\.\(\)/, 'and a pick opens the purchase window');
   // the host mounts it, restoring the bank when it closes (PushWindow/PopWindow)

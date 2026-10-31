@@ -175,7 +175,7 @@ test('DRAGON3 world: the host\'s wiring - its sites, link and host made online; 
     "if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());",
     "if (dragonSky && _mode() === 'exterior') { try { dragonSky.drawMarks(); }",
     'dragonSky?.onlineFrame();', 'dragonSky?.away(!onlineOn);',   // PIN MOVED (AUDIT DRAGON): its frame and away the sky's (createDragonSky)
-    "dragonSky = params.has('online') ? createDragonSky({", 'bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,',
+    "dragonSky = params.has('online') ? createDragonSky({", 'bayScan: () => { warmGateScan(); return _gateScan; }, theatres: () => theatreGates,',
     "street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,",
   ]) assert.ok(w.includes(wired), wired);
   const o = readFileSync('src/net/online.js', 'utf8');

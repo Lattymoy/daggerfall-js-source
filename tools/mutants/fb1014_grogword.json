@@ -2,8 +2,8 @@
   {
     "name": "GROG-WORD-the-drunk-row-read-as-the-top",
     "file": "src/systems/naval/navalYard.js",
-    "old": "have: morale, drunk: morale < 100 && !!grogToday });",
-    "new": "have: morale, drunk: false });",
+    "old": "      drunk: morale < 100 && !!grogToday,",
+    "new": "      drunk: false,",
     "tests": [
       "test/systems/naval/fb1014_grogword.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GROG-WORD-the-word-dropped",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      : r.drunk ? t('naval.yard.grogDrunk',",
-    "new": "      : false ? t('naval.yard.grogDrunk',",
+    "old": "          : `${r.have} in the hold - ${r.missing} more at ${gold(r.price)} each`\n        : r.drunk",
+    "new": "          : `${r.have} in the hold - ${r.missing} more at ${gold(r.price)} each`\n        : false",
     "tests": [
       "test/systems/naval/fb1014_grogword.test.js"
     ]

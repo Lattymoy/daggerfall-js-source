@@ -15,13 +15,16 @@ import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePane
 import { drawMenuBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { processGrammar } from '../systems/textManager.js';   // L10N3g: each BackStory line through the grammar (:152)
+import { processGrammar } from '../systems/textManager.js'; // L10N3g: each BackStory line through the grammar (:152)
 
 let _art = null;
 export async function preloadPlayerHistoryArt(deps) {
   if (_art) return;
-  try { _art = await loadImg(deps, 'LGBK00I0.IMG'); }
-  catch { console.warn('[history] LGBK00I0.IMG unavailable; the history window falls back to text'); }
+  try {
+    _art = await loadImg(deps, 'LGBK00I0.IMG');
+  } catch {
+    console.warn('[history] LGBK00I0.IMG unavailable; the history window falls back to text');
+  }
 }
 export const playerHistoryArtLoaded = () => !!_art;
 
@@ -51,11 +54,13 @@ export class PlayerHistoryWindow {
     this.entity = entity;
     this.done = false;
     this.pageStartLine = 0;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam, like CharSheet
-    audio.playOneShot(SOUND.OpenBook, 1);   // Setup()/OnPush both play it (:74, :140)
+    this.isChoiceWindow = true; // raw codes through the overlay seam, like CharSheet
+    audio.playOneShot(SOUND.OpenBook, 1); // Setup()/OnPush both play it (:74, :140)
   }
 
-  get lines() { return this.entity?.backStory ?? []; }
+  get lines() {
+    return this.entity?.backStory ?? [];
+  }
 
   /** MoveNextPage (:183-192). Paging is by WHOLE pages, and the last
    *  page will not advance - there is no wrap. */
@@ -88,28 +93,50 @@ export class PlayerHistoryWindow {
 
   input(action, e = null) {
     const code = e?.code ?? action;
-    if (action === 'confirm' || action === 'back' || action === 'Escape' || action === 'Enter'
-      || code === 'Escape' || code === 'Enter') { this.close(); return true; }
+    if (
+      action === 'confirm' ||
+      action === 'back' ||
+      action === 'Escape' ||
+      action === 'Enter' ||
+      code === 'Escape' ||
+      code === 'Enter'
+    ) {
+      this.close();
+      return true;
+    }
     // The scroll wheel pages too (:103-119), and so do the arrows -
     // the port's overlay seam has no wheel of its own for this window.
-    if (action === 'ArrowRight' || action === 'ArrowDown' || code === 'ArrowRight' || code === 'ArrowDown') return this.nextPage();
-    if (action === 'ArrowLeft' || action === 'ArrowUp' || code === 'ArrowLeft' || code === 'ArrowUp') return this.prevPage();
+    if (action === 'ArrowRight' || action === 'ArrowDown' || code === 'ArrowRight' || code === 'ArrowDown')
+      return this.nextPage();
+    if (action === 'ArrowLeft' || action === 'ArrowUp' || code === 'ArrowLeft' || code === 'ArrowUp')
+      return this.prevPage();
     return false;
   }
 
   // AUDIT 24 ui: the OpenBook one-shot belongs to the two BUTTON
   // handlers (:83, :92); NativePanel_OnMouseScrollDown/Up (:97-111)
   // just page and re-layout, silently.
-  wheel(dy) { return dy > 0 ? this.nextPage(false) : this.prevPage(false); }
+  wheel(dy) {
+    return dy > 0 ? this.nextPage(false) : this.prevPage(false);
+  }
 
   /** Every DFU button rect is answered or consumed, so a click can
    *  never fall through to the host's pointer-lock request - the same
    *  law AUDIT 18 established for the character sheet. */
   click(vx, vy) {
     const R = HISTORY_RECTS;
-    if (inRect(R.exit, vx, vy)) { this.close(); return true; }
-    if (inRect(R.nextPage, vx, vy)) { this.nextPage(); return true; }
-    if (inRect(R.prevPage, vx, vy)) { this.prevPage(); return true; }
+    if (inRect(R.exit, vx, vy)) {
+      this.close();
+      return true;
+    }
+    if (inRect(R.nextPage, vx, vy)) {
+      this.nextPage();
+      return true;
+    }
+    if (inRect(R.prevPage, vx, vy)) {
+      this.prevPage();
+      return true;
+    }
     return false;
   }
 

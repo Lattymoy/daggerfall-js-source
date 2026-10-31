@@ -26,11 +26,23 @@
 // :544-552), which is the same answer arrived at independently; this
 // module reads that store rather than growing a second one.
 
-import { drawMapSection, drawPath, drawLocation, isLocationLarge, packColor, packRGBA, DOT_SCALE, ROAD_COLOR, TRACK_COLOR, RIVER_COLOR, STREAM_COLOR } from './travelPathsOverlay.js';
-import { hasPortFor as hasPort } from '../../systems/travel/travelPorts.js';   // SEAT2b part two: HasPort, or a members' Harbour at a seat (travelPorts.js hasPortFor)
+import {
+  drawMapSection,
+  drawPath,
+  drawLocation,
+  isLocationLarge,
+  packColor,
+  packRGBA,
+  DOT_SCALE,
+  ROAD_COLOR,
+  TRACK_COLOR,
+  RIVER_COLOR,
+  STREAM_COLOR,
+} from './travelPathsOverlay.js';
+import { hasPortFor as hasPort } from '../../systems/travel/travelPorts.js'; // SEAT2b part two: HasPort, or a members' Harbour at a seat (travelPorts.js hasPortFor)
 import { TRAVEL_OPTIONS_TEXT as T, format } from '../../systems/travel/travelOptionsText.js';
 import { PATH_ROADS, PATH_TRACKS, PATH_RIVERS, PATH_STREAMS } from '../../systems/travel/travelPaths.js';
-import { BUILDING_TYPES, isNamedBuildingType } from '../../world/buildingNames.js';   // RMBLayout.IsNamedBuilding, one home
+import { BUILDING_TYPES, isNamedBuildingType } from '../../world/buildingNames.js'; // RMBLayout.IsNamedBuilding, one home
 
 /** TravelOptionsMapWindow.cs:80-92 - the ports button and the three
  *  anchors it shuffles. The button sits where the arrow buttons live,
@@ -85,29 +97,43 @@ export function portsFilterAllows(portsFilter, mapId) {
  *  `deps` mirrors the window's own reads: politicAt, summaryAt,
  *  discovered, colorIndexOf, colors, pathsAt, showPaths, onlyLargeDots,
  *  markedMapId, markColor, outlineOn, outlineColor. */
-export function drawRegionPageWithPaths(dotsBuf, outlineBuf, {
-  originX, originY, width, height, scale, selectedRegion,
-}, deps) {
+export function drawRegionPageWithPaths(
+  dotsBuf,
+  outlineBuf,
+  { originX, originY, width, height, scale, selectedRegion },
+  deps,
+) {
   const {
-    summaryAt, discovered, colorIndexOf, colors, pathsAt,   // AUDIT-TO1 L6: politicAt is handed in and NOT read - see below
-    showPaths = [true, true, false, false], onlyLargeDots = false,
-    markedMapId = -1, markColor = null, outlineOn = false, outlineColor = 0,
-    largeOf = null,   // IT1: the dot's size by the whole summary - Immersive Travel's two maps answer their own IsLocationLarge
+    summaryAt,
+    discovered,
+    colorIndexOf,
+    colors,
+    pathsAt, // AUDIT-TO1 L6: politicAt is handed in and NOT read - see below
+    showPaths = [true, true, false, false],
+    onlyLargeDots = false,
+    markedMapId = -1,
+    markColor = null,
+    outlineOn = false,
+    outlineColor = 0,
+    largeOf = null, // IT1: the dot's size by the whole summary - Immersive Travel's two maps answer their own IsLocationLarge
   } = deps;
   dotsBuf.fill(0);
   outlineBuf.fill(0);
   const width5 = width * DOT_SCALE;
   const px = {
-    [PATH_STREAMS]: packColor(STREAM_COLOR), [PATH_TRACKS]: packColor(TRACK_COLOR),
-    [PATH_RIVERS]: packColor(RIVER_COLOR), [PATH_ROADS]: packColor(ROAD_COLOR),
+    [PATH_STREAMS]: packColor(STREAM_COLOR),
+    [PATH_TRACKS]: packColor(TRACK_COLOR),
+    [PATH_RIVERS]: packColor(RIVER_COLOR),
+    [PATH_ROADS]: packColor(ROAD_COLOR),
   };
   const mark = markColor ? (typeof markColor === 'number' ? markColor : packRGBA(...markColor)) : null;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const offset = Math.trunc((((height - y - 1) * width) + x) * scale);
+      const offset = Math.trunc(((height - y - 1) * width + x) * scale);
       if (offset >= width * height) continue;
-      const offset5 = Math.trunc((((height - y - 1) * DOT_SCALE * width5) + (x * DOT_SCALE)) * scale);
-      const mpX = originX + x, mpY = originY + y;
+      const offset5 = Math.trunc(((height - y - 1) * DOT_SCALE * width5 + x * DOT_SCALE) * scale);
+      const mpX = originX + x,
+        mpY = originY + y;
       // :621-628 - the four path types, in the mod's own order
       for (const type of [PATH_STREAMS, PATH_TRACKS, PATH_RIVERS, PATH_ROADS]) {
         if (showPaths[type]) drawPath(dotsBuf, offset5, width5, pathsAt(mpX, mpY, type), px[type]);
@@ -126,9 +152,14 @@ export function drawRegionPageWithPaths(dotsBuf, outlineBuf, {
       const index = colorIndexOf(summary.locationType);
       if (index === -1) continue;
       if (outlineOn) outlineBuf[offset] = outlineColor;
-      drawLocation(dotsBuf, offset5, width5, colors[index] ?? 0,
+      drawLocation(
+        dotsBuf,
+        offset5,
+        width5,
+        colors[index] ?? 0,
         largeOf ? largeOf(summary) : isLocationLarge(summary.locationType, onlyLargeDots),
-        { highlight: summary.mapID === markedMapId || summary.mapId === markedMapId, markColor: mark });
+        { highlight: summary.mapID === markedMapId || summary.mapId === markedMapId, markColor: mark },
+      );
     }
   }
 }
@@ -161,17 +192,20 @@ export function locationInfoRows(locationType, buildings, typeName) {
   for (const b of buildings) {
     // :396 - `RMBLayout.IsNamedBuilding(building.buildingType)`
     if (!b || !isNamedBuildingType(b.buildingType)) continue;
-    const name = String(b.displayName ?? '').startsWith('The ') ? String(b.displayName).slice(4) : String(b.displayName ?? '');
+    const name = String(b.displayName ?? '').startsWith('The ')
+      ? String(b.displayName).slice(4)
+      : String(b.displayName ?? '');
     if (b.buildingType === BUILDING_GUILD_HALL) {
       if (!guildNames.includes(name)) guildNames.push(name);
-      continue;   // :404-406 - a guild hall is named, never counted
+      continue; // :404-406 - a guild hall is named, never counted
     }
     counts.set(b.buildingType, (counts.get(b.buildingType) ?? 0) + 1);
   }
   if (!counts.size && !guildNames.length) return null;
   guildNames.sort();
   // :419-431 - a SortedDictionary, so the rows come out in building-type order
-  const rows = [...counts.entries()].sort((a, b) => a[0] - b[0])
+  const rows = [...counts.entries()]
+    .sort((a, b) => a[0] - b[0])
     .map(([type, n]) => ({ type, name: typeName(type), count: n }));
   return { guilds: guildNames.length ? T.MsgGuildHalls + guildNames.join(', ') : '', rows };
 }

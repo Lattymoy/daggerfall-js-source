@@ -18,15 +18,28 @@ import { PRESS_LEAD_MAX_S } from './stitchAct.js';
  * @param {{ facets?: number, windowDeg?: number, gentle?: boolean, rng?: () => number }} [opts] `facets` the piece's
  *   (recipeLaw facetCount), `windowDeg` the window's whole width (recipeLaw facetWindow - the rank's and the band's)
  */
-export function createFacetAct({ facets = FACET_ACT.facets, windowDeg = FACET_ACT.windowDeg, gentle = false, rng = Math.random } = {}) {
+export function createFacetAct({
+  facets = FACET_ACT.facets,
+  windowDeg = FACET_ACT.windowDeg,
+  gentle = false,
+  rng = Math.random,
+} = {}) {
   /** The light's bearing for a facet, by one throw of the dice: FACET_ACT.lightLo to lightHi. */
-  const light = () => FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));
+  const light = () =>
+    FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));
   const st = {
-    kind: 'facet', t: 0, need: Math.max(1, facets | 0), half: Math.max(0, Number(windowDeg) || 0) / 2,
+    kind: 'facet',
+    t: 0,
+    need: Math.max(1, facets | 0),
+    half: Math.max(0, Number(windowDeg) || 0) / 2,
     /** the facet being cut: how far the stone has turned (degrees, from 0 - past 360 the turn goes round), the light */
-    turned: 0, light: light(),
+    turned: 0,
+    light: light(),
     /** each facet as it ended: true caught, false lost; `passed` how many the turn let go round by itself */
-    cuts: /** @type {boolean[]} */ ([]), passed: 0, lastAt: -Infinity, done: false,
+    cuts: /** @type {boolean[]} */ ([]),
+    passed: 0,
+    lastAt: -Infinity,
+    done: false,
   };
   /** The stone's bearing now, 0 to 360. */
   const bearing = (turned) => ((turned % 360) + 360) % 360;
@@ -35,21 +48,31 @@ export function createFacetAct({ facets = FACET_ACT.facets, windowDeg = FACET_AC
   const end = (ok, at) => {
     st.cuts.push(ok);
     st.lastAt = at;
-    if (st.cuts.length >= st.need) { st.done = true; return; }
+    if (st.cuts.length >= st.need) {
+      st.done = true;
+      return;
+    }
     st.turned = 0;
     st.light = light();
   };
   return {
     state: st,
     /** The stone's bearing now, degrees. */
-    get bearing() { return bearing(st.turned); },
+    get bearing() {
+      return bearing(st.turned);
+    },
     /** Whether the stone stands in the light now (never under Gentle acts). */
-    get inWindow() { return !st.done && inWindow(st.turned); },
+    get inWindow() {
+      return !st.done && inWindow(st.turned);
+    },
     tick(dt) {
       if (st.done || !Number.isFinite(dt) || dt <= 0) return;
       st.t += dt;
       st.turned += FACET_ACT.degPerS * dt;
-      if (st.turned >= 360 * FACET_ACT.turns) { st.passed++; end(false, st.t); }   // let go round: the facet lost, the next begun
+      if (st.turned >= 360 * FACET_ACT.turns) {
+        st.passed++;
+        end(false, st.t);
+      } // let go round: the facet lost, the next begun
     },
     /** The turn stopped: true caught, false lost, null too soon after the last stop or the act over. `lead` - the press's
      *  own moment past the act's last frame (AUDIT 32 P1's law, the stitch's): the bearing it is judged at is the one then. */
@@ -62,12 +85,19 @@ export function createFacetAct({ facets = FACET_ACT.facets, windowDeg = FACET_AC
       return ok;
     },
     /** Let go (Esc, or the page shut): no more facets; an act short of its facets is never clean. */
-    cancel() { st.done = true; },
+    cancel() {
+      st.done = true;
+    },
     /** The act's report: its facets, the caught ones, the ones let go round, and whether it was clean - every facet cut,
      *  every one caught (a Gentle act's are none). */
     report() {
       const hits = st.cuts.filter(Boolean).length;
-      return { facets: st.cuts.length, hits, passed: st.passed, clean: st.cuts.length >= st.need && hits === st.cuts.length };
+      return {
+        facets: st.cuts.length,
+        hits,
+        passed: st.passed,
+        clean: st.cuts.length >= st.need && hits === st.cuts.length,
+      };
     },
   };
 }

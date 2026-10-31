@@ -17,9 +17,9 @@
 import { FRIEND_AT } from '../livingWorld/relations.js';
 import { RACE_KEYS } from '../races.js';
 import { personOf, isAlive, touch, newPerson, addChild, fullNameOf } from './family.js';
-import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: the other player's house, held to its law
-import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house said once
-import { t } from '../textManager.js';   // TONE-TASTE: the cooled courtship's line, said in the player's language
+import { readHouse } from '../../net/houseLaw.js'; // LEGACY7 part three: the other player's house, held to its law
+import { houseWord } from './houseName.js'; // LEGACY-NAME: a seat's house said once
+import { t } from '../textManager.js'; // TONE-TASTE: the cooled courtship's line, said in the player's language
 
 export const AFFECTION_MAX = 100;
 /** A day's courtship: the base, a point per twenty of Personality and of Etiquette, and the tone's as the resident took
@@ -44,7 +44,10 @@ export const dayOf = (minutes) => Math.floor((Number(minutes) || 0) / DAY_MINUTE
 
 /** A resident's given name and the rest - "Ysolde Hlaalu" -> ['Ysolde', 'Hlaalu']. */
 export function splitName(name) {
-  const words = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+  const words = String(name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   return [words[0] ?? 'Someone', words.slice(1).join(' ')];
 }
 
@@ -56,9 +59,11 @@ const courtsOf = (member) => (member.courting ??= {});
 export const courtable = (res) => !!res && res.roll === 'h' && !res.guard && !res.legacy;
 
 /** Is this resident one of the house already - a member's spouse? */
-export const residentInHouse = (family, residentId) => (family?.people ?? []).some((p) => p.kind === 'resident' && p.residentId === residentId);
+export const residentInHouse = (family, residentId) =>
+  (family?.people ?? []).some((p) => p.kind === 'resident' && p.residentId === residentId);
 /** AUDIT LEGACY III A1: is this resident betrothed to another member of the house than `member`? */
-export const betrothedElsewhere = (family, member, residentId) => (family?.people ?? []).some((p) => p !== member && isAlive(p) && p.courting?.[residentId]?.betrothed);
+export const betrothedElsewhere = (family, member, residentId) =>
+  (family?.people ?? []).some((p) => p !== member && isAlive(p) && p.courting?.[residentId]?.betrothed);
 
 /** The member's living spouse, or null. */
 export function spouseOf(family, member) {
@@ -90,7 +95,12 @@ export const topicLabel = (t) => LABEL[t] ?? t;
 /** The player's side of each topic, by tone (Polite, Normal, Blunt). */
 export function topicQuestion(t, tone = 1) {
   const i = Math.max(0, Math.min(2, tone | 0));
-  if (t === TOPIC.court) return ['Would you let me court you?', 'I would like to spend some time with you.', 'You and me - what do you say?'][i];
+  if (t === TOPIC.court)
+    return [
+      'Would you let me court you?',
+      'I would like to spend some time with you.',
+      'You and me - what do you say?',
+    ][i];
   if (t === TOPIC.propose) return ['Will you do me the honor of marrying me?', 'Will you marry me?', 'Marry me.'][i];
   if (t === TOPIC.wedding) return 'When shall we be wed?';
   return 'How is our family?';
@@ -100,7 +110,11 @@ export function topicQuestion(t, tone = 1) {
  *  quarters; a tone taken ill, -COURT_TASTE whatever else (TONE-TASTE). `taste` toneTaste's: 1, 0 or -1. */
 export function courtGain({ personality = 50, etiquette = 0, taste = 0, roll = 0.5 } = {}) {
   if (taste < 0) return -COURT_TASTE;
-  const base = COURT_BASE + Math.floor(Math.max(0, personality) / 20) + Math.floor(Math.max(0, etiquette) / 20) + (taste > 0 ? COURT_TASTE : 0);
+  const base =
+    COURT_BASE +
+    Math.floor(Math.max(0, personality) / 20) +
+    Math.floor(Math.max(0, etiquette) / 20) +
+    (taste > 0 ? COURT_TASTE : 0);
   return Math.max(1, Math.round(base * (0.75 + 0.5 * Math.max(0, Math.min(1, roll)))));
 }
 
@@ -115,8 +129,17 @@ export function courtGain({ personality = 50, etiquette = 0, taste = 0, roll = 0
 export function court(member, res, o) {
   const courts = courtsOf(member);
   // the resident as they are - their identity is for life (the Living World's law), so the wedding needs no town loaded
-  const c = (courts[res.id] ??= { name: String(res.name), mapId: res.town | 0, town: String(o.townName ?? ''), affection: 0, day: -1, betrothed: false,
-    sex: res.sex === 'female' ? 'female' : 'male', race: String(res.race ?? ''), face: res.face | 0 });
+  const c = (courts[res.id] ??= {
+    name: String(res.name),
+    mapId: res.town | 0,
+    town: String(o.townName ?? ''),
+    affection: 0,
+    day: -1,
+    betrothed: false,
+    sex: res.sex === 'female' ? 'female' : 'male',
+    race: String(res.race ?? ''),
+    face: res.face | 0,
+  });
   if (c.day >= o.day) return { gained: 0, affection: c.affection, again: true };
   const gain = courtGain(o);
   const gained = Math.max(-c.affection, Math.min(AFFECTION_MAX - c.affection, gain));
@@ -142,7 +165,8 @@ export function warmCourtship(member, residentId, n, { deed = null, day = null }
 
 /** COURT-DEEDS: whether `kind` warmed this courtship on `day` or later (warmCourtship's stamp). @param {any} courtship
  *  @param {string} kind @param {number} day */
-export const deedDoneOn = (courtship, kind, day) => Number.isInteger(courtship?.deeds?.[kind]) && courtship.deeds[kind] >= day;
+export const deedDoneOn = (courtship, kind, day) =>
+  Number.isInteger(courtship?.deeds?.[kind]) && courtship.deeds[kind] >= day;
 
 /** A PROPOSAL, heard at full affection: the two are betrothed. Answers whether it was taken. */
 export function propose(member, residentId) {
@@ -190,8 +214,8 @@ export function wed(family, member, res, at, { takeName = false } = {}) {
   member.spouse = s.id;
   member.wedAt = at;
   member.courting = {};
-  for (const p of family.people) if (p.courting?.[s.residentId]) delete p.courting[s.residentId];   // A1
-  s.mapId = res.mapId ?? res.town ?? 0;   // the town they live in - their census house is there, and their day
+  for (const p of family.people) if (p.courting?.[s.residentId]) delete p.courting[s.residentId]; // A1
+  s.mapId = res.mapId ?? res.town ?? 0; // the town they live in - their census house is there, and their day
   family.people.push(s);
   touch(family);
   return s;
@@ -223,7 +247,8 @@ export function wedPlayer(family, member, card, sid, at) {
   s.surname = house?.hn ?? own;
   s.gender = card.gender === 'female' ? 'female' : 'male';
   s.race = RACE_KEYS.includes(/** @type {any} */ (card.race)) ? /** @type {string} */ (card.race) : 'Breton';
-  s.face = Number.isInteger(card.face) && /** @type {number} */ (card.face) >= 0 ? /** @type {number} */ (card.face) : 0;
+  s.face =
+    Number.isInteger(card.face) && /** @type {number} */ (card.face) >= 0 ? /** @type {number} */ (card.face) : 0;
   s.gen = member.gen | 0;
   s.spouse = member.id;
   s.wedAt = at;
@@ -237,7 +262,8 @@ export function wedPlayer(family, member, card, sid, at) {
 }
 
 /** The person of this house a union (by its sid) recorded, or null. */
-export const unionSpouse = (family, sid) => (family?.people ?? []).find((p) => p.kind === 'player' && p.realm?.sid === sid) ?? null;
+export const unionSpouse = (family, sid) =>
+  (family?.people ?? []).find((p) => p.kind === 'player' && p.realm?.sid === sid) ?? null;
 
 /** A union the realm ended - the other player's character dead ('died', cause 'fell') or gone from the realm ('gone',
  *  deleted): in this house's record they are dead, and the member may wed again. Answers whether it changed anything. */
@@ -250,7 +276,10 @@ export function playerSpouseLost(family, spouse, at, why) {
 
 /** The children the two have had together in this house. UNION-CHILDREN: a child the other player's house raises is
  *  not one of them - each house rolls its own CHILDREN_MAX, and theirs never take this house's places. */
-export const childrenTogether = (family, member, spouse) => (family?.people ?? []).filter((p) => (p.kind ?? 'member') === 'member' && p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;
+export const childrenTogether = (family, member, spouse) =>
+  (family?.people ?? []).filter(
+    (p) => (p.kind ?? 'member') === 'member' && p.parents.includes(member.id) && p.parents.includes(spouse.id),
+  ).length;
 
 /**
  * A CHILD, perhaps: every CHILD_DAYS days since the wedding (or the last child's day), CHILD_CHANCE of one while both
@@ -263,7 +292,11 @@ export const childrenTogether = (family, member, spouse) => (family?.people ?? [
 export function childStep(family, member, { day, rng, at, settings = {} }) {
   const spouse = spouseOf(family, member);
   if (!spouse || !isAlive(member)) return null;
-  if (member.childDay == null) { member.childDay = day; touch(family); return null; }
+  if (member.childDay == null) {
+    member.childDay = day;
+    touch(family);
+    return null;
+  }
   const from = member.childDay;
   if (day - from < CHILD_DAYS) return null;
   member.childDay = from + CHILD_DAYS * Math.floor((day - from) / CHILD_DAYS);
@@ -276,11 +309,14 @@ export function childStep(family, member, { day, rng, at, settings = {} }) {
 
 /** The lines a resident answers with. */
 export const MARRIAGE_TEXT = Object.freeze({
-  courted: (name, affection) => (affection >= AFFECTION_MAX
-    ? `${name} takes your hand. "If you have a question for me, ask it."`
-    : affection >= 67 ? `${name} laughs, and walks with you a while. "Come back tomorrow."`
-      : affection >= 34 ? `${name} smiles. "I like your company. Come and find me again."`
-        : `${name} looks at you a long moment. "You're kind. We'll see."`),
+  courted: (name, affection) =>
+    affection >= AFFECTION_MAX
+      ? `${name} takes your hand. "If you have a question for me, ask it."`
+      : affection >= 67
+        ? `${name} laughs, and walks with you a while. "Come back tomorrow."`
+        : affection >= 34
+          ? `${name} smiles. "I like your company. Come and find me again."`
+          : `${name} looks at you a long moment. "You're kind. We'll see."`,
   again: (name) => `${name} smiles. "You've had my day already. Tomorrow."`,
   // TONE-TASTE: a tone the resident took ill - the day's courtship spent, and some of what was between them with it
   cooled: (name) => t('legacy.court.cooled', '{name} stiffens. "That is no way to ask me. Another day."', { name }),
@@ -289,9 +325,13 @@ export const MARRIAGE_TEXT = Object.freeze({
   accepted: (name, town) => `${name} says yes. "Meet me at the temple${town ? ` in ${town}` : ''}, and we'll be wed."`,
   wedding: (town) => `"The temple${town ? ` in ${town}` : ''} is waiting on us - walk in, and we'll be wed."`,
   // F11b: a count in words, as speech says it
-  family: (n) => (n ? `"The ${n === 1 ? 'little one is' : `${COUNT_WORDS[n] ?? 'many'} children are`} well. Come home when you can."` : '"All is well at home. Come back to me safe."'),
+  family: (n) =>
+    n
+      ? `"The ${n === 1 ? 'little one is' : `${COUNT_WORDS[n] ?? 'many'} children are`} well. Come home when you can."`
+      : '"All is well at home. Come back to me safe."',
   ask: (name) => `Be wed to ${name} here, before the gods?`,
-  wed: (name, house) => `You and ${name} are wed. ${name} is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,
+  wed: (name, house) =>
+    `You and ${name} are wed. ${name} is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,
   child: (name, spouse) => `A child is born to you and ${spouse}: ${name}.`,
   lost: (name) => `Word reaches you: ${name} is dead.`,
   // LEGACY7 part three: two players wed

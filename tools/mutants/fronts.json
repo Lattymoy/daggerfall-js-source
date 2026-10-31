@@ -32,8 +32,8 @@
   {
     "name": "FRONTS-twice-a-cycle",
     "file": "src/net/frontLaw.js",
-    "old": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * (i + 1));",
-    "new": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * i) && i - 1;",
+    "old": "    const j = Math.floor(random() * (i + 1));",
+    "new": "    const j = Math.floor(random() * i) && i - 1;",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -43,7 +43,7 @@
     "name": "FRONTS-bay-inside",
     "file": "src/net/frontLaw.js",
     "old": "export const frontStands = (day, lane) => !FRONT_PROVINCES.includes(lane) || frontLanes(day).includes(lane);",
-    "new": "export const frontStands = (day, lane) => (lane !== 9 && lane !== 0 ? !FRONT_PROVINCES.includes(lane) : lane === 9) || frontLanes(day).includes(lane);",
+    "new": "export const frontStands = (day, lane) =>\n  (lane !== 9 && lane !== 0 ? !FRONT_PROVINCES.includes(lane) : lane === 9) || frontLanes(day).includes(lane);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "FRONTS-star-unfronted",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": " && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
-    "new": " && starfallRuns(starTimes(n, k).fallAt);",
+    "old": "export const starInWindow = (n, k) =>\n  starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
+    "new": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "FRONTS-raid-slots",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out;",
-    "new": "  if (!raidLaneOpen(lane) || !parties.length) return out;",
+    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out; // FRONTS: a province off its turn rolls no slot",
+    "new": "  if (!raidLaneOpen(lane) || !parties.length) return out; // FRONTS: a province off its turn rolls no slot",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "FRONTS-raid-client",
     "file": "src/systems/raidingParties.js",
-    "old": "export const raidsForLane = (day, lane, groups, fronted = true) => (fronted && !raidLaneStands(day, lane) ?",
-    "new": "export const raidsForLane = (day, lane, groups, fronted = true) => (fronted && !raidLaneOpen(lane) ?",
+    "old": "  fronted && !raidLaneStands(day, lane)",
+    "new": "  fronted && !raidLaneOpen(lane)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-FRONTS-A5-starOk-fronted",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "&& siteEventLaneOpen(starLaneOf(k));\n",
-    "new": "&& siteEventLaneOpen(starLaneOf(k)) && frontStands(frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt)), starLaneOf(k));\n",
+    "old": "  siteEventLaneOpen(starLaneOf(k));",
+    "new": "  siteEventLaneOpen(starLaneOf(k)) &&\n  frontStands(frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt)), starLaneOf(k));",
     "tests": [
       "test/net/fronts1_law.test.js",
       "test/net/starfall/star1_law.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-FRONTS-B7-row-instant",
     "file": "src/systems/eventTimers.js",
-    "old": "      const rise = sdRiseNotBefore(lr, now, recs);",
-    "new": "      const rise = Math.max(lr.next, now);",
+    "old": "      const rise = sdRiseNotBefore(lr, now, recs); // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)",
+    "new": "      const rise = Math.max(lr.next, now); // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-FRONTS-B6-offline-fronted",
     "file": "src/systems/raidingParties.js",
-    "old": "(fronted && !raidLaneStands(day, lane) ? [] :",
-    "new": "(!raidLaneStands(day, lane) ? [] :",
+    "old": "  fronted && !raidLaneStands(day, lane)",
+    "new": "  !raidLaneStands(day, lane)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "AUDIT-FRONTS-B6-host-online",
     "file": "src/systems/raidingParties.js",
-    "old": "raidsForLane(day, lane, laneGroupsNow(lane), sharedClockOn())",
-    "new": "raidsForLane(day, lane, laneGroupsNow(lane), true)",
+    "old": "const lanesForDay = (day) =>\n  RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane), sharedClockOn()));",
+    "new": "const lanesForDay = (day) => RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane), true));",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-FRONTS-B4-sched-live",
     "file": "src/systems/eventTimers.js",
-    "old": "of.filter((r) => r.live && !r.sched).length",
-    "new": "of.filter((r) => r.live).length",
+    "old": "    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length }; // AUDIT FRONTS B4: a schedule is not under way",
+    "new": "    return { id: g.id, rows: of, live: of.filter((r) => r.live).length }; // AUDIT FRONTS B4: a schedule is not under way",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AUDIT-FRONTS-C1-names-swapped",
     "file": "src/systems/frontWords.js",
-    "old": "t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1))",
-    "new": "t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day))",
+    "old": "      title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1)),",
+    "new": "      title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day)),",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-FRONTS-C1-province",
     "file": "src/systems/frontWords.js",
-    "old": "const provinceName = (lane) => { const r = regionOfTheatre(lane);",
-    "new": "const provinceName = (lane) => { const r = regionOfTheatre(lane % 8 + 1);",
+    "old": "  const r = regionOfTheatre(lane);",
+    "new": "  const r = regionOfTheatre((lane % 8) + 1);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

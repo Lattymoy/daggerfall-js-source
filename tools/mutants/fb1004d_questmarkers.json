@@ -112,8 +112,8 @@
   {
     "name": "QUEST-MARKERS-backstop-always-moves",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  if (hasFloor(own)) return own;",
-    "new": "",
+    "old": "  if (hasFloor(own)) return own;\n  for (const p of spots ?? []) if (hasFloor(p)) return p;",
+    "new": "  for (const p of spots ?? []) if (hasFloor(p)) return p;",
     "tests": [
       "test/systems/quest/fb1004d_questmarkers.test.js"
     ],

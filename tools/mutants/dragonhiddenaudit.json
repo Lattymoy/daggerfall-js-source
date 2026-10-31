@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-the-theatre-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py",
-    "new": "  return Math.floor(py",
+    "old": "  return (\n    Math.floor(px / DRAGON_CELL_PX) === cell.cx &&\n    Math.floor(py / DRAGON_CELL_PX) === cell.cy &&\n    sx === c.sx &&\n    sz === c.sz\n  );",
+    "new": "  return Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx && sz === c.sz;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-the-centre-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "=== cell.cy && sx === c.sx && sz === c.sz;",
-    "new": "=== cell.cy;",
+    "old": "  return (\n    Math.floor(px / DRAGON_CELL_PX) === cell.cx &&\n    Math.floor(py / DRAGON_CELL_PX) === cell.cy &&\n    sx === c.sx &&\n    sz === c.sz\n  );",
+    "new": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-its-north-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "=== cell.cy && sx === c.sx && sz === c.sz;",
-    "new": "=== cell.cy && sx === c.sx;",
+    "old": "  return (\n    Math.floor(px / DRAGON_CELL_PX) === cell.cx &&\n    Math.floor(py / DRAGON_CELL_PX) === cell.cy &&\n    sx === c.sx &&\n    sz === c.sz\n  );",
+    "new": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A4-none-let-go",
     "file": "server/src/dragonFights.js",
-    "old": "      if (!f.fell && !(f.v >= DRAGON_BRAIN_MIN)) old.push(id); else s.fights.set(id, dragonBrain.dragonWoke(f));",
+    "old": "      if (!f.fell && !(f.v >= DRAGON_BRAIN_MIN)) old.push(id);\n      else s.fights.set(id, dragonBrain.dragonWoke(f));",
     "new": "      s.fights.set(id, dragonBrain.dragonWoke(f));",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A4-its-record-kept",
     "file": "server/src/dragonFights.js",
-    "old": "    if (old.length) { await room.state.storage.delete(old.map(storeKey)); await index(room, s.fights); }",
-    "new": "    if (old.length) { await index(room, s.fights); }",
+    "old": "      await room.state.storage.delete(old.map(storeKey));\n      await index(room, s.fights);",
+    "new": "      await index(room, s.fights);",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-B1-a-battles-blow-let-through",
     "file": "server/src/dragonFights.js",
-    "old": "  if (!isCellRoom(a.key)) { room._junk(ws); return; }\n",
-    "new": "",
+    "old": "  if (!isCellRoom(a.key)) {\n    room._junk(ws);\n    return;\n  }\n  if (a.ly) {",
+    "new": "  if (a.ly) {",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A3-the-fight-brass",
     "file": "server/src/dragonFights.js",
-    "old": "b: dragonLookOf(o), sx: m.sx,",
-    "new": "b: 0, sx: m.sx,",
+    "old": "    f = DRAGON_SEAM.new({\n      w: t.w,\n      b: dragonLookOf(o),\n      sx: m.sx,\n      sz: m.sz,\n      now,\n      leaveAt: t.leaveAt,\n      roost: roostLeg(o),\n    });",
+    "new": "    f = DRAGON_SEAM.new({ w: t.w, b: 0, sx: m.sx, sz: m.sz, now, leaveAt: t.leaveAt, roost: roostLeg(o) });",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-C2-the-share-brass",
     "file": "server/src/dragonFights.js",
-    "old": "look = c.b === 1 ? 1 : 0;",
-    "new": "look = 0;",
+    "old": "      look = c.b === 1 ? 1 : 0;",
+    "new": "      look = 0;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]

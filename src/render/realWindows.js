@@ -33,8 +33,19 @@ import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { pageParam } from '../systems/pageQuery.js';
 import {
-  ROOM_TEXELS_PER_M, ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_HEARTH_GLOW, ROOM_SEED_START, ROOM_SEED_NQ, ROOM_SEED_BIAS,
-  ROOM_CURTAIN_SALT, ROOM_LIT_K, ROOM_CURTAIN_K, ROOM_CURTAIN_EDGE, roomColorTable,
+  ROOM_TEXELS_PER_M,
+  ROOM_STYLES,
+  ROOM_PIECES,
+  ROOM_FABRICS,
+  ROOM_HEARTH_GLOW,
+  ROOM_SEED_START,
+  ROOM_SEED_NQ,
+  ROOM_SEED_BIAS,
+  ROOM_CURTAIN_SALT,
+  ROOM_LIT_K,
+  ROOM_CURTAIN_K,
+  ROOM_CURTAIN_EDGE,
+  roomColorTable,
 } from '../world/windowRoomArt.js';
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -48,7 +59,7 @@ import {
 export function realWindowsMode(search = globalThis.location?.search ?? '') {
   if (!isEnhanced(search)) return 'off';
   const door = pageParam('windows', search);
-  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');   // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands
+  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows'); // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands
   return v === 'rooms' || v === 'off' ? v : 'full';
 }
 
@@ -129,7 +140,9 @@ export function roomExit(o, d, box = ROOM_BOX) {
  *  `night` when the style is the warm one (the night style's amber: red over blue; day, fog and custom are not),
  *  the lamp the night style's own hue lifted to a lamp, and the day light the ambient's share. */
 export function roomLightFor(emission, ambient) {
-  const e0 = emission?.[0] ?? 0, e1 = emission?.[1] ?? 0, e2 = emission?.[2] ?? 0;
+  const e0 = emission?.[0] ?? 0,
+    e1 = emission?.[1] ?? 0,
+    e2 = emission?.[2] ?? 0;
   const on = e0 + e1 + e2 > 0;
   const night = on && e0 > e2 + 0.05;
   const peak = Math.max(e0, e1, e2) || 1;
@@ -138,7 +151,11 @@ export function roomLightFor(emission, ambient) {
     on,
     night: night ? 1 : 0,
     lamp: [e0 * k, e1 * k, e2 * k],
-    day: [(ambient?.[0] ?? 0) * ROOM_DAY_SHARE, (ambient?.[1] ?? 0) * ROOM_DAY_SHARE, (ambient?.[2] ?? 0) * ROOM_DAY_SHARE],
+    day: [
+      (ambient?.[0] ?? 0) * ROOM_DAY_SHARE,
+      (ambient?.[1] ?? 0) * ROOM_DAY_SHARE,
+      (ambient?.[2] ?? 0) * ROOM_DAY_SHARE,
+    ],
   };
 }
 
@@ -395,13 +412,17 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
  *  derivatives in uniform control flow, before any discard); CUTOUT after the picture's texel; GLASS between the
  *  emission and the albedo it is subtracted from (an interior's glass wears no window style); ROOM once the lighting
  *  is summed and before the fog - `lit` carries the room, so the shader's own output line stands as it was. */
-export const RW_MAIN_DERIVS = '  vec3 rwDp1 = dFdx(vWorldPos), rwDp2 = dFdy(vWorldPos); vec2 rwDuv1 = dFdx(vUV), rwDuv2 = dFdy(vUV);   // RW1: the room\'s frame, in uniform control flow\n'
-  + '  if (uPaneOn > 0.5 && gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;   // PANE-CLIP: the view out draws only what stands past the glass';
-export const RW_MAIN_CUTOUT = '  if (uCutout > 0.5 && tex.a < 0.5) discard;   // RW1: a cutout picture\'s hole (every other picture keeps INCIDENT 2026-09-04\'s no-clip law)';
-export const RW_MAIN_GLASS = '  float rwGlass = texture(uEmissionTex, vUV).r;   // RW1: the glass mask\n'
-  + '  if (uWinMode > 2.5 && rwGlass > 0.5 && rwInRect(gl_FragCoord.xy)) discard;   // RW1: an interior\'s glass, cut to the view out\n'
-  + '  emission *= step(uWinMode, 1.5);   // RW1: an interior\'s glass wears no window style';
-export const RW_MAIN_ROOM = '  if (uWinMode > 0.5 && uWinMode < 1.5) lit = rwRoomOver(lit + emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2, diff) - emission;   // RW1: the room behind the glass; WL1: and the sun through it';
+export const RW_MAIN_DERIVS =
+  "  vec3 rwDp1 = dFdx(vWorldPos), rwDp2 = dFdy(vWorldPos); vec2 rwDuv1 = dFdx(vUV), rwDuv2 = dFdy(vUV);   // RW1: the room's frame, in uniform control flow\n" +
+  '  if (uPaneOn > 0.5 && gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;   // PANE-CLIP: the view out draws only what stands past the glass';
+export const RW_MAIN_CUTOUT =
+  "  if (uCutout > 0.5 && tex.a < 0.5) discard;   // RW1: a cutout picture's hole (every other picture keeps INCIDENT 2026-09-04's no-clip law)";
+export const RW_MAIN_GLASS =
+  '  float rwGlass = texture(uEmissionTex, vUV).r;   // RW1: the glass mask\n' +
+  "  if (uWinMode > 2.5 && rwGlass > 0.5 && rwInRect(gl_FragCoord.xy)) discard;   // RW1: an interior's glass, cut to the view out\n" +
+  "  emission *= step(uWinMode, 1.5);   // RW1: an interior's glass wears no window style";
+export const RW_MAIN_ROOM =
+  '  if (uWinMode > 0.5 && uWinMode < 1.5) lit = rwRoomOver(lit + emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2, diff) - emission;   // RW1: the room behind the glass; WL1: and the sun through it';
 
 // ---------------------------------------------------------------------------------------------------------------
 // THE VIEW OUT
@@ -459,32 +480,51 @@ export function sphereNdcRect(pv, x, y, z, r, out = [0, 0, 0, 0]) {
   const cy = pv[1] * x + pv[5] * y + pv[9] * z + pv[13];
   const w = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];
   const sw = Math.hypot(pv[3], pv[7], pv[11]) * r;
-  if (w + sw <= 0) return null;                                                          // behind the eye
-  if (w - sw <= 1e-6) { out[0] = -1; out[1] = -1; out[2] = 1; out[3] = 1; return out; }  // through the eye's plane
-  const sx = Math.hypot(pv[0], pv[4], pv[8]) * r, sy = Math.hypot(pv[1], pv[5], pv[9]) * r;
-  const n = w - sw, f = w + sw;
-  const x0 = Math.min((cx - sx) / n, (cx - sx) / f), x1 = Math.max((cx + sx) / n, (cx + sx) / f);
-  const y0 = Math.min((cy - sy) / n, (cy - sy) / f), y1 = Math.max((cy + sy) / n, (cy + sy) / f);
-  if (x0 >= 1 || x1 <= -1 || y0 >= 1 || y1 <= -1) return null;                          // wholly off screen
-  out[0] = Math.max(-1, x0); out[1] = Math.max(-1, y0); out[2] = Math.min(1, x1); out[3] = Math.min(1, y1);
+  if (w + sw <= 0) return null; // behind the eye
+  if (w - sw <= 1e-6) {
+    out[0] = -1;
+    out[1] = -1;
+    out[2] = 1;
+    out[3] = 1;
+    return out;
+  } // through the eye's plane
+  const sx = Math.hypot(pv[0], pv[4], pv[8]) * r,
+    sy = Math.hypot(pv[1], pv[5], pv[9]) * r;
+  const n = w - sw,
+    f = w + sw;
+  const x0 = Math.min((cx - sx) / n, (cx - sx) / f),
+    x1 = Math.max((cx + sx) / n, (cx + sx) / f);
+  const y0 = Math.min((cy - sy) / n, (cy - sy) / f),
+    y1 = Math.max((cy + sy) / n, (cy + sy) / f);
+  if (x0 >= 1 || x1 <= -1 || y0 >= 1 || y1 <= -1) return null; // wholly off screen
+  out[0] = Math.max(-1, x0);
+  out[1] = Math.max(-1, y0);
+  out[2] = Math.min(1, x1);
+  out[3] = Math.min(1, y1);
   return out;
 }
 
 /** The rectangle grown by the margin and held to the screen; null when nothing of it is left. */
 export function padRect(rect, margin = GLASS_RECT_MARGIN) {
   if (!rect) return null;
-  const x0 = Math.max(-1, rect[0] - margin), y0 = Math.max(-1, rect[1] - margin);
-  const x1 = Math.min(1, rect[2] + margin), y1 = Math.min(1, rect[3] + margin);
+  const x0 = Math.max(-1, rect[0] - margin),
+    y0 = Math.max(-1, rect[1] - margin);
+  const x1 = Math.min(1, rect[2] + margin),
+    y1 = Math.min(1, rect[3] + margin);
   return x1 > x0 && y1 > y0 ? [x0, y0, x1, y1] : null;
 }
 
 /** The camera's projection cropped to an NDC rectangle: the rectangle becomes the whole of the new clip space, so the
  *  pass draws only what the glass can show, at the pixels the glass covers. Column-major, `out` reused. */
 export function cropProjection(proj, rect, out = new Float32Array(16)) {
-  const sx = 2 / (rect[2] - rect[0]), sy = 2 / (rect[3] - rect[1]);
-  const tx = -(rect[2] + rect[0]) / (rect[2] - rect[0]), ty = -(rect[3] + rect[1]) / (rect[3] - rect[1]);
+  const sx = 2 / (rect[2] - rect[0]),
+    sy = 2 / (rect[3] - rect[1]);
+  const tx = -(rect[2] + rect[0]) / (rect[2] - rect[0]),
+    ty = -(rect[3] + rect[1]) / (rect[3] - rect[1]);
   for (let c = 0; c < 4; c++) {
-    const x = proj[c * 4], y = proj[c * 4 + 1], w = proj[c * 4 + 3];
+    const x = proj[c * 4],
+      y = proj[c * 4 + 1],
+      w = proj[c * 4 + 3];
     out[c * 4] = sx * x + tx * w;
     out[c * 4 + 1] = sy * y + ty * w;
     out[c * 4 + 2] = proj[c * 4 + 2];
@@ -507,8 +547,8 @@ export function viewOutProjection(proj, out = new Float32Array(16)) {
 
 /** The view out's pixels for a rectangle of a `vw` x `vh` world: drawn `w` x `h`, in a texture `allocW` x `allocH`. */
 export function viewTargetSize(rect, vw, vh, scale = VIEW_SCALE) {
-  const w = Math.max(8, Math.min(VIEW_MAX_SIDE, Math.round((rect[2] - rect[0]) / 2 * vw * scale)));
-  const h = Math.max(8, Math.min(VIEW_MAX_SIDE, Math.round((rect[3] - rect[1]) / 2 * vh * scale)));
+  const w = Math.max(8, Math.min(VIEW_MAX_SIDE, Math.round(((rect[2] - rect[0]) / 2) * vw * scale)));
+  const h = Math.max(8, Math.min(VIEW_MAX_SIDE, Math.round(((rect[3] - rect[1]) / 2) * vh * scale)));
   const up = (n) => Math.min(VIEW_MAX_SIDE, Math.ceil(n / VIEW_BUCKET) * VIEW_BUCKET);
   return { w, h, allocW: up(w), allocH: up(h) };
 }
@@ -523,7 +563,14 @@ export function viewOutDue(state, view, rect, now) {
 
 /** A building's view out, one per interior host (scenes/worldModes.js): what was drawn, when, and from where. */
 export function createViewOut() {
-  return { drawn: false, rect: [0, 0, 0, 0], view: new Float32Array(16), proj: new Float32Array(16), at: -Infinity, lastWanted: -Infinity };
+  return {
+    drawn: false,
+    rect: [0, 0, 0, 0],
+    view: new Float32Array(16),
+    proj: new Float32Array(16),
+    at: -Infinity,
+    lastWanted: -Infinity,
+  };
 }
 
 /**
@@ -534,27 +581,48 @@ export function createViewOut() {
  * whether the street is in it (`view`: the glass is cut) or only the sky (a cutout's holes with the street off).
  */
 export function viewOutFrame(state, opts) {
-  try { return viewOut(state, opts); }
-  finally { opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode); }   // WL1: the outside's light, for what the glass lets in (render/windowLight.js) - fresh from the view out when it drew, else read; and the row's word
+  try {
+    return viewOut(state, opts);
+  } finally {
+    opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode);
+  } // WL1: the outside's light, for what the glass lets in (render/windowLight.js) - fresh from the view out when it drew, else read; and the row's word
 }
 function viewOut(state, { renderer, mode, proj, view, now, scene }) {
   const seen = renderer.takeGlassRect?.() ?? null;
   const rect = padRect(seen?.rect ?? null);
   const street = mode === 'full' && typeof scene?.draw === 'function';
   if (!rect || (!street && !seen.holes)) {
-    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { renderer.releaseOutsideView?.(); state.drawn = false; }
+    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) {
+      renderer.releaseOutsideView?.();
+      state.drawn = false;
+    }
     return null;
   }
   // WAGONS2 (FINAL AUDIT): the street off (Rooms only, or Off) and only a cutout's holes on screen - its sky alone, which
   // the target never holds: let it go now (the holes kept it wanted, and a target drawn under Full - up to 8 MB - stood
   // until the player left the building)
-  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }
+  if (!street) {
+    if (state.drawn) {
+      renderer.releaseOutsideView?.();
+      state.drawn = false;
+    }
+    return { rect, view: false };
+  }
   state.lastWanted = now;
   if (viewOutDue(state, view, rect, now)) {
-    const ok = renderer.outsideViewFrame?.(rect, viewOutProjection(proj, state.proj ??= new Float32Array(16)), view, scene);
+    const ok = renderer.outsideViewFrame?.(
+      rect,
+      viewOutProjection(proj, (state.proj ??= new Float32Array(16))),
+      view,
+      scene,
+    );
     if (!ok) return { rect, view: false };
-    state.drawn = true; state.at = now;
-    state.rect[0] = rect[0]; state.rect[1] = rect[1]; state.rect[2] = rect[2]; state.rect[3] = rect[3];
+    state.drawn = true;
+    state.at = now;
+    state.rect[0] = rect[0];
+    state.rect[1] = rect[1];
+    state.rect[2] = rect[2];
+    state.rect[3] = rect[3];
     state.view.set(view);
   }
   return { rect, view: true };
@@ -601,7 +669,8 @@ void main() {
 /** The background's ray from the camera: the rows of the view's rotation over the projection's two scales (a
  *  symmetric perspective, mirrored or not - mat4.js mirrorProjectionX negates the first scale, and the ray with it). */
 export function viewRays(proj, view) {
-  const p0 = proj[0] || 1, p5 = proj[5] || 1;
+  const p0 = proj[0] || 1,
+    p5 = proj[5] || 1;
   return {
     x: [view[0] / p0, view[4] / p0, view[8] / p0],
     y: [view[1] / p5, view[5] / p5, view[9] / p5],

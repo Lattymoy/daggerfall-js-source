@@ -46,25 +46,30 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SAVE_MAX_BYTES } from './service.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';   // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
-import { homeMoved } from '../../src/net/homeLaw.js';   // QUEST-HOME: the homes a deleted character took with it
-import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realm/realmGoldLaw.js';
-import { birthSkillOk } from '../../src/systems/levelClimb.js';   // LEVEL-45: a birth's skill start is a real creation's (skills zeroed / start forged → no birth)
-import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/card/cardWorthLaw.js';   // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
-import { ID_RE, armsIssuable } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an account named by its id; INT7: the arms' claim
-import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
-import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js'; // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
+import { homeMoved } from '../../src/net/homeLaw.js'; // QUEST-HOME: the homes a deleted character took with it
+import {
+  liquidWealthOf,
+  customsAllowance,
+  REALM_BIRTH_LEVEL,
+  REALM_BIRTH_WEALTH_MAX,
+} from '../../src/net/realm/realmGoldLaw.js';
+import { birthSkillOk } from '../../src/systems/levelClimb.js'; // LEVEL-45: a birth's skill start is a real creation's (skills zeroed / start forged → no birth)
+import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/card/cardWorthLaw.js'; // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
+import { ID_RE, armsIssuable } from '../../src/net/identityToken.js'; // CUSTOMS-PASS: an account named by its id; INT7: the arms' claim
+import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js'; // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
+import { isDeveloper } from './titles.js'; // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
-import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character brought in links its first play
-import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
-import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
-import { wealthOf, ledgerPieces, classicCount, WEALTH_VERSION } from './judge.js';   // INT5: what the service's own writes move, witnessed; INT4: the pieces it moves
-import { seaSeasonSteps } from './seaSeason.js';   // SEA-SEASON: the sea's season figures, off a clean checkpoint
-import { piecesRefusal, ledgerMoves, releaseSteps, ledgerReads, leavingKeys } from './ledger.js';   // INT4: a piece the record may give, and the ledger moved with it; SAVE-BATCH: its reads in the checkpoint's first batch
-import { budgetKept, budgetRead, budgetFrom } from './budget.js';   // SAVE-BATCH: and the budget's config, where the isolate kept none
-import { villainClamp } from '../../src/systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: the meter the mint signs, held to its bounds
-import { mightOk } from '../../src/net/mightLaw.js';   // EG-MIGHT: the kit's might the mint signs, held to its bounds
-import { verdictOn } from './verdict.js';   // INT2-INT5: the verdict on every checkpoint, in the checkpoint's own batch
+import { linkFirstPlay } from './founderLink.js'; // FOUNDER5: a character brought in links its first play
+import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js'; // REALM-GZIP: a save read packed or plain
+import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js'; // LEGACY7: a realm character born as a person of the account's own line
+import { wealthOf, ledgerPieces, classicCount, WEALTH_VERSION } from './judge.js'; // INT5: what the service's own writes move, witnessed; INT4: the pieces it moves
+import { seaSeasonSteps } from './seaSeason.js'; // SEA-SEASON: the sea's season figures, off a clean checkpoint
+import { piecesRefusal, ledgerMoves, releaseSteps, ledgerReads, leavingKeys } from './ledger.js'; // INT4: a piece the record may give, and the ledger moved with it; SAVE-BATCH: its reads in the checkpoint's first batch
+import { budgetKept, budgetRead, budgetFrom } from './budget.js'; // SAVE-BATCH: and the budget's config, where the isolate kept none
+import { villainClamp } from '../../src/systems/wild/villainLaw.js'; // PVP-VILLAIN-KEEP: the meter the mint signs, held to its bounds
+import { mightOk } from '../../src/net/mightLaw.js'; // EG-MIGHT: the kit's might the mint signs, held to its bounds
+import { verdictOn } from './verdict.js'; // INT2-INT5: the verdict on every checkpoint, in the checkpoint's own batch
 
 /** Realm characters an ACCOUNT may hold. A new one past it is refused; nothing is ever deleted to make room. */
 export const REALM_CHARACTERS_MAX = 6;
@@ -89,17 +94,32 @@ export const ORIGIN_ID_RE = /^[A-Za-z0-9_-]{4,64}$/;
 /** The R2 keys: player first, so an account is a prefix walk; a character's saves under its id, each at the sequence
  *  it lands at and a tag of its own, so no two writes ever share a key. */
 export const realmPrefix = (/** @type {string} */ playerId) => `realm/${encodeURIComponent(playerId)}/`;
-export const realmObjectKey = (/** @type {string} */ playerId, /** @type {string} */ id, /** @type {number} */ seq, /** @type {string} */ tag) => `${realmPrefix(playerId)}${id}/${seq}-${tag}`;
+export const realmObjectKey = (
+  /** @type {string} */ playerId,
+  /** @type {string} */ id,
+  /** @type {number} */ seq,
+  /** @type {string} */ tag,
+) => `${realmPrefix(playerId)}${id}/${seq}-${tag}`;
 
-const hex = (/** @type {(b: Uint8Array) => Uint8Array} */ rand, /** @type {number} */ n) => [...rand(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, '0')).join('');
+const hex = (/** @type {(b: Uint8Array) => Uint8Array} */ rand, /** @type {number} */ n) =>
+  [...rand(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, '0')).join('');
 /** A fresh key for a write of this character at `seq`. */
-export const mintObjectKey = (/** @type {(b: Uint8Array) => Uint8Array} */ rand, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {number} */ seq) => realmObjectKey(playerId, id, seq, hex(rand, 4));
+export const mintObjectKey = (
+  /** @type {(b: Uint8Array) => Uint8Array} */ rand,
+  /** @type {string} */ playerId,
+  /** @type {string} */ id,
+  /** @type {number} */ seq,
+) => realmObjectKey(playerId, id, seq, hex(rand, 4));
 /** Objects nothing names any more - a write that lost its race, or the save two back. Best effort: one that will not go
  *  is only bytes under the character's prefix, which its delete walks. */
 export async function dropObjects(/** @type {any} */ bucket, /** @type {(string | null | undefined)[]} */ keys) {
   for (const k of keys) {
     if (!k) continue;
-    try { await bucket.delete(k); } catch { /* bytes nothing names */ }
+    try {
+      await bucket.delete(k);
+    } catch {
+      /* bytes nothing names */
+    }
   }
 }
 export const mintRealmId = (/** @type {(b: Uint8Array) => Uint8Array} */ rand) => `r${hex(rand, 10)}`;
@@ -112,8 +132,10 @@ export function realmNameOf(/** @type {unknown} */ v) {
   return name && !/[\u0000-\u001f\u007f]/.test(name) ? name : null;
 }
 
-const whole = (/** @type {unknown} */ v, /** @type {number} */ max) => (Number.isSafeInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= max ? v : null);
-const text = (/** @type {unknown} */ v, /** @type {number} */ max) => (typeof v === 'string' && v && !/[\u0000-\u001f\u007f]/.test(v) ? v.slice(0, max) : null);
+const whole = (/** @type {unknown} */ v, /** @type {number} */ max) =>
+  Number.isSafeInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= max ? v : null;
+const text = (/** @type {unknown} */ v, /** @type {number} */ max) =>
+  typeof v === 'string' && v && !/[\u0000-\u001f\u007f]/.test(v) ? v.slice(0, max) : null;
 
 /**
  * THE SUMMARY A CLIENT MAY SEND, projected - what the tile shows and nothing else: level, class, race, gender, and
@@ -137,25 +159,38 @@ export function realmSummaryOf(v) {
 /** The row as the Online door sees it. The lease is never in it. */
 const view = (/** @type {any} */ r, /** @type {number} */ nowS) => {
   let summary = null;
-  try { summary = r.summary ? JSON.parse(r.summary) : null; } catch { summary = null; }
+  try {
+    summary = r.summary ? JSON.parse(r.summary) : null;
+  } catch {
+    summary = null;
+  }
   return {
-    id: r.id, name: r.name, summary, seq: r.seq, bytes: r.bytes,
+    id: r.id,
+    name: r.name,
+    summary,
+    seq: r.seq,
+    bytes: r.bytes,
     playing: !!r.lease && nowS - r.lease_at < REALM_PLAYING_S,
     customs: !!r.origin_id,
-    createdAt: r.created_at, updatedAt: r.updated_at,
-    lineage: r.lineage_id ?? null, person: r.person_id ?? null,   // LEGACY7: the line and the person it plays (legacy.js)
-    house: r.line ? houseOn(r.line, r.person_id) : null,   // LEGACY7 part two: its house, for the tile (net/houseLaw.js)
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+    lineage: r.lineage_id ?? null,
+    person: r.person_id ?? null, // LEGACY7: the line and the person it plays (legacy.js)
+    house: r.line ? houseOn(r.line, r.person_id) : null, // LEGACY7 part two: its house, for the tile (net/houseLaw.js)
   };
 };
 
 /** Every realm character this account holds, the one played last first. LEGACY7: the living - a tombstoned one
  *  (legacy.js realmDie) is played no more and holds no slot; its family's record keeps it (the Hall). */
 export async function listRealm({ db, nowS }, /** @type {string} */ playerId) {
-  const r = await db.prepare(
-    'SELECT r.id, r.name, r.summary, r.seq, r.bytes, r.lease, r.lease_at, r.origin_id, r.created_at, r.updated_at, r.lineage_id, r.person_id, l.record AS line'
-    + ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id'
-    + ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',
-  ).bind(playerId, REALM_CHARACTERS_MAX).all();
+  const r = await db
+    .prepare(
+      'SELECT r.id, r.name, r.summary, r.seq, r.bytes, r.lease, r.lease_at, r.origin_id, r.created_at, r.updated_at, r.lineage_id, r.person_id, l.record AS line' +
+        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id' +
+        ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',
+    )
+    .bind(playerId, REALM_CHARACTERS_MAX)
+    .all();
   return (r?.results ?? []).map((row) => view(row, nowS));
 }
 
@@ -192,27 +227,39 @@ export const REALM_LEVEL_CLAIM_MAX = 45;
 export async function realmMintFacts({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
   const none = { rc: 0, cl: null, wa: null, km: null, house: null, name: null, vl: 0 };
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return none;
-  const row = await db.prepare('SELECT r.dead_at, r.lease, r.summary, r.level_seen, r.arms_top, r.arms_bow, r.might, r.person_id AS person, r.name AS name, r.villainy AS villainy, l.record AS record'
-    + ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();
+  const row = await db
+    .prepare(
+      'SELECT r.dead_at, r.lease, r.summary, r.level_seen, r.arms_top, r.arms_bow, r.might, r.person_id AS person, r.name AS name, r.villainy AS villainy, l.record AS record' +
+        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?',
+    )
+    .bind(id, playerId)
+    .first();
   if (!row || row.dead_at != null || row.lease == null) return none;
   let summary = null;
-  try { summary = row.summary ? JSON.parse(row.summary) : null; } catch { summary = null; }
+  try {
+    summary = row.summary ? JSON.parse(row.summary) : null;
+  } catch {
+    summary = null;
+  }
   const lv = row.level_seen ?? summary?.level;
   const arms = row.arms_top != null ? [row.arms_top, row.arms_bow === 1 ? 1 : 0] : null;
   return {
     rc: 1,
     cl: Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null,
     wa: armsIssuable(arms) ? /** @type {[number, 0|1]} */ (arms) : null,
-    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null,   // EG-MIGHT: the kit's might, judged
-    house: houseOn(row.record, row.person),   // no line, no record: none (houseOn's own null)
-    name: typeof row.name === 'string' && row.name ? row.name : null,   // NAME-AS: its own name, for the mint to wear where chosen
-    vl: villainClamp(row.villainy),   // PVP-VILLAIN-KEEP: its villain meter, 0..10,000
+    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null, // EG-MIGHT: the kit's might, judged
+    house: houseOn(row.record, row.person), // no line, no record: none (houseOn's own null)
+    name: typeof row.name === 'string' && row.name ? row.name : null, // NAME-AS: its own name, for the mint to wear where chosen
+    vl: villainClamp(row.villainy), // PVP-VILLAIN-KEEP: its villain meter, 0..10,000
   };
 }
 
 /** ONE CHARACTER IN PLAY AN ACCOUNT: every lease of this account but `keep`'s is dropped. */
 async function freeOthers({ db }, /** @type {string} */ playerId, /** @type {string} */ keep) {
-  await db.prepare('UPDATE realm_characters SET lease = NULL WHERE player = ? AND id != ? AND lease IS NOT NULL').bind(playerId, keep).run();
+  await db
+    .prepare('UPDATE realm_characters SET lease = NULL WHERE player = ? AND id != ? AND lease IS NOT NULL')
+    .bind(playerId, keep)
+    .run();
 }
 
 /**
@@ -224,38 +271,70 @@ async function freeOthers({ db }, /** @type {string} */ playerId, /** @type {str
  * `{ id, lease, seq }` or `{ error }`.
  * @param {any} ctx @param {string} playerId @param {{ name: unknown, summary?: unknown, lineage?: unknown, person?: unknown }} at
  */
-export async function createRealm({ db, rand, nowS }, playerId, { name, summary = null, lineage = null, person = null }) {
+export async function createRealm(
+  { db, rand, nowS },
+  playerId,
+  { name, summary = null, lineage = null, person = null },
+) {
   const n = realmNameOf(name);
   if (!playerId || !n) return { error: 'body' };
   const born = lineage != null || person != null;
   if (born && Number.isSafeInteger(person)) {
     // LEGACY7: A BIRTH WHOSE FIRST SAVE NEVER LANDED is taken up again (customs' own resume) - the same row, a new lease -
     // never refused as a person already played: the realm never held a save of them
-    const had = await db.prepare('SELECT id, bytes, dead_at FROM realm_characters WHERE player = ? AND lineage_id = ? AND person_id = ?').bind(playerId, lineage, person).first();
+    const had = await db
+      .prepare('SELECT id, bytes, dead_at FROM realm_characters WHERE player = ? AND lineage_id = ? AND person_id = ?')
+      .bind(playerId, lineage, person)
+      .first();
     if (had && !(had.bytes > 0) && had.dead_at == null) {
       const joined = await joinRealm({ db, rand, nowS }, playerId, had.id);
       return joined.error ? joined : { id: joined.id, lease: joined.lease, seq: 0, resumed: true };
     }
   }
-  if (born) { const refused = await lineageBirthRefusal(db, playerId, lineage, person); if (refused) return refused; }
+  if (born) {
+    const refused = await lineageBirthRefusal(db, playerId, lineage, person);
+    if (refused) return refused;
+  }
   const id = mintRealmId(rand);
   const lease = mintLease(rand);
   let wrote;
   try {
-    wrote = await db.prepare(
-      'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at, lineage_id, person_id)'
-      + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'
-      // AUDIT FB1029e F4: a birth lands only on a line that still stands - one removed since its check is no line
-      + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',
-    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null, born ? person : null, playerId, REALM_CHARACTERS_MAX,
-      born ? lineage : null, playerId, born ? lineage : null).run();
+    wrote = await db
+      .prepare(
+        'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at, lineage_id, person_id)' +
+          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +
+          // AUDIT FB1029e F4: a birth lands only on a line that still stands - one removed since its check is no line
+          ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',
+      )
+      .bind(
+        id,
+        playerId,
+        n,
+        realmSummaryOf(summary),
+        lease,
+        nowS,
+        nowS,
+        nowS,
+        born ? lineage : null,
+        born ? person : null,
+        playerId,
+        REALM_CHARACTERS_MAX,
+        born ? lineage : null,
+        playerId,
+        born ? lineage : null,
+      )
+      .run();
   } catch (e) {
     // LEGACY7: two tabs born as one person race to the unique index (migration 0084) - one wins
     if (born && /UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) return { error: 'lineage-played' };
     throw e;
   }
   if (!wrote.meta.changes) {
-    if (born && !(await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, lineage).first())) return { error: 'no-lineage' };
+    if (
+      born &&
+      !(await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, lineage).first())
+    )
+      return { error: 'no-lineage' };
     return { error: 'too-many-characters' };
   }
   await freeOthers({ db }, playerId, id);
@@ -281,8 +360,17 @@ export const CHARACTER_TABLES = Object.freeze(['renown_tracks', 'homes', 'guild_
 /** CUSTOMS CARRIES A CHARACTER'S TRACK IN, re-keyed from the offline id to the realm's - the account's own rows only, and
  *  never over a track the realm's id already holds (OR IGNORE: a resume carries again, AUDIT REALM2 S6). Statements, for
  *  the caller's batch. */
-const customsCarry = (/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ originId, /** @type {string} */ id) =>
-  CHARACTER_TABLES.map((table) => db.prepare(`UPDATE OR IGNORE ${table} SET char_id = ? WHERE player = ? AND char_id = ?`).bind(id, playerId, originId));
+const customsCarry = (
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {string} */ originId,
+  /** @type {string} */ id,
+) =>
+  CHARACTER_TABLES.map((table) =>
+    db
+      .prepare(`UPDATE OR IGNORE ${table} SET char_id = ? WHERE player = ? AND char_id = ?`)
+      .bind(id, playerId, originId),
+  );
 
 // ═══ CUSTOMS-PASS (2026-09-29, the field - Mac, asked, "Staff customs pass") ══════════════════════════════════════════
 //
@@ -301,9 +389,13 @@ const openPassOf = (/** @type {any} */ db, /** @type {string} */ playerId) =>
   db.prepare('SELECT id FROM realm_passes WHERE player = ? AND spent_at IS NULL').bind(playerId).first();
 
 /** CUSTOMS-PASS: is this character already in - its census spent on any account, or a realm character standing on it? */
-const originIn = async (/** @type {any} */ db, /** @type {string} */ originId) => !!(await db.prepare(
-  'SELECT 1 AS here WHERE EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND spent = 1) OR EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)',
-).bind(originId, originId).first());
+const originIn = async (/** @type {any} */ db, /** @type {string} */ originId) =>
+  !!(await db
+    .prepare(
+      'SELECT 1 AS here WHERE EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND spent = 1) OR EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)',
+    )
+    .bind(originId, originId)
+    .first());
 
 /**
  * CUSTOMS-PASS, GRANTED OR TAKEN BACK - a developer's act alone (a pass lets a character into the realm's economy, which
@@ -317,15 +409,22 @@ const originIn = async (/** @type {any} */ db, /** @type {string} */ originId) =
  */
 export async function grantCustomsPass({ db, nowS }, actor, env, { name, account, revoke = false } = {}) {
   if (!isDeveloper(actor, env)) return { error: 'not-developer' };
-  if ((name === undefined) === (account === undefined) || (revoke !== true && revoke !== false)) return { error: 'body' };
+  if ((name === undefined) === (account === undefined) || (revoke !== true && revoke !== false))
+    return { error: 'body' };
   let found;
   if (account !== undefined) {
     if (typeof account !== 'string' || !ID_RE.test(account)) return { error: 'body' };
     found = await db.prepare('SELECT * FROM players WHERE id = ?').bind(account).all();
   } else if (isHandleShaped(name)) {
-    found = await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(/** @type {string} */ (name).toLowerCase()).all();
+    found = await db
+      .prepare('SELECT * FROM players WHERE handle_lc = ?')
+      .bind(/** @type {string} */ (name).toLowerCase())
+      .all();
   } else if (isGuestShaped(name)) {
-    found = await db.prepare('SELECT * FROM players WHERE guest_name = ? AND handle_lc IS NULL LIMIT 2').bind(name).all();
+    found = await db
+      .prepare('SELECT * FROM players WHERE guest_name = ? AND handle_lc IS NULL LIMIT 2')
+      .bind(name)
+      .all();
   } else return { error: 'body' };
   const rows = found?.results ?? [];
   if (!rows.length) return { error: 'no-player' };
@@ -333,7 +432,10 @@ export async function grantCustomsPass({ db, nowS }, actor, env, { name, account
   const target = rows[0];
   const wrote = revoke
     ? await db.prepare('DELETE FROM realm_passes WHERE player = ? AND spent_at IS NULL').bind(target.id).run()
-    : await db.prepare('INSERT OR IGNORE INTO realm_passes (player, granted_by, granted_at) VALUES (?, ?, ?)').bind(target.id, actor.id, nowS).run();
+    : await db
+        .prepare('INSERT OR IGNORE INTO realm_passes (player, granted_by, granted_at) VALUES (?, ?, ?)')
+        .bind(target.id, actor.id, nowS)
+        .run();
   return { ok: true, target: target.id, name: displayName(target), open: !revoke, changed: wrote.meta.changes > 0 };
 }
 
@@ -354,7 +456,10 @@ export async function grantCustomsPass({ db, nowS }, actor, env, { name, account
  * @param {any} ctx @param {string} playerId @param {string} originId
  */
 export async function customsRefusal({ db }, playerId, originId) {
-  const counted = await db.prepare('SELECT spent FROM realm_census WHERE player = ? AND char_id = ?').bind(playerId, originId).first();
+  const counted = await db
+    .prepare('SELECT spent FROM realm_census WHERE player = ? AND char_id = ?')
+    .bind(playerId, originId)
+    .first();
   if (counted?.spent) return 'customs-already';
   if (!counted) {
     if (!(await openPassOf(db, playerId))) {
@@ -370,7 +475,10 @@ export async function customsRefusal({ db }, playerId, originId) {
     }
     if (await originIn(db, originId)) return 'customs-already';
   }
-  const held = await db.prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE player = ? AND dead_at IS NULL').bind(playerId).first();   // LEGACY7: the living
+  const held = await db
+    .prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE player = ? AND dead_at IS NULL')
+    .bind(playerId)
+    .first(); // LEGACY7: the living
   return (held?.n ?? 0) >= REALM_CHARACTERS_MAX ? 'too-many-characters' : null;
 }
 
@@ -387,9 +495,12 @@ export async function customsRefusal({ db }, playerId, originId) {
 export async function customsRealm(ctx, playerId, { origin, name, summary = null }) {
   const { db, rand, nowS } = ctx;
   if (typeof origin !== 'string' || !ORIGIN_ID_RE.test(origin) || REALM_ID_RE.test(origin)) return { error: 'body' };
-  const mine = await db.prepare('SELECT id, bytes FROM realm_characters WHERE player = ? AND origin_id = ?').bind(playerId, origin).first();
+  const mine = await db
+    .prepare('SELECT id, bytes FROM realm_characters WHERE player = ? AND origin_id = ?')
+    .bind(playerId, origin)
+    .first();
   if (mine && !(mine.bytes > 0)) {
-    await db.batch(customsCarry(db, playerId, origin, mine.id));   // AUDIT REALM2 S6: carried again - a resume never carried
+    await db.batch(customsCarry(db, playerId, origin, mine.id)); // AUDIT REALM2 S6: carried again - a resume never carried
     const joined = await joinRealm(ctx, playerId, mine.id);
     return joined.error ? joined : { id: joined.id, lease: joined.lease, seq: 0, resumed: true };
   }
@@ -401,22 +512,43 @@ export async function customsRealm(ctx, playerId, { origin, name, summary = null
     await db.batch([
       // THE GATE: the census's unspent row for this account and character - or (CUSTOMS-PASS) the account's open pass, for
       // a character no account has brought in: none's census spent on it, no realm character standing on it (L3-F2)
-      db.prepare(
-        'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at)'
-        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'
-        + ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'
-        + ' OR (EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)'
-        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND spent = 1)'
-        + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)))',
-      ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, origin, nowS, nowS, playerId, REALM_CHARACTERS_MAX, playerId, origin, playerId, origin, origin),
+      db
+        .prepare(
+          'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at)' +
+            ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +
+            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +
+            ' OR (EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)' +
+            ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND spent = 1)' +
+            ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)))',
+        )
+        .bind(
+          id,
+          playerId,
+          n,
+          realmSummaryOf(summary),
+          lease,
+          nowS,
+          origin,
+          nowS,
+          nowS,
+          playerId,
+          REALM_CHARACTERS_MAX,
+          playerId,
+          origin,
+          playerId,
+          origin,
+          origin,
+        ),
       mustChange(db),
       // CUSTOMS-PASS: the pass is spent on the character it let in - only when the census did not (asked before the census
       // is spent below), and it keeps whom and when, the record of the grant's one use
-      db.prepare(
-        'UPDATE realm_passes SET origin_id = ?, spent_at = ? WHERE player = ? AND spent_at IS NULL'
-        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)',
-      ).bind(origin, nowS, playerId, playerId, origin),
-      db.prepare('INSERT OR IGNORE INTO realm_census (player, char_id, spent) VALUES (?, ?, 1)').bind(playerId, origin),   // CUSTOMS-PASS: counted in - once, on every account
+      db
+        .prepare(
+          'UPDATE realm_passes SET origin_id = ?, spent_at = ? WHERE player = ? AND spent_at IS NULL' +
+            ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)',
+        )
+        .bind(origin, nowS, playerId, playerId, origin),
+      db.prepare('INSERT OR IGNORE INTO realm_census (player, char_id, spent) VALUES (?, ?, 1)').bind(playerId, origin), // CUSTOMS-PASS: counted in - once, on every account
       db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),
       // AUDIT REALM2 S6: THE CARRY IS IN THE CENSUS'S OWN BATCH. It ran after it, a statement at a time, so a failure
       // there (a transient D1 error, the request cancelled) left the census spent and the track under an id the realm
@@ -429,7 +561,7 @@ export async function customsRealm(ctx, playerId, { origin, name, summary = null
     throw e;
   }
   await freeOthers({ db }, playerId, id);
-  await linkFirstPlay({ db }, playerId, origin);   // FOUNDER5: the character arrived on this account
+  await linkFirstPlay({ db }, playerId, origin); // FOUNDER5: the character arrived on this account
   return { id, lease, seq: 0 };
 }
 
@@ -444,12 +576,24 @@ export async function joinRealm({ db, rand, nowS }, playerId, id) {
   const lease = mintLease(rand);
   // INT5: and the account's played seconds as it takes the seat - the budget fills from here, never from the time the account
   // spent on another of its characters
-  const took = await db.prepare('UPDATE realm_characters SET lease = ?3, lease_at = ?4, played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL')
-    .bind(id, playerId, lease, nowS).run();
+  const took = await db
+    .prepare(
+      'UPDATE realm_characters SET lease = ?3, lease_at = ?4, played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL',
+    )
+    .bind(id, playerId, lease, nowS)
+    .run();
   // LEGACY7: a tombstone is never joined again - an older save is never played past a death
-  if (!took.meta.changes) return { error: (await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first()) ? 'dead' : 'no-realm-character' };
+  if (!took.meta.changes)
+    return {
+      error: (await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first())
+        ? 'dead'
+        : 'no-realm-character',
+    };
   await freeOthers({ db }, playerId, id);
-  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db
+    .prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(id, playerId)
+    .first();
   // RESTORE: and the offline id a customs character came from - the playing tab gives back what customs once kept, off
   // that character's own save on its device (systems/realmCustoms.js reclaimFromDevice)
   return { id, lease, seq: row?.seq ?? 0, bytes: row?.bytes ?? 0, origin: row?.origin_id ?? null };
@@ -483,19 +627,32 @@ export async function realmSaveTextOf(/** @type {any} */ object) {
  */
 export function firstSaveRefusal(text, row) {
   let save = null;
-  try { save = JSON.parse(text); } catch { save = null; }
+  try {
+    save = JSON.parse(text);
+  } catch {
+    save = null;
+  }
   const shaped = !!save && typeof save === 'object' && !Array.isArray(save);
   if (!row.origin_id) {
     // CARDS9: and no more cards than the binder's gift - the starter deck's worth (net/card/cardWorthLaw.js). AUDIT CARDS-6 A1:
     // and no sealed pack - chargen hands none, and the first save lands before the world is played
     // LEVEL-45 / BIRTH-SKILL: the skill start, current sum, 3/3/6 career and 35 skills agree; only a Legacy person's
     // Hearth may use the larger start ceiling
-    return shaped && save.level === REALM_BIRTH_LEVEL && birthSkillOk(save, { legacy: row.lineage_id != null })
-      && liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0
-      ? null : { error: 'realm-birth' };
+    return shaped &&
+      save.level === REALM_BIRTH_LEVEL &&
+      birthSkillOk(save, { legacy: row.lineage_id != null }) &&
+      liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX &&
+      cardWorthOf(save) <= STARTER_DECK_WORTH &&
+      cardPacksOf(save) === 0
+      ? null
+      : { error: 'realm-birth' };
   }
   let level = null;
-  try { level = JSON.parse(row.summary ?? 'null')?.level ?? null; } catch { level = null; }
+  try {
+    level = JSON.parse(row.summary ?? 'null')?.level ?? null;
+  } catch {
+    level = null;
+  }
   if (!(shaped && liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };
   // CARDS9 (Tavern-Cards section 32): A CUSTOMS CHARACTER'S CARDS, at their worth, within the level's card allowance -
   // customs' own bound (systems/realmCustoms.js cardCustoms takes the dearest past it on the client's copy)
@@ -504,8 +661,9 @@ export function firstSaveRefusal(text, row) {
 
 /** INT2-INT6: the judge's columns on a character's row (migration 0096; AUTO-HOLD's timed hold, 0120; RPT1026-LEDGERLAW's
  *  `law_v`, 0178), as verdict.js reads them. */
-export const JUDGE_COLUMNS = 'judged_seq, held, held_at, strikes, review, wealth, witnessed, allowance, played_at, clean_obj, clean_seq,'
-  + ' dupes, judge_rev, svc_seq, level_seen, level_at, law_sig, law_excused, law_v, wealth_v, held_until, law_holds, law_at';
+export const JUDGE_COLUMNS =
+  'judged_seq, held, held_at, strikes, review, wealth, witnessed, allowance, played_at, clean_obj, clean_seq,' +
+  ' dupes, judge_rev, svc_seq, level_seen, level_at, law_sig, law_excused, law_v, wealth_v, held_until, law_holds, law_at';
 
 /**
  * INT3: THE HOLD, AS A ROUTE ASKS IT - before any act that hands a realm character's value to another player (a market
@@ -525,9 +683,18 @@ export function holdRefusal(row) {
 /** INT3: the hold of `character` when it is one of the account's realm characters (holdRefusal), else null - for a route
  *  that hands what a character owns at the service (a crafted piece the market lists, its Stores' units) to another
  *  player, its record untouched (AUDIT INT: a held character listed its craft for 900,000 gold). */
-export async function realmHoldOf(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {unknown} */ character) {
+export async function realmHoldOf(
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {unknown} */ character,
+) {
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return null;
-  return holdRefusal(await db.prepare('SELECT held, judged_seq FROM realm_characters WHERE id = ?1 AND player = ?2').bind(character, playerId).first());
+  return holdRefusal(
+    await db
+      .prepare('SELECT held, judged_seq FROM realm_characters WHERE id = ?1 AND player = ?2')
+      .bind(character, playerId)
+      .first(),
+  );
 }
 
 /** AUDIT AUTO-HOLD: A HOLD STANDING on the character row aliased `a`, as a reader that cannot wait for that character's
@@ -535,7 +702,10 @@ export async function realmHoldOf(/** @type {any} */ db, /** @type {string} */ p
  *  it - and the dead are refused one (LEGACY7), so a maker that died inside its week held every craft of its make for
  *  good. A law hold whose time is out, on a character that can checkpoint no more and whose last judgement found nothing
  *  that holds (`law_sig`), stands no more. */
-export const holdStandsSql = (/** @type {string} */ a, /** @type {string} */ now) => `(${a}.held IS NOT NULL AND NOT (${a}.dead_at IS NOT NULL
+export const holdStandsSql = (
+  /** @type {string} */ a,
+  /** @type {string} */ now,
+) => `(${a}.held IS NOT NULL AND NOT (${a}.dead_at IS NOT NULL
   AND ${a}.held = 'law' AND ${a}.held_until IS NOT NULL AND ${a}.held_until <= ${now} AND ${a}.law_sig IS NULL))`;
 
 /** CRAFT-HOLD (2026-10-11, the exploit audit): INT3's hold on a crafted piece follows THE PIECE - the hold of the
@@ -546,10 +716,19 @@ export const holdStandsSql = (/** @type {string} */ a, /** @type {string} */ now
  *  open on the boards for Drakes). Null for a piece no realm character of this account made. AUDIT CRAFT-HOLD: a HOLD
  *  alone, never `record-unjudged` - `char_id` stays the maker's for the piece's life (a sale moves `owner` only), so a
  *  sibling that bought its own account's piece back was refused for good once its maker lay unplayed or dead. */
-export async function craftHoldOf(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {unknown} */ provenance) {
+export async function craftHoldOf(
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {unknown} */ provenance,
+) {
   if (typeof provenance !== 'string') return null;
-  const row = await db.prepare(`SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2
-    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`).bind(provenance, playerId, Math.floor(Date.now() / 1000)).first();
+  const row = await db
+    .prepare(
+      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2
+    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`,
+    )
+    .bind(provenance, playerId, Math.floor(Date.now() / 1000))
+    .first();
   return row?.held ? { error: 'trade-held', held: row.held } : null;
 }
 
@@ -570,9 +749,22 @@ export async function craftHoldOf(/** @type {any} */ db, /** @type {string} */ p
  * @param {any} ctx @param {string} playerId
  * @param {{ id: string, lease: unknown, seq: unknown, summary?: unknown }} at @param {ArrayBuffer} body @param {number} bytes
  */
-export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false }, playerId, { id, lease, seq, summary = null, session = null }, body, bytes) {
+export async function checkpointRealm(
+  { db, bucket, rand, nowS, firmOpen = false },
+  playerId,
+  { id, lease, seq, summary = null, session = null },
+  body,
+  bytes,
+) {
   if (!bucket) return { error: 'no-storage' };
-  if (!REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease) || !Number.isSafeInteger(seq) || /** @type {number} */ (seq) < 1) return { error: 'body' };
+  if (
+    !REALM_ID_RE.test(id) ||
+    typeof lease !== 'string' ||
+    !LEASE_RE.test(lease) ||
+    !Number.isSafeInteger(seq) ||
+    /** @type {number} */ (seq) < 1
+  )
+    return { error: 'body' };
   // SAVE-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/
   // Scale-Arc.md SAVE-BATCH): the record's row, the ledger's two reads of the character's own rows and (where this isolate
   // kept none) the budget's config, in ONE batch - each was a round trip of its own, and checkpoints were a third of the
@@ -582,7 +774,9 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
     // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand;
     // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep);
     // AUDIT POTION-MIGHT A5: and the character's sky, which the kit's might reads (judge.js)
-    db.prepare(`SELECT seq, lease, obj, prev, origin_id, lineage_id, summary, dead_at, ${JUDGE_COLUMNS},
+    db
+      .prepare(
+        `SELECT seq, lease, obj, prev, origin_id, lineage_id, summary, dead_at, ${JUDGE_COLUMNS},
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
     (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,
@@ -591,7 +785,9 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
     (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive,
     (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally,
     (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree
-    FROM realm_characters WHERE id = ?1 AND player = ?2`).bind(id, playerId, session),
+    FROM realm_characters WHERE id = ?1 AND player = ?2`,
+      )
+      .bind(id, playerId, session),
     ...ledgerReads(db, id),
     ...(keptConfig ? [] : [budgetRead(db)]),
   ]);
@@ -604,13 +800,15 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
   // already makes - a hot route believes a pass for its reads, and a session signed out, or an account banned, since its
   // pass was minted saves nothing (a request the lookup answered knows both already; the save asks them all the same)
   if (session != null && row.session_alive == null) return { error: 'auth' };
-  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };
+  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)
+    return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };
   // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "checkpoints still save"): and the freeze - a frozen player
   // only looks around, so its save moves nothing while the freeze stands
-  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen', player: { frozen_until: row.frozen_until_now, frozen_reason: row.frozen_reason_now } };
-  if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again
+  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS)
+    return { error: 'frozen', player: { frozen_until: row.frozen_until_now, frozen_reason: row.frozen_reason_now } };
+  if (row.dead_at != null) return { error: 'dead' }; // LEGACY7: the tombstone - nothing of the dead is written again
   if (row.lease !== lease) return { error: 'lease' };
-  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };   // the service's own: a client whose last answer was lost resyncs
+  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs
   // REALM-GZIP: opened first, packed or not - INT2: EVERY checkpoint, never the first alone
   const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);
   if (seq === 1) {
@@ -619,12 +817,20 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
     if (refused) return refused;
   }
   let save = null;
-  try { save = JSON.parse(/** @type {string} */ (text)); } catch { save = null; }
+  try {
+    save = JSON.parse(/** @type {string} */ (text));
+  } catch {
+    save = null;
+  }
   const said = realmSummaryOf(summary);
   // INT2: the tile's level is judged as it is CLAIMED - a checkpoint that brings no tile leaves the row's, claimed and judged
   // with an earlier save
   let summaryNow = null;
-  try { summaryNow = JSON.parse(said ?? 'null'); } catch { summaryNow = null; }
+  try {
+    summaryNow = JSON.parse(said ?? 'null');
+  } catch {
+    summaryNow = null;
+  }
   const key = mintObjectKey(rand, playerId, id, /** @type {number} */ (seq));
   // INT2-INT5: THE VERDICT, read BEFORE the object lands (AUDIT INT: a read that failed - D1's limit - after the put left
   // the object behind, a retry at a time), and written in the batch that moves the row - a checkpoint that loses its race
@@ -633,13 +839,24 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
   // the stored record measured again under the new one
   const baseline = row.wealth == null || row.wealth_v !== WEALTH_VERSION ? await baselineOf(bucket, row, save) : null;
   const known = { mine: mineRes, dupes: dupesRes, config };
-  const v = await verdictOn({ db, nowS, firmOpen }, { player: playerId, char: id, seq: /** @type {number} */ (seq), key }, row, save, summaryNow, baseline, known);
+  const v = await verdictOn(
+    { db, nowS, firmOpen },
+    { player: playerId, char: id, seq: /** @type {number} */ (seq), key },
+    row,
+    save,
+    summaryNow,
+    baseline,
+    known,
+  );
   await bucket.put(key, body);
   /** @type {any} the judge's columns as they stand after the batch - the verdict's, or (its rev moved) the row's */
   let stood = null;
   try {
     const res = await db.batch([
-      db.prepare('UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?')
+      db
+        .prepare(
+          'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?',
+        )
         .bind(seq, bytes, key, nowS, said, nowS, id, playerId, lease, /** @type {number} */ (seq) - 1),
       mustChange(db),
       ...v.steps,
@@ -653,15 +870,29 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
       // AUDIT REALM2 S7: WHY IT DID NOT MOVE, read again - two checkpoints under one lease (a retry beside a slow one, the
       // page's beside the timer's) race to one sequence, and the loser was told 'lease': "another tab has the character",
       // and its tab ended the session. Its own write won; 'seq', with the service's, is the truth, and the tab resyncs.
-      return (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' };
+      return (
+        (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' }
+      );
     }
   }
   // a verdict not written (staff acted between the read and the write, or the answer was lost): the row says what stands
-  stood ??= await db.prepare('SELECT held, clean_obj FROM realm_characters WHERE id = ?').bind(id).first() ?? { held: row.held, clean_obj: row.clean_obj };
+  stood ??= (await db.prepare('SELECT held, clean_obj FROM realm_characters WHERE id = ?').bind(id).first()) ?? {
+    held: row.held,
+    clean_obj: row.clean_obj,
+  };
   // two back now: the one before the last stays - and INT6's clean one, kept for staff, whichever it is
   const keep = new Set([key, row.obj, stood.clean_obj].filter(Boolean));
-  await dropObjects(bucket, [...new Set([row.prev, row.clean_obj])].filter((k) => k && !keep.has(k)));
-  return { ok: true, seq, tradeHeld: stood.held ?? null, ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}), locked: v.locked };
+  await dropObjects(
+    bucket,
+    [...new Set([row.prev, row.clean_obj])].filter((k) => k && !keep.has(k)),
+  );
+  return {
+    ok: true,
+    seq,
+    tradeHeld: stood.held ?? null,
+    ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}),
+    locked: v.locked,
+  };
 }
 
 /**
@@ -674,7 +905,11 @@ export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false
 async function baselineOf(bucket, row, save) {
   if (row.obj) {
     let stored = null;
-    try { stored = JSON.parse(/** @type {string} */ (await realmSaveTextOf(await bucket.get(row.obj)))); } catch { stored = null; }
+    try {
+      stored = JSON.parse(/** @type {string} */ (await realmSaveTextOf(await bucket.get(row.obj))));
+    } catch {
+      stored = null;
+    }
     if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { wealth: null, level: null };
     const level = Number.isInteger(stored.level) && stored.level >= 1 ? stored.level : null;
     return { wealth: wealthOf(stored), level };
@@ -691,7 +926,10 @@ async function baselineOf(bucket, row, save) {
 export async function getRealmBlob({ db, bucket }, /** @type {string} */ playerId, /** @type {string} */ id) {
   if (!bucket) return { error: 'no-storage' };
   if (!REALM_ID_RE.test(id)) return { error: 'body' };
-  const row = await db.prepare('SELECT seq, bytes, obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db
+    .prepare('SELECT seq, bytes, obj FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(id, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
   if (!row.seq || !row.bytes || !row.obj) return { error: 'no-data' };
   const object = await bucket.get(row.obj);
@@ -703,13 +941,22 @@ export async function getRealmBlob({ db, bucket }, /** @type {string} */ playerI
 /** THE GUARD a batch step answers to (migration 0019's `realm_tx_guard`): placed right after an UPDATE that must change
  *  exactly `n` rows, it inserts only when that UPDATE changed another number, and the table's CHECK refuses the row - so
  *  D1 rolls the whole batch back. An UPDATE that matches nothing is not an error by itself; this makes it one. */
-export const mustChange = (/** @type {any} */ db, n = 1) => db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);
+export const mustChange = (/** @type {any} */ db, n = 1) =>
+  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);
 
 /** Where a tab says its record stands - `{ id, lease, seq }` - or null. */
 export function realmAtOf(/** @type {any} */ v) {
   if (!v || typeof v !== 'object') return null;
   const { id, lease, seq } = v;
-  if (typeof id !== 'string' || !REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease) || !Number.isSafeInteger(seq) || seq < 1) return null;
+  if (
+    typeof id !== 'string' ||
+    !REALM_ID_RE.test(id) ||
+    typeof lease !== 'string' ||
+    !LEASE_RE.test(lease) ||
+    !Number.isSafeInteger(seq) ||
+    seq < 1
+  )
+    return null;
   return { id, lease, seq };
 }
 
@@ -740,11 +987,22 @@ export function realmAtOf(/** @type {any} */ v) {
  * @param {(save: any) => string | null} change @param {{ outbound?: boolean, escrow?: boolean | Set<string>, seize?: boolean, take?: boolean, witness?: boolean }} [opts]
  *   `escrow`: the pieces leaving in the service's hands (ledger.js ledgerMoves - true all, a Set those keys)
  */
-export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false, take = false, witness = true } = {}) {
+export async function prepareRealmRecord(
+  { db, bucket, rand, nowS },
+  playerId,
+  at,
+  change,
+  { outbound = false, escrow = false, seize = false, take = false, witness = true } = {},
+) {
   if (!bucket) return { error: 'no-storage' };
-  const row = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
+  const row = await db
+    .prepare(
+      'SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?',
+    )
+    .bind(at.id, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
-  if (!seize && row.lease !== at.lease) return { error: 'lease' };   // INT9: a seizure names no tab's lease (seizeRealmRecord)
+  if (!seize && row.lease !== at.lease) return { error: 'lease' }; // INT9: a seizure names no tab's lease (seizeRealmRecord)
   if (row.seq !== at.seq || !row.obj) return { error: 'seq', seq: row.seq };
   if (outbound) {
     const held = holdRefusal(row);
@@ -752,7 +1010,11 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   }
   const object = await bucket.get(row.obj);
   let save = null;
-  try { save = JSON.parse(await realmSaveTextOf(object)); } catch { save = null; }   // REALM-GZIP: packed or plain
+  try {
+    save = JSON.parse(await realmSaveTextOf(object));
+  } catch {
+    save = null;
+  } // REALM-GZIP: packed or plain
   if (!save || typeof save !== 'object' || Array.isArray(save)) return { error: 'no-data' };
   const before = wealthOf(save);
   const piecesBefore = ledgerPieces(save);
@@ -766,23 +1028,34 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   const piecesAfter = ledgerPieces(save);
   // AUDIT AUTO-HOLD: a key whose count fell is leaving - one of two the record held is a copy, never handed on
   const { leaving, twice } = leavingKeys(piecesBefore, piecesAfter);
-  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;
+  const why = take
+    ? null
+    : twice.length
+      ? 'piece-dupe'
+      : leaving.length
+        ? await piecesRefusal(db, at.id, leaving)
+        : null;
   if (why) return { error: why };
   const text = JSON.stringify(save);
   const bytes = new TextEncoder().encode(text).byteLength;
-  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' };   // REALM-GZIP: written plain, within the text's bound
+  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' }; // REALM-GZIP: written plain, within the text's bound
   const key = mintObjectKey(rand, playerId, at.id, at.seq + 1);
   await bucket.put(key, text);
   // INT6: a record the judge last found clean, moved by the service, is clean still - the clean one follows it, so a
   // rollback never hands back what the service moved since (AUDIT INT: a piece listed after the clean checkpoint came
   // back in the pack, and stood listed too); `svc_seq` says a service move came after one that did not follow
   const clean = row.clean_obj != null && row.clean_obj === row.obj;
-  const moves = ledgerMoves(db, { player: playerId, char: at.id, seq: at.seq + 1, nowS }, piecesBefore, piecesAfter, { escrow });
+  const moves = ledgerMoves(db, { player: playerId, char: at.id, seq: at.seq + 1, nowS }, piecesBefore, piecesAfter, {
+    escrow,
+  });
   // INT9: a seizure clears the lease (whatever tab held the character plays a record that moved under it) and is guarded on
   // the sequence it read alone
   const steps = [
-    db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
-      WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8 AND dead_at IS NULL' : 'lease = ?8'} AND seq = ?9`)
+    db
+      .prepare(
+        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
+      WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8 AND dead_at IS NULL' : 'lease = ?8'} AND seq = ?9`,
+      )
       .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),
     mustChange(db),
     ...moves.left,
@@ -802,18 +1075,34 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
  * @param {(save: any) => string | null} change @param {{ escrow?: boolean | Set<string>, take?: boolean }} [opts] `take` prepareRealmRecord's
  */
 export async function seizeRealmRecord(ctx, playerId, charId, change, { escrow = true, take = false } = {}) {
-  const row = await ctx.db.prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(charId, playerId).first();
+  const row = await ctx.db
+    .prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL')
+    .bind(charId, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
-  return prepareRealmRecord(ctx, playerId, { id: charId, lease: row.lease ?? '', seq: row.seq }, change, { escrow, seize: true, take });
+  return prepareRealmRecord(ctx, playerId, { id: charId, lease: row.lease ?? '', seq: row.seq }, change, {
+    escrow,
+    seize: true,
+    take,
+  });
 }
 
 /** AUDIT REALM2 S3: AFTER A BATCH THAT THREW, the object it wrote goes only if the row names it nowhere (`obj` or
  *  `prev`). D1 can commit a batch and lose its answer: every catch dropped the new object whatever the row said, and the
  *  row that had moved to it named a save that was gone - a trade's two records, a guild deposit's, the character's live
  *  save deleted and its next join 'no-data'. Answers whether the row names it (the batch landed). */
-export async function dropIfUnnamed(/** @type {any} */ db, /** @type {any} */ bucket, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {string} */ key) {
-  const row = await db.prepare('SELECT obj, prev, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
-  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true;   // INT6: the clean one kept, too
+export async function dropIfUnnamed(
+  /** @type {any} */ db,
+  /** @type {any} */ bucket,
+  /** @type {string} */ playerId,
+  /** @type {string} */ id,
+  /** @type {string} */ key,
+) {
+  const row = await db
+    .prepare('SELECT obj, prev, clean_obj FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(id, playerId)
+    .first();
+  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true; // INT6: the clean one kept, too
   await dropObjects(bucket, [key]);
   return false;
 }
@@ -821,8 +1110,15 @@ export async function dropIfUnnamed(/** @type {any} */ db, /** @type {any} */ bu
 /** After a batch that carried a record's move failed: the record's own reason - 'lease' (another tab holds it) or
  *  'seq' with the service's sequence (it moved) - or null when it still stands where the tab said, and the act's own
  *  write was what failed. */
-export async function recordMovedOf(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {{ id: string, lease: string, seq: number }} */ at) {
-  const row = await db.prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
+export async function recordMovedOf(
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {{ id: string, lease: string, seq: number }} */ at,
+) {
+  const row = await db
+    .prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(at.id, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
   if (row.lease !== at.lease) return { error: 'lease' };
   return row.seq !== at.seq ? { error: 'seq', seq: row.seq } : null;
@@ -859,9 +1155,17 @@ export async function realmActFirst(db, playerId, character, realm) {
 }
 
 /** A LEAVE: the lease given up, if it is still this tab's. Answers `{ ok, released }`. */
-export async function leaveRealm({ db }, /** @type {string} */ playerId, /** @type {{ id: unknown, lease: unknown }} */ { id, lease }) {
-  if (typeof id !== 'string' || !REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease)) return { error: 'body' };
-  const r = await db.prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?').bind(id, playerId, lease).run();
+export async function leaveRealm(
+  { db },
+  /** @type {string} */ playerId,
+  /** @type {{ id: unknown, lease: unknown }} */ { id, lease },
+) {
+  if (typeof id !== 'string' || !REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease))
+    return { error: 'body' };
+  const r = await db
+    .prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?')
+    .bind(id, playerId, lease)
+    .run();
   return { ok: true, released: r.meta.changes > 0 };
 }
 
@@ -888,25 +1192,43 @@ export async function leaveRealm({ db }, /** @type {string} */ playerId, /** @ty
  *  reach them (MERGE 2's open question 3). What another player is part of waits: while the character has market
  *  business open ('realm-market-open', REALM_MARKET_OPEN_SQL) the delete is refused, since the goods or the piece it
  *  would be handed come to this character. The history (the ledger, the crafts, the sales) stays. */
-export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1000) }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
+export async function deleteRealm(
+  { db, bucket, nowS = Math.floor(Date.now() / 1000) },
+  /** @type {string} */ playerId,
+  /** @type {unknown} */ id,
+) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return { error: 'body' };
-  const row = await db.prepare('SELECT obj, prev, bytes, origin_id, dead_at, held FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db
+    .prepare('SELECT obj, prev, bytes, origin_id, dead_at, held FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(id, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
-  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7
+  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7
   // AUDIT CRAFT-HOLD (the exploit audit): A HELD CHARACTER WITH CRAFTS IS NOT DELETED - its row is where its hold lives,
   // and the hold on the pieces it made (craftHoldOf) went with it: held, deleted, and its pieces listed under any other
   // name the next minute. Its Stores go with the row (below), so a held character with no piece of its make at the
   // account goes as any other - a finding can be the law's mistake, and the slot is the player's. The hold lifts (the
   // law's at a clean checkpoint, a timed one at the first past its end - AUTO-HOLD; staff's by review.js realm-clear);
   // then it goes.
-  if (row.held && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')
-    .bind(playerId, id, row.origin_id ?? id).first()) return { error: 'trade-held', held: row.held };
+  if (
+    row.held &&
+    (await db
+      .prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')
+      .bind(playerId, id, row.origin_id ?? id)
+      .first())
+  )
+    return { error: 'trade-held', held: row.held };
   if (row.origin_id && !(row.bytes > 0)) return undoCustoms({ db, bucket }, playerId, id, row.origin_id);
-  const master = await db.prepare(`SELECT (SELECT COUNT(*) FROM guild_members o WHERE o.guild_id = m.guild_id) AS n,
+  const master = await db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM guild_members o WHERE o.guild_id = m.guild_id) AS n,
     (SELECT treasury FROM guilds g WHERE g.id = m.guild_id) AS treasury,
     (SELECT 1 FROM homes h WHERE h.guild_id = m.guild_id) AS hall,
     (SELECT 1 FROM guild_vault v WHERE v.guild_id = m.guild_id LIMIT 1) AS vault FROM guild_members m
-    WHERE m.player = ? AND m.char_id = ? AND m.rank = ?`).bind(playerId, id, GUILD_RANK_MASTER).first();
+    WHERE m.player = ? AND m.char_id = ? AND m.rank = ?`,
+    )
+    .bind(playerId, id, GUILD_RANK_MASTER)
+    .first();
   if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };
   if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };
   // AUDIT GUILD1d S1: and a lone one sells its guild's hall first - deleted, the guild stood memberless with the hall,
@@ -915,65 +1237,97 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
   // AUDIT GUILD2 G2: and empties its guild's vault - deleted, the guild stood memberless with pieces nobody could take
   // out, kept from going by them (guildKeepsSql), its name and tag held for good (guilds.js disband and leave ask it too)
   if (master?.vault) return { error: 'guild-vault' };
-  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };
+  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0)
+    return { error: 'realm-market-open' };
   // ACCOUNT-HOMES (2026-10-06): the homes it bought go with it ("Deleted characters should remove their houses from
   // online"), and any character of the account may stock a trader in one now - so goods another of them has standing at
   // one wait, as a sale waits for them (homes.js releaseHome): the delete would leave them for sale at a trader gone
-  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };
+  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0)
+    return { error: 'home-vendor-stocked' };
   // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)
-  if (await db.prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`).bind(playerId, id).first()) return { error: 'cards-held' };
+  if (
+    await db
+      .prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`)
+      .bind(playerId, id)
+      .first()
+  )
+    return { error: 'cards-held' };
   // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home
   // to it first (seaBounty.js, seaWreck.js) - deleted, they stood owed to no character for good
-  if (await db.prepare(`SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL
+  if (
+    await db
+      .prepare(
+        `SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL
     UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3
-    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`).bind(playerId, id, nowS).first()) return { error: 'sea-held' };
+    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`,
+      )
+      .bind(playerId, id, nowS)
+      .first()
+  )
+    return { error: 'sea-held' };
   // HOME-RENT: a room another player is renting in its home waits for its days to run out, and rent held for it waits to
   // be collected - the delete takes the home with it. AUDIT: then no room of it is offered any more, and both are asked
   // again - a rent landing between the first asking and the delete's batch was deleted with the home (a rent needs its
   // room offered, so none can land after the offers go)
   const homeHeld = async () => {
-    if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0) return { error: 'home-tenants' };
-    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0) return { error: 'home-rent-due' };
+    if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0)
+      return { error: 'home-tenants' };
+    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)
+      return { error: 'home-rent-due' };
     return null;
   };
   const held = await homeHeld();
   if (held) return held;
-  await db.prepare(`UPDATE home_rooms SET listed = 0 WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = home_rooms.map_id
-    AND h.building_key = home_rooms.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id).run();
+  await db
+    .prepare(
+      `UPDATE home_rooms SET listed = 0 WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = home_rooms.map_id
+    AND h.building_key = home_rooms.building_key AND h.player = ? AND h.char_id = ?)`,
+    )
+    .bind(playerId, id)
+    .run();
   const late = await homeHeld();
   if (late) return late;
   await dropCharacterObjects(bucket, playerId, id, [row.obj, row.prev]);
   // QUEST-HOME (Mac, 2026-10-15: "Close both"): the homes the delete takes, a house again to every page online - read
   // with the delete in one batch, so the answer names exactly what went
   const [gone] = await db.batch([
-    db.prepare('SELECT map_id, building_key FROM homes WHERE player = ? AND char_id = ? ORDER BY map_id, building_key').bind(playerId, id),
+    db
+      .prepare('SELECT map_id, building_key FROM homes WHERE player = ? AND char_id = ? ORDER BY map_id, building_key')
+      .bind(playerId, id),
     // AUDIT FB1029f A1: the homes' access rows with them (a chest's, a station's, who may rest)
-    db.prepare(`DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id
-      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),
+    db
+      .prepare(
+        `DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id
+      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`,
+      )
+      .bind(playerId, id),
     db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),
-    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id),   // AUDIT GUILD-RANKS B3: its requests to join
+    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join
     db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),
-    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE
-    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE
-    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id),   // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)
-    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?').bind(playerId, id),   // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts
-    db.prepare('DELETE FROM prof_carried WHERE player = ? AND char_id = ?').bind(playerId, id),   // BAG1: and what it was counted as carrying
-    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id),   // WOVEN-PAYS: and its cloth's silver counts
-    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP1: its standing with the guilds (npcRoll.js)
+    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE
+    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE
+    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)
+    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts
+    db.prepare('DELETE FROM prof_carried WHERE player = ? AND char_id = ?').bind(playerId, id), // BAG1: and what it was counted as carrying
+    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id), // WOVEN-PAYS: and its cloth's silver counts
+    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP1: its standing with the guilds (npcRoll.js)
     db.prepare('DELETE FROM npc_roll_heads WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM npc_rep_events WHERE player = ? AND char_id = ?').bind(playerId, id),
-    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave
-    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats (the Chronicle keeps their story)
+    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP2b: and what its receipts gave
+    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id), // CHAP4a: and its seats (the Chronicle keeps their story)
     db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),
-    ...releaseSteps(db, id, nowS, { deleted: true }),   // INT4: its pieces no record's, its claims and copies gone with it
-    endUnionsOf(db, id, nowS, 'gone'),   // LEGACY7 part three: a union ends with the character
+    ...releaseSteps(db, id, nowS, { deleted: true }), // INT4: its pieces no record's, its claims and copies gone with it
+    endUnionsOf(db, id, nowS, 'gone'), // LEGACY7 part three: a union ends with the character
     db.prepare('DELETE FROM realm_wed_halves WHERE char_id = ?').bind(id),
   ]);
   /** @type {Map<number, number[]>} */
   const towns = new Map();
   for (const h of gone?.results ?? []) towns.set(h.map_id, [...(towns.get(h.map_id) ?? []), h.building_key]);
-  return { ok: true, ...(towns.size ? { moved: [...towns].flatMap(([mapId, keys]) => homeMoved(mapId, [], keys)) } : {}) };
+  return {
+    ok: true,
+    ...(towns.size ? { moved: [...towns].flatMap(([mapId, keys]) => homeMoved(mapId, [], keys)) } : {}),
+  };
 }
 
 /** HOME-RENT (2026-09-30): THE TENANCIES STILL RUNNING in a character's homes - a sale (homes.js) or the character's
@@ -981,7 +1335,8 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
 export const HOME_TENANTS_SQL = `SELECT COUNT(*) AS n FROM home_rooms r JOIN homes h ON h.map_id = r.map_id AND h.building_key = r.building_key
   WHERE h.player = ?1 AND h.char_id = ?2 AND r.tenant IS NOT NULL AND r.until > ?3`;
 /** HOME-RENT: the rent held on a character's homes, not yet collected (`due`) - its delete waits for it too. */
-export const HOME_RENT_DUE_SQL = 'SELECT COALESCE(SUM(rent_due), 0) AS due FROM homes WHERE player = ?1 AND char_id = ?2';
+export const HOME_RENT_DUE_SQL =
+  'SELECT COALESCE(SUM(rent_due), 0) AS due FROM homes WHERE player = ?1 AND char_id = ?2';
 /** ACCOUNT-HOMES: the goods standing for sale at the traders of the homes a character bought, whoever of the account
  *  stocked them (`n`) - its delete takes those homes and their traders, so it waits for them. `?1` the account, `?2` the
  *  character. */
@@ -1008,14 +1363,24 @@ export const REALM_MARKET_OPEN_SQL = `SELECT
 
 /** A character's objects: the ones its row names, and anything else under its prefix a lost write left. Best effort -
  *  an object that will not go is not a reason to keep the row. */
-async function dropCharacterObjects(/** @type {any} */ bucket, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {(string | null | undefined)[]} */ named) {
+async function dropCharacterObjects(
+  /** @type {any} */ bucket,
+  /** @type {string} */ playerId,
+  /** @type {string} */ id,
+  /** @type {(string | null | undefined)[]} */ named,
+) {
   if (!bucket) return;
   await dropObjects(bucket, named);
   if (typeof bucket.list !== 'function') return;
   try {
     const listed = await bucket.list({ prefix: `${realmPrefix(playerId)}${id}/` });
-    await dropObjects(bucket, (listed?.objects ?? []).map((/** @type {any} */ o) => o.key));
-  } catch { /* the walk is the sweep's, not the delete's */ }
+    await dropObjects(
+      bucket,
+      (listed?.objects ?? []).map((/** @type {any} */ o) => o.key),
+    );
+  } catch {
+    /* the walk is the sweep's, not the delete's */
+  }
 }
 
 /**
@@ -1045,21 +1410,35 @@ async function undoCustoms({ db, bucket }, playerId, id, originId) {
       db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id),
       db.prepare('DELETE FROM npc_roll_heads WHERE player = ? AND char_id = ?').bind(playerId, id),
       db.prepare('DELETE FROM npc_rep_events WHERE player = ? AND char_id = ?').bind(playerId, id),
-      db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave
-      db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats
-      ...customsCarry(db, playerId, id, originId),   // the carry, run back: from the realm's id to the offline one
+      db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP2b: and what its receipts gave
+      db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id), // CHAP4a: and its seats
+      ...customsCarry(db, playerId, id, originId), // the carry, run back: from the realm's id to the offline one
       // the pass's census row (a pass is spent only where this account's census counted no such character), asked before
       // the pass comes back below
-      db.prepare('DELETE FROM realm_census WHERE player = ? AND char_id = ? AND EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND origin_id = ?)')
+      db
+        .prepare(
+          'DELETE FROM realm_census WHERE player = ? AND char_id = ? AND EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND origin_id = ?)',
+        )
         .bind(playerId, originId, playerId, originId),
-      db.prepare('UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?'
-        + ' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)').bind(playerId, originId, playerId),
+      db
+        .prepare(
+          'UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' +
+            ' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)',
+        )
+        .bind(playerId, originId, playerId),
       db.prepare('DELETE FROM realm_passes WHERE player = ? AND origin_id = ?').bind(playerId, originId),
-      db.prepare('UPDATE realm_census SET spent = 0 WHERE char_id = ? AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)').bind(originId, originId),
+      db
+        .prepare(
+          'UPDATE realm_census SET spent = 0 WHERE char_id = ? AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)',
+        )
+        .bind(originId, originId),
     ]);
   } catch (e) {
-    const now = await db.prepare('SELECT seq FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
-    if (now) return { error: 'seq', seq: now.seq };   // its first save landed in the meantime: a character now, kept
+    const now = await db
+      .prepare('SELECT seq FROM realm_characters WHERE id = ? AND player = ?')
+      .bind(id, playerId)
+      .first();
+    if (now) return { error: 'seq', seq: now.seq }; // its first save landed in the meantime: a character now, kept
     throw e;
   }
   await dropCharacterObjects(bucket, playerId, id, []);
@@ -1073,9 +1452,12 @@ async function undoCustoms({ db, bucket }, playerId, id, originId) {
  *  @param {any} ctx @param {string} playerId @param {unknown} id */
 export async function undoRealm({ db, bucket }, playerId, id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return { error: 'body' };
-  const row = await db.prepare('SELECT origin_id, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db
+    .prepare('SELECT origin_id, dead_at FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(id, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
   if (!row.origin_id) return { error: 'body' };
-  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7: undone, a tombstone is deleted too
+  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7: undone, a tombstone is deleted too
   return undoCustoms({ db, bucket }, playerId, id, row.origin_id);
 }

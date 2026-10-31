@@ -135,7 +135,10 @@ await vite.listen();
 const port = vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
-const ok = (cond, what, got) => { console.log(`   ${cond ? 'ok  ' : 'FAIL'}  ${what}${got !== undefined ? `   (${JSON.stringify(got)})` : ''}`); if (!cond) fails.push(what); };
+const ok = (cond, what, got) => {
+  console.log(`   ${cond ? 'ok  ' : 'FAIL'}  ${what}${got !== undefined ? `   (${JSON.stringify(got)})` : ''}`);
+  if (!cond) fails.push(what);
+};
 
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
@@ -190,16 +193,28 @@ try {
   // ── 3. THE SPELL KEY ────────────────────────────────────────────────
   console.log('\n3. a TAP of 3 - the spell readies; again, and it is put away');
   await reset({ spell: true });
-  await page.keyboard.down('3'); await page.waitForTimeout(50); await page.keyboard.up('3');
+  await page.keyboard.down('3');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('3');
   await page.waitForTimeout(80);
   r = await read();
   ok(r.readied === 'Spark', "the slot's spell is in hand", r.readied);
-  ok(r.log.some((l) => l.startsWith('ready:')), "through the engine's own readySpell", r.log);
-  await page.keyboard.down('3'); await page.waitForTimeout(50); await page.keyboard.up('3');
+  ok(
+    r.log.some((l) => l.startsWith('ready:')),
+    "through the engine's own readySpell",
+    r.log,
+  );
+  await page.keyboard.down('3');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('3');
   await page.waitForTimeout(80);
   r = await read();
   ok(r.readied === null, 'the same key put it away', r.readied);
-  ok(r.log.some((l) => l.startsWith('abort:')), 'through AbortReadySpell, not by clearing a field', r.log);
+  ok(
+    r.log.some((l) => l.startsWith('abort:')),
+    'through AbortReadySpell, not by clearing a field',
+    r.log,
+  );
 
   console.log('\n4. a HOLD of 3 - the book cycles, and nothing is readied');
   await reset({ spell: true });
@@ -223,13 +238,15 @@ try {
   await page.waitForTimeout(250);
   await page.evaluate(() => window.__qs.overlay(false));
   await page.waitForTimeout(60);
-  await page.keyboard.up('1');            // released only now, in play
+  await page.keyboard.up('1'); // released only now, in play
   await page.waitForTimeout(80);
   r = await read();
   ok(r.used.length === 0, 'NOT ONE POTION - a hold that spanned a window performs nothing on the way out', r.used);
   ok(r.cycles.length === 0, 'and it did not walk the pack under the window either', r.cycles);
   // ...and the machine still works straight afterwards.
-  await page.keyboard.down('1'); await page.waitForTimeout(50); await page.keyboard.up('1');
+  await page.keyboard.down('1');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('1');
   await page.waitForTimeout(80);
   r = await read();
   ok(r.used.length === 1, 'the next real press is a real press', r.used);
@@ -238,7 +255,7 @@ try {
   console.log('\n6. the OS auto-repeat storm a held key really produces');
   await reset({ c1: true });
   await page.keyboard.down('1');
-  await page.waitForTimeout(1200);         // long enough for the repeat to be running
+  await page.waitForTimeout(1200); // long enough for the repeat to be running
   const repeats = await page.evaluate(() => window.__qs.read().routed.length);
   await page.keyboard.up('1');
   await page.waitForTimeout(80);
@@ -257,17 +274,27 @@ try {
   r = await read();
   ok(r.cycles.length >= 2, 'Q holds the spell slot now', r.cycles);
   ok(r.readied === null, 'and still readies nothing', r.readied);
-  await page.keyboard.down('3'); await page.waitForTimeout(50); await page.keyboard.up('3');
+  await page.keyboard.down('3');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('3');
   await page.waitForTimeout(80);
   r = await read();
   ok(r.readied === null && r.cycles.length >= 2, "...and 3 is nobody's key any more", r.readied);
 
-  if (errors.length) { console.log('\nPAGE ERRORS:'); for (const e of errors) console.log('  - ' + e); fails.push('the page threw'); }
+  if (errors.length) {
+    console.log('\nPAGE ERRORS:');
+    for (const e of errors) console.log('  - ' + e);
+    fails.push('the page threw');
+  }
   await page.close();
 } finally {
   await browser.close();
   await vite.close();
   await unlink(PAGE_PATH).catch(() => {});
 }
-if (fails.length) { console.log(`\nFAILED (${fails.length}):`); for (const f of fails) console.log('  - ' + f); process.exit(1); }
+if (fails.length) {
+  console.log(`\nFAILED (${fails.length}):`);
+  for (const f of fails) console.log('  - ' + f);
+  process.exit(1);
+}
 console.log('\nall clear');

@@ -17,9 +17,12 @@ import { buildPaperdollPayload } from '../../src/characters/paperdoll/paperdollP
 // src/characters/paperdoll/paperdollPayload.js and is shared with the deployed
 // page, which gets the same three from the user at runtime instead.
 const A = process.env.ARENA2_PATH;
-const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
-const img = new ImgFile(); img.load(readFileSync(A + '/BODY00I0.IMG'), 'BODY00I0.IMG', pal);
-const cif = new CifRciFile(); cif.load(readFileSync(A + '/FACE00I0.CIF'), 'FACE00I0.CIF', pal);
+const pal = new DFPalette();
+pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
+const img = new ImgFile();
+img.load(readFileSync(A + '/BODY00I0.IMG'), 'BODY00I0.IMG', pal);
+const cif = new CifRciFile();
+cif.load(readFileSync(A + '/FACE00I0.CIF'), 'FACE00I0.CIF', pal);
 
 const payloadObj = buildPaperdollPayload(pal, img, cif);
 const payload = JSON.stringify(payloadObj);
@@ -34,7 +37,14 @@ let statesSrc = readFileSync(dir + '../../src/characters/weaponStates.js', 'utf8
 // scope is a SyntaxError that killed the WHOLE viewer script - the
 // page loaded and nothing ran. Renamed the same way, over every
 // occurrence so the injected copy stays self-consistent.
-let animateSrc = readFileSync(dir + '../../src/characters/animate.js', 'utf8').replace(/^export /gm, '').replace('function animateTarget(', 'function animateTargetCore(').replace(/\bZERO_ARM\b/g, 'ZERO_ARM_CORE');
-const tpl = readFileSync(dir + 'viewer-template.html', 'utf8').replace('/*__CLOTHSIM__*/', clothSrc).replace('/*__ANIMS__*/', animsSrc).replace('/*__WEAPONSTATES__*/', statesSrc).replace('/*__ANIMATE__*/', animateSrc);
+let animateSrc = readFileSync(dir + '../../src/characters/animate.js', 'utf8')
+  .replace(/^export /gm, '')
+  .replace('function animateTarget(', 'function animateTargetCore(')
+  .replace(/\bZERO_ARM\b/g, 'ZERO_ARM_CORE');
+const tpl = readFileSync(dir + 'viewer-template.html', 'utf8')
+  .replace('/*__CLOTHSIM__*/', clothSrc)
+  .replace('/*__ANIMS__*/', animsSrc)
+  .replace('/*__WEAPONSTATES__*/', statesSrc)
+  .replace('/*__ANIMATE__*/', animateSrc);
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
 console.log('viewer written (', payloadObj.n, 'faces ) ->', process.argv[2] || 'dagger-viewer.html');
