@@ -4,9 +4,11 @@
 //
 //   node tools/commentTags.mjs            the totals, and any file over its baseline
 //   node tools/commentTags.mjs --lower    write the baseline down to today's counts (after a sweep)
+//   node tools/commentTags.mjs --seed REF admit REF's own counts for files over the baseline (a merge from main)
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { isMain } from './lib/isMain.mjs';
 import { historyLines } from './commentRules.mjs';
 
@@ -48,7 +50,35 @@ export function verdict(now, base) {
 if (isMain(import.meta.url)) {
   const now = measure();
   const total = Object.values(now).reduce((a, b) => a + b, 0);
-  if (process.argv.includes('--lower')) {
+  const seedAt = process.argv.indexOf('--seed');
+  if (seedAt >= 0) {
+    const ref = process.argv[seedAt + 1];
+    const base = JSON.parse(readFileSync(join(ROOT, BASELINE), 'utf8'));
+    const admitted = [];
+    for (const [f, n] of Object.entries(now)) {
+      if (n <= (base[f] ?? 0)) continue;
+      let atRef = 0;
+      try {
+        atRef = historyLines(
+          execFileSync('git', ['show', `${ref}:${f}`], {
+            cwd: ROOT,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+          }),
+        );
+      } catch {
+        atRef = 0;
+      }
+      const next = Math.min(n, Math.max(base[f] ?? 0, atRef));
+      if (next > (base[f] ?? 0)) {
+        base[f] = next;
+        admitted.push(`${f}: ${next}`);
+      }
+    }
+    const sorted = Object.fromEntries(Object.entries(base).sort(([a], [b]) => (a < b ? -1 : 1)));
+    writeFileSync(join(ROOT, BASELINE), `${JSON.stringify(sorted, null, 1)}\n`);
+    console.log(`admitted from ${ref}: ${admitted.length ? admitted.join(', ') : 'nothing'}`);
+  } else if (process.argv.includes('--lower')) {
     const base = existsSync(join(ROOT, BASELINE)) ? JSON.parse(readFileSync(join(ROOT, BASELINE), 'utf8')) : null;
     const next = base
       ? Object.fromEntries(

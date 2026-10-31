@@ -58,6 +58,6 @@ test('HISTORY-OUT a file pinned byte for byte is never swept', () => {
 
 test('HISTORY-OUT the ratchet: no file gains history comments, a new file has none, and a sweep lowers the baseline', () => {
   const { over, lower } = verdict(measure(), base);
-  assert.deepEqual(over, [], 'comments say why, not the ticket, date or quote that made the line (HISTORY-OUT, bible/Home.md)');
+  assert.deepEqual(over, [], 'comments say why, not the ticket, date or quote that made the line (HISTORY-OUT); after a merge of main, admit its own: node tools/commentTags.mjs --seed origin/main');
   assert.deepEqual(lower, [], 'history came out - lower the baseline: node tools/commentTags.mjs --lower');
 });

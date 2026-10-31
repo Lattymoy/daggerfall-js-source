@@ -26,7 +26,7 @@ without breaking the thousands of pins that quote source text.
   `tools/shortNamesBaseline.json`, which only goes down (`--seed REF` admits a base without the law).
 - **History comments.** `tools/commentTags.mjs` counts comment lines with a date, a bible pointer, an owner quote, an
   audit, a moved pin or a leading slice tag. `test/tooling/commenttags.test.js` holds each file to
-  `tools/commentTagsBaseline.json`, which only goes down.
+  `tools/commentTagsBaseline.json`, which only goes down (`--seed origin/main` admits main's own after a merge).
 - **Reachability.** `node tools/unreached.mjs` lists modules nothing ships; `test/tooling/unreached.test.js` holds
   them to `tools/unreachedBaseline.json`.
 

@@ -270,6 +270,15 @@ HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDee
 # this list is matched against the account's handle, never the name the
 # room reads. A handle goes here, never a name off the herald.
 EG_FIRST_HANDLES = "Serveride"
+# FIRST-WYRM (2026-10-31, the owner: "Seasoning needs to be granted the
+# first dragon rider. He hasnt recieved it"): FIRST WYRM RIDER by name, as
+# First of the Spire is (titles.js isNamedFirstWyrm). While this list names
+# anyone, it names the First: the earliest brass tame (hunts.js FIRST_OF)
+# holds the title only if listed here. An account's handle, never a
+# character's name. Comma-separated, case-insensitive; held while listed.
+# FIRST-WYRM-NAME (2026-10-31, the owner: "His name is Seanobi"): the
+# account is Seanobi.
+FIRST_WYRM_RIDER_HANDLES = "Seanobi"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This

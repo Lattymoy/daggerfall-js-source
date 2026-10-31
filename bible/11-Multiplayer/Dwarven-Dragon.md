@@ -132,6 +132,9 @@ monster they meet - never a player, party mate or court boss. `/dragon blue` and
 - A budget of cells an account is judged in each watch, kept on the hub (the owner).
 - Each dragon pays its own kill: a second dragon in one watch pays too (the owner).
 - A tamer's title is worn on a metal name plate (the owner); developers' tames never count as a First (the owner).
+- First Wyrm Rider is granted by name (the owner): `server-account/wrangler.toml` `FIRST_WYRM_RIDER_HANDLES` holds the
+  account, read by `server-account/src/titles.js` `isNamedFirstWyrm`. While the list names anyone, only it names the
+  First. First Aether Rider stays derived from the earliest tame.
 - Lore: the Rourken and aetherium are canon; the clockwork dragons as sky-ketch outriders are the port's own.
 
 ## Daggerfall Unity
