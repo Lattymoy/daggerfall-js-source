@@ -119,7 +119,7 @@
   {
     "name": "RMBC4-world-record-dropped",
     "file": "src/scenes/world.js",
-    "old": "      if (!hit?.pixelKey) return hit?.settlement ?? null;",
+    "old": "      if (!hit?.pixelKey) return hit?.settlement ? { ...hit.settlement } : null;",
     "new": "      if (!hit?.pixelKey) return null;",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"

@@ -123,7 +123,7 @@ test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and a
   assert.match(world, /settlements\?\.draw\(renderer\);/);
   assert.equal(world.match(/settlements\?\.destroyAll\(\);/g)?.length, 2, 'at a re-anchor and a load');
   assert.match(world, /\.\.\.\(settlements\?\.doorTargets\(\) \?\? \[\]\)\]/);
-  assert.match(world, /if \(!hit\?\.pixelKey\) return hit\?\.settlement \?\? null;/);
+  assert.match(world, /if \(!hit\?\.pixelKey\) return hit\?\.settlement \? \{ \.\.\.hit\.settlement \} : null;/, 'a copy: the transition writes on the record (the game\'s first run threw on a frozen one)');
   const build = readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
   assert.match(build, /bridges, meets, settlement \} = await terrainGen\.generate\(\{/);
   assert.match(build, /\n\s+settlement,\s+\/\/ RMB-CONTRACTS RMBC4/);

@@ -28924,7 +28924,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // origin); the name matches the directory only while the topics
     // pixel is the door's pixel (else '' - the window shows Shelves).
     buildingDataForDoor: (hit) => {
-      if (!hit?.pixelKey) return hit?.settlement ?? null;   // RMB-CONTRACTS RMBC4: a settlement's door carries its building's record (no RMB block, no location)
+      if (!hit?.pixelKey) return hit?.settlement ? { ...hit.settlement } : null;   // RMB-CONTRACTS RMBC4: a settlement's door carries its building's record (no RMB block, no location) - a copy, as the transition writes on it
       const dfLoc = locationIndex.get(hit.pixelKey);
       const p = built.get(hit.pixelKey);
       if (!dfLoc || !p?.locBlocks || !p.locOrigin) return null;
