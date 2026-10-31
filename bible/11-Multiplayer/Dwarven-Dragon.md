@@ -85,7 +85,9 @@ forged site in its cell pays once. The hub keeps an account's receipts of its ne
 device carries it (`src/net/dragon/dragonClaims.js`) to `/v1/dragon/claim` (`server-account/src/dragons.js`
 `claimDragon`), which counts one kill a (watch, place, account) and gives the hoard to the one claim that writes that
 dragon's row. A receipt with no place counts one a watch, and a placed receipt is refused where an older service
-counted its watch after it was minted. The hoard (`src/systems/dragon/dragonSpoils.js`) is rolled on the receipt's seed, never past the character's level:
+counted its watch after it was minted.
+
+The hoard (`src/systems/dragon/dragonSpoils.js`) is rolled on the receipt's seed, never past the character's level:
 `DRAGON_GOLD_PER_LEVEL` gold a level, and Magic-or-better and Rare-or-better pieces for a dealer, less for a stander.
 The tame is the service's own draw, 1 in `DRAGON_TAME_ONE_IN`, for a dealer whose character holds no dragon. A tamed
 player sees "Its core still turns. The Dwarven Dragon is yours." and the item goes into the pack
