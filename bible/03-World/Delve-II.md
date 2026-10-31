@@ -414,3 +414,4 @@ at the opener's level. With the ladder off it comes plain (`systems/delve/delveV
 | `test/scenes/delve/dlv3_e2e.test.js` LITANY-STAND E2E | the real host on the real Room, the room one frame behind as the page is: won, the vault my share. On the old code the first plate never lit |
 | `test/systems/delve/delvevault.test.js` | the piece, the pile and the gold; the source; LOOT-GATE's hold on a young opener; the ladder off |
 | `tools/mutants/litanystand.json`, `tools/mutants/delvevault.json` | 15 mutants, all dead; five records of `dlv1`-`dlv3` re-aimed by content, and the two of the old vault's second roll and its gold floor retired with that law |
+| Won in the real game | `tools/delveProbe.mjs` over the freeware's data, offline: The Agryn Prison's Litany, each plate lit as it was walked onto, 126 s, the vault 8 items; Bedard Laboratory's Hold (444 s, 4 items) and Seals (375 s, 5 items). No page error |
