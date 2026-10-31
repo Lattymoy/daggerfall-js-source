@@ -15665,7 +15665,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
-    get modes() { return modes; }, campToScene: (p) => campToScene(p),   // PORTAL-BOOK: the landing at a kept door
+    get modes() { return modes; }, get campToScene() { return campToScene; },   // PORTAL-BOOK: the landing at a kept door
   });
   const portalBook = createPortalBookHost({   // PORTAL-BOOK (scenes/portalBookHost.js): the Portal Book's window
     townTalk, playerEntity, mode: _mode, house: () => modes?.portalBookHere?.() ?? null, pixel: () => playerTravelPixel(),
