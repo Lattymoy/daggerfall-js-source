@@ -29,7 +29,7 @@
   {
     "name": "CRUX1-the-child-quests-throw-takes-the-parent",
     "file": "src/systems/quest/machine.js",
-    "old": "    try {\n      return this.scheduleQuest(lines, factionId, opts);\n    } catch (ex) {\n      console.warn(`[quest] Parsing quest ${questName} FAILED!\\r\\n${ex?.message ?? ex}`);\n      return null;\n    }",
+    "old": "    try {\n      return this.scheduleQuest(lines, factionId, opts);\n    } catch (ex) {\n      console.warn(`[quest] Parsing quest ${questName} FAILED!\\r\\n${ex?.message ?? ex}`);\n      // StartQuest consumes the attempt even on failure. Keep the failed step\n      // at the existing story recovery door instead of silently losing it.\n      if (story) this.storyEnded.add(name);\n      return null;\n    }",
     "new": "    return this.scheduleQuest(lines, factionId, opts);",
     "tests": [
       "test/systems/quest/crux1.test.js"

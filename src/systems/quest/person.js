@@ -759,6 +759,7 @@ export class Person extends QuestResource {
   _assignHomeTown(world, scopeString) {
     const HOUSE = 'house';
     const symbolName = `_${this.symbol.name}_home_`;
+    const randomScope = !scopeString;
 
     if (this.isQuestor || (this.isIndividualNPC && this.isIndividualAtHome)) {
       const homePlace = new Place(this.parentQuest);
@@ -800,7 +801,15 @@ export class Person extends QuestResource {
         nearTowns: false,
       });
     } catch {
-      homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${HOUSE}`);
+      try {
+        homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${HOUSE}`);
+      } catch (error) {
+        // #1532: an unspecified home rolled local, but every suitable site can
+        // already be a player's home or another quest's. The script permits a
+        // remote home too. Explicitly local people must stay in their town.
+        if (!randomScope || scopeString !== 'local') throw error;
+        homePlace = new Place(this.parentQuest, `Place ${symbolName} remote ${HOUSE}`);
+      }
     }
     this.homePlaceSymbol = homePlace.symbol.clone();
     this.parentQuest.addResource(homePlace);

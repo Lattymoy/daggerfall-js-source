@@ -292,7 +292,7 @@
 
 import { Parser } from './parser.js';
 import { globalVarsTable } from './tables.js'; // STORY-AGAIN (AUDIT QA3): a step's globals, by name
-import { spineOwed, spineRecord, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js'; // MAIN-SPINE: the main quest's backbone kept
+import { spineOwed, spineRecord, SPINE, SPINE_OPENER, SPINE_CURSE, SPINE_CHECK_TICKS } from './mainSpine.js'; // MAIN-SPINE: the main quest's backbone kept
 import { defaultActionTemplates, heldPromptPlaces } from './actions.js'; // AUDIT QA3 A1: a box up here, asked in the envelope
 import { receivedState, mergeSharedState, freshState, QL_STAMP } from '../questlines/qlState.js'; // QL1: a shared copy's questline state (decision 7); AUDIT QUESTLINES BRANCH-14: a restart's stamp
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
@@ -696,7 +696,7 @@ export class QuestMachine {
       onOfferPending: (givePc) => this.deps.onOfferPending?.(givePc),
       // StartQuest schedules child quests through the machine's own
       // data seam (QuestListsManager.GetQuest -> ScheduleQuest).
-      startQuest: (questName) => this.scheduleQuestByName(questName),
+      startQuest: (questName) => this.scheduleQuestByName(questName, 0, { storyOnce: true }),
       globalVars: this.globalVars,
       // The Q3-i world seam + site machinery. deps.world is the
       // world-data/player-state surface a running host wires (contract
@@ -804,9 +804,22 @@ export class QuestMachine {
 
   /** Schedule by quest name through the data seam. */
   scheduleQuestByName(questName, factionId = 0, opts = {}) {
+    // #1532: duplicate backbones can ask for the same royal quest on one tick.
+    // A story step is started once; an ended step is recovered explicitly via
+    // startStoryAgain, never by replaying a parent's one-time StartQuest action.
+    const name = String(questName ?? '').toUpperCase();
+    const story = isMainStoryQuest(name);
+    if (opts.storyOnce && (story || questNameIn([SPINE, SPINE_CURSE], name))) {
+      const existing = [...this.quests.values(), ...this.questsToInvoke].find(
+        (q) => q.questName?.toUpperCase() === name,
+      );
+      if (existing) return existing;
+      if (story && this.storyStarted.has(name)) return null;
+    }
     const lines = this.deps.getQuestSourceLines?.(questName);
     if (!lines) {
       console.warn(`[quest] no source for quest ${questName}`);
+      if (story) this.storyEnded.add(name);
       return null;
     }
     // CRUX1 (2026-09-22): UNDER ParseQuest's CATCH, as the lists arm is
@@ -822,6 +835,9 @@ export class QuestMachine {
       return this.scheduleQuest(lines, factionId, opts);
     } catch (ex) {
       console.warn(`[quest] Parsing quest ${questName} FAILED!\r\n${ex?.message ?? ex}`);
+      // StartQuest consumes the attempt even on failure. Keep the failed step
+      // at the existing story recovery door instead of silently losing it.
+      if (story) this.storyEnded.add(name);
       return null;
     }
   }
@@ -1424,6 +1440,7 @@ export class QuestMachine {
     for (const n of data.storyStarted ?? []) if (isMainStoryQuest(n)) this.storyStarted.add(String(n).toUpperCase());
     for (const n of data.storyEnded ?? []) if (isMainStoryQuest(n)) this.storyEnded.add(String(n).toUpperCase());
     this.storyLegacy = !Array.isArray(data.storyStarted);
+    if (!this.storyLegacy) this.recoverFailedStoryStarts();
     if (!this.storyLegacy) return; // the record is whole: every start and every end wrote it
     for (const q of this.quests.values()) {
       if (!isMainStoryQuest(q.questName)) continue;
@@ -1433,6 +1450,24 @@ export class QuestMachine {
     }
     for (const q of this.quests.values())
       if (!q.questTombstoned && isMainStoryQuest(q.questName)) this.storyEnded.delete(q.questName.toUpperCase());
+  }
+
+  /** #1532: older backbones spent StartQuest even when the child's parse failed.
+   *  A save with a complete story-start record can prove the child never began.
+   *  Leave pre-record saves to seedStory's journal migration; absence there is
+   *  not evidence of a failed start. No parent progress or rewards are reset. */
+  recoverFailedStoryStarts() {
+    const standing = new Set([...this.quests.values(), ...this.questsToInvoke].map((q) => q.questName?.toUpperCase()));
+    for (const q of this.quests.values()) {
+      if (!questNameIn([SPINE], q.questName)) continue;
+      for (const task of q.tasks.values()) {
+        for (const action of task.actions ?? []) {
+          if (action.typeName !== 'StartQuest' || !action.isComplete) continue;
+          const name = String(action.questName || (action.questIndex1 > 0 ? `S${String(action.questIndex1).padStart(7, '0')}` : '')).toUpperCase();
+          if (isMainStoryQuest(name) && !standing.has(name) && !this.storyStarted.has(name)) this.storyEnded.add(name);
+        }
+      }
+    }
   }
 
   /** RemoveStaleSiteLinks (:1946-1970). */
