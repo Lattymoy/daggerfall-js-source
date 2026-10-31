@@ -1219,6 +1219,14 @@ upright by a half turn where needed so its widest end is on top (a sword's guard
 resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against the sets' 0.019. It is uploaded as
 drawn and mirrored; a store keeps eight, more while more are asked, and asks again for one that did not come (AUDIT).
 
+**FLAIL-BACK** (2026-10-31, the owner: "The flail when holstered on the back needs to look different. Adjust the
+placement of the ball and chain"). Stood up as the doll draws it, a flail's chain stuck out sideways from the cap and its
+ball rode the top like a flag, the handle broken at the doll's hand. `eotbHolsterFlail.js` `uprightFlailPicture` splits
+it as the hands do (`heldPicture`, `heldChain`): the handle upright, cap on top, its hand's gap bridged, and the chain
+hung from the cap down beside it, the ball by the handle's foot. `loadBackPicture` is the door my body and every walker
+take the back's picture through. Pins: `test/player/eyeOfTheBeholder/holster_flail.test.js`,
+`tools/mutants/flailback.json` (6, all dead).
+
 **The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
 of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle, centred on the painted
 body (`auraSpriteAcross`, the cape's law), scaled with the sprite. Its frame is the picture's facing (`portrayedYaw`),

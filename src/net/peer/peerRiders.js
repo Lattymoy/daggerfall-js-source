@@ -52,6 +52,7 @@ import { gatherActOf, peerGatherTool, peerGatherSwing } from './peerGather.js'; 
 import { peerWeaponOf, peerHandsOf } from './peerBodies.js';   // LAYERED-WEAPONS: the weapon in the hand the peer uses (LAYERED-DUAL: or its pair)
 import { layeredWeaponOf, layeredHands } from '../../player/eyeOfTheBeholder/layeredWeapon.js';
 import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from '../../player/eyeOfTheBeholder/layeredWarm.js';   // ATTACK-WARM
+import { loadBackPicture } from '../../player/eyeOfTheBeholder/eotbHolsterFlail.js';   // FLAIL-BACK
 import { withoutShield, loadShieldPicture } from '../../player/eyeOfTheBeholder/layeredShield.js';   // LAYERED-SHIELD: a walker's marks without its shield
 
 /** The table a riding pose shows: standing, walking, galloping (EOTB's three mounted tables). */
@@ -99,7 +100,7 @@ async function decodeUrl(url) {
  * (player/eyeOfTheBeholder/eotbLantern.js createLanternArt, loadLanternArt from the player's ARENA2), uploaded under the same key, which
  * the renderer caches once for both. Asked only when a pose first says `hl`. `loadLantern` is the pins' door.
  */
-export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, clock = () => Date.now(), loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture } = {}) {
+export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, clock = () => Date.now(), loadLantern = loadLanternArt, loadHolster = loadBackPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture } = {}) {
   const tex = new Map();      // `${archive}:${rec}` -> { w, h } | Promise | null (no art at all) | { failedAt } (asked again after RIDER_RETRY_MS)
   const pixels = new Map();   // sprite key -> decode promise, the most recently asked last (PEER-ART: RIDER_PIXELS_KEPT of them)
   // COATS1: the riders' horses' looks (systems/horse/horseCoats.js) - each its own dyed pictures, so a look is let go once

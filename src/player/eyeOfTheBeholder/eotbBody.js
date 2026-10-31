@@ -57,6 +57,7 @@ import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPa
 import { isLayeredKey, decodeLayered, outfitOfSlots, outfitPieces, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
 import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from './layeredWarm.js';   // ATTACK-WARM: a look's clips composed before they play
+import { loadBackPicture } from './eotbHolsterFlail.js';   // FLAIL-BACK: a flail on the back, its chain hung from the cap
 import { withoutShield, loadShieldPicture } from './layeredShield.js';   // LAYERED-SHIELD: the body's marks are read without the shield it carries
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
@@ -233,7 +234,7 @@ const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / 
 
 const handWeapon = () => { try { return equipTableOf(playerEntity)?.[HOLSTER_HAND_SLOT] ?? null; } catch { return null; } };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadBackPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
