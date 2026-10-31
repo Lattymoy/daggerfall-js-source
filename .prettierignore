@@ -945,15 +945,7 @@
 !/src/systems/graphicsPresets.js
 !/src/systems/gravestoneLore.js
 !/src/systems/guild/
-/src/systems/guild/*
-!/src/systems/guild/guildFactions.js
-!/src/systems/guild/guildHallReveal.js
-!/src/systems/guild/guildNpcServices.js
-!/src/systems/guild/guildServiceActions.js
-!/src/systems/guild/guildServiceFlow.js
-!/src/systems/guild/guildServices.js
-!/src/systems/guild/guildVariants.js
-!/src/systems/guild/guilds.js
+/src/systems/guild/*/
 !/src/systems/handWraps.js
 !/src/systems/handheldTorches.js
 !/src/systems/harmMark.js
