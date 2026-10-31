@@ -418,16 +418,14 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/horse-cart-and-cargo/Textures/Walk.4-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
   ['vendor/horse-cart-and-cargo/Textures/Walk.4-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
   ['vendor/horse-cart-and-cargo/Textures/Walk.4-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  // HANDHELD TORCHES (HT1, vendor/handheld-torches/Textures/). Thirty-nine
-  // textures of a third-party mod, vendored whole with the author's
-  // permission (the line in vendor/handheld-torches/README.md) and
-  // published the same way. The pixels are the author's own: no ARENA2
-  // file shows a hand holding a torch or a torch lying on a floor - the
-  // 112359 sheets are a first-person hand holding a lit torch (90x205)
-  // or a lantern (110x138), the 112358 sheets are dropped lights with
-  // their emission twins and three doused frames, all drawn in
-  // Daggerfall's idiom rather than cut from it (the account:
-  // bible/06-Systems/Handheld-Torches.md, 'The textures, and the doctrine').
+  // HANDHELD TORCHES (HT1, vendor/handheld-torches/Textures/). Seventeen
+  // textures of a third-party mod, carried with the author's permission
+  // (the line in vendor/handheld-torches/README.md): the 112359 hands
+  // holding a torch or a lantern, the dropped torch and its emission
+  // twins, the doused torch. NO-BETHESDA2: the candles and holy candles
+  // (22 pictures) are TEXTURE.210's own flames, rebuilt from the
+  // player's files (derived.json), never carried - the account:
+  // bible/06-Systems/Handheld-Torches.md.
   ['vendor/handheld-torches/Textures/112359_0-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 0"],
   ['vendor/handheld-torches/Textures/112359_0-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 1"],
   ['vendor/handheld-torches/Textures/112359_0-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 2"],
@@ -444,44 +442,21 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/handheld-torches/Textures/112358_0-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 2"],
   ['vendor/handheld-torches/Textures/112358_0-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 3"],
   ['vendor/handheld-torches/Textures/112358_0-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_1-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_1-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_1-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_1-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_1-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_1-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_1-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_1-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_1-4.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 4"],
-  ['vendor/handheld-torches/Textures/112358_1-4_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 4"],
-  ['vendor/handheld-torches/Textures/112358_2-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_2-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_2-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_2-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_2-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_2-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_2-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_2-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_2-4.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 4"],
-  ['vendor/handheld-torches/Textures/112358_2-4_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 4"],
   ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
-  ['vendor/handheld-torches/Textures/112358_11-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused candle, one frame, no emission"],
-  ['vendor/handheld-torches/Textures/112358_12-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused holy candle, one frame, no emission"],
   // CLIMATES & CALORIES (SURV2, vendor/climates-calories/Textures/).
-  // Sixteen of the mod's eighteen PNGs, carried on the author's
-  // permission (vendor/climates-calories/README.md): the spoiled face
-  // of each food, raw meat's three, the waterskin. Archives 532-539 are
+  // Fourteen PNGs, carried on the author's permission
+  // (vendor/climates-calories/README.md): the spoiled faces, raw meat's
+  // three, the waterskin. NO-BETHESDA2 rebuilds four that are Daggerfall's
+  // own records - two faces, the tent's canvas and pole (derived.json). Archives 532-539 are
   // the mod's own (its template indices), with no ARENA2 file behind
   // them - the pipeline stands a vendor archive in for them.
   ['vendor/climates-calories/Textures/532_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy apple"],
   ['vendor/climates-calories/Textures/532_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten apple"],
   ['vendor/climates-calories/Textures/533_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy orange"],
   ['vendor/climates-calories/Textures/533_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten orange"],
-  ['vendor/climates-calories/Textures/534_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy bread"],
   ['vendor/climates-calories/Textures/534_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten bread"],
   ['vendor/climates-calories/Textures/535_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy raw fish"],
   ['vendor/climates-calories/Textures/535_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten raw fish"],
-  ['vendor/climates-calories/Textures/536_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy cooked fish"],
   ['vendor/climates-calories/Textures/536_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten cooked fish"],
   ['vendor/climates-calories/Textures/537_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy meat"],
   ['vendor/climates-calories/Textures/537_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten meat"],
@@ -489,8 +464,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/538_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - rotten raw meat"],
   ['vendor/climates-calories/Textures/538_2-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - raw meat, fresh"],
   ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
-  ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
-  ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,
@@ -965,7 +938,7 @@ const BUNDLE_ART = new Map([
       why: "THIRD-PARTY - Foraging 1.7 (Harbinger451), carried on Mac's word of the author's permission; the mod's own pixel art - the Wood-Axe, Pick-Axe, Sickle, Fishing-Net, Wood Bundle, Egg and Spade - written as PNG from the bundle's Texture2D objects (see vendor/foraging/README.md)" }],
   ['vendor/eye-of-the-beholder/Textures/',
     { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
-      why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the mod's own player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README)" }],
+      why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the author's own 166 player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README). NO-BETHESDA2: the other 2,869 are Daggerfall's own TEXTURE records, rebuilt from the player's files (derived.json), never files" }],
   // AUDIT-TO1 F3: TO1 vendored three pictures and never came here, and
   // the gate did not say so on the day - `tracked()` reads git's index,
   // the slice ran its suite BEFORE `git add`, and three untracked files
@@ -1002,10 +975,10 @@ const BUNDLE_ART = new Map([
   // hauberk or an archer's axe).
   ['public/art/roleplay-realism-items/',
     { manifest: 'vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json',
-      why: "THIRD-PARTY - Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar); the mod's own inventory and paper-doll sprites for its fourteen custom items in every metal, and the helmet's masks - re-encoded from the bundle's Texture2D objects by tools/rriExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
+      why: "THIRD-PARTY - Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar); the mod's own inventory and paper-doll sprites for its fourteen custom items in every metal, and the helmet's masks - re-encoded from the bundle's Texture2D objects by tools/rriExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README). NO-BETHESDA2: the 50 that are Daggerfall's own records (46 helmet masks, the four Dwarven helmets) are rebuilt from the player's files (derived-art.json), not carried" }],
   ['public/art/roleplay-realism/',
     { manifest: 'vendor/roleplay-realism/roleplay-realism.dfmod.json',
-      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own seven variant shop and tavern keeper sprites (197_0-0 .. 197_6-0, the XML scale beside each under vendor/) and its seventeen BUTTONS.RCI records 21-37 (the training window's '5 Days' and the rest of its index) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README)" }],
+      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own five variant shop and tavern keeper sprites (197_0-0 .. 197_3-0 and 197_6-0, the XML scale beside each under vendor/) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README). NO-BETHESDA2: 197_4-0, 197_5-0 and the seventeen BUTTONS.RCI records 21-37 are Daggerfall's own records under the author's paint, rebuilt from the player's files (derived-art.json), not carried" }],
   // OVH2 (2026-09-24, Mac: "Our first overhaul option will be the file attached"): GrimoireUI's 139 pictures - the
   // mod's own hand-drawn UI (parchment, wood and new lettering over Daggerfall's screen layouts), vendored byte for
   // byte the way Roleplay & Realism's BUTTONS.RCI repaints are. A LOOSE-FILE pack ships no .dfmod, so its authority is
@@ -1103,6 +1076,19 @@ const BUNDLE_ART = new Map([
     { manifest: 'vendor/windfall/windfall.files.json',
       why: "THIRD-PARTY - Windfall 1.0.0 (demifiend000), carried on Mac's word of the author's permission; the mod's own leaf sheets and snowflake, RGBA32 with one mip in the bundle - each PNG is the texture exactly (see vendor/windfall/README.md)" }],
 ]);
+/** NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): the pictures a mod carried that are
+ *  Daggerfall's own - 60% or more of their drawn pixels a TEXTURE or RCI record's, exactly - are rebuilt from the player's files
+ *  (tools/classicDerive.mjs, formats/classicPictures.js), never carried. Each folder's listing, by the folder. */
+const REBUILT = new Map([
+  ['vendor/eye-of-the-beholder/Textures/', 'vendor/eye-of-the-beholder/derived.json'],
+  ['vendor/handheld-torches/Textures/', 'vendor/handheld-torches/derived.json'],
+  ['vendor/climates-calories/Textures/', 'vendor/climates-calories/derived.json'],
+  ['public/art/roleplay-realism/', 'vendor/roleplay-realism/derived-art.json'],
+  ['public/art/roleplay-realism-items/', 'vendor/roleplay-realism-items/derived-art.json'],
+]);
+/** The names a folder's listing rebuilds, lowercased with `.png` - none where it has no listing. */
+const rebuiltNames = (dir) => (REBUILT.has(dir) ? new Set(Object.keys(JSON.parse(readFileSync(join(root, REBUILT.get(dir)), 'utf8'))).map((n) => `${n.toLowerCase()}.png`)) : new Set());
+
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is
  *  386 KB, so re-parsing it per file turned a 1-second file into an
@@ -1163,9 +1149,30 @@ test('doctrine EOTB0: a vendored bundle\u2019s art is the art its own manifest n
     // does not carry means the vendoring dropped art on the floor,
     // which a one-way check would never say.
     const carried = new Set(here.map((f) => f.split('/').pop().toLowerCase()));
-    const dropped = [...names].filter((n) => /\.(png|jpg|jpeg|gif|bmp|webp|tga)$/i.test(n) && !carried.has(n));
+    const rebuilt = rebuiltNames(dir);   // NO-BETHESDA2: a picture rebuilt from the player's files is carried as its spec
+    const dropped = [...names].filter((n) => /\.(png|jpg|jpeg|gif|bmp|webp|tga)$/i.test(n) && !carried.has(n) && !rebuilt.has(n));
     assert.deepEqual(dropped, [],
       `${dir}: the manifest names ${dropped.length} pictures the tree does not carry`);
+  }
+});
+
+test('NO-BETHESDA2: a rebuilt picture is a spec and never a file, and every spec is of a classic record', () => {
+  for (const [dir, listing] of REBUILT) {
+    const specs = JSON.parse(readFileSync(join(root, listing), 'utf8'));
+    const names = Object.keys(specs);
+    assert.ok(names.length > 0, `${listing} rebuilds nothing - a claim about pictures that are not there`);
+    const files = new Set(tracked(dir).map((f) => f.split('/').pop().toLowerCase()));
+    assert.deepEqual(names.filter((n) => files.has(`${n.toLowerCase()}.png`)), [], `${dir}: a picture both rebuilt and carried - Daggerfall's pixels in the tree`);
+    for (const [n, spec] of Object.entries(specs)) {
+      // a TEXTURE record is [archive, record, frame]; an RCI file's (`rci`, Roleplay & Realism's buttons) [record, frame]
+      if (typeof spec.rci === 'string') assert.ok(/^[A-Z0-9_]+\.RCI$/.test(spec.rci) && spec.from?.length === 2 && spec.from.every(Number.isInteger), `${listing} ${n}: an RCI spec is rci and [record, frame]`);
+      else assert.ok(Array.isArray(spec.from) && spec.from.length === 3 && spec.from.every(Number.isInteger), `${listing} ${n}: from is [archive, record, frame]`);
+      assert.ok(['ART_PAL.COL', 'PAL.PAL'].includes(spec.pal), `${listing} ${n}: a palette the player's ARENA2 has`);
+    }
+    if (BUNDLE_ART.has(dir)) {
+      const manifest = bundleNames(dir);
+      assert.deepEqual(names.filter((n) => !manifest.has(`${n.toLowerCase()}.png`)), [], `${listing}: a spec for a picture the mod never shipped`);
+    }
   }
 });
 

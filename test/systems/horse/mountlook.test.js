@@ -20,6 +20,7 @@ import { MOUNT_PREVIEW_BEAT, MOUNT_PREVIEW_FILE } from '../../../src/ui/mountPre
 import { bindPeerEffects } from '../../../src/net/peer/peerEffects.js';
 import { SESSION_KEY } from '../../../src/net/accountClient.js';
 import { HORSE_LOOK_MAX } from '../../../src/net/wire.js';
+import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const picture = (p) => { const raw = PNG.sync.read(readFileSync(new URL(`../../../vendor/${p}`, import.meta.url))); return { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }; };
@@ -116,7 +117,7 @@ test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and i
 
 // AUDIT-STOREFRONT (the owner: "the horse designs are awful"): PIN MOVED - the Warhorse's mane and tail burn now, and the
 // charger's are fire, not the gold's shadow.
-test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - the ghost\'s mane and tail a deep blue, see-through at their tips; the charger\'s and the Warhorse\'s fire; the automaton\'s steel - and never a rider\'s bow rising off the neck, nor a rein hanging in the air, in either row order (mutants: the points left black; a bow dyed; a rein dyed; the ghost\'s points its hide\'s light; the charger\'s points cold; the ghost\'s points never see-through; the charger\'s far legs unburnt; the Warhorse\'s mane left black)', () => {
+test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - the ghost\'s mane and tail a deep blue, see-through at their tips; the charger\'s and the Warhorse\'s fire; the automaton\'s steel - and never a rider\'s bow rising off the neck, nor a rein hanging in the air, in either row order (mutants: the points left black; a bow dyed; a rein dyed; the ghost\'s points its hide\'s light; the charger\'s points cold; the ghost\'s points never see-through; the charger\'s far legs unburnt; the Warhorse\'s mane left black)', async () => {
   // a built horse: a bay hide, a tail off its croup, a bow rising off its withers, a rein hanging in the air
   const W = 60, Hh = 40, colors = new Uint8Array(W * Hh * 4);
   const put = (x, y, rgb) => { colors.set([...rgb, 255], (y * W + x) * 4); };
@@ -149,9 +150,12 @@ test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - th
     }
   }
   // the shop's horse and the riders' own pictures: nothing over the hide's crest moves (a helmet, a bow); the ghost's
-  // points see-through as its hide is, the charger's burning at its legs
-  for (const f of [`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, ...['1-0', '2-0', '3-0'].map((k) => `eye-of-the-beholder/Textures/112382/112382_${k}.png`)]) {
-    const img = picture(f), hide = pictureHide(img), hidden = new Set(hide.at);
+  // points see-through as its hide is, the charger's burning at its legs. NO-BETHESDA2: the riders' are Daggerfall's own
+  // TEXTURE.495, rebuilt from the player's ARENA2 - asked where ARENA2_PATH is set; the shop's horse always
+  const riders = process.env.ARENA2_PATH ? ['1-0', '2-0', '3-0'].map((k) => `112382_${k}`) : [];
+  const EOTB = eotbPictures();
+  for (const f of [`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, ...riders]) {
+    const img = f.includes('/') ? picture(f) : await EOTB.picture(f).then((p) => ({ width: p.width, height: p.height, colors: new Uint8Array(p.data) })), hide = pictureHide(img), hidden = new Set(hide.at);
     const crest = hide.r0 - Math.ceil(POINT_ABOVE * (hide.r1 - hide.r0 + 1));
     const coat = horseLookCode({ coat: 2, pattern: 0, legs: 0, seed: 5 }), plain = recolorHorse(img, coat, { bottomFirst: false });
     for (const m of MOUNT_LOOKS) {

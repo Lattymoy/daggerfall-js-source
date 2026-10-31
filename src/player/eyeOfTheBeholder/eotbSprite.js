@@ -33,6 +33,8 @@ import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import spriteInfo from '../../../vendor/eye-of-the-beholder/spriteInfo.json' with { type: 'json' };
+import EOTB_DERIVED from '../../../vendor/eye-of-the-beholder/derived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
+import { classicArt } from '../../systems/classicArt.js';   // NO-BETHESDA2: and the one reader that builds them from the player's files
 
 const IN_BROWSER = typeof window !== 'undefined';
 const URLS = IN_BROWSER
@@ -53,13 +55,47 @@ const BY_KEY = Object.fromEntries(
 // duplicate-declaration ratchet caught the collision - ONE DFU
 // MEMBER, ONE EXPORT - and these two are genuinely different things,
 // so the answer is a distinct name rather than a shared home.
-export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : BY_KEY[key] ?? null);   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
-/** How many sprites the build actually carries - for the probes, and
+export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : BY_KEY[key] ?? (IN_BROWSER ? derivedSpriteUrl(key) : null));   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
+/** How many sprites the build can draw - for the probes, and
  *  so "the art is wired" is a number rather than a hope. AUDIT 68
  *  S15-eotb-spritecount-hot: counted once - the table never changes, and
- *  `eotbBody.ready()` asks about eleven times a frame. */
-const SPRITE_COUNT = Object.keys(BY_KEY).length;
+ *  `eotbBody.ready()` asks about eleven times a frame. NO-BETHESDA2: the files and the specs. */
+const SPRITE_COUNT = Object.keys(BY_KEY).length + (IN_BROWSER ? Object.keys(EOTB_DERIVED).length : 0);
 export const spriteCount = () => SPRITE_COUNT;
+
+// ── NO-BETHESDA2 (2026-10-31, the owner): A SPRITE THAT IS DAGGERFALL'S OWN ────────────────────────────────────────
+// 2869 of the bundle's 3035 are TEXTURE records exactly. They are not carried: derived.json names each one's record and
+// palette, and the picture is built from the player's own ARENA2 (systems/classicArt.js). The author's 166 stay files.
+// A derived sprite's "URL" is a marker the decoders build, as a worn-armour key is composed. In node, as the glob, none.
+const DERIVED_MARK = 'DF:';
+export const isDerivedSprite = (url) => typeof url === 'string' && url.startsWith(DERIVED_MARK);
+/** The marker for `key`, or null where derived.json names no spec for it. Pure, browser or not. */
+export const derivedSpriteUrl = (key) => (Object.hasOwn(EOTB_DERIVED, key) ? `${DERIVED_MARK}${key}` : null);
+/** The spec a marker (or a bare key) names - `{ from, pal }` (formats/derivedTexture.js) - or null. */
+export const derivedSpriteSpec = (url) => EOTB_DERIVED[isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url] ?? null;
+/** The builds, a few milliseconds of them a task: once a TEXTURE file lands, a set's 145 built in one task took ~85 ms. */
+const BUILD_BUDGET_MS = 6;
+const _builds = [];
+let _building = false;
+async function drainBuilds() {
+  _building = true;
+  while (_builds.length) {
+    const start = performance.now();
+    while (_builds.length && performance.now() - start < BUILD_BUDGET_MS) await _builds.shift()();
+    if (_builds.length) await new Promise((res) => setTimeout(res, 0));
+  }
+  _building = false;
+}
+/** A derived sprite's picture, top row first, built from the player's own record (`build` the pins' door). Rejects
+ *  where the player's file is missing, as a PNG's failed fetch does. */
+export function buildDerivedSprite(url, build = (spec) => classicArt().build(spec)) {
+  const spec = derivedSpriteSpec(url);
+  if (!spec) return Promise.reject(new Error(`${url}: no spec in derived.json`));
+  return new Promise((resolve, reject) => {
+    _builds.push(() => Promise.resolve().then(() => build(spec)).then(resolve, reject));
+    if (!_building) drainBuilds();
+  });
+}
 
 /**
  * `get_sizeMod`: METRES PER TEXTURE PIXEL. The mod keeps two, and the
@@ -254,12 +290,15 @@ export function worldOrderLayered(image) {
  * THE BROWSER DECODE, lifted out so it can be replaced (eotbBody.js takes it as its `decode`; PROFILE-SLOTS: the
  * profile's stage too, without the body's own module). EOTB-FLIP: the dropped torch's door - `decodePng`, then the one
  * row-order converter - never a canvas of its own. A decode that fails answers a rejection. FIRST-VISIT: decodeServedPng
- * fetches and decodes.
+ * fetches and decodes. NO-BETHESDA2: a derived sprite is built (`build` the pins' door) and takes the same turn.
  */
-export async function decodeSprite(url) {
+export async function decodeSprite(url, { build = undefined } = {}) {
   if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng, { picture: decodeServedPng }));   // WORN-ARMOUR: composed from its strip
+  if (isDerivedSprite(url)) return decodeDerivedSprite(url, build);
   return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
 }
+/** NO-BETHESDA2: a derived sprite on the world's rows - its build is a fresh raster, so it is turned in its own bytes. */
+export const decodeDerivedSprite = async (url, build = undefined) => worldOrderColors(await buildDerivedSprite(url, build), { owned: true });
 
 /**
  * Mirror one sprite's pixels row by row, for a state that draws

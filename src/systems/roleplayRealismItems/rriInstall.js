@@ -15,6 +15,8 @@ import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js'
 import { registerCustomArmorValue } from '../armorMaterials.js';
 import { registerSwingSound, SOUND } from '../soundClips.js';
 import { APP_ROOT } from '../appRoot.js';
+import { classicArt } from '../classicArt.js';
+import { RRI_DERIVED } from './rriIndex.js';
 import { RRI_TEMPLATES, RRI_TEMPLATE_PATCHES, RRI_CLASSES, customItemClass, rriEnabled, rriModule, rriSpriteEntries } from './rriItems.js';
 // RRI2: the nine modules' delegates and overrides - each checks its own
 // switch at the call, so a pane toggle takes effect at the next roll
@@ -32,14 +34,28 @@ import { useBandage, assignSkillEquipment, assignSkillSpellbook, rriAnimTimeOver
 export const rriSpriteUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
   new URL(`art/roleplay-realism-items/${encodeURIComponent(name)}.png`, root).href;
 
+/** NO-BETHESDA2: the fifty sprites that are Daggerfall's own records (RRI_DERIVED) are not carried - each is built
+ *  from the player's ARENA2 by its spec (tools/classicDerive.mjs). The specs are 600 kB: their own chunk, read on the
+ *  first build, never at boot. A failed read is forgotten. */
+let _specs = null;
+export const rriDerivedSpecs = () => (_specs ??= import('../../../vendor/roleplay-realism-items/derived-art.json', { with: { type: 'json' } })
+  .then((m) => m.default, (e) => { _specs = null; throw e; }));
+/** A derived picture, built from the player's own record through `art` (systems/classicArt.js; a test's fake). */
+export async function rriDerivedPicture(name, art = classicArt()) {
+  const spec = (await rriDerivedSpecs())[name];
+  if (!spec) throw new Error(`${name}: no spec in derived-art.json`);
+  return art.build(spec);
+}
+
 let _installed = false;
 /** Once: the fourteen rows, the twenty patches (while the mod is on at
  *  boot - a patch changes what a minted item weighs and costs, so like
  *  DFU's merge it is read at load, not per frame), and the 280
- *  sprites as lazy, gated vendor entries. `fetchBytes(name)` is the
- *  test seam. Returns how many sprites were registered (0 when already
- *  installed). */
-export function installRoleplayRealismItems({ fetchBytes = null, enabledAtBoot = rriEnabled() } = {}) {
+ *  sprites as lazy, gated vendor entries - a file's `load`, a derived
+ *  one's `build`. `fetchBytes(name)` and `art` (the classic reader) are
+ *  the test seams. Returns how many sprites were registered (0 when
+ *  already installed). */
+export function installRoleplayRealismItems({ fetchBytes = null, art = null, enabledAtBoot = rriEnabled() } = {}) {
   if (_installed && vendorTextureCount() > 0) return 0;
   _installed = true;
   registerCustomTemplates(RRI_TEMPLATES);
@@ -49,13 +65,15 @@ export function installRoleplayRealismItems({ fetchBytes = null, enabledAtBoot =
   for (const cls of Object.values(RRI_CLASSES)) if (cls.swingSound) registerSwingSound(cls.index, SOUND[cls.swingSound]);
   installRoleplayRealismModules();
   const load = fetchBytes ?? (async (name) => { const r = await fetch(rriSpriteUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  const derived = new Set(RRI_DERIVED);
+  const source = (name) => (derived.has(name) ? { build: () => rriDerivedPicture(name, art ?? classicArt()) } : { load });
   return addVendorTextures(rriSpriteEntries().map((e) => ({
     archive: e.archive, record: e.record, frame: e.frame, dye: e.dye, map: e.map, fileName: e.name,
     // the archives 513-526 exist only as this art (no TEXTURE.513): the
     // stand-in kind (SURV-TENT); the <rect> beside a sprite is where
     // the paper doll puts it, in the doll's own space
     standIn: true, lazy: true, offset: e.rect ? { x: e.rect.x, y: e.rect.y, paperdoll: true } : null,
-    load, gate: rriEnabled,
+    ...source(e.name), gate: rriEnabled,
   })));
 }
 

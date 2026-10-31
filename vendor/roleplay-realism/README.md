@@ -51,6 +51,18 @@ source tree carries at `0af2ec9`, unchanged. They carry no licence
 text of their own (the MIT header is the scripts') - granted, as the
 Mod-Registry row records. Both are what the mod's manifest names.
 
+**NO-BETHESDA2 (2026-10-31, the owner).** Nineteen of those 24 pictures
+are Daggerfall's own records - at least 60% of their drawn pixels
+exactly - and are no longer carried: `197_4-0` (TEXTURE.186 record 1,
+untouched), `197_5-0` (TEXTURE.182 record 1 under the author's paint,
+78%) and the seventeen buttons (BUTTONS.RCI's own buttons, records
+3-20, relabelled, 68-90%). `derived-art.json` here holds each one's
+spec: the record, the palette and the pixels the author changed
+(`tools/classicDerive.mjs --rci`). The game builds them from the
+player's own ARENA2. What `public/art/roleplay-realism/` carries now is
+the authors' own five: `197_0-0` to `197_3-0` and `197_6-0` (8-54% a
+record's).
+
 ## The quests (RR3a)
 
 `Quests/QuestList-RoleplayRealism.txt` and `Quests/RRMSTARM0-2.txt`,

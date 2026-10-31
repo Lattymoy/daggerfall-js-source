@@ -144,8 +144,7 @@ const rgbaOf = (bm, pal) => {
 export function* classicPictures(arena2) {
   const pal = (n) => { const p = new DFPalette(); p.load(new Uint8Array(readFileSync(join(arena2, n))), n); return p; };
   const art = pal('ART_PAL.COL'), game = pal('PAL.PAL');
-  const pals = new Map([['ART_PAL.COL', art], ['PAL.PAL', game]]);
-  const palNamed = (n) => { if (!pals.has(n)) { try { pals.set(n, pal(n)); } catch { pals.set(n, art); } } return pals.get(n); };
+  const kept = [art, game].map((p) => p.paletteBuffer.slice());   // checked at the end: no reader may repaint them
   for (const f of readdirSync(arena2).sort()) {
     const F = f.toUpperCase();
     const bytes = () => new Uint8Array(readFileSync(join(arena2, f)));
@@ -161,12 +160,14 @@ export function* classicPictures(arena2) {
         }
       }
     } else if (/\.IMG$/.test(F)) {
+      // Every IMG its own palette object, read afresh: a palettized one reads its palette into the object it holds when
+      // its pixels are read, which can be after isPalettized is asked. Handed the shared ART_PAL, it repainted every
+      // TEXTURE frame read after it (Roleplay & Realism: Items' helmet masks went unseen).
       const im = new ImgFile();
-      if (!im.load(bytes(), F, pal('ART_PAL.COL'))) continue;   // its own copy: a palettized IMG reads its palette into it
-      const p = im.isPalettized ? null : palNamed(im.paletteName);
-      if (p) im.palette = p;
+      if (!im.load(bytes(), F, pal('ART_PAL.COL'))) continue;
+      if (!im.isPalettized) { try { im.palette = pal(im.paletteName); } catch { /* the file's ART_PAL copy stands */ } }
       const bm = im.getDFBitmap(0, 0);
-      if (bm?.width) yield { from: F, rgba: rgbaOf(bm, bm.palette ?? p ?? art) };
+      if (bm?.width) yield { from: F, rgba: rgbaOf(bm, bm.palette ?? im.palette) };
     } else if (/\.(CIF|RCI)$/.test(F)) {
       for (const [pn, p] of [['ART_PAL', art], ['PAL', game]]) {
         const c = new CifRciFile();
@@ -181,6 +182,7 @@ export function* classicPictures(arena2) {
       }
     }
   }
+  [art, game].forEach((p, i) => { if (!p.paletteBuffer.every((v, j) => v === kept[i][j])) throw new Error('a reader repainted a shared palette'); });
 }
 
 /** A picture's key: its size and the sha256 of its drawn pixels (a clear pixel is clear whatever colour sits under it). */

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +12,7 @@ import {
   STRING, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, holdDrawFrames,
   mirrorFlips, MIRROR_TABLES, mirrorRevertTime, autoToggleRows, DELAYED_FRAMES, ORIENTATION_TIME,
 } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
+import { EOTB_DERIVED, eotbHas } from '../../../tools/lib/eotbPictures.mjs';
 
 // ═══ EOTB3: THE PLAYER BILLBOARD ══════════════════════════════════
 //
@@ -24,6 +25,12 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const bundle = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/states.json'), 'utf8'));
 const TEX = join(root, 'vendor/eye-of-the-beholder/Textures');
+// NO-BETHESDA2 (2026-10-31): a sprite the bundle ships is the author's file or a derived.json spec, rebuilt from the
+// player's ARENA2 - so the names the mod has are both (test/player/eyeOfTheBeholder/nobethesda2_eotb.test.js)
+const SPRITE_NAMES = [
+  ...readdirSync(TEX, { recursive: true }).filter((f) => /\.png$/.test(f)).map((f) => f.split(/[\\/]/).pop().replace(/\.png$/, '')),
+  ...Object.keys(EOTB_DERIVED),
+];
 
 test('EOTB3: the GENERATED table is the mod’s own - all 168 states, checked not claimed', () => {
   // THE PIN THIS SLICE EXISTS FOR. The port carries 21 base records and
@@ -56,14 +63,12 @@ test('EOTB-IL: THE CHOP - the clip lengths are the ART’s, counted per record o
   // one (IL_5a70-IL_5ad4), so the count is asked of the vendored files
   // - every archive, every record - and compared with TABLE_FRAMES.
   const counts = new Map();   // archive -> record -> frames
-  for (const arch of readdirSync(TEX)) {
-    const per = new Map();
-    for (const f of readdirSync(join(TEX, arch))) {
-      const m = /^(\d+)_(\d+)-(\d+)\.png$/.exec(f);
-      if (!m) continue;
-      per.set(+m[2], (per.get(+m[2]) ?? 0) + 1);
-    }
-    counts.set(+arch, per);
+  for (const name of SPRITE_NAMES) {   // NO-BETHESDA2: the files and the specs
+    const m = /^(\d+)_(\d+)-(\d+)$/.exec(name);
+    if (!m) continue;
+    if (!counts.has(+m[1])) counts.set(+m[1], new Map());
+    const per = counts.get(+m[1]);
+    per.set(+m[2], (per.get(+m[2]) ?? 0) + 1);
   }
   assert.equal(counts.size, 23, 'the 23 archives');
   const kinds = { foot: [], horse: [], lycan: [] };
@@ -117,19 +122,20 @@ test('EOTB3: every sprite the table asks for is a sprite the bundle actually shi
       const { record } = stateFor(table, o);
       const archive = tableArchive(table, { onFoot: 0, onHorse: 0, lycanthropyType: 1 });
       for (let f = 0; f < frameCount(table); f++) {
-        const file = join(TEX, String(archive), `${spriteKey(archive, record, f)}.png`);
         asked++;
-        if (!existsSync(file)) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);
+        if (!eotbHas(spriteKey(archive, record, f))) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);   // NO-BETHESDA2: a file or a spec
       }
     }
   }
   assert.ok(asked > 168, 'the sweep really ran over every state and every frame');
-  assert.deepEqual(missing, [], 'every frame of every state is in the vendored art');
+  assert.deepEqual(missing, [], 'every frame of every state is in the vendored art, or rebuilt from the player\'s');
 });
 
 test('EOTB3: every on-foot and horse archive the settings can pick is present', () => {
-  for (let i = 0; i <= 15; i++) assert.ok(existsSync(join(TEX, String(ARCHIVE_FOOT + i))), `OnFoot ${i}`);
-  for (let i = 0; i <= 4; i++) assert.ok(existsSync(join(TEX, String(ARCHIVE_HORSE + i))), `OnHorse ${i}`);
+  // NO-BETHESDA2: an archive wholly Daggerfall's own (set 5, the five riders) has no folder now, only specs
+  const has = (archive) => SPRITE_NAMES.some((n) => n.startsWith(`${archive}_`));
+  for (let i = 0; i <= 15; i++) assert.ok(has(ARCHIVE_FOOT + i), `OnFoot ${i}`);
+  for (let i = 0; i <= 4; i++) assert.ok(has(ARCHIVE_HORSE + i), `OnHorse ${i}`);
   assert.equal(tableArchive('Idle', { onFoot: 7 }), ARCHIVE_FOOT + 7);
   assert.equal(tableArchive('GallopHorse', { onHorse: 3 }), ARCHIVE_HORSE + 3);
 });
@@ -347,6 +353,6 @@ test('EOTB3: the sprite key is the bundle’s own naming', () => {
   assert.equal(spriteKey(112364, 25, 3), '112364_25-3');
   const { record } = stateFor('AttackMelee', 0);
   assert.equal(spriteKey(ARCHIVE_FOOT, record, 0), '112364_25-0');
-  assert.ok(existsSync(join(TEX, '112364', '112364_25-5.png')), 'and the swing really has a sixth frame');
-  assert.ok(!existsSync(join(TEX, '112364', '112364_0-1.png')), 'and the idle really has no second');
+  assert.ok(eotbHas('112364_25-5'), 'and the swing really has a sixth frame');   // NO-BETHESDA2: a file or a spec
+  assert.ok(!eotbHas('112364_0-1'), 'and the idle really has no second');
 });

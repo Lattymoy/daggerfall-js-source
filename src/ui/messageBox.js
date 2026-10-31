@@ -182,7 +182,7 @@ function buttonTex(record) {
     const custom = _buttonArt.get(record);
     if (custom && (custom.isOn?.() ?? true)) {
       _art.buttons.set(record, null);
-      Promise.resolve(custom.load()).then((bytes) => decodePng(bytes)).then((img) => {
+      Promise.resolve(custom.load()).then((v) => (v?.width ? v : decodePng(v))).then((img) => {   // NO-BETHESDA2: or the picture, built
         const colors = new Uint32Array(img.data.buffer, img.data.byteOffset, img.width * img.height);
         _art.buttons.set(record, _art.renderer.uploadTexture('img', `buttons:${record}`, { width: img.width, height: img.height, colors }));
       }).catch((e) => console.warn('[messagebox] a registered button did not load:', e?.message ?? e));
@@ -196,7 +196,8 @@ function buttonTex(record) {
   return t;
 }
 /** RR2: `registerButtonArt(record, load, isOn)` - `load()` answers the PNG
- *  bytes (a Promise), `isOn` the mod's switch. */
+ *  bytes (a Promise), or (NO-BETHESDA2) the top-down RGBA picture built
+ *  from the player's BUTTONS.RCI; `isOn` the mod's switch. */
 const _buttonArt = new Map();
 const _packFailed = new Set();   // OVH2: the pack buttons that did not load - the classic arms answer them
 export function registerButtonArt(record, load, isOn = null) { if (typeof load === 'function') _buttonArt.set(record, { load, isOn }); else _buttonArt.delete(record); }

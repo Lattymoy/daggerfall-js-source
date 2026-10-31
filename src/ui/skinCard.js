@@ -61,7 +61,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MOD_SETTINGS, modSetting, setModSetting, storedModSetting } from '../systems/modSettings.js';
-import { spriteFor, eotbSpriteUrl } from '../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, isDerivedSprite, buildDerivedSprite } from '../player/eyeOfTheBeholder/eotbSprite.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
 import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js';   // LAYERED-GEAR
 import { t } from '../systems/textManager.js';
@@ -83,11 +83,29 @@ export const layeredBodyToWear = () => lastBody || LAYERED_OWN;
 /** The front-on standing view: orientation 0 of the idle table (EOTB's wheel, the record offset 0, unmirrored). */
 const FRONT = 0;
 
+/** NO-BETHESDA2: a derived sprite's `<img>` src - built from the player's own files (eotbSprite.js buildDerivedSprite),
+ *  made a PNG and handed back as a blob URL, once a key. A build that fails is forgotten, so the next ask builds again. */
+const _images = new Map();
+async function pictureBlobUrl({ width, height, data }) {
+  const cv = new OffscreenCanvas(width, height);
+  cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), width, height), 0, 0);
+  return URL.createObjectURL(await cv.convertToBlob({ type: 'image/png' }));
+}
+export function derivedImageUrl(url, { build = undefined, encode = pictureBlobUrl } = {}) {
+  let p = _images.get(url);
+  if (!p) {
+    p = buildDerivedSprite(url, build).then(encode);
+    _images.set(url, p);
+    p.catch(() => { if (_images.get(url) === p) _images.delete(url); });
+  }
+  return p;
+}
+
 /**
  * The sets the card offers, each with its name and its picture's URL - the idle table's front frame for a set on
  * foot, the mounted idle's for a rider. Pure off the declarations and the bundle's own index, so node pins it.
  * `key` is the bundle's own name for the picture (`<archive>_<record>-<frame>`); `url` the built asset's, null outside
- * a browser build (eotbSprite.js's glob), where the tile says the name alone.
+ * a browser build (eotbSprite.js's glob), where the tile says the name alone. NO-BETHESDA2: a derived sprite's marker.
  * LAYERED-GEAR: `layered` the setting's four - off, female, male, your own body - each body pictured in plain leather
  * (layeredArmor.js layeredPreviewUrl; off has no picture, and the card offers the two bodies).
  * @returns {{foot: Array<{index:number, name:string, key:string|null, url:string|null}>, horse: Array<{index:number, name:string, key:string|null, url:string|null}>, layered: Array<{index:number, name:string, key:string|null, url:string|null}>}}
@@ -127,11 +145,11 @@ export const FOOT_GROUPS = Object.freeze([
  * skins it offers; one is open at a time, and a skin chosen closes it on the new one. `sets` the offer (skinSets; the
  * pins hand one with URLs, which only a browser build's glob has). LAYERED-GEAR: over them the Look toggle, and
  * `gender` the character's own body ('male' or 'female'; the menu hands playerEntity's), the one Layered Gearing
- * first wears.
+ * first wears. NO-BETHESDA2: `imageUrl` a derived sprite's `<img>` src, a moment later (derivedImageUrl).
  * @param {Document} doc
- * @param {{sets?: typeof skinSets, gender?: () => (string|null|undefined)}} [opts]
+ * @param {{sets?: typeof skinSets, gender?: () => (string|null|undefined), imageUrl?: (url: string) => Promise<string|null>}} [opts]
  */
-export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = {}) {
+export function skinCard(doc, { sets: offer = skinSets, gender = () => null, imageUrl = derivedImageUrl } = {}) {
   const el = (t, cls, txt) => {
     const n = doc.createElement(t);
     if (cls) n.className = cls;
@@ -144,7 +162,8 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
 
   const art = (s) => {
     const img = el('img', 'skinart');
-    img.src = s.url;
+    if (!isDerivedSprite(s.url)) img.src = s.url;
+    else imageUrl(s.url).then((u) => { if (u) img.src = u; }, () => {});   // NO-BETHESDA2: built - none where the player's data has none
     img.alt = '';
     img.setAttribute('draggable', 'false');
     return img;

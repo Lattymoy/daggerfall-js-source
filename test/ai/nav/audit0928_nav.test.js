@@ -221,22 +221,27 @@ test('AUDIT PRE-MERGE 0928 N5: a cache hit with a dead worker does not re-cut a 
 
 // ─── N8 ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 test('AUDIT PRE-MERGE 0928 N8: the vendored set answers in import.meta.glob’s own key form - every frame the mod ships, and nothing past its last', async () => {
-  const { inVendoredSet, SPRITE_ARCHIVE, DROPPED_ARCHIVE } = await import('../../../src/systems/handheldTorches.js');
+  const { inVendoredSet, inTorchSet, SPRITE_ARCHIVE, DROPPED_ARCHIVE } = await import('../../../src/systems/handheldTorches.js');
   // the table as Vite builds it: its keys are the glob's own pattern, spelled from the importing file
   const glob = /import\.meta\.glob\('([^']*)\/\*\.png'/.exec(read('src/systems/handheldTorches.js'));
   assert.ok(glob, 'the table is a glob of the vendored folder');
   const files = readdirSync(new URL('../../../vendor/handheld-torches/Textures/', import.meta.url)).filter((f) => f.endsWith('.png'));
   const table = Object.fromEntries(files.map((f) => [`${glob[1]}/${f}`, `/assets/${f}`]));
-  const admitted = (archive) => {
+  const admitted = (archive, inSet = inVendoredSet) => {
     const out = [];
-    for (let record = 0; record < 16; record++) for (let frame = 0; frame < 8; frame++) if (inVendoredSet(table, `${archive}_${record}-${frame}.png`)) out.push(`${record}-${frame}`);
+    for (let record = 0; record < 16; record++) for (let frame = 0; frame < 8; frame++) if (inSet(table, `${archive}_${record}-${frame}.png`)) out.push(`${record}-${frame}`);
     return out;
   };
-  const shipped = (archive) => files.map((f) => new RegExp(`^${archive}_(\\d+-\\d+)\\.png$`).exec(f)?.[1]).filter(Boolean)
-    .sort((p, q) => { const [a, b] = p.split('-').map(Number), [c, d] = q.split('-').map(Number); return a - c || b - d; });
+  const byFrame = (p, q) => { const [a, b] = p.split('-').map(Number), [c, d] = q.split('-').map(Number); return a - c || b - d; };
+  const shipped = (archive) => files.map((f) => new RegExp(`^${archive}_(\\d+-\\d+)\\.png$`).exec(f)?.[1]).filter(Boolean).sort(byFrame);
   assert.deepEqual(admitted(SPRITE_ARCHIVE), shipped(SPRITE_ARCHIVE), 'the hand’s sprite: exactly the frames on disk');
   assert.deepEqual(admitted(SPRITE_ARCHIVE), ['0-0', '0-1', '0-2', '0-3', '1-0', '1-1', '1-2', '1-3']);
   assert.deepEqual(admitted(DROPPED_ARCHIVE), shipped(DROPPED_ARCHIVE), 'the dropped flats: exactly the frames on disk');
+  // NO-BETHESDA2: the loaders' probe (inTorchSet) admits the files and the pictures rebuilt from the player's files
+  const rebuilt = Object.keys(JSON.parse(read('vendor/handheld-torches/derived.json'))).map((n) => new RegExp(`^${DROPPED_ARCHIVE}_(\\d+-\\d+)$`).exec(n)?.[1]).filter(Boolean);
+  assert.deepEqual(admitted(SPRITE_ARCHIVE, inTorchSet), admitted(SPRITE_ARCHIVE), 'the hand’s sprite: no picture of it is rebuilt');
+  assert.deepEqual(admitted(DROPPED_ARCHIVE, inTorchSet), [...shipped(DROPPED_ARCHIVE), ...rebuilt].sort(byFrame), 'the dropped flats: the files and the specs, nothing past the last');
+  assert.deepEqual(admitted(DROPPED_ARCHIVE, inTorchSet), ['0-0', '0-1', '0-2', '0-3', '1-0', '1-1', '1-2', '1-3', '1-4', '2-0', '2-1', '2-2', '2-3', '2-4', '10-0', '11-0', '12-0']);
   assert.equal(inVendoredSet(null, `${SPRITE_ARCHIVE}_0-9.png`), true, 'no table (node): the loaders fetch as before');
 });
 

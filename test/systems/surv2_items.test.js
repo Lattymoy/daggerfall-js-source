@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SURVIVAL_TEMPLATES, createSurvivalItem, spoilFood, dressFood, useSurvivalItem, drinkAtSource, provisionsStock, startingProvisions,
   isSurvivalItem, VENDOR_ICON_FILES, VENDOR_TENT_FILES, installSurvivalIcons, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
-  CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT,
+  CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT, derivedIconSpec,
 } from '../../src/systems/survival/items.js';
 import { TEMPLATE, FOOD_STAGE, waterIn } from '../../src/systems/survival/food.js';
 import { corpseFood, humanoidFood, MEAT_BY_TYPE, isAnimal, isHumanoid } from '../../src/systems/survival/loot.js';
@@ -234,11 +234,15 @@ test('SURV2: the dead leave food - animals raw meat by kind (half of it turning)
   assert.equal(humanoidFood(() => 0.99).templateIndex, TEMPLATE.Waterskin);
 });
 
-test('SURV2: the mod\'s sixteen icons are vendored, allow-listed, and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
-  for (const f of VENDOR_ICON_FILES) assert.ok(existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`)), f);
+test('SURV2: the mod\'s sixteen icons are vendored or rebuilt (NO-BETHESDA2), allow-listed, and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
+  // PIN MOVED (NO-BETHESDA2, 2026-10-31): a picture that is Daggerfall's own is a spec rebuilt from the player's files
+  // (derived.json), never a file - each of the eighteen is one or the other, and every file carried has its row
   const doctrine = read('test/tooling/doctrine.test.js');
-  for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
-  for (const f of VENDOR_TENT_FILES) assert.ok(existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`)), f);
+  for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) {
+    const file = existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`));
+    assert.notEqual(file, derivedIconSpec(f) != null, `${f}: a file or a spec, never both and never neither`);
+    if (file) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
+  }
   clearVendorTextures();
   const bytes = readFileSync(join(root, 'vendor/climates-calories/Textures/539_0-0.png'));
   const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', standIn: true, load: async () => new Uint8Array(bytes) }]);   // SURV-TENT: an archive that is ONLY this art

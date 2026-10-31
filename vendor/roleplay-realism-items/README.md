@@ -52,6 +52,18 @@ The `<rect>` beside 232 of them (the paper-doll placement
 may hold is this manifest's own file list (`test/tooling/doctrine.test.js`
 derives the folder's membership from it).
 
+**NO-BETHESDA2 (2026-10-31, the owner).** Fifty of the 280 are
+Daggerfall's own records - 73-84% of their drawn pixels exactly - and
+are no longer carried: 46 of the helmet's 48 paper-doll masks and the
+four Dwarven helmets, all archive 522, over TEXTURE.245 record 27 and
+TEXTURE.251 records 27 and 31. `derived-art.json` here holds each
+one's spec: the record, the palette and the pixels the authors changed
+(`tools/classicDerive.mjs`). The game builds them from the player's
+own ARENA2, and `rriIndex.js` names them (`RRI_DERIVED`). What
+`public/art/roleplay-realism-items/` carries now is the authors' own
+230; `tools/rriExtract.mjs` indexes a derived sprite and does not write
+it.
+
 ## What is ported, and where
 
 - **RRI1** (2026-09-23): the fourteen item classes as

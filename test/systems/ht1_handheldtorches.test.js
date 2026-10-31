@@ -112,7 +112,7 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(manifest.GUID, HANDHELD_TORCHES_MOD.guid);
   assert.equal(manifest.ModTitle, HANDHELD_TORCHES_MOD.title); assert.equal(manifest.ModVersion, HANDHELD_TORCHES_MOD.version); assert.equal(manifest.ModAuthor, HANDHELD_TORCHES_MOD.author);
   assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
-  assert.equal(manifest.Files.filter((f) => /\.png$/i.test(f)).length, 39, 'the 39 textures the manifest names - the author\'s own art, vendored');
+  assert.equal(manifest.Files.filter((f) => /\.png$/i.test(f)).length, 39, 'the 39 textures the manifest names - 17 the author\'s own art, vendored; 22 Daggerfall\'s own candles, rebuilt from the player\'s files (NO-BETHESDA2, nobethesda2_torchesicons.test.js)');
   assert.equal(manifest.Files.filter((f) => /\.cs$/.test(f)).length, 4, 'the four scripts the manifest names and the bundle does not carry');
   for (let f = 0; f < 4; f++) assert.ok(rd(`vendor/handheld-torches/Textures/${SPRITE_ARCHIVE}_0-${f}.png`).length > 0, `the torch hand's frame ${f}`);
   for (let f = 0; f < 4; f++) assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_0-${f}_Emission.png`).length > 0, `the dropped torch's emission twin ${f}`);

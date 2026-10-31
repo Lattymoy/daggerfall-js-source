@@ -18,6 +18,7 @@ import { TextureFile, texName } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { changeMask } from '../src/formats/baseImageFile.js';
 import { uprightWeaponPicture } from '../src/player/eyeOfTheBeholder/eotbHolster.js';
+import { eotbPictures } from './lib/eotbPictures.mjs';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5231;
@@ -46,6 +47,9 @@ tf207.load(new Uint8Array(readFileSync(join(A2, texName(207)))), texName(207), p
 const ac = tf207.getColor32(changeMask(tf207.getDFBitmap(16, 0)), 0);
 const ap0 = uprightWeaponPicture({ width: ac.width, height: ac.height, colors: new Uint8Array(ac.colors.buffer, ac.colors.byteOffset, ac.colors.byteLength) });
 const arrowPic = { width: ap0.width, height: ap0.height, colors: Buffer.from(ap0.colors).toString('base64') };
+// NO-BETHESDA2: the skin's five views are Daggerfall's own TEXTURE.481, built from the player's ARENA2 as the game builds them
+const EOTB = eotbPictures({ arena2: A2 });
+const skinUrls = Object.fromEntries(await Promise.all([0, 1, 2, 3, 4].map(async (rec) => [rec, await EOTB.dataUrl(`112364_${rec}-0`)])));
 
 const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { port: PORT, strictPort: true, hmr: false }, logLevel: 'error' });
 await server.listen();
@@ -54,7 +58,7 @@ const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });   // a page at the origin, nothing of its own to boot
 const W = 240, H = 320;
-const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, arrowPic, W, H }) => {
+const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, arrowPic, skinUrls, W, H }) => {
   const [{ Renderer }, m4, Hs, bb, sp, ap, ar] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbHolster.js'),
     import('/src/player/eyeOfTheBeholder/eotbBillboard.js'), import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'),
@@ -88,7 +92,7 @@ const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, ar
     return { width: img.width, height: img.height, colors: out };
   }
   const BODIES = {
-    skin: { archive: 112364, url: (rec) => `/vendor/eye-of-the-beholder/Textures/112364/112364_${rec}-0.png`, base: 0 },
+    skin: { archive: 112364, url: (rec) => skinUrls[rec], base: 0 },
     layered: { archive: 1700, url: (rec) => `/vendor/layered-armor/male/leather_leather_leather/${rec}-0.png`, base: 15 },
   };
   const out = [];
@@ -298,7 +302,7 @@ const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, ar
     }
   }
   return { out, glowOut, quiverOut };
-}, { pics, arrowPic, W, H });
+}, { pics, arrowPic, skinUrls, W, H });
 await browser.close();
 await server.close();
 

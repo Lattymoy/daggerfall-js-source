@@ -29,7 +29,7 @@ import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speed
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels, ridersReady } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels, ridersReady, isDerivedSprite, decodeDerivedSprite } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
@@ -81,6 +81,7 @@ export function spriteLookOf(s) {
 
 async function decodeUrl(url) {
   if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng));   // WORN-ARMOUR: composed from its strip
+  if (isDerivedSprite(url)) return decodeDerivedSprite(url);   // NO-BETHESDA2: built from the player's own TEXTURE file
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes

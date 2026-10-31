@@ -15,7 +15,7 @@ import {
 } from '../../src/systems/roleplayRealism/rrRealism.js';
 import {
   RR_NPC_XML_SCALE, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrArtUrl, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
-  rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt,
+  rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED,
 } from '../../src/systems/roleplayRealism/rrVariants.js';
 import { installRoleplayRealism, setRrHostSeams, rrHostSeams } from '../../src/systems/roleplayRealism/rrInstall.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, MobilePerson } from '../../src/characters/mobile/mobilePerson.js';
@@ -51,7 +51,7 @@ const off = () => { reset(); on('Enabled', false); };
 installRoleplayRealism();
 
 // ---- the record --------------------------------------------------------------
-test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest names under public/art, the eleven switches', () => {
+test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest names - each a file under public/art or a spec rebuilt from ARENA2 (NO-BETHESDA2), never both - the eleven switches', () => {
   for (const r of RR_NPC_RECORDS) {
     const xml = rd(`vendor/roleplay-realism/Textures/${RR_NPC_ARCHIVE}_${r}-0.xml`);
     const sx = Number(/<scaleX>([\d.]+)<\/scaleX>/.exec(xml)[1]), sy = Number(/<scaleY>([\d.]+)<\/scaleY>/.exec(xml)[1]);
@@ -60,8 +60,12 @@ test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest
   const manifest = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.dfmod.json'));
   const named = new Set(manifest.Files.filter((f) => f.endsWith('.png')).map((f) => f.split('/').pop()));
   const shipped = readdirSync(join(ROOT, 'public/art/roleplay-realism')).filter((f) => f.endsWith('.png')).sort();
-  assert.equal(shipped.length, 24, '7 sprites + 17 buttons');
-  for (const f of shipped) assert.ok(named.has(f), `${f} is the mod's own`);
+  const rebuilt = Object.keys(RR_DERIVED).map((n) => `${n}.png`);
+  assert.deepEqual(shipped, ['197_0-0.png', '197_1-0.png', '197_2-0.png', '197_3-0.png', '197_6-0.png'], 'the authors\' own five');
+  assert.equal(rebuilt.length, 19, '197_4-0, 197_5-0 and the 17 buttons: Daggerfall\'s own records');
+  assert.deepEqual(rebuilt.filter((f) => shipped.includes(f)), [], 'never both a file and a spec');
+  assert.deepEqual([...shipped, ...rebuilt].sort(), [...RR_NPC_RECORDS.map((r) => `197_${r}-0.png`), ...RR_BUTTON_RECORDS.map((r) => `BUTTONS.RCI_${r}-0.png`)].sort(), '7 sprites + 17 buttons, every one somewhere');
+  for (const f of [...shipped, ...rebuilt]) assert.ok(named.has(f), `${f} is the mod's own`);
   assert.deepEqual(RR_BUTTON_RECORDS, Array.from({ length: 17 }, (_, i) => 21 + i));
   assert.ok(!existsSync(join(ROOT, 'vendor/roleplay-realism/Textures/197_0-0.png')), 'one copy: the served one');
   assert.equal(rrArtUrl('197_3-0', 'http://h/x/'), 'http://h/x/art/roleplay-realism/197_3-0.png');

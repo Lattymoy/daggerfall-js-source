@@ -291,6 +291,19 @@ credited on the About screen, decoded from the `.dfmod` AssetBundle
 dropped lights load them by URL and decode them in the browser into the
 port's color32 order.
 
+**NO-BETHESDA2 (2026-10-31, the owner).** The owner: "ensuring they are
+not implemented". A scan of the tree against Daggerfall's freeware data
+found 22 of the 39 were not the author's own: the candle's and the holy
+candle's flats (records 1 and 2, five frames each, with their
+`_Emission` twins) and the two doused (11 and 12) are TEXTURE.210
+records 3 and 4 in PAL.PAL - twenty exactly, the doused two under 27 of
+the author's pixels each. They left the tree. `tools/classicDerive.mjs`
+wrote a spec for each into `vendor/handheld-torches/derived.json`, and
+both loaders build it from the player's own ARENA2 (`torchPicture`,
+through `systems/rebuiltPicture.js`) - the pixels the PNG gave. The
+other 17 - the hand, the dropped torch and the doused torch - are the
+author's own and stay files. Pins: `nobethesda2_torchesicons.test.js`.
+
 ## The settings
 
 The eight sections as shipped, every key under the vendor key

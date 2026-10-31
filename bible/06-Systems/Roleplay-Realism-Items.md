@@ -150,6 +150,15 @@ paperDollOrigin subtraction a classic record's offset needs. The
 stand-in answers a record's size, offset and RGBA across dyes (one
 record, one entry per dye, the same size and rect for all).
 
+**NO-BETHESDA2 (2026-10-31, the owner).** Fifty of the 280 sprites are Daggerfall's own records, 73-84% of their
+drawn pixels exactly, and are no longer carried: 46 of the helmet's 48 masks and the four Dwarven helmets (archive
+522), over TEXTURE.245 record 27 and TEXTURE.251 records 27 and 31 - a mask is the classic helmet's own mask area,
+index 255. `tools/classicDerive.mjs` wrote each as a spec in `vendor/roleplay-realism-items/derived-art.json`; the
+door builds it from the player's own ARENA2 through `systems/classicArt.js` (`rriInstall.js` rriDerivedPicture). The
+specs are 600 kB, so they load as a chunk of their own at the first build; `rriIndex.js` names them at boot
+(`RRI_DERIVED`). The other 230 stay as files, and `tools/rriExtract.mjs` indexes a derived sprite without writing it.
+`test/systems/rr_nobethesda2.test.js` pins it.
+
 ### Not in this slice
 
 The mod's other nine modules were RRI2, below.
@@ -403,5 +412,6 @@ the bare TEMPLATE's name (`systems/loot/lootRarity.js rarityName`), so the long 
 `vendor/roleplay-realism-items/`. Suites `test/systems/rri1_items.test.js` (9),
 `test/systems/rri2_realism.test.js` (11), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
 (11), `tools/mutants/rri2.json` (18). The shipped set:
-`public/art/roleplay-realism-items/` (280 PNGs), `src/systems/roleplayRealismItems/rriIndex.js`
-(generated), `tools/rriExtract.mjs`.
+`public/art/roleplay-realism-items/` (230 PNGs; NO-BETHESDA2 rebuilds the other 50 from
+`vendor/roleplay-realism-items/derived-art.json`, suite `test/systems/rr_nobethesda2.test.js`),
+`src/systems/roleplayRealismItems/rriIndex.js` (generated), `tools/rriExtract.mjs`.

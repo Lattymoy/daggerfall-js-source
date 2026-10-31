@@ -25,7 +25,9 @@ import { registerBillboardXml } from '../../world/billboardXml.js';
 import { registerButtonArt } from '../../ui/messageBox.js';
 import { setFlatFaceOverride } from '../../characters/staticNpc.js';
 import { APP_ROOT } from '../appRoot.js';
+import { classicArt } from '../classicArt.js';
 import { rrModule, rrRefinedTrainingOn } from './rrRealism.js';
+import RR_DERIVED from '../../../vendor/roleplay-realism/derived-art.json' with { type: 'json' };
 
 export const RR_ART_DIR = 'art/roleplay-realism';
 /** The shipped sprite's URL - `<root>/art/roleplay-realism/<name>.png`. */
@@ -130,22 +132,31 @@ export function rrVariantPerson(pn, { buildingType = -1, quality = 0, nameSeed =
 
 // ---- the art on its doors ----------------------------------------------------
 let _installed = false;
+/** NO-BETHESDA2: the pictures that are Daggerfall's own records (197_4-0, 197_5-0, the seventeen buttons), by name -
+ *  each one's spec, built from the player's ARENA2 and never carried (vendor/roleplay-realism/derived-art.json). */
+export { RR_DERIVED };
 /** Once: the seven 197 sprites on the replacement door (lazy, gated on
  *  variantNpcs - a classic archive, so ordinary replacement entries, not
  *  stand-ins), the XML scale beside them, and the seventeen button
- *  records on the message box (gated on refinedTraining). `fetchBytes
- *  (name)` is the test seam. Returns the sprite count registered. */
-export function installRoleplayRealismArt({ fetchBytes = null } = {}) {
+ *  records on the message box (gated on refinedTraining). A file is
+ *  fetched; a derived picture is built through `art` (the session's
+ *  classic reader). `fetchBytes(name)` and `art` are the test seams.
+ *  Returns the sprite count registered. */
+export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}) {
   if (_installed) return 0;
   _installed = true;
   const load = fetchBytes ?? (async (name) => { const r = await fetch(rrArtUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  const built = (name) => (art ?? classicArt()).build(RR_DERIVED[name]);
   const gate = () => rrModule('variantNpcs');
   registerBillboardXml('roleplay-realism', { [RR_NPC_ARCHIVE]: Object.fromEntries(Object.entries(RR_NPC_XML_SCALE)) }, gate);
-  for (const record of RR_BUTTON_RECORDS) registerButtonArt(record, () => load(`BUTTONS.RCI_${record}-0`), () => rrRefinedTrainingOn());
-  return addVendorTextures(RR_NPC_RECORDS.map((record) => ({
-    archive: RR_NPC_ARCHIVE, record, frame: 0, dye: null, map: 'Albedo', fileName: `${RR_NPC_ARCHIVE}_${record}-0`,
-    lazy: true, load, gate,
-  })));
+  for (const record of RR_BUTTON_RECORDS) {
+    const name = `BUTTONS.RCI_${record}-0`;
+    registerButtonArt(record, () => (RR_DERIVED[name] ? built(name) : load(name)), () => rrRefinedTrainingOn());
+  }
+  return addVendorTextures(RR_NPC_RECORDS.map((record) => {
+    const fileName = `${RR_NPC_ARCHIVE}_${record}-0`;
+    return { archive: RR_NPC_ARCHIVE, record, frame: 0, dye: null, map: 'Albedo', fileName, lazy: true, gate, ...(RR_DERIVED[fileName] ? { build: () => built(fileName) } : { load }) };
+  }));
 }
 /** Test seam. */
 export function _resetRoleplayRealismArt() { _installed = false; }

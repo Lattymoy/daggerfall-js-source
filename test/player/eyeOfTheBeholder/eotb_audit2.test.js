@@ -593,11 +593,13 @@ test('EOTB-FLIP: the body\'s decode is the dropped torch\'s door - decodePng, th
   // PIN MOVED (PROFILE-SLOTS): the door is eotbSprite.js's, the body's (and the profile's stage's) one decode
   const body = rd('src/player/eyeOfTheBeholder/eotbSprite.js');
   assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /decode = decodeSprite/);
-  assert.match(body, /export async function decodeSprite\(url\) \{\s*(?:if \(isLayeredKey\(url\)\)[^\n]*\s*)?return worldOrderColors\(await decodeServedPng\(url\), \{ owned: true \}\);[^\n]*\s*\}/,
+  // PIN MOVED (NO-BETHESDA2): a sprite that is Daggerfall's own is built from the player's file, then takes the same turn
+  assert.match(body, /export async function decodeSprite\(url, \{ build = undefined \} = \{\}\) \{\s*(?:if \(isLayeredKey\(url\)\)[^\n]*\s*)?if \(isDerivedSprite\(url\)\) return decodeDerivedSprite\(url, build\);\s*return worldOrderColors\(await decodeServedPng\(url\), \{ owned: true \}\);[^\n]*\s*\}/,
     'FIRST-VISIT: the decode workers\' fetch and decode (vanillaEnhancedPack.js decodeServedPng - decodePng\'s own, off this thread), then worldOrderColors');
+  assert.match(body, /export const decodeDerivedSprite = async \(url, build = undefined\) => worldOrderColors\(await buildDerivedSprite\(url, build\), \{ owned: true \}\);/);
   assert.ok(!/getImageData|new Image\(|OffscreenCanvas/.test(body + rd('src/player/eyeOfTheBeholder/eotbBody.js')), 'no canvas door of its own');
   assert.match(rd('src/player/eyeOfTheBeholder/eotbSprite.js'), /import \{ toColor32, toColor32OrderInPlace \} from '\.\.\/\.\.\/formats\/color32Order\.js';/, 'the converter is the tree\'s (PERF-PEERS5: its in-place twin beside it)');
-  assert.match(rd('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'and the torch still takes it too');
+  assert.match(rd('src/scenes/droppedTorches.js'), /return pic && toColor32\(pic\);/, 'and the torch still takes it too (PIN MOVED, NO-BETHESDA2: its picture is torchPicture\'s, a PNG decodePng decodes or one rebuilt)');
   assert.deepEqual(MATERIAL.shade, { mode: 4, alpha: 0.6 });
   assert.equal(TABLE_FRAMES.Death, 2);
 });

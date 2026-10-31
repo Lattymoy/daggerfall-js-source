@@ -924,6 +924,20 @@ vendored archive's end: refused, never fetched. 8, all dead again.]
 backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`). The port draws its
 tavern menu in its own panel.
 
+**NO-BETHESDA2 (2026-10-31, the owner).** The owner: "ensuring they are
+not implemented". A scan against Daggerfall's freeware data found four
+of the eighteen are Daggerfall's own, in PAL.PAL: the tent's canvas IS
+TEXTURE.050 record 7 and its pole TEXTURE.067 record 10, the mouldy
+cooked fish (`536_0-0`) IS the cooked fish, TEXTURE.211 record 10, and
+the mouldy bread (`534_0-0`) is the bread, record 31, under 145 of the
+author's pixels. They left the tree. `tools/classicDerive.mjs` wrote a
+spec for each into `vendor/climates-calories/derived.json`, and
+`installSurvivalIcons` puts it on the texture door as a `build` through
+`systems/rebuiltPicture.js`, in the spec's own palette - the pixels the
+PNG gave. Fourteen stay files. The rotten cooked fish (`536_1-0`) is
+that record re-shaded, and stays until the owner decides. Pins:
+`nobethesda2_torchesicons.test.js`.
+
 ## SURV-TIERS - OFF, CASUAL, HARD (2026-09-23)
 
 > Mac: *"So I want to talk about adding a new tab to climates and

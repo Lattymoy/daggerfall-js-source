@@ -31,7 +31,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 import {
   addVendorTextures, clearVendorTextures, preloadTextureArchive, decodedTexture,
@@ -195,23 +195,20 @@ test('SURV-ART: both doors keep the arm that reaches the vendored art', () => {
 // wall and floor drawn from archive 50, gone. Nothing about the archive
 // NUMBER says which it is, so the registration says, and this holds it.
 
-import { installSurvivalIcons, VENDOR_TENT_FILES } from '../../src/systems/survival/items.js';
+import { installSurvivalIcons, VENDOR_TENT_FILES, derivedIconSpec } from '../../src/systems/survival/items.js';
 import { hasTextureReplacement } from '../../src/systems/textureReplacement.js';
 import { TENT_MODEL } from '../../src/systems/survival/camp.js';
 
-test('SURV-TENT: the tent’s art is carried, and does NOT stand in for its archive', async () => {
+test('SURV-TENT: the tent’s art is registered, and does NOT stand in for its archive', async () => {
   assert.deepEqual([...VENDOR_TENT_FILES], ['50_7-0', '67_10-0']);
-  for (const f of VENDOR_TENT_FILES) {
-    const b = readFileSync(`vendor/climates-calories/Textures/${f}.png`);
-    assert.equal(b[25], 6, `${f} is RGBA, as the other sixteen are`);
-  }
-  // the sizes the shipped bundle's Texture2Ds carry
-  const sizeOf = (f) => { const b = readFileSync(`vendor/climates-calories/Textures/${f}.png`); return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }; };
-  assert.deepEqual(sizeOf('50_7-0'), { width: 32, height: 32 }, 'the canvas');
-  assert.deepEqual(sizeOf('67_10-0'), { width: 64, height: 8 }, 'the pole');
+  // PIN MOVED (NO-BETHESDA2, 2026-10-31): the two ARE TEXTURE.050 record 7 and TEXTURE.067 record 10 in PAL.PAL, so they
+  // are rebuilt from the player's files, not carried. Their sizes (32x32, 64x8) are pinned on the built pictures, with
+  // ARENA2, in nobethesda2_torchesicons.test.js.
+  assert.deepEqual(VENDOR_TENT_FILES.map(derivedIconSpec), [{ from: [50, 7, 0], pal: 'PAL.PAL' }, { from: [67, 10, 0], pal: 'PAL.PAL' }]);
+  for (const f of VENDOR_TENT_FILES) assert.equal(existsSync(`vendor/climates-calories/Textures/${f}.png`), false, `${f}: no copy in the tree`);
 
   clearVendorTextures();
-  const n = installSurvivalIcons({ fetchBytes: async () => new Uint8Array(readFileSync('vendor/climates-calories/Textures/50_7-0.png')) });
+  const n = installSurvivalIcons({ fetchBytes: async () => new Uint8Array(readFileSync('vendor/climates-calories/Textures/539_0-0.png')) });
   assert.equal(n, 18, 'sixteen icons and the tent’s two');
 
   // the swap arm finds them, ungated - they are the port's own art

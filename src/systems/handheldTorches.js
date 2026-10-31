@@ -57,6 +57,8 @@ import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { beltLanternOf } from './beltLantern.js';   // BELT-WAIST: a press lights the lantern slot's lantern first
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
+import { rebuiltPicture } from './rebuiltPicture.js';   // NO-BETHESDA2: a picture that is Daggerfall's own, built from the player's files
+import DERIVED_TEXTURES from '../../vendor/handheld-torches/derived.json' with { type: 'json' };
 import { setLightSource, addLightSourceListener } from './lightSource.js';   // DISC7: the light in hand's one door
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -173,8 +175,23 @@ const VENDORED_TEXTURES = typeof window !== 'undefined'
  *  `file` (`archive_record-frame.png`); true where there is no table to ask. Pure, so node can hand it the table the
  *  bundle builds (AUDIT PRE-MERGE 0928 N8: node has none, and a wrong key form missed every frame unseen). */
 export const inVendoredSet = (table, file) => table == null || `../../vendor/handheld-torches/Textures/${file}` in table;
-/** Whether the mod's vendored set carries `file` - true where there is no table to ask. */
-export const vendoredTexture = (file) => inVendoredSet(VENDORED_TEXTURES, file);
+/** NO-BETHESDA2 (2026-10-31): the mod's pictures that are Daggerfall's own - the candle's and the holy candle's flats,
+ *  lit and doused, and their emission twins, TEXTURE.210 records 3 and 4 (vendor/handheld-torches/derived.json). The
+ *  spec for `name` (`archive_record-frame`, no extension), or null where the picture is the author's own file. */
+export const derivedTorchSpec = (name) => (Object.hasOwn(DERIVED_TEXTURES, name) ? DERIVED_TEXTURES[name] : null);
+/** Whether the mod's set carries `file` - a picture rebuilt, or a file `table` carries (inVendoredSet). Pure. */
+export const inTorchSet = (table, file) => derivedTorchSpec(file.replace(/\.png$/, '')) != null || inVendoredSet(table, file);
+/** Whether the mod's set carries `file` - true where there is no table to ask. */
+export const vendoredTexture = (file) => inTorchSet(VENDORED_TEXTURES, file);
+/** The mod's picture `name`, top-down RGBA: rebuilt from the player's files where derived.json names it (`art`, a
+ *  test's reader), else the vendored PNG at `url`, fetched and decoded. Null where the fetch finds none. */
+export async function torchPicture(name, url, { art = undefined, fetchUrl = (u) => fetch(u), decode = decodePng } = {}) {
+  const spec = derivedTorchSpec(name);
+  if (spec) return rebuiltPicture(spec, art);
+  const res = await fetchUrl(url);
+  if (!res.ok) return null;
+  return decode(new Uint8Array(await res.arrayBuffer()));
+}
 
 /** HT6: THE LIVE COMPONENT - the one whose Update ran last, and the
  *  only one the equip change may reach. The hosts build a rig EACH
@@ -851,10 +868,8 @@ export function createHandheldTorches({
  *  into the port's color32 order. */
 async function defaultLoadSprite(record, frame) {
   if (!vendoredTexture(`${SPRITE_ARCHIVE}_${record}-${frame}.png`)) return null;   // the probe's miss, known (FIELD 2026-09-27)
-  const res = await fetch(spriteUrl(record, frame));
-  if (!res.ok) return null;
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  return toScreenOrder(await decodePng(bytes));   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
+  const pic = await torchPicture(`${SPRITE_ARCHIVE}_${record}-${frame}`, spriteUrl(record, frame));
+  return pic && toScreenOrder(pic);   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
 }
 
 /**

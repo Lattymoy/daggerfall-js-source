@@ -40,7 +40,8 @@ not a 1:1 port, with the mod's own item art carried.**
   fish 1.5 to half a kilo, because a cut is a kilo and cooking takes
   its water.
   It adds 541, the port's own Campfire (eight nights of fuel, REST2).
-- `Textures/` - eighteen of the mod's twenty PNGs, in two kinds.
+- `Textures/` - fourteen of the mod's twenty PNGs; with the four in
+  `derived.json` (below), the eighteen the port draws, in two kinds.
 
   SIXTEEN ARE ARCHIVES OF THEIR OWN: the spoiled face of each food
   (`532_0-0` a mouldy apple, `532_1-0` a rotten one, and so on through
@@ -63,6 +64,19 @@ not a 1:1 port, with the mod's own item art carried.**
   The two tavern menu backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`)
   are still not carried, and have nowhere to go: the port draws its
   tavern menu in its own panel.
+- `derived.json` - four of the eighteen are Daggerfall's own pictures
+  (NO-BETHESDA2, 2026-10-31), so they are not carried: the tent's
+  canvas IS TEXTURE.050 record 7 and its pole TEXTURE.067 record 10,
+  the mouldy cooked fish (`536_0-0`) IS the cooked fish, TEXTURE.211
+  record 10, and the mouldy bread (`534_0-0`) is the bread, record 31,
+  with the author's mould on it - all in PAL.PAL.
+  `tools/classicDerive.mjs` wrote a spec for each (the record, the
+  palette, the author's pixels), and the game builds it from the
+  player's own ARENA2 (`src/systems/rebuiltPicture.js`), the same
+  pixels the PNG gave. The rotten cooked fish (`536_1-0`) is still
+  carried, and waits on the owner's word: it is the same record
+  re-shaded - Daggerfall's outline, 97% of its pixels moved a little -
+  so a spec could rebuild it only by carrying the whole picture.
 
 ## What the port does with it
 

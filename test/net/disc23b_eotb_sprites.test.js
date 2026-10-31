@@ -14,7 +14,7 @@
 // over the EOTB billboard tables; the host's wiring by source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { skinCard, skinSets } from '../../src/ui/skinCard.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
@@ -23,6 +23,7 @@ import { validLook, FOOT_SKINS } from '../../src/net/wire.js';
 import { EOTB_FOOT_SET_COUNT } from '../../src/player/classSkins.js';
 import { createPeerWalkers, createPeerRiders, createEotbArt, WALK_ONE_SHOTS } from '../../src/net/peer/peerRiders.js';
 import { ARCHIVE_FOOT, frameCount } from '../../src/player/eyeOfTheBeholder/eotbBillboard.js';
+import { eotbHas } from '../../tools/lib/eotbPictures.mjs';
 
 const V = 'eye-of-the-beholder';
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -78,10 +79,10 @@ test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, th
   assert.equal(sets.foot.length, FOOT_SKINS); assert.equal(sets.horse.length, 5);   // SKIN2: the mod's sixteen and the classes
   assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
   // each tile is the set's own front-on standing sprite, out of the bundle the body draws from
-  // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file)
+  // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file;
+  // NO-BETHESDA2: or the derived.json spec the player's ARENA2 rebuilds it from)
   for (const s of [...sets.foot.slice(0, EOTB_FOOT_SET_COUNT), ...sets.horse]) {   // (the classes' art: skin2_class_skins)
-    const [arch] = s.key.split('_');
-    assert.ok(existsSync(new URL(`../../vendor/eye-of-the-beholder/Textures/${arch}/${s.key}.png`, import.meta.url)), `${s.name}: ${s.key}`);
+    assert.ok(eotbHas(s.key), `${s.name}: ${s.key}`);
   }
   assert.equal(sets.foot[7].key, `${ARCHIVE_FOOT + 7}_0-0`, 'Mage (male)\'s own archive, front on and standing');
   assert.equal(sets.horse[3].key, '112385_0-0', 'the fourth rider, front on');

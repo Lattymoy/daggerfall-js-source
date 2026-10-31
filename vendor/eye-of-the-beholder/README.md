@@ -81,11 +81,26 @@ mod's sprite if they do not.
   288 hold just SIX distinct triples. A thousand files that say one
   small table's worth are carried as that table, with the default
   stated once and only the departures listed.
-- `Textures/<archive>/<archive>_<record>-<frame>.png` - the 3035
-  sprites, in 23 archives: 16 on-foot sets (112364-112379, 155 sprites
-  each), two of 65 and five of 85 for the mounts (112380-112386).
+- `Textures/<archive>/<archive>_<record>-<frame>.png` - the author's
+  own **166** sprites: records 10-14 of the sixteen on-foot sets
+  (112364-112379), no Daggerfall record among them. The bundle ships
+  3035 sprites in 23 archives: 16 on-foot sets (112364-112379, 155
+  sprites each), two of 65 and five of 85 for the mounts
+  (112380-112386).
+- `derived.json` - the other **2869**, which ARE Daggerfall's own
+  TEXTURE records exactly (TEXTURE.096, .264, .269 and .475-.495, in
+  PAL.PAL or ART_PAL.COL). They are not carried. Each is a spec
+  (`{ from: [archive, record, frame], pal }`) that the game builds from
+  the player's own ARENA2 when the body asks for it
+  (`src/player/eyeOfTheBeholder/eotbSprite.js`, through
+  `src/systems/classicArt.js`). `tools/classicDerive.mjs` wrote it and
+  checked that every spec rebuilds its picture byte for byte. Archive
+  112369 and the five riders (112382-112386) have no folder now.
 
 ## The sprites are RE-ENCODED, and here is exactly how
+
+(Written of all 3035, before NO-BETHESDA2 took the 2869 Daggerfall
+records out on 2026-10-31. It holds for the 166 that are left.)
 
 The bundle's textures are palettised artwork stored as truecolor RGBA.
 Measured over all 3035, not sampled:

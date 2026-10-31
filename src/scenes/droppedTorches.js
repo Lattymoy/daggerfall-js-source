@@ -11,7 +11,7 @@
 // HandheldTorchesEnemyParticleEmitter (0x4588-0x4667).
 //
 // WHAT A DROPPED LIGHT IS: a billboard of TEXTURE.112358 (the mod's
-// own art, vendored) - record 0 a torch, 1 a candle, 2 a holy candle,
+// own art; the candles are TEXTURE.210's, rebuilt from the player's files, NO-BETHESDA2) - record 0 a torch, 1 a candle, 2 a holy candle,
 // +10 doused when it lands under a dungeon's water - a point light for
 // the lit ones (the player torch's colour; the range shrinking with the
 // time left) and, for a torch, a burning loop; a TIME in seconds (the
@@ -62,11 +62,10 @@ import { liveStat } from '../systems/statMods.js';
 import { worldMinutes } from '../systems/worldTick.js';
 import { FlatAnim } from '../render/flatAnimation.js';
 import { toColor32 } from '../formats/color32Order.js';   // TEX1: the SHAPE the upload path reads
-import { decodePng } from '../systems/textureReplacement.js';
 import { torchRange } from '../systems/playerTorch.js';
 import {
   DROPPED_ARCHIVE, DROPPED_RECORD, CLIPS, MESSAGES, SECONDS_PER_CONDITION, THROW_HAND_OFFSET, FREE_HAND, rotateAboutAxis, readTorchSettings,
-  vendoredTexture,
+  vendoredTexture, torchPicture,
 } from '../systems/handheldTorches.js';
 
 /** The mod's key for its light effect (HandheldTorchesEnemyLight.EffectKey). */
@@ -525,7 +524,6 @@ export function createDroppedTorches({
  *  in the shape `uploadTexture` reads - `{ width, height, colors }` (TEX1). */
 async function defaultLoadTexture(record, frame) {
   if (!vendoredTexture(`${DROPPED_ARCHIVE}_${record}-${frame}.png`)) return null;   // the probe's miss, known (FIELD 2026-09-27: handheldTorches.js)
-  const res = await fetch(droppedTextureUrl(record, frame));
-  if (!res.ok) return null;
-  return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));
+  const pic = await torchPicture(`${DROPPED_ARCHIVE}_${record}-${frame}`, droppedTextureUrl(record, frame));   // NO-BETHESDA2: a candle's is rebuilt from the player's TEXTURE.210
+  return pic && toColor32(pic);
 }

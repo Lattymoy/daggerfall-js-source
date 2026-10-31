@@ -232,6 +232,16 @@ its arms to `rrInstall.js`.
   record's offer with the skill's name spliced after its first word
   (:68-70). The gold gate is DFU's NOT_ENOUGH_GOLD on either price.
 
+**NO-BETHESDA2 (2026-10-31, the owner).** Nineteen of the mod's 24 pictures are Daggerfall's own records, 60% or
+more of their drawn pixels exactly, and are no longer carried: `197_4-0` (TEXTURE.186 record 1, untouched), `197_5-0`
+(TEXTURE.182 record 1 under the author's paint) and the seventeen buttons (BUTTONS.RCI records 3-20, relabelled).
+`tools/classicDerive.mjs --rci` wrote each as a spec in `vendor/roleplay-realism/derived-art.json`, and `rrVariants.js`
+builds it from the player's own ARENA2 through `systems/classicArt.js`: the keepers on the replacement door, the
+buttons through `registerButtonArt`, which takes a built picture as well as PNG bytes. The other five keepers
+(`197_0-0` to `197_3-0`, `197_6-0`; 8-54% a record's) are the author's own and stay as files.
+`test/systems/rr_nobethesda2.test.js` pins the wiring with a fake reader, and with ARENA2 that every rebuilt picture
+is the shipped one exactly.
+
 ## RR3a - the Master Armorer quest line: the registrations
 
 RoleplayRealism.cs:241-256 registers what the line needs and DFU's
@@ -677,7 +687,8 @@ real producer; literals off the real ceiling of 90); mutants
 
 `vendor/roleplay-realism/`. Suites `test/systems/rr1_realism.test.js` (12),
 `test/systems/rr2_realism.test.js` (12), `test/systems/quest/rr3_questline.test.js` (11),
-`test/systems/talk/rr3b_worlddata.test.js` (9), `test/systems/auditrr.test.js` (15), `test/systems/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
+`test/systems/talk/rr3b_worlddata.test.js` (9), `test/systems/auditrr.test.js` (15), `test/systems/auditrr2.test.js` (17),
+`test/systems/rr_nobethesda2.test.js` (3, NO-BETHESDA2, shared with the Items page). Campaigns `tools/mutants/rr1.json`
 (18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).

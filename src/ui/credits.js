@@ -324,7 +324,7 @@ export const CREDITS = Object.freeze({
       version: '2.1',
       author: 'RedRoryOTheGlen',
       get what() { return t('credits.eyeOfTheBeholder.what', 'Third person without Morrowind data. Scroll the mouse wheel to swing the camera out behind your shoulder. It moves clear of walls, and you are drawn as the mod\u2019s own sprite from 8 directions, standing, walking, attacking and casting, on foot or riding.'); },
-      get terms() { return t('credits.eyeOfTheBeholder.terms', 'Used with the author\u2019s permission, with the mod\u2019s own 3,035 sprites.'); },
+      get terms() { return t('credits.eyeOfTheBeholder.terms', 'Used with the author\u2019s permission, with the mod\u2019s own 166 sprites. The rest are built from your own Daggerfall files.'); },
       contact: 'rmufrancisco@gmail.com',
       vendor: Object.freeze(['eye-of-the-beholder']),
     }),

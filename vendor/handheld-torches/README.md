@@ -29,14 +29,22 @@ here - the earlier mod records carry theirs in this line.]**
   (`Throwing.Chance`), with the port's own `Enabled` in front. Two key
   kinds are new to the port for it: TextKey (a Unity KeyCode name -
   the three bindings) and the two Tuple keys (a pair).
-- `Textures/` - the mod's 39 PNGs, decoded from the `.dfmod`
+- `Textures/` - 17 of the mod's 39 PNGs, decoded from the `.dfmod`
   AssetBundle (Unity's import of each file, which is what the player
   sees): `112359_0-0..3` the first-person hand holding a lit TORCH
   (90x205, four frames) and `112359_1-0..3` a LANTERN (110x138), and
   `112358_*` the dropped lights - record 0 a torch (31x34, four frames
-  with `_Emission` twins), 1 a candle (9x19, five), 2 a holy candle
-  (15x21, five), and 10 / 11 / 12 the three DOUSED (one frame, no
-  emission), which a light dropped into water takes.
+  with `_Emission` twins) and 10 the DOUSED torch (one frame, no
+  emission), which a torch dropped into water takes.
+- `derived.json` - the other 22 (NO-BETHESDA2, 2026-10-31): the
+  candle (record 1, 9x19, five frames) and the holy candle (record 2,
+  15x21, five), their `_Emission` twins, and the doused candle and
+  holy candle (11 and 12). Each is Daggerfall's own TEXTURE.210 record
+  3 or 4 in PAL.PAL - exactly, or with the author's few pixels on it -
+  so none is carried. `tools/classicDerive.mjs` wrote a spec for each
+  (the record, the palette, the author's pixels), and the game builds
+  it from the player's own ARENA2 (`src/systems/rebuiltPicture.js`),
+  the same pixels the PNG gave.
 - This note.
 
 ## Why the textures ARE here
@@ -46,8 +54,9 @@ ARENA2 and every render of it out of the repository - Seasons of the
 Iliac Bay's and Weapon Widget's repaints are re-shaded classic sprites
 and stay with the player's copy of those mods. These are not that: no
 ARENA2 file shows a hand holding a torch or a torch lying on a floor;
-the 39 images are the author's own pixel art, drawn in Daggerfall's
-idiom. They are the mod's data the way Dynamic Skies' textures and
+the 17 images here are the author's own pixel art, drawn in Daggerfall's
+idiom. (The candles were not: they are Daggerfall's own, and are built
+from the player's files - `derived.json` above.) They are the mod's data the way Dynamic Skies' textures and
 Windmills of Daggerfall's models are those authors' - vendored with the
 author's permission (the line above), credited on the About screen,
 and without them the mod's sprite and its dropped torches would not

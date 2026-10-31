@@ -170,6 +170,20 @@ The 1035 per-sprite `.xml` files (three values each: `scale`, `X`, `Y`)
 fold to one table - 288 carry anything but the default and those hold
 six distinct triples.
 
+**NO-BETHESDA2 (2026-10-31, the owner).** A scan against Daggerfall's
+freeware data found that 2869 of the 3035 are Daggerfall's own TEXTURE
+records, exactly: TEXTURE.096, .264, .269 and .475-.495, in PAL.PAL or
+ART_PAL.COL. A render of game data is game data (Port-Doctrine), and no
+exception covered this folder, so they left the tree.
+`vendor/eye-of-the-beholder/derived.json` names each one's record and
+palette (`tools/classicDerive.mjs` checked that every spec rebuilds its
+picture byte for byte). `eotbSprite.js` builds it from the player's own
+ARENA2 when the body asks (`systems/classicArt.js`), a few milliseconds
+a task, and turns its rows as a PNG's. The body, the peers, the profile,
+the skin card and the riders' masks draw what they drew. The author's
+own 166 (records 10-14 of the on-foot sets) stay files. The doctrine
+gate counts a derived name as carried, never also as a file.
+
 ## The gate that carries 3035 pictures
 
 The doctrine allow-list is per-file, with a human-written reason beside

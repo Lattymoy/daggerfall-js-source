@@ -35,14 +35,38 @@ The run of 2026-10-31 read 48,300 tracked files against 1,590 ARENA2 files.
 
 - **No ARENA2 file and no BSA record is in the tree.** The site and the desktop app read the player's own ARENA2
   (`scenes/dataSource.js`, `app/lib/arena2Detect.cjs`). `vite.config.js` serves `/arena2` to the dev server alone.
-- **Copies of Daggerfall's pictures, outside every exception.** They were carried as the mods' own art and are not
-  (NO-BETHESDA2, below): Eye of the Beholder, 2,869 of 3,035 sprites (94% of its pixels classic); Handheld Torches,
-  22 of 39 (the TEXTURE.210 flames); Climates & Calories, 5 of 18 icons; Roleplay & Realism, its keeper sprites and
-  BUTTONS.RCI repaints (65% of its pixels); Roleplay & Realism: Items, 4 of 280.
+- **Copies of Daggerfall's pictures, outside every exception.** Five mods carried them as their own art.
+  NO-BETHESDA2 took them out (below).
 - **Approved and expected.** The four exceptions' directories are Daggerfall's art repainted, as Port-Doctrine says,
   and their indexed PNGs carry Daggerfall's palette in their `PLTE` chunk.
 
+### NO-BETHESDA2: the copies, rebuilt from the player's files
+
+A picture whose drawn pixels are 60% or more a classic record's, exactly, is not carried (DEX0's law, Port-Doctrine's
+fourth exception). `tools/classicDerive.mjs` writes it as a spec: the TEXTURE or RCI record, its palette (most are
+PAL.PAL, not the pipeline's ART_PAL), its offset and the author's changed pixels. `formats/classicPictures.js`
+builds it from the player's own file at runtime, through `systems/classicArt.js`. Every spec rebuilds its old PNG
+byte for byte. `test/tooling/doctrine.test.js` holds each folder: a picture is a file or a spec, never both.
+
+| mod | rebuilt | still carried, the author's own | listing |
+|---|---|---|---|
+| Eye of the Beholder | 2,869 sprites (TEXTURE.096, .264, .269, .475-.495) | 166 | `vendor/eye-of-the-beholder/derived.json` |
+| Handheld Torches | 22 candle frames (TEXTURE.210 records 3 and 4) | 17 | `vendor/handheld-torches/derived.json` |
+| Climates & Calories | 4 (two spoiled faces, the tent's canvas and pole) | 14 | `vendor/climates-calories/derived.json` |
+| Roleplay & Realism | 2 keeper sprites, 17 BUTTONS.RCI buttons | 5 | `vendor/roleplay-realism/derived-art.json` |
+| Roleplay & Realism: Items | 46 helmet masks, 4 Dwarven helmets | 230 | `vendor/roleplay-realism-items/derived-art.json` |
+
+A player without ARENA2 stored sees these pictures as a failed load, as any missing file. A texture-door entry is
+built once a world pipeline is up.
+
+The scan after NO-BETHESDA2 read 45,248 tracked files. Outside the exceptions it finds only the open items below:
+Diverse Weapons' seven magic daggers, the rotten cooked fish, and DFU's quest and TEXT.RSC text.
+
 ### Open: the owner's call
+
+- **Climates & Calories' rotten cooked fish (`536_1-0`).** It is a re-shade of TEXTURE.211 record 10 (95% of it
+  within a few shades) with 3% of its pixels exact, so a spec would carry the whole picture. Drop it, keep it under
+  an exception, or draw our own.
 
 - **Bethesda's words in Daggerfall Unity's MIT data.** `vendor/dfu-quests` carries DFU's 265 quest scripts, whose
   messages are Daggerfall's quest text (eight runs of 68 to 77 bytes match the QRC files byte for byte). Its
@@ -72,17 +96,17 @@ provenance until it is retired.
 | `beautiful-villages` | carademono | one world-data pack, 7,317 locations and 209 blocks | yes | world data | 2 |
 | `beautiful-cities` | carademono | one world-data pack, 410 cities and 611 blocks | yes | world data | 2 |
 | `immersive-travel` | kkgobkk | four city-gate block patches, the assembly and its IL | yes | world data, code | 2 |
-| `climates-calories` | Ralzar | item templates, 16 item icons (the rules are already an overhaul) | yes | data, art | 2 |
+| `climates-calories` | Ralzar | item templates, 14 item icons (the rules are already an overhaul) | yes | data, art | 2 |
 | `foraging` | Harbinger451 | 12 item templates, 22 quests, 7 textures, the assembly and its IL | yes | data, words, art | 2 |
 | `travel-options` | Hazelnut | the string table, settings, 3 UI textures | yes | words, art | 2 |
-| `roleplay-realism` | Hazelnut | quests, world data, 7 scripts, 7 sprites and 17 button records | yes | mixed | 2 |
-| `roleplay-realism-items` | Hazelnut and Ralzar | item templates, string table, 15 scripts, 280 sprites | yes | mixed | 2 |
+| `roleplay-realism` | Hazelnut | quests, world data, 7 scripts, 5 sprites | yes | mixed | 2 |
+| `roleplay-realism-items` | Hazelnut and Ralzar | item templates, string table, 15 scripts, 230 sprites | yes | mixed | 2 |
 | `iliac-puddle-no-more` | jet082 | 7 fish templates, 7 fish pictures, the assembly (the coastline bake is already ours) | yes | data, art | 2 |
 | `diverse-weapons` | RealAKP | 12,624 weapon sprites (59 MB under `public/art/`), the script | yes | art | 3 |
 | `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | 3 |
-| `eye-of-the-beholder` | RedRoryOTheGlen | 3,035 sprites, the assembly's IL | yes | art | 3 |
+| `eye-of-the-beholder` | RedRoryOTheGlen | 166 sprites, the assembly's IL | yes | art | 3 |
 | `shield-widget` | RedRoryOTheGlen | 600 shield textures, presets | yes | art | 3 |
-| `handheld-torches` | RedRoryOTheGlen | 39 torch textures | yes | art | 3 |
+| `handheld-torches` | RedRoryOTheGlen | 17 torch textures | yes | art | 3 |
 | `horse-cart-and-cargo` | demifiend000 | 45 horse pictures, two assemblies and their IL, the text table | yes | art, words | 3 |
 | `dynamic-skies` | BadLuckBurt and carademono | sky presets, 19 textures, shaders | yes | art | 3 |
 | `come-sail-away` | RedRoryOTheGlen | 12 boats as data, pictures, 5 clips, the assembly | yes | art, sound | 3 |

@@ -4,15 +4,16 @@
 // her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the vendored art
 // itself (the producer: the mod's own PNGs and spriteInfo.json, read through pngjs), sized through the real door
 // (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
+// NO-BETHESDA2 (2026-10-31): set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
+// player's ARENA2 (tools/lib/eotbPictures.mjs), so the measure runs where ARENA2_PATH is set; the scale table runs in CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { spriteOffset, spriteSize, eotbRecordScale } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { ARCHIVE_FOOT, STATE_TABLES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
+import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
 
-const { PNG } = createRequire(import.meta.url)('pngjs');
-const png = (archive, record, frame = 0) => PNG.sync.read(readFileSync(new URL(`../../../vendor/eye-of-the-beholder/Textures/${archive}/${archive}_${record}-${frame}.png`, import.meta.url)));
+const EOTB = eotbPictures();
+const png = (archive, record, frame = 0) => EOTB.picture(`${archive}_${record}-${frame}`);
 /** The figure's height in pixels: the first row with a hood's green (over red and blue) down to the last opaque row -
  *  the woman herself, whatever her arm and her sword do above the hood. */
 function hoodToBoot(im) {
@@ -27,32 +28,36 @@ function hoodToBoot(im) {
   return bot - top + 1;
 }
 /** Her height in metres as the body draws a record: the figure's pixels over the record's scale, times the size mod. */
-function figureMetres(archive, record, frame = 0) {
-  const im = png(archive, record, frame);
+async function figureMetres(archive, record, frame = 0) {
+  const im = await png(archive, record, frame);
   const xml = spriteOffset(archive, record);
   const size = spriteSize(im.width, im.height, { riding: false }, xml.scale);
   return (hoodToBoot(im) / im.height) * size.h;
 }
 
-test('RPT1026-MISC SPELL-SHORT: the Fighter Mage (female) stands as tall with a spell up - readied, walking and casting - as at rest, from every side; no other set or record moves (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread)', () => {
+test('RPT1026-MISC SPELL-SHORT: the Fighter Mage (female) stands as tall with a spell up - readied, walking and casting - as at rest, from every side (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread)', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
   const set10 = ARCHIVE_FOOT + 10;
-  const idle = figureMetres(set10, STATE_TABLES.Idle.base);
+  const idle = await figureMetres(set10, STATE_TABLES.Idle.base);
   for (const table of ['IdleSpell', 'MoveSpell', 'AttackSpell']) {
     for (let side = 0; side < 5; side++) {
       const record = STATE_TABLES[table].base + side;
-      const h = figureMetres(set10, record);
+      const h = await figureMetres(set10, record);
       assert.ok(Math.abs(h / idle - 1) < 0.06, `${table} record ${record}: ${h.toFixed(3)} m against the idle's ${idle.toFixed(3)} m`);
     }
   }
   // the casting frames too, not only each record's first
-  for (const frame of [1, 2, 3]) assert.ok(Math.abs(figureMetres(set10, STATE_TABLES.AttackSpell.base, frame) / idle - 1) < 0.06, `cast frame ${frame}`);
+  for (const frame of [1, 2, 3]) assert.ok(Math.abs(await figureMetres(set10, STATE_TABLES.AttackSpell.base, frame) / idle - 1) < 0.06, `cast frame ${frame}`);
+  // the report's case before the fix: drawn as the XML had it, she lost a quarter of her height
+  const im = await png(set10, 55, 2);
+  const asDrawn = (hoodToBoot(im) / im.height) * spriteSize(im.width, im.height, { riding: false }, 1).h;
+  assert.ok(asDrawn / idle < 0.8, `at the XML's scale 1 the cast stands ${(asDrawn / idle).toFixed(2)} of her height`);
+});
+
+test('RPT1026-MISC SPELL-SHORT: set 10\'s spell sheets carry the scale they were drawn at, the XML\'s offset kept; no other set or record moves (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread, rpt1026-misc-spell-short-xml-lost)', () => {
+  const set10 = ARCHIVE_FOOT + 10;
   // the mod's XML offset is kept, and grows with the figure it centres
   assert.deepEqual(spriteOffset(set10, 45), { scale: 80 / 110, x: 0.52, y: 0 });
   // the rest of her sets are the mod's own: her walk and her blade, and the other women's spells
   for (const record of [0, 5, 15, 25, 30, 40]) assert.equal(eotbRecordScale(set10, record), 1, `record ${record}`);
   for (const set of [0, 2, 4, 6, 8, 11, 12, 14]) for (const record of [45, 50, 55]) assert.equal(spriteOffset(ARCHIVE_FOOT + set, record).scale, 1, `set ${set} record ${record}`);
-  // the report's case before the fix: drawn as the XML had it, she lost a quarter of her height
-  const im = png(set10, 55, 2);
-  const asDrawn = (hoodToBoot(im) / im.height) * spriteSize(im.width, im.height, { riding: false }, 1).h;
-  assert.ok(asDrawn / idle < 0.8, `at the XML's scale 1 the cast stands ${(asDrawn / idle).toFixed(2)} of her height`);
 });

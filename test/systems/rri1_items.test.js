@@ -38,7 +38,7 @@ import {
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { CREDITS } from '../../src/ui/credits.js';
-import { RRI_SPRITES } from '../../src/systems/roleplayRealismItems/rriIndex.js';
+import { RRI_SPRITES, RRI_DERIVED } from '../../src/systems/roleplayRealismItems/rriIndex.js';
 import { rectOf, renderIndex } from '../../tools/rriExtract.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -254,6 +254,7 @@ test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered a
   assert.deepEqual(rectOf('<?xml version="1.0"?><info><rect scale="2"><x>10</x><y>20</y><width>30</width><height>40</height></rect></info>'), { x: 5, y: 10, width: 15, height: 20 }, 'XMLManager.GetRect divides by the rect\'s scale');
   assert.equal(rectOf('<info></info>'), null);
   assert.match(renderIndex([{ name: 'a', width: 1, height: 2, rect: null }], '1.3'), /"a": \[1, 2\],/);
+  assert.match(renderIndex([{ name: 'a', width: 1, height: 2, rect: null }], '1.3', ['a']), /RRI_DERIVED = Object\.freeze\(\[\n {2}"a",\n\]\);/, 'NO-BETHESDA2: the derived names');
   try {
     const { n, loads } = fresh();
     assert.equal(n, 280); assert.equal(installRoleplayRealismItems(), 0, 'once');
@@ -280,10 +281,15 @@ test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered a
     assert.equal(decodedTexture(520, 10, 0, 'Albedo', DYE_COLORS.Iron), null);
     assert.match(rriSpriteUrl('520_10-0_Iron', 'https://host/play/'), /^https:\/\/host\/play\/art\/roleplay-realism-items\/520_10-0_Iron\.png$/);
   } finally { done(); }
+  // NO-BETHESDA2: a sprite is a file or a spec rebuilt from the player's ARENA2 - never both, never neither
   const files = tracked('public/art/roleplay-realism-items').filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
+  const specs = Object.keys(JSON.parse(rd('vendor/roleplay-realism-items/derived-art.json')));
+  assert.deepEqual([...RRI_DERIVED], specs, 'the index\'s derived names are the listing\'s, in its order');
   assert.deepEqual(files.filter((n) => !RRI_SPRITES[n]), [], 'files the index does not name');
-  assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !files.includes(n)), [], 'index names with no file');
-  assert.equal(files.length, 280);
+  assert.deepEqual(specs.filter((n) => !RRI_SPRITES[n]), [], 'specs the index does not name');
+  assert.deepEqual(specs.filter((n) => files.includes(n)), [], 'a picture both rebuilt and carried');
+  assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !files.includes(n) && !specs.includes(n)), [], 'index names with neither a file nor a spec');
+  assert.equal(files.length, 230); assert.equal(specs.length, 50);
   assert.match(rd('test/tooling/doctrine.test.js'), /\['public\/art\/roleplay-realism-items\/',\n\s+\{ manifest: 'vendor\/roleplay-realism-items\/roleplay-realism-items\.dfmod\.json',/);
 });
 

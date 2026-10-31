@@ -5,14 +5,17 @@
 // spec (formats/derivedTexture.js, with `pal`) built at runtime from the player's own TEXTURE file
 // (formats/classicPictures.js); only the pixels the author changed ride along, as edits.
 //
-//   node tools/classicDerive.mjs --arena2 <ARENA2> --dir <folder> --out <derived.json> [--remove]
+//   node tools/classicDerive.mjs --arena2 <ARENA2> --dir <folder> --out <derived.json> [--rci] [--remove]
 //
 // `--remove` deletes each derived picture's file. A later run with the files gone keeps the specs it already holds.
+// `--rci` searches every RCI file's records too (Roleplay & Realism's buttons repaint BUTTONS.RCI): such a spec names
+// its file, `{ rci: 'BUTTONS.RCI', from: [record, frame], ... }`.
 import { readFileSync, writeFileSync, readdirSync, existsSync, unlinkSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { composeDerivedPicture, deriveSpec } from '../src/formats/derivedTexture.js';
+import { CifRciFile } from '../src/formats/cifRciFile.js';
+import { composeDerivedPicture, deriveSpec, classicRecordRgba } from '../src/formats/derivedTexture.js';
 import { readPng } from './pngIO.mjs';
 import { classicRecords, findClassicSource, DERIVED_SHARE } from './lib/classicSource.mjs';
 import { keyOf } from './bethesdaScan.mjs';
@@ -21,13 +24,28 @@ import { isMain } from './lib/isMain.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const PALETTES = Object.freeze(['PAL.PAL', 'ART_PAL.COL']);
 
-/** Every classic record in both palettes, each tagged with its palette's name. */
-export function recordsInBothPalettes(arena2) {
+/** Every record of every RCI file in `palette`, each tagged with its file (`rci`). */
+export function* rciRecords(arena2, palette) {
+  for (const f of readdirSync(arena2).filter((n) => /\.RCI$/i.test(n)).sort()) {
+    const c = new CifRciFile(), name = f.toUpperCase();
+    if (!c.load(new Uint8Array(readFileSync(join(arena2, f))), name, palette)) continue;
+    for (let r = 0; r < c.recordCount; r++) {
+      for (let fr = 0; fr < Math.max(1, c.getFrameCount(r)); fr++) {
+        const bm = c.getDFBitmap(r, fr);
+        if (bm?.width) yield { rci: name, record: r, frame: fr, rgba: classicRecordRgba(bm, palette) };
+      }
+    }
+  }
+}
+
+/** Every classic record in both palettes, each tagged with its palette's name - the RCI files' too with `rci`. */
+export function recordsInBothPalettes(arena2, { rci = false } = {}) {
   const out = [];
   for (const pal of PALETTES) {
     const p = new DFPalette();
     p.load(new Uint8Array(readFileSync(join(arena2, pal))), pal);
     for (const r of classicRecords(arena2, p)) out.push({ ...r, pal });
+    if (rci) for (const r of rciRecords(arena2, p)) out.push({ ...r, pal });
   }
   return out;
 }
@@ -38,13 +56,13 @@ export function specFor(pic, records, exact) {
   const hit = exact.get(keyOf(pic));
   const best = hit ? { ...hit, at: [0, 0] } : findClassicSource(pic, records);
   if (!best) return null;
-  const spec = deriveSpec([best.archive, best.record, best.frame], pic, best.rgba, best.at);
+  const spec = deriveSpec(best.rci ? [best.record, best.frame] : [best.archive, best.record, best.frame], pic, best.rgba, best.at);
   const back = composeDerivedPicture(spec, best.rgba);
   for (let i = 0; i < pic.data.length; i += 4) {   // the spec is checked: built from the record, it is the picture
     if (pic.data[i + 3] === 0 && back.data[i + 3] === 0) continue;
     for (let c = 0; c < 4; c++) if (pic.data[i + c] !== back.data[i + c]) throw new Error(`spec does not rebuild its picture at byte ${i}`);
   }
-  return { ...spec, pal: best.pal };
+  return best.rci ? { rci: best.rci, ...spec, pal: best.pal } : { ...spec, pal: best.pal };
 }
 
 /** The exact-copy index over `records`: drawn-pixel key -> record. */
@@ -65,8 +83,8 @@ export function picturesUnder(dir) {
   return out;
 }
 
-export function deriveFolder({ arena2, dir, prior = {}, log = () => {} }) {
-  const records = recordsInBothPalettes(arena2);
+export function deriveFolder({ arena2, dir, prior = {}, rci = false, log = () => {} }) {
+  const records = recordsInBothPalettes(arena2, { rci });
   const exact = exactIndex(records);
   const derived = { ...prior }, kept = [];
   for (const [name, path] of picturesUnder(dir)) {
@@ -84,9 +102,9 @@ if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
   const arena2 = opt('--arena2') ?? process.env.ARENA2_PATH, dir = opt('--dir'), out = opt('--out');
-  if (!arena2 || !dir || !out) { console.error('usage: node tools/classicDerive.mjs --arena2 <ARENA2> --dir <folder> --out <derived.json> [--remove]'); process.exit(2); }
+  if (!arena2 || !dir || !out) { console.error('usage: node tools/classicDerive.mjs --arena2 <ARENA2> --dir <folder> --out <derived.json> [--rci] [--remove]'); process.exit(2); }
   const prior = existsSync(resolve(ROOT, out)) ? JSON.parse(readFileSync(resolve(ROOT, out), 'utf8')) : {};
-  const { derived } = deriveFolder({ arena2, dir: resolve(ROOT, dir), prior, log: console.log });
+  const { derived } = deriveFolder({ arena2, dir: resolve(ROOT, dir), prior, rci: args.includes('--rci'), log: console.log });
   writeFileSync(resolve(ROOT, out), derivedText(derived));
   if (args.includes('--remove')) {
     let n = 0;

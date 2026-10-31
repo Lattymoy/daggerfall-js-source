@@ -7,8 +7,9 @@
 // AUDIT ARMORY: and THE MORROWIND BODY - retail's own skeleton (test/fixtures/mw/retailRig.mjs) read by the game's own
 // reader (fpArm armBonesInBody, what thirdBones and a peer's bonesOf answer), a mannequin on its bones for the eye, the
 // pieces on its pose. Its mesh is Bethesda's and never ships; the bones are what the pieces hang on.
+// NO-BETHESDA2: the sprite is Daggerfall's own TEXTURE.481, built from the player's ARENA2 (tools/lib/eotbPictures.mjs).
 //
-//     node tools/armoryProbe.mjs [--shots <dir>]
+//     ARENA2_PATH=<arena2> node tools/armoryProbe.mjs [--shots <dir>]
 import { chromium } from 'playwright';
 import http from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -23,15 +24,18 @@ import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../src/formats
 import { armBonesInBody } from '../src/combat/fpArm.js';
 import { retailSkeleton } from '../test/fixtures/mw/retailRig.mjs';
 import { ARMORY_BONES } from '../src/render/armoryPose.js';
+import { eotbPictures } from './lib/eotbPictures.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 if (shotsAt) mkdirSync(shotsAt, { recursive: true });
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const SPRITE = '/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png';
+if (!process.env.ARENA2_PATH) { console.error('ARENA2_PATH is not set: sh tools/fetch-data.sh, then point it at the arena2 folder'); process.exit(2); }
+const EOTB = eotbPictures();
+const SPRITE = await EOTB.dataUrl('112364_0-0');
 const MW_SK = buildSkeleton(parseNif(retailSkeleton()));
 const MW_BONES = armBonesInBody({ skeleton: MW_SK, mats: skeletonSpaceMatrices(MW_SK, new Map(), GRAPH_ROOT) }, ARMORY_BONES);
-const BACK = '/vendor/eye-of-the-beholder/Textures/112364/112364_4-0.png';
+const BACK = await EOTB.dataUrl('112364_4-0');
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=480 height=640></canvas><script type=module>
 import { ArmoryRenderer, armoryMotionStep, armoryPrograms } from '/src/render/armoryPass.js';
