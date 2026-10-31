@@ -276,7 +276,9 @@ EG_FIRST_HANDLES = "Serveride"
 # anyone, it names the First: the earliest brass tame (hunts.js FIRST_OF)
 # holds the title only if listed here. An account's handle, never a
 # character's name. Comma-separated, case-insensitive; held while listed.
-FIRST_WYRM_RIDER_HANDLES = "Seasoning"
+# FIRST-WYRM-NAME (2026-10-31, the owner: "His name is Seanobi"): the
+# account is Seanobi.
+FIRST_WYRM_RIDER_HANDLES = "Seanobi"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This

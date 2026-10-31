@@ -198,7 +198,7 @@ export const isSpireFirst = (player, env) =>
 /** FIRST-WYRM (2026-10-31, the owner: "Seasoning needs to be granted the first dragon rider. He hasnt recieved it"):
  *  First Wyrm Rider by name, as First of the Spire is - wrangler.toml FIRST_WYRM_RIDER_HANDLES, an account's handle, held
  *  while listed, never a guest's. While the list names anyone it names the First, and the earliest-tame reading (hunts.js
- *  FIRST_OF) gives the title to no one else: there is one First. */
+ *  FIRST_OF) gives the title to no one else: there is one First. FIRST-WYRM-NAME (the owner: "His name is Seanobi"). */
 export function firstWyrmHandles(env) {
   return handleList(env?.FIRST_WYRM_RIDER_HANDLES);
 }
