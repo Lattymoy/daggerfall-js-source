@@ -342,7 +342,9 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // travel (`resetPlayerGpsState`), with its note, above the needles (the last stands at 13528)
   // PIN MOVED (STAR4, at the merge with main), the window held at 13800: the Starfall's stars taken down with the old frame
   // (`starfall?.destroyAll()`), with its note, above the last needle beside DEX C1's (13451 on the branch, 13696 merged)
-  const core = src.slice(k, k + 13800);
+  // PIN MOVED (AMBIENT-LIFE, 2026-10-31), 13800 -> 14000: the creatures ride `state.initOffset` beside the wind, above the
+  // last needle (it stands at 13794)
+  const core = src.slice(k, k + 14000);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

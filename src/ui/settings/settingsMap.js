@@ -44,8 +44,8 @@ export const CATEGORIES = Object.freeze([
       "Video/AmbientLitInteriors"]),
     sec("sky", "Sky, water & weather", [
       "feat:enhanced-environments", "feat:enhanced-water", "feat:water-quality", "feat:armory-others", "feat:mod-heat-haze", "feat:mod-snowfall"]),
-    sec("plants", "Plants, trees & wind", [
-      "feat:grass", "feat:wind", "feat:mod-windfall", "feat:mod-low-poly-trees", "feat:mod-seasons-iliac-bay"]),
+    sec("plants", "Plants, wind & wildlife", [
+      "feat:grass", "feat:wind", "feat:mod-windfall", "feat:wildlife", "feat:mod-low-poly-trees", "feat:mod-seasons-iliac-bay"]),
     sec("looks", "Textures & looks", [
       "link:overhauls", "feat:dungeon-wall-style", "Video/RandomDungeonTextures", "Video/MainFilterMode", "GUI/GUIFilterMode", "GUI/VideoFilterMode",
       "Video/EnableTextureArrays", "GUI/AccelerateUICopyTexture"]),

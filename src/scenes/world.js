@@ -249,6 +249,7 @@ import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { Dr
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
+import { createAmbientLifeHost, streamedWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: the birds, bats and small animals outdoors
 import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -13096,6 +13097,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };
   };
   const playerGroundTile = () => playerGroundSample()?.tile ?? null;
+  // AMBIENT-LIFE (scenes/ambientLifeHost.js): the creatures on this host's ground, sea and lakes, roofs and buildings
+  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, world: streamedWorld(heightAt, tvSeaY, groundSampleAt, collider, built, state) });
   const footsteps = new FootstepMachine();   // FS-slice
   // PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk
   // on... like you have" for online peers): the kind computed below at the
@@ -13370,6 +13373,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // places - and the leaves in the air blew on at the new pixel. The arrival's haze reads its layer afresh.
     snowfall.offsetOrigin(state.initOffset);
     windfall.offsetOrigin(state.initOffset);
+    ambientLife.offsetOrigin(state.initOffset);   // AMBIENT-LIFE: the creatures stand on the land
     hazeGl?.offsetOrigin(state.initOffset);
     heatHaze.reset();
     _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
@@ -32250,6 +32254,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       hazeGl?.offsetOrigin(r.offset);   // HAZE1: the shimmer's noise stands on the land, not the scene
       heatHaze.offsetOrigin(r.offset);   // HAZE1 (AUDIT ENVIRONS I7): and the ring's layer, held while airborne, with it
       windfall.offsetOrigin(r.offset);   // WINDFALL1: the trees' places in the mod's wind, and its leaves, stand on the land
+      ambientLife.offsetOrigin(r.offset);   // AMBIENT-LIFE: and the creatures, their perches and their flocks' anchors
       snowfall.offsetOrigin(r.offset);   // SNOWFALL1: FloatingOrigin.OnPositionUpdate - the tiers' centres, their tracks and their pending stamps stand on the land
       droppedLoot.offsetAll(r.offset);
       dwFish?.offsetAll(r.offset);   // DW-E3: the fish and their schools' centres (Port-Ledger A, the Iliac Puddle row)
@@ -32579,6 +32584,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const _wfPx = playerTravelPixel();
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
       heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
+    if (!tvf) ambientLife.frame(gamePaused() ? 0 : dt * worldTimeScale(), walkMode && playerSpawned ? player.pos : cam.pos, minute, ambientWord, maps.getClimateIndex(_wfPx.x, _wfPx.y), season === SEASON.Winter);   // AMBIENT-LIFE: the birds fly when DFU's ambience hears them (presetForExterior on the same word); none under the travel view's camera
     soundscape.frame(dt, { wd, weather: ambientWord, minute, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), winter: season === SEASON.Winter, paused: gamePaused() });   // SOUNDSCAPE: beside the wind and DFU's ambience, never inside it - its ear the listener's, set above
     meterFor(renderer.gl)?.markCpu('snow');   // PERF-SIM1: the snow layer's frame
     _snowPixels.clear();
@@ -33793,6 +33799,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WINDFALL1: WINDFALL's LEAVES AND SNOW - cutouts that write depth, so with the opaque world and before the haze grabs
     // it; lit as the flats round the player are. Not under the travel view's camera (they ride the player's place).
     if (windfall.particles && !tvf && windfall.draw(proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();
+    if (!tvf && ambientLife.draw(renderer, proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();   // AMBIENT-LIFE: the creatures, opaque and lit as the flats round the player
     const frameHaze = () => {   // PERF-V8
     if (hazeGl) {
       const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;

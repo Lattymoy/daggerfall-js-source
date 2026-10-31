@@ -855,6 +855,18 @@ export const FEATURES = Object.freeze([
         Object.freeze({ key: 'windWisps', get label() { return t('features.wind.wisps', 'Wisps'); } })]),
     }),
   }),
+  // AMBIENT-LIFE (2026-10-31, bible/07-Rendering/Ambient-Life.md): the birds, bats and small animals outdoors - a look,
+  // nothing the room shares, so each player's own online. Kill door `?wildlife=off` (scenes/ambientLifeHost.js).
+  Object.freeze({
+    id: 'wildlife',
+    group: 'sight',
+    get title() { return t('features.wildlife.title', 'Wildlife'); },
+    get note() { return t('features.wildlife.note', 'Birds, bats and small animals live outdoors. Flocks cross the sky, birds sit on roofs and fly off '
+      + 'as you come near, and small animals run from your feet.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'ambientLife', initial: true, online: 'player' }),   // AMBIENT-LIFE: scenes/ambientLifeHost.js wildlifeDensity
+  }),
   // ES1 (2026-09-16, Mac: "lump this in as a new enhanced toggle. Enhanced
   // Sounds, add the wind noise to it"): WIND3's `wind-sound` row IS this
   // row now - one switch over the port's own sounds (systems/

@@ -80,6 +80,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Feature | Its folders under `src/` |
 |---|---|
 | Abyss Dungeon (super dungeons) | `systems/superDungeon/`, `net/superDungeon/`, `world/superDungeon/`, `render/superDungeon/`, `scenes/superDungeon/`, `ui/superDungeon/` |
+| Ambient life (birds, bats, small animals) | `systems/ambientLife/` - and loose: `render/ambientLifePass.js`, `scenes/ambientLifeHost.js` |
 | Arena | `systems/arena/`, `net/arena/`, `world/arena/`, `scenes/arena/`, `ui/arena/` |
 | Automap | `systems/automap/`, `ui/automap/` |
 | Blood | `combat/blood/` |
@@ -299,6 +300,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 
 | Folder | What lives there |
 |---|---|
+| `src/systems/ambientLife/` | The creatures outdoors (`07-Rendering/Ambient-Life.md`): who stands by climate, hour and weather, the birds, the runners and the insects, and the instances the pass draws. |
 | `src/systems/arena/` | The Arena's law (`11-Multiplayer/Arena.md`): the bout, its fighters and moves, the ladder and the league, the board and score, the herald, the crowd and the replay. |
 | `src/systems/automap/` | The automap's law: the model, its floors, and what a click picks. |
 | `src/systems/bounty/` | The bounty board's law: the board, the journal and the reward. |
