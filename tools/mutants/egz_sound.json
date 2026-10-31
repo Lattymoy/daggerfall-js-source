@@ -452,8 +452,8 @@
   {
     "name": "EGZ-fire-colour",
     "file": "src/world/emissiveTextures.js",
-    "old": "Object.freeze([0.706, 0.271, 0.086])",
-    "new": "Object.freeze([0.773, 0.38, 0.122])",
+    "old": "export const FIRE_WALL_COLOR = Object.freeze([0.706, 0.271, 0.086]);",
+    "new": "export const FIRE_WALL_COLOR = Object.freeze([0.773, 0.38, 0.122]);",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]

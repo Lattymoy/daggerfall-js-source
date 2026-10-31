@@ -987,7 +987,7 @@ WHAT IT IS NOW:
   pixel (`bootStartHost.js:"export function farPixelOf"`): by its map id - the registry's place (a
   capital's slice, an Arena place), a country place's id read back to its pixel where the countryside stands it there
   (`world/tamrielCountry.js:"export function countryPixelOfId(id) {"`), an isle's to its centre
-  (`world/etherPlaces.js:"export function etherPlacePixelOfId(id) {"`) - else by name, the registry's first listed place
+  (`world/etherPlaces.js:"export function etherPlacePixelOfId"`) - else by name, the registry's first listed place
   of that name and region past the Bay. Any `?region=&loc=` boot reaches it, a dev boot's as a birth's; a load's place
   stays the save's; a Bay name MAPS.BSA lacks still throws, as it always did.
 - **The birth waits on the move** (`testPresetHost.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so

@@ -2067,8 +2067,8 @@
   {
     "name": "B10-dolls-kept",
     "file": "src/world/familyBodies.js",
-    "old": "    destroy() { peers.length = 0; dolls.destroy?.(); bodies?.destroy(); },",
-    "new": "    destroy() { peers.length = 0; bodies?.destroy(); },",
+    "old": "      dolls.destroy?.();\n      bodies?.destroy();",
+    "new": "      bodies?.destroy();",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

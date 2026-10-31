@@ -272,7 +272,7 @@
   {
     "name": "MWNPC10c-room-not-handed",
     "file": "src/world/familyBodies.js",
-    "old": "    drawBodies(canvas, proj, view, eye, dt) { sprites.drawBodies?.(canvas, proj, view, eye, dt); },",
+    "old": "    drawBodies(canvas, proj, view, eye, dt) {\n      sprites.drawBodies?.(canvas, proj, view, eye, dt);\n    },",
     "new": "    drawBodies() {},",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"

@@ -66,7 +66,7 @@
     "name": "HORSE-VIEW-rig-fresh-out-of-view",
     "file": "src/world/horseRig.js",
     "old": "    if (!seen(h, view, proj, bx)) return false;",
-    "new": "    if (fresh) pose(h); if (!seen(h, view, proj, bx)) return false;",
+    "new": "    if (fresh) pose(h);\n    if (!seen(h, view, proj, bx)) return false;",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]

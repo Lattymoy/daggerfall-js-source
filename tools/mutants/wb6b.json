@@ -2,8 +2,8 @@
   {
     "name": "WB6b-an-island-in-the-towers-window",
     "file": "src/world/deadlandsLand.js",
-    "old": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * (TOWER_WINDOW + 0.05);\n",
-    "new": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * 0.02;\n",
+    "old": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * (TOWER_WINDOW + 0.05);",
+    "new": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * 0.02;",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB6b-a-shard-in-the-towers-window",
     "file": "src/world/deadlandsLand.js",
-    "old": "    const off = (a) => Math.abs(wrapPi(a - SIGIL_TOWER.az)) < SHARD_WINDOW || Math.abs(wrapPi(a - Math.PI)) < 0.45",
-    "new": "    const off = (a) => Math.abs(wrapPi(a - SIGIL_TOWER.az)) < 0.1 || Math.abs(wrapPi(a - Math.PI)) < 0.45",
+    "old": "      Math.abs(wrapPi(a - SIGIL_TOWER.az)) < SHARD_WINDOW ||",
+    "new": "      Math.abs(wrapPi(a - SIGIL_TOWER.az)) < 0.1 ||",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB6b-a-turn-off-the-whole",
     "file": "src/world/deadlandsLand.js",
-    "old": "    const bobTurns = 40 + Math.floor(rolls() * 40);",
-    "new": "    const bobTurns = 40.5 + Math.floor(rolls() * 40);",
+    "old": "    const bobTurns = 40 + Math.floor(rolls() * 40); // a bob every 7.5 to 15 s",
+    "new": "    const bobTurns = 40.5 + Math.floor(rolls() * 40); // a bob every 7.5 to 15 s",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB6b-the-shard-mirrored",
     "file": "src/world/deadlandsLand.js",
-    "old": "  out.set([cy * k, 0, -sy * k, 0,",
-    "new": "  out.set([-cy * k, 0, sy * k, 0,",
+    "old": "    cy * k,\n    0,\n    -sy * k,",
+    "new": "    -cy * k,\n    0,\n    sy * k,",
     "tests": [
       "test/world/gate/wb6b_deadlands_life.test.js"
     ]

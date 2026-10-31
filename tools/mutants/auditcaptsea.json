@@ -1062,8 +1062,8 @@
   {
     "name": "ACS-G5-ground-law",
     "file": "src/world/ethericSea.js",
-    "old": "  ground.etherLaw = inEtherLaw;",
-    "new": "  ground.etherLaw = null;",
+    "old": "  ground.etherLaw = inEtherLaw; // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)",
+    "new": "  ground.etherLaw = null; // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1117,8 +1117,8 @@
   {
     "name": "ACS-G11-doc",
     "file": "src/world/ethericSea.js",
-    "old": "of fifty places charted, two share a name about one time in twenty",
-    "new": "of fifty places charted, no two share a name",
+    "old": " *  called by (AUDIT CAPTAIN'S SEA G11: of fifty places charted, two share a name about one time in twenty - measured over",
+    "new": " *  called by (AUDIT CAPTAIN'S SEA G11: of fifty places charted, no two share a name - measured over",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1126,8 +1126,8 @@
   {
     "name": "ACS-G13-doc",
     "file": "src/world/ethericSea.js",
-    "old": "Past the margin the law answers nothing: the sea is the box's, and past it nothing streams.",
-    "new": "Past the margin the law answers the Bay.",
+    "old": "// past a margin of four). Past the margin the law answers nothing: the sea is the box's, and past it nothing streams.",
+    "new": "// past a margin of four). Past the margin the law answers the Bay.",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1135,8 +1135,8 @@
   {
     "name": "ACS-G12-zero",
     "file": "src/world/ethericSea.js",
-    "old": "  if (!dx && !dy) return null;\n",
-    "new": "",
+    "old": "  if (!dx && !dy) return null;\n  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;",
+    "new": "  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1171,8 +1171,8 @@
   {
     "name": "ACS-H1-port-size",
     "file": "src/world/ethericSea.js",
-    "old": "  port: Object.freeze({ r: Object.freeze([0.9, 1.1]),",
-    "new": "  port: Object.freeze({ r: Object.freeze([1.6, 2.4]),",
+    "old": "    r: Object.freeze([0.9, 1.1]),",
+    "new": "    r: Object.freeze([1.6, 2.4]),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1189,8 +1189,8 @@
   {
     "name": "ACS-H1-haven-radius",
     "file": "src/world/ethericSea.js",
-    "old": "  const radius = haven ? 1 : lerp(",
-    "new": "  const radius = haven ? 2.4 : lerp(",
+    "old": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
+    "new": "  const radius = haven ? 2.4 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1243,8 +1243,8 @@
   {
     "name": "ACS-P1-types",
     "file": "src/world/etherPlaces.js",
-    "old": "(type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
-    "new": "(type(l) === LOCATION_TYPES.TownCity || type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
+    "old": "        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.haven),",
+    "new": "        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownCity || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.haven),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],
@@ -1253,8 +1253,8 @@
   {
     "name": "ACS-P1-range",
     "file": "src/world/etherPlaces.js",
-    "old": "haven: Object.freeze([6, 12])",
-    "new": "haven: Object.freeze([6, 16])",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 16]) });",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1262,8 +1262,8 @@
   {
     "name": "ACS-P1-floor",
     "file": "src/world/etherPlaces.js",
-    "old": "haven: Object.freeze([6, 12])",
-    "new": "haven: Object.freeze([4, 12])",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([4, 12]) });",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1280,8 +1280,8 @@
   {
     "name": "ACS-P12-exterior-ids",
     "file": "src/world/etherPlaces.js",
-    "old": "...(template.exterior?.recordElement ? { recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),",
-    "new": "",
+    "old": "      ...(template.exterior?.recordElement\n        ? {\n            recordElement: {\n              ...template.exterior.recordElement,\n              header: { ...template.exterior.recordElement.header, locationId: mapId },\n            },\n          }\n        : {}), // AUDIT CAPTAIN'S SEA P12",
+    "new": "      // AUDIT CAPTAIN'S SEA P12",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1289,8 +1289,8 @@
   {
     "name": "ACS-P12-exterior-mapid",
     "file": "src/world/etherPlaces.js",
-    "old": "locationId: mapId, mapId, portTownAndUnknown",
-    "new": "locationId: mapId, portTownAndUnknown",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, portTownAndUnknown: port ? 1 : 0 },",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1298,8 +1298,8 @@
   {
     "name": "ACS-P10-ruin-port",
     "file": "src/world/etherPlaces.js",
-    "old": "portTownAndUnknown: port ? 1 : 0 },",
-    "new": "...(port ? { portTownAndUnknown: 1 } : {}) },",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: {\n        ...template.exterior?.exteriorData,\n        locationId: mapId,\n        mapId,\n        ...(port ? { portTownAndUnknown: 1 } : {}),\n      },",
     "tests": [
       "test/world/etherplaces.test.js",
       "test/systems/naval/auditcaptsea.test.js"

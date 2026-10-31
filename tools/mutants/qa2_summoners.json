@@ -11,8 +11,8 @@
   {
     "name": "QA2-summoner-vendor-gate",
     "file": "src/world/curatedPeople.js",
-    "old": "export const curatedSummonersOf = (name, vendor) => (vendor === TEMPLE_SUMMONER_VENDOR ? BY_BLOCK.get(name) ?? [] : []);",
-    "new": "export const curatedSummonersOf = (name, vendor) => (BY_BLOCK.get(name) ?? []);",
+    "old": "export const curatedSummonersOf = (name, vendor) =>\n  vendor === TEMPLE_SUMMONER_VENDOR ? (BY_BLOCK.get(name) ?? []) : [];",
+    "new": "export const curatedSummonersOf = (name, vendor) => BY_BLOCK.get(name) ?? [];",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QA2-summoner-row-faction",
     "file": "src/world/curatedPeople.js",
-    "old": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 498,",
-    "new": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 492,",
+    "old": "  row('TEMPASH0.RMB', 11, 35, {\n    position: 36089,\n    xPos: -92,\n    yPos: 0,\n    zPos: 122,\n    factionID: 498,\n    flags: 1,\n    textureArchive: 177,\n    textureRecord: 4,\n  }),",
+    "new": "  row('TEMPASH0.RMB', 11, 35, {\n    position: 36089,\n    xPos: -92,\n    yPos: 0,\n    zPos: 122,\n    factionID: 492,\n    flags: 1,\n    textureArchive: 177,\n    textureRecord: 4,\n  }),",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "QA2-summoner-list",
     "file": "src/world/curatedPeople.js",
-    "old": "  .filter(([id, kind]) => kind === 'DaedraSummoning' && Number(id) !== MAGES_GUILD_SUMMONER).map(([id]) => Number(id)));",
-    "new": "  .filter(([, kind]) => kind === 'DaedraSummoning').map(([id]) => Number(id)));",
+    "old": "    .filter(([id, kind]) => kind === 'DaedraSummoning' && Number(id) !== MAGES_GUILD_SUMMONER)",
+    "new": "    .filter(([, kind]) => kind === 'DaedraSummoning')",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ]

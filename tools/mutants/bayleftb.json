@@ -182,8 +182,8 @@
   {
     "name": "BAY-LEFT-B-B1-isle-cell",
     "file": "src/world/etherPlaces.js",
-    "old": "const isle = isleOfCell(n % CELLS_W, Math.floor(n / CELLS_W));",
-    "new": "const isle = isleOfCell(Math.floor(n / CELLS_W), n % CELLS_W);",
+    "old": "  const isle = isleOfCell(n % CELLS_W, Math.floor(n / CELLS_W));",
+    "new": "  const isle = isleOfCell(Math.floor(n / CELLS_W), n % CELLS_W);",
     "tests": [
       "test/systems/legacy/bayleftb_seat.test.js"
     ]

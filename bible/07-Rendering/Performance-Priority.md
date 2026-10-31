@@ -1801,7 +1801,7 @@ scenes/horseCartPool.js frame -> poseTeam / pose3dTeam / horseRig.step, writeHor
 
 **Found.** PERF-TEAMS cuts another player's team past `PEER_TEAM_DRAW_M` (400 m); inside it nothing asked the view or
 the distance before a pose. `horseCartPool.js:"function pose3dTeam"` stepped every horse the pool stands - mine, and
-every peer's alone, following, parked in harness or pulling - through `horseRig.js:"function step(h,"`, which stepped
+every peer's alone, following, parked in harness or pulling - through `horseRig.js:"{ feet, yaw, speed"`, which stepped
 the gait, wrote the palette (`writeHorsePalette`, 33 bones composed) and sent it (`renderer.updateSkinPalette`, 1,632
 bytes) every frame. Only the draw asked the view (AUDIT COATS3D A12), so a horse behind the eye or a parked pair a
 hundred metres off cost what one in the street did. A riding peer's horse was the same:
@@ -1816,7 +1816,7 @@ container).
   since HORSE-VIEW II, its own section). False steps the clock and places the horse, and neither writes nor sends its
   pose: it stands in the last one sent (`stale`). The palette is the clock's alone, so `horseRig.js:"function pose(h)"`
   catches a horse up to the very palette an every-frame horse shows on that frame. A horse never posed is posed
-  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"function draw(h, canvas,"` takes `fresh`:
+  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"canvas, { proj, view,"` takes `fresh`:
   a pose behind its clock is caught up before the picture is queued.
 - The pool's horses - every one it stands, mine and every peer's, alone, following, parked in harness or pulling - are
   posed only in the last body pass's view (`_cam3d`, draw3d's camera - one frame behind; before the first pass, every

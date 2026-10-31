@@ -2,8 +2,8 @@
   {
     "name": "SNOWLESS1-ground-as-drawn-ignored",
     "file": "src/world/climateSwaps.js",
-    "old": "return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);",
-    "new": "return groundIsSnowy(climateSettings, season);",
+    "old": "  return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);",
+    "new": "  return groundIsSnowy(climateSettings, season);",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]

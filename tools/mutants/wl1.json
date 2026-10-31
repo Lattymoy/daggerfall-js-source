@@ -490,8 +490,8 @@
   {
     "name": "WL1-exterior-glass-colour-short",
     "file": "src/world/exteriorGlass.js",
-    "old": "  '171_2': Object.freeze([104, 105, 106]),",
-    "new": "  '171_2': Object.freeze([104]),",
+    "old": "  '171_2': Object.freeze([104, 105, 106]), // a timber wall's four blue panes",
+    "new": "  '171_2': Object.freeze([104]), // a timber wall's four blue panes",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "WL1-speck-4-connected",
     "file": "src/world/exteriorGlass.js",
-    "old": "        if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
-    "new": "        if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "old": "          if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "new": "          if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]

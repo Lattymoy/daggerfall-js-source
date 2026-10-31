@@ -286,8 +286,8 @@
   {
     "name": "HOME-LOOK-the-base-dropped",
     "file": "src/world/homeLook.js",
-    "old": "    const swapped = base?.get?.(key);\n    if (swapped) out.set(key, swapped);",
-    "new": "    const swapped = null;\n    if (swapped) out.set(key, swapped);",
+    "old": "    const swapped = base?.get?.(key);",
+    "new": "    const swapped = null;",
     "tests": [
       "test/net/homelook.test.js"
     ]

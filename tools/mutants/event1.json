@@ -210,8 +210,8 @@
   {
     "name": "EVENT1-grade-weight-ignored",
     "file": "src/world/dreadSky.js",
-    "old": "const k = Math.max(0, Math.min(1, w || 0));",
-    "new": "const k = 1;",
+    "old": "  const k = Math.max(0, Math.min(1, w || 0));",
+    "new": "  const k = 1;",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "EVENT1-grade-undimmed",
     "file": "src/world/dreadSky.js",
-    "old": "LUMA[2] * rgb[2]) * DREAD_DIM);",
-    "new": "LUMA[2] * rgb[2]));",
+    "old": "  const g = dreadRamp((LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2]) * DREAD_DIM);",
+    "new": "  const g = dreadRamp(LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2]);",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "EVENT1-fade-any-event-is-dread",
     "file": "src/world/dreadSky.js",
-    "old": "target = ev?.kind === DREAD_EVENT ? 1 : 0;",
-    "new": "target = ev ? 1 : 0;",
+    "old": "      target = ev?.kind === DREAD_EVENT ? 1 : 0;",
+    "new": "      target = ev ? 1 : 0;",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "EVENT1-storm-weight-ignored",
     "file": "src/world/dreadSky.js",
-    "old": "if (r() >= DREAD_STRIKE_CHANCE * Math.min(1, w)) continue;",
-    "new": "if (r() >= DREAD_STRIKE_CHANCE) continue;",
+    "old": "    if (r() >= DREAD_STRIKE_CHANCE * Math.min(1, w)) continue;",
+    "new": "    if (r() >= DREAD_STRIKE_CHANCE) continue;",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "EVENT1-storm-backlog-unbounded",
     "file": "src/world/dreadSky.js",
-    "old": "Math.max(Math.floor(fromMs / DREAD_SLOT_MS), last - DREAD_SLOTS_MAX + 1)",
-    "new": "Math.floor(fromMs / DREAD_SLOT_MS)",
+    "old": "  const first = Math.max(Math.floor(fromMs / DREAD_SLOT_MS), last - DREAD_SLOTS_MAX + 1);",
+    "new": "  const first = Math.floor(fromMs / DREAD_SLOT_MS);",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "EVENT1-storm-thunder-undelayed",
     "file": "src/world/dreadSky.js",
-    "old": "dueMs: s.atMs + t.delay * 1000,",
-    "new": "dueMs: s.atMs,",
+    "old": "          if (t) thunder.push({ dueMs: s.atMs + t.delay * 1000, clip: t.clip, volume: t.volume, x, z });",
+    "new": "          if (t) thunder.push({ dueMs: s.atMs, clip: t.clip, volume: t.volume, x, z });",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "EVENT1-storm-colour-dropped",
     "file": "src/world/dreadSky.js",
-    "old": "kind: s.kind, strength: s.strength, color: DREAD_BOLT_COLOR });",
-    "new": "kind: s.kind, strength: s.strength });",
+    "old": "          strikes.push({ x, z, seed: s.seed, kind: s.kind, strength: s.strength, color: DREAD_BOLT_COLOR });",
+    "new": "          strikes.push({ x, z, seed: s.seed, kind: s.kind, strength: s.strength });",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "EVENT1-glow-any-strike",
     "file": "src/world/dreadSky.js",
-    "old": "if (b.color === DREAD_BOLT_COLOR && b.bright > best)",
-    "new": "if (b.bright > best)",
+    "old": "  for (const b of bolts ?? []) if (b.color === DREAD_BOLT_COLOR && b.bright > best) best = b.bright;",
+    "new": "  for (const b of bolts ?? []) if (b.bright > best) best = b.bright;",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]

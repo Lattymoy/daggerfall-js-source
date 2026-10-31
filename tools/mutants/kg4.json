@@ -20,8 +20,8 @@
   {
     "name": "KG4-M-speed",
     "file": "src/world/gambitMotion.js",
-    "old": "until: from + ((path.length - 1) / GAMBIT_WALK_CELLS_S) * MS, path",
-    "new": "until: from + ((path.length - 1) / (GAMBIT_WALK_CELLS_S * 2)) * MS, path",
+    "old": "          push(p.id, { kind: 'walk', from, until: from + ((path.length - 1) / GAMBIT_WALK_CELLS_S) * MS, path });",
+    "new": "          push(p.id, { kind: 'walk', from, until: from + ((path.length - 1) / (GAMBIT_WALK_CELLS_S * 2)) * MS, path });",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KG4-M-path",
     "file": "src/world/gambitMotion.js",
-    "old": "const path = (tiles && reachPath(board, { ...p, col: e.from[0], row: e.from[1] }, e.to[0], e.to[1])) ?? [e.from, e.to];",
-    "new": "const path = [e.from, e.to];",
+    "old": "          const path = (tiles && reachPath(board, { ...p, col: e.from[0], row: e.from[1] }, e.to[0], e.to[1])) ?? [\n            e.from,\n            e.to,\n          ];",
+    "new": "          const path = [e.from, e.to];",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KG4-M-lunge-reach",
     "file": "src/world/gambitMotion.js",
-    "old": "reach: e.shot ? GAMBIT_LUNGE_SHOT : GAMBIT_LUNGE_MELEE",
-    "new": "reach: GAMBIT_LUNGE_MELEE",
+    "old": "            reach: e.shot ? GAMBIT_LUNGE_SHOT : GAMBIT_LUNGE_MELEE,",
+    "new": "            reach: GAMBIT_LUNGE_MELEE,",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KG4-M-shot-flight",
     "file": "src/world/gambitMotion.js",
-    "old": "const lands = e.shot ? impact + GAMBIT_SHOT_S * MS : impact;",
-    "new": "const lands = impact;",
+    "old": "          const lands = e.shot ? impact + GAMBIT_SHOT_S * MS : impact;",
+    "new": "          const lands = impact;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KG4-M-queue",
     "file": "src/world/gambitMotion.js",
-    "old": "const from = Math.max(at, busy(a.id));",
-    "new": "const from = at;",
+    "old": "          const from = Math.max(at, busy(a.id));",
+    "new": "          const from = at;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KG4-M-fall-wait",
     "file": "src/world/gambitMotion.js",
-    "old": "at: at + GAMBIT_FALL_AFTER_S * MS, dir, pile",
-    "new": "at: at, dir, pile",
+    "old": "      fallen.set(id, { piece: { ...p }, at: at + GAMBIT_FALL_AFTER_S * MS, dir, pile, index: piles[p.side]++ });",
+    "new": "      fallen.set(id, { piece: { ...p }, at: at, dir, pile, index: piles[p.side]++ });",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "KG4-M-pile-count",
     "file": "src/world/gambitMotion.js",
-    "old": "index: piles[p.side]++",
-    "new": "index: piles[p.side]",
+    "old": "      fallen.set(id, { piece: { ...p }, at: at + GAMBIT_FALL_AFTER_S * MS, dir, pile, index: piles[p.side]++ });",
+    "new": "      fallen.set(id, { piece: { ...p }, at: at + GAMBIT_FALL_AFTER_S * MS, dir, pile, index: piles[p.side] });",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "KG4-M-king-first",
     "file": "src/world/gambitMotion.js",
-    "old": "const order = [...mine.filter((/** @type {any} */ p) => p.king), ...mine.filter((/** @type {any} */ p) => !p.king)];",
-    "new": "const order = [...mine.filter((/** @type {any} */ p) => !p.king), ...mine.filter((/** @type {any} */ p) => p.king)];",
+    "old": "              ...mine.filter((/** @type {any} */ p) => p.king),\n              ...mine.filter((/** @type {any} */ p) => !p.king),",
+    "new": "              ...mine.filter((/** @type {any} */ p) => !p.king),\n              ...mine.filter((/** @type {any} */ p) => p.king),",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "KG4-M-beat",
     "file": "src/world/gambitMotion.js",
-    "old": "throws.set(p.id, at + i * GAMBIT_MUSTER_BEAT_S * MS)",
-    "new": "throws.set(p.id, at)",
+    "old": "            order.forEach((/** @type {any} */ p, i) => throws.set(p.id, at + i * GAMBIT_MUSTER_BEAT_S * MS));",
+    "new": "            order.forEach((/** @type {any} */ p, i) => throws.set(p.id, at));",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "KG4-M-fallen-kept",
     "file": "src/world/gambitMotion.js",
-    "old": "      for (const [, f] of fallen) {\n",
-    "new": "      for (const [, f] of []) {\n",
+    "old": "      for (const [, f] of fallen) {",
+    "new": "      for (const [, f] of []) {",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "KG4-C-card-height",
     "file": "src/world/gambitCloth.js",
-    "old": "if (Math.abs(u) <= half && y >= 0 && y <= H) take(t, [p.col, p.row]);",
-    "new": "if (Math.abs(u) <= half && y >= 0 && y <= H * 0.1) take(t, [p.col, p.row]);",
+    "old": "    if (Math.abs(u) <= half && y >= 0 && y <= H) take(t, [p.col, p.row]);",
+    "new": "    if (Math.abs(u) <= half && y >= 0 && y <= H * 0.1) take(t, [p.col, p.row]);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "KG4-C-wall-top",
     "file": "src/world/gambitCloth.js",
-    "old": "const t = planeY(places.top + (tile === KG_TILE.wall ? GAMBIT_WALL_H : GAMBIT_PILLAR_H));",
-    "new": "const t = planeY(places.top);",
+    "old": "      const t = planeY(places.top + (tile === KG_TILE.wall ? GAMBIT_WALL_H : GAMBIT_PILLAR_H));",
+    "new": "      const t = planeY(places.top);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KG4-C-screen-up",
     "file": "src/world/gambitCloth.js",
-    "old": "const up = [f[1] * rt[2] - f[2] * rt[1], f[2] * rt[0] - f[0] * rt[2], f[0] * rt[1] - f[1] * rt[0]];",
-    "new": "const up = [rt[1] * f[2] - rt[2] * f[1], rt[2] * f[0] - rt[0] * f[2], rt[0] * f[1] - rt[1] * f[0]];",
+    "old": "  const up = [f[1] * rt[2] - f[2] * rt[1], f[2] * rt[0] - f[0] * rt[2], f[0] * rt[1] - f[1] * rt[0]]; // forward x right: the screen's up (the world's left hand - Unity's axes)",
+    "new": "  const up = [rt[1] * f[2] - rt[2] * f[1], rt[2] * f[0] - rt[0] * f[2], rt[0] * f[1] - rt[1] * f[0]]; // forward x right: the screen's up (the world's left hand - Unity's axes)",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "KG4-C-fill",
     "file": "src/world/gambitCloth.js",
-    "old": "(b.x1 - b.x0) / ((cx1 - cx0) * GAMBIT_LEAN_FILL)",
-    "new": "(b.x1 - b.x0) / (cx1 - cx0)",
+    "old": "    const k = Math.max(\n      (b.x1 - b.x0) / ((cx1 - cx0) * GAMBIT_LEAN_FILL),\n      (b.y1 - b.y0) / ((cy1 - cy0) * GAMBIT_LEAN_FILL),\n    );",
+    "new": "    const k = Math.max((b.x1 - b.x0) / (cx1 - cx0), (b.y1 - b.y0) / ((cy1 - cy0) * GAMBIT_LEAN_FILL));",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "KG4-C-centring",
     "file": "src/world/gambitCloth.js",
-    "old": "sx -= dx * dist * tx; sy -= dy * dist * ty;",
-    "new": "sx -= dx * dist * tx;",
+    "old": "    sy -= dy * dist * ty;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "KG4b-M-archers",
     "file": "src/world/gambitMotion.js",
-    "old": "if (e.shot && GAMBIT_ARCHER_CLASSES.includes(a.unit)) {",
-    "new": "if (e.shot && false) {",
+    "old": "          if (e.shot && GAMBIT_ARCHER_CLASSES.includes(a.unit)) {",
+    "new": "          if (e.shot && false) {",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "KG4b-M-swing",
     "file": "src/world/gambitMotion.js",
-    "old": "cue(a.unit >= GAMBIT_CALLING_FROM ? one(GAMBIT_SWING_CLIPS) : monsterClip(a.unit, 'attackSound'), from, A);",
-    "new": "cue(monsterClip(a.unit, 'attackSound'), from, A);",
+    "old": "            cue(a.unit >= GAMBIT_CALLING_FROM ? one(GAMBIT_SWING_CLIPS) : monsterClip(a.unit, 'attackSound'), from, A);",
+    "new": "            cue(monsterClip(a.unit, 'attackSound'), from, A);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "KG4b-M-bark",
     "file": "src/world/gambitMotion.js",
-    "old": "else cue(t.unit >= GAMBIT_CALLING_FROM ? SOUND.PainSound : monsterClip(t.unit, 'barkSound'), hit + 0.1 * MS, T);",
-    "new": "else cue(SOUND.PainSound, hit + 0.1 * MS, T);",
+    "old": "          else\n            cue(t.unit >= GAMBIT_CALLING_FROM ? SOUND.PainSound : monsterClip(t.unit, 'barkSound'), hit + 0.1 * MS, T);",
+    "new": "          else cue(SOUND.PainSound, hit + 0.1 * MS, T);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "KG4b-M-fall-wait",
     "file": "src/world/gambitMotion.js",
-    "old": "if (e.killed) cue(SOUND.BodyFall, hit + 0.3 * MS, T);",
-    "new": "if (e.killed) cue(SOUND.BodyFall, hit, T);",
+    "old": "          if (e.killed) cue(SOUND.BodyFall, hit + 0.3 * MS, T);",
+    "new": "          if (e.killed) cue(SOUND.BodyFall, hit, T);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "KG4b-M-hazard-clip",
     "file": "src/world/gambitMotion.js",
-    "old": "fire: SOUND.SpellImpactFire, spikes: SOUND.Hit3",
-    "new": "fire: SOUND.Hit3, spikes: SOUND.SpellImpactFire",
+    "old": "  fire: SOUND.SpellImpactFire,\n  spikes: SOUND.Hit3,",
+    "new": "  fire: SOUND.Hit3,\n  spikes: SOUND.SpellImpactFire,",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -362,7 +362,7 @@
   {
     "name": "KG4b-M-move-second",
     "file": "src/world/gambitMotion.js",
-    "old": "if (steps > 1) cue(walk, from + (steps / GAMBIT_WALK_CELLS_S) * 0.5 * MS, e.to);",
+    "old": "          if (steps > 1) cue(walk, from + (steps / GAMBIT_WALK_CELLS_S) * 0.5 * MS, e.to);",
     "new": "",
     "tests": [
       "test/world/kg4_board.test.js"
@@ -371,8 +371,8 @@
   {
     "name": "KG4b-M-once",
     "file": "src/world/gambitMotion.js",
-    "old": "      cues = cues.filter((c) => c.at > now);\n",
-    "new": "",
+    "old": "      cues = cues.filter((c) => c.at > now);\n      return due;",
+    "new": "      return due;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]

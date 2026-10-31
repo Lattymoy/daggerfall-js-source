@@ -182,8 +182,8 @@
   {
     "name": "WD3-WINTER-SUMMER",
     "file": "src/world/flatFields.js",
-    "old": "if (natureArchive >= 505 && natureArchive % 2 === 1) return [511, [22]];",
-    "new": "if (natureArchive >= 505 && natureArchive % 2 === 0) return [511, [22]];",
+    "old": "  if (natureArchive >= 505 && natureArchive % 2 === 1) return [511, [22]]; // winter, outside the desert and the south",
+    "new": "  if (natureArchive >= 505 && natureArchive % 2 === 0) return [511, [22]]; // winter, outside the desert and the south",
     "tests": [
       "test/world/wd3_standins.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WD3-FIELD-UNSEEDED",
     "file": "src/world/flatFields.js",
-    "old": "const rnd = mulberry32(((Math.round(x * 40) * 73856093) ^ (Math.round(z * 40) * 19349663)) >>> 0);",
-    "new": "const rnd = mulberry32((Math.random() * 4294967296) >>> 0);",
+    "old": "  const rnd = mulberry32(((Math.round(x * 40) * 73856093) ^ (Math.round(z * 40) * 19349663)) >>> 0);",
+    "new": "  const rnd = mulberry32((Math.random() * 4294967296) >>> 0);",
     "tests": [
       "test/world/wd3_standins.test.js"
     ]

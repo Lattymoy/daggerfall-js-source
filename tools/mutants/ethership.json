@@ -146,8 +146,8 @@
   {
     "name": "SHIP-rumour-way",
     "file": "src/world/ethericSea.js",
-    "old": "  const a = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;",
-    "new": "  const a = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;",
+    "old": "  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;",
+    "new": "  const a = ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;",
     "tests": [
       "test/systems/naval/ethership.test.js",
       "test/systems/naval/ethercross.test.js"

@@ -72,8 +72,8 @@
   {
     "name": "AEOW-C1-2-classes-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls]; }",
-    "new": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea]; }",
+    "old": "    return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls];",
+    "new": "    return [this._fine, this._full, this._dist, this._edge, this._sea];",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AEOW-C1-3-ether-holds-all",
     "file": "src/world/etherWatersBake.js",
-    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
-    "new": "",
+    "old": "    for (const [x, y] of [\n      [px, py],\n      [px - 1, py],\n      [px + 1, py],\n      [px, py - 1],\n      [px, py + 1],\n    ])\n      if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "AEOW-C1-3-ether-holds-own",
     "file": "src/world/etherWatersBake.js",
-    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
+    "old": "    for (const [x, y] of [\n      [px, py],\n      [px - 1, py],\n      [px + 1, py],\n      [px, py - 1],\n      [px, py + 1],\n    ])\n      if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
     "new": "    for (const [x, y] of [[px, py]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AEOW-C1-3-pair-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  holdsSea(px, py) { return this.of(px, py).holdsSea(px, py); }",
-    "new": "  holdsSea(px, py) { return this.bay.holdsSea(px, py); }",
+    "old": "    return this.of(px, py).holdsSea(px, py);",
+    "new": "    return this.bay.holdsSea(px, py);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "AEOW-T-rows-circle-open",
     "file": "src/world/etherPlaces.js",
-    "old": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)",
-    "new": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) < reach)",
+    "old": "    .filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)",
+    "new": "    .filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) < reach)",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "AEOW-T-evict-ether-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "old": "    this.ether?.evictOutside(px, py, radius);\n    this.tamriel?.evictOutside(px, py, radius);",
+    "new": "    this.tamriel?.evictOutside(px, py, radius);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "AEOW-T-evict-bay-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "old": "    this.bay.evictOutside(px, py, radius);\n    this.ether?.evictOutside(px, py, radius);",
+    "new": "    this.ether?.evictOutside(px, py, radius);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "AEOW-T-local-edge-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
-    "new": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.bay.sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
+    "old": "    return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz);",
+    "new": "    return this.bay.sampleLocalEdgeDistanceMeters(x, y, fx, fz);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "AEOW-T-cardinal-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
-    "new": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.bay.mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
+    "old": "    return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y);",
+    "new": "    return this.bay.mapPixelOrCardinalNeighborHasWaterCells(x, y);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "AEOW-T-landcells-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  mapPixelHasLandCells(x, y) { return this.of(x, y).mapPixelHasLandCells(x, y); }",
-    "new": "  mapPixelHasLandCells(x, y) { return this.bay.mapPixelHasLandCells(x, y); }",
+    "old": "    return this.of(x, y).mapPixelHasLandCells(x, y);",
+    "new": "    return this.bay.mapPixelHasLandCells(x, y);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "AEOW-T-rects-ruins-as-towns",
     "file": "src/world/etherWatersBake.js",
-    "old": "ruins: rows(templates?.ruins), bases };",
-    "new": "ruins: rows(templates?.towns), bases };",
+    "old": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
+    "new": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.towns), bases };",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "AEOW-T-rects-towns-as-ruins",
     "file": "src/world/etherWatersBake.js",
-    "old": "towns: rows(templates?.towns),",
-    "new": "towns: rows(templates?.ruins),",
+    "old": "  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
+    "new": "  return { towns: rows(templates?.ruins), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],

@@ -43,7 +43,7 @@ world or moves a server's cost. R1-1 is the one a player meets - a city's street
 ### R1-1 - a town's wall model and the Imperial City's cells (HIGH, FIXED)
 
 `townWalls.js:"export const TOWN_WALL_MODEL_BASE = 1000000;"` (was `3000000 + ((mapId >>> 0) & 0xfffff)`),
-`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL = 7_000_000;"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor(id, ctx = null) {"`.
+`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL = 7_000_000;"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor"`.
 AT THE MERGE (2026-10-26): IC-GRAND's own perf pass found the same overlap from the city's side and moved its fabric's and
 skylines' models to 7,000,000 and 7,100,000 (`03-World/Arena-Provinces.md` "THE ID RUNS"); with this lane's walls at
 1,000,000 the two ranges are clear from both sides, and both pins hold.

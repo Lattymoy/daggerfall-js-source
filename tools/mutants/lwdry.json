@@ -11,8 +11,8 @@
   {
     "name": "LW-DRY-axes-crossed",
     "file": "src/world/dryGround.js",
-    "old": "const x0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span))), y0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span)));",
-    "new": "const x0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span))), y0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span)));",
+    "old": "    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span))),\n      y0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span)));",
+    "new": "    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span))),\n      y0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span)));",
     "tests": [
       "test/systems/livingWorld/lwdry_ground.test.js"
     ]

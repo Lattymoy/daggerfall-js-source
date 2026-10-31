@@ -523,7 +523,7 @@ The sea past the Veil is **the Eltheric Ocean** (2026-10-12, the owner: "Apparen
 not etheric"). It is the lore's ocean west of Tamriel and the name the world had already given the waters west of the
 Bay (`world/tamriel/tamrielGeography.js` SEAS, the intro map's; `test/ui/tamriel.test.js` "the Bay opens west to the Eltheric") -
 one ocean, one name, the noun the owner's own. It was "the Etheric Sea", spelt in fourteen literals across eight modules;
-the word has one home now, `ethericSea.js:"export const ETHER_WORD = 'Eltheric';"`, and every word a player reads of the
+the word has one home now, `ethericSea.js:"export const ETHER_WORD"`, and every word a player reads of the
 sea is made of it: the chart's title and its two labels, the harbourmaster's lede, the legend's end, the crossing's
 question and its landfall, the log's lines and trades, the isles' region's words and the unstreamed landing.
 `test/world/eltheric.test.js` holds the word, the names, the map's ocean the same, each reader made of it, and a scan of the
@@ -549,7 +549,7 @@ a floor carved against the corner and a swim that read no water over it - and he
 THE LAW. A bake answers a FRAME of pixels (`deepWatersBake.js:"export const BAY_FRAME"`):
 its planes indexed and its cells counted from the frame's corner, its tile data clamped to it - the Bay's frame is the
 mod's map to the float (a pixel less 0 is the pixel; every DW pin and mutant stands). The Eltheric Ocean's box is a
-bake's own frame (`etherWatersBake.js:"export class EtherWatersBake extends DeepWatersBake {"`), built by the same rules
+bake's own frame (`etherWatersBake.js:"export class EtherWatersBake"`), built by the same rules
 from the same composed ground the world streams: the bound's classes, the coarse candidates and fine masks off the
 pixel's own samples, the 8-connected flood that keeps a pond out (`floodSteps`, the map's flood over any frame), the
 octile distance planes. Only how much of it is built differs: forty million pixels are asked as they are read and kept

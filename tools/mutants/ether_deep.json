@@ -39,7 +39,7 @@
     "name": "ED-candidates-for-sea",
     "file": "src/world/etherWatersBake.js",
     "old": "      const bits = s === 1 ? ALL8 : s === 2 ? partial.get(k) : NONE8;",
-    "new": "      const qx = x0 + (k % w), qy = y0 + Math.floor(k / w), c = this._class(i, qx, qy); const bits = c === PIXEL_SEA ? ALL8 : c === PIXEL_LAND ? NONE8 : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
+    "new": "      const qx = x0 + (k % w),\n        qy = y0 + Math.floor(k / w),\n        c = this._class(i, qx, qy);\n      const bits =\n        c === PIXEL_SEA\n          ? ALL8\n          : c === PIXEL_LAND\n            ? NONE8\n            : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ED-flood-wrong-cell",
     "file": "src/world/etherWatersBake.js",
-    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
-    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
+    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX,",
+    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ED-no-rect",
     "file": "src/world/etherWatersBake.js",
-    "old": "    if (!r) return null;\n    const basis = r[4] >= 0",
-    "new": "    return null;\n    const basis = r[4] >= 0",
+    "old": "    if (!r) return null;",
+    "new": "    return null;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]

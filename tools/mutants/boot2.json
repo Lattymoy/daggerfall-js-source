@@ -41,7 +41,7 @@
     "name": "ECOTONE1-the-border-law-imports-on-the-boot-path",
     "file": "src/world/ecotone.js",
     "old": "export const ECOTONE = Object.freeze({",
-    "new": "import { MAP_W } from './road/roadNetwork.js'; void MAP_W;\nexport const ECOTONE = Object.freeze({",
+    "new": "import { MAP_W } from './road/roadNetwork.js';\nvoid MAP_W;\nexport const ECOTONE = Object.freeze({",
     "tests": [
       "test/render/boot2.test.js"
     ]

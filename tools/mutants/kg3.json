@@ -1138,8 +1138,8 @@
   {
     "name": "KG3-D-cell",
     "file": "src/world/gambitCloth.js",
-    "old": "const cell = end ? GAMBIT_FELT_SHORT / KG_COLS : GAMBIT_FELT_SHORT / KG_ROWS;",
-    "new": "const cell = GAMBIT_FELT_SHORT / KG_ROWS;",
+    "old": "  const cell = end ? GAMBIT_FELT_SHORT / KG_COLS : GAMBIT_FELT_SHORT / KG_ROWS;",
+    "new": "  const cell = GAMBIT_FELT_SHORT / KG_ROWS;",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1147,8 +1147,8 @@
   {
     "name": "KG3-D-side-test",
     "file": "src/world/gambitCloth.js",
-    "old": "const end = Math.abs(da) > Math.abs(dq);",
-    "new": "const end = Math.abs(da) < Math.abs(dq);",
+    "old": "  const end = Math.abs(da) > Math.abs(dq);",
+    "new": "  const end = Math.abs(da) < Math.abs(dq);",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1156,8 +1156,8 @@
   {
     "name": "KG3-D-handedness",
     "file": "src/world/gambitCloth.js",
-    "old": "const right = [-toHost[1], toHost[0]];",
-    "new": "const right = [toHost[1], -toHost[0]];",
+    "old": "  const right = [-toHost[1], toHost[0]];",
+    "new": "  const right = [toHost[1], -toHost[0]];",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1165,8 +1165,8 @@
   {
     "name": "KG3-D-one-yaw",
     "file": "src/world/gambitCloth.js",
-    "old": "+ (side === 0 ? Math.PI : 0)",
-    "new": "+ (side === 0 ? 0 : 0)",
+    "old": "export const gambitCardYaw = (places, side) =>\n  Math.atan2(places.toHost[0], places.toHost[1]) + (side === 0 ? Math.PI : 0);",
+    "new": "export const gambitCardYaw = (places, side) => Math.atan2(places.toHost[0], places.toHost[1]) + (side === 0 ? 0 : 0);",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]

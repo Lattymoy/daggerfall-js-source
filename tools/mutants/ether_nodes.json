@@ -13,7 +13,7 @@
     "name": "EN-law-margin",
     "file": "src/world/ethericSea.js",
     "old": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEther(x, y);",
-    "new": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEtherLaw(x, y);",
+    "new": "export const onBayOrEther = (x, y) =>\n  (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEtherLaw(x, y);",
     "tests": [
       "test/net/ether_nodes.test.js"
     ],

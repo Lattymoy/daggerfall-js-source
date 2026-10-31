@@ -1463,11 +1463,11 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
   warning's pulsing ring and its bobbing "!" - each over KG3's painted mark.
 - THE SHOT (10.7): four bright squares on the line from the shooter to its target over the bolt's 0.3 s, at a card's
   mid-height.
-- THE PRESS ON THE BUILT BOARD (14.3): `gambitCloth.js:"export function gambitPressCell(places, board, eye, dir, selected = null) {"` -
+- THE PRESS ON THE BUILT BOARD (14.3): `gambitCloth.js:"export function gambitPressCell"` -
   the nearest of a standing card's face (its cell), a wall's top (the wall's cell, which presses nothing), a pillar's top
   and the mat; never the cell a ray reaches on the mat behind a card. Under a finger a piece snaps by its card's middle,
   where the finger sees it.
-- THE LEAN (10.7, 14.7): `gambitCloth.js:"export function gambitLean(places, { aspect, fovY, clear: given = { x0: 0, x1: 1, y0: 0, y1: 1 }, pitch = GAMBIT_LEAN_PITCH }) {"`
+- THE LEAN (10.7, 14.7): `gambitCloth.js:"export function gambitLean"`
   - SOLVED, not guessed: pitched `GAMBIT_LEAN_PITCH` (55 degrees) down over the board, the eye moved back along its line
   of sight and slid square to it until the board's corners and its head row's cards standing fill `GAMBIT_LEAN_FILL` of
   the CLEAR screen and stand centred in it. The clear screen

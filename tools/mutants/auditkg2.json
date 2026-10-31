@@ -138,8 +138,8 @@
   {
     "name": "AKG2-B18-midway",
     "file": "src/world/gambitMotion.js",
-    "old": "          if (e.midway) continue;",
-    "new": "",
+    "old": "          if (e.midway) continue; // AUDIT KG II B18: a game opened under way (a watcher come near) was mustered long ago",
+    "new": "          // AUDIT KG II B18: a game opened under way (a watcher come near) was mustered long ago",
     "tests": [
       "test/net/auditkg2_online.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "AKG2-C5-lean",
     "file": "src/world/gambitCloth.js",
-    "old": "const clear = given && given.x1 - given.x0 > 0 && given.y1 - given.y0 > 0 ? given : { x0: 0, x1: 1, y0: 0, y1: 1 };",
-    "new": "const clear = given;",
+    "old": "  const clear = given && given.x1 - given.x0 > 0 && given.y1 - given.y0 > 0 ? given : { x0: 0, x1: 1, y0: 0, y1: 1 };",
+    "new": "  const clear = given;",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "AKG2-C7-lift",
     "file": "src/world/gambitCloth.js",
-    "old": "(places.top + GAMBIT_CARD_FOOT + (p.id === selected ? GAMBIT_SELECT_LIFT : 0))",
-    "new": "(places.top + GAMBIT_CARD_FOOT)",
+    "old": "      y = q[1] - (places.top + GAMBIT_CARD_FOOT + (p.id === selected ? GAMBIT_SELECT_LIFT : 0));",
+    "new": "      y = q[1] - (places.top + GAMBIT_CARD_FOOT);",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]

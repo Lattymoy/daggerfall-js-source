@@ -362,8 +362,8 @@
   {
     "name": "KG5-P-flip",
     "file": "src/world/gambitCloth.js",
-    "old": "  const way = flip ? -1 : 1;",
-    "new": "  const way = 1;",
+    "old": "  const way = flip ? -1 : 1; // the guest's rows run from the host's foot to its head",
+    "new": "  const way = 1; // the guest's rows run from the host's foot to its head",
     "tests": [
       "test/net/kg5_client.test.js"
     ]

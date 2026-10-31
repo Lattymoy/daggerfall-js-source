@@ -22,8 +22,8 @@
   {
     "name": "QA2A-summoner-json-name",
     "file": "src/world/curatedPeople.js",
-    "old": "curatedSummonersOf(dfBlock?.servedName ?? dfBlock?.name, vendor)",
-    "new": "curatedSummonersOf(dfBlock?.name, vendor)",
+    "old": "  const rows = curatedSummonersOf(dfBlock?.servedName ?? dfBlock?.name, vendor); // AUDIT QA2 B1: the name the town lays, not the JSON's own",
+    "new": "  const rows = curatedSummonersOf(dfBlock?.name, vendor); // AUDIT QA2 B1: the name the town lays, not the JSON's own",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ],

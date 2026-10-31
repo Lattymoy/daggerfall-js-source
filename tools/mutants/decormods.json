@@ -164,8 +164,8 @@
   {
     "name": "DECORMODS-builder-off-table",
     "file": "src/world/detStandIns.js",
-    "old": "    [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],",
-    "new": "    [tapestry, () => hanging(PICTURE.regionBanner('Glenpoint'), 0.9, 1.35)],",
+    "old": "      [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],",
+    "new": "      [tapestry, () => hanging(PICTURE.regionBanner('Glenpoint'), 0.9, 1.35)],",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],

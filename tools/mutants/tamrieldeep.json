@@ -56,8 +56,8 @@
   {
     "name": "TDEEP-frame-over-the-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
-    "new": "  : tamriel && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
+    "old": "  ether && inFrame(ETHER_FRAME, px, py)\n    ? ETHER_FRAME\n    : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py)\n      ? tamriel\n      : BAY_FRAME;",
+    "new": "  ether && inFrame(ETHER_FRAME, px, py) ? ETHER_FRAME : tamriel && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]

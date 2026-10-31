@@ -20,8 +20,8 @@
   {
     "name": "PLACE-id-cell",
     "file": "src/world/etherPlaces.js",
-    "old": "(ETHER_PLACE_BASE + isle.cy * CELLS_W + isle.cx)) >>> 0);",
-    "new": "(ETHER_PLACE_BASE + isle.cy + isle.cx)) >>> 0);",
+    "old": "export const etherPlaceId = (isle) =>\n  ((ETHER_PLACE_SALT << 20) | (ETHER_PLACE_BASE + isle.cy * CELLS_W + isle.cx)) >>> 0;",
+    "new": "export const etherPlaceId = (isle) => ((ETHER_PLACE_SALT << 20) | (ETHER_PLACE_BASE + isle.cy + isle.cx)) >>> 0;",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLACE-is-below-base",
     "file": "src/world/etherPlaces.js",
-    "old": " && ((Number(id) >>> 0) & 0xfffff) >= ETHER_PLACE_BASE;",
-    "new": ";",
+    "old": "export const isEtherPlaceId = (id) =>\n  ((Number(id) >>> 20) & 0xfff) === ETHER_PLACE_SALT && ((Number(id) >>> 0) & 0xfffff) >= ETHER_PLACE_BASE;",
+    "new": "export const isEtherPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === ETHER_PLACE_SALT;",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLACE-town-one-block",
     "file": "src/world/etherPlaces.js",
-    "old": "port: Object.freeze([2, 6])",
-    "new": "port: Object.freeze([1, 6])",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([1, 6]), haven: Object.freeze([6, 12]) });",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PLACE-haven-blocks",
     "file": "src/world/etherPlaces.js",
-    "old": "haven: Object.freeze([6, 12])",
-    "new": "haven: Object.freeze([10, 12])",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([10, 12]) });",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLACE-town-dungeon",
     "file": "src/world/etherPlaces.js",
-    "old": "const towns = list.filter((l) => !l.hasDungeon && (",
-    "new": "const towns = list.filter((l) => (",
+    "old": "      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),",
+    "new": "      (l) =>\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PLACE-haven-hamlet",
     "file": "src/world/etherPlaces.js",
-    "old": "(type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
-    "new": "(type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
+    "old": "    .filter(\n      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.haven),\n    )",
+    "new": "    .filter((l) => !l.hasDungeon && type(l) === LOCATION_TYPES.TownVillage && within(l, TOWN_BLOCKS.haven))",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PLACE-spawn-template",
     "file": "src/world/etherPlaces.js",
-    "old": "l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
-    "new": "l?.exterior?.exteriorData && !l.ether && !isMain(idOf(l)));",
+    "old": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
+    "new": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.ether && !isMain(idOf(l)));",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PLACE-main-template",
     "file": "src/world/etherPlaces.js",
-    "old": "l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
-    "new": "l?.exterior?.exteriorData && !l.spawned && !l.ether);",
+    "old": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
+    "new": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether);",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PLACE-towns-unsorted",
     "file": "src/world/etherPlaces.js",
-    "old": "within(l, TOWN_BLOCKS.port)).sort(byId);",
-    "new": "within(l, TOWN_BLOCKS.port));",
+    "old": "  const towns = list\n    .filter(\n      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),\n    )\n    .sort(byId);",
+    "new": "  const towns = list.filter(\n    (l) =>\n      !l.hasDungeon &&\n      (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n      within(l, TOWN_BLOCKS.port),\n  );",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PLACE-haven-no-fallback",
     "file": "src/world/etherPlaces.js",
-    "old": "(isle.haven && templates.havens?.length ? templates.havens : templates.towns)",
-    "new": "(isle.haven ? templates.havens : templates.towns)",
+    "old": "        ? isle.haven && templates.havens?.length",
+    "new": "        ? isle.haven",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PLACE-wild-town",
     "file": "src/world/etherPlaces.js",
-    "old": ": isle.kind === 'port' ? (isle.haven && templates.havens?.length ? templates.havens : templates.towns) : null;",
-    "new": ": isle.kind === 'port' ? (isle.haven && templates.havens?.length ? templates.havens : templates.towns) : templates.towns;",
+    "old": "        : null;",
+    "new": "        : templates.towns;",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PLACE-exterior-id",
     "file": "src/world/etherPlaces.js",
-    "old": "exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
-    "new": "exteriorData: { ...template.exterior?.exteriorData, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, mapId, portTownAndUnknown: port ? 1 : 0 },",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PLACE-no-harbour",
     "file": "src/world/etherPlaces.js",
-    "old": "portTownAndUnknown: port ? 1 : 0 },",
-    "new": "portTownAndUnknown: 0 },",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
     "tests": [
       "test/world/etherplaces.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PLACE-dungeon-id",
     "file": "src/world/etherPlaces.js",
-    "old": "  if (template.dungeon) loc.dungeon = {",
-    "new": "  if (false) loc.dungeon = {",
+    "old": "  if (template.dungeon)",
+    "new": "  if (false)",
     "tests": [
       "test/world/etherplaces.test.js"
     ]

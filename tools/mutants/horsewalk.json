@@ -155,8 +155,8 @@
   {
     "name": "HORSEWALK-gait-ceiling-ignored",
     "file": "src/world/horseModel.js",
-    "old": "const top = gallops ? HORSE_GAITS.length - 1 : HORSE_GAITS.indexOf('trot');",
-    "new": "const top = HORSE_GAITS.length - 1;",
+    "old": "  const top = gallops ? HORSE_GAITS.length - 1 : HORSE_GAITS.indexOf('trot');",
+    "new": "  const top = HORSE_GAITS.length - 1;",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "HORSEWALK-gallop-held-over-ceiling",
     "file": "src/world/horseModel.js",
-    "old": "if (c < 0 || c > top || k === c) return HORSE_GAITS[k];",
-    "new": "if (c < 0 || k === c) return HORSE_GAITS[k];",
+    "old": "  if (c < 0 || c > top || k === c) return HORSE_GAITS[k];",
+    "new": "  if (c < 0 || k === c) return HORSE_GAITS[k];",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HORSEWALK-step-word-dropped",
     "file": "src/world/horseModel.js",
-    "old": "const want = gaitFor(speed, g.gait, gallops);",
-    "new": "const want = gaitFor(speed, g.gait);",
+    "old": "  const want = gaitFor(speed, g.gait, gallops);",
+    "new": "  const want = gaitFor(speed, g.gait);",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HORSEWALK-rig-word-dropped",
     "file": "src/world/horseRig.js",
-    "old": "stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);",
-    "new": "stepHorseGait(h.gait, bake, speed, dt, h.seed);",
+    "old": "    stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);",
+    "new": "    stepHorseGait(h.gait, bake, speed, dt, h.seed);",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

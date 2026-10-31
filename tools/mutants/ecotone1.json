@@ -2,8 +2,8 @@
   {
     "name": "ECOTONE1-stretch-dropped",
     "file": "src/world/ecotone.js",
-    "old": "  stretch: 2,\n",
-    "new": "  stretch: 1,\n",
+    "old": "  stretch: 2,",
+    "new": "  stretch: 1,",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ECOTONE1-stretch-unused",
     "file": "src/world/ecotone.js",
-    "old": "const n = Math.min(1, Math.max(0, (n0 - 0.5) * ECOTONE.stretch + 0.5));",
-    "new": "const n = n0;",
+    "old": "  const n = Math.min(1, Math.max(0, (n0 - 0.5) * ECOTONE.stretch + 0.5));",
+    "new": "  const n = n0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ECOTONE1-band-halved",
     "file": "src/world/ecotone.js",
-    "old": "const p = Math.min(1, Math.max(0, 0.5 + d / (2 * ECOTONE.band)));",
-    "new": "const p = Math.min(1, Math.max(0, 0.5 + d / ECOTONE.band));",
+    "old": "  const p = Math.min(1, Math.max(0, 0.5 + d / (2 * ECOTONE.band)));",
+    "new": "  const p = Math.min(1, Math.max(0, 0.5 + d / ECOTONE.band));",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ECOTONE1-hash-term",
     "file": "src/world/ecotone.js",
-    "old": "h = Math.imul(h, 0x7feb352d) >>> 0;",
-    "new": "h = Math.imul(h, 0x7feb352f) >>> 0;",
+    "old": "  h = Math.imul(h, 0x7feb352d) >>> 0;",
+    "new": "  h = Math.imul(h, 0x7feb352f) >>> 0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ECOTONE1-pixel's-own-lattice",
     "file": "src/world/ecotone.js",
-    "old": "const ix = origin[0] / cell + fx0, iz = origin[1] / cell + fz0;",
-    "new": "const ix = fx0, iz = fz0;",
+    "old": "  const ix = origin[0] / cell + fx0,\n    iz = origin[1] / cell + fz0;",
+    "new": "  const ix = fx0,\n    iz = fz0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ECOTONE1-side-flipped",
     "file": "src/world/ecotone.js",
-    "old": "if (askX) { const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX); ox = sx < 0 ? s : 1 - s; }",
-    "new": "if (askX) { const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX); ox = sx < 0 ? 1 - s : s; }",
+    "old": "      ox = sx < 0 ? s : 1 - s;",
+    "new": "      ox = sx < 0 ? 1 - s : s;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ECOTONE1-reach-short",
     "file": "src/world/ecotone.js",
-    "old": "const askX = (axes & 1) && Math.abs(ux) < ECOTONE_REACH, askZ = (axes & 2) && Math.abs(uz) < ECOTONE_REACH;",
-    "new": "const askX = (axes & 1) && Math.abs(ux) < ECOTONE_REACH / 2, askZ = (axes & 2) && Math.abs(uz) < ECOTONE_REACH / 2;",
+    "old": "  const askX = axes & 1 && Math.abs(ux) < ECOTONE_REACH,\n    askZ = axes & 2 && Math.abs(uz) < ECOTONE_REACH;",
+    "new": "  const askX = axes & 1 && Math.abs(ux) < ECOTONE_REACH / 2,\n    askZ = axes & 2 && Math.abs(uz) < ECOTONE_REACH / 2;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ECOTONE1-skip-wrong-axis",
     "file": "src/world/ecotone.js",
-    "old": "const axes = (kx === k0 && kd === kz ? 0 : 1) | (kz === k0 && kd === kx ? 0 : 2);",
-    "new": "const axes = (kx === k0 && kd === kz ? 0 : 2) | (kz === k0 && kd === kx ? 0 : 1);",
+    "old": "  const axes = (kx === k0 && kd === kz ? 0 : 1) | (kz === k0 && kd === kx ? 0 : 2);",
+    "new": "  const axes = (kx === k0 && kd === kz ? 0 : 2) | (kz === k0 && kd === kx ? 0 : 1);",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ECOTONE1-tie-not-own",
     "file": "src/world/ecotone.js",
-    "old": "for (const [k, w] of sums) if (w > bestW) { best = k; bestW = w; }",
-    "new": "for (const [k, w] of sums) if (w >= bestW) { best = k; bestW = w; }",
+    "old": "    if (w > bestW) {",
+    "new": "    if (w >= bestW) {",
     "tests": [
       "test/systems/ecotone1.test.js"
     ],
