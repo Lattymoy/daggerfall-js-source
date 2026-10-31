@@ -269,6 +269,12 @@ fifteen logical lines, each a getter on the host's own state, and bootWorld's ce
 (`hostceiling.test.js`). The host's `frame` warns its own throw, so the world calls it bare. `buildingDataForDoor`
 answers a door with no location pixel by a copy of the record it carries.
 
+Seen in the game (`tools/settlementWorldProbe.mjs`, ARENA2, the dev server): the player jumped to Sahr Waters' pixel,
+which stood 37 buildings, every mesh ready. At a shop's door the eye found it, the shopkeeper's greeting opened, and when
+it closed the player stood inside The Adventurer's Market with its keeper behind the counter. The first runs found one
+fault, a frozen record the transition wrote on, and `buildingDataForDoor` now hands over a copy. Pictures stay in
+`scratch/`: a render of the game's data is the game's data.
+
 ## RMBC5 - the sites (BUILT, 2026-10-31)
 
 `settlementPlaces.js` reads `settlements.json` (RD-16): each row's pixel is its picture point under the fit now, so a
