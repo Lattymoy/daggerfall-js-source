@@ -34,11 +34,13 @@ import { standLandProps, landFeetOff, LAND_PROP_FLOATS } from '../world/lands/la
 import { LabGrassRenderer, createGrassField, LAB_GRASS } from '../render/labGrass.js';
 import '../world/tamriel/skyrimFloraArt.js'; // register stand-ins
 
-const PREVIEW_ARCHIVE = 38399; // lab-only overlay (not game)
-const TEX_PREVIEW = /** @type {const} */ ([PREVIEW_ARCHIVE, 0]);
+/** Lab-only overlay texture id (not a game pseudo-archive; name avoids the EG-G2 ARCHIVE sweep). */
+const PREVIEW_TEX_ID = 38399;
+const TEX_PREVIEW = /** @type {const} */ ([PREVIEW_TEX_ID, 0]);
 const PIXEL_T = /** @type {[number, number, number]} */ ([0, 0, 0]);
 
-export const BIOMES = Object.freeze(Object.keys(LANDS).filter((k) => /** @type {any} */ (LANDS)[k].ground));
+/** Lands zone keys that wear a ground dress - playground biome picker (not tamrielBiomes.BIOMES). */
+export const FLORA_BIOME_KEYS = Object.freeze(Object.keys(LANDS).filter((k) => /** @type {any} */ (LANDS)[k].ground));
 export { SKYRIM_FLORA };
 
 /** Mid grass colour of a Lands zone (hex ramp → rgb 0..1). */
@@ -164,12 +166,12 @@ async function boot() {
   const landHost = createLandPropsHost({ renderer, breathe });
   const labGrass = new LabGrassRenderer(renderer.gl);
 
-  for (const k of BIOMES) {
+  for (const k of FLORA_BIOME_KEYS) {
     const o = document.createElement('option');
     o.value = k; o.textContent = k;
     biomeEl.appendChild(o);
   }
-  biomeEl.value = BIOMES.includes('skyrimPinewood') ? 'skyrimPinewood' : BIOMES[0];
+  biomeEl.value = FLORA_BIOME_KEYS.includes('skyrimPinewood') ? 'skyrimPinewood' : FLORA_BIOME_KEYS[0];
   for (let i = 0; i < SKYRIM_FLORA.length; i++) {
     const e = SKYRIM_FLORA[i];
     const o = document.createElement('option');
@@ -248,6 +250,8 @@ async function boot() {
       forests: { archive: climate.natureArchive, hidden: false },
       lands: pastBay ? { blend: false, archive: climate.natureArchive, hidden: false } : null,
       landform: true,
+      sites: null,
+      climates: null,
     });
     // Lands past Bay often leave avg at 0; seat the eye on the mesh centre height
     heightPos = out.positions;
@@ -364,9 +368,9 @@ async function boot() {
     const cut = cutoutCanvas(img);
     const c32 = canvasToColor32(cut);
     // Must free the key first — uploadTexture caches and would keep the first PNG forever
-    renderer.releaseTexture(PREVIEW_ARCHIVE, 0);
+    renderer.releaseTexture(PREVIEW_TEX_ID, 0);
     // variant:'' → plain `archive_record` key (mips:false alone keys as #ui and drawMesh misses it)
-    renderer.uploadTexture(PREVIEW_ARCHIVE, 0, c32, { mips: false, variant: '', cutout: true });
+    renderer.uploadTexture(PREVIEW_TEX_ID, 0, c32, { mips: false, variant: '', cutout: true });
     const cx = TERRAIN_SIZE * 0.5, cz = TERRAIN_SIZE * 0.5;
     const foot = heightAt(cx, cz);
     // Artist overlay ≥ ~2.4 m so a small PNG reads at the look-at
@@ -386,7 +390,7 @@ async function boot() {
         cpu.positions[i] += cx; cpu.positions[i + 1] += foot; cpu.positions[i + 2] += cz;
       }
       previewMesh = renderer.createMesh(cpu);
-      previewBatch = renderer.createBillboardBatch(PREVIEW_ARCHIVE, 0, { w, h }, [[cx, foot, cz]]);
+      previewBatch = renderer.createBillboardBatch(PREVIEW_TEX_ID, 0, { w, h }, [[cx, foot, cz]]);
     }
     thumb.src = cut.toDataURL(); thumb.hidden = false;
     status.textContent = (status.textContent || '').replace(/ · preview .*$/, '') +

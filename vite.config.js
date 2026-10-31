@@ -309,5 +309,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait(), floraPlaygroundAlias()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait()],
 });

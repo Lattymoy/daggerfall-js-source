@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BIOMES, biomeGroundRgb, buildPreviewMesh, pixelOfBiome } from '../../src/tools/floraPlayground.js';
+import { FLORA_BIOME_KEYS, biomeGroundRgb, buildPreviewMesh, pixelOfBiome } from '../../src/tools/floraPlayground.js';
 import { SKYRIM_FLORA_CARDS } from '../../src/world/tamriel/skyrimFlora.js';
 import { landKeyAt } from '../../src/world/tamriel/tamrielLands.js';
 
@@ -19,8 +19,8 @@ test('flora playground page and vite entry exist', () => {
 });
 
 test('flora playground biomes, pixel picker, meshes', () => {
-  assert.ok(BIOMES.includes('skyrimPinewood'));
-  assert.ok(BIOMES.includes('skyrimReach'));
+  assert.ok(FLORA_BIOME_KEYS.includes('skyrimPinewood'));
+  assert.ok(FLORA_BIOME_KEYS.includes('skyrimReach'));
   const rgb = biomeGroundRgb('skyrimPinewood');
   assert.equal(rgb.length, 3);
   assert.ok(rgb.every((c) => c >= 0 && c <= 1));

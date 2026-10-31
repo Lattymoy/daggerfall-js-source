@@ -200,17 +200,17 @@ export function createPixelBuild(host) {
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
       // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
-      const base = g.natureBase(archive) ?? archive;
-      const asTree = g.natureSet.has(archive) && isTreeRecord(base, record);
-      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: asTree }));   // PROP-BODIES: the record's own, whichever picture stands
+      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands
       // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
       if (archive === SKYRIM_FLORA_ARCHIVE) {
         skyrimPlants.push({ record, centers, size: plain });
-        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: false }));
+        if (isCoverFlat(archive, record, plain)) coverItems.push(...centers.flatMap((center) => coverProxies(center, plain, { tree: false })));
         continue;
       }
+      const base = g.natureBase(archive) ?? archive;
+      const asTree = g.natureSet.has(archive) && isTreeRecord(base, record);
       if (g.natureSet.has(archive) && (asTree || isSkyrimMossRock(base, record))) {
-        for (const c of centers) hangHosts.push({ c, h: plain.h, tree: asTree });
+        for (const center of centers) hangHosts.push({ c: center, h: plain.h, tree: asTree });
       }
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
@@ -243,7 +243,7 @@ export function createPixelBuild(host) {
         g.unionBox(batch._box);
         batches.push(batch);
         if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
-        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: asTree }));
+        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));
         continue;
       }
       if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
@@ -254,7 +254,7 @@ export function createPixelBuild(host) {
         g.unionBox(batch._box);
         batches.push(batch);
         if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
-        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: asTree }));   // AUDIT TACT B2: a tree's trunk and crown
+        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
         continue;
       }
       const size = plain;   // the record, uploaded (world/naturePicture.js)
@@ -266,7 +266,7 @@ export function createPixelBuild(host) {
       armFlatAnim(batch, t, archive, record, g.flatAnims, g.uploadRecordFrame);
       batches.push(batch);
       if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
-      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: asTree }));   // AUDIT TACT B2: a tree's trunk and crown
+      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
     }
   }
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
@@ -1255,12 +1255,12 @@ export function createPixelBuild(host) {
       // Hanging records are never cover picks, so standFlatGroups never uploads them
       if (skyrimReach && SKYRIM_HANGING_RECORDS.length) {
         const hangTex = await getTexture(SKYRIM_FLORA_ARCHIVE);
-        for (const r of SKYRIM_HANGING_RECORDS) {
-          if (r < hangTex.recordCount) uploadRecord(SKYRIM_FLORA_ARCHIVE, r);
+        for (const hangRecord of SKYRIM_HANGING_RECORDS) {
+          if (hangRecord < hangTex.recordCount) uploadRecord(SKYRIM_FLORA_ARCHIVE, hangRecord);
         }
       }
       standSkyrimFlora(skyrimPlants, skyrimReach ? hangHosts : [], skyrimReach ? landStood?.set.props : null, px, py, {
-        addStatic: (m, at, own) => addStatic(m, at, own),
+        addStatic: (mesh, at, own) => addStatic(mesh, at, own),
         unionBox,
       });
     }
