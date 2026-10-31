@@ -95,3 +95,17 @@ test('JUNK-RULES the row: Always junk is a names list part of the Quick loot row
   assert.match(rd('src/ui/enhanced/enhancedTrade.js'), /filter\(\(it\) => isJunkNow\(it\) && !equipped\(it\)/, 'Sell junk takes a listed name\'s pieces too');
   assert.match(rd('src/systems/quickLoot.js'), /if \(isJunk\(item\)\) return true;/, 'the take-all still leaves only a MARKED piece - a name always junk is looted, to be sold');
 });
+
+test('BATCH-JUNK locked: a locked piece that is already junk is passed over like any locked piece - not in the Clear list, and Clear never lifts its mark (mutants: the junk test before the lock test; Clear ignoring the lock)', () => {
+  const kept = book({ name: 'Kept Tome' }), plain = book({ name: 'Plain Tome' });
+  setJunk(kept, true); setLocked(kept, true); setJunk(plain, true);
+  const sel = { pages: new Set(['books']), rarities: new Set(['common']) };
+  const plan = batchJunkPlan([kept, plain], sel);
+  assert.deepEqual(plan.marked.map((x) => x.name), ['Plain Tome'], 'only the unlocked one is Clear\'s');
+  assert.deepEqual(plan.skipped, { locked: 1 }, 'the locked one is counted as passed over');
+  assert.equal(clearBatchJunk(plan), 1);
+  assert.ok(!isJunk(plain), 'the plain one is cleared');
+  assert.ok(isJunk(kept), 'the locked one keeps its mark');
+  assert.equal(clearBatchJunk({ marked: [kept] }), 0, 'even a plan handed the locked piece cannot lift it');
+  assert.ok(isJunk(kept));
+});

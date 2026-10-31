@@ -70,5 +70,23 @@
     "tests": [
       "test/ui/junkbatch.test.js"
     ]
+  },
+  {
+    "name": "BATCH-JUNK-locked-junk-piece-in-the-clear-list",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "      if (isLocked(it)) skipped.locked = (skipped.locked ?? 0) + 1;",
+    "new": "      if (false) skipped.locked = (skipped.locked ?? 0) + 1;",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-JUNK-clear-ignores-the-lock",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "if (isJunk(it) && !isLocked(it)) { setJunk(it, false); n++; }",
+    "new": "if (isJunk(it)) { setJunk(it, false); n++; }",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
   }
 ]
