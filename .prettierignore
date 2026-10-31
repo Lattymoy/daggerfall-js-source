@@ -1453,9 +1453,7 @@
 !/src/tools/mwInspect.js
 !/src/tools/mwViewer.js
 !/src/tools/paperdoll/
-/src/tools/paperdoll/*
-!/src/tools/paperdoll/paperdollViewer.js
-!/src/tools/paperdoll/skin.js
+/src/tools/paperdoll/*/
 !/src/tools/spireMap.js
 !/src/tools/studioLab.js
 !/src/tools/waterLab.js
