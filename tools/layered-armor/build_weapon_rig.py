@@ -176,21 +176,37 @@ SHIELD_ARM = {
     ('female', '6-3'): [[(68, 70), (74, 66), (80, 63.5), (82, 68), (78, 74), (73, 80), (66, 85), (61.5, 85), (62, 80)]],
     ('female', '7-3'): [[(57.5, 85.5), (61.5, 81.5), (65.5, 78.5), (69.5, 75.5), (73.5, 71.5), (80, 67.5), (84.5, 69.5), (80.5, 75.5), (74.5, 80.5), (68.5, 85.5), (64.5, 90.5), (60, 93.5), (55.5, 91.5)]],
 }
-# Where the shield's grip goes (`sh`): the free hand where BOW_HAND has it; else read by eye - from aside before the
-# chest (the far arm's, behind the body), from behind at the body's left edge, the hand flung out in a flinch, and in a
-# swing the guard over the arm taken out. A third entry is the width share where the frame turns it otherwise.
+# The idle's free arm, which a front swing takes back (`sp`): its outline from under the shoulder to the hand.
+SHIELD_ARM_OF_IDLE = {
+    ('male', '15-0'): [[(46.5, 24), (53, 22.5), (55.5, 30), (57, 40), (57.5, 50), (57.5, 58), (57, 66), (55, 69.5), (51.5, 69.5), (50.5, 60), (48.5, 52), (47, 44), (45.5, 34)]],
+    ('male', '16-0'): [[(71.5, 24), (78, 21.5), (80.5, 30), (81.5, 42), (83.5, 52), (84.5, 62), (83, 68.5), (77, 69), (75, 60), (74, 50), (72.5, 40), (71, 32)]],
+    ('female', '15-0'): [[(82, 62.5), (87.5, 60), (89.5, 70), (88.5, 80), (90.5, 88), (90.5, 97), (86.5, 97.5), (85, 90), (83, 80), (81, 70)]],
+    ('female', '16-0'): [[(89, 64.5), (95.5, 61), (97.5, 70), (97.5, 80), (99.5, 88), (100.5, 97.5), (95, 99.5), (92, 92), (91, 82), (89, 72)]],
+}
+# From before, the swing's free arm comes out and the idle's goes back in its place, the shield in its hand (`sg`): the
+# idle, the shift its torso fills the hole from (the best match round the hole, on the leather outfit), and the shift its
+# arm hangs from this frame's shoulder by (each the idle's px less this frame's). The shield's grip follows the arm.
+SHIELD_GRAFT = {
+    ('male', '5-0'): ('15-0', -31, -15, -38, -28), ('male', '5-1'): ('15-0', -31, -17, -39, -30),
+    ('male', '5-2'): ('15-0', -38, -34, -48, -35), ('male', '6-0'): ('16-0', -11, -12, -11, -24),
+    ('male', '6-1'): ('16-0', -11, -16, -11, -25), ('male', '6-2'): ('16-0', -21, -23, -17, -31),
+    ('male', '6-3'): ('16-0', -24, -37, -24, -37),
+    ('female', '5-0'): ('15-0', -10, 16, -8, 5), ('female', '5-1'): ('15-0', -15, 5, -9, 4),
+    ('female', '5-2'): ('15-0', -15, 10, -14, 1), ('female', '6-0'): ('16-0', 9, 17, 12, 10),
+    ('female', '6-1'): ('16-0', 6, 14, 12, 8), ('female', '6-2'): ('16-0', 5, 9, 9, 3),
+    ('female', '6-3'): ('16-0', 2, -7, 4, -1),
+}
+# Where the shield's grip goes (`sh`): the free hand where BOW_HAND has it, or the grafted arm's; else read by eye - from
+# aside before the waist as the side walk holds it (the far arm's, behind the body), from behind at the body's left edge,
+# the hand flung out in a flinch. A third entry is the width share where the frame turns it otherwise.
 SHIELD_GRIP = {
     'male': {'2-0': (45, 58), '2-1': (44, 56), '2-2': (43, 57), '2-3': (44, 56), '17-0': (49, 58), '18-0': (26, 62),
              '10-0': (100, 64), '11-0': (62, 62), '12-0': (40, 66), '13-0': (14, 67), '14-0': (16, 65),
-             '5-0': (87, 64), '5-1': (88, 66), '5-2': (92, 72),
-             '6-0': (78, 62), '6-1': (82, 64), '6-2': (88, 70), '6-3': (88, 76),
-             '7-0': (68, 62), '7-1': (67, 63), '7-2': (68, 68), '7-3': (60, 66), '7-4': (63, 70), '7-5': (67, 62),
+             '7-0': (69, 69), '7-1': (68, 68), '7-2': (68, 72), '7-3': (60, 79), '7-4': (64, 74), '7-5': (68, 69),
              '8-0': (55, 64), '8-1': (55, 64), '8-2': (50, 64), '9-0': (40, 64), '9-1': (40, 64), '9-2': (38, 66)},
     'female': {'2-0': (71, 86), '2-1': (72, 84), '2-2': (71, 86), '2-3': (72, 84), '17-0': (69, 82), '18-0': (62, 90),
                '3-2': (60, 92), '10-0': (98, 66), '11-0': (88, 58), '12-0': (48, 66), '13-0': (24, 63), '14-0': (28, 62),
-               '5-0': (90, 62), '5-1': (89, 62), '5-2': (95, 68),
-               '6-0': (72, 62), '6-1': (71, 65), '6-2': (70, 70), '6-3': (78, 76),
-               '7-0': (74, 66), '7-1': (73, 68), '7-2': (72, 76), '7-3': (66, 72), '7-4': (72, 72), '7-5': (72, 66),
+               '7-0': (72, 84), '7-1': (71, 84), '7-2': (72, 86), '7-3': (67, 90), '7-4': (71, 88), '7-5': (72, 86),
                '8-0': (66, 78), '8-1': (66, 78), '8-2': (61, 80), '9-0': (38, 80), '9-1': (37, 80), '9-2': (34, 80)},
 }
 # The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views -
@@ -566,10 +582,15 @@ def main(only=None):
                     p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
         for rf, per in frames.items():   # LAYERED-SHIELD: the free arm out of a swing (`sa`), the shield's grip (`sh`)
             g = SHIELD_GRIP[body].get(rf) or BOW_HAND[body].get(rf, ())[:2]
+            gr = SHIELD_GRAFT.get((body, rf))
+            if gr:   # the grafted arm's hand
+                hx, hy = BOW_HAND[body][gr[0]][:2]; g = (round(hx - gr[3], 1), round(hy - gr[4], 1))
             for p in per:
-                p.pop('sa', None); p.pop('sh', None)
+                p.pop('sa', None); p.pop('sh', None); p.pop('sg', None); p.pop('sp', None)
                 if g: p['sh'] = [float(v) for v in g]
                 if (body, rf) in SHIELD_ARM: p['sa'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_ARM[(body, rf)]]
+                if gr: p['sg'] = [gr[0]] + [float(v) for v in gr[1:]]
+                if (body, rf) in SHIELD_ARM_OF_IDLE: p['sp'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_ARM_OF_IDLE[(body, rf)]]
         for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
             rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
             prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest

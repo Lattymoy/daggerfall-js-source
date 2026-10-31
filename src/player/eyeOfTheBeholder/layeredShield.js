@@ -181,22 +181,36 @@ const inPolygon = (x, y, P) => {
   }
   return c;
 };
-/** Take the free arm out of a frame, in place: the body px inside the rig's outlines (`polys`), filled as a hammer's hole
- *  is (layeredWeapon.js removeWeapon, the smooth blend) - but a filled px no path of filled px joins to the body is open
- *  air (the blend has nothing to carry into it), and a scrap of the arm's edge left beside the hole, apart from the body
- *  (ARM_SCRAP px at most), goes with it. The px taken out, 1 each. */
-export function removeShieldArm(out, polys) {
-  const w = out.width, h = out.height, m = new Uint8Array(w * h);
+/** The opaque px of `img` inside any of the outlines (`polys`, [[x, y], ...] each), 1 each. */
+export function outlineMask(img, polys) {
+  const w = img.width, h = img.height, m = new Uint8Array(w * h);
   for (const P of polys) {
     const xs = P.map((p) => p[0]), ys = P.map((p) => p[1]);
     for (let y = Math.max(0, Math.floor(Math.min(...ys))); y <= Math.min(h - 1, Math.ceil(Math.max(...ys))); y++) {
       for (let x = Math.max(0, Math.floor(Math.min(...xs))); x <= Math.min(w - 1, Math.ceil(Math.max(...xs))); x++) {
-        if (out.data[(y * w + x) * 4 + 3] && inPolygon(x + 0.5, y + 0.5, P)) m[y * w + x] = 1;
+        if (img.data[(y * w + x) * 4 + 3] && inPolygon(x + 0.5, y + 0.5, P)) m[y * w + x] = 1;
       }
     }
   }
+  return m;
+}
+/** Take the free arm out of a frame, in place: the body px inside the rig's outlines (`polys`), filled as a hammer's hole
+ *  is (layeredWeapon.js removeWeapon, the smooth blend) - from a graft's idle torso where it has one (`from`: its picture,
+ *  its arm, the shift `fill`) - but a filled px no path of filled px joins to the body is open air, and a scrap of the
+ *  arm's edge left floating beside the hole (ARM_SCRAP px at most) goes with it. The px taken out, 1 each. */
+export function removeShieldArm(out, polys, from = null) {
+  const w = out.width, h = out.height, m = outlineMask(out, polys);
   removeWeapon(out, m, 0);
-  const d = out.data, n = w * h, piece = new Int32Array(n).fill(-1), sizes = [], near = [];
+  const d = out.data, n = w * h;
+  if (from) {
+    const R = from.img, [fx, fy] = from.fill;
+    for (let i = 0; i < n; i++) {
+      if (!m[i] || !d[i * 4 + 3]) continue;
+      const X = (i % w) + fx, Y = ((i / w) | 0) + fy, j = Y * R.width + X;
+      if (X >= 0 && Y >= 0 && X < R.width && Y < R.height && R.data[j * 4 + 3] && !from.arm[j]) d.set(R.data.subarray(j * 4, j * 4 + 4), i * 4);
+    }
+  }
+  const piece = new Int32Array(n).fill(-1), sizes = [], near = [];
   const each = (i, fn) => { const x = i % w, y = (i / w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h) fn(Y * w + X); } };
   for (let i0 = 0; i0 < n; i0++) {   // the body's own px in 8-joined pieces: each one's size, and does it touch the hole?
     if (m[i0] || !d[i0 * 4 + 3] || piece[i0] >= 0) continue;
@@ -221,6 +235,18 @@ export function removeShieldArm(out, polys) {
     if ((m[i] && !joined[i]) || (k >= 0 && k !== body && near[k] && sizes[k] <= ARM_SCRAP)) d.fill(0, i * 4, i * 4 + 4);
   }
   return m;
+}
+/** A graft's arm (`from`: the idle's picture, its arm's px, the shift `at` it hangs from this frame's shoulder by) laid
+ *  over a frame, in place. The px it covers, 1 each. */
+export function graftArm(out, from) {
+  const w = out.width, h = out.height, R = from.img, [ax, ay] = from.at, laid = new Uint8Array(w * h);
+  for (let y = 0; y < R.height; y++) for (let x = 0; x < R.width; x++) {
+    const j = y * R.width + x, X = x - ax, Y = y - ay;
+    if (!from.arm[j] || X < 0 || Y < 0 || X >= w || Y >= h) continue;
+    out.data.set(R.data.subarray(j * 4, j * 4 + 4), (Y * w + X) * 4);
+    laid[Y * w + X] = 1;
+  }
+  return laid;
 }
 /** The most px a scrap of the arm's edge left floating beside its hole has. */
 const ARM_SCRAP = 24;

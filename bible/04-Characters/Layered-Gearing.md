@@ -265,17 +265,22 @@ face's rim and two straps (`shieldPicture`). A shield past a canvas widens it ev
 where it was (`padFrame`).
 
 **One-handed.** The art's one attack holds the hammer in both fists. The rig names the free arm's outline in each swing
-frame it reaches into (SHIELD_ARM, `sa`); it comes out, filled as a hammer's hole (`removeShieldArm`). A fill no body
-joins, and a scrap of the arm's edge left floating, are open air. A view plays only the frames whose sword arm swings
-on its own side (`SHIELD_CUTS`): from three quarters before 0-3, from the front and from behind 0-2 (after the strike the
-arms cross to the shield), from aside all six, the far arm's crossing (7-3) taken out. A cast keeps to them, a held throw
-carrying its stage (`!03`, `SHIELD_CAST`); a shot too (`SHIELD_GUN`). The far hand that shows behind the back from aside
-(male 2-2 and 17-0, female 2-0 and 17-0) comes out, as the shield is before the body there.
+frame it reaches into (SHIELD_ARM, `sa`); it comes out (`removeShieldArm`). A fill no body joins, and a scrap of the
+arm's edge left floating, are open air. A view plays only the frames whose sword arm swings on its own side
+(`SHIELD_CUTS`): from three quarters before 0-3, from the front and from behind 0-2 (after the strike the arms cross to
+the shield), from aside all six, the far arm's crossing (7-3) taken out. A cast keeps to them, a held throw carrying its
+stage (`!03`, `SHIELD_CAST`); a shot too (`SHIELD_GUN`).
+
+**The arm put back** (the owner, 2026-10-31: "Its rough. You need to really go deep"). From before, the arm taken out
+left the shield floating on the chest. Each front swing frame now takes the idle's free arm back (the rig's `sg`): the
+idle of its view is composed in the same outfit, its torso fills the hole (not its arm), and its arm (`sp`) is laid from
+this frame's shoulder (`graftArm`), the shield in its hand where the idle and the walk hold it. The far hand that shows
+behind the back from aside (male 2-2 and 17-0, female 2-0 and 17-0) comes out, as the shield is before the body there.
 
 **What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
 glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield
 fills (`withoutShield`). A bare walk's twin is the armed one, unturned, so the shield keeps its arm. Verified by
-`test/player/eyeOfTheBeholder/layered_shield.test.js` and `tools/mutants/layered_shield.json` (28 mutants, all dead).
+`test/player/eyeOfTheBeholder/layered_shield.test.js` and `tools/mutants/layered_shield.json` (34 mutants, all dead).
 
 ## The art - the doctrine's third exception
 
