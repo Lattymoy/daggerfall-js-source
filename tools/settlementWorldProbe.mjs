@@ -87,9 +87,13 @@ try {
     entered = await page.evaluate(async () => { try { return String(await window.__enter?.()); } catch (e) { return `threw ${e?.message}`; } });
   }
   console.log(JSON.stringify({ doorsSeen, entered }));
+  // a shop's greeting stands over the door: the entry goes on when it closes (activateStaticDoor's ChoiceWindow)
+  const greeted = await until(() => { try { return JSON.parse(window.__talk()).overlay ? 'yes' : null; } catch { return null; } }, 30000) ?? 'no';
+  await drain();
   const after = await until(() => (window.__mode?.() === 'interior' ? 'interior' : null), 180000) ?? await page.evaluate(() => window.__mode?.() ?? null);
   page.off('console', hear);
-  console.log(JSON.stringify({ door: d.type, modeBefore: before, modeAfter: after }));
+  const inside = await page.evaluate(() => window.__building?.() ?? null);
+  console.log(JSON.stringify({ door: d.type, greeted, modeBefore: before, modeAfter: after, inside }));
   await drain(); await frames(20, 180000);
   await page.screenshot({ path: join(out, 'inside.png'), timeout: 240000 }).catch((e) => console.log('no shot inside:', e.message.split('\n')[0]));
   if (after !== 'interior') console.log(said.slice(0, 15).join('\n'));
