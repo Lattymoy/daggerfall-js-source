@@ -270,6 +270,16 @@
 !/src/combat/weapon/weaponWidgetMotion.js
 !/src/formats/
 /src/formats/*
+!/src/formats/arch3dFile.js
+!/src/formats/arch3dPatch.js
+!/src/formats/baseImageFile.js
+!/src/formats/bc7.js
+!/src/formats/bioFile.js
+!/src/formats/biogFile.js
+!/src/formats/blocksFile.js
+!/src/formats/bookFile.js
+!/src/formats/bsaFile.js
+!/src/formats/bssFile.js
 !/src/formats/imgFile.js
 !/src/formats/lz4.js
 !/src/formats/magicDef.js

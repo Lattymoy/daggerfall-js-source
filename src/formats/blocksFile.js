@@ -15,8 +15,8 @@
 // Not ported (no port consumer): DiscardAllBlocks.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
-import { worldDataDoor } from './worldData/worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
-import { dryPuddles } from '../world/puddleDry.js';   // PUDDLE-DRY: a town's puddles are dry ground, served so to every reader
+import { worldDataDoor } from './worldData/worldDataDoor.js'; // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
+import { dryPuddles } from '../world/puddleDry.js'; // PUDDLE-DRY: a town's puddles are dry ground, served so to every reader
 
 export const BLOCK_TYPES = Object.freeze({
   Unknown: 0,
@@ -121,7 +121,10 @@ export function readBuildingData(view, pos) {
 
 /** PUDDLE-DRY (world/puddleDry.js): the block as the port serves it - an RMB's puddles dried, once; readClassicBlock
  *  keeps BLOCKS.BSA's bytes. */
-const dryBlock = (dfBlock) => { dryPuddles(dfBlock?.rmbBlock?.fldHeader?.groundData?.groundTiles); return dfBlock; };
+const dryBlock = (dfBlock) => {
+  dryPuddles(dfBlock?.rmbBlock?.fldHeader?.groundData?.groundTiles);
+  return dfBlock;
+};
 
 export class BlocksFile {
   constructor() {
@@ -205,7 +208,7 @@ export class BlocksFile {
   /** Load a block into memory and decompose it for use. */
   loadBlock(block) {
     if (block < 0 || block >= this.count) return false;
-    if (this._blocks[block] !== null && this._blocks[block].bytes !== null) return true;   // AUDIT-RR F38: a replacement stored in the slot (GetBlock) has no MemoryFile - LoadBlock reads the record again (BlocksFile.cs:303)
+    if (this._blocks[block] !== null && this._blocks[block].bytes !== null) return true; // AUDIT-RR F38: a replacement stored in the slot (GetBlock) has no MemoryFile - LoadBlock reads the record again (BlocksFile.cs:303)
 
     if (this.autoDiscard && this._lastBlock !== -1) this.discardBlock(this._lastBlock);
 
@@ -249,8 +252,19 @@ export class BlocksFile {
     const bytes = this._bsa.getRecordBytes(block);
     const name = this._bsa.getRecordName(block);
     const rec = {
-      name, bytes, view: new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), classic: true,
-      dfBlock: { position: this._bsa.getRecordPosition(block), index: block, name, type: this.getBlockType(block), rmbBlock: null, rdbBlock: null, rdiBlock: null },
+      name,
+      bytes,
+      view: new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength),
+      classic: true,
+      dfBlock: {
+        position: this._bsa.getRecordPosition(block),
+        index: block,
+        name,
+        type: this.getBlockType(block),
+        rmbBlock: null,
+        rdbBlock: null,
+        rdiBlock: null,
+      },
     };
     const saved = this._blocks[block];
     this._blocks[block] = rec;
@@ -272,7 +286,8 @@ export class BlocksFile {
     // Check for replacement block data and use it if found (BlocksFile.cs:383-390 - RR3b: the world-data door); a BSA-range index keeps the record in its slot
     const replacement = block >= 0 ? worldDataDoor()?.getDFBlockReplacementData(block, this.getBlockName(block)) : null;
     if (replacement) {
-      if (this._blocks && this._blocks.length > block) this._blocks[block] = { name: replacement.name, bytes: null, view: null, dfBlock: replacement };
+      if (this._blocks && this._blocks.length > block)
+        this._blocks[block] = { name: replacement.name, bytes: null, view: null, dfBlock: replacement };
       return dryBlock(replacement);
     }
     if (!this.loadBlock(block)) return null;
@@ -330,22 +345,36 @@ export class BlocksFile {
       switch (rec.dfBlock.type) {
         case BLOCK_TYPES.Rmb: {
           const r = { pos: 0 };
-          rec.dfBlock.rmbBlock = { fldHeader: null, subRecords: null, misc3dObjectRecords: null, miscFlatObjectRecords: null };
+          rec.dfBlock.rmbBlock = {
+            fldHeader: null,
+            subRecords: null,
+            misc3dObjectRecords: null,
+            miscFlatObjectRecords: null,
+          };
           this._readRmbFldHeader(r, rec);
           this._readRmbBlockData(r, rec);
           rec.dfBlock.rmbBlock.misc3dObjectRecords = this._readRmbModelRecords(
-            r, rec, rec.dfBlock.rmbBlock.fldHeader.numMisc3dObjectRecords
+            r,
+            rec,
+            rec.dfBlock.rmbBlock.fldHeader.numMisc3dObjectRecords,
           );
           rec.dfBlock.rmbBlock.miscFlatObjectRecords = this._readRmbFlatObjectRecords(
-            r, rec, rec.dfBlock.rmbBlock.fldHeader.numMiscFlatObjectRecords
+            r,
+            rec,
+            rec.dfBlock.rmbBlock.fldHeader.numMiscFlatObjectRecords,
           );
           break;
         }
         case BLOCK_TYPES.Rdb: {
           const r = { pos: 0 };
           rec.dfBlock.rdbBlock = {
-            position: 0, header: null, modelReferenceList: null, modelDataList: null,
-            objectHeader: null, unknownObjectList: null, objectRootList: null,
+            position: 0,
+            header: null,
+            modelReferenceList: null,
+            modelDataList: null,
+            objectHeader: null,
+            unknownObjectList: null,
+            objectRootList: null,
           };
           this._readRdbHeader(r, rec);
           this._readRdbModelReferenceList(r, rec);
@@ -380,9 +409,7 @@ export class BlocksFile {
    * must keep stopping at the first NUL.
    */
   _readCString(rec, offset, fieldLength) {
-    return UTF8_DECODER
-      .decode(rec.bytes.subarray(offset, offset + fieldLength))
-      .replace(/\0+$/, '');
+    return UTF8_DECODER.decode(rec.bytes.subarray(offset, offset + fieldLength)).replace(/\0+$/, '');
   }
 
   // --- RMB readers ---
@@ -498,7 +525,7 @@ export class BlocksFile {
     const recordCount = h.numBlockDataRecords;
     const subRecords = new Array(recordCount);
     let position = r.pos;
-    const door = rec.classic ? null : worldDataDoor();   // WD1: readClassicBlock reads past the door
+    const door = rec.classic ? null : worldDataDoor(); // WD1: readClassicBlock reads past the door
     for (let i = 0; i < recordCount; i++) {
       // Check for replacement building data and use it, if found (BlocksFile.cs:848-861 - RR3b: the world-data door)
       const replacement = door?.getBuildingReplacementData(rec.name, rec.dfBlock.index, i);
@@ -850,8 +877,7 @@ export class BlocksFile {
     for (let index = 0; index < rdbObjects.length; index++) {
       if (rdbObjects[index].position === a.nextObjectOffset) {
         a.nextObjectIndex = index;
-        rdbObjects[index].resources.modelResource.actionResource.previousObjectOffset =
-          rdbObject.position;
+        rdbObjects[index].resources.modelResource.actionResource.previousObjectOffset = rdbObject.position;
         break;
       }
     }
