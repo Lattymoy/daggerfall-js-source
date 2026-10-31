@@ -69,8 +69,8 @@
   {
     "name": "FLORA-GROUND-the-jungle-on-the-bilinear",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const placeAt = (mx, mz, g2) => walkGroundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;",
-    "new": "const placeAt = (mx, mz, g2) => groundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;",
+    "old": "    walkGroundAt(heightmapData, mx, mz) - (Math.atan(Math.sqrt(g2)) * (180 / Math.PI)) / SLOPE_SINK_RATIO; // FLORA-GROUND: on the ground the player walks on",
+    "new": "    groundAt(heightmapData, mx, mz) - (Math.atan(Math.sqrt(g2)) * (180 / Math.PI)) / SLOPE_SINK_RATIO; // FLORA-GROUND: on the ground the player walks on",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "FLORA-GROUND-the-graht-oaks-on-the-bilinear",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "    ground: (mx, mz) => walkGroundAt(heightmapData, mx, mz),",
-    "new": "    ground: (mx, mz) => groundAt(heightmapData, mx, mz),",
+    "old": "        ground: (mx, mz) => walkGroundAt(heightmapData, mx, mz), // FLORA-GROUND: a graht-oak's foot on the walk law",
+    "new": "        ground: (mx, mz) => groundAt(heightmapData, mx, mz), // FLORA-GROUND: a graht-oak's foot on the walk law",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "FLORA-GROUND-the-plane-off-the-law",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  return walkGroundAt(heightmapData, lx, lz) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
-    "new": "  return surfaceHeightAt(heightmapData, lx, lz, 4) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
+    "old": "  return walkGroundAt(heightmapData, lx, lz) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE); // FLORA-GROUND: the walk law",
+    "new": "  return surfaceHeightAt(heightmapData, lx, lz, 4) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE); // FLORA-GROUND: the walk law",
     "tests": [
       "test/world/terrain/floraground.test.js",
       "test/world/terrain/natureground.test.js"
@@ -116,8 +116,8 @@
   {
     "name": "FLORA-GROUND-the-shrub-off-the-law",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "for (const x of xs) for (const z of zs) low = Math.min(low, walkGroundAt(heightmapData, x, z));",
-    "new": "for (const x of xs) for (const z of zs) low = Math.min(low, surfaceHeightAt(heightmapData, x, z, 4));",
+    "old": "  for (const x of xs) for (const z of zs) low = Math.min(low, walkGroundAt(heightmapData, x, z)); // FLORA-GROUND: the walk law",
+    "new": "  for (const x of xs) for (const z of zs) low = Math.min(low, surfaceHeightAt(heightmapData, x, z, 4)); // FLORA-GROUND: the walk law",
     "tests": [
       "test/world/terrain/floraground.test.js",
       "test/world/terrain/wodbush.test.js"
@@ -297,8 +297,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-ring-at-the-near-stride",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  const h = surfaceHeightAt(heightmapData, lx, lz, stride);\n  if (!carve) return h;",
-    "new": "  const h = surfaceHeightAt(heightmapData, lx, lz, 1);\n  if (!carve) return h;",
+    "old": "  const h = surfaceHeightAt(heightmapData, lx, lz, stride);",
+    "new": "  const h = surfaceHeightAt(heightmapData, lx, lz, 1);",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-ring-blind-to-its-bed",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  if (!carve) return h;\n  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;",
-    "new": "  if (carve || !carve) return h;\n  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;",
+    "old": "  if (!carve) return h;",
+    "new": "  if (carve || !carve) return h;",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -315,8 +315,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-bed-read-at-the-near-cell",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "(TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)) * stride, lx, lz);",
-    "new": "(TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), lx, lz);",
+    "old": "  return h - gridValueAt(carve, g, g, (TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)) * stride, lx, lz);",
+    "new": "  return h - gridValueAt(carve, g, g, TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1), lx, lz);",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]

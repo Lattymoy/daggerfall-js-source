@@ -281,8 +281,8 @@
   {
     "name": "G-40-canopy-share-whole",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),",
-    "new": "share: () => 1,",
+    "old": "        share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),",
+    "new": "        share: () => 1,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "G-41-canopy-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "|| g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue;",
-    "new": "|| g2Of[ti] > TAN_MAX_SQ) continue;",
+    "old": "      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
+    "new": "      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "G-42-young-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (!ground || onFoot?.[ti]) continue;",
-    "new": "if (!ground) continue;",
+    "old": "      if (!ground || onFoot?.[ti]) continue; // GRAHT1: no young tree or palm on a graht-oak's foot",
+    "new": "      if (!ground) continue; // GRAHT1: no young tree or palm on a graht-oak's foot",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "G-43-floor-in-trunk",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (!ground || taken[ti] || onFoot?.[ti] === 2) continue;",
-    "new": "if (!ground || taken[ti]) continue;",
+    "old": "      if (!ground || taken[ti] || onFoot?.[ti] === 2) continue; // GRAHT1: no plant of the floor out of a graht-oak's trunk",
+    "new": "      if (!ground || taken[ti]) continue; // GRAHT1: no plant of the floor out of a graht-oak's trunk",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "G-44-pairs-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "&& !onFoot[ty * tDim + tx])(pairTile(",
-    "new": "&& true)(pairTile(",
+    "old": "                ok(tx, ty) && !onFoot[ty * tDim + tx]",
+    "new": "                ok(tx, ty) && true",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "G-45-canopy-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const graht = jg.canopy ? grahtSites({",
-    "new": "const graht = false ? grahtSites({",
+    "old": "  const graht = jg.canopy",
+    "new": "  const graht = false",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "G-102-the-edges-refused",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "(jg.canopy && GRAHT_LAND_RECORDS.includes(record))",
-    "new": "(jg.canopy && false)",
+    "old": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue; // GRAHT1: a buttress lies on any land tile",
+    "new": "      if (!(ground || (jg.canopy && false)) || paths?.[ti]) continue; // GRAHT1: a buttress lies on any land tile",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "G-104-the-foot-on-the-flats-ground",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "    growsOn: (ti) => footOf[ti] > 0,",
-    "new": "    growsOn: (ti) => groundOf[ti] > 0,",
+    "old": "        growsOn: (ti) => footOf[ti] > 0,",
+    "new": "        growsOn: (ti) => groundOf[ti] > 0,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "G-105-an-edge-tile-s-slope-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      g2Of[ti] = g2;\n      if (!ground) continue;",
-    "new": "      if (!ground) continue;\n      g2Of[ti] = g2;",
+    "old": "      g2Of[ti] = g2;\n      if (!ground) continue; // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone",
+    "new": "      if (!ground) continue;\n      g2Of[ti] = g2; // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]

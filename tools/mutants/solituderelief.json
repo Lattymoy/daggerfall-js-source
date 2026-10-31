@@ -110,8 +110,8 @@
   {
     "name": "SR-GROUND-no-band",
     "file": "src/world/terrain/capitalRelief.js",
-    "old": "w = d >= r.band ? 0 : 1 - smooth(d / r.band);",
-    "new": "w = 0;",
+    "old": "        w = d >= r.band ? 0 : 1 - smooth(d / r.band);",
+    "new": "        w = 0;",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

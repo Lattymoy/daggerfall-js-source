@@ -38,8 +38,8 @@
   {
     "name": "WODBUSH-highest-ground",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "low = Math.min(low, walkGroundAt(heightmapData, x, z));",
-    "new": "low = Math.max(low === Infinity ? -Infinity : low, walkGroundAt(heightmapData, x, z));",
+    "old": "  for (const x of xs) for (const z of zs) low = Math.min(low, walkGroundAt(heightmapData, x, z)); // FLORA-GROUND: the walk law",
+    "new": "  for (const x of xs)\n    for (const z of zs) low = Math.max(low === Infinity ? -Infinity : low, walkGroundAt(heightmapData, x, z)); // FLORA-GROUND: the walk law",
     "tests": [
       "test/world/terrain/wodbush.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "WODBUSH-no-sample-lines",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "    for (let g = Math.ceil(a / cell) * cell; g < b; g += cell) out.push(g);\n",
-    "new": "",
+    "old": "    for (let g = Math.ceil(a / cell) * cell; g < b; g += cell) out.push(g);\n    return out;",
+    "new": "    return out;",
     "tests": [
       "test/world/terrain/wodbush.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "WODBUSH-off-the-pixel",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "const clamp = (v) => Math.max(0, Math.min(TERRAIN_SIZE, v));",
-    "new": "const clamp = (v) => v;",
+    "old": "  const clamp = (v) => Math.max(0, Math.min(TERRAIN_SIZE, v));",
+    "new": "  const clamp = (v) => v;",
     "tests": [
       "test/world/terrain/wodbush.test.js"
     ]

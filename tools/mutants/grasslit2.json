@@ -213,7 +213,7 @@
   {
     "name": "GRASSLIT2-normal-unnormalised",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  out[0] /= l; out[1] /= l; out[2] /= l;\n  return out;",
+    "old": "  out[0] /= l;\n  out[1] /= l;\n  out[2] /= l;\n  return out;",
     "new": "  return out;",
     "tests": [
       "test/render/grasslit2.test.js",

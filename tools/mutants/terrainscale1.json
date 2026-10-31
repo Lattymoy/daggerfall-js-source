@@ -11,8 +11,8 @@
   {
     "name": "TS1-placed-on-the-prefab",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
-    "new": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "old": "  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]

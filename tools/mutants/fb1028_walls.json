@@ -400,8 +400,8 @@
   {
     "name": "FB1028-Y2-the-edge-band-read",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
-    "new": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "old": "      mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "new": "      mask[i] =\n        shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "COAST-LOOK-kinds-swapped",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "{ records: SHORE_FAMILIES[0], a: GROUND_KIND.water, b: GROUND_KIND.dirt, ring: 0 }",
-    "new": "{ records: SHORE_FAMILIES[0], a: GROUND_KIND.dirt, b: GROUND_KIND.water, ring: 0 }",
+    "old": "  { records: SHORE_FAMILIES[0], a: GROUND_KIND.water, b: GROUND_KIND.dirt, ring: 0 },",
+    "new": "  { records: SHORE_FAMILIES[0], a: GROUND_KIND.dirt, b: GROUND_KIND.water, ring: 0 },",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "COAST-LOOK-mask-its-complement",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "const at = convertTile(raw), e = entry(fam.a, fam.b, shape);",
-    "new": "const at = convertTile(raw), e = entry(fam.a, fam.b, ~shape & 15);",
+    "old": "        e = entry(fam.a, fam.b, shape);",
+    "new": "        e = entry(fam.a, fam.b, ~shape & 15);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COAST-LOOK-a-ring-unread",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "for (const fam of FAMILIES.slice(0, 3)) {",
-    "new": "for (const fam of FAMILIES.slice(0, 2)) {",
+    "old": "  for (const fam of FAMILIES.slice(0, 3)) {",
+    "new": "  for (const fam of FAMILIES.slice(0, 2)) {",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COAST-LOOK-twins-unwritten",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "      if (fam.ring === 0) for (const twin of FAMILIES.slice(3)) table[(twin.records[k] << 2) | (at & 3)] = entry(twin.a, twin.b, shape);\n",
-    "new": "",
+    "old": "      if (fam.ring === 0)\n        for (const twin of FAMILIES.slice(3)) table[(twin.records[k] << 2) | (at & 3)] = entry(twin.a, twin.b, shape);\n    }",
+    "new": "    }",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "COAST-LOOK-saddle-turn-unread",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "    for (const t of [2, 3]) if (!table[(saddle << 2) | t]) table[(saddle << 2) | t] = table[(saddle << 2) | (t - 2)];\n",
-    "new": "",
+    "old": "    for (const t of [2, 3]) if (!table[(saddle << 2) | t]) table[(saddle << 2) | t] = table[(saddle << 2) | (t - 2)];\n  }",
+    "new": "  }",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "COAST-LOOK-pack-half",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "((table[i] & 0xffff) << ((i & 1) * 16))",
-    "new": "((table[i] & 0xffff) << ((i & 1) * 8))",
+    "old": "  for (let i = 0; i < 256; i++) words[i >> 1] = (words[i >> 1] | ((table[i] & 0xffff) << ((i & 1) * 16))) >>> 0;",
+    "new": "  for (let i = 0; i < 256; i++) words[i >> 1] = (words[i >> 1] | ((table[i] & 0xffff) << ((i & 1) * 8))) >>> 0;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "COAST-LOOK-bilinear-corner",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "const top = c00 + (c10 - c00) * fx, bottom = c01 + (c11 - c01) * fx;",
-    "new": "const top = c00 + (c01 - c00) * fx, bottom = c10 + (c11 - c10) * fx;",
+    "old": "  const top = c00 + (c10 - c00) * fx,\n    bottom = c01 + (c11 - c01) * fx;",
+    "new": "  const top = c00 + (c01 - c00) * fx,\n    bottom = c10 + (c11 - c10) * fx;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "COAST-LOOK-wander-amplitude",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "Object.freeze({ cells: 32, amp: 0.16 })",
-    "new": "Object.freeze({ cells: 32, amp: 0.36 })",
+    "old": "    Object.freeze({ cells: 32, amp: 0.16 }),",
+    "new": "    Object.freeze({ cells: 32, amp: 0.36 }),",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "COAST-LOOK-js-wander-sign",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "GROUND_EDGE.wander.forEach((o, k) => { w += o.amp",
-    "new": "GROUND_EDGE.wander.forEach((o, k) => { w -= o.amp",
+    "old": "    w += o.amp * (2 * roadEdgeNoise(x, y, o.cells, GROUND_EDGE.salt + k) - 1);",
+    "new": "    w -= o.amp * (2 * roadEdgeNoise(x, y, o.cells, GROUND_EDGE.salt + k) - 1);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "COAST-LOOK-js-share-wander-sign",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "share + groundEdgeWander(x, y));",
-    "new": "share - groundEdgeWander(x, y));",
+    "old": "  return smoothstep(0.5 - GROUND_EDGE.soft, 0.5 + GROUND_EDGE.soft, share + groundEdgeWander(x, y));",
+    "new": "  return smoothstep(0.5 - GROUND_EDGE.soft, 0.5 + GROUND_EDGE.soft, share - groundEdgeWander(x, y));",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "COAST-LOOK-js-cut-wander-unscaled",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "if (lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line)",
-    "new": "if (lin + groundEdgeWander(x, y) > COAST_CUT.line)",
+    "old": "  if (lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
+    "new": "  if (lin + groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "COAST-LOOK-js-nearer-edge-second",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "const order = u <= v ? [[kb, cb], [kc, cc]] : [[kc, cc], [kb, cb]];",
-    "new": "const order = u > v ? [[kb, cb], [kc, cc]] : [[kc, cc], [kb, cb]];",
+    "old": "    u <= v",
+    "new": "    u > v",
     "tests": [
       "test/render/coastlook.test.js"
     ]

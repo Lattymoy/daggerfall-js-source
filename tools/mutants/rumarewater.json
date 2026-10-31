@@ -157,8 +157,8 @@
   {
     "name": "RW-SEA-a-tile's-corner-read-turned",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "(1 << ((1 - dx) + 2 * (1 - dy)))",
-    "new": "(1 << (dx + 2 * dy))",
+    "old": "      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << (1 - dx + 2 * (1 - dy)))) return true;",
+    "new": "      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << (dx + 2 * dy))) return true;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "RW-SEA-the-stamped-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
-    "new": "  const stamped = false;",
+    "old": "      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
+    "new": "      const stamped = false;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "RW-SEA-the-rim's-sea-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  else if (!inRect) sea = stamped || natural[i] <= SEA_LINE;",
-    "new": "  else if (!inRect) sea = stamped;",
+    "old": "        sea = stamped || natural[i] <= SEA_LINE; // the rim: the sea reaching in",
+    "new": "        sea = stamped; // the rim: the sea reaching in",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "RW-SEA-the-outer-edge-the-city's",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "      if (outer) { S[i] = natural[i]; continue; }   // the span's outer edge: the land's own, as the pixel past it stands\n",
-    "new": "",
+    "old": "      if (outer) {\n        S[i] = natural[i];\n        continue;\n      } // the span's outer edge: the land's own, as the pixel past it stands\n      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
+    "new": "      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "RW-SEA-the-sea's-seam-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  else if (border && seaEdges && ((x === 0 && seaEdges.W) || (x === H - 1 && seaEdges.E) || (y === 0 && seaEdges.S) || (y === H - 1 && seaEdges.N))) sea = true;\n",
-    "new": "",
+    "old": "      else if (\n        border &&\n        seaEdges &&\n        ((x === 0 && seaEdges.W) ||\n          (x === H - 1 && seaEdges.E) ||\n          (y === 0 && seaEdges.S) ||\n          (y === H - 1 && seaEdges.N))\n      )\n        sea = true;\n      else sea = stamped;",
+    "new": "      else sea = stamped;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "RW-IC-the-seams-the-tiles'",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
-    "new": "sea = rumareSeaAt(bx, by) || stamped;",
+    "old": "        sea = rumareSeaAt(bx, by) || (!border && stamped); // the Imperial City: its plan's law, the seams the law's alone",
+    "new": "        sea = rumareSeaAt(bx, by) || stamped; // the Imperial City: its plan's law, the seams the law's alone",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "RW-IC-the-law-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
-    "new": "sea = !border && stamped;",
+    "old": "        sea = rumareSeaAt(bx, by) || (!border && stamped); // the Imperial City: its plan's law, the seams the law's alone",
+    "new": "        sea = !border && stamped; // the Imperial City: its plan's law, the seams the law's alone",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "RW-IC-the-far-shore-flat",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "      else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));\n",
-    "new": "",
+    "old": "      else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));\n      else S[i] = inRect ? CAPITAL_LAND : Math.max(S[i], CAPITAL_LAND);",
+    "new": "      else S[i] = inRect ? CAPITAL_LAND : Math.max(S[i], CAPITAL_LAND);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

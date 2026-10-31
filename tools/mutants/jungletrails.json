@@ -137,8 +137,8 @@
   {
     "name": "JUNGLE-TRAILS-the-canopy-s-foot-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n      if (onTrail(ti, mx, mz, species, js)) continue;\n",
-    "new": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n",
+    "old": "      if (onTrail(ti, mx, mz, species, js)) continue;\n      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk",
+    "new": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "JUNGLE-TRAILS-the-young-trees-foot-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "        if (onTrail(ti, mx, mz, species, js)) continue;\n        out.push(",
-    "new": "        out.push(",
+    "old": "        if (onTrail(ti, mx, mz, species, js)) continue;\n        out.push({",
+    "new": "        out.push({",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "JUNGLE-TRAILS-the-foot-s-gate-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "trails && share[ti] >= 1 && !trailClear(",
-    "new": "trails && !trailClear(",
+    "old": "    trails && share[ti] >= 1 && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);",
+    "new": "    trails && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);",
     "tests": [
       "test/world/jungletrails.test.js"
     ]

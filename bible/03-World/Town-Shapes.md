@@ -902,7 +902,7 @@ yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 as #1184 laid it: its boards, carriages and markers by that wall's gates, stood clear of its cells
 (`townWalls.js:"export function townWallYardLayout(yl, dfLocation) {"`). The game stands today's. The yards' ground is
 TS2's mask over the outline before its crops, with no edge band
-(`townBlendBefore.js:"export function townGroundMaskBefore(shape, ground, hDim) {"`, the kernel's `yardGround`), and
+(`townBlendBefore.js:"export function townGroundMaskBefore"`, the kernel's `yardGround`), and
 today's ring is no road on it (`terrainGen.js:"export function ringAsWas(paths, ring, yardGround) {"`). The host hands
 both (`scenes/pixelBuild.js` shapeWas, yardShut), so the Bay's yards keep #1184's mask whatever today's becomes.
 

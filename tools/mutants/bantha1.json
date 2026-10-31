@@ -83,8 +83,8 @@
   {
     "name": "BANTHA1-the-canopy-chance-whole",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (tileDraw(wx, wz, 22) >= JUNGLE.canopy * share[ti] * (1 - light) * groundOf[ti]) continue;",
-    "new": "if (tileDraw(wx, wz, 22) >= share[ti] * (1 - light) * groundOf[ti]) continue;",
+    "old": "      if (tileDraw(wx, wz, 22) >= JUNGLE.canopy * share[ti] * (1 - light) * groundOf[ti]) continue;",
+    "new": "      if (tileDraw(wx, wz, 22) >= share[ti] * (1 - light) * groundOf[ti]) continue;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BANTHA1-an-emergent-of-any-species",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const species = emergent ? fromPool(JUNGLE.emergents, tileDraw(wx, wz, 24)) : canopySpecies(",
-    "new": "const species = emergent ? Math.floor(tileDraw(wx, wz, 24) * 5) : canopySpecies(",
+    "old": "        ? fromPool(JUNGLE.emergents, tileDraw(wx, wz, 24))",
+    "new": "        ? Math.floor(tileDraw(wx, wz, 24) * 5)",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "BANTHA1-the-track-ignored",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue;",
-    "new": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record)))) continue;",
+    "old": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue; // GRAHT1: a buttress lies on any land tile",
+    "new": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record)))) continue; // GRAHT1: a buttress lies on any land tile",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "BANTHA1-the-slope-test-off",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (g2 > TAN_FLOOR_SQ) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (g2 > TAN_FLOOR_SQ) continue; // LAY-2: DFU's own 50 - the trees' 34 is theirs alone (below)",
+    "new": "      if (false) continue; // LAY-2: DFU's own 50 - the trees' 34 is theirs alone (below)",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "BANTHA1-a-stream-walked-across-the-pixel",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "jungleStandNoise(origin, x + 0.5, y + 0.5) < j",
-    "new": "jungleStandNoise(origin, x + 0.5 + own.length, y + 0.5) < j",
+    "old": "      if (j >= 1 || jungleStandNoise(origin, x + 0.5, y + 0.5) < j) {",
+    "new": "      if (j >= 1 || jungleStandNoise(origin, x + 0.5 + own.length, y + 0.5) < j) {",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "BANTHA1-the-reach-test-answers-a-copy",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) };",
-    "new": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: [...own], pairs: [], graht: new Float32Array(0) };",
+    "old": "    return { flats: own, pairs: [], graht: new Float32Array(0) }; // the line, wander and all, cannot reach a tile",
+    "new": "    return { flats: [...own], pairs: [], graht: new Float32Array(0) }; // the line, wander and all, cannot reach a tile",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-BANTHA1-the-canopy-light-not-handed-to-the-species",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "canopySpecies(origin, tx, tz, above, light, tileDraw(wx, wz, 24))",
-    "new": "canopySpecies(origin, tx, tz, above, 0, tileDraw(wx, wz, 24))",
+    "old": "        : canopySpecies(origin, tx, tz, above, light, tileDraw(wx, wz, 24));",
+    "new": "        : canopySpecies(origin, tx, tz, above, 0, tileDraw(wx, wz, 24));",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "AUDIT-BANTHA1-the-species-height-not-over-the-beach",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const above = groundAt(heightmapData, mx, mz) - BEACH_M;",
-    "new": "const above = groundAt(heightmapData, mx, mz);",
+    "old": "      const above = groundAt(heightmapData, mx, mz) - BEACH_M;",
+    "new": "      const above = groundAt(heightmapData, mx, mz);",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "AUDIT-BANTHA1-no-mid-storey",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const palm = JUNGLE.palm * j * ground * fields;",
-    "new": "const palm = 0 * j * ground * fields;",
+    "old": "      const palm = JUNGLE.palm * j * ground * fields;",
+    "new": "      const palm = 0 * j * ground * fields;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "AUDIT-BANTHA1-the-glades-off",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const closed = smoothstep(JUNGLE.glade.edge[0], JUNGLE.glade.edge[1], glade(x, y)),",
-    "new": "const closed = 1,",
+    "old": "      const closed = smoothstep(JUNGLE.glade.edge[0], JUNGLE.glade.edge[1], glade(x, y)),",
+    "new": "      const closed = 1,",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "AUDIT-BANTHA1-the-gap-law-swapped",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "(gap ? JUNGLE.gapUnder : JUNGLE.under)",
-    "new": "(gap ? JUNGLE.under : JUNGLE.gapUnder)",
+    "old": "      const under = g2 > TAN_MAX_SQ ? 0 : (gap ? JUNGLE.gapUnder : JUNGLE.under) * j * ground * fields; // LAY-2: no young tree past 34",
+    "new": "      const under = g2 > TAN_MAX_SQ ? 0 : (gap ? JUNGLE.under : JUNGLE.gapUnder) * j * ground * fields; // LAY-2: no young tree past 34",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "AUDIT-BANTHA1-the-floors-glade-light-ignored",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "lerp(JUNGLE.cover, JUNGLE.gladeCover, gladeOf[ti])",
-    "new": "JUNGLE.cover",
+    "old": "      const cover = lerp(JUNGLE.cover, JUNGLE.gladeCover, gladeOf[ti]) * share[ti] * ground; // LAY-3: the floor by the glade's light, never a place's",
+    "new": "      const cover = JUNGLE.cover * share[ti] * ground; // LAY-3: the floor by the glade's light, never a place's",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "AUDIT-BANTHA1-the-own-flats-tile-read-x-for-z",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "!mine[Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6))]",
-    "new": "!mine[Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6))]",
+    "old": "        Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6))",
+    "new": "        Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6))",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "AUDIT-BANTHA1-the-reach-without-the-wander",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) };",
-    "new": "if (hi * TERRAIN_SIZE <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) };",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out)\n    return { flats: own, pairs: [], graht: new Float32Array(0) }; // the line, wander and all, cannot reach a tile",
+    "new": "  if (hi * TERRAIN_SIZE <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) }; // the line, wander and all, cannot reach a tile",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "AUDIT-BANTHA1-the-reach-test-deleted",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) };   // the line, wander and all, cannot reach a tile\n",
-    "new": "",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out)\n    return { flats: own, pairs: [], graht: new Float32Array(0) }; // the line, wander and all, cannot reach a tile\n  const whole = jungleWhole(jg.nine); // ...nor leave one: every tile the jungle's",
+    "new": "  const whole = jungleWhole(jg.nine); // ...nor leave one: every tile the jungle's",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ],
@@ -455,8 +455,8 @@
   {
     "name": "AUDIT-BANTHA1-the-whole-pixel-without-the-wander",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "return lo * TERRAIN_SIZE - JUNGLE_WANDER_MAX >= JUNGLE_EDGE.in;",
-    "new": "return lo * TERRAIN_SIZE >= JUNGLE_EDGE.in;",
+    "old": "  return lo * TERRAIN_SIZE - JUNGLE_WANDER_MAX >= JUNGLE_EDGE.in;",
+    "new": "  return lo * TERRAIN_SIZE >= JUNGLE_EDGE.in;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDIT-BANTHA1-the-glade-fields-rows-mirrored",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "oz = -py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
-    "new": "oz = py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
+    "old": "    oz = -py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
+    "new": "    oz = py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -833,8 +833,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-1-the-grove-off-the-lattice",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "grove: Object.freeze({ cell: 32,",
-    "new": "grove: Object.freeze({ cell: 24,",
+    "old": "  grove: Object.freeze({ cell: 32, floor: 0.25, gain: 1.5, salt: 523 }), // AUDIT BANTHA1 LAY-1: a cell dividing 128, so the world's lattice - 24 restarted every pixel's groves at its edge",
+    "new": "  grove: Object.freeze({ cell: 24, floor: 0.25, gain: 1.5, salt: 523 }), // AUDIT BANTHA1 LAY-1: a cell dividing 128, so the world's lattice - 24 restarted every pixel's groves at its edge",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-2-a-canopy-tree-up-a-cliff",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue;",
-    "new": "if (!groundOf[ti] || onFoot?.[ti]) continue;",
+    "old": "      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
+    "new": "      if (!groundOf[ti] || onFoot?.[ti]) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-2-a-young-tree-up-a-cliff",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const under = g2 > TAN_MAX_SQ ? 0 :",
-    "new": "const under =",
+    "old": "      const under = g2 > TAN_MAX_SQ ? 0 : (gap ? JUNGLE.gapUnder : JUNGLE.under) * j * ground * fields; // LAY-2: no young tree past 34",
+    "new": "      const under = (gap ? JUNGLE.gapUnder : JUNGLE.under) * j * ground * fields; // LAY-2: no young tree past 34",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-3-the-fields-a-light-gap",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const fields = 1 - openOf[ti];",
-    "new": "const fields = 1;",
+    "old": "      const fields = 1 - openOf[ti]; // LAY-3: a place's fields stand no young tree and no palm",
+    "new": "      const fields = 1; // LAY-3: a place's fields stand no young tree and no palm",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -878,8 +878,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-7-the-neighbour-pixels-trunks-unseen",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "    if (!canopySite(wx, wz)) return false;   // SPREAD: no site, no trunk\n",
-    "new": "    return false;\n",
+    "old": "    if (!canopySite(wx, wz)) return false; // SPREAD: no site, no trunk",
+    "new": "    return false;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ],
@@ -897,8 +897,8 @@
   {
     "name": "AUDIT-BANTHA1-LAY-9-the-stands-a-tiles-white-noise",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "jungleStandNoise(origin, x + 0.5, y + 0.5) < j",
-    "new": "tileDraw(ox + x, oz + y, 6) < j",
+    "old": "      if (j >= 1 || jungleStandNoise(origin, x + 0.5, y + 0.5) < j) {",
+    "new": "      if (j >= 1 || tileDraw(ox + x, oz + y, 6) < j) {",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -906,8 +906,8 @@
   {
     "name": "AUDIT-BANTHA1-PERF-2-a-lacked-field-read-as-nan",
     "file": "src/world/terrain/natureWire.js",
-    "old": "const at = (c, i) => { if (!c) return undefined; const v = c[i]; return v === v ? v : undefined; };",
-    "new": "const at = (c, i) => { if (!c) return undefined; return c[i]; };",
+    "old": "    const v = c[i];\n    return v === v ? v : undefined;",
+    "new": "    return c[i];",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

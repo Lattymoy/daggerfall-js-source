@@ -323,7 +323,7 @@ test('JUNGLE-ROADSIDE where it asks: both trunks\' tiles of the jungle\'s tree l
   g2[9 * T + 7] = Math.tan(33.5 * Math.PI / 180) ** 2;
   assert.ok(ok(7, 9), '33.5 degrees stands');
   // PIN MOVED (GRAHT1): the tile law off a graht-oak's foot where they stand (world/jungle/grahtOaks.js grahtFootMask)
-  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot \? \(\(ok\) => \(tx, ty\) => ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\)\(pairTile\(share, groundOf, g2Of, openOf\)\) : pairTile\(share, groundOf, g2Of, openOf\),[^\n]*\n\s+trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
+  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot\n\s*\? \(\n\s*\(ok\) => \(tx, ty\) =>\n\s*ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\n\s*\)\(pairTile\(share, groundOf, g2Of, openOf\)\)\n\s*: pairTile\(share, groundOf, g2Of, openOf\), \/\/ GRAHT1: never on a graht-oak's foot\n\s*trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
   // EVERY STATION of every arm, slid either way, every pair, turn and the two extreme scales: a trunk EDGE_MIN inside
   let nearest = Infinity;
   for (const [, sx, sz] of ARMS) {

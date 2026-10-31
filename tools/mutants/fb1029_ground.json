@@ -191,8 +191,8 @@
   {
     "name": "MEET-cone-steep",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;",
-    "new": "const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;",
+    "old": "        const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
+    "new": "        const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "MEET-cone-lowers",
     "file": "src/world/terrain/townMeet.js",
-    "old": "for (let i = 0; any && i < up.length; i++) if (up[i] > S[i]) {",
-    "new": "for (let i = 0; any && i < up.length; i++) if (up[i] > 0) {",
+    "old": "    if (up[i] > S[i]) {",
+    "new": "    if (up[i] > 0) {",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "MEET-beyond-moved",
     "file": "src/world/terrain/townMeet.js",
-    "old": "edges[side] = moved && !beyond ? { R, E } : null;",
-    "new": "edges[side] = moved ? { R, E } : null;",
+    "old": "    edges[side] = moved && !beyond ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
+    "new": "    edges[side] = moved ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "MEET-least-unread",
     "file": "src/world/terrain/townMeet.js",
-    "old": "R[k] = want - e > least ? Math.fround(want) : e;",
-    "new": "R[k] = want > e ? Math.fround(want) : e;",
+    "old": "      R[k] = want - e > least ? Math.fround(want) : e;",
+    "new": "      R[k] = want > e ? Math.fround(want) : e;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "MEET-point-law-parted",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2); if (c > up) up = c;",
-    "new": "const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky)); if (c > up) up = c;",
+    "old": "    const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2);",
+    "new": "    const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky));",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "MEET-reach-3x3",
     "file": "src/world/terrain/townMeet.js",
-    "old": "if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;",
-    "new": "if (!meet) continue;",
+    "old": "    if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;",
+    "new": "    if (!meet) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "MEET-cache-world",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const sameGround = (had, woods, lf) => had.woods === woods &&",
-    "new": "const sameGround = (had, woods, lf) => true &&",
+    "old": "  had.woods === woods &&",
+    "new": "  true &&",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],

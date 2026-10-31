@@ -525,8 +525,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-canopy-over-a-pairs-trunk",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue;   // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk\n",
-    "new": "",
+    "old": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk\n      const k = (cy * cells + cx) * 3;",
+    "new": "      const k = (cy * cells + cx) * 3;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-young-trees-over-it",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue;   // JUNGLE-ROADSIDE: nor a young tree or a palm\n",
-    "new": "",
+    "old": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: nor a young tree or a palm\n      if (roll < under) {",
+    "new": "      if (roll < under) {",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-floor-over-it",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "crowded(mx, mz, cx, cy, JUNGLE.coverClear) || nearPair(mx, mz, JUNGLE.coverClear)) continue;",
-    "new": "crowded(mx, mz, cx, cy, JUNGLE.coverClear)) continue;",
+    "old": "      if (\n        tileDraw(wx, wz, 32) >= cover ||\n        crowded(mx, mz, cx, cy, JUNGLE.coverClear) ||\n        nearPair(mx, mz, JUNGLE.coverClear)\n      )\n        continue; // JUNGLE-ROADSIDE: nor a pair's",
+    "new": "      if (tileDraw(wx, wz, 32) >= cover || crowded(mx, mz, cx, cy, JUNGLE.coverClear)) continue; // JUNGLE-ROADSIDE: nor a pair's",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-trails-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "trailOk: (x, z, r) => !trails || trailClear(px, py, x, z, r),",
-    "new": "trailOk: () => true,",
+    "old": "        trailOk: (x, z, r) => !trails || trailClear(px, py, x, z, r),",
+    "new": "        trailOk: () => true,",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-jungle-whole-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "return share[ti] >= 1 && groundOf[ti] > 0",
-    "new": "return share[ti] > 0 && groundOf[ti] > 0",
+    "old": "  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
+    "new": "  return share[ti] > 0 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -588,8 +588,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-ground-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti]",
-    "new": "share[ti] >= 1 && g2Of[ti]",
+    "old": "  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
+    "new": "  return share[ti] >= 1 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-slope-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": " && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
-    "new": " && openOf[ti] === 0;",
+    "old": "  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
+    "new": "  return share[ti] >= 1 && groundOf[ti] > 0 && openOf[ti] === 0;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-fields-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;\n};",
-    "new": "g2Of[ti] <= TAN_MAX_SQ;\n};",
+    "old": "  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;",
+    "new": "  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-tile-transposed",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "  const ti = ty * WORLD_MAP_TILE_DIM + tx;\n  return share[ti]",
-    "new": "  const ti = tx * WORLD_MAP_TILE_DIM + ty;\n  return share[ti]",
+    "old": "  const ti = ty * WORLD_MAP_TILE_DIM + tx;",
+    "new": "  const ti = tx * WORLD_MAP_TILE_DIM + ty;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

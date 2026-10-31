@@ -188,8 +188,8 @@
   {
     "name": "FB1028-the-kept-id-packed-none",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-    "new": "r[i * 3 + 2] = -1;",
+    "old": "    r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "    r[i * 3 + 2] = -1;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "FB1028-the-kept-id-unpacked-none",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });",
-    "new": "records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
+    "old": "  for (let i = 0; i < k.r.length; i += 3)\n    records.push(\n      k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] },\n    );",
+    "new": "  for (let i = 0; i < k.r.length; i += 3) records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "FB1028-the-kept-flat-an-id",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-    "new": "r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
+    "old": "    r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "    r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -375,8 +375,8 @@
   {
     "name": "FB1028-frame-before-reach-not-12",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "const BLEND_TILES = 12, EDGE_TILES = 4;",
-    "new": "const BLEND_TILES = 17, EDGE_TILES = 4;",
+    "old": "const BLEND_TILES = 12,",
+    "new": "const BLEND_TILES = 17,",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "FB1028-frame-before-fields-kept",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "outlineOfBasis({ ...shape.basis, fields: null }, seed)",
-    "new": "outlineOfBasis(shape.basis, seed)",
+    "old": "  return shape?.basis?.fields ? outlineOfBasis({ ...shape.basis, fields: null }, seed) : shape;",
+    "new": "  return shape?.basis?.fields ? outlineOfBasis(shape.basis, seed) : shape;",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "FB1028-frame-before-sea-lifted",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n",
-    "new": "",
+    "old": "      if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n      s *= edge * edge * (3 - 2 * edge);",
+    "new": "      s *= edge * edge * (3 - 2 * edge);",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -402,7 +402,7 @@
   {
     "name": "FB1028-frame-before-edge-unfaded",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "    s *= edge * edge * (3 - 2 * edge);",
+    "old": "      s *= edge * edge * (3 - 2 * edge);",
     "new": "",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
