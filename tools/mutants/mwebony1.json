@@ -2,8 +2,8 @@
   {
     "name": "MWEBONY1-the-tassets-swing-less",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "top: 84, bottom: 62, share: 0.7, centre: 4 }",
-    "new": "top: 84, bottom: 62, share: 0.5, centre: 4 }",
+    "old": "    hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: LEGS, top: 84, bottom: 62, share: 0.7, centre: 4 }),",
+    "new": "    hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: LEGS, top: 84, bottom: 62, share: 0.5, centre: 4 }),",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MWEBONY1-the-hang-starts-higher",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "top: 84, bottom: 62, share: 0.7, centre: 4 }",
-    "new": "top: 90, bottom: 62, share: 0.7, centre: 4 }",
+    "old": "    hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: LEGS, top: 84, bottom: 62, share: 0.7, centre: 4 }),",
+    "new": "    hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: LEGS, top: 90, bottom: 62, share: 0.7, centre: 4 }),",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MWEBONY1-the-skirt-to-the-steel-hem",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "hang: Object.freeze({ ...PLATE_RIG.skirt.hang, bottom: 60 }) }),",
-    "new": "hang: PLATE_RIG.skirt.hang }),",
+    "old": "  skirt: Object.freeze({ ...PLATE_RIG.skirt, hang: Object.freeze({ ...PLATE_RIG.skirt.hang, bottom: 60 }) }),",
+    "new": "  skirt: Object.freeze({ ...PLATE_RIG.skirt, hang: PLATE_RIG.skirt.hang }),",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "MWEBONY1-the-helm-lifted-again",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])]),",
-    "new": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], 4),",
+    "old": "  piece('helm', [\n    shape('Sphere.007', 'helm', [\n      [-6.31, -6.64, 112.1],\n      [6.31, 10.19, 133.37],\n    ]),\n  ]),",
+    "new": "  piece(\n    'helm',\n    [\n      shape('Sphere.007', 'helm', [\n        [-6.31, -6.64, 112.1],\n        [6.31, 10.19, 133.37],\n      ]),\n    ],\n    4,\n  ),",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],

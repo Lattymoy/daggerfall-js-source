@@ -23,7 +23,7 @@
     "name": "MWCAPERIGID-the-thighs-back",
     "file": "tools/bakeCloak.mjs",
     "old": "  const weights = Array.from({ length: mesh.positions.length / 3 }, () => [[CHEST_BONE, 1]]);",
-    "new": "  const weights = Array.from({ length: mesh.positions.length / 3 }, (_, v) => (mesh.positions[v * 3 + 2] < 50 ? [[CHEST_BONE, 0.5], [mesh.positions[v * 3] < 0 ? 'Bip01 L Thigh' : 'Bip01 R Thigh', 0.5]] : [[CHEST_BONE, 1]]));",
+    "new": "  const weights = Array.from({ length: mesh.positions.length / 3 }, (_, v) =>\n    mesh.positions[v * 3 + 2] < 50\n      ? [\n          [CHEST_BONE, 0.5],\n          [mesh.positions[v * 3] < 0 ? 'Bip01 L Thigh' : 'Bip01 R Thigh', 0.5],\n        ]\n      : [[CHEST_BONE, 1]],\n  );",
     "tests": [
       "test/tooling/mwcloak1.test.js"
     ],

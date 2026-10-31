@@ -110,8 +110,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-reference-variant",
     "file": "tools/bakeEgHeroCaverns.mjs",
-    "old": "class: 'passage', variant: 'caverns'",
-    "new": "class: 'passage', variant: 'reference'",
+    "old": "  variant: 'caverns',",
+    "new": "  variant: 'reference',",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]

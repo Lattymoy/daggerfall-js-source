@@ -40,8 +40,8 @@
   {
     "name": "MWBRIG4-every-nif-names-steel",
     "file": "tools/bakeBrigandine.mjs",
-    "old": "nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' })",
-    "new": "nif: meshToNif(named, { texture: TEXTURE_NAME, node: 'Brigandine' })",
+    "old": "  const out = {\n    metal,\n    png,\n    dds,\n    nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' }),\n    sheets: null,\n  };",
+    "new": "  const out = { metal, png, dds, nif: meshToNif(named, { texture: TEXTURE_NAME, node: 'Brigandine' }), sheets: null };",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "MWBRIG4-a-missing-painting-baked-anyway",
     "file": "tools/bakeBrigandine.mjs",
-    "old": "      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);",
-    "new": "",
+    "old": "      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);\n      return paint(mesh, metal, pngs[metal], sheets);",
+    "new": "      return paint(mesh, metal, pngs[metal], sheets);",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]

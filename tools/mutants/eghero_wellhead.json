@@ -119,8 +119,8 @@
   {
     "name": "EGHERO-WELLHEAD-a-chamber-naming-no-play",
     "file": "tools/bakeEgHeroClanPit.mjs",
-    "old": "play: Object.freeze(['balcony'])",
-    "new": "play: Object.freeze([])",
+    "old": "  play: Object.freeze(['balcony']),",
+    "new": "  play: Object.freeze([]),",
     "tests": [
       "test/tooling/eghero_wellhead.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGHERO-WELLHEAD-the-forge-gut-as-the-reference",
     "file": "tools/bakeEgHeroForgeGut.mjs",
-    "old": "variant: 'forgegut'",
-    "new": "variant: 'reference'",
+    "old": "  variant: 'forgegut',",
+    "new": "  variant: 'reference',",
     "tests": [
       "test/tooling/eghero_wellhead.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGHERO-WELLHEAD-the-deep-caverns-a-passage",
     "file": "tools/bakeEgHeroDeepCaverns.mjs",
-    "old": "kit: 'deep', class: 'chamber'",
-    "new": "kit: 'deep', class: 'passage'",
+    "old": "  class: 'chamber',",
+    "new": "  class: 'passage',",
     "tests": [
       "test/tooling/eghero_wellhead.test.js"
     ]

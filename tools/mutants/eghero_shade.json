@@ -173,8 +173,8 @@
   {
     "name": "EGHERO-SHADE-the-gloam-baked-as-the-reference",
     "file": "tools/bakeEgHeroGloam.mjs",
-    "old": "class: 'passage', variant: 'gloam',",
-    "new": "class: 'passage', variant: 'reference',",
+    "old": "  variant: 'gloam',",
+    "new": "  variant: 'reference',",
     "tests": [
       "test/tooling/eghero_shade.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGHERO-SHADE-the-vaults-play-without-its-engine",
     "file": "tools/bakeEgHeroEclipse.mjs",
-    "old": "play: Object.freeze(['balcony', 'engine']),",
-    "new": "play: Object.freeze(['balcony']),",
+    "old": "  play: Object.freeze(['balcony', 'engine']),",
+    "new": "  play: Object.freeze(['balcony']),",
     "tests": [
       "test/tooling/eghero_shade.test.js"
     ]

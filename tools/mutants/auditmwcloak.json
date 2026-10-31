@@ -323,8 +323,8 @@
   {
     "name": "AUDITMWCLOAK-the-stray-island-kept",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "{ acrossTheMiddle: 'left' }",
-    "new": "{}",
+    "old": "      { acrossTheMiddle: 'left' },",
+    "new": "      {},",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "AUDITMWCLOAK-any-vertex-across-drops-the-island",
     "file": "tools/bakeEbonyPlate.mjs",
-    "old": "wholly.set(r, (wholly.get(r) ?? true) && across(v));",
-    "new": "wholly.set(r, (wholly.get(r) ?? false) || across(v));",
+    "old": "    wholly.set(r, (wholly.get(r) ?? true) && across(v));",
+    "new": "    wholly.set(r, (wholly.get(r) ?? false) || across(v));",
     "tests": [
       "test/tooling/mwebony1.test.js"
     ],
