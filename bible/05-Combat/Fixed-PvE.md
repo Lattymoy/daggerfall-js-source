@@ -156,7 +156,7 @@ farthest from its edge and the sea (`pveHotspots.js`, measured from MAPS.BSA by 
 Bay on a district's middle, by the province map.
 
 A place's rung is 1 on its nearest hot spot and 0 at 120 pixels: 36-45 on it, a band lower each sixth of the way out,
-and 1-8 everywhere outside. Toward the center the rings widen. On the Bay the three stand in Ephesus, Ayasofya and
+and 1-8 everywhere outside. Toward the center the rings widen. On the Bay the three stand in Gavaudon, Antiphyllos and
 Kambria, and 76% of the land is 1-8. The first pass's district step is gone: it broke the rings.
 
 Four districts in a hundred are high-level enclaves, three bands up, with a warning; ten are farming grounds. The party
