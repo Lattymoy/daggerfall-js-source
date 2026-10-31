@@ -632,7 +632,7 @@ test('AUDIT WB12d (G2): the burned earth - the circle says where no grass grows 
   assert.deepEqual(r2.bare.at(-1), [E + 100 - RITE_BARE_R, N - RITE_BARE_R, E + 100 + RITE_BARE_R, N + RITE_BARE_R], 'gone: placed again where the scene has it now');
   assert.equal(r2.host.clearing(), null);
   const w = read('src/scenes/world.js');
-  assert.match(w, /const _bare = riteHost\?\.clearing\(\) \?\? starfall\?\.clearing\(\) \?\? null;/);
+  assert.match(w, /const _bare = riteHost\?\.clearing\(\) \?\? starfall\?\.clearing\(\) \?\? passSeason\?\.clearing\(\) \?\? null;/);   // PIN MOVED (STOREFRONT): and a Brass Fissure's scorch
   assert.match(w, /if \(_bare && \(x - _bare\.x\) \* \(x - _bare\.x\) \+ \(z - _bare\.z\) \* \(z - _bare\.z\) <= _bare\.r \* _bare\.r\) return null;/);
   assert.match(w, /onBare: \(x0, z0, x1, z1\) => labGrassField\?\.invalidate\(x0, z0, x1, z1\),/);
 });

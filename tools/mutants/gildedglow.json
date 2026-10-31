@@ -184,10 +184,11 @@
   {
     "name": "GGLOW-the-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world293';",
+    "old": "export const RELAY_VERSION = 'world297';",
     "new": "export const RELAY_VERSION = 'world285';",
     "tests": [
       "test/net/relayversion.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb INTO DRAGON-HARDER/HIDDEN): world293, past DELVE II's world292. Re-aimed by content (THE MERGE OF MAIN INTO DRAGON-HARDER/HIDDEN): world292, the dragon's health and its hidden rolls, past GILDED-GLOW's world291."
   }
 ]

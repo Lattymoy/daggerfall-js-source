@@ -56,7 +56,7 @@
   {
     "name": "NOTICE1-7-a-recruit-recruits",
     "file": "server-account/src/board.js",
-    "old": "    if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };",
+    "old": "    if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };",
     "new": "    if (false) return { error: 'guild-rank' };",
     "tests": [
       "test/net/notice1.test.js"

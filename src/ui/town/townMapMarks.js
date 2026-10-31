@@ -12,19 +12,23 @@
 //   map id must be this town's too - isHouseOwned asks the region alone because its callers stand at the door).
 import { homeDoorTitle } from '../../systems/online/onlineHomes.js';
 import { regionDeedsOf } from '../../net/homeLaw.js';   // HOUSES-3: a region's three deeds
+import { t } from '../../systems/textManager.js';   // VENDOR-HOUSES: the trader's word in the player's language
 
 /** The name under the pointer of the house the character bought at a bank. */
 export const TOWN_HOUSE_LABEL = 'Your house';
+/** VENDOR-HOUSES: a trader's house says so under the pointer (the waypoint's own label already does). */
+const vendorTitle = (home) => (home.vendor === true && home.waypoint !== true ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) }) : homeDoorTitle(home));
 /** How near a pointer must come to a mark, in paper pixels - the party's reach (townSheet PARTY_REACH). */
 export const TOWN_MARK_REACH = 12;
 
-/** The homes the host hands, read: `{ buildingKey, own, label }` - a row with no building is dropped. */
+/** The homes the host hands, read: `{ buildingKey, own, label }` (and `vendor` on a trader's house - VENDOR-HOUSES) - a
+ *  row with no building is dropped. */
 export function readTownHomes(fn) {
   let rows = [];
   try { rows = typeof fn === 'function' ? fn() : []; } catch { rows = []; }
   if (!Array.isArray(rows)) return [];
   return rows.filter((r) => Number.isSafeInteger(r?.buildingKey) && r.buildingKey > 0 && typeof r.label === 'string')
-    .map((r) => ({ buildingKey: r.buildingKey, own: r.own === true, label: r.label }));
+    .map((r) => ({ buildingKey: r.buildingKey, own: r.own === true, ...(r.vendor === true ? { vendor: true } : {}), label: r.label }));
 }
 
 /**
@@ -42,7 +46,7 @@ export function townHomeRows({ buildings = [], mapId, regionIndex, houses = null
     const key = b?.buildingKey;
     if (!(key > 0)) continue;
     const home = homeAt ? homeAt(id, key) : null;
-    if (home) out.push({ buildingKey: key, own: home.own === true, label: homeDoorTitle(home) });
+    if (home) out.push({ buildingKey: key, own: home.own === true, ...(home.vendor === true ? { vendor: true } : {}), label: vendorTitle(home) });
     else if (bought.has(key)) out.push({ buildingKey: key, own: true, label: TOWN_HOUSE_LABEL });
   }
   return out;

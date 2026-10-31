@@ -202,4 +202,11 @@ test('DECOR-TURN in a yard: a piece whose turned footprint would reach the house
   await clock.run();
   assert.equal(calls.length, 1);
   assert.deepEqual(rig.standing[0].rot, [DECOR_TURN_STEP, 0, 0]);
+  // AUDIT FB1030 M3: a model already standing in the house turns no further into it
+  rig.standing[0] = { ...rig.standing[0], pos: [0.3, 0, 0] };
+  rig.frame();
+  roomPress(rig, 'c1', 'Turn right');
+  await clock.run();
+  assert.equal(calls.length, 1, 'never asked');
+  assert.equal(rig.said.at(-1), YARD_IN_HOUSE);
 });

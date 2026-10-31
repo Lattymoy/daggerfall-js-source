@@ -64,6 +64,31 @@ export class PakFile {
     return this.buffer[y * PAK_WIDTH + x];
   }
 
+  /** FOUNDATION F4: the PAK written back - the row offsets, then each row as runs (a count, a value), as `load` reads
+   *  it. @returns {Uint8Array} */
+  encode() {
+    const runs = [];
+    for (let row = 0; row < PAK_HEIGHT; row++) {
+      const r = [];
+      for (let x = 0; x < PAK_WIDTH;) {
+        const value = this.buffer[row * PAK_WIDTH + x];
+        let n = 1;
+        while (x + n < PAK_WIDTH && n < 0xffff && this.buffer[row * PAK_WIDTH + x + n] === value) n++;
+        r.push([n, value]);
+        x += n;
+      }
+      runs.push(r);
+    }
+    const out = new Uint8Array(PAK_HEIGHT * 4 + runs.reduce((a, r) => a + r.length * 3, 0));
+    const v = new DataView(out.buffer);
+    let pos = PAK_HEIGHT * 4;
+    runs.forEach((r, row) => {
+      v.setUint32(row * 4, pos, true);
+      for (const [n, value] of r) { v.setUint16(pos, n, true); out[pos + 2] = value; pos += 3; }
+    });
+    return out;
+  }
+
   /** Set value at world-map position. Returns false if out of range. */
   setValue(x, y, value) {
     if (x < 0 || x >= PAK_WIDTH) return false;

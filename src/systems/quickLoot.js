@@ -383,13 +383,14 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
   const how = _pending;
   _pending = null;   // spent on the press it was armed for, whatever that press finds
   // WERE-LOOT (2026-10-30, the owner: "let them loot ... just dont let them open inventory"): the beast's pack window
-  // stays shut (DISC10-E L3), so every press of its takes the lot, quick loot on or off
+  // stays shut (DISC10-E L3). WERE-PICK: with quick loot on its press takes one row - the lit one, else the first (AUDIT
+  // WERE-PICK P1: a touch screen draws no plaque) - and P the lot; with quick loot off a press takes the lot
   const beast = !!racialSuppressInventory(playerEntity);
   if (how === 'open' && !beast) return null;   // J: the player asked for the window
   if ((!quickLootOn() && !beast) || !hooks || !playerEntity) return null;
   const items = hooks.items?.();
   if (!Array.isArray(items)) return null;
-  if (how === 'all' || beast) {
+  if (how === 'all' || (beast && !quickLootOn())) {
     // P: the lot, through the same one-item door - so the carry gate and
     // the gold rule are the window's here too, and a caller cannot get a
     // bulk take that spells them differently. `[...items]` because the
@@ -418,7 +419,7 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
     return n ? items : null;
   }
-  const item = quickLootItemAt(key, items);
+  const item = quickLootItemAt(key, items) ?? (beast ? hoverItemAt(items, 0, Infinity) : null);
   if (!item) return null;
   return takeOneItem(playerEntity, items, item, say, { getQuest, took });   // PI1: the one-item take, one home (below)
 }

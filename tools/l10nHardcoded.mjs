@@ -36,11 +36,13 @@ const CSS_IDENT = String.raw`-?[A-Za-z_][\w-]*`;
 const COMPOUND_SELECTOR = new RegExp(String.raw`^(?:[a-z][\w-]*|\*)?(?:[.#]${CSS_IDENT}|\[${CSS_IDENT}(?:[~|^$*]?=(?:"[^"]*"|'[^']*'|[\w-]+))?\]|::?${CSS_IDENT}(?:\([^()\s]*\))?)*$`);
 /** A class in a compound - every selector the port writes into its code names one. */
 const HAS_CLASS = new RegExp(String.raw`\.${CSS_IDENT}`);
+/** A class list: hyphenated names, one or more, a space between. */
+export const CLASS_LIST = /^[a-z]+(-[a-z0-9]+)+( [a-z]+(-[a-z0-9]+)*)*$/;
 /** Prose: two words of two letters or more, not a CSS value, a selector, a path, code or a URL. */
 export function isProse(s) {
   if (!/[A-Za-z]{2,}[\s\u00a0]+[A-Za-z]{2,}/.test(s)) return false;
   if (/(^|\s)(px|em|rem|vh|vw)(\s|;|$)|\d(px|em|rem|vh|vw|ms|deg)\b|rgba?\(|hsla?\(|var\(--|calc\(|linear-gradient|;\s*$|=>|\bfunction\b|\bimport\b|\bconst\b|\breturn\b|https?:|\.(js|mjs|json|png|wav|ttf|glb|bsa|img|cif)\b/i.test(s)) return false;
-  if (/^[a-z]+(-[a-z0-9]+)+( [a-z]+(-[a-z0-9]+)*)*$/.test(s)) return false;   // class lists
+  if (CLASS_LIST.test(s)) return false;   // class lists
   const english = /\s(a|an|the|of|to|is|in|on|and|or|you|your)\s/i.test(` ${s} `);
   if (/^[\w$.-]+( [\w$.-]+)*$/.test(s) && !/[A-Z]/.test(s[0]) && !english) return false;   // identifier runs
   // CARDS-PLUS (2026-10-13): a selector naming an id, an attribute or a pseudo-class (`#wp-menu input.wpm-name`,
@@ -94,7 +96,10 @@ export function hardcodedStrings(root = ROOT) {
         if (n.type === 'Literal' && typeof n.value === 'string' && isProse(n.value)) out.push({ file, line: n.loc.start.line, text: n.value });
         if (n.type === 'TemplateLiteral') {
           const s = n.quasis.map((x) => x.value.cooked ?? '').join(' {} ');
-          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });
+          // STOREFRONT: a class list with a name built in it (`sh-panel sh-panel-${kind}`) is CSS, read with each
+          // interpolation as part of the name it sits in - as the literal class lists above
+          const asClasses = n.quasis.map((x) => x.value.cooked ?? '').join('x');
+          if (isProse(s) && !CLASS_LIST.test(asClasses)) out.push({ file, line: n.loc.start.line, text: s });
         }
       }
       for (const k of Object.keys(n)) {

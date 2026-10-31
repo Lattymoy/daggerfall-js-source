@@ -15,6 +15,9 @@ something I really want you be detailed on and focus."
 
 ## GUILD2a - a new name, for a price
 
+> GUILD-SHOP (2026-10-30, `Guild-Shop.md` section 2): a rename costs 2,500 silver from the silver treasury now
+> (`GUILD_RENAME_SILVER`), under a request id. The gold price below is history.
+
 - **The guildmaster's alone** (`GUILD_POWERS.rename`): a new name, a new tag, or both, in the founding's shapes (3 to 32
   plain words; 2 to 4 capitals or digits) and free of every other guild's - a guild nobody is left in gives its own up,
   as at a founding.

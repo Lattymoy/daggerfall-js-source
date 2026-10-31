@@ -720,6 +720,33 @@ Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` 
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 
+## VENDOR-HOUSES (2026-10-30) - a trader's house is blue on the town plan
+
+Mac, forwarding #feature-feedback "Player Vendors": "trying to find a vendor in Daggerfall is insane"; "Literally just
+make them a different color like the Player's own houses are red. Make a marked vendor blue or something."
+
+- **Every house with a player's trader and goods up is filled blue** (`TOWN_PEN.vendor` - classic's shop blue, the map's
+  pen `PEN.vendor`, so EM4 holds: no colour invented) with a parchment door; the
+  waypoint's house is blue too. My own house stays my red, trader or not. Under the pointer a trader's house reads
+  "Gryphoth's home - trader"; the waypoint's keeps its own words.
+- **The read** is the Notice Board's Vendors tab's (`scenes/vendorHost.js` vendorReachable, its door law with it),
+  registered into `systems/vendorHouses.js`. Opening the town plan, by either key, asks for its region's traders,
+  once in `VENDOR_HOUSES_READ_S` (120 s). The sheet repaints when a read changes the marks. Regions past the Bay are
+  read the same way (TAMRIEL-WIDE): the key is the town's MapId and the house's key.
+- **The rest is unchanged:** the gold coin on the world maps, the compass and the Overworld's mark (HOME-VENDOR,
+  `06-Systems/Online-Arc.md`). The classic exterior automap draws no homes.
+
+AUDIT TECH-FEEDBACK (2026-10-30, `01-Overview/Audit-Log.md`): a read that failed is asked again after
+`VENDOR_HOUSES_RETRY_S` (15 s); a shut market marks nothing; a read unanswered after `VENDOR_HOUSES_HUNG_S` (30 s) is
+let go and its late answer ignored. The homes' version is a number again (the sheet asks it a frame). The waypoint's
+house is told by a flag, and "- trader" is the text core's (`town.home.trader`). AUDIT TECH-FEEDBACK II: a read that
+throws or rejects is a failure too; a load (another character, another door's law) forgets every read; nothing is
+marked while the market is shut (`registerVendorHouseReader`'s `open`).
+
+Code: `systems/vendorHouses.js`, `ui/town/townMapMarks.js`, `ui/town/townSheet.js`, `ui/ink/inkTown.js`
+(`paintHomeMark`), `scenes/exteriorAutomapToggle.js`, `scenes/vendorHost.js`. Pins: `test/ui/town/town_marks.test.js`
+(VENDOR-HOUSES, 5). Mutants: `tools/mutants/vendorhouses.json` (21, all dead).
+
 ## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
 
 A player's private report: the town map's Find me never found them. FINDME (`11-Multiplayer/Wild-Zone.md`) was built

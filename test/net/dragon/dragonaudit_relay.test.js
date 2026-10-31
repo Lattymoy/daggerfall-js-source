@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { dragonTimes, isDragonWatch, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M } from '../../../src/net/dragon/dragonLaw.js';
+import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M } from '../../../src/net/dragon/dragonLaw.js';
 import { roostLeg } from '../../../src/net/dragon/dragonBody.js';
 import * as B from '../../../src/net/dragon/dragonBrain.js';
 import { DRAGON_SEAM } from '../../../src/net/bossSeam.js';
@@ -16,13 +16,13 @@ import { validDragonOut, DRAGON_FIGHT_KEY, DRAGON_TELL_RETRY_MS, cellRoomOfWire,
 import { foldDragon, DRAGON_STATE_EMPTY } from '../../../src/net/dragon/dragonLink.js';
 import { sweepDragonReceipts } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const seeded = (s = 7) => () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296);
-let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const T = dragonTimes(W);
-const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(W) });
+const OMEN = await dragonOmenFrom(500_000), W = OMEN.w;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
+const T = dragonTimes(OMEN);
+const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(OMEN) });
 const BODIES = [{ sub: 'a', x: 10, z: 0 }, { sub: 'b', x: -15, z: 20 }, { sub: 'c', x: 5, z: -25 }];
 /** The brain stepped until `pred` holds of a word it says: `{ f, word, now }`. */
 function stepUntil(pred, ms = 20 * 60_000) {
@@ -116,14 +116,12 @@ test('AUDIT DRAGON a kill whose receipts fail to mint is tried again at DRAGON_T
   const ID = dragonFightId(W, SX, SZ);
   const at = (mx, mz) => ({ x: SX + mx * DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
   const subtle = globalThis.crypto.subtle;
-  const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
-  const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
   const realNow = Date.now; let clock = T.landAt + 60_000;
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
     const r = world.room(cellRoomOfWire(SX, SZ));
-    r.env.GATE_SIGNING_KEY = pkcs8;
+    r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;
     const a = r.connect();
     await r.hello(a, 'peer-0001', at(40, 0));
     await r.raw(a, JSON.stringify({ t: 'dragon', k: 'in', w: W, bv: DRAGON_BRAIN_V, lv: 20, sx: SX, sz: SZ }));

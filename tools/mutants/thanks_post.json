@@ -1,0 +1,193 @@
+[
+  {
+    "name": "THANKS-POST-the-aurum",
+    "file": "src/net/giftLaw.js",
+    "old": "thanks: Object.freeze({ aurum: 500,",
+    "new": "thanks: Object.freeze({ aurum: 50,",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-piece-dropped",
+    "file": "src/net/giftLaw.js",
+    "old": "armory: Object.freeze(['crystalspurs']) }),",
+    "new": "armory: Object.freeze([]) }),",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-an-unknown-key-read",
+    "file": "src/net/giftLaw.js",
+    "old": ".filter((k) => GIFT_RE.test(k) && Object.hasOwn(GIFTS, k))",
+    "new": ".filter((k) => GIFT_RE.test(k))",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-hold-unread",
+    "file": "server-account/src/titles.js",
+    "old": ", ...giftPiecesOf(player)]);",
+    "new": "]);",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-a-guest-given-it",
+    "file": "tools/sendServerPost.mjs",
+    "old": "WHERE handle IS NOT NULL AND instr(",
+    "new": "WHERE instr(",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-a-guests-aurum",
+    "file": "tools/sendServerPost.mjs",
+    "old": "FROM players p WHERE p.handle IS NOT NULL;\n${everyoneSql(THANKS_POST)}",
+    "new": "FROM players p;\n${everyoneSql(THANKS_POST)}",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-ledger-not-once",
+    "file": "tools/sendServerPost.mjs",
+    "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)\nSELECT p.id, 'gift'",
+    "new": "INSERT INTO aurum_ledger (account, kind, ref, amount, day, at)\nSELECT p.id, 'gift'",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-letter-without-its-gift",
+    "file": "tools/sendServerPost.mjs",
+    "old": "${everyoneSql(THANKS_POST)}`;",
+    "new": "${everyoneSql({ ...THANKS_POST, gift: null })}`;",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-box-drops-the-gift",
+    "file": "server-account/src/post.js",
+    "old": "    ...(giftOf(row.gift) ? { gift: row.gift } : {}),",
+    "new": "",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-page-drops-the-gift",
+    "file": "src/net/postLaw.js",
+    "old": ", ...(gift ? { gift } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-letter-mute",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "  return g ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))] : [];",
+    "new": "  return g ? [] : [];",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-one-arm",
+    "file": "src/render/armoryPass.js",
+    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
+    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ],
+    "note": "Merge of main (re-aimed by content): the spurs on ARMORY-MIRROR's upperArm"
+  },
+  {
+    "name": "THANKS-POST-spurs-into-the-body",
+    "file": "src/render/armoryPass.js",
+    "old": "const dir = unit(add(add(outward, back, SPUR_TAN[k]), d, p.lean));",
+    "new": "const dir = unit(add(add([-outward[0], -outward[1], -outward[2]], back, SPUR_TAN[k]), d, p.lean));",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ],
+    "note": "AUDIT lane 3 F7 (re-aimed by content): the turn's tangent read once"
+  },
+  {
+    "name": "THANKS-POST-the-forearms-on-a-sprite",
+    "file": "src/render/armoryPass.js",
+    "old": "        if (p.seg === 'fore' && !full) return;\n",
+    "new": "",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-colour-still",
+    "file": "src/render/armoryPass.js",
+    "old": "  float h = uTime ${hz(ARMORY_HZ.prism)} + uSeed",
+    "new": "  float h = uSeed",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-tip-unlit",
+    "file": "src/render/armoryPass.js",
+    "old": "lit * (0.45 + 0.55 * tip)",
+    "new": "lit",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "THANKS-POST-the-facets-unlit",
+    "file": "src/render/armoryPass.js",
+    "old": "  float lit = 0.3 + 0.7 * clamp(vS.x, 0.0, 1.0) *",
+    "new": "  float lit = 0.3 + 0.7 * 1.0 *",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F7-the-spurs-a-round-tube",
+    "file": "src/render/armoryPass.js",
+    "old": "tube(k, root, add(root, dir, p.len * s), p.r, 0.0015, fwd, true);",
+    "new": "tube(k, root, add(root, dir, p.len * s), p.r, 0.0015);",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F5-the-prism-unpainted",
+    "file": "src/ui/playerBadge.js",
+    "old": "  crystal: Object.freeze([Object.freeze([0.55, 0.32, 1, 1]), Object.freeze([0.22, 0.85, 0.95, 1]), Object.freeze([1, 0.38, 0.72, 1])]),\n",
+    "new": "",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F5-the-ring-unpainted",
+    "file": "src/ui/collections/wardrobePart.js",
+    "old": "const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ?? TITLE_GRADIENT",
+    "new": "const stops = TITLE_GRADIENT",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F5-the-locked-look-two-lines-alone",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal, .card button.actarmory.locked.aura-guild, .card button.actarmory.locked.aura-crystal {",
+    "new": ".card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal {",
+    "tests": [
+      "test/server/thanks_post.test.js"
+    ]
+  }
+]

@@ -147,6 +147,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'hudBarsSplit',     // HUD-MOVE: whether this player's three bars move apart - the same screen's
   'hudSnap',          // HUD-SNAP: whether this player's pieces catch on each other while moved - the same screen's
   'shotDownload',     // LOAD1: whether THIS player's screenshot key also saves a file - their disk, nobody else's
+  'autoUpdates',      // AUTO-UPDATE: whether THIS player's game restarts itself onto a new version
   'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
@@ -167,9 +168,10 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'chatChannelColours', 'chatPingSound',   // CHAT-COLOURS, PING1: how THIS player's chat is coloured and whether a ping chimes - a screen and an ear, nothing the room agrees on
   'chatTrade', 'chatLfg',   // CHAT-TRADE: whether THIS player listens to the Trade and LFG channels - their tabs, nothing the room agrees on
   'standingAll',   // EVERY-STANDING: whether THIS player's Standing page lists every faction's number - a page they read, nothing the room agrees on
+  'shopHidden',   // SHOP-HIDE: whether THIS player's pause screen draws the shop's gem - the device's own choice, nothing the room agrees on
   'reducedMotion',   // EG-G1: whether THIS player's HUD stands still (ui/eliteGates/egAccess.js) - an accessibility choice, nothing the room agrees on
   'townPanelFolded',   // NOTICE-PANEL: whether the town panel is folded to its name - a view of this screen's alone
-  'capeShown',   // CAPE-TOGGLE: whether THIS player's cloak and aura are drawn - their own look, which the room is told (systems/capeShown.js)
+  'capeShown',   // CAPE-TOGGLE: whether THIS player's cloak is drawn - their own look, which the room is told (systems/capeShown.js)
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
 /** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU

@@ -1,0 +1,215 @@
+[
+  {
+    "name": "PASS-PANELS-law-a-held-item-sold-again",
+    "file": "src/net/battlePassLaw.js",
+    "old": "  if (a.bought.includes(/** @type {string} */ (grant))) return 'held';\n",
+    "new": "",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-a-premium-item-on-a-shut-track",
+    "file": "src/net/battlePassLaw.js",
+    "old": "  if (at.track === 'premium' && !a.premium) return 'track';\n",
+    "new": "",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-a-shut-panel-sold",
+    "file": "src/net/battlePassLaw.js",
+    "old": "  if (!passPanelOpen(season, at.track, at.panel, a.bought)) return 'panel';\n",
+    "new": "",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-a-panel-opened-by-the-other-track",
+    "file": "src/net/battlePassLaw.js",
+    "old": "return p >= 0 && p < panels.length && passSpentOn(season, track, bought) >= panels[p].open;",
+    "new": "return p >= 0 && p < panels.length && PASS_TRACKS.reduce((a, t) => a + passSpentOn(season, t, bought), 0) >= panels[p].open;",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-the-tracks-shut-with-the-season",
+    "file": "src/net/battlePassLaw.js",
+    "old": "Number.isFinite(nowMs) && nowMs >= season.fromMs;",
+    "new": "Number.isFinite(nowMs) && nowMs >= season.fromMs && nowMs < season.toMs;",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-a-find-past-the-bound",
+    "file": "src/net/battlePassLaw.js",
+    "old": "return Math.min(PASS_SOURCES[/** @type {keyof typeof PASS_SOURCES} */ (source)], left);",
+    "new": "return PASS_SOURCES[/** @type {keyof typeof PASS_SOURCES} */ (source)];",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-the-card-premium-from-a-truthy-word",
+    "file": "src/net/battlePassLaw.js",
+    "old": "premium: c.tracks?.premium === true }",
+    "new": "premium: !!c.tracks?.premium }",
+    "tests": [
+      "test/net/passpanels_law.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-the-card-keeps-a-strangers-item",
+    "file": "src/net/battlePassLaw.js",
+    "old": "=> !!passItemOf(season.id, g) && a.indexOf(g) === i)",
+    "new": "=> a.indexOf(g) === i)",
+    "tests": [
+      "test/net/passpanels_law.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-the-items-read-a-strangers-grant",
+    "file": "src/net/battlePassLaw.js",
+    "old": ".filter((g) => PASS_ALL_GRANTS.includes(g)))]",
+    "new": ".filter(Boolean))]",
+    "tests": [
+      "test/net/passpanels_law.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-open-free",
+    "file": "server-account/src/battlePass.js",
+    "old": ".bind(player.id, trackRef(id), -cost,",
+    "new": ".bind(player.id, trackRef(id), 0,",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-open-unguarded",
+    "file": "server-account/src/battlePass.js",
+    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`)\n        .bind(player.id, trackRef(id)",
+    "new": "WHERE ?6 > 0`)\n        .bind(player.id, trackRef(id)",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-price-never-spent",
+    "file": "server-account/src/battlePass.js",
+    "old": "-at.aurum, utcDay(nowS), nowS, at.aurum)",
+    "new": "0, utcDay(nowS), nowS, at.aurum)",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-buy-unguarded",
+    "file": "server-account/src/battlePass.js",
+    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`)\n          .bind(player.id, `${id}:${grant}`",
+    "new": "WHERE ?6 > 0`)\n          .bind(player.id, `${id}:${grant}`",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-item-never-written",
+    "file": "server-account/src/battlePass.js",
+    "old": "[...was.split(' ').filter(Boolean), grant].join(' ')",
+    "new": "was",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-row-unguarded",
+    "file": "server-account/src/battlePass.js",
+    "old": "WHERE id = ?1 AND pass_items = ?3')",
+    "new": "WHERE id = ?1 AND ?3 = ?3')",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-premium-track-never-asked",
+    "file": "server-account/src/battlePass.js",
+    "old": "const premium = at.track === 'premium' && (await premiumOf(db, player.id, id));",
+    "new": "const premium = true;",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-switch-ignored",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (!passOpenFor(player, env) || !aurumOpenFor(player, env)) return { error: 'pass-closed' };\n",
+    "new": "  if (!aurumOpenFor(player, env)) return { error: 'pass-closed' };\n",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-a-guest-served",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (!player?.handle) return { error: 'pass-guest' };\n",
+    "new": "",
+    "tests": [
+      "test/server/passpanels_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-the-finds-shut-with-the-season",
+    "file": "server-account/src/battlePass.js",
+    "old": "nowS * 1000 < PASS_FINDS_FROM_MS) return { error: 'closed' };",
+    "new": "nowS * 1000 < PASS_FINDS_FROM_MS || !passSeasonAt(nowS * 1000)) return { error: 'closed' };",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-a-finds-aurum-off-the-ledger",
+    "file": "server-account/src/battlePass.js",
+    "old": "FROM pass_days WHERE account = ?1 AND day = ?3 AND last > 0",
+    "new": "FROM pass_days WHERE account = ?1 AND day = ?3 AND last < 0",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-service-a-challenge-counted-past-its-season",
+    "file": "server-account/src/battlePass.js",
+    "old": "const season = passSeasonAt(nowS * 1000), stage",
+    "new": "const season = passSeasonShown(nowS * 1000), stage",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-client-the-finds-shut-with-the-season",
+    "file": "src/systems/pass/passClient.js",
+    "old": "return _doors.nowMs() >= PASS_FINDS_FROM_MS && !_rest.resting();",
+    "new": "return _doors.nowMs() >= PASS_FINDS_FROM_MS && _doors.nowMs() < PASS_FINDS_FROM_MS + 60 * 86_400_000 && !_rest.resting();",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-client-a-find-answer-taken-for-the-card",
+    "file": "src/systems/pass/passClient.js",
+    "old": "_state = told ? { ...(was ?? {}), ...(ofToday && Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;",
+    "new": "_state = told ? d : d;",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  }
+]

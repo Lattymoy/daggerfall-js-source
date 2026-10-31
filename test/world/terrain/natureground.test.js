@@ -46,7 +46,8 @@ test('NATURE-GROUND by source: the pixel build lifts the block\'s nature flats b
   // PIN MOVED (SOLITUDE-RELIEF): the offset `off`, read for a seated block's nature range too (its own law, below)
   assert.match(w, /const off = flat\.archive === natureArchive \|\| \(hillSeat && isNatureArchive\(flat\.archive\)\) \? groundOffPlane\(samples, avg, fx, fz\) : 0;/, 'the climate\'s nature archive alone - a lamp, a sign, an animal may stand on a model');
   // TREES-SEATED (test/world/fb1003b_trees.test.js): a block whose hills the port draws as its stand-ins seats its whole nature RANGE
-  // on the higher of that ground and the mounds; every other block keeps the plane and this lift, as before
-  assert.match(w, /const hillY = hillSeat && isNatureArchive\(flat\.archive\) \? NATURE_FLATS_Y \+ off - \(blockY - locLocal\[1\]\) : null;\n\s+const fy = hillY !== null \? blockY \+ seatNatureFlat\(hillSeat, flat\.x, flat\.z, hillY\) : flat\.archive === natureArchive \? locLocal\[1\] \+ flat\.y \+ off : blockY \+ flat\.y;\n\s+addFlat\(flat\.archive, flat\.record, fx, fy, fz, \{ block, n \}\);/);
+  // on the higher of that ground and the mounds; every other block keeps the plane and this lift, as before. PIN MOVED (AUDIT
+  // PROP-GROUND): a block flat past the nature's stands on the street its town's fabric lays (`lift`, fabricLift - 0 off it)
+  assert.match(w, /const hillY = hillSeat && isNatureArchive\(flat\.archive\) \? NATURE_FLATS_Y \+ off - \(blockY - locLocal\[1\]\) : null;\n\s+const fy = hillY !== null \? blockY \+ seatNatureFlat\(hillSeat, flat\.x, flat\.z, hillY\) : flat\.archive === natureArchive \? locLocal\[1\] \+ flat\.y \+ off : blockY \+ flat\.y \+ lift;\n\s+addFlat\(flat\.archive, flat\.record, fx, fy, fz, \{ block, n \}\);/);
   assert.match(w, /const flatOpts = \{ climateIndex: maps\.getClimateIndex\(px, py\), solid: blockSolids\([^\n]*\n\s+const blockFlats = collectBlockFlats\(b\.dfBlock, natureArchive, flatOpts\);/, 'the archive the scenery and the nature flats were swapped to (FIELD BUGS 2026-10-04d CROPS: a field\'s batch handed the climate and the block\'s solids too)');
 });

@@ -4,21 +4,27 @@
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  return (valuablePiece(item) || WILD_GEAR_GROUPS.includes(item.group)) && wildCanLose(item);",
     "new": "  return valuablePiece(item) && wildCanLose(item);",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-a-stack-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
     "new": "  if (item.bound === true || item.questItem === true) return false;",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-a-bound-or-quest-piece-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
     "new": "  if (Number.isInteger(item.stackCount) && item.stackCount > 1) return false;",
-    "tests": ["test/systems/wild/insureall.test.js"],
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ],
     "equivalent": true,
     "why": "belt-and-braces: wildCanLose, which the same law reads, refuses a bound and a quest piece by the trade's own refusals (net/realm/realmTradeLaw.js tradeableRecord) - the law's own word for them kept beside it"
   },
@@ -27,111 +33,143 @@
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  return typeof item.uid === 'string' && ITEM_UID_RE.test(item.uid) ? item.uid : null;\n}",
     "new": "  return null;\n}",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-id-minted-twice",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  if (insureKeyOf(item) == null && Object.isExtensible(item)) item.uid = mintItemId(rand);",
     "new": "  if (Object.isExtensible(item)) item.uid = mintItemId(rand);",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-makers-gold-unread",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
     "new": "Math.max(1, Math.ceil(itemWorth(item) / WILD_INSURE_DIVISOR))",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-a-side-effect-paid",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "g + Math.max(0, enchantmentRowCost(e) ?? 0)",
     "new": "g + Math.abs(enchantmentRowCost(e) ?? 0)",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-rows-own-cost-read",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "g + Math.max(0, enchantmentRowCost(e) ?? 0)",
     "new": "g + Math.max(0, e.enchantCost ?? 0)",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-gold-per-point-dropped",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "Math.max(0, enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
     "new": "Math.max(0, enchantmentRowCost(e) ?? 0), 0);",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-ladders-row-paid",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "item.enchantments.filter(makerLaid) : [];",
     "new": "item.enchantments : [];",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-a-shared-key-kept",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "    if (seen.has(k)) set.delete(k);\n",
     "new": "",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-fall-reads-no-among",
     "file": "server-account/src/wild.js",
     "old": "{ villain: isVillain(Number(row.villainy)), among: stored.items }",
     "new": "{ villain: isVillain(Number(row.villainy)) }",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-a-shared-key-insured",
     "file": "server-account/src/wildInsure.js",
     "old": "      const piece = named.length === 1 ? named[0] : null;",
     "new": "      const piece = named[0] ?? null;",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-saved-by-the-ledger-key",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const keyOf = /** @type {any} */ (insured).keyOf ?? ledgerKeyOf;",
     "new": "  const keyOf = ledgerKeyOf;",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-policy-pick-by-the-ledger-key",
     "file": "src/systems/wild/pvpReward.js",
     "old": "offer.filter((it) => insured(it)).map(insureKeyOf)",
     "new": "offer.filter((it) => insured(it)).map((it) => it.provenance ?? null)",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-book-mints-no-id",
     "file": "src/net/wild/wildInsureBook.js",
     "old": "      const key = wildInsureKey(item), gold = wildPremium(item), at = region();",
     "new": "      const key = insureKeyOf(item), gold = wildPremium(item), at = region();",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-book-offers-no-plain-gear",
     "file": "src/net/wild/wildInsureBook.js",
     "old": "!!character() && wildInsurable(item) && !book.policyOf(item);",
     "new": "!!character() && insureKeyOf(item) != null && wildInsurable(item) && !book.policyOf(item);",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-service-finds-by-the-ledger-key",
     "file": "server-account/src/wildInsure.js",
     "old": "      const named = pack.filter((it) => insureKeyOf(it) === k);",
     "new": "      const named = pack.filter((it) => insureKeyOf(it) === k && it.uid !== k);",
-    "tests": ["test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "INSURE-ALL-the-service-version",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct227';",
+    "old": "export const ACCOUNT_VERSION = 'acct230';",
     "new": "export const ACCOUNT_VERSION = 'acct216';",
-    "tests": ["test/server/realm1.test.js"]
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
   }
 ]

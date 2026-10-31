@@ -12,7 +12,7 @@
   {
     "name": "OW5b-D1-lairs-spend-the-twelve",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "  const inGrid = (g) => !g.found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
+    "old": "  const inGrid = (g) => (!g.found || g.spawn) && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
     "new": "  const inGrid = () => false;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"

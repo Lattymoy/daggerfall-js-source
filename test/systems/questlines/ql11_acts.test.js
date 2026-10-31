@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { webcrypto } from 'node:crypto';
 
 import { parseModule, findHostFunction } from '../../../tools/hostScope.mjs';
-import { ACT_KINDS, ACT_IDS, noteAct, setActSink } from '../../../src/systems/questlines/qlActs.js';
+import { ACT_KINDS, ACT_IDS, ACT_NOT_FOUND, noteAct, setActSink } from '../../../src/systems/questlines/qlActs.js';
 import { hearEliteFoesIn, QL_ELITE_FOE } from '../../../src/systems/questlines/qlEliteFoe.js';
 import { reportPlayerKill, registerPlayerKillListener } from '../../../src/systems/playerKills.js';
 import { createSdClaims } from '../../../src/net/superDungeon/sdClaims.js';
@@ -930,4 +930,17 @@ test('QL11 ship-struck (scenes/naval/navalHost.js, a ship\'s state changed - the
     h.run(1);
     assert.deepEqual(heard, [['ship-struck', 1]], 'mine, once');
   } finally { done(); }
+});
+
+test('AUDIT PASS 1 THE ACTS NO FIND PAYS: one list in the leaf, read by the festival\'s finds and the pass\'s alike, no list of their own; every endgame act that finds is a receipt the service holds - the Ketch\'s lift and cells no find, its Warden one (mutants: the lift a find; a cell a find)', () => {
+  assert.ok(Object.isFrozen(ACT_NOT_FOUND));
+  for (const k of ACT_NOT_FOUND) assert.ok(Object.hasOwn(ACT_KINDS, k), `${k} is a kind`);
+  assert.deepEqual(ACT_IDS.filter((k) => ACT_KINDS[k] === 'endgame' && !ACT_NOT_FOUND.includes(k)),
+    ['rite-broken', 'breach-closed', 'redoubt-taken', 'valkynaz-felled', 'hour-broken', 'serpent-slain', 'dragon-slain', 'star-held', 'heart-star-held', 'warden-felled'],   // PIN MOVED (DRAGON4, at the merge of main): the Dwarven Dragon's fall, its z1 receipt the service records, as the Serpent's
+    'a new endgame act is a receipt the service holds, or goes on the list');
+  for (const f of ['src/systems/festival/festivalClient.js', 'src/systems/pass/passClient.js']) {
+    const text = readFileSync(join(ROOT, f), 'utf8');
+    assert.match(text, /^import \{[^}]*\bACT_NOT_FOUND\b[^}]*\} from '\.\.\/questlines\/qlActs\.js';$/m, `${f} reads the leaf's list`);
+    assert.doesNotMatch(text, /\bconst ACT_NOT_FOUND\b/, `${f} keeps no list of its own`);
+  }
 });

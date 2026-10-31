@@ -9,16 +9,25 @@ import {
   AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights,
   CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S,
 } from '../render/auraRing.js';
-import { auraClothOver } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
-import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, ARMORY_DETAIL_M } from '../render/armoryPass.js';
+import { auraClothOver, auraSpriteAcross, auraShiftAcross } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
+import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, cardRightOf, ARMORY_DETAIL_M } from '../render/armoryPass.js';
 import { ARMORY_BONES, newPose, poseFromBones, poseFromFigure, poseAtRest } from '../render/armoryPose.js';
 import { compiledPass } from '../render/glProgram.js';
 import { peerBodyYaw } from '../net/peer/peerClimb.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
-import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
+import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
+import { bindPeerEffects } from '../net/peer/peerEffects.js';   // STOREFRONT: each peer's worn effects, for a face that holds only its id
 import { getPref } from '../systems/uiPrefs.js';
-import { capeShown, lookCapesHidden } from '../systems/capeShown.js';   // CAPE-TOGGLE: capes hidden - mine by my switch, a peer's by their look
+import { drawAurasThenBacks, SELF_OWNER } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
+import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
+import { createSpriteBacks } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
+import { armoryKitPieces } from '../net/armoryLaw.js';
+import { guildArmsOf, ownGuildArms, setPeerTagReader, setPeerClothReader } from '../net/guild/guildArmsBook.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
+
+/** GUILD-SHOP: the arms a kit's Insignia Armlet wears - its wearer's guild's (`tag`, the token's), or null for none; a kit
+ *  without the armlet reads none, so no guild is asked of for it. Pure but for the arms book's ask. */
+export const armletArmsOf = (/** @type {unknown} */ kit, /** @type {unknown} */ tag) => (armoryKitPieces(kit).arms === 'insigniaarmlet' ? guildArmsOf(tag) : null);
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -37,6 +46,17 @@ export function armoryLayers(/** @type {any[]} */ kits, /** @type {any[]} */ aur
   return under;
 }
 
+/** CAPE-CARD (2026-10-30): what the first sprite layer that draws peer `id` answers to `ask` ('figureOf', 'faceOf') - each
+ *  layer draws a peer as a picture on a card (the Eye of the Beholder walkers and riders, the paperdolls and class
+ *  sprites), and a peer stands in one at most. `eye` the camera the answer is for. Pure. */
+export const spriteAnswer = (/** @type {any[]} */ layers, /** @type {string} */ ask, /** @type {string} */ id, /** @type {any} */ eye = null) => {
+  for (const l of layers) { const a = l?.[ask]?.(id, eye); if (a) return a; }
+  return null;
+};
+
+/** AURA-ON-DRAGON: feet `f` lifted `lift` metres. Pure but for `f`. */
+const liftedFeet = (/** @type {number[]} */ f, /** @type {number} */ lift) => { f[1] += lift; return f; };
+
 /** A peer's seed, by its id - the auras' own (FNV-1a over the id, a share of 997). Pure. */
 export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 997) / 997; };
 
@@ -45,22 +65,30 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  * @param {{
  *   renderer: any, online: () => any, travelActive: () => boolean, quiet: () => boolean, player: () => any, camYaw: () => number,
  *   spawned: () => boolean, beast: () => boolean, veiled: (id: string) => boolean, toScene: (shown: any) => number[],
- *   walkers: () => any, riders: () => any, bodies: () => any,
+ *   sprites: () => any[], bodies: () => any, selfLift?: () => number, peerLift?: (d: any) => number,
  * }} deps
  */
 export function createAuraHost(deps) {
   const { renderer } = deps;
+  bindPeerEffects((id) => deps.online()?.effectsOf?.(id) ?? null);   // STOREFRONT: a peer's gate and spared revenant in its own portal skin
   /** The aura the last minted token said, and the kit (undefined until a service that says one) - a wear since is said
    *  again at the next frame (AURA-LIVE). */
-  let auraHeard, armoryHeard;
-  let gathered = 0;   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
+  let auraHeard, armoryHeard, effectsHeard;   // STOREFRONT: and the effects kit, said again the same way
+  let gathered = 0;
+  let selfLiftNow = 0;   // AURA-ON-DRAGON: the frame's lift of my own (frame's), for the cape hung in draw   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
+  const acrossRight = [1, 0, 0];   // BACK-HOLSTER: the view's right the capes are moved along (auraShiftAcross)
+  // AUDIT BACK-HOLSTER A2: the sprites' backs by wearer (eotbGlow.js createSpriteBacks) - mine and the walkers'
+  const backSources = [eotbBody], worn = new Set(), auraRun = [];
+  const backs = createSpriteBacks(renderer, () => { backSources.length = 1; for (const l of deps.sprites() ?? []) backSources.push(l); return backSources; });   // every sprite layer (the walkers list theirs)
   const auraList = [], auraDraw = [], auraPool = new Map(), auraLights = [], armoryList = [], armoryDraw = [], armoryPool = new Map();
   const armoryUnder = [], armoryOver = [];   // ARMORY-SEEN: this frame's pieces under the cloth on their back, and the rest
-  const self = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
+  const self = { id: SELF_OWNER, at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
   const selfKit = { id: 'self', at: [0, 0, 0], kit: null, seed: 0.37, kindle: 1, since: 0, yaw: 0, pose: newPose(), torn: -1 };
   // AURA-STALL (bible/07-Rendering/Performance-Priority.md): built at the first wearer in range, each look's program at its
   // own door; a throw costs the auras, never the game. The armory's pass the same.
   const auraPassOf = compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the aura would not build', e?.message ?? e));
+  setPeerTagReader((id) => deps.online()?.guildTagOf?.(id) ?? null);   // GUILD-SHOP: a peer's guild, for their boats' sailcloth
+  setPeerClothReader((id) => deps.online()?.sailclothOf?.(id) === true);   // AUDIT GUILD-SHOP S2: and whether the sailcloth is theirs
   const armoryPassOf = compiledPass(renderer.gl, [], () => new ArmoryRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the armory would not build', e?.message ?? e));
   const fogNow = () => ({ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze });
   /** ARMORY-SEEN: one layer of the frame's pieces (armoryLayers), under the frame's camera. */
@@ -71,21 +99,38 @@ export function createAuraHost(deps) {
     if (pass?.drawn) renderer.markForeignPass();
   };
 
+  /** FOLLOW-NOW (2026-10-30, mob: "aura ghost behind the player", "th red glow", "is a few frame behind the charcter"):
+   *  MY OWN COSMETICS WHERE MY BODY IS DRAWN THIS FRAME. The gather (frame) runs with the online frame, BEFORE the motor
+   *  steps the player - so a kit and a strip aura placed there stood where I was a frame ago, and on the camera's low-passed
+   *  feet: a ghost trailing the body by a step, far behind it flying. At the draw, after the step and the body's own draw,
+   *  mine stand again at the body's feet (bodyFeetAt, lifted on my dragon), and the kit is posed off the body as drawn
+   *  and its motion stepped there. A peer's stand where the gather put them, as their bodies do. */
+  function placeSelf(/** @type {number} */ now) {
+    if (!self.aura && !selfKit.kit) return;
+    const player = deps.player(), faced = mwViewSpriteFacing(), yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());
+    if (self.aura) { const f = liftedFeet(player.bodyFeetAt?.() ?? player.feetAt(), selfLiftNow); self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.yaw = yaw; }
+    if (selfKit.kit && armoryList.includes(selfKit)) {
+      const f = liftedFeet(player.bodyFeetAt?.() ?? player.feetAt(), selfLiftNow), vw = renderer._view;
+      selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.yaw = yaw;
+      selfPose(selfKit.pose, player, selfLiftNow > 0); armoryMotionStep(selfKit, now, vw ? cardRightOf(renderer._proj, vw) : null);
+    }
+  }
   /** The pose of my own body as drawn - the rig's bones, the sprite's figure, or the rest pose pressed to my height. */
-  function selfPose(/** @type {any} */ pose, /** @type {any} */ player) {
+  function selfPose(/** @type {any} */ pose, /** @type {any} */ player, aloft = false) {
+    if (aloft) { poseAtRest(pose, player.height / CAPSULE_HEIGHT, true); return; }   // AURA-ON-DRAGON: no body of mine drawn - the dragon's rider wears it
     if (poseFromBones(mwViewBodyBones(ARMORY_BONES), pose)) return;
     if (poseFromFigure(mwViewSpriteFigure(), pose)) return;
     poseAtRest(pose, player.height / CAPSULE_HEIGHT, !!player.riding);
   }
   /** A peer's pose as drawn - its Morrowind body's bones (peerBodies.bonesOf answers `{ feet, yaw, bones }`: the body stands
    *  the wearer where it is drawn, as the cape's auraCapeStep does), its sprite's figure, or the rest pose (a rider's saddled). */
-  function peerPose(/** @type {string} */ id, /** @type {any} */ w) {
+  function peerPose(/** @type {string} */ id, /** @type {any} */ w, /** @type {any[]} */ layers) {
     const body = deps.bodies()?.bonesOf?.(id, ARMORY_BONES);
     if (body && poseFromBones(body.bones, w.pose)) {
       if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0]; w.at[1] = body.feet[1]; w.at[2] = body.feet[2]; w.yaw = body.yaw; }
       return;
     }
-    if (poseFromFigure(deps.walkers()?.figureOf?.(id) ?? deps.riders()?.figureOf?.(id), w.pose)) return;
+    if (poseFromFigure(spriteAnswer(layers, 'figureOf', id), w.pose)) return;
     poseAtRest(w.pose, 1, w.mounted);
   }
   /** Whether a peer's pieces are drawn at all, by the player's "Others' armory" choice. */
@@ -99,6 +144,7 @@ export function createAuraHost(deps) {
     issued(/** @type {any} */ who) {
       if (who && 'aura' in who) auraHeard = who.aura ?? null;
       if (who && 'armory' in who) armoryHeard = who.armory ?? null;
+      if (who && 'effects' in who) effectsHeard = who.effects ?? null;
     },
     /** WB9g: GATHERED WITH THE PEERS each frame - mine as the service signed it, and every peer's the relay vouched for. */
     frame(/** @type {any[]} */ seen) {
@@ -106,49 +152,54 @@ export function createAuraHost(deps) {
       const online = deps.online();
       if (!online || deps.travelActive()) return;
       if (deps.quiet()) return;   // EG-E2 (Elite-Gates.md section 25.4, THE QUIET COMPANY): no cosmetic aura during a Spire's trial
-      const t = performance.now() / 1000, player = deps.player(), walkers = deps.walkers(), riders = deps.riders();
-      const vw = renderer._view, right = vw ? [vw[0], vw[4], vw[8]] : null;   // the view's right, a sprite's feet off it (the draw's)
+      const t = performance.now() / 1000, player = deps.player(), layers = deps.sprites(), eye = renderer._camPos;   // CAPE-CARD: every sprite layer, and the eye their pictures face
+      const vw = renderer._view, right = vw ? cardRightOf(renderer._proj, vw) : null;   // the card's right, a sprite's feet off it (the draw's; ARMORY-MIRROR)
       // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say is
       // said again, so the room sees it now. ARMORY: and the kit the same
-      const mine = ownAura(), kit = ownArmory();
-      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; } }
+      const mine = ownAura(), kit = ownArmory(), fx = ownEffects();
+      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard !== undefined && fx !== effectsHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; effectsHeard = fx; } }
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
-      if (mine && spawned && capeShown()) {   // CAPE-TOGGLE: my aura hidden with my cloak, here and (the look's `hc`) on every screen
-        const f = player.feetAt();
+      const lift = deps.selfLift?.() || 0;   // AURA-ON-DRAGON: on my dragon, worn where its rider sits
+      selfLiftNow = lift;
+      // CAPE-TOGGLE (2026-10-30, mob: "it saposta help show the aura not tuen it off"): hiding the cape hides the cloak alone,
+      // never the aura - mine here, and (the look's `hc`) a peer's below
+      if (mine && spawned) {
+        const f = player.feetAt(); f[1] += lift;
         if (self.aura !== mine) self.since = t;
         self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine; self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw()); auraBeastStep(self, deps.beast(), t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
-        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding;   // SHADOW-CLOAK: a rider's cape folded away
+        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding || lift > 0;   // SHADOW-CLOAK: a rider's cape folded away; AURA-ON-DRAGON: a dragon's rider is one
         auraList.push(self);
       } else self.aura = null;
       if (kit && spawned) {
-        const f = player.bodyFeetAt?.() ?? player.feetAt();
+        const f = player.bodyFeetAt?.() ?? player.feetAt(); f[1] += lift;
         if (selfKit.kit !== kit) selfKit.since = t;
         selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.kit = kit; selfKit.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());
-        selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding; selfKit.torn = deps.beast() ? 1 : -1;
-        selfPose(selfKit.pose, player); armoryMotionStep(selfKit, t, right);
-        armoryList.push(selfKit);
+        selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding || lift > 0; selfKit.torn = deps.beast() ? 1 : -1;
+        /** @type {any} */ (selfKit).arms = armoryKitPieces(kit).arms === 'insigniaarmlet' ? ownGuildArms() : null;   // GUILD-SHOP
+        armoryList.push(selfKit);   // FOLLOW-NOW: placed, posed and stepped at the draw (draw's placeSelf)
       } else selfKit.kit = null;
       for (const d of seen) {
         if (deps.veiled(d.id) || !d.shown) continue;   // a concealed peer's fire is concealed with them
-        const au = lookCapesHidden(online.lookOf?.(d.id)) ? null : online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;   // CAPE-TOGGLE: a peer who hides their capes wears no aura here
+        const au = online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;   // CAPE-TOGGLE: a peer who hides their capes wears no aura here
         if (!au) auraPool.delete(d.id);
         if (!ak) armoryPool.delete(d.id);
         if (!au && !ak) continue;
-        const p = deps.toScene(d.shown);
-        const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame
+        const seenAs = spriteAnswer(layers, 'faceOf', d.id, eye), p = seenAs?.at ?? deps.toScene(d.shown), up = deps.peerLift?.(d) || 0;   // AURA-ON-DRAGON: a dragon's rider wears them in its seat; AUDIT CAPE-CARD A4: at its picture's own feet (a seated doll sinks)
+        const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame; CAPE-CARD: a paperdoll's and a class sprite's too
         if (au) {
           let w = auraPool.get(d.id);
           if (!w || w.aura !== au) { w = { id: d.id, at: [0, 0, 0], aura: au, seed: auraSeedOf(d.id), kindle: 0, since: t }; auraPool.set(d.id, w); }
-          w.at[0] = p[0]; w.at[1] = p[1]; w.at[2] = p[2]; w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);   // SHADOW-CLOAK: the peer's facing (to the wall on a climb); turned beast (the pose's `wb`), the cloak torn
+          w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);   // SHADOW-CLOAK: the peer's facing (to the wall on a climb); turned beast (the pose's `wb`), the cloak torn
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t; w.mounted = !!d.shown.rd;   // SHADOW-CLOAK: a rider's (a horse, a cart) cape folded away
           auraList.push(w);
         }
         if (ak) {
           let w = armoryPool.get(d.id);
           if (!w || w.kit !== ak) { w = { id: d.id, at: [0, 0, 0], kit: ak, seed: auraSeedOf(d.id), kindle: 0, since: t, pose: newPose(), torn: -1 }; armoryPool.set(d.id, w); }
-          w.at[0] = p[0]; w.at[1] = p[1]; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
+          w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t;
-          peerPose(d.id, w); armoryMotionStep(w, t, right);
+          w.arms = armletArmsOf(ak, online.guildTagOf?.(d.id));   // GUILD-SHOP: the arms their token's guild bears
+          peerPose(d.id, w, layers); armoryMotionStep(w, t, right);
           armoryList.push(w);
         }
       }
@@ -159,13 +210,17 @@ export function createAuraHost(deps) {
     draw() {
       const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;   // the frame's camera, the world's own
       const now = performance.now() / 1000;
+      placeSelf(now);
       if (!(proj && view && eye && auraList.length && auraWearers(auraList, eye, auraDraw).length)) auraDraw.length = 0;
       if (auraDraw.length) {
-        const player = deps.player(), walkers = deps.walkers(), riders = deps.riders(), faced = mwViewSpriteFacing();
+        const player = deps.player(), layers = deps.sprites(), faced = mwViewSpriteFacing();
         // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at
         // rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE: a sprite's faced as its
-        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`)
-        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: player.bodyFeetAt(), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`); AUDIT CAPE-CARD A3: my sprite's a card
+        // (`card`), so in the saddle, with no figure to read, what hangs on my back stands behind it as on a walker
+        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, spriteAnswer(layers, 'figureOf', w.id), spriteAnswer(layers, 'faceOf', w.id, eye)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+        // BACK-HOLSTER: a sprite's cape and wings stand at its painted body (auraSpriteAcross), moved there for the pass alone
+        for (const w of auraDraw) w.across = auraLookOf(w.aura).mesh ? auraSpriteAcross(w === self ? (selfLiftNow > 0 || mwViewBodyBones(CLOAK_BONES) ? null : mwViewSpriteFigure()) : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ? null : spriteAnswer(layers, 'figureOf', w.id)) : 0;
       }
       auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
       armoryDraw.length = 0;
@@ -179,10 +234,19 @@ export function createAuraHost(deps) {
       // the rest after. Drawn after every cape, the pieces under one burned through it
       armoryLayers(armoryDraw, auraDraw, eye, armoryUnder, armoryOver);
       drawArmory(armoryUnder, proj, view, eye, now);
-      if (auraDraw.length) {
-        const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing above
-        pass?.draw(auraDraw, proj, view, eye, now, fogNow());
-        if (pass?.drawn) renderer.markForeignPass();
+      // BACK-HOLSTER (AUDIT A2): a sprite's back - its weapon drawn again, its glows - over its OWN aura and under a nearer
+      // one: a body wearing none before the auras, every frame; each wearer's straight after its aura (drawAurasThenBacks)
+      const pass = auraDraw.length ? auraPassOf() : null;   // AURA-STALL: null while its program compiles - the capes still hang and swing above
+      worn.clear();
+      if (pass) for (const w of auraDraw) worn.add(w.id);
+      if (proj && view) backs.drawBare(worn);
+      if (pass) {
+        const yaw = deps.camYaw(), fog = fogNow();
+        acrossRight[0] = Math.cos(yaw); acrossRight[2] = -Math.sin(yaw);   // the view's right, as the sprites' quads take it
+        auraShiftAcross(auraDraw, acrossRight, 1);
+        try {
+          drawAurasThenBacks(auraDraw, (run) => { pass.draw(run, proj, view, eye, now, fog); if (pass.drawn) renderer.markForeignPass(); return pass.drawn; }, (w) => backs.has(w.id), (w) => backs.draw(w.id), auraRun);
+        } finally { auraShiftAcross(auraDraw, acrossRight, -1); }   // AUDIT BACK-HOLSTER A9: the feet given back, whatever the pass did
       }
       drawArmory(armoryOver, proj, view, eye, now);
     },

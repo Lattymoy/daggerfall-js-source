@@ -115,7 +115,8 @@ export function nearDungeons({ at, dungeons, locAt, isFound, spawns = [], spawnK
     out.push({ key: `spawn:${s.loc.mapTableData?.mapId}`, x: s.x, y: s.y, loc: s.loc, row: null, d, found: !!spawnFound(s), spawn: true });
   }
   const nearer = (a, b) => a.d - b.d || a.x - b.x || a.y - b.y;
-  const inGrid = (g) => !g.found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;   // AUDIT OW5b D1
+  // AUDIT OW5b D1; AUDIT FB1030 Z1: and a found spawn there - nothing else plates it (SPAWN-PLATE), so past the twelve it had none
+  const inGrid = (g) => (!g.found || g.spawn) && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;
   const rest = out.filter((g) => !inGrid(g));
   rest.sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0) || nearer(a, b));   // AUDIT OW4 D7: the found first
   return [...out.filter(inGrid), ...rest.slice(0, max)].sort(nearer);

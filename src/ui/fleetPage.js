@@ -20,7 +20,9 @@ import { HERALDRY_COLOURS, HERALDRY_DEVICES, HERALDRY_DIVISIONS, HERALDRY_DIVISI
 import { FLAG_SHAPES, FLAG_DEFAULT, fitFlag, flownFlag } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: her flag's law
 import { flagSvg } from './flagArt.js';   // SHIP-COLOURS: and its picture
 import { SHIP_PAINTS, LIVERY_PARTS, liveryOf } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: her paint's law
+import { clothSvg, sailClothRows } from './sailClothPanel.js';   // GUILD-SHOP: her sailcloth
 import { t } from '../systems/textManager.js';   // SHIP-COLOURS: the designer's words in the player's language
+import { carvingOpen, toggleCarving, carvingShut, carvingPanel } from './figureheadPanel.js';   // FIGUREHEAD: her carving's panel
 
 export const FLEET_PAGE_SECTIONS = Object.freeze([Object.freeze(['fleet', 'Fleet'])]);
 /** Come Sail Away's two items' pictures: a deed's (209/5) for a ship whose title is held, her parts' (212/11) packed. */
@@ -278,7 +280,7 @@ const BUILT = Object.freeze({ 1: [[58, 92, 70], [176, 128, 48]], 2: [[118, 34, 2
  * SHIP-LIVERY: her paint as a picture - a hull in profile, her strake and her trim, a mast and her sail, in the colours
  * her livery gives each (her own as built where it gives none; a stained hull's wood stained). Pure SVG.
  */
-export function paintSvg(hull, livery, { width = 150 } = {}) {
+export function paintSvg(hull, livery, { width = 150, heraldry = null } = {}) {
   const l = liveryOf(livery, hull) ?? { strake: 0, accent: 0, sail: 0, stain: 0 };
   const rgbOf = (i, built) => SHIP_PAINTS[i]?.rgb ?? built;
   const oak = [104, 72, 44], stainOf = SHIP_PAINTS[l.stain]?.rgb;
@@ -290,6 +292,7 @@ export function paintSvg(hull, livery, { width = 150 } = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="${width}" height="${h}" role="img">`
     + `<rect x="0" y="78" width="150" height="22" fill="#2b4a5c"/>`
     + (sails ? `<rect x="73" y="10" width="4" height="62" fill="#5c3f26"/><path d="M78 14 L118 20 L114 62 L78 64 Z" fill="${hexOf(sail)}" stroke="#3a2a1a" stroke-width="1"/>` : '')
+    + (sails ? clothSvg(/** @type {any} */ (l).cloth, hexOf(rgbOf(/** @type {any} */ (l).cloth?.second ?? 0, [214, 205, 180])), heraldry) : '')   // GUILD-SHOP: her sailcloth
     + `<path d="M12 60 L138 60 L124 84 L28 84 Z" fill="${hexOf(wood)}" stroke="#2a1a10" stroke-width="1.2"/>`
     + `<path d="M15 62 L135 62 L131 70 L19 70 Z" fill="${hexOf(strake)}"/>`
     + (built ? `<rect x="17" y="60" width="118" height="2" fill="${hexOf(trim)}"/><rect x="20" y="70" width="111" height="1.5" fill="${hexOf(trim)}"/>` : '')
@@ -317,15 +320,17 @@ function paintSwatches(el, word, current, choose) {
 }
 /** HER PAINT: her picture in the paint chosen, a row of paints for each part her hull takes, and Paint her, Strip her
  *  paint (back as built) or Close. Every player who sights her sees it. */
-function paintPanel(el, s, rerender, act) {
+function paintPanel(el, s, rerender, act, arms = null) {
   const box = el('div', 'hld-text hld-colours');
   const d = { strake: 0, accent: 0, sail: 0, stain: 0, ...(s.livery ?? {}), cabin: s.cabin ?? 0, ...(_paint ?? {}) };
   const set = (k, v) => { _paint = { ...d, [k]: v }; rerender(); };
   const pic = el('div', 'hld-flag');
   pic.setAttribute('aria-label', t('naval.paint.preview', 'Paint preview'));
-  pic.innerHTML = paintSvg(s.hull, d, { width: 150 });
+  pic.innerHTML = paintSvg(s.hull, d, { width: 150, heraldry: arms });
   box.append(pic);
   for (const part of s.paints ?? []) box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));
+  // GUILD-SHOP: her sailcloth, the Guild Sailcloth's - on a hull with a sail
+  if (s.clothable) box.append(sailClothRows(el, d.cloth ?? null, (c) => set('cloth', c), { held: s.cloth ?? null, armed: !!heraldryOf(arms), swatches: paintSwatches, button }));
   // CABIN-LOOK: her cabin's wood, below decks - made at her next visit there
   if (s.cabin != null) {
     box.append(paintSwatches(el, t('naval.paint.p.cabin', 'Cabin wood'), d.cabin, (v) => set('cabin', v)));
@@ -333,7 +338,7 @@ function paintPanel(el, s, rerender, act) {
   }
   box.append(el('span', 'hld-sub', t('naval.paint.note', 'Painting is free and works wherever the ship is. Other players see it.')));
   const acts = el('div', 'hld-acts');
-  const chosen = { ...Object.fromEntries(LIVERY_PARTS.map((p) => [p, d[p] ?? 0])), cabin: d.cabin ?? 0 };
+  const chosen = { ...Object.fromEntries(LIVERY_PARTS.map((p) => [p, d[p] ?? 0])), cabin: d.cabin ?? 0, cloth: d.cloth ?? null };
   acts.append(button(el, t('naval.paint.apply', 'Apply paint'), null, () => { _open = null; _paint = null; act('livery', chosen); }, 'act primary'));
   if (s.livery || s.cabin) acts.append(button(el, t('naval.paint.strip', 'Remove paint'), null, () => { _open = null; _paint = null; act('livery', null); }));
   acts.append(button(el, t('naval.flag.close', 'Close'), null, () => { _open = null; _paint = null; rerender(); }));
@@ -387,9 +392,12 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
   // SHIP-LIVERY: her paint - every hull that takes one
   acts.append(button(el, s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'), null, () => act('deckPlan')));   // DECK-PROPS: the plan of her deck, her fittings on it
   if (s.paints?.length || s.cabin != null) acts.append(button(el, t('naval.paint.open', 'Paint'), null, () => { const open = _open?.uid === s.uid && _open.panel === 'paint'; _open = open ? null : { uid: s.uid, panel: 'paint' }; _paint = null; _said = null; rerender(); }));
+  // FIGUREHEAD: her carving at her stem - every hull with a stem for one
+  if (s.carvable) acts.append(button(el, t('naval.figurehead.open', 'Figurehead'), null, () => { _open = null; toggleCarving(s.uid); _said = null; rerender(); }));
   text.append(acts);
-  if (_open?.uid === s.uid) text.append(_open.panel === 'refit' ? refitPanel(el, s, rerender, act) : _open.panel === 'crew' ? crewPanel(el, s, act) : _open.panel === 'colours' ? coloursPanel(el, s, rerender, act, arms) : _open.panel === 'paint' ? paintPanel(el, s, rerender, act) : renamePanel(el, s, rerender, act));
+  if (_open?.uid === s.uid) text.append(_open.panel === 'refit' ? refitPanel(el, s, rerender, act) : _open.panel === 'crew' ? crewPanel(el, s, act) : _open.panel === 'colours' ? coloursPanel(el, s, rerender, act, arms) : _open.panel === 'paint' ? paintPanel(el, s, rerender, act, arms) : renamePanel(el, s, rerender, act));
   item.append(text);
+  if (carvingOpen(s.uid)) text.append(carvingPanel(el, s, rerender, act, button));   // FIGUREHEAD: under the card's acts, as the page's own panels
   return item;
 }
 
@@ -399,6 +407,7 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
  */
 export function drawFleetPage(detail, rerender, { el, divider, meter = null, door = null } = /** @type {any} */ ({})) {
   ensureHoldingsStyle();
+  if (_open) carvingShut();   // FIGUREHEAD: a panel the page opened shuts the carving's
   const m = fleet()?.model?.() ?? { ships: [], gold: 0, atPort: false };
   detail.append(divider(`Fleet (${m.ships.length})`));
   if (!m.ships.length) {
@@ -414,4 +423,4 @@ export function drawFleetPage(detail, rerender, { el, divider, meter = null, doo
 }
 
 /** A visit's words forgotten (an act's answer, an open panel) - the pause menu's every mount. */
-export function resetFleetPage() { _said = null; _open = null; _draft = ''; _flag = null; }
+export function resetFleetPage() { _said = null; _open = null; _draft = ''; _flag = null; carvingShut(); }

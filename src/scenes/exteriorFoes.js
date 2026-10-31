@@ -18,7 +18,7 @@ import { setupFoeLook } from '../characters/enemy/foeLook.js';   // DEX2: SetupD
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // HALT-ONE: a peer's watchman, silent in the living watch's lane
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
 import { strikeTraits, traitWireKey } from './foeTraitsHost.js';   // AUDIT WORLD-EVENTS: my blow's door - resisted, its number retold, each trait taught once; and the record key's share
-import { bossStrikeAt, bossTakeAt, eliteTraits, giveBossTraits, bossTraitsOf, bossTraitsOfMask, bossTraitMask, markBossWrath, bossWardShare, hasBossTrait, standBossWard, tickBossClock, bossClockS, bossTraitsTick, bossWardBrokeLine, bossWrathLine } from '../systems/bossTraits.js';   // BOSS-TRAITS: a hard foe's own rules (AUDIT WORLD-EVENTS: its clock, its tick, its ward on the wire, its rules taught)
+import { bossStrikeAt, bossTakeAt, eliteTraits, giveBossTraits, bossTraitsOf, bossTraitsOfMask, bossTraitsMost, bossTraitMask, markBossWrath, bossWardShare, hasBossTrait, standBossWard, tickBossClock, bossClockS, bossTraitsTick, bossWardBrokeLine, bossWrathLine } from '../systems/bossTraits.js';   // BOSS-TRAITS: a hard foe's own rules (AUDIT WORLD-EVENTS: its clock, its tick, its ward on the wire, its rules taught)
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';   // PX30
 import { damageShieldPool, playerBlowCameToNothing } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
@@ -85,7 +85,8 @@ import { createStreetCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / A
 import { rollCorpseKit, savedSummon, restoredSummon } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door; AUDIT RPT1026 F4: a summon's mark through a save
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
-import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { peerEffectWorn } from '../net/peer/peerEffects.js';   // STOREFRONT: a peer's spared revenant rises through its owner's portal skin
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, foeFightersUpTo, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { stampWonWeapons, lootRarityOn } from '../systems/loot/lootRarity.js';   // SIGIL1: a body's weapons won online; BAL3: the ladder's switch, the wilds' threat's
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
@@ -99,7 +100,7 @@ import { puppetLead } from './puppetLead.js';   // DESYNC-ZERO: a moving puppet 
 import { appliedOwnerTm } from '../net/ownerClock.js';   // OWNER-CLOCK: and by its owner's clock, where the frame says it
 import { bindQuestFoeHost, isPrivateQuestFoe, placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // B1: quest foes ride this pool; CURSE-SYNC: a world quest's ride as the world's; RVN6: a band placed about its master
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RVN6: PlaceFoeFreely's ring, a camp member's law
-import { validSites, validSiteTags, isRiteSite, isStarSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
+import { validSites, validSiteTags, isRiteSite, isStarSite, isColossusSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
 import { validRaidTags, validAlliedIds, validStaffBossTags, RAID_PUPPETS_MAX } from '../world/raidShared.js';   // RAID2: a town's raid, shared
 import { isShipmate, sparedBySwing } from '../combat/friendlyFire.js';   // SHIPMATES: my crew named on the wire, and never the swing's; AUDIT WORLD-EVENTS L4-5: nor a raid's refugees
 import { campTagsOf, validCampTags } from '../world/campShared.js';   // OW6: a camp rides tagged, and an heir takes it as a camp
@@ -1078,7 +1079,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         say?.(SOUL_TRAP_TEXT.trapSuccess);
       }
       f.dead = true;
-      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind });   // SET2: MY blow killed it (a set's "each kill")
+      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind, fx: killFxOf(f) });   // SET2: MY blow killed it (a set's "each kill"); STOREFRONT: and where it falls, before its flat goes
       renownFoeDied(f);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       f.corpse = true;
       f._diedAt = _now();   // AUDIT WORLD6b-iii(c) C5: the roll keeps the newest bodies
@@ -1493,7 +1494,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (id === 'spare') {
       const s = beginSpare(playerEntity, f, { now: Date.now(), rolls });
       if (!s) return false;
-      portals.open(at);
+      portals.openMine(at);   // STOREFRONT: my spared revenant's portal, in the skin I wear
       revenantSay(s.event, say);
       return true;
     }
@@ -1549,19 +1550,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (typeof dropLoot === 'function' && items.length) { try { dropLoot(items, feet); playRareDrop?.(audio, feet, items); } catch (e) { console.warn('[revenant] the pile would not drop', e?.message ?? e); } }
     else if (items.length) { f.entity.items = items; f.corpse = true; f._diedAt = _now(); mintCorpse(f); }   // no pile door: a body holds it
   }
-  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`). */
+  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`) - STOREFRONT: in the skin I wear. */
   const companionFx = {
-    arrive(rec) { if (!rec?.ai) return; portals.open(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
+    arrive(rec) { if (!rec?.ai) return; portals.openMine(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
     leave(rec, done) {
       if (!rec?.ai || rec.dead) { done(); return; }
-      portals.open(rec.ai.feet);
+      portals.openMine(rec.ai.feet);
       rec.portalFx = { dir: 'out', at: Date.now(), delay: 180, ms: 600 };
       rec.leaving = { at: Date.now(), done };
     },
     jump(rec, from) {
       if (!rec?.ai) return;
-      portals.open(from, { short: true });
-      portals.open(rec.ai.feet, { short: true, quiet: true });
+      portals.openMine(from, { short: true });
+      portals.openMine(rec.ai.feet, { short: true, quiet: true });
       rec.portalFx = { dir: 'in', at: Date.now(), delay: 140, ms: 480 };
     },
   };
@@ -1629,7 +1630,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         f._mout = f.mobile.update(dt, { moving: f.ai.moving, striking: edge && !f.attack.firedRanged, rangedStriking: edge && !!f.attack.firedRanged, hurting: f.ai.hurtKnock || _pb.staggered, casting: !!f._castPending, hold: _pb.hold }, f.ai.yaw, f.ai.feet, eye);   // TELL8: the held arm, the cancel, the spent pose, the stagger's Hurt
         if ((f._pupYield || f._pupExec) && f.mobile.heldPose) f._mout = f.mobile.heldPose('hurt', -1, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);   // REVENANT-FATE: its owner's kneels - so it kneels here
         else if (f._pupSpare && f.mobile.heldPose) f._mout = f.mobile.heldPose('idle', 0, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);   // ...and rises, sworn, into the light
-        if (f._pupSpare && !f._pupSpareGate) { f._pupSpareGate = true; portals.open(f.ai.feet, { quiet: true }); }   // its portal, seen here too
+        if (f._pupSpare && !f._pupSpareGate) { f._pupSpareGate = true; portals.open(f.ai.feet, { quiet: true, skin: peerEffectWorn(f.puppet, 'portal') }); }   // its portal, seen here too - STOREFRONT: in its owner's skin
         f._castPending = false;
         f.quietVoice = f.mobileType === KNIGHT_CITY_WATCH && !!oneVoice();   // HALT-ONE: a peer's watchman, in the living watch's lane
         if (edge && f.ai._tac?.state !== 'windup') playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // TELL8: a wind-up's swing is its cues'
@@ -2387,7 +2388,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function restoreTraits(entity, sf) {
     entity.bossTraits = undefined; entity.bossWard = undefined;
     entity.bossWardShown = Number.isInteger(sf.ward) ? sf.ward / 100 : undefined;
-    giveBossTraits(entity, bossTraitsOfMask(sf.traits, entity.raidLeader ? 2 : 1));
+    giveBossTraits(entity, bossTraitsOfMask(sf.traits, bossTraitsMost(!!entity.raidLeader, isColossusSite(sf.site))));
     if (sf.wrath === true) markBossWrath(entity);
     entity.bossWardShown = undefined;
   }
@@ -2899,7 +2900,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (r.sb && !f.entity.staffBoss) promoteStaffBoss(f.entity, { own: false, sizePct: r.sb });   // STAFF-EVENT: its owner's mini boss - its size, its yellow (its maximum is `k`)
     if (r.z === 1 && !f.entity.eliteFoe && !f.entity.champion && markedOf(f.puppet, isElitePuppet) < PEER_ELITE_PUPPETS_MAX) promoteEliteFoe(f.entity, { own: false });   // ELITE FOES: its owner's elite - the blows, the size, the glow (its maximum is `k`); FOE-FORGE: no more of them than an owner rolls
     if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });   // RAID5: its owner's raid leader - its size, its name; HUNTERS-MARK-II: a leader no raid tags is a hunter's named mark, by the week's name (the event clock's)
-    if (f.entity.eliteFoe && r.bt) { giveBossTraits(f.entity, bossTraitsOfMask(r.bt, r.rl === 1 ? 2 : 1), { own: false }); if (r.bw === 1 && markBossWrath(f.entity)) say?.(bossWrathLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); }   // BOSS-TRAITS: its owner's traits, on an elite alone (a mask on a plain foe stands nothing); AUDIT WORLD-EVENTS L2-11: no more than an elite carries (two a raid's leader), never an exclusive pair; L2-7: its wrath said here too
+    if (f.entity.eliteFoe && r.bt) { giveBossTraits(f.entity, bossTraitsOfMask(r.bt, bossTraitsMost(r.rl === 1, isColossusSite(f.site))), { own: false }); if (r.bw === 1 && markBossWrath(f.entity)) say?.(bossWrathLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); }   // BOSS-TRAITS: its owner's traits, on an elite alone (a mask on a plain foe stands nothing); AUDIT WORLD-EVENTS L2-11: no more than an elite carries (two a raid's leader, STOREFRONT the Colossus's three - bossTraitsMost), never an exclusive pair; L2-7: its wrath said here too
     if (r.bv !== undefined && hasBossTrait(f.entity, 'warded')) { if (f.entity.bossWardShown > 0 && r.bv === 0) say?.(bossWardBrokeLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); f.entity.bossWardShown = r.bv / 100; }   // AUDIT WORLD-EVENTS L2-7: its ward as its owner holds it - drawn, and its break said, here too
     f._pupYield = r.yd === 1;   // REVENANT-FATE: its owner's revenant kneels...
     f._pupExec = r.ex === 1 ? (f._pupExec ?? Date.now()) : null;   // ...or burns away, from the record that said so
@@ -3058,7 +3059,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;
       f._struckAt = null;
       playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });
-      reportPlayerKill(f.entity, { kind: 'remote' });   // SET2: the owner's word that my blow killed its foe
+      reportPlayerKill(f.entity, { kind: 'remote', fx: killFxOf(f) });   // SET2: the owner's word that my blow killed its foe; STOREFRONT: where it falls
       return true;
     }
     // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow

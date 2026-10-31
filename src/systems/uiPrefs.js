@@ -50,6 +50,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // (systems/faction/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
   // default (PREF1), so a player who never pressed the row moves with it, and one who pressed it off keeps their Off.
   standingAll: true,
+  // SHOP-HIDE (2026-10-30, the owner: "a settings toggle that disables the shop interface ingame. Off by default"): on, the
+  // pause screen draws no shop gem and the shop's window never opens; the account's Aurum and what it holds are untouched.
+  shopHidden: false,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's
@@ -220,10 +223,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // front door, and on the classic skin no ANIM0001 splash before the title (main.js). ?nointro and ?novideo do the
   // same for one visit. Off by default: the film is how the game introduces itself.
   skipStartVideo: false,
+  // AUTO-UPDATE (2026-10-30, the owner: "turn off the automatic updates by default"): a new version saves and restarts the
+  // game after a minute's warning (ui/updateScreen.js) only with this on; off, the player is told and updates when ready.
+  autoUpdates: false,
   // LOAD1 (2026-10-05): the PrintScreen key's download - on, the PNG is saved as KB1 always saved it; off, the shot is
   // kept in the gallery alone (ui/screenshot.js). The Screenshots pane's own switch, so it is no Features row.
   shotDownload: true,
-  // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak and my aura drawn, for me and everyone
+  // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak drawn, for me and everyone (never the aura)
   // (systems/capeShown.js). The pack's own switch, so it is no Features row.
   capeShown: true,
   // NOTICE-PANEL (2026-10-29): the town panel under the compass folded to the town's name (ui/hud/townPanel.js) - its

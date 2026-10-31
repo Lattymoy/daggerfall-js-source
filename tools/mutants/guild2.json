@@ -85,8 +85,8 @@
   {
     "name": "GUILD2a-the-gold-unread",
     "file": "src/ui/socialPanel.js",
-    "old": "              : Number(v.hallGold ?? 0) < GUILD_RENAME_GOLD ? ",
-    "new": "              : false ? ",
+    "old": "                : Number(v.marks) < GUILD_RENAME_SILVER ? ",
+    "new": "                : false ? ",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "GUILD2b-grants-to-an-officer",
     "file": "src/ui/socialPanel.js",
-    "old": "    const mayGrant = guildMay(me, 'vaultGrant');",
-    "new": "    const mayGrant = guildMay(me, 'invite');",
+    "old": "    const mayGrant = guildMay(me, 'vaultGrant', v.powers);",
+    "new": "    const mayGrant = guildMay(me, 'invite', v.powers);",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT-GUILD2-M2-read-once-a-session",
     "file": "src/ui/socialPanel.js",
-    "old": "guildUi.storesAsked = false; guildUi.vaultAsked = false; if",
-    "new": "guildUi.storesAsked = false; if",
+    "old": "guildUi.storesAsked = false; guildUi.vaultAsked = false; guildUi.shopAsked = false; if",
+    "new": "guildUi.storesAsked = false; guildUi.shopAsked = false; if",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT2-GUILD2-S5-the-granter-unheld",
     "file": "server-account/src/guildVault.js",
-    "old": "      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`)",
-    "new": "      AND (EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6) OR 1)`)",
+    "old": "      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')})`)",
+    "new": "      AND (EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')}) OR 1)`)",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "AUDIT2-GUILD2-D3-the-batch-fortnight-gone",
     "file": "server-account/src/guilds.js",
-    "old": "AND (renamed_at IS NULL OR renamed_at + ?10 <= ?5)",
-    "new": "AND (?10 = ?10)",
+    "old": "AND (renamed_at IS NULL OR renamed_at + ?8 <= ?5)",
+    "new": "AND (?8 = ?8)",
     "tests": [
       "test/net/guild2_service.test.js"
     ],

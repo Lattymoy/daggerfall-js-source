@@ -158,6 +158,16 @@
     }
     const check = $('update-check');
     if (check.checked !== v.options.checkOnLaunch) check.checked = v.options.checkOnLaunch;
+    // GPU-BACKEND-LAUNCHER: the Graphics option - the box is the backend the next start uses
+    const g = v.options.graphics;
+    $('graphics').hidden = !g;
+    if (g) {
+      const vulkan = $('backend-vulkan');
+      if (vulkan.checked !== g.on) vulkan.checked = g.on;
+      vulkan.disabled = !g.enabled;
+      setText($('backend-note'), g.note);
+      document.querySelector('[data-act="restart"]').hidden = !g.restart;
+    }
 
     // Enter takes the screen's own answer - the first run's card's, or PLAY once it can be pressed -
     // and only that: "Play without updating" under a download is the way out, not the way on
@@ -180,5 +190,6 @@
     if (link) bridge.act('open', link.dataset.open);
   });
   $('update-check').addEventListener('change', (e) => bridge.act('set-update-check', e.target.checked));
+  $('backend-vulkan').addEventListener('change', (e) => bridge.act('set-backend', e.target.checked ? 'vulkan' : 'default'));
   bridge.onView(render);
 })();

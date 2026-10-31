@@ -183,5 +183,5 @@ test('AUDIT RPT1026 J2 the law: a door in a flat wall hangs two; one on a vestib
 test('AUDIT RPT1026 J2 by source: the pixel build hands each building frame its models as they stand, the first and every one after', () => {
   const pb = src('src/scenes/pixelBuild.js');
   assert.ok(pb.includes('faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });'), 'the first model');   // PIN MOVED (AUDIT TAMRIEL-WIDE A1); PIN MOVED (IC-BACKYARD: its block and record)
-  assert.ok(pb.includes('f.rects.push(...rects); f.parts?.push([cpu, local]); }'), 'and every one after it');
+  assert.ok(pb.includes('f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }'), 'and every one after it');   // PIN MOVED (YARD-DECK, FIELD BUGS 2026-10-30b; AUDIT FB1030 Y1-Y8): its ground in parts beside it
 });

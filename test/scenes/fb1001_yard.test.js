@@ -247,11 +247,11 @@ test('FB1001 YARD-CORNER: a piece turned across the house\'s corner - none of it
   const { svc, who, charId, rows } = await seated(A);
   const r = yardRig(svc, town, { who, charId, key: A });
   await r.frames(8);
-  // the house is [-4, -3, 4, 3] round its frame; the bench (3 m by 0.6) turned 45 degrees lies along its north-east
-  // corner's diagonal's normal, its long side 0.16 m past the corner
-  const g = await r.ghostAt(BENCH_MODEL, 4.1, 3.1, 3);
-  assert.deepEqual([g.pos[0], g.pos[2], g.rot[0]], [4.1, 3.1, 45], 'the ghost where the eye looks, turned by the tool');
-  const corners = turned(BENCH_BOX, 45).map(([dx, dz]) => [4.1 + dx, 3.1 + dz]);
+  // the house is [-4, -3, 4, 3] round its frame; the bench (3 m by 0.6) turned 45 degrees lies across its north-east
+  // corner, its long side 0.6 m past the corner (PIN MOVED, WALL-TOUCH: from 0.16 m, a touch of the wall since)
+  const g = await r.ghostAt(BENCH_MODEL, 4.05, 2.55, 3);
+  assert.deepEqual([g.pos[0], g.pos[2], g.rot[0]], [4.05, 2.55, 45], 'the ghost where the eye looks, turned by the tool');
+  const corners = turned(BENCH_BOX, 45).map(([dx, dz]) => [4.05 + dx, 2.55 + dz]);
   assert.ok(corners.every(([x, z]) => !(x > -4 && x < 4 && z > -3 && z < 3)), 'not one of its corners in the house');
   assert.equal(r.tool.why(), YARD_IN_HOUSE, 'and yet the house\'s corner is in it: refused');
   assert.equal(await r.tool.commit(), false);

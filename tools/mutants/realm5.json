@@ -185,8 +185,8 @@
   {
     "name": "REALM5-guilds-no-bucket",
     "file": "server-account/src/index.js",
-    "old": "        const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);",
-    "new": "        const r = await act({ ...ctx, env }, who.player, body);",
+    "old": "        const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);",
+    "new": "        const r = await act({ ...ctx, env, self: url.origin }, who.player, body);",
     "tests": [
       "test/net/realm5.test.js"
     ]

@@ -214,6 +214,16 @@ export function mobileOrientation(yaw, feet, cameraPos) {
   return ((orientation % 8) + 8) % 8;
 }
 
+/** CAPE-CARD (2026-10-30; not a DFU member): mobileOrientation run backwards - the yaw a picture of `orientation` is seen
+ *  to face from `cameraPos`, the middle of its bucket. An aura on a class sprite hangs on this, not on the pose's yaw.
+ *  Null with no line of sight. Pure. */
+export function mobilePortrayedYaw(orientation, feet, cameraPos) {
+  const dx = cameraPos[0] - feet[0], dz = cameraPos[2] - feet[2];
+  if (!Number.isInteger(orientation) || (!dx && !dz)) return null;
+  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;
+  return Math.atan2(Math.sin(y), Math.cos(y));
+}
+
 /** ApplyEnemyState's PrimaryAttack variant roll, verbatim: one
  *  Dice100 roll walks the chance ladder 2..5, remainder = frames 1. */
 export function rollAttackFrames(basics, roll100) {

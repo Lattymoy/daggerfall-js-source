@@ -35,6 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { collectDecor, decorCatalogue, addDecorNature, HALL_BOARD_ENTRY } from './decorCatalogue.js';
+import { GUILD_FURNITURE_ENTRIES, registerGuildFurniture } from '../../world/guildFurniture.js';   // GUILD-SHOP
 import { addDecorMods } from './decorMods.js';   // DECOR-MODS: the town mods' furnishings
 import { customModelFor, customModelNeeds, classicModelIdOf } from '../../world/customModels.js';   // DECOR-MODS: a stand-in's own size
 import { BLOCK_TYPES } from '../../formats/blocksFile.js';   // DECOR-DUNGEON: the host's deps, built once (decorScanDeps)
@@ -147,7 +148,8 @@ export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) 
     if (next >= total) {
       // GUILD1e: and the hall's board, which no room placed - measured and priced as every piece
       const read = nature ? addDecorNature(collected) : collected;   // DECOR-OUTDOOR: and the climates' nature
-      entries = Object.freeze([...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]);   // DECOR-MODS: and the town mods' furnishings
+      registerGuildFurniture();   // measured as any model is (customModelFor, below)
+      entries = Object.freeze([...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]);   // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings
       models = entries.filter((e) => e.model != null);
       phase = 'models';
     }

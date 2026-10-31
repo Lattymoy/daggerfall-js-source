@@ -1,0 +1,292 @@
+[
+  {
+    "name": "PASSAUDIT-1-the-lift-a-find",
+    "file": "src/systems/questlines/qlActs.js",
+    "old": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
+    "new": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-cell-banked']);",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js",
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-1-a-cell-a-find",
+    "file": "src/systems/questlines/qlActs.js",
+    "old": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
+    "new": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded']);",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js",
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-1-the-pass-reads-no-list",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  if (!g || ACT_NOT_FOUND.includes(kind)) return;",
+    "new": "  if (!g) return;",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-open-the-season-days-again",
+    "file": "server-account/src/battlePass.js",
+    "old": "open: passOpenFor(player, env), stage: passStageAt(season, nowS * 1000),",
+    "new": "open: passOpenFor(player, env) && !!passSeasonAt(nowS * 1000), stage: passStageAt(season, nowS * 1000),",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-the-shut-read-kept-for-the-page",
+    "file": "src/net/askRest.js",
+    "old": "      if (open === false) rest(nowMs() + ASK_REST_MS.long, true);",
+    "new": "      if (open === false) rest(Infinity, true);",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-the-shut-season-never-read-again",
+    "file": "src/net/askRest.js",
+    "old": "    due: (/** @type {unknown} */ open) => reread || open === false,",
+    "new": "    due: (/** @type {unknown} */ open) => reread,",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-an-unanswered-read-asked-every-deed",
+    "file": "src/net/askRest.js",
+    "old": "    unheard() { rest(nowMs() + ASK_REST_MS.brief, false); },",
+    "new": "    unheard() { },",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3-the-find-no-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3-the-silver-finds-stream",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
+    "new": "  '/v1/pass/find': Object.freeze(['find', false]),\n",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3-spent-as-profession-xp",
+    "file": "server-account/src/progress.js",
+    "old": "    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
+    "new": "    case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3-the-route-spends-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: an ask answered\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3-a-stored-line-dropped-for-a-new-stream",
+    "file": "server-account/src/progress.js",
+    "old": "  try { c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null'))); } catch { c = null; }",
+    "new": "  try { c = progressConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-8-a-challenge-told-without-its-aurum",
+    "file": "src/systems/pass/passClient.js",
+    "old": "_doors.onEvent({ kind: 'challenge', key, aurum: c.aurum });",
+    "new": "_doors.onEvent({ kind: 'challenge', key });",
+    "tests": [
+      "test/server/storefront_passaudit.test.js",
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-8-the-bound-told-at-every-find",
+    "file": "src/systems/pass/passClient.js",
+    "old": "if (_fullSaid !== k) { _fullSaid = k; _doors.onEvent({ kind: 'full' }); }",
+    "new": "{ _fullSaid = k; _doors.onEvent({ kind: 'full' }); }",
+    "tests": [
+      "test/server/storefront_passaudit.test.js",
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-9-the-binds-read-off-the-queue",
+    "file": "src/systems/pass/passClient.js",
+    "old": "export const refreshPass = () => queued(readPass);",
+    "new": "export const refreshPass = () => readPass();",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-no-rest-after-capped",
+    "file": "src/net/askRest.js",
+    "old": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000, false);",
+    "new": "      if (error === 'capped') { /* no rest */ }",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-the-days-end-missed",
+    "file": "src/net/askRest.js",
+    "old": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000, false);",
+    "new": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 2) * 86_400_000, false);",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-a-closed-find-never-read-again",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'closed') { rest(now + ASK_REST_MS.brief, false); reread = true; }",
+    "new": "      else if (error === 'closed') { rest(now + ASK_REST_MS.brief, false); }",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-a-rate-asked-every-deed",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'rate' || error === 'progress-play') rest(now + ASK_REST_MS.brief, false);",
+    "new": "      else if (error === 'rate') rest(now + ASK_REST_MS.brief, false);",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-a-seat-refusal-asked-every-deed",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'progress-seat' || error === 'trade-held') rest(now + ASK_REST_MS.long, false);",
+    "new": "      else if (error === 'progress-seat') rest(now + ASK_REST_MS.long, false);",
+    "tests": [
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-11-the-queued-asks-past-a-refusal",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  return queued(async () => {\n    if (!mine()) return held();\n",
+    "new": "  return queued(async () => {\n",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-an-open-read-leaves-the-rest",
+    "file": "src/net/askRest.js",
+    "old": "      else if (open === true && shut) rest(0, false);",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-festival-open-the-days-again",
+    "file": "server-account/src/festival.js",
+    "old": "    open: festivalOpenFor(player, env),",
+    "new": "    open: festivalOpenFor(player, env) && inDays(nowS),",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-veto-kept",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (!festivalOpen(festivalNowMs()) || _rest.shut()) return 'closed';",
+    "new": "  if (!festivalOpen(festivalNowMs()) || festivalState().open === false) return 'closed';",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-never-reads-again",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) { _rest.unheard(); return 0; }   // a shut word read again\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-read-unheard",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  _rest.heard(r.data?.open);",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-find-no-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-pass-stream",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
+    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),\n",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-route-spends-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-refusal-unheard",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (!r?.ok) _rest.refused(r?.error);\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-queued-finds-past-a-refusal",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (_rest.resting()) return 0;   // a refusal ahead of it in the queue stood the page back\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  }
+]

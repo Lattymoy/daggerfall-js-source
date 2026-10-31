@@ -114,7 +114,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
 import { foeHitFlash, setBatchHitFlash, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
-import { reportPlayerKill } from '../systems/playerKills.js';
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';
 import { createHostNpcBodies, npcBodiesOn, WATCH_BODY_TIERS } from '../characters/npcBodies.js';   // MWNPC6: the watch in Morrowind bodies
 import { isClassFoe, foeActor, foeFx } from '../characters/foeBodies.js';   // SET2: my own kills, told
 
@@ -978,7 +978,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.entity.health -= healthDamage;
     if (g.entity.health <= 0) {
       g.dead = true;
-      if (fromPlayer && !peer) reportPlayerKill(g.entity, { kind: 'melee' });   // SET2: MY blow killed him (a set's "each kill")
+      if (fromPlayer && !peer) reportPlayerKill(g.entity, { kind: 'melee', fx: killFxOf(g) });   // SET2: MY blow killed him (a set's "each kill"); STOREFRONT: where he falls
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
       g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';   // WATCH-FIX: whose hand - the player's own blow (DFU's `source == Player`, :203) is the living world's deed; any other its loss (scenes/livingWorld/livingWatch.js)

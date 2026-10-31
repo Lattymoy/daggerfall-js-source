@@ -11,8 +11,8 @@
   {
     "name": "PRWW1-form-not-handed-to-spriteFor",
     "file": "src/net/peer/peerRiders.js",
-    "old": "{ onHorse: pose.rv | 0, lycanthropyType: beast, horse: pose.rc | 0 }",
-    "new": "{ onHorse: pose.rv | 0, horse: pose.rc | 0 }",
+    "old": "{ onHorse: pose.rv | 0, lycanthropyType: beast, horse: peerMountLook(peer.id, pose.rc | 0, feet) }",
+    "new": "{ onHorse: pose.rv | 0, horse: peerMountLook(peer.id, pose.rc | 0, feet) }",
     "tests": [
       "test/net/prww1_werewolf.test.js"
     ]

@@ -712,8 +712,9 @@ export function chronicleWhen(week, zero = null) {
 export const HALL_OF_RECORDS_ROWS = 400;
 /** The Hall of Records' title: "The Hall of Records of Anticlere". */
 export const hallOfRecordsTitle = (seat) => `The Hall of Records of ${seat?.name ?? 'the seat'}`;
-/** What an empty Hall of Records says. */
-export const HALL_OF_RECORDS_EMPTY = 'Nothing is written here yet.';
+/** What an empty Hall of Records says - RECORDS-SAID (FIELD BUGS 2026-10-30b): what the book is for, where a new seat's
+ *  empty page read as "not implemented yet". */
+export const HALL_OF_RECORDS_EMPTY = 'No guild has held this seat yet. Its claims, sieges and holders are written here.';
 /** THE HALL OF RECORDS' CHAPTERS (9.2): a seat's Chronicle rows (oldest first) as chronicleLine reads them, one chapter a
  *  Season - `{ heading, lines }`, the heading the Season's name (seatSeasonName's), or null for rows from no counted
  *  Season; a row the Chronicle has no words for is left out. */

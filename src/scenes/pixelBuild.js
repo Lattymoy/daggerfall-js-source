@@ -17,7 +17,7 @@ import { buildingKeysOfType, castleEntranceOf, siegeFieldOf } from '../systems/s
 import { buildingSummaries } from '../world/buildingSummaries.js';
 import { buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';
 import { CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
-import { carveLefay, isLefayTown, lefayExitOf, lefaySpotOf } from '../world/lefayMonument.js';
+import { carveLefay, isLefayTown, monumentSpotOf } from '../world/lefayMonument.js';
 import { carveYards } from '../world/merchantYards/merchantYardSites.js';
 import { carveCapitalWalks } from '../world/capitalWalks.js';   // FB1029 BRIDGE-ENDS
 import { CityNavigation } from '../world/city/cityNavigation.js';
@@ -29,12 +29,11 @@ import { DOOR_TYPE, GLOBAL_SCALE } from '../world/meshReader.js';
 import { isHouseSign } from '../world/houseSigns.js';   // HOUSE-SIGN: a shop's sign at a house's door does not stand
 import { doorCornersOf, doorNormalOf } from './hallBanners.js';
 import { drawnFlat } from '../characters/nudeFlats.js';
-import { dungeonEntranceLanding } from '../player/enterExit.js';
 import { ecoOrigin } from '../world/ecotone.js';
 import { festivalBannerAnchors, festivalLanternsOf } from './seatFestival.js';
 import { flatBatchAabb, localAabb, transformedAabb } from '../render/frustum.js';
 import { floraSwayOf } from '../systems/wind/windDrive.js';
-import { footRectsAt } from './homeYards.js';
+import { footGroundAt, footRectsAt, modelFootParts } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs, tamrielLandsOn } from './shared.js';
 import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
@@ -43,7 +42,7 @@ import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } fr
 import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 YARDS Y2: the yards' outline as #1184 drew it
 import { townWalkShut, yardWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
 import { townGateRoads } from '../world/townGates.js';   // GATE-ROADS: a walled town's gates for their roads
-import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
+import { townFabricFor, fabricWalkShut, fabricLift } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -492,7 +491,7 @@ export function createPixelBuild(host) {
     let arenaOrigin = null;   // ARENA2: the colosseum's block's origin (pixel-local) - the city floor's frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
-    let lefaySpot = null;    // LEFAY1: the monument - its spot in the location frame (world/lefayMonument.js lefaySpot), null anywhere but outside Privateer's Hold (HOLD-MONUMENT)
+    let lefaySpot = null;    // LEFAY1: a monument - its id and spot in the location frame (world/lefayMonument.js monumentSpotOf), null anywhere but Gothway Garden and the Imperial City's centre
     let yardSites = null;    // MERCHANT-YARDS: a city's or a town's Stable and Wagon Yard - their sites in the location frame, null in any other place
     let portSites = null;    // SHIPYARDS: a port town's shipyard and lighthouse - their sites in the location frame, null in any other place
     let personBatches = null;
@@ -515,7 +514,9 @@ export function createPixelBuild(host) {
       const loc = await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());   // WM3: the pack's own switch; IC-STUTTER: a block a step
       locBlocks = loc.blocks;
       const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)
-      const lefayExitDoors = [];   // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the Hold's dungeon-entrance doors as its blocks stand them - its way out
+      // GOTHWAY-MONUMENT, STEWART-MONUMENT: a monument's spot, a function of the layout alone - found before the yards, which keep off it
+      lefaySpot = farView ? null : monumentSpotOf(dfLocation, loc);
+      if (isLefayTown(dfLocation) && !lefaySpot) console.warn('[lefay] no open ground for the monument in Gothway Garden');   // AUDIT FIVE-ASKS B8: never silent
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
       const yardTown = !farView && isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));
@@ -612,9 +613,10 @@ export function createPixelBuild(host) {
             const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], blockY + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
+            const ground = footGroundAt(modelFootParts(cpu.positions, cpu.indices), local);   // WALL-TOUCH, YARD-DECK: its walls' lines and flat roofs
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's
-            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.parts?.push([cpu, local]); }
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's
+            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
           const homeLook = homeRow ? lookOfHome(homeTown, homeKey, homeRow) : null;
@@ -689,7 +691,6 @@ export function createPixelBuild(host) {
             // keys the 31000-overlap repair on EntryDoor.blockIndex, and a
             // hardcoded 0 made it unreachable from this host.
             const staticDoors = getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, local);
-            if (isLefayTown(dfLocation)) for (const sd of staticDoors) if (sd.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) lefayExitDoors.push(sd);   // HOLD-MONUMENT: the way out of the Hold
             // GUILD1d: the building's first door, measured where it stands - its hall's banners hang beside it
             const hf = homeKey != null ? pixelHomeFrames.get(homeKey) : null;
             if (hf && !hf.door) { hf.door = doorCornersOf(cpu.doors[0], local); hf.normal = doorNormalOf(cpu.doors[0], local); }   // AUDIT WITCH1 D1: and its own outward normal - a door on its box's middle line takes its face from it, never the vertices' order (systems/siegeField.js doorFaceSign)
@@ -728,24 +729,25 @@ export function createPixelBuild(host) {
           pixelNpcFlats.push({
             ...npc,
             x: locLocal[0] + b.originX + npc.x,
-            y: blockY + npc.y,
+            y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),   // AUDIT PROP-GROUND: on the street its fabric lays
             z: locLocal[2] + b.originZ + npc.z,
           });
         }
         for (const [n, flat] of blockFlats.entries()) {
+          const lift = fabricLift(fabric, b.originX + flat.x, b.originZ + flat.z);   // AUDIT PROP-GROUND: a flat on the street its fabric lays stands on it
           // A4: every archive-201 town animal is an audio source
           // (AddAnimalAudioSource on RMB flats, verbatim). It runs
           // BEFORE DFU's faction test (:363-377), so it is not part of
           // what the NPC pass takes over below.
           if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
             pixelAnimals.push({
-              pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z],
+              pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y + lift, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
           }
           // SURV3: a fountain or a well is a water source (the mod's RegisterCustomActivation list); the dry one only says so
           if (isWaterSourceFlat(flat.archive, flat.record) || isDrySourceFlat(flat.archive, flat.record)) {
-            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
+            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y + lift, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
           }
           // E3: an exterior StaticNPC's BILLBOARD is stood by
           // standPixelNpcs, not batched here - RMBLayout hands the same
@@ -770,7 +772,7 @@ export function createPixelBuild(host) {
           // StaticNPC holds (a flat of a person's archive with no faction) stand in batches of their own
           // (standPixelFlats, below), so a 3D horse or a Morrowind body can take one's place. Neither was ever cover
           // (201 is NOT_COVER's; a person never is - AUDIT TACT B3).
-          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y, z: fz }); continue; }
+          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y + lift, z: fz }); continue; }
           // NATURE-GROUND (2026-09-26, Ilvi: "a lot of floating sprites across Illiac Bay"): the block's ground scenery and nature
           // flats stand on the DRAWN ground - the plane holds only inside the flattened rect, the band past it is only eased toward
           // it (DFU's too: AddNatureFlats reads no terrain); inside the rect the lift is exactly 0. A lamp, a sign, an animal keep the
@@ -781,7 +783,7 @@ export function createPixelBuild(host) {
           // all one law where the block stands on the plane
           const off = flat.archive === natureArchive || (hillSeat && isNatureArchive(flat.archive)) ? groundOffPlane(samples, avg, fx, fz) : 0;
           const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;
-          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;
+          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y + lift;
           addFlat(flat.archive, flat.record, fx, fy, fz, { block, n });
           // FLORA-GROUND, THE RINGS (scenes/floraSeat.js): a nature flat stood on the ground - the climate's, the plane's
           // band under it; a hill block's where no mound raised it - is drawn on the ground its pixel draws at every ring
@@ -803,10 +805,6 @@ export function createPixelBuild(host) {
           if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], blockY + light.foot, light.w, light.h]);
         }
       }
-      // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the monument's spot, its blocks stood - beside the Hold's way out (DFU's exit landing over
-      // its dungeon-entrance door, the location frame), clear of World of Daggerfall's camp on or off
-      if (isLefayTown(dfLocation)) lefaySpot = lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit: lefayExitOf(dungeonEntranceLanding(lefayExitDoors), locLocal) });
-      if (isLefayTown(dfLocation) && !lefaySpot) console.warn('[lefay] no open ground for the monument outside Privateer\'s Hold');   // AUDIT FIVE-ASKS B8: never silent
 
       // URBANIZER U3 (world/urban/townFabricModel.js): the town's own fabric - its main streets' setts and pavements, its side
       // streets' cobbles, its yards' fences and walls, its dead ends' walls, its woodpiles - one model at its origin, merged
@@ -1489,7 +1487,7 @@ export function createPixelBuild(host) {
       _bed: bed,   // WATER-NEXT 2: the bed, for the cap's re-index (dwWaterSurface) and its re-carve (dwRecarve)
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
-      lefay: lefaySpot,   // LEFAY1: the monument's spot, location frame (locOrigin + its x, z) - null off Privateer's Hold (HOLD-MONUMENT)
+      monument: lefaySpot,   // LEFAY1: a monument's id and spot, location frame (locOrigin + its x, z) - null where none stands
       merchantYards: yardSites,   // MERCHANT-YARDS: the Stable's and the Wagon Yard's sites, location frame - null off a city or a town
       portSites,   // SHIPYARDS: the shipyard's and the lighthouse's sites, location frame - null off a port town
       wardenTown: dfLocation && isWardenTown(dfLocation.mapTableData?.locationType) ? (dfLocation.mapTableData?.mapId ?? 0) >>> 0 : null,   // WARDEN1: a city's, a hamlet's or a village's map id - its watch throws a wagon parked too long on its road, or past its fourth

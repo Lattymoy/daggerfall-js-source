@@ -117,10 +117,10 @@ test('ROAD-H tail: the flight reach is displacement.magnitude + ColliderRadius a
   assert.ok(Math.abs(a.arrows[0].pos[1] - (1 - 0.05 * step)) < 1e-12, 'the dip is flown, not renormalised away');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/hostMagic.js']) {
     const s = src(f);
-    assert.match(s, /const \{ unit: _unit, reach \} = missileReach\(m\.dir, step\);\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)?\s*const _len = [^\n]*\n\s*const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len\);[^\n]*\n\s+const hitWall = _cs\.stop;\n\s+if \(Number\.isFinite\(hitWall\) && hitWall <= reach\) \{/,
+    assert.match(s, /const \{ unit: _unit, reach \} = missileReach\(m\.dir, step\);\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)?\s*const _len = [^\n]*\n\s*const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len(?:, !!m\.fromPlayer)?\);[^\n]*\n\s+const hitWall = _cs\.stop;\n\s+if \(Number\.isFinite\(hitWall\) && hitWall <= reach\) \{/,
       `${f}: the missile flight casts for the scaled reach along the unit ray`);   // AUDIT GROUND-BOLT C6: both flights take the one law, flightStop (below)
     assert.doesNotMatch(s, /raycast\(m\.pos, m\.dir, step \+ MISSILE_COLLIDER_RADIUS\)/, `${f}: no flight casts the bare step`);
-    if (f === 'src/scenes/hostMagic.js') assert.match(s, /export function flightStop\(collider, pos, unit, reach, stepLen\) \{\n\s*const radius = reach - stepLen;\n\s*const cs = coverStep\(coverDistance\(collider, pos, unit, reach\), collider\.raycast\(pos, unit, reach\), reach, radius, stepLen\);/, 'flightStop: the wall at the step\'s whole reach along the unit ray, the radius the reach past the step (AUDIT GROUND-BOLT C6: the one law)');
+    if (f === 'src/scenes/hostMagic.js') assert.match(s, /export function flightStop\(collider, pos, unit, reach, stepLen, swept = false\) \{\n\s*const radius = reach - stepLen;\n\s*const cs = coverStep\(coverDistance\(collider, pos, unit, reach\), collider\.raycast\(pos, unit, reach\), reach, radius, stepLen, swept\);/, 'flightStop: the wall at the step\'s whole reach along the unit ray, the radius the reach past the step (AUDIT GROUND-BOLT C6: the one law; WALL-SHAFT: by touch for a swept shaft)');
     // REVIEW: ...and the WALL POINT is measured along the vector the
     // ray was actually cast along. The collider answers in its ray's
     // own parameter units (player/collider.js's rayTriangle returns
@@ -249,7 +249,7 @@ test('ROAD-H tail (review): the player\'s OWN spell missile meets a foe at its C
   // by its call and by the absence of the point form it was converted
   // from (the ceiling-bats count carries the same law by number).
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /^\s*if \(missileHitsFoe\(m\.pos, f\)\) \{ {3}\/\/ ROAD-H tail: DaggerfallMissile\.cs:339/m,
+  assert.match(d, /^\s*if \(missileHitsFoe\(m\.pos, f, _from\)\) \{ {3}\/\/ ROAD-H tail: DaggerfallMissile\.cs:339/m,
     'the dungeon\'s PLAYER shaft meets a foe through the one capsule test');
   assert.doesNotMatch(d, /const fx = f\.ai\.feet\[0\] - m\.pos\[0\]/,
     'and not at the foe\'s capsule centre as a point');
