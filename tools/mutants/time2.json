@@ -62,8 +62,8 @@
   {
     "name": "TIME2-online-the-moon-is-DFUs-whole-day",
     "file": "src/systems/lycanthropy.js",
-    "old": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
-    "new": "const moonForces = isFullMoonFromMinutes(skyMinutes);",
+    "old": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
+    "new": "  const moonForces = isFullMoonFromMinutes(skyMinutes);",
     "tests": [
       "test/systems/time2_moon.test.js",
       "test/systems/time1_sky.test.js",
@@ -74,8 +74,8 @@
   {
     "name": "TIME2-offline-the-moon-is-a-night-too",
     "file": "src/systems/lycanthropy.js",
-    "old": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
-    "new": "const moonForces = isFullMoonNightFromMinutes(skyMinutes);",
+    "old": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
+    "new": "  const moonForces = isFullMoonNightFromMinutes(skyMinutes);",
     "tests": [
       "test/systems/time2_moon.test.js",
       "test/systems/time1_sky.test.js",
@@ -86,8 +86,8 @@
   {
     "name": "TIME2-the-round-defaults-to-the-online-lane",
     "file": "src/systems/lycanthropy.js",
-    "old": "skyMinutes = clockMinutes, moonNight = false,",
-    "new": "skyMinutes = clockMinutes, moonNight = true,",
+    "old": "    moonNight = false,",
+    "new": "    moonNight = true,",
     "tests": [
       "test/systems/time2_moon.test.js",
       "test/systems/time1_sky.test.js",

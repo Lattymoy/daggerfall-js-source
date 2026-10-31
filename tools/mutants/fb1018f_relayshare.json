@@ -252,8 +252,8 @@
   {
     "name": "RELAY-SHARE-the-martial-paths-keep-their-own-copy",
     "file": "src/systems/martialPowers.js",
-    "old": "const share = (e) => healthShare(e) ?? 1;",
-    "new": "const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "old": "const share = (e) => healthShare(e) ?? 1; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Gutting Lunge there too)",
+    "new": "const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1); // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Gutting Lunge there too)",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "RELAY-SHARE-the-martial-paths-read-no-word-as-under",
     "file": "src/systems/martialPowers.js",
-    "old": "const share = (e) => healthShare(e) ?? 1;",
-    "new": "const share = (e) => healthShare(e) ?? 0;",
+    "old": "const share = (e) => healthShare(e) ?? 1; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Gutting Lunge there too)",
+    "new": "const share = (e) => healthShare(e) ?? 0; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Gutting Lunge there too)",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

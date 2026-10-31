@@ -107,7 +107,7 @@ its own probe (`tools/weaponGlowProbe.mjs`).
 
 2026-10-30, the owner: "let them keep the wraps and let them loot and use potions just dont let them open inventory",
 "keep wraps and make them useful". A DEPARTURE from DFU's MorphSelf, which empties both hands: the change takes a weapon
-off and leaves a pair of Hand Wraps on (`lycanthropy.js:"if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot"`).
+off and leaves a pair of Hand Wraps on (`lycanthropy.js:"if (!isHandWraps(equipTableOf(entity)[slot]))"`).
 The claws strike in them (`playerWeapon.js:"get wraps() {"`): their damage
 lines and gems ride the claws' roll as a fist's, their skill lines and enchantments count while worn, and between players
 their lines are the claws' (PvP-Rework PVP-GEAR). The loot ladder's blow powers stay off the claws (BAL10).

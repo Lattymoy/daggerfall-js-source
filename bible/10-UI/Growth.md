@@ -111,7 +111,7 @@ spell, the martial law's weapons and technique, one shape). Pure model (`specGui
   **Needs mastering** (both at 100, a Master Skills press away); **Within reach** (both still masterable); **Closed**
   (the family's other path held - one of each; its line points to the held path's Reset - and only where a reset could open it: section 10); **No slots left** (the mastery slots left cannot hold the
   pair: a group the player's own masteries filled, or two skills of one group with one slot left - Master Skills'
-  own count, `masterSkills.js:"export function masterableCount(entity, ids) {"`, as `pathPossible` and `martialPossible`
+  own count, `masterSkills.js:"export function masterableCount"`, as `pathPossible` and `martialPossible`
   count the family - AUDIT GROWTH LANE1-1, LANE1-4); **Not for your class** (a skill the career cannot master). In that
   order, and within a state the nearest first - the points its pair still owes 100 - then the laws' order.
 - **The state's line** names the skill when only one still needs it ("Raise Axe to 100 and master it", "Master

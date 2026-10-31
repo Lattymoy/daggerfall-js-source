@@ -58,8 +58,8 @@
   {
     "name": "EVENT-RULES-the-court-off-again",
     "file": "src/systems/madeLevel.js",
-    "old": "companions: 'out', regen: 'held', death: 'castOut'",
-    "new": "companions: 'out', regen: 'off', death: 'castOut'",
+    "old": "    companions: 'out',\n    regen: 'held',\n    death: 'castOut',",
+    "new": "    companions: 'out',\n    regen: 'off',\n    death: 'castOut',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "EVENT-RULES-the-ketch-refuses-a-rise",
     "file": "src/systems/madeLevel.js",
-    "old": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
-    "new": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
+    "old": "    techFlight: 'refused',\n    runLeap: 'refused',\n    avoidDeath: 'refused',\n    death: 'fall',",
+    "new": "    techFlight: 'refused',\n    runLeap: 'refused',\n    resurrect: 'refused',\n    avoidDeath: 'refused',\n    death: 'fall',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
       "test/ui/hud/eventrules_tile.test.js"

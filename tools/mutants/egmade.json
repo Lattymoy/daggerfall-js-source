@@ -2,8 +2,8 @@
   {
     "name": "EGMADE-the-court-named-the-hour",
     "file": "src/systems/madeLevel.js",
-    "old": "madeLevelOf = (loc) => (isGateArena(loc) ? 'court'",
-    "new": "madeLevelOf = (loc) => (isGateArena(loc) ? 'hour'",
+    "old": "  isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
+    "new": "  isGateArena(loc) ? 'hour' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGMADE-the-court-refuses-a-recall",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone",
-    "new": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone",
+    "old": "    mark: 'refused',\n    portalStone: 'refused',",
+    "new": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGMADE-the-spire-glides",
     "file": "src/systems/madeLevel.js",
-    "old": "levitate: 'banned', slowfall: 'banned', techFlight",
-    "new": "levitate: 'banned', slowfall: null, techFlight",
+    "old": "    potions: 'counted',\n    levitate: 'banned',\n    slowfall: 'banned',\n    techFlight: 'refused',",
+    "new": "    potions: 'counted',\n    levitate: 'banned',\n    slowfall: null,\n    techFlight: 'refused',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGMADE-the-hour-unwarded",
     "file": "src/systems/madeLevel.js",
-    "old": "regen: 'held', levitate: 'banned',\n    runLeap: 'refused', death: 'final'",
-    "new": "regen: 'held', levitate: null,\n    runLeap: 'refused', death: 'final'",
+    "old": "    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    regen: 'held',\n    levitate: null,\n    runLeap: 'refused',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGMADE-a-thrown-traverse-believed",
     "file": "src/systems/madeLevel.js",
-    "old": "try { return !!_traverse?.(); } catch { return false; }",
-    "new": "try { return !!_traverse?.(); } catch { return true; }",
+    "old": "    return false;",
+    "new": "    return true;",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGMADE-any-word-a-level",
     "file": "src/systems/madeLevel.js",
-    "old": "return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'|'ketch'} */ (v) : null;",
-    "new": "return /** @type {any} */ (v);",
+    "old": "    return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'|'ketch'} */ (v) : null;",
+    "new": "    return /** @type {any} */ (v);",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGMADE-no-level-no-zero",
     "file": "src/systems/madeLevel.js",
-    "old": "  return NONE_IS_ZERO.has(rule) ? 0 : null;\n}",
-    "new": "  return null;\n}",
+    "old": "  return NONE_IS_ZERO.has(rule) ? 0 : null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]

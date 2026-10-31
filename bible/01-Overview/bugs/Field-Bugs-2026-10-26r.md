@@ -1236,7 +1236,7 @@ counted every weak blow whole, to the clamp. Mastering it from the sheet (or swi
 counter to the bank, which cannot tell how it was counted: 20,000 plain uses bought a point every rest. Mastering at the
 prompt was safe only because the pass that raised the skill to 100 had just zeroed it.
 
-FIXED. The plain practice is dropped the moment a skill may pass 100 (`masterSkills.js:"function dropPlainPractice(entity, id) {"`):
+FIXED. The plain practice is dropped the moment a skill may pass 100 (`masterSkills.js:"function dropPlainPractice"`):
 in masterSkill, and in setMasterSkills when the switch moves on, for each skill mastered and at the cap or beyond. A skill below 100
 keeps its uses (it counts by the plain rule either way), a switch pressed On while on drops nothing, the weighted fraction
 (`skillUseFrac`) is the tough-foe rule's own and stays. DFU's TallySkill is untouched. Port-Ledger A's MOVE-BANK row
@@ -1370,7 +1370,7 @@ when laid anyway, nothing paid; two gems bind two, the law's three answers). PIN
 WHAT THE PORT DID. Flowing Steel worked - +3% a landed blow, five deep, four seconds after the last (AUDIT MARTIAL L1 L2 pins
 it through the real formula) - and said nothing; the Legendary Flow, the same law on a blade, has had a chip since LOOT5.
 
-FIXED. Its stacks stand on the HUD beside the sets' and the Legendaries' (`martialPowers.js:"export function martialHudChips(entity, now = _now()) {"`):
+FIXED. Its stacks stand on the HUD beside the sets' and the Legendaries' (`martialPowers.js:"export function martialHudChips"`):
 "Flowing Steel 3" and its seconds, in the technique's blue, its card "Specialization". world.js hands it on in the one
 setHudSetChips statement it already had (no logical line added to bootWorld).
 

@@ -2,8 +2,8 @@
   {
     "name": "BAL6-the-advantages-in-both-forms",
     "file": "src/systems/lycanthropy.js",
-    "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS)",
-    "new": "  for (const stat of LYCANTHROPE_STATS)",
+    "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS) entry.statMods[stat] = LYCANTHROPE_STAT_MOD;",
+    "new": "  for (const stat of LYCANTHROPE_STATS) entry.statMods[stat] = LYCANTHROPE_STAT_MOD;",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "BAL6-the-change-writes-no-advantages",
     "file": "src/systems/lycanthropy.js",
-    "old": "  lycanthropeAdvantages(entry);   // BAL6: the form's own advantages from the change's instant, not the next round's",
+    "old": "  lycanthropeAdvantages(entry); // BAL6: the form's own advantages from the change's instant, not the next round's",
     "new": "  // the change writes nothing",
     "tests": [
       "test/systems/bal6_curses.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "BAL6-the-round-writes-no-advantages",
     "file": "src/systems/lycanthropy.js",
-    "old": "  // maps. BAL6: the beast's alone, so after the moon's change above.\n  lycanthropeAdvantages(entry);",
-    "new": "  // maps. BAL6: the beast's alone, so after the moon's change above.",
+    "old": "  lycanthropeAdvantages(entry);\n",
+    "new": "",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "BAL6-the-heal-on-the-cast-stamp",
     "file": "src/systems/lycanthropy.js",
     "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
-    "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
+    "new": "export const morphHeals = (entry, nowMinutes = 0) =>\n  nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

@@ -224,8 +224,8 @@
   {
     "name": "DISC10-E-V1-the-moon-reads-the-past-round",
     "file": "src/systems/lycanthropy.js",
-    "old": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
-    "new": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(nowMinutes);",
+    "old": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
+    "new": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(nowMinutes);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "DISC10-E-V9-a-hole-is-read-as-a-curse",
     "file": "src/systems/lycanthropy.js",
-    "old": "(entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
-    "new": "(entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
+    "old": "  (entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride' && a.racial === 'lycanthropy' && !a.ended) ??",
+    "new": "  (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride' && a.racial === 'lycanthropy' && !a.ended) ??",
     "tests": [
       "test/systems/auditworld5.test.js",
       "test/systems/quest/world5.test.js",
@@ -578,8 +578,8 @@
   {
     "name": "DISC10-E-L4-the-limit-ratchets-off-itself",
     "file": "src/systems/lycanthropy.js",
-    "old": "let limit = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) -",
-    "new": "let limit = (entity.maxHealth ?? 0) -",
+    "old": "    let limit =\n      (entity.rawMaxHealth ?? entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);",
+    "new": "    let limit = (entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "WERE-WRAPS-the-change-strips-the-wraps",
     "file": "src/systems/lycanthropy.js",
-    "old": "if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);",
-    "new": "unequipSlot(entity, slot);",
+    "old": "    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand])\n      if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);",
+    "new": "    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand]) unequipSlot(entity, slot);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

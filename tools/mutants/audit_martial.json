@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-MARTIAL-L1M1-felling-at-the-landing",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'woodsman': _s.felling.set(target, now); break;",
-    "new": "    case 'woodsman': healMine(m, (m.maxHealth * N.fellingStrike.heal) / 100); break;",
+    "old": "      _s.felling.set(target, now);",
+    "new": "      healMine(m, (m.maxHealth * N.fellingStrike.heal) / 100);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-MARTIAL-L1M1-felling-unbounded",
     "file": "src/systems/martialPowers.js",
-    "old": "_now() - at <= TOLL_REFUND_S",
-    "new": "_now() - at <= 1e9",
+    "old": "    if (at !== undefined && _now() - at <= TOLL_REFUND_S) {",
+    "new": "    if (at !== undefined && _now() - at <= 1e9) {",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-MARTIAL-L1M1-lunge-after-the-blow",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'bloodletter': if (share(target) < N.guttingLunge.below) again(target, landed * k, name); break;",
-    "new": "    case 'bloodletter': if ((target.health - landed) / target.maxHealth < N.guttingLunge.below) again(target, landed * k, name); break;",
+    "old": "      if (share(target) < N.guttingLunge.below) again(target, landed * k, name);",
+    "new": "      if ((target.health - landed) / target.maxHealth < N.guttingLunge.below) again(target, landed * k, name);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-MARTIAL-L1M1-cuts-guessed",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'blademaster': again(target, landed * N.thousandCuts.share * k, name); break;",
-    "new": "    case 'blademaster': if (target.health - landed > 0) again(target, landed * N.thousandCuts.share * k, name); break;",
+    "old": "      again(target, landed * N.thousandCuts.share * k, name);",
+    "new": "      if (target.health - landed > 0) again(target, landed * N.thousandCuts.share * k, name);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L1-a-foe-counted-twice",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (u.foes.has(foe)) return 0;\n",
-    "new": "",
+    "old": "  if (u.foes.has(foe)) return 0;\n  u.foes.add(foe);",
+    "new": "  u.foes.add(foe);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L2-off-hand-stacks",
     "file": "src/systems/martialPowers.js",
-    "old": "if (id === 'blademaster' && info?.blow !== false)",
-    "new": "if (id === 'blademaster')",
+    "old": "  if (id === 'blademaster' && info?.blow !== false) {",
+    "new": "  if (id === 'blademaster') {",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L3-cyclone-at-no-press",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'bladedancer': _s.quickUntil = now + N.cyclone.seconds; break;",
-    "new": "    case 'bladedancer': break;",
+    "old": "      _s.quickUntil = now + N.cyclone.seconds;\n      break;",
+    "new": "      break;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L3-earthsplitter-at-no-press",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'juggernaut': _s.guardUntil = now + N.earthsplitter.seconds; break;",
-    "new": "    case 'juggernaut': break;",
+    "old": "      _s.guardUntil = now + N.earthsplitter.seconds;\n      break;",
+    "new": "      break;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L3-phantom-at-no-press",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'shadowdancer': _s.evadeUntil = now + N.phantomStrike.seconds; break;",
-    "new": "    case 'shadowdancer': break;",
+    "old": "      _s.evadeUntil = now + N.phantomStrike.seconds;\n      break;",
+    "new": "      break;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L4-the-overkill-leeched",
     "file": "src/systems/martialPowers.js",
-    "old": "(Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage)",
-    "new": "damage",
+    "old": "    healMine(\n      attacker,\n      ((Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage) *\n        mentorScaled(attacker, N.savageWhirl.leech)) /\n        100,\n    );",
+    "new": "    healMine(attacker, (damage * mentorScaled(attacker, N.savageWhirl.leech)) / 100);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L5-the-watch-feeds-a-rider",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (!foeOf(target) || neverCounts(target)) return;",
-    "new": "  if (!foeOf(target)) return;",
+    "old": "  if (!foeOf(target) || neverCounts(target)) return; // AUDIT MARTIAL L1 L5: the City Watch and my own allies feed no rider, as no kill of them counts",
+    "new": "  if (!foeOf(target)) return; // AUDIT MARTIAL L1 L5: the City Watch and my own allies feed no rider, as no kill of them counts",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L6-the-name-built-a-read",
     "file": "src/systems/martialPaths.js",
-    "old": "'name', { get() { return signatureName(f.path); }",
-    "new": "'name', { get() { return martialWords(f.path)?.technique ?? SIGNATURE_EN[f.path]; }",
+    "old": "            return signatureName(f.path);",
+    "new": "            return martialWords(f.path)?.technique ?? SIGNATURE_EN[f.path];",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-MARTIAL-L1N1-the-owed-number-unshown",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, entity);   // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN); FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands\n",
-    "new": "",
+    "old": "  if (!f?.dead) showFollowUp(n, word, entity); // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN); FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands\n  if (f) {",
+    "new": "  if (f) {",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-MARTIAL-L1N3-blows-alone",
     "file": "src/systems/martialPaths.js",
-    "old": "'Your blows and arrows deal {pct}% more damage to enemies that haven\\'t noticed you.'",
-    "new": "'Your blows deal {pct}% more damage to enemies that haven\\'t noticed you.'",
+    "old": "      \"Your blows and arrows deal {pct}% more damage to enemies that haven't noticed you.\",",
+    "new": "      \"Your blows deal {pct}% more damage to enemies that haven't noticed you.\",",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-MARTIAL-L3F3-the-court-unread",
     "file": "src/systems/martialPowers.js",
-    "old": "{ const held = regenShare((entity.maxHealth * mentorScaled(entity, N.grit.health)) / 100, 'grit', entity); if (held > 0) healMine(entity, held); }",
-    "new": "healMine(entity, (entity.maxHealth * mentorScaled(entity, N.grit.health)) / 100);",
+    "old": "  if (entity.health > 0 && entity.health < entity.maxHealth) {\n    const held = regenShare((entity.maxHealth * mentorScaled(entity, N.grit.health)) / 100, 'grit', entity);\n    if (held > 0) healMine(entity, held);\n  }",
+    "new": "  if (entity.health > 0 && entity.health < entity.maxHealth)\n    healMine(entity, (entity.maxHealth * mentorScaled(entity, N.grit.health)) / 100);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -294,7 +294,7 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-the-path-carries-the-estimate",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
+    "old": "  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
     "new": "  _carry.set(key, Math.max(0, exact - more));",
     "tests": [
       "test/systems/audit_martial.test.js",
@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-MARTIAL-L4M1-the-technique-sentence-back",
     "file": "src/systems/martialPaths.js",
-    "old": "t('martial.chosen', 'Martial specialization chosen: {name}.', { name: p.name })",
-    "new": "t('martial.chosen', 'Martial specialization chosen: {name}. {technique} answers your technique key with its weapons.', { name: p.name, technique: p.technique.name })",
+    "old": "  return { ok: true, text: t('martial.chosen', 'Martial specialization chosen: {name}.', { name: p.name }) };",
+    "new": "  return {\n    ok: true,\n    text: t(\n      'martial.chosen',\n      'Martial specialization chosen: {name}. {technique} answers your technique key with its weapons.',\n      { name: p.name, technique: p.technique.name },\n    ),\n  };",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -400,8 +400,8 @@
   {
     "name": "AUDIT-MARTIAL-L4L4-the-arcane-words",
     "file": "src/systems/martialPaths.js",
-    "old": "t('martial.choice.title', 'Martial specialization: {name}?', { name: p.name })",
-    "new": "t('martial.choice.title', 'Specialize as {name}?', { name: p.name })",
+    "old": "    t('martial.choice.title', 'Martial specialization: {name}?', { name: p.name }), // AUDIT MARTIAL L4 L4: never the arcane ask's own words",
+    "new": "    t('martial.choice.title', 'Specialize as {name}?', { name: p.name }), // AUDIT MARTIAL L4 L4: never the arcane ask's own words",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -430,8 +430,8 @@
   {
     "name": "AUDIT-MARTIAL-L4N2-a-stars-name",
     "file": "src/systems/martialPaths.js",
-    "old": "t('martial.bladedancer.name', 'Skirmisher')",
-    "new": "t('martial.bladedancer.name', 'Bladedancer')",
+    "old": "    name: t('martial.bladedancer.name', 'Skirmisher'),",
+    "new": "    name: t('martial.bladedancer.name', 'Bladedancer'),",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -440,8 +440,8 @@
   {
     "name": "AUDIT-MARTIAL-L4N3-two-times",
     "file": "src/systems/martialPaths.js",
-    "old": "'An enemy that hadn\\'t noticed you takes the blow twice.'",
-    "new": "'An enemy that hadn\\'t noticed you takes it 2 times.'",
+    "old": "    rider: t('martial.cutthroat.rider', \"An enemy that hadn't noticed you takes the blow twice.\"), // N.blackjack.times is 2 (pinned beside the word)",
+    "new": "    rider: t('martial.cutthroat.rider', \"An enemy that hadn't noticed you takes it 2 times.\"), // N.blackjack.times is 2 (pinned beside the word)",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-MARTIAL-L4N3-the-mace-to-hit-unsaid",
     "file": "src/systems/martialPaths.js",
-    "old": "a heavy blow at the nearest enemy in front of you, +{toHit} to hit.', { through: FORMS.hallowedShot.through, toHit: FORMS.hallowedStrike.toHit })",
-    "new": "a heavy blow at the nearest enemy in front of you.', { through: FORMS.hallowedShot.through })",
+    "old": "      'Bow: a shot that passes through up to {through} enemies. Blunt weapon: a heavy blow at the nearest enemy in front of you, +{toHit} to hit.',\n      { through: FORMS.hallowedShot.through, toHit: FORMS.hallowedStrike.toHit },",
+    "new": "      'Bow: a shot that passes through up to {through} enemies. Blunt weapon: a heavy blow at the nearest enemy in front of you.',\n      { through: FORMS.hallowedShot.through },",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-sig-asleep-mentoring",
     "file": "src/systems/martialPaths.js",
-    "old": "  const p = martialHeld(entity);\n  const id = p && typeof family",
-    "new": "  const p = martialAwake(entity);\n  const id = p && typeof family",
+    "old": "  const p = martialHeld(entity);",
+    "new": "  const p = martialAwake(entity);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -474,8 +474,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-held-no-mastery-read",
     "file": "src/systems/martialPaths.js",
-    "old": " || !isMasteredSkill(entity, p.skills[0]) || !isMasteredSkill(entity, p.skills[1])) return null;",
-    "new": ") return null;",
+    "old": "  if (\n    !p ||\n    !masterSkillsActive(entity) ||\n    !isMasteredSkill(entity, p.skills[0]) ||\n    !isMasteredSkill(entity, p.skills[1])\n  )\n    return null;",
+    "new": "  if (!p || !masterSkillsActive(entity)) return null;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -484,8 +484,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-held-second-skill-unread",
     "file": "src/systems/martialPaths.js",
-    "old": " || !isMasteredSkill(entity, p.skills[0]) || !isMasteredSkill(entity, p.skills[1])) return null;",
-    "new": " || !isMasteredSkill(entity, p.skills[0])) return null;",
+    "old": "  if (\n    !p ||\n    !masterSkillsActive(entity) ||\n    !isMasteredSkill(entity, p.skills[0]) ||\n    !isMasteredSkill(entity, p.skills[1])\n  )\n    return null;",
+    "new": "  if (!p || !masterSkillsActive(entity) || !isMasteredSkill(entity, p.skills[0])) return null;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-next-ignores-prompted",
     "file": "src/systems/martialPaths.js",
-    "old": "(entity?.martialPrompted ? null : martialChoices(entity)[0] ?? null)",
-    "new": "(martialChoices(entity)[0] ?? null)",
+    "old": "export const nextMartialChoice = (entity) => (entity?.martialPrompted ? null : (martialChoices(entity)[0] ?? null));",
+    "new": "export const nextMartialChoice = (entity) => martialChoices(entity)[0] ?? null;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-leech-always",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (id === 'berserker' && now < _s.leechUntil) healMine",
-    "new": "  if (id === 'berserker') healMine",
+    "old": "  if (id === 'berserker' && now < _s.leechUntil)",
+    "new": "  if (id === 'berserker')",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-leech-never-ends",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.leechUntil = now + N.savageWhirl.seconds;",
-    "new": "_s.leechUntil = now + 1e9;",
+    "old": "      _s.leechUntil = now + N.savageWhirl.seconds;",
+    "new": "      _s.leechUntil = now + 1e9;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -564,8 +564,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-frenzy-pace-any-health",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'berserker': return share(e) < N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
-    "new": "    case 'berserker': return mentorScaled(e, N.frenzy.pace);",
+    "old": "      return share(e) < N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
+    "new": "      return mentorScaled(e, N.frenzy.pace);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -574,8 +574,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-frenzy-pace-at-half",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'berserker': return share(e) < N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
-    "new": "    case 'berserker': return share(e) <= N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
+    "old": "      return share(e) < N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
+    "new": "      return share(e) <= N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-juggernaut-guard-always",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'juggernaut': return now < _s.guardUntil ? mentorScaled(entity, N.earthsplitter.lighter) : 0;",
-    "new": "    case 'juggernaut': return mentorScaled(entity, N.earthsplitter.lighter);",
+    "old": "      return now < _s.guardUntil ? mentorScaled(entity, N.earthsplitter.lighter) : 0;",
+    "new": "      return mentorScaled(entity, N.earthsplitter.lighter);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -594,8 +594,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-guard-never-ends",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.guardUntil = now + N.earthsplitter.seconds;",
-    "new": "_s.guardUntil = now + 1e9;",
+    "old": "      _s.guardUntil = now + N.earthsplitter.seconds;",
+    "new": "      _s.guardUntil = now + 1e9;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-daze-never-ends",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.dazed.set(target, now + N.knockout.seconds);",
-    "new": "_s.dazed.set(target, now + 1e9);",
+    "old": "      _s.dazed.set(target, now + N.knockout.seconds);",
+    "new": "      _s.dazed.set(target, now + 1e9);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-flow-window-halved",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.flowUntil = now + N.flowingSteel.seconds; }",
-    "new": "_s.flowUntil = now + N.flowingSteel.seconds / 2; }",
+    "old": "    _s.flowUntil = now + N.flowingSteel.seconds;",
+    "new": "    _s.flowUntil = now + N.flowingSteel.seconds / 2;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -624,8 +624,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-rhythm-window-halved",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.rhythmUntil = _now() + N.warRhythm.seconds;",
-    "new": "_s.rhythmUntil = _now() + N.warRhythm.seconds / 2;",
+    "old": "  if (id === 'warblade') _s.rhythmUntil = _now() + N.warRhythm.seconds;",
+    "new": "  if (id === 'warblade') _s.rhythmUntil = _now() + N.warRhythm.seconds / 2;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -634,8 +634,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-rally-window-halved",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.rallyUntil = now + N.rallyingCleave.seconds;",
-    "new": "_s.rallyUntil = now + N.rallyingCleave.seconds / 2;",
+    "old": "      _s.rallyUntil = now + N.rallyingCleave.seconds;",
+    "new": "      _s.rallyUntil = now + N.rallyingCleave.seconds / 2;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-mark-window-halved",
     "file": "src/systems/martialPowers.js",
-    "old": "_s.marks.set(target, now + N.huntersMark.seconds);",
-    "new": "_s.marks.set(target, now + N.huntersMark.seconds / 2);",
+    "old": "      _s.marks.set(target, now + N.huntersMark.seconds);",
+    "new": "      _s.marks.set(target, now + N.huntersMark.seconds / 2);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-stand-firm-on-saved-death",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || !(after > 0)",
-    "new": "  if (awakeMartialId(entity) !== 'juggernaut' || !(after > 0)",
+    "old": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || !(after > 0) || !(entity.maxHealth > 0)) return;",
+    "new": "  if (awakeMartialId(entity) !== 'juggernaut' || !(after > 0) || !(entity.maxHealth > 0)) return;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-stand-firm-on-death",
     "file": "src/systems/martialPowers.js",
-    "old": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || !(after > 0) || ",
-    "new": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || ",
+    "old": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || !(after > 0) || !(entity.maxHealth > 0)) return;",
+    "new": "  if (awakeMartialId(entity) !== 'juggernaut' || saved || !(entity.maxHealth > 0)) return;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -704,8 +704,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-gutting-lunge-at-the-line",
     "file": "src/systems/martialPowers.js",
-    "old": "    case 'bloodletter': if (share(target) < N.guttingLunge.below)",
-    "new": "    case 'bloodletter': if (share(target) <= N.guttingLunge.below)",
+    "old": "      if (share(target) < N.guttingLunge.below) again(target, landed * k, name);",
+    "new": "      if (share(target) <= N.guttingLunge.below) again(target, landed * k, name);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -714,8 +714,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-grit-unregistered",
     "file": "src/systems/martialPowers.js",
-    "old": "registerMagicRoundHook(MARTIAL_POWERS, martialRound);\n",
-    "new": "",
+    "old": "registerMagicRoundHook(MARTIAL_POWERS, martialRound);\nregisterPlayerKillListener(MARTIAL_POWERS, martialKill);",
+    "new": "registerPlayerKillListener(MARTIAL_POWERS, martialKill);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -724,8 +724,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-strike-unregistered",
     "file": "src/systems/martialPowers.js",
-    "old": "registerPlayerStrikeListener(MARTIAL_POWERS, martialStrike);\n",
-    "new": "",
+    "old": "registerPlayerStrikeListener(MARTIAL_POWERS, martialStrike);\nregisterSwingPaceMod(MARTIAL_POWERS, martialPace);",
+    "new": "registerSwingPaceMod(MARTIAL_POWERS, martialPace);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -734,8 +734,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-the-watch-counts",
     "file": "src/systems/martialPowers.js",
-    "old": "const neverCounts = (e) => e?.mobileType === KNIGHT_CITY_WATCH || ",
-    "new": "const neverCounts = (e) => ",
+    "old": "const neverCounts = (e) =>\n  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
+    "new": "const neverCounts = (e) => e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-ally-mobileTeam-counts",
     "file": "src/systems/martialPowers.js",
-    "old": " || e?.mobileTeam === 'PlayerAlly';",
-    "new": ";",
+    "old": "const neverCounts = (e) =>\n  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
+    "new": "const neverCounts = (e) => e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly';",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -754,8 +754,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-owed-blow-dropped",
     "file": "src/systems/martialPowers.js",
-    "old": "  oweFoe(entity, n);\n",
-    "new": "",
+    "old": "  oweFoe(entity, n);\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -764,8 +764,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-chameleon-as-my-own",
     "file": "src/systems/martialPowers.js",
-    "old": "playerDoor()?.castOnPlayer?.(bundle, { power: true });",
-    "new": "playerDoor()?.castOnPlayer?.(bundle);",
+    "old": "    playerDoor()?.castOnPlayer?.(bundle, { power: true });",
+    "new": "    playerDoor()?.castOnPlayer?.(bundle);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

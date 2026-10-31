@@ -2240,7 +2240,7 @@ its fifth ask.
 
 Recorded, not changed: loads that keep a failure but throw in no build - the snowfall's masks (snowfallHost.js:"failed = true;": no snow) and the helm's
 art (world.js `_csa*Load ??=`) - a session's look lost, not a hole in the world. Low Poly Trees' door no longer keeps
-one: since AUDIT BANTHA1 TREE-6 it is asked again on this backoff (lowPolyTreesAssets.js:"failedUntil = now() + (BUILD_RETRY_MS[tries] ?? Infinity);"),
+one: since AUDIT BANTHA1 TREE-6 it is asked again on this backoff (lowPolyTreesAssets.js:"failedUntil = now"),
 the trees flats meanwhile.
 
 **The four hosts.** `scenes/world.js` wired - it alone streams pixels (the pump, the frame's re-ask, the person

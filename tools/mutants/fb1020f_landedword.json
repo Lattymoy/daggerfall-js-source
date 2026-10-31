@@ -152,8 +152,8 @@
   {
     "name": "LANDED-followup-martial-target",
     "file": "src/systems/martialPowers.js",
-    "old": "showFollowUp(n, word, entity);",
-    "new": "showFollowUp(n, word);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, entity); // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN); FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  if (!f?.dead) showFollowUp(n, word); // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN); FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/net/eliteGates/fb1020f_landedword.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "L10N1b-resolve-ignores-text",
     "file": "src/systems/localeCatalog.js",
-    "old": "return BY_CODE.has(code) && has(code) ? code : 'en';",
-    "new": "return BY_CODE.has(code) ? code : 'en';",
+    "old": "  return BY_CODE.has(code) && has(code) ? code : 'en';",
+    "new": "  return BY_CODE.has(code) ? code : 'en';",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N1b-hk-not-traditional",
     "file": "src/systems/localeCatalog.js",
-    "old": "new Set(['TW', 'HK', 'MO'])",
-    "new": "new Set(['TW', 'MO'])",
+    "old": "const CHINESE_TRADITIONAL_REGIONS = new Set(['TW', 'HK', 'MO']);",
+    "new": "const CHINESE_TRADITIONAL_REGIONS = new Set(['TW', 'MO']);",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N1b-hant-script-ignored",
     "file": "src/systems/localeCatalog.js",
-    "old": "if (parts.some((p) => p.toLowerCase() === 'hant') || CHINESE_TRADITIONAL_REGIONS.has(parts[1]?.toUpperCase())) return 'zh-Hant';",
-    "new": "if (CHINESE_TRADITIONAL_REGIONS.has(parts[1]?.toUpperCase())) return 'zh-Hant';",
+    "old": "    if (parts.some((p) => p.toLowerCase() === 'hant') || CHINESE_TRADITIONAL_REGIONS.has(parts[1]?.toUpperCase()))\n      return 'zh-Hant';",
+    "new": "    if (CHINESE_TRADITIONAL_REGIONS.has(parts[1]?.toUpperCase())) return 'zh-Hant';",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N1b-nynorsk-unfolded",
     "file": "src/systems/localeCatalog.js",
-    "old": "if (lang === 'no' || lang === 'nn') return 'nb';",
-    "new": "if (lang === 'no') return 'nb';",
+    "old": "  if (lang === 'no' || lang === 'nn') return 'nb';",
+    "new": "  if (lang === 'no') return 'nb';",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "L10N1b-english-reader-offered",
     "file": "src/systems/localeCatalog.js",
-    "old": "    if (lang === 'en') return null;   // the player reads English first: nothing to offer\n",
-    "new": "",
+    "old": "    if (lang === 'en') return null; // the player reads English first: nothing to offer\n    const exact = LOCALE_CATALOG.find((l) => l.code.toLowerCase() === raw.toLowerCase())?.code;",
+    "new": "    const exact = LOCALE_CATALOG.find((l) => l.code.toLowerCase() === raw.toLowerCase())?.code;",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "L10N1b-offer-without-text",
     "file": "src/systems/localeCatalog.js",
-    "old": "BY_CODE.has(code) && has(code);\n  for (const tag",
-    "new": "BY_CODE.has(code);\n  for (const tag",
+    "old": "  const ok = (code) => !!code && code !== 'en' && !catalogLocale(code)?.hidden && BY_CODE.has(code) && has(code);",
+    "new": "  const ok = (code) => !!code && code !== 'en' && !catalogLocale(code)?.hidden && BY_CODE.has(code);",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "L10N1b-offer-hidden",
     "file": "src/systems/localeCatalog.js",
-    "old": "code !== 'en' && !catalogLocale(code)?.hidden && BY_CODE",
-    "new": "code !== 'en' && BY_CODE",
+    "old": "  const ok = (code) => !!code && code !== 'en' && !catalogLocale(code)?.hidden && BY_CODE.has(code) && has(code);",
+    "new": "  const ok = (code) => !!code && code !== 'en' && BY_CODE.has(code) && has(code);",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "L10N1b-no-language-fold",
     "file": "src/systems/localeCatalog.js",
-    "old": "LOCALE_CATALOG.find((l) => l.code.split('-')[0].toLowerCase() === lang)?.code;",
-    "new": "LOCALE_CATALOG.find((l) => l.code.toLowerCase() === lang)?.code;",
+    "old": "    const byLang = LOCALE_CATALOG.find((l) => l.code.split('-')[0].toLowerCase() === lang)?.code;",
+    "new": "    const byLang = LOCALE_CATALOG.find((l) => l.code.toLowerCase() === lang)?.code;",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "L10N1b-any-file-a-table",
     "file": "src/systems/localeCatalog.js",
-    "old": "([A-Za-z0-9_]+)\\.csv$/",
-    "new": "([A-Za-z0-9_]+)\\.\\w+$/",
+    "old": "  const m = /(?:^|\\/)locales\\/([A-Za-z0-9-]+)\\/([A-Za-z0-9_]+)\\.csv$/.exec(String(path ?? ''));",
+    "new": "  const m = /(?:^|\\/)locales\\/([A-Za-z0-9-]+)\\/([A-Za-z0-9_]+)\\.\\w+$/.exec(String(path ?? ''));",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]

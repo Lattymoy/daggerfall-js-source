@@ -2,8 +2,8 @@
   {
     "name": "RPT1026-PROGRESS-mastery-keeps-plain-practice",
     "file": "src/systems/masterSkills.js",
-    "old": "  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole\n",
-    "new": "",
+    "old": "  dropPlainPractice(entity, id); // RPT1026-PROGRESS: what it practised unmastered was counted whole\n  const n = names?.[id] ?? 'The skill';",
+    "new": "  const n = names?.[id] ?? 'The skill';",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-keeps-plain-practice",
     "file": "src/systems/masterSkills.js",
-    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }",
-    "new": "returnMasterPractice(entity); }",
+    "old": "    for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);\n    returnMasterPractice(entity);",
+    "new": "    returnMasterPractice(entity);",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-drops-every-skill",
     "file": "src/systems/masterSkills.js",
-    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);",
-    "new": "for (const id of entity.skills.keys()) if (entity.skillUses) entity.skillUses[id] = 0;",
+    "old": "    for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);",
+    "new": "    for (const id of entity.skills.keys()) if (entity.skillUses) entity.skillUses[id] = 0;",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RPT1026-PROGRESS-drop-below-100",
     "file": "src/systems/masterSkills.js",
-    "old": "  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses)",
-    "new": "  if (Array.isArray(entity.skillUses)",
+    "old": "  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length)\n    entity.skillUses[id] = 0;",
+    "new": "  if (Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -167,8 +167,8 @@
   {
     "name": "RPT1026-PROGRESS-flow-chip-none",
     "file": "src/systems/martialPowers.js",
-    "old": "  return [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
-    "new": "  return NO_CHIPS || [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
+    "old": "  return [\n    {\n      key: 'flowing-steel',\n      set: 'martial',\n      name: `${name} ${n}`,\n      text: `${Math.max(0, Math.ceil(_s.flowUntil - now))}s`,\n      state: 'active',\n    },\n  ];",
+    "new": "  return (\n    NO_CHIPS || [\n      {\n        key: 'flowing-steel',\n        set: 'martial',\n        name: `${name} ${n}`,\n        text: `${Math.max(0, Math.ceil(_s.flowUntil - now))}s`,\n        state: 'active',\n      },\n    ]\n  );",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],

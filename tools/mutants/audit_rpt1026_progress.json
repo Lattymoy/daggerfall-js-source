@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-RPT1026-F1-nothing-held",
     "file": "src/systems/masterSkills.js",
-    "old": "  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);",
-    "new": "  if (false) holdMasterPractice(entity);",
+    "old": "  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity); // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside",
+    "new": "  if (false) holdMasterPractice(entity); // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-RPT1026-F1-nothing-returned",
     "file": "src/systems/masterSkills.js",
-    "old": "dropPlainPractice(entity, id); returnMasterPractice(entity); }",
-    "new": "dropPlainPractice(entity, id); }",
+    "old": "    returnMasterPractice(entity);\n  } // AUDIT RPT1026 F1: and what it held comes back",
+    "new": "  } // AUDIT RPT1026 F1: and what it held comes back",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-RPT1026-F1-note-empty",
     "file": "src/systems/masterSkills.js",
-    "old": "for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];",
-    "new": "for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = 0;",
+    "old": "  for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];",
+    "new": "  for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = 0;",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],

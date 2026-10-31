@@ -146,8 +146,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-near-only-prototypes-far-picture-drawn",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "          if (proto.nearOnly) {\n",
-    "new": "          if (false) {\n",
+    "old": "          if (proto.nearOnly) {",
+    "new": "          if (false) {",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "JUNGLE-ROADSIDE-its-handles-absent-texture-given-back",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (h && h.record != null) renderer.releaseTexture",
-    "new": "if (h) renderer.releaseTexture",
+    "old": "    if (h && h.record != null) renderer.releaseTexture(h.archive, h.record); // JUNGLE-ROADSIDE: a near-only handle uploaded none",
+    "new": "    if (h) renderer.releaseTexture(h.archive, h.record); // JUNGLE-ROADSIDE: a near-only handle uploaded none",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "JUNGLE-ROADSIDE-its-atlases-unkept",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "record: null, atlasKeys: protoAtlases,",
-    "new": "record: null, atlasKeys: [],",
+    "old": "              atlasKeys: protoAtlases,",
+    "new": "              atlasKeys: [],",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

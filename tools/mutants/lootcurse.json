@@ -5,8 +5,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "    kind: 'racialOverride',\n    permanent: true,",
-    "new": "    kind: 'racialOverride',"
+    "old": "    kind: 'racialOverride',\n    permanent: true, // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)",
+    "new": "    kind: 'racialOverride', // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)"
   },
   {
     "name": "CP-vampire-not-lifelong",

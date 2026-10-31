@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-GROWTH-L1-5-brawler-overclaims",
     "file": "src/systems/martialPaths.js",
-    "old": "'For {seconds} seconds, blows from the enemy it hits deal {pct}% less damage to you.'",
-    "new": "'For {seconds} seconds, the enemy it hits deals {pct}% less damage to you.'",
+    "old": "    rider: t(\n      'martial.brawler.rider',\n      'For {seconds} seconds, blows from the enemy it hits deal {pct}% less damage to you.',\n      { seconds: N.knockout.seconds, pct: N.knockout.lighter },\n    ),",
+    "new": "    rider: t('martial.brawler.rider', 'For {seconds} seconds, the enemy it hits deals {pct}% less damage to you.', {\n      seconds: N.knockout.seconds,\n      pct: N.knockout.lighter,\n    }),",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-GROWTH-L1-7-berserker-no-arrows",
     "file": "src/systems/martialPaths.js",
-    "old": "every blow or arrow you land heals you",
-    "new": "every blow you land heals you",
+    "old": "      'For {seconds} seconds, every blow or arrow you land heals you for {pct}% of its damage.',",
+    "new": "      'For {seconds} seconds, every blow you land heals you for {pct}% of its damage.',",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

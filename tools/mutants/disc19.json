@@ -2,7 +2,7 @@
   {
     "name": "DISC19-A-werewolf-curse-rounds-out",
     "file": "src/systems/lycanthropy.js",
-    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
+    "old": "    permanent: true, // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
     "new": "    racial: 'lycanthropy',",
     "tests": [
       "test/systems/disc19.test.js"

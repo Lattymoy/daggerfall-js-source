@@ -191,8 +191,8 @@
   {
     "name": "WB3b-the-map-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark",
-    "new": "court: row({ save: 'refused', rest: 'refused', automap: null, mark",
+    "old": "    save: 'refused',\n    rest: 'refused',\n    automap: 'off',\n    mark: 'refused',\n    portalStone: 'refused',",
+    "new": "    save: 'refused',\n    rest: 'refused',\n    automap: null,\n    mark: 'refused',\n    portalStone: 'refused',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WB3b-rest-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused', rest: 'refused',",
-    "new": "court: row({ save: 'refused', rest: null,",
+    "old": "  court: row({\n    save: 'refused',\n    rest: 'refused',\n    automap: 'off',",
+    "new": "  court: row({\n    save: 'refused',\n    rest: null,\n    automap: 'off',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WB3b-a-save-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused',",
-    "new": "court: row({ save: null,",
+    "old": "  court: row({\n    save: 'refused',",
+    "new": "  court: row({\n    save: null,",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "WB3b-a-mark-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "automap: 'off', mark: 'refused', portalStone",
-    "new": "automap: 'off', mark: null, portalStone",
+    "old": "    automap: 'off',\n    mark: 'refused',\n    portalStone: 'refused',",
+    "new": "    automap: 'off',\n    mark: null,\n    portalStone: 'refused',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]

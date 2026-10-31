@@ -146,8 +146,8 @@
   {
     "name": "POWER-CEILING-the-paths-blow-not-asking",
     "file": "src/systems/martialPowers.js",
-    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');",
-    "new": "  const pct = (martialBlowPct(attacker, target, info));",
+    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial'); // POWER-CEILING",
+    "new": "  const pct = martialBlowPct(attacker, target, info); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "POWER-CEILING-the-paths-guard-not-asking",
     "file": "src/systems/martialPowers.js",
-    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;",
-    "new": "  const owed = (dmg * pct) / 100 + _s.guardOwed;",
+    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed; // POWER-CEILING",
+    "new": "  const owed = (dmg * pct) / 100 + _s.guardOwed; // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-the-paths-spend-their-raw-blow",
     "file": "src/systems/martialPowers.js",
-    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');",
-    "new": "  const pct = martialBlowPct(attacker, target, info); blowRoom(pct, 'martial');",
+    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial'); // POWER-CEILING",
+    "new": "  const pct = martialBlowPct(attacker, target, info);\n  blowRoom(pct, 'martial'); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-the-paths-spend-their-raw-guard",
     "file": "src/systems/martialPowers.js",
-    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;",
-    "new": "  guardRoom(pct, 'martial'); const owed = (dmg * pct) / 100 + _s.guardOwed;",
+    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed; // POWER-CEILING",
+    "new": "  guardRoom(pct, 'martial');\n  const owed = (dmg * pct) / 100 + _s.guardOwed; // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]

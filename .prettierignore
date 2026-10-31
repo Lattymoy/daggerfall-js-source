@@ -1271,6 +1271,8 @@
 !/src/systems/livingWorld/trouble.js
 !/src/systems/livingWorld/wagons.js
 !/src/systems/livingWorld/ways.js
+!/src/systems/localeCatalog.js
+!/src/systems/localizedBook.js
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
 !/src/systems/loot/
@@ -1287,8 +1289,14 @@
 !/src/systems/loot/lootScry.js
 !/src/systems/loot/lootThemes.js
 !/src/systems/loot/roomCarriedList.js
+!/src/systems/lowPolyTreesAssets.js
+!/src/systems/lycanthropy.js
+!/src/systems/madeLevel.js
 !/src/systems/map/
 /src/systems/map/*/
+!/src/systems/martialPaths.js
+!/src/systems/martialPowers.js
+!/src/systems/masterSkills.js
 !/src/systems/materialsBag.js
 !/src/systems/mathf.js
 !/src/systems/mentorMode.js

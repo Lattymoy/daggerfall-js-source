@@ -797,8 +797,8 @@
   {
     "name": "AUDIT-BANTHA1-TREE-6-a-failed-load-the-sessions",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "      loading.then((v) => { if (!v) loading = null; });",
-    "new": "      void loading;",
+    "old": "      loading.then((v) => {\n        if (!v) loading = null;\n      }); // a failed load is asked afresh past its wait",
+    "new": "      void loading; // a failed load is asked afresh past its wait",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -824,8 +824,8 @@
   {
     "name": "AUDIT-BANTHA1-TREE-9-the-idle-upload",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (visible.count || shown) gpu.setInstances(vis, visible.count);",
-    "new": "gpu.setInstances(vis, visible.count);",
+    "old": "      if (visible.count || shown) gpu.setInstances(vis, visible.count); // AUDIT BANTHA1 TREE-9/PERF-10: none to show, none shown - no upload",
+    "new": "      gpu.setInstances(vis, visible.count); // AUDIT BANTHA1 TREE-9/PERF-10: none to show, none shown - no upload",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

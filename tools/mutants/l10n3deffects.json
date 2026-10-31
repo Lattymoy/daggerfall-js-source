@@ -262,8 +262,8 @@
   {
     "name": "L10N3d2-systems-lycanthropy-379-inventoryWhileShapechanged",
     "file": "src/systems/lycanthropy.js",
-    "old": "  return isTransformedNow(entity) ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) } : null;   // :413",
-    "new": "  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null;   // :413",
+    "old": "  return isTransformedNow(entity)\n    ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) }\n    : null; // :413",
+    "new": "  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null; // :413",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "L10N3d2-systems-lycanthropy-382-youGetNoResponse",
     "file": "src/systems/lycanthropy.js",
-    "old": "  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null;   // :427",
-    "new": "  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null;   // :427",
+    "old": "  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null; // :427",
+    "new": "  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null; // :427",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"

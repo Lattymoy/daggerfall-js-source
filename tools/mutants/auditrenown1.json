@@ -442,8 +442,8 @@
   {
     "name": "AUDIT-RENOWN1-full-heal-to-raw",
     "file": "src/systems/lycanthropy.js",
-    "old": "(entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity));",
-    "new": "(entity?.maxHealthLimiter ?? Infinity));",
+    "old": "export const currentMaxHealth = (entity) =>\n  Math.min(entity?.maxHealth ?? 0, (entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity)); // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter",
+    "new": "export const currentMaxHealth = (entity) => Math.min(entity?.maxHealth ?? 0, entity?.maxHealthLimiter ?? Infinity); // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-RENOWN1-cure-to-raw",
     "file": "src/systems/lycanthropy.js",
-    "old": "  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity);",
-    "new": "  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health;",
+    "old": "  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity); // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247",
+    "new": "  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health; // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]

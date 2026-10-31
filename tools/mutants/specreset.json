@@ -83,8 +83,8 @@
   {
     "name": "SPEC-RESET-martial-box-permanent",
     "file": "src/systems/martialPaths.js",
-    "old": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
-    "new": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.final', 'This decision cannot be undone.'),",
+    "old": "    '',\n    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    '',\n    t('martial.choice.final', 'This decision cannot be undone.'),",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L4-5-martial-price-row-dropped",
     "file": "src/systems/martialPaths.js",
-    "old": "    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),   // AUDIT SPEC-RESET L4-5: a row of its own\n",
-    "new": "",
+    "old": "    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }), // AUDIT SPEC-RESET L4-5: a row of its own\n  ];",
+    "new": "  ];",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]

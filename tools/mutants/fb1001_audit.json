@@ -102,8 +102,8 @@
   {
     "name": "CURE-FILL-filled-before-the-cure",
     "file": "src/systems/lycanthropy.js",
-    "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
-    "new": "  fillVitalSigns(entity);\n  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n}",
+    "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
+    "new": "  fillVitalSigns(entity);\n  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);",
     "tests": [
       "test/systems/fb1001_audit.test.js"
     ]
