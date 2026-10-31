@@ -33,7 +33,7 @@ export function createKernelSea(woodsOf) {
     if (!w) return true;
     if (w !== woods) {
       woods = w;
-      landform = createLandforms({ woods: w });
+      landform = createLandforms({ woods: w, sites: null, climates: null });
       kernels.clear();
       lastPx = NaN;
     }
