@@ -61,9 +61,9 @@ Every item is the account's for good, on every character, read off the row at ev
 style"*; asked, a page of its own at 2,000 Aurum). Page IV of the Gilded Folio opens at 6,400 Aurum spent on it, what every
 item before it costs, so it opens only once all of them are bought. It holds the Aetherium Wings: the developers' Seraph
 Wings - their mesh, measures, motes and beat - in aetherium's pale blue, their pool and their light on the world blue too
-(`render/auraRing.js` AETHER_WING_RGB, kind 19). The developers keep the gold. A season's finds, challenges and the week's
-deeds with a dedicated player's caches (six new dungeons a day, CACHES-ONCE) reach it inside the season; the folios
-never close, so it waits for anyone slower.
+(`render/auraRing.js` AETHER_WING_RGB, kind 19). The developers keep the gold. A season's finds, challenges and the
+week's deeds with a dedicated player's caches (seven new dungeons a day at 5 to 10 a coffer, CACHE-SPREAD; six at 10
+before) reach it inside the season; the folios never close, so it waits for anyone slower.
 
 The free track costs 2,300 Aurum, the premium 1,000 to open and 8,400 more. The owner's "No overbundence of titles and
 profile icons" holds: one title free and two premium, three icons in all. The Brass Crown came with the retired Seasonal

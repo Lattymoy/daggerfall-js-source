@@ -267,7 +267,6 @@ account.refusal.bodyLong,"Письмо — не больше {max} символ�
 account.refusal.bought,"Вы уже покупали из Паноплии на этой неделе. Возвращайтесь на следующей."
 account.refusal.breach,"Шпиль не знает такого прорыва."
 account.refusal.busy,"Ваше последнее дело с миром ещё улаживается. Повторите чуть позже."
-account.refusal.cacheCapped,"Сегодня вы открыли {n, plural, one {# сундук с Aurum} few {# сундука с Aurum} many {# сундуков с Aurum} other {# сундука с Aurum}}. Вернитесь после полуночи по UTC, чтобы открыть этот."
 account.refusal.cacheClosed,"Aurum пока недоступен. Сундук остаётся закрытым."
 account.refusal.cacheGuest,"Для тайников с Aurum нужна зарегистрированная учётная запись. Сначала добавьте имя пользователя и пароль."
 account.refusal.cacheId,"Этот сундук нельзя открыть. Перезагрузите игру и попробуйте снова."

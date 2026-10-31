@@ -1,13 +1,15 @@
 // AURUM-CACHES (2026-10-30, the owner: "Also Aurum caches"; bible/06-Systems/Aurum.md section 3a): THE CACHES' LAW. CACHES-ONCE
 // (the owner: "Is there a way we can make it non time gated"): every dungeon holds one cache, its id the dungeon's key, its
-// check that key's one spelling; the Aurum one gives and the day's forgery bound. Past the Bay beside the Bay's: a lair of
+// check that key's one spelling; the Aurum each gives, 5 to 10 by its hash (CACHE-SPREAD, no day's bound). Past the Bay beside the Bay's: a lair of
 // Cyrodiil keys by its whole map id. tools/mutants/aurum_caches.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  AURUM_CACHE_AURUM, AURUM_CACHE_DAY_MAX, AURUM_CACHE_DUNGEON_MAX, aurumCacheDungeonKey, aurumCacheUnit, aurumCacheIdOk, aurumCacheSpotOf,
+  AURUM_CACHE_AURUM_MIN, AURUM_CACHE_AURUM_MAX, AURUM_CACHE_DUNGEON_MAX, aurumCacheDungeonKey, aurumCacheUnit, aurumCacheIdOk, aurumCacheSpotOf,
+  aurumCacheAurumOf,
 } from '../../src/net/aurumCacheLaw.js';
+import * as LAW from '../../src/net/aurumCacheLaw.js';
 import { DUNGEON_ID_MAX } from '../../src/net/nodeLaw.js';
 import { dungeonIdOf } from '../../src/scenes/dungeonIdentity.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
@@ -18,23 +20,36 @@ const BAY = Array.from({ length: 4000 }, (_, i) => dungeonIdOf((7 << 20) | (i * 
 const LAIRS = Array.from({ length: 4000 }, (_, i) => dungeonIdOf(lairPlaceId(i * 97 + 5)));
 const DAY = 20_757;
 
-// PIN MOVED (CACHES-ONCE): twenty-five Aurum, three caches a day, one place in four
-test('AURUM-CACHES the numbers: ten Aurum a cache, ten claims an account a UTC day (the forgery bound); a dungeon\'s id the professions\' (nodeLaw DUNGEON_ID_MAX) (mutants: the amount, the bound)', () => {
-  assert.equal(AURUM_CACHE_AURUM, 10);
-  assert.equal(AURUM_CACHE_DAY_MAX, 10);
+// PIN MOVED (CACHE-SPREAD): ten Aurum a cache and ten claims a UTC day; before CACHES-ONCE twenty-five, three a day, one place in four
+test('CACHE-SPREAD the numbers: a cache gives 5 to 10 Aurum, and no day\'s bound is left in the law; a dungeon\'s id the professions\' (nodeLaw DUNGEON_ID_MAX) (mutants: the least, the most)', () => {
+  assert.deepEqual([AURUM_CACHE_AURUM_MIN, AURUM_CACHE_AURUM_MAX], [5, 10]);
+  assert.deepEqual(Object.keys(LAW).filter((k) => /DAY|CAP/.test(k)), [], 'no day\'s bound (Mac: "no daily cap")');
   assert.equal(AURUM_CACHE_DUNGEON_MAX, DUNGEON_ID_MAX, 'one bound for a dungeon id');
   assert.equal(aurumCacheDungeonKey(0), 'd0');
   assert.equal(aurumCacheDungeonKey(0xffffffff), 'd4294967295');
   for (const bad of [-1, 2 ** 32, 1.5, '12', null, NaN]) assert.equal(aurumCacheDungeonKey(bad), null, `${bad}`);
 });
 
-// PIN MOVED (CACHES-ONCE): a cache worth two quests, one in four dungeons, a visit worth 5 to 10 Aurum
-test('CACHES-ONCE BALANCE (the owner: "I\'d tune the amount so the total doesn\'t flood the economy"): a cache worth one to two quests\' finds; a regular day (four dungeons, three in five new) finding 20 to 30 Aurum, as the old caches\' 25; the day\'s bound at most the finds\' own and never met by a dedicated day (ten dungeons) (mutants: the Aurum, the bound)', () => {
-  assert.ok(AURUM_CACHE_AURUM >= PASS_SOURCES.quest && AURUM_CACHE_AURUM <= 2 * PASS_SOURCES.quest, 'a quest\'s finds or two');
-  const regular = 4 * 0.6 * AURUM_CACHE_AURUM, before = 4 * 0.25 * 25;
-  assert.ok(regular >= 20 && regular <= 30 && Math.abs(regular - before) <= 5, `a regular day (${regular}, before ${before})`);
-  assert.ok(AURUM_CACHE_AURUM * AURUM_CACHE_DAY_MAX <= PASS_DAY_AURUM, 'a forger earns no more than a day\'s finds');
-  assert.ok(10 * 0.6 < AURUM_CACHE_DAY_MAX, 'a dedicated day never meets the bound');
+// PIN MOVED (CACHE-SPREAD): ten Aurum a cache, a regular day 24, ten claims a day the forgery bound; before it a cache worth two quests, one in four dungeons
+test('CACHE-SPREAD the amount: every cache\'s own, 5 to 10 off its id alone, each of the six about a sixth of the Bay\'s caches and of those past it; a cache worth half to one quest\'s finds; a regular day (four dungeons, three in five new) finding about 18 Aurum (mutants: the least, the most, the amount not the id\'s)', () => {
+  for (const [name, list] of [['the Bay', BAY], ['past the Bay', LAIRS]]) {
+    const ids = list.map((id) => /** @type {string} */ (aurumCacheDungeonKey(id)));
+    const counts = new Map();
+    for (const id of ids) {
+      const a = aurumCacheAurumOf(id);
+      assert.ok(Number.isInteger(a) && a >= AURUM_CACHE_AURUM_MIN && a <= AURUM_CACHE_AURUM_MAX, `${name} ${id}: ${a}`);
+      counts.set(a, (counts.get(a) ?? 0) + 1);
+    }
+    assert.deepEqual([...counts.keys()].sort((a, b) => a - b), [5, 6, 7, 8, 9, 10], `${name}: every amount paid`);
+    for (const [a, n] of counts) assert.ok(Math.abs(n / ids.length - 1 / 6) < 0.03, `${name}: ${a} in ${n} of ${ids.length}`);
+    const mean = ids.reduce((t, id) => t + aurumCacheAurumOf(id), 0) / ids.length;
+    assert.ok(Math.abs(mean - 7.5) < 0.15, `${name}: the mean ${mean}`);
+  }
+  assert.equal(aurumCacheAurumOf('d5'), aurumCacheAurumOf('d5'), 'the same id, the same amount');
+  assert.equal(AURUM_CACHE_AURUM_MAX, PASS_SOURCES.quest, 'the most is a quest\'s finds');
+  assert.equal(2 * AURUM_CACHE_AURUM_MIN, PASS_SOURCES.quest, 'the least half of one');
+  const mean = (AURUM_CACHE_AURUM_MIN + AURUM_CACHE_AURUM_MAX) / 2, regular = 4 * 0.6 * mean;
+  assert.ok(regular >= 15 && regular <= 24 && regular < PASS_DAY_AURUM / 4, `a regular day (${regular}, 24 at ten a cache)`);
 });
 
 // PIN MOVED (CACHES-ONCE): the id was `<day>:d<dungeon>`, taken on its day and the next; a quarter of places held one
