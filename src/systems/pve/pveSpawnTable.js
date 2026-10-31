@@ -26,7 +26,7 @@ const byKey = (list) => list.sort((a, b) => a.key.localeCompare(b.key));
  * The spawn table at a place: its zone and, for each population, the templates (or groups) it draws from at their
  * share. Null where no zone is.
  * @param {{ px: number, py: number, region: number, place?: string, dungeon?: number|null, province?: string,
- *   climate?: number|null, night?: boolean, event?: string|null, factions?: string[], towns?: Iterable<number>|null }} at
+ *   climate?: number|null, night?: boolean, event?: string|null, factions?: string[] }} at
  */
 export function spawnTable(at) {
   const zone = pveZoneAt(at);

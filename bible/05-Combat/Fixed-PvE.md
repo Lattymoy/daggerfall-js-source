@@ -147,19 +147,20 @@ SAFE-ROAD ("make the road safe out of the pvp
 zone", "enemys avoid roads"): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
 and foes keep off them; a new character is under the PvP zone's level 30 and walks out on them.
 
-REGION-LADDER (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
-the owner chose every region 1-45): where the world hands the zone its nearby towns (`zoneTownsAt`, cities and hamlets through
-the world's places), the base band comes from a rung, not the progress. The rung is the distance to the nearest town
-over the distance to the third, so 0 at a town's gate and near 1 in the empty wild, alike in a crowded region and a
-bare one. Bands start at rungs 0.30, 0.44, 0.55, 0.66 and 0.78, which cut the Bay's land into six near-even shares.
+REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region",
+then chose every region 1-45; 2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1"): each
+area rings out from its hot spot (`pveHotspots.js`). A Bay region's hot spot is its land farthest from its edge and the
+sea, and its reach is how far its land runs from there (90th centile), both measured from MAPS.BSA by
+`tools/pveHotspots.mjs`. Past the Bay a province's 96-pixel district has its middle and its half diagonal. The rung is
+1 at the hot spot and 0 at the reach, and each sixth of the way out is a band lower: 36-45 at the heart, 1-8 at the edge.
 
-Progress toward the center steepens the climb, so the heart has more high ground, but a gate is level 1 even there.
-Without towns the base is the progress alone. Measured on the Bay with every rule: 42 of 45 land regions hold both ends of the ladder. The rest are
-two small islands and one with no town.
+Progress toward the center widens the rings, so the heart has more high ground, but an area's edge is level 1 even
+there. Measured on the Bay: 44 of 45 land regions hold all six bands; the last is a one-pixel sliver. A region with no
+land falls back to the progress alone. The district step of the first pass is gone: it broke the rings.
 
-Each 96-pixel district steps one band down or up from its key alone, except the first and last bands, which never step. Four districts in a hundred are high-level
-enclaves, three bands up, with a warning; ten are farming grounds. The party zone is the heart's ring on the top band. A road keeps its base band, a town is safe, a dungeon
-is one band deeper and the old and undead ones two. The recommended Combat Score is advice and changes no foe.
+Four districts in a hundred are high-level enclaves, three bands up, with a warning; ten are farming grounds. The party
+zone is the heart's ring on the top band. A town is safe, a dungeon is one band deeper and the old and undead ones two.
+The recommended Combat Score is advice and changes no foe.
 
 A spawn table (`pveSpawnTable.js`) follows the spec's six steps: place, bestiary, hour and event and factions, band,
 then the populations - settlement (a community group), ambient, farming, encounter, group, road patrol and rare. A

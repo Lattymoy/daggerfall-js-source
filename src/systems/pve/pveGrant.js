@@ -30,14 +30,14 @@ export function factionsHolding(region, place, dungeon = null) {
  * province's past it), province, climate and holders. `regionAt` and `climateAt` are the map's.
  * @param {number} px @param {number} py
  * @param {{ regionAt: (x: number, y: number) => number, climateAt: (x: number, y: number) => number, minute: number,
- *   place?: string, dungeon?: number|null, event?: string|null, townsAt?: ((x: number, y: number) => number[])|null }} o
+ *   place?: string, dungeon?: number|null, event?: string|null }} o
  */
-export function pveTableAt(px, py, { regionAt, climateAt, minute, place = 'wild', dungeon = null, event = null, townsAt = null }) {
+export function pveTableAt(px, py, { regionAt, climateAt, minute, place = 'wild', dungeon = null, event = null }) {
   const region = inBay(px, py) ? regionAt(px, py) : regionOfTheatre(theatreAt(px, py));
   if (!(region >= 0)) return null;
   const province = provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5)) ?? (REGION_RACES[region] === 1 ? 'Hammerfell' : 'HighRock');
   return spawnTable({ px, py, region, place, dungeon, province, climate: climateAt(px, py), night: isNight(minute), event,
-    factions: factionsHolding(region, place, dungeon), towns: townsAt ? townsAt(px, py) : null });   // REGION-LADDER: zoneTownsAt
+    factions: factionsHolding(region, place, dungeon) });
 }
 
 /**

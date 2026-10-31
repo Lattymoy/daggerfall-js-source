@@ -16,8 +16,8 @@ import { CITIES } from '../../../src/world/tamriel/tamrielGeography.js';
 import { pictureToBay } from '../../../src/world/tamriel/tamrielFrame.js';
 
 const mountain = { regionAt: () => ORSINIUM_REGION, climateAt: () => CLIMATES.Mountain, minute: 12 * 60 };
-const orcs = pveTableAt(964, 100, mountain);
-const grant = (k, s) => ({ k, s, p: [964, 100], m: mountain.minute });
+const orcs = pveTableAt(888, 158, mountain);
+const grant = (k, s) => ({ k, s, p: [888, 158], m: mountain.minute });
 
 test('STAGE 7: who holds a place - outlaws the open land, the clans their Wrothgar and strongholds, nobody a town', () => {
   assert.deepEqual(factionsHolding(5, 'wild'), ['bandits']);
@@ -33,7 +33,7 @@ test('STAGE 7: the table at a grant\'s pixel - the Bay\'s region from the map, a
   const skyrim = pveTableAt(sx, sy, { ...mountain, regionAt: () => { throw new Error('past the Bay reads no map region'); } });
   assert.equal(skyrim.zone.region, BAY_REGION_COUNT + 2);
   assert.equal(skyrim.zone.pastBay, true);
-  const night = pveTableAt(964, 100, { ...mountain, minute: 0 });
+  const night = pveTableAt(888, 158, { ...mountain, minute: 0 });
   assert.ok(night, 'the minute reaches the hour');
 });
 

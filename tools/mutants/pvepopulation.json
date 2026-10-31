@@ -1,10 +1,8 @@
 [
   {"name": "STAGE7-no-enclave", "file": "src/systems/pve/pveZones.js", "old": "  if (enclave) tier = clampTier(base + 3);\n  else if", "new": "  if (false) tier = clampTier(base + 3);\n  else if", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "STAGE7-road-climbs", "file": "src/systems/pve/pveZones.js", "old": "  else if (place === 'road') tier = Math.min(tier, base);\n", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-town-unsafe", "file": "src/systems/pve/pveZones.js", "old": "  else if (place === 'town') tier = 0;\n", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-dungeon-flat", "file": "src/systems/pve/pveZones.js", "old": "tier = clampTier(tier + 1 + (DEEP_DUNGEONS", "new": "tier = clampTier(tier + 0 + (DEEP_DUNGEONS", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-no-deep", "file": "src/systems/pve/pveZones.js", "old": "(DEEP_DUNGEONS.includes(/** @type {number} */ (dungeon)) ? 1 : 0)", "new": "0", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "STAGE7-no-district-step", "file": "src/systems/pve/pveZones.js", "old": "  let tier = base === 0 || base === TOP ? base : clampTier(base + DISTRICT_STEP[roll % DISTRICT_STEP.length]);", "new": "  let tier = base === 0 || base === TOP ? base : clampTier(base);", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-enclave-on-road", "file": "src/systems/pve/pveZones.js", "old": "  const enclave = place === 'wild' && roll < ZONE_SHARE.enclave;", "new": "  const enclave = roll < ZONE_SHARE.enclave;", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-farming-anywhere", "file": "src/systems/pve/pveZones.js", "old": "  const farming = place === 'wild' && !enclave &&", "new": "  const farming = !enclave &&", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-no-warning", "file": "src/systems/pve/pveZones.js", "old": "warning: enclave || party || tier >= base + 2 })", "new": "warning: enclave || party })", "tests": ["test/systems/pve/pve_population.test.js"]},
@@ -23,12 +21,11 @@
   {"name": "STAGE7-rare-always", "file": "src/systems/pve/pvePopulation.js", "old": "  if (pop === 'rare' && rng() >= RARE_CHANCE) return null;\n", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-sleep-early", "file": "src/systems/pve/pvePopulation.js", "old": "    if (now - cell.seenAt < CELL_IDLE_S) continue;", "new": "    if (now - cell.seenAt < CELL_IDLE_S - 1) continue;", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-waits-kept", "file": "src/systems/pve/pvePopulation.js", "old": "  for (const [id, w] of L.waits) if (w.standsAt <= now) L.waits.delete(id);\n", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "LADDER-gate-steps", "file": "src/systems/pve/pveZones.js", "old": "  let tier = base === 0 || base === TOP ? base : clampTier(", "new": "  let tier = base === -1 || base === TOP ? base : clampTier(", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "LADDER-top-steps", "file": "src/systems/pve/pveZones.js", "old": "  let tier = base === 0 || base === TOP ? base", "new": "  let tier = base === 0 || base === -1 ? base", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "LADDER-no-towns", "file": "src/systems/pve/pveZones.js", "old": "  const base = towns ? ladderTier(", "new": "  const base = false ? ladderTier(", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "LADDER-no-lean", "file": "src/systems/pve/pveZones.js", "old": "(1 + LADDER_LEAN * Math.max(", "new": "(1 + 0 * Math.max(", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "LADDER-party-anywhere", "file": "src/systems/pve/pveZones.js", "old": " >= PARTY_ZONE_FROM && base === TOP;", "new": " >= PARTY_ZONE_FROM;", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "LADDER-rung-nearest", "file": "src/systems/pve/pveZones.js", "old": "Math.min(1, d[0] / d[2])", "new": "Math.min(1, d[0] / d[1])", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "LADDER-reach-unchecked", "file": "src/systems/pve/pveZones.js", "old": "    if (d.length >= 3 && d[2] <= r) return d;", "new": "    if (d.length >= 3) return d;", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-no-hotspot", "file": "src/systems/pve/pveZones.js", "old": "  return hot ? ladderTier(", "new": "  return false ? ladderTier(", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-district-corner", "file": "src/systems/pve/pveHotspots.js", "old": "half = DISTRICT_PX / 2;", "new": "half = 0;", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-bay-as-district", "file": "src/systems/pve/pveHotspots.js", "old": "  if (inBay(px, py) && region < BAY_REGION_COUNT) return", "new": "  if (false) return", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-rings-reversed", "file": "src/systems/pve/pveZones.js", "old": "  return Math.max(0, 1 - Math.hypot(", "new": "  return Math.max(0, 0 + Math.hypot(", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-lasting-ignored", "file": "src/systems/pve/pvePopulation.js", "old": "  if (lasting) { L.gone.add(id); cell?.slots.delete(id); }", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]}
 ]
