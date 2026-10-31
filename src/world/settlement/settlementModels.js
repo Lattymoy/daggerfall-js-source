@@ -70,12 +70,14 @@ function outward(ring, i) {
 /**
  * The ground's model: paving and retaining walls, decks and posts, stairs, ramps and bridges.
  * @param {import('./settlementContract.js').SettlementPlan} plan @param {number} datum @param {Map<string, { natural: number }>} cells
+ * @param {string} [style] its style's key: its terraces' paving (settlementStyles.js `ground`)
  */
-export function groundModel(plan, datum, cells) {
+export function groundModel(plan, datum, cells, style = 'IliacBay') {
   const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));
+  const ground = art(CAPITAL_ART[SETTLEMENT_STYLES[style]?.ground] ?? CAPITAL_ART.bridgeStone);   // its style's paving
   for (const pad of plan.pads) {
     if (pad.legacy) continue;   // RMBC6: a core's ground is its town's own tiles
-    const y = /** @type {number} */ (Y.get(pad.id)), raised = pad.base === 'raised', top = raised ? PLANK : PAVING;
+    const y = /** @type {number} */ (Y.get(pad.id)), raised = pad.base === 'raised', top = raised ? PLANK : ground;
     for (const [i, j, k] of earClip(pad.poly)) {
       const p = [pad.poly[i], pad.poly[j], pad.poly[k]];
       mb.tri(top, [p[0][0], y, p[0][1]], [p[1][0], y, p[1][1]], [p[2][0], y, p[2][1]], [0, 1, 0], [p[0][0] / TILE, p[0][1] / TILE], [p[1][0] / TILE, p[1][1] / TILE], [p[2][0] / TILE, p[2][1] / TILE]);

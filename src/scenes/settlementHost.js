@@ -75,7 +75,7 @@ export function standSettlement(p, blocksFile, slot = -1) {
     const dfBlock = { name: `SETTLE${input.place}.${b.key}`, index: -1, rmbBlock: { subRecords: [{ get interior() { return (interior ??= buildingInterior(input.place, b, piece, blocksFile)); } }] } };
     return { id: buildingModelId(run, i), piece, record, dfBlock };
   });
-  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(style) ?? 300 };
+  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style), pieces, climateBase: townLookBase(style) ?? 300 };
 }
 
 /**

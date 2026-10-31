@@ -152,5 +152,23 @@
       "test/world/atlas/f1_atlas.test.js"
     ],
     "why": "a settlement asked of locate and bundled as a location it does not have"
+  },
+  {
+    "name": "ORGANIC-paving-unstyled",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "const ground = art(CAPITAL_ART[SETTLEMENT_STYLES[style]?.ground] ?? CAPITAL_ART.bridgeStone);",
+    "new": "const ground = art(CAPITAL_ART.bridgeStone);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-paving-host-unstyled",
+    "file": "src/scenes/settlementHost.js",
+    "old": "new Map(L.cells.map((c) => [c.id, c])), style),",
+    "new": "new Map(L.cells.map((c) => [c.id, c]))),",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
   }
 ]

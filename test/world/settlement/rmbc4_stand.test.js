@@ -16,6 +16,7 @@ import { keyBandOf } from '../../../src/world/settlement/settlementContract.js';
 import { DOOR_TYPE } from '../../../src/world/meshReader.js';
 import { BUILDING_TYPES as T } from '../../../src/world/buildingNames.js';
 import { IMPERIAL_DOOR_MODEL } from '../../../src/world/imperialFabricBuildings.js';
+import { art, CAPITAL_ART } from '../../../src/world/capitalShapes.js';
 import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
 
 const ROW = SETTLEMENT_ROWS.find((r) => r.province === 'Hammerfell');
@@ -47,6 +48,12 @@ test('RMBC4 the ground\'s model: every pad paved at its own height, a wall down 
     if (p.base === 'cut') assert.ok(ys.has(Math.round((L.datum + p.y - WALL_DROP) * 100) / 100), `${p.id}'s wall reaches down`);
   }
   assert.ok(g.indices.length / 3 > plan.pads.length * 10);
+  // ORGANIC: its terraces paved in its style's stone - a village's, never a city's flags (mutant: the style unread)
+  const recs = (m) => new Set(m.subMeshes.map((x) => `${x.textureArchive}/${x.textureRecord}`));
+  const [sand, flags] = [art(CAPITAL_ART.sandstone), art(CAPITAL_ART.bridgeStone)].map(([a, r]) => `${a}/${r}`);
+  const desert = recs(groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), 'Hammerfell'));
+  assert.ok(desert.has(sand), 'Hammerfell\'s sandstone');
+  assert.ok(recs(groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), 'Imperial')).has(flags), 'the Empire\'s flags');
 });
 
 test('RMBC4 a building: the fabric\'s mesher over its footprint; its door the fabric\'s door model on its front wall, facing its street (mutants: the turn, the floor)', () => {
@@ -114,6 +121,8 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(host.count(), 0);
   assert.deepEqual(removed.slice(-1), ['settlement:1084,241']);
   assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null), null);
+  const sand = art(CAPITAL_ART.sandstone);   // the host paves in the row's style (mutant: the style unpassed)
+  assert.ok(standSettlement(P, null).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));
 });
 
 test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and asks the host; a settlement door\'s record answers the door; the pixel carries its layout (mutants: each seam)', () => {
