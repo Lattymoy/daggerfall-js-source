@@ -73,10 +73,11 @@ try {
   await frames(10);
   await drain();
   const before = await page.evaluate(() => window.__mode?.() ?? null);
-  await page.mouse.click(640, 400); await frames(30);
-  for (let i = 0; i < 3; i++) { await page.keyboard.press('Enter'); await frames(10); }
-  const after = await page.evaluate(() => window.__mode?.() ?? null);
   await page.screenshot({ path: join(out, 'door.png') });
+  await page.evaluate(() => window.__enter?.());   // the modes' own tryEnter, from the eye: the door the press would take
+  const after = await until(() => (window.__mode?.() === 'interior' ? 'interior' : null), 180000) ?? await page.evaluate(() => window.__mode?.() ?? null);
+  await drain(); await frames(20);
+  await page.screenshot({ path: join(out, 'inside.png') });
   console.log(JSON.stringify({ door: d.type, modeBefore: before, modeAfter: after }));
 } catch (e) { console.log('FAIL:', e.message); }
 console.log(errors.length ? `errors:\n${errors.slice(0, 12).join('\n')}` : 'no page errors');
