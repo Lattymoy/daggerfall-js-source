@@ -174,9 +174,9 @@ the Eternal Edge a blue-violet line with a light running along it, a fainter one
 GILDED-GLOW; AUDIT FB1029f D3: the owner may turn this round). An element shows next, because it is the blow's truth.
 The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it
-while the piece is worn. A sprite in third person wears it as an outline round the whole sprite while its weapon is
-drawn, and on the weapon on its back while sheathed (BACK-HOLSTER GLOW, `05-Combat/Weapon-Glow.md` "On a sprite"): its
-weapon is painted into the picture, with nothing to tell it from the hand.
+while the piece is worn. A sprite in third person wears it as an outline round the weapon in its hand while drawn - a
+skin's round the whole sprite, whose weapon is painted into its picture - and on the weapon on its back while sheathed
+(BACK-HOLSTER GLOW, LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "On a sprite").
 
 **In the shop** a weapon piece stands on a stage of its own (`src/render/weaponPiecePreview.js`): a longsword of
 Daggerfall's pixels, outlined by the classic hand's own shaders - the field baked once, the band drawn each frame.
