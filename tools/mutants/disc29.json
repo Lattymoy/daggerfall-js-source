@@ -281,8 +281,8 @@
   {
     "name": "DISC29-D-plaque-wall-clock",
     "file": "src/ui/worldPlaque.js",
-    "old": "armDrawWatchdog(PLAQUE_WATCHDOG_MS, () => { _watchdog = null; hideWorldPlaque(); }, { schedule: _schedule, cancel: _cancel });",
-    "new": "_schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);",
+    "old": "  _watchdog = armDrawWatchdog(\n    PLAQUE_WATCHDOG_MS,\n    () => {\n      _watchdog = null;\n      hideWorldPlaque();\n    },\n    { schedule: _schedule, cancel: _cancel },\n  );",
+    "new": "  _watchdog = _schedule(() => {\n    _watchdog = null;\n    hideWorldPlaque();\n  }, PLAQUE_WATCHDOG_MS);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

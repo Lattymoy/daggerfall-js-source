@@ -112,7 +112,7 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-draw",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }\n  const n = ensure();",
+    "old": "  if (!worldPlaqueOn()) {\n    hideWorldPlaque();\n    return;\n  }\n  const n = ensure();",
     "new": "  const n = ensure();",
     "tests": [
       "test/systems/worldhover.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!dom && !classic && !verbs) { hideWorldPlaque(); return null; }   // (the hide",
-    "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
+    "old": "  if (!dom && !classic && !verbs) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/worldhover.test.js",
       "test/ui/enhanced/enhancedInventory.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
     "file": "src/ui/worldPlaque.js",
-    "old": "    blank(n);\n    return;\n  }\n  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats);",
-    "new": "    return;\n  }\n  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats);",
+    "old": "    blank(n);\n    return;",
+    "new": "    return;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "WORLD-HOVER-cursorActive-ignored",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }",
-    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) {",
+    "new": "  if (!eye || !dir || !collider) {",
     "tests": [
       "test/systems/worldhover.test.js",
       "test/ui/enhanced/enhancedInventory.test.js"
@@ -172,7 +172,7 @@
     "name": "WORLD-HOVER-plaque-ignores-the-docked-large-hud",
     "file": "src/ui/worldPlaque.js",
     "old": "  const { scale, largeHudHeight } = hudReticle(canvas);",
-    "new": "  const { scale } = hudReticle(canvas); const largeHudHeight = 0;",
+    "new": "  const { scale } = hudReticle(canvas);\n  const largeHudHeight = 0;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "WORLD-HOVER-the-signature-guard-retires",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const sig = `${frameSignature(frame)}|${lit}|${win.from}|${statsSide(lastX, globalThis.innerWidth ?? 0)}|${actionLayout}`;\n  if (sig === shownSig) return;",
-    "new": "  const sig = `${frameSignature(frame)}|${lit}|${win.from}|${statsSide(lastX, globalThis.innerWidth ?? 0)}|${actionLayout}`;\n  if (false) return;",
+    "old": "  if (sig === shownSig) return;",
+    "new": "  if (false) return;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -595,7 +595,7 @@
   {
     "name": "WORLD-HOVER-the-hide-door-is-gated-by-the-skin",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }",
+    "old": "  if (!worldPlaqueOn()) {\n    hideWorldPlaque();\n    return;\n  }",
     "new": "  if (!worldPlaqueOn()) return;",
     "tests": [
       "test/systems/worldhover.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "WORLD-HOVER-the-hide-keeps-the-signature",
     "file": "src/ui/worldPlaque.js",
-    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  blank(node);\n}",
+    "old": "  shownSig = null;\n  blank(node);",
+    "new": "  blank(node);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "old": "  if (!node) return;\n  shownSig = null;\n  blank(node);",
+    "new": "  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "WORLD-HOVER-the-gate-memo-outlives-the-host",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _gateMark = null;\n  _gateOn = false;\n",
-    "new": "",
+    "old": "  _gateMark = null;\n  _gateOn = false;\n  // QUICK-LOOT B3: the highlight dies with the host that raised it. A",
+    "new": "  // QUICK-LOOT B3: the highlight dies with the host that raised it. A",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -878,8 +878,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!dom && !classic && !verbs) { hideWorldPlaque(); return null; }   // (the hide",
-    "new": "  if (!dom && !classic && !verbs) { return null; }   // (the hide",
+    "old": "    hideWorldPlaque();\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "AUDIT-WH2-the-contained-frame-freezes-on-its-last-answer",
     "file": "src/ui/worldPlaque.js",
-    "old": "    try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }\n",
-    "new": "",
+    "old": "    try {\n      showWorldPlaque(null);\n    } catch {\n      /* the draw itself is gone; nothing left to hide */\n    }\n    setClassicLootFrame(null); // DISC22-C: and the classic panel draws nothing either",
+    "new": "    setClassicLootFrame(null); // DISC22-C: and the classic panel draws nothing either",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "AUDIT-WH2-no-watchdog",
     "file": "src/ui/worldPlaque.js",
-    "old": "  disarmDraw(_watchdog);\n  _watchdog = armDrawWatchdog(PLAQUE_WATCHDOG_MS, () => { _watchdog = null; hideWorldPlaque(); }, { schedule: _schedule, cancel: _cancel });\n",
-    "new": "",
+    "old": "  disarmDraw(_watchdog);\n  _watchdog = armDrawWatchdog(\n    PLAQUE_WATCHDOG_MS,\n    () => {\n      _watchdog = null;\n      hideWorldPlaque();\n    },\n    { schedule: _schedule, cancel: _cancel },\n  );\n  if (anchor && (anchor.x !== lastX || anchor.top !== lastTop)) {",
+    "new": "  if (anchor && (anchor.x !== lastX || anchor.top !== lastTop)) {",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "AUDIT-WH2-the-plaque-is-never-attached",
     "file": "src/ui/worldPlaque.js",
-    "old": "  document.body.append(node);\n",
-    "new": "",
+    "old": "  document.body.append(node);\n  return node;",
+    "new": "  return node;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -923,8 +923,8 @@
   {
     "name": "AUDIT-WH2-the-teardown-orphans-the-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "  try { node?.remove(); } catch { /* already gone */ }\n",
-    "new": "",
+    "old": "  try {\n    node?.remove();\n  } catch {\n    /* already gone */\n  }\n  node = null;",
+    "new": "  node = null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

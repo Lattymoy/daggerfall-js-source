@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-STAR8-T3-the-row-left-out",
     "file": "src/ui/wyrdWindow.js",
-    "old": "    gift('title', 'starwarden', worn?.titles?.includes('starwarden') ? 1 : 0, 1, t('festival.window.earnStarwarden', 'Earned on The Thirteenth of Frostfall.'), false),   // AUDIT STAR8 T3\n",
-    "new": "",
+    "old": "      'title',\n      'starwarden',\n      worn?.titles?.includes('starwarden') ? 1 : 0,\n      1,\n      t('festival.window.earnStarwarden', 'Earned on The Thirteenth of Frostfall.'),\n      false,\n    ), // AUDIT STAR8 T3\n    gift(\n      'icon',",
+    "new": "      'icon',",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-STAR8-T3-held-off-the-wrong-title",
     "file": "src/ui/wyrdWindow.js",
-    "old": "worn?.titles?.includes('starwarden') ? 1 : 0",
-    "new": "worn?.titles?.includes('hearthkeeper') ? 1 : 0",
+    "old": "      worn?.titles?.includes('starwarden') ? 1 : 0,",
+    "new": "      worn?.titles?.includes('hearthkeeper') ? 1 : 0,",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-STAR8-T3-its-count-shown",
     "file": "src/ui/wyrdWindow.js",
-    "old": "'Earned on The Thirteenth of Frostfall.'), false),",
-    "new": "'Earned on The Thirteenth of Frostfall.'), true),",
+    "old": "      false,",
+    "new": "      true,",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ]

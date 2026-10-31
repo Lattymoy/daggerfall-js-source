@@ -191,8 +191,8 @@
   {
     "name": "A8-fault-keeps-the-highlight",
     "file": "src/ui/worldPlaque.js",
-    "old": "    foldQuickLoot(null);   // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb\n",
-    "new": "",
+    "old": "    foldQuickLoot(null); // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb\n    try {",
+    "new": "    try {",
     "tests": [
       "test/systems/disc7.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "CAT-MEOW-the-plaque-keeps-the-seed",
     "file": "src/ui/worldPlaque.js",
-    "old": "    setSeed(classicSeed);   // CAT-MEOW: the namers' DisplayName draws leave no mark on the game's stream\n",
-    "new": "",
+    "old": "    setSeed(classicSeed); // CAT-MEOW: the namers' DisplayName draws leave no mark on the game's stream\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1006c_catmeow.test.js"
     ]

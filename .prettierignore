@@ -1606,6 +1606,9 @@
 !/src/ui/windowMotion.js
 !/src/ui/windowStack.js
 !/src/ui/workSift.js
+!/src/ui/worldPlaque.js
+!/src/ui/wyrdDoor.js
+!/src/ui/wyrdWindow.js
 !/src/world/
 /src/world/*
 !/src/world/arena/

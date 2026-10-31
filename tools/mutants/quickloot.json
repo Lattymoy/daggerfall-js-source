@@ -204,8 +204,8 @@
   {
     "name": "QUICK-LOOT-the-draw-lights-no-row",
     "file": "src/ui/worldPlaque.js",
-    "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity)",
-    "new": "    ;\n    if (r.rarity)",
+    "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity) row.dataset.rarity = r.rarity; // LR1",
+    "new": "    if (r.rarity) row.dataset.rarity = r.rarity; // LR1",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

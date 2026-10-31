@@ -253,8 +253,8 @@
   {
     "name": "WITCH1-worn-reads-wear",
     "file": "src/ui/wyrdWindow.js",
-    "old": "  if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };\n",
-    "new": "",
+    "old": "  if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };\n  if (row.owned) return { label: t('festival.window.wear', 'Wear'), why: null };",
+    "new": "  if (row.owned) return { label: t('festival.window.wear', 'Wear'), why: null };",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],
@@ -564,8 +564,8 @@
   {
     "name": "WITCH1-AUDIT-window-never-looks-again",
     "file": "src/ui/wyrdWindow.js",
-    "old": "if (now !== was) { was = now; render(); }",
-    "new": "if (now !== was) { was = now; }",
+    "old": "      render();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],
@@ -636,7 +636,7 @@
     "name": "WITCH1-AUDIT-G2-a-nought-known",
     "file": "src/ui/wyrdWindow.js",
     "old": "    const heard = Number.isSafeInteger(have);",
-    "new": "    const heard = true; have = have ?? 0;",
+    "new": "    const heard = true;\n    have = have ?? 0;",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],

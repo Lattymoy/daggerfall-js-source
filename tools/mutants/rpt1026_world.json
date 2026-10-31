@@ -397,8 +397,8 @@
   {
     "name": "RPT1026-DECOR-VERBS-the-whole-list",
     "file": "src/ui/worldPlaque.js",
-    "old": "foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
-    "new": "foldQuickLoot(frame);",
+    "old": "    foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
+    "new": "    foldQuickLoot(frame);",
     "tests": [
       "test/scenes/decor/rpt1026_world_decor.test.js"
     ],

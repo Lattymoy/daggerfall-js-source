@@ -11,7 +11,7 @@
   {
     "name": "D22C-frame-not-left-for-hud",
     "file": "src/ui/worldPlaque.js",
-    "old": "    else { const lit = quickLootRow(frame), w = windowOf(frame, lit); setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1); }   // DISC22-C: drawHud draws it, this frame, its lit row with it - LOOT-SCROLL: the same window the plaque draws",
+    "old": "    else {\n      const lit = quickLootRow(frame),\n        w = windowOf(frame, lit);\n      setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1);\n    } // DISC22-C: drawHud draws it, this frame, its lit row with it - LOOT-SCROLL: the same window the plaque draws",
     "new": "",
     "tests": [
       "test/systems/disc22c_classic_loot.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "D22C-lit-row-not-carried",
     "file": "src/ui/worldPlaque.js",
-    "old": "setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1);",
-    "new": "setClassicLootFrame(w.frame, frameMark());",
+    "old": "      setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1);",
+    "new": "      setClassicLootFrame(w.frame, frameMark());",
     "tests": [
       "test/systems/disc22c_classic_loot.test.js"
     ]

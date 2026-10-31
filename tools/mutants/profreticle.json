@@ -117,8 +117,8 @@
   {
     "name": "PROFRETICLE-anchor-bar-unread",
     "file": "src/ui/worldPlaque.js",
-    "old": "const viewH = Math.max(1, canvas.height - largeHudHeight) / dpr;",
-    "new": "const viewH = Math.max(1, canvas.height) / dpr;",
+    "old": "  const viewH = Math.max(1, canvas.height - largeHudHeight) / dpr;",
+    "new": "  const viewH = Math.max(1, canvas.height) / dpr;",
     "tests": [
       "test/systems/profreticle.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "PROFRETICLE-anchor-half-fov",
     "file": "src/ui/worldPlaque.js",
-    "old": "focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13) / 2),",
-    "new": "focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13)),",
+    "old": "    focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13) / 2),",
+    "new": "    focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13)),",
     "tests": [
       "test/systems/profreticle.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "PROFRETICLE-anchor-centre",
     "file": "src/ui/worldPlaque.js",
-    "old": "    y: crosshairCentreY(canvas.height, largeHudHeight) / dpr,\n    focal",
-    "new": "    y: (canvas.height / 2) / dpr,\n    focal",
+    "old": "    y: crosshairCentreY(canvas.height, largeHudHeight) / dpr,",
+    "new": "    y: canvas.height / 2 / dpr,",
     "tests": [
       "test/systems/profreticle.test.js"
     ]

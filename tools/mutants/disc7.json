@@ -47,8 +47,8 @@
   {
     "name": "ACT-MENU-hidden-plaque-keeps-the-highlight",
     "file": "src/ui/worldPlaque.js",
-    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n",
-    "new": "",
+    "old": "  foldQuickLoot(null); // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null); // DISC22-C: and the classic panel's frame with it",
+    "new": "  setClassicLootFrame(null); // DISC22-C: and the classic panel's frame with it",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ACT-MENU-verbs-not-drawn",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (f.kind === 'actions') {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (f.kind === 'actions') {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "ACT-MENU-verbs-drawn-unlit",
     "file": "src/ui/worldPlaque.js",
-    "old": "      row.className = 'wplaque-row wplaque-act';\n      if (i === sel) row.classList.add('sel');",
-    "new": "      row.className = 'wplaque-row wplaque-act';",
+    "old": "      if (i === sel) row.classList.add('sel');\n      if (f.rows[i].disabled) row.classList.add('off'); // AUDIT DISC7 A4: a refused verb, its reason in its name",
+    "new": "      if (f.rows[i].disabled) row.classList.add('off'); // AUDIT DISC7 A4: a refused verb, its reason in its name",
     "tests": [
       "test/systems/disc7.test.js"
     ]
