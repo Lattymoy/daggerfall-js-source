@@ -434,7 +434,8 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
     }
     assert.ok(red.length > 3, `${frame}: the chain drawn (${red.length} px)`);
     const [gx, gy] = chainWay(fr.cv, { ux, uy }, Number(frame.split('-')[0]) >= 5 && Number(frame.split('-')[0]) <= 9, Number(frame.split('-')[1]));
-    assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > 0), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
+    // PIN MOVED (FLAIL-LINK): the chain starts at the cap, so its first px may sit up to a px short of the head end
+    assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > -1), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
     if (!fr.cv) assert.deepEqual([gx, gy], [0, 1], `${frame}: at rest it hangs plumb`);
   }  const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
   assert.equal(heldImage(kt, { gender: 'male' }).record, inventoryItemImage(kt, { gender: 'male' }).record - 1);
@@ -615,6 +616,28 @@ test('a flail\'s chain swings: in a walk it lags the hand\'s move since the fram
   const rows = new Set();
   for (let i = 0; i < 60 * 60; i++) if (out.data[i * 4] > 200 && out.data[i * 4 + 2] < 60) rows.add((i / 60) | 0);
   assert.ok(rows.size >= 8, `the thin chain drawn on ${rows.size} rows`);
+});
+
+test('FLAIL-LINK (the placement audit, 2026-10-31): the chain hangs from the cap - the doll\'s first link sits below it, and the cap\'s px off the axis stay the handle\'s, no speck', () => {
+  const W = 40, H = 80, c = new Uint8Array(W * H * 4);
+  for (let x = 0; x < 30; x++) if (x < 4 || x > 7) c.set([0, 0, 255, 255], (20 * W + x) * 4);
+  for (let y = 16; y < 20; y++) for (let x = 27; x <= 31; x++) c.set([0, 0, 255, 255], (y * W + x) * 4);   // the cap, off the axis
+  for (let y = 25; y < 40; y++) c.set([255, 0, 0, 255], (y * W + 29) * 4);   // the first link four px below the cap
+  const pic = heldChain(heldPicture({ width: W, height: H, colors: c }));
+  assert.ok(pic.chain.lead >= 3, `the chain starts at its first link: lead ${pic.chain.lead}`);
+  const S = 60, out = { width: S, height: S, data: new Uint8Array(S * S * 4) }, along = 0.62 * (20 / 30), qx = 20 - 21 * along;
+  drawWeapon(out, { q: [qx, 10], t: [qx + 20, 10], d: 'f'.repeat(87), side: 1 }, 'fl1', 30, 2, { cm: 0.62, pic, swing: false });
+  const on = (x, y) => x >= 0 && y >= 0 && x < S && y < S && out.data[(y * S + x) * 4 + 3] > 0;
+  const seen = new Uint8Array(S * S); let pieces = 0;
+  for (let i = 0; i < S * S; i++) {
+    if (seen[i] || !on(i % S, (i / S) | 0)) continue;
+    pieces++;
+    for (const st = [i]; st.length;) {
+      const j = st.pop(), x = j % S, y = (j / S) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = (y + dy) * S + x + dx; if (on(x + dx, y + dy) && !seen[k]) { seen[k] = 1; st.push(k); } }
+    }
+  }
+  assert.equal(pieces, 1, 'the handle, its cap and the chain drawn as one piece');
 });
 
 test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are the ranged stance, hands empty', () => {

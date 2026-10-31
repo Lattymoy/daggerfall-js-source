@@ -241,6 +241,18 @@ for floating pieces and grips off the fist. A notch in a haft past the hand (the
 of its cap) is filled with the haft (`HAFT_NOTCH`). A picture's px alone in the air is dropped (`dropSpecks`), but not
 one beside the body. The art's own specks go where the code holds the hands (`dropLoneArt`: female 9-2, male 8-4).
 
+**The placement audit** (2026-10-31, the owner: "Ensure placements are perfect including shields"). Every frame of
+both bodies, in a leather and a plate chest, with a long blade, a claymore, a dagger, a mace, an axe, a flail, a staff,
+the bows and four shields: each piece of the weapon (the frame's `held` px) or the shield must touch the body. A fist
+the trace took as a piece of the hammer left floating is kept (`keep`, its skin: female 10-0's hand, female 8-2's,
+male 9-3's), and three grips are set where the haft meets the fist (female 10-0, male 9-0, male 5-1, whose plate grip
+sat ten px up the shaft).
+
+A flail's chain hangs from its cap (FLAIL-LINK: the doll's first link sits below the cap, so
+the chain is drawn from it, and the cap's px off the axis stay the handle's). Shields touch the body in every frame.
+What still stands off: a claymore's or dagger's guard tip past the body, the war axe behind male 8-1's hood, and female
+8-2's fist from behind, which the art joins to the body only through the hammer.
+
 **What the audit fixed in the hands.** A clip keeps the hands it started with (`isAnimating.hands`, a walker's
 `r.shot.hands`): the cast's element outlives the rig's cast, and a pair's next blow cannot turn this one. A weapon beside
 a readied spell stays in hand. A pair's shot is the striking hand's gun. A flinch at the loose takes the bow's stance. A

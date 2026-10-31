@@ -363,13 +363,19 @@ export function heldChain(P) {
   if (n < 8 || !(top > 0)) return P;
   const x = P.gx + P.ux * top, y = P.gy + P.uy * top, D = Math.hypot(cx / n - x, cy / n - y) || 1;
   const dx = (cx / n - x) / D, dy = (cy / n - y) / D;
-  let len = 0, half = 0;
+  let len = 0, half = 0, near = Infinity;
   for (let py = 0; py < img.height; py++) for (let px = 0; px < img.width; px++) {
-    if (chain[(py * img.width + px) * 4 + 3] <= 127) continue;
-    len = Math.max(len, (px - x) * dx + (py - y) * dy); half = Math.max(half, Math.abs((px - x) * dy - (py - y) * dx));
+    const j = (py * img.width + px) * 4;
+    if (chain[j + 3] <= 127) continue;
+    const a = (px - x) * dx + (py - y) * dy;
+    if (a < 0) { chain[j + 3] = 0; handle[j + 3] = img.colors[j + 3]; continue; }   // FLAIL-LINK: above the anchor, the cap's
+    len = Math.max(len, a); near = Math.min(near, a); half = Math.max(half, Math.abs((px - x) * dy - (py - y) * dx));
   }
+  // FLAIL-LINK (the placement audit, 2026-10-31): the doll's first link sits past the cap; the chain is drawn from it,
+  // so it hangs from the cap, not a pixel or two below it (half a px short, so the two touch)
+  const lead = Number.isFinite(near) ? Math.max(0, near - 0.5) : 0;
   const pic = (colors) => ({ width: img.width, height: img.height, colors });
-  return { ...P, handle: pic(handle), chain: { img: pic(chain), x, y, dx, dy, len: len + 1, half: half + 1 } };
+  return { ...P, handle: pic(handle), chain: { img: pic(chain), x, y, dx, dy, lead, len: len + 1 - lead, half: half + 1 } };
 }
 
 /** Does the axis's line run through a band wider than a string: as many px 1.5 to 4 px off it as on it? */
@@ -791,7 +797,7 @@ function drawChain(out, P, L, shown, g = [0, 1]) {
   const y0 = Math.max(0, Math.floor(Math.min(hy, ey) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(hy, ey) + wide));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(k, ka))));
   const at = (x, y) => {
-    const c = ((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;
+    const c = ((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;
     return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v];
   };
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {

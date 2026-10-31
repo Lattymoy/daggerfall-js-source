@@ -41,11 +41,11 @@ GRIPS = {
         '2-0': (46, 61), '2-1': (45, 57), '2-2': (41, 58), '2-3': (45, 60),
         '3-0': (47, 56), '3-1': (50, 57), '3-2': (60, 58), '3-3': (48, 56),
         '4-0': (45, 53), '4-1': (53, 52), '4-2': (58, 53), '4-3': (55, 55),
-        '5-0': (56, 26), '5-1': (52, 32), '5-2': (45, 65), '5-3': (91, 79), '5-4': (110, 76), '5-5': (102, 31),
+        '5-0': (56, 26), '5-1': (49, 35.5, 1), '5-2': (45, 65), '5-3': (91, 79), '5-4': (110, 76), '5-5': (102, 31),
         '6-0': (54, 27), '6-1': (55, 31), '6-2': (41, 63), '6-3': (58, 83), '6-4': (104, 84), '6-5': (90, 29),
         '7-0': (74, 28), '7-1': (63, 30), '7-2': (42, 61), '7-3': (47, 81), '7-4': (70, 69), '7-5': (65, 22),
         '8-0': (76, 25), '8-1': (66, 28), '8-2': (78, 53), '8-3': (38, 84), '8-4': (46, 74), '8-5': (42, 26),
-        '9-0': (61, 27), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
+        '9-0': (64.5, 24.5, 1), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
         '10-0': (18, 44), '11-0': (24, 50), '12-0': (55, 47), '13-0': (86, 40), '14-0': (84, 46),
         '15-0': (9, 58), '16-0': (29, 51), '17-0': (40.5, 55.5, 1), '18-0': (27, 48), '19-0': (44, 49),
     },
@@ -60,7 +60,7 @@ GRIPS = {
         '7-0': (74, 31), '7-1': (72, 30), '7-2': (53, 63), '7-3': (48, 77), '7-4': (84, 70), '7-5': (66, 26),
         '8-0': (90, 31), '8-1': (87, 32), '8-2': (70, 74), '8-3': (48, 82), '8-4': (56, 70), '8-5': (52, 27),
         '9-0': (65, 28), '9-1': (70, 39), '9-2': (67, 68), '9-3': (32, 64), '9-4': (15, 80), '9-5': (29, 35),
-        '10-0': (24, 48), '11-0': (42, 46), '12-0': (68, 44), '13-0': (94, 42), '14-0': (92, 46),
+        '10-0': (31, 46.5, 1), '11-0': (42, 46), '12-0': (68, 44), '13-0': (94, 42), '14-0': (92, 46),
         '15-0': (51, 73), '16-0': (57, 77), '17-0': (60, 82), '18-0': (64, 79), '19-0': (73, 78),
     },
 }
@@ -139,12 +139,17 @@ ARMS = {
     ('female', '7-3'): dict(extra=[(57, 78, 61, 82), (45, 78, 48, 82)], air=[(57, 78, 61, 82), (45, 78, 48, 82)]),   # a speck of the haft in the air between the arms
     ('female', '8-3'): dict(extra=[(43, 79, 47, 83)], air=[(43, 79, 47, 83)]),   # a chain chest's, off the hand
     ('female', '17-0'): dict(extra=[(58, 86, 61, 89)], air=[(58, 86, 61, 89)]),   # a chain or plate chest's, off the hand
+    # a fist the trace took as a piece of the hammer left floating: kept, the weapon held in it (the placement audit)
+    ('female', '10-0'): dict(keep=[(29, 43, 34, 49)]),
+    ('female', '8-2'): dict(keep=[(58, 62, 65, 70)]),
+    ('male', '9-3'): dict(keep=[(28, 78, 35, 87)]),
 }
 # Frames whose chain or plate trace lost the hammer the leather one found (male 10-0 and 12-0: the head and the haft's
 # foot, black as the plate gauntlet beside them): that family takes the leather trace too, moved to where its own
 # picture draws the hammer (the best of +-3 px), skin aside.
 LIKE_LEATHER = {('male', '10-0'), ('male', '12-0')}
 SKIN = {_k: _v['skin'] for _k, _v in ARMS.items() if _v.get('skin')}
+KEEP = {_k: _v['keep'] for _k, _v in ARMS.items() if _v.get('keep')}   # a fist's skin, never the hammer's: no island taken
 HAND_MORE = {_k: _v['all'] for _k, _v in ARMS.items() if _v.get('all')}   # a HAND frame's, moved with its family's offset, not read for it   # boxes taken skin and all: a thumb up the haft
 # what any of the family's outfits draws there, not the reference's alone: a chain or plate helmet or legs draws its
 # own rim of the haft (female 1-1's bars below the hand)
@@ -412,6 +417,7 @@ def trace(body, rf, fam, cap=16):
     anyop = (st[..., 3] > 0).any(axis=0)
     for _ in range(2): m |= nd.binary_dilation(m, K8, 1) & disc & anyop & ~sk
     m |= nd.binary_fill_holes(m) & disc
+    for x0, y0, x1, y1 in KEEP.get((body, rf), []): m &= ~(sk & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     q = (px + ux * Q, py + uy * Q)
     # the face: the head reaches further on the spike's side
     vv = (hx - T[0]) * nx + (hy - T[1]) * ny
