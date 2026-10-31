@@ -550,8 +550,10 @@ The staff event's pack fixes now run the town's raids too (`systems/raidingParti
 - RAID-STALL: a pack's leader with no spot `STAFF_PACK_LEADER_TRIES` times goes to the next player, or another side of
   the square (PACK-STALL).
 - RAID-BANNER: the Standard's packs are 3-5 every 4 s (`RAID_DEFEND_PACK_*`), about three times the old 2-3 every 9 s.
+  It counts every third death (`RAID_BANNER_KILLS_X`): each machine says a third of its deaths, so the relay's target of
+  15-25 stands for 45-75 deaths and the relay is unchanged. The board and the map show deaths.
 - RAID-REACH: a raid's or an event's spot stands only on a street of the town's walk grid that meets its player's
   (`scenes/raidSitesHost.js` `reachable`, the street net's labels) - never in a wall, a building or a closed yard. Off a
   town's grid any spot stands.
 
-Pins: `test/systems/raidpacks_town.test.js` (5).
+Pins: `test/systems/raidpacks_town.test.js` (6).

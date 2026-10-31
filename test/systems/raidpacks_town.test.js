@@ -10,10 +10,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  raidFrame as frame, restoreRaidSaveData as restoreSaveData, setRaidingPartiesHost, _resetRaidingParties,
+  raidFrame as frame, restoreRaidSaveData as restoreSaveData, raidState, setRaidingPartiesHost, _resetRaidingParties,
   MAX_RAID_ENEMIES, STAFF_PACK_LEADER_TRIES, STAFF_PACK_CAP_PER, STAFF_PACK_STEP_S, RAID_CLASSIC_PACK_MIN, RAID_CLASSIC_PACK_MAX,
 } from '../../src/systems/raidingParties.js';
-import { raidKindOf, RAID_DEFEND_PACK_MIN, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, RAID_DEFEND_FROM_M } from '../../src/systems/raidKinds.js';
+import { raidKindOf, RAID_BANNER_KILLS_X, raidKillsX, RAID_DEFEND_PACK_MIN, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, RAID_DEFEND_FROM_M } from '../../src/systems/raidKinds.js';
 import { createRaidSites, streetCellAt, RAID_REACH_RING } from '../../src/scenes/raidSitesHost.js';
 import { NAV_CELL } from '../../src/world/city/cityNavigation.js';
 import { setSharedClock } from '../../src/systems/worldTick.js';
@@ -134,4 +134,19 @@ test('RAID-REACH: a raid\'s spot stands only on a street that meets its player\'
   // the stand asks it, for every raid and event
   assert.match(rd('src/scenes/hostEnchant.js'), /if \(spot && reach && !reach\(\[spot\.x, spot\.y, spot\.z\]\)\) spot = null;/);
   assert.ok(rd('src/scenes/raidHost.js').includes('reach: (spot) => host.raidSites?.reachable?.(spot, at?.at ?? at?.near ?? enchantFeet()) ?? true'));
+});
+
+test('RAID-BANNER: a Standard\'s raid counts every third death - the relay\'s target of 15-25 stands for 45-75 deaths - and the map shows the deaths; any other kind counts each (mutants: every death counted; the map in counts)', async () => {
+  assert.equal(RAID_BANNER_KILLS_X, 3);
+  const { log } = rig({ sites: true });
+  restoreSaveData({ lastSelectedDay: DAY, raids: [raidOf('defend')] });
+  await run(30, 0.05, () => log.raiders.length >= 7);
+  for (const f of log.raiders.slice(0, 7)) { f.dead = true; f.corpse = true; }
+  frame(0.05); await tick();
+  const r = raidState().raids[0];
+  assert.equal(r.killed, 2, 'seven deaths: two counts');
+  assert.equal(raidKillsX(r), 3);
+  assert.equal(raidKillsX({ kind: 'waves' }), 1);
+  const { raidMapMarks } = await import('../../src/ui/eventMapMarks.js');
+  assert.ok(raidMapMarks([r], AT(610))[0].tip.lines.includes(`6 of ${r.attackAmount * 3} driven off`), 'in deaths');
 });
