@@ -219,7 +219,7 @@ export function worldOrderColors(image, { owned = false } = {}) {
 }
 
 /** LAYERED-GLOW: a composed worn-armour picture in the world's row order, with its weapon's own px (`held`, top row
- *  first - eotbGlow.js heldOf). */
+ *  first - eotbGlow.js heldGlowPx). */
 export function worldOrderLayered(image) {
   const held = image.held ?? null;
   return { ...worldOrderColors(image, { owned: true }), held, ...(image.provisional ? { provisional: true } : {}) };   // AUDIT: drawn before its weapon's picture came

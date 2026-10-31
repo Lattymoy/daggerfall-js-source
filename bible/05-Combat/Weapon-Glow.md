@@ -218,7 +218,7 @@ a beast, at a gathering act or under the Overworld's grown body. Each owner list
 **Round the weapon** (LAYERED-GLOW, 2026-10-30, the owner: "ensure all third person weapons get the glow on equip (a
 prior change kinda did this but for the whole body)"). A worn-armour body draws its own weapon (`04-Characters/
 Layered-Gearing.md`), so the compose keeps the weapon's pixels (`layeredArmor.js` heldPx: those its drawing changed;
-the iron warhammer's, the art's own). The stores keep them sparse with the picture (`heldOf`: its rows, its mirror),
+the iron warhammer's, the art's own). The stores keep them sparse with the picture (`heldGlowPx`: its rows, its mirror),
 and the glow uploads them once as the weapon's own picture, the sprite's size, under the sprite's record and `#w`
 (`heldGlowRecord`). The outline stands round that picture on the body's quad. A frame that hides the weapon (a back
 view's blade) glows not at all.

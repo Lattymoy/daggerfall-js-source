@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { myWeaponGlow, peerWeaponGlow, createSpriteGlow, setSpriteGlow, drawSpriteGlows, heldOf, heldGlowRecord, evictHeld, HELD_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
+import { myWeaponGlow, peerWeaponGlow, createSpriteGlow, setSpriteGlow, drawSpriteGlows, heldGlowPx, heldGlowRecord, evictHeld, HELD_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
 import { uprightWeaponPicture, HOLSTER_LEFT_SLOT, holsterItemOfLook } from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
 import * as WG from '../../../src/systems/weaponGlow.js';
 import * as GL from '../../../src/render/weaponGlowGlsl.js';
@@ -335,15 +335,15 @@ test('BACK-HOLSTER GLOW the wiring: the rig says the hand in use and its wraps; 
 test('LAYERED-GLOW (2026-10-30, the owner: "ensure all third person weapons get the glow on equip (a prior change kinda did this but for the whole body)"): a worn-armour picture\'s weapon px, as uploaded - row 0 the bottom, mirrored as the body; its own picture uploaded once beside the body\'s, the weapon alone; none this frame, no glow; none of its own, the whole sprite (mutants: rows top-down; the mirror ignored; uploaded every frame; the body\'s px in it; the empty frame glows)', () => {
   const W = 4, H = 3, colors = Uint32Array.from({ length: W * H }, (_, i) => 100 + i), held = new Uint8Array(W * H);
   held[1] = 1;   // the top row, x 1
-  const h = heldOf(colors, held, W, H);
+  const h = heldGlowPx(colors, held, W, H);
   assert.deepEqual([...h.idx], [(H - 1) * W + 1], 'the top row is the last uploaded');
   assert.deepEqual([...h.col], [colors[(H - 1) * W + 1]]);
-  assert.deepEqual([...heldOf(colors, held, W, H, true).idx], [(H - 1) * W + 2], 'mirrored as the body');
-  assert.equal(heldOf(colors, null, W, H), null, 'a skin: none of its own');
-  assert.equal(heldOf(colors, new Uint8Array(5), W, H), null, 'a mask not the picture\'s size: none');
+  assert.deepEqual([...heldGlowPx(colors, held, W, H, true).idx], [(H - 1) * W + 2], 'mirrored as the body');
+  assert.equal(heldGlowPx(colors, null, W, H), null, 'a skin: none of its own');
+  assert.equal(heldGlowPx(colors, new Uint8Array(5), W, H), null, 'a mask not the picture\'s size: none');
   const r = recordingRenderer();
   assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', null, W, H), null, 'none of its own: the whole sprite');
-  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', heldOf(colors, new Uint8Array(W * H), W, H), W, H), '', 'none this frame: no glow');
+  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', heldGlowPx(colors, new Uint8Array(W * H), W, H), W, H), '', 'none this frame: no glow');
   assert.equal(r.uploads.length, 0);
   assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', h, W, H), `lll@ls1_2-1${HELD_SUFFIX}`);
   assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', h, W, H), `lll@ls1_2-1${HELD_SUFFIX}`);
