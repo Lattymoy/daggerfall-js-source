@@ -33,25 +33,29 @@ test('RMBC9 a row\'s controls and structure: a patch inside the bounds applies, 
   assert.equal(editSettlementRow(ROW, { fix: { layout: 'row', shore: { dir: [1, 1], at: 30 } } }).problems.length, 1, 'a shore\'s direction is a unit');
 });
 
-test('RMBC9 one district dressed again: it changes, and every other district keeps its buildings, keys and types (mutants: the district\'s draw, a plot drawn by its global number, the services kept)', () => {
-  let changed = null;
-  for (const seed of [91, 92, 93, 94]) {
-    const r = regenerateDistrict(input, L, target, seed, { ledger: before.ledger, published: before.plan.buildings });
-    const d = r.changed;
-    if (d.added.length + d.removed.length + d.moved.length + d.retyped.length) { changed = r; break; }
+test('RMBC9 one district dressed again, every district of a Bay fort and a Hammerfell oasis: it changes, and every other keeps its buildings, keys, kinds, access and heights (mutants: the district\'s draw, a plot drawn by its global number, the services kept, a displaced service on a fresh plot, a height by its global number)', () => {
+  const home = (/** @type {string} */ a) => (a === 'keep' ? 'keep' : districtOf(a));
+  for (const row of [SETTLEMENT_ROWS.find((r) => r.archetype === 'fort'), ROW]) {
+    const env = SYNTHETIC[row.archetype] ?? SYNTHETIC.oasis, inp = { ...settlementInput(row, 1084, 241), env }, lay = layoutSettlement(inp, env), was = dressSettlement(inp, lay);
+    const districts = [...new Set(was.plan.buildings.map((b) => home(b.anchor)))].filter((d) => d !== 'keep');
+    let moved = 0;
+    for (const d of districts) {
+      const r = regenerateDistrict(inp, lay, d, 12, { ledger: was.ledger, published: was.plan.buildings });
+      const after = new Map(r.plan.buildings.map((b) => [b.anchor, b]));
+      if (Object.values(r.changed).some((list) => list.length)) moved++;
+      for (const b of was.plan.buildings.filter((x) => home(x.anchor) !== d)) {
+        const a = after.get(b.anchor);
+        assert.ok(a, `${row.name} ${d}: ${b.anchor} stands`);
+        assert.deepEqual([a.key, a.type, a.access, a.storeys, a.footprint], [b.key, b.type, b.access, b.storeys, b.footprint], `${row.name} ${d}: ${b.anchor} as it was`);
+      }
+      for (const k of [...r.changed.added, ...r.changed.removed, ...r.changed.moved]) {
+        const b = r.plan.buildings.find((x) => x.key === k) ?? was.plan.buildings.find((x) => x.key === k);
+        assert.equal(home(b.anchor), d, `${k} is the district's`);
+      }
+      for (const b of r.plan.buildings) if (was.ledger.keys[b.anchor] !== undefined) assert.equal(b.key, was.ledger.keys[b.anchor], 'an anchor keeps its key');
+    }
+    assert.ok(moved > districts.length / 2, `${row.name}: ${moved} of ${districts.length} districts change under a seed of their own`);
   }
-  assert.ok(changed, `${target} changes under a seed of its own`);
-  const after = new Map(changed.plan.buildings.map((b) => [b.anchor, b]));
-  for (const b of before.plan.buildings.filter((x) => districtOf(x.anchor) !== target)) {
-    const a = after.get(b.anchor);
-    assert.ok(a, `${b.anchor} stands`);
-    assert.deepEqual([a.key, a.type, a.footprint], [b.key, b.type, b.footprint], `${b.anchor} as it was`);
-  }
-  for (const k of [...changed.changed.added, ...changed.changed.removed, ...changed.changed.moved]) {
-    const b = changed.plan.buildings.find((x) => x.key === k) ?? before.plan.buildings.find((x) => x.key === k);
-    assert.equal(districtOf(b.anchor), target, `${k} is the district's`);
-  }
-  for (const b of changed.plan.buildings) if (before.ledger.keys[b.anchor] !== undefined) assert.equal(b.key, before.ledger.keys[b.anchor], 'an anchor keeps its key');
 });
 
 test('RMBC9 a protected building the regeneration would drop is refused (mutant: the protected keys unread)', () => {

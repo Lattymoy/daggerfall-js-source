@@ -30,10 +30,10 @@ test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (muta
   }
 });
 
-test('RMBC3 golden prints: three plans bit for bit at generator version 3 (mutant: any change to the layout)', () => {
-  assert.equal(SETTLEMENT_GENERATOR_VERSION, 3);   // PIN MOVED (ORGANIC): 2 -> 3, a core's outskirts hug it and follow its roads; PIN MOVED (RMBC9): 1 -> 2
+test('RMBC3 golden prints: three plans bit for bit at generator version 4 (mutant: any change to the layout)', () => {
+  assert.equal(SETTLEMENT_GENERATOR_VERSION, 4);   // PIN MOVED (AUDIT): 3 -> 4, a building's height its plot's own draw; (ORGANIC): 2 -> 3; (RMBC9): 1 -> 2
   const print = (archetype) => settlementPrint(generateSettlement({ place: PLACE, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: 'Hammerfell', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] }).plan);
-  assert.deepEqual([print('fort'), print('river'), print('wetland')], [3742776532, 2088010454, 1371967766]);   // PIN MOVED (ORGANIC): version 3's - the plans the same but for their version
+  assert.deepEqual([print('fort'), print('river'), print('wetland')], [367346139, 1864370929, 2382924073]);   // PIN MOVED (AUDIT): version 4's - each height its plot's draw
 });
 
 test('RMBC3 one layout, two parts: the worker\'s layout dressed is the whole generator\'s plan; its dressing draws on the seed too (mutants: either part unseeded)', () => {

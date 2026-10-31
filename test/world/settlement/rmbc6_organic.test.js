@@ -80,8 +80,8 @@ test('ORGANIC a road bars a plot, never a cell: a plot its bearing falls in, wid
   assert.equal(onRoad([TAU - 0.05], -0.1, 0.1, 0), true, 'and back');
 });
 
-test('ORGANIC a town grows along its roads: more buildings within a twelfth of a turn of a road than in as wide a span off them, and houses either side (a Hammerfell town; mutant: the reach)', () => {
-  const g = town((P) => { for (let y = 0; y < T; y++) P[y * T + 60] = 1; }, 'Hammerfell', 7002, 2);
+test('ORGANIC a town grows along its roads: more buildings within a twelfth of a turn of a road than in as wide a span off them, houses either side, and a plot it drops renames none (a Hammerfell town; mutants: the reach, a plot numbered by those kept)', () => {
+  const g = town((P) => { for (let y = 0; y < T; y++) P[y * T + 56] = 1; }, 'Hammerfell', 7002, 2);   // PIN MOVED (AUDIT): column 60 dropped no plot before another
   const { plan } = dressSettlement(g.input, g.layout), c = g.layout.core.centre, roads = g.input.roads.map((d) => (d * Math.PI) / 180);
   assert.equal(roads.length, 2, 'the road leaves north and south');
   const near = plan.buildings.filter((b) => roads.some((w) => apart(bearing(b.at[0], b.at[1], c), w) < TAU / 12)).length;
@@ -92,6 +92,10 @@ test('ORGANIC a town grows along its roads: more buildings within a twelfth of a
   const crossed = new Set(g.layout.cells.filter((x) => x.road?.length).map((x) => x.id));
   assert.ok(crossed.size > 0);
   assert.ok(plan.plots.filter((x) => crossed.has(x.pad)).length < blind.plots.filter((x) => crossed.has(x.pad)).length, 'fewer plots where the road runs');
-  const roadE = 60.5 * SAMPLE_M;
+  // a plot the road drops renames none after it: each left keeps its number, ground, building, key and height (RD-19)
+  const blindPlot = new Map(blind.plots.map((x) => [x.id, x])), blindAt = new Map(blind.buildings.map((x) => [x.anchor, x]));
+  for (const x of plan.plots) assert.deepEqual(x.poly, blindPlot.get(x.id)?.poly, `${x.id} where it was`);
+  for (const b of plan.buildings) assert.deepEqual([b.key, b.footprint, b.storeys], [blindAt.get(b.anchor)?.key, blindAt.get(b.anchor)?.footprint, blindAt.get(b.anchor)?.storeys], `${b.anchor} as it was`);
+  const roadE = 56.5 * SAMPLE_M;
   assert.ok(plan.buildings.some((b) => b.at[0] < roadE - 5) && plan.buildings.some((b) => b.at[0] > roadE + 5), 'on both sides of it');
 });

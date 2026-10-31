@@ -173,7 +173,7 @@
   {
     "name": "RMBC2-services-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "  for (const s of A.services) {",
+    "old": "  for (const s of homeless) {",
     "new": "  for (const s of []) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "RMBC2-temple-divine-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "factionId: type === T.Temple ? DIVINES[st.temple] :",
-    "new": "factionId: type === T.Temple ? 0 :",
+    "old": "factionId: T[s.type] === T.Temple ? DIVINES[st.temple] :",
+    "new": "factionId: T[s.type] === T.Temple ? 0 :",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RMBC2-dress-unseeded",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
-    "new": "const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
+    "old": "const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0;",
+    "new": "const base = 0;",
     "tests": [
       "test/world/settlement/rmbc3_exact.test.js"
     ]

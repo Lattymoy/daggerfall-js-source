@@ -75,8 +75,8 @@
   {
     "name": "RMBC7-band-unread",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && !held.has(k));",
-    "new": "return protectedKeys.filter((k) => !held.has(k));",
+    "old": "return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && (",
+    "new": "return protectedKeys.filter((k) => (",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -96,6 +96,42 @@
     "file": "tools/settlementRevise.mjs",
     "old": "out.set(Number(k) >>> 0, v.filter((x) => Number.isSafeInteger(x)));",
     "new": "out.set(Number(k) >>> 0, v);",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-protected-kind-unread",
+    "file": "src/world/settlement/settlementIds.js",
+    "old": "if (guarded.has(key) && before?.type !== undefined && (before.type !== b.type || before.access !== b.access)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-protected-kind-unpublished",
+    "file": "src/world/settlement/settlementIds.js",
+    "old": "before?.type !== undefined && (",
+    "new": "(",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-gone-published-unread",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "(!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k))))",
+    "new": "!held.has(k)",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-gone-absent-field-read",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "KEPT.some((f) => f in a && ",
+    "new": "KEPT.some((f) => ",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]

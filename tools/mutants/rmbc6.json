@@ -306,5 +306,23 @@
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-plot-numbered-by-kept",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "for (const [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1;\n",
+    "new": "for (let [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1; local = plots.filter((p) => p.pad === c.id).length;\n",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-deck-steep-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (!f || !t || Math.abs(t.h - f.h) <= link.max + 1e-3) continue;",
+    "new": "    continue;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
   }
 ]

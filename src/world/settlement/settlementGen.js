@@ -42,8 +42,6 @@ export function dressSettlement(input, L) {
   const A = SETTLEMENT_ARCHETYPES[input.archetype], st = SETTLEMENT_STYLES[input.style];
   if (!A) throw new RangeError(`no settlement archetype '${input.archetype}' (settlementStyles.js SETTLEMENT_ARCHETYPES)`);
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
-  const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;
-  const pick = (range, ...ns) => range[0] + (range[1] - range[0]) * rng(...ns);
   // RMBC9: each district draws from its own seed (the editor's `districtSeeds`), each plot by its own cell and number
   const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };
   const density = clampWithin(params.density ?? 1, 0.5, 2), openShare = clampWithin(params.open ?? 0.08, 0, 0.9);
@@ -81,8 +79,8 @@ export function dressSettlement(input, L) {
     const draw = rngOf(c.j), choose = (/** @type {readonly number[]} */ range, /** @type {number[]} */ ...salt) => range[0] + (range[1] - range[0]) * draw(...salt);
     const n = Math.floor(((ue - us) * rf) / (choose(st.frontage, 8, c.k, c.j) / density));
     if (n < 1) continue;
-    for (const [s0, s1] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j)) {
-      const p0 = us + s0, p1 = us + s1, local = plots.filter((p) => p.pad === c.id).length;
+    for (const [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none
+      const p0 = us + s0, p1 = us + s1;
       if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // ORGANIC: the road runs here - its plots either side
       const id = `${c.id}.p${local}`;
       const poly = [...along(frame, grids[c.j], p0, p1, rf), ...along(frame, grids[c.j], p0, p1, rf + depth).reverse()];
@@ -102,37 +100,41 @@ export function dressSettlement(input, L) {
       const door = /** @type {Pt} */ ([cm((fp[0][0] + fp[1][0]) / 2), cm((fp[0][1] + fp[1][1]) / 2)]);
       const facing = degrees(compassBearing(-dsin((p0 + p1) / 2), -dcos((p0 + p1) / 2)));   // toward the street: the frame's centre
       const prestige = (1 - (c.k - 1) / Math.max(1, bands)) * 0.6 + (gateSectors.includes(c.j) ? 0.3 : 0) + draw(11, c.k, c.j, local) * 0.1;
-      proposed.push({ id, c, fp, door, facing, prestige, area: width * bd });
+      proposed.push({ id, c, fp, door, facing, prestige, area: width * bd, tall: choose(st.storeys, 12, c.k, c.j, local) });
     }
   }
   const mound = cells.get('mound');
   if (mound) {
     const gb = mound.gb, fp = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([dx, dz]) => frame.toW(gb + datan2(dx, dz), keepHalf * Math.SQRT2));
     const door = /** @type {Pt} */ ([cm((fp[2][0] + fp[3][0]) / 2), cm((fp[2][1] + fp[3][1]) / 2)]);
-    proposed.unshift({ id: 'keep', c: mound, fp, door, facing: degrees(gb), prestige: 2, area: 4 * keepHalf * keepHalf, keep: true });
+    proposed.unshift({ id: 'keep', c: mound, fp, door, facing: degrees(gb), prestige: 2, area: 4 * keepHalf * keepHalf, keep: true, tall: st.storeys[1] });
   }
 
   // the services take their plots: near the square (the inner bands), near a gate, or the best left
   const T = BUILDING_TYPES, taken = new Map();
   if (mound) taken.set('keep', { type: T.Palace, factionId: 0 });
   const order = [...proposed].sort((x, y) => y.prestige - x.prestige || (x.id < y.id ? -1 : 1));
-  // RMBC9: a service keeps the plot it was published on while that plot stands - a district regenerated moves no other's
+  // RMBC9: every service first keeps the plot it was published on while that plot stands; one whose plot is gone takes a
+  // plot drawn afresh (its anchor new, or its district's seed its own) before another district's - so none moves a house
   const was = new Map((input.published ?? []).map((building) => [building.anchor, building.type]));
-  for (const s of A.services) {
+  const serve = (/** @type {any} */ plot, /** @type {any} */ s) => taken.set(plot.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 });
+  const homeless = A.services.filter((s) => {
     const kept = order.find((plot) => !taken.has(plot.id) && was.get(plot.id) === T[s.type]);
-    if (kept) { taken.set(kept.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 }); continue; }
+    if (kept) serve(kept, s);
+    return !kept;
+  });
+  const fresh = (/** @type {any} */ p) => !was.has(p.id) || input.districtSeeds?.[`d${p.c.j}`] !== undefined;
+  for (const s of homeless) {
     const score = (p) => (s.near === 'plaza' ? -p.c.k : s.near === 'gate' ? (gateSectors.includes(p.c.j) ? 10 : 0) + (ring ? p.c.k : -p.c.k) : 0) * 10 + p.prestige + (s.type === 'Temple' ? p.area / 100 : 0);
-    const free = order.filter((p) => !taken.has(p.id));
+    const free = order.filter((p) => !taken.has(p.id)), open = free.filter(fresh);
     if (!free.length) break;
-    const best = free.reduce((x, y) => (score(y) > score(x) ? y : x));
-    const type = T[s.type];
-    taken.set(best.id, { type, factionId: type === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 });
+    serve((open.length ? open : free).reduce((x, y) => (score(y) > score(x) ? y : x)), s);
   }
-  const buildings = proposed.map((p, i) => {
+  const buildings = proposed.map((p) => {
     const t = taken.get(p.id) ?? { type: p.prestige > 0.75 ? T.House2 : T.House1, factionId: 0 };
     return /** @type {Building} */ ({
       key: 0, source: 'procedural', anchor: p.id, pad: p.c.id, at: ringCentroid(p.fp), yaw: p.facing, lift: 0, footprint: p.fp,
-      storeys: p.keep ? st.storeys[1] + 1 : clampWithin(Math.round(pick(st.storeys, 12, i) + (p.prestige > 0.8 ? 1 : 0)), 1, st.storeys[1] + 1),
+      storeys: p.keep ? st.storeys[1] + 1 : clampWithin(Math.round(p.tall + (p.prestige > 0.8 ? 1 : 0)), 1, st.storeys[1] + 1),   // its plot's draw: a neighbour gone re-rolls none
       exterior: { kind: 'procedural', style: input.style }, interior: { kind: 'generated', plan: p.id }, entrances: [{ n: 0, at: p.door, facing: p.facing }],
       type: t.type, factionId: t.factionId, quality: clampWithin(Math.round(1 + 19 * (A.wealth * 0.6 + Math.min(1, p.prestige) * 0.4)), 1, 20),
       nameSeed: hash32(place >>> 0, ...[...p.id].map((ch) => ch.charCodeAt(0))) & 0x7fffffff, access: isResidence(t.type) ? 'private' : 'public',

@@ -57,7 +57,7 @@ test('RMBC7 a town\'s protected keys are its homes\' answer\'s, and both shapes 
   assert.deepEqual([...protectedByTown({ 270420: [513, 'x', 0x800005] }).entries()], [[270420, [513, 0x800005]]]);
 });
 
-test('RMBC7 a published row\'s revision refuses a protected building that would go or move, and passes one that stays (mutants: the protected keys unread, the published unread)', () => {
+test('RMBC7 a published row\'s revision refuses a protected building that would go, move or change kind, and passes one that stays (mutants: the protected keys unread, the published unread, the kind unread)', () => {
   const { plan, ledger } = dressSettlement(input, L);
   const held = plan.buildings[0];
   assert.deepEqual(revisionConflicts({ ...input, ledger }, L, [held.key]), [], 'it stays: nothing refused');
@@ -68,12 +68,24 @@ test('RMBC7 a published row\'s revision refuses a protected building that would 
   // what was published stood elsewhere: the protected building moved
   const moved = revisionConflicts({ ...input, ledger }, L, [held.key], [{ ...held, at: [held.at[0] + 5, held.at[1]] }]);
   assert.deepEqual(moved.map((c) => [c.code, c.key]), [['protected-moved', held.key]]);
+  // published a home and now a shop where it stood: a protected home is never made another kind (mutant: the kind unread)
+  const shop = revisionConflicts({ ...input, ledger }, L, [held.key], [{ ...held, type: held.type + 1, access: held.access === 'private' ? 'public' : 'private' }]);
+  assert.deepEqual(shop.map((c) => [c.code, c.key]), [['protected-retyped', held.key]]);
+  assert.deepEqual(revisionConflicts({ ...input, ledger }, L, [held.key], [{ ...held, type: undefined }]), [], 'a row published with no kind is read for its stand alone');
 });
 
-test('RMBC7 a grown town\'s revision: a protected minted key its new plan no longer holds is named; a legacy key never is (mutant: the band)', () => {
+test('RMBC7 a grown town\'s revision: a protected minted key its new plan no longer holds, or holds for another building, is named; a legacy key never is (mutants: the band, the published unread)', () => {
   const plan = { buildings: [{ key: 0x800001 }, { key: 0x800002 }] };
   assert.deepEqual(protectedGone(plan, [0x800001, 0x800003, 513]), [0x800003]);
   assert.deepEqual(protectedGone(plan, []), []);
+  // held, but published as another building: handed to a neighbour, made a shop or moved (mutant: the published unread)
+  const home = { key: 0x800001, anchor: 'c1.2.p0', type: 17, access: 'private', pad: 'c1.2', at: [10, 20], yaw: 90, lift: 0, footprint: [[0, 0]] };
+  const now = { buildings: [home] };
+  assert.deepEqual(protectedGone(now, [home.key], [home]), [], 'as it was');
+  for (const [field, value] of [['anchor', 'c1.2.p1'], ['type', 3], ['access', 'public'], ['at', [10, 30]], ['footprint', [[1, 0]]]]) {
+    assert.deepEqual(protectedGone(now, [home.key], [{ ...home, [field]: value }]), [home.key], `its ${field}`);
+  }
+  assert.deepEqual(protectedGone(now, [home.key], [{ key: home.key, anchor: home.anchor }]), [], 'a field the published row lacks is not read');
   assert.equal(emptyIdLedger(1).next, MINTED_KEY_MIN);
 });
 

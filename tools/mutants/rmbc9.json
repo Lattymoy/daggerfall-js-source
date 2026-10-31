@@ -47,8 +47,8 @@
   {
     "name": "RMBC9-services-unkept",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "if (kept) { taken.set(kept.id,",
-    "new": "if (false) { taken.set(kept.id,",
+    "old": "    if (kept) serve(kept, s);\n    return !kept;",
+    "new": "    return true;",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -80,6 +80,24 @@
       "test/world/settlement/rmbc9_editor.test.js",
       "test/world/settlement/rmbc2_gen.test.js",
       "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-storeys-global",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "tall: choose(st.storeys, 12, c.k, c.j, local) }",
+    "new": "tall: choose(st.storeys, 12, proposed.length) }",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-displaced-anywhere",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "open = free.filter(fresh);",
+    "new": "open = free;",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
     ]
   }
 ]

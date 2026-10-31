@@ -44,8 +44,8 @@ test('RMBC6 the job: a city, town or village grows; a farm, a dungeon, a capital
   assert.ok(!SETTLEMENT_ARCHETYPES.village.core && SETTLEMENT_ARCHETYPES.outskirts.core, 'the outskirts stand round a core alone');
 });
 
-test('RMBC6 the outskirts keep the contract round a core that never moves: its pad legacy, at the datum, no building on it, the way in its (mutants: the core\'s fixed give, the datum, the gate)', () => {
-  for (const [job, slope, blocks] of [[village(5001, 'IliacBay'), 0, 4], [village(5002, 'Hammerfell', 63), 0.04, 2]]) {
+test('RMBC6 the outskirts keep the contract round a core that never moves: its pad legacy, at the datum, no building on it, the way in its; Valenwood\'s decks on a slope too (mutants: the core\'s fixed give, the datum, the gate, a deck too steep kept)', () => {
+  for (const [job, slope, blocks] of [[village(5001, 'IliacBay'), 0, 4], [village(5002, 'Hammerfell', 63), 0.04, 2], [village(5003, 'Valenwood', 67), 0.08, 2]]) {
     const rect = rectOf(blocks), g = standTownGrowth(...HAMMERFELL, ground(slope, rect), job, rect, {});
     assert.ok(g, job.style);
     const { plan, report } = dressSettlement(g.input, g.layout);
@@ -60,6 +60,7 @@ test('RMBC6 the outskirts keep the contract round a core that never moves: its p
     assert.ok(!plan.features.some((f) => f.pad === 'plaza'), 'no well in the town\'s square');
     assert.ok(plan.buildings.length >= 3 && plan.buildings.every((b) => keyBandOf(b.key) === 'minted'));
     for (const b of plan.buildings) for (const [e, n] of b.footprint) assert.ok(!pointInRing([e, n], core.poly), 'outside the core');
+    if (job.style === 'Valenwood') assert.ok(plan.pads.some((p) => p.base === 'raised'), 'its decks stand where their links hold');
   }
 });
 

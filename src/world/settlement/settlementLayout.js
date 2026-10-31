@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 3;   // 3: ORGANIC - a core's outskirts hug it and follow its roads. 2: RMBC9 - each district its own draw, each plot by its cell and number
+export const SETTLEMENT_GENERATOR_VERSION = 4;   // 4: AUDIT - a plot numbered by its split, its storeys its own, a deck too steep dropped. 3: ORGANIC - a core's outskirts hug it and follow its roads. 2: RMBC9 - each district its own draw, each plot by its cell and number
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -358,10 +358,16 @@ export function roadReach(reachOf, edges, roads, bands, rng) {
   }
 }
 
-/** RMBC6: the cells round a fixed core whose cut passes `limit`, dropped, and what no longer reaches the core after them; the
+/** RMBC6: the cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too
+ *  steep (a deck held over its ground beside a core that never moves); and what no longer reaches the core after them. The
  *  links left. Dropping a cell only loosens its neighbours, so every link left still holds. */
 function dropDeepCuts(cells, links, limit) {
   for (const cell of [...cells.values()]) if (!cell.core && !cell.raised && Math.abs(cell.h - cell.natural) > limit) cells.delete(cell.id);
+  for (const link of links) {
+    const f = cells.get(link.from), t = cells.get(link.to);
+    if (!f || !t || Math.abs(t.h - f.h) <= link.max + 1e-3) continue;
+    cells.delete((f.core ? t : t.core ? f : t.k > f.k || (t.k === f.k && t.id > f.id) ? t : f).id);
+  }
   let live = links.filter((link) => cells.has(link.from) && cells.has(link.to));
   const reach = new Set(), stack = ['plaza'];
   while (stack.length) {

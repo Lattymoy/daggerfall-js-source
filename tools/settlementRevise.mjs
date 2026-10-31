@@ -2,8 +2,9 @@
 // RMB-CONTRACTS RMBC7 (bible/03-World/RMB-Contracts.md RD-6, RD-19, RD-20): A REVISION ASKED OF WHAT PLAYERS HOLD. Lays
 // every published settlement and every grown town a protected key names on the player's own ground, dressed by this
 // tree's generator, and refuses (exit 1) where a protected key would move or go: a published row through its ledger, a
-// grown town where a key's anchor is gone. `--dump` writes the plans before a generator change; `--published` reads them
-// after, so a protected building that moved is named. `--write` records the published rows' ledgers when nothing refuses.
+// grown town where its key's building is gone. `--dump` writes the plans before a generator change; `--published` reads
+// them after, so a protected building moved, renamed or retyped is named in either. `--write` records the published rows'
+// ledgers when nothing refuses.
 //   ARENA2_PATH=... node tools/settlementRevise.mjs --protected homes.json [--dump plans.json] [--published plans.json] [--write]
 // homes.json: the account service's /v1/homes/town answers (an array, one a town), or { "<mapId>": [keys] }.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -38,7 +39,7 @@ export function protectedByTown(json) {
 }
 
 /** What `--dump` keeps of a plan: each building's key and what moves it. @param {any} plan */
-const kept = (plan) => plan.buildings.map((b) => ({ key: b.key, anchor: b.anchor, pad: b.pad, at: b.at, yaw: b.yaw, lift: b.lift, footprint: b.footprint }));
+const kept = (plan) => plan.buildings.map((b) => ({ key: b.key, anchor: b.anchor, pad: b.pad, at: b.at, yaw: b.yaw, lift: b.lift, footprint: b.footprint, type: b.type, access: b.access }));
 
 async function main() {
   const A2 = process.env.ARENA2_PATH;
@@ -96,13 +97,13 @@ async function main() {
     const tilemap = new Uint8Array(128 * 128), rect = setLocationTiles(loc, world.maps, world.blocks, tilemap);
     const g = generatePixelTerrain({ woods, px: pixel.x, py: pixel.y, stride: 1, tilemap, locationRect: rect, hasLocation: true, climateType: CLIMATES.Woodlands, landform: true, roads, growth: growthJobAt(loc, pixel.x, pixel.y) });
     const plan = g.settlement?.growth ? dressSettlement(g.settlement.input, g.settlement.layout).plan : { buildings: [] };
-    for (const k of protectedGone(plan, keys)) refused.push(`${loc.name} (${place}): protected key ${k} - its building's anchor is gone (RD-19)`);
+    for (const k of protectedGone(plan, keys, before[place] ?? [])) refused.push(`${loc.name} (${place}): protected key ${k} - its building is gone, changed or moved (RD-19)`);
     dump[place] = kept(plan);
   }
   if (arg('--dump')) writeFileSync(arg('--dump'), `${JSON.stringify(dump)}\n`);
   for (const r of refused) console.log('REFUSED', r);
   if (refused.length) { process.exitCode = 1; return; }
-  console.log(`settlementRevise: ${SETTLEMENT_ROWS.length} published, ${guarded.size} towns with protected keys - nothing moves`);
+  console.log(`settlementRevise: ${SETTLEMENT_ROWS.length} published, ${guarded.size} towns with protected keys - ${guarded.size ? 'nothing moves' : 'no protected keys given (--protected)'}`);
   if (process.argv.includes('--write')) {
     const path = new URL('../src/world/settlement/settlements.json', import.meta.url), json = JSON.parse(readFileSync(path, 'utf8'));
     for (const s of json.settlements) {

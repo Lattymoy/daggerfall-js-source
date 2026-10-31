@@ -18,8 +18,9 @@ export const emptyIdLedger = (place) => Object.freeze({ place, next: MINTED_KEY_
 
 /**
  * RMBC7 (RD-19): A GROWN TOWN'S LEDGER, ITS ANCHORS' OWN. Each anchor's key is a hash of its place and its name in the
- * minted band, probed forward past a taken key in the anchors' sorted order - so a key depends on its anchor alone, a
- * plot added or dropped moves no other, and every client agrees with no ledger shipped.
+ * minted band, so a plot added or dropped moves no other key and every client agrees with no ledger shipped. Two names
+ * on one hash (about one town in 5,000) probe forward in sorted order: the later one's key hangs on the earlier, and
+ * protectedGone refuses a protected key that changes hands.
  * @param {number} place @param {readonly string[]} anchors @returns {IdLedger}
  */
 export function anchorLedger(place, anchors) {
@@ -75,6 +76,9 @@ export function reconcileBuildingIds(ledger, proposed, { protectedKeys = [], pub
     const before = was.get(key);
     if (guarded.has(key) && before && standOf(before) !== standOf(b)) {
       conflicts.push({ code: 'protected-moved', key, anchor: b.anchor, why: 'a protected building moved: its yard and rooms need an explicit migration' });
+    }
+    if (guarded.has(key) && before?.type !== undefined && (before.type !== b.type || before.access !== b.access)) {
+      conflicts.push({ code: 'protected-retyped', key, anchor: b.anchor, why: 'a protected home would become another kind of building' });
     }
     return { ...b, key };
   });
