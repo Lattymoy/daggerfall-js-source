@@ -42,8 +42,8 @@
   {
     "name": "OWED-PACE-ends-probation",
     "file": "src/systems/guild/guilds.js",
-    "old": "    m.probation = true;\n    m.lastRankChange = today;   // the next review is 28 days on",
-    "new": "    m.probation = owed === 0;\n    m.lastRankChange = today;   // the next review is 28 days on",
+    "old": "    m.probation = true;",
+    "new": "    m.probation = owed === 0;",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "OWED-PACE-not-passed",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
-    "new": "promoteWhenEarned, owed: 0 });",
+    "old": "    owed: standingOwedOf(guild.factionId),",
+    "new": "    owed: 0,",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "OWED-PACE-old-words",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)'",
-    "new": "'Reputation {have} of {need} ({owed} more to come)'",
+    "old": "    ? t(\n        'guild.rankNeeds.reputationOwed',\n        'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)',\n        { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX },\n      )",
+    "new": "    ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more to come)', {\n        have: n.reputation,\n        need: n.reputationNeed,\n        owed,\n        max: ROLL_GAIN_DAY_MAX,\n      })",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js",
       "test/systems/fb1015g_guildwords.test.js"

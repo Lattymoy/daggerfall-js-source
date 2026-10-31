@@ -74,8 +74,8 @@
   {
     "name": "CURE-ENDS-the-cure-leaves-it",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      if ((a.magnitude ?? 0) > 0) { a.magnitude = 0; n++; }\n      a.ended = true;\n",
-    "new": "      if ((a.magnitude ?? 0) > 0) { a.magnitude = 0; n++; }\n",
+    "old": "      a.ended = true;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/fb1001_audit.test.js",
       "test/systems/fb1001_regen.test.js"

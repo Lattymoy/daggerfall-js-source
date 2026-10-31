@@ -41,7 +41,7 @@
   {
     "name": "BANK-REGION-a-werewolf-reads-the-vampire-book",
     "file": "src/systems/guild/guilds.js",
-    "old": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended\n    && entity.racialOverride.racial === 'vampirism');",
+    "old": "  const vamp = !!(\n    entity.racialOverride &&\n    !entity.racialOverride.ended &&\n    entity.racialOverride.racial === 'vampirism'\n  );",
     "new": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended);",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"

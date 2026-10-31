@@ -174,7 +174,7 @@
     "name": "PURSE-MEND-the-halves-shifted-back",
     "file": "src/systems/guild/guildServiceActions.js",
     "old": "  if (Math.floor(costBeforeBargaining / 2) <= cost) {",
-    "new": "  if ((costBeforeBargaining >> 1) <= cost) {",
+    "new": "  if (costBeforeBargaining >> 1 <= cost) {",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PURSE-MEND-the-quarter-shifted-back",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "(costBeforeBargaining - Math.floor(costBeforeBargaining / 4)) <= cost",
-    "new": "(costBeforeBargaining - (costBeforeBargaining >> 2)) <= cost",
+    "old": "    return costBeforeBargaining - Math.floor(costBeforeBargaining / 4) <= cost ? 2 : 1;",
+    "new": "    return costBeforeBargaining - (costBeforeBargaining >> 2) <= cost ? 2 : 1;",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]

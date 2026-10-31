@@ -1291,7 +1291,7 @@ THE LEFTOVERS, both what they seemed. The haggle message reads its band off `cos
 (`guildServiceActions.js cureOfferMessageOffset`, the temple's and the trade window's one home). Past 2^31 the shift
 wrapped int32 to a negative half, so a lot that big never got the cheerful line and a bought one could get the wrong
 grudging one: 25,000 Daedric claymores at a quality-10 counter named the wrong band in three of four modes and skills.
-Halved and quartered by division now (`guildServiceActions.js:"if (Math.floor(costBeforeBargaining / 2) <= cost) {"`),
+Halved and quartered by division now (`guildServiceActions.js:"if (Math.floor(costBeforeBargaining / 2) <= cost)"`),
 the shifts' band for every cost an int holds. DFU's `cost` is C#'s int (DaggerfallTradeWindow.ShowTradePopup), which a
 lot that big had wrapped already - TRADE-WRAP's departure at one more site. The Reforge said its purse as
 `Math.max(0, gold | 0)` of the coins and the letters together (`court.js totalGoldAmount`), so two letters of one int's

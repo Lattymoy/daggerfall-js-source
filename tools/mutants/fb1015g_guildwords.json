@@ -263,8 +263,8 @@
   {
     "name": "STANDING-WORDS-the-owed-row",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "const reputationLine = (n, owed) => (owed > 0\n",
-    "new": "const reputationLine = (n, owed) => (false\n",
+    "old": "  owed > 0",
+    "new": "  false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SEAT-WORDS-the-seat-warnings",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      ...warnings,\n      next,\n",
-    "new": "      next,\n",
+    "old": "      ...warnings,\n      next,",
+    "new": "      next,",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "REVIEW-WARNINGS-the-fall-reason",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(false",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "REVIEW-WARNINGS-never-expels-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "guild.neverExpels && !underworldRuleOf(guild) ? 'ends'",
-    "new": "false ? 'ends'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = false ? 'ends' : skillsShort ? 'skills' : 'expel';",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "REVIEW-WARNINGS-the-skills-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "skillsShort ? 'skills'",
-    "new": "false ? 'skills'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : false ? 'skills' : 'expel';",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "REVIEW-WARNINGS-the-seated-book",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "reviewWarnings(entity, guild, ctx?.book ?? memberships, store,",
-    "new": "reviewWarnings(entity, guild, memberships, store,",
+    "old": "  const warnings = reviewWarnings(\n    entity,\n    guild,\n    ctx?.book ?? memberships,\n    store,\n    ctx && { ...ctx, online: !!ctx.pace },\n  );",
+    "new": "  const warnings = reviewWarnings(entity, guild, memberships, store, ctx && { ...ctx, online: !!ctx.pace });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "REVIEW-WARNINGS-the-review-days",
     "file": "src/systems/guild/guilds.js",
-    "old": "+ DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
-    "new": "- daySinceZero(now);",
+    "old": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
+    "new": "  const due = Number(m?.lastRankChange) - daySinceZero(now);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "REVIEW-WARNINGS-the-renewal-not-the-laws",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES })",
-    "new": "{ days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: 30 })",
+    "old": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
+    "new": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: 30 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "LANE-E-GU-days-off-by-one",
     "file": "src/systems/guild/guilds.js",
-    "old": "+ DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
-    "new": "+ DAYS_BETWEEN_RANK_CHANGES - 1 - daySinceZero(now);",
+    "old": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
+    "new": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - 1 - daySinceZero(now);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -587,8 +587,8 @@
   {
     "name": "LANE-E-GU-ceiling-boundary",
     "file": "src/systems/guild/guilds.js",
-    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ?",
-    "new": "  return Number.isInteger(ceiling) && ruled >= ceiling ?",
+    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
+    "new": "  return Number.isInteger(ceiling) && ruled >= ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -601,8 +601,8 @@
   {
     "name": "LANE-E-GU-ceiling-no-floor",
     "file": "src/systems/guild/guilds.js",
-    "old": "? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
-    "new": "? Math.min(ruled, m.rank) : ruled;",
+    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
+    "new": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.min(ruled, m.rank) : ruled;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -613,8 +613,8 @@
   {
     "name": "LANE-E-GU-seat-at-or-past",
     "file": "src/systems/guild/guilds.js",
-    "old": "    return m.rank === top\n",
-    "new": "    return m.rank >= top\n",
+    "old": "    return m.rank === top",
+    "new": "    return m.rank >= top",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -626,8 +626,8 @@
   {
     "name": "LANE-E-GSF-seat-loop-short",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "rank <= SEAT_RANK.master; rank++",
-    "new": "rank < SEAT_RANK.master; rank++",
+    "old": "    for (let rank = ceiling + 1; rank <= SEAT_RANK.master; rank++) {",
+    "new": "    for (let rank = ceiling + 1; rank < SEAT_RANK.master; rank++) {",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -640,8 +640,8 @@
   {
     "name": "LANE-E-GSF-kind-rr-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "guild.neverExpels && !underworldRuleOf(guild) ? 'ends'",
-    "new": "guild.neverExpels ? 'ends'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = guild.neverExpels ? 'ends' : skillsShort ? 'skills' : 'expel';",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -676,8 +676,8 @@
   {
     "name": "LANE-E-GSF-fall-reason-always-rep",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(true",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      true",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -688,8 +688,8 @@
   {
     "name": "LANE-E-GSF-fall-reason-boundary",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(getReputation(store, guild.factionId) <= need",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      getReputation(store, guild.factionId) <= need",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -724,8 +724,8 @@
   {
     "name": "LANE-E-GSF-owed-row-boundary",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "const reputationLine = (n, owed) => (owed > 0",
-    "new": "const reputationLine = (n, owed) => (owed >= 0",
+    "old": "  owed > 0",
+    "new": "  owed >= 0",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -948,8 +948,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-start-reason",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "out.push(getReputation(store, guild.factionId) < 0\n      ? t('guild.probation.comingRep'",
-    "new": "out.push(true\n      ? t('guild.probation.comingRep'",
+    "old": "      getReputation(store, guild.factionId) < 0",
+    "new": "      true",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-start-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "puts you on probation: your standing is below 0.', { days: daysOf(days) })",
-    "new": "puts you on probation: your standing is below 0.', { days: 0 })",
+    "old": "            \"Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your standing is below 0.\",\n            { days: daysOf(days) },",
+    "new": "            \"Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your standing is below 0.\",\n            { days: 0 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-falls-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "lowers you to {title}.', { days: daysOf(days), title })",
-    "new": "lowers you to {title}.', { days: 0, title })",
+    "old": "            { days: daysOf(days), title },",
+    "new": "            { days: 0, title },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -975,8 +975,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-fallsRep-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days: daysOf(days), title, current:",
-    "new": "{ days: 0, title, current:",
+    "old": "            { days: daysOf(days), title, current: getTitle({ rank: m.rank }, entity, guild), need },",
+    "new": "            { days: 0, title, current: getTitle({ rank: m.rank }, entity, guild), need },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -984,8 +984,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-skills-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0]",
-    "new": "{ days: 0, high: RANK_REQ_SKILL_HIGH[0]",
+    "old": "      { days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW },",
+    "new": "      { days: 0, high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -993,8 +993,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-hall-offline",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "ctx && { ...ctx, online: !!ctx.pace })",
-    "new": "ctx && { ...ctx, online: false })",
+    "old": "  const warnings = reviewWarnings(\n    entity,\n    guild,\n    ctx?.book ?? memberships,\n    store,\n    ctx && { ...ctx, online: !!ctx.pace },\n  );",
+    "new": "  const warnings = reviewWarnings(entity, guild, ctx?.book ?? memberships, store, ctx && { ...ctx, online: false });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1002,8 +1002,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-online-word",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "online: online ? 'yes' : 'no'",
-    "new": "online: 'no'",
+    "old": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
+    "new": "        { days, online: 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-online-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "out.push(probationWords(days, kind, !!ctx?.online));",
-    "new": "out.push(probationWords(days, kind));",
+    "old": "    out.push(probationWords(days, kind, !!ctx?.online));",
+    "new": "    out.push(probationWords(days, kind));",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1047,8 +1047,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-rank-bars",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "  const { high, low } = numHighLowSkills(entity, guild, 0);\n  const skillsShort = high < 1 || high + low < 2;",
-    "new": "  const { high, low } = numHighLowSkills(entity, guild, m.rank);\n  const skillsShort = high < 1 || high + low < 2;",
+    "old": "  const days = ctx?.now ? reviewDaysLeft(m, ctx.now) : 0;\n  const { high, low } = numHighLowSkills(entity, guild, 0);",
+    "new": "  const days = ctx?.now ? reviewDaysLeft(m, ctx.now) : 0;\n  const { high, low } = numHighLowSkills(entity, guild, m.rank);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1273,8 +1273,8 @@
   {
     "name": "WORDS-II-C2-the-seat-word",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "are chapter chairs won by Merit, and a chair\\'s services",
-    "new": "are chapter seats won by Merit, and a seat\\'s services",
+    "old": "            \"Rank {rank} offers this. Online, ranks {officer} and {master} are chapter chairs won by Merit, and a chair's services are at its own chapter's halls, for a member at rank {cap}. A notice board explains chapters.\",",
+    "new": "            \"Rank {rank} offers this. Online, ranks {officer} and {master} are chapter seats won by Merit, and a seat's services are at its own chapter's halls, for a member at rank {cap}. A notice board explains chapters.\",",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

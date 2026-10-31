@@ -257,8 +257,8 @@
   {
     "name": "CHAP1-LEAF-ID",
     "file": "src/systems/guild/guildFactions.js",
-    "old": "Akatosh: 26, Arkay: 21,",
-    "new": "Akatosh: 26, Arkay: 20,",
+    "old": "  Arkay: 21,",
+    "new": "  Arkay: 20,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"

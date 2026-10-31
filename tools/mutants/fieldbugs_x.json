@@ -47,8 +47,8 @@
   {
     "name": "X3-fon-dropped",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "    fon: factionName, kno: factionName,\n",
-    "new": "",
+    "old": "    fon: factionName,\n    kno: factionName,\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/fieldbugs_x.test.js"
     ]

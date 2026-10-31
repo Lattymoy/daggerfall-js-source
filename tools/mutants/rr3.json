@@ -294,8 +294,8 @@
   {
     "name": "RR3-33-the-route-ignores-the-custom-service",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    if (hasCustomMerchantService(npcFactionId)) return { kind: 'merchant', service: 'sell' };\n",
-    "new": "",
+    "old": "    if (hasCustomMerchantService(npcFactionId)) return { kind: 'merchant', service: 'sell' };\n    if (isShop(buildingType)) {",
+    "new": "    if (isShop(buildingType)) {",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]

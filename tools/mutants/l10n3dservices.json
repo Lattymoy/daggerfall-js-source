@@ -53,7 +53,7 @@
     "name": "L10N3d2-systems-guildServiceFlow-47-table",
     "file": "src/systems/guild/guildServiceFlow.js",
     "old": "export const SERVICE_LABEL = localizedTable({",
-    "new": "export const SERVICE_LABEL = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "new": "export const SERVICE_LABEL = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "L10N3d2-systems-guildServiceFlow-148-serviceMembersOnly",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "  if (!isMember(membership)) return { allowed: false, text: localizedText('serviceMembersOnly', SERVICE_MEMBERS_ONLY) };   // :325",
-    "new": "  if (!isMember(membership)) return { allowed: false, text: SERVICE_MEMBERS_ONLY };   // :325",
+    "old": "  if (!isMember(membership)) return { allowed: false, text: localizedText('serviceMembersOnly', SERVICE_MEMBERS_ONLY) }; // :325",
+    "new": "  if (!isMember(membership)) return { allowed: false, text: SERVICE_MEMBERS_ONLY }; // :325",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -73,7 +73,7 @@
     "name": "L10N3d2-systems-guildServices-168-table",
     "file": "src/systems/guild/guildServices.js",
     "old": "export const DEITY_DESCRIPTIONS = localizedTable({",
-    "new": "export const DEITY_DESCRIPTIONS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "new": "export const DEITY_DESCRIPTIONS = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "L10N3d2-systems-guildVariants-156-templeRanks",
     "file": "src/systems/guild/guildVariants.js",
-    "old": "    get rankTitles() { return shownRankTitles(localizedText('templeRanks', TEMPLE_RANKS), TEMPLE_RANKS, TEMPLE_RANK_TITLES); },",
-    "new": "    get rankTitles() { return shownRankTitles(TEMPLE_RANKS, TEMPLE_RANKS, TEMPLE_RANK_TITLES); },",
+    "old": "      return shownRankTitles(localizedText('templeRanks', TEMPLE_RANKS), TEMPLE_RANKS, TEMPLE_RANK_TITLES);",
+    "new": "      return shownRankTitles(TEMPLE_RANKS, TEMPLE_RANKS, TEMPLE_RANK_TITLES);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -103,7 +103,7 @@
     "name": "L10N3d2-systems-guildVariants-164-table",
     "file": "src/systems/guild/guildVariants.js",
     "old": "    femaleRankTitles: localizedTable({ 9: ['matriarch', 'Matriarch'], 6: ['sister', 'Sister'] }),",
-    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({ 9: ['matriarch', 'Matriarch'], 6: ['sister', 'Sister'] }),",
+    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({\n      9: ['matriarch', 'Matriarch'],\n      6: ['sister', 'Sister'],\n    }),",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "L10N3d2-systems-guildVariants-182-knightlyOrderRanks",
     "file": "src/systems/guild/guildVariants.js",
-    "old": "    get rankTitles() { return shownRankTitles(localizedText('knightlyOrderRanks', KNIGHTLY_RANKS), KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES); },",
-    "new": "    get rankTitles() { return shownRankTitles(KNIGHTLY_RANKS, KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES); },",
+    "old": "      return shownRankTitles(localizedText('knightlyOrderRanks', KNIGHTLY_RANKS), KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES);",
+    "new": "      return shownRankTitles(KNIGHTLY_RANKS, KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "L10N3d2-systems-guildVariants-183-table",
     "file": "src/systems/guild/guildVariants.js",
-    "old": "    femaleRankTitles: localizedTable({ 5: ['knightSister', 'Knight Sister'] }),   // KnightlyOrder.cs:123-124",
-    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({ 5: ['knightSister', 'Knight Sister'] }),   // KnightlyOrder.cs:123-124",
+    "old": "    femaleRankTitles: localizedTable({ 5: ['knightSister', 'Knight Sister'] }), // KnightlyOrder.cs:123-124",
+    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({\n      5: ['knightSister', 'Knight Sister'],\n    }), // KnightlyOrder.cs:123-124",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "L10N3d2-systems-guilds-191-table",
     "file": "src/systems/guild/guilds.js",
-    "old": "    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89",
-    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89",
+    "old": "    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }), // DarkBrotherhood.cs:88-89",
+    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({\n      8: ['darkSister', 'Dark Sister'],\n    }), // DarkBrotherhood.cs:88-89",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
