@@ -70,7 +70,7 @@ test('MERGE-MAIN imports: each module\'s names unioned, main\'s order then the b
 });
 
 test('MERGE-MAIN a line number both sides moved: ours + theirs - base, where the three are one text but their numbers (mutants: theirs alone; no base asked)', () => {
-  assert.deepEqual(mergeNumbersHunk(H(['the row `Port-Ledger.md:859`, and :864'], ['the row `Port-Ledger.md:864`, and :869'], ['the row `Port-Ledger.md:854`, and :859'])), ['the row `Port-Ledger.md:869`, and :874']);
+  assert.deepEqual(mergeNumbersHunk(H(['the row `Port-Ledger.md:860`, and :864'], ['the row `Port-Ledger.md:865`, and :869'], ['the row `Port-Ledger.md:855`, and :859'])), ['the row `Port-Ledger.md:870`, and :874']);
   assert.equal(mergeNumbersHunk(H(['row :855 here'], ['row :860 there'], ['row :850 here'])), null, 'words changed too: a person');
   assert.equal(mergeNumbersHunk(H(['row :855'], ['row :860'])), null, 'no base, no arithmetic');
 });
