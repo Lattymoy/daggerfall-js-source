@@ -20,8 +20,8 @@
   {
     "name": "DUNGEON-SEAMS-a-corner-edited-in-place",
     "file": "src/world/arch3dSeams.js",
-    "old": "        if (out === p) out = { ...p };\n",
-    "new": "",
+    "old": "        if (out === p) out = { ...p };\n        out[k] = r.map[from];",
+    "new": "        out[k] = r.map[from];",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DUNGEON-SEAMS-a-near-value-taken",
     "file": "src/world/arch3dSeams.js",
-    "old": "if (Math.abs(v - Number(from)) <= POINT_EPS) {",
-    "new": "if (Math.abs(v - Number(from)) <= 1) {",
+    "old": "      if (Math.abs(v - Number(from)) <= POINT_EPS) {",
+    "new": "      if (Math.abs(v - Number(from)) <= 1) {",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DUNGEON-SEAMS-a-stray-matched-on-two-axes",
     "file": "src/world/arch3dSeams.js",
-    "old": " && Math.abs(out.y - r.at[1]) <= STRAY_EPS",
-    "new": "",
+    "old": "      if (\n        Math.abs(out.x - r.at[0]) <= STRAY_EPS &&\n        Math.abs(out.y - r.at[1]) <= STRAY_EPS &&\n        Math.abs(out.z - r.at[2]) <= STRAY_EPS\n      ) {",
+    "new": "      if (Math.abs(out.x - r.at[0]) <= STRAY_EPS && Math.abs(out.z - r.at[2]) <= STRAY_EPS) {",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DUNGEON-SEAMS-the-texture-lost",
     "file": "src/world/arch3dSeams.js",
-    "old": "out = { ...out, x: r.to[0], y: r.to[1], z: r.to[2] };",
-    "new": "out = { x: r.to[0], y: r.to[1], z: r.to[2], nx: out.nx, ny: out.ny, nz: out.nz, u: 0, v: 0 };",
+    "old": "        out = { ...out, x: r.to[0], y: r.to[1], z: r.to[2] };",
+    "new": "        out = { x: r.to[0], y: r.to[1], z: r.to[2], nx: out.nx, ny: out.ny, nz: out.nz, u: 0, v: 0 };",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DUNGEON-SEAMS-the-sloped-stair-dropped",
     "file": "src/world/arch3dSeams.js",
-    "old": "  63026: SLOPED_STAIR,\n",
-    "new": "  63027: SLOPED_STAIR,\n",
+    "old": "  63026: SLOPED_STAIR,",
+    "new": "  63027: SLOPED_STAIR,",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DUNGEON-SEAMS-the-vault-corner-on-the-grid",
     "file": "src/world/arch3dSeams.js",
-    "old": "[-64, -95.996, -128]",
-    "new": "[-64, -96, -128]",
+    "old": "  point([-63.996, -95.02, -127.992], [-64, -95.996, -128]),",
+    "new": "  point([-63.996, -95.02, -127.992], [-64, -96, -128]),",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DUNGEON-SEAMS-the-round-room-on-the-plane-only",
     "file": "src/world/arch3dSeams.js",
-    "old": "point([61.688, -126, 256.617], [64, -126, 256])",
-    "new": "point([61.688, -126, 256.617], [61.688, -126, 256])",
+    "old": "  point([61.688, -126, 256.617], [64, -126, 256]),",
+    "new": "  point([61.688, -126, 256.617], [61.688, -126, 256]),",
     "why": "killed by the census against the player's own data (ARENA2_PATH): a corner moved onto the corridor's plane but not its corner leaves the slit",
     "tests": [
       "test/world/dungeonseams.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "DUNGEON-SEAMS-the-L-one-flight",
     "file": "src/world/arch3dSeams.js",
-    "old": "59004: [side('x', [[26, 24]]), side('z', [[-26, -24]]), ",
-    "new": "59004: [side('x', [[26, 24]]), ",
+    "old": "  59004: [side('x', [[26, 24]]), side('z', [[-26, -24]]), point([-256, -2, -24], [-256, 2, -24])],",
+    "new": "  59004: [side('x', [[26, 24]]), point([-256, -2, -24], [-256, 2, -24])],",
     "why": "killed by the census against the player's own data (ARENA2_PATH)",
     "tests": [
       "test/world/dungeonseams.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "DUNGEON-SEAMS-a-flight-moved-off-its-wall",
     "file": "src/world/arch3dSeams.js",
-    "old": "  67025: [side('x', [[63, 64], [-63, -64]])],",
-    "new": "  67025: [side('x', [[63, 61], [-63, -61]])],",
+    "old": "  67025: [\n    side('x', [\n      [63, 64],\n      [-63, -64],\n    ]),",
+    "new": "  67025: [\n    side('x', [\n      [63, 61],\n      [-63, -61],\n    ]),",
     "tests": [
       "test/world/dungeonseams.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "DUNGEON-SEAMS-the-landing-flight-centred",
     "file": "src/world/arch3dSeams.js",
-    "old": "  56000: [side('x', [[120, 124], [122, 124]]), side('z', [[120, 122], [-120, -122]])],",
-    "new": "  56000: [side('x', [[120, 122], [-120, -122]]), side('z', [[120, 122], [-120, -122]])],",
+    "old": "      [120, 124],\n      [122, 124],",
+    "new": "      [120, 122],\n      [-120, -122],",
     "tests": [
       "test/world/dungeonseams.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "DUNGEON-SEAMS-the-posts-left-floating",
     "file": "src/world/arch3dSeams.js",
-    "old": "  63022: [side('y', [[-2, 0], [-1, 0], [-124, -126]])],",
-    "new": "  63023: [side('y', [[-2, 0], [-1, 0], [-124, -126]])],",
+    "old": "  63022: [",
+    "new": "  63023: [",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "DUNGEON-SEAMS-the-L-foot-left-standing",
     "file": "src/world/arch3dSeams.js",
-    "old": "side('x', [[-166, -168], [38, 40]]), side('y', [[-2, 0]])]",
-    "new": "side('x', [[-166, -168], [38, 40]])]",
+    "old": "    side('y', [[-2, 0]]),\n  ], // and its foot, walls and first riser, two units over the floor it stands on",
+    "new": "  ], // and its foot, walls and first riser, two units over the floor it stands on",
     "tests": [
       "test/world/dungeonseams.test.js"
     ],
@@ -151,8 +151,8 @@
   {
     "name": "DUNGEON-SEAMS-a-twin-left-bare",
     "file": "src/world/arch3dSeams.js",
-    "old": "  63234: ROUND_ROOM,\n",
-    "new": "  63235: ROUND_ROOM,\n",
+    "old": "  63234: ROUND_ROOM,",
+    "new": "  63235: ROUND_ROOM,",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "DISC29-A-ray-any-bucket",
     "file": "src/world/actionSystem.js",
-    "old": "skin + TRIGGER_RAY_LIFT, { only: [key] }));",
-    "new": "skin + TRIGGER_RAY_LIFT, null));",
+    "old": "  return Number.isFinite(surfaces.raycast(origin, DOWN, skin + TRIGGER_RAY_LIFT, { only: [key] }));",
+    "new": "  return Number.isFinite(surfaces.raycast(origin, DOWN, skin + TRIGGER_RAY_LIFT, null));",
     "tests": [
       "test/world/disc29_throne.test.js"
     ]

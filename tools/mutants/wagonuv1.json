@@ -52,8 +52,8 @@
   {
     "name": "WAGONUV1-6-the-room-laid-from-the-axle",
     "file": "src/world/caravanRoomModel.js",
-    "old": "return [caravanSideU(b, out, WAGON_TILE.roomSide[0]),",
-    "new": "return [planarUv(b, out, [WAGON_TILE.roomSide[0], 1])[0],",
+    "old": "    caravanSideU(b, out, WAGON_TILE.roomSide[0]),",
+    "new": "    planarUv(b, out, [WAGON_TILE.roomSide[0], 1])[0],",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ],

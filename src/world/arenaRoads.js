@@ -17,7 +17,7 @@
 // Nothing of Arena ships or crosses the wire (bible/01-Overview/Port-Doctrine.md): each player's roads are laid from
 // their own Daggerfall files, the same for every player.
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
-import { setRoadsPastTable } from './road/pathData.js';   // BAY-LEFT-MAPS: Travel Options' reads past the table are this layer's
+import { setRoadsPastTable } from './road/pathData.js'; // BAY-LEFT-MAPS: Travel Options' reads past the table are this layer's
 import { inBay } from './tamriel/tamrielFrame.js';
 
 /** TESA5: how deep inside its edge a Bay road may lie and still be joined, Bay pixels. */
@@ -55,14 +55,24 @@ export function arenaJoins(bay, land) {
     for (let u = 0; u < len; u++) {
       for (let k = 0; k < JOIN_DEPTH; k++) {
         const [x, y] = at(u, k);
-        if (bay.roads[y * MAP_W + x]) { hits.push([u, k]); break; }
+        if (bay.roads[y * MAP_W + x]) {
+          hits.push([u, k]);
+          break;
+        }
       }
     }
     const runs = [];
-    for (const h of hits) { const r = runs.at(-1); if (r && h[0] - r.at(-1)[0] < JOIN_SPACING) r.push(h); else runs.push([h]); }
+    for (const h of hits) {
+      const r = runs.at(-1);
+      if (r && h[0] - r.at(-1)[0] < JOIN_SPACING) r.push(h);
+      else runs.push([h]);
+    }
     for (const r of runs) {
-      const depth = Math.min(...r.map((h) => h[1])), mid = (r[0][0] + r.at(-1)[0]) / 2;
-      const [u, k] = r.filter((h) => h[1] === depth).reduce((a, b) => (Math.abs(b[0] - mid) < Math.abs(a[0] - mid) ? b : a));
+      const depth = Math.min(...r.map((h) => h[1])),
+        mid = (r[0][0] + r.at(-1)[0]) / 2;
+      const [u, k] = r
+        .filter((h) => h[1] === depth)
+        .reduce((a, b) => (Math.abs(b[0] - mid) < Math.abs(a[0] - mid) ? b : a));
       const run = [];
       for (let j = k; j >= 0; j--) run.push(at(u, j));
       const [ex, ey] = at(u, 0);
@@ -79,7 +89,8 @@ export function arenaJoins(bay, land) {
  *  a road node, whose pixel the countryside may stand on as on a capital's gate. */
 export function joinRunPixels(joins = []) {
   const out = [];
-  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });
+  for (const { run, gate } of joins)
+    for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });
   return out;
 }
 
@@ -95,13 +106,16 @@ const offBay = (x, y) => !inBay(x, y);
  *  takes: none on the Bay, unless the join's. */
 function stampRun(layer, ax, ay, bx, by, keep = offBay) {
   const n = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
-  let px = ax, py = ay;
+  let px = ax,
+    py = ay;
   for (let i = 1; i <= n; i++) {
-    const qx = ax + Math.round(((bx - ax) * i) / n), qy = ay + Math.round(((by - ay) * i) / n);
+    const qx = ax + Math.round(((bx - ax) * i) / n),
+      qy = ay + Math.round(((by - ay) * i) / n);
     const bit = BIT_OF.get(`${qx - px},${qy - py}`);
     if (keep(px, py)) layer.set(beyondKey(px, py), (layer.get(beyondKey(px, py)) ?? 0) | bit);
     if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));
-    px = qx; py = qy;
+    px = qx;
+    py = qy;
   }
 }
 
@@ -133,7 +147,8 @@ let _layer = null;
 let _version = 0;
 /** TESA15: what moved in it, a tile at a time - each ROAD_TILE tile its pixels are in and the install that last touched
  *  it, and the keys of its pixels; null until asked after a whole install (worked out then, from every pixel). */
-let _tiles = null, _tilePixels = null;
+let _tiles = null,
+  _tilePixels = null;
 /**
  * Install a layer (null: none). TESA15: `add`, the part merged into the layer already installed (the terrain client's
  * addArenaRoads: a region landing) - only the tiles it touches move; with none, or another layer, every tile does.
@@ -144,11 +159,19 @@ export function setArenaRoads(layer, add = null) {
   const merged = !!add && !!layer && layer === _layer;
   _layer = layer ?? null;
   _version++;
-  if (!merged) { _tiles = null; _tilePixels = null; return; }
+  if (!merged) {
+    _tiles = null;
+    _tilePixels = null;
+    return;
+  }
   // the first add into a layer works its tiles out whole (it is small yet: the crossings, a region) - every add after
   // keeps them, so the map's first ask never walks the continent
-  if (!_tiles) { arenaRoadTiles(); return; }
-  for (const kind of /** @type {const} */ (['roads', 'tracks'])) for (const key of add[kind]?.keys() ?? []) stampPixel(key);
+  if (!_tiles) {
+    arenaRoadTiles();
+    return;
+  }
+  for (const kind of /** @type {const} */ (['roads', 'tracks']))
+    for (const key of add[kind]?.keys() ?? []) stampPixel(key);
 }
 function stampPixel(key) {
   const t = roadTileOfKey(key);
@@ -177,7 +200,8 @@ export function arenaRoadTiles() {
   if (!_tiles) {
     _tiles = new Map();
     _tilePixels = new Map();
-    for (const kind of /** @type {const} */ (['roads', 'tracks'])) for (const key of _layer?.[kind]?.keys() ?? []) stampPixel(key);
+    for (const kind of /** @type {const} */ (['roads', 'tracks']))
+      for (const key of _layer?.[kind]?.keys() ?? []) stampPixel(key);
   }
   return _tiles;
 }
@@ -197,14 +221,22 @@ export const arenaRoadByte = (kind, x, y) => layerByte(_layer, kind, x, y);
 setRoadsPastTable(arenaRoadByte);
 /** Its corner byte at a Bay pixel, as the mod's (world/road/roadPainter.js pathCorners): the east neighbour's SW|NW bits and
  *  the west neighbour's NE|SE. */
-export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);
+export const arenaRoadCorners = (kind, x, y) =>
+  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);
 /** Roads and tracks together at a Bay pixel - travelPaths.js pathsDataPoint's question. */
 export const arenaPathsAt = (x, y) => (arenaRoadByte('roads', x, y) | arenaRoadByte('tracks', x, y)) & 0xff;
 /** TESA5: a Bay pixel's join byte - a road's, the one part of the layer a pixel ON the Bay reads (its runs are straight
  *  out of the Bay, so no diagonal of them brushes a corner). */
 export const arenaJoinByte = (x, y) => arenaRoadByte('join', x, y);
 /** Does a layer carry anything on a pixel or the two beside it - whose bytes and corners its paint reads? */
-export const layerTouches = (layer, x, y) => !!layer && [-1, 0, 1].some((dx) => layerByte(layer, 'roads', x + dx, y) || layerByte(layer, 'tracks', x + dx, y) || layerByte(layer, 'join', x + dx, y));
+export const layerTouches = (layer, x, y) =>
+  !!layer &&
+  [-1, 0, 1].some(
+    (dx) =>
+      layerByte(layer, 'roads', x + dx, y) ||
+      layerByte(layer, 'tracks', x + dx, y) ||
+      layerByte(layer, 'join', x + dx, y),
+  );
 
 /**
  * The layer to post across a thread, and back: its pixels' keys and bytes in three arrays (transferable).
@@ -212,14 +244,27 @@ export const layerTouches = (layer, x, y) => !!layer && [-1, 0, 1].some((dx) => 
  */
 export function packArenaRoads(layer) {
   const keys = [...new Set([...layer.roads.keys(), ...layer.tracks.keys()])];
-  const k = new Float64Array(keys), r = new Uint8Array(keys.length), t = new Uint8Array(keys.length);
-  keys.forEach((key, i) => { r[i] = layer.roads.get(key) ?? 0; t[i] = layer.tracks.get(key) ?? 0; });
+  const k = new Float64Array(keys),
+    r = new Uint8Array(keys.length),
+    t = new Uint8Array(keys.length);
+  keys.forEach((key, i) => {
+    r[i] = layer.roads.get(key) ?? 0;
+    t[i] = layer.tracks.get(key) ?? 0;
+  });
   const join = layer.join ?? new Map();
-  return { keys: k, roads: r, tracks: t, joinKeys: new Float64Array(join.keys()), join: Uint8Array.from(join.values()) };
+  return {
+    keys: k,
+    roads: r,
+    tracks: t,
+    joinKeys: new Float64Array(join.keys()),
+    join: Uint8Array.from(join.values()),
+  };
 }
 /** @param {{ keys: Float64Array, roads: Uint8Array, tracks: Uint8Array, joinKeys?: Float64Array, join?: Uint8Array }} packed */
 export function unpackArenaRoads(packed) {
-  const roads = new Map(), tracks = new Map(), join = new Map();
+  const roads = new Map(),
+    tracks = new Map(),
+    join = new Map();
   for (let i = 0; i < packed.keys.length; i++) {
     if (packed.roads[i]) roads.set(packed.keys[i], packed.roads[i]);
     if (packed.tracks[i]) tracks.set(packed.keys[i], packed.tracks[i]);

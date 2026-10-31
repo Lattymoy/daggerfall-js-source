@@ -41,7 +41,7 @@ same roots land 83.7 m away (still a walk-in teleport, still wrong). The other E
 Teleport. Ruled out, measured: the void rescue (its floor -10.40, the roots' floors 12.8 to 23.35), the relay's snap-back
 (siege and royal battles alone), a size change's warp (a load alone), the anchor's prompt (single-use).
 
-THE LAW NOW. `actionSystem.js:"export const walkHears = (o) =>"`: what a walk hears is a DaggerfallActionCollision's
+THE LAW NOW. `actionSystem.js:"export const walkHears"`: what a walk hears is a DaggerfallActionCollision's
 object that is not a flat relay, and the pass asks it (`dungeonContext.js:"if (!walkHears(o)) continue;"` - the line
 edited in place, buildDungeonContext not a line longer). A flat Teleport, Activate or Unknown27 fires on a click or a
 blow, as DFU's; the red brick teleporters (model relays, 22 Collision03 and the rest) are walked into as ever; an effect

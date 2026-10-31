@@ -421,8 +421,8 @@
   {
     "name": "BROKER-CAGE-a-face-wound-in",
     "file": "src/world/cageModel.js",
-    "old": "  side(0, 1, 5, 4); side(1, 2, 6, 5);",
-    "new": "  side(4, 5, 1, 0); side(1, 2, 6, 5);",
+    "old": "  side(0, 1, 5, 4);",
+    "new": "  side(4, 5, 1, 0);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "BROKER-CAGE-the-back-wall-missing",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -hx - o, y0, -hz - o, hx + o, y1, -hz + i);   // the back\n",
-    "new": "",
+    "old": "  slabTris(out, -hx - o, y0, -hz - o, hx + o, y1, -hz + i); // the back\n  slabTris(out, -hx - o, y0, -hz, -hx + i, y1, hz); // the sides",
+    "new": "  slabTris(out, -hx - o, y0, -hz, -hx + i, y1, hz); // the sides",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "BROKER-CAGE-the-doors-slab-missing",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -dx, -CAGE_FOOT, hz - CAGE_WALL_IN, dx, CAGE_H, hz + CAGE_WALL_OUT);\n",
-    "new": "",
+    "old": "  slabTris(out, -dx, -CAGE_FOOT, hz - CAGE_WALL_IN, dx, CAGE_H, hz + CAGE_WALL_OUT);\n  return frozenMesh(out);",
+    "new": "  return frozenMesh(out);",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -607,8 +607,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C10-no-roof",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -hx - o, CAGE_H - CAGE_BEAM, -hz - o, hx + o, CAGE_H + CAGE_CAP, hz + o);   // the roof\n",
-    "new": "",
+    "old": "  slabTris(out, -hx - o, CAGE_H - CAGE_BEAM, -hz - o, hx + o, CAGE_H + CAGE_CAP, hz + o); // the roof\n  return frozenMesh(out);",
+    "new": "  return frozenMesh(out);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G5-posts-flush-with-the-frame",
     "file": "src/world/cageModel.js",
-    "old": "bar(f, foot, x, z, H + CAGE_CAP, CAGE_POST",
-    "new": "bar(f, foot, x, z, H, CAGE_POST",
+    "old": "    bar(f, foot, x, z, H + CAGE_CAP, CAGE_POST, GATE_PLINTH_RECORD);",
+    "new": "    bar(f, foot, x, z, H, CAGE_POST, GATE_PLINTH_RECORD);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -670,8 +670,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G5-jambs-through-the-beam",
     "file": "src/world/cageModel.js",
-    "old": "for (const x of [-dx, dx]) bar(f, foot, x, hz, top, CAGE_BEAM",
-    "new": "for (const x of [-dx, dx]) bar(f, foot, x, hz, H, CAGE_BEAM",
+    "old": "  for (const x of [-dx, dx]) bar(f, foot, x, hz, top, CAGE_BEAM, GATE_PLINTH_RECORD);",
+    "new": "  for (const x of [-dx, dx]) bar(f, foot, x, hz, H, CAGE_BEAM, GATE_PLINTH_RECORD);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G6-the-models-foot-fixed",
     "file": "src/world/cageModel.js",
-    "old": "slab(f, rec, x - w / 2, -foot, z - w / 2, x + w / 2, top, z + w / 2);",
-    "new": "slab(f, rec, x - w / 2, -CAGE_FOOT, z - w / 2, x + w / 2, top, z + w / 2);",
+    "old": "  slab(f, rec, x - w / 2, -foot, z - w / 2, x + w / 2, top, z + w / 2);",
+    "new": "  slab(f, rec, x - w / 2, -CAGE_FOOT, z - w / 2, x + w / 2, top, z + w / 2);",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -743,8 +743,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-T5-no-top-bars",
     "file": "src/world/cageModel.js",
-    "old": "  for (const x of along(-hx, hx)) slab(f, GATE_STONE_RECORD, x - CAGE_BAR / 2, top + 0.02, -hz, x + CAGE_BAR / 2, H - 0.02, hz);\n",
-    "new": "",
+    "old": "  for (const x of along(-hx, hx))\n    slab(f, GATE_STONE_RECORD, x - CAGE_BAR / 2, top + 0.02, -hz, x + CAGE_BAR / 2, H - 0.02, hz);\n  return assemble(f);",
+    "new": "  return assemble(f);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-T5-no-front-bars",
     "file": "src/world/cageModel.js",
-    "old": "  for (const x of [...along(-hx, -dx), ...along(dx, hx)]) bar(f, foot, x, hz, H);\n",
-    "new": "",
+    "old": "  for (const x of [...along(-hx, -dx), ...along(dx, hx)]) bar(f, foot, x, hz, H);\n  // the frame round the top, and the bars across it",
+    "new": "  // the frame round the top, and the bars across it",
     "tests": [
       "test/systems/brokercage.test.js"
     ]

@@ -21,9 +21,9 @@
 // own negative, never a row of MAPS.BSA, and past the isles' (-1000 to -403194: 806 x 499 cells).
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32 } from './spawnedDungeons.js';
-import { PLACES_PER_PROVINCE } from './tamrielPlaces.js';   // TESA12: a province's slots
+import { PLACES_PER_PROVINCE } from './tamrielPlaces.js'; // TESA12: a province's slots
 import { ROAD_TYPES, TRACK_TYPES } from './road/roadNetwork.js';
-import { unwalledLocation } from './townShape.js';   // TS7: a Bay city cloned as it was read, its ring and gates and all
+import { unwalledLocation } from './townShape.js'; // TS7: a Bay city cloned as it was read, its ring and gates and all
 
 /** The places' lane in the id's high 12 bits, and the first low number a place takes. */
 export const ARENA_PLACE_SALT = 0xa7;
@@ -60,11 +60,12 @@ export function arenaRoadTowns(pixels) {
 /** A place's own number in the lane: its province's 48 slots, then its slot. */
 const ordinal = (place) => place.provinceIndex * PLACES_PER_PROVINCE + place.id;
 /** A place's map id. */
-export const arenaPlaceId = (place) => (((ARENA_PLACE_SALT << 20) | (ARENA_PLACE_BASE + ordinal(place))) >>> 0);
+export const arenaPlaceId = (place) => ((ARENA_PLACE_SALT << 20) | (ARENA_PLACE_BASE + ordinal(place))) >>> 0;
 /** A place's location index: its own negative. */
 export const arenaLocationIndex = (place) => -(ARENA_INDEX_BASE + ordinal(place));
 /** Is a map id a place's of this lane? */
-export const isArenaPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === ARENA_PLACE_SALT && ((Number(id) >>> 0) & 0xfffff) >= ARENA_PLACE_BASE;
+export const isArenaPlaceId = (id) =>
+  ((Number(id) >>> 20) & 0xfff) === ARENA_PLACE_SALT && ((Number(id) >>> 0) & 0xfffff) >= ARENA_PLACE_BASE;
 
 const idOf = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;
 /**
@@ -74,10 +75,14 @@ const idOf = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;
  * @param {Iterable<any>} rows @param {(mapId: number) => boolean} [isMain]
  */
 export function arenaTemplates(rows, isMain = () => false) {
-  const list = [...(rows ?? [])].map(unwalledLocation).filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)));   // TS7
+  const list = [...(rows ?? [])]
+    .map(unwalledLocation)
+    .filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l))); // TS7
   const out = {};
   for (const [kind, { type }] of Object.entries(ARENA_TEMPLATE_KINDS)) {
-    out[kind] = list.filter((l) => l.mapTableData?.locationType === type && !l.hasDungeon).sort((a, b) => idOf(a) - idOf(b));
+    out[kind] = list
+      .filter((l) => l.mapTableData?.locationType === type && !l.hasDungeon)
+      .sort((a, b) => idOf(a) - idOf(b));
   }
   return out;
 }
@@ -112,11 +117,36 @@ export function synthesizeArenaLocation(template, place, where = {}) {
     mapTableData: { ...template.mapTableData, mapId, longitude: ll.x, latitude: ll.y },
     exterior: {
       ...template.exterior,
-      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: place.port ? 1 : 0 },
-      ...(template.exterior?.recordElement ? { recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),
+      exteriorData: {
+        ...template.exterior?.exteriorData,
+        locationId: mapId,
+        mapId,
+        portTownAndUnknown: place.port ? 1 : 0,
+      },
+      ...(template.exterior?.recordElement
+        ? {
+            recordElement: {
+              ...template.exterior.recordElement,
+              header: { ...template.exterior.recordElement.header, locationId: mapId },
+            },
+          }
+        : {}),
     },
-    arena: Object.freeze({ province: place.province, provinceIndex: place.provinceIndex, id: place.id, kind: place.kind, port: !!place.port }),
+    arena: Object.freeze({
+      province: place.province,
+      provinceIndex: place.provinceIndex,
+      id: place.id,
+      kind: place.kind,
+      port: !!place.port,
+    }),
   };
-  if (template.dungeon) loc.dungeon = { ...template.dungeon, recordElement: { ...template.dungeon?.recordElement, header: { ...template.dungeon?.recordElement?.header, locationId: mapId } } };
+  if (template.dungeon)
+    loc.dungeon = {
+      ...template.dungeon,
+      recordElement: {
+        ...template.dungeon?.recordElement,
+        header: { ...template.dungeon?.recordElement?.header, locationId: mapId },
+      },
+    };
   return loc;
 }

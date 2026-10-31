@@ -48,12 +48,12 @@
 
 import { trs, multiply } from './mat4.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
-import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
-import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
-import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
-import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home, and it is not this file
-import { localizedText, localizedTextList } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { moverSteps, meetBody } from '../player/moverBody.js';   // MOVER-BODY: a mover never closes on the body
+import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js'; // single source (DaggerfallAction 45.454546)
+import { flashPlayerDamage } from '../ui/damageFlash.js'; // AUDIT 24 (wave 39): ShowPlayerDamage
+import { triggerOpen, triggerLock } from '../systems/mysticism.js'; // X1: the Open/Lock door laws live there, not here
+import { dice100 } from '../combat/formulas.js'; // PT1: Dice100 has ONE home, and it is not this file
+import { localizedText, localizedTextList } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { moverSteps, meetBody } from '../player/moverBody.js'; // MOVER-BODY: a mover never closes on the body
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -69,9 +69,14 @@ import { moverSteps, meetBody } from '../player/moverBody.js';   // MOVER-BODY: 
 //   DrainMagicka (0x1c): verbatim max(1, IsFlat ? Magnitude :
 //     AxisRaw) off current magicka.
 export const EFFECT_ACTION_FLAGS = new Set([
-  ACTION_FLAGS.Hurt21, ACTION_FLAGS.Hurt22, ACTION_FLAGS.Hurt23,
-  ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
-  ACTION_FLAGS.DrainMagicka, ACTION_FLAGS.CastSpell,
+  ACTION_FLAGS.Hurt21,
+  ACTION_FLAGS.Hurt22,
+  ACTION_FLAGS.Hurt23,
+  ACTION_FLAGS.Hurt24,
+  ACTION_FLAGS.Hurt25,
+  ACTION_FLAGS.Poison,
+  ACTION_FLAGS.DrainMagicka,
+  ACTION_FLAGS.CastSpell,
 ]);
 
 // The door-verb family (DaggerfallAction delegates that act on the
@@ -81,8 +86,10 @@ export const EFFECT_ACTION_FLAGS = new Set([
 //   OpenDoor (0x12): unlock + open if closed.
 //   CloseDoor (0x14): close if open, then re-lock to StartingLockValue.
 export const DOOR_VERB_FLAGS = new Set([
-  ACTION_FLAGS.LockDoor, ACTION_FLAGS.UnlockDoor,
-  ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
+  ACTION_FLAGS.LockDoor,
+  ACTION_FLAGS.UnlockDoor,
+  ACTION_FLAGS.OpenDoor,
+  ACTION_FLAGS.CloseDoor,
 ]);
 
 /** AUDIT 63 F36/F40: `GetComponent<DaggerfallActionDoor>()`, the one
@@ -130,8 +137,8 @@ export const PLAY_DEPTH_MAX = 32;
 export function classifyPlacementAction(actionFlag, isActionDoor = false) {
   if (MOVE_ACTION_FLAGS.has(actionFlag)) return 'move';
   if (EFFECT_ACTION_FLAGS.has(actionFlag)) return 'effect';
-  if (actionFlag === ACTION_FLAGS.OpenDoor
-    || (actionFlag === ACTION_FLAGS.CloseDoor && !isActionDoor)) return 'specialDoor';
+  if (actionFlag === ACTION_FLAGS.OpenDoor || (actionFlag === ACTION_FLAGS.CloseDoor && !isActionDoor))
+    return 'specialDoor';
   return 'relay';
 }
 
@@ -139,7 +146,7 @@ export function classifyPlacementAction(actionFlag, isActionDoor = false) {
 // TYPES each RDB TriggerFlag accepts. ActionObject (chain cascade)
 // is ALWAYS valid; undefined flags never fire (the source's default).
 export const TRIGGER_GATE = Object.freeze({
-  [TRIGGER_FLAGS.None]: [],                                    // ActionObject only
+  [TRIGGER_FLAGS.None]: [], // ActionObject only
   [TRIGGER_FLAGS.Collision01]: ['WalkOn'],
   [TRIGGER_FLAGS.Direct]: ['Direct'],
   [TRIGGER_FLAGS.Collision03]: ['WalkInto'],
@@ -187,12 +194,13 @@ export function validActionRecord(r) {
     if (!ACTION_STATES.includes(r.moveState)) return null;
     const mt = unit(r.moveT ?? 0);
     if (mt == null) return null;
-    out.moveState = r.moveState; out.moveT = mt;
+    out.moveState = r.moveState;
+    out.moveT = mt;
   }
   return out;
 }
 
-export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
+export const COLLISION_TIMEOUT_S = 0.12; // DaggerfallActionCollision.Timeout
 
 /** AUDIT 63 F45 (review round): WHICH OBJECTS HAVE A
  *  DaggerfallActionCollision AT ALL. RDBLayout.AddAction attaches the
@@ -218,8 +226,10 @@ export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
  *  collision pass with this, so the port's reachable Receive set is
  *  DFU's component set. */
 export const COLLISION_TRIGGER_FLAGS = Object.freeze([
-  TRIGGER_FLAGS.Collision01, TRIGGER_FLAGS.Collision03,
-  TRIGGER_FLAGS.MultiTrigger, TRIGGER_FLAGS.Collision09,
+  TRIGGER_FLAGS.Collision01,
+  TRIGGER_FLAGS.Collision03,
+  TRIGGER_FLAGS.MultiTrigger,
+  TRIGGER_FLAGS.Collision09,
 ]);
 /** RDBLayout.cs:992-996 - "if a collision type action or action flat,
  *  add DaggerFallActionCollision component". */
@@ -276,7 +286,9 @@ export function actionContact(o, feet, height, surfaces, wish = null) {
   const only = { only: [o.key] };
   const at = surfaces.capsuleContact(feet, height, TRIGGER_SKIN_WIDTH, only, _contact);
   if (!at) return null;
-  const dx = at[0] - feet[0], dy = at[1] - (feet[1] + height / 2), dz = at[2] - feet[2];
+  const dx = at[0] - feet[0],
+    dy = at[1] - (feet[1] + height / 2),
+    dz = at[2] - feet[2];
   const len = Math.hypot(dx, dy, dz);
   if (len > 0 && dy / len < WALK_ON_DIR_Y) return 'WalkOn';
   if (wish && !(wish[0] * dx + wish[1] * dz > 0)) {
@@ -385,9 +397,9 @@ export function lookAtLockText(lockValue, level, lockpickSkill) {
 }
 
 // ---- U6: the text actions, verbatim constants ----
-export const TYPE_11_TEXT_INDEX = 8600;   // ShowText: TEXT.RSC record = Index + 8600
-export const TYPE_12_TEXT_INDEX = 5400;   // ShowTextWithInput: Index + 5400
-export const TYPE_99_TEXT_INDEX = 7700;   // DoorText: Index + 7700
+export const TYPE_11_TEXT_INDEX = 8600; // ShowText: TEXT.RSC record = Index + 8600
+export const TYPE_12_TEXT_INDEX = 5400; // ShowTextWithInput: Index + 5400
+export const TYPE_99_TEXT_INDEX = 7700; // DoorText: Index + 7700
 // AUDIT 63 F39: DoorText is the one action text that overrides the HUD
 // pop delay - DaggerfallAction.cs:875 `DaggerfallUI.AddHUDText(tokens,
 // 2.0f)` -> DaggerfallUI.cs:775-781 -> PopupText.cs:130-141, which
@@ -399,11 +411,11 @@ export const DOOR_TEXT_HUD_DELAY_S = 2.0;
 /** DaggerfallAction.actionTypeTwelveLookup, verbatim - the classic
  *  riddle answers per text id (case-insensitive match). */
 export const TYPE_12_ANSWERS = Object.freeze({
-  5404: ['bow', 'bow arrow', 'crossbow', 'bows', 'crossbows'],           // sheogorath
-  5406: ['one', '1'],                                                    // blind god
-  5423: ['benefactor', 'the benefactor'],                                // benefactor
-  5424: ['shut up', 'shutup', 'shaddup'],                                // shaddup!
-  5464: ['yes', 'oK', 'i agree', 'y', 'agreed', 'done', 'fine', 'okay', 'sure', 'yep'],   // daggerfall guard
+  5404: ['bow', 'bow arrow', 'crossbow', 'bows', 'crossbows'], // sheogorath
+  5406: ['one', '1'], // blind god
+  5423: ['benefactor', 'the benefactor'], // benefactor
+  5424: ['shut up', 'shutup', 'shaddup'], // shaddup!
+  5464: ['yes', 'oK', 'i agree', 'y', 'agreed', 'done', 'fine', 'okay', 'sure', 'yep'], // daggerfall guard
 });
 
 /** The DoorText id patch table, verbatim (comments preserved in the
@@ -422,7 +434,7 @@ const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 // recall/anchor arm, not the front door) can land behind the held doors
 // and be shut in; classic leaves you talking to the guard through the
 // crack. So: still show the "magically held" line, but open anyway.
-export const CASTLE_DAGGERFALL_MAP_ID = 1291010263;              // PlayerGPS.CurrentLocation.MapTableData.MapId
+export const CASTLE_DAGGERFALL_MAP_ID = 1291010263; // PlayerGPS.CurrentLocation.MapTableData.MapId
 export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331574, 29331622]);
 
 /** HOME-DOORS (AUDIT): the keys a record may wait under for its object (a placed door's), and how many may wait. */
@@ -432,16 +444,32 @@ const EARLY_MAX = 64;
 /** Stand an object's bucket at `m` (null: take it away). The collider's restand keeps its broad filing; a collider
  *  without one (a test's stand-in) is asked to remove and add, which is what restand means. */
 function standBucket(collider, o, m) {
-  if (collider.restand) { collider.restand(o.key, o.cpu.positions, o.cpu.indices, m); return; }
+  if (collider.restand) {
+    collider.restand(o.key, o.cpu.positions, o.cpu.indices, m);
+    return;
+  }
   collider.removeBucket(o.key);
   if (m) collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, m);
 }
 
 export class ActionSystem {
-constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false, magicDoorsContext = null } = {}) {
+  constructor(
+    collider,
+    {
+      damagePlayer = null,
+      drainMagicka = null,
+      castSpell = null,
+      setGlobalVar = null,
+      playerLevel = () => 1,
+      lockpickSkill = () => 0,
+      rolls = Math.random,
+      insideDungeonCastle = () => false,
+      magicDoorsContext = null,
+    } = {},
+  ) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
-    this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
+    this._links = new Map(); // `${ns}:${position}` -> object (the chain graph)
     this._doorCount = 0;
     // HOME-DOORS (AUDIT): a placed door's record that came before its door - a save's, the room's memory's or a peer's,
     // read while the door was still being hung (its model is fetched, scenes/decor/decorRoom.js) - kept by its key until the
@@ -457,9 +485,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // beyond its cascade, which is the pre-wiring shape.
     this._setGlobalVar = setGlobalVar;
     this._playerLevel = playerLevel;
-    this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
+    this._lockpickSkill = lockpickSkill; // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
-// ROAD-B (b2): PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
+    // ROAD-B (b2): PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
     // AttemptBash's tail (DaggerfallActionDoor.cs:220-221) and by
     // nothing else in this file. Absent (an interior host, a bare pin)
     // it answers false, which is what a building interior IS.
@@ -495,9 +523,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     this.onTeleport = null;
     this.onTeleportPortal = null;
     this.onLockedDoor = null;
-    this.onSealedDoor = null;   // DOOR-VOID: (o) - the player tried a door that opens onto nothing
+    this.onSealedDoor = null; // DOOR-VOID: (o) - the player tried a door that opens onto nothing
     this.onActionSound = null;
-    this.onPlayed = null;   // ECHO1: (o, triggerType) - every Receive that passed the gate, before its Play (systems/dungeon/dungeonEcho.js)
+    this.onPlayed = null; // ECHO1: (o, triggerType) - every Receive that passed the gate, before its Play (systems/dungeon/dungeonEcho.js)
     this.onShowText = null;
     this.onShowTextInput = null;
     this.onDoorText = null;
@@ -539,12 +567,23 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  differ after; a nested call (the cascade, a pick's toggle) rides
    *  the outer one. Nothing is diffed without a listener. */
   _changed(fn) {
-    if (!this.onChanged || this._depth > 0) { this._depth++; try { return fn(); } finally { this._depth--; } }
+    if (!this.onChanged || this._depth > 0) {
+      this._depth++;
+      try {
+        return fn();
+      } finally {
+        this._depth--;
+      }
+    }
     const before = new Map(this.collectSaveData().map((r) => [r.key, JSON.stringify(sharedRecord(r))]));
     this._depth++;
-    try { return fn(); } finally {
+    try {
+      return fn();
+    } finally {
       this._depth--;
-      const changed = this.collectSaveData().map(sharedRecord).filter((r) => before.get(r.key) !== JSON.stringify(r));
+      const changed = this.collectSaveData()
+        .map(sharedRecord)
+        .filter((r) => before.get(r.key) !== JSON.stringify(r));
       if (changed.length) this.onChanged(changed);
     }
   }
@@ -572,15 +611,18 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // life of the session - a door bricked open, for every player in the room, by one 146-byte frame.
       const rec = validActionRecord(raw);
       const o = rec && this.objects.get(rec.key);
-      if (!o) { if (rec) this._keepEarly(withoutLock(rec)); continue; }   // HOME-DOORS (AUDIT): a placed door not hung yet takes it when it is (SPELL-LOCK: never a peer's lock)
+      if (!o) {
+        if (rec) this._keepEarly(withoutLock(rec));
+        continue;
+      } // HOME-DOORS (AUDIT): a placed door not hung yet takes it when it is (SPELL-LOCK: never a peer's lock)
       const opening = o.kind === 'door' && o.state !== 'forward' && rec.state === 'forward';
       // AUDIT WORLD3 B3: the author rings the RDB soundIndex on EVERY Play (`_play`, "if (PlaySound && Index > 0)"),
       // and a Play always moves the record's own state - a tween's start, or an INSTANT flip. Gating the peers' ring
       // on a tween start alone left every zero-duration mover (an acting flat's Translation, a duration-0 model)
       // sliding in silence on every screen but the author's.
-      const played = rec.state !== o.state
-        || (o.kind === 'door' && rec.moveState != null && rec.moveState !== o.moveState);
-      this.restoreSaveData([rec], { remote: true });   // SPELL-LOCK: a peer's lock lands only up to the door's own
+      const played =
+        rec.state !== o.state || (o.kind === 'door' && rec.moveState != null && rec.moveState !== o.moveState);
+      this.restoreSaveData([rec], { remote: true }); // SPELL-LOCK: a peer's lock lands only up to the door's own
       if (opening) this.onDoorState?.(o, true);
       if (played && o.index > 0) this.onActionSound?.(o);
       n++;
@@ -633,7 +675,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       key,
       ns,
       kind: 'effect',
-      modelIdNum,   // WORLD-HOVER: the model stays in the static draw, so there is no cpu here - the host hands its id
+      modelIdNum, // WORLD-HOVER: the model stays in the static draw, so there is no cpu here - the host hands its id
       actionFlag: action.actionFlag,
       magnitude: action.magnitude,
       index: action.index,
@@ -655,17 +697,23 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     const F = ACTION_FLAGS;
     if (o.actionFlag === F.Hurt21) {
       if (o.activationCount % 20 !== 0) return;
-      const a = Math.max(1, o.magnitude), b = Math.max(1, o.index);
-      const span = Math.max(0, b - a);                      // int Range: exclusive upper; max<=min -> min
+      const a = Math.max(1, o.magnitude),
+        b = Math.max(1, o.index);
+      const span = Math.max(0, b - a); // int Range: exclusive upper; max<=min -> min
       const dmg = (a + Math.floor(this._rolls() * span)) * lvl;
       // AUDIT 24 (wave 39): DaggerfallAction.cs:739 sends RemoveHealth,
       // so a damage trap flashes the screen (ShowPlayerDamage).
-      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(dmg); }   // BA1: RemoveHealth carries the amount
+      if (this._damagePlayer) {
+        this._damagePlayer(dmg);
+        flashPlayerDamage(dmg);
+      } // BA1: RemoveHealth carries the amount
     } else if (o.actionFlag >= F.Hurt22 && o.actionFlag <= F.Hurt25) {
       const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
-      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(dmg); }   // :768, the same message
-    }
-    else if (o.actionFlag === F.CastSpell) {
+      if (this._damagePlayer) {
+        this._damagePlayer(dmg);
+        flashPlayerDamage(dmg);
+      } // :768, the same message
+    } else if (o.actionFlag === F.CastSpell) {
       // S4b verbatim: cooldown -= 45.454546 per Play; at <= 0 the
       // spell (record by Index) fires AT the player from the object,
       // then the cooldown RESETS to 1000 (parity fix, audit
@@ -676,8 +724,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
         if (this._castSpell) this._castSpell(o.index, o.origin);
         o.cooldown = 1000;
       }
-    }
-    else if (o.actionFlag === F.DrainMagicka) {
+    } else if (o.actionFlag === F.DrainMagicka) {
       // S4a: REAL now that chargen rolls magicka - verbatim
       // DaggerfallAction.DrainMagicka: max(1, IsFlat ? Magnitude :
       // AxisRaw) off current magicka, floored at 0.
@@ -697,7 +744,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // DaggerfallAction.Teleport: player transform = NextObject's;
       // null next logs and returns, verbatim.
       const dest = this.resolvePosition?.(o.ns, o.nextKey) ?? null;
-      if (!dest) { console.warn('[action] Teleport next object null - can\'t teleport'); return; }
+      if (!dest) {
+        console.warn("[action] Teleport next object null - can't teleport");
+        return;
+      }
       // ROAD-C c2/S8: RaiseOnTeleportActionEvent(thisAction.gameObject,
       // thisAction.NextObject) fires HERE (:596), one line BEFORE the
       // player transform is assigned - the automap's OnTeleportAction is
@@ -760,7 +810,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     if (o.activationCount === 1 && textId !== TYPE_99_TEXT_INDEX && !o.actionEnabled) {
       this.onDoorText?.(textId);
     } else if (o.axisRaw > 5) {
-      this.onTrespass?.();   // "classic seems to only check whether this value is greater than 5"
+      this.onTrespass?.(); // "classic seems to only check whether this value is greater than 5"
     }
   }
 
@@ -783,7 +833,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // which is what the Teleport relay's automap report needs.
       positionKey,
       kind: 'relay',
-      modelIdNum,   // WORLD-HOVER: as addEffect
+      modelIdNum, // WORLD-HOVER: as addEffect
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
       axisRaw: action.axisRaw,
@@ -818,7 +868,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       ns,
       kind: 'door',
       cpu,
-      modelIdNum: cpu?.modelIdNum ?? null,   // WORLD-HOVER: as addAction
+      modelIdNum: cpu?.modelIdNum ?? null, // WORLD-HOVER: as addAction
       base: baseMatrix,
       duration: DOOR_OPEN_DURATION,
       rotation: { x: 0, y: DOOR_OPEN_ANGLE, z: 0 },
@@ -870,7 +920,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     if (opts.positionKey != null) this._links.set(`${ns}:${opts.positionKey}`, o);
     this.collider.addMesh(key, cpu.positions, cpu.indices, baseMatrix);
     const early = this._early.get(key);
-    if (early) { this._early.delete(key); this.restoreSaveData([early]); }   // HOME-DOORS (AUDIT): its swing and lock, as they were left
+    if (early) {
+      this._early.delete(key);
+      this.restoreSaveData([early]);
+    } // HOME-DOORS (AUDIT): its swing and lock, as they were left
     return o;
   }
 
@@ -917,9 +970,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       ns,
       kind: 'action',
       cpu,
-      modelIdNum: cpu?.modelIdNum ?? null,   // WORLD-HOVER: WHICH model this is. DFU reads it off the GameObject's MeshFilter name (World Tooltips scrapes exactly that, .cs:408-420); the port reads it off the model record, which is the same fact without the string.
+      modelIdNum: cpu?.modelIdNum ?? null, // WORLD-HOVER: WHICH model this is. DFU reads it off the GameObject's MeshFilter name (World Tooltips scrapes exactly that, .cs:408-420); the port reads it off the model record, which is the same fact without the string.
       base: baseMatrix,
-      index: action.index,   // A2: the RDB soundIndex plays on every Play
+      index: action.index, // A2: the RDB soundIndex plays on every Play
       duration: action.duration / 20,
       rotation: action.rotation,
       translation: action.translation,
@@ -971,7 +1024,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       kind: 'moveFlat',
       isFlat: true,
       actionFlag: action.actionFlag,
-      index: action.index,        // the RDB soundIndex plays on every Play
+      index: action.index, // the RDB soundIndex plays on every Play
       magnitude: action.magnitude,
       axisRaw: action.axisRaw,
       // AddActionFlatHelper passes duration 0 (RDBLayout.cs:915), so a
@@ -1042,8 +1095,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
       if (!allowed || !allowed.includes(triggerType)) return;
     }
-    o.activationCount = (o.activationCount ?? 0) + 1;   // verbatim: Receive increments, then Plays
-    this.onPlayed?.(o, triggerType);   // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)
+    o.activationCount = (o.activationCount ?? 0) + 1; // verbatim: Receive increments, then Plays
+    this.onPlayed?.(o, triggerType); // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)
     this._play(o);
   }
 
@@ -1085,8 +1138,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // `GetComponent<DaggerfallActionDoor>()` (DaggerfallAction.cs:270)
     // can never return - and it has no lock at all, so IsLocked is not
     // even a question it answers.
-    if (!isActionDoorObject(o)) return;                   // GetComponent<DaggerfallActionDoor>()
-    if (!(o.currentLockValue > 0 && o.state === 'start')) return;   // IsLocked && IsClosed
+    if (!isActionDoorObject(o)) return; // GetComponent<DaggerfallActionDoor>()
+    if (!(o.currentLockValue > 0 && o.state === 'start')) return; // IsLocked && IsClosed
     o.currentLockValue = 0;
     this.toggleDoor(o);
   }
@@ -1106,9 +1159,18 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // audioSource.Play()": the RDB soundIndex fires on every Play,
     // movers and effect actions alike (the scene owns the engine).
     if (o.index > 0) this.onActionSound?.(o);
-    if (o.kind === 'effect') { this._runEffect(o); return; }
-    if (o.kind === 'relay') { this._runRelay(o); return; }
-    if (o.kind === 'door') { this._dispatchDoor(o, selfToggle); return; }
+    if (o.kind === 'effect') {
+      this._runEffect(o);
+      return;
+    }
+    if (o.kind === 'relay') {
+      this._runRelay(o);
+      return;
+    }
+    if (o.kind === 'door') {
+      this._dispatchDoor(o, selfToggle);
+      return;
+    }
     if (o.duration <= 0) {
       // Instant flip, still honoring the state cycle. (iTween with
       // time 0 fires its oncomplete SetState on the spot; a FLAT gets
@@ -1116,7 +1178,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // hands AddAction a duration of 0.)
       o.state = o.state === 'start' || o.state === 'reverse' ? 'end' : 'start';
       o.t = o.state === 'end' ? 1 : 0;
-      if (o.kind === 'moveFlat') { this._applyFlat(o); return; }
+      if (o.kind === 'moveFlat') {
+        this._applyFlat(o);
+        return;
+      }
       this._applyMatrix(o);
       if (o.kind === 'action') {
         standBucket(this.collider, o, o.matrix);
@@ -1136,7 +1201,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  remaining flag is a routed relay or a verbatim no-op (a chained
    *  None-flag door does NOT open - there is no delegate). */
   _dispatchDoor(o, selfToggle = false) {
-    if (MOVE_ACTION_FLAGS.has(o.actionFlag)) { this._doorMove(o); return; }
+    if (MOVE_ACTION_FLAGS.has(o.actionFlag)) {
+      this._doorMove(o);
+      return;
+    }
     if (DOOR_VERB_FLAGS.has(o.actionFlag)) {
       // The one carve-out: on the ExecuteActionOnToggle path the
       // player's toggle IS the verb. DFU re-enters ToggleDoor here and
@@ -1146,7 +1214,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (!selfToggle) this._doorVerb(o);
       return;
     }
-    if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) { this._runEffect(o); return; }
+    if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) {
+      this._runEffect(o);
+      return;
+    }
     this._runRelay(o);
   }
 
@@ -1156,9 +1227,13 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     if (o.moveDuration <= 0) {
       // A zero-duration tween completes on the spot (iTween fires its
       // oncomplete SetState immediately), still honoring the cycle.
-      if (o.moveState === 'start') { o.moveState = 'end'; o.moveT = 1; }
-      else if (o.moveState === 'end') { o.moveState = 'start'; o.moveT = 0; }
-      else return;
+      if (o.moveState === 'start') {
+        o.moveState = 'end';
+        o.moveT = 1;
+      } else if (o.moveState === 'end') {
+        o.moveState = 'start';
+        o.moveT = 0;
+      } else return;
       this._applyMatrix(o);
       this._settleDoorBucket(o);
       return;
@@ -1169,7 +1244,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
 
   /** ToggleDoor: no-op while moving; otherwise Open or Close. */
   toggleDoor(o, byPlayer = false) {
-    if (o.state === 'forward' || o.state === 'reverse') return false;   // IsMoving
+    if (o.state === 'forward' || o.state === 'reverse') return false; // IsMoving
     if (o.state === 'end') return this._closeDoor(o, byPlayer);
     return this._openDoor(o, false, byPlayer);
   }
@@ -1189,10 +1264,15 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (byPlayer) this.onSealedDoor?.(o);
       return false;
     }
-    if (o.actionFlag === ACTION_FLAGS.DoorText && o.index > 0
-        && (o.triggerFlag === TRIGGER_FLAGS.Door || o.triggerFlag === TRIGGER_FLAGS.Direct
-          || o.triggerFlag === TRIGGER_FLAGS.MultiTrigger)
-        && o.activationCount === 0 && byPlayer) {
+    if (
+      o.actionFlag === ACTION_FLAGS.DoorText &&
+      o.index > 0 &&
+      (o.triggerFlag === TRIGGER_FLAGS.Door ||
+        o.triggerFlag === TRIGGER_FLAGS.Direct ||
+        o.triggerFlag === TRIGGER_FLAGS.MultiTrigger) &&
+      o.activationCount === 0 &&
+      byPlayer
+    ) {
       this._execOwnAction(o);
       // ActionEnabled is still false if there was text to display: hold
       // the door shut for this first activation.
@@ -1203,8 +1283,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       return false;
     }
     if (byPlayer) this._execOwnAction(o);
-    this.collider.removeBucket(o.key);   // MakeTrigger(true)
-    this.onDoorState?.(o, true);         // A1: the audio seam (open)
+    this.collider.removeBucket(o.key); // MakeTrigger(true)
+    this.onDoorState?.(o, true); // A1: the audio seam (open)
     o.state = 'forward';
     o.currentLockValue = 0;
     return true;
@@ -1214,7 +1294,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  door's own record. The collider stays a trigger until the close
    *  COMPLETES (OnCompleteClose's MakeTrigger(false)). */
   _closeDoor(o, byPlayer = false) {
-    if (o.state === 'start') return false;   // IsClosed
+    if (o.state === 'start') return false; // IsClosed
     o.state = 'reverse';
     // AUDIT 26 F184: Close() plays NOTHING (:311-332) - the CloseSound
     // is OnCompleteClose's (:339-346), after the 1.5s swing and just
@@ -1233,11 +1313,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   _doorVerb(o) {
     const F = ACTION_FLAGS;
     if (o.actionFlag === F.OpenDoor) {
-      if (o.state === 'end') return;            // already open
-      o.currentLockValue = 0;                   // unlock + open
+      if (o.state === 'end') return; // already open
+      o.currentLockValue = 0; // unlock + open
       this.toggleDoor(o);
     } else if (o.actionFlag === F.CloseDoor) {
-      if (o.state !== 'end') return;            // only closes an OPEN door
+      if (o.state !== 'end') return; // only closes an OPEN door
       this.toggleDoor(o);
       o.currentLockValue = o.startingLockValue; // re-lock to the starting value
     } else if (o.actionFlag === F.LockDoor) {
@@ -1302,17 +1382,18 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  exists so the foe arm cannot land without answering it. */
   attemptBash(o, roll01 = this._rolls(), { byPlayer = true } = {}) {
     if (o.kind !== 'door' || o.special) return false;
-    this.onDoorBash?.(o);   // A1 seam (PlayerDoorBash)
+    this.onDoorBash?.(o); // A1 seam (PlayerDoorBash)
     // :220-221, hoisted above the returns below - see the note.
     if (byPlayer && this._insideDungeonCastle()) this.onMakeEnemiesHostile?.();
     if (o.state === 'end') {
-      this.toggleDoor(o, true);   // bash-close; ToggleDoor(true) fires the record
+      this.toggleDoor(o, true); // bash-close; ToggleDoor(true) fires the record
       return true;
     }
-    if (o.sealed) return false;   // DOOR-VOID: struck, heard, and never burst
-    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false;   // magically held: cannot bash
+    if (o.sealed) return false; // DOOR-VOID: struck, heard, and never burst
+    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false; // magically held: cannot bash
     const chance = 20 - o.currentLockValue;
-    if (Math.floor(roll01 * 100) < chance) {      // Dice100.SuccessRoll
+    if (Math.floor(roll01 * 100) < chance) {
+      // Dice100.SuccessRoll
       o.currentLockValue = 0;
       this.toggleDoor(o, true);
       return true;
@@ -1344,9 +1425,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // onDoorSpell, then drops the effect; the LAWS live in
     // systems/mysticism.js, which this file calls rather than copies.
     if (doorSpell && o.kind === 'door' && !o.special) {
-      const result = doorSpell.kind === 'open'
-        ? triggerOpen(o, doorSpell.holderLevel, { castBySkeletonKey: doorSpell.skeletonKey === true })
-        : triggerLock(o, doorSpell.holderLevel);
+      const result =
+        doorSpell.kind === 'open'
+          ? triggerOpen(o, doorSpell.holderLevel, { castBySkeletonKey: doorSpell.skeletonKey === true })
+          : triggerLock(o, doorSpell.holderLevel);
       // X3: BOTH swings are ToggleDoor(activatedByPlayer), and this
       // path IS the player activating (Open.cs:131, Lock.cs:122-126).
       // Lock's auto-close passed false, which suppresses the door's
@@ -1367,7 +1449,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (steal && o.currentLockValue > 0 && o.state !== 'end') this.attemptLockpicking(o);
       else this.toggleDoor(o, true);
     }
-    this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)
+    this.receive(o, 'Direct'); // player activation = the Direct trigger type (the gate table applies)
     return true;
   }
 
@@ -1383,26 +1465,30 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  the skill level. No lockpick ITEM is required - DFU checks no
    *  inventory. */
   attemptLockpicking(o) {
-    if (o.state === 'forward' || o.state === 'reverse') return false;   // IsMoving
+    if (o.state === 'forward' || o.state === 'reverse') return false; // IsMoving
     // LOCKPICK: a host that plays the tumblers takes a lock DFU would roll for - the magic arm below stays DFU's - and its
     // snapped picks are what a retry costs, so the retry gate is not read for it (Ledger A, LOCKPICK)
-    if (this.onLockpickAttempt && o.currentLockValue < MAGIC_LOCK_THRESHOLD) { this.onLockpickAttempt(o); return false; }
-    const skill = this._lockpickSkill();
-    if (o.failedSkillLevel === skill) return false;   // the retry gate (:157) - == exactly, so a skill moved EITHER way re-opens it
-    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) {
-      this.onLockpickResult?.(o, false);   // :187-190 - the magic arm is failure-with-no-roll
+    if (this.onLockpickAttempt && o.currentLockValue < MAGIC_LOCK_THRESHOLD) {
+      this.onLockpickAttempt(o);
       return false;
     }
-    this.onLockpickTally?.();   // TallySkill(Lockpicking, 1) (:165)
+    const skill = this._lockpickSkill();
+    if (o.failedSkillLevel === skill) return false; // the retry gate (:157) - == exactly, so a skill moved EITHER way re-opens it
+    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) {
+      this.onLockpickResult?.(o, false); // :187-190 - the magic arm is failure-with-no-roll
+      return false;
+    }
+    this.onLockpickTally?.(); // TallySkill(Lockpicking, 1) (:165)
     const chance = interiorLockpickingChance(this._playerLevel(), o.currentLockValue, skill);
-    if (!dice100(chance, this._rolls())) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
+    if (!dice100(chance, this._rolls())) {
+      // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
       this.onLockpickResult?.(o, false);
-      o.failedSkillLevel = skill;   // :171
+      o.failedSkillLevel = skill; // :171
       return false;
     }
     this.onLockpickResult?.(o, true);
-    o.currentLockValue = 0;   // :176
-    this.toggleDoor(o, true);   // :184 - a successful pick opens the door
+    o.currentLockValue = 0; // :176
+    this.toggleDoor(o, true); // :184 - a successful pick opens the door
     return true;
   }
 
@@ -1444,12 +1530,21 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // AUDIT 26 F187: failedSkillLevel IS in the door record
     // (SerializableActionDoor :77, :99-101) - without it a failed
     // pick could be retried across a save/load.
-    return [...this.objects.values()].map((o) => ({
-      key: o.key, state: o.state, t: o.t ?? 0,
-      ...(o.kind === 'door'
-        ? { lock: o.currentLockValue, failedSkillLevel: o.failedSkillLevel ?? 0, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
-        : {}),
-    })).concat([...this._early.values()]);   // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit
+    return [...this.objects.values()]
+      .map((o) => ({
+        key: o.key,
+        state: o.state,
+        t: o.t ?? 0,
+        ...(o.kind === 'door'
+          ? {
+              lock: o.currentLockValue,
+              failedSkillLevel: o.failedSkillLevel ?? 0,
+              moveState: o.moveState,
+              moveT: o.moveT ?? 0,
+            } // P10 lock; the Move pair
+          : {}),
+      }))
+      .concat([...this._early.values()]); // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit
   }
 
   /** RestoreSaveData for the whole action graph: set the saved state,
@@ -1474,17 +1569,23 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   restoreSaveData(list, { remote = false, level = null } = {}) {
     list?.forEach((sa) => {
       const o = this.objects.get(sa.key);
-      if (!o) { this._keepEarly(remote ? withoutLock(sa) : sa); return; }   // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then
-      if (o.sealed) return;   // DOOR-VOID: shut whatever a save from before the seal, or a peer, says
+      if (!o) {
+        this._keepEarly(remote ? withoutLock(sa) : sa);
+        return;
+      } // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then
+      if (o.sealed) return; // DOOR-VOID: shut whatever a save from before the seal, or a peer, says
       o.state = sa.state;
       o.t = sa.t;
       // F185: activationCount deliberately NOT restored - an old
       // envelope still carrying the field is ignored, so every
       // counter starts the rebuilt scene at 0, as DFU's does.
       if (o.kind === 'door') {
-        if (sa.lock != null && lockLands(o, sa.lock, remote, level)) o.currentLockValue = sa.lock;   // P10: door locks persist; SPELL-LOCK: a Lock spell's, its caster's alone
-        if (sa.failedSkillLevel != null) o.failedSkillLevel = sa.failedSkillLevel;   // F187: the pick latch survives
-        if (sa.moveState != null) { o.moveState = sa.moveState; o.moveT = sa.moveT ?? 0; }
+        if (sa.lock != null && lockLands(o, sa.lock, remote, level)) o.currentLockValue = sa.lock; // P10: door locks persist; SPELL-LOCK: a Lock spell's, its caster's alone
+        if (sa.failedSkillLevel != null) o.failedSkillLevel = sa.failedSkillLevel; // F187: the pick latch survives
+        if (sa.moveState != null) {
+          o.moveState = sa.moveState;
+          o.moveT = sa.moveT ?? 0;
+        }
       }
       this.syncRestored(o);
     });
@@ -1506,7 +1607,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       return;
     }
     if (o.kind !== 'door' && o.kind !== 'action') return;
-    if (o.kind === 'door' && o.state === 'start') { o.t = 0; }
+    if (o.kind === 'door' && o.state === 'start') {
+      o.t = 0;
+    }
     if (o.kind === 'door') {
       if (o.moveState === 'start') o.moveT = 0;
       else if (o.moveState === 'end') o.moveT = 1;
@@ -1527,8 +1630,15 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  @template T @param {() => T} fn @returns {T} */
   withDoorsShut(fn) {
     const doors = [...this.objects.values()].filter((o) => o.kind === 'door');
-    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base); }
-    try { return fn(); } finally { for (const o of doors) this._settleDoorBucket(o); }
+    for (const o of doors) {
+      this.collider.removeBucket(o.key);
+      this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base);
+    }
+    try {
+      return fn();
+    } finally {
+      for (const o of doors) this._settleDoorBucket(o);
+    }
   }
 
   /** A door is a solid obstacle only while the hinge is fully closed
@@ -1541,14 +1651,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
 
   _applyMatrix(o) {
     const p = o.t;
-    const translate = trs(
-      o.translation.x * p, o.translation.y * p, o.translation.z * p, 0, 0, 0);
+    const translate = trs(o.translation.x * p, o.translation.y * p, o.translation.z * p, 0, 0, 0);
     // trs takes DEGREES (Ry * Rx * Rz, the layout convention).
-    const rotate = trs(
-      0, 0, 0,
-      o.rotation.x * p,
-      o.rotation.y * p,
-      o.rotation.z * p);
+    const rotate = trs(0, 0, 0, o.rotation.x * p, o.rotation.y * p, o.rotation.z * p);
     let m = multiply(translate, multiply(o.base, rotate));
     if (o.kind === 'door' && o.moveT) {
       // The record's Move rides the SAME transform as the hinge (two
@@ -1556,11 +1661,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // like the mover translation above, and RotateBy is Space.Self,
       // so it post-multiplies like the hinge.
       const q = o.moveT;
-      const mt = trs(
-        o.moveTranslation.x * q, o.moveTranslation.y * q, o.moveTranslation.z * q, 0, 0, 0);
-      const mr = trs(
-        0, 0, 0,
-        o.moveRotation.x * q, o.moveRotation.y * q, o.moveRotation.z * q);
+      const mt = trs(o.moveTranslation.x * q, o.moveTranslation.y * q, o.moveTranslation.z * q, 0, 0, 0);
+      const mr = trs(0, 0, 0, o.moveRotation.x * q, o.moveRotation.y * q, o.moveRotation.z * q);
       m = multiply(mt, multiply(m, mr));
     }
     o.matrix = m;
@@ -1570,10 +1672,14 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  meet it (MOVER-BODY, _standMover). */
   update(dt, body = null) {
     for (const o of this.objects.values()) {
-      if (o.kind === 'door') { this._tickDoor(o, dt); continue; }
+      if (o.kind === 'door') {
+        this._tickDoor(o, dt);
+        continue;
+      }
       if (o.state !== 'forward' && o.state !== 'reverse') continue;
       const dir = o.state === 'forward' ? 1 : -1;
-      const t0 = o.t, m0 = o.matrix;
+      const t0 = o.t,
+        m0 = o.matrix;
       // A zero-duration tween is instant (and _play never leaves one
       // in a playing state), so the guard is for the restored-state
       // path and for a dt of exactly 0, which would otherwise make t
@@ -1602,12 +1708,26 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     const place = (m) => standBucket(this.collider, o, m);
     place(o.matrix);
     if (!body) return;
-    const t1 = o.t, m1 = o.matrix, n = moverSteps(this.collider, o.key, m0, m1, body);
+    const t1 = o.t,
+      m1 = o.matrix,
+      n = moverSteps(this.collider, o.key, m0, m1, body);
     for (let k = 1, t = t0, m = m0; k <= n; k++) {
       o.t = k === n ? t1 : t0 + ((t1 - t0) * k) / n;
-      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }
-      if (!meetBody(this.collider, o.key, m, o.matrix, body, place)) { o.t = t; o.matrix = m; place(m); return; }
-      t = o.t; m = o.matrix;
+      if (k < n) {
+        this._applyMatrix(o);
+        place(o.matrix);
+      } else if (n > 1) {
+        o.matrix = m1;
+        place(m1);
+      }
+      if (!meetBody(this.collider, o.key, m, o.matrix, body, place)) {
+        o.t = t;
+        o.matrix = m;
+        place(m);
+        return;
+      }
+      t = o.t;
+      m = o.matrix;
     }
   }
 
@@ -1652,5 +1772,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
 // swung in one diff, as the roll's success always was.
 for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking', 'lockpicked']) {
   const body = ActionSystem.prototype[name];
-  ActionSystem.prototype[name] = function (...args) { return this._changed(() => body.apply(this, args)); };
+  ActionSystem.prototype[name] = function (...args) {
+    return this._changed(() => body.apply(this, args));
+  };
 }

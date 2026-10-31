@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CC-L1-the-far-shore-read-flat",
     "file": "src/world/capitalCarriages.js",
-    "old": "(cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach))",
-    "new": "false",
+    "old": "        ([a, b]) =>\n          inCapitalRim(cap, x + a * reach + ax * BLOCK_M, z + b * reach + ar * BLOCK_M) ||\n          (cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach)),",
+    "new": "        ([a, b]) => inCapitalRim(cap, x + a * reach + ax * BLOCK_M, z + b * reach + ar * BLOCK_M) || false,",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-CC-L4-the-relief-own-law",
     "file": "src/world/capitalCarriages.js",
-    "old": "const heightAt = (x, z) => (relief ? reliefDrawnAt(relief, x, z) - relief.flat : 0);",
-    "new": "const heightAt = (x, z) => (relief ? relief.height(x, z) - relief.flat : 0);",
+    "old": "  const heightAt = (x, z) => (relief ? reliefDrawnAt(relief, x, z) - relief.flat : 0);",
+    "new": "  const heightAt = (x, z) => (relief ? relief.height(x, z) - relief.flat : 0);",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AUDIT-CC-L7-the-rim-by-the-centre",
     "file": "src/world/capitalCarriages.js",
-    "old": "    if (REACH_RING.some(([a, b]) => inCapitalRim(",
-    "new": "    if ([[0, 0]].some(([a, b]) => inCapitalRim(",
+    "old": "      REACH_RING.some(",
+    "new": "      [[0, 0]].some(",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-CC-T-clearOf-null-blocks",
     "file": "src/world/capitalCarriages.js",
-    "old": "  if (!test) return true;\n  for (let i",
-    "new": "  if (!test) return false;\n  for (let i",
+    "old": "  if (!test) return true;",
+    "new": "  if (!test) return false;",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-CC-T-mod-not-loaded-guard-gone",
     "file": "src/world/capitalCarriages.js",
-    "old": "  if (!Object.values(SIDE_GATES).some((g) => records(g))) return [];",
-    "new": "  if (false) return [];",
+    "old": "  if (!Object.values(SIDE_GATES).some((g) => records(g))) return []; // the mod not loaded: no footprint built for nothing",
+    "new": "  if (false) return []; // the mod not loaded: no footprint built for nothing",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-CC-T-side-gt-zero",
     "file": "src/world/capitalCarriages.js",
-    "old": "const ok = b > reach && ",
-    "new": "const ok = b > 0 && ",
+    "old": "          b > reach &&",
+    "new": "          b > 0 &&",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-CC-T-never-toward-wall",
     "file": "src/world/capitalCarriages.js",
-    "old": "for (const db of b > 1e-9 ? [b, -b] : [0])",
-    "new": "for (const db of [b])",
+    "old": "      for (const db of b > 1e-9 ? [b, -b] : [0]) if (ok(a, db)) return [a, db];",
+    "new": "      for (const db of [b]) if (ok(a, db)) return [a, db];",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDIT-CC-T-along-one-way",
     "file": "src/world/capitalCarriages.js",
-    "old": "for (let a = -r; a <= r + 1e-9; a += step) {",
-    "new": "for (let a = 0; a <= r + 1e-9; a += step) {",
+    "old": "    for (let a = -r; a <= r + 1e-9; a += step) {",
+    "new": "    for (let a = 0; a <= r + 1e-9; a += step) {",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "AUDIT-CC-T-capital-k-truthy",
     "file": "src/world/capitalCarriages.js",
-    "old": "const cap = loc?.capital ? CAPITALS[loc.capital.k] : null;",
-    "new": "const cap = loc?.capital?.k ? CAPITALS[loc.capital.k] : null;",
+    "old": "  const cap = loc?.capital ? CAPITALS[loc.capital.k] : null;",
+    "new": "  const cap = loc?.capital?.k ? CAPITALS[loc.capital.k] : null;",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "AUDIT-CC-P-the-faction-dropped",
     "file": "src/world/capitalCarriages.js",
-    "old": ": { ...it.r }, model: it.model",
-    "new": ": { ...it.r, FactionID: 0 }, model: it.model",
+    "old": "              r: it.model ? { ...it.r, YRotation: (it.r.YRotation ?? 0) + turn } : { ...it.r },",
+    "new": "              r: it.model ? { ...it.r, YRotation: (it.r.YRotation ?? 0) + turn } : { ...it.r, FactionID: 0 },",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]

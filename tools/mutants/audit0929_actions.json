@@ -20,8 +20,8 @@
   {
     "name": "AUDIT0929-D1-the-ray-for-every-flag",
     "file": "src/world/actionSystem.js",
-    "old": "  if (o.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
-    "new": "  if (ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
+    "old": "  if (o.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';",
+    "new": "  if (ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';",
     "tests": [
       "test/player/audit0929_actions.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT0929-D1-no-contact-answered",
     "file": "src/world/actionSystem.js",
-    "old": "  if (!at) return null;\n  const dx",
-    "new": "  if (!at) return 'WalkInto';\n  const dx",
+    "old": "  if (!at) return null;",
+    "new": "  if (!at) return 'WalkInto';",
     "tests": [
       "test/player/audit0929_actions.test.js"
     ]

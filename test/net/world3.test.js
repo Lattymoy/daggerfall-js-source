@@ -167,7 +167,7 @@ test('WORLD3: the action graph\'s change seam and remote apply, executed on bare
   assert.equal(E.a._depth, 0, 'the depth unwinds'); assert.equal(A.a._depth, 0);
   assert.equal(B.a.applyRemote(null), 0); assert.equal(B.a.applyRemote([{ key: 'nope', state: 'end' }]), 0, 'a record for no object is skipped');
   const src = rd('src/world/actionSystem.js');
-  assert.match(src, /for \(const name of \['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking', 'lockpicked'\]\) \{\s*const body = ActionSystem\.prototype\[name\];\s*ActionSystem\.prototype\[name\] = function \(\.\.\.args\) \{ return this\._changed\(\(\) => body\.apply\(this, args\)\); \};\s*\}/, 'the six entries ride the seam, their signatures kept');   // PIN MOVED (LOCKPICK): and the lock a host's tumblers opened
+  assert.match(src, /for \(const name of \['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking', 'lockpicked'\]\) \{\n\s*const body = ActionSystem\.prototype\[name\];\n\s*ActionSystem\.prototype\[name\] = function \(\.\.\.args\) \{\n\s*return this\._changed\(\(\) => body\.apply\(this, args\)\);\n\s*\};\n\s*\}/, 'the six entries ride the seam, their signatures kept');   // PIN MOVED (LOCKPICK): and the lock a host's tumblers opened
 });
 
 test('WORLD3: the target machine with a PEER, executed - a peer is a player to every gate and wins on distance; measured at its own feet and capsule; a peer in sight arms GetTargets when the host is out of the band and unseen; the machine hands the peer\'s own feet back; a peer gone (health 0) is dropped; the aim point is the peer\'s transform; the motor aims its senses at the peer\'s feet and reads its capsule - and the hosts by source', () => {

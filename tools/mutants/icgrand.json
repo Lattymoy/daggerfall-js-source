@@ -517,8 +517,8 @@
   {
     "name": "IC-GRAND-palace-gate-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "P = framed(...polar(b, rm), face), gate = gates.has(b), gw",
-    "new": "P = framed(...polar(b, rm), face), gate = false, gw",
+    "old": "      gate = gates.has(b),",
+    "new": "      gate = false,",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "IC-GRAND-gardens-statues-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "g.statues.forEach(([x, z, fx, fz], i) => { if (only([x, z], [x, z])) emperorStatue(",
-    "new": "g.statues.forEach(([x, z, fx, fz], i) => { if (false) emperorStatue(",
+    "old": "    if (only([x, z], [x, z])) emperorStatue(mb, x, z, [fx, fz], i % 3);",
+    "new": "    if (false) emperorStatue(mb, x, z, [fx, fz], i % 3);",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "IC-GRAND-tombs-face-tower",
     "file": "src/world/capitalImperial.js",
-    "old": "const [x, z] = tombAt(i), P = framed(x, z, unit([x, z]));",
-    "new": "const [x, z] = tombAt(i), P = framed(x, z, unit([-x, -z]));",
+    "old": "      P = framed(x, z, unit([x, z]));",
+    "new": "      P = framed(x, z, unit([-x, -z]));",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "IC-GRAND-palacewall-arches-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "obox(mb, MARBLE, P, -t, t, -wd, wd, W.gateH, top);   // the arch's mass over the gate",
-    "new": "// the arch's mass over the gate",
+    "old": "    obox(mb, MARBLE, P, -t, t, -wd, wd, W.gateH, top); // the arch's mass over the gate",
+    "new": "    // the arch's mass over the gate",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "IC-GRAND-tower-unfluted",
     "file": "src/world/capitalImperial.js",
-    "old": "k = i % 2 ? 1 - depth : 1;",
-    "new": "k = 1;",
+    "old": "      k = i % 2 ? 1 - depth : 1;",
+    "new": "      k = 1;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "IC-GRAND-tower-tiers-unringed",
     "file": "src/world/capitalImperial.js",
-    "old": "    if (y1 < T.shaftTop) {\n      const balcony",
-    "new": "    if (false) {\n      const balcony",
+    "old": "    if (y1 < T.shaftTop) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -962,8 +962,8 @@
   {
     "name": "IC-TOWER-LOD-palace-runs-thick",
     "file": "src/world/capitalImperial.js",
-    "old": "    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2,",
-    "new": "    obox(mb, LOD_ART[w.mat], P, -w.t, w.t, -len / 2, len / 2,",
+    "old": "    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2, w.mat === 'slate' ? I.palace.h - 0.5 : -2, w.h);",
+    "new": "    obox(mb, LOD_ART[w.mat], P, -w.t, w.t, -len / 2, len / 2, w.mat === 'slate' ? I.palace.h - 0.5 : -2, w.h);",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]

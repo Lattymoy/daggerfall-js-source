@@ -159,8 +159,8 @@
   {
     "name": "MOVER-BODY-the-hold-closes-anyway",
     "file": "src/world/actionSystem.js",
-    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
-    "new": "{ return; }",
+    "old": "        o.t = t;\n        o.matrix = m;\n        place(m);\n        return;",
+    "new": "        return;",
     "tests": [
       "test/world/fb1019f_moverbody.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "MOVER-BODY-the-held-tween-runs-on",
     "file": "src/world/actionSystem.js",
-    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
-    "new": "{ o.matrix = m; place(m); return; }",
+    "old": "        o.t = t;\n        o.matrix = m;",
+    "new": "        o.matrix = m;",
     "tests": [
       "test/world/fb1019f_moverbody.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "MOVER-BODY-the-held-bucket-left-closing",
     "file": "src/world/actionSystem.js",
-    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
-    "new": "{ o.t = t; o.matrix = m; return; }",
+    "old": "        place(m);\n        return;",
+    "new": "        return;",
     "tests": [
       "test/world/fb1019f_moverbody.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "MOVER-BODY-a-step-never-stood",
     "file": "src/world/actionSystem.js",
-    "old": "      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }",
-    "new": "      if (k < n) { this._applyMatrix(o); } else if (n > 1) { o.matrix = m1; place(m1); }",
+    "old": "        place(o.matrix);\n      } else if (n > 1) {",
+    "new": "      } else if (n > 1) {",
     "tests": [
       "test/world/fb1019f_moverbody.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "MOVER-BODY-the-last-step-left-short",
     "file": "src/world/actionSystem.js",
-    "old": "      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }",
-    "new": "      if (k < n) { this._applyMatrix(o); place(o.matrix); }",
+    "old": "      } else if (n > 1) {\n        o.matrix = m1;\n        place(m1);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/fb1019f_moverbody.test.js"
     ]

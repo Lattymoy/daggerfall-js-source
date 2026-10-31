@@ -20,8 +20,8 @@
   {
     "name": "TESA10-is-id-low-bit",
     "file": "src/world/capitalLane.js",
-    "old": "=== CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
-    "new": "=== CAPITAL_LANE;",
+    "old": "export const isCapitalPlaceId = (id) =>\n  ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
+    "new": "export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -735,8 +735,8 @@
   {
     "name": "TESA10b-arch-solid",
     "file": "src/world/capitalSolitude.js",
-    "old": "o = archOpening(x, A), I = o > 0 ? o : -UNDER, depth = D - I;",
-    "new": "o = archOpening(x, A), I = -UNDER, depth = D - I;",
+    "old": "      I = o > 0 ? o : -UNDER,",
+    "new": "      I = -UNDER,",
     "tests": [
       "test/tesa10_capitals.test.js",
       "test/world/solitude_relief.test.js"
@@ -754,8 +754,8 @@
   {
     "name": "TESA10b-arch-gap-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  const gapN = [W.west, -W.archGap], gapS = [W.west, W.archGap];",
-    "new": "  const gapN = [W.west, 0], gapS = [W.west, 0];",
+    "old": "  const gapN = [W.west, -W.archGap],\n    gapS = [W.west, W.archGap];",
+    "new": "  const gapN = [W.west, 0],\n    gapS = [W.west, 0];",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -763,8 +763,8 @@
   {
     "name": "TESA10b-castle-gate-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, up + C.h, h, C.gate, C.gateH);",
-    "new": "  wallRun(mb, NORD, nw, sw, C.thick, up + C.h);",
+    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, up + C.h, h, C.gate, C.gateH); // the west gate at the lane's level",
+    "new": "  wallRun(mb, NORD, nw, sw, C.thick, up + C.h); // the west gate at the lane's level",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -772,8 +772,8 @@
   {
     "name": "TESA10b-palace-on-water",
     "file": "src/world/capitalSolitude.js",
-    "old": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = levelY(st.top);",
-    "new": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = 0;",
+    "old": "    y = levelY(st.top);",
+    "new": "    y = 0;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -781,8 +781,8 @@
   {
     "name": "TESA10b-piers-short",
     "file": "src/world/capitalSolitude.js",
-    "old": "    const len = D.edge - D.pierTo, zc = (D.edge + D.pierTo) / 2;",
-    "new": "    const len = (D.edge - D.pierTo) / 2, zc = (D.edge + D.pierTo) / 2;",
+    "old": "    const len = D.edge - D.pierTo,",
+    "new": "    const len = (D.edge - D.pierTo) / 2,",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

@@ -210,8 +210,8 @@
   {
     "name": "WW7-4-no-door",
     "file": "src/world/capitalSolitude.js",
-    "old": "doors: [entranceDoor(ex, Hh.z, 4, 6.5, [1, 0], y)]",
-    "new": "doors: []",
+    "old": "  return { ...mb.build(), doors: [entranceDoor(ex, Hh.z, 4, 6.5, [1, 0], y)] }; // WW7-4: the palace's halls (world/capitalCastles.js)",
+    "new": "  return { ...mb.build(), doors: [] }; // WW7-4: the palace's halls (world/capitalCastles.js)",
     "tests": [
       "test/world/worldWide/ww7_castles.test.js"
     ]

@@ -648,12 +648,12 @@ through their ring.
   (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation))"`), and once they land
   its pixel is built again (`tamrielSweepsHost.js:"|| townWallReadyAt(p.px, p.py);"`, TESA4's stale law).
 - **A capital's approaches** (`world/capitalApproaches.js`): each plan names its road gates (`gateAt`, the middle of each
-  opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates = (W) =>"`, Mournhold's,
+  opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates"`, Mournhold's,
   Helstrom's, Solitude's main gate, the Imperial City's Talos Bridge landing); the road's gate pixel stands off the slice
-  the gate stands in (`capitalApproaches.js:"export function capitalGateSlice(cap, D, side) {"`); and the capital lays
+  the gate stands in (`capitalApproaches.js:"export function capitalGateSlice"`); and the capital lays
   two tiles of the road's own surface (the painter's record 46) from the arm's end - the middle of the gate pixel's side -
   straight in to a gate on its line, else in to APPROACH_SKIRT (19.2 m) outside the wall's line, along it, and in to the
-  gate (`capitalApproaches.js:"export function capitalApproaches(cap, D) {"`). Its gardens lay it over their rim too (the
+  gate (`capitalApproaches.js:"export function capitalApproaches"`). Its gardens lay it over their rim too (the
   rim's no ground elsewhere), no tree on it (`tamrielCapitals.js:"tile: (x, z) => (way(x, z) ? APPROACH_TILE : rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),"`);
   the Imperial City's crosses four cells of the open ground past its lake, each now a block of its own
   (`capitalApproachName`), the shared open cell everywhere else. Every approach lies on gardens and open ground, under no

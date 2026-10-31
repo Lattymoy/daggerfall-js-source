@@ -324,7 +324,7 @@ test('RR3b the hosts and the save: the four hosts bind the reader and await the 
   assert.equal((w.match(/locationIndex: (dfLoc|loc)\.locationIndex \?\? 0/g) ?? []).length, 5, 'world.js: the five merge sites');
   assert.equal((e.match(/locationIndex: dfLocation\.locationIndex \?\? 0/g) ?? []).length, 4, 'exterior.js: the four merge sites');
   assert.match(rd('src/systems/talk/talkTopics.js'), /export function mergeNamedBuildings\(exteriorBuildings, blocks, \{ locationIndex = 0 \} = \{\}\) \{/);
-  assert.match(rd('src/world/buildingSummaries.js'), /mergeNamedBuildings\(exteriorBuildings \?\? \[\], blocks \?\? \[\], \{ locationIndex: nameOpts\.locationIndex \?\? 0 \}\)/);
+  assert.match(rd('src/world/buildingSummaries.js'), /mergeNamedBuildings\(exteriorBuildings \?\? \[\], blocks \?\? \[\], \{\n\s*locationIndex: nameOpts\.locationIndex \?\? 0,\n\s*\}\)/);
   const sv = rd('src/systems/save/save.js');
   assert.match(sv, /snap\.worldVariation = getWorldVariationSaveData\(\);/, 'SaveLoadManager.cs:1125');
   assert.match(sv, /clearWorldDataVariants\(\);\s*restoreWorldVariationData\(snap\.worldVariation \?\? null\);/, 'SaveLoadManager.cs:1465-1466');

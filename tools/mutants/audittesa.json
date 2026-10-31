@@ -415,8 +415,8 @@
   {
     "name": "AUDIT-TESA-A6-3-walks-in-houses",
     "file": "src/world/capitalHelstrom.js",
-    "old": "len = C.z1 - C.z0 + 1, zc",
-    "new": "len = C.z1 - C.z0 + 8, zc",
+    "old": "    len = C.z1 - C.z0 + 1,",
+    "new": "    len = C.z1 - C.z0 + 8,",
     "tests": [
       "test/audit_tesa.test.js"
     ]

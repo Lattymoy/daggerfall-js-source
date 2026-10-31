@@ -393,8 +393,8 @@
   {
     "name": "RF-the-arrival-at-the-slice-s-corner",
     "file": "src/world/capitalApproaches.js",
-    "old": "mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;",
-    "new": "mid = (8 * s - cap.anchor[F.lateral]) * BLOCK_M;",
+    "old": "    mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;",
+    "new": "    mid = (8 * s - cap.anchor[F.lateral]) * BLOCK_M;",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "RF-the-run-in-short-of-the-gate",
     "file": "src/world/capitalApproaches.js",
-    "old": "[ug - H, vs - H, ug + H, vg]",
-    "new": "[ug - H, vs - H, ug + H, vs + H]",
+    "old": "        [ug - H, vs - H, ug + H, vg],",
+    "new": "        [ug - H, vs - H, ug + H, vs + H],",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "RF-the-south-side-s-frame",
     "file": "src/world/capitalApproaches.js",
-    "old": "  S: Object.freeze({ uv: (x, z, e) => [x, e - z],",
-    "new": "  S: Object.freeze({ uv: (x, z, e) => [x, z - e],",
+    "old": "  S: Object.freeze({ uv: (x, z, e) => [x, e - z], lateral: 0, edge: (cap, D) => (8 * D.h - cap.anchor[1]) * BLOCK_M }),",
+    "new": "  S: Object.freeze({ uv: (x, z, e) => [x, z - e], lateral: 0, edge: (cap, D) => (8 * D.h - cap.anchor[1]) * BLOCK_M }),",
     "tests": [
       "test/world/road_gates.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-LWR-doors-base",
     "file": "src/world/actionSystem.js",
-    "old": "    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base); }",
-    "new": "    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix); }",
+    "old": "      this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base);",
+    "new": "      this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);",
     "tests": [
       "test/systems/livingWorld/auditlwrooms.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-LWR-doors-after",
     "file": "src/world/actionSystem.js",
-    "old": "    try { return fn(); } finally { for (const o of doors) this._settleDoorBucket(o); }",
+    "old": "    try {\n      return fn();\n    } finally {\n      for (const o of doors) this._settleDoorBucket(o);\n    }",
     "new": "    return fn();",
     "tests": [
       "test/systems/livingWorld/auditlwrooms.test.js"

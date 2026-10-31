@@ -102,7 +102,7 @@
   {
     "name": "DEX2-the-band-undressed",
     "file": "src/world/bandSprites.js",
-    "old": "        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);",
+    "old": "        r.batch = setupFoeLook(\n          renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null,\n          b.mobileType,\n        );",
     "new": "        r.batch = renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null;",
     "why": "AUDIT DEX B6: an Overworld band of a Spectral or NoShadow row drawn opaque and casting",
     "tests": [

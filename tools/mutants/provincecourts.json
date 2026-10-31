@@ -200,8 +200,8 @@
   {
     "name": "PC-the-port-titles",
     "file": "src/world/buildingNames.js",
-    "old": "15: () => t('faction.ruler.emperor', 'Emperor'),",
-    "new": "15: () => t('faction.ruler.emperor', 'Lord'),",
+    "old": "  15: () => t('faction.ruler.emperor', 'Emperor'),",
+    "new": "  15: () => t('faction.ruler.emperor', 'Lord'),",
     "tests": [
       "test/world/worldWide/provincecourts.test.js"
     ]

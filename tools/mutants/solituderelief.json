@@ -193,8 +193,8 @@
   {
     "name": "SR-SHAPE-the-terraces'-stair-sunk",
     "file": "src/world/capitalSolitude.js",
-    "old": "    const y = top - ((top - foot) * k) / steps, s0 = run * k,",
-    "new": "    const y = top - ((top - foot) * (k + 1)) / steps, s0 = run * k,",
+    "old": "    const y = top - ((top - foot) * k) / steps,",
+    "new": "    const y = top - ((top - foot) * (k + 1)) / steps,",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SR-SHAPE-the-parapet-to-the-ground",
     "file": "src/world/capitalSolitude.js",
-    "old": "    if (g0 - from > 0.5) wallRun(mb, NORD, [from, z1 - 0.3], [g0, z1 - 0.3], 0.6, up + 1.1, -up, 3);",
-    "new": "    if (g0 - from > 0.5) wallRun(mb, NORD, [from, z1 - 0.3], [g0, z1 - 0.3], 0.6, up + 1.1, 0.1, 3);",
+    "old": "    if (g0 - from > 0.5) wallRun(mb, NORD, [from, z1 - 0.3], [g0, z1 - 0.3], 0.6, up + 1.1, -up, 3); // on the wall's top, its face the wall's",
+    "new": "    if (g0 - from > 0.5) wallRun(mb, NORD, [from, z1 - 0.3], [g0, z1 - 0.3], 0.6, up + 1.1, 0.1, 3); // on the wall's top, its face the wall's",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SR-SHAPE-cliffs-in-the-city",
     "file": "src/world/capitalSolitude.js",
-    "old": "      if (inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(",
-    "new": "      if (false && inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(",
+    "old": "      if (inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(ax(x + 0.5), az(y + 0.5))) continue; // inside the walls the terraces' own works stand on the steps",
+    "new": "      if ((false && inCity(ax(x + 0.5), az(y + 0.5))) || onRoad(ax(x + 0.5), az(y + 0.5))) continue; // inside the walls the terraces' own works stand on the steps",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "SR-SHAPE-rock-on-the-road's-banks",
     "file": "src/world/capitalSolitude.js",
-    "old": "inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(ax(x + 0.5), az(y + 0.5))) continue;",
-    "new": "inCity(ax(x + 0.5), az(y + 0.5))) continue;",
+    "old": "      if (inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(ax(x + 0.5), az(y + 0.5))) continue; // inside the walls the terraces' own works stand on the steps",
+    "new": "      if (inCity(ax(x + 0.5), az(y + 0.5))) continue; // inside the walls the terraces' own works stand on the steps",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "SR-SHAPE-the-paving-on-the-relief",
     "file": "src/world/capitalSolitude.js",
-    "old": "return [x, levelY(D.at(x, z)) + 0.1, z]; };",
-    "new": "return [x, levelY(solitudeHeight(x, z)) + 0.1, z]; };",
+    "old": "    return [x, levelY(D.at(x, z)) + 0.1, z];",
+    "new": "    return [x, levelY(solitudeHeight(x, z)) + 0.1, z];",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "SR-APPROACH-the-straight-run-up-the-slope",
     "file": "src/world/capitalApproaches.js",
-    "old": "  if (cap.approach) return cap.approach;   // SOLITUDE-RELIEF",
-    "new": "  if (false) return cap.approach;   // SOLITUDE-RELIEF",
+    "old": "  if (cap.approach) return cap.approach; // SOLITUDE-RELIEF: a capital whose road on to its gate is a line of its own (Solitude's Gate Road)",
+    "new": "  if (false) return cap.approach; // SOLITUDE-RELIEF: a capital whose road on to its gate is a line of its own (Solitude's Gate Road)",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "SR-APPROACH-cells-off-its-line",
     "file": "src/world/capitalApproaches.js",
-    "old": "  if (cap.approach) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked",
-    "new": "  if (false) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked",
+    "old": "  if (cap.approach) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

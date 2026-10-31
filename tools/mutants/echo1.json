@@ -137,8 +137,8 @@
   {
     "name": "ECHO1-refused-heard",
     "file": "src/world/actionSystem.js",
-    "old": "  receive(o, triggerType = 'ActionObject') {\n    if (this._isPlaying(o)) return;\n",
-    "new": "  receive(o, triggerType = 'ActionObject') {\n    if (this._isPlaying(o)) return;\n    this.onPlayed?.(o, triggerType);\n",
+    "old": "    // ROAD-B B4: DaggerfallAction.cs:183 - the hack runs AFTER the",
+    "new": "    this.onPlayed?.(o, triggerType);\n    // ROAD-B B4: DaggerfallAction.cs:183 - the hack runs AFTER the",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ECHO1-nothing-heard",
     "file": "src/world/actionSystem.js",
-    "old": "    this.onPlayed?.(o, triggerType);   // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)\n",
-    "new": "",
+    "old": "    this.onPlayed?.(o, triggerType); // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)\n    this._play(o);",
+    "new": "    this._play(o);",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]

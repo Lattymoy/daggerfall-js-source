@@ -92,8 +92,8 @@
   {
     "name": "TB-the-arena-reader-walled",
     "file": "src/world/arenaLocations.js",
-    "old": "[...(rows ?? [])].map(unwalledLocation).filter(",
-    "new": "[...(rows ?? [])].filter(",
+    "old": "  const list = [...(rows ?? [])]\n    .map(unwalledLocation)\n    .filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l))); // TS7",
+    "new": "  const list = [...(rows ?? [])].filter(\n    (l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)),\n  ); // TS7",
     "tests": [
       "test/world/baywalls.test.js"
     ]

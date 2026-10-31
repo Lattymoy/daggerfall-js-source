@@ -211,8 +211,8 @@
   {
     "name": "IS-the-bridge-model-short",
     "file": "src/world/capitalImperial.js",
-    "old": "x1 = bridgeLine(I)[1][0], xr = -I.isle,",
-    "new": "x1 = -(I.isle + 40), xr = -I.isle,",
+    "old": "    x1 = bridgeLine(I)[1][0],",
+    "new": "    x1 = -(I.isle + 40),",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]

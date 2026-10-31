@@ -38,8 +38,8 @@
   {
     "name": "TESA13-key-off-by-one",
     "file": "src/world/arenaRoads.js",
-    "old": "export const beyondPixel = (key) => [(key % 65536) - 32768,",
-    "new": "export const beyondPixel = (key) => [(key % 65536) - 32767,",
+    "old": "export const beyondPixel = (key) => [(key % 65536) - 32768, Math.floor(key / 65536) - 32768];",
+    "new": "export const beyondPixel = (key) => [(key % 65536) - 32767, Math.floor(key / 65536) - 32768];",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

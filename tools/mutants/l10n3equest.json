@@ -227,8 +227,8 @@
   {
     "name": "L10N3e-quest-building-guild-shown",
     "file": "src/world/buildingNames.js",
-    "old": "a = shownFactionName?.(factionId) ?? factionName?.(factionId)",
-    "new": "a = factionName?.(factionId)",
+    "old": "      a = shownFactionName?.(factionId) ?? factionName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3022, as shown",
+    "new": "      a = factionName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3022, as shown",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "L10N3e-quest-building-temple-shown",
     "file": "src/world/buildingNames.js",
-    "old": "a = shownTempleName?.(factionId) ?? templeName?.(factionId)",
-    "new": "a = templeName?.(factionId)",
+    "old": "      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3036, as shown",
+    "new": "      a = templeName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3036, as shown",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "L10N3e-quest-building-helper-lookup",
     "file": "src/world/buildingNames.js",
-    "old": "return f?.name != null ? getLocalizedFactionName(id, f.name) : null;",
-    "new": "return f?.name ?? null;",
+    "old": "    return f?.name != null ? getLocalizedFactionName(id, f.name) : null;",
+    "new": "    return f?.name ?? null;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "L10N3e-quest-building-helper-first-child",
     "file": "src/world/buildingNames.js",
-    "old": "return shown(children?.length ? children[0] : id);",
-    "new": "return shown(id);",
+    "old": "      return shown(children?.length ? children[0] : id);",
+    "new": "      return shown(id);",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "L10N3e-quest-building-helper-own-name",
     "file": "src/world/buildingNames.js",
-    "old": "return shown(children?.length ? children[0] : id);",
-    "new": "return children?.length ? shown(children[0]) : null;",
+    "old": "      return shown(children?.length ? children[0] : id);",
+    "new": "      return children?.length ? shown(children[0]) : null;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "TESA15-the-add-unread",
     "file": "src/world/arenaRoads.js",
-    "old": "for (const key of add[kind]?.keys() ?? []) stampPixel(key);",
-    "new": "for (const key of [] ?? add[kind]?.keys()) stampPixel(key);",
+    "old": "    for (const key of add[kind]?.keys() ?? []) stampPixel(key);",
+    "new": "    for (const key of [] ?? add[kind]?.keys()) stampPixel(key);",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TESA15-the-merge-unchecked",
     "file": "src/world/arenaRoads.js",
-    "old": "const merged = !!add && !!layer && layer === _layer;",
-    "new": "const merged = !!add && !!layer;",
+    "old": "  const merged = !!add && !!layer && layer === _layer;",
+    "new": "  const merged = !!add && !!layer;",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "TESA15-the-first-add-lazy",
     "file": "src/world/arenaRoads.js",
-    "old": "  if (!_tiles) { arenaRoadTiles(); return; }",
+    "old": "  if (!_tiles) {\n    arenaRoadTiles();\n    return;\n  }",
     "new": "  if (!_tiles) return;",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "TESA15-a-tile-unstamped",
     "file": "src/world/arenaRoads.js",
-    "old": "  const t = roadTileOfKey(key);\n  _tiles.set(t, _version);",
-    "new": "  const t = roadTileOfKey(key);",
+    "old": "  _tiles.set(t, _version);\n  let keys = _tilePixels.get(t);",
+    "new": "  let keys = _tilePixels.get(t);",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]

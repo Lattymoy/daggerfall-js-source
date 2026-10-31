@@ -112,8 +112,8 @@
   {
     "name": "HOME-DOORS-the-bucket-left",
     "file": "src/world/actionSystem.js",
-    "old": "    this.collider.removeBucket(key);\n    return true;\n  }",
-    "new": "    return true;\n  }",
+    "old": "    this.collider.removeBucket(key);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "HOME-DOORS-the-early-record-dropped",
     "file": "src/world/actionSystem.js",
-    "old": "      if (!o) { this._keepEarly(remote ? withoutLock(sa) : sa); return; }",
-    "new": "      if (!o) return;",
+    "old": "      if (!o) {\n        this._keepEarly(remote ? withoutLock(sa) : sa);\n        return;\n      } // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then",
+    "new": "      if (!o) return; // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "HOME-DOORS-the-early-record-unsaved",
     "file": "src/world/actionSystem.js",
-    "old": "    })).concat([...this._early.values()]);",
-    "new": "    }));",
+    "old": "    return [...this.objects.values()]\n      .map((o) => ({\n        key: o.key,\n        state: o.state,\n        t: o.t ?? 0,\n        ...(o.kind === 'door'\n          ? {\n              lock: o.currentLockValue,\n              failedSkillLevel: o.failedSkillLevel ?? 0,\n              moveState: o.moveState,\n              moveT: o.moveT ?? 0,\n            } // P10 lock; the Move pair\n          : {}),\n      }))\n      .concat([...this._early.values()]); // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit",
+    "new": "    return [...this.objects.values()].map((o) => ({\n      key: o.key,\n      state: o.state,\n      t: o.t ?? 0,\n      ...(o.kind === 'door'\n        ? {\n            lock: o.currentLockValue,\n            failedSkillLevel: o.failedSkillLevel ?? 0,\n            moveState: o.moveState,\n            moveT: o.moveT ?? 0,\n          } // P10 lock; the Move pair\n        : {}),\n    })); // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]

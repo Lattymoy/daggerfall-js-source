@@ -56,8 +56,8 @@
   {
     "name": "AUDITTESA2R-R9-the-gate-held",
     "file": "src/world/arenaRoads.js",
-    "old": "if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
-    "new": "if (!inBay(x, y)) out.push({ x, y });",
+    "old": "  for (const { run, gate } of joins)\n    for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
+    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y)) out.push({ x, y });",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITTESA2R-R9-a-bay-pixel-held",
     "file": "src/world/arenaRoads.js",
-    "old": "  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y) && ",
-    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (",
+    "old": "  for (const { run, gate } of joins)\n    for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
+    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (x !== gate[0] || y !== gate[1]) out.push({ x, y });",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]

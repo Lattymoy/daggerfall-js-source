@@ -72,8 +72,8 @@
   {
     "name": "CRYPTSALE-summaries-unstamped",
     "file": "src/world/buildingSummaries.js",
-    "old": "        hasInterior: hasInteriorModels(sub),   // AUDIT FB1005 C2",
-    "new": "        // AUDIT FB1005 C2",
+    "old": "        hasInterior: hasInteriorModels(sub), // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)",
+    "new": "        // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

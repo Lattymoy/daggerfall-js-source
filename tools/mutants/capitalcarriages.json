@@ -1,147 +1,147 @@
 [
- {
-  "name": "CC-the-frames-turned",
-  "file": "src/world/capitalCarriages.js",
-  "old": "turn = Math.round((Math.atan2(f.out[0] * po[1] - f.out[1] * po[0], f.out[0] * po[0] + f.out[1] * po[1]) * 1024) / Math.PI);",
-  "new": "turn = 0;",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-rim-unread",
-  "file": "src/world/capitalCarriages.js",
-  "old": "    if (REACH_RING.some(([a, b]) => inCapitalRim(cap, x + a * reach + ax * BLOCK_M, z + b * reach + ar * BLOCK_M) || (cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach)))) return false;\n",
-  "new": "    if (REACH_RING.some(([a, b]) => cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach))) return false;\n",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-footprint-unread",
-  "file": "src/world/capitalCarriages.js",
-  "old": "clearOf(fp, x, z, reach) && ",
-  "new": "",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-lane-unread",
-  "file": "src/world/capitalCarriages.js",
-  "old": "Math.abs(a) >= APPROACH_HALF + reach && ",
-  "new": "",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-inside-never-tried",
-  "file": "src/world/capitalCarriages.js",
-  "old": "[false, true].map((inside)",
-  "new": "[false].map((inside)",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-level-unread",
-  "file": "src/world/capitalCarriages.js",
-  "old": "(!it.model || level(x, z, reach))",
-  "new": "true",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-records-unlaid",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });",
-  "new": "closed: (x, z) => on(x, z) || shut(x, z) }) });",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-cell-anothers",
-  "file": "src/world/capitalCarriages.js",
-  "old": "[Math.floor(stand.at[0] / BLOCK_M + cap.anchor[0]),",
-  "new": "[Math.floor(stand.at[0] / BLOCK_M + cap.anchor[0]) + 1,",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-trees-planted",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "const standing = (cap) => { const under = standsOf(cap), coach = thingsOf(cap); return (x, z) => !!under?.(x, z) || !!coach?.on(x, z); };",
-  "new": "const standing = (cap) => { const under = standsOf(cap); return (x, z) => !!under?.(x, z); };",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-walkers-through",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });",
-  "new": "closed: (x, z) => !!standsOf(cap)?.(...anchorMetres(cap, cx, r, x, z)) || shut(x, z) }), ...coach });",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-a-capital-no-carriage-town",
-  "file": "src/world/capitalCarriages.js",
-  "old": "  return capitalCarriageSlices(cap).has(loc.capital.s ?? capitalCentre(cap));",
-  "new": "  return true;",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-blocks-handed-none",
-  "file": "src/world/capitalModels.js",
-  "old": "capitalFootprint(cap), gateThings: capitalCarriagesOf })",
-  "new": "capitalFootprint(cap) })",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-stand-unlaid",
-  "file": "src/world/solitudeRelief.js",
-  "old": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
-  "new": "  return h;",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-bank-unread",
-  "file": "src/world/solitudeRelief.js",
-  "old": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
-  "new": "  return d > 0 ? h : SOLITUDE_LEVELS.city;",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-a-frame-moved",
-  "file": "src/world/immersiveTravelGates.js",
-  "old": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64])",
-  "new": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64.8])",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ]
- },
- {
-  "name": "CC-the-cities-carriages-unlaid",
-  "file": "src/world/townWalls.js",
-  "old": "const own = classicOf?.(f.name)?.rmbBlock ?? null, more = extra?.(f.name) ?? null;",
-  "new": "const own = classicOf?.(f.name)?.rmbBlock ?? null, more = null;",
-  "tests": [
-   "test/world/capitalcarriages.test.js"
-  ],
-  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
- }
+  {
+    "name": "CC-the-frames-turned",
+    "file": "src/world/capitalCarriages.js",
+    "old": "          turn = Math.round(\n            (Math.atan2(f.out[0] * po[1] - f.out[1] * po[0], f.out[0] * po[0] + f.out[1] * po[1]) * 1024) / Math.PI,\n          );",
+    "new": "          turn = 0;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-rim-unread",
+    "file": "src/world/capitalCarriages.js",
+    "old": "    if (\n      REACH_RING.some(\n        ([a, b]) =>\n          inCapitalRim(cap, x + a * reach + ax * BLOCK_M, z + b * reach + ar * BLOCK_M) ||\n          (cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach)),\n      )\n    )\n      return false;",
+    "new": "    if (REACH_RING.some(([a, b]) => cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach))) return false;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-footprint-unread",
+    "file": "src/world/capitalCarriages.js",
+    "old": "          clearOf(fp, x, z, reach) &&\n          clearOf(way, x, z, reach) &&",
+    "new": "          clearOf(way, x, z, reach) &&",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-lane-unread",
+    "file": "src/world/capitalCarriages.js",
+    "old": "          Math.abs(a) >= APPROACH_HALF + reach &&\n          ground(x, z, reach) &&",
+    "new": "          ground(x, z, reach) &&",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-inside-never-tried",
+    "file": "src/world/capitalCarriages.js",
+    "old": "    const stood = [false, true].map((inside) => standAt(inside ? OPPOSITE[side] : side, inside)).find(Boolean);",
+    "new": "    const stood = [false].map((inside) => standAt(inside ? OPPOSITE[side] : side, inside)).find(Boolean);",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-level-unread",
+    "file": "src/world/capitalCarriages.js",
+    "old": "          (!it.model || level(x, z, reach));",
+    "new": "          true;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-records-unlaid",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });",
+    "new": "closed: (x, z) => on(x, z) || shut(x, z) }) });",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-cell-anothers",
+    "file": "src/world/capitalCarriages.js",
+    "old": "  Math.floor(stand.at[0] / BLOCK_M + cap.anchor[0]),",
+    "new": "  Math.floor(stand.at[0] / BLOCK_M + cap.anchor[0]) + 1,",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-trees-planted",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const standing = (cap) => { const under = standsOf(cap), coach = thingsOf(cap); return (x, z) => !!under?.(x, z) || !!coach?.on(x, z); };",
+    "new": "const standing = (cap) => { const under = standsOf(cap); return (x, z) => !!under?.(x, z); };",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-walkers-through",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });",
+    "new": "closed: (x, z) => !!standsOf(cap)?.(...anchorMetres(cap, cx, r, x, z)) || shut(x, z) }), ...coach });",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-a-capital-no-carriage-town",
+    "file": "src/world/capitalCarriages.js",
+    "old": "  return capitalCarriageSlices(cap).has(loc.capital.s ?? capitalCentre(cap));",
+    "new": "  return true;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-blocks-handed-none",
+    "file": "src/world/capitalModels.js",
+    "old": "capitalFootprint(cap), gateThings: capitalCarriagesOf })",
+    "new": "capitalFootprint(cap) })",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-stand-unlaid",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
+    "new": "  return h;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-bank-unread",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
+    "new": "  return d > 0 ? h : SOLITUDE_LEVELS.city;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-a-frame-moved",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64])",
+    "new": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64.8])",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ]
+  },
+  {
+    "name": "CC-the-cities-carriages-unlaid",
+    "file": "src/world/townWalls.js",
+    "old": "const own = classicOf?.(f.name)?.rmbBlock ?? null, more = extra?.(f.name) ?? null;",
+    "new": "const own = classicOf?.(f.name)?.rmbBlock ?? null, more = null;",
+    "tests": [
+      "test/world/capitalcarriages.test.js"
+    ],
+    "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
+  }
 ]

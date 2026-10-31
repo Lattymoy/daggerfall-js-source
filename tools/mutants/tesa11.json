@@ -342,8 +342,8 @@
   {
     "name": "TESA11-gate-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "ringRuns(W.r, W.towerEvery, W.gates, half)",
-    "new": "ringRuns(W.r, W.towerEvery, [], half)",
+    "old": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half))",
+    "new": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, [], half))",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "TESA11-no-lintel",
     "file": "src/world/capitalImperial.js",
-    "old": "    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));\n",
-    "new": "",
+    "old": "    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));\n    for (const side of [1, -1]) {",
+    "new": "    for (const side of [1, -1]) {",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "TESA11-palace-gates-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "ringRuns(W.r, 360 / W.sides, gates, half)",
-    "new": "ringRuns(W.r, 360 / W.sides, [], half)",
+    "old": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half))",
+    "new": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, [], half))",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
@@ -395,8 +395,8 @@
   {
     "name": "TESA11-bridge-short",
     "file": "src/world/capitalImperial.js",
-    "old": "x1 = bridgeLine(I)[1][0], xr = -I.isle,",
-    "new": "x1 = bridgeLine(I)[1][0] + 102.4, xr = -I.isle,",
+    "old": "    x1 = bridgeLine(I)[1][0],",
+    "new": "    x1 = bridgeLine(I)[1][0] + 102.4,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]

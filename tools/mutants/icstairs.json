@@ -193,8 +193,8 @@
   {
     "name": "IC-STAIRS-the-tombs'-old-step",
     "file": "src/world/capitalImperial.js",
-    "old": "    frontFlight(mb, MARBLE, P, edge, -hw, hw, TOMB_FLIGHT.climb, { cheek: ch });   // IC-STAIRS: its flight up to the portico",
-    "new": "    obox(mb, MARBLE, P, edge, w + pd, -hw - ch, hw + ch, -1, 0.6);   // IC-STAIRS: its flight up to the portico",
+    "old": "    frontFlight(mb, MARBLE, P, edge, -hw, hw, TOMB_FLIGHT.climb, { cheek: ch }); // IC-STAIRS: its flight up to the portico",
+    "new": "    obox(mb, MARBLE, P, edge, w + pd, -hw - ch, hw + ch, -1, 0.6); // IC-STAIRS: its flight up to the portico",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "IC-STAIRS-the-temple's-flight-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "  frontFlight(mb, MARBLE, framed(x, front - 2, [0, -1]), 0, -TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.climb);",
+    "old": "  frontFlight(\n    mb,\n    MARBLE,\n    framed(x, front - 2, [0, -1]),\n    0,\n    -TEMPLE_FLIGHT.half,\n    TEMPLE_FLIGHT.half,\n    TEMPLE_FLIGHT.climb,\n  );",
     "new": "",
     "tests": [
       "test/world/icstairs.test.js"

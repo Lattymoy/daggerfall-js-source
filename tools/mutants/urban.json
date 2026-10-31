@@ -92,8 +92,8 @@
   {
     "name": "U2-castle-dour-in-rubble",
     "file": "src/world/capitalSolitude.js",
-    "old": "const ASHLAR = urbanArt('ashlar')",
-    "new": "const ASHLAR = art(CAPITAL_ART.nordStone)",
+    "old": "const ASHLAR = urbanArt('ashlar'),",
+    "new": "const ASHLAR = art(CAPITAL_ART.nordStone),",
     "tests": [
       "test/world/urban/urban2_art.test.js"
     ]

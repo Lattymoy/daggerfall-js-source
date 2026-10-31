@@ -29,8 +29,8 @@
   {
     "name": "TESA5-the-first-not-the-nearest",
     "file": "src/world/arenaRoads.js",
-    "old": "const depth = Math.min(...r.map((h) => h[1])), mid",
-    "new": "const depth = r[0][1], mid",
+    "old": "      const depth = Math.min(...r.map((h) => h[1])),",
+    "new": "      const depth = r[0][1],",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TESA5-the-middle-unread",
     "file": "src/world/arenaRoads.js",
-    "old": ".reduce((a, b) => (Math.abs(b[0] - mid) < Math.abs(a[0] - mid) ? b : a));",
-    "new": ".reduce((a) => a);",
+    "old": "      const [u, k] = r\n        .filter((h) => h[1] === depth)\n        .reduce((a, b) => (Math.abs(b[0] - mid) < Math.abs(a[0] - mid) ? b : a));",
+    "new": "      const [u, k] = r.filter((h) => h[1] === depth).reduce((a) => a);",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TESA5-the-land-unasked",
     "file": "src/world/arenaRoads.js",
-    "old": "      if (run.every(([x, y]) => land(x, y))) joins.push(",
-    "new": "      if (true) joins.push(",
+    "old": "      if (run.every(([x, y]) => land(x, y))) joins.push({ side, gate: run.at(-1), meet: run[0], run });",
+    "new": "      if (true) joins.push({ side, gate: run.at(-1), meet: run[0], run });",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TESA5-a-track-crossed",
     "file": "src/world/arenaRoads.js",
-    "old": "        if (bay.roads[y * MAP_W + x]) { hits.push([u, k]); break; }",
-    "new": "        if (bay.roads[y * MAP_W + x] || bay.tracks?.[y * MAP_W + x]) { hits.push([u, k]); break; }",
+    "old": "        if (bay.roads[y * MAP_W + x]) {",
+    "new": "        if (bay.roads[y * MAP_W + x] || bay.tracks?.[y * MAP_W + x]) {",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TESA5-the-join-unkept",
     "file": "src/world/arenaRoads.js",
-    "old": "    stampRun(out.join, meet[0], meet[1], gate[0], gate[1], inBay);\n",
-    "new": "",
+    "old": "    stampRun(out.join, meet[0], meet[1], gate[0], gate[1], inBay);\n    stampRun(out.roads, meet[0], meet[1], gate[0], gate[1]);",
+    "new": "    stampRun(out.roads, meet[0], meet[1], gate[0], gate[1]);",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TESA5-the-gate-unstamped",
     "file": "src/world/arenaRoads.js",
-    "old": "    stampRun(out.roads, meet[0], meet[1], gate[0], gate[1]);\n",
-    "new": "",
+    "old": "    stampRun(out.roads, meet[0], meet[1], gate[0], gate[1]);\n  }",
+    "new": "  }",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "TESA5-the-join-unpacked",
     "file": "src/world/arenaRoads.js",
-    "old": "  for (let i = 0; i < (packed.joinKeys?.length ?? 0); i++) join.set(packed.joinKeys[i], packed.join[i]);\n",
-    "new": "",
+    "old": "  for (let i = 0; i < (packed.joinKeys?.length ?? 0); i++) join.set(packed.joinKeys[i], packed.join[i]);\n  return { roads, tracks, join };",
+    "new": "  return { roads, tracks, join };",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "TESA5-the-touch-blind-to-it",
     "file": "src/world/arenaRoads.js",
-    "old": " || layerByte(layer, 'tracks', x + dx, y) || layerByte(layer, 'join', x + dx, y));",
-    "new": " || layerByte(layer, 'tracks', x + dx, y));",
+    "old": "  !!layer &&\n  [-1, 0, 1].some(\n    (dx) =>\n      layerByte(layer, 'roads', x + dx, y) ||\n      layerByte(layer, 'tracks', x + dx, y) ||\n      layerByte(layer, 'join', x + dx, y),\n  );",
+    "new": "  !!layer && [-1, 0, 1].some((dx) => layerByte(layer, 'roads', x + dx, y) || layerByte(layer, 'tracks', x + dx, y));",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "TESA4-one-end-unstamped",
     "file": "src/world/arenaRoads.js",
-    "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n",
-    "new": "",
+    "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n    px = qx;",
+    "new": "    px = qx;",
     "tests": [
       "test/tesa5_join.test.js"
     ],
