@@ -803,15 +803,15 @@ export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every((
  * FIRST-BUDGET (SaberGGaming's report, 2026-10-25: Provisioning is slow; the owner: "No band aids"), RETUNED (the owner,
  * asked: "Match Smithing's pace"): A FIRST-MAKE PAYS ITS TRACK'S SHARE, SET SO EVERY CRAFTING TRACK REACHES MASTER IN THE
  * CRAFTS SMITHING TAKES. Every first-make paid a flat 500 (3.2's "+500 the first time a recipe is made"), every track
- * alike, and a track's whole climb leans on them - but the tracks' pools differ tenfold: Smithing's 221 first-makes,
+ * alike, and a track's whole climb leans on them - but the tracks' pools differ tenfold: Smithing's 235 first-makes,
  * Outfitting's 332 (since CLOTH-GEMS let the loom's cloth patterns pay), Building's 43 and Provisioning's 22 - so
- * Provisioning took 178 crafts to Journeyman and 599 to Master and Building 116 and 525, where Smithing took 45 and 172
+ * Provisioning took 178 crafts to Journeyman and 599 to Master and Building 116 and 525, where Smithing took 45 and 170
  * (tools/craftPace.mjs, each track walked from no XP at its best). Now each track's first-make pays FIRST_MAKE_SHARE's
  * figure for it: Smithing's the 500 it always paid, and each other track's THE LEAST SHARE AT WHICH THE WALK REACHES
- * MASTER IN SMITHING'S 172 - DERIVED by craftPace's firstShares, pinned here, the two held equal by
- * test/net/firstbudget_law.test.js (one XP less and the track takes 173). One share a track matches Master, not
+ * MASTER IN SMITHING'S 170 - DERIVED by craftPace's firstShares, pinned here, the two held equal by
+ * test/net/firstbudget_law.test.js (one XP less and the track takes 171). One share a track matches Master, not
  * Journeyman as well: a small pool's firsts come early, so Building reaches Journeyman in 14 crafts and Provisioning in 8
- * (Outfitting in 45, as Smithing). NO TRACK PAYS LESS THAN IT DID (FIRST_MAKE_FLOOR): no share is under the 500.
+ * (Outfitting in 44, Smithing in 45). NO TRACK PAYS LESS THAN IT DID (FIRST_MAKE_FLOOR): no share is under the 500.
  * A first-make is what the service keys its "made before" by: a recipe's pattern at its tier (firstCraftKey - a jewel's
  * piece and base, a dish either herb's way), a mason's work by its id (smeltAtForge), a brew by its potion
  * (brewAtStation) - each where its first can pay (firstCraftPays, brewFirstPays). THE SHARE SAYS HOW MUCH A FIRST PAYS,

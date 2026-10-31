@@ -459,8 +459,8 @@
   {
     "name": "SS5-the-lock-unsaid",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };",
-    "new": "const refusedFor = (why) => { notice = null; refresh(); render(); };",
+    "old": "  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };",
+    "new": "  const refusedFor = (why) => { notice = null; refresh(); render(); };",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

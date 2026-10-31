@@ -585,7 +585,13 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const T = carry ? 'prof_carried' : 'prof_stores';
   const ROOM = carry ? CARRIED_MAX : STORES_MAX;
   const prior = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
-  if (prior) return harvestAnswer(db, player, env, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered
+  if (prior) {   // before the switch: a harvest made is a harvest answered
+    const again = await harvestAnswer(db, player, env, prior, nowS, { repeat: true });
+    // AUDIT FB1031 C1: a row whose butchery went to the Stores, asked again by a build that never asks so, names no
+    // meat - that build mints any `extra` it hears, and the meat is already counted in the Stores
+    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }
+    return again;
+  }
   const closed = shut(player, env);
   if (closed) return closed;
   const n = parseNodeKey(node);

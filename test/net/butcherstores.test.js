@@ -157,3 +157,19 @@ test('BUTCHER-STORES client: a carried harvest asks `butcheryStores`; the hide a
   // not carried: the Stores' words, as ever
   assert.equal(storesLine({ material: 'hide:bear', qty: 1, extra: 'food:meat', extraQty: 2 }), '+1 Bear Hide and 2 Raw Meat to your Stores');
 });
+
+// AUDIT FB1031 C1: the new build's harvest, its answer lost, asked again under the same id by an older build (an old
+// tab, a desktop copy, a rollback) - that build mints any `extra` it hears, so the row's answer names none to it.
+test('AUDIT FB1031 C1: a Stores row asked again by an older build names no meat, so it is never minted twice; the new build still hears it (mutant: the repeat names the meat to every build)', async () => {
+  const t = await stand();
+  t.setXp('hunting');
+  const ask = t.skin({ ...CARRY, butcheryStores: true });
+  await t.harvest(ask);
+  const { butcheryStores: _, ...older } = ask;
+  const again = await t.harvest(older);
+  assert.deepEqual([again.status, again.body.repeat, again.body.material, again.body.extra ?? null, again.body.extraQty ?? null, 'extraCarried' in again.body],
+    [200, true, 'hide:bear', null, null, false], 'the older build hears the hide and no meat');
+  const newer = await t.harvest(ask);
+  assert.deepEqual([newer.body.extra, newer.body.extraStore?.own], ['food:meat', 1], 'the new build still hears where its meat went');
+  assert.deepEqual([t.stores('food:meat'), t.carried('food:meat')], [[['own', 1]], []]);
+});

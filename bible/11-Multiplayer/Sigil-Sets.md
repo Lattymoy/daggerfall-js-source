@@ -1235,7 +1235,7 @@ good. Not a DFU member: Daggerfall has no bound piece and no destroy.
 - **The enhanced pack.** The card and its right-click menu offer Destroy where Dismantle is not. It asks first in the
   dismantle's own question, Keep focused, with the pair guard and the chest window's refusal (AUDIT RPT1026 B1).
 - **The classic pack.** Remove over the ground offers it in DFU's own Yes/No box, as SS5's dismantle does - a pack-only
-  face too. A chest, a body and the wagon get the plain refusal.
+  face too. A chest and a body get the plain refusal; the wagon takes gear and refuses a face (AUDIT FB1031 D4).
 - **Found on the way.** The batch salvage said every Aetheric piece was the Broker's to dismantle. A piece he never
   priced now reads "is Aetheric, and the Reforge never breaks it."
 

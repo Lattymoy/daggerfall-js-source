@@ -22,7 +22,7 @@
   {
     "name": "BOUND-DESTROY-dismantle-not-preferred",
     "file": "src/systems/item/itemDiscard.js",
-    "old": "    if (dismantleStones(item) > 0) return 'dismantle';",
+    "old": "    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';",
     "new": "    if (false) return 'dismantle';",
     "tests": [
       "test/systems/item/bound_destroy.test.js"

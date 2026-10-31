@@ -99,3 +99,14 @@ test('SMITH-RRI DONE WHEN, through the real Worker: a Steel Light Flail and an I
   const left = raw.prepare('SELECT material, SUM(qty) AS n FROM prof_stores WHERE player = ? GROUP BY material ORDER BY material').all(mac.id).map((x) => [x.material, Number(x.n)]).filter(([, n]) => n > 0);
   assert.deepEqual(left, [], 'every ingot and fitting spent');
 });
+
+// AUDIT FB1031 C3: a sworn revenant's weapon slot read Dagger..War Axe alone, so a made Light Flail or Archer's Axe was
+// refused where a made Flail or Battle Axe was taken.
+test('AUDIT FB1031 C3: a sworn revenant takes a made Light Flail and Archer\'s Axe in its weapon slot, as a made Flail (mutant: the slot the classic range alone)', async () => {
+  const { gearKeyOf } = await import('../../src/systems/revenant/revenantGear.js');
+  const { installRoleplayRealismItems } = await import('../../src/systems/roleplayRealismItems/rriInstall.js');
+  installRoleplayRealismItems({ fetchBytes: async () => new Uint8Array(0) });
+  const { mintPiece } = await import('../../src/systems/smithItems.js');
+  const keys = ['flail:steel', 'lightflail:steel', 'archersaxe:steel'].map((id) => gearKeyOf(mintPiece({ recipe: id, quality: 1, seed: 7 }, '00000000000000ab')));
+  assert.deepEqual(keys, ['weapon', 'weapon', 'weapon']);
+});

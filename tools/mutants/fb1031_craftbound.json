@@ -1,0 +1,51 @@
+[
+  {
+    "name": "AUDIT-FB1031-C1-the-repeat-names-the-meat-to-every-build",
+    "file": "server-account/src/professions.js",
+    "old": "    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }",
+    "new": "",
+    "tests": ["test/net/butcherstores.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-C1-the-new-build-told-nothing-either",
+    "file": "server-account/src/professions.js",
+    "old": "    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) {",
+    "new": "    if (Number(prior.extra_stores) === 1) {",
+    "tests": ["test/net/butcherstores.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-C3-the-slot-the-classic-range-alone",
+    "file": "src/systems/revenant/revenantGear.js",
+    "old": " || customItemClass(item.templateIndex)?.group === 'Weapons');",
+    "new": ");",
+    "tests": ["test/net/smithrri.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-D1-the-kept-id-never-spent-by-a-count",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (_discard && !_discardFlying && Number.isSafeInteger(d[_discard.kind])) _discard = null;",
+    "new": "",
+    "tests": ["test/server/bound_destroy_service.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-D3-the-budget-unread",
+    "file": "server-account/src/festival.js",
+    "old": "  if (overAccountRate(`fest:${player.id}`, nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };\n  const col = Object.hasOwn(DISCARD_COLUMNS",
+    "new": "  const col = Object.hasOwn(DISCARD_COLUMNS",
+    "tests": ["test/server/bound_destroy_service.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-D5-the-lock-unread-by-the-dismantle",
+    "file": "src/systems/sigil/sigilBroker.js",
+    "old": "  if (isRealmLocked(item)) return 'realm';",
+    "new": "",
+    "tests": ["test/systems/item/bound_destroy.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-D5-the-lock-unread-by-the-destroy",
+    "file": "src/systems/item/itemDiscard.js",
+    "old": "    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';",
+    "new": "    if (dismantleStones(item) > 0) return 'dismantle';",
+    "tests": ["test/systems/item/bound_destroy.test.js"]
+  }
+]

@@ -10,6 +10,7 @@ import { templateByIndex } from './itemTemplates.js';
 import { isLocked, lockedText } from './itemLock.js';
 import { isEquipped } from '../equip.js';
 import { dismantleStones } from '../sigil/sigilBroker.js';
+import { isRealmLocked } from './itemBound.js';
 import { SOUL_CAKE_TEMPLATE, HEARTH_OFFERING_TEMPLATE } from '../../net/festivalLaw.js';
 import { festivalRefusalText } from '../festival/festivalWords.js';
 import { t } from '../textManager.js';
@@ -33,7 +34,7 @@ export function discardRefusal(item) {
   if (!countedKind(item)) {
     if (templateByIndex(item.templateIndex)?.bound === true) return 'kept';
     if (item.bound !== true) return 'not';
-    if (dismantleStones(item) > 0) return 'dismantle';
+    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';   // AUDIT FB1031 D5: a realm-locked copy is destroyed, never paid for
   }
   if (item.questItem) return 'quest';
   if (isEquipped(item)) return 'worn';

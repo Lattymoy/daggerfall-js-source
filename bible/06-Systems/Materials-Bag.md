@@ -427,6 +427,7 @@ Sammy: "The game should not add meat to your inventory when you skin animals." S
 harvest, so a body's Raw Meat went into the bag or the pack beside its hide, where the Professions arc had decided the
 Stores (its section 29). Now a carrying client asks `butcheryStores`, the service writes the meat to the Stores and
 answers no carried count for it, and the client mints only what the answer counts carried (`bagLaw.js` `extraStored`).
-An older client, or an older service, keeps the carried path whole, so no unit is minted twice or counted for nothing.
+An older client, or an older service, keeps the carried path whole, so no unit is minted twice or counted for nothing. A Stores
+row asked again by an older build names it no meat (AUDIT FB1031 C1), so that build does not mint it as well.
 A tree's Resin is still carried. The record is the Professions arc's section 60; pinned by
 `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`.

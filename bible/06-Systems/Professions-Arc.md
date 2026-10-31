@@ -6042,7 +6042,7 @@ band aids"; and, asked how fast the tracks should climb: "Match Smithing's pace"
   much.
 - **SMITH-RRI moved it** (section 59): Smithing at Master in 170, and Outfitting 518, Building 1,832, Provisioning 3,171.
 - **One share a track matches Master, not Journeyman as well**: a small pool's firsts come early in the climb, so
-  Building reaches Journeyman in 14 crafts and Provisioning in 8, against Smithing's 45 (Outfitting in 45, as Smithing).
+  Building reaches Journeyman in 14 crafts and Provisioning in 8, against Smithing's 45 (Outfitting in 44; AUDIT FB1031 C4: since SMITH-RRI, Master in 170 crafts).
   Matching both would take a second figure a track (the firsts paid by the rank they open at, say); the owner's word was
   the pace, and Master is the pace's whole.
 - **NO TRACK PAYS LESS THAN IT DID - the floor** (`FIRST_MAKE_FLOOR`, 500, the flat first every track paid before):
@@ -6824,7 +6824,9 @@ and a Big Tooth to your bag, and Raw Meat to your Stores"; the meat's haul card 
 
 **Both sides sound.** An older client asks no `butcheryStores`, so its meat is carried and minted as before. A new
 client against an older service gets `extraCarried`, so it mints that meat. A harvest the older service made and the
-new one answers again keeps its row's word. A Butcher's meat still spoils half as fast when it is withdrawn (29).
+new one answers again keeps its row's word. AUDIT FB1031 C1: a Stores row asked again by an older build (an old tab,
+a rollback) names no meat, since that build mints any `extra` it hears; its Stores count comes with the next read. A
+Butcher's meat still spoils half as fast when it is withdrawn (29).
 
 ACCOUNT_VERSION acct232 (acct231 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
 before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the

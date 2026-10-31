@@ -445,3 +445,21 @@ test('BOUND-DESTROY discardFaces: the service lets the count go and its answer r
     delete globalThis.localStorage;
   }
 });
+
+// AUDIT FB1031 D5: AUTO-HOLD shut salvage on a copy the realm locked ("the copy's worth out"), but the Broker's
+// dismantle still paid its Embers, and the destroy offered it. A locked copy is destroyed for nothing, never paid for.
+test('AUDIT FB1031 D5: a priced ware the realm locked is never dismantled - refused in the lock\'s words - and the destroy takes it for nothing (mutants: the lock unread by the dismantle, by the destroy)', async () => {
+  const { dismantleRefusal, dismantleWare } = await import('../../../src/systems/sigil/sigilBroker.js');
+  const { realmLockedText } = await import('../../../src/systems/item/itemBound.js');
+  const day = brokerDay(Date.parse('2026-10-31T12:00:00Z'));
+  const ware = brokerSale(brokerStock(day)[0], { items: [Object.assign(sigilStone(), { stackCount: 40 })], bought: [], day }).give;
+  ware.uid = 'u-ware-dupe';
+  assert.ok(dismantleStones(ware) > 0 && dismantleRefusal(ware) === null && discardRefusal(ware) === 'dismantle', 'unlocked: the Broker pays');
+  setRealmLocked(['u-ware-dupe']);
+  try {
+    const pack = [ware];
+    assert.deepEqual([dismantleRefusal(ware), dismantleWare(ware, { items: pack }).ok, pack.length], ['realm', false, 1], 'no Embers out of a locked copy');
+    assert.equal(discardRefusal(ware), null, 'the destroy takes it instead');
+    assert.match(realmLockedText('The ware'), /^The ware is locked by the realm/);
+  } finally { setRealmLocked([]); }
+});

@@ -80,3 +80,57 @@ test('BOUND-DESTROY ONE ID, ONE LET-GO: two asks by the same id at once take the
   assert.deepEqual(row(alice), { fest_cakes: 0, fest_bowls: 0 });
   assert.deepEqual(both.map((r) => r.error ?? 'ok').sort(), ['count', 'ok']);
 });
+
+// AUDIT FB1031 D1: a let-go whose answer was lost kept its id for "the same ask" however long after - five cakes found
+// again and destroyed reused it, the service answered the old let-go, and the page said Destroyed with nothing moved.
+test('AUDIT FB1031 D1: a count heard since a lost let-go makes the next press a new ask - five found again are let go (mutant: the kept id never spent by a count)', async () => {
+  await import('../modsOff.js');
+  const { accountFestival, SESSION_KEY } = await import('../../src/net/accountClient.js');
+  const { bindFestival, refreshFestival, _resetFestivalClientForTests } = await import('../../src/systems/festival/festivalClient.js');
+  const { destroyPiece } = await import('../../src/systems/item/itemDiscard.js');
+  const { isSoulCake } = await import('../../src/systems/festival/soulCake.js');
+  const Sv = await standService();
+  const alice = await Sv.registered('Alice');
+  const raw = Sv.env.DB._raw;
+  const lay = (c) => raw.prepare('UPDATE players SET fest_cakes = ? WHERE id = ?').run(c, alice.id);
+  const count = () => raw.prepare('SELECT fest_cakes FROM players WHERE id = ?').get(alice.id).fest_cakes;
+  const store = new Map();
+  const mem = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } };
+  const realStorage = globalThis.localStorage;
+  globalThis.localStorage = mem;
+  store.set(SESSION_KEY, JSON.stringify({ secret: alice.secret, id: alice.id, name: 'Alice', kind: 'linked' }));
+  let lose = false;
+  const fetch = async (u, i) => {
+    const res = await Sv.fetch(u, i);
+    if (lose && String(u).endsWith('/v1/festival/discard')) { lose = false; throw new TypeError('the answer lost'); }
+    return res;
+  };
+  try {
+    _resetFestivalClientForTests();
+    const entity = { isPlayer: true, items: [] };
+    bindFestival({ online: () => true, entity: () => entity, say: () => {}, selfId: () => 'me', saved: () => {}, api: accountFestival({ fetch, storage: mem }), nowMs: () => Date.now() });
+    const cake = () => entity.items.find(isSoulCake);
+    lay(5); await refreshFestival();
+    lose = true;
+    await destroyPiece(cake(), { items: entity.items });
+    await refreshFestival();
+    assert.equal(count(), 0, 'the lost let-go landed');
+    lay(5); await refreshFestival();
+    const r = await destroyPiece(cake(), { items: entity.items });
+    assert.deepEqual([r.ok, count(), cake() ?? null], [true, 0, null], 'the new five let go, and the pack says so');
+  } finally {
+    _resetFestivalClientForTests();
+    globalThis.localStorage = realStorage;
+  }
+});
+
+// AUDIT FB1031 D3: the let-go spends the festival's hourly ask budget as every other festival act does; no pin read it.
+test('AUDIT FB1031 D3: past FEST_OPS_MAX asks in the hour a let-go is answered rate, nothing moved (mutant: the budget unread)', async () => {
+  const { FEST_OPS_MAX } = await import('../../server-account/src/festival.js');
+  const { alice, row, lay, player, ctx } = await stand();
+  lay(alice, 5, 2);
+  const p = player(alice);
+  for (let i = 0; i < FEST_OPS_MAX; i++) await discardFestival(ctx(), p, { kind: 'bowls', n: 9, rid: 'bbbbbbbbbbbb' });   // refused 'count', each spending one ask
+  assert.deepEqual(await discardFestival(ctx(), p, { kind: 'bowls', n: 1, rid: 'bbbbbbbbbbbd' }), { error: 'rate' });
+  assert.deepEqual(row(alice), { fest_cakes: 5, fest_bowls: 2 });
+});

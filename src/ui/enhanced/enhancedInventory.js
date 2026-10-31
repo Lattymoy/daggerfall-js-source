@@ -158,7 +158,7 @@ import { setCard, setStrip, markSetFrame } from '../setCard.js';   // SET5: a se
 import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
 import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
-import { isBound, boundLine, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
+import { isBound, boundLine, boundRefusesPut, boundText, realmLockedText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { isStolen, stolenLine } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece says so on its card
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -3809,7 +3809,7 @@ function askDismantle(item) {
   { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the ware left the chest's copy of the pack alone
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = wareName(itemLongName(item, { getQuest: deps.getQuest ?? null }), item);   // AUDIT FB1025i A8: and its set's
-  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };
+  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };   // AUDIT FB1031 D5
   const why = dismantleRefusal(item);
   if (why) { refusedFor(why); return; }
   const n = dismantleStones(item);
