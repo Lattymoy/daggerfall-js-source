@@ -22,6 +22,21 @@ export const RAID_WAY_EXPANSIONS = 30000;
 /** AUDIT WORLD-EVENTS L4-8: the least a walkable component holds to be the town's streets where its living town names
  *  none (cells) - a yard boxed in about the grid's middle is no square (the game's held one, two, sixteen and 237). */
 export const RAID_STREETS_MIN = 400;
+/** RAID-REACH: how far round a player's feet (cells) its street is sought - a player at a door or a wall's foot. */
+export const RAID_REACH_RING = 4;
+/**
+ * RAID-REACH: the street label nearest a location-frame point within `ring` cells (0: none). Pure.
+ * @param {{ width: number, height: number }} nav @param {Int32Array} label @param {number[]} local @param {number} ring
+ */
+export function streetCellAt(nav, label, local, ring) {
+  const W = nav.width, H = nav.height, gx = Math.floor(local[0] / NAV_CELL), gy = Math.floor(local[1] / NAV_CELL);
+  for (let r = 0; r <= ring; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    const x = gx + dx, y = gy + dy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || x < 0 || y < 0 || x >= W || y >= H) continue;
+    if (label[y * W + x]) return label[y * W + x];
+  }
+  return 0;
+}
 /** The sides a way comes from, by the raid's draw (0 north - the grid's far rows, +z - then east, south, west), as the
  *  living town's exits name them (systems/livingWorld/places.js). */
 const SIDE_NAMES = Object.freeze(['n', 'e', 's', 'w']);
@@ -125,7 +140,24 @@ export function createRaidSites({ townAt, townAtPixel = () => null, feet, ground
       if (!cells || cells.length < 2) return null;
       return pathLine(cells).pts.map((p) => { const s = t.toScene(p[0], p[1]); return [s[0], groundAt(s[0], s[1]), s[1]]; });
     },
-    /** The Standard-Bearer at `post`: the watch's own, RAID_BEARER_HEALTH_X as hardy, kept within RAID_BEARER_LEASH_M of it. */
+    /**
+     * RAID-REACH (2026-10-31: "spawn in the wall of mobs", "checking pathfinding"): can a raid's monster at `spot` walk to
+     * `from` - the player its pack goes to, or its leader? Its cell on the town's walk grid is a street (no building, wall
+     * or water) on the same streets as `from`'s. Off any town's grid (an area's event, the fields) it can.
+     * @param {number[]} spot @param {number[]|null} from
+     */
+    reachable(spot, from) {
+      const t = townAt(spot[0], spot[2]);
+      if (!t?.local) return true;
+      const s = streetsOf(t);
+      if (!s) return true;
+      const cell = streetCellAt(t.nav, s.label, t.local, 0);
+      if (cell === 0) return false;
+      const f = from ? townAt(from[0], from[2]) : null;
+      const goal = f?.local && f.nav === t.nav ? streetCellAt(t.nav, s.label, f.local, RAID_REACH_RING) : 0;
+      return cell === (goal || s.id);
+    },
+    /** The Standard-Bearer at `post`:the watch's own, RAID_BEARER_HEALTH_X as hardy, kept within RAID_BEARER_LEASH_M of it. */
     async standBearer(post) {
       const g = await standGuard(post, 0);
       if (!g?.entity) return g ?? null;
