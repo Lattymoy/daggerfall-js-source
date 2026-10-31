@@ -20,7 +20,7 @@ import { parseIni } from '../../scripts/bakeSettings.mjs';
 import { combatVoicesEnabled } from '../../src/combat/combatVoices.js';
 import { loiterLimitHours, cannotLoiterLines } from '../../src/systems/rest/restSession.js';
 import { assignStartingGear } from '../../src/systems/startingGear.js';
-import { isWalletItem } from '../../src/systems/walletItem.js';   // WALLET1: the port's own tail's wallet, set aside from DFU's bag
+import { isWalletItem } from '../../src/systems/walletItem.js'; import { isPortalBook } from '../../src/systems/gate/gateSpoils.js';   // WALLET1: the port's own tail's wallet, set aside from DFU's bag
 import { lookScale, lookInvert, LOOK_BASE } from '../../src/ui/lookSettings.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
@@ -107,7 +107,7 @@ test('settings: the LIVE tier does not lie - each consumer really reads the stor
   setValue('Enhancements', 'PlayerTorchFromItems', false);
   const e2 = { items: [], stats: {}, skills: [] };
   assignStartingGear(e2, { classIndex: 0, rolls: () => 0 });
-  assert.equal(e2.items.filter((it) => it.group === 'UselessItems2' && !isWalletItem(it)).length, 0, 'and not with it off');   // PIN MOVED (WALLET1): the wallet is miscellany too, and the port's own tail's
+  assert.equal(e2.items.filter((it) => it.group === 'UselessItems2' && !isWalletItem(it) && !isPortalBook(it)).length, 0, 'and not with it off');   // PIN MOVED (WALLET1): the wallet is miscellany too, and the port's own tail's - PORTAL-BOOK: and the book
   // MouseLookSensitivity + InvertMouseVertical
   setValue('Controls', 'MouseLookSensitivity', 1.0);
   assert.equal(lookScale(), LOOK_BASE, 'sensitivity 1.0 IS the port feel constant');

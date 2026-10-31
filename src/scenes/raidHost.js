@@ -39,7 +39,7 @@ export function createRaidHost(host) {
     standRaider: (mobileType, at, boss = false) => standLooseFoe({   // STAFF-EVENT PACKS: `at` a pack's place - around its leader's feet, or far (systems/raidingParties.js staffPackStep)
       collider, feet: at?.at ?? at?.near ?? enchantFeet(), yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, foes: exteriorFoePool(),
       spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true, eventFoe: boss }),   // STAR-MASTER-FLED: the mini boss an event's own before its stand draws the mark
-    }, mobileType, raidSpawnRange(at)),
+    }, mobileType, { ...raidSpawnRange(at), reach: (spot) => host.raidSites?.reachable?.(spot, at?.at ?? at?.near ?? enchantFeet()) ?? true }),   // RAID-REACH: on a street its player's street meets (scenes/raidSitesHost.js)
     standDefender: (threats) => cityGuards.standDefender({
       playerFeet: [...enchantFeet()], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], threats,
       minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE,

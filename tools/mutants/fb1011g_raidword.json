@@ -65,8 +65,8 @@
   {
     "name": "RAID-WORD-h-the-ledgers-target-unread",
     "file": "src/ui/eventMapMarks.js",
-    "old": "    const target = Number.isInteger(led?.tg) && led.tg > 0 ? led.tg : r.attackAmount;",
-    "new": "    const target = r.attackAmount;",
+    "old": "    const target = (Number.isInteger(led?.tg) && led.tg > 0 ? led.tg : r.attackAmount) * x;",
+    "new": "    const target = r.attackAmount * x;",
     "tests": [
       "test/systems/fb1011g_raidword.test.js"
     ]
