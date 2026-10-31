@@ -2,7 +2,8 @@
 // never runs (WG-4) - and writes it gzipped where the game serves it: `node tools/wg2Bake.mjs <id|all> [--out dir]`.
 // `--check` bakes again and compares each print with the file's, writing nothing; `--doc <package.json>` applies an editor
 // package as the authored overrides (its base must be the served bake); `--province <Key>` bakes a province's tiles
-// (tiling.js; `--tile`, `--overlap`) and prints their manifest rows. Reads the repository alone: no ARENA2.
+// (tiling.js; `--tile`, `--overlap`) and prints their manifest rows; `--lean` writes the runtime planes alone (a
+// published tile's cut, bakeCodec.js RUNTIME). Reads the repository alone: no ARENA2.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync, gunzipSync } from 'node:zlib';
@@ -26,13 +27,13 @@ await canonReady();   // the relief is its own chunk: loaded before any bake rea
 export const BAKE_DIR = 'public/worldgen2';
 
 /** Bake one region spec to its bytes and print. */
-export function bakeBytes(spec, doc = null) {
+export function bakeBytes(spec, doc = null, lean = false) {
   const bake = bakeRegion(spec, { doc });
   // the region's towns: the prototypes and any the document placed, made on the bake's own ground (regionBake.js bakeTowns)
   const docTowns = (doc?.layers ?? []).filter((L) => L.visible).flatMap((L) => L.ops.filter((o) => o.kind === 'settlement').map((o) => o.spec));
   const towns = [...TEST_SETTLEMENTS.filter((t) => t.region === spec.id), ...docTowns];
   bake.towns = bakeTowns(encodeBake(bake), towns, regionSampler, { generate: generateSettlement, problems: settlementProblems, mint: mintIds, mapId: settlementMapId }, decodeBake);
-  const bytes = encodeBake(bake);
+  const bytes = encodeBake(bake, { lean });
   return { bytes, print: bakePrint(bytes) };
 }
 /** A served bake's raw bytes (its gzip opened). @param {string} file */
@@ -56,7 +57,7 @@ if (isMain(import.meta.url)) {
       if (got.refused) { console.error(`${spec.id}: the package is refused - ${got.refused.join('; ')}`); process.exit(1); }
       doc = got.doc;
     }
-    const t0 = Date.now(), { bytes, print } = bakeBytes(spec, doc), file = join(out, `${spec.id}.wg2.gz`);
+    const t0 = Date.now(), { bytes, print } = bakeBytes(spec, doc, args.includes('--lean')), file = join(out, `${spec.id}.wg2.gz`);
     if (check) {
       const had = existsSync(file) ? bakePrint(readBake(file)) : '(none)';
       if (had !== print) bad++;

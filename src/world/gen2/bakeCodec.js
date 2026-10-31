@@ -35,13 +35,17 @@ const ARRAY = { i16: Int16Array, u8: Uint8Array, u16: Uint16Array };
 const LIMIT = { i16: [-32768, 32767], u8: [0, 255], u16: [0, 65535] };
 const q = (v, d) => Math.round(v * d) / d;
 
-/** The bake as bytes. @param {ReturnType<import('./regionBake.js').bakeRegion>} bake @returns {Uint8Array} */
-export function encodeBake(bake) {
-  const { spec } = bake, w = spec.rect.w * spec.res, h = spec.rect.h * spec.res;
+/** The planes a client reads to stand the ground (the sampler: height, biome, water, lakes); the rest are the authoring
+ *  tools' (the editor, the towns' sites, the plants). A lean bake carries these alone - a published tile's cut. */
+export const RUNTIME = new Set(['elev', 'biome', 'water', 'lake']);
+/** The bake as bytes; `lean`: the runtime planes alone. @param {ReturnType<import('./regionBake.js').bakeRegion>} bake
+ *  @param {{ lean?: boolean }} [o] @returns {Uint8Array} */
+export function encodeBake(bake, o = {}) {
+  const { spec } = bake, w = spec.rect.w * spec.res, h = spec.rect.h * spec.res, planes = o.lean ? PLANES.filter((p) => RUNTIME.has(p.name)) : PLANES;
   const header = {
     format: BAKE_FORMAT, id: spec.id, rect: spec.rect, res: spec.res, seed: spec.seed, fit: spec.fit, generator: bake.generator, stages: bake.stages,
     ...(spec.tiling ? { tiling: spec.tiling, blend: spec.blend, core: spec.core } : {}),
-    canon: bake.canon ?? null, planes: PLANES.map((p) => p.name),
+    canon: bake.canon ?? null, planes: planes.map((p) => p.name),
     rivers: bake.rivers.map((r) => ({ id: r.id, order: r.order, into: r.into, raw: r.raw.map((p) => [q(p.x, 1024), q(p.y, 1024), q(p.q, 1000), q(p.s, 100)]) })),
     lakes: bake.lakes.map((l) => ({ id: l.id, kind: l.kind, level: q(l.level, 100), cells: l.cells, x: q(l.x, 64), y: q(l.y, 64), inflow: q(l.inflow, 1000) })),
     falls: bake.falls.map((f) => ({ x: q(f.x, 64), y: q(f.y, 64), drop: q(f.drop, 10), kind: f.kind })),
@@ -49,14 +53,14 @@ export function encodeBake(bake) {
     roads: (bake.roads ?? []).map((r) => ({ width: r.width, pts: r.pts.map((p) => [q(p[0], 1024), q(p[1], 1024), q(p[2], 100)]) })),
   };
   const text = new TextEncoder().encode(JSON.stringify(header)), pad = (4 - ((8 + text.length) % 4)) % 4;
-  const sizes = PLANES.map((p) => w * h * ARRAY[p.type].BYTES_PER_ELEMENT);
+  const sizes = planes.map((p) => w * h * ARRAY[p.type].BYTES_PER_ELEMENT);
   const pixels = spec.rect.w * spec.rect.h;
   const total = 8 + text.length + pad + sizes.reduce((a, b) => a + b, 0) + 2 * pixels;
   const out = new Uint8Array(total), view = new DataView(out.buffer);
   view.setUint32(0, MAGIC, true); view.setUint32(4, text.length, true);
   out.set(text, 8);
   let at = 8 + text.length + pad;
-  PLANES.forEach((p, i) => {
+  planes.forEach((p, i) => {
     const src = bake.fields[p.name].data, arr = new ARRAY[p.type](w * h);
     for (let k = 0; k < w * h; k++) {
       const v = Math.round((p.root ? Math.sqrt(Math.max(0, src[k])) : src[k]) / p.step), [lo, hi] = LIMIT[p.type];
@@ -83,7 +87,7 @@ export function decodeBake(bytes) {
   let at = 8 + len + ((4 - ((8 + len) % 4)) % 4);
   /** @type {Record<string, Field>} */
   const fields = {};
-  for (const p of PLANES) {
+  for (const p of PLANES.filter((q) => header.planes.includes(q.name))) {
     const Arr = ARRAY[p.type], n = w * h, raw = new Arr(bytes.buffer.slice(bytes.byteOffset + at, bytes.byteOffset + at + n * Arr.BYTES_PER_ELEMENT));
     at += n * Arr.BYTES_PER_ELEMENT;
     if (p.step === 1) { const f = new Field(w, h, frame, /** @type {any} */ (Arr)); f.data.set(/** @type {any} */ (raw)); fields[p.name] = f; continue; }

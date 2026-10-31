@@ -64,3 +64,19 @@ test('WG2 TILES IN THE MANIFEST: tiles of one tiling may overlap in their bands;
   assert.deepEqual(manifestProblems({ ...m, published: [row(0), row(1, 'skyrim')] }), ['published t1: overlaps t0']);
   assert.deepEqual(manifestProblems({ ...m, published: [row(0), row(1, 'hammerfell', -20)] }), ['published t1: overlaps t0']);
 });
+
+test('WG2 LEAN: a published tile\'s cut carries the runtime planes alone - the same ground to the bit at a third of the bytes or less (mutants: a runtime plane dropped)', async () => {
+  const { RUNTIME, decodeBake } = await import('../../../src/world/gen2/bakeCodec.js');
+  const { regionSampler } = await import('../../../src/world/gen2/regionSampler.js');
+  const { gzipSync } = await import('node:zlib');
+  const spec = { id: 'law-lean', rect: { x: 3230, y: 1270, w: 24, h: 24 }, res: 2, seed: m.worldSeed, fit, springs: [], erosion: { steps: 10 } };
+  const bake = bakeRegion(spec), full = encodeBake(bake), lean = encodeBake(bake, { lean: true });
+  assert.deepEqual(Object.keys(decodeBake(lean).fields).sort(), [...RUNTIME].sort());
+  assert.ok(gzipSync(lean).length * 2.5 < gzipSync(full).length, 'smaller');
+  const a = regionSampler(decodeBake(full)), b = regionSampler(decodeBake(lean));
+  for (let i = 0; i < 400; i++) {
+    const x = 3232 + (i * 0.0517) % 20, y = 1272 + (i * 0.0733) % 20;
+    assert.equal(b.heightAt(x, y), a.heightAt(x, y));
+    assert.deepEqual(b.waterAt(x, y), a.waterAt(x, y));
+  }
+});
