@@ -1846,9 +1846,9 @@ each one line to change:
 - **The name** - "Overworld" to the player, TRAVEL VIEW in the code (TV1).
 - **Being seen** - the switch, on by default, nothing on the region's channel from indoors (TV3; the party's own pose still rides from indoors, as it always has - AUDIT DEEP2 C5).
 - **A second door** - the `TravelView` action, shipped unbound; the map stays the door (TV1).
-- **A band met with the view down** (2026-09-29, at the merge of AUDIT OW5 and OW5b) - stood WHERE IT IS, about 140 m off
-  (AUDIT OW5b B2, by CAMP-FAR's own 100-150 m: come across, not landed on); AUDIT OW5 had left it Mac's call. One line
-  to change back: `bandStand`'s distances.
+- **A band met with the view down** (2026-09-29, at the merge of AUDIT OW5 and OW5b) - stood WHERE IT IS (AUDIT OW5b
+  B2), at BAND_STAND_M: 45 m since BAND-NEAR (2026-10-31, a player's report, below), inside its members' sight. One line
+  to change: `BAND_STAND_M`.
 
 ## GATHER-OW - the professions' groups on the Overworld (2026-10-02, Mac)
 
@@ -4017,3 +4017,24 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## BAND-NEAR - a band that catches you stands near enough to come (2026-10-31, the field)
+
+A player, Discord #feature-feedback: "Overworld packs ambushing you spawn way too far away, it's tedious especially
+when traveling a lot." A band that chased the traveller and reached them with the view down stood at BAND_STAND_M,
+140 m (AUDIT OW5b B2, by CAMP-FAR's 100-150 m, left for Mac to confirm). Its members see CAMP_SIGHT_RADIUS, 60 m, so
+the pack stood blind: alerted, it came on without sight and could give up on the way, and the journey stopped for a
+pack 140 m off. Not a DFU member: the bands are TV7's own.
+
+**What changed.** `BAND_STAND_M` is 45 m (`src/systems/travel/travelBands.js`). The anchor stands 39-51 m off and each
+member within PACK_SPACING (6 m) of it, so every member stands 33-57 m away: inside its own 60 m sight, and past DFU's
+10-20 m wilderness ring (`src/systems/encounters.js` SPAWNER_ARMS.wilderness, PlayerEntity.IntermittentEnemySpawn and
+CreateFoeSpawner). The chase stops a journey at that contact, as AUDIT OW5b E1 has it, and the 18 m floor
+(BAND_STAND_MIN_M) does not bind it. Under the Overworld a band still stands at its 30 m contact. The constant is every
+province's: a band is born and stood the same way across Tamriel.
+
+**Not changed.** The camps keep CAMP-FAR's 100-150 m (Mac's call): a camp is come across, not met. A band never seen
+from above is still never met in play.
+
+**Pins.** `test/systems/travel/bandnear.test.js` (BN1-BN2); the B2 host run's literal 140 in
+`test/systems/travel/tv7_bands.test.js`, re-aimed to the constant (PIN MOVED); `tools/mutants/bandnear.json` (4).

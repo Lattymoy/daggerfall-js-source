@@ -45,9 +45,12 @@ export const BAND_CHASE_MPS = 5.2;
 /** A chase given up past this far (m), or after this long without closing (ms). */
 export const BAND_LEASH_M = 900;
 export const BAND_GIVE_UP_MS = 120 * 1000;
-/** Contact (m): under the Overworld the band must reach the traveller; with the view down it stands as foes this near. */
+/** Contact (m): under the Overworld the band must reach the traveller; with the view down it stands as foes this near.
+ *  BAND-NEAR (a player: "Overworld packs ambushing you spawn way too far away"): 45, so every member stands inside its
+ *  own 60 m sight (campEncounters.js CAMP_SIGHT_RADIUS) and comes at once - at 140 it came on blind and could give up -
+ *  and still past DFU's 10-20 m wilderness ring (encounters.js SPAWNER_ARMS). */
 export const BAND_CONTACT_M = 30;
-export const BAND_STAND_M = 140;
+export const BAND_STAND_M = 45;
 /** AUDIT OW5b B2: the nearest a band's anchor stands to the traveller (m) - its members, a pack's spacing about it, never
  *  on top of them. A band stands where it IS, this or farther. */
 export const BAND_STAND_MIN_M = 18;

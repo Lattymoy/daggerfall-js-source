@@ -512,9 +512,10 @@ test('AUDIT OW5b B5 law: A BAND CLOSES TO THE CONTACT\'S RING AND NO NEARER - a 
   assert.ok(Math.abs(far.dist - (100 - BAND_CHASE_MPS)) < 1e-9, 'short of the ring: a runner\'s stride, as ever');
 });
 
-test('AUDIT OW5b B2 host run: A BAND STANDS WHERE IT IS - met under the view at the contact\'s ring, it stands there; met with the view down at BAND_STAND_M (Mac\'s CAMP-FAR, never beside the player out of nowhere), it stands at that distance - not brought a hundred metres nearer', async () => {
-  const { BAND_STAND_MIN_M } = await import('../../../src/systems/travel/travelBands.js');
-  for (const [what, up, contact] of [['under the view', true, BAND_CONTACT_M], ['the view down', false, 140]]) {
+test('AUDIT OW5b B2 host run: A BAND STANDS WHERE IT IS - met under the view at the contact\'s ring, it stands there; met with the view down at BAND_STAND_M (BAND-NEAR: inside its members\' sight), it stands at that distance - not brought nearer', async () => {
+  const { BAND_STAND_MIN_M, BAND_STAND_M } = await import('../../../src/systems/travel/travelBands.js');
+  // PIN MOVED (BAND-NEAR): the view down's distance is the constant's, 45 m (test/systems/travel/bandnear.test.js) - it was a literal 140
+  for (const [what, up, contact] of [['under the view', true, BAND_CONTACT_M], ['the view down', false, BAND_STAND_M]]) {
     const h = await bandHost({ travelView: { active: up }, standAt: [] });
     h.d._bandChase.set('b1.1.5', { band: bandAt('b1.1.5', 0, 400), pos: { x: 0, z: 400 * NATIVE_PER_M }, gainAt: 0, best: 400, dist: 400, tries: 0, retryAt: 0 });
     let t = 1000;

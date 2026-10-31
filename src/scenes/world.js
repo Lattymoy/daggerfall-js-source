@@ -30328,8 +30328,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!bandRoom(mk)) return false;
     const fx = player.feetAt();
     // AUDIT OW5b B2: WHERE IT IS - its anchor at the band's own distance, a pack's spacing about it (never nearer than
-    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (140 m, Mac's
-    // CAMP-FAR - no pack lands beside the player out of nowhere) was brought a hundred metres nearer and stood beside them
+    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (45 m since
+    // BAND-NEAR, inside its members' sight; 140 m before) was brought nearer and stood beside them
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
