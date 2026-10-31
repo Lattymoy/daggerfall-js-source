@@ -11,8 +11,8 @@
   {
     "name": "SHIP-legend-weight",
     "file": "src/systems/naval/navalShips.js",
-    "old": "cls('legendWake', 'pirate', HULL.SmallShip, 'Legendary Brigantine', { hullHp: 1.8, sailHp: 1.4, crew: 34, speed: 9.4, turn: 12, skill: 0.85, range: 95, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0,",
-    "new": "cls('legendWake', 'pirate', HULL.SmallShip, 'Legendary Brigantine', { hullHp: 1.8, sailHp: 1.4, crew: 34, speed: 9.4, turn: 12, skill: 0.85, range: 95, cargo: 4, minLevel: LEGEND_LEVEL, weight: 1,",
+    "old": "    minLevel: LEGEND_LEVEL,\n    weight: 0,\n    boarders: 22,",
+    "new": "    minLevel: LEGEND_LEVEL,\n    weight: 1,\n    boarders: 22,",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHIP-legend-flag",
     "file": "src/systems/naval/navalShips.js",
-    "old": "tactic: o.tactic ?? 'broadside', legend: !!o.legend,",
-    "new": "tactic: o.tactic ?? 'broadside', legend: false,",
+    "old": "    legend: !!o.legend,",
+    "new": "    legend: false,",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SHIP-wake-slow",
     "file": "src/systems/naval/navalShips.js",
-    "old": "speed: 9.4, turn: 12, skill: 0.85, range: 95, cargo: 4,",
-    "new": "speed: 7.4, turn: 12, skill: 0.85, range: 95, cargo: 4,",
+    "old": "    speed: 9.4,",
+    "new": "    speed: 7.4,",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHIP-legend-names",
     "file": "src/systems/naval/etherShips.js",
-    "old": "  if (legend) return { name: legend.name, captain: legend.captain, crown: null };\n",
-    "new": "",
+    "old": "  if (legend) return { name: legend.name, captain: legend.captain, crown: null };\n  const captain = shipNames(cls, seed, { regionIndex: 17 }).captain;",
+    "new": "  const captain = shipNames(cls, seed, { regionIndex: 17 }).captain;",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SHIP-port-weight",
     "file": "src/systems/naval/etherShips.js",
-    "old": "  if (nearPort) { w.merchant += ETHER_PORT_WEIGHTS.merchant; w.pirate *= ETHER_PORT_WEIGHTS.pirateK; }\n",
-    "new": "",
+    "old": "  if (nearPort) {\n    w.merchant += ETHER_PORT_WEIGHTS.merchant;\n    w.pirate *= ETHER_PORT_WEIGHTS.pirateK;\n  }\n  return w;",
+    "new": "  return w;",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SHIP-haunt-reach",
     "file": "src/systems/naval/etherShips.js",
-    "old": "    if (d <= HAUNT_PX && d < bd) { bd = d; best = l; }",
-    "new": "    if (d < HAUNT_PX && d < bd) { bd = d; best = l; }",
+    "old": "    if (d <= HAUNT_PX && d < bd) {",
+    "new": "    if (d < HAUNT_PX && d < bd) {",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHIP-rise-edge",
     "file": "src/systems/naval/etherShips.js",
-    "old": "(day | 0) - (endedDay | 0) >= LEGEND_RISE_DAYS;",
-    "new": "(day | 0) - (endedDay | 0) > LEGEND_RISE_DAYS;",
+    "old": "  !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) >= LEGEND_RISE_DAYS;",
+    "new": "  !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) > LEGEND_RISE_DAYS;",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SHIP-rumour-days",
     "file": "src/systems/naval/etherShips.js",
-    "old": "ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`",
-    "new": "ago === 0 ? 'yesterday' : ago === 1 ? 'today' : `${ago} days ago`",
+    "old": "    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise it again.`;",
+    "new": "    return `${legend.name} went down ${ago === 0 ? 'yesterday' : ago === 1 ? 'today' : `${ago} days ago`}; they say the aether will raise it again.`;",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SHIP-dir-factions",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "weightedPick(ether ? etherFactionWeights(ether.band, { nearPort: !!ctx.nearPort }) : factionWeights(",
-    "new": "weightedPick(false ? etherFactionWeights(ether.band, { nearPort: !!ctx.nearPort }) : factionWeights(",
+    "old": "      const faction = weightedPick(\n        ether",
+    "new": "      const faction = weightedPick(\n        false",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SHIP-dir-level",
     "file": "src/systems/naval/navalDirector.js",
-    "old": " + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
-    "new": " + (deep ? DEEP_LEVEL : 0), rng());",
+    "old": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
+    "new": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0), rng());",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "SHIP-dir-spec",
     "file": "src/systems/naval/navalDirector.js",
-    "old": ", ...(ether ? { ether: ether.band.id } : {}) };",
-    "new": " };",
+    "old": "        out.spawn = {\n          seed,\n          classId: cls.id,\n          variant,\n          pos,\n          yaw,\n          hunter,\n          ...(deep ? { deep: true } : {}),\n          ...(ether ? { ether: ether.band.id } : {}),\n        }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "new": "        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(deep ? { deep: true } : {}) }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SHIP-dir-patrol",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    const kind = ctx.ether ? 'plunder' : drawn;",
-    "new": "    const kind = drawn;",
+    "old": "    const kind = ctx.ether ? 'plunder' : drawn; // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader",
+    "new": "    const kind = drawn; // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SHIP-dir-relief",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "!ctx.relieving && !ctx.ether ? ctx.distress : null;",
-    "new": "!ctx.relieving ? ctx.distress : null;",
+    "old": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "new": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -228,7 +228,7 @@
   {
     "name": "SHIP-dir-legend-twice",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    if (!want?.classId || ctx.nearPort || (ctx.legends ?? []).length || (ctx.ships ?? []).some((s) => s.classId === want.classId)) return null;",
+    "old": "    if (\n      !want?.classId ||\n      ctx.nearPort ||\n      (ctx.legends ?? []).length ||\n      (ctx.ships ?? []).some((s) => s.classId === want.classId)\n    )\n      return null;",
     "new": "    if (!want?.classId || ctx.nearPort || (ctx.legends ?? []).length) return null;",
     "tests": [
       "test/systems/naval/ethership.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "SHIP-dir-legend-yaw",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "      return { seed, classId: cls.id, variant: 0, pos, yaw: Math.atan2(ctx.player[0] - pos[0], ctx.player[2] - pos[2]), hunter: false, ether: ctx.ether.band.id, legend: want.id };",
-    "new": "      return { seed, classId: cls.id, variant: 0, pos, yaw: 0, hunter: false, ether: ctx.ether.band.id, legend: want.id };",
+    "old": "        yaw: Math.atan2(ctx.player[0] - pos[0], ctx.player[2] - pos[2]),",
+    "new": "        yaw: 0,",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]

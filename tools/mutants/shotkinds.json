@@ -92,8 +92,8 @@
   {
     "name": "SHOT-solution-unsaid",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "barrel: false, shot: load, elevation,",
-    "new": "barrel: false, shot: null, elevation,",
+    "old": "    shot: load,",
+    "new": "    shot: null,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SHOT-one-broadside",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];\n      const armed",
-    "new": "      const sides = [side];\n      const armed",
+    "old": "      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];",
+    "new": "      const sides = [side];",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHOT-switch-whole",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = now * scaleNow();",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHOT-switch-free",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = 0; clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = 0;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SHOT-switch-unscaled",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = SHOT_SWITCH * now; clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = SHOT_SWITCH * now;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SHOT-reloading-unscaled",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        if (clocks[x] > 0) { const k = now / (was || 1); clocks[x] *= k; length[x] *= k; }",
-    "new": "        if (clocks[x] > 0) { const k = 1; clocks[x] *= k; length[x] *= k; }",
+    "old": "          const k = now / (was || 1);",
+    "new": "          const k = 1;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "SHOT-barrels-loaded",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "      const armed = sides.filter((x) => { const b = batteryOf(hull, x); return b && b.gun !== 'barrel'; });",
+    "old": "      const armed = sides.filter((x) => {\n        const b = batteryOf(hull, x);\n        return b && b.gun !== 'barrel';\n      });",
     "new": "      const armed = sides.filter((x) => !!batteryOf(hull, x));",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "SHOT-ball-sweep-bore",
     "file": "src/systems/naval/navalShots.js",
-    "old": "    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1);",
-    "new": "    const radius = (b.radius ??= GUNS[b.gun]?.radius ?? 0.1);",
+    "old": "    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1); // AUDIT 2: read once a ball (shotGun makes its row)",
+    "new": "    const radius = (b.radius ??= GUNS[b.gun]?.radius ?? 0.1); // AUDIT 2: read once a ball (shotGun makes its row)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SHOT-hit-unsaid",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
-    "new": "target: ship.t.id, gun: b.gun, shot: null, t: flight(ship.e.t),",
+    "old": "        gun: b.gun,\n        shot: b.shot,\n        t: flight(ship.e.t),",
+    "new": "        gun: b.gun,\n        shot: null,\n        t: flight(ship.e.t),",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SHOT-hit-untimed",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
-    "new": "target: ship.t.id, gun: b.gun, shot: b.shot, t: 0,",
+    "old": "        t: flight(ship.e.t),",
+    "new": "        t: 0,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SHOT-ball-launch-unread",
     "file": "src/systems/naval/navalShots.js",
-    "old": "gun: l.gun, shot: l.shot ?? null,",
-    "new": "gun: l.gun, shot: null,",
+    "old": "        shot: l.shot ?? null,",
+    "new": "        shot: null,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -389,7 +389,7 @@
   {
     "name": "SHOT-ai-no-hysteresis",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "old": "  const done =\n    !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
     "new": "  const done = true;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "SHOT-ai-grape-held",
     "file": "src/systems/naval/navalAI.js",
-    "old": "{ broadsides: boarderBroadsides(ship) });",
-    "new": "{ broadsides: ship.mode !== 'board' });",
+    "old": "      broadsides: boarderBroadsides(ship),",
+    "new": "      broadsides: ship.mode !== 'board',",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SHOT-ai-lay-unloaded",
     "file": "src/systems/naval/navalAI.js",
-    "old": "targetY: aimY, shot });",
-    "new": "targetY: aimY });",
+    "old": "        shot,\n      });",
+    "new": "      });",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SHOT-fx-grape-one-spout",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'grape') {\n      for (let i = 0; i < 6; i++) {",
-    "new": "    if (shot === 'grape') {\n      for (let i = 0; i < 1; i++) {",
+    "old": "      for (let i = 0; i < 6; i++) {",
+    "new": "      for (let i = 0; i < 1; i++) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "SHOT-fx-chain-once",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'chain') {\n      tear(pos, dir);",
-    "new": "    if (shot === 'chain') {\n      void 0;",
+    "old": "      tear(pos, dir);",
+    "new": "      void 0;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "SHOT-fx-heated-no-embers",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      for (let i = 0; i < 10; i++) push({ kind: 'ember'",
-    "new": "      for (let i = 0; i < 0; i++) push({ kind: 'ember'",
+    "old": "      for (let i = 0; i < 10; i++)",
+    "new": "      for (let i = 0; i < 0; i++)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "SHOT-fx-heated-no-steam",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'heated') {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
-    "new": "    if (false) {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
+    "old": "    spout(pos, big, scale); // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none\n    if (shot === 'heated') {",
+    "new": "    spout(pos, big, scale); // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none\n    if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "SHOT-ai-opened-kept",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "old": "  const done =\n    !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
     "new": "  const done = !(ship.mode === 'engage' || ship.mode === 'board');",
     "tests": [
       "test/systems/naval/shotkinds.test.js"

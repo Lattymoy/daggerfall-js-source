@@ -456,8 +456,8 @@
   {
     "name": "NAVB-B13-the-papers-unread",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "  if (choice === 'papers') return { notoriety: -Math.min(Math.max(0, notoriety), PAPERS_NOTORIETY) };\n",
-    "new": "",
+    "old": "  if (choice === 'papers') return { notoriety: -Math.min(Math.max(0, notoriety), PAPERS_NOTORIETY) };\n  return {};",
+    "new": "  return {};",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "NAVB-B13-the-pirate-papers-unnamed",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : CHOICE_TITLES[choice] ?? choice;",
-    "new": "const title = CHOICE_TITLES[choice] ?? choice;",
+    "old": "  const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : (CHOICE_TITLES[choice] ?? choice);",
+    "new": "  const title = CHOICE_TITLES[choice] ?? choice;",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "NAVB-minor-powder-on-a-rowboat",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' };   // AUDIT NAV1: a rowboat's, never \"loaded\"\n",
-    "new": "",
+    "old": "    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' }; // AUDIT NAV1: a rowboat's, never \"loaded\"\n    const topUp = barrelGuns && barrels < barrelStock;",
+    "new": "    const topUp = barrelGuns && barrels < barrelStock;",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]

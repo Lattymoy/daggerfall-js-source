@@ -2,8 +2,8 @@
   {
     "name": "NAV-R-the-flagship-drawn",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0)",
-    "new": "c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0)",
+    "old": "  const pool = SHIP_CLASSES.filter(\n    (c) => c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0),\n  );",
+    "new": "  const pool = SHIP_CLASSES.filter((c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0));",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "NAV-R-the-level-ungated",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0)",
-    "new": "c.faction === 'pirate' && !c.flagship",
+    "old": "  const pool = SHIP_CLASSES.filter(\n    (c) => c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0),\n  );",
+    "new": "  const pool = SHIP_CLASSES.filter((c) => c.faction === 'pirate' && !c.flagship);",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NAV-R-the-seed-unread",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "let x = seededRng((seed ^ CLASS_SALT) >>> 0)() * total;",
-    "new": "let x = seededRng(CLASS_SALT)() * total;",
+    "old": "  let x = seededRng((seed ^ CLASS_SALT) >>> 0)() * total;",
+    "new": "  let x = seededRng(CLASS_SALT)() * total;",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "NAV-R-the-range-unread",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
+    "old": "    .filter(\n      (r) =>\n        !stood.has(r.id) &&\n        !spent.has(r.id) &&\n        !held.has(r.id) &&\n        !peers.has(r.seed) &&\n        flat(r.pos, me) <= RAIDER_STAND_M,\n    )",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed))",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "NAV-R-the-cap",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "const stand = candidates.slice(0, Math.max(0, RAIDER_SHIPS_MAX - keep.length)).map((r) => r.id);",
-    "new": "const stand = candidates.map((r) => r.id);",
+    "old": "  const stand = candidates.slice(0, Math.max(0, RAIDER_SHIPS_MAX - keep.length)).map((r) => r.id);",
+    "new": "  const stand = candidates.map((r) => r.id);",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "NAV-R-a-spent-one-stood",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
+    "old": "    .filter(\n      (r) =>\n        !stood.has(r.id) &&\n        !spent.has(r.id) &&\n        !held.has(r.id) &&\n        !peers.has(r.seed) &&\n        flat(r.pos, me) <= RAIDER_STAND_M,\n    )",
     "new": "    .filter((r) => !stood.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "NAV-R-a-fight-let-go",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "if (!s.engaged && flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
-    "new": "if (flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
+    "old": "    if (!s.engaged && flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
+    "new": "    if (flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "NAV-R-the-lower-id-kept-waiting",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) { drop.push(id); continue; }",
-    "new": "    if (owner !== undefined && !s.boarding && chaseYields(owner, myId)) { drop.push(id); continue; }",
+    "old": "    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) {",
+    "new": "    if (owner !== undefined && !s.boarding && chaseYields(owner, myId)) {",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "NAV-R-the-peer-copy-unread",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
+    "old": "    .filter(\n      (r) =>\n        !stood.has(r.id) &&\n        !spent.has(r.id) &&\n        !held.has(r.id) &&\n        !peers.has(r.seed) &&\n        flat(r.pos, me) <= RAIDER_STAND_M,\n    )",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "NAV-R-the-course-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (ship.course) return Math.atan2(ship.course[0] - ship.pos[0], ship.course[1] - ship.pos[2]);\n",
-    "new": "",
+    "old": "  if (ship.course) return Math.atan2(ship.course[0] - ship.pos[0], ship.course[1] - ship.pos[2]);\n  const wp = ship.waypoint;",
+    "new": "  const wp = ship.waypoint;",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "MERGE-OW6-the-hold-unread",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
+    "old": "    .filter(\n      (r) =>\n        !stood.has(r.id) &&\n        !spent.has(r.id) &&\n        !held.has(r.id) &&\n        !peers.has(r.seed) &&\n        flat(r.pos, me) <= RAIDER_STAND_M,\n    )",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"

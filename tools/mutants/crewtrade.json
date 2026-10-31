@@ -83,8 +83,8 @@
   {
     "name": "CREW-TRADE-cap-at-yard",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9) - 1);",
-    "new": "Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9));",
+    "old": "export const crewPayMost = (discount = 0) => Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9) - 1);",
+    "new": "export const crewPayMost = (discount = 0) => Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9));",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CREW-TRADE-cap-undiscounted",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9) - 1);",
-    "new": "Math.max(1, Math.ceil(yardHandPrice(0) - 1e-9) - 1);",
+    "old": "export const crewPayMost = (discount = 0) => Math.max(1, Math.ceil(yardHandPrice(discount) - 1e-9) - 1);",
+    "new": "export const crewPayMost = (discount = 0) => Math.max(1, Math.ceil(yardHandPrice(0) - 1e-9) - 1);",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CREW-TRADE-ashore-place",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "  const need = party.length ? party.length + 1 : 0;",
-    "new": "  const need = party.length;",
+    "old": "  const need = party.length ? party.length + 1 : 0; // the shore party's places, and one hand aboard beside them",
+    "new": "  const need = party.length; // the shore party's places, and one hand aboard beside them",
     "note": "Re-aimed by content (AUDIT CREW-TRADE H1): the shore party counted, and one hand aboard beside it",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "CREW-TRADE-customs",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "  if (crossed) return { n: 0, why: CREW_TRADE_TEXT.crossed };\n",
-    "new": "",
+    "old": "  if (crossed) return { n: 0, why: CREW_TRADE_TEXT.crossed };\n  const now = Math.max(0, Math.floor(Number(crew) || 0));",
+    "new": "  const now = Math.max(0, Math.floor(Number(crew) || 0));",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "CREW-TRADE-room",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "Math.max(0, Math.floor((Number(d?.maxCrew) || 0) - (Number(d?.crew) || 0)));",
-    "new": "Math.max(0, Math.floor(Number(d?.maxCrew) || 0));",
+    "old": "export const crewRoom = (d) => Math.max(0, Math.floor((Number(d?.maxCrew) || 0) - (Number(d?.crew) || 0)));",
+    "new": "export const crewRoom = (d) => Math.max(0, Math.floor(Number(d?.maxCrew) || 0));",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]

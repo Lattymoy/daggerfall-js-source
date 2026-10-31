@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-GN-G2-fired-from-where-it-stood",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "      if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];\n",
-    "new": "",
+    "old": "      if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];\n      const a = s.lids[index]?.getComponent?.('Animator')?.animator;",
+    "new": "      const a = s.lids[index]?.getComponent?.('Animator')?.animator;",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-GN-G2-shutter-not-snapped",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }",
-    "new": "if (a) a.SetBool('Opened', true);",
+    "old": "      if (a) {\n        a.SetBool('Opened', true);\n        a.Play(OPENED_STATE);\n        a.update(0);\n      }",
+    "new": "      if (a) a.SetBool('Opened', true);",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-GN-G4-hull-2-the-new-build-whatever-stands",
     "file": "src/systems/naval/navalShips.js",
-    "old": "(MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
-    "new": "(HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
+    "old": "export const hullBuild = (hull) =>\n  MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : (HULL_BUILDS[hull] ?? HULL_BUILDS[0]);",
+    "new": "export const hullBuild = (hull) => HULL_BUILDS[hull] ?? HULL_BUILDS[0];",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-GN-G7-step-clamped",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "const dt = Math.max(0, now - lastNow);",
-    "new": "const dt = Math.min(0.25, Math.max(0, now - lastNow));",
+    "old": "      const dt = Math.max(0, now - lastNow);",
+    "new": "      const dt = Math.min(0.25, Math.max(0, now - lastNow));",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]

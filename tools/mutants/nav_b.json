@@ -2,8 +2,8 @@
   {
     "name": "NAV-B-the-smoke-born-opaque",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "p.kind === 'smoke' ? Math.min(1, k * 6) * (1 - k) :",
-    "new": "p.kind === 'smoke' ? (1 - k) :",
+    "old": "            ? Math.min(1, k * 6) * (1 - k)",
+    "new": "            ? 1 - k",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "NAV-B-the-swell-linear",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "(p.kind === 'smoke' ? Math.sqrt(k) : k);",
-    "new": "k;",
+    "old": "      const size = p.size0 + (p.size1 - p.size0) * (p.kind === 'smoke' ? Math.sqrt(k) : k);",
+    "new": "      const size = p.size0 + (p.size1 - p.size0) * k;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAV-B-the-wind-ignored",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
-    "new": "    const ax = 0, az = 0;",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS,\n      az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = 0,\n      az = 0;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAV-B-the-burn-per-frame",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const k = clamp(dt, 0, 0.1);\n    if (r() < 14 * k)",
-    "new": "    const k = 0.05;\n    if (r() < 14 * k)",
+    "old": "  function burn(pos, dt) {\n    const k = clamp(dt, 0, 0.1);",
+    "new": "  function burn(pos, dt) {\n    const k = 0.05;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]

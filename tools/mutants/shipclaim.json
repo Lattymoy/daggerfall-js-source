@@ -11,8 +11,8 @@
   {
     "name": "SC-value-another-hulls",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "Math.round(HULL_PRICES[hull] * PRIZE_DEED_SHARE)",
-    "new": "Math.round(HULL_PRICES[1] * PRIZE_DEED_SHARE)",
+    "old": "export const prizeDeedValue = (hull) => Math.round(HULL_PRICES[hull] * PRIZE_DEED_SHARE);",
+    "new": "export const prizeDeedValue = (hull) => Math.round(HULL_PRICES[1] * PRIZE_DEED_SHARE);",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]

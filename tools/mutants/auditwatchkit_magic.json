@@ -254,8 +254,8 @@
   {
     "name": "LD-CC-load-codec-throws",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "try { const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : []; } catch { return []; }",
-    "new": "const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : [];",
+    "old": "    try {\n      const out = codec ? codec.deserialize(data) : data.slice();\n      return Array.isArray(out) ? out : [];\n    } catch {\n      return [];\n    }",
+    "new": "    const out = codec ? codec.deserialize(data) : data.slice();\n    return Array.isArray(out) ? out : [];",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LD-CC-save-codec-throws",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "try { return codec ? codec.serialize(items) : items.slice(); } catch { return []; }",
-    "new": "return codec ? codec.serialize(items) : items.slice();",
+    "old": "    try {\n      return codec ? codec.serialize(items) : items.slice();\n    } catch {\n      return [];\n    }",
+    "new": "    return codec ? codec.serialize(items) : items.slice();",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LD-CC-load-codec-shape",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "return Array.isArray(out) ? out : [];",
-    "new": "return out;",
+    "old": "      return Array.isArray(out) ? out : [];",
+    "new": "      return out;",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]

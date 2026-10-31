@@ -22,8 +22,8 @@
   {
     "name": "SHIPS2-C-the-battery-not-hers",
     "file": "src/systems/naval/navalShips.js",
-    "old": "broadside: Object.freeze([[6.785, 3.4982, -9.2435], ",
-    "new": "broadside: Object.freeze([[6.3, 4.5, -16], ",
+    "old": "        [6.785, 3.4982, -9.2435],",
+    "new": "        [6.3, 4.5, -16],",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHIPS2-C-the-carriage-unread",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "s.outX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runOutX ?? RUN_OUT_X);",
-    "new": "s.outX = s.guns.map(() => RUN_OUT_X);",
+    "old": "        s.outX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runOutX ?? RUN_OUT_X);",
+    "new": "        s.outX = s.guns.map(() => RUN_OUT_X);",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "SHIPS2-C-the-mods-carracks-numbers-back",
     "file": "src/systems/naval/navalShips.js",
-    "old": "crew: 30, deck: 7.81, beam: 6.0, ram: false, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55,",
-    "new": "crew: 30, deck: 3.64, beam: 7.4, ram: false, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82,",
+    "old": "    deck: 7.81,\n    beam: 6.0,\n    ram: false,\n    bowZ: 26.14,\n    aftZ: -23.31,\n    halfWidth: 6.7,\n    keel: -4.59,\n    top: 11.55,",
+    "new": "    deck: 3.64,\n    beam: 7.4,\n    ram: false,\n    bowZ: 23.71,\n    aftZ: -28.24,\n    halfWidth: 8.43,\n    keel: -3.35,\n    top: 11.82,",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SHIPS2-C-a-box-short-of-its-canvas",
     "file": "src/systems/naval/navalShips.js",
-    "old": "onBoom(3, [0, 18.9, 8.9293], [-4.7, 15.47, 9.01], [4.7, 19.07, 10.46], 3)",
-    "new": "onBoom(3, [0, 18.9, 8.9293], [-4.7, 16.47, 9.01], [4.7, 19.07, 10.46], 3)",
+    "old": "      onBoom(3, [0, 18.9, 8.9293], [-4.7, 15.47, 9.01], [4.7, 19.07, 10.46], 3), // the main topsail and its yard",
+    "new": "      onBoom(3, [0, 18.9, 8.9293], [-4.7, 16.47, 9.01], [4.7, 19.07, 10.46], 3), // the main topsail and its yard",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],

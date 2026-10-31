@@ -20,8 +20,8 @@
   {
     "name": "NAV-C-the-memory-forever",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
-    "new": "  if (ship.provoked.has(contact.id)) return true;",
+    "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true; // a blow, answered by every temper",
+    "new": "  if (ship.provoked.has(contact.id)) return true; // a blow, answered by every temper",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "NAV-C-the-beam-soundings-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half)) return false;",
+    "old": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half))\n      return false;",
     "new": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half)) return false;",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "NAV-C-the-flagship-running",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(ship.cls.faction === 'pirate' && !ship.cls.flagship && ship.damage.hullShare() < PIRATE_RUNS_AT",
-    "new": "(ship.cls.faction === 'pirate' && ship.damage.hullShare() < PIRATE_RUNS_AT",
+    "old": "    (ship.cls.faction === 'pirate' &&\n      !ship.cls.flagship &&\n      ship.damage.hullShare() < PIRATE_RUNS_AT &&\n      (threat || enemy)) ||",
+    "new": "    (ship.cls.faction === 'pirate' && ship.damage.hullShare() < PIRATE_RUNS_AT && (threat || enemy)) ||",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "NAV-C-the-stillness-never-counted",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S;",
+    "old": "  return (\n    !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S\n  );",
     "new": "  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL;",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "NAV-C-the-grapple-range-ignored",
     "file": "src/systems/naval/navalAI.js",
-    "old": ": bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;\n    if (close) out.grapple = q.id;",
-    "new": ": true;\n    if (close) out.grapple = q.id;",
+    "old": "        : bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;",
+    "new": "        : true;",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NAV-C-the-tactic-ignored",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (ship.cls.tactic === 'bow' && ship.guns.ready('bow') &&",
-    "new": "  if (false &&",
+    "old": "  if (\n    ship.cls.tactic === 'bow' &&\n    ship.guns.ready('bow') &&\n    d <= bowReach * PRESENT_WITHIN &&\n    Math.abs(bearing) <= BOW_SWING * DEG\n  ) {",
+    "new": "  if (false && d <= bowReach * PRESENT_WITHIN && Math.abs(bearing) <= BOW_SWING * DEG) {",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "NAV-C-an-engaged-ship-let-go",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
-    "new": "if (!s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "old": "      for (const s of ctx.ships ?? [])\n        if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "new": "      for (const s of ctx.ships ?? []) if (!s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "NAV-C-two-flagships",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng());   // one flagship at a time",
+    "old": "      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng()); // one flagship at a time",
     "new": "",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "NAV-C-the-port-weights-dropped",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "  if (nearPort) { w.merchant += PORT_WEIGHTS.merchant; w.navy += PORT_WEIGHTS.navy; w.pirate *= PORT_PIRATE_K; }",
-    "new": "  if (nearPort) { w.pirate *= PORT_PIRATE_K; }",
+    "old": "    w.merchant += PORT_WEIGHTS.merchant;\n    w.navy += PORT_WEIGHTS.navy;\n    w.pirate *= PORT_PIRATE_K;",
+    "new": "    w.pirate *= PORT_PIRATE_K;",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "NAV-C-the-stream-left-moved",
     "file": "src/systems/naval/navalShips.js",
-    "old": "  } finally { setSeed(saved); }",
-    "new": "  } finally { /* left where the name moved it */ }",
+    "old": "    setSeed(saved);",
+    "new": "    /* left where the name moved it */",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "NAV-C-the-crown-ignored",
     "file": "src/systems/naval/navalShips.js",
-    "old": "  const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;",
+    "old": "  const crown = shipClass.faction === 'navy' ? (crownIn ?? crownOf(0, 0, null, regionIndex)) : null;",
     "new": "  const crown = shipClass.faction === 'navy' ? CROWNS[0] : null;",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js",
@@ -210,8 +210,8 @@
   {
     "name": "NAV-C-the-farthest-capital",
     "file": "src/systems/naval/navalShips.js",
-    "old": "    if (d < bd) { bd = d; best = crown; }",
-    "new": "    if (d > bd || bd === Infinity) { bd = d; best = crown; }",
+    "old": "    if (d < bd) {",
+    "new": "    if (d > bd || bd === Infinity) {",
     "tests": [
       "test/systems/naval/nav_c_ships.test.js"
     ]

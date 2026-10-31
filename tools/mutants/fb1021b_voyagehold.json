@@ -32,7 +32,7 @@
   {
     "name": "VOYAGE-HOLD-load-forgets",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      log.departed = restoreDeparted(l.departed, log.sailed);   // VOYAGE-HOLD",
+    "old": "      log.departed = restoreDeparted(l.departed, log.sailed); // VOYAGE-HOLD",
     "new": "",
     "tests": [
       "test/systems/naval/fb1021b_voyagehold.test.js",
@@ -43,8 +43,8 @@
   {
     "name": "VOYAGE-HOLD-departure-past-its-log",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "&& d.sailed <= sailed ? { port: d.port",
-    "new": "? { port: d.port",
+    "old": "  d.sailed >= 0 &&\n  d.sailed <= sailed",
+    "new": "  d.sailed >= 0",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ],

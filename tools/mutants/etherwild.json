@@ -174,8 +174,8 @@
   {
     "name": "ETHER-WILD-crossing-never-warns",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn'",
-    "new": "...(false ? ['', ...questionRows(t('sea.wild.crossWarn'",
+    "old": "        ...(pvp",
+    "new": "        ...(false",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "ETHER-WILD-wrap-off-by-one",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "if (row && row.length + 1 + word.length > width)",
-    "new": "if (row && row.length + 1 + word.length >= width)",
+    "old": "    if (row && row.length + 1 + word.length > width) {",
+    "new": "    if (row && row.length + 1 + word.length >= width) {",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

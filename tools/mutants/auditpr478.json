@@ -67,8 +67,8 @@
   {
     "name": "ASLH-B7-null-kept",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }",
-    "new": "else if (false) { h.harbour = sound(); h.at = clock; }",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/scenes/naval/auditshiplife_host.test.js"
     ],

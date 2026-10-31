@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-RPT1026-J3-the-cutter-stands-off",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (f === 'navy') return g === 'pirate';",
-    "new": "if (f === 'navy') return false;",
+    "old": "  if (f === 'navy') return g === 'pirate';",
+    "new": "  if (f === 'navy') return false;",
     "tests": [
       "test/systems/naval/rpt1026_world_seabrake.test.js"
     ],

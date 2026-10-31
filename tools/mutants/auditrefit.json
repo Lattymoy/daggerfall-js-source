@@ -2,8 +2,8 @@
   {
     "name": "AR-near-sphere-tight",
     "file": "src/systems/naval/navalShots.js",
-    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
-    "new": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2])) continue;",
+    "old": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M)\n        continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
+    "new": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2])) continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AR-near-sphere-beam",
     "file": "src/systems/naval/navalShots.js",
-    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
-    "new": "t.box.h[0] + NEAR_MISS_M) continue;",
+    "old": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M)\n        continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
+    "new": "      if (segmentPointGap(a, next, t.box.c, upTo) > t.box.h[0] + NEAR_MISS_M) continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "AR-near-sphere-past-its-end",
     "file": "src/systems/naval/navalShots.js",
-    "old": "  const u = dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;",
+    "old": "  const u =\n    dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;",
     "new": "  const u = dd > 0 ? (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd : 0;",
     "tests": [
       "test/systems/naval/auditrefit.test.js",
@@ -104,7 +104,7 @@
   {
     "name": "AR-refit-whole-unmoved",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      s.maxHull = h; s.maxSail = sl;",
+    "old": "      s.maxHull = h;\n      s.maxSail = sl;",
     "new": "      s.maxSail = sl;",
     "tests": [
       "test/systems/naval/fleet.test.js"

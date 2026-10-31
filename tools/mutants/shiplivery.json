@@ -366,8 +366,8 @@
   {
     "name": "DF-model-any",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
-    "new": "if (!f || typeof f !== 'object' || !finite(f.x) || !finite(f.z)) continue;",
+    "old": "    if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
+    "new": "    if (!f || typeof f !== 'object' || !finite(f.x) || !finite(f.z)) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "DF-place-nan",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
-    "new": "if (!f || typeof f !== 'object' || !isFitting(f.m)) continue;",
+    "old": "    if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
+    "new": "    if (!f || typeof f !== 'object' || !isFitting(f.m)) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "DF-reach-none",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "    if (Math.hypot(x, z) > FITTING_REACH) continue;\n",
-    "new": "",
+    "old": "    if (Math.hypot(x, z) > FITTING_REACH) continue;\n    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;",
+    "new": "    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "DF-gap-none",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;\n",
-    "new": "",
+    "old": "    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;\n    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
+    "new": "    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "DF-turn-unwrapped",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
-    "new": "const yaw = Number.isInteger(f.yaw) ? f.yaw : 0;",
+    "old": "    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
+    "new": "    const yaw = Number.isInteger(f.yaw) ? f.yaw : 0;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "DF-code-uneven",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
-    "new": "if (!Array.isArray(code) || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "DF-code-long",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
-    "new": "if (!Array.isArray(code) || code.length % 4 || !code.every(Number.isInteger)) return [];",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length % 4 || !code.every(Number.isInteger)) return [];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "DF-code-fraction",
     "file": "src/systems/naval/deckFittings.js",
-    "old": "if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
-    "new": "if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4) return [];",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4) return [];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

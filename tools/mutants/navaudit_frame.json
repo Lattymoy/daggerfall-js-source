@@ -398,8 +398,8 @@
   {
     "name": "NAVF-evict-farthest-first",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "idx.sort((a, b) => list[b].age / list[b].life - list[a].age / list[a].life);",
-    "new": "idx.sort((a, b) => list[a].age / list[a].life - list[b].age / list[b].life);",
+    "old": "      if (idx.length > n) idx.sort((a, b) => list[b].age / list[b].life - list[a].age / list[a].life);",
+    "new": "      if (idx.length > n) idx.sort((a, b) => list[a].age / list[a].life - list[b].age / list[b].life);",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]

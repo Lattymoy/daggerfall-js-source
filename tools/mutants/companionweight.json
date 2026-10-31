@@ -2,7 +2,7 @@
   {
     "name": "COMPANION-WEIGHT-law-unread",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "export const packCapacityKg = (entity) => (Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) : maxEncumbrance(PACK_DEFAULT_STRENGTH));",
+    "old": "export const packCapacityKg = (entity) =>\n  Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) : maxEncumbrance(PACK_DEFAULT_STRENGTH);",
     "new": "export const packCapacityKg = (entity) => maxEncumbrance(PACK_DEFAULT_STRENGTH);",
     "tests": [
       "test/systems/companion_weight.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-ECON-the-body-read-raw",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) :",
-    "new": "Number(entity?.stats?.strength) > 0 ? maxEncumbrance(Number(entity.stats.strength)) :",
+    "old": "  Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) : maxEncumbrance(PACK_DEFAULT_STRENGTH);",
+    "new": "  Number(entity?.stats?.strength) > 0\n    ? maxEncumbrance(Number(entity.stats.strength))\n    : maxEncumbrance(PACK_DEFAULT_STRENGTH);",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]

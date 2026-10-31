@@ -155,8 +155,8 @@
   {
     "name": "DECK-rail-side-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "            const i = side > 0 ? nx - 1 - n : n, j = k * nx + i, x = minX + (i + 0.5) * cell;",
-    "new": "            const i = n, j = k * nx + i, x = minX + (i + 0.5) * cell;",
+    "old": "            const i = side > 0 ? nx - 1 - n : n,",
+    "new": "            const i = n,",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DECK-rail-row-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      const k0 = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));\n      for (let r = 0; r < nz; r++) {\n        for (let pass",
-    "new": "      const k0 = 0;\n      for (let r = 0; r < nz; r++) {\n        for (let pass",
+    "old": "      const k0 = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));",
+    "new": "      const k0 = 0;",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]

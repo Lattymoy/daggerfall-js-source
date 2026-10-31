@@ -200,8 +200,8 @@
   {
     "name": "SEA-SEASON-ledger-old-day-resets",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    if (ether.season && n < ether.season.n) return null;\n",
-    "new": "",
+    "old": "    if (ether.season && n < ether.season.n) return null;\n    if (!ether.season || n > ether.season.n) ether.season = { n, deepest: 0, legends: 0 };",
+    "new": "    if (!ether.season || n > ether.season.n) ether.season = { n, deepest: 0, legends: 0 };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SEA-SEASON-ledger-legend-uncounted",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      if (s) s.legends = whole(s.legends + 1);\n",
-    "new": "",
+    "old": "      if (s) s.legends = whole(s.legends + 1);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SEA-SEASON-restore-past-sea",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "&& v.deepest <= SEA_DEEPEST_MAX",
-    "new": "",
+    "old": "  v.deepest <= SEA_DEEPEST_MAX &&\n  Number.isSafeInteger(v.legends) &&",
+    "new": "  Number.isSafeInteger(v.legends) &&",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEA-SEASON-restore-season-none",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "(v && Number.isSafeInteger(v.n) && v.n >= 1 &&",
-    "new": "(v && Number.isSafeInteger(v.n) &&",
+    "old": "  v.n >= 1 &&\n  Number.isSafeInteger(v.deepest) &&",
+    "new": "  Number.isSafeInteger(v.deepest) &&",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEA-SEASON-restore-negative",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "  && Number.isSafeInteger(v.legends) && v.legends >= 0 ? {",
-    "new": "  && Number.isSafeInteger(v.legends) ? {",
+    "old": "  Number.isSafeInteger(v.legends) &&\n  v.legends >= 0",
+    "new": "  Number.isSafeInteger(v.legends)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SEA-SEASON-restore-dropped",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      ether.season = restoreSeason(e.season);   // SEA-SEASON\n",
-    "new": "",
+    "old": "      ether.season = restoreSeason(e.season); // SEA-SEASON\n      ether.fleets = [",
+    "new": "      ether.fleets = [",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

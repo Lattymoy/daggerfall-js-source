@@ -2,8 +2,8 @@
   {
     "name": "FH-order",
     "file": "src/systems/naval/figurehead.js",
-    "old": "'dragon', 'serpent', 'lion'",
-    "new": "'dragon', 'lion', 'serpent'",
+    "old": "  'serpent',\n  'lion',",
+    "new": "  'lion',\n  'serpent',",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FH-galley-no-stem",
     "file": "src/systems/naval/figurehead.js",
-    "old": "hull === 1 || hull === 2 || hull === 3 || hull === 4;",
-    "new": "hull === 1 || hull === 2 || hull === 4;",
+    "old": "export const figureheadHull = (hull) => hull === 1 || hull === 2 || hull === 3 || hull === 4;",
+    "new": "export const figureheadHull = (hull) => hull === 1 || hull === 2 || hull === 4;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FH-door-past-last",
     "file": "src/systems/naval/figurehead.js",
-    "old": "(raw) > FIGUREHEAD_MAX) return null;",
-    "new": "(raw) > FIGUREHEAD_MAX + 1) return null;",
+    "old": "  if (!Number.isInteger(raw) || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX)",
+    "new": "  if (!Number.isInteger(raw) || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX + 1)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FH-door-fraction",
     "file": "src/systems/naval/figurehead.js",
-    "old": "if (!Number.isInteger(raw) ||",
-    "new": "if (typeof raw !== 'number' ||",
+    "old": "  if (!Number.isInteger(raw) || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX)",
+    "new": "  if (typeof raw !== 'number' || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FH-door-any-hull",
     "file": "src/systems/naval/figurehead.js",
-    "old": "return hull != null && !figureheadHull(hull) ? 0 : /** @type {number} */ (raw);",
-    "new": "return /** @type {number} */ (raw);",
+    "old": "  return hull != null && !figureheadHull(hull) ? 0 : /** @type {number} */ (raw);",
+    "new": "  return /** @type {number} */ (raw);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FH-accent-sail",
     "file": "src/systems/naval/figurehead.js",
-    "old": "const accent = ((liveryCode | 0) >> 4) & 15;",
-    "new": "const accent = ((liveryCode | 0) >> 8) & 15;",
+    "old": "  const accent = ((liveryCode | 0) >> 4) & 15;",
+    "new": "  const accent = ((liveryCode | 0) >> 8) & 15;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FH-accent-any-hull",
     "file": "src/systems/naval/figurehead.js",
-    "old": "if (!liveryPartsOf(hull).includes('accent')) return 0;",
-    "new": "if (!liveryPartsOf(hull).length) return 0;",
+    "old": "  if (!liveryPartsOf(hull).includes('accent')) return 0;",
+    "new": "  if (!liveryPartsOf(hull).length) return 0;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FH-livery-paint",
     "file": "src/systems/naval/figurehead.js",
-    "old": "carvingPaint(hull, ((livery?.accent | 0) & 15) << 4)",
-    "new": "carvingPaint(hull, ((livery?.accent | 0) & 15) << 8)",
+    "old": "export const liveryCarvingPaint = (hull, livery) => carvingPaint(hull, ((livery?.accent | 0) & 15) << 4);",
+    "new": "export const liveryCarvingPaint = (hull, livery) => carvingPaint(hull, ((livery?.accent | 0) & 15) << 8);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

@@ -409,8 +409,8 @@
   {
     "name": "SR-KEEP-rock-unkept",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "    if (onSolitudeRock(dx, dz)) return true;",
-    "new": "    if (false) return true;",
+    "old": "    if (onSolitudeRock(dx, dz)) return true; // SOLITUDE-RELIEF: its rock - its cliffs' feet no quay",
+    "new": "    if (false) return true; // SOLITUDE-RELIEF: its rock - its cliffs' feet no quay",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "SR-KEEP-arch-foot-flat",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16, STACK_FOOT = SOLITUDE.stack.foot + 19;",
-    "new": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 4, STACK_FOOT = SOLITUDE.stack.r + 11;",
+    "old": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16,\n  STACK_FOOT = SOLITUDE.stack.foot + 19;",
+    "new": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 4,\n  STACK_FOOT = SOLITUDE.stack.r + 11;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]

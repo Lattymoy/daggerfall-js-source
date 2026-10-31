@@ -2,8 +2,8 @@
   {
     "name": "NAV1H-the-slope-a-radians",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  const slope = AIM_SLOPE / NAVAL_DEG;   // m a radian",
-    "new": "  const slope = AIM_SLOPE;   // m a radian",
+    "old": "  const slope = AIM_SLOPE / NAVAL_DEG; // m a radian",
+    "new": "  const slope = AIM_SLOPE; // m a radian",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NAV1H-the-ramp-turned-back",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "hh / Math.tan(p0) + slope * (p0 - dip);",
-    "new": "hh / Math.tan(p0) + slope * (dip - p0);",
+    "old": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
+    "new": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (dip - p0);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAV1H-the-laws-swapped",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  return dip >= p0 ? hh / Math.tan(dip)",
-    "new": "  return dip <= p0 ? hh / Math.tan(dip)",
+    "old": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
+    "new": "  return dip <= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "NAV1H-the-points-height-ignored",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "    layDy = c[1] - look.at[1];\n",
-    "new": "",
+    "old": "    layDy = c[1] - look.at[1];\n  } else if (look) {",
+    "new": "  } else if (look) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "NAV1H-the-slant-for-the-range",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "    want = (lookPoint[0] - c[0]) * dir[0] + (lookPoint[2] - c[2]) * dir[2];\n  }",
-    "new": "    want = Math.hypot(lookPoint[0] - c[0], lookPoint[2] - c[2]);\n  }",
+    "old": "    want = (lookPoint[0] - c[0]) * dir[0] + (lookPoint[2] - c[2]) * dir[2];",
+    "new": "    want = Math.hypot(lookPoint[0] - c[0], lookPoint[2] - c[2]);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "NAV1H-the-look-ignored",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  } else if (look) {\n    // the sea",
-    "new": "  } else if (false) {\n    // the sea",
+    "old": "  } else if (look) {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/nav_a_guns.test.js"
@@ -675,8 +675,8 @@
   {
     "name": "NAV1H-mending-while-she-burns",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n        s.lastHitAt = now;\n",
-    "new": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n",
+    "old": "        s.lastHitAt = now;\n        for (const f of s.fires) {",
+    "new": "        for (const f of s.fires) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -1063,8 +1063,8 @@
   {
     "name": "AIMENDS-the-fall-straight",
     "file": "src/systems/naval/navalBallistics.js",
-    "old": "p0[1] + (land[1] - p0[1]) * s * s,",
-    "new": "p0[1] + (land[1] - p0[1]) * s,",
+    "old": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
+    "new": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s, p0[2] + (land[2] - p0[2]) * s]);",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]
@@ -1072,8 +1072,8 @@
   {
     "name": "AIMENDS-the-way-uneven",
     "file": "src/systems/naval/navalBallistics.js",
-    "old": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
-    "new": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s * s]);",
+    "old": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
+    "new": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s * s]);",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]

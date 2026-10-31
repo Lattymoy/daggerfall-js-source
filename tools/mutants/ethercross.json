@@ -2,8 +2,8 @@
   {
     "name": "CROSS-home-unasked",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "  if (inVeil(px, py)) return 'home';\n",
-    "new": "",
+    "old": "  if (inVeil(px, py)) return 'home';\n  if (!crossingWaters(px, py, landPx, Infinity)) return null;",
+    "new": "  if (!crossingWaters(px, py, landPx, Infinity)) return null;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CROSS-gate-unforgotten",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
-    "new": "      if (ours && n !== arrivals) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (ours && n !== arrivals) {",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CROSS-out-target",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "  if (way === 'out') return landfall();\n",
-    "new": "",
+    "old": "  if (way === 'out') return landfall();\n  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py)",
+    "new": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py)",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CROSS-from-unchecked",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py) ?",
-    "new": "  return from && !inEtherLaw(from.px, from.py) ?",
+    "old": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py)",
+    "new": "  return from && !inEtherLaw(from.px, from.py)",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CROSS-host-land-ring",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) { d = r; break ring; }",
-    "new": "        if (!seaPixel(px + dx, py + dy)) { d = r; break ring; }",
+    "old": "          if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) {",
+    "new": "          if (!seaPixel(px + dx, py + dy)) {",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LEDGER-chart-uncounted",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      chartedSet.add(key);\n      ledger.note('islands');",
-    "new": "      chartedSet.add(key);",
+    "old": "      ledger.note('islands');\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LEDGER-strands-unkept",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      for (let i = 0; i < keys.length - ETHER_HARVEST_KEEP; i++) delete ether.harvested[keys[i]];\n",
-    "new": "",
+    "old": "      for (let i = 0; i < keys.length - ETHER_HARVEST_KEEP; i++) delete ether.harvested[keys[i]];\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LEDGER-from-unfloored",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
-    "new": "  ? { px: at.px, py: at.py } : null);",
+    "old": "    ? { px: Math.floor(at.px), py: Math.floor(at.py) }",
+    "new": "    ? { px: at.px, py: at.py }",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LEDGER-crossings",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    crossed() { ether.crossings = whole(ether.crossings + 1); },",
-    "new": "    crossed() { ether.crossings = whole(ether.crossings); },",
+    "old": "      ether.crossings = whole(ether.crossings + 1);",
+    "new": "      ether.crossings = whole(ether.crossings);",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LEDGER-heard-twice",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX)",
-    "new": "if (typeof id === 'string' && ether.heard.length < LOG_LIST_MAX)",
+    "old": "      if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX)\n        ether.heard.push(id);",
+    "new": "      if (typeof id === 'string' && ether.heard.length < LOG_LIST_MAX) ether.heard.push(id);",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LEDGER-charted-junk",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "(Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string' && /^\\d{1,4},\\d{1,4}$/.test(k))",
-    "new": "(Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string')",
+    "old": "        ...new Set(\n          (Array.isArray(e.charted) ? e.charted : []).filter(\n            (k) => typeof k === 'string' && /^\\d{1,4},\\d{1,4}$/.test(k),\n          ),\n        ),",
+    "new": "        ...new Set((Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string')),",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LEDGER-deepest-words",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "`${log.deepest} ${log.deepest === 1 ? 'league' : 'leagues'} past the Veil`",
-    "new": "`${log.deepest}`",
+    "old": "  if (log.deepest)\n    lines.push([\n      `Deepest ${ETHER_WORD} waters`,\n      `${log.deepest} ${log.deepest === 1 ? 'league' : 'leagues'} past the Veil`,\n    ]);",
+    "new": "  if (log.deepest) lines.push([`Deepest ${ETHER_WORD} waters`, `${log.deepest}`]);",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]

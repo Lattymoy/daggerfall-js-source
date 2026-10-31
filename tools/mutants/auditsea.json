@@ -599,8 +599,8 @@
   {
     "name": "AUDIT-SEA-D4-unsaved",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      ether.fleets = [...ether.fleets, n].slice(-ETHER_FLEETS_KEEP);\n",
-    "new": "",
+    "old": "      ether.fleets = [...ether.fleets, n].slice(-ETHER_FLEETS_KEEP);\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "AUDIT-SEA-D4-unrestored",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      ether.fleets = [...new Set((Array.isArray(e.fleets) ? e.fleets : []).filter((n) => Number.isSafeInteger(n) && n >= 0))].slice(-ETHER_FLEETS_KEEP);",
-    "new": "      ether.fleets = [];",
+    "old": "      ether.fleets = [\n        ...new Set((Array.isArray(e.fleets) ? e.fleets : []).filter((n) => Number.isSafeInteger(n) && n >= 0)),\n      ].slice(-ETHER_FLEETS_KEEP); // AUDIT SEA VENTURES D2, D4",
+    "new": "      ether.fleets = []; // AUDIT SEA VENTURES D2, D4",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

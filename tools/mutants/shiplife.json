@@ -175,8 +175,8 @@
   {
     "name": "SHIPLIFE-AI-berthing-swings-off",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind);",
-    "new": "  want = avoidLand(ship, want, isWater, world.wind);",
+    "old": "  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind); // SHIP-LIFE: the last leg into a sounded berth",
+    "new": "  want = avoidLand(ship, want, isWater, world.wind); // SHIP-LIFE: the last leg into a sounded berth",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SHIPLIFE-AI-no-sweeps-in-harbour",
     "file": "src/systems/naval/navalAI.js",
-    "old": "!== life.want) { life.sweeps = SWEEP_WAY; life.sailable = true; }",
-    "new": "!== life.want) { }",
+    "old": "        life.sweeps = SWEEP_WAY;\n        life.sailable = true;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "SHIPLIFE-HOST-harbour-left-behind",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }",
-    "new": "  function offsetAll(o) { for (const h of []) offsetHarbour(h.harbour, o); }",
+    "old": "    for (const h of book.values()) offsetHarbour(h.harbour, o);",
+    "new": "    for (const h of []) offsetHarbour(h.harbour, o);",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "SHIPLIFE-DIRECTOR-moored-fill-the-sea",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "s.afloat !== false && !s.berthed).length;",
-    "new": "s.afloat !== false).length;",
+    "old": "      const alive = (ctx.ships ?? []).filter(\n        (s) => !out.despawn.includes(s.id) && s.afloat !== false && !s.berthed,\n      ).length;",
+    "new": "      const alive = (ctx.ships ?? []).filter((s) => !out.despawn.includes(s.id) && s.afloat !== false).length;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]

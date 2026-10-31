@@ -165,8 +165,8 @@
   {
     "name": "COMPANION-SLOTS-the-crew-blind-to-the-sworn",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (!find(boat, hand.name) && companionsWithYou() >= COMPANION_SLOTS) return COMPANION_WHY.slots;\n",
-    "new": "",
+    "old": "      if (!find(boat, hand.name) && companionsWithYou() >= COMPANION_SLOTS) return COMPANION_WHY.slots;\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

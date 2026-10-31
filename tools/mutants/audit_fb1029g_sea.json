@@ -2,8 +2,8 @@
   {
     "name": "AFB-SEA-F1-the-journey-read-unguarded",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      const under = !!journey?.isTravelActive, n = journey?.arrived ?? 0;",
-    "new": "      const under = !!journey.isTravelActive, n = journey.arrived ?? 0;",
+    "old": "      const under = !!journey?.isTravelActive,\n        n = journey?.arrived ?? 0;",
+    "new": "      const under = !!journey.isTravelActive,\n        n = journey.arrived ?? 0;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/ethercross.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "AFB-SEA-F3-the-journey-waters-unmarked",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (under && way && asked == null) { asked = way; ours = true; }\n",
-    "new": "",
+    "old": "      if (under && way && asked == null) {\n        asked = way;\n        ours = true;\n      }\n      return !!way && asked == null;",
+    "new": "      return !!way && asked == null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/ethercross.test.js"
@@ -34,8 +34,8 @@
   {
     "name": "AFB-SEA-F4-the-arrival-unheard",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }",
-    "new": "      if (way !== asked) { asked = null; ours = false; }",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (way !== asked) {",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/ethercross.test.js"
@@ -45,8 +45,8 @@
   {
     "name": "AFB-SEA-F4-an-arrival-forgets-a-refusal",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "(ours && n !== arrivals)",
-    "new": "(n !== arrivals)",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (way !== asked || n !== arrivals) {",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ],
@@ -105,8 +105,8 @@
   {
     "name": "AFB-SEA-F5-the-ring-unread",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity",
-    "new": "    let d = Infinity",
+    "old": "    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity,",
+    "new": "    let d = Infinity,",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -115,8 +115,8 @@
   {
     "name": "AFB-SEA-F5-past-the-reach-kept",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "d: d > reach ? Infinity : d };",
-    "new": "d };",
+    "old": "    at = { px, py, s, list, d: d > reach ? Infinity : d };",
+    "new": "    at = { px, py, s, list, d };",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -125,8 +125,8 @@
   {
     "name": "AFB-SEA-F5-the-bound-unpadded",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "if (!book.near(lane, here, reach + 1)) continue;",
-    "new": "if (!book.near(lane, here)) continue;",
+    "old": "      if (!book.near(lane, here, reach + 1)) continue;",
+    "new": "      if (!book.near(lane, here)) continue;",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -135,8 +135,8 @@
   {
     "name": "AFB-SEA-F5-a-half-answer",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "    if (!whole) return null;\n",
-    "new": "",
+    "old": "    if (!whole) return null;\n    at = { px, py, s, list, d: d > reach ? Infinity : d };",
+    "new": "    at = { px, py, s, list, d: d > reach ? Infinity : d };",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -145,8 +145,8 @@
   {
     "name": "AFB-SEA-F5-no-way-walked",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "if (fresh++ && now() - t0 > CROSS_WALK_MS)",
-    "new": "if (now() - t0 > CROSS_WALK_MS)",
+    "old": "        if (fresh++ && now() - t0 > CROSS_WALK_MS) {",
+    "new": "        if (now() - t0 > CROSS_WALK_MS) {",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -155,8 +155,8 @@
   {
     "name": "AFB-SEA-F5-every-check-measured-again",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "    if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;\n",
-    "new": "",
+    "old": "    if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;\n    const x = px + 0.5,",
+    "new": "    const x = px + 0.5,",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "AFB-SEA-F5-the-leg-unclamped",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))",
-    "new": "((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)",
+    "old": "  const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) : 0;",
+    "new": "  const t = dx || dy ? ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy) : 0;",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -185,8 +185,8 @@
   {
     "name": "AFB-SEA-F5-no-word-forgets",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way === undefined) return false;\n",
-    "new": "",
+    "old": "      if (way === undefined) return false;\n      const under = !!journey?.isTravelActive,",
+    "new": "      const under = !!journey?.isTravelActive,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/ethercross.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "AFB-SEA-F5-unmeasured-read-as-open",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "  if (sea === null) return undefined;\n",
-    "new": "",
+    "old": "  if (sea === null) return undefined;\n  return crossingWaters(px, py, landPx, sea) ? 'out' : null;",
+    "new": "  return crossingWaters(px, py, landPx, sea) ? 'out' : null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/ethercross.test.js"
@@ -207,8 +207,8 @@
   {
     "name": "AFB-SEA-F5-measured-by-the-coast",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "  if (!crossingWaters(px, py, landPx, Infinity)) return null;\n",
-    "new": "",
+    "old": "  if (!crossingWaters(px, py, landPx, Infinity)) return null;\n  const sea = typeof seaPx === 'function' ? seaPx(px, py) : seaPx;",
+    "new": "  const sea = typeof seaPx === 'function' ? seaPx(px, py) : seaPx;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ],

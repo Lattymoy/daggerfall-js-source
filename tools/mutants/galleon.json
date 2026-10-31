@@ -21,8 +21,8 @@
   {
     "name": "GALLEON-hold-dropped",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }",
-    "new": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now); settling.add(boat); }",
+    "old": "        s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);",
+    "new": "        s.laidUntil = Math.max(s.laidUntil, now);",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "GALLEON-muzzle-inside",
     "file": "src/systems/naval/navalShips.js",
-    "old": "broadside: Object.freeze([[5.949, 2.2435, -7.595]",
-    "new": "broadside: Object.freeze([[5.749, 2.2435, -7.595]",
+    "old": "        [5.949, 2.2435, -7.595],",
+    "new": "        [5.749, 2.2435, -7.595],",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "GALLEON2-keel-first-export",
     "file": "src/systems/naval/navalShips.js",
-    "old": "halfWidth: 5.86, keel: -4.64, top: 12.3,",
-    "new": "halfWidth: 5.86, keel: -3.89, top: 12.3,",
+    "old": "    keel: -4.64,",
+    "new": "    keel: -3.89,",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],

@@ -2,7 +2,7 @@
   {
     "name": "CT-xp-sunk-unweighed",
     "file": "src/systems/naval/captainTree.js",
-    "old": "for (const [trade, w] of Object.entries(CAPTAIN_XP.sunk)) xp += n0(log.sunk?.[trade]) * w;",
+    "old": "  for (const [trade, w] of Object.entries(CAPTAIN_XP.sunk)) xp += n0(log.sunk?.[trade]) * w;",
     "new": "",
     "tests": [
       "test/systems/naval/captaintree.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "CT-xp-contracts-unweighed",
     "file": "src/systems/naval/captainTree.js",
-    "old": "for (const v of Object.values(log.contracts ?? {})) xp += n0(v) * CAPTAIN_XP.contract;",
+    "old": "  for (const v of Object.values(log.contracts ?? {})) xp += n0(v) * CAPTAIN_XP.contract;",
     "new": "",
     "tests": [
       "test/systems/naval/captaintree.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "CT-xp-leagues-whole",
     "file": "src/systems/naval/captainTree.js",
-    "old": "xp += Math.floor(n0(log.sailed) / LEAGUE_M) * CAPTAIN_XP.league;",
-    "new": "xp += n0(log.sailed) / LEAGUE_M * CAPTAIN_XP.league;",
+    "old": "  xp += Math.floor(n0(log.sailed) / LEAGUE_M) * CAPTAIN_XP.league;",
+    "new": "  xp += (n0(log.sailed) / LEAGUE_M) * CAPTAIN_XP.league;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "CT-xp-traded-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "xp += Math.floor(n0(log.traded) / TRADED_GOLD) * CAPTAIN_XP.traded;",
+    "old": "  xp += Math.floor(n0(log.traded) / TRADED_GOLD) * CAPTAIN_XP.traded;",
     "new": "",
     "tests": [
       "test/systems/naval/captaintree.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "CT-curve-linear",
     "file": "src/systems/naval/captainTree.js",
-    "old": "(L <= 1 ? 0 : Math.round(100 * (L - 1) ** 1.6))",
-    "new": "(L <= 1 ? 0 : Math.round(100 * (L - 1)))",
+    "old": "export const xpForLevel = (L) => (L <= 1 ? 0 : Math.round(100 * (L - 1) ** 1.6));",
+    "new": "export const xpForLevel = (L) => (L <= 1 ? 0 : Math.round(100 * (L - 1)));",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CT-level-uncapped",
     "file": "src/systems/naval/captainTree.js",
-    "old": "while (L < CAPTAIN_LEVEL_MAX && n0(xp) >= xpForLevel(L + 1)) L++;",
-    "new": "while (L < 99 && n0(xp) >= xpForLevel(L + 1)) L++;",
+    "old": "  while (L < CAPTAIN_LEVEL_MAX && n0(xp) >= xpForLevel(L + 1)) L++;",
+    "new": "  while (L < 99 && n0(xp) >= xpForLevel(L + 1)) L++;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CT-held-one-pass",
     "file": "src/systems/naval/captainTree.js",
-    "old": "      seen.add(id); out.push(id); grew = true;",
-    "new": "      seen.add(id); out.push(id);",
+    "old": "      grew = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CT-held-uncapped",
     "file": "src/systems/naval/captainTree.js",
-    "old": "      if (out.length - 1 >= points) break;\n      if (seen.has(id)",
-    "new": "      if (seen.has(id)",
+    "old": "      if (out.length - 1 >= points) break;\n      if (seen.has(id) || !neighboursOf(id).some((n) => seen.has(n))) continue;",
+    "new": "      if (seen.has(id) || !neighboursOf(id).some((n) => seen.has(n))) continue;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CT-take-no-points",
     "file": "src/systems/naval/captainTree.js",
-    "old": "&& neighboursOf(id).some((n) => h.has(n)) && h.size - 1 < points;",
-    "new": "&& neighboursOf(id).some((n) => h.has(n));",
+    "old": "  return BY_ID.has(id) && !h.has(id) && neighboursOf(id).some((n) => h.has(n)) && h.size - 1 < points;",
+    "new": "  return BY_ID.has(id) && !h.has(id) && neighboursOf(id).some((n) => h.has(n));",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CT-stats-last-only",
     "file": "src/systems/naval/captainTree.js",
-    "old": "out[k] = Math.round((out[k] + v) * 10000) / 10000;",
-    "new": "out[k] = v;",
+    "old": "  for (const id of heldStars(held))\n    for (const [k, v] of Object.entries(starOf(id).stats)) out[k] = Math.round((out[k] + v) * 10000) / 10000;",
+    "new": "  for (const id of heldStars(held)) for (const [k, v] of Object.entries(starOf(id).stats)) out[k] = v;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CT-refit-way-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "speed: refit.speed * statScale(stats, 'way')",
-    "new": "speed: refit.speed",
+    "old": "    speed: refit.speed * statScale(stats, 'way'),",
+    "new": "    speed: refit.speed,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CT-refit-harm-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "guns: refit.guns * statScale(stats, 'harm')",
-    "new": "guns: refit.guns",
+    "old": "    guns: refit.guns * statScale(stats, 'harm'),",
+    "new": "    guns: refit.guns,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CT-refit-oars-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "oars: statScale(stats, 'oars'), turn: statScale(stats, 'turn'),",
-    "new": "oars: 1, turn: statScale(stats, 'turn'),",
+    "old": "    oars: statScale(stats, 'oars'),",
+    "new": "    oars: 1,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CT-refit-turn-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "oars: statScale(stats, 'oars'), turn: statScale(stats, 'turn'),",
-    "new": "oars: statScale(stats, 'oars'), turn: 1,",
+    "old": "    turn: statScale(stats, 'turn'),",
+    "new": "    turn: 1,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CT-worth-reload-unfloored",
     "file": "src/systems/naval/captainTree.js",
-    "old": "reload: Math.max(RELOAD_LEAST, worth.reload * (1 - n('reload')))",
-    "new": "reload: worth.reload * (1 - n('reload'))",
+    "old": "    reload: Math.max(RELOAD_LEAST, worth.reload * (1 - n('reload'))),",
+    "new": "    reload: worth.reload * (1 - n('reload')),",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CT-worth-mend-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "mend: worth.mend * statScale(stats, 'repair')",
-    "new": "mend: worth.mend",
+    "old": "    mend: worth.mend * statScale(stats, 'repair'),",
+    "new": "    mend: worth.mend,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CT-worth-hands-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "hands: Math.max(0, worth.hands + Math.round(n('boarders')))",
-    "new": "hands: worth.hands",
+    "old": "    hands: Math.max(0, worth.hands + Math.round(n('boarders'))),",
+    "new": "    hands: worth.hands,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "CT-shot-grape-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "if (s === 'grape' && stats.grape) return { ...gun, crew: gun.crew * statScale(stats, 'grape') };",
+    "old": "  if (s === 'grape' && stats.grape) return { ...gun, crew: gun.crew * statScale(stats, 'grape') };",
     "new": "",
     "tests": [
       "test/systems/naval/captaintree.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "CT-shot-chain-natural-missed",
     "file": "src/systems/naval/captainTree.js",
-    "old": "const s = shot == null ? naturalShot(gunKind) : shotId(shot);",
-    "new": "const s = shotId(shot);",
+    "old": "  const s = shot == null ? naturalShot(gunKind) : shotId(shot);",
+    "new": "  const s = shotId(shot);",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "CT-shot-heated-unread",
     "file": "src/systems/naval/captainTree.js",
-    "old": "if (s === 'heated' && stats.heated) return { ...gun, fireK: statScale(stats, 'heated') };",
+    "old": "  if (s === 'heated' && stats.heated) return { ...gun, fireK: statScale(stats, 'heated') };",
     "new": "",
     "tests": [
       "test/systems/naval/captaintree.test.js"
@@ -631,8 +631,8 @@
   {
     "name": "CT-ledger-tree-unsaved",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)), tree: tree.slice() }),",
-    "new": "raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)) }),",
+    "old": "      tree: tree.slice(),\n    }), // CAPTAIN-TREE: her stars",
+    "new": "    }), // CAPTAIN-TREE: her stars",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "CT-ledger-restore-uncapped",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      tree = heldStars(r.tree, captainOf(log).points);",
-    "new": "      tree = heldStars(r.tree);",
+    "old": "      tree = heldStars(r.tree, captainOf(log).points); // CAPTAIN-TREE: her stars as the law and her log allow (an older save's: the Helm)",
+    "new": "      tree = heldStars(r.tree); // CAPTAIN-TREE: her stars as the law and her log allow (an older save's: the Helm)",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -649,8 +649,8 @@
   {
     "name": "CT-ledger-set-uncapped",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },",
-    "new": "    setTree(ids) { tree = heldStars(ids); stats = starStats(tree); return tree.slice(); },",
+    "old": "      tree = heldStars(ids, captainOf(log).points);",
+    "new": "      tree = heldStars(ids);",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -658,8 +658,8 @@
   {
     "name": "CT-ledger-stats-stale",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },",
-    "new": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); return tree.slice(); },",
+    "old": "      stats = starStats(tree);\n      return tree.slice();",
+    "new": "      return tree.slice();",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

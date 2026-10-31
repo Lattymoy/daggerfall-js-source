@@ -209,7 +209,7 @@
   {
     "name": "LEDGER-dealt-any-day",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      const at = dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
+    "old": "      const at =\n        dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
     "new": "      const at = dealt && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
     "tests": [
       "test/systems/naval/capttrade.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "LEDGER-dealt-unsaved",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null, charts:",
-    "new": "dealt: null, charts:",
+    "old": "      dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null,",
+    "new": "      dealt: null,",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "LEDGER-chart-twice",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX) return false;",
+    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX)\n        return false;",
     "new": "      if (!c || typeof c.id !== 'string' || charts.length >= CHARTS_MAX) return false;",
     "tests": [
       "test/systems/naval/capttrade.test.js"
@@ -281,7 +281,7 @@
   {
     "name": "LEDGER-chart-uncapped",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX) return false;",
+    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX)\n        return false;",
     "new": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id)) return false;",
     "tests": [
       "test/systems/naval/capttrade.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "LEDGER-chart-unlogged",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      raised = [...raised.filter((x) => x !== id), id].slice(-CHARTS_RAISED_KEEP);\n      ledger.note('maps');",
-    "new": "      raised = [...raised.filter((x) => x !== id), id].slice(-CHARTS_RAISED_KEEP);",
+    "old": "      ledger.note('maps');\n      return c;",
+    "new": "      return c;",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]

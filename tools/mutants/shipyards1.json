@@ -219,8 +219,8 @@
   {
     "name": "SHIPYARDS-a-discharge-adds-men",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "discharge(crew) { if (Number.isFinite(crew)) s.crew = Math.max(0, Math.min(s.crew, crew)); },",
-    "new": "discharge(crew) { if (Number.isFinite(crew)) s.crew = Math.max(0, crew); },",
+    "old": "      if (Number.isFinite(crew)) s.crew = Math.max(0, Math.min(s.crew, crew));",
+    "new": "      if (Number.isFinite(crew)) s.crew = Math.max(0, crew);",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]

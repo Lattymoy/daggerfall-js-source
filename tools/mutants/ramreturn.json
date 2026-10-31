@@ -2,8 +2,8 @@
   {
     "name": "RR-the-lesser-hull-dropped",
     "file": "src/systems/naval/navalRam.js",
-    "old": "const lesser = Math.max(0, Math.min(Number(mine) || 0, Number(hers) || 0));",
-    "new": "const lesser = Math.max(0, Number(hers) || 0);",
+    "old": "  const lesser = Math.max(0, Math.min(Number(mine) || 0, Number(hers) || 0));",
+    "new": "  const lesser = Math.max(0, Number(hers) || 0);",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RR-the-pace-unbounded",
     "file": "src/systems/naval/navalRam.js",
-    "old": "const pace = Math.min(1, closing / RAM_FULL_SPEED);",
-    "new": "const pace = closing / RAM_FULL_SPEED;",
+    "old": "  const pace = Math.min(1, closing / RAM_FULL_SPEED);",
+    "new": "  const pace = closing / RAM_FULL_SPEED;",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RR-the-face-unread",
     "file": "src/systems/naval/navalRam.js",
-    "old": "* lesser * pace * (side ? 1 : RAM_GLANCE));",
-    "new": "* lesser * pace);",
+    "old": "  return Math.round((galley ? GALLEY_SHARE : RAM_SHARE) * lesser * pace * (side ? 1 : RAM_GLANCE));",
+    "new": "  return Math.round((galley ? GALLEY_SHARE : RAM_SHARE) * lesser * pace);",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RR-the-galley-share-plain",
     "file": "src/systems/naval/navalRam.js",
-    "old": "return Math.round((galley ? GALLEY_SHARE : RAM_SHARE) * lesser",
-    "new": "return Math.round(RAM_SHARE * lesser",
+    "old": "  return Math.round((galley ? GALLEY_SHARE : RAM_SHARE) * lesser * pace * (side ? 1 : RAM_GLANCE));",
+    "new": "  return Math.round(RAM_SHARE * lesser * pace * (side ? 1 : RAM_GLANCE));",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RR-a-bump-rams",
     "file": "src/systems/naval/navalRam.js",
-    "old": "if (!(closing >= RAM_SPEED)) return 0;",
-    "new": "if (!(closing > 0)) return 0;",
+    "old": "  if (!(closing >= RAM_SPEED)) return 0;",
+    "new": "  if (!(closing > 0)) return 0;",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RR-the-normal-inward",
     "file": "src/systems/naval/navalRam.js",
-    "old": "const a = side ? box.ax : box.az, s = (side ? x : z) < 0 ? -1 : 1;",
-    "new": "const a = side ? box.ax : box.az, s = (side ? x : z) < 0 ? 1 : -1;",
+    "old": "    s = (side ? x : z) < 0 ? -1 : 1;",
+    "new": "    s = (side ? x : z) < 0 ? 1 : -1;",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RR-her-way-ignored",
     "file": "src/systems/naval/navalRam.js",
-    "old": "most = Math.max(most, -((w[0] - her[0]) * normal[0] + (w[2] - her[2]) * normal[2]));",
-    "new": "most = Math.max(most, -(w[0] * normal[0] + w[2] * normal[2]));",
+    "old": "  for (const w of ways) most = Math.max(most, -((w[0] - her[0]) * normal[0] + (w[2] - her[2]) * normal[2]));",
+    "new": "  for (const w of ways) most = Math.max(most, -(w[0] * normal[0] + w[2] * normal[2]));",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "RR-the-galley-built-plain",
     "file": "src/systems/naval/navalShips.js",
-    "old": "beam: 8.8, ram: true,",
-    "new": "beam: 8.8, ram: false,",
+    "old": "    ram: true,",
+    "new": "    ram: false,",
     "tests": [
       "test/systems/naval/ramreturn.test.js",
       "test/systems/shipyards1.test.js",

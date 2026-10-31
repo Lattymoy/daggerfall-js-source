@@ -34,8 +34,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-the-seas-seconds",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "const spent = trafficSeconds(dt, ctx.real, lastReal);",
-    "new": "const spent = Math.max(0, dt);",
+    "old": "      const spent = trafficSeconds(dt, ctx.real, lastReal); // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts",
+    "new": "      const spent = Math.max(0, dt); // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -44,8 +44,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-reset-remembers",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "reset() { wait = FIRST_ROLL_S; lastReal = null; },",
-    "new": "reset() { wait = FIRST_ROLL_S; },",
+    "old": "      lastReal = null;\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -54,8 +54,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-first-read-spends",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
-    "new": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : Math.max(0, Number(dt) || 0);",
+    "old": "  return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
+    "new": "  return Number.isFinite(lastReal)\n    ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal))\n    : Math.max(0, Number(dt) || 0);",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -247,8 +247,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-band-unwalked",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
-    "new": "if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
+    "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
+    "new": "        if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -257,8 +257,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-dry-unread",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  if (built(x, z)) return true;\n  const c = state.compensation;",
-    "new": "  if (built(x, z)) return true;\n  if (built) return false;\n  const c = state.compensation;",
+    "old": "  const c = state.compensation;",
+    "new": "  if (built) return false;\n  const c = state.compensation;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -267,8 +267,8 @@
   {
     "name": "RPT1026-FAR-QUAY-every-pixel-dry",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
-    "new": "d = true;",
+    "old": "  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++)\n    for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
+    "new": "  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++) for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = true;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -277,8 +277,8 @@
   {
     "name": "RPT1026-FAR-QUAY-one-town-alone",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);",
-    "new": "stepOne(Array.isArray(near) ? near[0] : near, clock);",
+    "old": "    for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock); // RPT1026-WORLD FAR-QUAY: every port near",
+    "new": "    stepOne(Array.isArray(near) ? near[0] : near, clock); // RPT1026-WORLD FAR-QUAY: every port near",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -287,8 +287,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-far-edge-past-the-ring",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN)",
-    "new": "x0 + (sx * i) / nx, z0 + (sz * k) / nz",
+    "old": "        if (\n          !harbourKnown(\n            built,\n            state,\n            woods,\n            x0 + Math.min((sx * i) / nx, sx - EDGE_IN),\n            z0 + Math.min((sz * k) / nz, sz - EDGE_IN),\n          )\n        )\n          return false;",
+    "new": "        if (!harbourKnown(built, state, woods, x0 + (sx * i) / nx, z0 + (sz * k) / nz)) return false;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],

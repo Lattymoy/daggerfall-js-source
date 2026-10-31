@@ -182,8 +182,8 @@
   {
     "name": "A2-pass-first-kept",
     "file": "src/systems/naval/navalShots.js",
-    "old": "if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))",
-    "new": "if (near.gap <= NEAR_MISS_M && !was)",
+    "old": "      if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))\n        (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });",
+    "new": "      if (near.gap <= NEAR_MISS_M && !was) (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "A2-pass-gone-untold",
     "file": "src/systems/naval/navalShots.js",
-    "old": "for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id); ",
-    "new": "",
+    "old": "        for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id);\n        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });",
+    "new": "        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

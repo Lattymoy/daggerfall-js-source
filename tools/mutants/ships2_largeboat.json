@@ -172,8 +172,8 @@
   {
     "name": "SHIPS2-L-the-mods-boats-numbers-back",
     "file": "src/systems/naval/navalShips.js",
-    "old": "broadside: Object.freeze([[2.65, 2.62, -2.3], [2.65, 2.62, 0.3], [2.65, 2.62, 2.3]]",
-    "new": "broadside: Object.freeze([[1.8, 1.3, -2.3], [2.05, 1.3, 0.3], [1.8, 1.3, 2.3]]",
+    "old": "        [2.65, 2.62, -2.3],\n        [2.65, 2.62, 0.3],\n        [2.65, 2.62, 2.3],",
+    "new": "        [1.8, 1.3, -2.3],\n        [2.05, 1.3, 0.3],\n        [1.8, 1.3, 2.3],",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "SHIPS2-L-a-box-of-no-plan",
     "file": "src/systems/naval/navalShips.js",
-    "old": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0)",
-    "new": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 9)",
+    "old": "      onBoom(0, [-0.0171, 5.1175, -0.5993], [-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0), // 0: the lateen below,",
+    "new": "      onBoom(0, [-0.0171, 5.1175, -0.5993], [-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 9), // 0: the lateen below,",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "SHIPS2-L-a-box-short-of-its-canvas",
     "file": "src/systems/naval/navalShips.js",
-    "old": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0)",
-    "new": "[-1.09, 2.72, -5.04], [0.22, 4.31, 4.5], 0, 0)",
+    "old": "      onBoom(0, [-0.0171, 5.1175, -0.5993], [-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0), // 0: the lateen below,",
+    "new": "      onBoom(0, [-0.0171, 5.1175, -0.5993], [-1.09, 2.72, -5.04], [0.22, 4.31, 4.5], 0, 0), // 0: the lateen below,",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],

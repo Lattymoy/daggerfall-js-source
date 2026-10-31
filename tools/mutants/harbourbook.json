@@ -57,8 +57,8 @@
   {
     "name": "HARBOUR-BOOK-retry-late",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S",
-    "new": "else if (!h.harbour && clock - h.at > HARBOUR_RETRY_S",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (!h.harbour && clock - h.at > HARBOUR_RETRY_S && near.ready?.() !== false) {",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "HARBOUR-BOOK-sounded-off-a-streaming-shore",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "    if (!h) { if (near.ready?.() !== false) book.set(",
-    "new": "    if (!h) { if (true) book.set(",
+    "old": "      if (near.ready?.() !== false)\n        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "new": "      if (true) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HARBOUR-BOOK-found-sounded-again",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "else if (!h.harbour && clock",
-    "new": "else if (clock",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HARBOUR-BOOK-left-behind",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }",
-    "new": "  function offsetAll(o) { }",
+    "old": "  function offsetAll(o) {\n    for (const h of book.values()) offsetHarbour(h.harbour, o);\n  }",
+    "new": "  function offsetAll(o) {}",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "HARBOUR-BOOK-never-forgotten",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  function clear() { book.clear(); }",
-    "new": "  function clear() { }",
+    "old": "  function clear() {\n    book.clear();\n  }",
+    "new": "  function clear() {}",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "HARBOUR-BOOK-null-listed",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "    for (const h of book.values()) if (h.harbour?.berths?.length) out.push(",
-    "new": "    for (const h of book.values()) out.push(",
+    "old": "    for (const h of book.values())\n      if (h.harbour?.berths?.length) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });",
+    "new": "    for (const h of book.values()) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });",
     "tests": [
       "test/systems/naval/harbourbook.test.js"
     ]

@@ -110,8 +110,8 @@
   {
     "name": "TAGS-harbour-unnamed",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
-    "new": "book.set(near.key, { key: near.key, name: null, harbour: sound(), at: clock });",
+    "old": "      if (near.ready?.() !== false)\n        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "new": "      if (near.ready?.() !== false) book.set(near.key, { key: near.key, name: null, harbour: sound(), at: clock });",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]

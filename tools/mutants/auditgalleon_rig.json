@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-GALLEON-R5-a-box-home",
     "file": "src/systems/naval/navalShips.js",
-    "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2),",
-    "new": "      [[-5.2, 13.27, 0.42], [5.2, 17.82, 1.44]],",
+    "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2), // the main topsail and its yard",
+    "new": "      [\n        [-5.2, 13.27, 0.42],\n        [5.2, 17.82, 1.44],\n      ], // the main topsail and its yard",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-GALLEON-R5-the-gaffs-box-on-a-yards-boom",
     "file": "src/systems/naval/navalShips.js",
-    "old": "      onBoom(3, [0, 7.75, -0.191],",
-    "new": "      onBoom(2, [0, 7.75, -0.191],",
+    "old": "      onBoom(3, [0, 7.75, -0.191], [-1.07, 8.07, -8.2], [1.07, 15.03, -0.79], 3), // the gaff sail and its gaff",
+    "new": "      onBoom(2, [0, 7.75, -0.191], [-1.07, 8.07, -8.2], [1.07, 15.03, -0.79], 3), // the gaff sail and its gaff",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-GALLEON-R5-the-jibs-one-box",
     "file": "src/systems/naval/navalShips.js",
-    "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4),                     // the jib along its luff,\n      pitched([0, 12.375, 15.832], [1.03, 0.96, 7.35], 40.93, 4),                    // its leech\n      pitched([0, 9.286, 22.488], [1.06, 0.91, 4.54], -10.23, 4),                    // and its foot\n",
-    "new": "      [[-1.1, 12.3, 9.4], [1.1, 16.5, 27.9]],\n",
+    "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4), // the jib along its luff,\n      pitched([0, 12.375, 15.832], [1.03, 0.96, 7.35], 40.93, 4), // its leech\n      pitched([0, 9.286, 22.488], [1.06, 0.91, 4.54], -10.23, 4), // and its foot",
+    "new": "      [\n        [-1.1, 12.3, 9.4],\n        [1.1, 16.5, 27.9],\n      ],",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],

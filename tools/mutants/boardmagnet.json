@@ -11,7 +11,7 @@
   {
     "name": "BM-the-clearance-dropped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const off = side * Math.max(anchor.beam + ship.beam + BERTH_GAP, (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR);",
+    "old": "  const off =\n    side *\n    Math.max(\n      anchor.beam + ship.beam + BERTH_GAP,\n      (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR,\n    );",
     "new": "  const off = side * (anchor.beam + ship.beam + BERTH_GAP);",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "BM-the-haul-blind-to-the-berth-moving",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "    haul(to, anchor, dt) {\n      b.to = to;",
-    "new": "    haul(to, anchor, dt) {\n      to = b.to;",
+    "old": "      b.to = to;",
+    "new": "      to = b.to;",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "BM-the-stars-reach-nothing",
     "file": "src/systems/naval/captainTree.js",
-    "old": "['c_ram1', 'small', { reach: 0.15 }], ['c_irons', 'notable', { reach: 0.25, boarders: 1 }]",
-    "new": "['c_ram1', 'small', { boarders: 0 }], ['c_irons', 'notable', { boarders: 1 }]",
+    "old": "      ['c_ram1', 'small', { reach: 0.15 }],\n      ['c_irons', 'notable', { reach: 0.25, boarders: 1 }],",
+    "new": "      ['c_ram1', 'small', { boarders: 0 }],\n      ['c_irons', 'notable', { boarders: 1 }],",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "BM-AUDIT-the-lane-dropped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const da = clamp(a1 - a0, -step, step);\n  step -= Math.abs(da);",
-    "new": "  const da = clamp(a1 - a0, -step, step);",
+    "old": "  step -= Math.abs(da);\n  const a = a0 + da,",
+    "new": "  const a = a0 + da,",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "BM-AUDIT-the-push-dropped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "    if (!push) break;\n    pos = [pos[0] + push[0], pos[1], pos[2] + push[1]];",
-    "new": "    if (!push || push) break;\n    pos = [pos[0] + push[0], pos[1], pos[2] + push[1]];",
+    "old": "    if (!push) break;",
+    "new": "    if (!push || push) break;",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "BM-AUDIT-the-push-at-the-bare-hull",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  grown.hl += HULL_CLEAR; grown.hw += HULL_CLEAR;\n",
-    "new": "",
+    "old": "  grown.hl += HULL_CLEAR;\n  grown.hw += HULL_CLEAR;\n  for (let i = 0; i < 4; i++) {",
+    "new": "  for (let i = 0; i < 4; i++) {",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "BM-AUDIT-the-haul-never-waits",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "(b.t >= GRAPPLE_S - 1e-9 && b.arrived) || b.t >= HAUL_MAX_S",
-    "new": "b.t >= GRAPPLE_S - 1e-9 || b.t >= HAUL_MAX_S",
+    "old": "      if ((b.t >= GRAPPLE_S - 1e-9 && b.arrived) || b.t >= HAUL_MAX_S) {",
+    "new": "      if (b.t >= GRAPPLE_S - 1e-9 || b.t >= HAUL_MAX_S) {",
     "tests": [
       "test/systems/naval/boardmagnet.test.js",
       "test/systems/naval/nav_d_boarding.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "BM-AUDIT-the-haul-unbounded-in-time",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "      b.at = !anchor || b.t + d >= HAUL_MAX_S ?",
-    "new": "      b.at = !anchor ?",
+    "old": "      b.at =\n        !anchor || b.t + d >= HAUL_MAX_S\n          ? { pos: [...to.pos], yaw: to.yaw }\n          : drawHaul(b.at, to, b.t, d, anchor, b.hull);",
+    "new": "      b.at = !anchor ? { pos: [...to.pos], yaw: to.yaw } : drawHaul(b.at, to, b.t, d, anchor, b.hull);",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]

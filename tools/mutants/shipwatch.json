@@ -272,8 +272,8 @@
   {
     "name": "AI-night-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const see = nightSight(sight, { night: !!world.night, lit });",
-    "new": "const see = sight;",
+    "old": "    const see = nightSight(sight, { night: !!world.night, lit }); // SHIP-WATCH: by night, by her lanterns (or her guns)",
+    "new": "    const see = sight; // SHIP-WATCH: by night, by her lanterns (or her guns)",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AI-lanterns-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const lit = !!c.lit || !!flashed?.has(c.id);",
-    "new": "const lit = !!flashed?.has(c.id);",
+    "old": "    const lit = !!c.lit || !!flashed?.has(c.id);",
+    "new": "    const lit = !!flashed?.has(c.id);",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AI-flashes-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const lit = !!c.lit || !!flashed?.has(c.id);",
-    "new": "const lit = !!c.lit;",
+    "old": "    const lit = !!c.lit || !!flashed?.has(c.id);",
+    "new": "    const lit = !!c.lit;",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AI-flashes-forever",
     "file": "src/systems/naval/navalAI.js",
-    "old": "world.now - g.at <= GUNS_SEEN_S",
-    "new": "true",
+    "old": "  const flashed = world.night\n    ? new Set((world.gunfire ?? []).filter((g) => world.now - g.at <= GUNS_SEEN_S).map((g) => g.by))\n    : null;",
+    "new": "  const flashed = world.night ? new Set((world.gunfire ?? []).filter((g) => true).map((g) => g.by)) : null;",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AI-flee-by-day",
     "file": "src/systems/naval/navalAI.js",
-    "old": "dist < nightSight(FLEE_RANGE, { night: !!world.night, lit })",
-    "new": "dist < FLEE_RANGE",
+    "old": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit }) &&",
+    "new": "      dist < FLEE_RANGE &&",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]

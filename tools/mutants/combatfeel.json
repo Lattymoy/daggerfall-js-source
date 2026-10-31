@@ -2,8 +2,8 @@
   {
     "name": "CF-smoke-to-rest",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      if (p.kind === 'smoke') { p.vel[0] = ax + (p.vel[0] - ax) * drag; p.vel[2] = az + (p.vel[2] - az) * drag; }\n      else { p.vel[0] *= drag; p.vel[2] *= drag; }",
-    "new": "      p.vel[0] *= drag; p.vel[2] *= drag;",
+    "old": "      if (p.kind === 'smoke') {\n        p.vel[0] = ax + (p.vel[0] - ax) * drag;\n        p.vel[2] = az + (p.vel[2] - az) * drag;\n      } else {\n        p.vel[0] *= drag;\n        p.vel[2] *= drag;\n      }",
+    "new": "      p.vel[0] *= drag;\n      p.vel[2] *= drag;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CF-wind-unscaled",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
-    "new": "    const ax = (w[0] ?? 0), az = (w[2] ?? 0);",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS,\n      az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = w[0] ?? 0,\n      az = w[2] ?? 0;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CF-all-blown",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      if (p.kind === 'smoke') { p.vel[0] = ax",
-    "new": "      if (true) { p.vel[0] = ax",
+    "old": "      if (p.kind === 'smoke') {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CF-spout-dropped",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    spout(pos, big, scale);   // SPLASH-SPOUT",
-    "new": "    // SPLASH-SPOUT",
+    "old": "    spout(pos, big, scale); // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none",
+    "new": "    // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CF-spout-low",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "vel: [jitter(0.35), (big ? SPOUT_UP.big : SPOUT_UP.small) * Math.sqrt(k) * (0.8 + r() * 0.3), jitter(0.35)]",
-    "new": "vel: [jitter(0.35), 6.5 * (0.8 + r() * 0.3), jitter(0.35)]",
+    "old": "        vel: [jitter(0.35), (big ? SPOUT_UP.big : SPOUT_UP.small) * Math.sqrt(k) * (0.8 + r() * 0.3), jitter(0.35)],",
+    "new": "        vel: [jitter(0.35), 6.5 * (0.8 + r() * 0.3), jitter(0.35)],",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CF-splash-unscaled",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    splash(pos, big, scale);\n    spout(pos, big, scale);",
-    "new": "    splash(pos, big);\n    spout(pos, big, scale);",
+    "old": "    splash(pos, big, scale);",
+    "new": "    splash(pos, big);",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CF-splash-size-fixed",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "size0: (big ? 0.9 : 0.6) * k, size1: (big ? 1.8 : 1.2) * k,",
-    "new": "size0: big ? 0.9 : 0.6, size1: big ? 1.8 : 1.2,",
+    "old": "        size0: (big ? 0.9 : 0.6) * k,\n        size1: (big ? 1.8 : 1.2) * k,",
+    "new": "        size0: big ? 0.9 : 0.6,\n        size1: big ? 1.8 : 1.2,",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CF-foam-unscaled",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "size0: (big ? 1.6 : 1) * k, size1: (big ? 9 : 5.5) * k,",
-    "new": "size0: big ? 1.6 : 1, size1: big ? 9 : 5.5,",
+    "old": "      size0: (big ? 1.6 : 1) * k,\n      size1: (big ? 9 : 5.5) * k,",
+    "new": "      size0: big ? 1.6 : 1,\n      size1: big ? 9 : 5.5,",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CF-drench-away",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "vel: [dx / l * s + jitter(0.8), 6 + r() * 4, dz / l * s + jitter(0.8)]",
-    "new": "vel: [-dx / l * s + jitter(0.8), 6 + r() * 4, -dz / l * s + jitter(0.8)]",
+    "old": "        vel: [(dx / l) * s + jitter(0.8), 6 + r() * 4, (dz / l) * s + jitter(0.8)],",
+    "new": "        vel: [(-dx / l) * s + jitter(0.8), 6 + r() * 4, (-dz / l) * s + jitter(0.8)],",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CF-pass-deaf",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (!t.ear || t.id === b.shooter",
-    "new": "      if (t.id === b.shooter",
+    "old": "      if (!t.ear || t.id === b.shooter || b.passed?.has(t.id)) continue;",
+    "new": "      if (t.id === b.shooter || b.passed?.has(t.id)) continue;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CF-pass-own",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (!t.ear || t.id === b.shooter || b.passed?.has(t.id)",
-    "new": "      if (!t.ear || b.passed?.has(t.id)",
+    "old": "      if (!t.ear || t.id === b.shooter || b.passed?.has(t.id)) continue;",
+    "new": "      if (!t.ear || b.passed?.has(t.id)) continue;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CF-pass-twice",
     "file": "src/systems/naval/navalShots.js",
-    "old": "    (b.passed ??= new Set()).add(id);\n    emit({ type: 'pass'",
-    "new": "    emit({ type: 'pass'",
+    "old": "    (b.passed ??= new Set()).add(id);\n    emit({",
+    "new": "    emit({",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CF-pass-on-strike",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (ship && ship.t.id === t.id && ship.e.t === firstT) { b.near?.delete(t.id); continue; }\n",
-    "new": "",
+    "old": "      if (ship && ship.t.id === t.id && ship.e.t === firstT) {\n        b.near?.delete(t.id);\n        continue;\n      }\n      const upTo = firstT === Infinity ? 1 : firstT;",
+    "new": "      const upTo = firstT === Infinity ? 1 : firstT;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CF-pass-reach",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (near.gap <= NEAR_MISS_M && (!was",
-    "new": "      if (near.gap <= NEAR_MISS_M * 2 && (!was",
+    "old": "      if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))",
+    "new": "      if (near.gap <= NEAR_MISS_M * 2 && (!was || near.gap < was.gap))",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "CF-gap-signed",
     "file": "src/systems/naval/navalShots.js",
-    "old": "  return Math.hypot(Math.max(0, Math.abs(l[0]) - box.h[0]), Math.max(0, Math.abs(l[1]) - box.h[1]), Math.max(0, Math.abs(l[2]) - box.h[2]));",
+    "old": "  return Math.hypot(\n    Math.max(0, Math.abs(l[0]) - box.h[0]),\n    Math.max(0, Math.abs(l[1]) - box.h[1]),\n    Math.max(0, Math.abs(l[2]) - box.h[2]),\n  );",
     "new": "  return Math.hypot(Math.abs(l[0]) - box.h[0], Math.abs(l[1]) - box.h[1], Math.abs(l[2]) - box.h[2]);",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "CF-near-first-only",
     "file": "src/systems/naval/navalShots.js",
-    "old": "    if (boxGap(box, at(m1)) <= boxGap(box, at(m2))) hi = m2; else lo = m1;",
+    "old": "    if (boxGap(box, at(m1)) <= boxGap(box, at(m2))) hi = m2;\n    else lo = m1;",
     "new": "    hi = m2;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "CF-near-past-stop",
     "file": "src/systems/naval/navalShots.js",
-    "old": "  let lo = 0, hi = Math.max(0, Math.min(1, upTo));",
-    "new": "  let lo = 0, hi = 1;",
+    "old": "    hi = Math.max(0, Math.min(1, upTo));",
+    "new": "    hi = 1;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]

@@ -85,8 +85,8 @@
   {
     "name": "HELM-WAY-captains-way-for-rate",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(HULL_HELM[ship.hull] ?? 1) * steerage(v) * DEG",
-    "new": "(HULL_HELM[ship.hull] ?? 1) * v * DEG",
+    "old": "  return Math.min(ship.cls.turn * DEG, Math.max(floor, (HULL_HELM[ship.hull] ?? 1) * steerage(v) * DEG));",
+    "new": "  return Math.min(ship.cls.turn * DEG, Math.max(floor, (HULL_HELM[ship.hull] ?? 1) * v * DEG));",
     "tests": [
       "test/systems/naval/helmway.test.js",
       "test/systems/naval/navaudit_captains.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "HELM-WAY-lookout-at-her-way",
     "file": "src/systems/naval/navalAI.js",
-    "old": "ship.cls.speed / turnRateAt(ship, ship.cls.speed))",
-    "new": "ship.speed / turnRateAt(ship, ship.speed))",
+    "old": "export const turnRadius = (ship) =>\n  Math.max(hullLength(ship.hull) * 0.5, ship.cls.speed / turnRateAt(ship, ship.cls.speed));",
+    "new": "export const turnRadius = (ship) => Math.max(hullLength(ship.hull) * 0.5, ship.speed / turnRateAt(ship, ship.speed));",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "HELM-WAY-unmanned-fights-on",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "        else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck;",
-    "new": "",
+    "old": "        } else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck; // HELM-WAY: nobody left to fight her fires either",
+    "new": "        }\n        // HELM-WAY: nobody left to fight her fires either",
     "tests": [
       "test/systems/naval/helmway.test.js",
       "test/systems/naval/seapeace.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "HELM-WAY-unmanned-doused",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "unmanned()) s.state = SHIP_STATES.struck;",
-    "new": "unmanned()) { s.state = SHIP_STATES.struck; douse(); }",
+    "old": "        } else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck; // HELM-WAY: nobody left to fight her fires either",
+    "new": "        } else if (s.state === SHIP_STATES.afloat && unmanned()) {\n          s.state = SHIP_STATES.struck;\n          douse();\n        } // HELM-WAY: nobody left to fight her fires either",
     "tests": [
       "test/systems/naval/helmway.test.js",
       "test/systems/naval/navaudit_guns.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "HELM-WAY-unmanned-refights",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "s.hull > s.maxHull * STRUCK_AT && !unmanned()) s.state = SHIP_STATES.afloat;",
-    "new": "s.hull > s.maxHull * STRUCK_AT) s.state = SHIP_STATES.afloat;",
+    "old": "      if (s.state === SHIP_STATES.struck && s.hull > s.maxHull * STRUCK_AT && !unmanned()) s.state = SHIP_STATES.afloat;",
+    "new": "      if (s.state === SHIP_STATES.struck && s.hull > s.maxHull * STRUCK_AT) s.state = SHIP_STATES.afloat;",
     "tests": [
       "test/systems/naval/helmway.test.js"
     ]

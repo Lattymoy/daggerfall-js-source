@@ -21,8 +21,8 @@
   {
     "name": "PORT-TOWNS-the-sea-not-asked",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": " && deliveryPort(p, seaAt))",
-    "new": ")",
+    "old": "      .filter((p) => p && p.key !== port.key && cheb(p, port) >= DELIVERY_PX_MIN && deliveryPort(p, seaAt))",
+    "new": "      .filter((p) => p && p.key !== port.key && cheb(p, port) >= DELIVERY_PX_MIN)",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js",
       "test/systems/naval/captboard.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "PORT-TOWNS-a-cargo-never-void",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "    if (ev.type === 'unported') return ev.port === c.to?.key ? 'void' : null;",
-    "new": "    if (ev.type === 'unported') return null;",
+    "old": "    if (ev.type === 'unported') return ev.port === c.to?.key ? 'void' : null; // FIELD BUGS 2026-10-13c PORT-TOWNS",
+    "new": "    if (ev.type === 'unported') return null; // FIELD BUGS 2026-10-13c PORT-TOWNS",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "PORT-TOWNS-every-cargo-void",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "return ev.port === c.to?.key ? 'void' : null;",
-    "new": "return 'void';",
+    "old": "    if (ev.type === 'unported') return ev.port === c.to?.key ? 'void' : null; // FIELD BUGS 2026-10-13c PORT-TOWNS",
+    "new": "    if (ev.type === 'unported') return 'void'; // FIELD BUGS 2026-10-13c PORT-TOWNS",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]

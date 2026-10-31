@@ -136,7 +136,7 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   assert.equal(createCrossLand((x, y) => !(x === 0 && y === 0), 4)(0, 0), 0, 'on land: none');
   assert.equal(createCrossLand(island, 2)(10, 10), Infinity, 'past its reach');
   assert.equal(CROSS_LAND_PX, 20);
-  assert.match(readFileSync(new URL('../../../src/systems/naval/etherCrossing.js', import.meta.url), 'utf8'), /if \(Math\.max\(Math\.abs\(dx\), Math\.abs\(dy\)\) === r && !seaPixel\(px \+ dx, py \+ dy\)\) \{ d = r; break ring; \}/, 'each ring\'s own pixels, asked once');
+  assert.match(readFileSync(new URL('../../../src/systems/naval/etherCrossing.js', import.meta.url), 'utf8'), /if \(Math\.max\(Math\.abs\(dx\), Math\.abs\(dy\)\) === r && !seaPixel\(px \+ dx, py \+ dy\)\) \{\n\s*d = r;\n\s*break ring;\n\s*\}/, 'each ring\'s own pixels, asked once');
 });
 
 test('ETHER-SEA the ledger\'s record: isles charted once each (the log\'s islands), a legend\'s day, a strand\'s day (the newest kept), the way out, the crossings, the legends heard - kept whole by the save and cleaned field by field (mutants: each field, the bounds)', () => {

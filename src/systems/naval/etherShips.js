@@ -18,17 +18,94 @@
 
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classById, shipNames } from './navalShips.js';
-import { BANDS, LEAGUE_PX, VEIL_X, veilhaven, etherHash, etherRng, inEther, compassPoint } from '../../world/ethericSea.js';
+import {
+  BANDS,
+  LEAGUE_PX,
+  VEIL_X,
+  veilhaven,
+  etherHash,
+  etherRng,
+  inEther,
+  compassPoint,
+} from '../../world/ethericSea.js';
 
 /** A trader of the isles flies their colours (the spyglass reads "the Isles' merchant colours"). */
 export const ISLES_FLAG = 'the Isles';
 /** The Eltheric Ocean's ship names - its corsairs' and its traders', ours: two words a name, a first and a last of each
  *  trade's own (AUDIT CAPTAIN'S SEA D20 - sixteen names a trade moored two ships of one harbour under the same name;
  *  these are 256 a trade, drawn as the sixteen were). */
-const PIRATE_FIRSTS = ['Gloam', 'Void', 'Starving', 'Pale', 'Ashen', 'Hollow', 'Black', 'Sable', 'Crooked', 'Mourning', 'Weeping', 'Amber', 'Drowned', 'Grim', 'Red', 'Last'];
-const PIRATE_LASTS = ['Reaver', 'Cutter', 'Tide', 'Lantern', 'Gull', 'Wind', 'Fang', 'Blade', 'Aurora', 'Wraith', 'Psalm', 'Comet', 'Star', 'Tern', 'Mercy', 'Shard'];
-const MERCHANT_FIRSTS = ['Amber', 'Starglass', 'Patient', 'Silver', 'Quiet', 'Dawn', 'Voidsilk', 'Faithful', 'Morning', 'Gentle', 'Far', 'Willow', 'Golden', 'Lucky', 'Bright', 'Steady'];
-const MERCHANT_LASTS = ['Wind', 'Maiden', 'Tide', 'Wanderer', 'Swan', 'Fortune', 'Trader', 'Rose', 'Shoal', 'Glass', 'Aether', 'Harbour', 'Lantern', 'Heron', 'Promise', 'Gull'];
+const PIRATE_FIRSTS = [
+  'Gloam',
+  'Void',
+  'Starving',
+  'Pale',
+  'Ashen',
+  'Hollow',
+  'Black',
+  'Sable',
+  'Crooked',
+  'Mourning',
+  'Weeping',
+  'Amber',
+  'Drowned',
+  'Grim',
+  'Red',
+  'Last',
+];
+const PIRATE_LASTS = [
+  'Reaver',
+  'Cutter',
+  'Tide',
+  'Lantern',
+  'Gull',
+  'Wind',
+  'Fang',
+  'Blade',
+  'Aurora',
+  'Wraith',
+  'Psalm',
+  'Comet',
+  'Star',
+  'Tern',
+  'Mercy',
+  'Shard',
+];
+const MERCHANT_FIRSTS = [
+  'Amber',
+  'Starglass',
+  'Patient',
+  'Silver',
+  'Quiet',
+  'Dawn',
+  'Voidsilk',
+  'Faithful',
+  'Morning',
+  'Gentle',
+  'Far',
+  'Willow',
+  'Golden',
+  'Lucky',
+  'Bright',
+  'Steady',
+];
+const MERCHANT_LASTS = [
+  'Wind',
+  'Maiden',
+  'Tide',
+  'Wanderer',
+  'Swan',
+  'Fortune',
+  'Trader',
+  'Rose',
+  'Shoal',
+  'Glass',
+  'Aether',
+  'Harbour',
+  'Lantern',
+  'Heron',
+  'Promise',
+  'Gull',
+];
 const twoWords = (firsts, lasts) => Object.freeze(firsts.flatMap((a) => lasts.map((b) => `${a} ${b}`)));
 export const ETHER_PIRATE_NAMES = twoWords(PIRATE_FIRSTS, PIRATE_LASTS);
 export const ETHER_MERCHANT_NAMES = twoWords(MERCHANT_FIRSTS, MERCHANT_LASTS);
@@ -56,7 +133,10 @@ export const ETHER_PORT_WEIGHTS = Object.freeze({ merchant: 30, pirateK: 0.5 });
 /** The factions' weights in a band's waters (`band` a BANDS row; `nearPort` within a port isle's reach). */
 export function etherFactionWeights(band, { nearPort = false } = {}) {
   const w = { pirate: ETHER_FACTION_WEIGHTS.pirate * (band?.pirate ?? 1), merchant: ETHER_FACTION_WEIGHTS.merchant };
-  if (nearPort) { w.merchant += ETHER_PORT_WEIGHTS.merchant; w.pirate *= ETHER_PORT_WEIGHTS.pirateK; }
+  if (nearPort) {
+    w.merchant += ETHER_PORT_WEIGHTS.merchant;
+    w.pirate *= ETHER_PORT_WEIGHTS.pirateK;
+  }
   return w;
 }
 
@@ -64,12 +144,66 @@ export function etherFactionWeights(band, { nearPort = false } = {}) {
 /** @typedef {{ id: string, name: string, captain: string, classId: string, band: string, trait: string, purse: number, lore: string }} Legend */
 /** THE LEGENDS: two to a band past the Shallows, the deeper the deadlier and the richer. @type {readonly Legend[]} */
 export const LEGENDS = Object.freeze([
-  Object.freeze({ id: 'wake', name: "Sorrow's Wake", captain: 'Ysolde the Unmourned', classId: 'legendWake', band: 'reaches', trait: 'swift', purse: 2500, lore: 'The fastest hull afloat. It runs down whatever it hunts and runs from nothing.' }),
-  Object.freeze({ id: 'queen', name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', classId: 'legendQueen', band: 'reaches', trait: 'mends', purse: 3000, lore: 'Sunk and raised by the aether three times. Its timbers repair themselves between broadsides.' }),
-  Object.freeze({ id: 'hunger', name: 'Ninefold Hunger', captain: 'Ghorvak Ninefold', classId: 'legendHunger', band: 'deep', trait: 'boarders', purse: 5000, lore: 'A galley packed rail to rail with hands who board, and board again.' }),
-  Object.freeze({ id: 'lantern', name: 'The Lantern-Eater', captain: 'the Hooded Pilot', classId: 'legendLantern', band: 'deep', trait: 'night', purse: 5500, lore: 'It sails only at night, shows no light, and hunts ships that do.' }),
-  Object.freeze({ id: 'regent', name: 'The Pale Regent', captain: 'Lord Aumbrel the Pale', classId: 'legendRegent', band: 'abyss', trait: 'gunnery', purse: 9000, lore: 'Its gunners have not missed in a hundred years.' }),
-  Object.freeze({ id: 'starless', name: 'The Starless', captain: 'no one living', classId: 'legendStarless', band: 'abyss', trait: 'veiled', purse: 12000, lore: 'Black sails under a black sky. Even a spyglass can\'t find it until it is right on top of you.' }),
+  Object.freeze({
+    id: 'wake',
+    name: "Sorrow's Wake",
+    captain: 'Ysolde the Unmourned',
+    classId: 'legendWake',
+    band: 'reaches',
+    trait: 'swift',
+    purse: 2500,
+    lore: 'The fastest hull afloat. It runs down whatever it hunts and runs from nothing.',
+  }),
+  Object.freeze({
+    id: 'queen',
+    name: 'The Drowned Queen',
+    captain: 'Maraveth, Thrice Drowned',
+    classId: 'legendQueen',
+    band: 'reaches',
+    trait: 'mends',
+    purse: 3000,
+    lore: 'Sunk and raised by the aether three times. Its timbers repair themselves between broadsides.',
+  }),
+  Object.freeze({
+    id: 'hunger',
+    name: 'Ninefold Hunger',
+    captain: 'Ghorvak Ninefold',
+    classId: 'legendHunger',
+    band: 'deep',
+    trait: 'boarders',
+    purse: 5000,
+    lore: 'A galley packed rail to rail with hands who board, and board again.',
+  }),
+  Object.freeze({
+    id: 'lantern',
+    name: 'The Lantern-Eater',
+    captain: 'the Hooded Pilot',
+    classId: 'legendLantern',
+    band: 'deep',
+    trait: 'night',
+    purse: 5500,
+    lore: 'It sails only at night, shows no light, and hunts ships that do.',
+  }),
+  Object.freeze({
+    id: 'regent',
+    name: 'The Pale Regent',
+    captain: 'Lord Aumbrel the Pale',
+    classId: 'legendRegent',
+    band: 'abyss',
+    trait: 'gunnery',
+    purse: 9000,
+    lore: 'Its gunners have not missed in a hundred years.',
+  }),
+  Object.freeze({
+    id: 'starless',
+    name: 'The Starless',
+    captain: 'no one living',
+    classId: 'legendStarless',
+    band: 'abyss',
+    trait: 'veiled',
+    purse: 12000,
+    lore: "Black sails under a black sky. Even a spyglass can't find it until it is right on top of you.",
+  }),
 ]);
 /** The traits' numbers: a `mends` legend's hull knits this share of its whole a second while no ball has struck her for
  *  LEGEND_MEND_QUIET_S; a `gunnery` legend's guns load this much quicker; a `veiled` one is made out at this share of
@@ -107,7 +241,8 @@ export function hauntOf(legend) {
   const i = BANDS.findIndex((b) => b.id === legend.band);
   const band = BANDS[Math.max(0, i)];
   const next = BANDS[i + 1];
-  const from = band.from + HAUNT_PX / LEAGUE_PX, to = (next ? next.from : band.from + ABYSS_HAUNT_LEAGUES) - HAUNT_PX / LEAGUE_PX;
+  const from = band.from + HAUNT_PX / LEAGUE_PX,
+    to = (next ? next.from : band.from + ABYSS_HAUNT_LEAGUES) - HAUNT_PX / LEAGUE_PX;
   const r = etherRng(etherHash(LEGEND_SALT, LEGENDS.indexOf(legend), 3));
   const leagues = from + (Math.max(from, to) - from) * r();
   const spread = HAUNT_SPREAD[legend.band] ?? HAUNT_SPREAD.reaches;
@@ -116,15 +251,20 @@ export function hauntOf(legend) {
   return at;
 }
 /** Does a legend sail (her end `endedDay`, the day she was ended, or null) on `day`? */
-export const legendSails = (endedDay, day) => !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) >= LEGEND_RISE_DAYS;
+export const legendSails = (endedDay, day) =>
+  !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) >= LEGEND_RISE_DAYS;
 /** The legend whose haunt holds a pixel, or null - the nearest haunt's, where two reach it. */
 export function legendAt(px, py) {
   if (!inEther(px, py)) return null;
-  let best = null, bd = Infinity;
+  let best = null,
+    bd = Infinity;
   for (const l of LEGENDS) {
     const h = hauntOf(l);
     const d = Math.max(Math.abs(h.px - px), Math.abs(h.py - py));
-    if (d <= HAUNT_PX && d < bd) { bd = d; best = l; }
+    if (d <= HAUNT_PX && d < bd) {
+      bd = d;
+      best = l;
+    }
   }
   return best;
 }
@@ -142,7 +282,8 @@ export function rumourOf(legend, from, { endedDay = null, day = 0 } = {}) {
     return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise it again.`;
   }
   const h = hauntOf(legend);
-  const dx = h.px - from.px, dy = h.py - from.py;
+  const dx = h.px - from.px,
+    dy = h.py - from.py;
   const far = Math.hypot(dx, dy) / LEAGUE_PX;
   const night = legend.trait === 'night' ? ' By night.' : '';
   // AUDIT CAPTAIN'S SEA G12/D21: a haunt under half a league off is "hereabouts" (a freeport on her haunt was told "some

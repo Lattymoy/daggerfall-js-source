@@ -2,8 +2,8 @@
   {
     "name": "ACT-H1-mate-not-last",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.role === FIRST_MATE ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [0, h.role !== 'Deckhand' ? 1 : 0, h.hall ? 1 : 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACT-H1-posts-as-plain",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.role !== 'Deckhand' ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, 0, h.hall ? 1 : 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "ACT-H1-recruit-as-own",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.hall ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, h.role !== 'Deckhand' ? 1 : 0, 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "ACT-H1-service-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "serviceOf(h), -i];",
-    "new": "0, -i];",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, h.role !== 'Deckhand' ? 1 : 0, h.hall ? 1 : 0, 0, -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "ACT-H1-first-joined-first",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "serviceOf(h), -i];",
-    "new": "serviceOf(h), i];",
+    "old": "    -i,",
+    "new": "    i,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ACT-H1-shore-party-signed-off",
     "file": "src/systems/naval/crewTrade.js",
-    "old": ".filter(({ h }) => !away?.has?.(h.name))",
-    "new": "",
+    "old": "    .filter(({ h }) => !away?.has?.(h.name))\n    .sort((a, b) => before(a.w, b.w))",
+    "new": "    .sort((a, b) => before(a.w, b.w))",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "ACT-H2-hall-words",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "CREW_TRADE_TEXT.ashore(party.at(-1).name)",
-    "new": "`${party.at(-1).name} is ashore with you. Send them back aboard first.`",
+    "old": "          ? CREW_TRADE_TEXT.ashore(party.at(-1).name)",
+    "new": "          ? `${party.at(-1).name} is ashore with you. Send them back aboard first.`",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "ACT-O3-last-man-english",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "get lastMan() { return t('sea.crew.lastMan', 'That\\'s your last crew member. The ship would have nobody aboard.'); },",
-    "new": "lastMan: 'That\\'s your last crew member. The ship would have nobody aboard.',",
+    "old": "  get lastMan() {\n    return t('sea.crew.lastMan', \"That's your last crew member. The ship would have nobody aboard.\");\n  },",
+    "new": "  lastMan: \"That's your last crew member. The ship would have nobody aboard.\",",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "ACT-P4-row-stars-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "exchangeOf(port, day, dealt, edge, town, true)[0];",
-    "new": "exchangeOf(port, day, dealt, 0, town, true)[0];",
+    "old": "  const r = exchangeOf(port, day, dealt, edge, town, true)[0];",
+    "new": "  const r = exchangeOf(port, day, dealt, 0, town, true)[0];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "ACT-P4-row-town-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "exchangeOf(port, day, dealt, edge, town, true)[0];",
-    "new": "exchangeOf(port, day, dealt, edge, null, true)[0];",
+    "old": "  const r = exchangeOf(port, day, dealt, edge, town, true)[0];",
+    "new": "  const r = exchangeOf(port, day, dealt, edge, null, true)[0];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "ACT-P11-last-man-said-ashore",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "now > CREW_LEAST && party.length ? CREW_TRADE_TEXT.ashore",
-    "new": "party.length ? CREW_TRADE_TEXT.ashore",
+    "old": "  return {\n    n,\n    why:\n      n > 0\n        ? null\n        : now > CREW_LEAST && party.length\n          ? CREW_TRADE_TEXT.ashore(party.at(-1).name)\n          : CREW_TRADE_TEXT.lastMan,\n  };",
+    "new": "  return { n, why: n > 0 ? null : party.length ? CREW_TRADE_TEXT.ashore(party.at(-1).name) : CREW_TRADE_TEXT.lastMan };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"

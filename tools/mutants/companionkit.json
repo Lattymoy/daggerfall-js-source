@@ -160,8 +160,8 @@
   {
     "name": "CK-pack-none",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "health: null, maxHealth: null, items: [] };",
-    "new": "health: null, maxHealth: null };",
+    "old": "        items: [],\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "CK-pack-not-saved",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "party: party.map((p) => ({ ...p, items: packOut(p.items) }))",
-    "new": "party: party.map((p) => ({ ...p, items: [] }))",
+    "old": "    snapshot: () => ({\n      party: party.map((p) => ({ ...p, items: packOut(p.items) })),\n      resting: resting.map((r) => ({ ...r })),\n    }),",
+    "new": "    snapshot: () => ({ party: party.map((p) => ({ ...p, items: [] })), resting: resting.map((r) => ({ ...r })) }),",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "CK-codec-out-unread",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "return codec ? codec.serialize(items) : items.slice();",
-    "new": "return items.slice();",
+    "old": "      return codec ? codec.serialize(items) : items.slice();",
+    "new": "      return items.slice();",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "CK-codec-in-unread",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "const out = codec ? codec.deserialize(data) : data.slice();",
-    "new": "const out = data.slice();",
+    "old": "      const out = codec ? codec.deserialize(data) : data.slice();",
+    "new": "      const out = data.slice();",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "CK-pack-kept",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      c.items.length = 0;\n",
-    "new": "",
+    "old": "      c.items.length = 0;\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

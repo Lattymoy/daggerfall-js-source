@@ -129,8 +129,8 @@
   {
     "name": "ACS-B4-void",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
-    "new": "ev.type === 'end' ? 'done' : null;",
+    "old": "  if (c.kind === 'bounty')\n    return ev.bounty !== c.id ? null : ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
+    "new": "  if (c.kind === 'bounty') return ev.bounty !== c.id ? null : ev.type === 'end' ? 'done' : null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ACS-B4-off-list",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "else if (r === 'void') { contracts = contracts.filter((x) => x !== c); voided.push(c); }",
-    "new": "else if (r === 'void') { voided.push(c); }",
+    "old": "          contracts = contracts.filter((x) => x !== c);\n          voided.push(c);",
+    "new": "          voided.push(c);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "ACS-B6-outward",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "const d = want - i >= band.near ? want - i : want + (i - (want - band.near));",
-    "new": "const d = want - i;",
+    "old": "      const d = want - i >= band.near ? want - i : want + (i - (want - band.near)); // in from `want`, then out past it",
+    "new": "      const d = want - i; // in from `want`, then out past it",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "ACS-B13-hour",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  const last = Math.max(1, hours);",
-    "new": "  const last = hours;",
+    "old": "  const last = Math.max(1, hours); // AUDIT CAPTAIN'S SEA B13: under an hour is \"1 hour\", never \"1 hours\"",
+    "new": "  const last = hours; // AUDIT CAPTAIN'S SEA B13: under an hour is \"1 hour\", never \"1 hours\"",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "ACS-B13-noun",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "`${last} ${last === 1 ? 'hour' : 'hours'} left`",
-    "new": "`${last} hours left`",
+    "old": "        : `${last} ${last === 1 ? 'hour' : 'hours'} left`;",
+    "new": "        : `${last} hours left`;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "ACS-D7-director-list",
     "file": "src/systems/naval/navalDirector.js",
-    "old": " || (ctx.legends ?? []).length || (ctx.ships ?? []).some(",
-    "new": " || (ctx.ships ?? []).some(",
+    "old": "    if (\n      !want?.classId ||\n      ctx.nearPort ||\n      (ctx.legends ?? []).length ||\n      (ctx.ships ?? []).some((s) => s.classId === want.classId)\n    )\n      return null;",
+    "new": "    if (!want?.classId || ctx.nearPort || (ctx.ships ?? []).some((s) => s.classId === want.classId)) return null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "ACS-D14-port",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    if (!want?.classId || ctx.nearPort || (ctx.legends",
-    "new": "    if (!want?.classId || (ctx.legends",
+    "old": "    if (\n      !want?.classId ||\n      ctx.nearPort ||\n      (ctx.legends ?? []).length ||\n      (ctx.ships ?? []).some((s) => s.classId === want.classId)\n    )",
+    "new": "    if (!want?.classId || (ctx.legends ?? []).length || (ctx.ships ?? []).some((s) => s.classId === want.classId))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "ACS-D9-mark",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    const deep = !ctx.ether && !ctx.nearPort && !!ctx.deep;",
-    "new": "    const deep = false;",
+    "old": "    const deep = !ctx.ether && !ctx.nearPort && !!ctx.deep; // AUDIT CAPTAIN'S SEA D9: a pair of the deep waters is the deep's, as a single is",
+    "new": "    const deep = false; // AUDIT CAPTAIN'S SEA D9: a pair of the deep waters is the deep's, as a single is",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "ACS-D9-level",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "(ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ctx.ether?.band?.level ?? 0), r);",
-    "new": "(ctx.level ?? 1) + (ctx.ether?.band?.level ?? 0), r);",
+    "old": "    const pair = encounterClasses(kind, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ctx.ether?.band?.level ?? 0), r);",
+    "new": "    const pair = encounterClasses(kind, (ctx.level ?? 1) + (ctx.ether?.band?.level ?? 0), r);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "ACS-D9-launched",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {};",
-    "new": "const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : {};",
+    "old": "      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {}; // ETHER-SEA: launched of the Eltheric Ocean; CAPT-WATERS: of the deep",
+    "new": "      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : {}; // ETHER-SEA: launched of the Eltheric Ocean; CAPT-WATERS: of the deep",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -797,8 +797,8 @@
   {
     "name": "ACS-D11-reload",
     "file": "src/systems/naval/navalAI.js",
-    "old": "reloadScale: () => (legendOfClass(cls.id)?.trait === 'gunnery' ? LEGEND_RELOAD_K : 1) })",
-    "new": "reloadScale: () => 1 })",
+    "old": "    guns: createGunDeck(cls.hull, {\n      crewed: true,\n      crewShare: () => damage.crewShare(),\n      reloadScale: () => (legendOfClass(cls.id)?.trait === 'gunnery' ? LEGEND_RELOAD_K : 1),\n    }), // AUDIT CAPTAIN'S SEA D11: the Pale Regent's gunners (LEGEND_RELOAD_K had no reader)",
+    "new": "    guns: createGunDeck(cls.hull, { crewed: true, crewShare: () => damage.crewShare(), reloadScale: () => 1 }), // AUDIT CAPTAIN'S SEA D11: the Pale Regent's gunners (LEGEND_RELOAD_K had no reader)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -998,8 +998,8 @@
   {
     "name": "ACS-G2-way-home-guard",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": " && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py) ?",
-    "new": " && Number.isFinite(from.py) ?",
+    "old": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py)",
+    "new": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1144,8 +1144,8 @@
   {
     "name": "ACS-G12-near",
     "file": "src/systems/naval/etherShips.js",
-    "old": "  if (far < 0.5) return",
-    "new": "  if (false) return",
+    "old": "  if (far < 0.5) return `${legend.name} has been seen hereabouts.${night}`;",
+    "new": "  if (false) return `${legend.name} has been seen hereabouts.${night}`;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1153,8 +1153,8 @@
   {
     "name": "ACS-D21-singular",
     "file": "src/systems/naval/etherShips.js",
-    "old": "${leagues === 1 ? 'league' : 'leagues'}",
-    "new": "leagues",
+    "old": "  return `${legend.name} has been seen some ${leagues} ${leagues === 1 ? 'league' : 'leagues'} ${compassPoint(dx, dy)} of here.${night}`;",
+    "new": "  return `${legend.name} has been seen some ${leagues} leagues ${compassPoint(dx, dy)} of here.${night}`;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1225,8 +1225,8 @@
   {
     "name": "ACS-H1-host-feed",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  const reach = t.reach ?? HARBOUR_REACH;",
-    "new": "  const reach = HARBOUR_REACH;",
+    "old": "  const reach = t.reach ?? HARBOUR_REACH; // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore",
+    "new": "  const reach = HARBOUR_REACH; // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1234,8 +1234,8 @@
   {
     "name": "ACS-H1-book",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "const own = near.reach ?? HARBOUR_REACH;",
-    "new": "const own = HARBOUR_REACH;",
+    "old": "    const own = near.reach ?? HARBOUR_REACH;",
+    "new": "    const own = HARBOUR_REACH;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1626,8 +1626,8 @@
   {
     "name": "ACS-B1-per-port",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      if (!Object.hasOwn(dealt.at, port)) {\n        const ports = Object.keys(dealt.at);",
-    "new": "      if (!Object.hasOwn(dealt.at, port)) {\n        for (const k of Object.keys(dealt.at)) delete dealt.at[k];\n        const ports = Object.keys(dealt.at);",
+    "old": "        const ports = Object.keys(dealt.at);",
+    "new": "        for (const k of Object.keys(dealt.at)) delete dealt.at[k];\n        const ports = Object.keys(dealt.at);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1653,8 +1653,8 @@
   {
     "name": "ACS-B1-older-save",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "} else if (d && typeof d.port === 'string' && Number.isFinite(d.day)) dealt =",
-    "new": "} else if (false) dealt =",
+    "old": "      } else if (d && typeof d.port === 'string' && Number.isFinite(d.day))",
+    "new": "      } else if (false)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1671,8 +1671,8 @@
   {
     "name": "ACS-L8-purse",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "pay: Math.max(0, Math.min(BOARD_PAY_MAX, Math.round(c.pay)))",
-    "new": "pay: Math.round(c.pay)",
+    "old": "    pay: Math.max(0, Math.min(BOARD_PAY_MAX, Math.round(c.pay))),",
+    "new": "    pay: Math.round(c.pay),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1689,8 +1689,8 @@
   {
     "name": "ACS-L8-sailed",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0;",
-    "new": "log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? l.sailed : 0;",
+    "old": "      log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0; // AUDIT CAPTAIN'S SEA L8",
+    "new": "      log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? l.sailed : 0; // AUDIT CAPTAIN'S SEA L8",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1698,8 +1698,8 @@
   {
     "name": "ACS-L8-marque",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "until: Math.floor(Math.min(MARQUE_UNTIL_MAX, r.marque.until)) };",
-    "new": "until: Math.floor(r.marque.until) };",
+    "old": "        marque = { crown: r.marque.crown, until: Math.floor(Math.min(MARQUE_UNTIL_MAX, r.marque.until)) }; // AUDIT CAPTAIN'S SEA L8: bounded",
+    "new": "        marque = { crown: r.marque.crown, until: Math.floor(r.marque.until) }; // AUDIT CAPTAIN'S SEA L8: bounded",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1707,8 +1707,8 @@
   {
     "name": "ACS-L8-regard-own",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    if (typeof crown !== 'string' || !Object.hasOwn(standing, crown) || !Number.isFinite(n) || n === 0) return null;",
-    "new": "    if (typeof crown !== 'string' || !(crown in standing) || !Number.isFinite(n) || n === 0) return null;",
+    "old": "    if (typeof crown !== 'string' || !Object.hasOwn(standing, crown) || !Number.isFinite(n) || n === 0) return null; // AUDIT CAPTAIN'S SEA L8: never 'constructor'",
+    "new": "    if (typeof crown !== 'string' || !(crown in standing) || !Number.isFinite(n) || n === 0) return null; // AUDIT CAPTAIN'S SEA L8: never 'constructor'",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1716,8 +1716,8 @@
   {
     "name": "ACS-L8-standing-own",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "const standingOf = (crown) => (typeof crown === 'string' && Object.hasOwn(standing, crown) ? standing[crown] : 0);",
-    "new": "const standingOf = (crown) => (typeof crown === 'string' && crown in standing ? standing[crown] : 0);",
+    "old": "  const standingOf = (crown) => (typeof crown === 'string' && Object.hasOwn(standing, crown) ? standing[crown] : 0);",
+    "new": "  const standingOf = (crown) => (typeof crown === 'string' && crown in standing ? standing[crown] : 0);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1725,8 +1725,8 @@
   {
     "name": "ACS-L11-trade-one",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "${(o[k] === 1 ? TRADE_WORD : TRADE_WORDS)[k]}",
-    "new": "${TRADE_WORDS[k]}",
+    "old": "      .map((k) => `${o[k]} ${(o[k] === 1 ? TRADE_WORD : TRADE_WORDS)[k]}`)",
+    "new": "      .map((k) => `${o[k]} ${TRADE_WORDS[k]}`)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1734,8 +1734,8 @@
   {
     "name": "ACS-L11-contract-one",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "${(log.contracts[k] === 1 ? CONTRACT_WORD : CONTRACT_WORDS)[k]}",
-    "new": "${k}",
+    "old": "        .map((k) => `${log.contracts[k]} ${(log.contracts[k] === 1 ? CONTRACT_WORD : CONTRACT_WORDS)[k]}`)",
+    "new": "        .map((k) => `${log.contracts[k]} ${k}`)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1833,8 +1833,8 @@
   {
     "name": "ACS-L6-seen",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "if (Number.isFinite(ev.seed)) { const seed = ev.seed >>> 0; if ((c.seen ??= []).includes(seed)) return null; c.seen.push(seed); }",
-    "new": "void 0;",
+    "old": "    if (Number.isFinite(ev.seed)) {\n      const seed = ev.seed >>> 0;\n      if ((c.seen ??= []).includes(seed)) return null;\n      c.seen.push(seed);\n    }",
+    "new": "    void 0;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1842,8 +1842,8 @@
   {
     "name": "ACS-L6-seen-saved",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (c.kind === 'survey') out.seen = [...new Set(",
-    "new": "  if (false) out.seen = [...new Set(",
+    "old": "  };\n  if (c.kind === 'survey')",
+    "new": "  };\n  if (false)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1870,8 +1870,8 @@
   {
     "name": "ACS-B7-order",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "const order = one ? [...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until) : [...contracts];",
-    "new": "const order = [...contracts];",
+    "old": "      const order = one ? [...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until) : [...contracts];",
+    "new": "      const order = [...contracts];",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1879,8 +1879,8 @@
   {
     "name": "ACS-B7-own-first",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "[...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until)",
-    "new": "[...contracts].sort((a, b) => a.until - b.until)",
+    "old": "      const order = one ? [...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until) : [...contracts];",
+    "new": "      const order = one ? [...contracts].sort((a, b) => a.until - b.until) : [...contracts];",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2567,8 +2567,8 @@
   {
     "name": "ACS-X1-said-once",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "    refused(way) { if (said === way) return false; said = way; return true; },",
-    "new": "    refused(way) { said = way; return true; },",
+    "old": "      if (said === way) return false;\n      said = way;",
+    "new": "      said = way;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2576,8 +2576,8 @@
   {
     "name": "ACS-X1-waters-left",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way !== said) said = null;\n",
-    "new": "",
+    "old": "      if (way !== said) said = null;\n      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (way !== asked || (ours && n !== arrivals)) {",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2686,8 +2686,8 @@
   {
     "name": "ACS-X2-ledger-way-out",
     "file": "src/systems/naval/captainLedger.js",
-    "old": " && !inEtherLaw(at.px, at.py)\n  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
-    "new": "\n  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
+    "old": "  at &&\n  Number.isFinite(at.px) &&\n  Number.isFinite(at.py) &&\n  Math.abs(at.px) < 8192 &&\n  Math.abs(at.py) < 8192 &&\n  !inEtherLaw(at.px, at.py)",
+    "new": "  at && Number.isFinite(at.px) && Number.isFinite(at.py) && Math.abs(at.px) < 8192 && Math.abs(at.py) < 8192",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

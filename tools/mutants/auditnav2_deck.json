@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-NAV2-F58-centre-misread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "spotZ[q] = minZ + (k + 0.5) * cell; q++;",
-    "new": "spotZ[q] = minZ + (i + 0.5) * cell; q++;",
+    "old": "          spotZ[q] = minZ + (k + 0.5) * cell;",
+    "new": "          spotZ[q] = minZ + (i + 0.5) * cell;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-NAV2-F61-hypot-back",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "dz = minZ + (k + 0.5) * cell - ez; return Math.sqrt(dx * dx + dz * dz); };",
-    "new": "dz = minZ + (k + 0.5) * cell - ez; return Math.hypot(dx, dz); };",
+    "old": "        return Math.sqrt(dx * dx + dz * dz);",
+    "new": "        return Math.hypot(dx, dz);",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-NAV2-F32-bench-inset",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "(joined(kk * nx + ii, h, live, j) < 0 && !bench(kk * nx + ii, h))",
-    "new": "joined(kk * nx + ii, h, live, j) < 0",
+    "old": "        const off = (ii, kk) =>\n          ii < 0 || kk < 0 || ii >= nx || kk >= nz || (joined(kk * nx + ii, h, live, j) < 0 && !bench(kk * nx + ii, h));",
+    "new": "        const off = (ii, kk) => ii < 0 || kk < 0 || ii >= nx || kk >= nz || joined(kk * nx + ii, h, live, j) < 0;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-NAV2-F32-no-half-deck-rule",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    if (s.count * 2 < bare.count) s = bare;\n    else s = keepFlights(s, bare.live);\n",
-    "new": "    s = keepFlights(s, bare.live);\n",
+    "old": "    if (s.count * 2 < bare.count) s = bare;\n    else s = keepFlights(s, bare.live);",
+    "new": "    s = keepFlights(s, bare.live);",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-NAV2-F32-a-footed-wall-a-bench",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (w[q] <= floor + DECK_STEP || w[q + 1] > floor + DECK_BENCH) return false;",
-    "new": "      if (w[q + 1] > floor + DECK_BENCH) return false;",
+    "old": "        if (w[q] <= floor + DECK_STEP || w[q + 1] > floor + DECK_BENCH) return false;",
+    "new": "        if (w[q + 1] > floor + DECK_BENCH) return false;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-NAV2-F34-one-level-a-cell",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "for (let q = cand[j].length - 1; q >= 0; q--) if (cand[j][q] >= main - LEVEL_BIN) lv.push(cand[j][q]); }",
-    "new": "for (let q = cand[j].length - 1; q >= 0; q--) if (cand[j][q] >= main - LEVEL_BIN) { lv.push(cand[j][q]); break; } }",
+    "old": "    for (let q = cand[j].length - 1; q >= 0; q--) if (cand[j][q] >= main - LEVEL_BIN) lv.push(cand[j][q]);",
+    "new": "    for (let q = cand[j].length - 1; q >= 0; q--)\n      if (cand[j][q] >= main - LEVEL_BIN) {\n        lv.push(cand[j][q]);\n        break;\n      }",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-NAV2-F34-pieceAt-open-alone",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (e < d) { d = e; best = more.piece[n]; } }\n      return d <= band ? best : -1;",
-    "new": "if (e < d) { d = e; best = 0; } }\n      return d <= band ? best : -1;",
+    "old": "            best = more.piece[n];",
+    "new": "            best = 0;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT-NAV2-F36-height-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      const lo = h - DECK_HEADROOM, hi = h + DECK_STEP, rr = reach * reach;",
-    "new": "      const lo = -Infinity, hi = Infinity, rr = reach * reach;",
+    "old": "      const lo = h - DECK_HEADROOM,\n        hi = h + DECK_STEP,",
+    "new": "      const lo = -Infinity,\n        hi = Infinity,",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-NAV2-F36-kept-floors-alone",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "          if (floors) { for (let n = floors.at[j]; n < floors.at[j + 1]; n++) if (floors.y[n] >= lo && floors.y[n] <= hi) return true; continue; }\n",
-    "new": "",
+    "old": "          if (floors) {\n            for (let n = floors.at[j]; n < floors.at[j + 1]; n++)\n              if (floors.y[n] >= lo && floors.y[n] <= hi) return true;\n            continue;\n          }\n          if (y[j] >= lo && y[j] <= hi) return true;",
+    "new": "          if (y[j] >= lo && y[j] <= hi) return true;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "GALLEON-flight-tread-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    if (!(d <= FLIGHT_JOIN)) return false;\n    const mid =",
-    "new": "    return false;\n    const mid =",
+    "old": "    if (!(d <= FLIGHT_JOIN)) return false;",
+    "new": "    return false;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "GALLEON-flight-margin-taken",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    else s = keepFlights(s, bare.live);\n",
-    "new": "",
+    "old": "    else s = keepFlights(s, bare.live);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "GALLEON-walk-flight-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    if (!flights || !(d <= FLIGHT_JOIN)) return false;\n    return n - j",
-    "new": "    return false;\n    return n - j",
+    "old": "    if (!flights || !(d <= FLIGHT_JOIN)) return false;",
+    "new": "    return false;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]

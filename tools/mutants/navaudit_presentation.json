@@ -92,8 +92,8 @@
   {
     "name": "NAVP-trim-one-way",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "pitch: (seed & 2 ? -1 : 1) * SINK_PITCH * kk",
-    "new": "pitch: SINK_PITCH * kk",
+    "old": "  return { roll: (seed & 1 ? 1 : -1) * SINK_LIST * kk, pitch: (seed & 2 ? -1 : 1) * SINK_PITCH * kk };",
+    "new": "  return { roll: (seed & 1 ? 1 : -1) * SINK_LIST * kk, pitch: SINK_PITCH * kk };",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NAVP-list-one-side",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "roll: (seed & 1 ? 1 : -1) * SINK_LIST * kk",
-    "new": "roll: SINK_LIST * kk",
+    "old": "  return { roll: (seed & 1 ? 1 : -1) * SINK_LIST * kk, pitch: (seed & 2 ? -1 : 1) * SINK_PITCH * kk };",
+    "new": "  return { roll: SINK_LIST * kk, pitch: (seed & 2 ? -1 : 1) * SINK_PITCH * kk };",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "NAVP-sinking-douses",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "        if (s.hull <= 0) { s.state = SHIP_STATES.sinking; s.sinkT = 0; }   // AUDIT NAV1: her fires burn on as she goes down\n",
-    "new": "        if (s.hull <= 0) { s.state = SHIP_STATES.sinking; s.sinkT = 0; douse(); }\n",
+    "old": "        } // AUDIT NAV1: her fires burn on as she goes down\n        else if (s.state === SHIP_STATES.afloat && s.hull <= s.maxHull * STRUCK_AT) {",
+    "new": "          douse();\n        } else if (s.state === SHIP_STATES.afloat && s.hull <= s.maxHull * STRUCK_AT) {",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "NAVP-restore-resets-every-word",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      if (s.state === SHIP_STATES.sinking && was !== SHIP_STATES.sinking) s.sinkT = 0;",
-    "new": "      if (s.state === SHIP_STATES.sinking) s.sinkT = 0;",
+    "old": "      if (s.state === SHIP_STATES.sinking && was !== SHIP_STATES.sinking) s.sinkT = 0; // AUDIT NAV1: a word that says she still sinks never starts her over",
+    "new": "      if (s.state === SHIP_STATES.sinking) s.sinkT = 0; // AUDIT NAV1: a word that says she still sinks never starts her over",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "NAVP-scuttle-restarts",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "    scuttle() { if (s.state !== SHIP_STATES.sunk && s.state !== SHIP_STATES.sinking) { s.state = SHIP_STATES.sinking; s.sinkT = 0; } },",
-    "new": "    scuttle() { if (s.state !== SHIP_STATES.sunk) { s.state = SHIP_STATES.sinking; s.sinkT = 0; } },",
+    "old": "      if (s.state !== SHIP_STATES.sunk && s.state !== SHIP_STATES.sinking) {",
+    "new": "      if (s.state !== SHIP_STATES.sunk) {",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "NAVP-sinkOn-afloat-ticks",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      if (s.state !== SHIP_STATES.sinking) return s.state === SHIP_STATES.sunk;\n",
-    "new": "",
+    "old": "      if (s.state !== SHIP_STATES.sinking) return s.state === SHIP_STATES.sunk;\n      s.sinkT = Math.min(SINK_SECONDS, s.sinkT + Math.max(0, Number.isFinite(dt) ? dt : 0));",
+    "new": "      s.sinkT = Math.min(SINK_SECONDS, s.sinkT + Math.max(0, Number.isFinite(dt) ? dt : 0));",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "NAVP-muzzle-count-dropped",
     "file": "src/systems/naval/navalShots.js",
-    "old": "index: l.index, count: launches.length,",
-    "new": "index: l.index,",
+    "old": "        index: l.index,\n        count: launches.length, // GALLEON-WEIGHT: to its hit; SHOT-KINDS: its load",
+    "new": "        index: l.index, // GALLEON-WEIGHT: to its hit; SHOT-KINDS: its load",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "NAVP-burst-size-unscaled",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "size0: (0.18 + r() * 0.22) * k, size1: 0.18 * k,",
-    "new": "size0: 0.18 + r() * 0.22, size1: 0.18,",
+    "old": "        size0: (0.18 + r() * 0.22) * k,\n        size1: 0.18 * k,",
+    "new": "        size0: 0.18 + r() * 0.22,\n        size1: 0.18,",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "NAVP-ready-clip-unregistered",
     "file": "src/systems/naval/navalSounds.js",
-    "old": "  [NAVAL_SFX.ready]: 'naval-ready.wav',\n",
-    "new": "",
+    "old": "  [NAVAL_SFX.ready]: 'naval-ready.wav',\n  [NAVAL_SFX.sinking]: 'naval-sinking.wav',",
+    "new": "  [NAVAL_SFX.sinking]: 'naval-sinking.wav',",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js",
       "test/tooling/nav_e_sounds.test.js"
@@ -1289,8 +1289,8 @@
   {
     "name": "NAVP-smoke-rate-unscaled",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "if (r() >= SMOLDER_RATE * clamp(k, 0, 1) * clamp(dt, 0, 0.1)) return;",
-    "new": "if (r() >= SMOLDER_RATE * clamp(dt, 0, 0.1)) return;",
+    "old": "    if (r() >= SMOLDER_RATE * clamp(k, 0, 1) * clamp(dt, 0, 0.1)) return;",
+    "new": "    if (r() >= SMOLDER_RATE * clamp(dt, 0, 0.1)) return;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1298,8 +1298,8 @@
   {
     "name": "NAVP-smoke-a-point",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const u = r();\n    push({ kind: 'smoke', pos: [a[0] + (b[0] - a[0]) * u",
-    "new": "    const u = 0.5;\n    push({ kind: 'smoke', pos: [a[0] + (b[0] - a[0]) * u",
+    "old": "    const u = r();",
+    "new": "    const u = 0.5;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1370,8 +1370,8 @@
   {
     "name": "NAVP-timber-still",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "vel: [Math.sin(a) * sp, 0, Math.cos(a) * sp],",
-    "new": "vel: [0, 0, 0],",
+    "old": "        vel: [Math.sin(a) * sp, 0, Math.cos(a) * sp],",
+    "new": "        vel: [0, 0, 0],",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1379,8 +1379,8 @@
   {
     "name": "NAVP-timber-square",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "kind: p.kind, aspect: p.aspect ?? 1 };",
-    "new": "kind: p.kind };",
+    "old": "        aspect: p.aspect ?? 1,\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1442,8 +1442,8 @@
   {
     "name": "NAVP-sink-clip-unregistered",
     "file": "src/systems/naval/navalSounds.js",
-    "old": "  [NAVAL_SFX.sinking]: 'naval-sinking.wav',\n",
-    "new": "",
+    "old": "  [NAVAL_SFX.sinking]: 'naval-sinking.wav',\n  [NAVAL_SFX.whistle]: 'naval-whistle.wav',",
+    "new": "  [NAVAL_SFX.whistle]: 'naval-whistle.wav',",
     "tests": [
       "test/tooling/nav_e_sounds.test.js"
     ]

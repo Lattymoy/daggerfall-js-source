@@ -38,7 +38,7 @@
   {
     "name": "CC-take-twice",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null) return null;",
+    "old": "      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null)\n        return null;",
     "new": "      if (!isBoat(boat) || !isName(hand?.name) || this.why(boat, hand, now) != null) return null;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "CC-knock-anyone",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (!this.sendBack(boat, name)) return false;\n      resting",
-    "new": "      this.sendBack(boat, name);\n      resting",
+    "old": "      if (!this.sendBack(boat, name)) return false;",
+    "new": "      this.sendBack(boat, name);",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CC-restore-past-max",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (party.length >= COMPANION_MAX || !c || !isBoat(c.boat)",
-    "new": "      if (!c || !isBoat(c.boat)",
+    "old": "      if (\n        party.length >= COMPANION_MAX ||\n        !c ||\n        !isBoat(c.boat) ||\n        !isName(c.name) ||\n        party.some((p) => same(p, c.boat, c.name))\n      )\n        continue;",
+    "new": "      if (!c || !isBoat(c.boat) || !isName(c.name) || party.some((p) => same(p, c.boat, c.name))) continue;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CC-restore-resting-and-ashore",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (party.some((p) => same(p, r.boat, r.name))) continue;\n",
-    "new": "\n",
+    "old": "      if (party.some((p) => same(p, r.boat, r.name))) continue;",
+    "new": "",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CC-row-back-offered-as-take",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "    if (companions.isAshore(boat, h.name)) return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };\n",
-    "new": "",
+    "old": "    if (companions.isAshore(boat, h.name))\n      return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };\n    const why = companions.why(boat, h, now, crewed);",
+    "new": "    const why = companions.why(boat, h, now, crewed);",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CC-slot-one-side",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "  const back = 1.8, side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;",
-    "new": "  const back = 1.8, side = n > 1 ? 1.1 : 0;",
+    "old": "    side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;",
+    "new": "    side = n > 1 ? 1.1 : 0;",
     "tests": [
       "test/systems/naval/crewcompanions.test.js"
     ]

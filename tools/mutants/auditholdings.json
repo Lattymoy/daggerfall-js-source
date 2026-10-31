@@ -213,8 +213,8 @@
   {
     "name": "AH-O1-sounded-off-a-streaming-shore",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "    if (!h) { if (near.ready?.() !== false) book.set(",
-    "new": "    if (!h) { if (true) book.set(",
+    "old": "      if (near.ready?.() !== false)\n        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "new": "      if (true) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

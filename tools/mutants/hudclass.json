@@ -82,8 +82,8 @@
   {
     "name": "HUD-CLASS-faction-a-component",
     "file": "src/systems/naval/navalShips.js",
-    "old": "cls('navyCutter', 'navy',",
-    "new": "cls('navyCutter', 'side',",
+    "old": "  cls('navyCutter', 'navy', HULL.SmallShip, 'Navy Cutter', {",
+    "new": "  cls('navyCutter', 'side', HULL.SmallShip, 'Navy Cutter', {",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],

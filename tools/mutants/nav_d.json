@@ -20,8 +20,8 @@
   {
     "name": "NAV-D-the-hands-uncapped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "(crewed ? clamp(Math.floor(crew / CREW_PER_HAND), 0, HANDS_MAX) : 0);",
-    "new": "(crewed ? Math.floor(crew / CREW_PER_HAND) : 0);",
+    "old": "export const handsOf = (crew, crewed) => (crewed ? clamp(Math.floor(crew / CREW_PER_HAND), 0, HANDS_MAX) : 0);",
+    "new": "export const handsOf = (crew, crewed) => (crewed ? Math.floor(crew / CREW_PER_HAND) : 0);",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAV-D-the-gap-dropped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const off = side * Math.max(anchor.beam + ship.beam + BERTH_GAP,",
-    "new": "  const off = side * Math.max(anchor.beam + ship.beam,",
+    "old": "    Math.max(\n      anchor.beam + ship.beam + BERTH_GAP,\n      (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR,\n    );",
+    "new": "    Math.max(anchor.beam + ship.beam, (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR);",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NAV-D-the-long-way-round",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const dy = wrapAngle(to.yaw - at.yaw);",
-    "new": "  const dy = to.yaw - at.yaw;",
+    "old": "  const dy = wrapAngle(to.yaw - at.yaw); // the short way round, in one step whatever the input (ONCRASH1)",
+    "new": "  const dy = to.yaw - at.yaw; // the short way round, in one step whatever the input (ONCRASH1)",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "NAV-D-a-won-fight-abandoned",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "    abandon() { if (b.phase === 'fight' || b.phase === 'grapple') { b.phase = 'done'; b.outcome = 'abandoned'; } },",
-    "new": "    abandon() { b.phase = 'done'; b.outcome = 'abandoned'; },",
+    "old": "      if (b.phase === 'fight' || b.phase === 'grapple') {\n        b.phase = 'done';\n        b.outcome = 'abandoned';\n      }",
+    "new": "      b.phase = 'done';\n      b.outcome = 'abandoned';",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "NAV-D-the-plural",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "${n === 1 ? 'hand' : 'hands'}",
-    "new": "hands",
+    "old": "      detail:\n        mine.maxCrew <= 0\n          ? 'No berths for them'\n          : n > 0\n            ? `${n} ${n === 1 ? 'hand' : 'hands'} to your guns`\n            : 'Your crew is whole',",
+    "new": "      detail: mine.maxCrew <= 0 ? 'No berths for them' : n > 0 ? `${n} hands to your guns` : 'Your crew is whole',",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "NAV-D-the-quiet-crown-kept",
     "file": "src/systems/naval/navalLaw.js",
-    "old": "if (w > 0) by.set(k, w); else by.delete(k); }",
-    "new": "by.set(k, w); }",
+    "old": "        if (w > 0) by.set(k, w);\n        else by.delete(k);",
+    "new": "        by.set(k, w);",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "NAV-D-the-restore-unbounded",
     "file": "src/systems/naval/navalLaw.js",
-    "old": "if (Number.isFinite(v) && v > 0) by.set(c.name, Math.min(NOTORIETY.max, v)); }",
-    "new": "if (Number.isFinite(v) && v > 0) by.set(c.name, v); }",
+    "old": "        if (Number.isFinite(v) && v > 0) by.set(c.name, Math.min(NOTORIETY.max, v));",
+    "new": "        if (Number.isFinite(v) && v > 0) by.set(c.name, v);",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]

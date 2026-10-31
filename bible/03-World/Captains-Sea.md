@@ -343,7 +343,7 @@ delivered, no shipwright stood there. Within SEA_RING - the open sea's reach tha
 squares a tie went to the list's first, and Pencart's every pixel of water tied Longham's), handed whether or not a flagged place is within a
 pixel (`world.js:"nearPort, port: navalPortHere(), waters:"`); the berth, the shipwright and the crew's port read the two
 through one question (`navalHost.js:"const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };"`);
-and a cargo goes to a port the sea bears on within SEA_RING (`harbourBoard.js:"export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);"`)
+and a cargo goes to a port the sea bears on within SEA_RING (`harbourBoard.js:"export const deliveryPort"`)
 - all 106 now, Daggerfall, Sentinel and Wayrest among them. Left at its pixel, asked another question: `navalNearPort`'s
 other readers, the sea's traffic (`navalDirector.js factionWeights`, SEA-EASE's port weights) and its waters
 (CAPT-WATERS `watersOf`'s coastal) - who sails near a port, not whether she lies in one - and the quays' own port

@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-CC-F-hours-floor",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60))",
-    "new": "Math.max(1, Math.floor(((r?.until ?? now) - now) / 60))",
+    "old": "      const hours = Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60));",
+    "new": "      const hours = Math.max(1, Math.floor(((r?.until ?? now) - now) / 60));",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -517,8 +517,8 @@
   {
     "name": "AUDIT-CC-F-hours-plural",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "${hours === 1 ? 'hour' : 'hours'}",
-    "new": "hours",
+    "old": "      return {\n        id: h.name,\n        label: `${called}`,\n        disabled: true,\n        why: `${COMPANION_TEXT.resting}, ${hours} ${hours === 1 ? 'hour' : 'hours'}`,\n      };",
+    "new": "      return { id: h.name, label: `${called}`, disabled: true, why: `${COMPANION_TEXT.resting}, ${hours} hours` };",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -537,8 +537,8 @@
   {
     "name": "AUDIT-CC-F-restore-role-raw",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "role: isName(c.role) ? c.role : 'Deckhand'",
-    "new": "role: c.role",
+    "old": "        role: isName(c.role) ? c.role : 'Deckhand',",
+    "new": "        role: c.role,",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

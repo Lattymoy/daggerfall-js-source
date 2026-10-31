@@ -383,7 +383,7 @@ TileMap's water), 37 of the 106 port towns sounded no harbour at all - Daggerfal
 their nearest berths 1,542 m, 721 m and 1,118 m off their footprints; Holwych's town stands at 272 m over a sea pixel
 whose shore the kernel lays 1.1 km off. A Bay port whose own shore gives no berth is sounded again out to the ring its
 port law read (`systems/naval/harbourBook.js` portRingReach: the pixels within SEA_RING of the town's -
-`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }"`),
+`harbourBook.js:"(e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false)"`),
 once every pixel of that ring is built (the world's `ready` at any reach - O1's law: never "no harbour" off a
 half-streamed ring, the port waits and is asked again each step), and once a book's life (its scan is some five times
 the near one's; the B7 retry asks the near reach alone). 36 of the 37 then stand a harbour, its quays at the nearest

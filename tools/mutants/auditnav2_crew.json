@@ -539,8 +539,8 @@
   {
     "name": "AUDIT-NAV2-F62-rail-past-the-centreline",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (x * side < 0) break;",
-    "new": "if (false) break;",
+    "old": "            if (x * side < 0) break; // past her centreline: this row has no rail on `side`",
+    "new": "            if (false) break; // past her centreline: this row has no rail on `side`",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "AUDIT-NAV2-F62-rail-at-any-level",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue;   // (no level asked: NaN, never over)",
-    "new": "if (Number.isNaN(y[j])) continue;",
+    "old": "            if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue; // (no level asked: NaN, never over)",
+    "new": "            if (Number.isNaN(y[j])) continue;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]

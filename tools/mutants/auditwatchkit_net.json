@@ -2,8 +2,8 @@
   {
     "name": "LD-AI-held-by-day-reach",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (dist < (held ? see * DISENGAGE : see)",
-    "new": "if (dist < (held ? sight * DISENGAGE : see)",
+    "old": "      dist < (held ? see * DISENGAGE : see) &&",
+    "new": "      dist < (held ? sight * DISENGAGE : see) &&",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LD-AI-threat-flashes-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "dist < nightSight(FLEE_RANGE, { night: !!world.night, lit })",
-    "new": "dist < nightSight(FLEE_RANGE, { night: !!world.night, lit: !!c.lit })",
+    "old": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit }) &&",
+    "new": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit: !!c.lit }) &&",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]

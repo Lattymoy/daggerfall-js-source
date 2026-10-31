@@ -176,8 +176,8 @@
   {
     "name": "NAV1O-hold-drops-a-boarding",
     "file": "src/systems/naval/navalRaiders.js",
-    "old": "    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) { drop.push(id); continue; }",
-    "new": "    if (owner !== undefined && chaseYields(myId, owner)) { drop.push(id); continue; }",
+    "old": "    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) {",
+    "new": "    if (owner !== undefined && chaseYields(myId, owner)) {",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "NAV1O-roll-draws-idle",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "      if (!((ctx.density ?? 0) > 0)) return out;   // AUDIT NAV1 (online): letting go only - no roll, no draw on the stream\n",
-    "new": "",
+    "old": "      if (!((ctx.density ?? 0) > 0)) return out; // AUDIT NAV1 (online): letting go only - no roll, no draw on the stream\n      // SEA-EASE: a lawful player under a pirate's guns with no crown's ship by them - help is rolled for soon, in a",
+    "new": "      // SEA-EASE: a lawful player under a pirate's guns with no crown's ship by them - help is rolled for soon, in a",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "NAV1O-theirs-despawned",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
-    "new": "if (!s.engaged && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "old": "      for (const s of ctx.ships ?? [])\n        if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "new": "      for (const s of ctx.ships ?? []) if (!s.engaged && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "NAV1O-ball-law-unread",
     "file": "src/systems/naval/navalShots.js",
-    "old": "if (t.alive === false || t.id === shooter || t.hitBy?.(shooter) === false) continue;",
-    "new": "if (t.alive === false || t.id === shooter) continue;",
+    "old": "      if (t.alive === false || t.id === shooter || t.hitBy?.(shooter) === false) continue;",
+    "new": "      if (t.alive === false || t.id === shooter) continue;",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "NAV1O-canvas-law-unread",
     "file": "src/systems/naval/navalShots.js",
-    "old": "t.id === ball.shooter || t.hitBy?.(ball.shooter) === false ||",
-    "new": "t.id === ball.shooter ||",
+    "old": "      if (\n        t.alive === false ||\n        t.id === ball.shooter ||\n        t.hitBy?.(ball.shooter) === false ||\n        !t.rig?.length ||\n        ball.rigged?.has(t.id)\n      )\n        continue;",
+    "new": "      if (t.alive === false || t.id === ball.shooter || !t.rig?.length || ball.rigged?.has(t.id)) continue;",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "NAV1O-barrel-law-unread",
     "file": "src/systems/naval/navalShots.js",
-    "old": "s.id !== f.shooter && s.hitBy?.(f.shooter) !== false &&",
-    "new": "s.id !== f.shooter &&",
+    "old": "          (s) =>\n            s.alive !== false &&\n            s.id !== f.shooter &&\n            s.hitBy?.(f.shooter) !== false &&\n            insideGrown(s.box, f.pos, BARREL.fuse),",
+    "new": "          (s) => s.alive !== false && s.id !== f.shooter && insideGrown(s.box, f.pos, BARREL.fuse),",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "NAV1O-navy-by-stander-law",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(contact.notoriety ?? notoriety)(ship.names?.crown ?? null)",
-    "new": "notoriety(ship.names?.crown ?? null)",
+    "old": "    if (f === 'navy') return (contact.notoriety ?? notoriety)(ship.names?.crown ?? null) >= NAVY_HUNTS;",
+    "new": "    if (f === 'navy') return notoriety(ship.names?.crown ?? null) >= NAVY_HUNTS;",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -709,8 +709,8 @@
   {
     "name": "NAV1O-peer-never-boarded",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(enemy.peer ? enemy.boarders === false : world.boarders === false)",
-    "new": "enemy.peer || world.boarders === false",
+    "old": "  if (\n    ship.cls.faction !== 'pirate' ||\n    enemy.kind !== 'player' ||\n    (enemy.peer ? enemy.boarders === false : world.boarders === false)\n  )\n    return false;",
+    "new": "  if (ship.cls.faction !== 'pirate' || enemy.kind !== 'player' || enemy.peer || world.boarders === false) return false;",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -719,8 +719,8 @@
   {
     "name": "NAV1O-peer-by-my-setting",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(enemy.peer ? enemy.boarders === false : world.boarders === false)",
-    "new": "world.boarders === false",
+    "old": "  if (\n    ship.cls.faction !== 'pirate' ||\n    enemy.kind !== 'player' ||\n    (enemy.peer ? enemy.boarders === false : world.boarders === false)\n  )\n    return false;",
+    "new": "  if (ship.cls.faction !== 'pirate' || enemy.kind !== 'player' || world.boarders === false) return false;",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -738,8 +738,8 @@
   {
     "name": "NAV1O-age-unflown-shots",
     "file": "src/systems/naval/navalShots.js",
-    "old": "born: clock - back + Math.max(0, l.delay ?? 0)",
-    "new": "born: clock + Math.max(0, l.delay ?? 0)",
+    "old": "        born: clock - back + Math.max(0, l.delay ?? 0),",
+    "new": "        born: clock + Math.max(0, l.delay ?? 0),",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -747,8 +747,8 @@
   {
     "name": "NAV1O-chord-across-arc",
     "file": "src/systems/naval/navalShots.js",
-    "old": "const t1 = Math.min(age, b.t + BALL_STEP_S);",
-    "new": "const t1 = age;",
+    "old": "        const t1 = Math.min(age, b.t + BALL_STEP_S);",
+    "new": "        const t1 = age;",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -756,8 +756,8 @@
   {
     "name": "NAV1O-cask-pickup-ownerless",
     "file": "src/systems/naval/navalShots.js",
-    "old": "emit({ type: 'pickup', id: f.id, lot: f.lot, from: f.from, owner: f.owner, deep: !!f.deep, collector: c.id, point: [...f.pos] });",
-    "new": "emit({ type: 'pickup', id: f.id, lot: f.lot, from: f.from, deep: !!f.deep, collector: c.id, point: [...f.pos] });",
+    "old": "            owner: f.owner,\n            deep: !!f.deep,",
+    "new": "            deep: !!f.deep,",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]
@@ -765,8 +765,8 @@
   {
     "name": "NAV1O-cask-never-removed",
     "file": "src/systems/naval/navalShots.js",
-    "old": "if (i >= 0) floaters.splice(i, 1); return i >= 0;",
-    "new": "return i >= 0;",
+    "old": "      if (i >= 0) floaters.splice(i, 1);\n      return i >= 0;",
+    "new": "      return i >= 0;",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]

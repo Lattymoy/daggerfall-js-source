@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-GN-T4c-berthing-to-a-boat-under-way",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
-    "new": "  const berthing = !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "old": "    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "new": "    !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "AUDIT-GN-T4c-berthing-with-her-way-lost",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "AUDIT-GN-T4c-berthing-into-a-closed-berth",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && !ship.route?.lost && d <= lookout(ship).dist;",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "AUDIT-GN-T4c-berthing-beyond-her-lookout",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater);",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"

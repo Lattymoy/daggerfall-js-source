@@ -29,8 +29,8 @@
   {
     "name": "EL-crossing-literal",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "`here the sea is no longer the sea, but the ${ETHER_WORD}.`,",
-    "new": "'here the sea is no longer the sea, but the Eltheric.',",
+    "old": "        `here the sea is no longer the sea, but the ${ETHER_WORD}.`,",
+    "new": "        'here the sea is no longer the sea, but the Eltheric.',",
     "tests": [
       "test/world/eltheric.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EL-ledger-literal",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "ether: `${ETHER_WORD} ship`, legend: 'legend' });",
-    "new": "ether: 'Eltheric ship', legend: 'legend' });",
+    "old": "  ether: `${ETHER_WORD} ship`,",
+    "new": "  ether: 'Eltheric ship',",
     "tests": [
       "test/world/eltheric.test.js"
     ]

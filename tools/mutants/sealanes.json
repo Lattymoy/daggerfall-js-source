@@ -651,8 +651,8 @@
   {
     "name": "FEED-harbour-unnamed",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach };",
-    "new": "  return { key: `port:${t.id}`, rect, ready, reach };",
+    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach }; // SHIP-TAGS: her name, the words a ship bound there is read by",
+    "new": "  return { key: `port:${t.id}`, rect, ready, reach }; // SHIP-TAGS: her name, the words a ship bound there is read by",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
