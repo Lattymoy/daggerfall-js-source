@@ -279,6 +279,12 @@ the hammer's is: the builder's inpaint over each chest family's outfits (`arm_so
 The idle's torso did not serve: the female chain and plate show skin at the neck the swing's turned chest does not.
 The far hand that shows behind the back from aside (male 2-2 and 17-0, female 2-0 and 17-0) comes out too.
 
+**The shoulder** (the owner, 2026-10-31: "ensure perfection"). Where the swing raised the free shoulder with the arm
+(female 5-0 and 5-1, male 5-1), the outline takes the raised shoulder and the elbow out too: left in, the elbow
+floated by the head, and the inpaint copied the shoulder down into the hole as a pale block. A fourth entry in `sg` then
+lays the idle's shoulder as well (`ss`: the pauldron, or the hood's fall, and the arm under it). Female 5-2 keeps its
+own shoulder: its outline stops under the pauldron, which it had cut in two.
+
 **What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
 glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield
 fills (`withoutShield`). A bare walk's twin is the armed one, unturned, so the shield keeps its arm. Verified by

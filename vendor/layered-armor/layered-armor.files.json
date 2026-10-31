@@ -15481,11 +15481,11 @@
     "weapon/female/4-1.png": "376ea0b5ac7ad99f39e145983b03cdc09137e1ee4e6d27120a5c4b83629e2ec7",
     "weapon/female/4-2.png": "c307bbe8f039920fbeb7e83ea93000aa730a18902f551d3d4d11d627d8c91d71",
     "weapon/female/4-3.png": "7f28474b84348265ec30f8e2d865fa95c0de23500599fcc3a1eb34268eadabb3",
-    "weapon/female/5-0-arm.png": "94fa7547de354ffff1200f22f2c25d8d58fe76603218ecc88e4eee7f280d7a89",
+    "weapon/female/5-0-arm.png": "6a8b308581605bca645f82d560a414ee71398ed476badb86bda0ef3927284cf8",
     "weapon/female/5-0.png": "e867beaeabb953e9c9fe6cb9c5dbb14c61868118bf45591a94ec6db3e6921806",
-    "weapon/female/5-1-arm.png": "f7dc443ad1a927b673ffada4401344a457f450fee3300c5b744ddb0a31ce6261",
+    "weapon/female/5-1-arm.png": "3f0e941ec327a0d2246120d272f021bc420d62123fdbbc8c97e33f59b7a90723",
     "weapon/female/5-1.png": "96363e0a0c05651b28a6c7b141321698c57e043cfe42dd0b89bb326ec72a0899",
-    "weapon/female/5-2-arm.png": "a00322d1e6c1209c17d1c6f520daa3258b81d613a6e36bc921704e55e2daa980",
+    "weapon/female/5-2-arm.png": "c79cf06030eee02f0d88e477421dd12f447ff232df006eb987a46bb315fe0ff8",
     "weapon/female/5-2.png": "ce28a9365672e47fe8458f10ad7294c6f545746b6bca0b9f18ab1f93a1da0da5",
     "weapon/female/5-3.png": "9a60adb4eb058ea3a7eb44b4569209c108709527fb6a70286cee2f05136763a6",
     "weapon/female/5-4.png": "5f759daaee1d689de145b403ae413fe3a49b3a28949c0679eb46f4366cc6d137",
@@ -15494,7 +15494,7 @@
     "weapon/female/6-0.png": "d470fe96a132cfbb37093f0aeb0cc481d552ac5570cb1d6efb7b9d54d3f3531f",
     "weapon/female/6-1-arm.png": "0d16656ad011e59c6256e81affa3f02f173fb5cce67676e68c3d41c6e90428f3",
     "weapon/female/6-1.png": "493644aa3e61d4d777f181e7bdb20cfc6558140db58a59a422ef1508a5c66593",
-    "weapon/female/6-2-arm.png": "9663620fd230a3a87ff3c497430eb2bc2c77bc773e1279d57d6be72e03ae1467",
+    "weapon/female/6-2-arm.png": "698a38924afec2063fddee9b7d7defddf55519568f56926026527d770f415183",
     "weapon/female/6-2.png": "9a849c6a271ffe10b2902251c687bc6ad35408bbba1bbc6a8353ed49c1c0401e",
     "weapon/female/6-3-arm.png": "2b8dc7671e8703e651e0573a5b0837d9a214689f13f13d2d3e98f866e00e2434",
     "weapon/female/6-3.png": "600be8344c8c9f82672a6d5bdf2b2ae777c3f101d8eadcb8cbd7878cc2fcf2c1",
@@ -15553,7 +15553,7 @@
     "weapon/male/4-3.png": "db3a2d044041d27ffca0de6ce66dc0a95cc06c15123a3f28fe6c38fe040dbe49",
     "weapon/male/5-0-arm.png": "eeebe54544229bedf64af28bf9fa9cf9701da95080330f41563cfa85198ffc41",
     "weapon/male/5-0.png": "9927e1bee137fc2eb05138f0db27873bb1cc9fa989188bc4072800e3ba027ab6",
-    "weapon/male/5-1-arm.png": "de2942dd4d67012dc0a8e33d981971da8ce98d0721128ea0f926064f2f10f5ae",
+    "weapon/male/5-1-arm.png": "78607fad05a8c9f00951b415c7ed90b13856a5b71a477b23a46da060dd81f7ed",
     "weapon/male/5-1.png": "98e63c7b95388f888aa568d498713ad07784f2fb8bd02aac6d5635f70fb14f27",
     "weapon/male/5-2-arm.png": "813ca79c3f2321211cd21f644a774a7b1c7d23737951a861fb8629c3567bc7c2",
     "weapon/male/5-2.png": "96a3b604460fe703accc3d259390adcf2e7e29f2455415e0299944d5047aa7fc",
@@ -15589,6 +15589,6 @@
     "weapon/male/9-3.png": "df3590dc7c72ffcbe12b8254b93d8c3a47f3563b379793abac942003035a6a96",
     "weapon/male/9-4.png": "d7f3418076e744426893d05a3b96932ecaffb2742a739360acffba156791eaa7",
     "weapon/male/9-5.png": "390bd1d562a6e26fd43b7c7fad2bd27bd8cd04ec1d124ecf3cadd905b89071e1",
-    "weapon/manifest.json": "422a8e39f057f34b1fef88b89afab17715a9b86f8df6d5ce353dcfc4781092e8"
+    "weapon/manifest.json": "ab7665300ffeb14e6093a5b31989514561776c11423d5c6c409116d6678faade"
   }
 }

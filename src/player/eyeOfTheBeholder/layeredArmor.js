@@ -547,7 +547,8 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt);   // LAYERED-DUAL
     if (weapon && pieces.shield) weapon.shieldPic = await shieldPictureOf(pieces.shield, body, shieldArt);   // LAYERED-SHIELD
     // LAYERED-SHIELD: the hole the free arm leaves filled from the frame's own body (the `-arm` strip); a front swing
-    // takes the idle's free arm back (the rig's `sg`) - the idle composed in this outfit
+    // takes the idle's free arm back (the rig's `sg`) - the idle composed in this outfit - and its shoulder (`ss`) where
+    // the swing's own went up with the arm
     if (weapon && pieces.shield && Array.isArray(fr.sa)) {
       try { const au = weaponUrlOf(`weapon/${body}/${rf}-arm`); if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]); } catch { /* the blend alone */ }
     }
@@ -555,7 +556,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     if (idle?.sp) {
       try {
         const img = await decodeLayered(`LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
-        weapon.graft = { img, arm: outlineMask(img, idle.sp), at: [sg[1], sg[2]] };
+        weapon.graft = { img, arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp), at: [sg[1], sg[2]] };
       } catch { /* the arm taken out, none back */ }
     }
     // AUDIT: a picture not had yet (its load timed out) draws the shape meanwhile - the stores decode the frame again

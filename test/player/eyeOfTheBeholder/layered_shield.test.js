@@ -257,10 +257,12 @@ test('composed: the shield before the weapon, never in its glow; the swing\'s fr
     assert.ok(diff(swing, two) > diff(late, two) && diff(late, two) > 40, `${body}: the arm comes out, the shield over it`);
   }
   assert.ok(await shieldPictureOf('k1', 'male', shieldArt), 'a picture had');
-  // from before, the idle's arm hangs back from the shoulder, as the idle draws it; the hole is the frame's own body
-  for (const [body, rf] of [['male', '5-1'], ['female', '6-2'], ['male', '6-3']]) {
-    const sg = weaponRigOf(body, rf).sg, plain = `LA:${body}:leather_leather_leather`;
-    const idle = await decodeLayered(`${plain}:${sg[0]}:lll@0`, decodePng, opts), arm = outlineMask(idle, weaponRigOf(body, sg[0]).sp);
+  // from before, the idle's arm hangs back from the shoulder, as the idle draws it - with its shoulder where the swing's
+  // went up with the arm (male 5-1, female 5-0) - and the hole is the frame's own body
+  for (const [body, rf, shoulder] of [['male', '5-1', true], ['female', '5-0', true], ['female', '5-2', false], ['female', '6-2', false], ['male', '6-3', false]]) {
+    const sg = weaponRigOf(body, rf).sg, plain = `LA:${body}:leather_leather_leather`, ir = weaponRigOf(body, sg[0]);
+    assert.equal(!!sg[3], shoulder, `${body} ${rf}: the shoulder laid too`);
+    const idle = await decodeLayered(`${plain}:${sg[0]}:lll@0`, decodePng, opts), arm = outlineMask(idle, shoulder ? [...ir.sp, ...ir.ss] : ir.sp);
     const swing = await decodeLayered(`${plain}:${rf}:lll^k1@0`, decodePng, { ...opts, shieldArt: async () => null });
     let laid = 0, all = 0;
     const onArm = new Uint8Array(swing.width * swing.height);
@@ -281,6 +283,18 @@ test('composed: the shield before the weapon, never in its glow; the swing\'s fr
       if ([0, 1, 2].every((c) => swing.data[i * 4 + c] === before.data[j * 4 + c])) filled++;
     }
     assert.ok(sourced > 20 && filled / sourced > 0.95, `${body} ${rf}: the hole from its own body, ${filled}/${sourced}`);
+    if (shoulder || !ir.ss) continue;
+    // female 5-2 keeps its own shoulder: where the idle's would fall, the frame's px stand as they were
+    const ss = outlineMask(idle, ir.ss);
+    let own = 0, kept = 0;
+    for (let i = 0; i < ss.length; i++) {
+      if (!ss[i]) continue;
+      const X = (i % idle.width) - sg[1], Y = ((i / idle.width) | 0) - sg[2], j = Y * swing.width + X;
+      if (X < 0 || Y < 0 || X >= swing.width || Y >= swing.height || onArm[j] || hole[j] || !before.data[j * 4 + 3]) continue;
+      own++;
+      if ([0, 1, 2, 3].every((c) => swing.data[j * 4 + c] === before.data[j * 4 + c])) kept++;
+    }
+    assert.ok(own > 20 && kept / own > 0.95, `${body} ${rf}: its own shoulder kept, ${kept}/${own}`);
   }
   // male 7-3, the far arm across before the body: its fill and its edge's scrap below the sword are open air
   const cross = await decodeLayered('LA:male:leather_leather_leather:7-3:lll^k1@0', decodePng, { ...opts, shieldArt: async () => null });

@@ -338,5 +338,25 @@
    "test/player/eyeOfTheBeholder/layered_shield.test.js"
   ],
   "why": "the arm's sources never read"
+ },
+ {
+  "name": "LAYERED-SHIELD-shoulder-never-laid",
+  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+  "old": "outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
+  "new": "outlineMask(img, idle.sp)",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the swing's raised shoulder out, the idle's never back: a hole at the shoulder"
+ },
+ {
+  "name": "LAYERED-SHIELD-shoulder-always-laid",
+  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+  "old": "outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
+  "new": "outlineMask(img, Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp)",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "a second pauldron over the frame's own (female 5-2)"
  }
 ]
