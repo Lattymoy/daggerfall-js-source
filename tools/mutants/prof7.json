@@ -929,8 +929,8 @@
   {
     "name": "PROF7-hud-trace-unlit",
     "file": "src/ui/professions/profReticle.js",
-    "old": "setClass(n, st.tracing && i <= st.reached ? `prof-glint",
-    "new": "setClass(n, false ? `prof-glint",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, false ? `prof-glint${ctx.reduced ? ' still' : ''}` : i === 0 ? 'prof-point first' : 'prof-point');",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

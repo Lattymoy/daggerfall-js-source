@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C3-gentle-hint",
     "file": "src/ui/professions/profReticle.js",
-    "old": "hint: (st, label) => (st.gentle ? t('prof.reticle.basket.searching', 'searching...') : label || t('prof.reticle.basket.glint', 'click the glint')),",
-    "new": "hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'),",
+    "old": "    hint: (st, label) =>\n      st.gentle\n        ? t('prof.reticle.basket.searching', 'searching...')\n        : label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
+    "new": "    hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]

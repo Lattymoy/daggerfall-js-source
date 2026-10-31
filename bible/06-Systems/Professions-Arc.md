@@ -6651,7 +6651,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 ### 57.6 The station
 
 - In the craft box of the anvil, the workbench, the loom and the jeweller's bench, at Master in the recipe's craft
-  (`masterBox.js:"export function drawMasterBox(box, kit, r, { station, book, state, free, rerender, name, go }) {"`):
+  (`masterBox.js:"export function drawMasterBox"`):
   three line pickers - native selects, a key's and a finger's, 40px under Enhanced Plus - each line shown at its band's
   two ends ("+20 to 40% damage"), a chosen line and a second effect greyed in the others; its goods and catalysts held of
   what is asked, a short one marked; one a day, or today's made; the press; and the last work's card (its name as the
@@ -6660,7 +6660,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 - **AUDIT HORIZONTAL B4: the box reads its own goods.** It said "the goods above", but with the Heartwood or the cracked
   gem ticked those were the stand-in's, and its press read the station's readiness for them: a Pine Staff with 2 Planks
   and a Heartwood pressed, and the service refused it. The station now hands the box `free` (rank, fee, hands), and the
-  box lists the recipe's own goods (`masterBox.js:"export function masterGoods(r, book) {"`) and the chain that makes
+  box lists the recipe's own goods (`masterBox.js:"export function masterGoods"`) and the chain that makes
   them from raw.
 
 - **AUDIT HORIZONTAL B6: a Pearl jewel's Pearls, as the service holds them.** The catalysts are asked of the counted

@@ -233,8 +233,8 @@
   {
     "name": "CRAFT-HOWTO-cooking-unpaid",
     "file": "src/ui/professions/craftHall.js",
-    "old": "rows.push([t('prof.hall.src.dish', 'Cooking a dish'), ",
-    "new": "rows.push([t('prof.hall.src.dish', 'Cooking a dish'), none(), ",
+    "old": "        t('prof.hall.src.dishXp', '{xp, number} XP, {more, number} with every pan on time', {",
+    "new": "        none(),\n        t('prof.hall.src.dishXp', '{xp, number} XP, {more, number} with every pan on time', {",
     "why": "AUDIT FB1018D L1-5: the page tells a cook a dish pays nothing - the XP clause unread by the pin",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "CRAFT-HOWTO-building-unpaid",
     "file": "src/ui/professions/craftHall.js",
-    "old": "rows.push([t('prof.hall.src.mason', 'A cut or mix at the mason\\'s bench'), ",
-    "new": "rows.push([t('prof.hall.src.mason', 'A cut or mix at the mason\\'s bench'), none(), ",
+    "old": "        t('prof.hall.src.masonXp', '{xp, number} XP each, {more, number} for clean work', {",
+    "new": "        none(),\n        t('prof.hall.src.masonXp', '{xp, number} XP each, {more, number} for clean work', {",
     "why": "AUDIT FB1018D L1-5: the workbench and the mason's bench said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "CRAFT-HOWTO-outfitting-unpaid",
     "file": "src/ui/professions/craftHall.js",
-    "old": "rows.push([t('prof.hall.src.loom', 'A piece at the loom'), ",
-    "new": "rows.push([t('prof.hall.src.loom', 'A piece at the loom'), none(), ",
+    "old": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), piece(['outfitting'])]);",
+    "new": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), none(), piece(['outfitting'])]);",
     "why": "AUDIT FB1018D L1-5: the loom said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"

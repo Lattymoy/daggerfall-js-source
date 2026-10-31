@@ -164,8 +164,8 @@
   {
     "name": "TOUCH-HOLD-the-meter-names-a-key",
     "file": "src/ui/professions/profReticle.js",
-    "old": " : byUse ? t('prof.reticle.trace.aim', 'aim the knife at the first point')\n        : s.slips",
-    "new": "\n        : s.slips",
+    "old": "        : byUse\n          ? t('prof.reticle.trace.aim', 'aim the knife at the first point')\n          : s.slips > 0\n            ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key })\n            : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
+    "new": "        : s.slips > 0\n          ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key })\n          : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "TOUCH-HOLD-the-gentle-meter-names-a-key",
     "file": "src/ui/professions/profReticle.js",
-    "old": "? (byUse ? t('prof.reticle.hold.skinning', 'skinning...') : t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() }))",
-    "new": "? (t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() }))",
+    "old": "        ? byUse\n          ? t('prof.reticle.hold.skinning', 'skinning...')\n          : t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() })",
+    "new": "        ? t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() })",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]

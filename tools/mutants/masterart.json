@@ -319,8 +319,8 @@
   {
     "name": "MASTER-ART-box-below-master",
     "file": "src/ui/professions/masterBox.js",
-    "old": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK) return null;",
-    "new": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK - 1) return null;",
+    "old": "  if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK) return null;",
+    "new": "  if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK - 1) return null;",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "MASTER-ART-box-ready-two-lines",
     "file": "src/ui/professions/masterBox.js",
-    "old": "&& masterChoiceRefusal(r, picks) === null && needs.every",
-    "new": "&& masterChoiceRefusal(r, picks) !== 'procs' && needs.every",
+    "old": "    masterChoiceRefusal(r, picks) === null &&",
+    "new": "    masterChoiceRefusal(r, picks) !== 'procs' &&",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "MASTER-ART-box-catalysts-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "needs.every((c) => c.have >= c.need)",
-    "new": "needs.every((c) => c.have >= 0)",
+    "old": "    needs.every((c) => c.have >= c.need) &&",
+    "new": "    needs.every((c) => c.have >= 0) &&",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "MASTER-ART-box-shared-key-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "have: Math.max(0, workOf(book, i.key) - cat(i.key))",
-    "new": "have: Math.max(0, workOf(book, i.key) - 0 * cat(i.key))",
+    "old": "    have: Math.max(0, workOf(book, i.key) - cat(i.key)),",
+    "new": "    have: Math.max(0, workOf(book, i.key) - 0 * cat(i.key)),",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "MASTER-ART-box-lines-unhanded",
     "file": "src/ui/professions/masterBox.js",
-    "old": "const res = await go([...picks]);",
-    "new": "const res = await go([]);",
+    "old": "    const res = await go([...picks]);",
+    "new": "    const res = await go([]);",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT-HB4-box-goods-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "    && (goods.every((g) => g.have >= g.n) || goodsFromRaw(r, book, goods));",
-    "new": "    && (true || goodsFromRaw(r, book, goods));",
+    "old": "    (goods.every((g) => g.have >= g.n) || goodsFromRaw(r, book, goods));",
+    "new": "    (true || goodsFromRaw(r, book, goods));",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "AUDIT-HB4-box-stand-in-goods",
     "file": "src/ui/professions/masterBox.js",
-    "old": "return recipeInputs(r).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
-    "new": "return recipeInputs(r, { heartwood: true }).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
+    "old": "  return recipeInputs(r).map((/** @type {any} */ i) => ({",
+    "new": "  return recipeInputs(r, { heartwood: true }).map((/** @type {any} */ i) => ({",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "AUDIT-HB6-box-catalyst-asks-the-good",
     "file": "src/ui/professions/masterBox.js",
-    "old": "need: c.n, have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
-    "new": "need: c.n + (c.key === 'gem:pearl' ? 1 : 0), have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
+    "old": "    need: c.n,",
+    "new": "    need: c.n + (c.key === 'gem:pearl' ? 1 : 0),",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]

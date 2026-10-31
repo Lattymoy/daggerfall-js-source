@@ -470,8 +470,8 @@
   {
     "name": "AUDIT32-P11-no-line",
     "file": "src/ui/professions/profReticle.js",
-    "old": "const guide = k.svg('polyline', { class: 'trace-guide', points: '' }, art);",
-    "new": "const guide = k.svg('path', { class: 'trace-guide', points: '' }, art);",
+    "old": "  const guide = k.svg('polyline', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
+    "new": "  const guide = k.svg('path', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT32-P11-first-unmarked",
     "file": "src/ui/professions/profReticle.js",
-    "old": ": i === 0 ? 'prof-point first' : 'prof-point');",
-    "new": ": 'prof-point');",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, st.tracing && i <= st.reached ? `prof-glint${ctx.reduced ? ' still' : ''}` : 'prof-point');",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "AUDIT32-P11-degrees-unequal",
     "file": "src/ui/professions/profReticle.js",
-    "old": "return [focal * Math.tan(Math.max(-lim, Math.min(lim, dy))),",
-    "new": "return [focal * 0.6 * Math.tan(Math.max(-lim, Math.min(lim, dy))),",
+    "old": "  return [focal * Math.tan(Math.max(-lim, Math.min(lim, dy))), -focal * Math.tan(Math.max(-lim, Math.min(lim, dp)))];",
+    "new": "  return [\n    focal * 0.6 * Math.tan(Math.max(-lim, Math.min(lim, dy))),\n    -focal * Math.tan(Math.max(-lim, Math.min(lim, dp))),\n  ];",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT32-P10-slip-unsaid",
     "file": "src/ui/professions/profReticle.js",
-    "old": " : s.slips > 0 ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold',",
-    "new": " : t('prof.reticle.trace.hold',",
+    "old": "          : s.slips > 0\n            ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key })\n            : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
+    "new": "          : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]

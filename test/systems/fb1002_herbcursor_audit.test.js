@@ -300,5 +300,5 @@ test('AUDIT HERB-CURSOR C3: the Basket says to click the glint - "tap the glint"
     s.host.tick(0.016);
     assert.equal(s.label, 'click the glint');
   } finally { s.done(); }
-  assert.match(RETICLE, /hint: \(st, label\) => \(st\.gentle \? t\('prof\.reticle\.basket\.searching', 'searching\.\.\.'\) : label \|\| t\('prof\.reticle\.basket\.glint', 'click the glint'\)\),/);   // PIN MOVED (L10N4): the words through t()
+  assert.match(RETICLE, /hint: \(st, label\) =>\n\s*st\.gentle\n\s*\? t\('prof\.reticle\.basket\.searching', 'searching\.\.\.'\)\n\s*: label \|\| t\('prof\.reticle\.basket\.glint', 'click the glint'\),/);   // PIN MOVED (L10N4): the words through t()
 });

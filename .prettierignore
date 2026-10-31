@@ -1625,6 +1625,14 @@
 !/src/ui/plus/plusCursor.js
 !/src/ui/poi/
 /src/ui/poi/*/
+!/src/ui/professions/
+/src/ui/professions/*
+!/src/ui/professions/craftHall.js
+!/src/ui/professions/masterBox.js
+!/src/ui/professions/profActStyle.js
+!/src/ui/professions/profHud.js
+!/src/ui/professions/profReticle.js
+!/src/ui/professions/profStationStyle.js
 !/src/ui/profileIcons.js
 !/src/ui/profileWindow.js
 !/src/ui/provinceMap.js

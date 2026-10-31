@@ -57,8 +57,8 @@
   {
     "name": "STEADY-SAID-the-meter-names-none",
     "file": "src/ui/professions/profReticle.js",
-    "old": "label ? t('prof.reticle.steady.stillKey', 'hold {key} and keep still ({deg} degrees)', { key: label, deg }) : ",
-    "new": "",
+    "old": "            : label\n              ? t('prof.reticle.steady.stillKey', 'hold {key} and keep still ({deg} degrees)', { key: label, deg })\n              : t('prof.reticle.steady.still', 'keep still ({deg} degrees)', { deg })",
+    "new": "            : t('prof.reticle.steady.still', 'keep still ({deg} degrees)', { deg })",
     "tests": [
       "test/scenes/fb1001_nodes.test.js"
     ]
