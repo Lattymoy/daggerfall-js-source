@@ -178,8 +178,8 @@
   {
     "name": "ARMORY-the-kit-never-said-again",
     "file": "src/scenes/auraHost.js",
-    "old": " || (armoryHeard !== undefined && kit !== armoryHeard)) {",
-    "new": ") {",
+    "old": " || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard",
+    "new": " || (effectsHeard",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -268,7 +268,7 @@
   {
     "name": "ARMORY-the-arrival-in-english",
     "file": "src/ui/accountFlow.js",
-    "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
+    "old": "  if (kind === 'armory') return armoryPieceName(key);\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"
@@ -305,8 +305,8 @@
   {
     "name": "ARMORY-the-set-priced-as-the-singles",
     "file": "src/net/shopLaw.js",
-    "old": "ware('armory', 'eternalset', 2000, 256)",
-    "new": "ware('armory', 'eternalset', 3000, 256)",
+    "old": "ware('armory', 'eternalset', 2000, {",
+    "new": "ware('armory', 'eternalset', 3000, {",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "ARMORY-the-set-holding-nothing",
     "file": "src/net/shopLaw.js",
-    "old": "(kind === 'armory' ? armoryWarePieces(w.key) : [w.key])",
-    "new": "[w.key]",
+    "old": "{ ...pre(256), gives: armoryLinePieces(ARMORY_SETS.eternalset).map((p) => `armory:${p.key}`) }",
+    "new": "pre(256)",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "ARMORY-a-single-sold-over-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "return gives.length > 0 && gives.every(",
-    "new": "return gives.length > 1 && gives.every(",
+    "old": "    for (const g of w?.gives ?? []) if (!out.has(g) && !lost.has(g)) { out.add(g); stack.push(g); }\n",
+    "new": "",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "ARMORY-four-singles-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "gives.every((k) => shopKeysOf(bits, 'armory').includes(k))",
-    "new": "gives.some((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "old": "  if (!w || held.includes(w.id)) return 0;\n  return w.gives.length ? w.gives.reduce(",
+    "new": "  if (!w || held.includes(w.id) || w.gives.some((g) => held.includes(g))) return 0;\n  return w.gives.length ? w.gives.reduce(",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"

@@ -16,7 +16,8 @@ import { compiledPass } from '../render/glProgram.js';
 import { peerBodyYaw } from '../net/peer/peerClimb.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
-import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
+import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
+import { bindPeerEffects } from '../net/peer/peerEffects.js';   // STOREFRONT: each peer's worn effects, for a face that holds only its id
 import { getPref } from '../systems/uiPrefs.js';
 import { drawAurasThenBacks, SELF_OWNER } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
 import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
@@ -69,9 +70,10 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  */
 export function createAuraHost(deps) {
   const { renderer } = deps;
+  bindPeerEffects((id) => deps.online()?.effectsOf?.(id) ?? null);   // STOREFRONT: a peer's gate and spared revenant in its own portal skin
   /** The aura the last minted token said, and the kit (undefined until a service that says one) - a wear since is said
    *  again at the next frame (AURA-LIVE). */
-  let auraHeard, armoryHeard;
+  let auraHeard, armoryHeard, effectsHeard;   // STOREFRONT: and the effects kit, said again the same way
   let gathered = 0;
   let selfLiftNow = 0;   // AURA-ON-DRAGON: the frame's lift of my own (frame's), for the cape hung in draw   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
   const acrossRight = [1, 0, 0];   // BACK-HOLSTER: the view's right the capes are moved along (auraShiftAcross)
@@ -142,6 +144,7 @@ export function createAuraHost(deps) {
     issued(/** @type {any} */ who) {
       if (who && 'aura' in who) auraHeard = who.aura ?? null;
       if (who && 'armory' in who) armoryHeard = who.armory ?? null;
+      if (who && 'effects' in who) effectsHeard = who.effects ?? null;
     },
     /** WB9g: GATHERED WITH THE PEERS each frame - mine as the service signed it, and every peer's the relay vouched for. */
     frame(/** @type {any[]} */ seen) {
@@ -153,8 +156,8 @@ export function createAuraHost(deps) {
       const vw = renderer._view, right = vw ? cardRightOf(renderer._proj, vw) : null;   // the card's right, a sprite's feet off it (the draw's; ARMORY-MIRROR)
       // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say is
       // said again, so the room sees it now. ARMORY: and the kit the same
-      const mine = ownAura(), kit = ownArmory();
-      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; } }
+      const mine = ownAura(), kit = ownArmory(), fx = ownEffects();
+      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard !== undefined && fx !== effectsHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; effectsHeard = fx; } }
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
       const lift = deps.selfLift?.() || 0;   // AURA-ON-DRAGON: on my dragon, worn where its rider sits
       selfLiftNow = lift;

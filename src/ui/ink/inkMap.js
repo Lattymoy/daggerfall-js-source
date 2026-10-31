@@ -56,6 +56,7 @@ import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's
 import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
 import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
+import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../fissureMapMark.js';   // STOREFRONT: a Brass Fissure's brass and its crack's blue
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
@@ -1300,6 +1301,8 @@ export function paintInkOverlay(ctx, view, opts) {
   for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);
   // STAR6: the night's fallen stars, beside the raids - none ever falls in a town
   for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);
+  // STOREFRONT: the season's Brass Fissures, beside the stars - the Heart Fissures larger, ringed
+  for (const m of opts.fissures ?? []) if (visible(m.x, m.y)) paintFissureMark(ctx, view, m, pulse);
   // GUIDE5: where the quests point, over the raids and under the party - the diamond above its place, the followed
   // quest's filled
   for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);
@@ -1471,6 +1474,34 @@ export function paintStarMark(ctx, view, m, pulse = 0) {
   ctx.fill();
   ctx.strokeStyle = PEN.line;
   ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** STOREFRONT: A BRASS FISSURE - a brass cog on its pixel with a jagged crack of the aetherium's blue across it, outlined in
+ *  the pen's ink; a Heart Fissure's cog larger, a ring breathing about it as the gate's does. Skin. */
+export function paintFissureMark(ctx, view, m, pulse = 0) {
+  const [x, y] = toPaper(view, m.x, m.y);
+  const r = m.heart ? 7 : 5, teeth = 8;
+  ctx.save();
+  ctx.setLineDash([]);
+  if (m.heart) { ctx.strokeStyle = FISSURE_BRASS_CSS; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 11 + pulse * 2, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.beginPath();
+  for (let i = 0; i < teeth * 2; i++) {
+    const a0 = (i / (teeth * 2)) * Math.PI * 2, a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2, rr = i % 2 ? r : r * 1.3;
+    if (i === 0) ctx.moveTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr); else ctx.lineTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
+    ctx.lineTo(x + Math.cos(a1) * rr, y + Math.sin(a1) * rr);
+  }
+  ctx.closePath();
+  ctx.fillStyle = FISSURE_BRASS_CSS;
+  ctx.fill();
+  ctx.strokeStyle = PEN.line;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.strokeStyle = FISSURE_AETHER_CSS;   // the crack across it
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x - r * 1.2, y - r * 0.5); ctx.lineTo(x - r * 0.3, y + r * 0.1); ctx.lineTo(x + r * 0.2, y - r * 0.3); ctx.lineTo(x + r * 1.2, y + r * 0.5);
   ctx.stroke();
   ctx.restore();
 }

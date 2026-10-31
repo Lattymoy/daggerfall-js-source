@@ -77,7 +77,8 @@ const HARDCODED = {
   'src/net/accountClient.js': 14,
   'src/net/arena/arenaBrain.js': 2,
   'src/net/arena/arenaLaw.js': 28,
-  'src/net/armoryLaw.js': 11,   // GUILD-SHOP: and the Insignia Armlet's (armory.test.js holds every piece's service name to its client words). ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
+  'src/net/armoryLaw.js': 12,   // THANKS-POST: and the Crystal Spurs'; GUILD-SHOP: and the Insignia Armlet's (armory.test.js holds every piece's service name to its client words). ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
+  'src/net/effectLaw.js': 11,   // STOREFRONT: EFFECTS' names - the kill effects', portal skins' and mount looks' in the service's English (the shop's receipt); the client says them through ui/effectText.js, a pin holding the two equal
   'src/net/bagLaw.js': 26,
   'src/net/boardLaw.js': 4,
   'src/net/card/cardLaw.js': 6,
@@ -165,7 +166,7 @@ const HARDCODED = {
   'src/net/serpent/serpentLaw.js': 7,
   'src/net/serpent/serpentLink.js': 6,
   'src/net/serverPost.js': 5,
-  'src/net/shopLaw.js': 1,   // ARMORY: SHOP_KIND_NAME's 'Aura Armory' - the receipt's word for the ware's kind, the service's English (the shop's window says it through ui/enhanced/enhancedShop.js)
+  'src/net/shopLaw.js': 8,   // ARMORY: SHOP_KIND_NAME's 'Aura Armory' - the receipt's word for the ware's kind, the service's English (the shop's window says it through ui/enhanced/enhancedShop.js); STOREFRONT: +16, OWN_NAME - the new wares' names and the pass's kinds in the service's English (Stripe's line, the receipt); the window says them through ui/enhanced/enhancedShop.js shopWareName and the badges' own tables, pins holding them equal (test/ui/shop_window.test.js, storefront_badges.test.js); PASS-PANELS: 9 fewer, the passes', boosters' and Seasonal Collector's names gone with them
   'src/net/siege/siegeLink.js': 27,
   'src/net/siege/siegeRef.js': 4,
   'src/net/siege/siegeSession.js': 19,
@@ -194,6 +195,7 @@ const HARDCODED = {
   'src/render/bannerPass.js': 2,
   'src/render/cardFaces.js': 14,
   'src/render/characterStage.js': 1,   // PROFILE-SLOTS: the stage's picture shader - GLSL the scan reads as prose (`in vec2`), armoryPass.js's same line
+  'src/render/effectStage.js': 2,   // STOREFRONT: the profile's effect stage's two shaders - GLSL the scan reads as prose (`in vec2`), characterStage.js's same line
   'src/render/classicShadowLane.js': 3,
   'src/render/cloudNoise.js': 4,
   'src/render/comeSailAwayRender.js': 9,
@@ -218,6 +220,7 @@ const HARDCODED = {
   'src/render/gate/gateVeil.js': 1,
   'src/render/heatHaze.js': 2,
   'src/render/ketch/ktGaugePass.js': 1,   // KETCH-LOOK KL3: its vertex stage's source, as every pass's
+  'src/render/killFx.js': 1,   // STOREFRONT: the kill effects' particle vertex stage - GLSL the scan reads as prose (`in vec2`), as every pass's
   'src/render/labGrass.js': 176,
   'src/render/lightningBolts.js': 2,
   'src/render/navalRender.js': 2,
@@ -561,6 +564,7 @@ const HARDCODED = {
   'src/systems/testRoom.js': 59,   // PISTOLET: +2, the test room's two Dwarven Pistolet rows (the Thunderlock's own were counted)
   'src/systems/thunderlock.js': 11,   // KETCH: +3, the Thunderlock's, the Pistolet's and the Pellet's descriptions, their lore through the dweamer - an item's own record, as its name and power are; the Last Lock's hint 'No longer found' (no gun drops) in its old one's place, no count (AUDIT KETCH L5-10: the reason counted the hint among the three)
   'src/systems/pistolet.js': 1,   // PISTOLET: the template row's name, 'Dwarven Pistolet' - the Thunderlock's row's is counted the same way
+  'src/systems/pass/resonantMaul.js': 5,   // STOREFRONT: the Resonant Maul's record - its name, lore, power and hint, an item's own record as the Thunderlock's and every Legendary's in lootRarity.js
   'src/systems/tradePack.js': 10,
   'src/systems/translationPacks.js': 1,
   'src/systems/travel/travelBands.js': 1,
@@ -610,13 +614,12 @@ const HARDCODED = {
   'src/tools/studioLab.js': 3,   // STUDIO1: the studio page's own words to the game's artists (studio.html) - no player reads them
   'src/tools/spireMap.js': 3,   // THE ASCENT - THE ROOMS (LAW 9): the lab's map legend (its roads' names) - the bench page's, never a player's
   'src/ui/accountFlow.js': 2,
-  'src/ui/arena/arenaWindow.js': 4,
   'src/ui/armourCard.js': 5,
   'src/ui/automap/automapSheet.js': 14,
   'src/ui/bankWindow.js': 1,
   'src/ui/bounty/bountyMapMark.js': 1,
-  'src/ui/bounty/bountyWindow.js': 33,
-  'src/ui/brokerWindow.js': 42,
+  'src/ui/bounty/bountyWindow.js': 31,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/brokerWindow.js': 38,   // STOREFRONT: 4 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/captainPage.js': 13,
   'src/ui/card/cardBinderPage.js': 25,
   'src/ui/card/cardTableHud.js': 79,
@@ -627,7 +630,7 @@ const HARDCODED = {
   'src/ui/charsheet.js': 16,
   'src/ui/chatPanel.js': 18,
   'src/ui/classicLootPanel.js': 1,
-  'src/ui/companionRoster.js': 19,
+  'src/ui/companionRoster.js': 17,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/credits.js': 84,
   'src/ui/cursor.js': 1,
   'src/ui/deathScreen.js': 2,
@@ -637,37 +640,36 @@ const HARDCODED = {
   'src/ui/eliteGates/egBeats.js': 85,
   'src/ui/eliteGates/egBoardWindow.js': 15,
   'src/ui/eliteGates/egHud.js': 32,   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: -1, the Gauntlet's line routed (eg.progress.gauntlet). AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
-  'src/ui/eliteGates/egSpireHud.js': 15,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names)
+  'src/ui/eliteGates/egSpireHud.js': 11,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names); STOREFRONT: 4 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/eliteGates/egStartWindow.js': 5,
   'src/ui/enhanced/enhancedAccount.js': 7,   // PROFILE-SLOTS: -2, the wardrobe's rows moved to ui/characterSlots.js, its class lists built from parts
   'src/ui/enhanced/enhancedBook.js': 1,
   'src/ui/enhanced/enhancedCharSheet.js': 1,
   'src/ui/enhanced/enhancedChargen.js': 108,
-  'src/ui/enhanced/enhancedChronicle.js': 33,   // QUEST-AUDIT III SHELF-WORDS: -2, "Time remains" through t()
+  'src/ui/enhanced/enhancedChronicle.js': 31,   // QUEST-AUDIT III SHELF-WORDS: -2, "Time remains" through t(); STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedChunk.js': 2,
   'src/ui/enhanced/enhancedControls.js': 20,
   'src/ui/enhanced/enhancedDialog.js': 1,
   'src/ui/enhanced/enhancedFrame.js': 2,
-  'src/ui/enhanced/enhancedHelm.js': 16,
+  'src/ui/enhanced/enhancedHelm.js': 15,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedHotbar.js': 13,
-  'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
-  'src/ui/enhanced/enhancedInventory.js': 89,   // CHAT-POST: Link/Linked strings on the pack card (-3 Post strings); HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
-  'src/ui/enhanced/enhancedLevelingChoice.js': 6,
-  'src/ui/enhanced/enhancedMenu.js': 52,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main. REALM-COPY: -1, the copy's slot name moved to systems/realmCopyMark.js
-  'src/ui/enhanced/enhancedMerchantPanel.js': 1,
+  'src/ui/enhanced/enhancedHud.js': 5,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class); STOREFRONT: 4 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedInventory.js': 86,   // CHAT-POST: Link/Linked strings on the pack card (-3 Post strings); HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts); STOREFRONT: 3 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedLevelingChoice.js': 5,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedMenu.js': 47,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main. REALM-COPY: -1, the copy's slot name moved to systems/realmCopyMark.js; STOREFRONT: 5 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedNotice.js': 1,
-  'src/ui/enhanced/enhancedPlayerTrade.js': 14,
+  'src/ui/enhanced/enhancedPlayerTrade.js': 13,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedPlusStyle.js': 1,
-  'src/ui/enhanced/enhancedPort.js': 5,
+  'src/ui/enhanced/enhancedPort.js': 3,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedPorts.js': 106,
-  'src/ui/enhanced/enhancedPost.js': 13,
-  'src/ui/enhanced/enhancedRest.js': 10,
-  'src/ui/enhanced/enhancedSaddle.js': 19,   // AUDIT UICALM-FIRM1 L4 M8: the saddle's notes routed (saddle.note.*), back to its count before UI-CALM
-  'src/ui/enhanced/enhancedSpellbook.js': 22,
-  'src/ui/enhanced/enhancedTalk.js': 8,
-  'src/ui/enhanced/enhancedTavern.js': 9,
-  'src/ui/enhanced/enhancedTimers.js': 5,   // TIMERS2: -1, the Now and Coming up heads gone; its groups' words through the text core
-  'src/ui/enhanced/enhancedTrade.js': 19,
+  'src/ui/enhanced/enhancedPost.js': 12,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedRest.js': 9,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedSaddle.js': 16,   // AUDIT UICALM-FIRM1 L4 M8: the saddle's notes routed (saddle.note.*), back to its count before UI-CALM; STOREFRONT: 3 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedSpellbook.js': 20,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedTalk.js': 7,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedTavern.js': 8,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedTimers.js': 3,   // TIMERS2: -1, the Now and Coming up heads gone; its groups' words through the text core; STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/enhanced/enhancedTrade.js': 18,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/enhanced/enhancedTravelControl.js': 3,
   'src/ui/eventMapMarks.js': 6,
   'src/ui/exteriorAutomapWindow.js': 6,
@@ -678,11 +680,9 @@ const HARDCODED = {
   'src/ui/gate/gateBossBar.js': 5,
   'src/ui/gate/gateDamageChart.js': 3,
   'src/ui/gate/gateGroundView.js': 3,
-  'src/ui/gate/gateMarksView.js': 18,
-  'src/ui/gate/gateTitleCard.js': 1,
+  'src/ui/gate/gateMarksView.js': 17,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/gfxPrepBar.js': 4,   // FIX-STUTTER: the four browser folder paths, never translated
   'src/ui/grimoireDress.js': 13,
-  'src/ui/growth/growthStage.js': 1,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (GROWTH-BOOK)
   'src/ui/guildServiceWindow.js': 1,
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
@@ -707,13 +707,13 @@ const HARDCODED = {
   'src/ui/inventoryDoor.js': 1,
   'src/ui/joystickControlsWindow.js': 1,
   'src/ui/legacy/legacyModelChoice.js': 25,
-  'src/ui/legacy/legacySuccession.js': 3,
-  'src/ui/levelUp/levelNotice.js': 6,   // AUDIT UICALM-FIRM1 L4 M8: the Renown rise routed (level.renown.*)
+  'src/ui/legacy/legacySuccession.js': 2,   // STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/levelUp/levelNotice.js': 5,   // AUDIT UICALM-FIRM1 L4 M8: the Renown rise routed (level.renown.*); STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/levelingChoice.js': 16,
   'src/ui/loadingScreen.js': 10,
   'src/ui/localeFaces.js': 27,
   'src/ui/lootBanner.js': 3,
-  'src/ui/marketTab.js': 140,   // PACK-PICK: the List form's piece and pack words through the text core; AUDIT PACK-PICK: its kinds' and empty forms' too
+  'src/ui/marketTab.js': 136,   // PACK-PICK: the List form's piece and pack words through the text core; AUDIT PACK-PICK: its kinds' and empty forms' too; STOREFRONT: 4 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/merchant/merchantRepairDoor.js': 2,
   'src/ui/mouseControlsWindow.js': 2,
   'src/ui/native/nativeInventory.js': 5,
@@ -721,7 +721,7 @@ const HARDCODED = {
   'src/ui/naval/navalHud.js': 33,
   'src/ui/naval/navalPlunderWindow.js': 19,
   'src/ui/naval/navalYardWindow.js': 67,
-  'src/ui/noticeWindow.js': 99,
+  'src/ui/noticeWindow.js': 96,   // STOREFRONT: 3 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/oreMapTip.js': 2,   // WW-C1 (bible/03-World/World-Wide.md WW-C): Cyrodiil's line and the richest ores held back, its English - main's DEEP-OPEN routed the card's other lines through the text core (TESA x MAIN, the merge: 2 measured)
   'src/ui/padGlyphsHD.js': 15,
   'src/ui/pageWindow.js': 4,
@@ -729,15 +729,14 @@ const HARDCODED = {
   'src/ui/partyPanel.js': 3,
   'src/ui/pauseWindow.js': 2,
   'src/ui/peerMenuBindCard.js': 5,
-  'src/ui/pickupFeed.js': 1,
-  'src/ui/pixelDial.js': 3,
+  'src/ui/pixelDial.js': 1,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/pixelifyFive.js': 2,
   'src/ui/playerBadge.js': 55,   // WYRM-RIDER: the four dragon riders' titles in words, beside the other titles'; HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
+  'src/ui/professions/profPages.js': 28,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t(); STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/profileBadge.js': 4,
   'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,
@@ -748,7 +747,7 @@ const HARDCODED = {
   'src/ui/quest/questMarks.js': 1,
   'src/ui/quest/questRail.js': 1,
   'src/ui/quest/questTracker.js': 5,
-  'src/ui/reforgeWindow.js': 89,   // REFORGE-REPLACE: the card's note and the line's refusal through t(), the one-line lock's words gone
+  'src/ui/reforgeWindow.js': 85,   // REFORGE-REPLACE: the card's note and the line's refusal through t(), the one-line lock's words gone; STOREFRONT: 4 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/restWindow.js': 7,
   'src/ui/revenant/revenantCard.js': 5,
   'src/ui/revenant/revenantFateView.js': 3,
@@ -758,7 +757,6 @@ const HARDCODED = {
   'src/ui/superDungeon/sdMapMark.js': 1,
   'src/ui/superDungeon/sdMarksView.js': 19,
   'src/ui/superDungeon/sdRemnantBar.js': 11,
-  'src/ui/superDungeon/sdTitleCard.js': 1,
   'src/ui/seatTab.js': 89,
   'src/ui/seatWorks.js': 6,
   'src/ui/serpentBar.js': 5,
@@ -769,7 +767,6 @@ const HARDCODED = {
   'src/ui/settings/settingsMap.js': 24,
   'src/ui/shipyardWindow.js': 43,
   'src/ui/shotsPane.js': 21,
-  'src/ui/siegeHud.js': 1,
   'src/ui/sigilCard.js': 19,
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
@@ -790,18 +787,17 @@ const HARDCODED = {
   'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,
-  'src/ui/travel/travelViewHud.js': 22,
+  'src/ui/travel/travelViewHud.js': 16,   // STOREFRONT: 6 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/tutorialPopup.js': 9,
   'src/ui/tutorialsPane.js': 9,
   'src/ui/vendor/vendorMapMark.js': 1,
   'src/ui/vendor/vendorPage.js': 28,
-  'src/ui/vendor/vendorTab.js': 27,   // PACK-PICK
+  'src/ui/vendor/vendorTab.js': 26,   // PACK-PICK; STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/virtueLevelUp.js': 4,   // AUDIT GROWTH LANE5-1: its purse label routed (and enhancedLevelUp.js, levelUpView.js and firmamentWindow.js down to none - the Level and Firmament faces said through t())
   'src/ui/waitWindow.js': 1,
   'src/ui/waypointMenu.js': 11,
   'src/ui/wild/wildMapInk.js': 1,
   'src/ui/wild/wildZoneMap.js': 15,   // AUDIT TESA II M5: -2, the Wrothgarian zone's carriage and fast-travel laws gone - Cyrodiil's travel law through t() (wild.legend.travel)
-  'src/ui/workTab.js': 3,
   'src/ui/worldPlaque.js': 1,
   'src/ui/yesNoBox.js': 2,
   'src/world/actionSystem.js': 3,
@@ -826,7 +822,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 56,   // FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 58,   // AURUM-CACHES: +1, the coffer's row (AURUM_COFFER_ARCHIVE) - the registry's own words for a developer; FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows; STOREFRONT: +1, the Brass Fissure's art row (FISSURE_ARCHIVE) - the registry's own words for a developer
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
@@ -881,10 +877,13 @@ test('L10N4 the scan itself: prose counted; the text core\'s arguments, console 
       "export function f(n) { console.log('this is a log line'); if (!n) throw new Error('this never shows'); return `${n} coins in the purse`; }",
       "export const C = { 'Some key here': 1, style: 'margin: 4px 2px', border: '1px solid black', cls: 'hb-slot hb-empty', id: 'fooBar bazQux' };",
       "export const D = 'Resume';",
+      "export const E = (k, n) => [`sh-panel sh-panel-${k} fx-${k}-${n}`, `follow ${n} more steps`, `${k} sh-panel ready`];",
     ].join('\n'));
     assert.deepEqual(hardcodedStrings(root).map((s) => [s.line, s.text]), [
       [2, 'You have no gold left.'],
       [4, ' {}  coins in the purse'],
+      [7, 'follow  {}  more steps'],   // STOREFRONT: a class list with names built in it is CSS; words round an interpolation are not
+      [7, ' {}  sh-panel ready'],
     ]);
   } finally { rmSync(root, { recursive: true, force: true }); }
   assert.equal(isProse('The Bank of'), true);

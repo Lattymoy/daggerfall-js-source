@@ -85,6 +85,7 @@ import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the 
 import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
+import '../pass/resonantMaul.js';   // STOREFRONT: the Brass Colossus's Legendary, unrolled - lawful where it is held
 import '../pistolet.js';   // PISTOLET: the second gun's row, the Thunderlock's way
 import '../handWraps.js';   // HAND-WRAPS: the fists' weapon's row
 import '../gate/gateSpoils.js';

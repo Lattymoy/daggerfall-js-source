@@ -19,6 +19,9 @@ import { logoImage } from '../ui/guild/guildLogoImages.js';
 /** A tube's steps round and along; the most cards one draw floats; the footfall embers a wearer keeps. */
 export const ARMORY_ROUND = 32;
 export const ARMORY_ALONG = 6;
+/** AUDIT lane 3 F7: a spur's own mesh - six sides, one step: the shader draws six facets, so a round tube's 1,152 corners
+ *  were 32 times more than it shows. */
+export const ARMORY_SPIKE_ROUND = 6;
 export const ARMORY_CARDS = 12;
 export const ARMORY_TRAIL = 8;
 /** THE CARD LAW: how far toward the eye a sprite's piece is lifted (m) - off the card's plane, where it would fight it. */
@@ -32,7 +35,7 @@ export const ARMORY_DRAW_MAX = 24;
 export const ARMORY_EMBER_S = 2.5;
 export const ARMORY_STRIDE_M = 0.8;
 /** The rates (Hz), each whole over the clock: the heart's beat, the halo's light, the sigil's, the motes' orbit. */
-export const ARMORY_HZ = Object.freeze({ beat: 1, halo: 1 / 6, sigil: 1 / 8, orbit: 1 / 24, spark: 1 / 4, crest: 1 / 6, band: 1 / 4 });   // GUILD-SHOP: the armlet's sheen and its glint
+export const ARMORY_HZ = Object.freeze({ beat: 1, halo: 1 / 6, sigil: 1 / 8, orbit: 1 / 24, spark: 1 / 4, crest: 1 / 6, band: 1 / 4, prism: 1 / 20, glint: 1 / 5 });   // GUILD-SHOP: the armlet's sheen and its glint; THANKS-POST: the spurs' colours turning, a glint running up them
 /** THE HEAD PIECES' MEASURES (m, at the body's scale), read by their build (armoryDraws), their shader's motes and their
  *  tip (armoryHeadTip): the crown's band `brow` over the head point and `band` tall, `r` round, its flames `flame` over
  *  it narrowing to `tip` across; the halo `lift` over the crown, `r` round, its axis tipped `tilt` back, its motes
@@ -54,6 +57,25 @@ export const ARMORY_PIECE_INDEX = Object.freeze(Object.fromEntries(ARMORY_PIECES
  *  stand-in's) never buries them. The one piece drawn with its colours over what is behind it, not added to it. */
 export const ARMORY_ARMLET = Object.freeze({ at: ARM_BAND.at, tall: 0.07, r: 0.066, size: 0.058, off: 0.004, halo: 0.09, lift: 0.03 });
 const ARMLET = ARMORY_PIECE_INDEX.insigniaarmlet;
+/** THANKS-POST (2026-10-30, the owner: "Small and varied crystallized arm spikes that rotate color gradient but not
+ *  overbearing"): THE CRYSTAL SPURS - each spur a six-sided cone of crystal out of an arm: on the upper arm or the forearm
+ *  (`seg`), `at` of the way down it, `len` long, `r` across at its root (m, at the body's scale), turned `turn` round the arm
+ *  from straight out toward the back (radians) and leaning `lean` toward the hand. Five an arm, mirrored; `root` how far out
+ *  from the arm's line its root stands. Their colour turns slowly through PRISM_RGB, root to tip, each spur its own phase. */
+export const ARMORY_SPURS = Object.freeze([
+  Object.freeze({ seg: 'upper', at: 0.28, len: 0.08, r: 0.018, turn: 0.1, lean: 0.7 }),
+  Object.freeze({ seg: 'upper', at: 0.55, len: 0.11, r: 0.022, turn: 0.65, lean: 0.55 }),
+  Object.freeze({ seg: 'upper', at: 0.8, len: 0.065, r: 0.015, turn: -0.5, lean: 0.85 }),
+  Object.freeze({ seg: 'fore', at: 0.3, len: 0.095, r: 0.019, turn: 0.35, lean: 0.6 }),
+  Object.freeze({ seg: 'fore', at: 0.62, len: 0.07, r: 0.016, turn: -0.3, lean: 0.8 }),
+]);
+export const ARMORY_SPUR_ROOT = 0.045;
+/** The prism the spurs' colour turns through: amethyst, aqua, rose. RGB 0..1. */
+export const PRISM_RGB = Object.freeze([Object.freeze([0.55, 0.32, 1]), Object.freeze([0.22, 0.85, 0.95]), Object.freeze([1, 0.38, 0.72])]);
+/** How bright a spur is drawn at most (its added light): small and quiet beside the other pieces. */
+export const ARMORY_SPUR_GAIN = 0.85;
+const SPURS = ARMORY_PIECE_INDEX.crystalspurs;
+const SPUR_TAN = ARMORY_SPURS.map((p) => Math.tan(p.turn));
 
 const v3 = (/** @type {ReadonlyArray<number>} */ c) => `vec3(${c.map((x) => x.toFixed(3)).join(', ')})`;
 /** A rate (Hz) as GLSL multiplies by it EXACTLY - a division by its whole period (the auras' hzGlsl law). */
@@ -359,6 +381,22 @@ vec3 sigilLight() {
   float heat = ring + ticks * 0.6 + runes * 0.4 + rays * 0.35 + star * (0.75 + 0.25 * sin(TAU * uTime ${hz(ARMORY_HZ.spark)}));
   return eternalRamp(0.3 + 0.7 * min(heat, 1.0)) * min(heat, 1.2) * uFace * 0.85;
 }
+// THANKS-POST: CRYSTAL SPURS - a cone of crystal, six facets round it lit by the eye, its colour turning slowly through the
+// prism from root to tip (each spur its own phase, uPart), its tip brightest, a glint running up its edges now and then
+vec3 prism(float h) {
+  float x = fract(h) * 3.0;
+  vec3 a = ${v3(PRISM_RGB[0])}, b = ${v3(PRISM_RGB[1])}, c = ${v3(PRISM_RGB[2])};
+  return x < 1.0 ? mix(a, b, smoothstep(0.0, 1.0, x)) : x < 2.0 ? mix(b, c, smoothstep(1.0, 2.0, x)) : mix(c, a, smoothstep(2.0, 3.0, x));
+}
+vec3 crystalLight() {
+  float f = vP.x * 6.0, facet = floor(f);
+  float lit = 0.3 + 0.7 * clamp(vS.x, 0.0, 1.0) * (0.75 + 0.25 * sin(facet * 2.1 + 1.3));
+  float edge = lineAt(min(fract(f), 1.0 - fract(f)), 0.08);
+  float h = uTime ${hz(ARMORY_HZ.prism)} + uSeed + float(uPart) * 0.17 + vP.y * 0.35;
+  float tip = smoothstep(0.5, 1.0, vP.y);
+  float run = fract(uTime ${hz(ARMORY_HZ.glint)} + float(uPart) * 0.29), g = (vP.y - run * 1.4 + 0.2) / 0.08, glint = exp(-g * g) * edge;   // AUDIT lane 3: never pow() of a negative
+  return (prism(h) * (lit * (0.45 + 0.55 * tip) + edge * 0.25) + vec3(1.0) * glint * 0.6) * ${ARMORY_SPUR_GAIN.toFixed(2)};
+}
 `;
 
 export const ARMORY_FS = `${HEAD}in vec2 vP;
@@ -416,6 +454,7 @@ void main() {
   else if (uPiece == 3 || uPiece == 8) c = legLight();
   else if (uPiece == 5 || uPiece == 7) c = ringLight();
   else if (uPiece == 6) c = sigilLight();
+  else if (uPiece == ${SPURS}) c = crystalLight();   // THANKS-POST
   else c = vec3(0.0);   // the weapon's pieces are the weapon glow's (systems/weaponGlow.js law 7), never drawn here
   o = vec4(max(c, vec3(0.0)) * uKindle * fogFactorAt(vWorld), 1.0);
 }
@@ -438,11 +477,11 @@ export const ARMORY_BODY_PIECES = Object.freeze(ARMORY_PIECES.filter((p) => p.sl
 export const ARMORY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(ARMORY_BODY_PIECES.flatMap((k) => armoryPrograms(ARMORY_PIECES.findIndex((p) => p.key === k)))));
 const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror']);   // GUILD-SHOP: the armlet's crest and colours
 
-/** A tube's grid: ARMORY_ROUND steps round by ARMORY_ALONG along, two triangles a cell, as (round, along) pairs. Pure. */
-export function armoryTubeGrid() {
+/** A tube's grid: `round` steps round by `along` along, two triangles a cell, as (round, along) pairs. Pure. */
+export function armoryTubeGrid(round = ARMORY_ROUND, along = ARMORY_ALONG) {
   const out = [];
-  for (let j = 0; j < ARMORY_ALONG; j++) for (let i = 0; i < ARMORY_ROUND; i++) {
-    const u0 = i / ARMORY_ROUND, u1 = (i + 1) / ARMORY_ROUND, v0 = j / ARMORY_ALONG, v1 = (j + 1) / ARMORY_ALONG;
+  for (let j = 0; j < along; j++) for (let i = 0; i < round; i++) {
+    const u0 = i / round, u1 = (i + 1) / round, v0 = j / along, v1 = (j + 1) / along;
     out.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1);
   }
   return new Float32Array(out);
@@ -519,7 +558,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const fwd = [Math.sin(yaw), 0, Math.cos(yaw)];
   const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + 0.35)); };
   const out = [];
-  const tube = (part, A, B, r0, r1, N = fwd) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1 });
+  const tube = (part, A, B, r0, r1, N = fwd, spike = false) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1, ...(spike ? { spike: true } : {}) });
   // embers and motes only near; a glow or the Origin's spark (`always`) at any distance the piece is drawn
   const cards = (part, count, A, B, U, r = [0, 0], size = 0, face = 1, gain = 1, always = false) => { if (near || always) out.push({ mesh: CARDS, part, A, B, N: fwd, U, r, size, count, face, gain }); };
   const decal = (part, A, N, size, face) => out.push({ mesh: DECAL, part, A, B: A, N, U: UP, r: [0, 0], size, count: 0, face, gain: 1 });
@@ -590,6 +629,23 @@ export function armoryDraws(key, w, eye, near, right = null) {
       cards(key === 'cinderstride' ? 2 : 1, 8, ft, kn, UP, [0.08 * s, 0], 0, 1, key === 'cinderstride' ? 0.4 + 0.6 * speed : speed);
     }
     if (key === 'cinderstride') cards(1, ARMORY_TRAIL, at, at, UP);
+  } else if (key === 'crystalspurs') {
+    // THANKS-POST: the spurs on both arms - out from the body's side, turned round the arm and leaning toward the hand
+    const chest = pt('chest');
+    for (const arm of /** @type {const} */ (['left', 'right'])) {
+      const u = upperArm(arm, ARMORY_SPUR_ROOT);
+      if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
+      const { sh, el } = u, wa = pt(`wa${u.side}`), lat = sub(sh, chest);
+      ARMORY_SPURS.forEach((p, k) => {
+        if (p.seg === 'fore' && !full) return;
+        const upper = p.seg === 'upper', [a, b] = upper ? [sh, el] : [el, wa], d = unit(sub(b, a)), on = upper ? u.along(p.at) : mix(a, b, p.at);
+        const flat = [lat[0], 0, lat[2]], along = flat[0] * d[0] + flat[2] * d[2];
+        const outward = unit(sub(flat, [d[0] * along, d[1] * along, d[2] * along])), back = [-fwd[0], 0, -fwd[2]];
+        const dir = unit(add(add(outward, back, SPUR_TAN[k]), d, p.lean));
+        const root = add(on, dir, ARMORY_SPUR_ROOT * (upper ? u.k : 1) * s);   // on the painted arm's skin
+        tube(k, root, add(root, dir, p.len * s), p.r, 0.0015, fwd, true);
+      });
+    }
   } else if (key === 'insigniaarmlet') {
     // GUILD-SHOP (the owner: "shows your guild insigia in a detailed format on one of the upper arms. Just one side"): the
     // wearer's left arm. A sprite's points are the picture's sides, so seen from the front its left arm is the right one
@@ -720,6 +776,11 @@ export class ArmoryRenderer {
     this.tubeBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.tubeBuf);
     gl.bufferData(gl.ARRAY_BUFFER, armoryTubeGrid(), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    this.spikeVao = gl.createVertexArray();
+    gl.bindVertexArray(this.spikeVao);
+    this.spikeBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.spikeBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, armoryTubeGrid(ARMORY_SPIKE_ROUND, 1), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     this.cardVao = gl.createVertexArray();
     gl.bindVertexArray(this.cardVao);
     this.cardBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.cardBuf);
@@ -799,7 +860,7 @@ export class ArmoryRenderer {
             gl.uniform3fv(U.uA, d.A); gl.uniform3fv(U.uB, d.B); gl.uniform3fv(U.uN, d.N); gl.uniform3fv(U.uU, d.U);
             gl.uniform2fv(U.uR, d.r); gl.uniform1f(U.uSize, d.size); gl.uniform1f(U.uFace, d.face); gl.uniform1f(U.uGain, d.gain);
             if (key === 'insigniaarmlet') gl.uniform1f(U.uLift, ((w.pose.card ? ARMORY_LIFT_M : 0) + (d.mesh === DECAL ? ARMORY_ARMLET.lift : 0)) * (w.pose.scale > 0 ? w.pose.scale : 1));   // GUILD-SHOP
-            if (d.mesh === TUBE) { gl.bindVertexArray(this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, ARMORY_ROUND * ARMORY_ALONG * 6); }
+            if (d.mesh === TUBE) { gl.bindVertexArray(d.spike ? this.spikeVao : this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, (d.spike ? ARMORY_SPIKE_ROUND : ARMORY_ROUND * ARMORY_ALONG) * 6); }
             else { gl.bindVertexArray(this.cardVao); gl.drawArrays(gl.TRIANGLES, 0, (d.mesh === DECAL ? 1 : Math.min(d.count, ARMORY_CARDS)) * 6); }
           }
           this.drawn++;
@@ -889,8 +950,8 @@ export class ArmoryRenderer {
   /** EVERY ALLOCATION HAS AN OWNER: the pass's buffers and arrays. */
   dispose() {
     const gl = this.gl;
-    gl.deleteBuffer(this.tubeBuf); gl.deleteBuffer(this.cardBuf);
-    gl.deleteVertexArray(this.tubeVao); gl.deleteVertexArray(this.cardVao);
+    gl.deleteBuffer(this.tubeBuf); gl.deleteBuffer(this.cardBuf); gl.deleteBuffer(this.spikeBuf);
+    gl.deleteVertexArray(this.tubeVao); gl.deleteVertexArray(this.cardVao); gl.deleteVertexArray(this.spikeVao);
     for (const e of this._crests.values()) if (e.tex) gl.deleteTexture(e.tex);   // GUILD-SHOP: the crests
     this._crests.clear();
   }

@@ -50,6 +50,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // (systems/faction/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
   // default (PREF1), so a player who never pressed the row moves with it, and one who pressed it off keeps their Off.
   standingAll: true,
+  // SHOP-HIDE (2026-10-30, the owner: "a settings toggle that disables the shop interface ingame. Off by default"): on, the
+  // pause screen draws no shop gem and the shop's window never opens; the account's Aurum and what it holds are untouched.
+  shopHidden: false,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's

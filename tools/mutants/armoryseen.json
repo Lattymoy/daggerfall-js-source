@@ -2,8 +2,8 @@
   {
     "name": "ASEEN-keepSession-drops-the-kit",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, effects, nameAsAt })",
     "tests": [
       "test/net/armorylive.test.js"
     ]

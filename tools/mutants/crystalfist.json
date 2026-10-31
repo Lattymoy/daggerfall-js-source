@@ -92,8 +92,8 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "CRYSTALFIST-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
+    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "CRYSTALFIST-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "CRYSTALFIST-the-wrong-aura-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/crystalfist.test.js",
       "test/net/relayversion.test.js"

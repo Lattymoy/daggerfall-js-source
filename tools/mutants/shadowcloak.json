@@ -11,8 +11,8 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -68,8 +68,8 @@
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],

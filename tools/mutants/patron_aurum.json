@@ -1,0 +1,92 @@
+[
+  {
+    "name": "PATRON-AURUM-the-field-not-asked-for",
+    "file": "server-account/src/patreon.js",
+    "old": "fields%5Bmember%5D=patron_status%2Ccampaign_lifetime_support_cents",
+    "new": "fields%5Bmember%5D=patron_status",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-a-negative-total-read",
+    "file": "server-account/src/patreon.js",
+    "old": "return Number.isSafeInteger(c) && c >= 0 && c <= PATREON_CENTS_MAX ? c : undefined;",
+    "new": "return Number.isSafeInteger(c) && c <= PATREON_CENTS_MAX ? c : undefined;",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-bound-not-read",
+    "file": "server-account/src/patreon.js",
+    "old": "return Number.isSafeInteger(c) && c >= 0 && c <= PATREON_CENTS_MAX ? c : undefined;",
+    "new": "return Number.isSafeInteger(c) && c >= 0 ? c : undefined;",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-total-paid-again",
+    "file": "server-account/src/patreon.js",
+    "old": "SELECT id, 'patreon', ?1 || ':' || ?5 || ':' || ${NTH_SQL}, ?2 - ${PAID_SQL}, ?3, ?4 FROM players",
+    "new": "SELECT id, 'patreon', ?1 || ':' || ?5 || ':' || ${NTH_SQL}, ?2, ?3, ?4 FROM players",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-a-lower-total-paid-back",
+    "file": "server-account/src/patreon.js",
+    "old": "WHERE patreon_user = ?1 AND handle IS NOT NULL AND ?2 ${back ? '<' : '>'} ${PAID_SQL}`)",
+    "new": "WHERE patreon_user = ?1 AND handle IS NOT NULL AND (${back} OR true)`)",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-paid-lines-read-on-one-account",
+    "file": "server-account/src/patreon.js",
+    "old": "FROM aurum_ledger WHERE kind = 'patreon' AND ref LIKE ?1 || ':%'), 0)",
+    "new": "FROM aurum_ledger WHERE kind = 'patreon' AND account = players.id AND ref LIKE ?1 || ':%'), 0)",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-webhook-pays-nothing",
+    "file": "server-account/src/patreon.js",
+    "old": "    ...(m.cents === undefined || aurumSwitchOf(env?.AURUM_OPEN) !== 'on' ? [] : [patreonAurumStatement(db, m.user, m.cents, nowS, PATREON_UNDONE.includes(/** @type {string} */ (m.charge)))]),\n",
+    "new": "",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-link-pays-nothing",
+    "file": "server-account/src/patreon.js",
+    "old": "    patreonAurumStatement(db, c.u, cents, nowS),\n",
+    "new": "    db.prepare('SELECT 1'),\n",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-confirm-sends-no-total",
+    "file": "server-account/src/index.js",
+    "old": "c: aurumOpenFor(row, env) ? patreonCentsPayable(who, ticket.o === 1, env) : null });",
+    "new": "c: null });",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  },
+  {
+    "name": "PATRON-AURUM-the-linked-page-silent",
+    "file": "server-account/src/index.js",
+    "old": "titles: pledgeTitles(who.tiers, who.status, env), aurum: r.aurum }));",
+    "new": "titles: pledgeTitles(who.tiers, who.status, env) }));",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ]
+  }
+]

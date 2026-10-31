@@ -1,0 +1,283 @@
+[
+  {
+    "name": "SEASONAUDIT-every-member-walked",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin);",
+    "new": "if (Array.isArray(clear.list)) return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));",
+    "tests": [
+      "test/world/gate/seasonclear.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-box-s-pixels-one-short",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "  const pad = margin + CELL_PAD;",
+    "new": "  const pad = CELL_PAD;",
+    "tests": [
+      "test/world/gate/seasonclear.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-members-reach-one-short",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);",
+    "new": "      const c0 = c.px + Math.floor((x - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + CELL_PAD) / PIXEL_M);",
+    "tests": [
+      "test/world/gate/seasonclear.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-member-past-the-span-lost",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "    if (keys.has(NaN)) { idx.wide.push(c); continue; }",
+    "new": "    if (keys.has(NaN)) continue;",
+    "tests": [
+      "test/world/gate/seasonclear.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-come-walked-whole",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "|| reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
+    "new": "|| comeOf.get(was).list.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
+    "tests": [
+      "test/world/gate/seasonclear.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-maul-in-any-stage",
+    "file": "server-account/src/seasonClaim.js",
+    "old": "  if (!season || season.stages[passStageAt(season, nowMs)]?.key !== MAUL_STAGE_KEY) return { error: 'closed' };",
+    "new": "  if (!season) return { error: 'closed' };",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-lost-answer-refused",
+    "file": "server-account/src/seasonClaim.js",
+    "old": "  if (kept) return { ok: true, day: kept.day };",
+    "new": "  if (kept) return { error: 'taken' };",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-ask-s-id-unsent",
+    "file": "src/net/accountClient.js",
+    "old": "  return { claim: (/** @type {string} */ rid) => post('/v1/season/maul', { rid }) };",
+    "new": "  return { claim: (/** @type {string} */ rid) => post('/v1/season/maul', {}) };",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-minted-without-asking",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      const a = await maulApi.claim(rid);",
+    "new": "      const a = { ok: true };",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-asked-again-with-a-new-id",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      const a = await maulApi.claim(rid);",
+    "new": "      const a = await maulApi.claim(ridOf());",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-lost-answer-never-asked-again",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (!(a?.error === 'offline' || a?.error === 'server' || (a?.status ?? 0) >= 500)) return false;",
+    "new": "      return false;",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-device-clock-trusted",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (!at || !online() || !heard()) { this.destroyAll(); return; }",
+    "new": "      if (!at || !online()) { this.destroyAll(); return; }",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-leader-s-two-for-the-colossus",
+    "file": "src/systems/bossTraits.js",
+    "old": "colossus ? BOSS_TRAITS_MOST.colossus : BOSS_TRAITS_MOST.leader);",
+    "new": "colossus ? BOSS_TRAITS_MOST.leader : BOSS_TRAITS_MOST.leader);",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-site-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "bossTraitsOfMask(r.bt, bossTraitsMost(r.rl === 1, isColossusSite(f.site)))",
+    "new": "bossTraitsOfMask(r.bt, bossTraitsMost(r.rl === 1))",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-every-brass-site-a-colossus",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
+    "old": "export const isColossusSite = (site) => typeof site === 'string' && /:brass\\.[0-2]\\.\\d\\.h$/.test(site);",
+    "new": "export const isColossusSite = (site) => typeof site === 'string' && /:brass\\.[0-2]\\.\\d(?:\\.h)?$/.test(site);",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-colossus-rolled-as-the-street-s",
+    "file": "src/scenes/seasonHost.js",
+    "old": ", transient: true, ...(colossus ? { eliteFoe: false } : {}) };",
+    "new": ", transient: true };",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-bar-the-owner-s-alone",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        if (!fo.dead || F.colossus?.dead !== false) F.colossus = fo;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-fall-without-a-body",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (fo.dead) { if (colossus && fo.corpse) colossusFell(F, fo, t); continue; }",
+    "new": "      if (fo.dead) { if (colossus) colossusFell(F, fo, t); continue; }",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-quiet-unstored",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    try { storage?.setItem?.(SEASON_QUIET_STORE, JSON.stringify(Object.fromEntries(quiet))); } catch { /* a full store: this page keeps it */ }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-quiet-forgotten-at-a-reload",
+    "file": "src/scenes/seasonHost.js",
+    "old": "  const quiet = new Map(readQuiet());",
+    "new": "  const quiet = new Map();",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-quiet-the-stander-s-alone",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (F.live.length && F.live.every((fo) => fo.dead && fo.corpse)) keepQuiet(F, t);",
+    "new": "      if (F.spawned && F.live.length && F.live.every((fo) => fo.dead && fo.corpse)) keepQuiet(F, t);",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-a-race-loser-quiet",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (F.live.length && F.live.every((fo) => fo.dead && fo.corpse)) keepQuiet(F, t);",
+    "new": "      if (F.live.length) keepQuiet(F, t);",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-account-never-read",
+    "file": "src/scenes/seasonHost.js",
+    "old": "${storedSession(storage)?.id ?? 'local'}",
+    "new": "${storedSession()?.id ?? 'local'}",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-fall-said-to-a-striker-alone",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    say(COLOSSUS_TEXT.falls());\n    if (struckAt(fo) == null) return;\n",
+    "new": "    if (struckAt(fo) == null) return;\n    say(COLOSSUS_TEXT.falls());\n",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-burst-before-anything-stands",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        if (fo && !woke) { woke = true; burst(",
+    "new": "        if (!woke) { woke = true; burst(",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-line-before-the-colossus-stands",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        if (fo && colossus) say(COLOSSUS_TEXT.wakes(F.f.near));",
+    "new": "        if (colossus) say(COLOSSUS_TEXT.wakes(F.f.near));",
+    "tests": [
+      "test/scenes/seasonaudit_world.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-roads-unread",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": " && !onRoad(paths, x, y, spot)) { pick = id;",
+    "new": ") { pick = id;",
+    "tests": [
+      "test/systems/pass/fissureroads.test.js"
+    ],
+    "note": "W14: re-aimed by content - the draw now names its pixel (the Bay's by MapsFile's id, a province's by the world's key)."
+  },
+  {
+    "name": "SEASONAUDIT-the-road-margin-dropped",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "spot[1] * UNITS_PER_METRE, FISSURE_ROAD_M * UNITS_PER_METRE);",
+    "new": "spot[1] * UNITS_PER_METRE, 0);",
+    "tests": [
+      "test/systems/pass/fissureroads.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAUDIT-the-fissures-stood-before-the-roads",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (rn === undefined) return sites.list;",
+    "new": "    if (false) return sites.list;",
+    "tests": [
+      "test/systems/pass/fissureroads.test.js"
+    ],
+    "note": "W14: re-aimed by content - the Bay's scan no longer gates the theatres past it, so the roads alone do."
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-mauls-day-no-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/season/maul': Object.freeze(['pass', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-days-no-unsaid",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (a?.error === 'taken') setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came",
+    "new": "      if (false) setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  }
+]

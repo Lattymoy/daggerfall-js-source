@@ -54,6 +54,9 @@ something a player holds.
 
 ## 4. How a piece is had, and worn
 
+> STOREFRONT (2026-10-29): in the shop's second law the Eternal set is a ware that gives its five pieces, as a bundle
+> does - holding it holds them, and its price falls by the share of them already held (`06-Systems/Storefront.md` section 3).
+
 A piece is the ACCOUNT's, as an aura is: every character on the account may wear it, and the kit worn follows the
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.
@@ -70,7 +73,7 @@ window draws each piece on its own stage, as the shop does (`src/ui/brokerWindow
 Daggerfall Unity has no such sale; this is the WB9g Broker's law, extended.
 
 **The shop.** The Eternal pieces are wares of the kind `armory`, a section of their own in the window
-(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256) gives all five, and each piece is $6
+(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256; AURUM-ONLY, 2,000 Aurum) gives all five, and each piece is $6 (600 Aurum)
 alone. A ware already had is not sold again (`shopOwns`): a piece the set gave, or the set once the five singles are held.
 Each is on sale while `SHOP_ON_SALE` names it.
 
@@ -79,6 +82,14 @@ set's **Wear** sends it, or `null` to bare all five. The service refuses a piece
 not of its slot (`no-piece`, 400); a kit with one such piece is refused whole. The account card's **Aura Armory** row
 lists each slot with the pieces held for it. The Collections page lists every piece by slot, held or not, and how it is
 had.
+
+**The Crystal Spurs** (THANKS-POST, 2026-10-30, the owner: "a free arm armoury aura. Small and varied crystallized arm
+spikes that rotate color gradient but not overbearing"). An arms piece of its own line, `crystal`, code `d`, never sold:
+the Storefront update's gift to every account standing then (`src/net/giftLaw.js`, `06-Systems/Aurum.md` section 3c). Five
+spurs an arm, both arms (`src/render/armoryPass.js` ARMORY_SPURS): small six-sided cones of crystal, each its own size and
+way round the arm, leaning toward the hand. A sprite shows the upper arm's three. Their colour turns slowly through
+amethyst, aqua and rose (PRISM_RGB, a turn in 20 seconds), each spur its own phase, the tip brightest, a glint running
+up the edges. Drawn at ARMORY_SPUR_GAIN, under the other pieces' full light. `test/server/thanks_post.test.js`.
 
 ## 5. Online
 
@@ -174,9 +185,9 @@ the Eternal Edge a blue-violet line with a light running along it, a fainter one
 GILDED-GLOW; AUDIT FB1029f D3: the owner may turn this round). An element shows next, because it is the blow's truth.
 The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it
-while the piece is worn. A sprite in third person wears it as an outline round the whole sprite while its weapon is
-drawn, and on the weapon on its back while sheathed (BACK-HOLSTER GLOW, `05-Combat/Weapon-Glow.md` "On a sprite"): its
-weapon is painted into the picture, with nothing to tell it from the hand.
+while the piece is worn. A sprite in third person wears it as an outline round the weapon in its hand while drawn - a
+skin's round the whole sprite, whose weapon is painted into its picture - and on the weapon on its back while sheathed
+(BACK-HOLSTER GLOW, LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "On a sprite").
 
 **In the shop** a weapon piece stands on a stage of its own (`src/render/weaponPiecePreview.js`): a longsword of
 Daggerfall's pixels, outlined by the classic hand's own shaders - the field baked once, the band drawn each frame.

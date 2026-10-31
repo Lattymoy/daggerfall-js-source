@@ -437,7 +437,7 @@ export function coverDistance(collider, origin, dir, maxDist, sight = false) {
 }
 
 /**
- * AUDIT TACT B5: A MISSILE MEETS COVER AS IT MEETS A BODY - BY TOUCH. A wall is met at the step's whole reach (DFU's
+ * AUDIT TACT B5: A MISSILE MEETS COVER AS IT MEETS A BODY - BY TOUCH. A wall is met at the step's whole reach (`swept`: by touch; DFU's
  * own sweep); cover answered the same way ate every shot at someone standing in front of a trunk whenever a frame's
  * step crossed both (a 20 fps arrow never struck a player half a metre before a tree). So: the missile stops on cover
  * only when its own radius touches it (`cov <= radius`); short of that, it is advanced only as far as the touch (the
@@ -446,7 +446,8 @@ export function coverDistance(collider, origin, dir, maxDist, sight = false) {
  * terms plus `radius`), `stepLen` |dir| x step. Answers { stop } - the distance it stops at (Infinity: it does not) -
  * and { advance } - the share of the step to take (1: all of it).
  */
-export function coverStep(cov, wall, reach, radius, stepLen) {
+export function coverStep(cov, wall, reach, radius, stepLen, swept = false) {
+  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);   // WALL-SHAFT: a swept shaft meets a wall by touch too
   if (Number.isFinite(wall) && wall <= reach && !(cov < wall)) return { stop: wall, advance: 1 };
   if (!(cov <= reach)) return { stop: Number.isFinite(wall) && wall <= reach ? wall : Infinity, advance: 1 };
   if (cov <= radius + 1e-6) return { stop: cov, advance: 1 };

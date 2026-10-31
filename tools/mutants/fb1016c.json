@@ -217,7 +217,7 @@
   {
     "name": "QUEST-ELSEWHERE-no-line",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site);",
     "new": "      const quest = false;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "QUEST-ELSEWHERE-every-dungeon",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
-    "new": "      const quest = !site.isHold && questHere(site);",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site);",
+    "new": "      const quest = !site.isHold && !startLair && questHere(site);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

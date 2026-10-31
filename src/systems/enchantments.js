@@ -67,6 +67,7 @@ import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HO
 import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 import { creditOwnMend } from './item/foundMark.js';   // MEND-THIRD: the ring's mend credited past a found piece's mark
+import { NORMAL_POWER_CONCEALMENTS } from './concealment.js';   // WORN-CONCEAL: the kinds a blow ends, a leaf
 import { stampedTier } from './rarityTier.js';   // RPT1026-ITEMS RARE-KEPT: a laddered piece breaks and stays (RARE-BREAK1's law), a leaf
 export { ENCHANTMENT_TYPES };
 
@@ -281,6 +282,9 @@ export function setEnchantmentEffectDoors(doors) { Object.assign(_fx, doors); }
  *  effects re-roll once the item has been worn this many classic
  *  hours since the last roll. */
 export const REROLL_MINIMUM_HOURS = 6;
+/** WORN-CONCEAL (FIELD BUGS 2026-10-30g; a DEPARTURE, Port-Ledger A): magic rounds after the last blow that ended a worn
+ *  piece's Chameleon, Invisibility or Shadow before it stands again. DFU waits for the 6-hour reroll. */
+export const WORN_CONCEAL_BACK_ROUNDS = 2;
 const MINUTES_PER_HOUR = 60;
 
 /** InstantiateSpellBundle (CastWhenHeld.cs:~145-186): the classic
@@ -1014,11 +1018,23 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
     for (const item of items) {
       if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;
       const hours = Math.floor((nowMinutes - (item.timeEffectsLastRerolled ?? nowMinutes)) / MINUTES_PER_HOUR);
+      concealBack(entity, item);   // WORN-CONCEAL
       if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;
       _fx.removeItemPinnedEffects?.(entity, item);
       doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity, round, nowMinutes, ctx });
       item.timeEffectsLastRerolled = nowMinutes;
     }
+  }
+}
+
+/** WORN-CONCEAL: counts the rounds since the last blow (concealment.js resets the count) and stands `item`'s ended
+ *  concealment up again in place once WORN_CONCEAL_BACK_ROUNDS have passed. AUDIT C1: in place, never a reroll - the
+ *  piece's other powers keep their rolls and state (a busted Shield stays busted), and its 6-hour clock stands. */
+function concealBack(entity, item) {
+  for (const a of entity.activeEffects) {
+    if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;
+    a.endedRounds = (a.endedRounds ?? 0) + 1;
+    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }
   }
 }
 

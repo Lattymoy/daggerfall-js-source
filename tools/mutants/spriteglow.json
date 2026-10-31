@@ -263,8 +263,8 @@
   {
     "name": "GLOW-B-a-beast-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.sheathed && !last.riding && !last.transformed && !died",
-    "new": "!last.sheathed && !last.riding && !died",
+    "old": "!last.toolInHand && !last.riding && !last.transformed && !died",
+    "new": "!last.toolInHand && !last.riding && !died",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GLOW-B-a-rider-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.sheathed && !last.riding && !last.transformed",
-    "new": "!last.sheathed && !last.transformed",
+    "old": "!last.toolInHand && !last.riding && !last.transformed",
+    "new": "!last.toolInHand && !last.transformed",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "GLOW-P-the-hand-in-use-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
+    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "GLOW-P-the-kit-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
+    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-A5-keyed-to-the-picture-asked",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "setSpriteGlow(handGlow, batch.archive, batch.record, look,",
-    "new": "setSpriteGlow(handGlow, s.archive, s.rec, look,",
+    "old": "setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look,",
+    "new": "setSpriteGlow(handGlow, s.archive, held ?? s.rec, look,",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
