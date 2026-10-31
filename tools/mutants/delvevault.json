@@ -1,0 +1,92 @@
+[
+  {
+    "name": "DELVE-VAULT-no-piece",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "return [piece, ...(Array.isArray(pile) ? pile : []), gold];",
+    "new": "return [...(Array.isArray(pile) ? pile : []), gold];",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-piece-unknown",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  piece.isIdentified = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-piece-common",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "applyRarity(piece, magicOrBetter(rolls, source), rolls,",
+    "new": "applyRarity(piece, 'common', rolls,",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-no-gold",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "return [piece, ...(Array.isArray(pile) ? pile : []), gold];",
+    "new": "return [piece, ...(Array.isArray(pile) ? pile : [])];",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-gold-rate",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "export const DELVE_VAULT_GOLD_PER_LEVEL = 40;",
+    "new": "export const DELVE_VAULT_GOLD_PER_LEVEL = 4;",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-gold-spread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "(0.8 + 0.4 * rolls())",
+    "new": "(0.8 + 0.4 * 0.5)",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-elite-quality-dropped",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1",
+    "new": "qualityMult: 1",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-level-unread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": ", rollerLevel: levelOf(level) };",
+    "new": " };",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-ladder-switch-unread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  if (lootRarityOn()) {\n",
+    "new": "  if (true) {\n",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-host-plain-source",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "vaultSource(location?.mapTableData?.dungeonType, tier === 'elite', lv())",
+    "new": "vaultSource(undefined, false, lv())",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  }
+]

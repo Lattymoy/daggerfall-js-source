@@ -287,8 +287,8 @@ export function delvePlanHash(sites) {
  *  sinking, and both ends. */
 export const DP = Object.freeze({ idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7, spring: 8, sunk: 9 });
 /** An account: its verified name, the level and moment of its last word, its last from the ward, the plate it said and
- *  when, the Vigil's blows its machine has been credited, and the gate's hand and purse once it strikes a piece (spendBlow,
- *  spendPurse). Kept in a map with no prototype.
+ *  when (the Litany's: the plate judged), the Vigil's blows its machine has been credited, and the gate's hand and purse
+ *  once it strikes a piece (spendBlow, spendPurse). Kept in a map with no prototype.
  *  @typedef {{ nm: string, lv: number, last: number, inAt: number, pl: number, plAt: number, hb: number, rate?: number, rateAt?: number, bucket?: number, bucketAt?: number, clipped?: number, dealt?: number, bq?: any, bqAt?: number, bqWho?: string[] }} DelveAccount
  *  @typedef {{ s: number, kind: string, tier: string, seed: number, own: string, p: number, ec: number, stepAt: number, nearAt: number, inAt: number, bornAt: number, n: number, w: number, wz: number, sw: number, kn: number, gs: number, ws: number, bs: number, cs: number, fo: string, foAt: number, k: number, order: number[], next: number, sh: number, shows: number, wonAt: number, earned: string[], a: Record<string, DelveAccount>,
  *   ss: number, hp: number[], hx: number, lt: number, hb: number, bt: number, btAt: number, lb: number, fl: number, fc: string, ft: number, fw: number, fp: number[], fx: number[], hs: number, su: number,
@@ -421,7 +421,7 @@ export function stepDelve(led, nowMs) {
  *  owner's party; any other speaker moves nothing). `ctx.inWard` whether its pose stands in the site's ward; `ctx.plate`
  *  the plate it stands on (the Litany's or the Weighing's - delvePlates), or -1 (the caller reads both off the pose and the
  *  plan). The word (`w`): `lv` its level; `o` 1 while its machine stands the site's foes; `kw`/`kn` the deaths of wave
- *  `kw`; `wc` wave `wc` cleared; `cf` 1 the captain fallen; `st` the Litany plate it says it stepped on; `hb` the Vigil's
+ *  `kw`; `wc` wave `wc` cleared; `cf` 1 the captain fallen; `st` the Litany plate it says it stands on; `hb` the Vigil's
  *  foes' blows landed on the relic this attempt. Answers the events, in order. Pure but for the ledger.
  *  @param {DelveLedger} led @param {string} acct @param {string} name @param {any} w
  *  @param {{ party: boolean, inWard: boolean, plate?: number, nowMs: number }} ctx @returns {Array<any>} */
@@ -443,7 +443,7 @@ export function foldDelveWord(led, acct, name, w, ctx) {
   }
   foeMachine(led, acct, w, nowMs);
   if (led.kind === 'hold' || led.kind === 'vigil' || led.kind === 'wellsprings') return holdWord(led, acct, w, nowMs, ev);
-  if (led.kind === 'litany') return litanyWord(led, w, ctx.plate ?? -1, nowMs, ev);
+  if (led.kind === 'litany') return litanyWord(led, rec, w, ctx.plate ?? -1, nowMs, ev);
   if (led.kind === 'weighing') {
     const p = Number.isInteger(ctx.plate) ? ctx.plate : -1;
     if (p >= 0 || rec.pl >= 0) { rec.pl = p; rec.plAt = nowMs; }
@@ -477,8 +477,14 @@ function relicBlows(led, rec, w, nowMs, ev) {
   led.lt = Math.max(0, led.lt - credit * VIGIL_BLOW_LIGHT);
   if (led.lt <= 0) reset(led, 'failed', ev, false, { dark: true, rest: VIGIL_REST_MS });
 }
-function litanyWord(led, w, plate, nowMs, ev) {
-  if (led.p !== DP.work || !Number.isInteger(w.st) || w.st !== plate || plate < 0 || plate >= led.k) return ev;
+/** LITANY-STAND (2026-10-31): `st` is the plate a member stands on, said in every word. It is judged once, and again only
+ *  after they step off it (`rec.pl` the plate judged). A plate stood on through the show counts when the work begins, and
+ *  a word the room's pose of them does not bear out yet counts on the next one: a step said once was lost online. */
+function litanyWord(led, rec, w, plate, nowMs, ev) {
+  const on = Number.isInteger(w.st) && w.st === plate && plate >= 0 && plate < led.k ? plate : -1;
+  if (on !== rec.pl) rec.pl = -1;
+  if (led.p !== DP.work || on < 0 || on === rec.pl) return ev;
+  rec.pl = on;
   if (plate === led.order[led.next]) {
     led.next++; ev.push({ k: 'lit', j: plate, next: led.next });
     if (led.next >= led.k) win(led, nowMs, ev);

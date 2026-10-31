@@ -261,6 +261,26 @@ test('DLV1 THE LITANY, WHOLE: the order shown, then worked - a plate stood on an
   assert.equal(delveWon(led), true);
 });
 
+test('LITANY-STAND: the plate a member stands on is in every word and judged once - stood on through the show it lights as the work begins, a word the room does not bear out counts on the next, a wrong plate stood on is not judged again until stepped off (mutants: judged every word; never stepped off; the show taking the step)', () => {
+  const led = newDelveLedger(site({ kind: 'litany' }), 'A', 1, T0);
+  const order = litanyOrder(1, 0, 4);
+  assert.deepEqual(order, [0, 1, 3, 2]);
+  assert.deepEqual(say(led, 'A', word({ st: 0 }), T0), [{ k: 'show', order }], 'woken standing on the first plate');
+  assert.deepEqual(say(led, 'A', word({ st: 0 }), T0 + 4_000), [], 'nothing while it shows');
+  assert.deepEqual(say(led, 'A', word({ st: 0 }), T0 + 5_000), [{ k: 'work' }, { k: 'lit', j: 0, next: 1 }], 'stood on through the show: lit as the work begins');
+  assert.deepEqual(say(led, 'A', word({ st: 0 }), T0 + 5_100), [], 'judged once');
+  assert.deepEqual(say(led, 'A', word({ st: 1 }), T0 + 5_200, { plate: -1 }), [], 'the room still hears me short of it');
+  assert.deepEqual(say(led, 'A', word({ st: 1 }), T0 + 6_200), [{ k: 'lit', j: 1, next: 2 }], 'the next word, borne out');
+  let t = T0 + 6_300;
+  assert.deepEqual(say(led, 'A', word({ st: 2 }), t), [{ k: 'wrong', j: 2 }, { k: 'show', order }]);
+  const after = [];
+  for (let k = 0; k < 8; k++) after.push(...say(led, 'A', word({ st: 2 }), t += 1_000));
+  assert.deepEqual(after, [{ k: 'work' }], 'stood on through the order shown again and on: no second wrong');
+  assert.deepEqual(say(led, 'A', word(), t += 100), [], 'stepped off');
+  assert.deepEqual(say(led, 'A', word({ st: 2 }), t += 100), [{ k: 'wrong', j: 2 }, { k: 'show', order }], 'and on again: judged again');
+  assert.deepEqual(say(led, 'B', word({ st: 0 }), t += 6_000), [{ k: 'work' }, { k: 'lit', j: 0, next: 1 }], 'each member their own');
+});
+
 test('DLV1 THE LITANY IN AN ELITE DUNGEON: five plates, a wrong one wakes two foes; a party silent 60 s lets it go, and the next word shows it from the start (mutants: the wake in every dungeon; the let-go window; a let-go Litany keeping its lit plates)', () => {
   const led = newDelveLedger(site({ kind: 'litany', tier: 'elite' }), 'A', 1, T0);
   assert.equal(led.k, 5);

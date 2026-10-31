@@ -68,8 +68,9 @@ puzzle".
    seed, under `dungeonFires.js`'s determinism rules. Nothing about where a site stands rides the wire.
 5. **THE PARTY OWNS, THE RELAY COUNTS.** Online, the relay keeps each started encounter's ledger in the dungeon's room.
    The first word starts it for the speaker's party; only that party may work its puzzle; its vault is that party's.
-6. **ONE CHEST, SIDEWAYS.** The reward is a vault chest rolled by the dungeon's own pile law (`rollPileItems`). No new
-   odds, no new numbers: POWER-CEILING holds and LOOT-GATE applies as to any dungeon chest.
+6. **ONE CHEST, SIDEWAYS.** The reward is a vault chest: the dungeon's own pile (`rollPileItems`), and since DELVE-VAULT
+   gold and one known piece Magic or better (section 6). No new rung or band: POWER-CEILING holds and LOOT-GATE applies
+   as to any dungeon chest.
 7. **NOTHING FASTER, NOTHING UNFAIR.** A timed window is never under its route walked at THE DELVE PACE (the motor's
    `runSpeed(30, 5)`, a weak character's run) plus 1.5 s: THE ERRAND FLOOR, at a slower build than the Spire's.
 8. **ONCE A RESPAWN.** A won site stays won until its dungeon's respawn (`systems/dungeon/dungeonRespawn.js`: 20
@@ -140,8 +141,9 @@ ends the attempt: its foes crumble wherever they are, nothing is earned, and the
 
 - **THE LITANY** (runes in order - the Examination's law). Four plates 2.5 m round the disc's heart, five in an
   Elite dungeon. They light one at a time, a second each, with a numeral and a chime, then go dark. Step on each in
-  that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays again.
-  Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
+  that order (within 1.2 m). A plate counts while a member stands on it, once until they step off: one stood on as the
+  order plays counts when it ends (LITANY-STAND, section 16). A lit plate may be stood on again; a wrong one darkens all
+  and the order plays again. Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
   it go.
 The Brazier Rite and the Seals rise 3 s after the first step in, and count the party in the ward then.
 
@@ -171,13 +173,15 @@ No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no 
 - A chest stands sealed from the dungeon's first frame (Daggerfall's own, model 41811, the Crown Hall's), solid as a
   block's chest is: at the Litany's and the Seals' heart, at a wall for every other kind. The encounter won, it opens. Its plaque names a sealed vault
   and what opens it, and lists a won one as a pile; quick loot takes from it; the look round calls it a find.
-- Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite odds, LOOT-GATE's rarity, the online party's
-  shared base (PARTY-LOOT). Offline, the player's own roll. It is never empty: a roll with no item is rolled again,
-  once, and then holds the level's gold (1 a level, at least 1).
+- Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite odds, LOOT-GATE's rarity. With it, since
+  DELVE-VAULT (section 16): one known piece Magic or better (a weapon, armour or a jewel), laddered at the dungeon's own
+  pile source and the opener's level, and gold, 40 a level (0.8 to 1.2 of it). `systems/delve/delveVault.js`; each
+  earner's share is rolled on its own machine.
 - One vault a site a respawn (law 8). Online, each earner opens its own share once.
 - POWER-CEILING (`05-Combat/Power-Ceiling.md`): nothing here is a new line, rung or band.
-  The vault's roll is the pile's own, which `test/combat/powerceiling_walk.test.js` walks. Patch notes, release notes
-  and Discord posts say only that a vault holds the dungeon's own treasure (LOOT-GATE).
+  The pile and the piece are laddered by `applyRarity` at rungs `test/combat/powerceiling_walk.test.js` walks. Patch
+  notes, release notes and Discord posts may say a vault holds gold, a Magic or better piece and the dungeon's own
+  treasure, never its odds (LOOT-GATE).
 
 ## 7. Online (DLV3)
 
@@ -325,7 +329,7 @@ its state back. The row's note says a party wins an encounter together online.
 |---|---|
 | The frame | `dv`. From a page: `pl` its plan, `w` a word at a site, `a` an act, `x` a blow, `v` a vault's ask - 8 a second at most (the relay's bucket 16 deep). From the room: `dl` a site's state with my own part (`me`), `ev` what moved it, `v` a vault's answer, `pl?`, `no` |
 | The view | the room's state made a ledger-shaped view (`delveView`), so the looks read it as they read a ledger offline: each phase from 0 on its own clock, run on between states |
-| The word | every second near a site, at once when it changes: my screen's ward (`iw`), the plate stepped (said a second while the room's pose catches up), the Vigil's blows on my machine |
+| The word | every second near a site, at once when it changes: my screen's ward (`iw`), the plate I stand on where the room hears me (LITANY-STAND, section 16), the Vigil's blows on my machine |
 | Acts and blows | said to the room, never folded at home; an act said again after 600 ms unmoved |
 | The machine | the room's word (`me.fm`); named mid-wave it stands the rest, named no more its own crumble |
 | The vault | an earner's press asks the room; its yes rolls the share on my machine (PARTY-LOOT's base) |
@@ -383,3 +387,30 @@ takes one in half its draws (section 8).
 | The probe | `tools/delveProbe.mjs --lab=<id>` lays a shipped block in the bench's lab and wins its encounter in the real game, its pictures from the heart each way of the compass; `--spawn=px,py` a named dungeon cloned on a pixel, as the world builds a spawn |
 | Won in the real game | `crypt-hall` in the lab: the Hold's three waves and its captain, 661 s, the vault 2 items; the set pieces seen standing (the braziers lit, the sarcophagi, the candles). The other three are checked on the freeware's geometry and their kinds won in Daggerfall's own dungeons (section 14); each is still to be won in its own block, and a spawned clone with its block (Ruins of Krofylen Court at 100,300 takes the crypt hall) is still to be probed |
 
+
+## 16. LITANY-STAND and DELVE-VAULT (2026-10-31)
+
+From play, in Discord: a player stood on a Litany's plate and nothing lit ("is it still bugged or am I dumb"). The owner,
+the same day: "the rewards for these are really really bad".
+
+**LITANY-STAND.** Online the page said a step once, on the frame its player reached a plate. The room judges a word at
+the pose it last heard, which is the frame before (WEIGH-POSE), so the player was not yet on the plate there and the
+step was lost. The word is said again a second later, when its one-second window had already closed. Offline, a plate
+walked onto while the order played was spent before the work began. Now every word says the plate its member stands on,
+read where the room hears them, and the law judges it once, and again only after they step off (`delveLaw.js`
+litanyWord, the account's `pl`). `world298`. The site may deploy first: an older relay judges every word's plate, so a
+member who stays on a wrong plate hears it again after each showing.
+
+**DELVE-VAULT.** A vault was one treasure pile - often a few coins or an ingredient - for minutes of work. It now holds
+one known piece Magic or better, the pile, and gold at 40 a level (0.8 to 1.2 of it, half a raided town's thanks). The
+piece is the raids' and the stars' spoils' shape (`spoilsBase`, `magicOrBetter`, the ladder's last pass and the
+technique), laddered at the dungeon's own pile source - its type's tier, an Elite's quality, its family - with LOOT-GATE
+at the opener's level. With the ladder off it comes plain (`systems/delve/delveVault.js`).
+
+| Pin | What |
+|---|---|
+| `test/net/delve/dlv1_law.test.js` LITANY-STAND | stood on through the show, lit as the work begins; a word the room does not bear out counts on the next; a wrong plate stood on is judged once until stepped off |
+| `test/scenes/delve/dlv2_host.test.js` LITANY-STAND OFFLINE | the same in the host, offline |
+| `test/scenes/delve/dlv3_e2e.test.js` LITANY-STAND E2E | the real host on the real Room, the room one frame behind as the page is: won, the vault my share. On the old code the first plate never lit |
+| `test/systems/delve/delvevault.test.js` | the piece, the pile and the gold; the source; LOOT-GATE's hold on a young opener; the ladder off |
+| `tools/mutants/litanystand.json`, `tools/mutants/delvevault.json` | 15 mutants, all dead; five records of `dlv1`-`dlv3` re-aimed by content, and the two of the old vault's second roll and its gold floor retired with that law |

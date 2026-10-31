@@ -15,7 +15,7 @@ import {
   VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, driftSpots, holdCaptainTraits,
 } from '../../net/delve/delveLaw.js';
 import { createHoldFoes, HOLD_RANK_STEP_M } from './delveHold.js';
-import { plateLooks, shownPlate, createPlateSteps, DELVE_SOUNDS } from './delveLitany.js';
+import { plateLooks, shownPlate, DELVE_SOUNDS } from './delveLitany.js';
 import { createDelvePieces, siteShapes, DELVE_DRAW_M } from './delvePieces.js';
 import { createDelveProps, pieceCrystals, siteFlames, weightPlaces, sourceLook, DELVE_PEDESTAL_MODEL, DELVE_WEIGHT_MODEL } from './delveProps.js';
 import { breakTargets, createStandIns, makeRelic, createDelveCarry, delveCrystalOf, delveHuntSite } from './delveBodies.js';
@@ -23,7 +23,7 @@ import {
   DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_LITANY_TEXT, DELVE_VAULT_TEXT, DELVE_SPRINGS_TEXT, DELVE_VIGIL_TEXT, DELVE_BRAZIER_TEXT,
   DELVE_WEIGHING_TEXT, DELVE_SEALS_TEXT, DELVE_CARRY_TEXT, DELVE_PIECE_TEXT, DELVE_ROOM_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S,
 } from '../../systems/delve/delveWords.js';
-import { rollVault } from '../../systems/delve/delveVault.js';
+import { rollVault, vaultSource } from '../../systems/delve/delveVault.js';
 import { delveWireReady, sendDelveWord, attachDelveHearer } from '../../net/delve/delveLink.js';
 import { DELVE_ACTS, DELVE_NO, DELVE_HIT_MAX } from '../../net/wire.js';
 import { delvePlanWire, delveView, delveWordKey, DELVE_WORD_MS, DELVE_ACT_AGAIN_MS, DELVE_PLAN_AGAIN_MS, DELVE_HELD_SAY_MS } from './delveOnline.js';
@@ -172,6 +172,8 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   /** My machine stands this site's foes: offline always, online while the room names it. */
   const foesMine = (r) => !online() || !!r.me?.fm;
   const lv = () => effectiveLevel(player());
+  /** My vault: the dungeon's pile, its piece and gold at my level (DELVE-VAULT). */
+  const myVault = () => rollVault(rollPile, lv(), vaultSource(location?.mapTableData?.dungeonType, tier === 'elite', lv()));
   const foeHost = {
     spawn: (type, at, opts) => api.spawnLooseFoe(type, at, linked() ? { ...opts, delve: true } : opts),   // DLV3: online, the encounter's own grant kind
     remove: (f) => api.removeLooseFoe(f),
@@ -189,7 +191,6 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       foes: isWaveKind(site.kind) || site.kind === 'brazier' ? createHoldFoes(site, site.kind === 'vigil' ? hunting(site) : foeHost) : null,
       wakers: site.kind === 'litany' ? createHoldFoes(site, foeHost) : null,
       plates: site.kind === 'litany' || site.kind === 'weighing' ? delvePlates(site) : null,
-      steps: site.kind === 'litany' ? createPlateSteps() : null,
       wrong: /** @type {{ j: number, at: number }|null} */ (null), shown: -1,
       // kept for the frame: the word, the fold's context, the looks, the marks and the pass's entry, filled in place
       word: /** @type {any} */ ({ lv: 1, o: 0, kw: 0, kn: 0, wc: 0, cf: 0, st: -1, hb: 0 }), ctx: { party: true, inWard: false, plate: -1, nowMs: 0 },
@@ -199,10 +200,10 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       // said, the crystals' list kept
       relic: /** @type {any} */ (null), byFall: false, offPlate: -1, hb: 0, broke: /** @type {number[]} */ ([]), rose: 0, poured: /** @type {number[]} */ ([]), driftAt: 0, lowSaid: false,
       crystals: /** @type {any[]} */ ([]),
-      // DLV3: online, the room's last state of it and my part (`me`), my word's key and moment, my last act's, the step
-      // said while the room's pose catches up, and whether my machine stood its foes
+      // DLV3: online, the room's last state of it and my part (`me`), my word's key and moment, my last act's, and whether
+      // my machine stood its foes
       st: /** @type {any} */ (null), me: /** @type {any} */ (null), wordKey: '', wordAt: -Infinity, actKey: '', actAt: -Infinity,
-      step: { p: -1, until: 0 }, fm: false, apart: /** @type {any} */ (null), heldAt: -Infinity, knBase: 0, knWave: 0, clearWave: 0,
+      fm: false, apart: /** @type {any} */ (null), heldAt: -Infinity, knBase: 0, knWave: 0, clearWave: 0,
     };
     if (site.kind === 'vigil') r.relic = makeRelic(site, () => { if (r.led && r.led.p !== DP.idle) r.hb++; });
     return r;
@@ -239,7 +240,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
         break;
       case 'sink': say(DELVE_SEALS_TEXT.sink()); sound(DELVE_SOUNDS.wrong, site); break;
       case 'failed': r.foes?.on(ev); r.led = null; r.dark = true; r.rest = ev.rest ? now + ev.rest : 0; carry.set(false); say(failedLine(kind, ev), DELVE_SAY_LONG_S); break;
-      case 'let': r.wakers?.crumble(); r.foes?.crumble(); r.led = null; r.steps?.reset(); r.wrong = null; carry.set(false); break;
+      case 'let': r.wakers?.crumble(); r.foes?.crumble(); r.led = null; r.wrong = null; carry.set(false); break;
       case 'show': if (!r.wrong) say(DELVE_LITANY_TEXT.show()); r.shown = -1; break;   // after a wrong plate its own line said it
       case 'work':
         if (kind === 'brazier') { r.driftAt = now; say(DELVE_BRAZIER_TEXT.work(ev.n)); } else if (kind === 'weighing') say(DELVE_WEIGHING_TEXT.work()); else say(DELVE_LITANY_TEXT.work());
@@ -260,7 +261,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       case 'held': say(DELVE_WEIGHING_TEXT.held()); sound(DELVE_SOUNDS.chime(3), site); break;
       case 'unheld': say(DELVE_WEIGHING_TEXT.unheld()); break;
       case 'won':   // online the share is rolled when the room says it is mine to open (hear: `v`)
-        r.foes?.on(ev); r.wakers?.crumble(); r.won = true; r.vault = online() ? null : rollVault(rollPile, lv()); carry.set(false);
+        r.foes?.on(ev); r.wakers?.crumble(); r.won = true; r.vault = online() ? null : myVault(); carry.set(false);
         say(wonLine(kind), DELVE_SAY_LONG_S); sound(DELVE_SOUNDS.won, site);
         break;
       default: break;
@@ -299,7 +300,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     if (!r.led) { if (!iw || r.dark || now < r.rest) return; r.led = newDelveLedger(site, ME, seed, now); r.away = false; r.hb = 0; r.lowSaid = false; }
     const plate = r.plates ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1;
     const w = r.word;
-    w.lv = lv(); w.st = r.steps ? r.steps.at(iw ? plate : -1) : -1; w.hb = r.hb;
+    w.lv = lv(); w.st = site.kind === 'litany' && iw ? plate : -1; w.hb = r.hb;   // LITANY-STAND: the plate I stand on, judged once by the law
     r.foes?.frame(); r.wakers?.frame();
     if (r.foes) r.foes.word(w);
     r.ctx.inWard = iw; r.ctx.plate = plate; r.ctx.nowMs = now;
@@ -320,8 +321,8 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   }
   /** DLV3: A SITE A FRAME, ONLINE - the room's ledger read (its view, r.led), my machine taking up the foes the room names
    *  it for (the rest of a running wave, the captain) or letting its own go, and my word said: every DELVE_WORD_MS while I
-   *  am near, stand its foes or carry its piece, at once when it changes. A step on a plate is said a second, while the
-   *  room's pose of me catches up. With no foes' machine heard, a word from the ward offers mine. */
+   *  am near, stand its foes or carry its piece, at once when it changes. The plate I stand on is said where the room
+   *  hears me. With no foes' machine heard, a word from the ward offers mine. */
   function frameSiteOnline(r, feet) {
     const { site } = r;
     const near = nearSite(r, feet);
@@ -333,9 +334,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     if (fm) { r.foes?.frame(); r.wakers?.frame(); }
     const w = r.word;
     w.lv = lv(); w.hb = Math.min(r.hb, 9999); w.iw = iw ? 1 : 0; w.o = 0; w.kw = 0; w.kn = 0; w.wc = 0; w.cf = 0;
-    const stepped = r.steps ? r.steps.at(iw ? plate : -1) : -1;
-    if (stepped >= 0) r.step = { p: stepped, until: now + 1_000 };
-    w.st = r.step.p >= 0 && now < r.step.until && plate === r.step.p ? r.step.p : -1;
+    w.st = site.kind === 'litany' && holds(site, heardFeet) ? plateAt(r.plates, heardFeet[0], heardFeet[1], heardFeet[2]) : -1;   // LITANY-STAND: where the room hears me (WEIGH-POSE)
     if (fm) { if (r.foes) handedWord(r, w); else w.o = 1; }   // named: kept - a puzzle's machine has no foes host to say it (AUDIT DLV3 4)
     else if (iw && !r.won && (!led || !led.fo)) w.o = 1;   // the waking word offers it too: the first to speak keeps them, as offline
     if ((near || fm || mine()?.r === r) && !r.apart) {
@@ -496,7 +495,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     } else if (w.k === 'ev') { for (const e of w.ev) onEvent(r, e); }
     else if (w.k === 'v') {
       if (!w.ok) { api.hudSay?.(DELVE_VAULT_TEXT.notYours()); return; }
-      r.vault = rollVault(rollPile, lv());   // my share: the pile's own roll, on my machine (PARTY-LOOT's base)
+      r.vault = myVault();   // my share: the pile's own roll, on my machine (PARTY-LOOT's base)
       if (!quickLootTake(`${DELVE_KEY}vault:${r.site.i}`, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) api.openLootList?.(r.vault);
     }
   }
@@ -622,7 +621,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     /** A save's word laid back - under the same plan alone. Every running attempt ends first, and every living foe one
      *  stood goes - a foe the save held alive stood up again by the world record's own restore among them. */
     restore(s) {
-      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.steps?.reset(); r.wrong = null; r.shown = -1; r.rest = 0; r.broke = []; r.hb = 0; r.byFall = false; r.offPlate = -1; }
+      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.wrong = null; r.shown = -1; r.rest = 0; r.broke = []; r.hb = 0; r.byFall = false; r.offPlate = -1; }
       carry.set(false);
       if (!s || s.h !== hash || !Array.isArray(s.won) || online()) return;
       for (const w of s.won) { const r = runs[w?.i]; if (r) { r.won = true; r.vault = Array.isArray(w.items) ? w.items.map((it) => ({ ...it })) : []; } }
