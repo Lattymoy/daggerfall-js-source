@@ -42,14 +42,12 @@ export const sailClothCode = (/** @type {any} */ raw) => {
   return c ? SAIL_PATTERNS.indexOf(c.pattern) | (c.second << 3) | (c.arms ? 128 : 0) : 0;
 };
 /** The byte as a sailcloth, or null. */
-export const sailClothOfCode = (/** @type {unknown} */ n) =>
-  Number.isInteger(n) && /** @type {number} */ (n) > 0 && /** @type {number} */ (n) < 256
-    ? sailClothOf({
-        pattern: SAIL_PATTERNS[/** @type {number} */ (n) & 7],
-        second: /** @type {number} */ (n >> 3) & 15,
-        arms: /** @type {number} */ (n & 128) !== 0,
-      })
+export const sailClothOfCode = (/** @type {unknown} */ n) => {
+  const code = /** @type {number} */ (n); // LEGIBLE 3: one cast, so the formatter cannot move it onto a wider expression
+  return Number.isInteger(n) && code > 0 && code < 256
+    ? sailClothOf({ pattern: SAIL_PATTERNS[code & 7], second: (code >> 3) & 15, arms: (code & 128) !== 0 })
     : null;
+};
 
 /** Whether the texel at (`u`, `v`) - each 0..1 across the sail and down it - wears the pattern's second paint. Pure. */
 export function sailSecond(/** @type {string} */ pattern, /** @type {number} */ u, /** @type {number} */ v) {

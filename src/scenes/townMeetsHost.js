@@ -26,18 +26,15 @@ export const meetsTown = (loc) =>
  */
 export function createTownMeets({ groundLocationAt, maps, blocks }) {
   const kept = new Map();
+  /** A town's tiles laid out (LEGIBLE 3: the cast on its own call, where the formatter leaves it). */
+  const tilesOf = (loc) => /** @type {any} */ (setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)));
   /** A Bay pixel's town's outline, kept while the same place stands there. */
   const outlineAt = (x, y) => {
     const loc = groundLocationAt(x, y),
       k = `${x},${y}`,
       had = kept.get(k);
     kept.delete(k);
-    const shape =
-      had && had.loc === loc
-        ? had.shape
-        : meetsTown(loc)
-          ? /** @type {any} */ (setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128))?.shape ?? null)
-          : null;
+    const shape = had && had.loc === loc ? had.shape : meetsTown(loc) ? (tilesOf(loc)?.shape ?? null) : null;
     kept.set(k, { loc, shape });
     while (kept.size > ABOUT_KEPT) kept.delete(kept.keys().next().value);
     return shape;

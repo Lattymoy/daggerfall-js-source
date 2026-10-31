@@ -2091,9 +2091,10 @@ const ZONE_PROVINCE = freeze({
   blackMarshGloomire: 'BlackMarsh',
   cyrodiilBlackwood: 'Imperial',
 });
+/** ZONE_PROVINCE read by any key (LEGIBLE 3: the cast on its own name, where the formatter leaves it). */
+const PROVINCE_BY_ZONE = /** @type {Record<string, string>} */ (ZONE_PROVINCE);
 /** @param {string|null} home @returns {string|null} */
-export const provinceOfHome = (home) =>
-  home == null ? null : /** @type {Record<string, string>} */ (ZONE_PROVINCE[home] ?? home);
+export const provinceOfHome = (home) => (home == null ? null : (PROVINCE_BY_ZONE[home] ?? home));
 
 /** A region number's Bay or not: the Bay's own 62 regions (formats/mapsTables.js), the provinces and their areas after. */
 export const BAY_REGIONS = 62;
