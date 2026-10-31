@@ -2,8 +2,8 @@
   {
     "name": "TELL7-champion-range",
     "file": "src/ai/tells.js",
-    "old": "champion: Object.freeze([7, 13]),",
-    "new": "champion: Object.freeze([8, 15]),",
+    "old": "  COOLDOWN: Object.freeze({ ordinary: Object.freeze([8, 15]), champion: Object.freeze([7, 13]), elite: Object.freeze([6, 11]) }),",
+    "new": "  COOLDOWN: Object.freeze({ ordinary: Object.freeze([8, 15]), champion: Object.freeze([8, 15]), elite: Object.freeze([6, 11]) }),",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js",
       "test/systems/tell1_poise.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TELL7-elite-range",
     "file": "src/ai/tells.js",
-    "old": "elite: Object.freeze([6, 11]) }),",
-    "new": "elite: Object.freeze([8, 15]) }),",
+    "old": "  COOLDOWN: Object.freeze({ ordinary: Object.freeze([8, 15]), champion: Object.freeze([7, 13]), elite: Object.freeze([6, 11]) }),",
+    "new": "  COOLDOWN: Object.freeze({ ordinary: Object.freeze([8, 15]), champion: Object.freeze([7, 13]), elite: Object.freeze([8, 15]) }),",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js",
       "test/systems/tell1_poise.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "TELL7-rank-share",
     "file": "src/ai/tells.js",
-    "old": "  COOLDOWN_RANK: 0.08,",
-    "new": "  COOLDOWN_RANK: 0.1,",
+    "old": "  COOLDOWN_RANK: 0.08,          // a revenant's, less this a rank",
+    "new": "  COOLDOWN_RANK: 0.1,          // a revenant's, less this a rank",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js",
       "test/systems/tell1_poise.test.js"
@@ -41,8 +41,8 @@
   {
     "name": "TELL7-rank-ignored",
     "file": "src/ai/tells.js",
-    "old": "  return (lo + (hi - lo) * roll) * (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) * (ent?.revenant?.p2?.cooldown",
-    "new": "  return (lo + (hi - lo) * roll) * 1 * (ent?.revenant?.p2?.cooldown",
+    "old": "  return (lo + (hi - lo) * roll) * (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) * (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1);   // Phase two's x0.7",
+    "new": "  return (lo + (hi - lo) * roll) * 1 * (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1);   // Phase two's x0.7",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "TELL7-brain-ordinary-clock",
     "file": "src/ai/tactics.js",
-    "old": "  const cooled = now + blowCooldown(ai.vitals?.());   // TELL7: by its tier",
-    "new": "  const cooled = now + blowCooldown(null);   // TELL7: by its tier",
+    "old": "  const cooled = now + blowCooldown(ai.vitals?.());   // By its tier",
+    "new": "  const cooled = now + blowCooldown(null);   // By its tier",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js"
     ]

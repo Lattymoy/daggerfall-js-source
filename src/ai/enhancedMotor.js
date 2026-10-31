@@ -160,12 +160,12 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.nav = opts.nav ?? (() => null);
     this.navWorld = opts.navWorld ?? makeNavWorld();
     this.navSeed = (opts.navSeed ?? 0) >>> 0;
-    this.navGoal = opts.navGoal ?? null;   // INDOOR-WATCH W1: (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
+    this.navGoal = opts.navGoal ?? null;   // (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
     // his movement scratch (enemy.js:64), re-homed
     this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;
     this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
     this.navBroken = false;
-    this._wasFollowing = false;   // AUDIT CC-B5: the route's goal - the leader's or the foe's
+    this._wasFollowing = false;   // The route's goal - the leader's or the foe's
     /** observational, his stuckStats pattern - probes and tests only */
     this.navStats = { repaths: 0, fails: 0, stuckFires: 0, offMesh: 0 };
   }
@@ -187,8 +187,8 @@ export class EnhancedEnemyAI extends EnemyAI {
     return true;
   }
 
-  /** FIELD BUGS 2026-10-16b INDOOR-WATCH, AUDIT W1: a goal findPath cannot place - off the mesh past its locate's
-   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best : -1;"), a player between two shelves 0.8 m deep or in a
+  /** A goal findPath cannot place - off the mesh past its locate's
+   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best: -1;"), a player between two shelves 0.8 m deep or in a
    *  closet the erosion kept no floor of. The host's `navGoal` names the mesh's point a route there ends at (the room's
    *  meshPointNear, never through a wall); the route runs to it and its last leg is the straight walk in. No hook, or
    *  no point, or no route to it: null, the classic line. Departure from his repathToward, named: it answered null. */
@@ -231,7 +231,7 @@ export class EnhancedEnemyAI extends EnemyAI {
       if (drop) continue;
       const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.controllerHeight);   // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2); DOOR-JAM: at the controller's own height
       this.isGrounded = moveResult.grounded;
-      this.collidedSides = !!moveResult.sides;   // DOOR-JAM: and its CollidedSides, for HeightAdjust
+      this.collidedSides = !!moveResult.sides;   // And its CollidedSides, for HeightAdjust
       break;
     }
     this.path = null; this.repathT = 0;
@@ -280,7 +280,7 @@ export class EnhancedEnemyAI extends EnemyAI {
     let wp = this.path[this.pathI];
     while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
     const last = this.pathI === this.path.length - 1;
-    // INDOOR-WATCH AUDIT W1 - adaptation 1's other half: in sight, the classic stop is measured to the TARGET
+    // Adaptation 1's other half: in sight, the classic stop is measured to the TARGET
     // (EnemyMotor.cs:479-482), and a foe it stops turns to its destination - so one stopped within reach of the target
     // with a corner still ahead (the mouth of the aisle it was walked in by) faced the corner, and the swing's 22.5
     // degree gate (enemyAttack.js ATTACK_YAW_DEG) never opened. Stopped on the target, it faces the target.
@@ -297,9 +297,9 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.destination = [this.feet[0] + dx * k, y, this.feet[2] + dz * k];
   }
 
-  /** CREW-COMPANIONS: a follower walks the navmesh route to its leader - the route's next corner (the pursuit's own
+  /** A follower walks the navmesh route to its leader - the route's next corner (the pursuit's own
    *  corner walk), the leader's live feet on the last leg, and the straight line when there is no mesh or a detour
-   *  is running. COMPANION-TRAIL (FIELD BUGS 2026-10-04b): the leader in sight, or a crumb of the leader's own trail
+   *  is running. COMPANION-TRAIL: the leader in sight, or a crumb of the leader's own trail
    *  in sight, comes first (enemyMotor.js _trailGoal) - the walked way through a doorway, where the bake's erosion
    *  trims the threshold - and the route only when the trail has nothing; no route, the nearest crumb. */
   _followGoal(leader, dt) {
@@ -322,7 +322,7 @@ export class EnhancedEnemyAI extends EnemyAI {
     }
   }
 
-  /** FIELD BUGS 2026-10-16b INDOOR-WATCH (scenes/interiorNav.js, NO ROUTE): stood at `feet` by the host, on the island
+  /** Stood at `feet` by the host, on the island
    *  the route could not reach. The pursuit stands - its target, its give-up timer, its belief of where the player is;
    *  what the motor held of where it stood goes - EnemyAI._standAfresh, resumeLive's own list (AUDIT W4: this kept a
    *  shorter one, and a watchman crouched at the wall that stopped him was stood crouched) - and the route and the
@@ -333,7 +333,7 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
   }
 
-  /** WORLD2: the base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */
+  /** The base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */
   resumeLive() {
     super.resumeLive();
     this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;

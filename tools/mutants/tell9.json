@@ -2,8 +2,8 @@
   {
     "name": "TELL9-track-switch-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (!s || !tacticsSwitchOn()) return null;\n  if (unseen(s, clock()))",
-    "new": "  if (!s) return null;\n  if (unseen(s, clock()))",
+    "old": "  if (!s || !tacticsSwitchOn()) return null;",
+    "new": "  if (!s) return null;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TELL9-track-dash",
     "file": "src/ai/tactics.js",
-    "old": "  const b = s.state === 'windup' ? s.blow : null;   // AUDIT TELL: a charge's run",
-    "new": "  const b = s.state === 'windup' ? s.blow : s.state === 'dash' ? s.dash?.blow ?? null : null;   // AUDIT TELL: a charge's run",
+    "old": "  const b = s.state === 'windup' ? s.blow : null;   // AUDIT TELL: a charge's run is its landing - its poise is spent (a blow on it is DFU's)",
+    "new": "  const b = s.state === 'windup' ? s.blow : s.state === 'dash' ? s.dash?.blow ?? null : null;   // AUDIT TELL: a charge's run is its landing - its poise is spent (a blow on it is DFU's)",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TELL9-track-unclamped",
     "file": "src/ai/tactics.js",
-    "old": "fill: b.poise > 0 ? Math.min(1, (b.taken ?? 0) / b.poise) : 0, word: '' };",
-    "new": "fill: b.poise > 0 ? (b.taken ?? 0) / b.poise : 0, word: '' };",
+    "old": "  return { state: 'windup', fill: b.poise > 0 ? Math.min(1, (b.taken ?? 0) / b.poise) : 0, word: '' };",
+    "new": "  return { state: 'windup', fill: b.poise > 0 ? (b.taken ?? 0) / b.poise : 0, word: '' };",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TELL9-track-feint-hidden",
     "file": "src/ai/tactics.js",
-    "old": "  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };\n",
-    "new": "  if (b.feint) return { state: 'empty', fill: 0, word: '' };\n  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };\n",
+    "old": "  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };",
+    "new": "  if (b.feint) return { state: 'empty', fill: 0, word: '' };\n  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]

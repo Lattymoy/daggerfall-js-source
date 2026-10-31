@@ -2,8 +2,8 @@
   {
     "name": "AUDITTELL-B1-holds-unseen",
     "file": "src/ai/tactics.js",
-    "old": "ai.canAct !== false && !unseen(s, clock()) && tacticsSwitchOn();",
-    "new": "ai.canAct !== false && tacticsSwitchOn();",
+    "old": "  return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && !unseen(s, clock()) && tacticsSwitchOn();   // AUDIT TELL B1: a foe that cannot act holds nothing",
+    "new": "  return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && tacticsSwitchOn();   // AUDIT TELL B1: a foe that cannot act holds nothing",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDITTELL-B1-holds-canact",
     "file": "src/ai/tactics.js",
-    "old": "return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && !unseen",
-    "new": "return !!s && s.state === 'windup' && !!s.blow && !unseen",
+    "old": "  return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && !unseen(s, clock()) && tacticsSwitchOn();   // AUDIT TELL B1: a foe that cannot act holds nothing",
+    "new": "  return !!s && s.state === 'windup' && !!s.blow && !unseen(s, clock()) && tacticsSwitchOn();   // AUDIT TELL B1: a foe that cannot act holds nothing",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITTELL-B1-glint-unseen",
     "file": "src/ai/tactics.js",
-    "old": "if (!b || b.feint || unseen(s, now)) return null;",
-    "new": "if (!b || b.feint) return null;",
+    "old": "  if (!b || b.feint || unseen(s, now)) return null;   // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
+    "new": "  if (!b || b.feint) return null;   // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITTELL-B1-track-unseen",
     "file": "src/ai/tactics.js",
-    "old": "if (unseen(s, clock())) return { state: 'empty', fill: 0, word: '' };",
-    "new": "if (false) return { state: 'empty', fill: 0, word: '' };",
+    "old": "  if (unseen(s, clock())) return { state: 'empty', fill: 0, word: '' };   // AUDIT TELL B1: a state nobody is stepping",
+    "new": "  if (false) return { state: 'empty', fill: 0, word: '' };   // AUDIT TELL B1: a state nobody is stepping",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/ui/enhanced/tell9_screen.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "AUDITTELL-B1-skipped-gap",
     "file": "src/ai/tactics.js",
-    "old": "const skipped = !!ai._tacSkipped || unseen(s, now);",
-    "new": "const skipped = !!ai._tacSkipped;",
+    "old": "  const skipped = !!ai._tacSkipped || unseen(s, now);",
+    "new": "  const skipped = !!ai._tacSkipped;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITTELL-B1-break-puppet",
     "file": "src/ai/tactics.js",
-    "old": "if (!s || s.puppet || (s.state !== 'windup'",
-    "new": "if (!s || (s.state !== 'windup'",
+    "old": "  if (!s || s.puppet || (s.state !== 'windup' && s.state !== 'dash' && s.state !== 'chain')) return false;",
+    "new": "  if (!s || (s.state !== 'windup' && s.state !== 'dash' && s.state !== 'chain')) return false;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDITTELL-B1-break-swing",
     "file": "src/ai/tactics.js",
-    "old": "  clearBlowState(ai); dropSwing(ai);\n  ai._tacDir = null;\n  return true;",
-    "new": "  clearBlowState(ai);\n  ai._tacDir = null;\n  return true;",
+    "old": "  s.blow = null; s.dash = null; s.state = 'engage'; s.blowReady = cooled;\n  clearBlowState(ai); dropSwing(ai);",
+    "new": "  s.blow = null; s.dash = null; s.state = 'engage'; s.blowReady = cooled;\n  clearBlowState(ai);",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDITTELL-B4-release-shot",
     "file": "src/ai/tactics.js",
-    "old": "ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null;   // AUDIT TELL B4: an archer's aimed shot goes too",
-    "new": "ai._aimReady = false; ai._wantAimed = false;   // AUDIT TELL B4: an archer's aimed shot goes too",
+    "old": "  ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null;   // AUDIT TELL B4: an archer's aimed shot goes too (DFU's bow roll, whole again)",
+    "new": "  ai._aimReady = false; ai._wantAimed = false;   // AUDIT TELL B4: an archer's aimed shot goes too (DFU's bow roll, whole again)",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDITTELL-B5-held-swing",
     "file": "src/ai/tactics.js",
-    "old": "clearBlowState(ai); ai._blowHold = false; ai._blowWind = false; ai._blowFx = null;",
-    "new": "clearBlowState(ai); ai._blowFx = null;",
+    "old": "    clearBlowState(ai); ai._blowHold = false; ai._blowWind = false; ai._blowFx = null; ai._perfectAt = null; ai._blowLandedAt = null;",
+    "new": "    clearBlowState(ai); ai._blowFx = null; ai._perfectAt = null; ai._blowLandedAt = null;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDITTELL-B5-held-stagger",
     "file": "src/ai/tactics.js",
-    "old": "if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0; ",
-    "new": "",
+    "old": "    if (pe) { if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0; if (pe.overreachUntil === PUPPET_HELD_UNTIL) pe.overreachUntil = 0; }",
+    "new": "    if (pe) { if (pe.overreachUntil === PUPPET_HELD_UNTIL) pe.overreachUntil = 0; }",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDITTELL-B5-own-stagger",
     "file": "src/ai/tactics.js",
-    "old": "if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0;",
-    "new": "pe.staggerUntil = 0;",
+    "old": "    if (pe) { if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0; if (pe.overreachUntil === PUPPET_HELD_UNTIL) pe.overreachUntil = 0; }",
+    "new": "    if (pe) { pe.staggerUntil = 0; if (pe.overreachUntil === PUPPET_HELD_UNTIL) pe.overreachUntil = 0; }",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDITTELL-B8-turn",
     "file": "src/ai/tactics.js",
-    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n",
-    "new": "",
+    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n  const atMe = !!_me && key === LOCAL;",
+    "new": "  const atMe = !!_me && key === LOCAL;",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/ai/tell8_online.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "AUDITTELL-B9-spend",
     "file": "src/ai/tactics.js",
-    "old": "(ai._blowVerdict != null && now < s.chainAt + CHAIN_SPEND_MAX)",
-    "new": "false",
+    "old": "    if (now < s.chainAt || (ai._blowVerdict != null && now < s.chainAt + CHAIN_SPEND_MAX)) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }",
+    "new": "    if (now < s.chainAt || false) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/characters/enemy/tell5_patterns.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "AUDITTELL-B3-leap-arrived",
     "file": "src/ai/tactics.js",
-    "old": "if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(",
-    "new": "if (tf) return resolveLanding(ai, s, s.blow, inBlow(",
+    "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
+    "new": "    if (tf) return resolveLanding(ai, s, s.blow, inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/characters/enemy/tell6c_leap.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "AUDITTELL-shatter-never",
     "file": "src/ai/foeBlows.js",
-    "old": "if (b && b.cut == null && now < b.land) _shards.push({ blow: b, at: now });",
-    "new": "if (false) _shards.push({ blow: b, at: now });",
+    "old": "  if (b && b.cut == null && now < b.land) _shards.push({ blow: b, at: now });",
+    "new": "  if (false) _shards.push({ blow: b, at: now });",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDITTELL-shatter-endless",
     "file": "src/ai/foeBlows.js",
-    "old": "if (!(after >= 0 && after <= BLOW_SHATTER)) { _shards.splice(i, 1); continue; }",
-    "new": "if (!(after >= 0)) { _shards.splice(i, 1); continue; }",
+    "old": "    if (!(after >= 0 && after <= BLOW_SHATTER)) { _shards.splice(i, 1); continue; }",
+    "new": "    if (!(after >= 0)) { _shards.splice(i, 1); continue; }",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDITTELL-shatter-offset",
     "file": "src/ai/foeBlows.js",
-    "old": "[..._live.values(), ..._shards.map((x) => x.blow)]",
-    "new": "[..._live.values()]",
+    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }   // AUDIT TELL: a shattering one too",
+    "new": "  for (const b of [..._live.values()]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }   // AUDIT TELL: a shattering one too",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "AUDITTELL-shatter-cut",
     "file": "src/ai/foeBlows.js",
-    "old": "if (b && b.cut == null && now < b.land)",
-    "new": "if (b && now < b.land)",
+    "old": "  if (b && b.cut == null && now < b.land) _shards.push({ blow: b, at: now });",
+    "new": "  if (b && now < b.land) _shards.push({ blow: b, at: now });",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDITTELL-shatter-puppet",
     "file": "src/ai/puppetBlows.js",
-    "old": "if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null);",
-    "new": "setLiveBlow(ai, null);",
+    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
+    "new": "      else { setLiveBlow(ai, null); s.cancel = true; }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUDITTELL-U9-glint",
     "file": "src/ai/tactics.js",
-    "old": "  return _glint;\n}",
-    "new": "  return [..._glint];\n}",
+    "old": "  return _glint;",
+    "new": "  return [..._glint];",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "AUDITTELL-floor-law",
     "file": "src/ai/tells.js",
-    "old": "return (c === 'massive' ? Math.max(base, TELL.POISE_FLOOR_MASSIVE) : base) * poiseSpecial(entity);",
-    "new": "return base * poiseSpecial(entity);",
+    "old": "  return (c === 'massive' ? Math.max(base, TELL.POISE_FLOOR_MASSIVE) : base) * poiseSpecial(entity);",
+    "new": "  return base * poiseSpecial(entity);",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -672,8 +672,8 @@
   {
     "name": "AUDITTELL-O4-release",
     "file": "src/ai/puppetBlows.js",
-    "old": "  if (ai._tac && !ai._tac.puppet) releaseTactics(ai);   // AUDIT TELL O4",
-    "new": "  // AUDIT TELL O4",
+    "old": "  if (ai._tac && !ai._tac.puppet) releaseTactics(ai);   // AUDIT TELL O4: a brain that was mine (a seat handed back) gives up its tokens",
+    "new": "  // AUDIT TELL O4: a brain that was mine (a seat handed back) gives up its tokens",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -681,8 +681,8 @@
   {
     "name": "AUDITTELL-O6-mine",
     "file": "src/ai/puppetBlows.js",
-    "old": "if (!l || !l.mine || l.used ||",
-    "new": "if (!l || l.used ||",
+    "old": "  if (!l || !l.mine || l.used || (l.kind !== 'charge' && l.kind !== 'leap') || now - l.at > BLOW_VERDICT_LIFE) return false;",
+    "new": "  if (!l || l.used || (l.kind !== 'charge' && l.kind !== 'leap') || now - l.at > BLOW_VERDICT_LIFE) return false;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "AUDITTELL-O6-once",
     "file": "src/ai/puppetBlows.js",
-    "old": "  l.used = true;\n",
-    "new": "",
+    "old": "  l.used = true;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "AUDITTELL-O5-mine",
     "file": "src/ai/tactics.js",
-    "old": "  if (perfect && atMe) ai._perfectAt = now;",
-    "new": "  if (perfect) ai._perfectAt = now;",
+    "old": "  if (perfect && atMe) ai._perfectAt = now;   // the tag's and the bright ring's (scenes/hostCombat.js tellCues) - mine alone (AUDIT TELL O5)",
+    "new": "  if (perfect) ai._perfectAt = now;   // the tag's and the bright ring's (scenes/hostCombat.js tellCues) - mine alone (AUDIT TELL O5)",
     "tests": [
       "test/ai/tell8_online.test.js",
       "test/characters/enemy/tell4_punish.test.js",

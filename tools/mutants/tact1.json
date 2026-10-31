@@ -20,8 +20,8 @@
   {
     "name": "TACT1-excluded-archives-cover",
     "file": "src/ai/cover.js",
-    "old": "  if (NOT_COVER_ARCHIVES.has(archive)) return false;\n",
-    "new": "\n",
+    "old": "  if (NOT_COVER_ARCHIVES.has(archive)) return false;",
+    "new": "",
     "tests": [
       "test/scenes/tact1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TACT1-first-not-nearest",
     "file": "src/ai/cover.js",
-    "old": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
-    "new": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
+    "old": "            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
+    "new": "            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
     "tests": [
       "test/scenes/tact1.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "TACT1-degenerate-stood",
     "file": "src/ai/cover.js",
-    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;",
-    "new": "      if (!it || it.c?.noCover) continue;",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!it || it.c?.noCover) continue;   // AUDIT TACT B3: a person is no cover",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

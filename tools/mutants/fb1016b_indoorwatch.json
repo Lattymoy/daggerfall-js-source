@@ -488,8 +488,8 @@
   {
     "name": "INDOOR-WATCH-standAt-keeps-route",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];\n  }\n\n  /** WORLD2",
-    "new": "    this.lastX = feet[0]; this.lastZ = feet[2];\n  }\n\n  /** WORLD2",
+    "old": "    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];",
+    "new": "    this.lastX = feet[0]; this.lastZ = feet[2];",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W1-no-off-mesh-route",
     "file": "src/ai/enhancedMotor.js",
-    "old": "const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal);",
-    "new": "const np = findPath(chf, this.feet, goal);",
+    "old": "    const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0",
+    "new": "    const np = findPath(chf, this.feet, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W1-no-last-leg",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    p.push([goal[0], goal[1], goal[2]]);\n",
-    "new": "",
+    "old": "    p.push([goal[0], goal[1], goal[2]]);\n    return p;",
+    "new": "    return p;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W1-stop-faces-corner",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    if (!last && p && this.inSight && this._dist <= this.stopDistance) { this.destination = [p[0], this._aimY(p[1]), p[2]]; return; }\n",
-    "new": "",
+    "old": "    if (!last && p && this.inSight && this._dist <= this.stopDistance) { this.destination = [p[0], this._aimY(p[1]), p[2]]; return; }\n    // adaptation 3: the goal's y is classic's own aim at the goal",
+    "new": "    // adaptation 3: the goal's y is classic's own aim at the goal",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -760,8 +760,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W4-standAt-not-afresh",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    this._standAfresh();\n    this.path = null; this.pathI = 1;",
-    "new": "    this.path = null; this.pathI = 1;",
+    "old": "    this._standAfresh();\n    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];",
+    "new": "    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -859,8 +859,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-client-unpacks",
     "file": "src/ai/nav/navClient.js",
-    "old": "      if (m) result = m;",
-    "new": "      if (m) result = { ...m, cols: Array.from({ length: m.cols.noNavTop.length }, (_, i) => ({ x0: m.cols.box[i * 6], x1: m.cols.box[i * 6 + 1], z0: m.cols.box[i * 6 + 2], z1: m.cols.box[i * 6 + 3], top: m.cols.box[i * 6 + 4], bottom: m.cols.box[i * 6 + 5], noNavTop: m.cols.noNavTop[i] === 1 })) };",
+    "old": "      if (m) result = m;   // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)",
+    "new": "      if (m) result = { ...m, cols: Array.from({ length: m.cols.noNavTop.length }, (_, i) => ({ x0: m.cols.box[i * 6], x1: m.cols.box[i * 6 + 1], z0: m.cols.box[i * 6 + 2], z1: m.cols.box[i * 6 + 3], top: m.cols.box[i * 6 + 4], bottom: m.cols.box[i * 6 + 5], noNavTop: m.cols.noNavTop[i] === 1 })) };   // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)",
     "tests": [
       "test/ai/nav/audit68_enemies.test.js"
     ]
@@ -868,8 +868,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-client-recuts-hit",
     "file": "src/ai/nav/navClient.js",
-    "old": "    if (m) return m.cols;",
-    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });",
+    "old": "    if (m) return m.cols;   // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
+    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });   // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
     "tests": [
       "test/ai/nav/audit68_enemies.test.js"
     ]
@@ -877,8 +877,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unturned-x",
     "file": "src/ai/nav/navBake.js",
-    "old": "const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0],",
-    "new": "const x = v[0],",
+    "old": "        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1], z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];",
+    "new": "        const x = v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1], z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -886,8 +886,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unmoved-y",
     "file": "src/ai/nav/navBake.js",
-    "old": ": v[1]) + t[1], z = R",
-    "new": ": v[1]), z = R",
+    "old": "        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1], z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];",
+    "new": "        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]), z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -895,8 +895,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unmoved-x",
     "file": "src/ai/nav/navBake.js",
-    "old": "positions[p++] = x + t[0];",
-    "new": "positions[p++] = x;",
+    "old": "        positions[p++] = x + t[0]; positions[p++] = y; positions[p++] = z + t[2];",
+    "new": "        positions[p++] = x; positions[p++] = y; positions[p++] = z + t[2];",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -904,8 +904,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-indices",
     "file": "src/ai/nav/navBake.js",
-    "old": "indices[p / 3] = p / 3;",
-    "new": "indices[p / 3] = 0;",
+    "old": "        indices[p / 3] = p / 3;",
+    "new": "        indices[p / 3] = 0;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -913,8 +913,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-count",
     "file": "src/ai/nav/navBake.js",
-    "old": "use.push(bucket); tris += bucket.tris.length;",
-    "new": "use.push(bucket); tris += 1;",
+    "old": "    use.push(bucket); tris += bucket.tris.length;",
+    "new": "    use.push(bucket); tris += 1;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]

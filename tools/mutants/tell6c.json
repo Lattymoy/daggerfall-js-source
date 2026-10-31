@@ -57,8 +57,8 @@
   {
     "name": "TELL6c-fit-near",
     "file": "src/ai/foeBlows.js",
-    "old": "  const far = b.ahead > 2 ? b.ahead : 2;",
-    "new": "  const far = 2;",
+    "old": "  const far = b.ahead > 2 ? b.ahead : 2;   // A leap's disc lies on the ground at its point",
+    "new": "  const far = 2;   // A leap's disc lies on the ground at its point",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "TELL6c-terrain-unseen",
     "file": "src/ai/foeBlows.js",
-    "old": "const d = collider.surfaceHit ? collider.surfaceHit(o, DOWN, 5)?.dist : collider.raycast(o, DOWN, 5);",
-    "new": "const d = collider.raycast(o, DOWN, 5);",
+    "old": "  const at = (x, z) => { const o = [x, b.origin[1] + 2.5, z]; const d = collider.surfaceHit ? collider.surfaceHit(o, DOWN, 5)?.dist : collider.raycast(o, DOWN, 5); return Number.isFinite(d) ? b.origin[1] + 2.5 - d : null; };",
+    "new": "  const at = (x, z) => { const o = [x, b.origin[1] + 2.5, z]; const d = collider.raycast(o, DOWN, 5); return Number.isFinite(d) ? b.origin[1] + 2.5 - d : null; };",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "TELL6c-flyer",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'leap' && ENEMY_BASICS[ent?.mobileType]?.behaviour === 'Flying') return false;\n",
-    "new": "",
+    "old": "  if (kind === 'leap' && ENEMY_BASICS[ent?.mobileType]?.behaviour === 'Flying') return false;\n  const l = Math.hypot(dx, dz) || 1, dir = [dx / l, 0, dz / l];",
+    "new": "  const l = Math.hypot(dx, dz) || 1, dir = [dx / l, 0, dz / l];",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "TELL6c-ground-ignored",
     "file": "src/ai/tactics.js",
-    "old": "    if (!Number.isFinite(g)) return false;\n",
-    "new": "",
+    "old": "    if (!Number.isFinite(g)) return false;\n  }",
+    "new": "  }",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "TELL6c-point-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "if (shape === 'leap') { b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz));",
-    "new": "if (shape === 'leap') { b.ahead = 0;",
+    "old": "  if (shape === 'leap') { b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz)); b.jumpAt = b.land - BLOW.leap.arc; fitBlowToGround(b, ai.collider); }   // Its point - my feet now, locked",
+    "new": "  if (shape === 'leap') { b.ahead = 0; b.jumpAt = b.land - BLOW.leap.arc; fitBlowToGround(b, ai.collider); }   // Its point - my feet now, locked",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "TELL6c-no-jump",
     "file": "src/ai/tactics.js",
-    "old": "  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0);   // TELL6c: the jump\n",
-    "new": "",
+    "old": "  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0);   // The jump\n  if (now >= s.blow.land && b0.kind === 'aimed') {   // Loosed along its line - the arrow's flight decides; no verdict, no window",
+    "new": "  if (now >= s.blow.land && b0.kind === 'aimed') {   // Loosed along its line - the arrow's flight decides; no verdict, no window",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "TELL6c-no-arc",
     "file": "src/ai/tactics.js",
-    "old": "  if (!b.jumping) { b.jumping = true; ai.velY = (GRAVITY * BLOW.leap.arc) / 2; }",
-    "new": "  if (!b.jumping) { b.jumping = true; }",
+    "old": "  if (!b.jumping) { b.jumping = true; ai.velY = (GRAVITY * BLOW.leap.arc) / 2; }   // up, and down again at its landing",
+    "new": "  if (!b.jumping) { b.jumping = true; }   // up, and down again at its landing",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "TELL6c-jump-at-start",
     "file": "src/ai/tactics.js",
-    "old": "b.jumpAt = b.land - BLOW.leap.arc;",
-    "new": "b.jumpAt = b.start;",
+    "old": "  if (shape === 'leap') { b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz)); b.jumpAt = b.land - BLOW.leap.arc; fitBlowToGround(b, ai.collider); }   // Its point - my feet now, locked",
+    "new": "  if (shape === 'leap') { b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz)); b.jumpAt = b.start; fitBlowToGround(b, ai.collider); }   // Its point - my feet now, locked",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]

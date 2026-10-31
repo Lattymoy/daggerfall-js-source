@@ -200,8 +200,8 @@
   {
     "name": "RVN1-the-dodge-unnoted",
     "file": "src/ai/tactics.js",
-    "old": "  if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }",
-    "new": "  if (atMe && ent) { if (perfect) noteFeud(ent, 'perfect'); }",
+    "old": "  if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }   // My dodge - a peer's is its own fight",
+    "new": "  if (atMe && ent) { if (perfect) noteFeud(ent, 'perfect'); }   // My dodge - a peer's is its own fight",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN1-every-dodge-perfect",
     "file": "src/ai/tactics.js",
-    "old": "if (perfect) noteFeud(ent, 'perfect');",
-    "new": "noteFeud(ent, 'perfect');",
+    "old": "  if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }   // My dodge - a peer's is its own fight",
+    "new": "  if (atMe && ent) { noteFeud(ent, 'dodged'); noteFeud(ent, 'perfect'); }   // My dodge - a peer's is its own fight",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN1-a-perfect-dodge-uncounted",
     "file": "src/ai/tactics.js",
-    "old": "noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }",
-    "new": "noteFeud(ent, 'dodged'); }",
+    "old": "  if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }   // My dodge - a peer's is its own fight",
+    "new": "  if (atMe && ent) { noteFeud(ent, 'dodged'); }   // My dodge - a peer's is its own fight",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

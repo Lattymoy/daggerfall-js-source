@@ -2,8 +2,8 @@
   {
     "name": "TELL8-wire-iron-flag",
     "file": "src/ai/puppetBlows.js",
-    "old": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
-    "new": "out.wk = k | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "old": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "      out.wk = k | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TELL8-wire-feint-flag",
     "file": "src/ai/puppetBlows.js",
-    "old": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
-    "new": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "old": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TELL8-wire-landed-sent",
     "file": "src/ai/puppetBlows.js",
-    "old": "| (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
-    "new": "| (b.feint ? WIRE_FEINT : 0) | (b.sig ? WIRE_SIG : 0);",
+    "old": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (b.sig ? WIRE_SIG : 0);",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TELL8-wire-unclamped",
     "file": "src/ai/puppetBlows.js",
-    "old": "out.wl = landed ? 0 : Math.max(0, Math.min(WIRE_LAND_MS, Math.round((b.land - now) * 1000)));",
-    "new": "out.wl = landed ? 0 : Math.max(0, Math.round((b.land - now) * 1000));",
+    "old": "      out.wl = landed ? 0 : Math.max(0, Math.min(WIRE_LAND_MS, Math.round((b.land - now) * 1000)));",
+    "new": "      out.wl = landed ? 0 : Math.max(0, Math.round((b.land - now) * 1000));",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TELL8-wire-point",
     "file": "src/ai/puppetBlows.js",
-    "old": "      if (Number.isFinite(b.ahead)) out.wp = q2(b.ahead);\n",
-    "new": "",
+    "old": "      if (Number.isFinite(b.ahead)) out.wp = q2(b.ahead);\n    }",
+    "new": "    }",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TELL8-key-carries-wl",
     "file": "src/ai/puppetBlows.js",
-    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
-    "new": "export const blowWireKey = (r) => `${r.wl ?? ''}/${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
+    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/${r.wo ? r.wo.join(':') : ''}/${r.wp ?? ''}/${r.ws ?? 0}`;",
+    "new": "export const blowWireKey = (r) => `${r.wl ?? ''}/${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/${r.wo ? r.wo.join(':') : ''}/${r.wp ?? ''}/${r.ws ?? 0}`;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TELL8-key-no-yaw",
     "file": "src/ai/puppetBlows.js",
-    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
-    "new": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/",
+    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/${r.wo ? r.wo.join(':') : ''}/${r.wp ?? ''}/${r.ws ?? 0}`;",
+    "new": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wo ? r.wo.join(':') : ''}/${r.wp ?? ''}/${r.ws ?? 0}`;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TELL8-puppet-not-part-filled",
     "file": "src/ai/puppetBlows.js",
-    "old": "      const total = Math.max(BLOW[kind].windup + (iron ? TELL_IRON_EXTRA : 0), left);",
-    "new": "      const total = left;",
+    "old": "        const total = Math.max(BLOW[kind].windup + (iron ? TELL_IRON_EXTRA : 0), left);   // the shape's nominal length: a late record starts part-filled",
+    "new": "        const total = left;   // the shape's nominal length: a late record starts part-filled",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TELL8-puppet-no-track",
     "file": "src/ai/puppetBlows.js",
-    "old": "      else if (live.yaw !== r.wy) { live.yaw = r.wy; fitBlowToGround(live, collider); }",
-    "new": "      else if (false) { live.yaw = r.wy; fitBlowToGround(live, collider); }",
+    "old": "      else if (live.yaw !== r.wy) { live.yaw = r.wy; fitBlowToGround(live, collider); }   // a lunge's tracking, turned on its owner's",
+    "new": "      else if (false) { live.yaw = r.wy; fitBlowToGround(live, collider); }   // a lunge's tracking, turned on its owner's",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TELL8-puppet-feint-glints",
     "file": "src/ai/puppetBlows.js",
-    "old": "      if (feint) b.feint = true;",
-    "new": "      /* feint unmarked */",
+    "old": "        if (feint) b.feint = true;   // a feint never glints (the glint is the honest tell)",
+    "new": "        /* feint unmarked */   // a feint never glints (the glint is the honest tell)",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TELL8-puppet-iron-colour",
     "file": "src/ai/puppetBlows.js",
-    "old": "iron ? IRON_COLOR : BLOW_COLOR, iron ? 'iron' : 'poise', total);",
-    "new": "BLOW_COLOR, iron ? 'iron' : 'poise', total);",
+    "old": "        const b = makeBlow(kind, origin, r.wy, now + left - total, signature ? sig.COLOR : iron ? IRON_COLOR : BLOW_COLOR, iron ? 'iron' : 'poise', total);",
+    "new": "        const b = makeBlow(kind, origin, r.wy, now + left - total, signature ? sig.COLOR : BLOW_COLOR, iron ? 'iron' : 'poise', total);",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TELL8-puppet-point",
     "file": "src/ai/puppetBlows.js",
-    "old": "      if (Number.isFinite(r.wp)) b.ahead = r.wp;\n",
-    "new": "",
+    "old": "        if (Number.isFinite(r.wp)) b.ahead = r.wp;\n        fitBlowToGround(b, collider);",
+    "new": "          fitBlowToGround(b, collider);",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TELL8-puppet-cut-drops",
     "file": "src/ai/puppetBlows.js",
-    "old": "      if (live.feint) live.cut = now;",
-    "new": "      if (false) live.cut = now;",
+    "old": "      if (live.feint) live.cut = now;   // its owner cut it: the plain swing goes on (the held arm released), the mark dashes out",
+    "new": "      if (false) live.cut = now;   // its owner cut it: the plain swing goes on (the held arm released), the mark dashes out",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TELL8-puppet-no-cancel",
     "file": "src/ai/puppetBlows.js",
-    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }",
-    "new": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); }",
+    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
+    "new": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TELL8-puppet-break-keeps-mark",
     "file": "src/ai/puppetBlows.js",
-    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }",
-    "new": "      else { s.cancel = true; }",
+    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
+    "new": "      else { s.cancel = true; }   // broken - a stagger, a knock, a paralysis, a turn: the held arm drops; AUDIT TELL (3.2): one its owner staggered shatters here too",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TELL8-turn-unseen",
     "file": "src/ai/puppetBlows.js",
-    "old": "  if (!s?.puppet) return { hold: false, staggered: false };\n  s.seen = now;",
-    "new": "  if (!s?.puppet) return { hold: false, staggered: false };",
+    "old": "  s.seen = now;\n  if (feet) s.feet = feet;",
+    "new": "  if (feet) s.feet = feet;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "TELL8-turn-onlooker-judges",
     "file": "src/ai/puppetBlows.js",
-    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';",
-    "new": "  const mine = !!feet && b.kind !== 'aimed';",
+    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';   // an aimed shot's arrow is its owner's to loose",
+    "new": "  const mine = !!feet && b.kind !== 'aimed';   // an aimed shot's arrow is its owner's to loose",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "TELL8-turn-aimed-judged",
     "file": "src/ai/puppetBlows.js",
-    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';",
-    "new": "  const mine = s.key === LOCAL_TARGET && !!feet;",
+    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';   // an aimed shot's arrow is its owner's to loose",
+    "new": "  const mine = s.key === LOCAL_TARGET && !!feet;   // an aimed shot's arrow is its owner's to loose",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "TELL8-turn-no-fx",
     "file": "src/ai/puppetBlows.js",
-    "old": "    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // TELL6e",
-    "new": "    ai._blowFx = null;   // TELL6e",
+    "old": "    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // On MY machine, where its damage lands",
+    "new": "    ai._blowFx = null;   // On MY machine, where its damage lands",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "TELL8-class-not-winding",
     "file": "src/ai/puppetBlows.js",
-    "old": "  if (!b) return weak ? { k: blowK({ kind, weapon, claws, round }), back: false, weak: true } : null;\n  return { k:",
-    "new": "  return { k:",
+    "old": "  if (!b) return weak ? { k: blowK({ kind, weapon, claws, round }), back: false, weak: true } : null;\n  return { k: blowK({ kind, weapon, claws, round }), back: behind(b.origin, b.yaw, from), weak: !!weak };",
+    "new": "  return { k: blowK({ kind, weapon, claws, round }), back: behind(b.origin, b.yaw, from), weak: !!weak };",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "TELL8-brain-fx-kept",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFx = atMe && verdict ? {",
-    "new": "  ai._blowFx = verdict ? {",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "new": "  ai._blowFx = verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -492,8 +492,8 @@
   {
     "name": "TELL8-brain-mult-kept",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowMult = judged ? b.mult : undefined;",
-    "new": "  ai._blowMult = b.mult;",
+    "old": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now; ai._blowSwing = true;",
+    "new": "  ai._blowMult = b.mult; ai._blowAt = now; ai._blowSwing = true;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "TELL8-brain-puppet-kept",
     "file": "src/ai/tactics.js",
-    "old": "    setLiveBlow(ai, null); ai._tac = null;\n    // AUDIT TELL B5",
-    "new": "    void 0;\n    // AUDIT TELL B5",
+    "old": "    setLiveBlow(ai, null); ai._tac = null;",
+    "new": "    void 0;",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AF2-B1-out-unread",
     "file": "src/ai/tactics.js",
-    "old": "b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2]))",
-    "new": "b.lateIn === true",
+    "old": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }   // AUDIT TELL O5: a peer's perfect dodge is the peer's to see",
+    "new": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true, atMe); return true; }   // AUDIT TELL O5: a peer's perfect dodge is the peer's to see",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]

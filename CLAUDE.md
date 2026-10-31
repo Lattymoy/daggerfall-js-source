@@ -28,8 +28,10 @@ Each is an owner's decision. A rule's name is its label in the bible.
   is the shape). `test/scenes/hostceiling.test.js` lists the hosts and their ceilings.
 - **PLAIN-TEXT**: player text is at most 40 words a string and 25 a sentence. A bible paragraph is at most 150
   words. `tools/plainTextBaseline.json` only goes down.
-- **HISTORY-OUT**: history lives in git and PR descriptions, never in the bible or the code. The
-  bible says how things work now. A comment says why, in 8 lines or fewer, with no ticket tag, date or quote.
+- **HISTORY-OUT**: history lives in git and PR descriptions, never in the bible or the code. The bible says how
+  things work now; update a system's page when you change its behaviour. A comment says why, in 8 lines or fewer,
+  with no ticket tag, date, quote or bible pointer. `tools/commentTagsBaseline.json` only goes down;
+  `tools/commentSweep.mjs` takes history out folder by folder (`bible/01-Overview/Readability-Arc.md`).
 - **LOOT-GATE** (Dudey): never publish the levels, factors or chances in `src/systems/loot/lootLevelGate.js`. Say
   only that Rare and Legendary gear is rarer early on and more common as a character grows.
 - **Patch notes** go in the PR description under `## Patch notes: <title>`, written in STE. Use the `ste-notes`

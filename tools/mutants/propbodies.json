@@ -65,8 +65,8 @@
   {
     "name": "PROP-BODIES-the-felled-tree-a-body",
     "file": "src/ai/cover.js",
-    "old": "if (FELLED.has(c) || c.noCover) continue;",
-    "new": "if (c.noCover) continue;",
+    "old": "            if (FELLED.has(c) || c.noCover) continue;",
+    "new": "            if (c.noCover) continue;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PROP-BODIES-the-set-s-frame-unread",
     "file": "src/ai/cover.js",
-    "old": "const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];",
-    "new": "const t = [0, 0, 0], x = p[0], z = p[2];",
+    "old": "      const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];",
+    "new": "      const t = [0, 0, 0], x = p[0], z = p[2];",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PROP-BODIES-a-body-filed-as-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (it.body) { fileBody(set, it); continue; }   // PROP-BODIES: a body, never cover\n",
-    "new": "",
+    "old": "      if (it.body) { fileBody(set, it); continue; }   // A body, never cover\n      const i = set.n++;",
+    "new": "      const i = set.n++;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PROP-BODIES-near-without-the-reach",
     "file": "src/ai/cover.js",
-    "old": "const dx = x - c[0], dz = z - c[2], R = it.r + reach;",
-    "new": "const dx = x - c[0], dz = z - c[2], R = it.r;",
+    "old": "            const dx = x - c[0], dz = z - c[2], R = it.r + reach;",
+    "new": "            const dx = x - c[0], dz = z - c[2], R = it.r;",
     "tests": [
       "test/player/propbodies.test.js"
     ]

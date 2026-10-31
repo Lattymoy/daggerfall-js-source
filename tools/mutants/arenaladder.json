@@ -22,8 +22,8 @@
   {
     "name": "ARENA-LADDER-reexport-copy",
     "file": "src/ai/foeBlows.js",
-    "old": "export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';",
-    "new": "export { BLOW, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';\nconst _copy = (t, e) => blowShapesOf(t, e).slice();\nexport { _copy as blowShapesOf };",
+    "old": "export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';   // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
+    "new": "export { BLOW, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';\nconst _copy = (t, e) => blowShapesOf(t, e).slice();\nexport { _copy as blowShapesOf };   // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ARENA-LADDER-aim-bout-unread",
     "file": "src/ai/tactics.js",
-    "old": "if (String(sb.id) !== String(tb.id) || sb.out",
-    "new": "if (sb.out",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "new": "  if (sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ARENA-LADDER-aim-side-unread",
     "file": "src/ai/tactics.js",
-    "old": " || (sb.side | 0) === (tb.side | 0)) return null;",
-    "new": ") return null;",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "new": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ARENA-LADDER-aim-out-unread",
     "file": "src/ai/tactics.js",
-    "old": "sb.out || tb.out || sb.hold",
-    "new": "sb.out || sb.hold",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "new": "  if (String(sb.id) !== String(tb.id) || sb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "ARENA-LADDER-landing-at-me",
     "file": "src/ai/tactics.js",
-    "old": "arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
-    "new": "arrived && (_me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false), now, cooled, atMe, judgedHere(ai, key));",
+    "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
+    "new": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && (_me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false), now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "ARENA-LADDER-landing-mark-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n",
-    "new": "",
+    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n  const atMe = !!_me && key === LOCAL;",
+    "new": "  const atMe = !!_me && key === LOCAL;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "ARENA-LADDER-sand-draw-range",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor",
-    "new": "    if (near && d > range) continue;\n    out.push({ blow: b, phase, nearFloor",
+    "old": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor: d <= TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
+    "new": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    if (near && d > range) continue;\n    out.push({ blow: b, phase, nearFloor: d <= TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "ARENA-LADDER-dodge-untold",
     "file": "src/ai/foeBlows.js",
-    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }",
-    "new": "  if (!v) { ai._blowMult = undefined; }",
+    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
+    "new": "  if (!v) { ai._blowMult = undefined; }   // dodged: the weight is spent with it, and the dodge is told",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],

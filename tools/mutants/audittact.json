@@ -133,8 +133,8 @@
   {
     "name": "ATACT-A7-boards-kept",
     "file": "src/ai/tactics.js",
-    "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k);",
-    "new": "    void k;",
+    "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k);   // AUDIT TACT A7: no dead target held",
+    "new": "    void k;   // AUDIT TACT A7: no dead target held",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "ATACT-D3-blows-unshifted",
     "file": "src/ai/foeBlows.js",
-    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }",
-    "new": "  void offset;",
+    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }   // AUDIT TELL: a shattering one too",
+    "new": "  void offset;   // AUDIT TELL: a shattering one too",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "ATACT-D4-dead-blocks",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
-    "new": "    if (ai === except || b.cut != null) continue;",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;   // A cut feint is no wind-up",
+    "new": "    if (ai === except || b.cut != null) continue;   // A cut feint is no wind-up",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "ATACT-D4-dead-drawn",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }",
-    "new": "    if (!phase) { _live.delete(ai); continue; }",
+    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
+    "new": "    if (!phase) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "ATACT-B2-one-way",
     "file": "src/ai/cover.js",
-    "old": "  if (endAt != null) {",
-    "new": "  if (false) {",
+    "old": "  if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut",
+    "new": "  if (false) {   // the sight ray's own end (its target's eye), however short the search has been cut",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "ATACT-B3-people-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;",
-    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue;",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue;   // AUDIT TACT B3: a person is no cover",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

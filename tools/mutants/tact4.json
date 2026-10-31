@@ -83,8 +83,8 @@
   {
     "name": "TACT4-spent-kept",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }",
-    "new": "    if (!phase || (now < b.land && gone(ai, now))) continue;",
+    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
+    "new": "    if (!phase || (now < b.land && gone(ai, now))) continue;   // AUDIT TACT D4: a dead foe's wind-up goes with it",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TACT4-range-ignored",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor",
-    "new": "    void range;\n    out.push({ blow: b, phase, nearFloor",
+    "old": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor: d <= TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
+    "new": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    void range;\n    out.push({ blow: b, phase, nearFloor: d <= TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TACT4-verdict-kept",
     "file": "src/ai/foeBlows.js",
-    "old": "  ai._blowVerdict = null;\n  if (!fresh || turned)",
-    "new": "  if (!fresh || turned)",
+    "old": "  ai._blowVerdict = null;\n  if (!fresh || turned) { ai._blowMult = undefined; return classic; }",
+    "new": "  if (!fresh || turned) { ai._blowMult = undefined; return classic; }",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "TACT4-dodge-keeps-weight",
     "file": "src/ai/foeBlows.js",
-    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }",
-    "new": "  if (!v) { tellDodged(ai); }",
+    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
+    "new": "  if (!v) { tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "TACT4-weight-kept",
     "file": "src/ai/foeBlows.js",
-    "old": "  ai._blowMult = undefined;\n  return dmg > 0",
-    "new": "  return dmg > 0",
+    "old": "  ai._blowMult = undefined;\n  return dmg > 0 ? Math.max(1, Math.round(dmg * m)) : dmg;",
+    "new": "  return dmg > 0 ? Math.max(1, Math.round(dmg * m)) : dmg;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "TACT4-many-windups",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
-    "new": "    continue;",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;   // A cut feint is no wind-up",
+    "new": "    continue;   // A cut feint is no wind-up",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "TACT4-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "ai.canAct !== false && now >= (s.blowReady ?? 0)) {   // AUDIT TACT: a token holder",
-    "new": "ai.canAct !== false) {   // AUDIT TACT: a token holder",
+    "old": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false && now >= (s.blowReady ?? 0)) {   // AUDIT TACT: a token holder's, never an opportunist's",
+    "new": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false) {   // AUDIT TACT: a token holder's, never an opportunist's",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "TACT4-sight-breaks",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);\n  if (s.key !== key)",
-    "new": "  if (s.key !== key)",
+    "old": "  if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);\n  if (s.key !== key) { releaseTactics(ai); s.key = key; s.state = 'wait'; }",
+    "new": "  if (s.key !== key) { releaseTactics(ai); s.key = key; s.state = 'wait'; }",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]

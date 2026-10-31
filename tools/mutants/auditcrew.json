@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-CC-B5-route-kept",
     "file": "src/ai/enhancedMotor.js",
-    "old": "this._wasFollowing = this._following; this.path = null; this.repathT = 0; }",
-    "new": "this._wasFollowing = this._following; }",
+    "old": "      if (this._following !== this._wasFollowing) { this._wasFollowing = this._following; this.path = null; this.repathT = 0; }",
+    "new": "      if (this._following !== this._wasFollowing) { this._wasFollowing = this._following; }",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

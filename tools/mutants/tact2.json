@@ -2,8 +2,8 @@
   {
     "name": "TACT2-switch-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  if (!tacticsSwitchOn()) { if (ai._tac) releaseTactics(ai);",
-    "new": "  if (false) { if (ai._tac) releaseTactics(ai);",
+    "old": "  if (!tacticsSwitchOn()) { if (ai._tac) releaseTactics(ai); ai._tac = null; ai._tacStrike = undefined; ai._tacShoot = undefined; ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null; return false; }   // AUDIT TELL B4: DFU's bow roll whole again",
+    "new": "  if (false) { if (ai._tac) releaseTactics(ai); ai._tac = null; ai._tacStrike = undefined; ai._tacShoot = undefined; ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null; return false; }   // AUDIT TELL B4: DFU's bow roll whole again",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TACT2-no-swing-beat",
     "file": "src/ai/tactics.js",
-    "old": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now + TACT.SWING; }",
-    "new": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now; }",
+    "old": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now + TACT.SWING; }   // the blow plays out where it was struck",
+    "new": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now; }   // the blow plays out where it was struck",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TACT2-token-kept",
     "file": "src/ai/tactics.js",
-    "old": "    b.melee.delete(ai); b.waiting.set(ai, now);\n  }\n  if ((s.state",
-    "new": "    b.waiting.set(ai, now);\n  }\n  if ((s.state",
+    "old": "    b.melee.delete(ai); b.waiting.set(ai, now);",
+    "new": "    b.waiting.set(ai, now);",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TACT2-waiters-strike",
     "file": "src/ai/tactics.js",
-    "old": "  ai._tacStrike = false;\n  // AUDIT TACT A5",
-    "new": "  ai._tacStrike = undefined;\n  // AUDIT TACT A5",
+    "old": "  if (s.state === 'swing') { ai._tacStrike = false; ai.moving = false; face(); return true; }   // stands its blow\n  ai._tacStrike = false;",
+    "new": "  if (s.state === 'swing') { ai._tacStrike = false; ai.moving = false; face(); return true; }   // stands its blow\n  ai._tacStrike = undefined;",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "TACT2-no-prune",
     "file": "src/ai/tactics.js",
-    "old": "  prune(b, now);\n",
-    "new": "\n",
+    "old": "  prune(b, now);",
+    "new": "",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "TACT2-no-out-of-sight-gate",
     "file": "src/ai/tactics.js",
-    "old": "  const fighting = (ai.inSight || away) && ai.detected &&",
-    "new": "  const fighting = true &&",
+    "old": "  const fighting = (ai.inSight || away) && ai.detected && Number.isFinite(dist) && dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) && !ai.follow;",
+    "new": "  const fighting = true && Number.isFinite(dist) && dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) && !ai.follow;",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "TACT2-release-keeps",
     "file": "src/ai/tactics.js",
-    "old": "    b.melee.delete(ai); b.ranged.delete(ai); b.waiting.delete(ai);\n    if (k !== LOCAL",
-    "new": "    b.waiting.delete(ai);\n    if (k !== LOCAL",
+    "old": "    b.melee.delete(ai); b.ranged.delete(ai); b.waiting.delete(ai);",
+    "new": "    b.waiting.delete(ai);",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]

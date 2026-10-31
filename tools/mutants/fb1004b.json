@@ -74,8 +74,8 @@
   {
     "name": "TRAIL-route-first",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    const trail = this._trailGoal(leader, dt);\n    if (trail) return trail;\n",
-    "new": "",
+    "old": "    const trail = this._trailGoal(leader, dt);\n    if (trail) return trail;\n    if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;",
+    "new": "    if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;",
     "tests": [
       "test/scenes/fb1004b_companions.test.js",
       "test/systems/naval/crewcompanions.test.js"

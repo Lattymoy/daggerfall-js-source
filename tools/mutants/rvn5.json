@@ -356,8 +356,8 @@
   {
     "name": "RVN5-melee-signature-unpicked",
     "file": "src/ai/tactics.js",
-    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
-    "new": "    if (false && sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
+    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (false && sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "RVN5-melee-cooldown-ungated",
     "file": "src/ai/tactics.js",
-    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
-    "new": "    if (sig && !windupNear(tf, now, ai)",
+    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (sig && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "RVN5-melee-unrolled",
     "file": "src/ai/tactics.js",
-    "old": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
-    "new": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz)) {",
+    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai) && signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz)) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "RVN5-shooter-unwired",
     "file": "src/ai/tactics.js",
-    "old": "    if (has && sig?.kind === 'pyre' && _me",
-    "new": "    if (false && has && sig?.kind === 'pyre' && _me",
+    "old": "    if (has && sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (false && has && sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "RVN5-shooter-tokenless",
     "file": "src/ai/tactics.js",
-    "old": "    if (has && sig?.kind === 'pyre' && _me",
-    "new": "    if (sig?.kind === 'pyre' && _me",
+    "old": "    if (has && sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "RVN5-shooter-cooldown-ungated",
     "file": "src/ai/tactics.js",
-    "old": "now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai)",
-    "new": "now >= (s.blowReady ?? 0) && !windupNear(_me.feet, now, ai)",
+    "old": "    if (has && sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
+    "new": "    if (has && sig?.kind === 'pyre' && _me && ai.canAct !== false && now >= (s.blowReady ?? 0) && !windupNear(_me.feet, now, ai) && signatureReaches(ai, ent, 'pyre', dist, false, 0, 0) && Math.random() < BLOW_CHANCE) {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "RVN5-iron-unread",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(",
-    "new": "  const guard = blowGuard(",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "RVN5-ember-unread",
     "file": "src/ai/tactics.js",
-    "old": "now, sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
-    "new": "now, guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
+    "old": "  const b = fitBlowToGround(makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR, guard, windup), ai.collider);   // AUDIT TACT D8: on the ground it marks; RVN5: a signature in its ember",
+    "new": "  const b = fitBlowToGround(makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, guard === 'iron' ? IRON_COLOR : BLOW_COLOR, guard, windup), ai.collider);   // AUDIT TACT D8: on the ground it marks; RVN5: a signature in its ember",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "RVN5-pyre-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz));",
-    "new": "  if (shape === 'pyre') b.ahead = 0;",
+    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz));   // Its disc at my feet, locked",
+    "new": "  if (shape === 'pyre') b.ahead = 0;   // Its disc at my feet, locked",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "RVN5-mult-unread",
     "file": "src/ai/tactics.js",
-    "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
-    "new": "b.sig = true; b.windPitch = sig.windPitch;",
+    "old": "    b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
+    "new": "    b.sig = true; b.windPitch = sig.windPitch;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "RVN5-wind-unread",
     "file": "src/ai/tactics.js",
-    "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
-    "new": "b.sig = true; b.mult = sig.mult;",
+    "old": "    b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
+    "new": "    b.sig = true; b.mult = sig.mult;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "RVN5-cooldown-unset",
     "file": "src/ai/tactics.js",
-    "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();\n",
-    "new": "",
+    "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();\n    ai._sigCall = now;",
+    "new": "    ai._sigCall = now;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "RVN5-uncalled",
     "file": "src/ai/tactics.js",
-    "old": "    ai._sigCall = now;\n",
-    "new": "",
+    "old": "    ai._sigCall = now;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "RVN5-signature-feints",
     "file": "src/ai/tactics.js",
-    "old": "if (chain === 0 && !sig && shape !== 'aimed'",
-    "new": "if (chain === 0 && shape !== 'aimed'",
+    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {   // A Patient one's one in three",
+    "new": "  if (chain === 0 && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {   // A Patient one's one in three",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "RVN5-pyre-swing-held",
     "file": "src/ai/tactics.js",
-    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';",
-    "new": "  const swings = shape !== 'aimed';",
+    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';   // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "new": "  const swings = shape !== 'aimed';   // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "RVN5-miss-no-overreach",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && !hit) { beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe); return true; }   // TELL4: missed - it stands spent\n    s.state = 'wait';",
-    "new": "    s.state = 'wait';",
+    "old": "    if (tf && !hit) { beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe); return true; }   // Missed - it stands spent\n    s.state = 'wait';   // the aimed shot's law: its landing was its blow - no swing, no spell on top",
+    "new": "    s.state = 'wait';   // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "RVN5-hit-swings-on",
     "file": "src/ai/tactics.js",
-    "old": "    s.state = 'wait';   // the aimed shot's law",
-    "new": "    s.state = 'engage'; ai._tacStrike = true; ai._blowSwing = true;   // the aimed shot's law",
+    "old": "    s.state = 'wait';   // the aimed shot's law: its landing was its blow - no swing, no spell on top",
+    "new": "    s.state = 'engage'; ai._tacStrike = true; ai._blowSwing = true;   // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "RVN5-reach-pyre-any-range",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return !!ai.inSight && targetKey(ai) === LOCAL;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "RVN5-reach-pyre-blind",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && targetKey(ai) === LOCAL;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "RVN5-reach-pyre-at-anyone",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "RVN5-reach-any-out-of-reach",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return near;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return true;",
+    "old": "  return near;",
+    "new": "  return true;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "NAVBAKE-coarsened-again",
     "file": "src/ai/nav/navBake.js",
-    "old": "  const ag = agent;\n  const cols = trianglesToColliders(",
-    "new": "  const ag = { ...agent, cs: agent.cs * 2.5 };\n  const cols = trianglesToColliders(",
+    "old": "  const ag = agent;",
+    "new": "  const ag = { ...agent, cs: agent.cs * 2.5 };",
     "tests": [
       "test/ai/nav/enhancedAI.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NAVBAKE-doors-kept-in-the-soup",
     "file": "src/ai/nav/navBake.js",
-    "old": "    if (exclude && exclude.has(key)) continue;\n",
-    "new": "",
+    "old": "    if (exclude && exclude.has(key)) continue;\n    use.push(bucket); tris += bucket.tris.length;",
+    "new": "    use.push(bucket); tris += bucket.tris.length;",
     "tests": [
       "test/ai/nav/enhancedAI.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAVBAKE-player-anchor-only",
     "file": "src/ai/nav/navBake.js",
-    "old": ", ...landAnchors(chf, anchors ?? [])];",
-    "new": "];",
+    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])];   // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "new": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)])];   // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
     "tests": [
       "test/ai/nav/enhancedAI.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAVBAKE-anchors-unlanded-tolerance",
     "file": "src/ai/nav/navBake.js",
-    "old": "        if (dy <= tol && (!best || dy < best.dy))",
-    "new": "        if ((!best || dy < best.dy))",
+    "old": "        if (dy <= tol && (!best || dy < best.dy)) best = { x: chf.xmin + (ix + 0.5) * chf.cs, y, z: chf.zmin + (iz + 0.5) * chf.cs, dy };",
+    "new": "        if ((!best || dy < best.dy)) best = { x: chf.xmin + (ix + 0.5) * chf.cs, y, z: chf.zmin + (iz + 0.5) * chf.cs, dy };",
     "tests": [
       "test/ai/nav/enhancedAI.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "NAVBAKE-the-client-sends-the-worker-no-union",
     "file": "src/ai/nav/navClient.js",
-    "old": "this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input)",
-    "new": "this._ask({ t: 'bake', floor: input.minY - 10, anchor, agent }, input)",
+    "old": "      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => { failed = e; return null; });   // The worker's own word is kept for the console",
+    "new": "      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, agent }, input).catch((e) => { failed = e; return null; });   // The worker's own word is kept for the console",
     "tests": [
       "test/ai/nav/enhancedAI.test.js",
       "test/ai/nav/audit0928_nav.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "NAVBAKE-the-key-forgets-the-union",
     "file": "src/ai/nav/navClient.js",
-    "old": "const u = anchors?.length ? `:u${anchors.length}.${(h >>> 0).toString(36)}` : '';",
-    "new": "const u = '';",
+    "old": "  const u = anchors?.length ? `:u${anchors.length}.${(h >>> 0).toString(36)}` : '';",
+    "new": "  const u = '';",
     "tests": [
       "test/ai/nav/enhancedAI.test.js",
       "test/ai/nav/audit0928_nav.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "NAVBAKE-an-anchor-lands-in-its-own-column-only",
     "file": "src/ai/nav/navBake.js",
-    "old": "for (let r = 0; r <= 1 && !best; r++)",
-    "new": "for (let r = 0; r <= 0 && !best; r++)",
+    "old": "    for (let r = 0; r <= 1 && !best; r++) for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {",
+    "new": "    for (let r = 0; r <= 0 && !best; r++) for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {",
     "tests": [
       "test/ai/nav/enhancedAI.test.js",
       "test/ai/nav/audit0928_nav.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "NAVBAKE-an-anchor-lands-on-an-eroded-span",
     "file": "src/ai/nav/navBake.js",
-    "old": "        if (!s.walkable) continue;\n        const y = chf.ymin",
-    "new": "        const y = chf.ymin",
+    "old": "        if (!s.walkable) continue;\n        const y = chf.ymin + s.floor * chf.ch, dy = Math.abs(y - a[1]);",
+    "new": "        const y = chf.ymin + s.floor * chf.ch, dy = Math.abs(y - a[1]);",
     "tests": [
       "test/ai/nav/enhancedAI.test.js",
       "test/ai/nav/audit0928_nav.test.js"

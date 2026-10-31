@@ -1,25 +1,25 @@
 // @ts-check
-// TELL8 (bible/12-Enhanced-AI/Feud-Arc.md section 10; Mac, 2026-10-04: "breath more depth into it", then "Go" - OPEN 9:
+// TELL8 (Mac, 2026-10-04: "breath more depth into it", then "Go" - OPEN 9:
 // wind-ups at peers, each client judging its own feet): A WIND-UP ON THE WIRE. Before it a telegraphed blow lived on
 // its owner's machine alone - no peer saw its mark, its glint or its held arm, and a foe never wound up at a peer. Now:
-//   THE OWNER'S WORD (`blowWire`) - each foe record carries its live wind-up: `wk` the shape (0-6, WIRE_KINDS) +8 for
-//     iron +16 for a feint, `wy` its yaw, `wl` milliseconds to its landing (relative: the brain's clock is each
-//     client's own; it absorbs the frame's wait), `wo` its origin (the record's own coordinates), `wp` a leap's or a
-//     shot's point (its distance along `wy`, metres); and `ws` 1 staggered, 2 overreached.
-//   THE PUPPET'S STATE (`applyBlowRecord`, `puppetBlowTurn`) - a SYNTHETIC brain state on the puppet's `ai._tac`
-//     (marked `puppet`), so every reader of a wind-up - the ground (ai/foeBlows.js drawableBlows), the glint, the ear and
-//     the target bar (scenes/hostCombat.js tellCues, ai/tactics.js poiseTrack) - reads a peer's foe as a local one: the
-//     mark from `wl` (part-filled by the shape's nominal length), its held arm, a feint's dashed cut, a broken one's
-//     cancel; its stagger and its overreach (the puppet's pose; its entity's `staggerUntil`/`overreachUntil`, so my roll
-//     against it takes the same x1.25 and x1.3 - systems/blowTaken.js).
-//   EACH JUDGES THEIR OWN FEET (10.3, net/gate/gateStrike.js's law) - a puppet's wind-up AT ME lands on my feet at the
-//     landing: the verdict, the weight and the effect on the puppet's `ai` as a local landing leaves them, so its swing
-//     resolves through the host's own door (resolveFoeMeleeVsPlayer -> blowConnects, blowScaled, landBlowEffect); the
-//     late sample makes a perfect dodge mine too. The owner's view of my feet opens its foe's window (6.3) - never my
-//     damage.
-//   THE BLOW'S CLASS (`blowClassOf`, net/wire.js `wc`) - my blow on a puppet winding up rides to its owner with its K,
-//     its back flag (my feet against the puppet's facing) and its weakness flag, so the owner's poise meter weighs it as
-//     its own (10.4).
+//  THE OWNER'S WORD (`blowWire`) - each foe record carries its live wind-up: `wk` the shape (0-6, WIRE_KINDS) +8 for
+//    iron +16 for a feint, `wy` its yaw, `wl` milliseconds to its landing (relative: the brain's clock is each
+//    client's own; it absorbs the frame's wait), `wo` its origin (the record's own coordinates), `wp` a leap's or a
+//    shot's point (its distance along `wy`, metres); and `ws` 1 staggered, 2 overreached.
+//  THE PUPPET'S STATE (`applyBlowRecord`, `puppetBlowTurn`) - a SYNTHETIC brain state on the puppet's `ai._tac`
+//    (marked `puppet`), so every reader of a wind-up - the ground (ai/foeBlows.js drawableBlows), the glint, the ear and
+//    the target bar (scenes/hostCombat.js tellCues, ai/tactics.js poiseTrack) - reads a peer's foe as a local one: the
+//    mark from `wl` (part-filled by the shape's nominal length), its held arm, a feint's dashed cut, a broken one's
+//    cancel; its stagger and its overreach (the puppet's pose; its entity's `staggerUntil`/`overreachUntil`, so my roll
+//    against it takes the same x1.25 and x1.3 - systems/blowTaken.js).
+//  EACH JUDGES THEIR OWN FEET (10.3, net/gate/gateStrike.js's law) - a puppet's wind-up AT ME lands on my feet at the
+//    landing: the verdict, the weight and the effect on the puppet's `ai` as a local landing leaves them, so its swing
+//    resolves through the host's own door (resolveFoeMeleeVsPlayer -> blowConnects, blowScaled, landBlowEffect); the
+//    late sample makes a perfect dodge mine too. The owner's view of my feet opens its foe's window (6.3) - never my
+//    damage.
+//  THE BLOW'S CLASS (`blowClassOf`, net/wire.js `wc`) - my blow on a puppet winding up rides to its owner with its K,
+//    its back flag (my feet against the puppet's facing) and its weakness flag, so the owner's poise meter weighs it as
+//    its own (10.4).
 import { BLOW, TELL_IRON_EXTRA } from './blowShapes.js';
 import { makeBlow, setLiveBlow, shatterBlow, liveBlows, inBlow, fitBlowToGround, BLOW_COLOR, IRON_COLOR, BLOW_VERDICT_LIFE } from './foeBlows.js';
 import { TELL, blowK, behind } from './tells.js';
@@ -32,7 +32,7 @@ export const WIRE_IRON = 8;
 export const WIRE_FEINT = 16;
 /** AUDIT TELL O2: `wk`'s landed flag - its owner's landing, written for WIRE_LANDED_S after it. */
 export const WIRE_LANDED = 32;
-/** FEUD WIRE (Feud-Arc.md 25): `wk`'s signature flag - a revenant's signature (RVN5), struck at its multiplier. */
+/** FEUD WIRE: `wk`'s signature flag - a revenant's signature, struck at its multiplier. */
 export const WIRE_SIG = 64;
 export const WIRE_LANDED_S = 0.5;
 /** `wl`'s ceiling (ms): no wind-up is longer. */
@@ -148,7 +148,7 @@ function landPuppetBlow(ai, s, b, now, feet = s.feet) {
   if (mine) {
     const v = inBlow(b, feet[0], feet[2]);
     ai._blowVerdict = v; ai._blowMult = b.mult; ai._blowAt = now; ai._blowSwing = true;
-    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // TELL6e: on MY machine, where its damage lands
+    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // On MY machine, where its damage lands
     if (!v && b.lateIn === true) ai._perfectAt = now;
   }
   if (b.land > now) b.land = now;   // landed on its owner's word: the flash is now
@@ -194,7 +194,7 @@ export function puppetGapLanded(ai, now = tacticsNow()) {
 /** 10.4: my blow on a foe winding up, as its class for its owner's meter - `{ k, back, weak }` (K by its kind and
  *  weapon, the door's `opts`; from behind its facing, judged from `from`, my feet; its weakness, RVN3's) - or null when
  *  it is not winding up (no class to weigh). AUDIT FEUD: a blow of its WEAKNESS rides whether or not it winds up (no
- *  facing to be behind) - its owner's reveal reads it (RVN13, Feud-Arc.md 25). */
+ *  facing to be behind) - its owner's reveal reads it. */
 export function blowClassOf(ai, { kind = 'melee', weapon = null, claws = false, round = false } = {}, from = null, weak = false) {
   const s = ai?._tac, b = s?.state === 'windup' ? s.blow : null;
   if (!b) return weak ? { k: blowK({ kind, weapon, claws, round }), back: false, weak: true } : null;

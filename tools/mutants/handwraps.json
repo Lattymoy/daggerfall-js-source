@@ -424,8 +424,8 @@
   {
     "name": "HANDWRAPS-tell",
     "file": "src/ai/tells.js",
-    "old": "    case SKILLS.HandToHand: return TELL.K_HANDS;",
-    "new": "",
+    "old": "    case SKILLS.HandToHand: return TELL.K_HANDS;   // A fist in wraps weighs a fist",
+    "new": "   // A fist in wraps weighs a fist",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

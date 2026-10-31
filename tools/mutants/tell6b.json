@@ -57,8 +57,8 @@
   {
     "name": "TELL6b-run-not-near",
     "file": "src/ai/foeBlows.js",
-    "old": " && !(b.dashUntil > now)) continue;",
-    "new": ") continue;",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue;   // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "new": "    if (now >= b.land && !(b.chainUntil > now)) continue;   // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "TELL6b-charge-in-reach",
     "file": "src/ai/tactics.js",
-    "old": "  return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) :",
-    "new": "  return near ? all :",
+    "old": "  return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) : all.filter((k) => gapCloses(ai, k, dist, dx, dz, ent));",
+    "new": "  return near ? all : all.filter((k) => gapCloses(ai, k, dist, dx, dz, ent));",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js",
       "test/characters/enemy/tell5_patterns.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "TELL6b-wall-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  if (Number.isFinite(wall) && wall < len) return false;\n",
-    "new": "",
+    "old": "  if (Number.isFinite(wall) && wall < len) return false;\n  if (coverDistance(ai.collider, from, dir, len) < len) return false;",
+    "new": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "TELL6b-cover-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;\n",
-    "new": "",
+    "old": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;\n  if (kind === 'leap' && ai.collider) {   // ground under its point - the terrain too, outdoors (Collider.surfaceHit)",
+    "new": "  if (kind === 'leap' && ai.collider) {   // ground under its point - the terrain too, outdoors (Collider.surfaceHit)",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "TELL6b-no-run",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && s.blow.kind === 'charge') { beginDash(ai, s, s.blow, now, cooled); return true; }   // TELL6",
-    "new": "    // TELL6",
+    "old": "    if (tf && s.blow.kind === 'charge') { beginDash(ai, s, s.blow, now, cooled); return true; }   // Its landing is its run",
+    "new": "    // TELL6: its landing is its run",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ],
@@ -150,8 +150,8 @@
   {
     "name": "TELL6b-run-never-hits",
     "file": "src/ai/tactics.js",
-    "old": "  const hit = !!tf && segDist(",
-    "new": "  const hit = false && segDist(",
+    "old": "  const hit = !!tf && segDist(tf[0], tf[2], d.head[0], d.head[1], h[0], h[1]) <= BLOW.charge.halfW;",
+    "new": "  const hit = false && segDist(tf[0], tf[2], d.head[0], d.head[1], h[0], h[1]) <= BLOW.charge.halfW;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ],
@@ -178,8 +178,8 @@
   {
     "name": "TELL6b-run-chains",
     "file": "src/ai/tactics.js",
-    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) &&",
-    "new": "  if ((b.chain ?? 0) < chainMax(ent) &&",
+    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {   // Phase two chains to three",
+    "new": "  if ((b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {   // Phase two chains to three",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "TELL6b-run-dropped",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'dash') return dashTurn(ai, s, now, skipped);\n",
-    "new": "",
+    "old": "  if (s.state === 'dash') return dashTurn(ai, s, now, skipped);\n  // A wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight",
+    "new": "  // TACT4: a wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]

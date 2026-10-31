@@ -25,7 +25,7 @@
 //       `node tools/sameProgram.mjs --against HEAD` proves the files are the same programs.
 //       Carrying a record runs the transform over its whole file once, so a file with thousands of records (world.js
 //       has 3,778) is the slow part: the records are carried on N worker threads (default: every core).
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { join, dirname, resolve as resolvePath } from 'node:path';
@@ -339,7 +339,7 @@ async function main(args) {
   const listTexts = new Map(lists.filter(({ list }) => changedLists.has(list))
     .map(({ list, records }) => [`tools/mutants/${list}`, JSON.stringify(records, null, 2) + '\n']));
 
-  const docTexts = new Map(docPaths.map((d) => [d, newTexts.get(d) ?? read(d)]));
+  const docTexts = new Map(docPaths.filter((d) => existsSync(join(ROOT, d))).map((d) => [d, newTexts.get(d) ?? read(d)]));   // a doc deleted in the working tree is not carried
   const { docs, carried, failed } = carryCites({
     docs: docTexts, oldText: (f) => oldTexts.get(f) ?? read(f), newText: (f) => newTexts.get(f) ?? read(f),
     changed: new Set(newTexts.keys()), codeFiles: code,

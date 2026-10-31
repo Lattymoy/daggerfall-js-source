@@ -2,8 +2,8 @@
   {
     "name": "FM1-shard-range-plain",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
-    "new": "    if (near && d > range) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
+    "old": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
+    "new": "    const d = near ? Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) : Infinity;\n    if (near && d > range) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
     "tests": [
       "test/characters/feudmerge.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FM2-sand-on-a-peer",
     "file": "src/ai/tactics.js",
-    "old": "  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true;",
-    "new": "  if (b.key !== LOCAL) b.sand = true;",
+    "old": "  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true;   // One at a bout-mate (no other mark is begun at) is drawn for the stands (foeBlows.js SAND_DRAW_RANGE)",
+    "new": "  if (b.key !== LOCAL) b.sand = true;   // One at a bout-mate (no other mark is begun at) is drawn for the stands (foeBlows.js SAND_DRAW_RANGE)",
     "tests": [
       "test/characters/feudmerge.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FM2-effect-for-a-mate",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFx = atMe && verdict ? {",
-    "new": "  ai._blowFx = judged && verdict ? {",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "new": "  ai._blowFx = judged && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
     "tests": [
       "test/characters/feudmerge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FM2-no-blowFor",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined;",
-    "new": "  ai._blowFor = undefined;",
+    "old": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined;   // Whose verdict it is",
+    "new": "  ai._blowFor = undefined;   // Whose verdict it is",
     "tests": [
       "test/characters/feudmerge.test.js"
     ]

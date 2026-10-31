@@ -743,8 +743,8 @@
   {
     "name": "AUDIT-BANTHA1-TREE-1-no-wide-grid",
     "file": "src/ai/cover.js",
-    "old": "      if (it.r > COVER_CELL) {",
-    "new": "      if (false) {",
+    "old": "      if (it.r > COVER_CELL) {   // A wide proxy, once, under its centre",
+    "new": "      if (false) {   // A wide proxy, once, under its centre",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
