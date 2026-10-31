@@ -125,8 +125,8 @@
   {
     "name": "MWSTEEL4-the-bind-written-for-its-inverse",
     "file": "tools/nifWrite.mjs",
-    "old": "      return { name: b.name, data: { transform: { rotation: inv.a, translation: inv.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
-    "new": "      return { name: b.name, data: { transform: { rotation: b.bind.a, translation: b.bind.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
+    "old": "            transform: { rotation: inv.a, translation: inv.t, scale: 1 },",
+    "new": "            transform: { rotation: b.bind.a, translation: b.bind.t, scale: 1 },",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]

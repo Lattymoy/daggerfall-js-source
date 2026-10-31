@@ -1451,8 +1451,8 @@
   {
     "name": "NAVP-sink-loop-unjoined",
     "file": "tools/navalSfx.mjs",
-    "old": "  for (let i = 0; i < j; i++) out[i] = out[i] * (i / j) + out[n + i] * (1 - i / j);\n",
-    "new": "",
+    "old": "  for (let i = 0; i < j; i++) out[i] = out[i] * (i / j) + out[n + i] * (1 - i / j);\n  return softClip(out.slice(0, n), 1.5);",
+    "new": "  return softClip(out.slice(0, n), 1.5);",
     "tests": [
       "test/tooling/nav_e_sounds.test.js"
     ]

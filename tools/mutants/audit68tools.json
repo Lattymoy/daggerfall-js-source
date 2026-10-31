@@ -67,7 +67,7 @@
   {
     "name": "AUDIT68-X5-a-signal-kills-the-harness-mid-mutant",
     "file": "tools/mutate.mjs",
-    "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; for (const c of children) c.kill(sig); });\n",
+    "old": "for (const sig of ['SIGINT', 'SIGTERM'])\n  process.on(sig, () => {\n    interrupted = sig;\n    for (const c of children) c.kill(sig);\n  });\n",
     "new": "",
     "tests": [
       "test/tooling/audit68_tools.test.js"

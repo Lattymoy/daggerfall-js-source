@@ -2652,8 +2652,8 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   // clamp-hard ones included, and under the bob).
   const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
   assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
-  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped fix');
-  assert.match(probe, /Math\.abs\(fixHardUp\.cy - fixLevel\.cy\) < 0\.02 && Math\.abs\(fixHardDown\.cy - fixLevel\.cy\) < 0\.02/,
+  assert.match(probe, /window\.__arm\.setFollowCamera\(true\);\n\s*\}\);/, 'L5e measures the shipped fix');
+  assert.match(probe, /Math\.abs\(fixHardUp\.cy - fixLevel\.cy\) < 0\.02 &&\n\s*Math\.abs\(fixHardDown\.cy - fixLevel\.cy\) < 0\.02/,
     'and its assertion is INVARIANCE, clamp-hard looks included');
 });
 
