@@ -81,5 +81,23 @@
     ],
     "equivalent": true,
     "why": "the filter only spares the time: a regex whose literal run a text lacks cannot match it, so dropping the filter changes no answer"
+  },
+  {
+    "name": "TEXTPINS-an-escape-read",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (c === '\\\\') {\n      i++;\n      continue;\n    }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-named-group-missed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "(pattern[i + 1] !== '?' || (pattern[i + 2] === '<' && !'=!'.includes(pattern[i + 3])))",
+    "new": "pattern[i + 1] !== '?'",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
   }
 ]

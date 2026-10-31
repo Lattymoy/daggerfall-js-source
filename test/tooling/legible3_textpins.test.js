@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { offsetMap, carriedIn, literalRun } from '../../tools/carryTextPins.mjs';
+import { offsetMap, carriedIn, literalRun, hasCapture } from '../../tools/carryTextPins.mjs';
 
 const OLD = "export const a = { name: this.name.trim(), icon: this.icon };\nfunction f(x) { return x+1 }\n";
 const NEW = 'export const a = {\n  name: this.name.trim(),\n  icon: this.icon,\n};\nfunction f(x) {\n  return x + 1;\n}\n';
@@ -41,4 +41,14 @@ test('LEGIBLE 3 text pins: a regex is tried only on a text holding its longest l
   assert.equal(literalRun('a[bc]+d'), null, 'nothing six long');
   assert.equal(literalRun('abcdefg+hij'), 'abcdef', 'a quantified letter is not in the run');
   assert.deepEqual(carried('assert.match(s, /nowhere at all[^x]*icon/);'), [], 'never run on a text without its run');
+});
+
+test('LEGIBLE 3 text pins: a capture is a bare or a named group, never a class\'s bracket, an escape or a lookaround - and the scan is linear over a pin full of escaped brackets (mutants: an escape read; a named group missed)', () => {
+  assert.equal(hasCapture('a(b)c'), true);
+  assert.equal(hasCapture('a(?<n>b)'), true);
+  assert.equal(hasCapture('a(?:b)(?=c)(?<=d)'), false);
+  assert.equal(hasCapture('a\\(b\\)[(]'), false);
+  const t0 = Date.now();
+  assert.equal(hasCapture(`${'\\[f\\[0\\], '.repeat(40)}x`), false);
+  assert.ok(Date.now() - t0 < 100, 'linear');
 });

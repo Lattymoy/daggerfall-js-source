@@ -92,7 +92,26 @@ export function offsetMap(oldSource, newSource) {
 const escapeRegex = (s) => s.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&').replace(/\n[ \t]*/g, '\\n\\s*');
 const quoteAs = (q, s) =>
   `${q}${s.replace(/\\/g, '\\\\').replace(new RegExp(q, 'g'), `\\${q}`).replace(/\n/g, '\\n')}${q}`;
-const hasCapture = (pattern) => /(^|[^\\])\((?!\?)/.test(pattern.replace(/\[(?:\\.|[^\]])*\]/g, '[]'));
+/** Whether a regex source has a capturing group - a plain scan: a regex over a pin's own escapes once backtracked for
+ *  an hour on `\[f\[0\]`. A named group captures; a class's brackets and an escape do not open one. */
+export function hasCapture(pattern) {
+  let inClass = false;
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '\\') {
+      i++;
+      continue;
+    }
+    if (inClass) {
+      if (c === ']') inClass = false;
+      continue;
+    }
+    if (c === '[') inClass = true;
+    else if (c === '(' && (pattern[i + 1] !== '?' || (pattern[i + 2] === '<' && !'=!'.includes(pattern[i + 3]))))
+      return true;
+  }
+  return false;
+}
 
 /** A regex's longest run of literal characters (an escaped punctuation mark counts as one), or null under six. */
 export function literalRun(pattern) {
