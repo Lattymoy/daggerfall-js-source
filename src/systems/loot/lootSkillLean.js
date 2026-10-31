@@ -1,13 +1,11 @@
 // @ts-check
-// SKILL-LEAN (bible/05-Combat/Fixed-PvE.md section 14; the owner, 2026-10-30: "as they are higher tier area they have
-// better leaning skill gear", "1 line leans in 1-20 then 2 line leans in the 10-25 area and the 20-35 area has 3",
-// "to their highest skills", "for all weapons armor jewelry"; 2026-10-31 "clothing need to lean as well"): A FIXED-PVE
-// FOE'S DROP LEANS TO ITS KILLER'S BEST SKILLS. Its weapons, armour, jewellery and clothing take their first skill lines on the roller's highest skills - one line from a foe
-// to level 20, two to 35, three in the top band. Other lines roll as ever. Only a template foe's body: the switch off,
-// nothing leans. A leaf: the registered roller and the scope, no import.
+// SKILL-LEAN (bible/05-Combat/Fixed-PvE.md section 14): A FIXED-PVE FOE'S DROP LEANS TO ITS KILLER'S BEST SKILLS. Its
+// weapons, armour, jewellery and clothing take their first skill lines on the roller's highest skills. Other lines roll
+// as ever, and an Imbue stays random (the owner: "its a random"). The switch off, nothing leans. A leaf, no import.
 
-/** [below this foe level, lines that lean]: one to 20, two to 35, three in the top band (the owner: "23 to early"). */
-export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([21, 1]), Object.freeze([36, 2]), Object.freeze([Infinity, 3])]);
+/** [below this foe level, lines that lean]: a band ahead, so a band's drops make the next band's gear (the owner,
+ *  2026-10-31) - one to 11, two to 27, three from 28. */
+export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([12, 1]), Object.freeze([28, 2]), Object.freeze([Infinity, 3])]);
 /** The groups whose skill lines lean. */
 export const SKILL_LEAN_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);   // clothing: the owner, 2026-10-31
 

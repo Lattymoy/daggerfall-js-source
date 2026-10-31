@@ -239,13 +239,18 @@ record. Gold stays the classic price, the same at every skill. The simulator pay
 
 ## 14. A template foe's drop leans to its killer (SKILL-LEAN, 2026-10-30)
 
-The owner: "as they are higher tier area they have better leaning skill gear", "1 line leans in 1-20 then 2 line leans in
-the 10-25 area and the 20-35 area has 3", "to their highest skills", "for all weapons armor jewelry"; 2026-10-31: "clothing need to lean as well". A template foe's
-body and kit roll inside `withSkillLean` (`loot/lootSkillLean.js`) at the foe's own level: the first skill lines of each
-weapon, armour piece, piece of jewellery and garment take the roller's three best trained skills in order (`lootPowers.js` `bestSkills`). One
-line leans to level 20, two to 35, three in the top band (the owner: "23 to early"). The other
-lines and the values roll as ever. With the switch off no foe carries a template, so nothing leans. Daggerfall
-Unity's items have no lines. The tests: `test/systems/loot/skilllean.test.js`.
+The owner: "as they are higher tier area they have better leaning skill gear", "to their highest skills", "for all
+weapons armor jewelry"; 2026-10-31: "clothing need to lean as well". A template foe's body and kit roll inside
+`withSkillLean` (`loot/lootSkillLean.js`) at the foe's own level: the first skill lines of each weapon, armour piece,
+piece of jewellery and garment take the roller's best trained skills in order (`lootPowers.js` `bestSkills`). One line
+leans to level 11, two to 27, three from 28. The other lines and the values roll as ever. With the switch off no foe
+carries a template, so nothing leans. Daggerfall Unity's items have no lines. The tests:
+`test/systems/loot/skilllean.test.js`.
+
+The steps sit a band ahead (the owner: "adjust lean so player start farming gear for the nest area tto pushj up").
+Players craft gear to about 30 ("we want them to make gear for say 30"), then better it with leaned drops from harder
+zones and honing. Only drops lean: an Imbue stays random (the owner: "its a random"). The reference gear skill
+(`pveBuilds.js` `TIERS`) is +375 at 40, the plain enchanted base kit, and +575 at 45, inside the owner's "500-650 rang".
 
 ## 15. A template foe's metal follows its level (FOE-METAL, 2026-10-30)
 
