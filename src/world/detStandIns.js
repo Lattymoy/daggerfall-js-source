@@ -15,6 +15,7 @@
 // world/townPictures.js.
 
 import { registerCustomModel } from './customModels.js';
+import { chestModel, SEA_CHEST_BOX, SEA_CHEST_LOOK } from './chestModel.js';   // CHEST3D: the sea chest is the chest
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { buildDerivedPicture } from '../formats/derivedTexture.js';
 import { TOWN_PICTURE_ARCHIVE, PICTURE, townPictureEntries } from './townPictures.js';   // WD3: the cloth the tapestries wear
@@ -152,15 +153,8 @@ export const DET_MODELS = Object.freeze({
   45162: () => hanging(DET_PICTURES[45162], 0.8, 1.2),
   // Kynareth's tapestry, in her temples.
   45145: () => hanging(DET_PICTURES[45145], 1.0, 1.5),
-  // A sea chest, lengthwise on its own X.
-  45190: () => {
-    const m = new MeshBuilder();
-    m.box(WOOD, [0, 0.22, 0], [0.9, 0.44, 0.5], 2);
-    m.box(WOOD_DARK, [0, 0.49, 0], [0.92, 0.1, 0.52], 2);
-    for (const x of [-0.3, 0.3]) m.box(IRON, [x, 0.28, 0], [0.05, 0.56, 0.54]);
-    m.box(IRON, [0, 0.4, 0.265], [0.08, 0.1, 0.02]);
-    return m.build();
-  },
+  // A sea chest, lengthwise on its own X - CHEST3D: the owner's chest (world/chestModel.js), its latch to +z.
+  45190: () => chestModel(SEA_CHEST_BOX, SEA_CHEST_LOOK),
   // A weapon rack: two posts, two rails, the spears between.
   45191: () => {
     const m = new MeshBuilder();

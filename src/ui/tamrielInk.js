@@ -38,6 +38,8 @@ import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID, onTamr
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, capitalCanalOpen, capitalSpanPixels, capitalSliceName, capitalHarbourSlice, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key; BAY-LEFT-MAPS: a capital's harbour, as the registry reads it
 import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's seat's key
+import { countryPixelOfId } from '../world/tamrielCountry.js';   // FIND-FOUND: a found country place's pixel off its id
+import { lairPixelOfId } from '../world/tamrielDungeons.js';   // FIND-FOUND: and a found lair's
 import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey, arenaRoadByte } from '../world/arenaRoads.js';
 import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
@@ -553,6 +555,21 @@ export function tamrielFindRows(ink) {
       seen.add(name);
       out.push({ name, regionName, x: p.x, y: p.y, port: s === harbour && !!c.port });
     }
+  }
+  return out;
+}
+
+/** FIND-FOUND (Discord, 2026-10-31: a quest's town "Helbenar" not in the find box): THE FIND BOX'S FOUND PLACES PAST THE
+ *  BAY - the countryside's and the lairs' (TESA7, TESA8) are a pixel's roll and no list, so the box finds one once the
+ *  player has found it, as the Bay's box finds a discovered place. `found` is the store's rows (systems/discovery.js
+ *  foundMadePlaces); each row its pixel read back off its map id, the Bay's own ids and any other lane left out.
+ *  @param {ReadonlyArray<{ mapId: number, regionName: string, locationName: string }>} found */
+export function tamrielFoundRows(found) {
+  const out = [];
+  for (const f of found ?? []) {
+    const p = countryPixelOfId(f.mapId) ?? lairPixelOfId(f.mapId);
+    if (!p || inBay(p.x, p.y)) continue;
+    out.push({ name: f.locationName, regionName: f.regionName ?? '', x: p.x, y: p.y, port: false });
   }
   return out;
 }

@@ -737,6 +737,10 @@ The relay stamps `wa` on the socket at the hello, and every referee - a siege's,
 signed bow; a fist is every fighter's own. A token with no `wa` (a character not judged since INT7) is clipped to the
 look's weapon alone, the law before it.
 
+EG-MIGHT (2026-10-31, `11-Multiplayer/Elite-Gates.md` section 21.1): the same verdict reads the kit's might off the judged
+pack (`net/kitMight.js`), kept on the row (`might`, migration 0204) and signed as `mg` beside `rc` 1, grown by the Renown's
+sky. An Elite Breach's purse grows by it; no referee between players reads it.
+
 ### INT8 - the duel refereed (`net/duel/duelRef.js`, `net/duel/duelReceipt.js`)
 
 A duel is the Royal Tourney's ring without its title. The relay that routes it notes the ask and the yes as they pass
@@ -1266,6 +1270,12 @@ The first line (`PROGRESS_LINE`) is each clock cap read per hour of play: Renown
 RENOWN_XP_HOUR_MAX), a raid's six cleanses a game day of two real hours (three an hour), five bounty camps, five orc
 camps, a Watch tick each two minutes stood (thirty an hour, sixty held), twenty finds, thirty harvest silvers; and a guess
 for the professions (10,000 XP an hour, 20,000 held), which no route bounded by the hour.
+
+AUDIT PASS 3 (2026-10-29, `06-Systems/Battle-Pass.md` section 8): the Battle Pass's find (`/v1/pass/find`) is a claim of
+the account's seat too, on a ninth stream, `pass`: an ask answered spends one, and the first line is the day's 2,000 asks
+an hour. The Witches' Festival's find (`/v1/festival/find`) is the tenth, `festival`, its day's 1,500 asks an hour, the
+same way. A line staff wrote before a stream was added reads that stream's first line (`progress.js` progressConfig),
+where the whole line had been refused for the stream it lacked; a line staff write still names every stream.
 
 MEASURE FIRST (the owner, asked: "Measure first" - as the wealth budget and the boss fights' count were): while the line
 only measures, nothing is refused, the clock caps stand as they stood, and the bucket keeps no debt - so the day staff

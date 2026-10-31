@@ -251,9 +251,9 @@ test('SOLITUDE-RELIEF the hosts\' wiring: every block built on its tier - its mo
   const pb = rd('src/scenes/pixelBuild.js');
   assert.ok(pb.includes('const blockY = locLocal[1] + capitalBlockLift(dfLocation, b.x, b.y);'), 'a block\'s tier');
   assert.ok(pb.includes('locLocal[0] + b.originX, blockY, locLocal[2] + b.originZ, 0, 0, 0);'), 'its models');
-  assert.ok(pb.includes('y: blockY + npc.y,'), 'its people');
+  assert.ok(pb.includes('y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),'), 'its people');   // PIN MOVED (AUDIT PROP-GROUND): on the street its fabric lays
   assert.ok(pb.includes('blockY + light.y,'), 'its lights');
-  assert.ok(pb.includes(': flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;'), 'its flats, a tree on the drawn ground');
+  assert.ok(pb.includes(': flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y + lift;'), 'its flats, a tree on the drawn ground');   // PIN MOVED (AUDIT PROP-GROUND): `lift` its street's
   assert.ok(pb.includes('floorAt: dfLocation?.capital && locOrigin ? (x, z) => witchFloor + capitalBlockLift(dfLocation, Math.floor((x - locOrigin[0]) / RMB_SIDE), Math.floor((z - locOrigin[2]) / RMB_SIDE)) : null,'), 'the festival');
   assert.ok(rd('src/world/townWalls.js').includes('if (relief) shutRelief(nav, relief);'), 'the walk grid');
   assert.ok(rd('src/world/urban/townFabricStand.js').includes('const lift = CAPITALS[dfLocation.capital?.k]?.lift ? (bx, by) => capitalBlockLift(dfLocation, bx, by) : null;'), 'the fabric');
@@ -482,7 +482,7 @@ test('SOLITUDE-RELIEF the fabric on its blocks\' tiers: every piece cut at a blo
   const { fabricPlan, FABRIC_KIND } = await import('../../src/world/urban/townFabric.js');
   void fabricPlan;
   const W = 128, Hh = 64, n = W * Hh, K = FABRIC_KIND;
-  const plan = { W, H: Hh, kind: new Uint8Array(n), fences: [], gates: [], walls: [], props: [] };
+  const plan = { W, H: Hh, kind: new Uint8Array(n), under: new Uint8Array(n), fences: [], gates: [], walls: [], props: [] };
   for (let x = 0; x < W; x++) for (let z = 28; z < 34; z++) plan.kind[z * W + x] = K.main;   // a street across two blocks
   for (let x = 0; x < W; x++) plan.kind[34 * W + x] = K.pave;
   const flat = townFabricModel(plan, 'nord'), same = townFabricModel(plan, 'nord', { lift: null });
@@ -491,7 +491,7 @@ test('SOLITUDE-RELIEF the fabric on its blocks\' tiers: every piece cut at a blo
   for (let i = 0; i < lifted.positions.length; i += 3) {
     const x = lifted.positions[i], y = lifted.positions[i + 1];
     if (x < 64 * 1.6 - 1e-3) assert.ok(y < 1, `the west block's at its ground (${x}, ${y})`);
-    else if (x > 64 * 1.6 + 1e-3) assert.ok(y >= 6 - 1e-6, `the east block's 6 m up (${x}, ${y})`);
+    else if (x > 64 * 1.6 + 1e-3) assert.ok(y >= 6 - 0.05 - 1e-6, `the east block's 6 m up, a kerb's foot on its land (${x}, ${y})`);   // PIN MOVED (AUDIT PROP-GROUND): FABRIC_LAND_Y
   }
 });
 

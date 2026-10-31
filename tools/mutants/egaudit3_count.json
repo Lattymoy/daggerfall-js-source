@@ -281,8 +281,8 @@
   {
     "name": "EGA3-count-blow-of-none",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "return (m.dh > 0 && m.dh >= even * dealt)",
-    "new": "return (m.dh >= even * dealt)",
+    "old": "return (m.dh > 0 && egRefDealt(m.dh, m.mg) >= even * dealt)",
+    "new": "return (egRefDealt(m.dh, m.mg) >= even * dealt)",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]

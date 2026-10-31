@@ -108,10 +108,18 @@ export function raidWaveAt(plan, killed) {
 export const RAID_BEARER_HEALTH_X = 8;
 /** How far from his post the bearer is let fight (m) - he holds the square. */
 export const RAID_BEARER_LEASH_M = 4;
-/** The standard's packs: at most RAID_DEFEND_PACK_MAX at once, RAID_DEFEND_PACK_GAP_S apart, led from
- *  RAID_DEFEND_FROM_M out about the square. */
-export const RAID_DEFEND_PACK_MAX = 3;
-export const RAID_DEFEND_PACK_GAP_S = 9;
+/** The standard's packs: RAID_DEFEND_PACK_MIN to RAID_DEFEND_PACK_MAX at once, RAID_DEFEND_PACK_GAP_S apart, led from
+ *  RAID_DEFEND_FROM_M out about the square. RAID-BANNER (2026-10-31: "Increase spawn rate for banner raid"): 3-5 every
+ *  4 s, about three times the 2-3 every 9 s it stood. */
+export const RAID_DEFEND_PACK_MIN = 3;
+export const RAID_DEFEND_PACK_MAX = 5;
+export const RAID_DEFEND_PACK_GAP_S = 4;
+/** RAID-BANNER (2026-10-31: "number ok kills needed need to go up 2-3 times"): a Standard's raid needs this many deaths
+ *  for each the town's count holds - each machine says a third of its deaths, so the relay's target (15-25, the day's
+ *  roll) stands for 45-75 and nothing at the relay moves. The board and the map show the deaths. */
+export const RAID_BANNER_KILLS_X = 3;
+/** The deaths each count of a raid's stands for (its kind as the raid's runtime has read it). @param {any} raid */
+export const raidKillsX = (raid) => (raid?.kind === 'defend' ? RAID_BANNER_KILLS_X : 1);
 export const RAID_DEFEND_FROM_M = 40;
 /** How long a raider's grudge at the objective it is sent at holds (EnemyAI's give-up ticks - the defenders' own 600).
  *  AUDIT WORLD-EVENTS L5-14: ticks, never milliseconds (its name had it so). */

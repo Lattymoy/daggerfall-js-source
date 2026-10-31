@@ -72,8 +72,8 @@
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "sagesmoke: 'witchwarden', eternal: 'genesis' });",
+    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -152,7 +152,7 @@
   {
     "name": "NIRNROOT-SAGE-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'nirnrootsage' });",
+    "old": "nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "new": "nirnrootsage: 'wikimaid' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -162,7 +162,7 @@
   {
     "name": "NIRNROOT-SAGE-aura-grant",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'sagesmoke' });",
+    "old": "nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "new": "nirnrootsage: 'lilacwarren' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'witchfire', 'eternal']);",
+    "old": "'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "'witchfire', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -212,7 +212,7 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world296';",
+    "old": "export const RELAY_VERSION = 'world301';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"

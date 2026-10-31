@@ -53,7 +53,7 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   resetCollectionsPage();
   const me = { items: [] };
   assert.equal(collectionsPageShown(me), true, 'Loot rarity: the codex');
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'trophies', 'fish', 'annals'], 'PIN MOVED (ARMORY): and the Aura Armory after the auras - PIN MOVED (COLLECTIONS-II): the wardrobe\'s four parts before it - PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown - PIN MOVED (APPEARANCES): and the character\'s looks, every character\'s');
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'trophies', 'fish', 'tunes', 'annals'], 'PIN MOVED (ARMORY): and the Aura Armory after the auras - PIN MOVED (COLLECTIONS-II): the wardrobe\'s four parts before it - PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown - PIN MOVED (APPEARANCES): and the character\'s looks, every character\'s');
   setCollectionsPart('codex');
   let p = page(me);
   assert.equal(all(p.root, (c) => c.classList?.contains('coll-parts')).length, 1, 'PIN MOVED (COLLECTIONS-II): the switch always - the wardrobe\'s parts are every player\'s');
@@ -98,7 +98,7 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   oath.onclick();
   // a binder: two parts, the switch; a landing on cards; the reset
   giveBinder(me);
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'tunes', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part
   setCollectionsPart('cards');
   p = page(me);
   assert.ok(tile(p.root, 'cards').classList.contains('on'));
@@ -110,9 +110,9 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   // Loot rarity off: the cards with the wardrobe; neither: the wardrobe's parts alone - COLLECTIONS-II (PIN MOVED): the page
   // is every player's now
   setPref('lootRarity', false);
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'cards', 'trophies', 'fish', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'cards', 'trophies', 'fish', 'tunes', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part
   assert.equal(collectionsPageShown({ items: [] }), true);
-  assert.deepEqual(collectionParts({ items: [] }).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'trophies', 'fish', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part is every character's
+  assert.deepEqual(collectionParts({ items: [] }).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'trophies', 'fish', 'tunes', 'annals']);   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part is every character's
   // the menu's wiring
   const menu = read('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /collections: \(d\) => drawCollectionsPage\(d, render, \{ \.\.\.kit, player: playerEntity, account: newAccountFlow \}\),/);   // PIN MOVED (COLLECTIONS-II): and the account's flow, the card's own construction

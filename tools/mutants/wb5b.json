@@ -48,20 +48,22 @@
   {
     "name": "WB5b-the-account-view-without-gates",
     "file": "server-account/src/index.js",
-    "old": ", gates: await gateRecordOf(ctx, who.player.id), raids:",
-    "new": ", raids:",
+    "old": "nowS), duels, gates, raids,",
+    "new": "nowS), duels, raids,",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "WB5b-the-record-without-gates",
     "file": "server-account/src/index.js",
-    "old": ", gates: await gateRecordOf(ctx, body.id), raids:",
-    "new": ", raids:",
+    "old": "...duels, gates, raids,",
+    "new": "...duels, raids,",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "WB5b-the-key-read-per-request",

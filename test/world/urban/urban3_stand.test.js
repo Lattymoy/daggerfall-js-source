@@ -51,14 +51,14 @@ const laid = (x, name = 'RESIAA00.RMB') => {
   const autoMapData = new Uint8Array(64 * 64);
   for (let r = 10; r <= 24; r++) for (let c = 8; c <= 24; c++) autoMapData[r * 64 + c] = 18;
   const groundTiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, (_, ty) => ({ textureRecord: ty === 8 ? 46 : ty < 3 ? 2 : 1 })));
-  return { x, y: 0, blockName: name, dfBlock: { rmbBlock: { fldHeader: { autoMapData, groundData: { groundTiles } }, misc3dObjectRecords: [{ xPos: 1600, zPos: -2000 }], miscFlatObjectRecords: [] } } };
+  return { x, y: 0, blockName: name, dfBlock: { rmbBlock: { fldHeader: { autoMapData, groundData: { groundTiles } }, misc3dObjectRecords: [{ xPos: 1600, zPos: -2000, modelIdNum: 41818 }], miscFlatObjectRecords: [] } } };
 };
 
 test('URBANIZER U3 a block as the plan reads it: its town map, its ground (GroundTiles[x][y]) and its records\' places in its own metres; a port cell none (mutants: the ground\'s axes swapped; a record\'s z from the north)', () => {
   const b = fabricBlockOf(laid(0));
   assert.equal(b.automap[10 * 64 + 8], 18);
   assert.equal(b.ground(0, 8), 46); assert.equal(b.ground(5, 1), 2); assert.equal(b.ground(5, 12), 1);
-  assert.deepEqual(b.records, [{ x: 40, z: (-2000 + 4096) * 0.025 }]);
+  assert.deepEqual(b.records, [{ x: 40, z: (-2000 + 4096) * 0.025, id: 41818, plate: null }]);   // PIN MOVED (AUDIT PROP-GROUND): a model's id, its foot plate
   assert.equal(fabricBlockOf(laid(0, 'TESAOPEN.RMB')), null);
   assert.equal(fabricBlockOf(null), null);
 });
@@ -69,7 +69,7 @@ test('URBANIZER U3 a town\'s fabric: planned once and kept by its map id (its st
   let breaths = 0;
   const a = await townFabricFor(loc({ extra: { arena: { province: 'Skyrim' } } }), blocks, { ...at, breathe: () => { breaths++; } });
   assert.ok(a && a.modelId >= TOWN_FABRIC_MODEL_BASE);
-  assert.equal(breaths, 4);
+  assert.equal(breaths, 5);   // PIN MOVED (AUDIT PROP-GROUND): a breath before the street under the props
   assert.equal(a.style, 'granite');
   assert.equal(await townFabricFor(loc({ extra: { arena: { province: 'Skyrim' } } }), blocks, at), a, 'kept');
   assert.equal(townFabricOf(loc()), a);

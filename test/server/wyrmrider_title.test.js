@@ -26,7 +26,7 @@ test('WYRM-RIDER THE LAW: a brass tame holds Wyrm Rider, an Aetherbright Aether 
   assert.deepEqual(masteryMarksOf({ aethers: 1, firstAether: true }), ['aetherrider', 'firstaetherrider']);
   assert.deepEqual(masteryMarksOf({ dragons: 0, aethers: 0, firstTame: true, firstAether: true }), [], 'no dragon, no title');
   assert.deepEqual(masteryMarksOf({ dragons: 0, aethers: 1, firstTame: true }), ['aetherrider'], 'the brass First asks a brass dragon');
-  assert.deepEqual(TITLES.slice(-4), RIDERS, 'the token\'s vocabulary, last');
+  assert.deepEqual(TITLES.slice(-11, -7) /* PIN MOVED (BLOOD-OF-COLDHARBOUR): Blood of Coldharbour joined the list last */, RIDERS, 'the token\'s vocabulary, after Genesis');   // PIN MOVED (STOREFRONT): the shop's three name visuals and the Folios' three joined the list after them
   for (const k of RIDERS) assert.ok(MASTERY_MARKS.includes(k) && WARDROBE.title[k]?.src === 'dragon', k);
   assert.deepEqual(RIDERS.map((k) => TITLE_TEXT[k]), ['Wyrm Rider', 'First Wyrm Rider', 'Aether Rider', 'First Aether Rider']);
   assert.equal(WARDROBE.title.firstwyrmrider.avail, 'closed');

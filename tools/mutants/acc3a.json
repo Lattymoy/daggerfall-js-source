@@ -72,8 +72,8 @@
   {
     "name": "ACC3a-8-the-token-carries-what-the-caller-asked-for",
     "file": "server-account/src/index.js",
-    "old": "        const wardrobe = {\n          ...seatT,\n          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],\n",
-    "new": "        const wardrobe = {\n          t: body.title,\n          g: body.glyphs,\n",
+    "old": "        const wardrobe = {\n          ...seatT,\n          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "        const wardrobe = {\n          t: body.title,\n          g: body.glyphs,",
     "tests": [
       "test/server/acc3titles.test.js",
       "test/server/accountworker.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "ACC3a-9-the-relay-believes-the-frame",
     "file": "server/src/index.js",
-    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };",
-    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
+    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
     "tests": [
       "test/server/acc3titles.test.js"
     ],

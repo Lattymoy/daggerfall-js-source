@@ -4,6 +4,11 @@
 > (`src/net/shopLaw.js`, `server-account/src/shop.js`, `src/ui/enhanced/enhancedShop.js`) and the pins are what runs.
 > Not a DFU member: Daggerfall Unity has no accounts and no shop, so nothing here departs from it (Port-Ledger section
 > A, SHOP).
+> STOREFRONT (2026-10-29) rebuilt the catalogue, the window and the purchase path on this one - tiers, wares held by
+> id, bundles priced against what is held, the featured carousel: `06-Systems/Storefront.md`. This page stays SHOP's record.
+> AURUM-ONLY (2026-10-30, the owner: "nothing should cost money money anymore"): every ware, the pre-alpha nine with them,
+> is bought with Aurum at $1 = 100 Aurum, and money buys the Aurum packs alone (`06-Systems/Aurum.md` sections 4 and 5).
+> An order paid before the switch is still granted, refunded and taken back as this page says.
 
 ## 1. What was asked
 
@@ -90,6 +95,8 @@ checkout moves its order from open to paid, sets the ware's bit on `players.shop
 server's post - one batch, guarded on the order moving, so a webhook told twice grants once. The amount and currency
 must be the order's. A delayed payment method waits for its own event. A full refund or a dispute takes the bit off
 (unless another paid order holds the ware) with a letter saying so; a part refund keeps it; a dispute won gives it back.
+Since STOREFRONT the grant is guarded on the row as read too, and a payment taken back takes what it alone covered, a
+giver's credited wares with it (`Storefront.md` sections 3 and 3.2).
 
 The amount checked is Stripe's subtotal, the price before any tax Stripe adds. A paid amount that is not the order's
 grants nothing and is logged: the money is taken, so it is the owner's to refund or grant. A grant the database failed

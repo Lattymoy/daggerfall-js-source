@@ -102,6 +102,7 @@ import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6:
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: the presentation, world.js's twin on this host
 import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { birthHorses, riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the horses born; COATS3D: and the ridden one's look, for the 3D horse
+import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: the 3D horse under me in my mount look
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification
@@ -270,6 +271,7 @@ import { windDrive, floraSwayOf, floraSwayOn } from '../systems/wind/windDrive.j
 import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createAmbientLifeHost, benchWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: world.js's twin
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
 import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
@@ -714,6 +716,8 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  tests these against the activation ray's hit point and, on a hit,
    *  runs ActivateBuilding (:340-361). */
   const staticBuildings = [];
+  // AMBIENT-LIFE (world.js's twin): the bench's one town on its flat ground, its water its tilemap's - no floating origin
+  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, enhanced: !!sky.enhanced, world: benchWorld((x, z) => collider.heightAt(x, z), (x, z) => tileUnder(x, z), collider, () => staticBuildings.map((b) => b.aabb)) });
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   let lefaySpot = null;   // LEFAY1: world.js's spot (world/lefayMonument.js monumentSpotOf) - this host's frame is the location's own
@@ -1079,6 +1083,11 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  and anywhere outside the location), which isOutdoorWaterTile
    *  reads as DFU's -1: not water, so the fall bills normally. */
   const TILE_WORLD = RMB_SIDE / GROUND_TILE_DIM;
+  /** The raw tile at a scene point, null off the tilemap (AMBIENT-LIFE: the creatures' water). */
+  const tileUnder = (x, z) => {
+    const tx = Math.floor(x / TILE_WORLD), ty = Math.floor(z / TILE_WORLD);
+    return tx < 0 || ty < 0 || tx >= tilemapDim || ty >= tilemapDim ? null : locationTilemap[tx + ty * tilemapDim];
+  };
   const playerGroundSampleRaw = () => {
     const u = player.pos[0] / TILE_WORLD, v = player.pos[2] / TILE_WORLD;
     const tx = Math.floor(u);
@@ -5693,7 +5702,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const mwv = (!shotMode || walkMode) && !riding
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
-          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
+          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look (STOREFRONT: my mount look over it); HORSE-WALK: held under the gallop on a slow ride
           ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it, the camera's feet the seat's (after `feet`: it wins)
           pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
           cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
@@ -5783,6 +5792,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
       heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin (AUDIT ENVIRONS W1)
     snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: world.js's twin
+    ambientLife.frame(gamePaused() ? 0 : dt * hccTimeScale(), walkMode ? player.pos : cam.pos, minute, ambientWord, weather, locClimateIndex, season === SEASON.Winter);   // AMBIENT-LIFE: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -6126,7 +6136,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -6213,12 +6222,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
+    if (ambientLife.draw(renderer, proj, view, walkMode ? player.pos : cam.pos)) renderer.markForeignPass();   // AMBIENT-LIFE: world.js's twin - its lights too, the people and the veiled bodies drawn above
     // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
     if (hazeGl) {
       const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
         grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
       if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];
     const precipShown = enhancedFront ? fx.shown : precipMode;

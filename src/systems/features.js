@@ -119,6 +119,8 @@ export const EVENT_KINDS = Object.freeze({
   star: Object.freeze({ row: true, single: false, get label() { return t('events.kind.star', 'Starfall'); } }),
   raid: Object.freeze({ row: true, single: false, get label() { return t('events.kind.raid', 'Town Raid'); } }),
   festival: Object.freeze({ row: false, single: true, get label() { return t('events.kind.festival', 'Witches\' Festival'); } }),
+  // STOREFRONT (bible/06-Systems/Battle-Pass.md section 6): the season's tremors and its Colossus - news alone, as the festival's
+  season: Object.freeze({ row: false, single: true, get label() { return t('events.kind.season', 'Season'); } }),
 });
 /** The kinds in the board's order. */
 export const EVENT_KIND_ORDER = Object.freeze(Object.keys(EVENT_KINDS));
@@ -582,6 +584,17 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'armoryOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.armoryOthers.all', 'All')), tier('near', () => t('features.armoryOthers.near', 'Near')), tier('none', () => t('features.armoryOthers.none', 'None'))]) }),
   }),
+  // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 4 and 7): WHOSE KILL EFFECTS AND MOUNT LOOKS ARE
+  // DRAWN - every other player's, those near, or none (net/peer/peerEffects.js othersEffectShown: a kill effect, and a
+  // mount look's dye and beat). One's own always is.
+  Object.freeze({
+    id: 'killfx-others',
+    group: 'sight',
+    get title() { return t('features.killFxOthers.title', 'Others\' effects'); },
+    get note() { return t('features.killFxOthers.note', 'Whose kill effects and mount looks are shown. Near shows the players close to you. Your own always show.'); },
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'killFxOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.killFxOthers.all', 'All')), tier('near', () => t('features.killFxOthers.near', 'Near')), tier('none', () => t('features.killFxOthers.none', 'None'))]) }),
+  }),
   // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
   // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
   // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.
@@ -874,6 +887,18 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
+  }),
+  // AMBIENT-LIFE (2026-10-31, bible/07-Rendering/Ambient-Life.md): the birds, bats and small animals outdoors - a look,
+  // nothing the room shares, so each player's own online. Kill door `?wildlife=off` (scenes/ambientLifeHost.js).
+  Object.freeze({
+    id: 'wildlife',
+    group: 'sight',
+    get title() { return t('features.wildlife.title', 'Wildlife'); },
+    get note() { return t('features.wildlife.note', 'Birds, bats and small animals live outdoors. Flocks cross the sky, birds sit on roofs and fly off '
+      + 'as you come near, and small animals run from your feet.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'ambientLife', initial: true, online: 'player' }),   // AMBIENT-LIFE: scenes/ambientLifeHost.js wildlifeDensity
   }),
   // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
   // lighting (first person)" and "morrowind's first person view also

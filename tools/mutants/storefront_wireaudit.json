@@ -1,0 +1,275 @@
+[
+  {
+    "name": "WIREAUDIT-1-a-peers-kill-anywhere",
+    "file": "src/net/peer/peerFx.js",
+    "old": "if (at && within(at, feet, KILL_FX_PEER_M) && ",
+    "new": "if (at && ",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the audit's killspam: a modified client's pyre, its light and its sound at a stranger's face from anywhere in the cell"
+  },
+  {
+    "name": "WIREAUDIT-1-a-peers-blow-anywhere",
+    "file": "src/net/peer/peerFx.js",
+    "old": "if (at && within(at, feet, BLOW_PEER_M) && ",
+    "new": "if (at && ",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "hp's same hole: blood and a ring wherever a pose says"
+  },
+  {
+    "name": "WIREAUDIT-1-no-feet-anywhere",
+    "file": "src/net/peer/peerFx.js",
+    "old": "=> !!b && Math.hypot(a[0] - b[0]",
+    "new": "=> !b || Math.hypot(a[0] - b[0]",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "a peer with no feet to measure from believed everywhere"
+  },
+  {
+    "name": "WIREAUDIT-1-the-kill-reach-a-fresh-number",
+    "file": "src/net/peer/peerFx.js",
+    "old": "export const KILL_FX_SAY_M = KFX_FAR_M;",
+    "new": "export const KILL_FX_SAY_M = 48;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the reach unhooked from the killer's own draw - the two drift apart and a real kill is told where no peer believes it"
+  },
+  {
+    "name": "WIREAUDIT-1-the-ease-not-the-portals",
+    "file": "src/net/peer/peerFx.js",
+    "old": "export const PEER_POSE_EASE_M = 8;",
+    "new": "export const PEER_POSE_EASE_M = 3;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "an ease of its own beside the one a peer's portal has"
+  },
+  {
+    "name": "WIREAUDIT-1-the-blow-reach-a-plain-arrow",
+    "file": "src/net/peer/peerFx.js",
+    "old": "(t.mech === 'pierce' ? t.speed ?? 1 : 1)",
+    "new": "1",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "a Piercing Shot's blood past a plain arrow's flight refused - a real blow lost"
+  },
+  {
+    "name": "WIREAUDIT-2-the-memory-loses-the-effects",
+    "file": "src/net/online.js",
+    "old": "ak: p.ak ?? null, fx: p.fx ?? null, ",
+    "new": "ak: p.ak ?? null, ",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "effectsOf null for a gate's owner gone from the room: its gate in violet"
+  },
+  {
+    "name": "WIREAUDIT-2-the-re-stood-peer-bare",
+    "file": "src/net/online.js",
+    "old": "ak: knew.ak, fx: knew.fx, ",
+    "new": "ak: knew.ak, ",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "after a blip or a death and rise, the peer's mount in its coat and its kills unplayed until a who round trip"
+  },
+  {
+    "name": "WIREAUDIT-3-the-dye-ungated",
+    "file": "src/systems/horse/mountLook.js",
+    "old": "othersEffectShown(at) ? peerEffectWorn(id, 'mount') : null",
+    "new": "peerEffectWorn(id, 'mount')",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the Others' effects note says mount looks; a peer's horse dyed under None"
+  },
+  {
+    "name": "WIREAUDIT-3-the-beat-ungated",
+    "file": "src/net/peer/peerFx.js",
+    "old": "&& !pose.wb && othersEffectShown(feet) ?",
+    "new": "&& !pose.wb ?",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "a peer's mount look throwing its beat under None"
+  },
+  {
+    "name": "WIREAUDIT-3-near-shows-what-it-cannot-place",
+    "file": "src/net/peer/peerEffects.js",
+    "old": "return !!eye && !!at && Math.hypot(",
+    "new": "return !at || !!eye && Math.hypot(",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-3-near-read-as-all",
+    "file": "src/net/peer/peerEffects.js",
+    "old": "if (mode !== 'near') return mode === 'all';",
+    "new": "return mode !== 'none';",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-4-a-kill-rides-for-ever",
+    "file": "src/net/peer/peerFx.js",
+    "old": "if (!mine.xk || !(now - mine.xt <= KILL_FX_RIDE_S)) return out;",
+    "new": "if (!mine.xk) return out;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the audit's 55 bytes to 127: every pose fanned to every listener for the rest of the session carries the last kill"
+  },
+  {
+    "name": "WIREAUDIT-4-the-ride-a-fresh-number",
+    "file": "src/net/peer/peerFx.js",
+    "old": "export const KILL_FX_RIDE_S = GAP_MAX_MS / 1000;",
+    "new": "export const KILL_FX_RIDE_S = 5;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-4-the-places-unrounded",
+    "file": "src/net/wire.js",
+    "old": "    if ((k === 'hp' || k === 'xp') && Array.isArray(v)) { const q = slimPose({ x: v[0], y: v[1], z: v[2] }, key); out[k] = [q.x, q.y, q.z]; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "seventeen-digit floats on the second wire"
+  },
+  {
+    "name": "WIREAUDIT-5-told-only-when-drawn",
+    "file": "src/systems/killEffects.js",
+    "old": "  playKillFx(look, info.fx);\n  noteMyKill(info.fx.at, info.fx.h, playerDoor()?.feet?.());",
+    "new": "  if (playKillFx(look, info.fx)) noteMyKill(info.fx.at, info.fx.h, playerDoor()?.feet?.());",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the audit's finding as it stood: a kill my screen did not draw never told"
+  },
+  {
+    "name": "WIREAUDIT-5-told-from-anywhere",
+    "file": "src/net/peer/peerFx.js",
+    "old": " || !within(at, from, KILL_FX_SAY_M)) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "a kill no peer would believe, told on every pose of its ride"
+  },
+  {
+    "name": "WIREAUDIT-6-the-floor-unsaid",
+    "file": "src/net/wire.js",
+    "old": "its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-9-the-kill-fields-misnamed",
+    "file": "src/net/wire.js",
+    "old": "(STOREFRONT): a pose's kill (`xk`, `xp`, `xh`)",
+    "new": "(STOREFRONT): a pose's kill (`kc`, `kp`, `ks`)",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "`kc` names a sea receipt's killer (world246)"
+  },
+  {
+    "name": "WIREAUDIT-7-a-glyph-inserted-mid-list",
+    "file": "src/net/identityToken.js",
+    "old": "'penitent', 'herald', 'tower',",
+    "new": "'penitent', 'herald', 'kitten', 'tower',",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "every outstanding `gb` mask past the herald reads the next glyph over - a tower for a crown"
+  },
+  {
+    "name": "WIREAUDIT-8-the-mask-order-not-kept",
+    "file": "src/net/identityToken.js",
+    "old": "=> GLYPHS.filter((g) => list.includes(g));",
+    "new": "=> [...new Set(list)].filter((g) => GLYPHS.includes(g));",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-8-the-services-own-order",
+    "file": "server-account/src/titles.js",
+    "old": "  return glyphsInOrder(on);",
+    "new": "  return on;",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "the laurel after the list glyphs on my screen, before them on the room's"
+  },
+  {
+    "name": "WIREAUDIT-8-the-seats-appended",
+    "file": "server-account/src/index.js",
+    "old": "g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ],
+    "note": "a tower or a crown last on my own name, in its place on the room's"
+  },
+  {
+    "name": "WIREAUDIT-10-the-kit-never-attached",
+    "file": "server/src/index.js",
+    "old": "...(who.fx ? { fx: who.fx } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js",
+      "test/net/auditattach.test.js"
+    ],
+    "note": "STOREFRONT's own pin read the source alone; the hello-to-row pin and the widest attachment's field list read the room"
+  },
+  {
+    "name": "WIREAUDIT-10-the-kit-never-badged",
+    "file": "src/net/wire.js",
+    "old": "if (effectKitOk(from?.fx)) row.fx = from.fx;",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wireaudit.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-10-the-armory-kit-unattached",
+    "file": "server/src/index.js",
+    "old": "...(who.ak ? { ak: who.ak } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/auditattach.test.js"
+    ],
+    "note": "a field the widest attachment never measured: its fixture's token carried no kit"
+  },
+  {
+    "name": "WIREAUDIT-10-the-widest-token-without-the-worn-claims",
+    "file": "test/placeWidest.mjs",
+    "old": "...WIDE_WORN, ...(gx.length ? { gx } : {}) }",
+    "new": "...(gx.length ? { gx } : {}) }",
+    "tests": [
+      "test/net/auditattach.test.js"
+    ]
+  },
+  {
+    "name": "WIREAUDIT-10-the-widest-pose-without-its-events",
+    "file": "test/placeWidest.mjs",
+    "old": "fk: 5, ...WIDE_REST, rd:",
+    "new": "fk: 5, rd:",
+    "tests": [
+      "test/net/auditattach.test.js"
+    ]
+  }
+]

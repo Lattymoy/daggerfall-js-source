@@ -62,7 +62,7 @@ import { lootGateLevel } from '../mentorMode.js';   // LOOT-GATE, MENTOR2: the r
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
-import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines, countedPieces } from './lootRarity.js';   // GEM1: readLines, law 6's reading
+import { lootRarityOn, validAffix, powerOf, powerIdsOf, registerLegendaryFind, readLines, countedPieces } from './lootRarity.js';   // GEM1: readLines, law 6's reading
 import { equipTableOf } from '../equip.js';
 import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, playerEntity } from '../../characters/playerEntity.js';
 import { registerPlayerKillListener } from '../playerKills.js';
@@ -98,11 +98,9 @@ export const CAST_SPEED_CAP = 30;
  *  every landed blow, and the heal grew with every point of offence: the measured kit without a guard went from 6.6
  *  Ancient Liches in a Dragon's Den before it fell to 49.7. */
 export const LEECH_CAP = 10;
-/** BAL9c (bible/05-Combat/Balance-Arc.md section 15): all the potency a wearer's pieces sum to, at most (%) - focus's and
- *  castSpeed's own 30. */
-export const POTENCY_CAP = 30;
-/** BAL9c: all the loot adds to a damage spell's landing, potency and powers together, at most (%) - SPELL_CUT_MOST's 50. */
-export const SPELL_POWER_MOST = 50;
+// BAL9c's two caps, in their one home (AUDIT POTION-MIGHT D8 - systems/powerBlows.js): the account's judge reads them
+import { POTENCY_CAP, SPELL_POWER_MOST } from '../powerBlows.js';
+export { POTENCY_CAP, SPELL_POWER_MOST };
 /** BAL9c: all the wellspring a wearer's pieces sum to, at most (% of my magicka a kill) - LEECH_CAP's 10, the caster's
  *  leech (Soul Siphon's 15 is the Legendary's own, beside it). */
 export const WELLSPRING_CAP = 10;
@@ -189,7 +187,7 @@ const say = (line) => { try { _say(line); } catch { /* a line is not the power's
 
 /** The power ids a piece carries: a Legendary's own record, (LOOT10) a Rare's imprint and (GILDED1) a Gilded record's -
  *  none on anything else. */
-const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];
+const powerIds = powerIdsOf;   // lootRarity.js's one reading
 /** Every power MY entity's worn pieces carry - `[{ id, power, item }]`, ONE entry an id (a power counts once): a
  *  Legendary's own record, and (LOOT10) a Rare's imprint. None for anyone but me, with the switch off, or in a duel. */
 export function wornPowers(entity) {

@@ -31,10 +31,11 @@ function rig() {
   });
   return { art, uploads, evicted, decodes: () => decodes, tick: (ms) => { now += ms; } };
 }
-/** One outfit's walk: its five facings, four frames each - every sprite a walker in it is drawn with. */
+/** One outfit's walk: its five facings, four frames each - every picture a walker in it is drawn with, once (LAYERED-WEAPONS:
+ *  the female's empty-handed front walk draws 0-2 as 0-0's mirror twin, one picture). */
 const sprites = (outfit, gender = 'female', mirror = false) => {
   const out = [];
-  for (let o = 0; o < 5; o++) for (let f = 0; f < 4; f++) { const s = layeredSprite('Move', o, f, 4, { gender, outfit }, mirror); if (s) out.push(s); }
+  for (let o = 0; o < 5; o++) for (let f = 0; f < 4; f++) { const s = layeredSprite('Move', o, f, 4, { gender, outfit }, mirror); if (s && !out.some((t) => t.key === s.key)) out.push(s); }
   return out;
 };
 
@@ -46,6 +47,7 @@ test('PEER-ART a sprite\'s look: a horse\'s its coat; a worn-armour walker\'s it
   assert.equal(new Set(a.map(spriteLookOf)).size, 1, 'one outfit, one look');
   assert.notEqual(spriteLookOf(a[0]), spriteLookOf(b[0]));
   assert.match(spriteLookOf(a[0]), /^LA:/);
+  assert.equal(spriteLookOf({ key: `${a[0].key}:m` }), spriteLookOf(a[0]), 'a flipped bow\'s own picture is the same look');
   assert.equal(spriteLookOf({ key: 'FMRM_0-0', archive: 1, rec: 0 }), null, 'a class sprite every player shares stands');
 });
 
@@ -131,11 +133,11 @@ test('PEER-ART one cache, two stores: a texture the other store let go under the
   const [s] = sprites('lll');
   const key = `${s.archive}_${s.rec}`;
   assert.equal(art.ensure(s), null); await flush();
-  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null }, 'up');   // PIN MOVED (ARMORY): and where the body stands in the picture - none in a blank one
+  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null, held: null, heldOff: null }, 'up');   // PIN MOVED (ARMORY): and where the body stands in the picture - none in a blank one; (LAYERED-GLOW) and its weapon's px - none in a decode that carries none
   textures.delete(key);   // my own body's store let its look go: the renderer's one cache no longer holds it
   assert.equal(art.ensure(s), null, 'not drawn from nothing');
   await flush();
-  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null });
+  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null, held: null, heldOff: null });
   assert.deepEqual(uploads, [key, key], 'uploaded again');
   assert.equal(decodes, 1, 'from the pictures it kept');
   // AUDIT FB1022d D3: and a rider's horse look the same (COATS1's dyed pictures, keyed by archive and record alone)
@@ -221,7 +223,7 @@ test('AUDIT FB1022d D1/D3: a crowd of 30 outfits on screen through a 2.5 s hitch
   for (let i = 0; i < 30; i++) await frame([...people, ...passers]);
   for (let i = 0; i < 3 * 60; i++) await frame(people);
   const passed = new Set(evicted.map((k) => k.split('_')[1]));
-  assert.deepEqual([...passed].sort(), [...KITS.keys()].slice(60, 62).sort(), 'the two who passed, alone');
+  assert.deepEqual([...passed].sort(), [...KITS.keys()].slice(60, 62).map((k) => `${k}@0`).sort(), 'the two who passed, alone (LAYERED-WEAPONS: empty-handed)');
   evicted.length = 0;
   // the crowd gone, five others met: once the old have stood undrawn RIDER_LOOK_IDLE_MS, the store is down to its bound -
   // and not before
@@ -229,7 +231,7 @@ test('AUDIT FB1022d D1/D3: a crowd of 30 outfits on screen through a 2.5 s hitch
   for (let i = 0; i < 60; i++) await frame(next);
   assert.equal(evicted.length, 0, 'a second undrawn: all stand');
   for (let i = 0; i < 2 * 60; i++) await frame(next);
-  const gone = new Set(evicted.map((k) => k.split('_')[1]));
+  const gone = new Set(evicted.map((k) => k.split('_')[1].split('@')[0]));   // LAYERED-WEAPONS: an outfit in every hand
   assert.equal(gone.size, 30 + 5 - RIDER_LOOKS_KEPT, 'the old crowd\'s outfits past the bound let go');
   assert.ok([...gone].every((code) => [...KITS.keys()].slice(0, 30).includes(code)), 'the old crowd\'s alone - the five on screen stand');
 });
@@ -250,18 +252,18 @@ test('AUDIT FB1022d D4: my own body\'s armour changed lets the last outfit\'s te
     const still = { motion: { forward: 0, standing: true, speed: 0, grounded: true, height: 1.8 }, feet: [0, 2, 0], yaw: 0, cameraPos: [0, 3.5, -2] };
     const frame = async () => { b.tick(1 / 60, still); const drawn = b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }); await new Promise((res) => setTimeout(res, 2)); return drawn; };
     const drawnRec = () => r.batches.at(-1)?.rec ?? '';
-    for (let i = 0; i < 20 && !drawnRec().startsWith('lll_'); i++) await frame();
-    assert.match(drawnRec(), /^lll_/, 'in leather');
+    for (let i = 0; i < 20 && !drawnRec().startsWith('lll@0_'); i++) await frame();
+    assert.match(drawnRec(), /^lll@0_/, 'in leather, empty-handed (LAYERED-WEAPONS)');
     const fem = LAYERED_ARCHIVE.female;
-    const ofCode = (code) => [...textures.keys()].filter((k) => k.startsWith(`${fem}_${code}_`));
+    const ofCode = (code) => [...textures.keys()].filter((k) => k.startsWith(`${fem}_${code}_`) || k.startsWith(`${fem}_${code}@`));   // LAYERED-WEAPONS: in every hand
     const plain = ofCode('lll');
     assert.ok(plain.length > 20, `${plain.length} leather frames up (the whole outfit, preloaded)`);
     // a cloak put on: its frames drawn under 'lll~2', the frames with no cloak art still under 'lll' - they stand
     slots[CLOAK_SLOTS[0]] = { templateIndex: 155, dye: 2, group: 'MensClothing' };   // a Formal Cloak, dyed
     assert.equal(b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }), true, 'drawn the frame it changed');
     assert.equal(evicted.length, 0, 'nothing let go before the new outfit is up');
-    for (let i = 0; i < 20 && !drawnRec().startsWith('lll~2_'); i++) await frame();
-    assert.match(drawnRec(), /^lll~2_/, 'cloaked');
+    for (let i = 0; i < 20 && !drawnRec().startsWith('lll~2@0_'); i++) await frame();
+    assert.match(drawnRec(), /^lll~2@0_/, 'cloaked');
     assert.deepEqual(evicted, [], 'the cloak\'s outfit shares the plain frames: none let go');
     // a plate cuirass: every leather frame and every cloaked one goes, once the plate is up
     delete slots[CLOAK_SLOTS[0]];
@@ -270,14 +272,14 @@ test('AUDIT FB1022d D4: my own body\'s armour changed lets the last outfit\'s te
     assert.equal(b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }), true, 'the cloak still drawn the frame the plate is asked');
     assert.deepEqual(evicted, [], 'the cloak\'s pictures stand until the plate is up');
     for (let i = 0; i < 20 && !/^lp/.test(drawnRec()); i++) await frame();
-    assert.match(drawnRec(), /^lp\d+l_/, 'in the plate');
+    assert.match(drawnRec(), /^lp\d+l@0_/, 'in the plate');
     for (const k of [...plain, ...cloaked]) assert.ok(evicted.includes(k) && !textures.has(k), `${k}: let go`);
-    assert.ok(!evicted.some((k) => /_lp\d+l_/.test(k)), 'the plate stands');
+    assert.ok(!evicted.some((k) => /_lp\d+l[@_]/.test(k)), 'the plate stands');
     // the leather again: its strips were let go too - decoded afresh
     const d = decodes;
     delete slots[OUTFIT_SLOTS.top];
-    for (let i = 0; i < 20 && !drawnRec().startsWith('lll_'); i++) await frame();
-    assert.match(drawnRec(), /^lll_/);
+    for (let i = 0; i < 20 && !drawnRec().startsWith('lll@0_'); i++) await frame();
+    assert.match(drawnRec(), /^lll@0_/);
     assert.ok(decodes > d, 'the strips decoded again, not kept for the session');
     // the skin off: the class skin drawn - every outfit's texture goes
     setModSetting('eye-of-the-beholder', 'Graphics.LayeredGear', 0);
@@ -302,7 +304,7 @@ test('AUDIT FB1022d D4: an outfit let go while its strips are still decoding kee
     const held = [], asked = [];
     const img = () => ({ width: 4, height: 6, colors: new Uint32Array(24) });
     // the standing frame decodes at once, every other strip is held: the preload still decoding when the outfit changes
-    const leather = (u) => /^\/art\/LA:female:[^:]+:\d+-\d+:lll\.png$/.test(u) && !u.includes(':15-0:');
+    const leather = (u) => /^\/art\/LA:female:[^:]+:\d+-\d+:lll(@0)?\.png$/.test(u) && !u.includes(':15-0:');
     const decode = (url) => { asked.push(url); if (url.includes(':15-0:')) return Promise.resolve(img()); return new Promise((res) => held.push({ url, go: () => res(img()) })); };
     const r = { textures: new Map(), batches: [], uploadTexture(a, rec) { this.textures.set(`${a}_${rec}`, {}); }, evictTexture(k) { this.textures.delete(k); }, createBillboardBatch(archive, rec, size) { const b = { archive, rec, size, origin: [0, 0, 0] }; this.batches.push(b); return b; }, destroyBillboardBatch() {}, drawBillboards() {} };
     const b = createEotbBody({ count: () => 3035, urlFor: (k) => `/art/${k}.png`, decode });
@@ -311,24 +313,25 @@ test('AUDIT FB1022d D4: an outfit let go while its strips are still decoding kee
     const still = { motion: { forward: 0, standing: true, speed: 0, grounded: true, height: 1.8 }, feet: [0, 2, 0], yaw: 0, cameraPos: [0, 3.5, -2] };
     const frame = async () => { b.tick(1 / 60, still); b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }); await new Promise((res) => setTimeout(res, 2)); };
     const drawnRec = () => r.batches.at(-1)?.rec ?? '';
-    for (let i = 0; i < 20 && drawnRec() !== 'lll_15-0'; i++) await frame();
-    assert.equal(drawnRec(), 'lll_15-0');
+    for (let i = 0; i < 20 && drawnRec() !== 'lll@0_15-0'; i++) await frame();
+    assert.equal(drawnRec(), 'lll@0_15-0');
     const leatherHeld = held.filter((h) => leather(h.url)).length;
     assert.ok(leatherHeld > 20, `${leatherHeld} leather strips still decoding`);
     slots[OUTFIT_SLOTS.top] = { templateIndex: 102, material: 0x0201, group: 'Armor' };
-    for (let i = 0; i < 20 && !/^lp\d+l_15-0$/.test(drawnRec()); i++) await frame();
-    assert.match(drawnRec(), /^lp\d+l_15-0$/, 'the plate up: the leather let go, its strips in flight');
+    for (let i = 0; i < 20 && !/^lp\d+l@0_15-0$/.test(drawnRec()); i++) await frame();
+    assert.match(drawnRec(), /^lp\d+l@0_15-0$/, 'the plate up: the leather let go, its strips in flight');
     for (const h of held.splice(0)) h.go();   // the leather's strips land now
     await frame();
     // the plate off, the leather again - and walked in: a walking frame, one that landed after, is decoded afresh
     delete slots[OUTFIT_SLOTS.top];
-    for (let i = 0; i < 20 && drawnRec() !== 'lll_15-0'; i++) await frame();
-    assert.equal(drawnRec(), 'lll_15-0');
+    for (let i = 0; i < 20 && drawnRec() !== 'lll@0_15-0'; i++) await frame();
+    assert.equal(drawnRec(), 'lll@0_15-0');
     const walking = { ...still, motion: { forward: 1, standing: false, speed: 3, grounded: true, height: 1.8 } };
     for (let i = 0; i < 30 && /_1\d-/.test(drawnRec()); i++) { b.tick(1 / 60, walking); b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }); await new Promise((res) => setTimeout(res, 2)); for (const h of held.splice(0)) h.go(); }
     const walk = r.batches.at(-1);
-    assert.match(walk.rec, /^lll_[0-4]-\d+/, `a walking frame drawn: ${walk.rec}`);
-    const url = `/art/LA:female:${asked.find((u) => u.includes(`:${walk.rec.split('_')[1]}:lll.png`)).split(':')[2]}:${walk.rec.split('_')[1]}:lll.png`;
+    assert.match(walk.rec, /^lll@0_[0-4]-\d+/, `a walking frame drawn: ${walk.rec}`);
+    const rf = walk.rec.split('_')[1].replace(/m$/, '');
+    const url = `/art/LA:female:${asked.find((u) => u.includes(`:${rf}:lll@0.png`)).split(':')[2]}:${rf}:lll@0.png`;
     assert.equal(asked.filter((u) => u === url).length, 2, `${url}: held, let go, decoded again - not put back when it landed`);
   } finally {
     for (const k of Object.keys(slots)) delete slots[k];

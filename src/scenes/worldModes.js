@@ -323,6 +323,8 @@ import { createDecorPack, returnUnstood } from '../systems/decor/decorPack.js'; 
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
+import { MUSIC_STATION } from '../systems/musicBox.js';   // MUSIC-BOX: a placed music box
+import { openMusicBox } from './musicBoxPress.js';
 import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/quest/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -413,6 +415,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
 import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
+import { bookHouseOf } from './portalBookHost.js';   // PORTAL-BOOK: the house a Portal Book keeps
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -5010,6 +5013,7 @@ export function createWorldModes(host) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
+    if (piece?.station === MUSIC_STATION) return void openMusicBox(piece.id ?? id, { show: mountInterior, say });   // MUSIC-BOX: anyone may play it, their own tunes
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (hallPiecePress(piece, isHallBoard(piece), openHallBoard, openHallChest, !!(interiorHome?.hall && interiorHome.member), say)) return;   // GUILD1e: the board in a guild's hall; GUILD-SHOP: its banker, the vault (scenes/guildHallPress.js)
@@ -10156,7 +10160,7 @@ export function createWorldModes(host) {
     if (key.startsWith('plaque:')) { readPlaque(key); return true; }   // ARENA5: a plaque in the Hall of Champions reads its champion
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:')) {   // SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:') || key.startsWith('aurum:')) {   // AURUM-CACHES: today's coffer, answered by the context's takeLoot; SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
       dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
@@ -11254,7 +11258,6 @@ export function createWorldModes(host) {
       magic.firePending([...cam.pos], eyeDir(), overlayHeld);   // AUDIT SPELL-HAND L4-6: a kept press never leaves under a window
       magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
-      magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -11263,6 +11266,7 @@ export function createWorldModes(host) {
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
+    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
@@ -13549,6 +13553,7 @@ export function createWorldModes(host) {
      *  land the player one building offset away from where they set
      *  it. Same distinction the interior save half draws (IS1's
      *  `restore.pos` lands raw over the door landing). */
+    portalBookHere: () => bookHouseOf(interiorHome, mode === 'interior' && !!interiorBuilding && houseOwnedAt(interiorBuilding, interiorBuilding.buildingKey), interiorBuilding, homeTownOf(interiorBuilding), exitReturn?.siblings, player.pos, !!(interiorCabin || privateVisitRoom) || mode !== 'interior'),   // PORTAL-BOOK (scenes/portalBookHost.js): the house I stand in and the landing outside its front door, or null
     setPlayerLocalPosition(p) {
       player.spawn(p[0], p[1], p[2]);
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
@@ -13737,6 +13742,7 @@ export function createWorldModes(host) {
     attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
     /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
     decorFlying: () => decorTool.flying(),
+    musicBoxHere: (id) => mode === 'interior' && interiorDecor.pieceOf(id)?.station === MUSIC_STATION,   // MUSIC-BOX: a box in this room, for the world host's music chain (systems/musicBox.js createMusicBoxScore)
     /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
      *  swing and tap down (ui/touch/touch.js `cardTable`): the table's own listeners read the finger. */
     cardSeated: () => mode === 'interior' && !!cardSeat,

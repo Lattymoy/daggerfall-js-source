@@ -8,11 +8,16 @@ import { isOnShip } from '../systems/ship.js';
 import { madeRuleHere } from '../systems/madeLevel.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { PORTAL_HOLD_TEXT, PORTAL_TEXT, portalHold, portalStonePlace, spendPortalStone } from '../systems/portalStone.js';
+import { isPortalStone } from '../systems/gate/gateSpoils.js';
+import { PORTAL_BOOK_TEXT } from '../systems/portalBook.js';   // PORTAL-BOOK: a stone opened on a kept house's door
 import { travelMapDoorReady } from '../ui/travel/travelMapDoor.js';
 import { teleportJourney } from '../systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay
 import { pvpFightLeft, pvpLockSay } from './pvpFlagHost.js';   // PVP-PORTAL: only the combat lock holds a stone in the zone
 import { wildHere } from '../systems/wild/wildZone.js';
 import { pvpPortalLockText, pvpLockSecs } from '../ui/pvpHud.js';   // PVP-HUD
+
+/** PORTAL-BOOK: how far under a kept door's landing its ground is looked for, in metres. */
+const DOOR_PROBE = 4;
 
 /** @param {any} host */
 export function createPortalStoneHost(host) {
@@ -99,7 +104,7 @@ export function createPortalStoneHost(host) {
     });
     if (place.refused) { townTalk.say(PORTAL_TEXT[place.refused]); return; }
     if (!spendPortalStone(item, live())) { townTalk.say(PORTAL_TEXT.gone); return; }
-    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });
+    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name, ...(pick.at ? { at: pick.at, yaw: pick.yaw, mapId: pick.mapId } : {}) });   // PORTAL-BOOK: and a kept house's door
     host._foesFullAt = -Infinity;
     surfacePlayer();
     townTalk.say(PORTAL_TEXT.opened(pick.name));
@@ -115,9 +120,31 @@ export function createPortalStoneHost(host) {
     Promise.resolve().then(async () => {
       if (worldMoveBusy() || host._teleporting) { hudFade.clearFade(); return; }
       hccRuntimeOn()?.handlePreFastTravel();
-      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }   // PVP-PORTAL: the zone's law is not a stone's - the stone already spent   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
+      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); else if (g.dest.at) landAtDoor(g.dest); }   // PORTAL-BOOK: a kept house's door, past the town's marker   // PVP-PORTAL: the zone's law is not a stone's - the stone already spent   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
       finally { hccRuntimeOn()?.handlePostFastTravel(); }
     }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
   }
-  return { openPortalStone, portalArrive, portalHoldNow, lockRefused };
+  /** PORTAL-BOOK: THE LANDING AT A KEPT DOOR - on the ground found under it (DOOR_PROBE), facing as kept. No ground
+   *  found (the town not built there, a crafted word) leaves the traveller at the town's marker teleportTo landed on. */
+  function landAtDoor(dest) {
+    const at = host.campToScene(dest.at);
+    const d = collider.surfaceHit([at[0], at[1] + 1, at[2]], [0, -1, 0], DOOR_PROBE)?.dist;
+    if (!Number.isFinite(d)) return;
+    host.modes?.setPlayerLocalPosition?.([at[0], at[1] + 1 - d, at[2]]);
+    if (Number.isFinite(dest.yaw)) cam.yaw = dest.yaw;
+    surfacePlayer();
+  }
+  /** PORTAL-BOOK (systems/portalBook.js): A STONE OPENED ON A KEPT HOUSE'S DOOR - the stone's own door and pick (standPortal),
+   *  one stone of the pack spent (an unlocked stack first). Answers false when refused, the refusal said. */
+  function openToSpot(spot) {
+    if (lockRefused()) return false;   // PVP-HUD: the combat lock, as the stone's door asks it
+    const why = portalDoorRefusal();
+    if (why) { townTalk.say(why); return false; }
+    const items = playerEntity.items ?? [];
+    const stone = items.find((i) => isPortalStone(i) && !i.locked) ?? items.find(isPortalStone);
+    if (!stone) { townTalk.say(PORTAL_BOOK_TEXT.noStone()); return false; }
+    standPortal({ pixel: { x: spot.d[0], y: spot.d[1] }, name: spot.t, mapId: spot.m, at: spot.a, yaw: spot.w }, stone, () => playerEntity.items ?? []);
+    return true;
+  }
+  return { openPortalStone, portalArrive, portalHoldNow, lockRefused, openToSpot };
 }

@@ -3,10 +3,11 @@
 // walkers' lists of what they drew, the world picture's glow in the renderer (drawBillboardGlow, its field's world arm),
 // the shaders' bottom-up rows, and the wiring: the rig's hand, the aura host's last draw.
 import { test } from 'node:test';
+import { setModSetting } from '../../../src/systems/modSettings.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { myWeaponGlow, peerWeaponGlow, createSpriteGlow, setSpriteGlow, drawSpriteGlows } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
+import { myWeaponGlow, peerWeaponGlow, createSpriteGlow, setSpriteGlow, drawSpriteGlows, heldGlowPx, heldGlowRecord, evictHeld, HELD_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
 import { uprightWeaponPicture, HOLSTER_LEFT_SLOT, holsterItemOfLook } from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
 import * as WG from '../../../src/systems/weaponGlow.js';
 import * as GL from '../../../src/render/weaponGlowGlsl.js';
@@ -15,7 +16,7 @@ import { EQUIP_SLOTS } from '../../../src/systems/equip.js';
 import { Renderer } from '../../../src/render/renderer.js';
 import { createEotbBody } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
 import { createPeerWalkers, createEotbArt } from '../../../src/net/peer/peerRiders.js';
-import { spriteArtScale } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteArtScale, worldOrderLayered } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const settle = (ms = 5) => new Promise((res) => setTimeout(res, ms));
@@ -269,7 +270,10 @@ test('BACK-HOLSTER GLOW (my sprite): sheathed, the weapon on its back glows - it
   assert.equal(viewFrom(off.b, 4, { handItem: SHOCK }).length, 0, 'the switch off');
 });
 
-test('AUDIT BACK-HOLSTER A5 (my sprite): the weapon drawn, its ready picture still uploading, the last picture stands - and the glow round it is keyed to it, in its pixels, never to the picture asked (mutants: keyed to the picture asked)', async () => {
+test('AUDIT BACK-HOLSTER A5 (my sprite): the weapon drawn, its ready picture still uploading, the last picture stands - and the glow round it is keyed to it, in its pixels, never to the picture asked (mutants: keyed to the picture asked)', async (t) => {
+  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
+  setModSetting('eye-of-the-beholder', 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting('eye-of-the-beholder', 'Graphics.TurnToView', 1));
   const { b, r } = await liveBody({}, false);   // standing from the first: the idle picture
   const bodies = () => r.batches.filter((x) => typeof x.archive === 'number');
   const sheathed = { handItem: SHOCK, sheathed: true, weaponReady: false };
@@ -329,4 +333,71 @@ test('BACK-HOLSTER GLOW the wiring: the rig says the hand in use and its wraps; 
   const bare = host.indexOf('if (proj && view) backs.drawBare(worn);'), capes = host.indexOf('drawAurasThenBacks(auraDraw,'), armory = host.indexOf('drawArmory(armoryOver');
   assert.ok(bare > 0 && capes > bare && armory > capes, 'the bare before the auras, the wearers\' with them, the armory after');
   assert.match(host, /if \(pass\) for \(const w of auraDraw\) worn\.add\(w\.id\);/, 'a wearer is one whose aura draws');
+});
+
+// ── LAYERED-GLOW ───────────────────────────────────────────────────────────────────────────────────────────────────────
+test('LAYERED-GLOW (2026-10-30, the owner: "ensure all third person weapons get the glow on equip (a prior change kinda did this but for the whole body)"): a worn-armour picture\'s weapon px, as uploaded - row 0 the bottom, mirrored as the body; its own picture uploaded once beside the body\'s, the weapon alone; none this frame, no glow; none of its own, the whole sprite (mutants: rows top-down; the mirror ignored; uploaded every frame; the body\'s px in it; the empty frame glows)', () => {
+  const W = 4, H = 3, colors = Uint32Array.from({ length: W * H }, (_, i) => 100 + i), held = new Uint8Array(W * H);
+  held[1] = 1;   // the top row, x 1
+  const h = heldGlowPx(colors, held, W, H);
+  assert.deepEqual([...h.idx], [(H - 1) * W + 1], 'the top row is the last uploaded');
+  assert.deepEqual([...h.col], [colors[(H - 1) * W + 1]]);
+  assert.deepEqual([...heldGlowPx(colors, held, W, H, true).idx], [(H - 1) * W + 2], 'mirrored as the body');
+  assert.equal(heldGlowPx(colors, null, W, H), null, 'a skin: none of its own');
+  assert.equal(heldGlowPx(colors, new Uint8Array(5), W, H), null, 'a mask not the picture\'s size: none');
+  const r = recordingRenderer();
+  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', null, W, H), null, 'none of its own: the whole sprite');
+  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', heldGlowPx(colors, new Uint8Array(W * H), W, H), W, H), '', 'none this frame: no glow');
+  assert.equal(r.uploads.length, 0);
+  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', h, W, H), `lll@ls1_2-1${HELD_SUFFIX}`);
+  assert.equal(heldGlowRecord(r, 1700, 'lll@ls1_2-1', h, W, H), `lll@ls1_2-1${HELD_SUFFIX}`);
+  assert.equal(r.uploads.length, 1, 'uploaded once');
+  const up = r.uploads[0];
+  assert.deepEqual([up.archive, up.rec, up.img.width, up.img.height], [1700, `lll@ls1_2-1${HELD_SUFFIX}`, W, H], 'the sprite\'s size, beside its record');
+  assert.deepEqual([...up.img.colors], [...colors].map((c, i) => (i === (H - 1) * W + 1 ? c : 0)), 'the weapon alone');
+  r.textures.clear();
+  heldGlowRecord(r, 1700, 'lll@ls1_2-1', h, W, H);
+  assert.equal(r.uploads.length, 2, 'let go by a store: uploaded again');
+  // the decoders carry the compose's px with the picture they turn
+  const o = worldOrderLayered({ width: 2, height: 1, data: Uint8Array.from([1, 2, 3, 255, 4, 5, 6, 255]), held: Uint8Array.from([0, 1]) });
+  assert.deepEqual([o.width, o.height, o.colors.length, [...o.held]], [2, 1, 2, [0, 1]]);
+  assert.equal(worldOrderLayered({ width: 1, height: 1, data: new Uint8Array(4) }).held, null);
+  assert.match(read('src/player/eyeOfTheBeholder/eotbSprite.js'), /isLayeredKey\(url\)\) return worldOrderLayered\(await decodeLayered\(/);
+  assert.match(read('src/net/peer/peerRiders.js'), /isLayeredKey\(url\)\) return worldOrderLayered\(await decodeLayered\(/);
+});
+
+test('LAYERED-GLOW (my sprite, the others): drawn, a worn-armour body\'s glow stands round its weapon - its own picture, the body\'s quad and pixels; a frame that hides the weapon glows not at all; my outfit let go, its weapon picture goes too (mutants: the whole sprite kept; the empty frame glows; the weapon picture left in the renderer)', async () => {
+  const W = 53, H = 110, held = new Uint8Array(W * H);
+  for (let y = 40; y < 60; y++) held[y * W + 30] = 1;
+  const pic = (mask) => async () => ({ width: W, height: H, colors: new Uint32Array(W * H).fill(0xff203040), held: mask });
+  const drawn = { handItem: SHOCK, sheathed: false, weaponReady: true };
+  const { b, r } = await liveBody({ decode: pic(held) });
+  viewFrom(b, 4, drawn); await settle();
+  const g = viewFrom(b, 4, drawn), body = r.batches.filter((x) => typeof x.archive === 'number').at(-1);
+  assert.equal(g.length, 1);
+  assert.equal(g[0].key, `${body.archive}_${body.record}${HELD_SUFFIX}`, 'round the weapon\'s own picture');
+  assert.deepEqual([g[0].origin, g[0].w, g[0].h], [body.origin, body.size.w, body.size.h], 'on the body\'s quad');
+  assert.equal([...r.textures.get(g[0].key).colors].filter(Boolean).length, 20, 'the weapon\'s px alone');
+  const none = await liveBody({ decode: pic(new Uint8Array(W * H)) });
+  viewFrom(none.b, 4, drawn); await settle();
+  assert.equal(viewFrom(none.b, 4, drawn).length, 0, 'the frame hides the weapon: no glow');
+  // the others: a walker's decode carrying its weapon's px
+  const rr = recordingRenderer();
+  const art = createEotbArt({ renderer: rr, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110).fill(1), held: Uint8Array.from({ length: 50 * 110 }, (_, i) => (i % 50 === 20 && i < 50 * 30 ? 1 : 0)) }), loadHolster: async () => PIC });
+  const w = createPeerWalkers({ art }), FEET = [4, 0, 9];
+  const peer = { id: 'p1', look: { eo: 2, gender: 'male', race: 'Breton', items: [{ ...SWORD, glow: 'shock3' }] }, ak: null, shown: { x: FEET[0], y: FEET[1], z: FEET[2], yaw: 0, pitch: 0, mv: 0, wd: 1, an: 0, sr: 0, cn: 0, ar: 0 } };
+  const frame = () => { const cam = cameraFor(4, FEET); w.sync([peer], (p) => [p.x, p.y, p.z], { eye: cam.eye, right: cam.right, dt: 1 / 60 }); return w.glowsDrawn(); };
+  frame(); await settle(); frame(); await settle();
+  const wg = frame(), r0 = w.walkers.get('p1');
+  assert.equal(wg[0]?.key, `${r0.batch.archive}_${r0.batch.record}${HELD_SUFFIX}`, 'a walker\'s round its weapon');
+  assert.equal([...rr.textures.get(wg[0].key).colors].filter(Boolean).length, 30);
+  // let go with the look: the body's picture and its weapon's - where one was uploaded
+  for (const src of [read('src/player/eyeOfTheBeholder/eotbBody.js'), read('src/net/peer/peerRiders.js')]) {
+    // the release itself: the body's picture let go and its weapon's beside it (the retry's evictHeld is another door)
+    assert.match(src, /evictTexture\?\.\((?:k|key)\.replace\(':', '_'\)\);(?:\s*\/\/[^\n]*\n\s*|\s*)evictHeld\(renderer, (?:k|key)\.replace\(':', '_'\)\)/, 'the weapon\'s picture goes with the body\'s');
+  }
+  const gone = [];
+  const kept = { textures: new Map([[`1700_a${HELD_SUFFIX}`, {}]]), evictTexture(k) { gone.push(k); this.textures.delete(k); } };
+  evictHeld(kept, '1700_a'); evictHeld(kept, '1700_b');
+  assert.deepEqual(gone, [`1700_a${HELD_SUFFIX}`], 'only one that was uploaded');
 });

@@ -234,12 +234,13 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf, glyphsInOrder } from '../../src/net/identityToken.js';
+import { mightSigned } from '../../src/net/mightLaw.js';   // EG-MIGHT: the kit's might, its sky in it
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES, replicaDb, REPLICA_ANY, SHED_NO_REPLICA } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -256,7 +257,7 @@ import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's seas
 import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
 import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
-import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn, sailclothHeld } from './titles.js';
+import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn, sailclothHeld, effectsWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
@@ -268,7 +269,7 @@ import { LOST_BODY_MAX } from '../../src/net/lostLaw.js';
 import { sendReport, myReports, reportInbox, readReport, closeReport } from './reports.js';   // PRIVATE-REPORT: a player's private report
 import { REPORT_BODY_BYTES } from '../../src/net/reportLaw.js';
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
-import { firmamentState, setFirmament, respecFirmament, FIRM_STATUS } from './firmament.js';   // FIRM1: the Firmament - a character's passive tree
+import { firmamentState, setFirmament, respecFirmament, firmamentOpenFor, FIRM_STATUS } from './firmament.js';   // FIRM1: the Firmament - a character's passive tree
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { witnessTown, claimTownWatch, townsEcon, raidActStatements, strikeTown, auditTowns, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: the players' share
@@ -288,6 +289,8 @@ import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-R
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { passOf, findPass, BATTLE_PASS_STATUS, unlockPass, buyPass } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's pass and a deed's find; PASS-PANELS: a track opened and an item bought
+import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -380,11 +383,13 @@ import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab'
 import { ADMIT_ROUTES, admitWait } from './admit.js';   // ADMIT-LINE: the sign-in line
 export { AdmitGate } from './admit.js';   // ADMIT-LINE: the line's Durable Object (wrangler.toml binds it from this module)
 import {
-  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
+  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook, patreonScopeOk, patreonCampaignOf, patreonCentsPayable,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
-import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
+import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf, closeStale } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
+import { aurumCardOf, buyWare, AURUM_STATUS, aurumOpenFor } from './aurum.js';   // AURUM: the balance, the day's deals and a ware bought
+import { claimCache, AURUM_CACHE_STATUS } from './aurumCache.js';   // AURUM-CACHES: a cache claimed
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -944,13 +949,14 @@ const service = {
           if (!player?.handle) return page(PATREON_PAGES.account, 403);
           const token = await patreonExchange(outbound, env, code, `${url.origin}${PATREON_CALLBACK_PATH}`);
           if ('error' in token) return page(PATREON_PAGES.down, 502);
-          const who = await patreonIdentity(outbound, token.token);
+          const who = await patreonIdentity(outbound, token.token, patreonCampaignOf(env));
           if ('error' in who) return page(PATREON_PAGES.down, 502);
+          const o = patreonScopeOk(token.scope) ? 1 : 0, aurum = aurumOpenFor(player, env) ? patreonCentsPayable(who, !!o, env) ?? 0 : 0;   // AUDIT PATRON-AURUM H1, A1
           // NOTHING IS WRITTEN HERE. The page names the game account the state did, and the yes carries a sealed ticket -
           // so a link somebody else started is read by the patron before it can be finished.
           const from = await db.prepare('SELECT handle FROM players WHERE patreon_user = ?1 AND id <> ?2').bind(who.user, player.id).first();
-          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
-          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null }));
+          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, o, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
+          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null, aurum }));
         }
         // /v1/patreon/confirm - the page's own form
         if (request.method !== 'POST') return no('method', 405, origin);
@@ -959,13 +965,13 @@ const service = {
         if (!ticket || typeof ticket.k !== 'string') return page(PATREON_PAGES.expired, 400);
         // THE YES WRITES WHAT PATREON SAYS NOW - asked again with the patron's own token, not what the page showed: a
         // pledge cancelled between the page and the press holds nothing, and a yes pressed twice is Patreon asked twice.
-        const who = await patreonIdentity(outbound, ticket.k);
+        const who = await patreonIdentity(outbound, ticket.k, patreonCampaignOf(env));
         if ('error' in who) return page(PATREON_PAGES.down, 502);
         if (who.user !== ticket.u) return page(PATREON_PAGES.expired, 400);   // the token answers for another Patreon account now
-        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status });
+        const row = await db.prepare('SELECT id, handle FROM players WHERE id = ?1').bind(ticket.p).first();
+        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: aurumOpenFor(row, env) ? patreonCentsPayable(who, ticket.o === 1, env) : null });   // AUDIT PATRON-AURUM H1, A1
         if ('error' in r) return page(PATREON_PAGES.account, 403);
-        const row = await db.prepare('SELECT handle FROM players WHERE id = ?1').bind(ticket.p).first();
-        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env) }));
+        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env), aurum: r.aurum }));
       }
 
       // SHOP (shop.js): THE SHOP'S DOORS, no session - each proven by what it carries, answered before the JSON ladder as
@@ -1297,10 +1303,11 @@ const service = {
         const rb = seats && renownCharacterOk(body.character) ? await ribbonOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero), member) : null;
         const wardrobe = {
           ...seatT,
-          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],
+          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),   // STOREFRONT (the wire audit): in the order, and once each, the token's mask hands the room
           au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
           pi: iconWorn(who.player, env),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
           ak: armoryWorn(who.player, env),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none
+          fx: effectsWorn(who.player, env),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none
           ...(rb ? { rb } : {}),
           sc: sailclothHeld(who.player, env),   // AUDIT GUILD-SHOP S2: the Guild Sailcloth held - a peer's ship flies its cloth only so
         };
@@ -1348,6 +1355,9 @@ const service = {
         // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
         // (realm.js realmMintFacts), every referee's clip of a blow between players. Absent before its first judged checkpoint.
         const wa = facts.wa;
+        // EG-MIGHT: AND ITS MIGHT, `mg` - its judged kit's, its sky in it (realm.js realmMintFacts `km`; net/mightLaw.js
+        // mightSigned), what an Elite Breach's purse grows by. Absent before its first judged checkpoint since EG-MIGHT.
+        const mg = rc ? mightSigned(facts.km) : null;
         // PVP-VILLAIN-KEEP: AND ITS VILLAIN METER, `vl` (realm.js realmMintFacts) - the relay seeds the referee's meter from it
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arena/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
@@ -1364,7 +1374,7 @@ const service = {
         // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
         // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
         // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
-        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };
+        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}), ...(mg != null ? { mg } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
         // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
         // a house that would take it past either is left unsaid, never the rest
@@ -1390,6 +1400,7 @@ const service = {
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           icon: wardrobe.pi ?? null,   // WITCH1: the profile icon in my own portrait well, beside the token as the aura is
           armory: wardrobe.ak ?? null,   // ARMORY: the kit on my own body, beside the token as the aura is
+          effects: wardrobe.fx ?? null,   // STOREFRONT: my kill effect, portals' skin and mount's look, beside the token as the kit is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
           house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
@@ -1411,18 +1422,29 @@ const service = {
         // account, because it is a different KIND of fact. An account
         // view is the row; a wardrobe is the row read against this
         // service's config and clock, which is why it alone takes env.
+        // AURA-FAST: every read below is its own and asks D1 in the same breath - one after another they were some twenty
+        // round trips, and the account card and the Collections page waited on all of them in turn
+        const [duels, gates, raids, serpents, dragons, sds, stars, ketch, renown, marks, worn, purse, devices, patreon, shop, pass, aurum] = await Promise.all([
+          duelRecordOf(ctx, who.player.id), gateRecordOf(ctx, who.player.id), raidRecordOf(ctx, who.player.id), serpentRecordOf(ctx, who.player.id),
+          dragonRecordOf(ctx, who.player.id), sdRecordOf(ctx, who.player.id), starRecordOf(ctx, who.player.id), ketchRecordOf(ctx, who.player.id),
+          renownTracksOf(ctx, who.player.id), marksCardOf(ctx, who.player, env), withSeatTitles(ctx, who.player, env), insigniaPurse(ctx, who.player),
+          devicesOf(ctx, who.player.id), patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
+          shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }), passOf(ctx, who.player, env), aurumCardOf(ctx, who.player, env),
+        ]);
         return json({
           // DUEL1: and the duelling record, counted off the results (the profile card's K/D); WB5b: and the gates closed
           // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row) - RENOWN-CHAR: a
           // list of the characters' tracks again (RENOWN-ACCOUNT sent the account's one, `{ xp, level }`)
           // MARKS1: and the Marks balance, where Marks are this account's (null where not - a guest, the switch)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
-          wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player), annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK: the Annals' pages kept, the Collections page's   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
-          devices: await devicesOf(ctx, who.player.id),
+          account: { ...accountView(who.player, nowS), duels, gates, raids, serpents, dragons, sds, stars, ketch, renown, marks },
+          wardrobe: { ...accountWardrobe(worn, env, nowS), purse, annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK: the Annals' pages kept, the Collections page's   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
+          devices,
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
-          patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
-          shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
+          patreon,
+          shop,   // SHOP: the wares, what is held, and a Buy link each
+          pass: 'error' in pass ? null : pass,   // STOREFRONT: the season's card - a guest's, or none, null
+          aurum,   // AURUM: the balance, the day's wares, the week's deeds - a guest's null
         }, 200, origin);
       }
 
@@ -1507,7 +1529,9 @@ const service = {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonSlainOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
+        // AURA-FAST: the counts asked together, not one round trip after another
+        const [duels, gates, raids, serpents, dragons, sds, stars, ketch] = await Promise.all([duelRecordOf(ctx, body.id), gateRecordOf(ctx, body.id), raidRecordOf(ctx, body.id), serpentRecordOf(ctx, body.id), dragonSlainOf(ctx, body.id), sdRecordOf(ctx, body.id), starRecordOf(ctx, body.id), ketchRecordOf(ctx, body.id)]);
+        return json({ id: body.id, ...duels, gates, raids, serpents, dragons, sds, stars, ketch }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
       }
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {
@@ -1635,7 +1659,7 @@ const service = {
       if (path === '/v1/dragon/claim' && request.method === 'POST') {
         // DRAGON4: A DWARVEN DRAGON'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES, with the character that fought it. The relay
         // signed it at the kill (src/net/dragon/dragonReceipt.js); the session says who is asking, never the body, and dragons.js
-        // `claimDragon` holds the rest - the signature, the account, one row a (watch, account), the device's hoard, the tame.
+        // `claimDragon` holds the rest - the signature, the account, one row a (watch, place, account), the device's hoard, the tame.
         const r = await claimDragon(ctx, who.player, { receipt: body.receipt, character: body.character, cid: body.cid ?? null }, await gatePublicKey(env, subtle));
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
@@ -2352,6 +2376,13 @@ const service = {
         return r.error ? no(r.error, r.error === 'armory-not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
+      if (path === '/v1/account/effect' && request.method === 'POST') {
+        // STOREFRONT: WEAR ONE EFFECT IN ITS SLOT (a kill effect, a portal skin, a mount look), OR BARE IT - the armory's door
+        // a slot at a time. 403 for one not held, as the aura's; 400 for a slot or key the service does not know.
+        const r = await equipEffect(ctx, await withSeatTitles(ctx, who.player, env), env, body.slot, body.key ?? null);
+        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
       if (path === '/v1/account/icon' && request.method === 'POST') {
         // WITCH1: WEAR ONE PROFILE ICON, OR NONE - the aura's door, in the portrait well. 403 for `not-held`, as the aura's.
         const r = await equipIcon(ctx, await withSeatTitles(ctx, who.player, env), env, body.icon ?? null);
@@ -2376,7 +2407,60 @@ const service = {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      // ═══ STOREFRONT: THE BATTLE PASS ═══════════════════════════════════
+      //
+      // bible/06-Systems/Battle-Pass.md: the account's pass (its tracks, items, day and challenges), and a deed's find -
+      // AUDIT PASS 3: a progression claim, its seat asked at the door (progress.js PROGRESS_ROUTES)
+      if (path === '/v1/pass/mine' || path === '/v1/pass/find') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/mine' ? await passOf(ctx, who.player, env) : await findPass(ctx, who.player, body, env);
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: an ask answered
+        if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/pass/unlock' || path === '/v1/pass/buy') {
+        // PASS-PANELS (bible/06-Systems/Battle-Pass.md): THE PREMIUM TRACK OPENED, AND AN ITEM BOUGHT, FOR AURUM - one
+        // guarded batch each (battlePass.js); the answer is the wardrobe after it, the Aurum's card and the pass's card.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/unlock' ? await unlockPass(ctx, who.player, body, env) : await buyPass(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ...r, row: undefined, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env), pass: await passOf(ctx, after, env) }, 200, origin);
+      }
+
+      if (path === '/v1/season/maul') {
+        // AUDIT LANE 5 (bible/06-Systems/Battle-Pass.md section 6): THE RESONANT MAUL'S DAY - a yes once a UTC day an account,
+        // inside the Heart stage; the page mints the Maul on it alone (seasonClaim.js).
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimMaul(ctx, who.player, body);
+        if ('error' in r) return json({ error: r.error }, SEASON_MAUL_STATUS[/** @type {keyof typeof SEASON_MAUL_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/aurum/buy') {
+        // AURUM (bible/06-Systems/Aurum.md): A WARE BOUGHT FOR AURUM - AURUM-ONLY, any ware but a pack - one transaction
+        // (aurum.js buyWare); the answer is the wardrobe after it and the Aurum's card, so the window shows the ware held
+        // and the balance at once.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await buyWare(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}), ...(Number.isSafeInteger(r.price) ? { price: r.price } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
+        await closeStale(ctx, env, (u, i) => globalThis.fetch(u, i), who.player.id);   // AUDIT-STOREFRONT III A6: a money page for it left open
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ok: true, ware: r.ware, spent: r.spent, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env) }, 200, origin);
+      }
+
+      if (path === '/v1/aurum/cache') {
+        // AURUM-CACHES (bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE CLAIMED - one ledger line a cache an account,
+        // under the day's bound (aurumCache.js claimCache)
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimCache(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error }, AURUM_CACHE_STATUS[/** @type {keyof typeof AURUM_CACHE_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }
 
@@ -2753,7 +2837,7 @@ const service = {
       // account's as its Renown is.
       if (path.startsWith('/v1/realm')) {
         const me = who.player.id;
-        const rctx = { ...ctx, bucket: env.SAVES };
+        const rctx = { ...ctx, bucket: env.SAVES, firmOpen: firmamentOpenFor(who.player, env) };   // AUDIT POTION-MIGHT A5: the sky's switch, the kit's might reads the tree
         const answer = (r, ok = 200) => (r.error ? no(r.error, REALM_STATUS[r.error] ?? 400, origin) : json(r, ok, origin));
         if (path === '/v1/realm') {
           if (request.method !== 'GET') return no('method', 405, origin);

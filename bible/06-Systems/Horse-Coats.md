@@ -89,7 +89,9 @@ astride. The dye moves the HIDE alone:
    (mean value under `COAT_SHADOW_VALUE`, 0.3, within `COAT_SHADOW_REACH`, 2
    pixels, of a dyed region): the belly's and the far legs' dark specks the
    outline cut off. Measured on all five riders, a rider's skin is lit (a mean
-   value of 0.4 and more).
+   value of 0.4 and more);
+4. and never a pixel of an Eye Of The Beholder rider's (RIDERS, below): an arm
+   on the reins joins a rider's face to the neck's region, and rule 3 dyed it.
 
 A dyed pixel takes the coat's hue (the bay keeps the art's own), a saturation
 off its own (so the art's shading is still its shading) and a value
@@ -123,8 +125,25 @@ off its own (so the art's shading is still its shading) and a value
   the mane falls in the leather band's colours).
 
 Every white is the hide's own light in white (`0.4 + 0.85 v`), so a patch in
-shadow is a shadowed white. The mane stays the art's on every look: the dye
-cannot tell a dark mane from a rider's dark steel, so it is not asked to.
+shadow is a shadowed white. The mane stays the art's on every coat. A mount
+look does shade it (AUDIT-STOREFRONT, `Storefront.md` section 7): only
+near-black joined to the hide, never higher than the mane's crest and never a
+rider's (RIDERS). The 3D horse's mane and tail picture takes the same shades
+(`world/horseRig.js` HAIR_ROWS).
+
+### RIDERS (AUDIT-STOREFRONT, 2026-10-29)
+
+Eye Of The Beholder's five mounted sets are one horse under five riders, picture
+for picture, standing on their bottom row. Laid on each other
+(`tools/bakeEotbRiders.mjs`), a horse's pixel agrees in three sets or more, or
+with another set's sure one; a rider's agrees with none. Each picture's rider is
+baked as runs into `player/eyeOfTheBeholder/eotbRiderMasks.js`, loaded on the
+first dye of a mounted picture (`eotbSprite.js` ridersReady), and the dye and
+the look spare it (`recolorHorse`'s `spare`). Rules read off one picture - a
+waist line, lit skin - found three riders in four and flickered from frame to
+frame; the sets' agreement holds in every frame. A few horse pixels every other
+rider covers keep the coat's colour. `test/player/eyeOfTheBeholder/eotbriders.test.js`
+holds the table to the pictures.
 
 A sprite is one picture a side, so a flank's patches and the chest's are not
 one body's - each view is its own, and a walk frame carries its marks with the
@@ -133,7 +152,8 @@ other flank.
 
 PERF-HIDE (2026-10-12): rules 1-3 and the hide's frame are the PICTURE's -
 its pixels and `tack` - never the look's, so they are found once a picture
-(`hideOf`, kept weakly by the picture's pixels' array, one hide a `tack`) and
+(`hideOf`, kept weakly by the picture's pixels' array, one hide a `tack`, row
+order and rider spared) and
 every look after is the dye's own pass over the hide's pixels. The kept art is
 read and never written (the pool's, the riders'; a riding frame is a new array
 each time it is decoded), so a kept hide never goes stale. The helpers answer

@@ -258,8 +258,8 @@
   {
     "name": "PVP-POTIONS-always-a-fight",
     "file": "src/combat/pvpPotions.js",
-    "old": "export function setPvpFight(active) { fight = !!active; setBowFight(fight); }",
-    "new": "export function setPvpFight(active) { fight = true; setBowFight(fight); }",
+    "old": "export function setPvpFight(active) { fight = !!active; }",
+    "new": "export function setPvpFight(active) { fight = true; }",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],

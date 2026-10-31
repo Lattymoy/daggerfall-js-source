@@ -80,6 +80,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Feature | Its folders under `src/` |
 |---|---|
 | Abyss Dungeon (super dungeons) | `systems/superDungeon/`, `net/superDungeon/`, `world/superDungeon/`, `render/superDungeon/`, `scenes/superDungeon/`, `ui/superDungeon/` |
+| Ambient life (birds, bats, small animals) | `systems/ambientLife/` - and loose: `render/ambientLifePass.js`, `scenes/ambientLifeHost.js` |
 | Arena | `systems/arena/`, `net/arena/`, `world/arena/`, `scenes/arena/`, `ui/arena/` |
 | Automap | `systems/automap/`, `ui/automap/` |
 | Blood | `combat/blood/` |
@@ -299,6 +300,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 
 | Folder | What lives there |
 |---|---|
+| `src/systems/ambientLife/` | The creatures outdoors (`07-Rendering/Ambient-Life.md`): who stands by climate, hour and weather, the birds, the runners and the insects, and the instances the pass draws. |
 | `src/systems/arena/` | The Arena's law (`11-Multiplayer/Arena.md`): the bout, its fighters and moves, the ladder and the league, the board and score, the herald, the crowd and the replay. |
 | `src/systems/automap/` | The automap's law: the model, its floors, and what a click picks. |
 | `src/systems/bounty/` | The bounty board's law: the board, the journal and the reward. |
@@ -333,6 +335,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
 | `src/systems/online/` | The online save: checkpoints, homes, the lane, the sync - the law. |
 | `src/systems/party/` | A party: travelling, resting and walking together - the law. |
+| `src/systems/pass/` | The Battle Pass's season (`06-Systems/Battle-Pass.md`, STOREFRONT): the page's asks to the service and its notices, the season in the world's law (the tremor, the Brass Fissures, their camps and the Colossus) and its words, the Resonant Maul's record. |
 | `src/systems/professions/` | The professions' law (`06-Systems/Professions-Arc.md`): their items, templates and sounds. |
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
 | `src/systems/questlines/` | The questlines over the quest machine (`06-Systems/Questlines-Arc.md`): the objective sheets and branch patches by family, the actions, the rewards, the acts feed and the elite foe's act (`qlEliteFoe.js`, which the dungeon host hands its place - AUDIT QUESTLINES ACTS-8), the questlines, their runner and the guilds' ladders - the law. |
@@ -387,6 +390,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
 | `src/ui/guild/` | The guild window's pages (`11-Multiplayer/Guild-Shop.md`): its look and crest, the shop and its wares, the logo's pick and page, the ranks and the join requests. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
+| `src/ui/icons/` | The drawn icons' art, each drawn by `profileIcons.js` drawnIconNode: the profile icons' shared shapes and motions, Season One's and the daily wares' icons (none a figure, `06-Systems/Aurum.md` section 7) and the effect emblems (`06-Systems/Storefront.md` section 9). |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
 | `src/ui/intro/set/` | The film's set (INTRO4, `10-UI/UI-Arc.md`): the Imperial City as the intro was shot on it - the city's plan (`imperialCity.js`), its landmarks (`capitalImperial.js`) and the shapes they are built of (`capitalShapes.js`), kept as shot, never the game's grown city. |

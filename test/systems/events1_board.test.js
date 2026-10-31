@@ -77,7 +77,7 @@ test('EVENTS1 THE WAY: metres between the pixels\' hearts (a pixel PIXEL_M), the
 test('EVENTS1 THE LAW\'S NUMBERS: a quarter hour ahead, three rows on a desk, the nearest two raids, 25 km of reach, a news of 9 s and one at a time, a joined line 5 s of its own, a minute\'s sameness, six kept, the seed\'s 5 s of grace, a star\'s 10 minutes\' warning (mutants: each number)', () => {
   assert.deepEqual([EVENT_SOON_MS, EVENT_BOARD_ROWS, EVENT_BOARD_RAIDS, EVENT_RAID_REACH_M, EVENT_TOAST_MS, EVENT_TOASTS_SHOWN, EVENT_NOTE_MIN_MS, EVENT_NOTE_SAME_MS, EVENT_TOASTS_KEPT, EVENT_SEED_GRACE_MS, STAR_WARN_MS],
     [900_000, 3, 2, 25_000, 9000, 1, 5000, 60_000, 6, 5000, 600_000]);
-  assert.deepEqual([...EVENT_SINGLE_KINDS], ['gate', 'serpent', 'super', 'festival'], 'a star and a raid have several at once');
+  assert.deepEqual([...EVENT_SINGLE_KINDS], ['gate', 'serpent', 'super', 'festival', 'season'], 'a star and a raid have several at once');
 });
 
 test('EVENTS1 THE GATE AND THE SERPENT ON THE BOARD: their rows in the player\'s words (AUDIT EVENTS1 W3) - the gate open to its seal, near its place, its way off its site; sealed, no one gets in and it is left out (A6); the serpent hunting off its port with its way; each one\'s `since` its law\'s moment; the resets, the seat week and the battles stay the Timers window\'s (mutants: the shut filter, the serpent\'s way, the kinds filter)', () => {
@@ -372,16 +372,16 @@ function starsAndRaids(t) {
 }
 
 test('EVENTS2 ONE HOME FOR THE KINDS: features.js EVENT_KINDS, in the board\'s order - the board\'s rows, the door\'s kinds, the single kinds and the headings all derived from it; each kind a part of the Event board row, its pref `eventBoard-<kind>` on by default and the player\'s own online, its chip the heading\'s own words (mutants: the key, a kind without its chip, a kind undeclared, off by default, forced online, the chip unnamed, the festival a row, a star single, the heading not the home, the door\'s kinds, the board\'s kinds)', () => {
-  const KINDS = ['gate', 'serpent', 'super', 'star', 'raid', 'festival'];
-  const NAMES = ['Dagon\'s Breach', 'Sea Serpent', 'Abyss Dungeon', 'Starfall', 'Town Raid', 'Witches\' Festival'];
+  const KINDS = ['gate', 'serpent', 'super', 'star', 'raid', 'festival', 'season'];
+  const NAMES = ['Dagon\'s Breach', 'Sea Serpent', 'Abyss Dungeon', 'Starfall', 'Town Raid', 'Witches\' Festival', 'Season'];
   assert.deepEqual([...EVENT_KIND_ORDER], KINDS);
   assert.deepEqual([...EVENT_NOTICE_KINDS], KINDS, 'the door\'s');
   assert.deepEqual(Object.keys(EVENT_KIND_TEXT), KINDS, 'the headings\'');
   assert.deepEqual(KINDS.map((k) => EVENT_KIND_TEXT[k]()), NAMES);
   assert.deepEqual(KINDS.map((k) => EVENT_KINDS[k].label), NAMES);
-  assert.deepEqual([...EVENT_BOARD_KINDS], ['gate', 'serpent', 'super', 'star', 'raid'], 'the festival is news alone');
-  assert.deepEqual([...EVENT_SINGLE_KINDS], ['gate', 'serpent', 'super', 'festival']);
-  const PREFS = ['eventBoard-gate', 'eventBoard-serpent', 'eventBoard-super', 'eventBoard-star', 'eventBoard-raid', 'eventBoard-festival'];
+  assert.deepEqual([...EVENT_BOARD_KINDS], ['gate', 'serpent', 'super', 'star', 'raid'], 'the festival and the season are news alone');
+  assert.deepEqual([...EVENT_SINGLE_KINDS], ['gate', 'serpent', 'super', 'festival', 'season']);
+  const PREFS = ['eventBoard-gate', 'eventBoard-serpent', 'eventBoard-super', 'eventBoard-star', 'eventBoard-raid', 'eventBoard-festival', 'eventBoard-season'];
   assert.deepEqual(KINDS.map(eventKindPref), PREFS);
   const c = FEATURES.find((r) => r.id === 'event-board').control;
   assert.deepEqual(c.also.map((a) => [a.store, a.key, a.initial, a.online]), PREFS.map((k) => ['prefs', k, true, 'player']), 'each kind declared on the row that covers it');
@@ -426,7 +426,7 @@ test('EVENTS2 AT THE DOOR: a kind turned off (eventKindShown, its chip) is filed
     seatEventBoard(() => ({ now: 1 }), (t) => chat.push(t), (t) => logged.push(t));
     assert.deepEqual(EVENT_KIND_ORDER.map(eventKindShown), EVENT_KIND_ORDER.map(() => true), 'every kind shown by default');
     setPref(eventKindPref('star'), false);
-    assert.deepEqual(EVENT_KIND_ORDER.map(eventKindShown), [true, true, true, false, true, true]);
+    assert.deepEqual(EVENT_KIND_ORDER.map(eventKindShown), [true, true, true, false, true, true, true]);
     assert.equal(eventNotice('star', 'The star near Copperham is held by Ann.', 'star:9.1'), true);
     eventNotice('raid', 'Ilessan Hills in Daggerfall is under attack by orcs!', 'raid:17:7:400');
     assert.deepEqual([takeEventNotices().map((l) => l.text), logged, chat, hud],

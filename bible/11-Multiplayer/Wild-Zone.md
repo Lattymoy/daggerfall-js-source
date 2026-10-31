@@ -681,6 +681,9 @@ fast door - the travel map's journey and the carriage drivers' and the ships' an
   zone map's card is down, and its pick had shown nothing): a journey picked on the zone map is always Cautiously, by land, at inns - no choices (`_forceZoneOpts`,
   `heldMap.js:"_forceZoneOpts(o)"`); a press on the zone map's ground or on a place is a destination, and the legend's
   Begin journey starts it.
+- ROAD-GRAPH (2026-10-30, the owner: "not allowing you to traverse to different locations reliably"): a journey by the
+  roads across Cyrodiil is planned to its end. 111 of 992 trips between the zone's towns had said "no way"
+  (`06-Systems/Travel-View.md` ROAD-GRAPH).
 
 ## 10. The pace (WILD3)
 

@@ -56,20 +56,22 @@
   {
     "name": "AUDIT-DRAGON-none-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "old": "  for (const [k, v] of kept) { last = k; if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k); }",
     "new": "  for (const [k] of kept) { last = k; }",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-the-live-one-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "old": "  for (const [k, v] of kept) { last = k; if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k); }",
     "new": "  for (const [k] of kept) { last = k; dead.push(k); }",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-no-retry",
@@ -83,21 +85,22 @@
   {
     "name": "AUDIT-DRAGON-the-cache-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "noRcpt: new Bounded(HUB_KEEP_MAX) });",
-    "new": "noRcpt: new Map() });",
+    "old": "noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap(), judged: new Map(), refused: new Map(), asking: new Map(), budget: new Map() });",
+    "new": "noRcpt: new Map(), stood: new WeakMap(), judged: new Map(), refused: new Map(), asking: new Map(), budget: new Map() });",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",
     "file": "src/net/wire.js",
-    "old": "export const DRAGON_RELAY_MIN = 294;",
-    "new": "export const DRAGON_RELAY_MIN = 293;",
+    "old": "export const DRAGON_RELAY_MIN = 299;",
+    "new": "export const DRAGON_RELAY_MIN = 298;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-the-route-unlisted",
@@ -111,20 +114,22 @@
   {
     "name": "AUDIT-DRAGON-the-record-off-the-cards",
     "file": "server-account/src/index.js",
-    "old": "serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds:",
-    "new": "serpents: await serpentRecordOf(ctx, who.player.id), sds:",
+    "old": "serpents, dragons, sds, stars, ketch, renown, marks }",
+    "new": "serpents, sds, stars, ketch, renown, marks }",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-strangers-tames-told",
     "file": "server-account/src/index.js",
-    "old": "dragons: await dragonSlainOf(ctx, body.id)",
-    "new": "dragons: await dragonRecordOf(ctx, body.id)",
+    "old": "dragonSlainOf(ctx, body.id)",
+    "new": "dragonRecordOf(ctx, body.id)",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-line-for-none",

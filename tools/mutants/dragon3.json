@@ -23,17 +23,18 @@
   {
     "name": "DRAGON3-the-gates-day",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "  const w = o.w, lane = dragonLaneOf(o), day = dragonSiteDay(o);",
-    "new": "  const w = o.w, lane = dragonLaneOf(o), day = w;",
+    "old": "  const { cx, cy } = dragonCellOf(o), x0",
+    "new": "  const { cx, cy } = dragonCellOf({ w: o.w, s: 0 }), x0",
     "tests": ["test/net/dragon/dragon3_client.test.js"],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "DRAGON3-a-site-asked-every-frame",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "      if (tried === w && now() - triedAt < retryMs) return null;",
+    "old": "      if (tried === key && now() - triedAt < retryMs) return null;",
     "new": "",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "tests": ["test/net/dragon/dragon3_client.test.js"],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "DRAGON3-move-never",
@@ -68,8 +69,8 @@
     "file": "src/scenes/dragonHost.js",
     "old": "  for (const w of dragonWatchesAbout(t)) {\n    const s = seedOf(w), o = { w, s };",
     "new": "  for (const w of dragonWatchesAbout(t).slice(0, 1)) {\n    const s = seedOf(w), o = { w, s };",
-    "tests": ["test/net/dragon/dragon3_client.test.js"],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "tests": ["test/net/dragon/dragon3_client.test.js", "test/net/dragon/dragoncellaudit.test.js"],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. AUDIT DRAGON-CELL D12: alive on main too; dragoncellaudit's pin reads it."
   },
   {
     "name": "DRAGON3-in-from-anywhere",

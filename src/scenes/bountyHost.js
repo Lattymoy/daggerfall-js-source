@@ -36,6 +36,7 @@ import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJ
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
 import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
+import { passBountyPaid } from '../systems/pass/passClient.js';   // STOREFRONT: and a Battle Pass find
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { createHuntersMark } from './huntersMark.js';   // HUNTERS-MARK: the hunter's rank and the week's named mark
 
@@ -383,6 +384,7 @@ export function createBountyHost(deps) {
     });
     deps.say(`Bounty fulfilled: ${posting.title}. +${posting.gold} gold, ${reward.item}.`);
     festivalBountyPaid();   // WITCH1: a Witches' Festival find (nothing while it is not live)
+    passBountyPaid();   // STOREFRONT: a Battle Pass find (nothing while no season is open)
     hunt.cleared(id, Number.isInteger(region) ? region : null);   // HUNTERS-MARK: reported to the hunt's ledger, kept until answered
     repaint();
     return true;

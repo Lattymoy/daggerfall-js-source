@@ -5,8 +5,8 @@
 //   THE TRACKER (a readout, no click): outside the Spire the call; inside, THE COUNT CHIP (gold above 10:00, white to
 //     2:00, red below and pulsing in the last 30 s; *Held* while it holds; the last word's seal when it is nearer), the
 //     circle and hall by name with its band, the objective and its progress (rifts 3 of 5, the hold's seconds, the winch,
-//     the Gauntlet's plates left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips, THE POTION LAW's
-//     pip), the marks on me, the company's rows (numerals, a cracked recall, a witness's eye, home, forsaken), a
+//     the Gauntlet's plates left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips; THE POTION CLOCK's
+//     pip is the Spire's HUD's), the marks on me, the company's rows (numerals, a cracked recall, a witness's eye, home, forsaken), a
 //     witness's own line;
 //   THE PANEL (clicked, or answered by keys and `/breach` words): the Vestige offer (each card its name, rank and line;
 //     1-6 to take), the company's word (each choice open, its options and its countdown; Y/N, 1-2), and THE RECAP at a
@@ -51,8 +51,10 @@ export const EG_HUD_PULSE_MS = 30_000;
 export const EG_HUD_GOLD_MS = 10 * 60_000;
 /** A mark's words on a member (net/eliteGates/egBodies.js egMarksOut). */
 export const EG_MARK_NAMES = Object.freeze(['The Scent', 'Soul-mark', 'Fire-touched', 'Frost-touched', 'Chained', 'Caged', 'Challenged', 'Hunted', 'Bound']);
-/** THE POTION LAW (section 17.4): restoring potions a hall. */
-export const EG_POTIONS_PER_HALL = 2;
+/** POTION-CLOCK (section 17.4): the potion pip - each kind still waiting and its seconds (combat/pvpPotions.js potionWaits),
+ *  '' when every kind may be drunk. */
+export const egPotionPip = (waits) => (Array.isArray(waits) ? waits : [])   // AUDIT POTION-MIGHT C5: a kind's words never part, the chip wraps between kinds
+  .map(([kind, s]) => t('eg.potion.wait', '{kind, select, health {Health potion} magicka {Magicka potion} other {Potion}} {s} s', { kind, s }).replace(/ /g, '\u00a0')).join(' · ');
 export const EG_HUD_STYLE_ID = 'dagger-eg-hud-style';
 /** EG-PLUS (ui/eliteGates/egKit.js): the call's tracker is a plate over the world (the kit's `panel` - `body .eg-hud`) and
  *  the panel a breach window (`.eg-win`, the chrome's); this sheet writes their geometry and words, the kit their paint. */
@@ -179,9 +181,9 @@ export function egCompanyRows(E) {
 /**
  * What the tracker says now, or null. Pure.
  * @param {any} E net/eliteGates/egLink.js's state @param {string|null} me @param {number} now
- * @param {{ inSpire?: boolean, witness?: boolean, potions?: number }} where
+ * @param {{ inSpire?: boolean, witness?: boolean }} where
  */
-export function egHudModel(E, me, now, { inSpire = false, witness = false, potions = EG_POTIONS_PER_HALL } = {}) {
+export function egHudModel(E, me, now, { inSpire = false, witness = false } = {}) {
   if (!E) return null;
   if (inSpire && E.b) {
     const spec = E.h > 0 ? egHallOf(E.seed, E.h, E.geo ?? 0) : null;
@@ -199,7 +201,7 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
     const countCls = E.sg === 'end' ? '' : held ? 'held' : shown < EG_HUD_PULSE_MS ? 'pulse' : shown < EG_HUD_LOW_MS ? 'low' : shown > EG_HUD_GOLD_MS ? 'gold' : '';
     const run = me ? egRunOfMember(E, me) : null;
     const cants = (run?.cant ?? []).map((c) => EG_CANTRIPS[c]?.name).filter(Boolean);
-    const runLine = run ? [`Reliquaries ${run.rel}`, `lumen ${run.lumen}`, run.shards ? `shards ${run.shards}` : '', run.tonics ? `tonics ${run.tonics}` : '', `potions ${potions}/${EG_POTIONS_PER_HALL}`, cants.length ? `Cantrips: ${cants.join(', ')}` : ''].filter(Boolean).join(' - ') : '';
+    const runLine = run ? [`Reliquaries ${run.rel}`, `lumen ${run.lumen}`, run.shards ? `shards ${run.shards}` : '', run.tonics ? `tonics ${run.tonics}` : '', cants.length ? `Cantrips: ${cants.join(', ')}` : ''].filter(Boolean).join(' - ') : '';
     const dec = (E.dc ?? []).map(([id, rank]) => `${EG_DECREES[id]?.name ?? ''}${rank >= 2 ? ' II' : ''}`).filter(Boolean);
     const marks = (E.fight?.mk ?? []).filter((m) => m[0] === me && m[2] > now).map((m) => `${EG_MARK_NAMES[m[1]] ?? ''} ${Math.ceil((m[2] - now) / 1000)}s`);
     const mine = me ? egMemberOf(E, me) : null;

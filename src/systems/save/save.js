@@ -39,7 +39,8 @@ import { isMartialPathId } from '../martialPaths.js';   // MARTIAL1: the martial
 import { seedBundleSeq, effectKindLoaded } from '../effects.js';   // X10: the live-bundle counter's restore half; AUDIT PRE-MERGE 0928 S3: a mod's effect restores only while its mod is loaded
 import { repairLostCurses } from '../curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { repairUnmintedConditions, repoolWeaponConditions } from '../conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted; WEAPON-POOL: a weapon on its row's pool, moved to the one pool
-import { restackStones, nameEmbers, PORTAL_GIFT, givePortalGift } from '../gate/gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack; WB12a: and named Deadlands Embers
+import { restackStones, nameEmbers, PORTAL_GIFT, givePortalGift, PORTAL_BOOK_GIFT, givePortalBookGift } from '../gate/gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack; WB12a: and named Deadlands Embers
+import { readPortalBook } from '../portalBook.js';   // PORTAL-BOOK: the house doors this character keeps
 import { WALLET_GIFT, giveWalletGift } from '../walletItem.js';   // WALLET1: a character from before the wallet is given one, once
 import { LOCKPICK_GIFT, giveLockpickGift } from '../lockpick/lockpickItem.js';   // LOCKPICK: a picking class from before the lockpick is given its picks, once
 import { BINDER_GIFT, giveBinderGift, cleanBinders } from '../iliac/iliacItems.js';   // CARDS8: and a Card Binder with the starter deck, once
@@ -435,6 +436,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.walletGift = Number.isSafeInteger(entity.walletGift) ? entity.walletGift : WALLET_GIFT;   // WALLET1: whether this character has been given its wallet - one never restored from an older save is born with it (its kit's)
   snap.lockpickGift = Number.isSafeInteger(entity.lockpickGift) ? entity.lockpickGift : LOCKPICK_GIFT;   // LOCKPICK: the Wallet's law - one never restored from an older save is born with its picks (its kit's)
   snap.portalGift = Number.isSafeInteger(entity.portalGift) ? entity.portalGift : PORTAL_GIFT;   // PORTAL-GIFT: which gift this character has had - one never restored from an older save is born after it   // LOAN-AMNESTY: which amnesty this character has had - a character never restored from an older save is born after the last
+  snap.portalBookGift = Number.isSafeInteger(entity.portalBookGift) ? entity.portalBookGift : PORTAL_BOOK_GIFT;   // PORTAL-BOOK: the Wallet's law - a new character's kit holds its book
+  snap.portalBook = readPortalBook(entity.portalBook);   // PORTAL-BOOK: the kept house doors
   // TR4: SerializablePlayer.cs:180 - the BOARDING MEMORY is saved
   // beside the deed. Without it a save taken at sea loads with no way
   // back: IsOnShip needs the memory to answer true, so disembarking
@@ -927,6 +930,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;   // RESTORE: its customs mark, or none
   entity.loanAmnesty = Number.isSafeInteger(snap.loanAmnesty) ? snap.loanAmnesty : 0;   // LOAN-AMNESTY: a save from before the first amnesty has had none
   entity.portalGift = Number.isSafeInteger(snap.portalGift) ? snap.portalGift : 0;   // PORTAL-GIFT: a save from before the gift has had none
+  entity.portalBookGift = Number.isSafeInteger(snap.portalBookGift) ? snap.portalBookGift : 0;   // PORTAL-BOOK: a save from before the book has had none
+  entity.portalBook = readPortalBook(snap.portalBook);   // PORTAL-BOOK: a spot outside its law is dropped
   entity.walletGift = Number.isSafeInteger(snap.walletGift) ? snap.walletGift : 0;   // WALLET1: a save from before the wallet has had none
   entity.lockpickGift = Number.isSafeInteger(snap.lockpickGift) ? snap.lockpickGift : 0;   // LOCKPICK: a save from before the lockpick has had none
   entity.binderGift = Number.isSafeInteger(snap.binderGift) ? snap.binderGift : 0;   // CARDS8
@@ -1003,6 +1008,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   cleanBinders(entity.items);   // AUDIT CARDS-5 C1: a binder's decks from an old, foreign or edited save made sound (the load copies a record whole)
   giveBinderGift(entity);   // CARDS8: and the Card Binder and its starter deck, once - at the pack's end too
   giveLockpickGift(entity);   // LOCKPICK: and a picking class from before the lockpick, its picks - at the pack's end too
+  givePortalBookGift(entity);   // PORTAL-BOOK: and the Portal Book, once - at the pack's end too
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).filter((a) => effectKindLoaded(a.kind)).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312); AUDIT DUEL1 B4: nor a duel's spell a save from before the filter kept; AUDIT PRE-MERGE 0928 S3: nor an effect of a mod not loaded (Come Sail Away's water walk)
   // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps
   // the two PLAYED flags and the day (VampirismInfection.cs:221-251,

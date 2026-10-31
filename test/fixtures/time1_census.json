@@ -1328,6 +1328,12 @@
    "has": "export const frontDayStartMs = (day) => Math.round(wallMsForClassicMinutes(day * FRONT_DAY_MINUTES));",
    "clock": "event",
    "why": "a game day's start as relay ms - the fronts' rows' clocks (FRONTS)"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedShop.js",
+   "has": "export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());",
+   "clock": "event",
+   "why": "the shop's now (AUDIT-STOREFRONT III B8) - the daily wares' UTC day, a ware's window and the season's, on the relay's instant, so every device says Buy at the instant the service sells"
   }
  ]
 }

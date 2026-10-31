@@ -112,6 +112,7 @@ The claws strike in them (`playerWeapon.js:"get wraps() { return this.wrapsOf(th
 lines and gems ride the claws' roll as a fist's, their skill lines and enchantments count while worn, and between players
 their lines are the claws' (PvP-Rework PVP-GEAR). The loot ladder's blow powers stay off the claws (BAL10).
 
-The pack window stays shut. A press on a pile or a body takes the lot, quick loot on or off
-(`quickLoot.js:"const beast = !!racialSuppressInventory(playerEntity);"`), and a picked item comes into the pack. A
+The pack window stays shut. With quick loot on, a press on a pile or a body takes one row - the one the plaque has lit,
+else its first - and P takes the lot (WERE-PICK, `bugs/Field-Bugs-2026-10-30g.md`). With quick loot off a press takes
+the lot (`quickLoot.js:"if (how === 'all' || (beast && !quickLootOn())) {"`). A picked item comes into the pack. A
 potion on the hotbar is drunk; any other pack item stays refused (`quickslots.js:"if (sup && !isPotion(r?.item))"`).

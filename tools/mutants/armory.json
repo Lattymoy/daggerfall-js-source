@@ -124,8 +124,8 @@
   {
     "name": "ARMORY-the-forearm-drawn-on-a-card",
     "file": "src/render/armoryPass.js",
-    "old": "        if (full) tube(0, el, wa, 0.054, 0.046);",
-    "new": "        tube(0, el, wa, 0.054, 0.046);",
+    "old": "        if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);",
+    "new": "        tube(0, el, wa, 0.054 * a, 0.046 * a);",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -160,7 +160,7 @@
   {
     "name": "ARMORY-a-beast-dressed",
     "file": "src/render/armoryPass.js",
-    "old": "w.kindle : 1)) * (w.torn >= 0 ? 0 : 1);",
+    "old": "w.kindle : 1)) * (w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1);",
     "new": "w.kindle : 1));",
     "tests": [
       "test/render/armory.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "ARMORY-the-kit-never-said-again",
     "file": "src/scenes/auraHost.js",
-    "old": " || (armoryHeard !== undefined && kit !== armoryHeard)) {",
-    "new": ") {",
+    "old": " || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard",
+    "new": " || (effectsHeard",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "ARMORY-a-peers-morrowind-bones-unread",
     "file": "src/scenes/auraHost.js",
-    "old": "if (body && poseFromBones(body.bones, w.pose)) {",
-    "new": "if (body && poseFromBones(body, w.pose)) {",
+    "old": "if (body && poseFromBones(body.bones, w.pose, w.torn >= 0)) {",
+    "new": "if (body && poseFromBones(body, w.pose, w.torn >= 0)) {",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "ARMORY-the-sigils-back-inside-the-torso",
     "file": "src/render/armoryPass.js",
-    "old": "-(pose.card ? 0.24 : 0.27) * s)",
-    "new": "-(pose.card ? 0.24 : 0.2) * s)",
+    "old": ": (pose.card ? 0.24 : 0.27) * s))",
+    "new": ": (pose.card ? 0.24 : 0.2) * s))",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -268,7 +268,7 @@
   {
     "name": "ARMORY-the-arrival-in-english",
     "file": "src/ui/accountFlow.js",
-    "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
+    "old": "  if (kind === 'armory') return armoryPieceName(key);\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"
@@ -305,8 +305,8 @@
   {
     "name": "ARMORY-the-set-priced-as-the-singles",
     "file": "src/net/shopLaw.js",
-    "old": "ware('armory', 'eternalset', 2000, 256)",
-    "new": "ware('armory', 'eternalset', 3000, 256)",
+    "old": "ware('armory', 'eternalset', 2000, {",
+    "new": "ware('armory', 'eternalset', 3000, {",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "ARMORY-the-set-holding-nothing",
     "file": "src/net/shopLaw.js",
-    "old": "(kind === 'armory' ? armoryWarePieces(w.key) : [w.key])",
-    "new": "[w.key]",
+    "old": "{ ...pre(256), gives: armoryLinePieces(ARMORY_SETS.eternalset).map((p) => `armory:${p.key}`) }",
+    "new": "pre(256)",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "ARMORY-a-single-sold-over-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "return gives.length > 0 && gives.every(",
-    "new": "return gives.length > 1 && gives.every(",
+    "old": "    for (const g of w?.gives ?? []) if (!out.has(g) && !lost.has(g)) { out.add(g); stack.push(g); }\n",
+    "new": "",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "ARMORY-four-singles-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "gives.every((k) => shopKeysOf(bits, 'armory').includes(k))",
-    "new": "gives.some((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "old": "  if (!w || held.includes(w.id)) return 0;\n  return w.gives.length ? w.gives.reduce(",
+    "new": "  if (!w || held.includes(w.id) || w.gives.some((g) => held.includes(g))) return 0;\n  return w.gives.length ? w.gives.reduce(",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -555,6 +555,105 @@
     "file": "src/render/armoryPose.js",
     "old": "rows = at0.map((r) => Math.round(r * A));",
     "new": "rows = at0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-every-piece-off-the-beast",
+    "file": "src/render/armoryPass.js",
+    "old": "(w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1)",
+    "new": "(w.torn >= 0 ? 0 : 1)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-crown-on-the-muzzle",
+    "file": "src/render/armoryPass.js",
+    "old": "export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);",
+    "new": "export const ARMORY_BEAST_SLOTS = Object.freeze(['head', 'torso', 'arms', 'legs']);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-at-a-persons-scale",
+    "file": "src/render/armoryPose.js",
+    "old": "const k = beast ? ARMORY_BEAST_FIT : 1, face",
+    "new": "const k = 1, face",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-back-a-persons",
+    "file": "src/render/armoryPass.js",
+    "old": "-(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)",
+    "new": "-((pose.card ? 0.24 : 0.27) * s)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-chest-on-its-shoulders",
+    "file": "src/render/armoryPose.js",
+    "old": "const drop = beast ? ARMORY_BEAST_CHEST.down : 0;",
+    "new": "const drop = 0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-bands-inside-the-wolfs-arms",
+    "file": "src/render/armoryPass.js",
+    "old": "const a = pose.arm > 0 ? pose.arm : 1;",
+    "new": "const a = 1;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-chest-on-its-leaning-spine",
+    "file": "src/render/armoryPose.js",
+    "old": "beast && spine ? [(L[0] + R[0]) / 2, spine[1] - drop, (L[2] + R[2]) / 2 + face] :",
+    "new": "beast && spine ? [spine[0], spine[1] - drop, spine[2] + face] :",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-greaves-over-the-hock",
+    "file": "src/render/armoryPass.js",
+    "old": "ft = pose.hock ? [hock[0], at[1] + 0.1 * s, hock[2]] :",
+    "new": "ft = pose.hock ? add(hock, UP, -0.06 * s) :",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-left-on-a-person",
+    "file": "src/render/armoryPose.js",
+    "old": "out.scale = k; out.back = 0; out.arm = 1; out.hock = false; out.dx.fill(0);",
+    "new": "out.scale = k; out.back = 0; out.dx.fill(0);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-left-on-a-sprite",
+    "file": "src/render/armoryPose.js",
+    "old": "out.back = 0; out.arm = 1; out.hock = false;\n",
+    "new": "out.back = 0;\n",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-paperdolls-wolf-dressed",
+    "file": "src/render/armoryPass.js",
+    "old": "(w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot))",
+    "new": "(!ARMORY_BEAST_SLOTS.includes(slot))",
     "tests": [
       "test/render/armory.test.js"
     ]
