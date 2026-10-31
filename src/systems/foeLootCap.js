@@ -46,6 +46,7 @@ import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // KIT-ROLL
 import { renownLootQuarters, lootEased } from './renownLoot.js';
 import { isCardRecord } from '../net/card/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
 import { withSkillLean } from './loot/lootSkillLean.js';   // SKILL-LEAN
+import { templateDropSource } from './pve/pveDrops.js';   // TEMPLATE-DROPS
 
 /** CARDS9 (Tavern-Cards section 32): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
  *  common blade (rank 2: past a supply's 1 and a Common piece's 0, level with a Magic piece's). */
@@ -98,7 +99,7 @@ export const titledFoe = (entity) => !!(entity?.eliteFoe || entity?.champion || 
  */
 export function plainFoeLootRule(entity, basics = null) {
   if (!entity || titledFoe(entity)) return null;
-  if (corpseSource(basics, entity.level, entity.mobileType).boss) return null;
+  if (templateDropSource(entity, corpseSource(basics, entity.level, entity.mobileType)).boss) return null;   // TEMPLATE-DROPS: a template foe's rank
   const eliteDungeon = !!entity.elite;
   const wide = wildFoeLoot(entity);   // WILD1: a foe of the open zone - "double drops" (WILD2: its ring's share), carried past the cap
   return { cap: Math.ceil((eliteDungeon ? ELITE_DUNGEON_FOE_LOOT_CAP : PLAIN_FOE_LOOT_CAP) * wide), plainLadder: !eliteDungeon };
@@ -276,7 +277,7 @@ export function rollCorpseKit(entity, opts = {}) {
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */
 function rollKitPieces(entity, { rolls = Math.random, luck = 50, quarters = undefined, find: findIn = undefined } = {}) {   // PARTY-LOOT: the roll's RENOWN-LOOT share and finders when named (a room's base), else the roller's
   if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];
-  const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };   // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe
+  const source = { ...templateDropSource(entity, corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType)), boss: false, weights: plainFoeRarityWeights(quarters) };   // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe
   const find = findIn ?? legendaryFindMult();
   const minted = [];
   entity.items.forEach((it, i) => {
@@ -296,7 +297,7 @@ function rollKitPieces(entity, { rolls = Math.random, luck = 50, quarters = unde
 function rollKitGarments(entity, { rolls = Math.random, luck = 50, quarters = undefined, find: findIn = undefined } = {}) {   // PARTY-LOOT: as rollKitPieces
   if (!lootRarityOn() || entity?.revenant || !Array.isArray(entity?.items)) return [];
   // the kit's own source, as its pieces' (AUDIT 625 L3: the plain ladder at the roller's Renown, never a boss's)
-  const kit = corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType);
+  const kit = templateDropSource(entity, corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType));
   kit.boss = false;
   kit.weights = plainFoeRarityWeights(quarters);
   const find = findIn ?? legendaryFindMult();

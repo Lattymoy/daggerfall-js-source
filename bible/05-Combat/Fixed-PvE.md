@@ -308,3 +308,18 @@ raid boss is held to its area: `regionalTemplates` gives it only where `zoneArea
 wrathful, never both, because the two together beat a party of ten nine times in ten.
 All ten land within the report's edge. Where a raid stands in the world comes with the spawns. The tests:
 `pve_core.test.js`, `pve_bestiary.test.js`.
+
+## 20. A template foe's drop reads the foe (TEMPLATE-DROPS, 2026-10-31)
+
+The owner: "jewelery armor weapons", "that need fixed". A template foe's drop read its old body: its Daggerfall kind's
+level set the tier, so a level 40 rat rolled as a level 1 one, and a kind of level 18 or more rolled the boss ladder.
+Daggerfall gives a creature no gear and no foe jewellery.
+
+Now (`pve/pveDrops.js`, `pve/pveDropGear.js`) the tier is the foe's own level, and the boss ladder is for Strong and up.
+A Normal is a plain foe, capped at three pieces. A template foe carries jewellery 15% of the time, a body that casts
+50%. A creature carries a weapon or armour 30% of the time. A ranked foe carries more: one piece for Strong, two for
+Elite, three for a boss, five for a raid boss. The corpse's roll ladders all of it. The tests: `pve_drops.test.js`.
+
+OVER-GEAR (the owner's pick, 2026-10-31: "Cut gear past 10 levels over"): a template foe 10 or more levels under the
+character it rolls for drops no gear, only its gold and supplies, so a high character gains nothing farming a starter
+zone (`pveDropGear.js` `stripOverGear`). The gate is the character's real level, Mentor Mode's or not.

@@ -27,6 +27,7 @@ import { generateItems, addEnemyLootExtras, enemyLootTableKey, createRandomWeapo
 import { isAmmunition } from '../systems/item/itemTemplates.js';   // LOOT7: a champion's minted piece is never ammunition
 import { enemyLootSpawned } from '../characters/enemy/enemyEntity.js';   // OH-E: EnemyEntity.OnLootSpawned
 import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/roleplayRealismItems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
+import { addTemplateGear, stripOverGear } from '../systems/pve/pveDropGear.js';   // TEMPLATE-DROPS; OVER-GEAR
 import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
 import { rollCorpseLoot, lootRarityOn, rarityRank, RARITIES, rarityEligible, applyRarity, lastPass, stampWonWeapons } from '../systems/loot/lootRarity.js';   // RF2: and the port's, after it; LOOT7: a champion's guarantee
 import { championOf } from '../systems/champions.js';   // LOOT7: the champions' traits register at import
@@ -163,6 +164,7 @@ function rollEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random
   addEnemyLootExtras(entity.items, basics, rolls, { quarters: ease });
   const keep = plainFoeLootKeep(ease);
   if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => { if (isGoldPieces(it) || rolls() < keep) return true; rejects?.push(it); return false; });   // PLAIN-LOOT: three pieces in four (LOOT-EASE; RENOWN-LOOT: by the roller's Renown), on the host's stream as the kit's cut is; PARTY-LOOT: what it let go, for the bonus
+  addTemplateGear(entity, rolls);   // TEMPLATE-DROPS: a template foe's own jewellery, weapon or armour, past the keep
   // RRI2: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) fires here, after
   // the trio and with the kit already in Items - the mod's
   // RandomConditionEnemyItems (RoleplayRealismItemsMod.cs:222-245) wears
@@ -177,6 +179,7 @@ function rollEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random
   if (plain) entity.lootCap = plain.cap;
   rollCorpseLoot(entity, basics, { rolls, luck, find, qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null, level: lootGateLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4: and its level (LOOT-GATE) - a scene's first foes are rolled before any host frame; MENTOR2: a mentor's real one
   capFoeLoot(entity);
+  stripOverGear(entity, lootGateLevel(player));   // OVER-GEAR: no gear from a template foe 10 levels under its roller
   return entity.items;
 }
 

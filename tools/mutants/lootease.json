@@ -124,8 +124,8 @@
   {
     "name": "KIT-ROLL-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };",
-    "new": "entity.level, entity.mobileType), boss: false };",
+    "old": "entity.level, entity.mobileType)), boss: false, weights: plainFoeRarityWeights(quarters) };",
+    "new": "entity.level, entity.mobileType)), boss: false };",
     "why": "the kit on the whole ladder: 0.09 is blue",
     "tests": [
       "test/systems/search1_searchables.test.js"

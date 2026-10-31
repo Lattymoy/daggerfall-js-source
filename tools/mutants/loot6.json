@@ -74,8 +74,8 @@
   {
     "name": "LOOT6-the-corpse-door-no-type",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  const source = corpseSource(basics, entity.level, entity.mobileType);   // LOOT6: its family",
-    "new": "  const source = corpseSource(basics, entity.level);   // LOOT6: its family",
+    "old": "  const source = templateDropSource(entity, corpseSource(basics, entity.level, entity.mobileType));   // LOOT6: its family",
+    "new": "  const source = templateDropSource(entity, corpseSource(basics, entity.level));   // LOOT6: its family",
     "tests": [
       "test/systems/loot/loot6_signatures.test.js"
     ]

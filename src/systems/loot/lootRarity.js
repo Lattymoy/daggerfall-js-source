@@ -82,6 +82,7 @@ import { recipeById, MASTERWORK } from '../../net/recipeLaw.js';   // NAME-KEPT:
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { SKILL_NAMES, SKILL_COUNT, SKILLS, MAGIC_SKILLS } from '../skills.js';
 import { skillLean, withSkillLean, SKILL_LEAN_GROUPS } from './lootSkillLean.js';   // SKILL-LEAN
+import { templateDropSource } from '../pve/pveDrops.js';   // TEMPLATE-DROPS: a template foe's level and rank
 import { weaponSkillUsed } from '../../characters/weapons.js';   // LOOT1: a weapon's skill affix leans to the skill that swings it
 import { ENCHANTMENT_TYPES } from '../../formats/magicDef.js';
 import { enchantmentName, enchantmentParamName } from '../enchantmentCatalogue.js';
@@ -2298,7 +2299,7 @@ export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50,
   const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
   const loot = (entity.items ?? []).filter((it) => it && !worn.has(it));
   const carried = loot.length;
-  const source = corpseSource(basics, entity.level, entity.mobileType);   // LOOT6: its family
+  const source = templateDropSource(entity, corpseSource(basics, entity.level, entity.mobileType));   // LOOT6: its family; TEMPLATE-DROPS: a template foe's level and rank
   const champ = typeof entity.champion === 'string' && entity.champion !== '';   // LOOT7: a champion is a stronger source
   const roll = () => rollLootRarity(loot, champ ? championSource(source, qualityMult) : { ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find, level });   // CHAMP-LOOT: a champion's own source (half an elite's); FOE-CAP: a plain foe's ladder
   if (entity.pveTemplate) withSkillLean(entity.level, roll); else roll();   // SKILL-LEAN: a template foe's drop leans to its killer

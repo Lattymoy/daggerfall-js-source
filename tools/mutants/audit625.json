@@ -22,8 +22,8 @@
   {
     "name": "AUDIT625-L3-the-boss-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };",
-    "new": "entity.level, entity.mobileType), weights: plainFoeRarityWeights(quarters) };",
+    "old": "entity.level, entity.mobileType)), boss: false, weights: plainFoeRarityWeights(quarters) };",
+    "new": "entity.level, entity.mobileType)), weights: plainFoeRarityWeights(quarters) };",
     "why": "a boss's kit on its multiplied ladder",
     "tests": [
       "test/systems/audit625_loot.test.js"
