@@ -113,12 +113,16 @@ same plot stands on the same ground, and never gives a retired one again. Each b
 terrace's pad (`padLaw.js`) is one law for the generator and the streamed ground.
 `settlementGen.js` makes a town in stages A to G; `settlementValidate.js` must answer nothing before it is saved.
 
-In the streamed world (`world/settle2/`, `scenes/settle2Host.js`) a baked town is a location on its pixel: an 8 x 8
-grid of its own blocks (a port block family), each building a shell model (ids from 8,000,000, one a shape) with a
-door, and an interior made from a donor of its role's pool. Its location index is -(42,000,000 + ordinal). It stands on
-the region's ground, nothing blended, its models laid from its plaza's plane. A place listed before it on its pixel
-keeps the pixel. A departure from DFU: an arrival at a town lands at its nearest way in, as a city's does - its grid is
-its whole pixel, so a village's edge landing would be the next pixel.
+In the streamed world (`world/settle2/`, `scenes/settle2Host.js`) a baked town is a location on its pixel: an 8 x 8 grid
+of its own blocks (a port block family), each building a shell model (ids from 8,000,000, one a shape) with a door, and
+an interior made from a donor of its role's pool. Its wall, gates, retaining walls, stairs, wells, stalls, docks,
+bridges and platforms are models of the same lane (`settle2Features.js`), each a pure function of its shape. Its
+location index is -(42,000,000 + ordinal). It stands on the region's ground, nothing blended, its models laid from its
+plaza's plane. A place listed before it on its pixel keeps the pixel, and a town stands only where the near grid streams
+its region's ground (Landforms on).
+
+A departure from DFU: an arrival at a town lands at its nearest way in, as a city's does - its grid is its whole pixel,
+so a village's edge landing would be the next pixel.
 
 ## Editing and publishing
 

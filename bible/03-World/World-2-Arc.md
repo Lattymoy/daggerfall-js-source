@@ -89,9 +89,9 @@ drawn by hand, and a bake that takes a document as its authored overrides (`tool
 Built: the services each role carries, the home key lane, the protected-property guard and its refusal, resource sites
 with stable ids, the ground law's binding, and a profile for every province. Since: the continent's inflow, province
 tiles, the two tunings the editor showed (straight rivers on filled flats, streaky ridges), and the baked towns standing
-in the streamed world with their doors and interiors (`world/settle2/`). Waiting, each its own slice: the towns' walls,
-gates, docks, wells, stalls and boardwalks as models, NPC navigation over a published region, and published regions
-(the owner's call).
+in the streamed world with their doors, interiors, walls, gates, terraces, stairs, wells, stalls, docks, bridges and
+stilt platforms (`world/settle2/`). Waiting, each its own slice: NPC navigation over a published region, and published
+regions (the owner's call).
 
 Seen in the game (2026-10-31, `?wg2=hammerfell-test`, headless): the region installs on every thread, the ground's
 bytes at (1100, 430) move from 55-58 to 83-89, and the pixel builds and stands with no error. The editor's close-ups
@@ -118,7 +118,7 @@ showed lake shores straight along cell edges and dune steps up to 5 m; the sampl
 - `test/world/gen2/wg2_continent.test.js` - the continent's drainage, inflow, downstream reach, the basin network.
 - `test/world/gen2/wg2_tiles.test.js` - nine provinces' tiles, the crossfade, the manifest's tilings, the lean cut.
 - `test/world/settle2/wg2towns.test.js`, `wg2towns_freeware.test.js` - the towns standing: lanes, blocks, doors,
-  shells, the plane, interiors from the freeware's donors.
+  shells, the plane, interiors from the freeware's donors. `wg2towns_features.test.js` - each feature's model and place.
 - `tools/mutants/wg2.json`, `tools/mutants/wg2towns.json` - the mutants. `tools/wg2TownProbe.mjs` - a town in the game.
 
 ## Port-Ledger
