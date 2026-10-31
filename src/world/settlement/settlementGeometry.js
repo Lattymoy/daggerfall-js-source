@@ -1,7 +1,8 @@
 // @ts-check
 // RMB-CONTRACTS RMBC1 (2026-10-31, bible/03-World/RMB-Contracts.md): the plane geometry a settlement plan is checked with.
 // A point is [east, north] in metres. Touching is not overlap: row houses share a wall and terraces share a rim.
-// Pure, and imports nothing. Not a DFU member.
+// Pure; its one import is exactMath.js, so every engine measures alike. Not a DFU member.
+import { dhypot } from './exactMath.js';
 
 /** How near counts as on a line, metres: past the 1.4 cm a point and a line rounded to the centimetre can stand apart. */
 export const GEOM_EPS = 0.02;
@@ -26,7 +27,7 @@ export function segmentDistance(p, a, b) {
   const dx = b[0] - a[0], dz = b[1] - a[1];
   const len2 = dx * dx + dz * dz;
   const t = len2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / len2)) : 0;
-  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dz));
+  return dhypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dz));
 }
 
 /** Distance from p to the ring's edge. @param {Pt} p @param {readonly Pt[]} ring */
@@ -52,7 +53,7 @@ export const strictlyIn = (p, ring, eps = GEOM_EPS) => pointInRing(p, ring) && e
 export const inOrOn = (p, ring, eps = GEOM_EPS) => pointInRing(p, ring) || edgeDistance(p, ring) <= eps;
 
 /** Which side of the line c-d p stands, by more than eps: 1, -1, or 0 on it. @param {Pt} c @param {Pt} d @param {Pt} p */
-const side = (c, d, p) => { const s = cross(c, d, p) / (Math.hypot(d[0] - c[0], d[1] - c[1]) || 1); return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0; };
+const side = (c, d, p) => { const s = cross(c, d, p) / (dhypot(d[0] - c[0], d[1] - c[1]) || 1); return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0; };
 
 /** The two segments cross at a point inside both. An end within GEOM_EPS of the other's line is on it, not across it:
  *  points rounded to the centimetre leave a shared wall a hair off true. @param {Pt} a @param {Pt} b @param {Pt} c @param {Pt} d */
@@ -68,7 +69,7 @@ export function ringOk(ring) {
   const n = ring.length;
   for (let i = 0; i < n; i++) {
     const a = ring[i], b = ring[(i + 1) % n];
-    if (Math.hypot(b[0] - a[0], b[1] - a[1]) <= GEOM_EPS) return false;
+    if (dhypot(b[0] - a[0], b[1] - a[1]) <= GEOM_EPS) return false;
     for (let j = i + 2; j < n; j++) {
       if (i === 0 && j === n - 1) continue;   // neighbours across the closing edge
       const c = ring[j], d = ring[(j + 1) % n];
@@ -83,7 +84,7 @@ function innerProbes(ring) {
   const sign = Math.sign(ringArea2(ring)), step = GEOM_EPS * 4;
   return ring.map((a, i) => {
     const b = ring[(i + 1) % ring.length];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const len = dhypot(b[0] - a[0], b[1] - a[1]) || 1;
     const nx = (-(b[1] - a[1]) / len) * sign, nz = ((b[0] - a[0]) / len) * sign;   // the inward normal
     return /** @type {Pt} */ ([(a[0] + b[0]) / 2 + nx * step, (a[1] + b[1]) / 2 + nz * step]);
   });
@@ -107,4 +108,19 @@ export function ringWithin(inner, outer) {
     if (!inOrOn([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], outer)) return false;
   }
   return innerProbes(inner).every((p) => pointInRing(p, outer));
+}
+
+/**
+ * The pad a point stands on: the smallest pad that holds it, since a pad may stand inside another (a raised square, a
+ * keep's mound) and is then the ground there. Null off every pad.
+ * @template {{ poly: readonly Pt[] }} P @param {readonly P[]} pads @param {Pt} p @returns {P|null}
+ */
+export function padAt(pads, p) {
+  let best = null, bestArea = Infinity;
+  for (const pad of pads) {
+    if (!inOrOn(p, pad.poly)) continue;
+    const a = Math.abs(ringArea2(pad.poly));
+    if (a < bestArea) { best = pad; bestArea = a; }
+  }
+  return best;
 }

@@ -118,7 +118,7 @@
   },
   {
     "name": "RMBC1-stairs-pitch-moved",
-    "file": "src/world/settlement/settlementContract.js",
+    "file": "src/world/settlement/settlementLimits.js",
     "old": "stairs: 0.75,",
     "new": "stairs: 1,",
     "tests": [

@@ -132,7 +132,8 @@
 import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
 import { townMeetsAbout, applyTownMeets, meetLiftAt } from './terrain/townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
-import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
+import { blendShapedBefore } from './terrain/townBlendBefore.js';
+import { standSettlementGround } from './settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's carve, for a record's move   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
@@ -1238,7 +1239,7 @@ const meetsOf = (met, shaped) => (met ?? []).map((m) => ({ px: m.px, py: m.py, m
 /** A field of a pixel's samples (`f(x, y)`, integer samples 0..span) read between them: the read the collider's own floor
  *  takes (world.js heightAt), held to the pixel - FLORA-GROUND: the ground's one law, the drawn quad's two triangles cut on
  *  its (x, y)-(x+1, y+1) diagonal (terrainSurface.js walkGroundAt). */
-function fieldBetween(f, span) {
+export function fieldBetween(f, span) {
   return (sx, sy) => {
     const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));
     const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));
@@ -1315,6 +1316,19 @@ export function townMeetMovedField(woods, px, py, locationRect, about, hDim = HE
     blendLocationTerrain(now, avg, locationRect, hDim, ground, false, ground);
   }
   const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);
+  return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
+}
+
+/**
+ * RMB-CONTRACTS RMBC3 (PADS_FRAME_LAW 6): HOW FAR A SETTLEMENT'S PADS MOVED DFU'S OWN GROUND at pixel (px, py) under a record
+ * written before it - the kernel's ground with its settlement carved in, less the ground without (kernel units over
+ * MAX_TERRAIN_HEIGHT, as townMeetMovedField's); null where no settlement stands.
+ * @param {any} woods @param {number} px @param {number} py
+ */
+export function settlementMovedField(woods, px, py, hDim = HEIGHTMAP_DIMENSION) {
+  const ground = generateSamples(woods, px, py, hDim), now = Float32Array.from(ground);
+  if (!standSettlementGround(px, py, now)) return null;
+  const moved = now.map((v, i) => (v - ground[i]) * MAX_TERRAIN_HEIGHT);
   return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
 }
 

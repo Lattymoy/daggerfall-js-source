@@ -43,9 +43,11 @@ export const STREAMING_TERRAIN_SCALE = 1.25;
  *  world's grid (scenes/groundFrameHost.js). 3: RELIEF-PEAKS (bible/03-World/Tamriel.md) - DFU's own ground past the Bay
  *  stands its large map by WOODS.WLD's law of the small (world/tamriel/tamrielGround.js largeOfByte), where it stood a
  *  swell about 4.5: a record before it is moved by its ground's own move (world/landforms.js groundMovedField). 4: FB1028,
- *  a town's blend (townGroundMovedField). 5: ACROSS-EDGE, the meets (townMeetMovedField). Not the row's law (AUDIT
- *  LANDFORMS C1): a build without the row, or one that never knew the stamp, reads a record as it always did. */
-export const GROUND_FRAME_LAW = 5;
+ *  a town's blend (townGroundMovedField). 5: ACROSS-EDGE, the meets (townMeetMovedField). 6: RMB-CONTRACTS, a settlement's
+ *  carve (settlementMovedField). Not the row's law (AUDIT LANDFORMS C1): a build without the row reads a record as it did. */
+export const GROUND_FRAME_LAW = 6;
+/** RMB-CONTRACTS RMBC3: the frame's law from which a record stood the ground a settlement's pads carved (settlementMovedField). */
+export const PADS_FRAME_LAW = 6;
 /** ACROSS-EDGE (FB1029): the frame's law from which a record stood the ground the towns' meets raised. */
 export const MEET_FRAME_LAW = 5;
 /** FB1028: the frame's law from which a record stood a town's blend of today (townGroundMovedField). */

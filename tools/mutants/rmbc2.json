@@ -1,7 +1,7 @@
 [
   {
     "name": "RMBC2-padat-not-smallest",
-    "file": "src/world/settlement/settlementContract.js",
+    "file": "src/world/settlement/settlementGeometry.js",
     "old": "    if (a < bestArea) { best = pad; bestArea = a; }",
     "new": "    if (true) { best = pad; bestArea = a; }",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "RMBC2-relax-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "      f.h = Math.max(least(f), f.h + s * share);\n      t.h = Math.max(least(t), t.h - s * (1 - share));\n",
     "new": "",
     "tests": [
@@ -118,7 +118,7 @@
   },
   {
     "name": "RMBC2-deck-floor-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);",
     "new": "const least = (c) => -Infinity;",
     "tests": [
@@ -127,7 +127,7 @@
   },
   {
     "name": "RMBC2-terrace-cap-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02,",
     "new": "max: pitch * 0.95 - 0.02,",
     "tests": [
@@ -136,7 +136,7 @@
   },
   {
     "name": "RMBC2-bridge-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "const bridge = f.raised && t.raised && gap > 0;",
     "new": "const bridge = false;",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "RMBC2-landing-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }",
     "new": "if (false) { g.raised = false; g.h = g.natural; }",
     "tests": [
@@ -155,7 +155,7 @@
   {
     "name": "RMBC2-front-sag-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const half = (p1 - p0) / 2, sag = rf * (1 - Math.cos(half));",
+    "old": "const half = (p1 - p0) / 2, sag = rf * (1 - dcos(half));",
     "new": "const half = (p1 - p0) / 2, sag = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
@@ -164,7 +164,7 @@
   {
     "name": "RMBC2-back-sag-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "backSag = (rf + depth) * (1 - Math.cos(Math.min(half, step / 2)));",
+    "old": "backSag = (rf + depth) * (1 - dcos(Math.min(half, step / 2)));",
     "new": "backSag = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
@@ -182,7 +182,7 @@
   {
     "name": "RMBC2-temple-divine-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "factionId: type === T.Temple ? st.temple :",
+    "old": "factionId: type === T.Temple ? DIVINES[st.temple] :",
     "new": "factionId: type === T.Temple ? 0 :",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
@@ -198,17 +198,17 @@
     ]
   },
   {
-    "name": "RMBC2-unseeded",
+    "name": "RMBC2-dress-unseeded",
     "file": "src/world/settlement/settlementGen.js",
     "old": "const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
     "new": "const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
     "tests": [
-      "test/world/settlement/rmbc2_gen.test.js"
+      "test/world/settlement/rmbc3_exact.test.js"
     ]
   },
   {
     "name": "RMBC2-shore-sag-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "back = shore.at - 2 - sag;",
     "new": "back = shore.at - 2;",
     "tests": [
@@ -226,7 +226,7 @@
   },
   {
     "name": "RMBC2-roads-unread",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "const wants = roads.length ? roads.map(",
     "new": "const wants = false ? roads.map(",
     "tests": [
@@ -262,7 +262,7 @@
   },
   {
     "name": "RMBC2-keep-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "if (A.keep && cells.has('plaza')) {",
     "new": "if (false) {",
     "tests": [
@@ -301,6 +301,15 @@
     "file": "src/world/settlement/settlementGeometry.js",
     "old": "export const GEOM_EPS = 0.02;",
     "new": "export const GEOM_EPS = 0.01;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-layout-unseeded",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
+    "new": "const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]

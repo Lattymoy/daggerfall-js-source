@@ -7,7 +7,9 @@
 import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';
-import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2 } from './settlementGeometry.js';
+import { dsin, dcos, dhypot } from './exactMath.js';
+import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt } from './settlementGeometry.js';
+export { padAt };
 
 /** Raised when the plan's shape changes, so a reader can refuse a plan it does not know. */
 export const SETTLEMENT_CONTRACT_VERSION = 1;
@@ -55,10 +57,8 @@ export const RMB_KEY_LIMIT = 0x80000;
 export const MINTED_KEY_MIN = 0x800000;
 export const MINTED_KEY_MAX = HOME_KEY_MAX - 1;
 
-/** Most a grade link may rise, metres: a step a walker takes without stairs. */
-export const STEP_MAX = 0.4;
-/** Most rise per metre of run, by link kind (our own numbers; DFU's towns are flat). */
-export const PITCH_MAX = Object.freeze({ grade: Infinity, stairs: 0.75, ramp: 0.25, bridge: 0.25 });
+import { STEP_MAX, PITCH_MAX } from './settlementLimits.js';
+export { STEP_MAX, PITCH_MAX };
 /** How far before a door its approach is read, metres (imperialHomes.js DOOR_OUT's distance). */
 export const APPROACH = 0.8;
 /** How far a door may stand from its building's wall, metres. */
@@ -80,21 +80,6 @@ export function rmbPartsOfKey(key) {
 
 /** A building's name in logs and the editor: its place and key. @param {number} place @param {number} key */
 export const buildingIdText = (place, key) => `b:${place >>> 0}.${key}`;
-
-/**
- * The pad a point stands on: the smallest pad that holds it, since a pad may stand inside another (a raised square, a
- * keep's mound) and is then the ground there. Null off every pad.
- * @param {readonly Pad[]} pads @param {Pt} p @returns {Pad|null}
- */
-export function padAt(pads, p) {
-  let best = null, bestArea = Infinity;
-  for (const pad of pads) {
-    if (!inOrOn(p, pad.poly)) continue;
-    const a = Math.abs(ringArea2(pad.poly));
-    if (a < bestArea) { best = pad; bestArea = a; }
-  }
-  return best;
-}
 
 /** The pad under a point and its height, or null off every pad. @param {SettlementPlan} plan @param {number} east @param {number} north */
 export function groundAt(plan, east, north) {
@@ -168,7 +153,7 @@ export function validateSettlement(plan) {
     if (!from || !to) { bad('pad-missing', at, `joins pad '${from ? l.to : l.from}', which the plan does not have`); continue; }
     if (!LINK_KINDS.includes(l.kind) || !ptOk(l.a) || !ptOk(l.b) || !(l.width > 0)) { bad('link', at, 'needs a kind, two ends and a width'); continue; }
     if (padOf(l.a) !== from || padOf(l.b) !== to) bad('link-end', at, `its ends must stand on pads ${l.from} and ${l.to}`);
-    const rise = Math.abs(to.y - from.y), run = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]);
+    const rise = Math.abs(to.y - from.y), run = dhypot(l.b[0] - l.a[0], l.b[1] - l.a[1]);
     if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {
       bad('link-steep', at, `rises ${rise.toFixed(2)} m over ${run.toFixed(2)} m, past what a ${l.kind} allows`);
     }
@@ -268,7 +253,7 @@ export function validateSettlement(plan) {
       if (!ptOk(e.at) || !fin(e.facing)) { bad('entrance', eat, 'needs a point and a facing'); continue; }
       if (edgeDistance(e.at, b.footprint) > WALL_REACH) { bad('entrance-off-wall', eat, `stands more than ${WALL_REACH} m from the wall`); continue; }
       const r = (e.facing * Math.PI) / 180;
-      /** @type {Pt} */ const out1 = [e.at[0] + Math.sin(r) * APPROACH, e.at[1] + Math.cos(r) * APPROACH];
+      /** @type {Pt} */ const out1 = [e.at[0] + dsin(r) * APPROACH, e.at[1] + dcos(r) * APPROACH];
       const before = pointInRing(out1, b.footprint) ? null : padOf(out1);
       if (!before || Math.abs(before.y - floor) > STEP_MAX) { bad('entrance-blocked', eat, `no ground within ${STEP_MAX} m of the floor ${APPROACH} m outside it`); continue; }
       if (!reached.has(before.id)) bad('unreachable', eat, `its pad '${before.id}' has no way from a gate`);

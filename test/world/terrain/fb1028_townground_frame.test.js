@@ -46,8 +46,8 @@ function shapeOf(x0, x1, y0, y1, m) {
 }
 
 test('FB1028 the records\' frame (GROUND_FRAME_LAW 4): a record written before it rides its town\'s blend\'s move - on the Bay too, the row on or off - and one stamped 4 takes none; RELIEF-PEAKS\' move still law 3\'s and past the Bay\'s (mutants: the stamp at 3; the town\'s move by law 3; the town\'s move dropped)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [5, 4, 3, 2]);   // PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5, the town's move its own law TOWN_FRAME_LAW 4 (test/world/fb1029_ground.test.js)
-  assert.equal(RECORD_GROUND_STAMP.groundFrame, 5);
+  assert.deepEqual([GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [6, 4, 3, 2]);   // PIN MOVED (RMB-CONTRACTS RMBC3): the stamp 6; PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5, the town's move its own law TOWN_FRAME_LAW 4 (test/world/fb1029_ground.test.js)
+  assert.equal(RECORD_GROUND_STAMP.groundFrame, 6);   // PIN MOVED (RMB-CONTRACTS RMBC3): records now stamp 6
   const now = (x) => 100 + x, town = (x) => 30 - x / 2, relief = (x) => 7 + x;   // the lift; the town's blend's move; RELIEF-PEAKS'
   const liftAt = (x) => now(x), ground = 500, off = 3.5, x = 12;   // DFU's ground today at the spot
   const state = { compensation: [0, 7, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };

@@ -4,30 +4,29 @@
 // settlement - its layout family, its size, its services and its features. A designer adds a row; the engine
 // (settlementGen.js) reads rows and never names a province. The numbers are ours: DFU's towns are RMB grids.
 import { THEATRE_KEYS } from '../worldWide/worldGrid.js';
-import { DIVINES } from '../../systems/guild/guildFactions.js';
 
 /**
  * @typedef {{ look: string, storeys: readonly [number, number], roof: string, frontage: readonly [number, number],
  *   depth: readonly [number, number], gap: number, street: number, lane: number, back: number, deck: number,
- *   terrace: number, temple: number }} SettlementStyle
+ *   terrace: number, temple: string }} SettlementStyle
  *   look: urban/townLook.js TOWN_LOOK's set, or the Bay's; frontage, depth: a plot's, metres; gap: between neighbours (0 a
  *   row); street, lane, back: a band's street, side lane and yard; deck: a raised town's height over its ground (0 cut in);
- *   terrace: the most a step between neighbouring pads rises; temple: the divine its temple serves (Temple.Divines)
+ *   terrace: the most a step between neighbouring pads rises; temple: the divine its temple serves (a Temple.Divines name)
  */
 const style = (/** @type {SettlementStyle} */ s) => Object.freeze(s);
 
 /** A style for every theatre (worldGrid.js THEATRE_KEYS). */
 export const SETTLEMENT_STYLES = Object.freeze({
-  IliacBay: style({ look: 'IliacBay', storeys: [1, 2], roof: 'gable', frontage: [9, 14], depth: [9, 13], gap: 2, street: 5, lane: 3, back: 2, deck: 0, terrace: 3, temple: DIVINES.Akatosh }),
-  HighRock: style({ look: 'HighRock', storeys: [2, 3], roof: 'gable', frontage: [7, 11], depth: [9, 12], gap: 0, street: 5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: DIVINES.Dibella }),
-  Hammerfell: style({ look: 'Hammerfell', storeys: [1, 2], roof: 'flat', frontage: [9, 14], depth: [10, 13], gap: 0, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: DIVINES.Arkay }),
-  Skyrim: style({ look: 'Skyrim', storeys: [1, 2], roof: 'steep', frontage: [10, 16], depth: [8, 11], gap: 3, street: 5, lane: 3, back: 3, deck: 0, terrace: 3.5, temple: DIVINES.Kynareth }),
-  Morrowind: style({ look: 'Morrowind', storeys: [1, 3], roof: 'dome', frontage: [8, 12], depth: [8, 12], gap: 2, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3.5, temple: DIVINES.Akatosh }),
-  Sumurset: style({ look: 'Sumurset', storeys: [2, 3], roof: 'hip', frontage: [10, 15], depth: [10, 14], gap: 3, street: 6, lane: 3, back: 3, deck: 0, terrace: 3, temple: DIVINES.Akatosh }),
-  Valenwood: style({ look: 'Valenwood', storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 4, terrace: 2, temple: DIVINES.Zenithar }),
-  Elsweyr: style({ look: 'Elsweyr', storeys: [1, 2], roof: 'flat', frontage: [8, 12], depth: [9, 12], gap: 1, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: DIVINES.Akatosh }),
-  BlackMarsh: style({ look: 'BlackMarsh', storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 1.4, terrace: 2, temple: DIVINES.Arkay }),
-  Imperial: style({ look: 'Imperial', storeys: [2, 3], roof: 'gable', frontage: [8, 12], depth: [10, 13], gap: 0, street: 6, lane: 3, back: 2, deck: 0, terrace: 3, temple: DIVINES.Stendarr }),
+  IliacBay: style({ look: 'IliacBay', storeys: [1, 2], roof: 'gable', frontage: [9, 14], depth: [9, 13], gap: 2, street: 5, lane: 3, back: 2, deck: 0, terrace: 3, temple: 'Akatosh' }),
+  HighRock: style({ look: 'HighRock', storeys: [2, 3], roof: 'gable', frontage: [7, 11], depth: [9, 12], gap: 0, street: 5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: 'Dibella' }),
+  Hammerfell: style({ look: 'Hammerfell', storeys: [1, 2], roof: 'flat', frontage: [9, 14], depth: [10, 13], gap: 0, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: 'Arkay' }),
+  Skyrim: style({ look: 'Skyrim', storeys: [1, 2], roof: 'steep', frontage: [10, 16], depth: [8, 11], gap: 3, street: 5, lane: 3, back: 3, deck: 0, terrace: 3.5, temple: 'Kynareth' }),
+  Morrowind: style({ look: 'Morrowind', storeys: [1, 3], roof: 'dome', frontage: [8, 12], depth: [8, 12], gap: 2, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3.5, temple: 'Akatosh' }),
+  Sumurset: style({ look: 'Sumurset', storeys: [2, 3], roof: 'hip', frontage: [10, 15], depth: [10, 14], gap: 3, street: 6, lane: 3, back: 3, deck: 0, terrace: 3, temple: 'Akatosh' }),
+  Valenwood: style({ look: 'Valenwood', storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 4, terrace: 2, temple: 'Zenithar' }),
+  Elsweyr: style({ look: 'Elsweyr', storeys: [1, 2], roof: 'flat', frontage: [8, 12], depth: [9, 12], gap: 1, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: 'Akatosh' }),
+  BlackMarsh: style({ look: 'BlackMarsh', storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 1.4, terrace: 2, temple: 'Arkay' }),
+  Imperial: style({ look: 'Imperial', storeys: [2, 3], roof: 'gable', frontage: [8, 12], depth: [10, 13], gap: 0, street: 6, lane: 3, back: 2, deck: 0, terrace: 3, temple: 'Stendarr' }),
 });
 
 /** A theatre's style by its index (0 the Bay, 1..9 the provinces). @param {number} theatre */
