@@ -52,8 +52,8 @@
   {
     "name": "MWHEADS1-the-face-read-as-the-hair",
     "file": "tools/bakeHeads.mjs",
-    "old": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1,",
-    "new": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 0,",
+    "old": "  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1, 'tx_b_n_breton_m_h04.png', [",
+    "new": "  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 0, 'tx_b_n_breton_m_h04.png', [",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "MWHEADS1-two-eyepatches",
     "file": "tools/bakeHeads.mjs",
-    "old": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png',",
-    "new": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H0411.png',",
+    "old": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png', // tx_b_n_breton_m_h04.png",
+    "new": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H0411.png', // tx_b_n_breton_m_h04.png",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "MWHEADS1-AUDIT-box-minimum-only",
     "file": "tools/bakeHeads.mjs",
-    "old": "Math.abs(mesh.bounds.max[k] - p.box[1][k])]);",
-    "new": "0]);",
+    "old": "  const off = [0, 1, 2].flatMap((k) => [\n    Math.abs(mesh.bounds.min[k] - p.box[0][k]),\n    Math.abs(mesh.bounds.max[k] - p.box[1][k]),\n  ]);",
+    "new": "  const off = [0, 1, 2].flatMap((k) => [Math.abs(mesh.bounds.min[k] - p.box[0][k]), 0]);",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

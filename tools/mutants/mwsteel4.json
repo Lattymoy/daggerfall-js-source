@@ -40,8 +40,8 @@
   {
     "name": "MWSTEEL4-the-skirt-hangs-stiff",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "top: 84, bottom: 64.5, share: 0.7, centre: 4 }),",
-    "new": "top: 84, bottom: 64.5, share: 0, centre: 4 }),",
+    "old": "    share: 0.7,",
+    "new": "    share: 0,",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "MWSTEEL4-the-fingers-dropped",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]), bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),\n",
-    "new": "",
+    "old": "      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]),\n      bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),\n      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]),",
+    "new": "      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]),",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]

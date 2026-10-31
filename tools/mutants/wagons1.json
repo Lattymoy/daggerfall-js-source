@@ -182,8 +182,8 @@
   {
     "name": "WAGONS1-a-role-dropped",
     "file": "tools/bakeWagons.mjs",
-    "old": "const parts = Object.entries(spec.roles).map(([name, r]) => {",
-    "new": "const parts = Object.entries(spec.roles).slice(1).map(([name, r]) => {",
+    "old": "    const parts = Object.entries(spec.roles).map(([name, r]) => {\n      const o = byName.get(name);\n      const b = boxOf(o.scene);\n      const far = Math.max(...[b.min, b.max].flatMap((end, e) => end.map((v, k) => Math.abs(v - r.box[e][k]))));\n      if (!(far <= BOX_SLACK))\n        throw new Error(\n          `${name} (the ${spec.key}'s ${r.role}) was read standing in the box ${JSON.stringify(r.box)} and stands in ${JSON.stringify(mm(b))}; read the scene again (--list) before re-baking`,\n        );\n      const part = bakePart(\n        r.role,\n        o,\n        o.polygons.map((_, k) => k),\n        place,\n      );\n      // the part's own turning centre - a wheel's origin, where Mac's cylinder was drawn about - in the wagon's frame\n      return { ...part, origin: place(o.origin).map((v) => Math.round(v * 1e4) / 1e4 + 0) };\n    });",
+    "new": "    const parts = Object.entries(spec.roles)\n      .slice(1)\n      .map(([name, r]) => {\n        const o = byName.get(name);\n        const b = boxOf(o.scene);\n        const far = Math.max(...[b.min, b.max].flatMap((end, e) => end.map((v, k) => Math.abs(v - r.box[e][k]))));\n        if (!(far <= BOX_SLACK))\n          throw new Error(\n            `${name} (the ${spec.key}'s ${r.role}) was read standing in the box ${JSON.stringify(r.box)} and stands in ${JSON.stringify(mm(b))}; read the scene again (--list) before re-baking`,\n          );\n        const part = bakePart(\n          r.role,\n          o,\n          o.polygons.map((_, k) => k),\n          place,\n        );\n        // the part's own turning centre - a wheel's origin, where Mac's cylinder was drawn about - in the wagon's frame\n        return { ...part, origin: place(o.origin).map((v) => Math.round(v * 1e4) / 1e4 + 0) };\n      });",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WAGONS1-the-frame-unread",
     "file": "tools/bakeWagons.mjs",
-    "old": "const place = (p) => toWagon(p, spec.frame);",
-    "new": "const place = (p) => toWagon(p, wagons[0].frame);",
+    "old": "    const place = (p) => toWagon(p, spec.frame);",
+    "new": "    const place = (p) => toWagon(p, wagons[0].frame);",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WAGONS1-a-wagon-not-written",
     "file": "tools/bakeWagons.mjs",
-    "old": "    out[spec.key] = { bake: 'tools/bakeWagons.mjs',",
-    "new": "    if (spec.key !== 'caravan') out[spec.key] = { bake: 'tools/bakeWagons.mjs',",
+    "old": "    out[spec.key] = {\n      bake: 'tools/bakeWagons.mjs',\n      source,\n      sha256,\n      creator,\n      wagon: spec.key,\n      frame: { ...spec.frame },\n      parts,\n    };",
+    "new": "    if (spec.key !== 'caravan')\n      out[spec.key] = {\n        bake: 'tools/bakeWagons.mjs',\n        source,\n        sha256,\n        creator,\n        wagon: spec.key,\n        frame: { ...spec.frame },\n        parts,\n      };",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WAGONS1-the-forward-unread",
     "file": "tools/bakeWagons.mjs",
-    "old": "if (frame.forward === '-Y') return",
-    "new": "if (frame.forward) return",
+    "old": "  if (frame.forward === '-Y') return [(frame.centre - x) * s, (z - frame.ground) * s, (frame.rear - y) * s];",
+    "new": "  if (frame.forward) return [(frame.centre - x) * s, (z - frame.ground) * s, (frame.rear - y) * s];",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WAGONS1-the-ground-off",
     "file": "tools/bakeWagons.mjs",
-    "old": "[(frame.centre - x) * s, (z - frame.ground) * s, (frame.rear - y) * s]",
-    "new": "[(frame.centre - x) * s, z * s, (frame.rear - y) * s]",
+    "old": "  if (frame.forward === '-Y') return [(frame.centre - x) * s, (z - frame.ground) * s, (frame.rear - y) * s];",
+    "new": "  if (frame.forward === '-Y') return [(frame.centre - x) * s, z * s, (frame.rear - y) * s];",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WAGONS1-the-rear-off",
     "file": "tools/bakeWagons.mjs",
-    "old": "[(x - frame.centre) * s, (z - frame.ground) * s, (y - frame.rear) * s]",
-    "new": "[(x - frame.centre) * s, (z - frame.ground) * s, y * s]",
+    "old": "  if (frame.forward === '+Y') return [(x - frame.centre) * s, (z - frame.ground) * s, (y - frame.rear) * s];",
+    "new": "  if (frame.forward === '+Y') return [(x - frame.centre) * s, (z - frame.ground) * s, y * s];",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WAGONS1-a-skip-unchecked",
     "file": "tools/bakeWagons.mjs",
-    "old": "if (skip) { const fault = skipFault(o, skip, wagons); if (fault) throw new Error(fault); continue; }",
-    "new": "if (skip) { continue; }",
+    "old": "      const fault = skipFault(o, skip, wagons);\n      if (fault) throw new Error(fault);\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "WAGONS1-the-box-unchecked",
     "file": "tools/bakeWagons.mjs",
-    "old": "if (!(far <= BOX_SLACK)) throw",
-    "new": "if (!(far <= Infinity)) throw",
+    "old": "      if (!(far <= BOX_SLACK))",
+    "new": "      if (!(far <= Infinity))",
     "tests": [
       "test/tooling/wagons1_bake.test.js"
     ]

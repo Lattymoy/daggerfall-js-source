@@ -2,8 +2,8 @@
   {
     "name": "GATE-FBX-the-ground-unread",
     "file": "tools/bakeGate.mjs",
-    "old": "(z - frame.ground) * frame.scale",
-    "new": "z * frame.scale",
+    "old": "  (z - frame.ground) * frame.scale,",
+    "new": "  z * frame.scale,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATE-FBX-the-mirror",
     "file": "tools/bakeGate.mjs",
-    "old": "(y - frame.y) * frame.scale]",
-    "new": "(frame.y - y) * frame.scale]",
+    "old": "  (y - frame.y) * frame.scale,",
+    "new": "  (frame.y - y) * frame.scale,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "GATE-FBX-the-winding-left",
     "file": "tools/bakeGate.mjs",
-    "old": "    polygons.push([...poly].reverse());   // the mirror: the port's winding",
+    "old": "    polygons.push([...poly].reverse()); // the mirror: the port's winding",
     "new": "    polygons.push([...poly]);",
     "tests": [
       "test/tooling/gatefbx.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "GATE-FBX-the-triangles-wound-as-drawn",
     "file": "tools/bakeGate.mjs",
-    "old": "triangles.push(poly[a], poly[c], poly[b2]);",
-    "new": "triangles.push(poly[a], poly[b2], poly[c]);",
+    "old": "      triangles.push(poly[a], poly[c], poly[b2]);",
+    "new": "      triangles.push(poly[a], poly[b2], poly[c]);",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]

@@ -177,8 +177,8 @@
   {
     "name": "NIBEN-relief-bake-reads-the-river",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "palette: pal, relief: false, niben: false })",
-    "new": "palette: pal, relief: false })",
+    "old": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
+    "new": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]

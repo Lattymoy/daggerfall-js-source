@@ -2,8 +2,8 @@
   {
     "name": "AUDITTESA2G-G1-the-bake-masks-the-sea-again",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "    cells[j * w + i] = curve[",
-    "new": "    if (!trace.land[Math.floor(py) * tw + Math.floor(px)]) continue;\n    cells[j * w + i] = curve[",
+    "old": "      cells[j * w + i] = curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))];",
+    "new": "      if (!trace.land[Math.floor(py) * tw + Math.floor(px)]) continue;\n      cells[j * w + i] = curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))];",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITTESA2G-G2-the-bake-reads-its-own-output",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false })",
-    "new": "preloadTamrielTrace({ fetchBytes, palette: pal, niben: false })",
+    "old": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
+    "new": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, niben: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]

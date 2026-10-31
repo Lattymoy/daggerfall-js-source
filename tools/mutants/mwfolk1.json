@@ -182,8 +182,8 @@
   {
     "name": "MWFOLK1-the-arm-falls-at-the-old-angle",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "    const want = Math.asin(PACK_ARM_FALL / Math.hypot(H[0] - U[0], H[2] - U[2]));",
-    "new": "    const want = Math.atan2(PACK_ARM_FALL, Math.abs(H[0] - U[0]));",
+    "old": "    const want = Math.asin(PACK_ARM_FALL / Math.hypot(H[0] - U[0], H[2] - U[2])); // a turn about Y keeps that reach",
+    "new": "    const want = Math.atan2(PACK_ARM_FALL, Math.abs(H[0] - U[0])); // a turn about Y keeps that reach",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "MWFOLK1-the-teal-hood-green",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "  outfit(389, 'Breton_Male.028', [[0, 'tunic_nord1'], [1, 'hose_bretonnpc']]),",
-    "new": "  outfit(389, 'Breton_Male.028', [[0, 'tunic_nord2'], [1, 'hose_bretonnpc']]),",
+    "old": "  outfit(389, 'Breton_Male.028', [\n    [0, 'tunic_nord1'],",
+    "new": "  outfit(389, 'Breton_Male.028', [\n    [0, 'tunic_nord2'],",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -463,8 +463,8 @@
   {
     "name": "MWFOLK1-AUDIT-no-calves",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "    calves: ['Bip01 L Calf', 'Bip01 R Calf'], knee, kneeBlend: KNEE_BLEND };",
-    "new": "    knee, kneeBlend: KNEE_BLEND };",
+    "old": "    calves: ['Bip01 L Calf', 'Bip01 R Calf'],\n    knee,",
+    "new": "    knee,",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-hood-from-the-neck",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] &&",
-    "new": "  if (min[2] > 106 && max[2] > SCENE_BODY.head.max[2] &&",
+    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
+    "new": "  if (min[2] > 106 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -503,8 +503,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-wider-hood",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "Math.max(-min[0], max[0]) < 12) return 'hood';",
-    "new": "Math.max(-min[0], max[0]) < 12.9) return 'hood';",
+    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
+    "new": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12.9) return 'hood';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -533,8 +533,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-repainted-object-baked",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (JSON.stringify(names) !== JSON.stringify(want.materials)) {",
-    "new": "if (false) {",
+    "old": "  if (JSON.stringify(names) !== JSON.stringify(want.materials)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-moved-object-baked",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (Math.max(...off) > BOX_SLACK) throw new Error(`\"${name}\" stands at",
-    "new": "if (false) throw new Error(`\"${name}\" stands at",
+    "old": "  if (Math.max(...off) > BOX_SLACK)",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -553,8 +553,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-arm-from-x-4",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (min[2] > 100 && min[0] > 6) return 'arm:R';",
-    "new": "if (min[2] > 100 && min[0] > 4) return 'arm:R';",
+    "old": "  if (min[2] > 100 && min[0] > 6) return 'arm:R';",
+    "new": "  if (min[2] > 100 && min[0] > 4) return 'arm:R';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -667,8 +667,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-cut-guard-off",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (CUT[o.object]?.includes(s.material)) throw",
-    "new": "if (false) throw",
+    "old": "      if (CUT[o.object]?.includes(s.material))",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

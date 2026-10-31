@@ -110,8 +110,8 @@
   {
     "name": "EGHERO-CAIRN-the-ossuary-a-reference",
     "file": "tools/bakeEgHeroOssuary.mjs",
-    "old": "variant: 'ossuary'",
-    "new": "variant: 'reference'",
+    "old": "  variant: 'ossuary',",
+    "new": "  variant: 'reference',",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGHERO-CAIRN-the-mist-stair-a-passage",
     "file": "tools/bakeEgHeroMistStair.mjs",
-    "old": "class: 'shaft'",
-    "new": "class: 'passage'",
+    "old": "  class: 'shaft',",
+    "new": "  class: 'passage',",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]

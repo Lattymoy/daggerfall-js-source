@@ -200,8 +200,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-the-engine-unplayed",
     "file": "tools/bakeEgHeroStacks.mjs",
-    "old": "play: Object.freeze(['balcony', 'engine'])",
-    "new": "play: Object.freeze(['balcony'])",
+    "old": "  play: Object.freeze(['balcony', 'engine']),",
+    "new": "  play: Object.freeze(['balcony']),",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]

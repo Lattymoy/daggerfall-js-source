@@ -2,8 +2,8 @@
   {
     "name": "MEADOW1-a-soft-edge-let-through",
     "file": "tools/bakeMeadow.mjs",
-    "old": "      if (a !== 0 && a !== 255) throw new Error(",
-    "new": "      if (false) throw new Error(",
+    "old": "      if (a !== 0 && a !== 255)\n        throw new Error(`${name}: texel ${x},${y} has alpha ${a} - a meadow sprite is hard-edged`);",
+    "new": "      if (false) throw new Error(`${name}: texel ${x},${y} has alpha ${a} - a meadow sprite is hard-edged`);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]

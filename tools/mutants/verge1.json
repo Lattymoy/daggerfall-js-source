@@ -83,8 +83,8 @@
   {
     "name": "VERGE1-crown-the-axis-reach",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "reach = Math.max(reach, Math.hypot(f[o] * sx, f[o + 2] * sz));",
-    "new": "reach = Math.max(reach, Math.abs(f[o] * sx));",
+    "old": "      reach = Math.max(reach, Math.hypot(f[o] * sx, f[o + 2] * sz));",
+    "new": "      reach = Math.max(reach, Math.abs(f[o] * sx));",
     "tests": [
       "test/world/road/verge1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "VERGE1-crown-rounded-down",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "out[key] = Math.ceil(reach * 100) / 100;",
-    "new": "out[key] = Math.floor(reach * 100) / 100;",
+    "old": "    out[key] = Math.ceil(reach * 100) / 100;",
+    "new": "    out[key] = Math.floor(reach * 100) / 100;",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "BANTHA2-high-rock-s-shore-kept",
     "file": "tools/banthaArea.mjs",
-    "old": "const south = (i) => region[i] !== SEA && races[region[i]] === 1;",
-    "new": "const south = (i) => region[i] !== SEA;",
+    "old": "  const south = (i) => region[i] !== SEA && races[region[i]] === 1;",
+    "new": "  const south = (i) => region[i] !== SEA;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BANTHA2-the-coast-not-reached",
     "file": "tools/banthaArea.mjs",
-    "old": "while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
-    "new": "while (false) y--;",
+    "old": "    while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
+    "new": "    while (false) y--;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BANTHA2-the-coast-reached-past-its-reach",
     "file": "tools/banthaArea.mjs",
-    "old": "while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
-    "new": "while (y >= 0 && top - y <= COAST_REACH * 3 && south(y * width + x)) y--;",
+    "old": "    while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
+    "new": "    while (y >= 0 && top - y <= COAST_REACH * 3 && south(y * width + x)) y--;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BANTHA2-the-coast-reached-from-inland",
     "file": "tools/banthaArea.mjs",
-    "old": "if (y >= 0 && region[y * width + x] === SEA) for (let k = y + 1; k < top; k++) area[k * width + x] = 1;",
-    "new": "if (y >= 0) for (let k = y + 1; k < top; k++) area[k * width + x] = 1;",
+    "old": "    if (y >= 0 && region[y * width + x] === SEA) for (let k = y + 1; k < top; k++) area[k * width + x] = 1; // the walk stopped at the water, not at its reach",
+    "new": "    if (y >= 0) for (let k = y + 1; k < top; k++) area[k * width + x] = 1; // the walk stopped at the water, not at its reach",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BANTHA2-the-lake-left-out",
     "file": "tools/banthaArea.mjs",
-    "old": "if (!open && !dry) for (const i of piece) area[i] = 1;",
-    "new": "if (false) for (const i of piece) area[i] = 1;",
+    "old": "    if (!open && !dry) for (const i of piece) area[i] = 1;",
+    "new": "    if (false) for (const i of piece) area[i] = 1;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BANTHA2-the-hole-filled",
     "file": "tools/banthaArea.mjs",
-    "old": "if (!open && !dry) for (const i of piece) area[i] = 1;",
-    "new": "if (!open) for (const i of piece) area[i] = 1;",
+    "old": "    if (!open && !dry) for (const i of piece) area[i] = 1;",
+    "new": "    if (!open) for (const i of piece) area[i] = 1;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BANTHA2-the-pixel-s-corner-for-its-centre",
     "file": "tools/banthaArea.mjs",
-    "old": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5",
-    "new": "at(x / DRAWN_SCALE, y / DRAWN_SCALE) >= 0.5",
+    "old": "      if (south(i) && at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5) area[i] = 1;",
+    "new": "      if (south(i) && at(x / DRAWN_SCALE, y / DRAWN_SCALE) >= 0.5) area[i] = 1;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BANTHA2-the-threshold-moved",
     "file": "tools/banthaArea.mjs",
-    "old": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5",
-    "new": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.6",
+    "old": "      if (south(i) && at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5) area[i] = 1;",
+    "new": "      if (south(i) && at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.6) area[i] = 1;",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BANTHA2-the-blur-one-way",
     "file": "tools/banthaArea.mjs",
-    "old": "s += taps[i + R] * across[clampI(v + i, H) * W + u]; soft[v * W + u] = s;",
-    "new": "s += (i === 0 ? 1 : 0) * across[clampI(v + i, H) * W + u]; soft[v * W + u] = s;",
+    "old": "      for (let i = -R; i <= R; i++) s += taps[i + R] * across[clampI(v + i, H) * W + u];",
+    "new": "      for (let i = -R; i <= R; i++) s += (i === 0 ? 1 : 0) * across[clampI(v + i, H) * W + u];",
     "tests": [
       "test/world/bantha2_area.test.js"
     ]

@@ -152,8 +152,8 @@
   {
     "name": "MWHEADS3-the-eyepatch-on-the-other-head",
     "file": "tools/bakeHeads.mjs",
-    "old": "  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0411.png',",
-    "new": "  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0423.png',",
+    "old": "  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0411.png', // tx_b_n_breton_m_h0411.png",
+    "new": "  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0423.png', // tx_b_n_breton_m_h0411.png",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
