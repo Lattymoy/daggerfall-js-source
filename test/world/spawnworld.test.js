@@ -118,6 +118,7 @@ function stand({ places = new Set(), online = true } = {}) {
     const params = { has: (k) => k === 'online' && online }, _spawnSalt = 1, maps = { getClimateIndex: () => 231 }, _spawnGround = () => true;
     const terrainGen = { roads: () => d.roads }, _spawnUnroaded = new Set(), _spawnLedger = d.ledger, _insideSpawn = (k) => k === d.inside, locationIndex = d.index;
     const cyrodiilMask = () => null, wildInside = () => false, zoneHalls = { standOf: () => null, standIn: () => null };
+    const settle2LocationAt = () => null;   // PIN MOVED (WG2-TOWNS): no World 2.0 town here (scenes/settle2Host.js)
     const etherSea = false, inEther = () => false, etherPlaceAt = () => null, onTheBay = (x, y) => x >= 0 && y >= 0 && x < 1000 && y < 500;
     const _arenaTemplates = {}, _countryTemplates = {}, _capitalBase = {};
     const farm = { name: 'The Ulfgar Farmstead', country: { type: 0 } };

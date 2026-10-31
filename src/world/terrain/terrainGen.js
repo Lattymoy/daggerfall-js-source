@@ -85,11 +85,11 @@ import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS:
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
- * @param {?{px: number, py: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }, relief?: string}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ * @param {?{px?: number, py?: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }, relief?: string, own?: boolean, avg?: number}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
  *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
- *   too, where its canal stands; `seaEdges` its sides shared with its sea slice; `relief` (SOLITUDE-RELIEF) capitalRelief.js's key.
+ *   too, where its canal stands; `seaEdges` its sides shared with its sea slice; `relief` (SOLITUDE-RELIEF) capitalRelief.js's key; `own` (WG2-TOWNS) no blend, the plane `avg`.
  * @param {?{blend?: boolean, archive?: number, hidden?: boolean}} [job.lands] - TESA-LANDS: the lands' row (null off) - a zone's flats past the Bay, `blend` the Blended climates row, `archive` the climate's nature archive, `hidden` a place the woods close round
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
@@ -149,7 +149,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   /** @type {?Uint8Array} FB1028 YARDS Y2: the town's ground as #1184 drew it (TS2's mask over the outline before its crops) */
   let yardGround = null;
-  if (hasLocation) {
+  // WG2-TOWNS (world/settle2/settle2Location.js): a World 2.0 town stands on its region's ground, pads and all - nothing
+  // blended, its plane the one its blocks laid its models from
+  if (hasLocation && flattenAt?.own) avg = flattenAt.avg;
+  else if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
     const flat = flattenAt ? (flattenAt.relief ? reliefFlat(flattenAt.relief) : (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? unmet ?? { samples, classic } : null))) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor; SOLITUDE-RELIEF: one on a relief of its own at its streets' level
     const own = () => [Float32Array.from(samples), classic ? Float32Array.from(classic) : null];
@@ -229,7 +232,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)
   if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);   // RIVER-FORDS: a road's tiles kept
-  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // WG2: a published region's rivers and lakes
+  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // WG2: a published region's rivers and lakes - a town of its own ground its water too
   // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
   // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
   if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });

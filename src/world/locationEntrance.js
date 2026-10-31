@@ -241,7 +241,7 @@ export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], 
     mapHeight: ext.height,
     origin,
     startMarkers,
-    useNearestStartMarker: opts.useNearestStartMarker,
+    useNearestStartMarker: opts.useNearestStartMarker || !!dfLocation.settle2,   // WG2-TOWNS (a departure): a World 2.0 town's grid is its whole pixel, its edge the pixel's - it lands at its nearest way in, as a city does
     travelStart,
     worldPos,
     ...(roll ? { roll } : {}),

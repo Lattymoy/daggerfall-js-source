@@ -56,8 +56,8 @@
  {
   "name": "TS-a-capital-shaped",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;",
-  "new": "  if (!dfLocation?.exterior?.exteriorData) return null;",
+  "old": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;",
+  "new": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.settle2) return null;",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]

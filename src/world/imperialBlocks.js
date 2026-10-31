@@ -36,13 +36,15 @@ const b36 = (n) => n.toString(36).padStart(2, '0');
 /** The blocks' fixed indices (formats/worldData/worldDataReplacement.js: past every fixed one in the tree - the capitals'
  *  run from 901000, the town outline's 906000, TS4's walled towns' 1,000,000 plus twenty bits of a map id, to 2,048,575):
  *  a cell's own block, its far view's, the plan's ring of lake. FOUND (IC-GRAND's perf pass): the own blocks stood at
- *  2,000,000 - a walled town's index for a map id's low bits over 1,000,000 was one of theirs. */
+ *  2,000,000 - a walled town's index for a map id's low bits over 1,000,000 was one of theirs. WG2-TOWNS: World 2.0's towns
+ *  from 2,300,000, 64 an ordinal (world/settle2/settle2Towns.js SETTLE2_BLOCK_INDEX). */
 export const IMPERIAL_BLOCK_INDEX = Object.freeze({ own: 2_060_000, far: 2_100_000, lake: 2_200_000 });
 /** The models' ids (world/customModels.js families): a cell's fabric, a slice's skyline - past TS4's town walls'
  *  (world/townWalls.js townWallModelId: 3,000,000 plus twenty bits of a map id, to 4,048,575) and the towns' fabric's
  *  (world/urban/townFabricStand.js, from 5,000,000). FOUND (IC-GRAND's perf pass): they stood at 3,000,000 and
  *  3,100,000, inside the town walls' run - a walled town whose map id's low twenty bits fell under 40,000 would have drawn
- *  its wall in a cell of the city's (a model registered alone is asked before a family's). */
+ *  its wall in a cell of the city's (a model registered alone is asked before a family's). WG2-TOWNS: the shells of World
+ *  2.0's buildings from 8,000,000, a shape an id (world/settle2/settle2Shell.js SETTLE2_SHELL_MODEL). */
 export const IMPERIAL_FABRIC_MODEL = 7_000_000;
 export const IMPERIAL_SKYLINE_MODEL = 7_100_000;
 /** How many slices out from the player's are built near; the slack before a near slice is built far again. */

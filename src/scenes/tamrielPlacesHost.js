@@ -33,6 +33,7 @@ import { filedClimate, filedHeight } from '../world/land/landLayer.js';   // AUD
 import { placeOfRow } from '../world/worldWide/worldPlaces.js';   // FOUNDATION F1: a mod's addition as the registry would read it
 import { bayPlaceRows } from '../world/worldWide/bayPlaces.js';
 import { worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';   // FOUNDATION F1: a check when the door serves edits
+import { createSettle2Places } from './settle2Host.js';   // WG2-TOWNS: World 2.0's towns, standing
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -333,6 +334,8 @@ export function createTamrielPlaces(host) {
       rows: () => pastBayPlaceRows({ pixels: _arenaTemplates ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(_arenaTemplates, p), capitals: !!_capitalBase }),   // WW7-5: each its location's index
     });
   }
+  // WG2-TOWNS (scenes/settle2Host.js): listed after the places past the Bay, so a place of theirs keeps its pixel
+  const settle2 = createSettle2Places({ locationIndex, worldPlaces, maps, base: _capitalBase ?? _countryTemplates?.get(LOCATION_TYPES.TownVillage)?.[0] ?? null, host });
   /** AUDIT TESA II Z7: whether the countryside or a lair may stand on a pixel past the Bay - their rolls' own pick and the
    *  beach line (tamrielCountry.js countryMayStandAt, tamrielDungeons.js lairMayStandAt: no plateau summed, no name drawn;
    *  every pixel either stands, and the few under the beach it would): the zone's halls keep off them and their
@@ -462,7 +465,7 @@ export function createTamrielPlaces(host) {
   }
   /** The place the build stands on a pixel past the Bay, stood now - its own order (world.js _locationToBuild): a capital,
    *  an Arena place, the countryside, a lair; null on the Bay or where none stands. */
-  const standAt = (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null);
+  const standAt = (px, py) => (inBay(px, py) ? null : settle2.locationAt(px, py) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null);
   /** BAY-LEFT-MAPS: THE PLACE THE BUILD WOULD STAND ON A PIXEL PAST THE BAY, AS A ROW - read, never stood: the registry's
    *  (a capital's slice and an Arena place off its list; where the land stands, the countryside's and a lair's off its pixel
    *  providers), else the countryside's roll (countryRow) and the lair on its cell's site (lairAt) - the registry's own
@@ -500,7 +503,7 @@ export function createTamrielPlaces(host) {
   };
   /** AUDIT FOUNDATION II A1: the location a registry place would stand as, read and not indexed - the index's where it
    *  stands; past the Bay a capital's slice, else an Arena place's clone (the atlas's check reads every listed place). */
-  const peekAt = (p) => locationIndex.get(`${p.px},${p.py}`) ?? (inBay(p.px, p.py) ? null : capitalSliceAt(p.px, p.py) ?? arenaPeekAt(p.px, p.py));
+  const peekAt = (p) => locationIndex.get(`${p.px},${p.py}`) ?? (inBay(p.px, p.py) ? null : settle2.peekAt(p.px, p.py) ?? capitalSliceAt(p.px, p.py) ?? arenaPeekAt(p.px, p.py));
   const arenaPeekAt = (px, py) => {
     const place = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null, template = place ? arenaTemplateOf(_arenaTemplates, place) : null;
     return template ? arenaCloneOf(template, place, px, py) : null;

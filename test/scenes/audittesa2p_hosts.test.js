@@ -67,6 +67,7 @@ test('AUDIT TESA II P1 THE BUILD PAST THE BAY: online, a pixel of the open zone 
     const MASK = { zone: true }, cyrodiilMask = () => MASK, asked = arguments[1];
     const zoneHalls = { standIn: (mask, px, py) => { asked.push(['hall', px, py]); return mask === MASK && px === 2069 && py === 700 ? { name: 'Elite Hall' } : null; } };
     const capitalLocationAt = (px, py) => (px === 2069 && py === 700 ? { name: 'A capital slice' } : null);
+    const settle2LocationAt = (px, py) => (px === 2069 && py === 701 ? { name: 'A World 2.0 town' } : null);   // PIN MOVED (WG2-TOWNS): a town of World 2.0's asked before the capitals (scenes/settle2Host.js)
     const arenaLocationAt = (px) => (px === 2100 ? { name: 'Bravil' } : null), countryLocationAt = () => null, lairLocationAt = () => null;
     const locationIndex = new Map([['5,5', { name: 'Daggerfall' }]]);
     const _spawnLedger = { expired: () => false }, _spawnClock = () => 0, _insideSpawn = () => false, spawnedDungeonAt = () => null;
@@ -78,7 +79,8 @@ test('AUDIT TESA II P1 THE BUILD PAST THE BAY: online, a pixel of the open zone 
   assert.equal(online(2069, 700).name, 'Elite Hall', 'the zone\'s hall first, where a capital\'s slice would stand');
   assert.equal(online(2100, 700).name, 'Bravil', 'no hall there: the places');
   assert.equal(online(5, 5).name, 'Daggerfall', 'the Bay its own');
-  assert.deepEqual(asked, [['hall', 2069, 700], ['hall', 2100, 700]], 'never asked on the Bay (its spawns ask it there)');
+  assert.equal(online(2069, 701).name, 'A World 2.0 town', 'a World 2.0 town before the capitals and the places');
+  assert.deepEqual(asked, [['hall', 2069, 700], ['hall', 2100, 700], ['hall', 2069, 701]], 'never asked on the Bay (its spawns ask it there)');
   asked.length = 0;
   assert.equal(make('')(2069, 700).name, 'A capital slice', 'offline no zone');
   assert.deepEqual(asked, []);

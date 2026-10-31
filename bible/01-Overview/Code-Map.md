@@ -428,6 +428,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/gen2/` | World 2.0 (`03-World/World-2-Canon.md`): the exact kit, fields, stages, manifest, canon, the generator's stages (geology, climate, erosion, drainage, hydrology, soil, biome, resources, vegetation), the bake and its codec, the runtime sampler and the seam (`gen2Ground.js`); its tables under `data/`. |
 | `src/world/gen2/settle/` | Settlement System 2.0: the building record and its ids, the RMB adapter, site selection, the generator and its validator, the prototype towns. |
 | `src/world/gen2/edit/` | The World Editor's model: layers of edits, undo, revisions and publishing, protected property, packages, the prefab checks. |
+| `src/world/settle2/` | World 2.0's towns standing in the streamed world (`03-World/World-2-Canon.md`): the installed towns and their id lanes, the building shells (a model family), the blocks (a port block family: subrecords, records, made interiors, ground and town map) and the location with its place row. `scenes/settle2Host.js` stands them. |
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |

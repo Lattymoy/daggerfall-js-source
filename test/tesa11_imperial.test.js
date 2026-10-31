@@ -433,7 +433,8 @@ test('TESA11 one ground: every slice of a city over several pixels flattened to 
   const own2 = tall(x);
   assert.notEqual(own2, own);
   assert.equal(tall(x + 1, centre), own2);
-  assert.match(hostText('src/scenes/world.js'), /flattenAt: dfLocation\?\.capital\?\.flattenAt \?\? null,/);
+  // PIN MOVED (WG2-TOWNS): a World 2.0 town's own ground after it (scenes/pixelBuild.js, world/settle2/settle2Location.js)
+  assert.match(hostText('src/scenes/world.js'), /flattenAt: dfLocation\?\.capital\?\.flattenAt \?\? dfLocation\?\.settle2\?\.ground \?\? null,/);
 });
 
 test('TESA11 the host: a slice stood once on its pixel - a slice moved is stood again; the plan\'s Arena slot the centre\'s', () => {

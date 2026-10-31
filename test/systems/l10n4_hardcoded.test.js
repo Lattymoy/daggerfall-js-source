@@ -614,6 +614,7 @@ const HARDCODED = {
   'src/tools/paperdoll/paperdollViewer.js': 18,
   'src/tools/studioLab.js': 3,   // STUDIO1: the studio page's own words to the game's artists (studio.html) - no player reads them
   'src/tools/spireMap.js': 3,   // THE ASCENT - THE ROOMS (LAW 9): the lab's map legend (its roads' names) - the bench page's, never a player's
+  'src/tools/worldEditor.js': 4,   // WG2: the World Editor's checks and its failure to start (worldeditor.html) - a designer's tool, never a player's
   'src/ui/accountFlow.js': 2,
   'src/ui/armourCard.js': 5,
   'src/ui/automap/automapSheet.js': 14,
@@ -815,6 +816,16 @@ const HARDCODED = {
   'src/world/ethericSea.js': 8,
   'src/world/ships/galleonModel.js': 7,
   'src/world/ships/galleonRig.js': 18,
+  'src/world/gen2/edit/contentPackage.js': 5,   // WG2: a package's refusals, read in the World Editor - a designer's
+  'src/world/gen2/edit/editLayers.js': 2,   // WG2: the first layer's name and an op's refusal - the editor's
+  'src/world/gen2/edit/prefabCheck.js': 3,   // WG2: a prefab's refusals - an artist's, read in the editor
+  'src/world/gen2/edit/propertyGuard.js': 3,   // WG2: the guard's refusals - a designer's, before a publication
+  'src/world/gen2/edit/revisions.js': 4,   // WG2: the publication's gates and a rollback's note - the editor's
+  'src/world/gen2/settle/buildingRecord.js': 1,   // WG2: a record's refusal - the generator's, never shown in the game
+  'src/world/gen2/settle/settlementValidate.js': 10,   // WG2: a town's problems - the validator's, read by the bake and the editor
+  'src/world/gen2/settle/testSettlements.js': 3,   // WG2: the prototype towns' names of two words - proper names, as world/tamrielCapitals.js's
+  'src/world/gen2/testRegions.js': 1,   // WG2: the oasis's name (Tava Wells) - a proper name
+  'src/world/gen2/vegetation.js': 1,   // WG2: a plant's unmet need - the plants' check, never shown
   'src/world/gate/gateArena.js': 12,
   'src/world/gate/gateBoss.js': 17,
   'src/world/ships/largeBoatModel.js': 8,

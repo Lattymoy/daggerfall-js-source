@@ -2,8 +2,8 @@
   {
     "name": "P1-hall-unasked",
     "file": "src/scenes/spawnStandHost.js",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py)",
-    "new": ": null) || host.capitalLocationAt(px, py)",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py)",
+    "new": ": null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py)",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "P1-hall-after-the-places",
     "file": "src/scenes/spawnStandHost.js",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
-    "new": ": null) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": ": null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],

@@ -1,0 +1,263 @@
+[
+  {
+    "name": "WG2TOWNS-turn-sign",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "const f = (Math.atan2(-door.dir[0], door.dir[1]) * 180) / Math.PI;",
+    "new": "const f = (Math.atan2(door.dir[0], door.dir[1]) * 180) / Math.PI;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-frame-z",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "zPos: Math.round(RMB_DIMENSION - v / GLOBAL_SCALE)",
+    "new": "zPos: Math.round(v / GLOBAL_SCALE)",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-sector",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "Sector: by * 8 + bx,",
+    "new": "Sector: bx * 8 + by,",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-type",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "BuildingType: r ? r.type : -1,",
+    "new": "BuildingType: r ? 18 : -1,",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-slot-record",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "const r = here.find((q) => q.slot[2] === i);",
+    "new": "const r = here.find((q) => q.slot[2] === n - 1 - i);",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-plane-height",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "yPos: -Math.round((sceneOf(door.z) - settle2Base(town)) / GLOBAL_SCALE),",
+    "new": "yPos: -Math.round(sceneOf(door.z) / GLOBAL_SCALE),",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-name-pattern",
+    "file": "src/world/settle2/settle2Towns.js",
+    "old": "const NAME = /^WG2S([0-9A-Z]{4})([0-7])([0-7])\\.RMB$/;",
+    "new": "const NAME = /^WG2S([0-9A-Z]{4})([0-9])([0-9])\\.RMB$/;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-family-uninstalled",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "return c && settle2TownOf(c.ordinal) ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1;",
+    "new": "return c ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-index-base",
+    "file": "src/world/settle2/settle2Towns.js",
+    "old": "export const SETTLE2_INDEX_BASE = 42_000_000;",
+    "new": "export const SETTLE2_INDEX_BASE = 41_000_000;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-block-base",
+    "file": "src/world/settle2/settle2Towns.js",
+    "old": "export const SETTLE2_BLOCK_INDEX = 2_300_000;",
+    "new": "export const SETTLE2_BLOCK_INDEX = 2_200_000;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-scene-scale",
+    "file": "src/world/settle2/settle2Towns.js",
+    "old": "export const sceneOf = (z) => kernelUnits(z) * STREAMING_TERRAIN_SCALE;",
+    "new": "export const sceneOf = (z) => kernelUnits(z);",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-plane-plaza",
+    "file": "src/world/settle2/settle2Towns.js",
+    "old": "export const settle2Base = (town) => sceneOf(town.plaza.level);",
+    "new": "export const settle2Base = (town) => sceneOf(0);",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-shell-bits",
+    "file": "src/world/settle2/settle2Shell.js",
+    "old": "| ((s.wall & 3) << 18)",
+    "new": "| ((s.wall & 3) << 17)",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-shell-storey",
+    "file": "src/world/settle2/settle2Shell.js",
+    "old": "export const SHELL_STOREY_M = 3.2;",
+    "new": "export const SHELL_STOREY_M = 3;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-shell-footing",
+    "file": "src/world/settle2/settle2Shell.js",
+    "old": "const base = s.stilts ? 0 : -s.foot,",
+    "new": "const base = 0,",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-shell-foot-ceil",
+    "file": "src/world/settle2/settle2Shell.js",
+    "old": "(Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22)",
+    "new": "(Math.min(31, Math.floor(s.foot / SHELL_STEP_M)) << 22)",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-location-own",
+    "file": "src/world/settle2/settle2Location.js",
+    "old": "ground: Object.freeze({ own: true, avg: plane / WORLD_HEIGHT })",
+    "new": "ground: Object.freeze({ own: false, avg: plane / WORLD_HEIGHT })",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-location-index",
+    "file": "src/world/settle2/settle2Location.js",
+    "old": "locationIndex: settle2LocationIndex(town.ordinal),",
+    "new": "locationIndex: settle2LocationIndex(0),",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-terrain-seam",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "if (hasLocation && flattenAt?.own) avg = flattenAt.avg;",
+    "new": "if (hasLocation && flattenAt?.own && false) avg = flattenAt.avg;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-terrain-water-rect",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);",
+    "new": "hasLocation ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-outline-skip",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;",
+    "new": "if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-held-pixel",
+    "file": "src/scenes/settle2Host.js",
+    "old": "return p && !(p.source === SETTLE2_SOURCE && p.mapId === town.mapId >>> 0) ? p : null;",
+    "new": "return null;",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-wire-flatten",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,",
+    "new": "flattenAt: dfLocation?.capital?.flattenAt ?? null,",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-wire-stand-order",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| settle2LocationAt(px, py) || host.capitalLocationAt(px, py) ||",
+    "new": "|| host.capitalLocationAt(px, py) || settle2LocationAt(px, py) ||",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-pool-tavern",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "const ROLE_POOL = Object.freeze({ tavern: 'tavern',",
+    "new": "const ROLE_POOL = Object.freeze({ tavern: 'general',",
+    "tests": [
+      "test/world/settle2/wg2towns_freeware.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-cast-record",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "subRecords?.[d.record]?.interior ?? null",
+    "new": "subRecords?.[d.record + 1]?.interior ?? null",
+    "tests": [
+      "test/world/settle2/wg2towns_freeware.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-interior-frame",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "grid = fabricInteriorGrid(q, [0, 0], [0, -1], 0);",
+    "new": "grid = fabricInteriorGrid(q, [0, 0], [-1, 0], 0);",
+    "tests": [
+      "test/world/settle2/wg2towns_freeware.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-landing-departure",
+    "file": "src/world/locationEntrance.js",
+    "old": "useNearestStartMarker: opts.useNearestStartMarker || !!dfLocation.settle2,",
+    "new": "useNearestStartMarker: opts.useNearestStartMarker,",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-marker-height",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "const markers = ways.map(([x, y]) => [...L(x, y), ground(x, y)]);",
+    "new": "const markers = ways.map(([x, y]) => [...L(x, y), 0]);",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  }
+]

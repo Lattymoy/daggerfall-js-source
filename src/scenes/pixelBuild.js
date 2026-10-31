@@ -282,7 +282,7 @@ export function createPixelBuild(host) {
     // IC-GRAND's perf pass (bible/03-World/Arena-Provinces.md IC-GRAND): a family capital's slice's blocks read a breath
     // at a time - each taken from the city's worker or made, on the world-data door (world/capitalModels.js) - before
     // setLocationTiles reads its sixty-four in one task (1.1-1.8 s of one frame in the game, measured)
-    if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }
+    if (capitalViewOf(dfLocation) || dfLocation?.settle2) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }   // WG2-TOWNS: a World 2.0 town's made a breath at a time too
     if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);
     if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)
     if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)
@@ -334,7 +334,7 @@ export function createPixelBuild(host) {
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
     const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
-      flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
+      flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground; WG2-TOWNS: a World 2.0 town on its own
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)

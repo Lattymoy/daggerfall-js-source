@@ -724,7 +724,7 @@
   {
     "name": "IC-GRAND-prebuild-blocks-in-one-task",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }\n",
+    "old": "    if (capitalViewOf(dfLocation) || dfLocation?.settle2) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }   // WG2-TOWNS: a World 2.0 town's made a breath at a time too\n",
     "new": "",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
