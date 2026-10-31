@@ -4,7 +4,11 @@
 // `daggerShell.privateServer`). Then a local character loaded this run plays online there: the relay is the game's
 // own, run on the host's PC, and the sign-in is the host's - its front mints the token this asks for, signed with the
 // host's own key. Nothing of a private run reaches the main relay or the account service (accountClient.js
-// serviceBase answers none), so nothing made there can reach the realm.
+// serviceBase answers none once the boot starts the run), so nothing made there can reach the realm.
+//
+// A realm character comes along as a copy: the title menu still reaches the service (the run starts at the world's
+// boot, and a return to the title reloads the page), so the Online pane's Copy to offline writes it as a local
+// character, which then plays here. The copy never goes back: a realm boot on a private run is refused.
 //
 // The address is always a loopback one: the host's own game connects to its front, and a guest's to the bridge its
 // shell runs to the host - so wire.js relayUrl's one plain ws:// door (localhost) is the only one it needs.
@@ -16,6 +20,15 @@ export function privateServer(shell = /** @type {any} */ (globalThis).daggerShel
   const url = relayUrl(shell?.privateServer?.url);
   return url && url.startsWith('ws://') ? { url } : null;
 }
+
+/** What the title menu says when a realm character is opened on a private server. */
+export const PRIVATE_REALM_REFUSED = 'You are on a private server. To bring an online character, use Copy to offline on it first, then load the copy. Your online character stays as it is.';
+
+let running = false;
+/** The world's boot on a private server starts the run: from then on the page reaches no account service. */
+export function startPrivateRun() { running = true; }
+/** Whether this page's world plays on a private server (accountClient.js serviceBase). */
+export const privateRunOn = () => running;
 
 const SUBJECT_KEY = 'dfo.privateSubject';
 /** This device's account id on private servers: random, made once, kept in the app's storage (identityToken.js ID_RE).

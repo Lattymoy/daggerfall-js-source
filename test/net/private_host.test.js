@@ -7,7 +7,7 @@ import http from 'node:http';
 import { createRequire } from 'node:module';
 
 import { tokenMinter, parseAddress, frontServer, PRIVATE_PORT } from '../../app/lib/privateHost.mjs';
-import { privateServer, privateMinter, privateSubject } from '../../src/net/privateServer.js';
+import { privateServer, privateMinter, privateSubject, startPrivateRun } from '../../src/net/privateServer.js';
 import { serviceBase, PRIVATE_NO_SERVICE, DEFAULT_ACCOUNT_SERVICE } from '../../src/net/accountClient.js';
 import { verifyToken, importPublicKeyB64, _b64url } from '../../src/net/identityToken.js';
 
@@ -91,12 +91,11 @@ test('on a private server the page asks the host for its token and reaches no ac
   assert.match(s, /^p[0-9a-f]{24}$/);
   assert.equal(privateSubject(storage), s, 'one subject a device');
 
-  const prior = globalThis.daggerShell;
-  try {
-    assert.equal(serviceBase(storage), DEFAULT_ACCOUNT_SERVICE);
-    globalThis.daggerShell = { privateServer: { url: 'ws://127.0.0.1:7777' } };
-    assert.equal(serviceBase(storage), PRIVATE_NO_SERVICE);
-  } finally { globalThis.daggerShell = prior; }
+  // the title menu still reaches the service (Copy to offline brings a realm character as a copy); the world's boot
+  // starts the run, and from then on nothing does
+  assert.equal(serviceBase(storage), DEFAULT_ACCOUNT_SERVICE);
+  startPrivateRun();
+  assert.equal(serviceBase(storage), PRIVATE_NO_SERVICE);
 });
 
 test('the launcher shows the private server: host, join, the addresses a friend types', () => {

@@ -387,7 +387,7 @@ import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the g
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
 import { registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: Iron Footing on the spans (POTION-CLOCK: the potions' law is the made level's - spireKit.js)
-import { privateServer, privateMinter, privateSubject } from '../net/privateServer.js';   // A private server the desktop shell hosts or joined
+import { privateServer, privateMinter, privateSubject, startPrivateRun, PRIVATE_REALM_REFUSED } from '../net/privateServer.js';   // A private server the desktop shell hosts or joined
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
 import { accountKetch } from '../net/accountClient.js';   // KETCH: the Ketchmaster's hold - a Tonal Warden's receipt carried to the service
 import { createKetchClient } from './ketch/ketchClient.js';   // KETCH (HOST-SPLIT): the sky-ketch on this screen - the sky over Daggerfall, the anchor-lift, the ship aboard, the hold
@@ -1352,7 +1352,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // The desktop shell hosts or joined a private server - a local character plays
   // online there, never a realm character (the realm is the main servers', which a private run never reaches)
   const privateHost = privateServer();
-  if (privateHost && !params.has('realm') && !params.has('realmnew') && !params.has('online')) { params.set('online', ''); publishBootParams(params); }
+  if (privateHost) startPrivateRun();
+  if (privateHost && (params.has('realm') || params.has('realmnew'))) { setRealmNotice(globalThis.sessionStorage, PRIVATE_REALM_REFUSED); exitToTitleMenu(); return; }
+  if (privateHost && !params.has('online')) { params.set('online', ''); publishBootParams(params); }
   const realmNew = params.has('online') && params.has('realmnew');
   const realmIoNow = () => realmIo({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const realmBoot = params.has('online') && params.has('realm') && params.has('load') ? await openRealmBoot({ io: realmIoNow(), id: params.get('realm') }) : null;
