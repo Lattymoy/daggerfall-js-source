@@ -69,7 +69,7 @@ import {
   createSpriteHolster, createHolsterArt, loadHolsterPicture, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, HOLSTER_HAND_SLOT, SELF_OWNER,
 } from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
-import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldGlowPx, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
 import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from './eotbQuiver.js';   // QUIVER: a bow's quiver on the back
 import { ammoCountFor } from '../../systems/inventory.js';   // QUIVER: arrows in it, with no rig to say
 
@@ -300,7 +300,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batchRec = null;
   let batchSize = null, batchPx = 0, batchPxW = 0, batchArt = 1;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel; BACK-HOLSTER GLOW: its art scale
   let batchMarks = null;   // ARMORY: where the body stands in that picture (render/armoryPose.js spriteMarks), read at its upload
-  let batchHeld = null;   // LAYERED-GLOW: the weapon's own px in that picture (eotbGlow.js heldOf), null for none of its own
+  let batchHeld = null;   // LAYERED-GLOW: the weapon's own px in that picture (eotbGlow.js heldGlowPx), null for none of its own
   let batchHeldOff = null, batchPair = null;   // AUDIT: a pair's second weapon's px, and the hand on the line ('R'/'L')
   let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
   let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
@@ -462,7 +462,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, img.held, width, height, s.mirror), heldOff: heldOf(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, img.held, width, height, s.mirror), heldOff: heldGlowPx(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
