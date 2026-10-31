@@ -1104,8 +1104,10 @@ const DAY_S = 24 * 3600;
 
 /** An account's record: `{ wins, losses }`, counted off the results. */
 export async function duelRecordOf({ db }, playerId) {
-  const w = await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE winner = ?1').bind(playerId).first();
-  const l = await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1').bind(playerId).first();
+  const [w, l] = await Promise.all([   // AURA-FAST: both counts in one breath
+    db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE winner = ?1').bind(playerId).first(),
+    db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1').bind(playerId).first(),
+  ]);
   const n = (r) => (Number.isSafeInteger(Number(r?.n)) ? Number(r.n) : 0);
   return { wins: n(w), losses: n(l) };
 }

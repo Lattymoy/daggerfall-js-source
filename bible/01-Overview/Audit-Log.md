@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-31 - AUDIT PROP-GROUND.** The owner: *"Audit"*, of PROP-GROUND (`3582fe992`, the street laid under a prop past
+the Bay). Three cold lanes on the frozen head, each finding proven on the freeware. Paid: a lamp's own cell (the town
+map's 250 and 251) still stood on old ground; the last step laid lone flags; cobbles notched the pavement and setts met
+the dirt; 31,632 flats stood 5 to 13 cm under the new street; ARCH3D 41712's foot plate flickered in the setts (43603's
+found beside it); kerb feet hung 5 cm over the land; six mutants lived and the ARENA2 pin restated its rule; the record's
+15 cm. All fixed: the street's own lines and laws under the props, the flats stood on it, 41 mutants, all dead. Record:
+`03-World/Urban-Fabric.md` section 11.
+
 **2026-10-30 - AUDIT FOUNDATION II.** The owner: *"Audit this"*, again, of FOUNDATION with the first audit's fixes. Four
 fresh reviews, given the code alone. Paid: one island row on the Bay moved the continent's fit and the countryside's
 rates; a land row kept the mountain's detail under it; a row in the Eltheric Ocean's box read two ways; past the Bay a

@@ -42,7 +42,7 @@ import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } fr
 import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 YARDS Y2: the yards' outline as #1184 drew it
 import { townWalkShut, yardWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
 import { townGateRoads } from '../world/townGates.js';   // GATE-ROADS: a walled town's gates for their roads
-import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
+import { townFabricFor, fabricWalkShut, fabricLift } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -729,24 +729,25 @@ export function createPixelBuild(host) {
           pixelNpcFlats.push({
             ...npc,
             x: locLocal[0] + b.originX + npc.x,
-            y: blockY + npc.y,
+            y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),   // AUDIT PROP-GROUND: on the street its fabric lays
             z: locLocal[2] + b.originZ + npc.z,
           });
         }
         for (const [n, flat] of blockFlats.entries()) {
+          const lift = fabricLift(fabric, b.originX + flat.x, b.originZ + flat.z);   // AUDIT PROP-GROUND: a flat on the street its fabric lays stands on it
           // A4: every archive-201 town animal is an audio source
           // (AddAnimalAudioSource on RMB flats, verbatim). It runs
           // BEFORE DFU's faction test (:363-377), so it is not part of
           // what the NPC pass takes over below.
           if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
             pixelAnimals.push({
-              pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z],
+              pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y + lift, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
           }
           // SURV3: a fountain or a well is a water source (the mod's RegisterCustomActivation list); the dry one only says so
           if (isWaterSourceFlat(flat.archive, flat.record) || isDrySourceFlat(flat.archive, flat.record)) {
-            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
+            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y + lift, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
           }
           // E3: an exterior StaticNPC's BILLBOARD is stood by
           // standPixelNpcs, not batched here - RMBLayout hands the same
@@ -771,7 +772,7 @@ export function createPixelBuild(host) {
           // StaticNPC holds (a flat of a person's archive with no faction) stand in batches of their own
           // (standPixelFlats, below), so a 3D horse or a Morrowind body can take one's place. Neither was ever cover
           // (201 is NOT_COVER's; a person never is - AUDIT TACT B3).
-          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y, z: fz }); continue; }
+          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y + lift, z: fz }); continue; }
           // NATURE-GROUND (2026-09-26, Ilvi: "a lot of floating sprites across Illiac Bay"): the block's ground scenery and nature
           // flats stand on the DRAWN ground - the plane holds only inside the flattened rect, the band past it is only eased toward
           // it (DFU's too: AddNatureFlats reads no terrain); inside the rect the lift is exactly 0. A lamp, a sign, an animal keep the
@@ -782,7 +783,7 @@ export function createPixelBuild(host) {
           // all one law where the block stands on the plane
           const off = flat.archive === natureArchive || (hillSeat && isNatureArchive(flat.archive)) ? groundOffPlane(samples, avg, fx, fz) : 0;
           const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;
-          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;
+          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y + lift;
           addFlat(flat.archive, flat.record, fx, fy, fz, { block, n });
           // FLORA-GROUND, THE RINGS (scenes/floraSeat.js): a nature flat stood on the ground - the climate's, the plane's
           // band under it; a hill block's where no mound raised it - is drawn on the ground its pixel draws at every ring

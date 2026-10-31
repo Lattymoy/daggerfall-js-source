@@ -31,8 +31,9 @@ import { townWallGatesOf, townWallWaits, townWallOf, townWallCells } from '../to
 import { NAV_CELL } from '../city/cityNavigation.js';
 import { onTownTile } from '../townShape.js';
 import { getLocationTerrainTileOrigin } from '../terrain/terrainTiles.js';
-import { FABRIC_CELLS, fabricGrid, planSteps, isPortCell } from './townFabric.js';
-import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
+import { FABRIC_CELLS, FOOT_FACED, fabricGrid, planSteps, isPortCell } from './townFabric.js';
+import { miscModelMatrix } from '../rmbLayout.js';   // AUDIT PROP-GROUND: a foot plate where its block stands it
+import { townFabricModel, townFabricModelSliced, fabricFaces, FABRIC_PIECES, FABRIC_FACE, FABRIC_ROAD_Y, FABRIC_PAVE_Y, FABRIC_LAND_Y } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
 
 /** The fabric's model ids: past every other custom model's (the capitals' 910xxx, TS4's walls' 1,000,000 + 20 bits - AUDIT
@@ -79,6 +80,19 @@ export function fabricEnds(dfLocation, W, H) {
   return { mains: false, ends: [], centre: mid };
 }
 
+/** AUDIT PROP-GROUND: a misc model's foot plate (townFabric.js FOOT_FACED.road) where its block stands it - the box round
+ *  its rectangle's corners in the block's metres [x0, z0, x1, z1]; null for a model with none. */
+export function footPlate(r) {
+  const rect = FOOT_FACED.road[r.modelIdNum];
+  if (!rect) return null;
+  const m = miscModelMatrix(r), out = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [x, z] of [[rect[0], rect[1]], [rect[2], rect[1]], [rect[2], rect[3]], [rect[0], rect[3]]]) {
+    const wx = m[0] * x + m[8] * z + m[12], wz = m[2] * x + m[10] * z + m[14];
+    out[0] = Math.min(out[0], wx); out[1] = Math.min(out[1], wz); out[2] = Math.max(out[2], wx); out[3] = Math.max(out[3], wz);
+  }
+  return out;
+}
+
 /** A laid-out block (world/locationLayout.js layoutLocation's) as the plan reads it - its town map, its ground and its
  *  misc models' and flats' places in its own metres; a port cell none. */
 export function fabricBlockOf(b) {
@@ -89,7 +103,8 @@ export function fabricBlockOf(b) {
   return {
     automap: fh.autoMapData,
     ground: (tx, ty) => gt?.[tx]?.[ty]?.textureRecord ?? 1,
-    records: [...(rmb.misc3dObjectRecords ?? []), ...(rmb.miscFlatObjectRecords ?? [])].map((r) => ({ x: r.xPos * 0.025, z: (r.zPos + 4096) * 0.025 })),
+    records: [...(rmb.misc3dObjectRecords ?? []).map((r) => ({ x: r.xPos * 0.025, z: (r.zPos + 4096) * 0.025, id: r.modelIdNum, plate: footPlate(r) })),   // AUDIT PROP-GROUND: FOOT_FACED
+      ...(rmb.miscFlatObjectRecords ?? []).map((r) => ({ x: r.xPos * 0.025, z: (r.zPos + 4096) * 0.025 }))],
   };
 }
 
@@ -158,7 +173,7 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
     needs: Object.values(FABRIC_PIECES),
     buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),   // made a breath at a time as it was planned
   });
-  const made = Object.freeze({ plan, modelId, style, groundKey });
+  const made = Object.freeze({ plan, modelId, style, groundKey, faces: fabricFaces(plan, style, cobbles).faces });   // AUDIT PROP-GROUND: what is laid, for its flats
   _fabrics.set(mapId, made);
   for (const [id, f] of _fabrics) {
     if (_fabrics.size <= TOWN_FABRIC_KEEP) break;
@@ -166,6 +181,18 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
     unregisterCustomModel(f.modelId);
   }
   return made;
+}
+
+/** AUDIT PROP-GROUND: how far a flat Daggerfall stood on the land rises to stand on the street its fabric lays at
+ *  (lx, lz) - the location's metres, x east, z north (the model's own frame): the face's height over the land
+ *  (townFabricModel.js FABRIC_LAND_Y), 0 where none is laid or no fabric stands. @param {?{ plan: { W: number, H: number },
+ *  faces: Uint8Array }} fabric @param {number} lx @param {number} lz */
+export function fabricLift(fabric, lx, lz) {
+  if (!fabric?.faces) return 0;
+  const { W, H } = fabric.plan, x = Math.floor(lx / NAV_CELL), z = Math.floor(lz / NAV_CELL);
+  if (x < 0 || z < 0 || x >= W || z >= H) return 0;
+  const f = fabric.faces[z * W + x];
+  return f === FABRIC_FACE.road ? FABRIC_ROAD_Y - FABRIC_LAND_Y : f === FABRIC_FACE.flags ? FABRIC_PAVE_Y - FABRIC_LAND_Y : 0;
 }
 
 /** A town's fabric as kept (null: none planned, or let go). */

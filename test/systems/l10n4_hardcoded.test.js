@@ -414,7 +414,7 @@ const HARDCODED = {
   'src/systems/foraging/foragingInstall.js': 8,
   'src/systems/foraging/foragingLaw.js': 64,
   'src/systems/gate/gateOmen.js': 10,
-  'src/systems/gate/gateSpoils.js': 3,
+  'src/systems/gate/gateSpoils.js': 4,   // PORTAL-BOOK: the Portal Book's canonical name, a template row's
   'src/systems/gateTier.js': 4,
   'src/systems/gilded.js': 25,   // GILDED2: the Dragonfire Oath's and the Sunken Sovereign's names, powers, lore and hints - written as the Hourlock's are   // AUDIT PISTOLET A7 C1 D8: +1, the Sunken Sovereign's saber-era lore - an item's own story, as the records' are; KETCH: +9, Hammerfall's and Broadside's briefs and texts, Volendrung's Echo's lore and hint, the Ketchmaster's Word's name, lore and hint (the Echo's name and the two powers' a word or two the scan passes), The Hour Tolls' text re-read for the Pellet's dweamer in its old one's place (a kill returns the shot) - written as the Hourlock's are (AUDIT KETCH L5-10: the reason named the Hourlock's lore, unchanged, and left out the Echo and Broadside)
   'src/systems/gravestoneLore.js': 16,
@@ -463,6 +463,7 @@ const HARDCODED = {
   'src/systems/masterSkills.js': 52,
   'src/systems/merchantYards.js': 9,
   'src/systems/modSettings.js': 241,
+  'src/systems/musicSheetRow.js': 1,   // MUSIC-BOX: the row's name, its catalogue column - each sheet carries its own name through t()
   'src/systems/mysticism.js': 1,
   'src/systems/naval/captainLedger.js': 15,
   'src/systems/naval/crewCompanions.js': 3,

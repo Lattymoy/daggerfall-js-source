@@ -114,20 +114,22 @@
   {
     "name": "AUDIT-DRAGON-the-record-off-the-cards",
     "file": "server-account/src/index.js",
-    "old": "serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds:",
-    "new": "serpents: await serpentRecordOf(ctx, who.player.id), sds:",
+    "old": "serpents, dragons, sds, stars, ketch, renown, marks }",
+    "new": "serpents, sds, stars, ketch, renown, marks }",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-strangers-tames-told",
     "file": "server-account/src/index.js",
-    "old": "dragons: await dragonSlainOf(ctx, body.id)",
-    "new": "dragons: await dragonRecordOf(ctx, body.id)",
+    "old": "dragonSlainOf(ctx, body.id)",
+    "new": "dragonRecordOf(ctx, body.id)",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-line-for-none",

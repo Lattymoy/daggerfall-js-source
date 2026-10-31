@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { webcrypto } from 'node:crypto';
 
 import {
-  standAurumCache, aurumCachePlaceOf, aurumCacheFoot, aurumCacheStood, _resetAurumCaches, AURUM_CACHE_KEY, AURUM_CACHE_TEXT, AURUM_CACHE_STORE,
+  standAurumCache, aurumCofferYaw, aurumCachePlaceOf, aurumCacheFoot, aurumCacheStood, _resetAurumCaches, AURUM_CACHE_KEY, AURUM_CACHE_TEXT, AURUM_CACHE_STORE,
   AURUM_CACHE_GAP_M, AURUM_CACHE_SIDE_M, AURUM_CACHE_KNEE_M, aurumCofferBox, aurumPileBox,
 } from '../../src/scenes/aurumCacheHost.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE } from '../../src/world/aurumCofferArt.js';
@@ -20,6 +20,7 @@ import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { GATE_ARENA_LOCATION_ID } from '../../src/world/gate/gateArena.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
 import { mintCacheProof, keepCacheProof, _resetCacheProof } from '../../src/net/cacheProof.js';
+import { AURUM_COFFER_MODELS } from '../../src/world/chestModel.js';
 import { TREASURE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -314,7 +315,7 @@ test('AUDIT-STOREFRONT III D5 a yes that lands after the level is gone is kept: 
 
 test('AURUM-CACHES THE FOUR HOSTS: the dungeon context stands the coffer once its level and piles are, and its takeLoot presses it; the modal dungeon arm and the standalone dungeon carry `aurum:` there in their loot arms, as DELVE II\'s `delve:`; the world and the street stand none (mutants: the ladder\'s arm dropped, the bench\'s arm dropped, the context\'s arm dropped)', () => {
   const dc = read('src/scenes/dungeonContext.js'), wm = read('src/scenes/worldModes.js'), sd = read('src/scenes/dungeon.js');
-  assert.ok(dc.includes('  const _aurumCache = standAurumCache(api, dfLocation, lootPiles);'), 'stood at the build\'s end');
+  assert.ok(dc.includes('  const _aurumCache = standAurumCache(api, dfLocation, lootPiles, { meshes: deps });'), 'stood at the build\'s end - PIN MOVED (CHEST3D): with the pipeline\'s mesh door');
   assert.ok(dc.indexOf('const _aurumCache = standAurumCache(') > dc.indexOf('for (const pile of lootPiles) {'), 'after the piles stand on their floors');
   assert.ok(dc.includes("      if (kind === 'aurum') return _aurumCache?.press(key) ? 1 : 0;"), 'takeLoot\'s arm');
   // AUDIT-STOREFRONT III D1: each pile carries its size from the archive - never a texture mod's, which is one device's
@@ -450,4 +451,33 @@ test('AUDIT AURUM-CACHES E1 and lane 3 F2, F6: the press carries the proof the d
     assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] }, `${bad}: started again`);
   }
   _resetCacheProof();
+});
+
+test('CHEST3D: the coffer is the owner\'s chest in gold where the host hands the mesh door - shut in the level\'s draws at its foot, its front away from its pile, the open one once its yes lands, gone when the level is; no door, its picture (mutants: the model unstood, the yes not swapped, the facing toward the pile, the teardown leaving it)', async () => {
+  _resetAurumCaches();
+  const L = loc((3 << 20) | 4410), storage = memory(), asked = [];
+  const ctx = { ...fakeCtx(), dynamicDraws: [] };
+  const meshes = { getGpuMesh: async (id) => { asked.push(id); return { id }; } };
+  const c = standAurumCache(ctx, L, PILES, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim: async () => ({ ok: true }), audio: null, meshes });
+  await tick(); await tick();
+  assert.deepEqual(asked, [AURUM_COFFER_MODELS.shut]);
+  assert.equal(ctx.dynamicDraws.length, 1);
+  assert.deepEqual(ctx.stood, [], 'no picture beside it');
+  const m = ctx.dynamicDraws[0].object.matrix;
+  assert.deepEqual([m[12], m[13], m[14]].map((v) => +v.toFixed(5)), c.foot.map((v) => +v.toFixed(5)), 'at its foot');
+  const near = PILES.reduce((a, p) => ((p.pos[0] - c.foot[0]) ** 2 + (p.pos[2] - c.foot[2]) ** 2 < (a.pos[0] - c.foot[0]) ** 2 + (a.pos[2] - c.foot[2]) ** 2 ? p : a));
+  const front = [m[8], m[10]], away = [c.foot[0] - near.pos[0], c.foot[2] - near.pos[2]];
+  assert.ok(front[0] * away[0] + front[1] * away[1] > 0.99 * Math.hypot(...away), 'its front (+z) away from its pile');
+  assert.equal(aurumCofferYaw([], [1, 0, 1]), 0, 'no pile: its own facing');
+  c.press(AURUM_CACHE_KEY);
+  await tick(); await tick(); await tick();
+  assert.deepEqual(asked, [AURUM_COFFER_MODELS.shut, AURUM_COFFER_MODELS.open], 'emptied: the open one');
+  assert.deepEqual(ctx.dynamicDraws.map((d) => d.gpu.id), [AURUM_COFFER_MODELS.open], 'one stands');
+  for (const f of ctx.downs) f();
+  assert.deepEqual(ctx.dynamicDraws, [], 'gone with the level');
+  _resetAurumCaches();
+  const bare = fakeCtx();
+  standAurumCache(bare, loc((3 << 20) | 4411), PILES, { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: true }), audio: null });
+  await tick();
+  assert.deepEqual(bare.stood.map((b) => b.record), [AURUM_COFFER_ART.shut], 'no mesh door: its picture');
 });

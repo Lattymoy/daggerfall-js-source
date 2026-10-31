@@ -502,19 +502,19 @@ which a sleep forgets. Relay world298, re-hashed in place. Pinned by `test/net/d
 `dragoncellaudit`'s rooms aged; seven records re-aimed (AUDIT-DRAGON-the-cache-unbounded, D2's two, D6, E2's two, E3).
 AUDIT DRAGON-CELL III changed it: 24 cells became 48, each a pose could be told of (G4).
 
-**DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; acct231, migration 0203).** A
+**DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; acct233, migration 0203).** A
 kill was keyed by watch and account, so a second dragon in one watch paid nothing. The receipt now signs its dragon's
 place (`p`, its cell's number, `dragonLaw.js` dragonPlaceOf). The hub keeps an account's receipts of its newest watch,
 one a place (`dragonFights.js` keptOf), and the service keys the kill, the hoard and the tame by (watch, place,
 account). The client settles and spends one a dragon. A forged site has its cell's place, so it pays once. A receipt
 from before counts one a watch. Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoneach.test.js` (6);
-`tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct231 in twenty test files and eleven mutant lists; the hub's
+`tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct233 in twenty test files and eleven mutant lists; the hub's
 keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep). Deploy order and
 rollback floors: AUDIT DRAGON-CELL III G2.
 
 **AUDIT DRAGON-CELL III (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-III.md`).** Three lanes
-read DRAGON-BUDGET and DRAGON-EACH cold. CI deploys the relay before the service, so a placed receipt counted by acct230
-could be paid again by acct231: a placed receipt is now refused where an older service counted its watch after it was
+read DRAGON-BUDGET and DRAGON-EACH cold. CI deploys the relay before the service, so a placed receipt counted by acct232
+could be paid again by acct233: a placed receipt is now refused where an older service counted its watch after it was
 minted. One charged cell told a 3x3 block, so an ask is charged each cell it could be told of (48 a watch). A full
 budget is kept in the room, a fight's words reach a passer-by only once granted its cell, an `in` is judged by its site's
 cell, and a node room holds two dragons. The account deploy now names `dragonLaw.js`. Open, put to the owner: guest

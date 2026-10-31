@@ -360,6 +360,7 @@ on:
       - "src/systems/legacy/legacyLaw.js"
       - "src/systems/legacy/unionKinLaw.js"
       - "src/systems/livingWorld/keepsake.js"
+      - "src/systems/musicSheetRow.js"
       - "src/systems/levelClimb.js"
       - "src/systems/levelEven.js"
       - "src/systems/levelCap.js"
