@@ -8,7 +8,7 @@ import { setPref, resetPrefs, _resetForTests } from '../../src/systems/uiPrefs.j
 import { FEATURES, resolveControl } from '../../src/systems/features.js';
 import { RARITY_ORDER } from '../../src/systems/loot/lootRarity.js';
 import { MATERIAL_NAMES } from '../../src/systems/item/itemInfo.js';
-import { filterLeaves, hoverHidden, bodyHidden, hoverVisible, regexIsSafe, nameLeaves, skipMatches, skipList, validSkipEntry, migrateQuickLootTier, _resetMigration, QL_SKIP, QL_RARITY_PREF, QL_MATERIAL_PREF, QL_MATERIAL_COMMON, QL_HIDE_EMPTY, QL_HIDE_DULL, QL_HIDE_DROPS, QL_HIDE_LEFT } from '../../src/systems/quickLootFilter.js';
+import { filterLeaves, hoverHidden, bodyHidden, bodyTarget, hoverVisible, regexIsSafe, nameLeaves, skipMatches, skipList, validSkipEntry, migrateQuickLootTier, _resetMigration, QL_SKIP, QL_RARITY_PREF, QL_MATERIAL_PREF, QL_MATERIAL_COMMON, QL_HIDE_EMPTY, QL_HIDE_DULL, QL_HIDE_DROPS, QL_HIDE_LEFT } from '../../src/systems/quickLootFilter.js';
 import { takeAllLeaves } from '../../src/systems/quickLoot.js';
 import { resolveHover, hoverItemAt, hoverLines } from '../../src/systems/worldHover.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
@@ -229,4 +229,17 @@ test('QUICK-LOOT-FILTER regex: a pattern that can stall the matcher is no patter
   assert.equal(skipMatches({ mode: 'regex', text: '(a+)+$' }, 'a'.repeat(60) + '!'), false, 'and matches nothing');
   assert.ok(Date.now() - t0 < 200, 'in no time');
   assert.equal(skipMatches({ mode: 'regex', text: 'z$' }, 'a'.repeat(300) + 'z'), false, 'a name is cut to NAME_MATCH_MAX before it is matched');
+});
+
+test('QUICK-LOOT-FILTER dungeon body: bodyTarget is a body whose skip follows the plaque - out of the pick when the list leaves nothing the take wants, in it otherwise, and the host\'s list read at each pick (mutants: the skip never true; the list read once)', () => {
+  only(['Daedric']);
+  setPref(QL_HIDE_DULL, true);
+  let held = [sword(WEAPON_MATERIALS.Iron)];
+  const t = bodyTarget('corpse:3', (key) => { assert.equal(key, 'corpse:3'); return held; });
+  assert.equal(t.body, true);
+  assert.equal(t.skip(), true, 'only a left piece: out of the pick');
+  held = [sword(WEAPON_MATERIALS.Daedric)];
+  assert.equal(t.skip(), false, 'the list changed: back in the pick');
+  held = null;
+  assert.equal(t.skip(), false, 'an unheard list is never hidden');
 });
