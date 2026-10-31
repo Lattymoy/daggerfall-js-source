@@ -220,9 +220,9 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.doesNotMatch(read('tools/bakeTamrielRelief.mjs'), /export const (RELIEF_SCALE|FIT) =/, 'AUDIT TESA II G8: no second literal of the grid or the fit');
   assert.match(read('src/world/tamriel/tamrielLand.js'), /relief: trace\.relief \?\? null \};/);
   const client = read('src/world/terrain/terrainGenClient.js');
-  assert.match(client, /relief: trace\.relief \? trace\.relief\.slice\(\) : null,\n\s*\}/);
+  assert.match(client, /relief: trace\.relief \? trace\.relief\.slice\(\) : null \}/);
   assert.match(client, /\.\.\.\(t\.relief \? \[t\.relief\.buffer\] : \[\]\)/);
-  assert.match(read('src/scenes/tamrielRoadsHost.js'), /const trace = tamrielTrace\(\),\n\s*fit = tamrielFit\(\);/, 'the roads worker takes the installed trace whole');
+  assert.match(read('src/scenes/tamrielRoadsHost.js'), /const trace = tamrielTrace\(\), fit = tamrielFit\(\);/, 'the roads worker takes the installed trace whole');
   assert.match(read('src/world/tamrielRoads.js'), /if \(trace\?\.relief\) for \(let i = 0; i < trace\.relief\.length; i\+\+\) mix\(trace\.relief\[i\] \+ 256\);/);   // PIN MOVED (AUDIT TESA II R6): every cell
   assert.match(read('src/world/tamriel/tamrielGround.js'), /if \(reliefStands\(\)\) \{\n\s+const ease = Math\.min\(1, Math\.max\(0, \/\*\* @type \{number\} \*\/ \(coastDepthAt\(px, py\)\)\) \/ RELIEF_COAST_REACH\);/);   // AUDIT TESA II G4 (PIN MOVED, and again SMOOTH-LAND): the waterline's ease, the smooth law's own distance
   assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = 5;/);   // IC-RING moved it on; AUDIT TESA II (PIN MOVED) on again

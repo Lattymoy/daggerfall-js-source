@@ -132,8 +132,8 @@ export const ONLINE_PROBE_EDITS = Object.freeze([
     file: 'src/systems/online/onlineLane.js',
     edits: [
       [
-        "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', ",
-        'export const ONLINE_REFUSED_FLAGS = Object.freeze([',
+        "export const ONLINE_REFUSED_FLAGS = Object.freeze([\n  'shot',\n",
+        'export const ONLINE_REFUSED_FLAGS = Object.freeze([\n',
       ],
     ],
   },

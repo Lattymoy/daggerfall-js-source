@@ -49,8 +49,8 @@
   {
     "name": "PERF-ON4-the-edit-keeping-shot-refused",
     "file": "tools/onlineFrameProbe.mjs",
-    "old": "        'export const ONLINE_REFUSED_FLAGS = Object.freeze([',",
-    "new": "        \"export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', \",",
+    "old": "        'export const ONLINE_REFUSED_FLAGS = Object.freeze([\\n',",
+    "new": "        \"export const ONLINE_REFUSED_FLAGS = Object.freeze([\\n  'shot',\\n\",",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],
