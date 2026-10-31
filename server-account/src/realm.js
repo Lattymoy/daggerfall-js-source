@@ -63,6 +63,7 @@ import { seaSeasonSteps } from './seaSeason.js';   // SEA-SEASON: the sea's seas
 import { piecesRefusal, ledgerMoves, releaseSteps, ledgerReads, leavingKeys } from './ledger.js';   // INT4: a piece the record may give, and the ledger moved with it; SAVE-BATCH: its reads in the checkpoint's first batch
 import { budgetKept, budgetRead, budgetFrom } from './budget.js';   // SAVE-BATCH: and the budget's config, where the isolate kept none
 import { villainClamp } from '../../src/systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: the meter the mint signs, held to its bounds
+import { mightOk } from '../../src/net/mightLaw.js';   // EG-MIGHT: the kit's might the mint signs, held to its bounds
 import { verdictOn } from './verdict.js';   // INT2-INT5: the verdict on every checkpoint, in the checkpoint's own batch
 
 /** Realm characters an ACCOUNT may hold. A new one past it is refused; nothing is ever deleted to make room. */
@@ -162,7 +163,7 @@ export async function listRealm({ db, nowS }, /** @type {string} */ playerId) {
  *  online cap (src/systems/levelCap.js ONLINE_LEVEL_CAP), as the judge's JUDGE_LEVEL_MAX. */
 export const REALM_LEVEL_CLAIM_MAX = 45;
 
-/** WHAT THE IDENTITY MINT SIGNS OF THE CHARACTER IT IS MINTED FOR - `{ rc, cl, wa, house, name }`, one read of its row.
+/** WHAT THE IDENTITY MINT SIGNS OF THE CHARACTER IT IS MINTED FOR - `{ rc, cl, wa, km, house, name, vl }`, one read of its row.
  *  - `rc` REALM-DOOR (2026-09-29, the field): IS THIS ONE OF THE ACCOUNT'S REALM CHARACTERS? The relay's door refuses a
  *    0, so online is the realm's at the servers, not only in the new build's boot. A realm id of this account's own,
  *    standing - LEGACY7: never a tombstone - and INT9 (AUDIT): IN PLAY, a lease held (the token's `ci` is whose record a
@@ -181,7 +182,7 @@ export const REALM_LEVEL_CLAIM_MAX = 45;
  *  - `name` NAME-AS (2026-10-12): ITS OWN NAME, as its row keeps it (realmNameOf's) - the name the mint signs where the
  *    account chose its character's (accounts.js wornNameOf, which asks whether the wire can carry it). A fifth answer of
  *    the same read, never a second statement: test/server/scale4f.test.js holds it to its own read beside the four.
- *  - `vl` PVP-VILLAIN-KEEP: ITS VILLAIN METER (`villainy`, villainy.js), 0..VILLAIN.max. The four are read only for a character that is the realm's (`rc` 1), as the mint signs them only then.
+ *  - `vl` PVP-VILLAIN-KEEP: ITS VILLAIN METER (`villainy`, villainy.js), 0..VILLAIN.max. The four are read only for a character that is the realm's (`rc` 1), as the mint signs them only then. EG-MIGHT: `km`, ITS KIT'S MIGHT as its last judged checkpoint found it (verdict.js `might`, net/mightLaw.js mightOk; null before one) - the mint grows it into `mg`.
  *  SCALE4f (2026-10-10, Mac: "really future proof our archetecture while also increasing performance"; bible
  *  11-Multiplayer/Scale-Arc.md SCALE4f): THE FOUR READS OF ONE ROW, IN ONE. These were four functions and four
  *  statements of the same realm_characters row (realmCharacterHeld, realmLevelOf, realmArmsOf, legacy.js realmHouseOf),
@@ -189,9 +190,9 @@ export const REALM_LEVEL_CLAIM_MAX = 45;
  *  what the four answered: test/server/scale4f.test.js holds it to them, as they stood at acct106, over every state a row can be
  *  in. */
 export async function realmMintFacts({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
-  const none = { rc: 0, cl: null, wa: null, house: null, name: null, vl: 0 };
+  const none = { rc: 0, cl: null, wa: null, km: null, house: null, name: null, vl: 0 };
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return none;
-  const row = await db.prepare('SELECT r.dead_at, r.lease, r.summary, r.level_seen, r.arms_top, r.arms_bow, r.person_id AS person, r.name AS name, r.villainy AS villainy, l.record AS record'
+  const row = await db.prepare('SELECT r.dead_at, r.lease, r.summary, r.level_seen, r.arms_top, r.arms_bow, r.might, r.person_id AS person, r.name AS name, r.villainy AS villainy, l.record AS record'
     + ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();
   if (!row || row.dead_at != null || row.lease == null) return none;
   let summary = null;
@@ -202,6 +203,7 @@ export async function realmMintFacts({ db }, /** @type {string} */ playerId, /**
     rc: 1,
     cl: Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null,
     wa: armsIssuable(arms) ? /** @type {[number, 0|1]} */ (arms) : null,
+    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null,   // EG-MIGHT: the kit's might, judged
     house: houseOn(row.record, row.person),   // no line, no record: none (houseOn's own null)
     name: typeof row.name === 'string' && row.name ? row.name : null,   // NAME-AS: its own name, for the mint to wear where chosen
     vl: villainClamp(row.villainy),   // PVP-VILLAIN-KEEP: its villain meter, 0..10,000

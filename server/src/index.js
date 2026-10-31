@@ -411,6 +411,7 @@ import { dragonGate } from '../../src/net/wire.js';   // DRAGON2: its frames' ow
 import { EG_VOID_MAX_S, EG_DONE_KEY, EG_OPEN_HUB_TRIES, EG_INTERNAL_VOID, EG_INTERNAL_CALLED, EG_INTERNAL_RCPT, EG_RC_PREFIX, EG_RC_TELL_MS, EG_RC_OWED_MAX, egRcKey, egRcId, egRcFold, egRcSpent, egRcLive, egDoneWith, egDoneOf, egVoidable, egTickAt } from '../../src/net/eliteGates/egDurable.js';
 import { readEgReceipt, EG_RECEIPT_TTL_S } from '../../src/net/eliteGates/egReceipt.js';
 import { verifyEgOpenAnyAge } from '../../src/net/identityToken.js';
+import { egTokenAtt } from '../../src/net/eliteGates/egMight.js';   // EG-MIGHT: a breach member's kit's might, off its token
 // EG-E3 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 20): net/eliteGates/egHerald.js
 // JOINS THE BUNDLE - the Spire's herald (its posts, the hub's reckoning of the Descent's tops, First of the Spire and the
 // seals said; pure - it imports gateHerald.js, egLaw.js and arenaLaw.js, all here). A breach's room tells the hub its news
@@ -3507,7 +3508,7 @@ export class Room {
     if (c.vl) house.vl = c.vl;   // PVP-VILLAIN-KEEP: `vl`, the villain meter the token signed for (wildRef.js wildTokenAtt puts it on the socket)
     if (c.fo) house.fo = c.fo;   // STAFF-PANEL5-FOLLOW: `fo`, the account a hidden spectator follows (beside `hd` alone - claimsValid); set here, as the return's literal is pinned by other mutant lists
     if (c.hd === 1) this._hidHellos.add(m);   // STAFF-PANEL5-HIDDEN: `hd`, a hidden staff spectator's token - the hello marked off the signature (staffHidden.js hiddenHello)
-    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
+    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -3878,7 +3879,7 @@ export class Room {
       const arena = isArenaRoom(a.key) ? { ar: arenaRatingOk(who.ar), lk: who.kind === 'linked' ? 1 : 0, ...(Number.isSafeInteger(who.cl) && who.cl >= ARENA_CL_MIN && who.cl <= ARENA_CL_MAX ? { cl: who.cl } : {}) } : {};   // ARENA4: the hall queues by the signed rating, and a guest is queued for no rated bout   // ARENA4b: and a ladder bout's vitality is the signed character level's (`cl` - absent from a service before it)
       const linked = (isRegionRoom(a.key) || realmRoom) && who.kind === 'linked' ? { lk: 1 } : {};   // SD3: a region's channel marks a registered account - the census counts those alone (a guest is one click); AUDIT SD II (L7 H2): and a realm's - its stones count every guest as one turner
       const charLv = (isCellRoom(a.key) || realmRoom || ktRoom || isWorldRoom(a.key)) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};   // AUDIT SERPENT E4: a cell's serpent fighter's level is never above the token's own character level (`cl` - absent from a service before ARENA4b); AUDIT SD II (L7 M2): and a realm's fighter's level IS it
-      if (egRoom && Number.isSafeInteger(who.cl) && who.cl >= 1) charLv.cl = who.cl;   // EG-PLAY: and a breach member's level is its token's character level
+      if (egRoom) Object.assign(charLv, egTokenAtt(who));   // EG-PLAY: and a breach member's level is its token's character level; EG-MIGHT: and its kit's might (net/eliteGates/egMight.js)
       // AUDIT PRE-MERGE 1003b R5: A FLOOR'S PLACE MOVES WITH ITS RECONNECT - a replaced socket loses its id before its close,
       // so its leave frees no seat, and the new socket's `in` took another: every blip a seat gone from the stands (a full
       // session's sixty), every fighter's a second body. The place the old socket held is the new one's
@@ -9676,7 +9677,7 @@ export class Room {
       now = Date.now();
       B = this._eg;
       const lv = a.cl > 0 && Number.isSafeInteger(a.cl) ? a.cl : m.lv;   // the token's character level where it carries one
-      const w = egEnter(B, a.sub, r.claims.ez, lv, now);
+      const w = egEnter(B, a.sub, r.claims.ez, lv, now, a.mg);   // EG-MIGHT: and the token's kit's might, the purse's
       if (w) { no(w); return; }
       await this._egSave(B, now, true);
       this._egFan([egStateOf(B, now)]);

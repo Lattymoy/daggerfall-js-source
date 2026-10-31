@@ -18,6 +18,7 @@
 import { ATTACK_BY_ID, ATTACKS, BOSS_H, LEAP_AIR_MS, CROSS_AIR_MS, airOf, leapAt, profileOf, isDagons, HOST, HOST_KINDS, HOST_RISE_MS, hostAt, HALF } from '../../net/gate/gateBrain.js';
 import { HIT_CAP_X, dpsRef, LV_MAX } from '../../net/gate/gateBrain.js';   // STAND-IN-WHOLE: the most one blow lands, the relay's own law
 import { EG_BUCKET_X_MAX } from '../../net/eliteGates/egVestige.js';   // STAND-IN-WHOLE: and the most an Elite Breach's bucket grows by
+import { MIGHT_MOST, MIGHT_NONE } from '../../net/mightLaw.js';   // EG-MIGHT: and by the most a kit's signed might grows it
 import { bossAt } from '../../net/gate/gateLink.js';
 import { telegraphAt, chargeHead, hostTelegraphAt } from '../../net/gate/gateStrike.js';
 import {
@@ -88,9 +89,9 @@ export const BOSS_ARMOR = 60;
  * galley's reference) and a bout's (arenaBlowCap) - so a Disintegrate counts whole and the relay's own caps clip it, as
  * a duel's stand-in counts at the wire's vital ceiling (combat/duelCombat.js DUEL_STAND_IN); and under the least ceiling
  * nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Pinned against the real constants and
- * every validator (test/net/gate/fb1019f_standinwhole.test.js).
+ * every validator (test/net/gate/fb1019f_standinwhole.test.js). EG-MIGHT (Elite-Gates.md 21.1): and by the most a kit's might grows a breach's purse (x10), 9,750.
  */
-export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;
+export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE);
 /**
  * STAND-IN-WHOLE: WHAT ONE BLOW OF MINE AT LEVEL `lv` CAN LAND ON STAND-IN `e` - the relay's one-blow cap (net/gate/
  * gateBrain.js applyHit and spendPurse: HIT_CAP_X times the reference at my level), grown by the factor its owner says my

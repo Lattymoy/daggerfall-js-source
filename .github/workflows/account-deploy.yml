@@ -119,6 +119,8 @@ on:
       - "src/net/recipeLaw.js"
       - "src/net/productRecord.js"
       - "src/net/masterLaw.js"
+      - "src/net/kitMight.js"
+      - "src/net/mightLaw.js"
       - "src/net/marketLaw.js"
       - "src/net/vendorLaw.js"
       - "src/net/patronLaw.js"

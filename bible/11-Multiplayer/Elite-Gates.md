@@ -2751,6 +2751,9 @@ All of it is bounded by THE WIND-UP FLOOR, THE UNION FLOOR, THE CHECK CLASS and 
 THE ENVELOPE and THE TIMED SOLVER (section 10). Nothing shortens a wind-up, a piece's timing or a crumble below its
 value in circle 1.
 
+EG-MIGHT (section 21.1): a member's purse grows by its kit's signed might, and its share of every body's health by the
+might's square root, so the table below is a company of no might; a geared company kills faster and reaches deeper.
+
 **The lords' clock** (`ttkRef`, at the company's reference damage and at the trust law's cap, the gate's
 `(BOSS_TTK_S - BUCKET_DEPTH_X) / BUCKET_RATE_X` widened per circle, with the Vestiges' factors):
 
@@ -3293,6 +3296,46 @@ The gate's trust law, kept whole, and where it was not enough for one life, wide
 A modified client can still refuse to take damage (a player owns their body). Under `BOSS_BODY` enforcement, the
 relay's census fells it as it fells a gate's fighter. The Spire's boards are measured with enforcement on: it is on in
 `eg:` rooms (`EG_BODY_ENFORCE`, `net/eliteGates/egBrain.js`), whatever the gate's setting, on the time law above.
+
+### 21.1 THE KIT'S MIGHT (EG-MIGHT, 2026-10-31)
+
+The owner, 2026-10-31: "Address DMG cap in Elite Breach. It's not engaging to see 45 DMG when you're well geared".
+Asked how gear should count, the owner chose a gear-aware purse.
+
+**What was found.** A blow on a Spire body lands what the gate's purse allows (`gateBrain.js:"export function spendPurse("`): a
+bucket 15 x ref deep, refilled at 3 x ref a second, no blow over 12 x ref. Ref is `dpsRef(level)`, 5 + level, grown only
+by the Vestiges' declared factor (at most 1.25). Nothing a member wore reached it. At level 10 the bucket refills 45 a
+second, so once its depth is spent each blow lands what refilled since the last. Since LANDED-WORD the screen says that
+number. The reference was set on Daggerfall's damage (a level-20 Daedric dai-katana, 26-37 a blow). The powers since
+(`systems/powerCeiling.js` BLOW_TOPS, x120 together) put an honest geared blow far past it.
+
+**The might.** The judge (`server-account/src/judge.js`) reads each judged checkpoint's kit might
+(`net/kitMight.js` kitMightOf): an upper bound of what the lawful pack can add to a blow, in whole per cent, 100 to 1000.
+Its parts are the blow registries' rooms, each at most its top: a weapon's own damage lines (to 40); the slayer lines and
+each piece's own power - a Legendary's record once, a Gilded, a Master's work - at KIT_POWER_PCT (100), to 240; the most
+pieces of one set (2, 4, 6 of 200); a weapon's blow sigil (12); a weapon skill's climb past 100 and its gear lines (to
+400); a martial path held (40). They multiply. The row keeps it (`realm_characters.might`, migration 0203).
+
+- **The mint** grows it by the Renown's sky - the Firmament's 50 at the Renown's share of RENOWN_MAX - and signs it as `mg`,
+  beside the realm's yes alone (`net/mightLaw.js` mightSigned, `net/identityToken.js` mightIssuable).
+- **The relay** puts `mg` on a breach member's socket (`net/eliteGates/egMight.js` egTokenAtt) and its admission (`egEnter`; a
+  re-entry takes the newest token's). The member's purse - its depth, its rate and its one-blow cap - grows by `mg / 100`,
+  beside the Vestiges' factor (`egBrain.js:"const bx = vx.bx * egPurseX(mm.mg);"`).
+- **The health.** A member's share of every body its hall sizes by the company (lords, adds, objects: `F.team`, `F.mean`)
+  grows by the might's square root (`EG_MIGHT_HEALTH_EXP` 0.5, `egHealthRef`). A might of 400 lands four times as much
+  and its lord holds twice the health, so the kill is twice as fast. One number moves the balance: 0 lets the whole might
+  shorten a kill, 1 none of it.
+- **A stand-in's whole** grows by the most a might grows the purse (`world/gate/gateBoss.js` STAND_IN_WHOLE): 9,750, still
+  under a bout's 10,000, so a geared spell's claim is never held under it.
+
+**What it reads, and what not.** An honest kit's might is at or over what it lands, and a forged client gains only the
+room its judged gear holds. Daggerfall's enchantments and the artifacts' own effects are not read: their numbers are no
+blow registry's. A character judged before EG-MIGHT carries no `mg` until its next checkpoint, and lands as before.
+Section 18's table is a company of no might; the Depths board now ranks gear and play together.
+
+**Deploy.** The account service (acct231, migration 0203) and the relay (world298) in either order: an older relay ignores
+`mg`, and an older service signs none. Then the site. Pinned by `test/net/eliteGates/egmight.test.js`; mutants
+`tools/mutants/egmight.json`.
 
 ## 22. Failure and recovery
 

@@ -251,6 +251,7 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     // INT7: the arms the identity mint signs - the most reach of the lawful weapons in the pack, and a lawful bow
     arms_top: judged.arms[0],
     arms_bow: judged.arms[1],
+    might: judged.might,   // EG-MIGHT: the kit's might the identity mint signs (net/kitMight.js)
   };
   // the first thing the law found, for the tab to name the piece to its player (only when it holds) - and a TIMED hold
   // says its end, `until` (AUTO-HOLD): the piece gone or not, that is the way out (the Ring report: held still past the
@@ -270,7 +271,7 @@ export function verdictWrite(db, char, row, s) {
     'UPDATE realm_characters SET judged_seq = ?2, held = ?3, held_at = ?4, strikes = ?5, review = ?6, wealth = ?7, witnessed = 0,'
     + ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,'
     + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,'
-    + ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22, law_v = ?23,'
+    + ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22, law_v = ?23, might = ?24,'
     // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again.
     // AUDIT RPT1026 C2: an excuse of the character law's values (lawExcuseOf's `|`) alone - a piece staff excused stands
     // excused as every excuse did, or one put away for a checkpoint (a vault, a listing, a trade and back) held and struck
@@ -279,5 +280,5 @@ export function verdictWrite(db, char, row, s) {
     + ' WHERE id = ?1 AND judge_rev = ?16',
   ).bind(char, s.judged_seq, s.held, s.held_at, s.strikes, s.review, s.wealth, row.allowance ?? null, s.allowance, s.played_at,
     s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null,
-    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);
+    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null, s.might ?? null);
 }

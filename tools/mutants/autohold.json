@@ -121,8 +121,8 @@
   {
     "name": "AUTOHOLD-the-timed-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
-    "new": "    null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
+    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null, s.might ?? null);",
+    "new": "    null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null, s.might ?? null);",
     "tests": [
       "test/server/autohold.test.js"
     ]

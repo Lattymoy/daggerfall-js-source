@@ -155,7 +155,7 @@
   {
     "name": "EGZK-the-director-never-joins",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return land(0);\n",
+    "old": "  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home, mg: mm.mg })) return land(0);\n",
     "new": "\n",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"
