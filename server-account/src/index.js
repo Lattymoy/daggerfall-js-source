@@ -287,7 +287,7 @@ import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
 import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a Broker sale asked after by its request id
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
-import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, discardFestival, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
 import { passOf, findPass, BATTLE_PASS_STATUS, unlockPass, buyPass } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's pass and a deed's find; PASS-PANELS: a track opened and an item bought
 import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
@@ -2389,6 +2389,7 @@ const service = {
           '/v1/festival/offering/fill': async () => fillOffering(ctx, who.player, body, env),
           '/v1/festival/offering/take-in': async () => takeInOffering(ctx, who.player, body),
           '/v1/festival/offering/take': async () => takeFromOffering(ctx, who.player, body, env),
+          '/v1/festival/discard': async () => discardFestival(ctx, who.player, body),   // BOUND-DESTROY: cakes or bowls let go, any day
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();

@@ -122,8 +122,8 @@
   {
     "name": "KEY-FACE-classic-pack-only-silent",
     "file": "src/ui/native/nativeInventory.js",
-    "old": "        if (isPackOnly(it)) { this._refuse(",
-    "new": "        if (false) { this._refuse(",
+    "old": "        if (isPackOnly(it)) { if (destroy) this._askDestroy(it); else this._refuse(",
+    "new": "        if (false) { if (destroy) this._askDestroy(it); else this._refuse(",
     "why": "the classic window refuses a face in the bound law's words",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"

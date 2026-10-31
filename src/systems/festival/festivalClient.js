@@ -36,6 +36,7 @@ import { cakesFoundText, festivalRefusalText, isFestivalRefusal, findsFullText }
 import { wyrdPieceById } from '../aetheric.js';
 import { mintIliacCard } from '../iliac/iliacItems.js';
 import { addItem } from '../inventory.js';
+import { setCountedDiscard } from '../item/itemDiscard.js';   // BOUND-DESTROY: the pack's Destroy lets the account's faces go here
 
 /** The kill listener's and the act hearer's name. */
 export const FESTIVAL_FIND = 'festival-find';
@@ -387,6 +388,37 @@ export async function offeringMove(/** @type {'set'|'fill'|'takeIn'|'take'} */ m
   _doors.saved();
   return { ok: true, data: r.data, text: '' };
 }
+// ═══ BOUND-DESTROY ═══════════════════════════════════════════════════════════════════════════════════════════════════
+/** The refusals that end a let-go's request id (server-account/src/festival.js discardFestival): nothing moved, and the
+ *  same ask never will. Every other (no answer, the service's fault, a rate) keeps the id for the same ask again. */
+export const DISCARD_FINAL = Object.freeze(['rid', 'kind', 'count', 'guest']);
+/** The let-go asked and not yet answered: `{ kind, n, rid, account }` - the same ask reuses its id, so a lost answer
+ *  never takes twice. */
+let _discard = /** @type {{ kind: string, n: number, rid: string, account: string|null } | null} */ (null);
+/**
+ * LET GO `n` of the account's Soul Cakes or Hearth Offerings (`kind` 'cakes' or 'bowls') - the pack's Destroy
+ * (systems/item/itemDiscard.js destroyPiece). A face removed from the pack alone came back with the next answer, so the
+ * service lets the count go, and its answer restacks the pack. After the festival too; never offline or as a guest.
+ * Answers `{ ok, text }`.
+ * @param {string} kind @param {number} n
+ */
+export async function discardFaces(kind, n) {
+  if (!_api || !_doors.online()) return { ok: false, text: festivalRefusalText('offline') };
+  if (festivalShut() === 'guest') return { ok: false, text: festivalRefusalText('guest') };
+  const me = _api.me() ?? null;
+  const ask = _discard?.kind === kind && _discard.n === n && _discard.account === me ? _discard : (_discard = { kind, n, rid: saleRid(), account: me });
+  const r = await _api.discard(kind, n, ask.rid).catch(() => null);
+  if ((r?.ok || DISCARD_FINAL.includes(r?.error)) && _discard === ask) _discard = null;
+  if (!r?.ok) {
+    learn(r);   // a refusal's counts (`count`: fewer than that held now)
+    return { ok: false, text: refusalText(r?.error ?? 'offline') };
+  }
+  learn(r.data);
+  _doors.saved();
+  return { ok: true, text: '' };
+}
+setCountedDiscard(discardFaces);
+
 /** A town's offerings, as the service says them (`{ mapId, open, offerings }`), or null. */
 export async function townOfferings(/** @type {number} */ mapId) {
   if (!_api || !_doors.online()) return null;
@@ -396,7 +428,7 @@ export async function townOfferings(/** @type {number} */ mapId) {
 
 /** Tests only. */
 export function _resetFestivalClientForTests() {
-  _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null;
+  _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null; _discard = null;
   _state = UNHEARD; _stateOf = null; _fullSaid = null;
   _hear.clear(); _version = 0; _rest.reset();
 }

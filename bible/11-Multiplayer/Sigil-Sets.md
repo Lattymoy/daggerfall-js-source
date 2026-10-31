@@ -518,7 +518,8 @@ price and their week (`ui/brokerWindow.js`).
   for its owner alone), and to a smith or a sage, because it comes back.
 - A ware bought before SS4 carries no mark and stays unbound: nothing on a piece says where it was won (a set piece
   also drops from a fight, fresh and of a party of one), and the Broker's record keeps only the day's ids. For the
-  same reason a ware bought before SS5 carries no price and is never dismantled.
+  same reason a ware bought before SS5 carries no price and is never dismantled; BOUND-DESTROY (section 10) destroys it
+  instead.
 
 ## 9. The slices
 
@@ -1216,3 +1217,29 @@ b at Bright, c catches up to Bright, not Kindled) and `set5_ui`'s stage line (th
 "(3x XP)"). `_resetSigilSetsForTests` forgets the reach too, so no test's reach leaks into the next. The SET4 and SET3
 mutant records that quoted the drink and Unbroken's halving are re-aimed by content (`set4.json`, `set3.json`).
 Mutants in `tools/mutants/power-ceiling.json` (the `SET-CATCHUP-` records).
+
+### BOUND-DESTROY - a bound piece nothing else takes is destroyed (2026-10-31)
+
+#feature-feedback: "Soulbound items need to be disposable, certain aetheric sets and hearth offerings." FIELD BUGS
+2026-10-29e had left it to the owner ("A Destroy for bound pieces is a design of its own, for the owner"), and the owner
+handed it over. A bound piece left only for the wagon and the player's own storage (SS3), and only a priced Broker ware
+was dismantled (SS5), so the Wyrd's Raiment, a ware bought between SS4 and SS5 and the festival's bowls stayed for
+good. Not a DFU member: Daggerfall has no bound piece and no destroy.
+
+- **The law** (`systems/item/itemDiscard.js`). `discardRefusal` destroys what its own mark binds and the two festival
+  faces. Every row-bound token is kept (`kept`): the Embers, Shards and Portal Stones are coin with a sink that pays;
+  the Wallet, the Card Binder and the Dwarven Dragon are one each and hold what they hold; a Weir Key is the account
+  service's count. A priced ware is `dismantle` - Dismantle pays, so it stands instead. A worn, locked or quest piece
+  is refused. A copy the realm locked has no mark: the ledger holds it while it reads it, and the lock lifts to the
+  usual ways out. `discardItem` takes the piece or the whole stack, all or nothing, as `dismantleWare` does.
+- **The enhanced pack.** The card and its right-click menu offer Destroy where Dismantle is not. It asks first in the
+  dismantle's own question, Keep focused, with the pair guard and the chest window's refusal (AUDIT RPT1026 B1).
+- **The classic pack.** Remove over the ground offers it in DFU's own Yes/No box, as SS5's dismantle does - a pack-only
+  face too. A chest, a body and the wagon get the plain refusal.
+- **Found on the way.** The batch salvage said every Aetheric piece was the Broker's to dismantle. A piece he never
+  priced now reads "is Aetheric, and the Reforge never breaks it."
+
+The Soul Cakes and Hearth Offerings go through the account service (`06-Systems/Witches-Festival.md` BOUND-DESTROY).
+Four hosts: none edited - the pack is every host's. Pinned by `test/systems/item/bound_destroy.test.js` (11) and
+`test/server/bound_destroy_service.test.js` (3); `tools/mutants/bound_destroy.json` (42, all dead). Re-aimed by content:
+`wallet1.json` and `fb1019f_keyface.json` (the classic pack-only refusal's line), the version records at acct233.

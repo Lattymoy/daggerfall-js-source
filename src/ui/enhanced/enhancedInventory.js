@@ -169,6 +169,7 @@ import { landingTiles } from './landingTiles.js';   // VIRT: a picture into its 
 import { overlayAction, eventActions } from '../input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
+import { discardRefusal, destroyPiece, destroyAct, destroyAsk, destroyedText, destroyRefusalText } from '../../systems/item/itemDiscard.js';   // BOUND-DESTROY: a bound piece nothing else takes
 import { salvageShards, salvageRefusal, salvagePiece, salvageMany, salvageable, shardsText } from '../../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
 import { gemsHeld, setGemPiece, unsetGemPiece } from '../../systems/reforge.js';   // GEM1: a gem set in a socket from the pack, and shattered out of one
 import { ALL_GEM_IDS, SOCKET_EMPTY, emptySockets, gemKindOf } from '../../systems/loot/lootRarity.js';   // GEM1: the socket list and the gems
@@ -3745,6 +3746,14 @@ function itemActs(picked, side, { qty = true } = {}) {
     d.onclick = () => askDismantle(picked);
     acts.append(d);
   }
+  // BOUND-DESTROY (FIELD FEEDBACK 2026-10-31, "Soulbound items need to be disposable"): a bound piece nothing else takes -
+  // the Wyrd's Raiment, a ware sold unpriced, a Soul Cake, a Hearth Offering - is DESTROYED, asked first
+  // (systems/item/itemDiscard.js); never where a dismantle pays. A locked one says why when pressed, as Dismantle's does.
+  if (side === 'local' && !line.equipped && [null, 'locked'].includes(discardRefusal(picked))) {
+    const x = el('button', 'act', destroyAct());
+    x.onclick = () => askDestroy(picked);
+    acts.append(x);
+  }
   // LOOT9 (the Loot arc): a laddered piece SALVAGED into Welkynd Shards (systems/reforge.js) - the Reforge's coin - asked
   // first, as the dismantle is; never a worn one (taken off first), and a piece that will never break shows no button -
   // but one that wears Magic and never will (FB1012d SALVAGE-CLASSIC: DFU's own magic) shows it, and its press says why
@@ -3849,6 +3858,58 @@ function askDismantle(item) {
   const timer = setTimeout(() => { document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
   dismantleOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
 }
+/** BOUND-DESTROY: THE DESTROY'S QUESTION - the dismantle's own, in the one question's slot: Destroy (or Y) takes the piece
+ *  or its whole stack out for good (systems/item/itemDiscard.js destroyPiece - a Soul Cake or a Hearth Offering through
+ *  the account service, whose answer restacks the pack); Keep, N, Enter, Escape or a press outside keep it. A piece the
+ *  law refuses (locked) is refused in words before any question is asked. */
+function askDestroy(item) {
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: as the dismantle's - a chest's copy of the pack destroys nothing
+  hideTip(); closeMenu(); closeInfo(); closeDismantle();
+  const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
+  const refusedFor = (why, text = null) => { notice = text || destroyRefusalText(name, why); refresh(); render(); };
+  const why = discardRefusal(item);
+  if (why) { refusedFor(why); return; }
+  dismantleEl = el('div', 'inv-info inv-dismantle inv-destroy');
+  dismantleEl.setAttribute('role', 'alertdialog');
+  dismantleEl.setAttribute('aria-label', destroyAct()); dismantleEl.setAttribute('aria-modal', 'true');
+  const card = el('div', 'card');
+  const sec = el('div', 'inv-info-box');
+  for (const line of destroyAsk(name, Math.max(1, item.stackCount ?? 1))) sec.append(el('p', 'center', line));
+  card.append(sec);
+  const row = el('div', 'acts');
+  const ok = el('button', 'act primary', destroyAct());
+  const done = (r) => {
+    if (!host) return;   // the pack closed while the service answered
+    if (picked === item && (r.ok || !(deps.items?.() ?? []).includes(item))) picked = null;   // gone, or restacked by the answer
+    if (!r.ok) return void refusedFor(r.reason, r.text);   // worn, locked or gone since the question, or the service's word
+    notice = destroyedText(name);
+    refresh();
+    render();
+  };
+  ok.onclick = (e) => {
+    e?.stopPropagation?.();
+    closeDismantle();
+    const r = destroyPiece(item, { items: deps.items?.() ?? [] });
+    if (r instanceof Promise) void r.then(done); else done(r);
+  };
+  const no = el('button', 'act', t('inventory.destroy.keep', 'Keep'));
+  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // Keep: nothing moves
+  row.append(pairGuard(ok), no);
+  card.append(row);
+  dismantleEl.append(card);
+  document.body.append(dismantleEl);
+  no.focus?.({ preventScroll: true });   // the answer that loses nothing
+  const box = dismantleEl;
+  const outside = (e) => { if (e.target === box || !box.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };
+  const keys = (e) => {
+    const answer = e.code === 'KeyY' ? 'yes' : (e.key === 'Escape' || e.key === 'Enter' || e.code === 'KeyN' || e.code === 'NumpadEnter') ? 'keep' : null;
+    if (!answer) return;
+    e.preventDefault(); e.stopPropagation();
+    if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();
+  };
+  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);
+  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };
+}
 /** LOOT9: THE SALVAGE'S QUESTION - the dismantle's own (askDismantle), in the one question's slot, its words the
  *  Reforge's: Salvage (or Y) breaks the piece into its shards (systems/reforge.js salvagePiece); Keep, N, Enter, Escape
  *  or a press outside keep it. A locked piece is refused in words before any question is asked. */
@@ -3931,15 +3992,19 @@ export const BATCH_ASK = (n, shards) => [
 export const BATCH_NAMES_SHOWN = 6;
 export const BATCH_DONE = (n, shards, kept = 0) => t('inventory.batch.done', 'Salvaged {n, plural, one {# piece} other {# pieces}}, for {shards}.', { n, shards: shardsText(shards) })
   + (kept ? ` ${t('inventory.batch.kept', '{kept, plural, one {# would not break and was kept.} other {# would not break and were kept.}}', { kept })}` : '');
-/** Why a pressed piece takes no tick (systems/reforge.js salvageRefusal's reasons), in the card's own words where it has them. */
-export function batchRefusal(name, why) {
+/** Why a pressed piece takes no tick (systems/reforge.js salvageRefusal's reasons), in the card's own words where it has them.
+ *  BOUND-DESTROY: an Aetheric piece the Broker never priced (the Wyrd's Raiment, the gate's Regalia) is not his to dismantle. */
+export function batchRefusal(name, why, item = null) {
   if (why === 'locked') return lockedText(name);
   if (why === 'gems') return SALVAGE_GEMS(name);
   if (why === 'classic') return SALVAGE_CLASSIC(name);
   if (why === 'worn') return t('inventory.batch.worn', '{name} is worn - take it off to salvage it.', { name });
   if (why === 'bound') return t('inventory.batch.bound', '{name} is bound to you, and does not break.', { name });
   if (why === 'quest') return t('inventory.batch.quest', '{name} belongs to a quest.', { name });
-  if (why === 'aetheric') return t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name });
+  if (why === 'aetheric') {
+    return dismantleStones(item) > 0 ? t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name })
+      : t('inventory.batch.aethericKept', '{name} is Aetheric, and the Reforge never breaks it.', { name });
+  }
   if (why === 'gilded') return t('inventory.batch.gilded', '{name} is Gilded - its roll is never broken down.', { name });
   if (why === 'artifact') return t('inventory.batch.artifact', '{name} is an artifact, and never breaks.', { name });
   return t('inventory.batch.nothing', '{name} has nothing to salvage.', { name });
@@ -3952,7 +4017,7 @@ function pruneSalvage(pack) {
 function chooseSalvage(item) {
   hideTip();
   const why = salvageRefusal(item);
-  if (why) notice = batchRefusal(itemLongName(item, { getQuest: deps.getQuest ?? null }), why);
+  if (why) notice = batchRefusal(itemLongName(item, { getQuest: deps.getQuest ?? null }), why, item);
   else { if (salvageSel.has(item)) salvageSel.delete(item); else salvageSel.add(item); notice = null; }
   render();
 }

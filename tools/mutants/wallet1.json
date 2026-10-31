@@ -486,8 +486,8 @@
   {
     "name": "WALLET1-classic-pack-only-silent",
     "file": "src/ui/native/nativeInventory.js",
-    "old": "        if (isPackOnly(it)) { this._refuse(",
-    "new": "        if (false) { this._refuse(",
+    "old": "        if (isPackOnly(it)) { if (destroy) this._askDestroy(it); else this._refuse(",
+    "new": "        if (false) { if (destroy) this._askDestroy(it); else this._refuse(",
     "why": "the classic window's refusal in the bound law's words",
     "tests": [
       "test/systems/wallet1.test.js"
