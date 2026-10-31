@@ -288,10 +288,10 @@ test('OW-TOWN-RING: the host rings every location on the way (the build\'s own t
   assert.match(w, /rects = locationRectsOf\(o\.x, o\.z, \{ x: r\.xMin, y: r\.yMin, width: r\.xMax - r\.xMin, height: r\.yMax - r\.yMin \}, loc\.mapTableData\.locationType === LOCATION_TYPES\.TownCity, hasCustomLocationPosition\(loc\)\);/, 'Travel Options\' own rects');
   const t = rd('src/systems/travel/travelOptions.js');
   assert.match(t, /\.\.\.\(l\.ring \? \{ ring: true \} : \{\}\)/, 'the journey keeps the mark');
-  assert.match(t, /if \(cur && !cur\.ring && cur\.x === mp\.x && cur\.y === mp\.y\) best = r\.i \+ 1;/, 'standing in the town\'s pixel skips no ring point');
+  assert.match(t, /if \(cur && !cur\.ring && cur\.x === mp\.x && cur\.y === mp\.y\)\n\s*best = r\.i \+ 1;/, 'standing in the town\'s pixel skips no ring point');
   assert.match(t, /if \(r\.legs\[best\]\?\.at && !r\.legs\[best\]\.ring && best \+ 1 < r\.legs\.length\) best\+\+;/, 'a ring point is no join');
   assert.match(t, /if \(!leg \|\| !prev \|\| leg\.kind === 'open' \|\| leg\.ring \|\| prev\.ring\) return null;/, 'and no road lane is rejoined between ring points');
-  assert.match(t, /: leg\.at \? spotRect\(leg\.at\) :/, 'each leg with its own point is aimed at that point');
+  assert.match(t, /: leg\.at\n\s*\? spotRect\(leg\.at\)\n\s*:/, 'each leg with its own point is aimed at that point');
 });
 
 test('WOD-PEAKS: with the Mountains switch off (the default) a Mountains instance is no prefab - its pick stands nothing and levels nothing; on, it stands as the mod has it; a flip is a new world', async () => {

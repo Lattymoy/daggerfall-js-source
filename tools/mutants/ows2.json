@@ -2,8 +2,8 @@
   {
     "name": "OWS2-no-launch",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        if (layer !== ASHORE) continue;   // no boat to hand: the sea refused",
-    "new": "        continue;   // no boat to hand: the sea refused",
+    "old": "        if (layer !== ASHORE) continue; // no boat to hand: the sea refused",
+    "new": "        continue; // no boat to hand: the sea refused",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OWS2-left-launches-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = sea.again ? ASHORE : LEFT;",
-    "new": "nl = ASHORE;",
+    "old": "          nl = sea.again ? ASHORE : LEFT;",
+    "new": "          nl = ASHORE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OWS2-packed-never-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = sea.again ? ASHORE : LEFT;",
-    "new": "nl = LEFT;",
+    "old": "          nl = sea.again ? ASHORE : LEFT;",
+    "new": "          nl = LEFT;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OWS2-sea-goal-walked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const wet = sea ? isWater(nx, ny) || (seaGoal && n === goal) : false;",
-    "new": "const wet = sea ? isWater(nx, ny) : false;",
+    "old": "      const wet = sea ? isWater(nx, ny) || (seaGoal && n === goal) : false;",
+    "new": "      const wet = sea ? isWater(nx, ny) : false;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OWS2-goal-either-layer",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);",
-    "new": "const goalOk = () => true;",
+    "old": "  const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);",
+    "new": "  const goalOk = () => true;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "OWS2-sail-land-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          if (dx && dy && !isWater(cx + dx, cy) && !isWater(cx, cy + dy)) continue;\n",
-    "new": "\n",
+    "old": "          if (dx && dy && !isWater(cx + dx, cy) && !isWater(cx, cy + dy)) continue;",
+    "new": "",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "OWS2-coast-cheap",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kindIx = 3; step = diag * (nearLand(nx, ny) ? SEA_COST.coast : SEA_COST.sea);",
-    "new": "kindIx = 3; step = diag * SEA_COST.sea;",
+    "old": "          step = diag * (nearLand(nx, ny) ? SEA_COST.coast : SEA_COST.sea);",
+    "new": "          step = diag * SEA_COST.sea;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "OWS2-free-launch",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = AFLOAT; kindIx = 4; step = diag * SEA_COST.sea + SEA_COST.shore;",
-    "new": "nl = AFLOAT; kindIx = 4; step = diag * SEA_COST.sea;",
+    "old": "        step = diag * SEA_COST.sea + SEA_COST.shore; // the launch",
+    "new": "        step = diag * SEA_COST.sea; // the launch",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OWS2-free-landfall",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kindIx = 5; step = diag * ROUTE_COST.open + SEA_COST.shore;",
-    "new": "kindIx = 5; step = diag * ROUTE_COST.open;",
+    "old": "          step = diag * ROUTE_COST.open + SEA_COST.shore;",
+    "new": "          step = diag * ROUTE_COST.open;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "OWS2-start-ashore",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;",
-    "new": "const startLayer = !sea ? 0 : ASHORE;",
+    "old": "  const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;",
+    "new": "  const startLayer = !sea ? 0 : ASHORE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OWS2-road-share-sea",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kinds.filter((k) => k === 'road' || k === 'track').length",
-    "new": "kinds.filter((k) => k !== 'open').length",
+    "old": "  return kinds.filter((k) => k === 'road' || k === 'track').length / kinds.length;",
+    "new": "  return kinds.filter((k) => k !== 'open').length / kinds.length;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWS2-dry-line-delegate",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "return dryLineOf(a, b, deps.isWater);",
-    "new": "return true;",
+    "old": "    return dryLineOf(a, b, deps.isWater); // OWS2: the one law, travelRoute.js's (the Overworld's spot walk asks it too)",
+    "new": "    return true; // OWS2: the one law, travelRoute.js's (the Overworld's spot walk asks it too)",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "OWS2-ocean-stops-sailors",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "=== CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) {",
-    "new": "=== CLIMATE_OCEAN && !flownNow()) {",
+    "old": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) {",
+    "new": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !flownNow()) {",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "OWS2-steer-at-sea",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "&& deps.steer && !deps.atSea?.()) {",
-    "new": "&& deps.steer) {",
+    "old": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer && !deps.atSea?.()) {",
+    "new": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer) {",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "OWS2-sea-leg-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO",
-    "new": "      : false ? rectOf(w.x + SEA_LEG_LO",
+    "old": "      : leg.kind === 'sea' || leg.kind === 'embark'",
+    "new": "      : false",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "OWS2-sea-spot-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const w = afloat ? SEA_SPOT_SIZE : P_SIZE;",
-    "new": "const w = P_SIZE;",
+    "old": "    const w = afloat ? SEA_SPOT_SIZE : P_SIZE;",
+    "new": "    const w = P_SIZE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

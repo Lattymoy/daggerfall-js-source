@@ -542,8 +542,8 @@
   {
     "name": "OWKIN-the-guild-never-matched",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';\n",
-    "new": "",
+    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -552,8 +552,8 @@
   {
     "name": "OWKIN-no-guild-of-mine-matched",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (myTag && p?.gt && ",
-    "new": "  if (p?.gt && ",
+    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';",
+    "new": "  if (p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -562,8 +562,8 @@
   {
     "name": "OWWHO-a-kin-switch-ignored",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (w[g] === false) return false;\n  return !(w.renown",
-    "new": "  return !(w.renown",
+    "old": "  if (w[g] === false) return false;\n  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
+    "new": "  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "OWWHO-the-floor-inverted",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": ">= w.renown;",
-    "new": "< w.renown;",
+    "old": "  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
+    "new": "  return !(w.renown > 0) || (Number(p?.lv) || 0) < w.renown;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -582,8 +582,8 @@
   {
     "name": "OWNODEKM-the-reach-ignored",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;\n",
-    "new": "",
+    "old": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -592,8 +592,8 @@
   {
     "name": "OWWHO-travellers-never-filtered",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (g === 'travellers' && !playerShown(m, w)) return false;\n",
-    "new": "",
+    "old": "  if (g === 'travellers' && !playerShown(m, w)) return false;\n  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;",
+    "new": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

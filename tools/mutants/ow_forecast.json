@@ -155,8 +155,8 @@
   {
     "name": "OWF-legs-behind-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  for (let k = Math.min(n.length - 1, (route.i ?? 0) + 1); k < n.length; k++)",
-    "new": "  for (let k = 1; k < n.length; k++)",
+    "old": "  for (let k = Math.min(n.length - 1, (route.i ?? 0) + 1); k < n.length; k++) {",
+    "new": "  for (let k = 1; k < n.length; k++) {",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "OWF-streets-left-out",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  for (const q of (route.street?.pts ?? []).slice(Math.max(0, seg | 0))) { points.push([q.x, q.z]); of.push('street'); }",
+    "old": "  for (const q of (route.street?.pts ?? []).slice(Math.max(0, seg | 0))) {\n    points.push([q.x, q.z]);\n    of.push('street');\n  }",
     "new": "",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"

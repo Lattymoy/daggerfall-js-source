@@ -119,8 +119,8 @@
   {
     "name": "OCR-spent-first",
     "file": "src/systems/travel/regionChase.js",
-    "old": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(0, BANDS_WIRE_MAX);",
-    "new": "  return [...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1), ...all.filter((e) => e[3] === 1)].slice(0, BANDS_WIRE_MAX);",
+    "old": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(",
+    "new": "  return [...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1), ...all.filter((e) => e[3] === 1)].slice(",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "OCR-no-cap",
     "file": "src/systems/travel/regionChase.js",
-    "old": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(0, BANDS_WIRE_MAX);",
+    "old": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(\n    0,\n    BANDS_WIRE_MAX,\n  );",
     "new": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)];",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"

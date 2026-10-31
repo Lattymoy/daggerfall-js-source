@@ -2,8 +2,8 @@
   {
     "name": "TV7-births-unseeded",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  const seed = seedOf(cx, cy, life);\n  const r = seededRng(seed);",
-    "new": "  const seed = seedOf(cx, cy, life);\n  const r = Math.random;",
+    "old": "  const r = seededRng(seed);",
+    "new": "  const r = Math.random;",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -22,7 +22,7 @@
   {
     "name": "TV7-born-in-the-sea",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  if (!ok(x, z)) return null;   // born in the water or a town: no band this life",
+    "old": "  if (!ok(x, z)) return null; // born in the water or a town: no band this life",
     "new": "  // (the land never asked)",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "TV7-wander-through-walls",
     "file": "src/systems/travel/travelBands.js",
-    "old": "    if (!go) { heading += Math.PI;",
-    "new": "    if (!go && false) { heading += Math.PI;",
+    "old": "    if (!go) {",
+    "new": "    if (!go && false) {",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TV7-no-leash",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS) return",
-    "new": "  if (now - at > BAND_GIVE_UP_MS) return",
+    "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS)\n    return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };",
+    "new": "  if (now - at > BAND_GIVE_UP_MS) return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TV7-never-gives-up",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS) return",
-    "new": "  if (left > BAND_LEASH_M) return",
+    "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS)\n    return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };",
+    "new": "  if (left > BAND_LEASH_M) return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "TV7b-word-uncapped",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  for (const [id, c] of chases ?? []) { if (out.length >= BANDS_WIRE_MAX) break;",
-    "new": "  for (const [id, c] of chases ?? []) {",
+    "old": "    if (out.length >= BANDS_WIRE_MAX) break;\n    out.push([id, Math.round(c.pos.x), Math.round(c.pos.z), 1]);",
+    "new": "    out.push([id, Math.round(c.pos.x), Math.round(c.pos.z), 1]);",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "TV7b-spent-unsaid",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  for (const id of spent ?? []) { if (out.length >= BANDS_WIRE_MAX) break; out.push([id, 0, 0, 2]); }\n",
-    "new": "",
+    "old": "  for (const id of spent ?? []) {\n    if (out.length >= BANDS_WIRE_MAX) break;\n    out.push([id, 0, 0, 2]);\n  }\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],

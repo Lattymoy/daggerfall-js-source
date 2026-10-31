@@ -11,8 +11,8 @@
   {
     "name": "TD-held-never",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
-    "new": "const held = false;",
+    "old": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "  const held = false;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TD-held-everywhere",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "Math.hypot(t.dx, t.dz) <= t.holds);",
-    "new": "Math.hypot(t.dx, t.dz) <= Infinity);",
+    "old": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= Infinity);",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TD-held-standing-lost",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };",
-    "new": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held: false };",
+    "old": "  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };",
+    "new": "  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held: false };",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]

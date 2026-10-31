@@ -351,8 +351,8 @@
   {
     "name": "GATHER-OW-never-filtered",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (k === 'gather') return 'gathering';   // GATHER-OW\n",
-    "new": "",
+    "old": "  if (k === 'gather') return 'gathering'; // GATHER-OW\n  return null; // dest, target, party - always drawn",
+    "new": "  return null; // dest, target, party - always drawn",
     "tests": [
       "test/scenes/gatherow.test.js"
     ]

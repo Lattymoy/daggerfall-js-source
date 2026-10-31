@@ -94,8 +94,8 @@
   {
     "name": "SEA-TAUT-pull",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const taut = yield* seaTautSteps(pixels, isWater, tally);",
-    "new": "const taut = pixels.slice();",
+    "old": "  const taut = yield* seaTautSteps(pixels, isWater, tally);",
+    "new": "  const taut = pixels.slice();",
     "tests": [
       "test/systems/travel/fb1029g_seataut.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "SEA-TAUT-diagonal",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const nd = dist[i] + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1);",
-    "new": "const nd = dist[i] + 1;",
+    "old": "          const nd = dist[i] + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1);",
+    "new": "          const nd = dist[i] + 1;",
     "tests": [
       "test/systems/travel/fb1029g_seataut.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "SEA-TAUT-open",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => open(qx, qy));",
-    "new": "const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => water(qx, qy));",
+    "old": "  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => open(qx, qy));",
+    "new": "  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => water(qx, qy));",
     "tests": [
       "test/systems/travel/fb1029g_seataut.test.js"
     ],

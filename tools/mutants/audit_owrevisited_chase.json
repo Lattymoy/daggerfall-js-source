@@ -66,8 +66,8 @@
   {
     "name": "AOWR-L4-6-dead-lives-kept",
     "file": "src/systems/travel/regionChase.js",
-    "old": "...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(0, BANDS_WIRE_MAX);",
-    "new": "...all.filter((e) => e[3] !== 1)].slice(0, BANDS_WIRE_MAX);",
+    "old": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(\n    0,\n    BANDS_WIRE_MAX,\n  );",
+    "new": "  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1)].slice(0, BANDS_WIRE_MAX);",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"
     ]
@@ -76,7 +76,7 @@
     "name": "AOWR-L4-4-cell-reach-a-floor",
     "file": "src/systems/travel/regionChase.js",
     "old": "  const d = Math.max(Math.abs(f.p.px - me.x), Math.abs(f.p.py - me.y));",
-    "new": "  const d0 = Math.max(Math.abs(f.p.px - me.x), Math.abs(f.p.py - me.y)), d = d0 <= 3 ? Infinity : d0;",
+    "new": "  const d0 = Math.max(Math.abs(f.p.px - me.x), Math.abs(f.p.py - me.y)),\n    d = d0 <= 3 ? Infinity : d0;",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"
     ]
@@ -84,7 +84,7 @@
   {
     "name": "AOWR-L4-5-no-ceiling",
     "file": "src/systems/travel/regionChase.js",
-    "old": "  return { bd: d <= REGION_BANDS_NEAR_PX && Array.isArray(f.bd) ? f.bd : [], sr: d <= REGION_RAIDERS_NEAR_PX && Array.isArray(f.sr) ? f.sr : [] };",
+    "old": "  return {\n    bd: d <= REGION_BANDS_NEAR_PX && Array.isArray(f.bd) ? f.bd : [],\n    sr: d <= REGION_RAIDERS_NEAR_PX && Array.isArray(f.sr) ? f.sr : [],\n  };",
     "new": "  return { bd: Array.isArray(f.bd) ? f.bd : [], sr: Array.isArray(f.sr) ? f.sr : [] };",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "AOWR-L4-2-never-withdrawn",
     "file": "src/systems/travel/regionChase.js",
-    "old": "  for (const [id, p] of peers) if (p.from === from && p.hold === TRAV_BAND_HOLD_MS && !keep?.has(id)) peers.delete(id);",
-    "new": "",
+    "old": "export function regionChaseWithdraw(peers, from, keep = null) {\n  for (const [id, p] of peers) if (p.from === from && p.hold === TRAV_BAND_HOLD_MS && !keep?.has(id)) peers.delete(id);\n}",
+    "new": "export function regionChaseWithdraw(peers, from, keep = null) {}",
     "tests": [
       "test/systems/travel/ow_chaserange.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "TE-a-refusal-past-the-bay-kept",
     "file": "src/systems/travel/pastBayTravel.js",
-    "old": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return zone;\n}",
-    "new": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return _to && !inBay(_to.x, _to.y) ? { ok: false, text: 'No road leads there.' } : zone;\n}",
+    "old": "  return zone;",
+    "new": "  return _to && !inBay(_to.x, _to.y) ? { ok: false, text: 'No road leads there.' } : zone;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js",
       "test/systems/portalbay_stone.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TE-the-zones-verdict-replaced",
     "file": "src/systems/travel/pastBayTravel.js",
-    "old": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return zone;\n}",
-    "new": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return { ok: true, fee: 0 };\n}",
+    "old": "  return zone;",
+    "new": "  return { ok: true, fee: 0 };",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]

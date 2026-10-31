@@ -322,8 +322,8 @@
   {
     "name": "RW-WAYS-the-voyage's-sea-the-land's",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const isWater = seaWater;",
-    "new": "  const isWater = landWater;",
+    "old": "  const isWater = seaWater; // RUMARE-WATER: the water a boat sails (routeGround's seaWater) - the land's where none is said",
+    "new": "  const isWater = landWater; // RUMARE-WATER: the water a boat sails (routeGround's seaWater) - the land's where none is said",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "RW-WAYS-the-sea's-also-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "seaFn = (x, y) => w(x, y) || seaAlso(x, y);",
-    "new": "seaFn = w;",
+    "old": "        seaFn = (x, y) => w(x, y) || seaAlso(x, y);",
+    "new": "        seaFn = w;",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

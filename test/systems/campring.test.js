@@ -103,5 +103,5 @@ test('CAMP-TRAVEL: no camp rolls while a Travel Options journey is running', asy
   const chunk = w.slice(ci, w.indexOf('\n    pump();', ci));
   assert.match(chunk, /!playerEntity\.isResting && !travelOptions\?\.isTravelActive && getPref\('wildernessCamps'\) !== false/, 'the chunk roll stands down during a journey');
   const to = fs.readFileSync(new URL('../../src/systems/travel/travelOptions.js', import.meta.url), 'utf8');
-  assert.match(to, /get isTravelActive\(\) \{ return !!ui\?\.isShowing; \},/, 'the journey is the travel panel being up');
+  assert.match(to, /get isTravelActive\(\) \{\n\s*return !!ui\?\.isShowing;\n\s*\},/, 'the journey is the travel panel being up');
 });

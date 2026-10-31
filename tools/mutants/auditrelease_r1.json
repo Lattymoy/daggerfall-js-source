@@ -42,8 +42,8 @@
   {
     "name": "R1-2-memo-never-dropped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (memoMoved()) dryBeyond.clear();",
-    "new": "memoMoved();",
+    "old": "    if (memoMoved()) dryBeyond.clear();",
+    "new": "    memoMoved();",
     "tests": [
       "test/systems/travel/auditrelease_r1_route.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "R1-2-water-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (beyond && waterMoved()) isWater = waterOn();",
-    "new": "waterMoved();",
+    "old": "    if (beyond && waterMoved()) isWater = waterOn();",
+    "new": "    waterMoved();",
     "tests": [
       "test/systems/travel/auditrelease_r1_route.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "R1-2-fit-unwatched",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (v === v0 && f === f0) return false;",
-    "new": "if (v === v0) return false;",
+    "old": "    if (v === v0 && f === f0) return false;",
+    "new": "    if (v === v0) return false;",
     "tests": [
       "test/systems/travel/auditrelease_r1_route.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "R1-2-living-ground-churns",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const waterNow = () => { if (beyond && waterMoved())",
-    "new": "const waterNow = () => { if (waterMoved())",
+    "old": "    if (beyond && waterMoved()) isWater = waterOn();",
+    "new": "    if (waterMoved()) isWater = waterOn();",
     "tests": [
       "test/systems/travel/auditrelease_r1_route.test.js"
     ],

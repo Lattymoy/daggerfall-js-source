@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-G2-the-planner-across-the-line",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
-    "new": "const openBlocked = (_ax, _ay, bx, by) => false;",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
+    "new": "  const openBlocked = (_ax, _ay, bx, by) => false; // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

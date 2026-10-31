@@ -11,8 +11,8 @@
   {
     "name": "PACE-road-rule-never-drops",
     "file": "src/systems/travel/travelPace.js",
-    "old": "  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
-    "new": "  return v;   // WILD3: under the zone's cap too",
+    "old": "  return Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
+    "new": "  return v; // WILD3: under the zone's cap too",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PACE-road-rule-leaves-the-foe-dial",
     "file": "src/systems/travel/travelPace.js",
-    "old": "  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
-    "new": "  return which === 'foe' ? v : Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
+    "old": "  return Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
+    "new": "  return which === 'foe' ? v : Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PACE-boot-reads-x100",
     "file": "src/systems/travel/travelPace.js",
-    "old": "if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false);",
-    "new": "if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], true);",
+    "old": "      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false); // a boot is on no known road: x100 is chosen again on one",
+    "new": "      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], true); // a boot is on no known road: x100 is chosen again on one",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PACE-foe-floor-fixed",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE)",
-    "new": "Math.max(cap, JOURNEY_FOE_PACE)",
+    "old": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE));",
+    "new": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, JOURNEY_FOE_PACE));",
     "tests": [
       "test/systems/travel/pacedials.test.js",
       "test/systems/travel/ow6_slowdown.test.js",

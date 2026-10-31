@@ -444,8 +444,8 @@
   {
     "name": "VOYAGER2.1-free-reads-the-roads",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const beyond = roads || tracks ? pathsBeyond : null;",
-    "new": "const beyond = pathsBeyond;",
+    "old": "  const beyond = roads || tracks ? pathsBeyond : null;",
+    "new": "  const beyond = pathsBeyond;",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "VOYAGER2.1-the-reader-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "return beyond && (off ||",
-    "new": "return false && (off ||",
+    "old": "  return beyond && (off || nearEdge(ax, ay, width, height) || nearEdge(bx, by, width, height))",
+    "new": "  return false && (off || nearEdge(ax, ay, width, height) || nearEdge(bx, by, width, height))",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "VOYAGER2.1-the-join-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "(kind === 'roads' ? beyond('join', x, y) : 0)",
-    "new": "0",
+    "old": "  if (x >= 0 && y >= 0 && x < width && y < height)\n    return (arr ? arr[y * width + x] : 0) | (kind === 'roads' ? beyond('join', x, y) : 0);",
+    "new": "  if (x >= 0 && y >= 0 && x < width && y < height) return (arr ? arr[y * width + x] : 0) | 0;",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "VOYAGER2.1-the-edge-unreached",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "x >= width - 1 - JOIN_DEPTH ||",
-    "new": "x >= width ||",
+    "old": "  x <= JOIN_DEPTH || y <= JOIN_DEPTH || x >= width - 1 - JOIN_DEPTH || y >= height - 1 - JOIN_DEPTH;",
+    "new": "  x <= JOIN_DEPTH || y <= JOIN_DEPTH || x >= width || y >= height - 1 - JOIN_DEPTH;",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "VOYAGER2.1-no-reader-by-default",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "beyond = null, pathsBeyond = arenaRoadByte, seaAlso = null) {",
-    "new": "beyond = null, pathsBeyond = null, seaAlso = null) {",
+    "old": "  pathsBeyond = arenaRoadByte,",
+    "new": "  pathsBeyond = null,",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]

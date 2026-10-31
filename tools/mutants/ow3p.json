@@ -202,8 +202,8 @@
   {
     "name": "OW3P5-ends-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.cleared++;   // AUDIT OW3 P5: the journey's end, counted\n",
-    "new": "",
+    "old": "    st.cleared++; // AUDIT OW3 P5: the journey's end, counted\n    st.destinationName = null;",
+    "new": "    st.destinationName = null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],

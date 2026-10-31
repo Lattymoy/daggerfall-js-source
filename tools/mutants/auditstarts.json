@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-STARTS-P5-lanes-through-a-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sails = (ax, ay, bx, by) => isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));",
-    "new": "const sails = (ax, ay, bx, by) => isWater(bx, by);",
+    "old": "  const sails = (ax, ay, bx, by) =>\n    isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));",
+    "new": "  const sails = (ax, ay, bx, by) => isWater(bx, by);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "AUDIT-STARTS-V6-the-voyage-alone-sails-the-lanes",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
-    "new": "if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
+    "old": "  if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
+    "new": "  if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "AUDIT-STARTS-V5-no-wider-box",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
-    "new": "const sailed = (yield* planSeaLanesSteps(from, to, opts));",
+    "old": "    const sailed =\n      (yield* planSeaLanesSteps(from, to, opts)) ??\n      (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
+    "new": "    const sailed = yield* planSeaLanesSteps(from, to, opts);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "AUDIT-STARTS-V4-the-port-pixel-alone",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];",
-    "new": "const goals = [to];",
+    "old": "  const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];",
+    "new": "  const goals = [to];",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "AUDIT-STARTS-V4-the-end-unpadded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "endPad: VOYAGE_LANDFALL_PX * 2 });",
-    "new": "endPad: 0 });",
+    "old": "      endPad: VOYAGE_LANDFALL_PX * 2,",
+    "new": "      endPad: 0,",
     "equivalent": true,
     "why": "ROAD-BEYOND's reachOf grows the box by the rung's margin about every end past the table, and searchSteps clips the box to the two ends grown by that same margin, so a pad about an end past the table adds no cell the search may enter. Kept as the landfall's own word (GREEDY-BEYOND's mutants' sweep).",
     "tests": [

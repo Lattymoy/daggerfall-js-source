@@ -83,8 +83,8 @@
   {
     "name": "SEA-SQUARE-window-square",
     "file": "src/systems/travel/seaMark.js",
-    "old": "return inBay(x, y) ? o : { x: o.x + MP_WORLD_UNITS / 2, z: o.z - MP_WORLD_UNITS / 2 };",
-    "new": "return o;",
+    "old": "  return inBay(x, y) ? o : { x: o.x + MP_WORLD_UNITS / 2, z: o.z - MP_WORLD_UNITS / 2 };",
+    "new": "  return o;",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "SEA-SQUARE-built-one-square",
     "file": "src/systems/travel/seaMark.js",
-    "old": "for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (waterAt(origin.x + c",
-    "new": "for (const [a, b] of [[1, -1]]) if (waterAt(origin.x + c",
+    "old": "  for (const [a, b] of [\n    [-1, -1],\n    [1, -1],\n    [-1, 1],\n    [1, 1],\n  ])",
+    "new": "  for (const [a, b] of [[1, -1]])",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "SEA-SQUARE-launch-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;",
-    "new": "const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o;",
+    "old": "    const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o; // SEA-SQUARE: past the Bay about the pixel's byte",
+    "new": "    const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o; // SEA-SQUARE: past the Bay about the pixel's byte",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "SEA-SQUARE-rect-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
-    "new": "rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
+    "old": "        ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
+    "new": "        ? rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "SEA-SQUARE-rebuilt-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);",
-    "new": "const m = legMiddle(leg); return deps.seaWaterAt(m.x, m.z) !== null;",
+    "old": "    return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt); // SEA-SQUARE: the squares its mark is read on",
+    "new": "    const m = legMiddle(leg);\n    return deps.seaWaterAt(m.x, m.z) !== null; // SEA-SQUARE: the squares its mark is read on",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],

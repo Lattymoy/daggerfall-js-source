@@ -484,8 +484,8 @@
   {
     "name": "SEAT2b2-harbour-word-truthy",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
-    "new": "try { return !!_seatHarbour(mapId); } catch { return false; }",
+    "old": "    return _seatHarbour(mapId) === true;",
+    "new": "    return !!_seatHarbour(mapId);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "SEAT2b2-harbour-throw-a-port",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
-    "new": "try { return _seatHarbour(mapId) === true; } catch { return true; }",
+    "old": "    return false;",
+    "new": "    return true;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "SEAT2b2-harbour-unasked",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  if (hasPort(mapId)) return true;\n  if (mapId == null || !Number.isFinite(mapId)) return false;\n  try {",
-    "new": "  return hasPort(mapId);\n  try {",
+    "old": "  if (hasPort(mapId)) return true;\n  if (mapId == null || !Number.isFinite(mapId)) return false;",
+    "new": "  return hasPort(mapId);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "SEAT2b2-to-message-list-alone",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "hasPort: (mapId) => hasPortFor(mapId),",
-    "new": "hasPort: (mapId) => hasPortFor(mapId) && false,",
+    "old": "    hasPort: (mapId) => hasPortFor(mapId), // SEAT2b part two: or a members' Harbour at a seat - \"a Travel Options port for members\" (travelPorts.js)",
+    "new": "    hasPort: (mapId) => hasPortFor(mapId) && false, // SEAT2b part two: or a members' Harbour at a seat - \"a Travel Options port for members\" (travelPorts.js)",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]

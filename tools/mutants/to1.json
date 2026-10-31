@@ -67,8 +67,8 @@
   {
     "name": "target-pixel-north-inverted",
     "file": "src/systems/travel/travelPaths.js",
-    "old": "    case N: return { x: mapPixelX, y: mapPixelY - 1 };",
-    "new": "    case N: return { x: mapPixelX, y: mapPixelY + 1 };",
+    "old": "      return { x: mapPixelX, y: mapPixelY - 1 };",
+    "new": "      return { x: mapPixelX, y: mapPixelY + 1 };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "target-pixel-default-moves",
     "file": "src/systems/travel/travelPaths.js",
-    "old": "    default: return { x: mapPixelX, y: mapPixelY };",
-    "new": "    default: return { x: mapPixelX + 1, y: mapPixelY };",
+    "old": "      return { x: mapPixelX, y: mapPixelY };",
+    "new": "      return { x: mapPixelX + 1, y: mapPixelY };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "autopilot-forward-fixed",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
-    "new": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
+    "old": "    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
+    "new": "    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "speed-penalty-absolute",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    cautiousTravelMultiplier: 1 - (speedPenalty / 100),",
+    "old": "    cautiousTravelMultiplier: 1 - speedPenalty / 100,",
     "new": "    cautiousTravelMultiplier: speedPenalty / 100,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -229,7 +229,7 @@
   {
     "name": "waterways-ignore-rivers-switch",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  const waterwaysEnabled = roadsIntegration ? (!!get('RoadsIntegration.EnableWaterways') && riversStreams) : false;",
+    "old": "  const waterwaysEnabled = roadsIntegration ? !!get('RoadsIntegration.EnableWaterways') && riversStreams : false;",
     "new": "  const waterwaysEnabled = roadsIntegration ? !!get('RoadsIntegration.EnableWaterways') : false;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -274,8 +274,8 @@
   {
     "name": "circumnavigate-yaw-window",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 45 && yaw < 225) ? 'se' : 'nw';",
-    "new": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 135 && yaw < 315) ? 'se' : 'nw';",
+    "old": "  if (rectContains(corners.ne, worldX, worldZ)) return yaw > 45 && yaw < 225 ? 'se' : 'nw';",
+    "new": "  if (rectContains(corners.ne, worldX, worldZ)) return yaw > 135 && yaw < 315 ? 'se' : 'nw';",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "circumnavigate-no-bail",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  return null;\n}\n\n/** The mod, as a host builds it.",
-    "new": "  return 'ne';\n}\n\n/** The mod, as a host builds it.",
+    "old": "  if (worldX > locationBorderRect.xMin && worldX < locationRect.xMin) return yaw > 90 && yaw < 270 ? 'sw' : 'nw';\n  return null;",
+    "new": "  if (worldX > locationBorderRect.xMin && worldX < locationRect.xMin) return yaw > 90 && yaw < 270 ? 'sw' : 'nw';\n  return 'ne';",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "follow-keeps-destination",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        st.road = (roadDataPt & playerDirection) !== 0;\n        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
-    "new": "        st.road = (roadDataPt & playerDirection) !== 0;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "old": "        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "new": "        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "cautious-watch-always",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.destinationCautious) {\n        const e = deps.entity?.() ?? {};",
-    "new": "      if (true) {\n        const e = deps.entity?.() ?? {};",
+    "old": "      if (st.destinationCautious) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -382,7 +382,7 @@
   {
     "name": "ports-mask",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  return (mapId | 0) & 0x000FFFFF;",
+    "old": "  return (mapId | 0) & 0x000fffff;",
     "new": "  return mapId | 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -391,8 +391,8 @@
   {
     "name": "ports-null-is-a-port",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  if (mapId == null || !Number.isFinite(mapId)) return false;\n  return PORT_SET.has(maskMapId(mapId));",
-    "new": "  if (mapId == null || !Number.isFinite(mapId)) return true;\n  return PORT_SET.has(maskMapId(mapId));",
+    "old": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return false;",
+    "new": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return true;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "m1-detach-latch-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.enterRectDetached) return;   // AUDIT-TO1 M1: the mod's `-=` at :994-996",
-    "new": "",
+    "old": "    if (st.enterRectDetached) return; // AUDIT-TO1 M1: the mod's `-=` at :994-996\n    if (st.destinationName && st.settings.locationPause === LOC_PAUSE_ENTER) {",
+    "new": "    if (st.destinationName && st.settings.locationPause === LOC_PAUSE_ENTER) {",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -708,7 +708,7 @@
   {
     "name": "k1-yaw-zeroed-on-reinit",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame\n    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).",
+    "old": "    this.pitch = 0; // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame\n    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).",
     "new": "    this.pitch = 0;\n    this.yaw = 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -726,7 +726,7 @@
   {
     "name": "l5-estimate-kept-on-clear",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.estimateMinutes = null;   // AUDIT-TO1 L5",
+    "old": "    st.estimateMinutes = null; // AUDIT-TO1 L5",
     "new": "",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -791,8 +791,8 @@
   {
     "name": "g4-mark-per-window-again",
     "file": "src/systems/travel/travelMapState.js",
-    "old": "export function setTravelMapMarkedMapId(id) { _markedMapId = Number.isFinite(id) ? id : -1; }",
-    "new": "export function setTravelMapMarkedMapId(id) { _markedMapId = id; }",
+    "old": "  _markedMapId = Number.isFinite(id) ? id : -1;",
+    "new": "  _markedMapId = id;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -1028,7 +1028,7 @@
   {
     "name": "travel-drive-ungated",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "  return (!standing && streaming) ? 0 : forward;",
+    "old": "  return !standing && streaming ? 0 : forward;",
     "new": "  return forward;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -1055,7 +1055,7 @@
   {
     "name": "travel-drive-holds-for-ever",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "  return (!standing && streaming) ? 0 : forward;",
+    "old": "  return !standing && streaming ? 0 : forward;",
     "new": "  return !standing ? 0 : forward;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

@@ -1084,7 +1084,7 @@ every junction a star. Past the Bay the roads are drawn by the port's own law (`
 
 `10-UI/Travel-View.md` VOYAGER2.1: the route planner (`travelRoute.js` planRoute) read no road's byte past the Bay's table
 (TV-BEYOND), so a click past the Bay walked open ground (3.5 a step) beside a road it could walk at 1. Now `routeGround`
-carries the installed layer's reader (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`)
+carries the installed layer's reader (`travelRoute.js:"get pathsBeyond()"`)
 into every plan through the host's existing `...tvRouteGround()`: a road or a track past the Bay is its kind's step, and a
 crossing's join (TESA5) carries a Bay road out to them as one road. FREE mode (no roads handed) reads none.
 

@@ -47,8 +47,8 @@
   {
     "name": "AOWR-L3-2-walked-streets-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  for (const q of (route.street?.pts ?? []).slice(Math.max(0, seg | 0))) { points.push([q.x, q.z]); of.push('street'); }",
-    "new": "  for (const q of (route.street?.pts ?? [])) { points.push([q.x, q.z]); of.push('street'); }",
+    "old": "  for (const q of (route.street?.pts ?? []).slice(Math.max(0, seg | 0))) {",
+    "new": "  for (const q of route.street?.pts ?? []) {",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]

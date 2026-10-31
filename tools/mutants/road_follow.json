@@ -11,8 +11,8 @@
   {
     "name": "RF-the-straight-band-a-curve",
     "file": "src/systems/travel/roadLine.js",
-    "old": "    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null;   // straight through: the lane's own line\n",
-    "new": "",
+    "old": "    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null; // straight through: the lane's own line\n    const p = curvePolyline(q),",
+    "new": "    const p = curvePolyline(q),",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RF-an-end-s-run-a-curve",
     "file": "src/systems/travel/roadLine.js",
-    "old": "    if (q[2] !== MID || q[3] !== MID) continue;   // an end's straight run in to the middle\n",
-    "new": "",
+    "old": "    if (q[2] !== MID || q[3] !== MID) continue; // an end's straight run in to the middle\n    const fwd = q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1];",
+    "new": "    const fwd = q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "RF-the-bay-curved",
     "file": "src/systems/travel/roadLine.js",
-    "old": "  if (!past(p.x, p.y)) return null;\n",
-    "new": "",
+    "old": "  if (!past(p.x, p.y)) return null;\n  const inBit = stepBit(p, pixels[i - 1]),",
+    "new": "  const inBit = stepBit(p, pixels[i - 1]),",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "RF-the-second-half-dropped",
     "file": "src/systems/travel/roadLine.js",
-    "old": "line = [...(behind ? behind.slice(1) : []), ...",
-    "new": "line = [...[], ...",
+    "old": "        line = [\n          ...(behind ? behind.slice(1) : []),\n          ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)]),\n        ];",
+    "new": "        line = [...[], ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "RF-the-apex-not-the-end",
     "file": "src/systems/travel/roadLine.js",
-    "old": "...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])",
-    "new": "...[nativeOfTile(p.x, p.y, MID, MID)]",
+    "old": "        line = [\n          ...(behind ? behind.slice(1) : []),\n          ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)]),\n        ];",
+    "new": "        line = [...(behind ? behind.slice(1) : []), ...[nativeOfTile(p.x, p.y, MID, MID)]];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "RF-the-line-not-copied",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ", ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));",
-    "new": " }));",
+    "old": "      ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}),\n    })); // ROAD-FOLLOW: the painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
+    "new": "    })); // ROAD-FOLLOW: the painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "RF-the-lane-s-points-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const path = lane?.pts ?? null;",
-    "new": "    const path = null;",
+    "old": "    const path = lane?.pts ?? null; // ROAD-FOLLOW: on the curves past the Bay",
+    "new": "    const path = null; // ROAD-FOLLOW: on the curves past the Bay",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "RF-the-leg-s-end-square-at-the-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
-    "new": ": leg.line ? spotRect(legMiddle(leg)) : rectOf(",
+    "old": "            ? spotRect(legEnd(leg, legMiddle))",
+    "new": "            ? spotRect(legMiddle(leg))",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "RF-the-rejoin-on-the-chord",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;",
-    "new": "    const near = null;",
+    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null; // ROAD-FOLLOW: the nearest point of the curves it walks",
+    "new": "    const near = null; // ROAD-FOLLOW: the nearest point of the curves it walks",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "RF-the-last-leg-s-line-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const road = lane.pts ? (place ? lane.pts : lineUpTo(lane.pts, end)) : [[lane.ax, lane.az], [via.x, via.z]];",
-    "new": "    const road = [[lane.ax, lane.az], [via.x, via.z]];",
+    "old": "    const road = lane.pts\n      ? place\n        ? lane.pts\n        : lineUpTo(lane.pts, end)\n      : [\n          [lane.ax, lane.az],\n          [via.x, via.z],\n        ];",
+    "new": "    const road = [\n      [lane.ax, lane.az],\n      [via.x, via.z],\n    ];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "RF-the-floods-never-meet",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (other.seen.has(k)) joined = true;\n",
-    "new": "",
+    "old": "      if (other.seen.has(k)) joined = true;\n      s.seen.add(k);",
+    "new": "      s.seen.add(k);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -168,7 +168,7 @@
   {
     "name": "RF-the-piece-cap-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (a.seen.size >= ROAD_PIECE_CAP && b.seen.size >= ROAD_PIECE_CAP) break;   // both the land's network",
+    "old": "    if (a.seen.size >= ROAD_PIECE_CAP && b.seen.size >= ROAD_PIECE_CAP) break; // both the land's network",
     "new": "    if (true) break;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "RF-the-gap-s-crossing-unkept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      for (let k = found; k !== -1; k = g.parent.get(k)) bridges.add(k);\n",
-    "new": "",
+    "old": "      for (let k = found; k !== -1; k = g.parent.get(k)) bridges.add(k);\n      if ((dry === a ? b : a).seen.has(found)) joined = true;",
+    "new": "      if ((dry === a ? b : a).seen.has(found)) joined = true;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "RF-the-crossing-s-steps-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "\n  || (ends.bridges.has(beyondKey(ax, ay)) && ends.bridges.has(beyondKey(bx, by)));",
-    "new": ";",
+    "old": "  Math.max(Math.abs(ax - to.x), Math.abs(ay - to.y), Math.abs(bx - to.x), Math.abs(by - to.y)) <= ends.t ||\n  (ends.bridges.has(beyondKey(ax, ay)) && ends.bridges.has(beyondKey(bx, by)));",
+    "new": "  Math.max(Math.abs(ax - to.x), Math.abs(ay - to.y), Math.abs(bx - to.x), Math.abs(by - to.y)) <= ends.t;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "RF-the-ladder-s-open-ground-everywhere",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;",
-    "new": "        if (kind < 0) continue;",
+    "old": "        if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue; // ROAD-FOLLOW: by the roads, the open ground on an end's own leg alone",
+    "new": "        if (kind < 0) continue; // ROAD-FOLLOW: by the roads, the open ground on an end's own leg alone",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "RF-no-cost-law-where-no-road-joins",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });\n",
-    "new": "",
+    "old": "  if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });\n  // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country",
+    "new": "  // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "RF-the-cost-law-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const ends = (roads || tracks) && !opts.costLaw ? yield* roadEndsSteps(",
-    "new": "  const ends = (roads || tracks) && false ? yield* roadEndsSteps(",
+    "old": "    (roads || tracks) && !opts.costLaw",
+    "new": "    (roads || tracks) && false",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]

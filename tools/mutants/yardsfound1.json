@@ -83,8 +83,8 @@
   {
     "name": "YARDS-FOUND-the-group-lost",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "if (k === 'place' || k === 'yard') return 'towns';",
-    "new": "if (k === 'place') return 'towns';",
+    "old": "  if (k === 'place' || k === 'yard') return 'towns'; // YARDS-FOUND: a town's yards go with its plate",
+    "new": "  if (k === 'place') return 'towns'; // YARDS-FOUND: a town's yards go with its plate",
     "tests": [
       "test/systems/yardsfound1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "YARDS-FOUND-counted-a-town",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "if (g && !isYardMark(m)) n[g] += 1;",
-    "new": "if (g) n[g] += 1;",
+    "old": "    if (g && !isYardMark(m)) n[g] += 1;",
+    "new": "    if (g) n[g] += 1;",
     "tests": [
       "test/systems/yardsfound1.test.js"
     ]

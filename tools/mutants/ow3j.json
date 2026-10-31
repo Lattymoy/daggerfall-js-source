@@ -22,8 +22,8 @@
   {
     "name": "OW3-J1-pause-closes-nothing",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    pauseTravel: () => { if (ui?.isShowing) ui.closeWindow(); },",
-    "new": "    pauseTravel: () => { interruptTravel(); },",
+    "old": "    pauseTravel: () => {\n      if (ui?.isShowing) ui.closeWindow();",
+    "new": "    pauseTravel: () => {\n      interruptTravel();",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "OW3-J3-no-rejoin",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    r.join = rejoinPoint(r);\n",
-    "new": "    r.join = null;\n",
+    "old": "    r.join = rejoinPoint(r);",
+    "new": "    r.join = null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW3-J3-join-never-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.join) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (r.join) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OW3-J3-join-never-spent",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "r.join = null; startRouteLeg(); };",
-    "new": "startRouteLeg(); };",
+    "old": "        r.join = null;\n        startRouteLeg();",
+    "new": "        startRouteLeg();",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW3-J3-join-in-the-legs-pixel",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const j = r.join, jp = worldCoordToMapPixel(j.x, j.z);",
-    "new": "const j = r.join, jp = r.legs[r.i];",
+    "old": "        jp = worldCoordToMapPixel(j.x, j.z);",
+    "new": "        jp = r.legs[r.i];",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "OW3-J3-open-ground-rejoined",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null;",
-    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null;",
+    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null; // OW-TOWN-RING: a ring's points are walked point to point - no road's lane runs between them",
+    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null; // OW-TOWN-RING: a ring's points are walked point to point - no road's lane runs between them",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "OW3-J3-join-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": " && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2 ? j : null;",
-    "new": " ? j : null;",
+    "old": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2\n      ? j\n      : null;",
+    "new": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 ? j : null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "OW3-J3-stale-join-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // OW-TOWN-RING: a ring's point is no join\n",
-    "new": "",
+    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++; // OW-TOWN-RING: a ring's point is no join\n    r.i = best;",
+    "new": "    r.i = best;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "OW3-J4-last-leg-drawn",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "...legs.slice(0, -1).map(",
-    "new": "...legs.map(",
+    "old": "    ...legs\n      .slice(0, -1)\n      .map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
+    "new": "    ...legs.map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "OW3-J5-start-exempt-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": ": goalExempt ? 2 : 1, leaving, beyond);",
-    "new": ": goalExempt ? 2 : 1, leaving || c === start, beyond);",
+    "old": "          leaving,",
+    "new": "          leaving || c === start,",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "OW3-J5-plateau-climbed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "n !== goal ? 0 : goalExempt ? 2 : 1, leaving, beyond);",
-    "new": "n !== goal ? 0 : 2, leaving, beyond);",
+    "old": "          n !== goal ? 0 : goalExempt ? 2 : 1,",
+    "new": "          n !== goal ? 0 : 2,",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

@@ -29,8 +29,8 @@
   {
     "name": "TN-reach-drops-the-carried-step",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "(Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
-    "new": "(Math.min(Math.max(0, dt), maxFrameDt));",
+    "old": "  return Math.max(0, speed) * Math.max(0, scale) * (Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
+    "new": "  return Math.max(0, speed) * Math.max(0, scale) * Math.min(Math.max(0, dt), maxFrameDt);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TN-reach-unclamped-frame",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "(Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
-    "new": "(Math.max(0, dt) + fixedDt);",
+    "old": "  return Math.max(0, speed) * Math.max(0, scale) * (Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
+    "new": "  return Math.max(0, speed) * Math.max(0, scale) * (Math.max(0, dt) + fixedDt);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TN-no-pocket-rule-in-the-fan",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    const req = Math.max(f.reachFan, past(h, false));\n    const c = corridor(h, req, req);\n    return c >= req ? c : -1;",
-    "new": "    const req = f.reachFan;\n    const c = corridor(h, req, req);\n    return c >= req ? c : -1;",
+    "old": "    const req = Math.max(f.reachFan, past(h, false));",
+    "new": "    const req = f.reachFan;",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TN-tie-ignores-the-line",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "          s.side = r >= 0 && l >= 0 ? (f.lat > P.onLine ? -1 : 1) : (r >= 0 ? 1 : -1);",
-    "new": "          s.side = r >= 0 && l >= 0 ? 1 : (r >= 0 ? 1 : -1);",
+    "old": "          s.side = r >= 0 && l >= 0 ? (f.lat > P.onLine ? -1 : 1) : r >= 0 ? 1 : -1;",
+    "new": "          s.side = r >= 0 && l >= 0 ? 1 : r >= 0 ? 1 : -1;",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TN-goal-ignored",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff));",
-    "new": "    const lookWant = look;",
+    "old": "    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff)); // AUDIT OW-REVISITED L1-3: a line's run is walked TO its end",
+    "new": "    const lookWant = look; // AUDIT OW-REVISITED L1-3: a line's run is walked TO its end",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TN-feeler-cap-ignored",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "        if (s.probes + 3 > P.maxFeelers) return hold(out, inp);\n        const k = s.scanNext,",
-    "new": "        if (false) return hold(out, inp);\n        const k = s.scanNext,",
+    "old": "      for (; s.scanNext < N; s.scanNext++) {\n        if (s.probes + 3 > P.maxFeelers) return hold(out, inp);",
+    "new": "      for (; s.scanNext < N; s.scanNext++) {\n        if (false) return hold(out, inp);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TN-ramps-are-walls",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along;   // a wall",
-    "new": "        return along;   // a wall",
+    "old": "        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along; // a wall",
+    "new": "        return along; // a wall",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "TN-structure-follows-the-ground",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    const level = !(at[1] - g0 <= ON_STRUCTURE);",
-    "new": "    const level = false;",
+    "old": "    const level = !(at[1] - g0 <= ON_STRUCTURE); // no ground under the feet (NaN, -Infinity) reads as a structure too",
+    "new": "    const level = false; // no ground under the feet (NaN, -Infinity) reads as a structure too",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -237,7 +237,7 @@
     "name": "TN-edge-arrival-gone",
     "file": "src/systems/travel/travelAutopilot.js",
     "old": "    if (this.edgeArrival && !this.inDestinationMapPixel && rectContains(this.destinationWorldRect, worldX, worldZ)) {",
-    "new": "    if (false && this.edgeArrival && !this.inDestinationMapPixel && rectContains(this.destinationWorldRect, worldX, worldZ)) {",
+    "new": "    if (\n      false &&\n      this.edgeArrival &&\n      !this.inDestinationMapPixel &&\n      rectContains(this.destinationWorldRect, worldX, worldZ)\n    ) {",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TN-rect-distance-ignores-z",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "  const dz = Math.max(rect.zMin - z, 0, z - rect.zMax);\n  return Math.hypot(dx, dz);",
-    "new": "  const dz = 0;\n  return Math.hypot(dx, dz);",
+    "old": "  const dz = Math.max(rect.zMin - z, 0, z - rect.zMax);",
+    "new": "  const dz = 0;",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "TN-resume-without-edge-arrival",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });",
-    "new": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: false });",
+    "old": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },",
+    "new": "      { grow: true, isLocation: true, edgeArrival: false },",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "TN-stop-words-swapped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked",
-    "new": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck",
+    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
+    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "TN-stop-leaves-a-panelless-journey-running",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);\n          if (st.autopilot) interruptTravel();",
-    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
+    "old": "          if (st.autopilot) interruptTravel();\n          return { drive, handled: true, stopped: stop };",
+    "new": "          return { drive, handled: true, stopped: stop };",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "TN-facing-reads-the-camera",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);",
-    "new": "    (deps.yaw?.() ?? 0), invert);",
+    "old": "  const yawDeg = (invert = false) =>\n    normalisedYaw(st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);",
+    "new": "  const yawDeg = (invert = false) => normalisedYaw(deps.yaw?.() ?? 0, invert);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]

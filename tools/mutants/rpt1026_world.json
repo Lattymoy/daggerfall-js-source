@@ -176,8 +176,8 @@
   {
     "name": "RPT1026-CAUSEWAY-the-corner-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
-    "new": "isWater(bx, ay) && isWater(ax, by)) return -1;",
+    "old": "  if (\n    ax !== bx &&\n    ay !== by &&\n    isWater(bx, ay) &&\n    isWater(ax, by) &&\n    !pavedStep(ax, ay, bx, by, bit, width, height, roads)\n  )\n    return -1;",
+    "new": "  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
@@ -186,8 +186,8 @@
   {
     "name": "RPT1026-CAUSEWAY-the-boat-launches",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "(n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads))",
-    "new": "n !== goal",
+    "old": "      } else if (\n        wet &&\n        ((seaGoal && n === goal) || (n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads)))\n      ) {",
+    "new": "      } else if (wet && ((seaGoal && n === goal) || n !== goal)) {",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "RPT1026-CAUSEWAY-a-track-paved",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "!pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5",
-    "new": "!pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;\n  // AUDIT DEEP T2-5",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
+    "new": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],

@@ -38,8 +38,8 @@
   {
     "name": "TVB-law-farthest-first",
     "file": "src/systems/travel/travelDungeonModels.js",
-    "old": "  for (const g of list ?? []) {\n    if (n >= max) break;",
-    "new": "  for (const g of [...(list ?? [])].reverse()) {\n    if (n >= max) break;",
+    "old": "  for (const g of list ?? []) {",
+    "new": "  for (const g of [...(list ?? [])].reverse()) {",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "OWQ-a-filter-group",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (k === 'gather') return 'gathering';   // GATHER-OW",
-    "new": "  if (k === 'gather' || k === 'quest') return 'gathering';   // GATHER-OW",
+    "old": "  if (k === 'gather') return 'gathering'; // GATHER-OW",
+    "new": "  if (k === 'gather' || k === 'quest') return 'gathering'; // GATHER-OW",
     "tests": [
       "test/ui/travel/owquest.test.js"
     ]

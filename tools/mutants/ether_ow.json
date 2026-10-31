@@ -215,8 +215,8 @@
   {
     "name": "EOW-word-bay-extent",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && x >= 0 && z >= 0 && x <= 1000 * PIXEL_NATIVE && z <= 500 * PIXEL_NATIVE;",
+    "old": "  Number.isInteger(x) &&\n  Number.isInteger(z) &&\n  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&\n  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  Number.isInteger(x) && Number.isInteger(z) && x >= 0 && z >= 0 && x <= 1000 * PIXEL_NATIVE && z <= 500 * PIXEL_NATIVE;",
     "tests": [
       "test/systems/travel/ether_ow.test.js",
       "test/systems/travel/tv7_bands.test.js",

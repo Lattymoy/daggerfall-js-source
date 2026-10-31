@@ -2,8 +2,8 @@
   {
     "name": "OW3D1-spawns-dropped",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "  for (const s of spawns ?? []) {\n    const d = Math.hypot(s.x - at.x, s.y - at.y);",
-    "new": "  for (const s of []) {\n    const d = Math.hypot(s.x - at.x, s.y - at.y);",
+    "old": "  for (const s of spawns ?? []) {",
+    "new": "  for (const s of []) {",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "OW3D1-said-is-named",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "found: !!spawnFound(s), spawn: true",
-    "new": "found: true, spawn: true",
+    "old": "      found: !!spawnFound(s),",
+    "new": "      found: true,",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "OW3D1-spawn-a-place-key",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "key: `spawn:${s.loc.mapTableData?.mapId}`",
-    "new": "key: `dng:${s.loc.mapTableData?.mapId}`",
+    "old": "      key: `spawn:${s.loc.mapTableData?.mapId}`,",
+    "new": "      key: `dng:${s.loc.mapTableData?.mapId}`,",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OW3D3-grid-spends-slots",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "    if (found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid) continue;\n",
-    "new": "",
+    "old": "    if (found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid) continue;\n    out.push({ key: `dng:${g.row.mapID}`, x: g.x, y: g.y, loc, row: g.row, d, found, spawn: false });",
+    "new": "    out.push({ key: `dng:${g.row.mapID}`, x: g.x, y: g.y, loc, row: g.row, d, found, spawn: false });",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW3D3-cap-before-filter",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "  for (const g of dungeons ?? []) {\n    const d = Math.hypot(g.x - at.x, g.y - at.y);\n    if (d > range) continue;\n    const loc = locAt(g.x, g.y);",
-    "new": "  for (const g of (dungeons ?? []).slice(0, max)) {\n    const d = Math.hypot(g.x - at.x, g.y - at.y);\n    if (d > range) continue;\n    const loc = locAt(g.x, g.y);",
+    "old": "  for (const g of dungeons ?? []) {",
+    "new": "  for (const g of (dungeons ?? []).slice(0, max)) {",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],

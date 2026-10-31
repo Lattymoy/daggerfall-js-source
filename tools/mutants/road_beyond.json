@@ -2,8 +2,8 @@
   {
     "name": "ROAD-BEYOND-the-box-stops-at-the-end",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const reachOf = (margin) => (past ? {",
-    "new": "  const reachOf = (margin) => (false ? {",
+    "old": "    past",
+    "new": "    false",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROAD-BEYOND-the-ladder-unspent",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap;",
-    "new": "    const left = cap;",
+    "old": "    const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap; // ROAD-BEYOND: no edge of the world bounds the land past the Bay",
+    "new": "    const left = cap; // ROAD-BEYOND: no edge of the world bounds the land past the Bay",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ROAD-BEYOND-no-walk-across-country",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(",
-    "new": "  if (false) return yield* planRouteSteps(",
+    "old": "  if (!best && past && (roads || tracks) && !sea)\n    return yield* planRouteSteps(from, to, { ...opts, roads: null, tracks: null, tally });",
+    "new": "  if (false) return yield* planRouteSteps(from, to, { ...opts, roads: null, tracks: null, tally });",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "ROAD-BEYOND-the-ends-open-ground-everywhere",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;   // ROAD-FOLLOW: the open ground on an end's own leg alone",
+    "old": "      if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue; // ROAD-FOLLOW: the open ground on an end's own leg alone",
     "new": "      if (kind < 0) continue;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "ROAD-BEYOND-the-seek-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const rf = ringOf(from), rt = ringOf(to), f = leg(rf), t = leg(rt), bridges = new Set();",
-    "new": "  const rf = 0, rt = 0, f = leg(rf), t = leg(rt), bridges = new Set();",
+    "old": "  const rf = ringOf(from),\n    rt = ringOf(to),",
+    "new": "  const rf = 0,\n    rt = 0,",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROAD-BEYOND-the-step-leaves-by-any-edge",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue;",
-    "new": "if (closed.has(n)) continue;",
+    "old": "      if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue; // away from the ends and the gaps a step leaves by a road's or a track's edge",
+    "new": "      if (closed.has(n)) continue; // away from the ends and the gaps a step leaves by a road's or a track's edge",
     "equivalent": true,
     "why": "ROAD-FOLLOW's endLeg check (travelRoute.js endLegOf) rejects every step this test does, and more: an open step off a road's edge is kept only when both its pixels are on an end's leg or a gap's crossing, where this test asks only of the pixel stepped to. Kept as the cheaper early out, before stepKind (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
@@ -76,8 +76,8 @@
   {
     "name": "ROAD-BEYOND-the-search-unbounded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (tally) tally.n++;\n    if (++expanded > maxExpansions) return null;\n    const { x: cx",
-    "new": "    if (tally) tally.n++;\n    const { x: cx",
+    "old": "    if (++expanded > maxExpansions) return null;\n    const { x: cx, y: cy } = pix(c),",
+    "new": "    const { x: cx, y: cy } = pix(c),",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "ROAD-BEYOND-no-layer-still-searched",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!beyond) return null;\n  const pathAt",
-    "new": "  const pathAt",
+    "old": "  if (!beyond) return null;\n  const pathAt = (x, y) =>",
+    "new": "  const pathAt = (x, y) =>",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "ROAD-BEYOND-the-rung-unbounded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung;",
-    "new": "    const margin = rung;",
+    "old": "    const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung; // ROAD-BEYOND: past the table no rung wider than its spend can walk",
+    "new": "    const margin = rung; // ROAD-BEYOND: past the table no rung wider than its spend can walk",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "ROAD-BEYOND-no-greed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
-    "new": "open.push(ng + h(nx, ny), n);",
+    "old": "        open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
+    "new": "        open.push(ng + h(nx, ny), n);",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]

@@ -992,7 +992,7 @@ on-foot rule outside the zone is removed - the patch had for a while let only ro
 outside the cut), and the planner no longer reads it. Offline too: the law is the planner's, not the zone's. The
 words that promised the old rule say the new one: First Person Travel's roads switch is "planned by land"
 (`modSettings.js:"'GeneralOptions.FirstPersonTravelFollowsRoads':"`) and the Overworld's Free path is "straight across
-country" (`travelPathMode.js:"tipFree:"`), neither "round the mountains" any more.
+country" (`travelPathMode.js:"tipFree: 'Walk straight"`), neither "round the mountains" any more.
 
 ## 20. The test build (TESTBUILD)
 

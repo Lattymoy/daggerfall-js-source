@@ -313,8 +313,8 @@
   {
     "name": "START2-lanes-ashore-anywhere",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  for (let dy = -VOYAGE_LANDFALL_PX; dy <= VOYAGE_LANDFALL_PX; dy++) for (let dx = -VOYAGE_LANDFALL_PX; dx <= VOYAGE_LANDFALL_PX; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
-    "new": "  for (let dy = -40; dy <= 40; dy++) for (let dx = -40; dx <= 40; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
+    "old": "  for (let dy = -VOYAGE_LANDFALL_PX; dy <= VOYAGE_LANDFALL_PX; dy++)\n    for (let dx = -VOYAGE_LANDFALL_PX; dx <= VOYAGE_LANDFALL_PX; dx++)\n      if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
+    "new": "  for (let dy = -40; dy <= 40; dy++)\n    for (let dx = -40; dx <= 40; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

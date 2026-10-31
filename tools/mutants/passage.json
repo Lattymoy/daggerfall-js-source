@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-PASSAGE-A1-the-voyage-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;",
-    "new": "          if (false) continue;",
+    "old": "          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue; // PASSAGE: ashore at the port she sails for",
+    "new": "          if (false) continue; // PASSAGE: ashore at the port she sails for",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-PASSAGE-A1-the-landfall-reach-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;",
-    "new": "Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX * 20) continue;",
+    "old": "          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue; // PASSAGE: ashore at the port she sails for",
+    "new": "          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX * 20) continue; // PASSAGE: ashore at the port she sails for",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]

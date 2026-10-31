@@ -264,16 +264,16 @@ THE LAW NOW.
   dial and Leave on it, and the pad's prompts say those two (AUDIT FB1021d PS-7); the passenger's autorun is let go at her
   helm (PS-4).
 - PASSAGE-IN: (a) a sailed leg is aimed at its pixel's middle where the built ground floats her there, else at the nearest
-  water that does - a block of 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark(origin, waterAt) {"`,
-  `travelOptions.js:"const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;"` - the autopilot's rect,
+  water that does - a block of 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark"`,
+  `travelOptions.js:"const read = leg.kind"` - the autopilot's rect,
   so the hand's mark and the arrival are that point; the host hands the journey its built water, one entry). AUDIT
   FB1021d PS-1: a pixel built dry is passed for the next leg, and one not built when its leg begins (a leg folds a
-  straight run) is aimed again once it is (`travelOptions.js:"st.route.seaUnbuilt === st.route.i"`; the host's reader
+  straight run) is aimed again once it is (`travelOptions.js:"&& st.route && st.route.seaUnbuilt"`; the host's reader
   answers null there). On the same 56 voyages, none aimed at land - 25 dry legs passed, which the first count had
   filtered out.
   (b) `passage.js:"export function voyageSails"`: a voyage's plan may be walked when it sails, or when she
   already lies within VOYAGE_LANDFALL_PX of her port - no quay left is that near a port booked (`passageDestinations`).
-  (c) A pixel reached under sail or by embarking is walked round no town (`travelRoute.js:"const afloat = (i) =>"`) - the
+  (c) A pixel reached under sail or by embarking is walked round no town (`travelRoute.js:"const afloat = (i)"`) - the
   land a party embarks from or makes landfall on keeps its ring (AUDIT FB1021d PS-3).
 - PASSAGE-PLATE: the plate stands down under the Overworld's controls, which stand where it does, bottom right, as the
   helm panel does (`world.js:"!!travelView?.active;   // PASSAGE-PLATE: the Overworld's"`), and stands again when the

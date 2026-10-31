@@ -11,8 +11,8 @@
   {
     "name": "OTW-snap-farthest-in-ring",
     "file": "src/systems/travel/townWalk.js",
-    "old": "        if (d < bd) { bd = d; best = [cx + dx, cy + dy]; }",
-    "new": "        if (d >= bd || !best) { bd = d; best = [cx + dx, cy + dy]; }",
+    "old": "        if (d < bd) {",
+    "new": "        if (d >= bd || !best) {",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OTW-line-start-unread",
     "file": "src/systems/travel/townWalk.js",
-    "old": "  if (!open(nav, x, y)) return false;\n  const walked",
-    "new": "  const walked",
+    "old": "  if (!open(nav, x, y)) return false;\n  const walked = margin > 0 ? [[x, y]] : null;",
+    "new": "  const walked = margin > 0 ? [[x, y]] : null;",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "OTW-run-never-moves-on",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    if (k < last && (t >= 1 || segDistance(x, z, bx, bz, path[k + 2][0], path[k + 2][1]) < segDistance(x, z, ax, az, bx, bz))) { k++; continue; }",
+    "old": "    if (\n      k < last &&\n      (t >= 1 || segDistance(x, z, bx, bz, path[k + 2][0], path[k + 2][1]) < segDistance(x, z, ax, az, bx, bz))\n    ) {\n      k++;\n      continue;\n    }",
     "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "OTW-pace-unheld",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
-    "new": "    const rate = street ? travelRateOf(true) : st.walk",
+    "old": "      ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
+    "new": "      ? travelRateOf(true)",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OTW-asked-again-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "|| deps.atSea?.() || r.streetFor === key) return null;",
-    "new": "|| deps.atSea?.()) return null;",
+    "old": "    if (\n      !r.townAt ||\n      !deps.townWay ||\n      leg?.ring ||\n      SEA_LEG_KINDS.includes(leg?.kind) ||\n      deps.atSea?.() ||\n      r.streetFor === key\n    )\n      return null;",
+    "new": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.()) return null;",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OTW-resume-way-kept",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    r.street = null; r.streetFor = null;   // OW-TOWN-WALK: a resume",
-    "new": "    r.streetFor = null;   // OW-TOWN-WALK: a resume",
+    "old": "    r.street = null;\n    r.streetFor = null; // OW-TOWN-WALK: a resume in a town takes its streets again, from where it stands",
+    "new": "    r.streetFor = null; // OW-TOWN-WALK: a resume in a town takes its streets again, from where it stands",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OTW-town-walked-into-unheard",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }",
-    "new": "",
+    "old": "      if (k !== st.route.townAt) {\n        st.route.townAt = k;\n        if (k) {\n          startRouteLeg();\n          applyRate();\n        } else st.route.streetFor = null;\n      } // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into",
+    "new": "      // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OTW-ring-walked-through",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "if (!r.townAt || !deps.townWay || leg?.ring ||",
-    "new": "if (!r.townAt || !deps.townWay ||",
+    "old": "    if (\n      !r.townAt ||\n      !deps.townWay ||\n      leg?.ring ||\n      SEA_LEG_KINDS.includes(leg?.kind) ||\n      deps.atSea?.() ||\n      r.streetFor === key\n    )",
+    "new": "    if (!r.townAt || !deps.townWay || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key)",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OTW-place-walked-across",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;",
-    "new": "",
+    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null; // in the place it is bound for: arrived, not walked across",
+    "new": "    // in the place it is bound for: arrived, not walked across",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "OTW-steer-run-end-unread",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "  const to = autopilot.steerTarget ?? autopilot.destinationCentre;",
-    "new": "  const to = autopilot.destinationCentre;",
+    "old": "  const to = autopilot.steerTarget ?? autopilot.destinationCentre; // OW-TOWN-WALK: a line's leg, the run it is on",
+    "new": "  const to = autopilot.destinationCentre; // OW-TOWN-WALK: a line's leg, the run it is on",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "OTW-pieces-unread",
     "file": "src/systems/travel/townWalk.js",
-    "old": "  const mine = (x, y) => label[y * W + x] === id;",
-    "new": "  const mine = () => true;",
+    "old": "  const mine = (x, y) => label[y * W + x] === id; // the traveller's own piece - the only one a way can reach",
+    "new": "  const mine = () => true; // the traveller's own piece - the only one a way can reach",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "OTW-piece-four-unread",
     "file": "src/systems/travel/townWalk.js",
-    "old": "      if (y + 1 < H && !label[c + W] && open(nav, x, y + 1)) { label[c + W] = next; stack[top++] = c + W; }",
+    "old": "      if (y + 1 < H && !label[c + W] && open(nav, x, y + 1)) {\n        label[c + W] = next;\n        stack[top++] = c + W;\n      }",
     "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
@@ -308,7 +308,7 @@
   {
     "name": "OTW-walker-flags-carried",
     "file": "src/systems/travel/townWalk.js",
-    "old": "  for (let i = 0; i < W * H; i++) grid[i] &= 0xf0;   // the walkers' occupancy flags are the town's, never the journey's",
+    "old": "  for (let i = 0; i < W * H; i++) grid[i] &= 0xf0; // the walkers' occupancy flags are the town's, never the journey's",
     "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "OTW-reach-unsaid",
     "file": "src/systems/travel/townWalk.js",
-    "old": "reached: !!own && mine(own[0], own[1]) }",
-    "new": "reached: true }",
+    "old": "    return path ? { cells: simplifyWay(nav, path), inside: true, reached: !!own && mine(own[0], own[1]) } : null;",
+    "new": "    return path ? { cells: simplifyWay(nav, path), inside: true, reached: true } : null;",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "OTW-reach-own-piece-snapped",
     "file": "src/systems/travel/townWalk.js",
-    "old": "    const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to);",
-    "new": "    const own = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, 0, to);",
+    "old": "    const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to); // the point's own street, of whichever piece: reached when it is the traveller's",
+    "new": "    const own = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, 0, to); // the point's own street, of whichever piece: reached when it is the traveller's",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "OTW-other-piece-unmet",
     "file": "src/systems/travel/townWalk.js",
-    "old": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to);",
-    "new": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine);",
+    "old": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to); // a point in another piece (a shut gate's far side): this piece's nearest",
+    "new": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine); // a point in another piece (a shut gate's far side): this piece's nearest",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "OTW-heuristic-unweighted",
     "file": "src/systems/travel/townWalk.js",
-    "old": "export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {}) {",
-    "new": "export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = 1, scratchKey = nav } = {}) {",
+    "old": "  { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {},",
+    "new": "  { maxExpansions = nav.width * nav.height, hWeight = 1, scratchKey = nav } = {},",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ],
@@ -399,8 +399,8 @@
   {
     "name": "OTO-shut-unmarked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.shut) st.shutStop = true;",
-    "new": "",
+    "old": "    if (way?.shut) st.shutStop = true; // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
+    "new": "    // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]

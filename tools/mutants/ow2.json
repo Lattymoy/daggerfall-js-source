@@ -2,7 +2,7 @@
   {
     "name": "MOUNTAINS-WALKABLE-peaks-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
     "new": "  return climateAt(bx, by) === TV_MOUNTAIN_CLIMATE;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "MOUNTAINS-WALKABLE-cliffs-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
     "new": "  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "MOUNTAINS-WALKABLE-cliffs-down-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
     "new": "  return heightAt(ax, ay) - heightAt(bx, by) > TV_STEEP_RISE;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "OW-MOUNTAINS-never-asked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;\n",
-    "new": "",
+    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;\n  return kind;",
+    "new": "  return kind;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "OW-MOUNTAINS-passes-closed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(",
-    "new": "  if (goal !== 2 && openBlocked && openBlocked(",
+    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;",
+    "new": "  if (goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "OW-ROADSIDE-join-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ": leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
-    "new": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "old": "        : leg.at\n          ? spotRect(leg.at)\n          : leg.line\n            ? spotRect(legEnd(leg, legMiddle))\n            : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE); // ROAD-FOLLOW: a curve's apex",
+    "new": "        : leg.line\n          ? spotRect(legEnd(leg, legMiddle))\n          : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE); // ROAD-FOLLOW: a curve's apex",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW-ROADSIDE-join-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring",
-    "new": "'open', ...(l.ring",
+    "old": "      ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}),\n      ...(l.ring ? { ring: true } : {}),",
+    "new": "      ...(l.ring ? { ring: true } : {}),",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW-ROADSIDE-drawn-beside",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "(l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))",
-    "new": "(l) => (onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))",
+    "old": "    ...legs\n      .slice(0, -1)\n      .map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
+    "new": "    ...legs.slice(0, -1).map((l) => onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l))),",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

@@ -79,7 +79,7 @@ PIN MOVED (AUDIT RELEASE R1-1): `test/world/townwalls.test.js` (the walls' ids).
 
 ### R1-2 - the Travel View's ground and the land that lands after it (LOW, FIXED)
 
-`travelRoute.js:"const memoMoved = landWatch(), waterMoved = landWatch();"`, `travelRoute.js:"get isWater() { return waterNow(); },"`.
+`travelRoute.js:"const memoMoved ="`, `travelRoute.js:"get isWater() {"`.
 The route ground (`routeGround`) kept its answers past the Bay's table (`dryBeyond`, dropped only past BEYOND_CACHE_MAX),
 the sea lanes keep their water by the ground's `isWater` (planSeaLanes' `_laneGround`), and the host makes one ground a
 session (`world.js:"const tvRouteGround = () => {"`, made again only when the zone comes or goes). The land past the

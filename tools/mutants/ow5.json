@@ -124,8 +124,8 @@
   {
     "name": "OW5-J3-rung-capped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;",
-    "new": "const cap = maxExpansions;",
+    "old": "    const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;",
+    "new": "    const cap = maxExpansions;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],

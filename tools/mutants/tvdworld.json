@@ -2,8 +2,8 @@
   {
     "name": "TVD-WORLD-the-budget-gone",
     "file": "src/systems/travel/travelLairs.js",
-    "old": "        if (read >= budget) { owed = true; continue; }",
-    "new": "        if (false) { owed = true; continue; }",
+    "old": "        if (read >= budget) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TVD-WORLD-the-gen-unmoved",
     "file": "src/systems/travel/travelLairs.js",
-    "old": "    if (owed) gen++;",
-    "new": "    if (owed) gen += 0;",
+    "old": "    if (owed) gen++; // cells in reach still unread: what was built on this answer is built again",
+    "new": "    if (owed) gen += 0; // cells in reach still unread: what was built on this answer is built again",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TVD-WORLD-the-stamp-unread",
     "file": "src/systems/travel/travelLairs.js",
-    "old": "    if (v !== ver) { ver = v; cells.clear(); laid.clear(); gen++; }",
-    "new": "    if (ver === null) { ver = v; gen++; }",
+    "old": "    if (v !== ver) {\n      ver = v;\n      cells.clear();\n      laid.clear();",
+    "new": "    if (ver === null) {\n      ver = v;",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TVD-WORLD-the-laid-unkept",
     "file": "src/systems/travel/travelLairs.js",
-    "old": "    if (!laid.has(key)) laid.set(key, lairAt(x, y) ? cloneAt(x, y) ?? null : null);",
-    "new": "    laid.set(key, lairAt(x, y) ? cloneAt(x, y) ?? null : null);",
+    "old": "    if (!laid.has(key)) laid.set(key, lairAt(x, y) ? (cloneAt(x, y) ?? null) : null);",
+    "new": "    laid.set(key, lairAt(x, y) ? (cloneAt(x, y) ?? null) : null);",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TVD-WORLD-the-region-unread",
     "file": "src/systems/travel/travelLairs.js",
-    "old": "row: { mapID: row.mapId, regionIndex: regionAt(row.px, row.py), locationType: row.type }",
-    "new": "row: { mapID: row.mapId, regionIndex: 0, locationType: row.type }",
+    "old": "          row: { mapID: row.mapId, regionIndex: regionAt(row.px, row.py), locationType: row.type },",
+    "new": "          row: { mapID: row.mapId, regionIndex: 0, locationType: row.type },",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],

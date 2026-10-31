@@ -47,8 +47,8 @@
   {
     "name": "EXACT-PIECES-unknown-always",
     "file": "src/systems/travel/landPieces.js",
-    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
-    "new": "      if (!them) { joinX(a, UNKNOWN); continue; }",
+    "old": "        if (landRingDry(land, side, t)) joinX(a, UNKNOWN);",
+    "new": "        joinX(a, UNKNOWN);",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "EXACT-PIECES-unknown-never",
     "file": "src/systems/travel/landPieces.js",
-    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
+    "old": "      if (!them) {\n        if (landRingDry(land, side, t)) joinX(a, UNKNOWN);\n        continue;\n      }",
     "new": "      if (!them) continue;",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "EXACT-PIECES-the-water-end-blind",
     "file": "src/systems/travel/landPieces.js",
-    "old": "  if (own >= 0) return new Set([own]);\n  const out = new Set();",
-    "new": "  if (own >= 0) return new Set([own]);\n  return new Set();\n  const out = new Set();",
+    "old": "  const out = new Set();",
+    "new": "  return new Set();\n  const out = new Set();",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EXACT-PIECES-never-asked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (past && !sea && apart && apartExact(from, to)) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (past && !sea && apart && apartExact(from, to)) return null; // EXACT-PIECES: and at the pixel, once the roads' regions have all landed",
+    "new": "  if (false) return null; // EXACT-PIECES: and at the pixel, once the roads' regions have all landed",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
