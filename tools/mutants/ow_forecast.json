@@ -2,8 +2,8 @@
   {
     "name": "OWF-word-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "  get fog() { return t('forecast.word.fog', 'Fog'); },\n",
-    "new": "",
+    "old": "  get fog() {\n    return t('forecast.word.fog', 'Fog');\n  },\n  get rain() {",
+    "new": "  get rain() {",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -12,7 +12,7 @@
     "name": "OWF-sky-met",
     "file": "src/systems/weather/owForecast.js",
     "old": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']));",
-    "new": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall', 'overcast']));",
+    "new": "export const FORECAST_NOTABLE = Object.freeze(\n  new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall', 'overcast']),\n);",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OWF-corner-cut",
     "file": "src/systems/weather/owForecast.js",
-    "old": "    walked += len;\n    if (walked > ahead) return out;",
-    "new": "    walked += len * 0.9;\n    if (walked > ahead) return out;",
+    "old": "    walked += len;",
+    "new": "    walked += len * 0.9;",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OWF-clearing-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "    if (w !== nowWord && (notable(w) || notable(nowWord))) return",
-    "new": "    if (w !== nowWord && notable(w)) return",
+    "old": "    if (w !== nowWord && (notable(w) || notable(nowWord)))",
+    "new": "    if (w !== nowWord && notable(w))",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "OWF-end-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "    return dest ? t('forecast.route.allTo', '{word} all the way to {dest}', { word, dest }) : t('forecast.route.all', '{word} all the way', { word });",
+    "old": "    return dest\n      ? t('forecast.route.allTo', '{word} all the way to {dest}', { word, dest })\n      : t('forecast.route.all', '{word} all the way', { word });",
     "new": "    return t('forecast.route.all', '{word} all the way', { word });",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "OWF-fair-end-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "  return dest ? t('forecast.route.fairAllTo', 'Fair weather all the way to {dest}', { dest }) : t('forecast.route.fairAll', 'Fair weather all the way');",
+    "old": "  return dest\n    ? t('forecast.route.fairAllTo', 'Fair weather all the way to {dest}', { dest })\n    : t('forecast.route.fairAll', 'Fair weather all the way');",
     "new": "  return t('forecast.route.fairAll', 'Fair weather all the way');",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "OWF-turn-capitalised",
     "file": "src/systems/weather/owForecast.js",
-    "old": "{ word, next: FORECAST_TURNS[clear.word], eta }",
-    "new": "{ word, next: say(clear.word), eta }",
+    "old": "      ? t('forecast.here.turns', '{word} - {next} {eta}', { word, next: FORECAST_TURNS[clear.word], eta })",
+    "new": "      ? t('forecast.here.turns', '{word} - {next} {eta}', { word, next: say(clear.word), eta })",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWF-here-clearing-unread",
     "file": "src/systems/weather/owForecast.js",
-    "old": "    const clear = fc.steps.find((s) => s.word !== nowWord), word = say(nowWord);",
-    "new": "    const clear = null, word = say(nowWord);",
+    "old": "    const clear = fc.steps.find((s) => s.word !== nowWord),",
+    "new": "    const clear = null,",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OWF-mean-from-nothing",
     "file": "src/systems/weather/owForecast.js",
-    "old": "          const k = warm > 0 ? 1 - Math.exp(-dt / tau) : 1;",
-    "new": "          const k = 1 - Math.exp(-dt / tau);",
+    "old": "          const k = warm > 0 ? 1 - Math.exp(-dt / tau) : 1; // the first measure taken whole - a mean from nothing reads every pace slow",
+    "new": "          const k = 1 - Math.exp(-dt / tau); // the first measure taken whole - a mean from nothing reads every pace slow",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OWF-jump-kept",
     "file": "src/systems/weather/owForecast.js",
-    "old": "        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) { v = 0; r = 0; warm = 0; }",
-    "new": "        if (clockJump || dt > PACE_GAP_S) { v = 0; r = 0; warm = 0; }",
+    "old": "        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) {",
+    "new": "        if (clockJump || dt > PACE_GAP_S) {",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OWF-told-at-a-stand",
     "file": "src/systems/weather/owForecast.js",
-    "old": "    minutesFor(d) { return warm >= tau / 2 && v >= PACE_MIN_MPS ? (d / v) * r : null; },",
-    "new": "    minutesFor(d) { return warm >= tau / 2 ? (d / Math.max(v, 1e-9)) * r : null; },",
+    "old": "      return warm >= tau / 2 && v >= PACE_MIN_MPS ? (d / v) * r : null;",
+    "new": "      return warm >= tau / 2 ? (d / Math.max(v, 1e-9)) * r : null;",
     "tests": [
       "test/systems/weather/ow_forecast.test.js"
     ]

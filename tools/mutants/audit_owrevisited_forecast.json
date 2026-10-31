@@ -67,8 +67,8 @@
   {
     "name": "AOWR-L3-3-gap-measured",
     "file": "src/systems/weather/owForecast.js",
-    "old": "        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) { v = 0; r = 0; warm = 0; }",
-    "new": "        if (sp > PACE_JUMP_MPS || clockJump) { v = 0; r = 0; warm = 0; }",
+    "old": "        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) {",
+    "new": "        if (sp > PACE_JUMP_MPS || clockJump) {",
     "tests": [
       "test/systems/weather/audit_owrevisited_forecast.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AOWR-L3-12-figures-english",
     "file": "src/systems/weather/owForecast.js",
-    "old": "new Intl.NumberFormat(intlLocale(),",
-    "new": "new Intl.NumberFormat('en',",
+    "old": "    n: new Intl.NumberFormat(intlLocale(), {",
+    "new": "    n: new Intl.NumberFormat('en', {",
     "tests": [
       "test/systems/weather/audit_owrevisited_forecast.test.js"
     ]

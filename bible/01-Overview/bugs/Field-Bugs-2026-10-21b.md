@@ -215,7 +215,7 @@ build they play or what their machines log - but each is real, measured, and on 
 THE LAW NOW.
 
 - SNOW-YEAR: the sky's midsummer is a whole minute, so it is rounded to one before the floor
-  (`snowpack.js:"const midsummer = eventMinuteOfSky(Math.round(sky - since));"`) - one snow year, one origin, at any
+  (`snowpack.js:"const midsummer ="`) - one snow year, one origin, at any
   fractional minute of it; and a build's wait asks the clock's minute on every pass, as the tick does
   (`snowCoverHost.js:"py, now(), arriving?.()"`),
   so a wait across the year's real turn finishes too.

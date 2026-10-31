@@ -101,8 +101,8 @@
   {
     "name": "PRECIP3-the-cover-a-ramp",
     "file": "src/systems/weather/snowpack.js",
-    "old": "  const t = Math.max(0, Math.min(1, swe / SNOWPACK.fullMm));\n  return t * t * (3 - 2 * t);",
-    "new": "  const t = Math.max(0, Math.min(1, swe / SNOWPACK.fullMm));\n  return t;",
+    "old": "  return t * t * (3 - 2 * t);",
+    "new": "  return t;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PRECIP3-the-read-back-steeper",
     "file": "src/systems/weather/snowpack.js",
-    "old": "  if (h <= h50) return 0.1 + 0.4 * (h - h10) / lo;",
-    "new": "  if (h <= h50) return 0.1 + 0.5 * (h - h10) / lo;",
+    "old": "  if (h <= h50) return 0.1 + (0.4 * (h - h10)) / lo;",
+    "new": "  if (h <= h50) return 0.1 + (0.5 * (h - h10)) / lo;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js",
       "test/render/precip4_snowground.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "PRECIP3-the-melt-upside-down",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const next = swe[k] + fallMm * white - (SNOWPACK.melt * degreeHours",
-    "new": "const next = swe[k] + fallMm * white + (SNOWPACK.melt * degreeHours",
+    "old": "    const next = swe[k] + fallMm * white - (SNOWPACK.melt * degreeHours + SNOWPACK.rainMelt * fallMm * heat);",
+    "new": "    const next = swe[k] + fallMm * white + (SNOWPACK.melt * degreeHours + SNOWPACK.rainMelt * fallMm * heat);",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "PRECIP3-the-rain-cold",
     "file": "src/systems/weather/snowpack.js",
-    "old": "if (T > 0) heat += _w[i] * (1 - s) * T;",
-    "new": "if (T > 0) heat += 0;",
+    "old": "      if (T > 0) heat += _w[i] * (1 - s) * T;",
+    "new": "      if (T > 0) heat += 0;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "PRECIP3-the-share-unread",
     "file": "src/systems/weather/snowpack.js",
-    "old": "white += _w[i] * s;",
-    "new": "white += _w[i];",
+    "old": "      white += _w[i] * s;",
+    "new": "      white += _w[i];",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "PRECIP3-the-step-air-chill-dropped",
     "file": "src/systems/weather/snowpack.js",
-    "old": "out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm) - f.chill;",
-    "new": "out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm);",
+    "old": "  out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm) - f.chill;",
+    "new": "  out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm);",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "PRECIP3-the-origin-off-the-grid",
     "file": "src/systems/weather/snowpack.js",
-    "old": "return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
-    "new": "return midsummer;",
+    "old": "  return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
+    "new": "  return midsummer;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "PRECIP3-the-skip-loosened",
     "file": "src/systems/weather/snowpack.js",
-    "old": "- LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C)) { quiet = false; break; }",
-    "new": "- LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C - 4)) { quiet = false; break; }",
+    "old": "        if (!(stepAirFloor(pt.p, pt.x, pt.z, t0, t1) - LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C)) {",
+    "new": "        if (!(stepAirFloor(pt.p, pt.x, pt.z, t0, t1) - LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C - 4)) {",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "PRECIP3-the-blend-ends-swapped",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const u = Math.max(0, Math.min(1, 1 - (pt.step - t) / SNOWPACK.stepMinutes));",
-    "new": "const u = Math.max(0, Math.min(1, (pt.step - t) / SNOWPACK.stepMinutes));",
+    "old": "    const u = Math.max(0, Math.min(1, 1 - (pt.step - t) / SNOWPACK.stepMinutes));",
+    "new": "    const u = Math.max(0, Math.min(1, (pt.step - t) / SNOWPACK.stepMinutes));",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "PRECIP3-every-type-asked",
     "file": "src/systems/weather/snowpack.js",
-    "old": "walk: systemsSpanWalk(x, z, t, t1, this._births, range, WET_TYPES) };",
-    "new": "walk: systemsSpanWalk(x, z, t, t1, this._births, range) };",
+    "old": "      job = this._job = { t0: t, t1, x, z, range, walk: systemsSpanWalk(x, z, t, t1, this._births, range, WET_TYPES) };",
+    "new": "      job = this._job = { t0: t, t1, x, z, range, walk: systemsSpanWalk(x, z, t, t1, this._births, range) };",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]

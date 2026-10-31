@@ -213,8 +213,8 @@
   {
     "name": "RED-MOUNTAIN-the-levels-short",
     "file": "src/systems/weather/snowpack.js",
-    "old": "levels: Object.freeze({ from: -600, step: 200, count: 45 }),",
-    "new": "levels: Object.freeze({ from: -600, step: 200, count: 44 }),",
+    "old": "  levels: Object.freeze({ from: -600, step: 200, count: 45 }), // RED-MOUNTAIN: to 8,200 m, over its rim on the relief's top byte with the large map (23 to 3,800 before)",
+    "new": "  levels: Object.freeze({ from: -600, step: 200, count: 44 }), // RED-MOUNTAIN: to 8,200 m, over its rim on the relief's top byte with the large map (23 to 3,800 before)",
     "tests": [
       "test/world/redmountain.test.js",
       "test/render/precip4_snowground.test.js"

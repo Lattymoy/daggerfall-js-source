@@ -119,8 +119,8 @@
   {
     "name": "AUDITTESA2G-G3-the-snowpack-s-points-kept",
     "file": "src/systems/weather/snowpack.js",
-    "old": "    this._groundVersion = v;\n    this.reset();",
-    "new": "    this._groundVersion = v;",
+    "old": "    this.reset();\n    this._births = (px, py) => this.climateAt(px, py);",
+    "new": "    this._births = (px, py) => this.climateAt(px, py);",
     "tests": [
       "test/systems/weather/audittesa2g_air.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITTESA2G-G3-the-births-kept",
     "file": "src/systems/weather/snowpack.js",
-    "old": "    this.reset();\n    this._births = (px, py) => this.climateAt(px, py);",
-    "new": "    this.reset();",
+    "old": "    this._births = (px, py) => this.climateAt(px, py);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/weather/audittesa2g_air.test.js"
     ]

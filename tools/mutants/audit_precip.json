@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-PRECIP-A-4-the-crossings-clamped-to-the-ground",
     "file": "src/systems/weather/snowpack.js",
-    "old": "out[0] = cross(SWE_10); out[1] = cross(SWE_50); out[2] = cross(SWE_90);",
-    "new": "const hi = from + step * (m - 2) + 1; out[0] = Math.min(hi, cross(SWE_10)); out[1] = Math.min(hi, cross(SWE_50)); out[2] = Math.min(hi, cross(SWE_90));",
+    "old": "  out[0] = cross(SWE_10);\n  out[1] = cross(SWE_50);\n  out[2] = cross(SWE_90);",
+    "new": "  const hi = from + step * (m - 2) + 1;\n  out[0] = Math.min(hi, cross(SWE_10));\n  out[1] = Math.min(hi, cross(SWE_50));\n  out[2] = Math.min(hi, cross(SWE_90));",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-PRECIP-A-4-the-stand-in-the-top-of-all-levels",
     "file": "src/systems/weather/snowpack.js",
-    "old": "return from + step * m;   // never this white up to the highest level held: a level over it",
-    "new": "return from + step * count;",
+    "old": "    return from + step * m; // never this white up to the highest level held: a level over it",
+    "new": "    return from + step * count;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-2-the-rates-tripled",
     "file": "src/systems/weather/snowpack.js",
-    "old": "rate: Object.freeze({ rain: 1.3, thunder: 3.3, snow: 0.8 }),",
-    "new": "rate: Object.freeze({ rain: 3.9, thunder: 9.9, snow: 2.4 }),",
+    "old": "  rate: Object.freeze({ rain: 1.3, thunder: 3.3, snow: 0.8 }),",
+    "new": "  rate: Object.freeze({ rain: 3.9, thunder: 9.9, snow: 2.4 }),",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-3-no-cap",
     "file": "src/systems/weather/snowpack.js",
-    "old": "swe[k] = next > 0 ? (next < cap ? next : cap) : 0;",
-    "new": "swe[k] = next > 0 ? next : 0;",
+    "old": "    swe[k] = next > 0 ? (next < cap ? next : cap) : 0;",
+    "new": "    swe[k] = next > 0 ? next : 0;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-3-the-spin-skipped",
     "file": "src/systems/weather/snowpack.js",
-    "old": "if (!this.meltsOut(pt, before, origin)) pt.spin =",
-    "new": "if (false) pt.spin =",
+    "old": "    if (!this.meltsOut(pt, before, origin)) pt.spin = { step: before, swe: new Float32Array(n), empty: true };",
+    "new": "    if (false) pt.spin = { step: before, swe: new Float32Array(n), empty: true };",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-3-every-place-melts-out",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const steps = this.spinSteps(before, origin), need = SNOWPACK.capMm / SNOWPACK.melt;",
-    "new": "return true; const steps = this.spinSteps(before, origin), need = SNOWPACK.capMm / SNOWPACK.melt;",
+    "old": "    const steps = this.spinSteps(before, origin),",
+    "new": "    return true;\n    const steps = this.spinSteps(before, origin),",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-6-the-walk-unsliced",
     "file": "src/systems/weather/snowpack.js",
-    "old": "      if (now() > deadline) return null;\n    }\n  }",
-    "new": "    }\n  }",
+    "old": "      if (now() > deadline) return null;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-7-every-level-held",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const top = levelIndexAbove(ceil), n = top + 1;",
-    "new": "const top = levelIndexAbove(ceil), n = SNOWPACK.levels.count;",
+    "old": "      n = top + 1;",
+    "new": "      n = SNOWPACK.levels.count;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-8-the-wrong-root",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const al = Math.acos(-A / D), P = 2 * Math.PI;",
-    "new": "const al = Math.acos(A / D), P = 2 * Math.PI;",
+    "old": "  const al = Math.acos(-A / D),",
+    "new": "  const al = Math.acos(A / D),",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-9-the-origin-after-the-minute",
     "file": "src/systems/weather/snowpack.js",
-    "old": "return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
-    "new": "return Math.ceil(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
+    "old": "  return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
+    "new": "  return Math.ceil(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-PRECIP-PACK-10-the-rain-band-alone",
     "file": "src/systems/weather/snowpack.js",
-    "old": "return Math.max(r.rain * k(fall.rain), r.thunder * k(fall.thunder), r.snow * k(fall.snow));",
-    "new": "return r.rain * k(fall.rain);",
+    "old": "  return Math.max(r.rain * k(fall.rain), r.thunder * k(fall.thunder), r.snow * k(fall.snow));",
+    "new": "  return r.rain * k(fall.rain);",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-10-the-births-kept",
     "file": "src/systems/weather/snowpack.js",
-    "old": "        if (this._caughtUp > DROP_AFTER_STEPS && !this._job) { this._births = (px, py) => this.climateAt(px, py); this._span = null; }\n",
-    "new": "",
+    "old": "        if (this._caughtUp > DROP_AFTER_STEPS && !this._job) {\n          this._births = (px, py) => this.climateAt(px, py);\n          this._span = null;\n        }\n        this._caughtUp = 0;",
+    "new": "        this._caughtUp = 0;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]

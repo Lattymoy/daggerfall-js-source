@@ -146,8 +146,8 @@
   {
     "name": "ASH-the-field-coin",
     "file": "src/systems/weather/weatherField.js",
-    "old": "u < ash * ASH_FIELD_GAIN;",
-    "new": "u < ash;",
+    "old": "  if (word === 'ashfall') return ash > 0 && ASH_FROM.includes(zoneWord) && u < ash * ASH_FIELD_GAIN;",
+    "new": "  if (word === 'ashfall') return ash > 0 && ASH_FROM.includes(zoneWord) && u < ash;",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ASH-the-field-seat-unread",
     "file": "src/systems/weather/weatherField.js",
-    "old": "word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u)",
-    "new": "0, c.u)",
+    "old": "        if (!cellSeats(word, seat, wordOfClimate(seat), word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u))\n          continue; // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one",
+    "new": "        if (!cellSeats(word, seat, wordOfClimate(seat), 0, c.u)) continue; // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "ASH-forecast-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "'sandstorm', 'ashfall']));",
-    "new": "'sandstorm']));",
+    "old": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']));",
+    "new": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm']));",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "ASH-the-bay-asked",
     "file": "src/systems/weather/weatherField.js",
-    "old": "  if (inBay(px, py)) return 0;   // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)\n",
-    "new": "",
+    "old": "  if (inBay(px, py)) return 0; // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)\n  const zone = tamrielBiomeAt(px, py);",
+    "new": "  const zone = tamrielBiomeAt(px, py);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "ASH-the-nearest-cell-worn",
     "file": "src/systems/weather/weatherField.js",
-    "old": "CELL_RANK[c.word] < CELL_RANK[inside.word]",
-    "new": "c.d < inside.d",
+    "old": "  for (const c of cells) if (c.d < c.r && (!inside || CELL_RANK[c.word] < CELL_RANK[inside.word])) inside = c;",
+    "new": "  for (const c of cells) if (c.d < c.r && (!inside || c.d < inside.d)) inside = c;",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

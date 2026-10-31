@@ -1399,6 +1399,13 @@
 !/src/systems/weaponMastery.js
 !/src/systems/weaponSheathing.js
 !/src/systems/weaponSheathingAssets.js
+!/src/systems/weather/
+/src/systems/weather/*
+!/src/systems/weather/nightFog.js
+!/src/systems/weather/owForecast.js
+!/src/systems/weather/snowpack.js
+!/src/systems/weather/weatherField.js
+!/src/systems/weather/weatherTable.js
 !/src/systems/wind/
 /src/systems/wind/*/
 !/src/systems/windfall.js
