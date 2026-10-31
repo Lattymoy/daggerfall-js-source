@@ -30,12 +30,19 @@ const studioByKey = (listing) => new Map(studioEntries(listing.files).map((e) =>
  *  pattern that ignores it. Nothing outside a git checkout (a tree of a test's own). */
 function ignoredByGit(at, files) {
   if (!files.length) return [];
-  const r = spawnSync('git', ['check-ignore', '-v', '--no-index', '--stdin'], { cwd: at, input: files.map((f) => `${STUDIO_TREE}/${f}`).join('\n'), encoding: 'utf8' });
-  if (r.status !== 0 || !r.stdout) return [];
-  return r.stdout.split('\n').filter(Boolean).map((line) => {
-    const [why, path] = line.split('\t');
-    return { path: path.slice(STUDIO_TREE.length + 1), pattern: why.split(':').slice(2).join(':') };
+  const r = spawnSync('git', ['check-ignore', '-v', '--no-index', '--stdin'], {
+    cwd: at,
+    input: files.map((f) => `${STUDIO_TREE}/${f}`).join('\n'),
+    encoding: 'utf8',
   });
+  if (r.status !== 0 || !r.stdout) return [];
+  return r.stdout
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [why, path] = line.split('\t');
+      return { path: path.slice(STUDIO_TREE.length + 1), pattern: why.split(':').slice(2).join(':') };
+    });
 }
 
 /**
@@ -49,26 +56,40 @@ function ignoredByGit(at, files) {
  */
 export async function checkStudio(at = root) {
   const listing = studioListing(at);
-  const problems = [...listing.problems], notes = [];
+  const problems = [...listing.problems],
+    notes = [];
   const slots = new Map();
   for (const set of STUDIO_SETS) for (const s of studioSlots(set)) slots.set(s.key, s);
   const sets = new Map(STUDIO_SETS.map((s) => [s.archive, s]));
-  for (const { path, pattern } of ignoredByGit(at, listing.files)) problems.push(`${path}: git ignores it (.gitignore's \`${pattern}\`), so it would never be committed - rename the folder`);
+  for (const { path, pattern } of ignoredByGit(at, listing.files))
+    problems.push(
+      `${path}: git ignores it (.gitignore's \`${pattern}\`), so it would never be committed - rename the folder`,
+    );
   for (const e of studioEntries(listing.files)) {
     let png;
-    try { png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path))); } catch (err) {
+    try {
+      png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path)));
+    } catch (err) {
       problems.push(`${e.path}: will not decode (${err?.message ?? err}) - re-export it as PNG`);
       continue;
     }
     const slot = slots.get(e.key);
     if (slot) {
       const p = await slot.picture();
-      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01) notes.push(`${e.path}: ${png.width} x ${png.height}, and ${slot.name} is ${p.width} x ${p.height} - it is stretched to the slot's shape`);
-      if (!slot.cutout && png.data.some((v, i) => (i & 3) === 3 && v < 128)) notes.push(`${e.path}: clear texels, and ${slot.name} is drawn solid - they come out black; paint them`);
+      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)
+        notes.push(
+          `${e.path}: ${png.width} x ${png.height}, and ${slot.name} is ${p.width} x ${p.height} - it is stretched to the slot's shape`,
+        );
+      if (!slot.cutout && png.data.some((v, i) => (i & 3) === 3 && v < 128))
+        notes.push(`${e.path}: clear texels, and ${slot.name} is drawn solid - they come out black; paint them`);
     } else if (e.map === 'Albedo' && sets.has(e.archive)) {
-      problems.push(`${e.path}: ${sets.get(e.archive).title} has no picture ${e.key} - the templates' names are its slots (a digit dropped, the frame mistyped?)`);
+      problems.push(
+        `${e.path}: ${sets.get(e.archive).title} has no picture ${e.key} - the templates' names are its slots (a digit dropped, the frame mistyped?)`,
+      );
     } else if (e.map === 'Albedo' && e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE) {
-      notes.push(`${e.path}: archive ${e.archive} is none of the painted models' - it is worn only where a mod's own picture of that name stands (check the number)`);
+      notes.push(
+        `${e.path}: archive ${e.archive} is none of the painted models' - it is worn only where a mod's own picture of that name stands (check the number)`,
+      );
     }
   }
   return { listing, problems, notes };
@@ -79,11 +100,15 @@ async function list(at, log) {
   const own = studioByKey(listing);
   for (const set of STUDIO_SETS) {
     const slots = studioSlots(set);
-    log(`\n${set.title} - archive ${set.archive}, ${slots.length} slots${set.door === 'painted' ? '' : ' (on the texture door)'}`);
+    log(
+      `\n${set.title} - archive ${set.archive}, ${slots.length} slots${set.door === 'painted' ? '' : ' (on the texture door)'}`,
+    );
     for (const s of slots) {
       const p = await s.picture();
       const by = own.get(s.key);
-      log(`  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${by ? `   <- studio: ${by.path}` : ''}`);
+      log(
+        `  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${by ? `   <- studio: ${by.path}` : ''}`,
+      );
       own.delete(s.key);
     }
   }
@@ -91,18 +116,23 @@ async function list(at, log) {
     log("\nPictures of no painted model (Daggerfall's own textures, a mod's, or a name to check - see `check`):");
     for (const e of own.values()) log(`  ${e.key.padEnd(12)} ${e.path}`);
   }
-  log(`\nThe studio: ${listing.files.length} picture(s) worn, ${listing.problems.length} problem(s) - node tools/studioArt.mjs check says which.`);
+  log(
+    `\nThe studio: ${listing.files.length} picture(s) worn, ${listing.problems.length} problem(s) - node tools/studioArt.mjs check says which.`,
+  );
   return 0;
 }
 
 async function templates(at, log, dir = null) {
-  const out = dir ? resolve(dir) : join(at, 'studio-templates');   // a folder named is the caller's; the default is the checkout's (ignored)
+  const out = dir ? resolve(dir) : join(at, 'studio-templates'); // a folder named is the caller's; the default is the checkout's (ignored)
   let n = 0;
   for (const set of STUDIO_SETS) {
     mkdirSync(join(out, set.id), { recursive: true });
     for (const s of studioSlots(set)) {
       const p = await s.picture();
-      writeFileSync(join(out, set.id, s.fileName), writePng({ width: p.width, height: p.height, data: Uint8Array.from(p.data) }));
+      writeFileSync(
+        join(out, set.id, s.fileName),
+        writePng({ width: p.width, height: p.height, data: Uint8Array.from(p.data) }),
+      );
       n++;
     }
   }
@@ -114,7 +144,9 @@ async function check(at, log) {
   const { listing, problems, notes } = await checkStudio(at);
   for (const n of notes) log(`note: ${n}`);
   for (const p of problems) log(`PROBLEM: ${p}`);
-  log(`${listing.files.length} picture(s) worn by ${listing.roster.length} artist(s) on the roster; ${problems.length} problem(s).`);
+  log(
+    `${listing.files.length} picture(s) worn by ${listing.roster.length} artist(s) on the roster; ${problems.length} problem(s).`,
+  );
   return problems.length ? 1 : 0;
 }
 

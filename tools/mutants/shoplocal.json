@@ -56,8 +56,8 @@
   {
     "name": "SL-every-method-asked-again",
     "file": "tools/stripeMethods.mjs",
-    "old": "if (!cfg[m] || cfg[m].display_preference?.preference === 'on') continue;",
-    "new": "if (!cfg[m]) continue;",
+    "old": "    if (!cfg[m] || cfg[m].display_preference?.preference === 'on') continue;",
+    "new": "    if (!cfg[m]) continue;",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SL-a-refusal-stops-the-rest",
     "file": "tools/stripeMethods.mjs",
-    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
-    "new": "if (r.ok) turned.add(m); else { refused.set(m, said(r.body)); break; }",
+    "old": "    else refused.set(m, said(r.body));",
+    "new": "    else {\n      refused.set(m, said(r.body));\n      break;\n    }",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SL-the-child-configured",
     "file": "tools/stripeMethods.mjs",
-    "old": "c?.is_default === true && !c.application && !c.parent",
-    "new": "c?.is_default === true",
+    "old": "  (Array.isArray(list?.data) ? list.data : []).find((c) => c?.is_default === true && !c.application && !c.parent) ??\n  null;",
+    "new": "  (Array.isArray(list?.data) ? list.data : []).find((c) => c?.is_default === true) ?? null;",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SL-the-echoed-key-said",
     "file": "tools/stripeMethods.mjs",
-    "old": ".replace(/\\b(?:sk|rk|pk)_(?:live|test)_\\S*/g, '[the key]')",
-    "new": "",
+    "old": "    .replace(/\\b(?:sk|rk|pk)_(?:live|test)_\\S*/g, '[the key]')\n    .replace(/\\s+/g, ' ')",
+    "new": "    .replace(/\\s+/g, ' ')",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SL-the-turn-unsaid",
     "file": "tools/stripeMethods.mjs",
-    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
-    "new": "if (!r.ok) refused.set(m, said(r.body));",
+    "old": "    if (r.ok) turned.add(m);\n    else refused.set(m, said(r.body));",
+    "new": "    if (!r.ok) refused.set(m, said(r.body));",
     "tests": [
       "test/server/shoplocal.test.js"
     ]

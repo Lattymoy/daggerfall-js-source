@@ -363,8 +363,8 @@
   {
     "name": "TIME1-AUDIT-the-tool-cannot-move-the-row",
     "file": "tools/skyCutover.mjs",
-    "old": "const segments = moving || replacing ? SKY_SEGMENTS.slice(0, -1) : SKY_SEGMENTS;",
-    "new": "const segments = replacing ? SKY_SEGMENTS.slice(0, -1) : SKY_SEGMENTS;",
+    "old": "  const segments = moving || replacing ? SKY_SEGMENTS.slice(0, -1) : SKY_SEGMENTS;",
+    "new": "  const segments = replacing ? SKY_SEGMENTS.slice(0, -1) : SKY_SEGMENTS;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "TIME1-AUDIT2-the-tool-never-replaces",
     "file": "tools/skyCutover.mjs",
-    "old": "const replacing = !moving && !!last && after < last.fromMs;",
-    "new": "const replacing = false;",
+    "old": "  const replacing = !moving && !!last && after < last.fromMs;",
+    "new": "  const replacing = false;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "TIME1-AUDIT2-the-tool-never-says-already",
     "file": "tools/skyCutover.mjs",
-    "old": "skyLawOf(segments).rateAt(after) === minutesPerMs",
-    "new": "false",
+    "old": "      skyLawOf(segments).rateAt(after) === minutesPerMs",
+    "new": "      false",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]

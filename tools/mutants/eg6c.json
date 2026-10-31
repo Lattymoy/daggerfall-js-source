@@ -1679,8 +1679,8 @@
   {
     "name": "EG6C-a-scale-applied-to-a-normal",
     "file": "tools/shipBake.mjs",
-    "old": "const s = [n[0] / S[0], n[1] / S[1], n[2] / S[2]];",
-    "new": "const s = [n[0] * S[0], n[1] * S[1], n[2] * S[2]];",
+    "old": "      const s = [n[0] / S[0], n[1] / S[1], n[2] / S[2]];",
+    "new": "      const s = [n[0] * S[0], n[1] * S[1], n[2] * S[2]];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1688,8 +1688,8 @@
   {
     "name": "EG6C-a-normal-unrotated",
     "file": "tools/shipBake.mjs",
-    "old": "const w = [R[0] * s[0] + R[1] * s[1] + R[2] * s[2], R[3] * s[0] + R[4] * s[1] + R[5] * s[2], R[6] * s[0] + R[7] * s[1] + R[8] * s[2]];",
-    "new": "const w = s;",
+    "old": "      const w = [\n        R[0] * s[0] + R[1] * s[1] + R[2] * s[2],\n        R[3] * s[0] + R[4] * s[1] + R[5] * s[2],\n        R[6] * s[0] + R[7] * s[1] + R[8] * s[2],\n      ];",
+    "new": "      const w = s;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]

@@ -194,8 +194,8 @@
   {
     "name": "STUDIO1-the-check-decodes-nothing",
     "file": "tools/studioArt.mjs",
-    "old": "    try { png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path))); } catch (err) {",
-    "new": "    try { png = { width: 1, height: 1 }; void PNG; void readFileSync; } catch (err) {",
+    "old": "      png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path)));",
+    "new": "      png = { width: 1, height: 1 };\n      void PNG;\n      void readFileSync;",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "STUDIO1-a-stretched-picture-unsaid",
     "file": "tools/studioArt.mjs",
-    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
-    "new": "false",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && false)",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -968,8 +968,8 @@
   {
     "name": "STUDIO1-check-drops-the-listing",
     "file": "tools/studioArt.mjs",
-    "old": "  const problems = [...listing.problems], notes = [];",
-    "new": "  const problems = [], notes = [];",
+    "old": "  const problems = [...listing.problems],",
+    "new": "  const problems = [],",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "STUDIO1-stretch-by-half",
     "file": "tools/studioArt.mjs",
-    "old": "p.width / p.height) > 0.01)",
-    "new": "p.width / p.height) > 0.5)",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.5)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -986,8 +986,8 @@
   {
     "name": "STUDIO1-stretch-one-way",
     "file": "tools/studioArt.mjs",
-    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
-    "new": "(png.width / png.height - p.width / p.height) > 0.01",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && png.width / png.height - p.width / p.height > 0.01)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1004,8 +1004,8 @@
   {
     "name": "STUDIO1-no-slot-only-a-note",
     "file": "tools/studioArt.mjs",
-    "old": "      problems.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
-    "new": "      notes.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
+    "old": "    } else if (e.map === 'Albedo' && sets.has(e.archive)) {\n      problems.push(",
+    "new": "    } else if (e.map === 'Albedo' && sets.has(e.archive)) {\n      notes.push(",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1031,8 +1031,8 @@
   {
     "name": "STUDIO1-list-studio-unsaid",
     "file": "tools/studioArt.mjs",
-    "old": "${by ? `   <- studio: ${by.path}` : ''}",
-    "new": "${''}",
+    "old": "      log(\n        `  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${by ? `   <- studio: ${by.path}` : ''}`,\n      );",
+    "new": "      log(`  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${''}`);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1040,8 +1040,8 @@
   {
     "name": "STUDIO1-templates-in-the-checkout",
     "file": "tools/studioArt.mjs",
-    "old": "  const out = dir ? resolve(dir) : join(at, 'studio-templates');",
-    "new": "  const out = join(at, 'studio-templates'); void dir; void resolve;",
+    "old": "  const out = dir ? resolve(dir) : join(at, 'studio-templates'); // a folder named is the caller's; the default is the checkout's (ignored)",
+    "new": "  const out = join(at, 'studio-templates');\n  void dir;\n  void resolve; // a folder named is the caller's; the default is the checkout's (ignored)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

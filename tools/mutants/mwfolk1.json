@@ -433,8 +433,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-arms-reach-hard",
     "file": "tools/skinWeights.mjs",
-    "old": "claim = Math.max(claim, 1 - smoothstep((segmentDistance(p, b.from, b.to) - b.reach) / b.fade));",
-    "new": "claim = Math.max(claim, segmentDistance(p, b.from, b.to) <= b.reach ? 1 : 0);",
+    "old": "      if (b.reach != null)\n        claim = Math.max(claim, 1 - smoothstep((segmentDistance(p, b.from, b.to) - b.reach) / b.fade));",
+    "new": "      if (b.reach != null) claim = Math.max(claim, segmentDistance(p, b.from, b.to) <= b.reach ? 1 : 0);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

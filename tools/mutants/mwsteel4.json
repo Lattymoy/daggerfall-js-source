@@ -70,8 +70,8 @@
   {
     "name": "MWSTEEL4-no-joint-with-the-parent",
     "file": "tools/skinWeights.mjs",
-    "old": "      if (dot(sub(p, b.from), axis[k]) < L) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
-    "new": "      if (false) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
+    "old": "      if (dot(sub(p, b.from), axis[k]) < L) {",
+    "new": "      if (false) {",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "MWSTEEL4-no-weld",
     "file": "tools/skinWeights.mjs",
-    "old": "    if (g === undefined) { g = first.length; at.set(k, g); first.push(v); }",
-    "new": "    { g = first.length; at.set(k, g); first.push(v); }",
+    "old": "    if (g === undefined) {",
+    "new": "    {",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ],

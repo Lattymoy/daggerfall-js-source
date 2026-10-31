@@ -38,8 +38,8 @@
   {
     "name": "GATE-FBX-the-unread-asked-their-sense",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!read(name)) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (!read(name)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]

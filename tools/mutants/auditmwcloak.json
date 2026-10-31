@@ -283,8 +283,8 @@
   {
     "name": "AUDITMWCLOAK-a-leg-a-parents-blend",
     "file": "tools/skinWeights.mjs",
-    "old": "if (b.parent && !legIndex?.has(index.get(b.parent))) {",
-    "new": "if (b.parent) {",
+    "old": "    if (b.parent && !legIndex?.has(index.get(b.parent))) {",
+    "new": "    if (b.parent) {",
     "tests": [
       "test/tooling/mwcloak1.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "AUDITMWCLOAK-a-leg-a-childs-blend",
     "file": "tools/skinWeights.mjs",
-    "old": "      if (!can[j]) continue;   // a leg (the hang's alone), or - bare - a child that reaches",
-    "new": "      if (bare && bones[j].reach != null) continue;   // a leg (the hang's alone), or - bare - a child that reaches",
+    "old": "      if (!can[j]) continue; // a leg (the hang's alone), or - bare - a child that reaches",
+    "new": "      if (bare && bones[j].reach != null) continue; // a leg (the hang's alone), or - bare - a child that reaches",
     "tests": [
       "test/tooling/mwcloak1.test.js"
     ],

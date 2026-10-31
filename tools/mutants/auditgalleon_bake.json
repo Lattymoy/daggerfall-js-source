@@ -296,8 +296,8 @@
   {
     "name": "AUDITGN-B1-scene-coordinates",
     "file": "tools/shipBake.mjs",
-    "old": "  const corners = poly.map((vi) => object.local[vi]);\n",
-    "new": "  const corners = poly.map((vi) => object.scene[vi]);\n",
+    "old": "  const corners = poly.map((vi) => object.local[vi]);",
+    "new": "  const corners = poly.map((vi) => object.scene[vi]);",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -307,8 +307,8 @@
   {
     "name": "AUDITGN-B1-mirror-unwound",
     "file": "tools/shipBake.mjs",
-    "old": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[c], ring[b]); triangleOf.push(p); }\n",
-    "new": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[b], ring[c]); triangleOf.push(p); }\n",
+    "old": "      triangles.push(ring[a], ring[c], ring[b]);",
+    "new": "      triangles.push(ring[a], ring[b], ring[c]);",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -318,8 +318,8 @@
   {
     "name": "AUDITGN-B5-mirror-unrefused",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!(det > 0)) throw new Error(`${name}'s transform",
-    "new": "    if (det < -Infinity) throw new Error(`${name}'s transform",
+    "old": "    if (!(det > 0))",
+    "new": "    if (det < -Infinity)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -328,8 +328,8 @@
   {
     "name": "AUDITGN-B5-rotation-offset-unread",
     "file": "tools/shipBake.mjs",
-    "old": "['PostRotation', [0, 0, 0]], ['RotationOffset', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
-    "new": "['PostRotation', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
+    "old": "  ['RotationOffset', [0, 0, 0]],\n  ['RotationPivot', [0, 0, 0]],",
+    "new": "  ['RotationPivot', [0, 0, 0]],",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "AUDITGN-B5-scaling-offset-unread",
     "file": "tools/shipBake.mjs",
-    "old": "  ['ScalingOffset', [0, 0, 0]], ['ScalingPivot', [0, 0, 0]],\n",
-    "new": "  ['ScalingPivot', [0, 0, 0]],\n",
+    "old": "  ['ScalingOffset', [0, 0, 0]],\n  ['ScalingPivot', [0, 0, 0]],",
+    "new": "  ['ScalingPivot', [0, 0, 0]],",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "AUDITGN-B5-axes-unread",
     "file": "tools/shipBake.mjs",
-    "old": "  assertExportAxes(tree);\n",
-    "new": "",
+    "old": "  assertExportAxes(tree);\n  const byId = new Map(objects.children.map((o) => [String(o.props[0]), o]));",
+    "new": "  const byId = new Map(objects.children.map((o) => [String(o.props[0]), o]));",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -358,8 +358,8 @@
   {
     "name": "AUDITGN-B5-front-axis-unread",
     "file": "tools/shipBake.mjs",
-    "old": "{ UpAxis: 1, UpAxisSign: 1, FrontAxis: 2, FrontAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
-    "new": "{ UpAxis: 1, UpAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
+    "old": "export const EXPORT_AXES = Object.freeze({\n  UpAxis: 1,\n  UpAxisSign: 1,\n  FrontAxis: 2,\n  FrontAxisSign: 1,\n  CoordAxis: 0,\n  CoordAxisSign: 1,\n});",
+    "new": "export const EXPORT_AXES = Object.freeze({ UpAxis: 1, UpAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 });",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -378,8 +378,8 @@
   {
     "name": "AUDITGN-B5-box-unread",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!(off <= BOX_SLACK)) throw new Error(",
-    "new": "    if (off < -1) throw new Error(",
+    "old": "    if (!(off <= BOX_SLACK))",
+    "new": "    if (off < -1)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -399,8 +399,8 @@
   {
     "name": "AUDITGN-B6-origin-unchecked",
     "file": "tools/shipBake.mjs",
-    "old": "      if (o.origin[1] !== spec.frame.centreline) throw new Error(",
-    "new": "      if (false) throw new Error(",
+    "old": "      if (o.origin[1] !== spec.frame.centreline)",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -409,8 +409,8 @@
   {
     "name": "AUDITGN-B6-quarter-turn-unread",
     "file": "tools/shipBake.mjs",
-    "old": ".map(Number).map(quarterTurn));",
-    "new": ".map(Number));",
+    "old": "    const R = eulerXYZ((property70(model, 'Lcl Rotation') ?? [0, 0, 0]).map(Number).map(quarterTurn));",
+    "new": "    const R = eulerXYZ((property70(model, 'Lcl Rotation') ?? [0, 0, 0]).map(Number));",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "AUDITGN-B7-split-miscounted",
     "file": "tools/shipBake.mjs",
-    "old": "    if (poly.length > 3) split++;\n",
-    "new": "    if (poly.length > 4) split++;\n",
+    "old": "    if (poly.length > 3) split++;",
+    "new": "    if (poly.length > 4) split++;",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js",
       "test/world/ships/galleon_model.test.js"

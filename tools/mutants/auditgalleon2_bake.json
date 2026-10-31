@@ -167,8 +167,8 @@
   {
     "name": "AUDITGN2-BK1-version-unread",
     "file": "tools/shipBake.mjs",
-    "old": "  assertBlenderFill(tree);   // AUDIT GN2-BK1\n",
-    "new": "",
+    "old": "  assertBlenderFill(tree); // AUDIT GN2-BK1\n  const objects = sceneObjects(tree);",
+    "new": "  const objects = sceneObjects(tree);",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],
@@ -187,8 +187,8 @@
   {
     "name": "AUDITGN2-BK1-name-unread",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!name.startsWith('Blender')) throw",
-    "new": "    if (false) throw",
+    "old": "    if (!name.startsWith('Blender'))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],
@@ -227,8 +227,8 @@
   {
     "name": "AUDITGN2-BK4-source-unrecorded",
     "file": "tools/shipBake.mjs",
-    "old": "    source,\n",
-    "new": "    source: SOURCE_FBX,\n",
+    "old": "    source,",
+    "new": "    source: SOURCE_FBX,",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],
@@ -267,7 +267,7 @@
   {
     "name": "AUDITGN2-BK5-round-half-up",
     "file": "tools/shipBake.mjs",
-    "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
+    "old": "export const round4 = (v) => (Math.sign(v) * Math.round(Math.abs(v) * 1e4)) / 1e4 + 0;",
     "new": "export const round4 = (v) => Math.round(v * 1e4) / 1e4 + 0;",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
@@ -277,8 +277,8 @@
   {
     "name": "AUDITGN2-BK5-minus-nought",
     "file": "tools/shipBake.mjs",
-    "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
-    "new": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4;",
+    "old": "export const round4 = (v) => (Math.sign(v) * Math.round(Math.abs(v) * 1e4)) / 1e4 + 0;",
+    "new": "export const round4 = (v) => (Math.sign(v) * Math.round(Math.abs(v) * 1e4)) / 1e4;",
     "tests": [
       "test/tooling/auditgalleon2_bake.test.js"
     ],

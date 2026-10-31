@@ -2,8 +2,8 @@
   {
     "name": "GALLEON-bake-fill-strays",
     "file": "tools/shipBake.mjs",
-    "old": "  if (fault) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
-    "new": "  if (false) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
+    "old": "  const fault = tilingFault(blenderProject(corners), tris, corners);\n  if (fault)",
+    "new": "  const fault = tilingFault(blenderProject(corners), tris, corners);\n  if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -130,8 +130,8 @@
   {
     "name": "GALLEON2-centreline-unread",
     "file": "tools/shipBake.mjs",
-    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
-    "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
+    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
+    "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],
@@ -140,8 +140,8 @@
   {
     "name": "GALLEON2-twin-baked",
     "file": "tools/shipBake.mjs",
-    "old": "    if (skip) {\n      const fault = skipFault(o, skip, byName, spec);\n",
-    "new": "    if (skip && !skip.twin) {\n      const fault = skipFault(o, skip, byName, spec);\n",
+    "old": "    if (skip) {",
+    "new": "    if (skip && !skip.twin) {",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],
