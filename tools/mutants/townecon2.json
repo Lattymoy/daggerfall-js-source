@@ -72,8 +72,8 @@
   {
     "name": "TOWNECON2-reading-by-key",
     "file": "src/systems/town/townEcon.js",
-    "old": "    const players = host.players?.(id) ?? 0;",
-    "new": "    const players = host.players?.(key) ?? 0;",
+    "old": "    const players = host.players?.(id) ?? 0; // TE2: the service keys a town by its map id",
+    "new": "    const players = host.players?.(key) ?? 0; // TE2: the service keys a town by its map id",
     "tests": [
       "test/net/townecon_client.test.js"
     ],

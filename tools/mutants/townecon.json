@@ -252,8 +252,8 @@
   {
     "name": "TOWNECON-offline-runs",
     "file": "src/systems/town/townEcon.js",
-    "old": "  const readingOf = (mapId) => {\n    if (!host.online() || ",
-    "new": "  const readingOf = (mapId) => {\n    if (",
+    "old": "  const readingOf = (mapId) => {\n    if (!host.online() || mapId == null || !Number.isFinite(Number(mapId))) return null;",
+    "new": "  const readingOf = (mapId) => {\n    if (mapId == null || !Number.isFinite(Number(mapId))) return null;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "TOWNECON-AUDIT-DOC3-bailiwick-any",
     "file": "src/systems/town/townEcon.js",
-    "old": "bailiwickOf(seats, r.town.region, [r.town.px, r.town.py])",
-    "new": "(seats[0] ?? null)",
+    "old": "    return r.seat || seats == null ? undefined : bailiwickOf(seats, r.town.region, [r.town.px, r.town.py]);",
+    "new": "    return r.seat || seats == null ? undefined : (seats[0] ?? null);",
     "tests": [
       "test/systems/townecon.test.js"
     ],

@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-CC-B6-watch-leaves",
     "file": "src/systems/town/townWatch.js",
-    "old": " && !(t?.companion != null && !t.dead)   // AUDIT CC-B6",
-    "new": "   // AUDIT CC-B6",
+    "old": "    !(t?.defender === true && !t.dead) &&\n    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
+    "new": "    !(t?.defender === true && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

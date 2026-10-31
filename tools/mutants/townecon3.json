@@ -92,8 +92,8 @@
   {
     "name": "TOWNECON3-patrons-unread",
     "file": "src/systems/town/townEcon.js",
-    "old": "patrons: host.patronsIn?.(r.town.region) ?? [], lanes: r.lanes }",
-    "new": "patrons: [], lanes: r.lanes }",
+    "old": "          patrons: host.patronsIn?.(r.town.region) ?? [],",
+    "new": "          patrons: [],",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],

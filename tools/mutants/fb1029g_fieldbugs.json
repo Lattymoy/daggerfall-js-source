@@ -215,8 +215,8 @@
   {
     "name": "NOTICE-PANEL-lines-of-no-town",
     "file": "src/systems/town/townEcon.js",
-    "old": "      if (!r) return [];\n      return townPanelLinesOf(",
-    "new": "      if (!r) return [''];\n      return townPanelLinesOf(",
+    "old": "      if (!r) return [];",
+    "new": "      if (!r) return [''];",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

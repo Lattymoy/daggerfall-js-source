@@ -93,7 +93,7 @@ test('PERF-TOWN1: a person answers into its OWN row, and the pool refills one li
   const q = new MobilePerson(nav, { archive: 385, frameCount: () => 4, groundY: () => 0, rand: () => 0.5 });
   q.place(40, 40);
   assert.notEqual(q.update(1 / 60, [0, 0, 0], false), b, 'two people, two rows');
-  assert.match(src('src/systems/town/townPopulation.js'), /const out = this\._live \?\?= \[\];\s*\n\s*out\.length = 0;/,
+  assert.match(src('src/systems/town/townPopulation.js'), /const out = \(this\._live \?\?= \[\]\);\n\s*out\.length = 0;/,
     'and the LIST is the pool’s own, refilled rather than rebuilt');
 });
 

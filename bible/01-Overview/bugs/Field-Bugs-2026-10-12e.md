@@ -42,7 +42,7 @@ FIXED. A defender who is stood down now walks off. He leaves the world only wher
   breakWindup keeps outside a wind-up, would otherwise have struck the player beside him.)
 - **Gone only out of sight.** He leaves the world only where DFU's PopulationManager lets any walker come or go:
   UpdateMobiles' allowChange, which is beyond allowVisiblePopRange (120) or outside the player's 180-degree forward view.
-  He leaves no body. The law has one home now, `townPopulation.js:"export function popAllowChange("`. The street's pool
+  He leaves no body. The law has one home now, `townPopulation.js:"export function popAllowChange"`. The street's pool
   and the living town (`_hidden`) each carried their own copy, and now read it as the guard pool does. A host that hands
   the pool no yaw has only the distance term to go by. Measured on the real pool and motor: a defender watched the whole
   way walks about 4.9 m/s and leaves the world at 120.06 m. If the player turns away, he leaves on that frame.

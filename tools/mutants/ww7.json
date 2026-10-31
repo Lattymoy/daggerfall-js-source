@@ -84,8 +84,8 @@
   {
     "name": "WW7-3-a-source-never-replaced",
     "file": "src/systems/town/townSeats.js",
-    "old": "  for (const key of book.extra.get(source) ?? []) { const s = book.byMapId.get(key); if (s) touched.add(s.region); book.byMapId.delete(key); }\n",
-    "new": "",
+    "old": "  for (const key of book.extra.get(source) ?? []) {\n    const s = book.byMapId.get(key);\n    if (s) touched.add(s.region);\n    book.byMapId.delete(key);\n  }\n  const keys = [];",
+    "new": "  const keys = [];",
     "tests": [
       "test/world/worldWide/ww7_seats.test.js"
     ]
@@ -93,7 +93,7 @@
   {
     "name": "WW7-3-the-power-left-stale",
     "file": "src/systems/town/townSeats.js",
-    "old": "    if (best) book.powers.set(region, best.key); else book.powers.delete(region);",
+    "old": "    if (best) book.powers.set(region, best.key);\n    else book.powers.delete(region);",
     "new": "    if (best && !book.powers.has(region)) book.powers.set(region, best.key);",
     "tests": [
       "test/world/worldWide/ww7_seats.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "WW7-3-the-pixel-test-kept",
     "file": "src/systems/town/townSeats.js",
-    "old": "    if (list !== of) { of = list;",
-    "new": "    if (!of) { of = list;",
+    "old": "    if (list !== of) {",
+    "new": "    if (!of) {",
     "tests": [
       "test/world/worldWide/ww7_seats.test.js"
     ]

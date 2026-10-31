@@ -281,8 +281,8 @@
   {
     "name": "APF-C-guard-face-the-town's",
     "file": "src/systems/town/townPopulation.js",
-    "old": "      this._setFaceRecord(person, GENDERS.Male, 0, sprite);",
-    "new": "      this._setFaceRecord(person, GENDERS.Male, 0);",
+    "old": "      this._setFaceRecord(person, GENDERS.Male, 0, sprite); // the guard arm is personOutfitVariant 0 (:147-149)",
+    "new": "      this._setFaceRecord(person, GENDERS.Male, 0); // the guard arm is personOutfitVariant 0 (:147-149)",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "APF-C-walker-draw-after-the-guard-roll",
     "file": "src/systems/town/townPopulation.js",
-    "old": "const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
-    "new": "const own = this.folk ? folkRace(this.folk, 7) : null;",
+    "old": "    const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
+    "new": "    const own = this.folk ? folkRace(this.folk, 7) : null;",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

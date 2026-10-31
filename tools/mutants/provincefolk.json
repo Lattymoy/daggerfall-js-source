@@ -101,8 +101,8 @@
   {
     "name": "PFOLK-the-Bay's-stream-drawn",
     "file": "src/systems/town/townPopulation.js",
-    "old": "const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
-    "new": "const own = folkRace(this.folk, Math.floor(this.rand() * 0x100000000));",
+    "old": "    const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
+    "new": "    const own = folkRace(this.folk, Math.floor(this.rand() * 0x100000000));",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PFOLK-the-walker-the-town's",
     "file": "src/systems/town/townPopulation.js",
-    "old": "person.folk = own ?? this.race;",
-    "new": "person.folk = this.race;",
+    "old": "    person.folk = own ?? this.race;",
+    "new": "    person.folk = this.race;",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PFOLK-the-walker-named-by-the-region",
     "file": "src/systems/town/townPopulation.js",
-    "old": "const bank = own ? folkNameBank(own) : (this.nameBank ?? getNameBank(this.race));",
-    "new": "const bank = this.nameBank ?? getNameBank(this.race);",
+    "old": "    const bank = own ? folkNameBank(own) : (this.nameBank ?? getNameBank(this.race));",
+    "new": "    const bank = this.nameBank ?? getNameBank(this.race);",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PFOLK-the-walker's-picture-the-town's",
     "file": "src/systems/town/townPopulation.js",
-    "old": "const sprite = spriteRaceOf(own, this.race);",
-    "new": "const sprite = this.race;",
+    "old": "    const sprite = spriteRaceOf(own, this.race);",
+    "new": "    const sprite = this.race;",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

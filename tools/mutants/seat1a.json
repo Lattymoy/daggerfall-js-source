@@ -106,8 +106,8 @@
   {
     "name": "SEAT1a-any-building-a-palace",
     "file": "src/systems/town/townSeats.js",
-    "old": "(b) => b?.buildingType === BUILDING_TYPES.Palace)",
-    "new": "(b) => b?.buildingType != null)",
+    "old": "export const hasPalace = (loc) =>\n  (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType === BUILDING_TYPES.Palace);",
+    "new": "export const hasPalace = (loc) => (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType != null);",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -115,8 +115,8 @@
   {
     "name": "SEAT1a-crown-with-a-palace-a-palace",
     "file": "src/systems/town/townSeats.js",
-    "old": "tier: crown ? 'crown' : 'palace',",
-    "new": "tier: hasPalace(loc) ? 'palace' : 'crown',",
+    "old": "    tier: crown ? 'crown' : 'palace',",
+    "new": "    tier: hasPalace(loc) ? 'palace' : 'crown',",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "SEAT1a-key-signed",
     "file": "src/systems/town/townSeats.js",
-    "old": "key: loc.mapTableData.mapId >>> 0,",
-    "new": "key: loc.mapTableData.mapId | 0,",
+    "old": "    key: loc.mapTableData.mapId >>> 0,",
+    "new": "    key: loc.mapTableData.mapId | 0,",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]

@@ -152,8 +152,8 @@
   {
     "name": "WATCH-PROTECTS-threat",
     "file": "src/systems/town/townWatch.js",
-    "old": "    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;",
-    "new": "    ) return false;",
+    "old": "    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight\n    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
+    "new": "    !(t?.companion != null && !t.dead) // AUDIT CC-B6: a monster fighting a companion is still the fight",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "WATCH-PROTECTS-threat-dead",
     "file": "src/systems/town/townWatch.js",
-    "old": "!(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
-    "new": "!(t?.civilian === true)",
+    "old": "    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
+    "new": "    !(t?.civilian === true)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

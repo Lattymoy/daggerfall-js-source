@@ -245,8 +245,8 @@
   {
     "name": "RR2-28-the-retired-walker-stays-active",
     "file": "src/systems/town/townPopulation.js",
-    "old": "      it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;\n      return true;",
-    "new": "      it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;\n      return true;",
+    "old": "      it.active = false;\n      it.scheduleEnable = false;",
+    "new": "      it.scheduleEnable = false;",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ]

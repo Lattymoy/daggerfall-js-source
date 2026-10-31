@@ -65,8 +65,8 @@
   {
     "name": "DOMAIN3-power-crown-first",
     "file": "src/systems/town/townSeats.js",
-    "old": "  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';\n",
-    "new": "",
+    "old": "  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';\n  if (!ca !== !cb) return !!ca;",
+    "new": "  if (!ca !== !cb) return !!ca;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DOMAIN3-power-key-tie",
     "file": "src/systems/town/townSeats.js",
-    "old": "  return a.key < b.key;\n};",
-    "new": "  return a.key > b.key;\n};",
+    "old": "  return a.key < b.key;",
+    "new": "  return a.key > b.key;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

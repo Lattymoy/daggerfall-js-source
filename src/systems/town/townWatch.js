@@ -84,8 +84,13 @@ export function isTownThreat(f, { inTownRect } = {}) {
   if (!f.ai.isHostile) return false;
   if (f.entity.team === 'PlayerAlly') return false;
   const t = f.ai.target;
-  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight
-    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world
+  if (
+    !isPlayerTarget(t) &&
+    !(t?.defender === true && !t.dead) &&
+    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight
+    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)
+  )
+    return false; // WATCH-PROTECTS: and one hunting a townsperson of the living world
   return !!inTownRect?.(f);
 }
 
@@ -115,14 +120,26 @@ export function createTownWatch({ rand = Math.random } = {}) {
   let quiet = 0;
   let waves = 0;
   return {
-    get countdown() { return countdown; },
-    get waves() { return waves; },
-    tick(dt, { enabled = true, playerInTown = false, crime = false, threats = 0, defenders = 0, locationKey = null } = {}) {
+    get countdown() {
+      return countdown;
+    },
+    get waves() {
+      return waves;
+    },
+    tick(
+      dt,
+      { enabled = true, playerInTown = false, crime = false, threats = 0, defenders = 0, locationKey = null } = {},
+    ) {
       if (threats > 0) quiet = 0;
-      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;   // the incident is over
-      if (crime) { countdown = 0; calm = 0; return null; }   // the pool enlists them; nothing to decide
+      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over
+      if (crime) {
+        countdown = 0;
+        calm = 0;
+        return null;
+      } // the pool enlists them; nothing to decide
       if (!enabled || !playerInTown) {
-        countdown = 0; calm = 0;
+        countdown = 0;
+        calm = 0;
         return defenders > 0 ? 'dismiss' : null;
       }
       if (threats > 0) {
@@ -136,13 +153,16 @@ export function createTownWatch({ rand = Math.random } = {}) {
           waves++;
           return 'summon';
         }
-        if (waves >= TOWN_WATCH_MAX_WAVES) return null;   // the town has sent all it will this incident
+        if (waves >= TOWN_WATCH_MAX_WAVES) return null; // the town has sent all it will this incident
         countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);
         countdownKey = locationKey;
         return null;
       }
       countdown = 0;
-      if (defenders <= 0) { calm = 0; return null; }
+      if (defenders <= 0) {
+        calm = 0;
+        return null;
+      }
       calm += dt;
       if (calm < TOWN_WATCH_STAND_DOWN_SECONDS) return null;
       calm = 0;
@@ -167,13 +187,22 @@ export function createTownWatch({ rand = Math.random } = {}) {
  *
  * Answers the act.
  */
-export function runTownWatchFrame(watch, dt, { enabled, inTown, crime, locationKey, foes = [], inTownRect, guards, playerFeet, playerFwd, pool = () => [] }) {
+export function runTownWatchFrame(
+  watch,
+  dt,
+  { enabled, inTown, crime, locationKey, foes = [], inTownRect, guards, playerFeet, playerFwd, pool = () => [] },
+) {
   const threats = inTown ? foes.filter((f) => isTownThreat(f, { inTownRect })) : [];
   const act = watch.tick(dt, {
-    enabled, playerInTown: inTown, crime,
-    threats: threats.length, defenders: guards.defenderCount(), locationKey,
+    enabled,
+    playerInTown: inTown,
+    crime,
+    threats: threats.length,
+    defenders: guards.defenderCount(),
+    locationKey,
   });
-  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));
+  if (act === 'summon')
+    guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));
   else if (act === 'dismiss') guards.dismissDefenders();
   return act;
 }

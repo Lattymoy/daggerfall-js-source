@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DISC19-W1-fight-with-defender-is-quiet",
     "file": "src/systems/town/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion",
-    "new": "  if (!isPlayerTarget(t) && !(t?.companion",
+    "old": "    !(t?.defender === true && !t.dead) &&\n    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
+    "new": "    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-DISC19-W1-dead-defender-still-a-fight",
     "file": "src/systems/town/townWatch.js",
-    "old": "!(t?.defender === true && !t.dead)",
-    "new": "!(t?.defender === true)",
+    "old": "    !(t?.defender === true && !t.dead) &&",
+    "new": "    !(t?.defender === true) &&",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-DISC19-W3-no-wave-cap",
     "file": "src/systems/town/townWatch.js",
-    "old": "        if (waves >= TOWN_WATCH_MAX_WAVES) return null;   // the town has sent all it will this incident\n",
-    "new": "",
+    "old": "        if (waves >= TOWN_WATCH_MAX_WAVES) return null; // the town has sent all it will this incident\n        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
+    "new": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-DISC19-W3-waves-never-counted",
     "file": "src/systems/town/townWatch.js",
-    "old": "          waves++;\n",
-    "new": "",
+    "old": "          waves++;\n          return 'summon';",
+    "new": "          return 'summon';",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-DISC19-W3-incident-never-ends",
     "file": "src/systems/town/townWatch.js",
-    "old": "      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;   // the incident is over",
+    "old": "      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
     "new": "      else quiet += dt;",
     "tests": [
       "test/systems/auditdisc19.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-DISC19-W3-quiet-cumulative",
     "file": "src/systems/town/townWatch.js",
-    "old": "      if (threats > 0) quiet = 0;\n      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;",
-    "new": "      if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;",
+    "old": "      if (threats > 0) quiet = 0;\n      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
+    "new": "      if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-DISC19-standing-squad-summoned-again",
     "file": "src/systems/town/townWatch.js",
-    "old": "        if (defenders > 0) return null;\n",
-    "new": "",
+    "old": "        if (defenders > 0) return null;\n        if (countdown > 0) {",
+    "new": "        if (countdown > 0) {",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DISC19-calm-cumulative",
     "file": "src/systems/town/townWatch.js",
-    "old": "      if (threats > 0) {\n        calm = 0;\n",
-    "new": "      if (threats > 0) {\n",
+    "old": "        calm = 0;\n        if (defenders > 0) return null;",
+    "new": "        if (defenders > 0) return null;",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-DISC19-W6-defenders-unread",
     "file": "src/systems/town/townWatch.js",
-    "old": "threats: threats.length, defenders: guards.defenderCount(), locationKey,",
-    "new": "threats: threats.length, defenders: 0, locationKey,",
+    "old": "    defenders: guards.defenderCount(),",
+    "new": "    defenders: 0,",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-DISC19-W6-summon-without-threats",
     "file": "src/systems/town/townWatch.js",
-    "old": "pool: pool(), threats })",
-    "new": "pool: pool(), threats: [] })",
+    "old": "    guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));",
+    "new": "    guards\n      .summonDefenders({ playerFeet, playerFwd, pool: pool(), threats: [] })\n      .catch((e) => console.error('[guards]', e));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-DISC19-W6-dismissal-dropped",
     "file": "src/systems/town/townWatch.js",
-    "old": "  else if (act === 'dismiss') guards.dismissDefenders();\n",
-    "new": "",
+    "old": "  else if (act === 'dismiss') guards.dismissDefenders();\n  return act;",
+    "new": "  return act;",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-DISC19-W6-pool-read-every-frame",
     "file": "src/systems/town/townWatch.js",
-    "old": "  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats })",
-    "new": "  const _p = pool();\n  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: _p, threats })",
+    "old": "  if (act === 'summon')\n    guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));",
+    "new": "  const _p = pool();\n  if (act === 'summon')\n    guards.summonDefenders({ playerFeet, playerFwd, pool: _p, threats }).catch((e) => console.error('[guards]', e));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
