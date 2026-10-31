@@ -102,8 +102,8 @@
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
+    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/primarch.test.js"
     ],

@@ -136,7 +136,7 @@ test('SEASON1 THE BANNER RIBBON ON THE TOKEN AND THE RELAY: a claim set may carr
   // the wiring by source - the relay's two reads
   const relay = src('server/src/index.js');
   assert.match(relay, /glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lt, lv: c\.lv,/);   // PIN MOVED (LEASE1): the time of the word on the mute beside it; PIN MOVED (WITCH1): the profile icon worn beside the aura
-  assert.match(relay, /au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura
+  assert.match(relay, /au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv, \.\.\.\(who\.ak \? \{ ak: who\.ak \} : \{\}\), \.\.\.\(who\.fx \? \{ fx: who\.fx \} : \{\}\),/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura; PIN MOVED (STOREFRONT): the armory's kit and the effects kit; PIN MOVED (GUILD-SHOP, at the merge of main): the level ahead of the kits on the hello's row
 });
 
 test('SEASON1 THE BANNER RIBBON ON THE PAGE: the mint\'s answer hands mine to the page (null for none, nothing from an older service); the session keeps a peer\'s off the welcome and each hello (one taken off is gone), remembers it past a re-stand, and answers `ribbonOf`; the name point carries it; the bitmap face draws a band the run\'s width in the field colour under the name, edged in the border colour, none for none; the DOM face a band under the name row in both colours, written when it changes and off for none (mutants: the minter; the session\'s reads; the point; the bands; the DOM\'s colours and its off)', async () => {

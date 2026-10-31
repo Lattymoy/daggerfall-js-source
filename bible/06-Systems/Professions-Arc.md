@@ -6817,7 +6817,7 @@ still count the meat carried.
 
 **Built, on the service** (`professions.js` harvestNode): a carried body's butchery goes to `prof_stores`, its room
 the Stores', for a client that asks it so (`butcheryStores: true`). The row says so (`node_harvests.extra_stores`,
-migration 0201), and the answer then names no `extraCarried`, the first time or asked again. Scoped to bodies: a tree's
+migration 0203), and the answer then names no `extraCarried`, the first time or asked again. Scoped to bodies: a tree's
 Resin and a haul's second find keep the bag. **On the client**: every carried harvest asks `butcheryStores`, and a
 second find is minted only where the answer counts it carried (`bagLaw.js` `extraStored`). The line says "+1 Bear Hide
 and a Big Tooth to your bag, and Raw Meat to your Stores"; the meat's haul card reads Stores.
@@ -6826,9 +6826,9 @@ and a Big Tooth to your bag, and Raw Meat to your Stores"; the meat's haul card 
 client against an older service gets `extraCarried`, so it mints that meat. A harvest the older service made and the
 new one answers again keeps its row's word. A Butcher's meat still spoils half as fast when it is withdrawn (29).
 
-ACCOUNT_VERSION acct231 (SMITH-RRI's recipes, section 59, in the same release); migration 0201, applied by the deploy
+ACCOUNT_VERSION acct232 (acct231 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
 before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the
-version pins moved to acct231.
+version pins moved to acct232.
 
 ## Appendix A - a day of a gatherer
 

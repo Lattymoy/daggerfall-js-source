@@ -9,6 +9,9 @@ the on-foot tables (walk, attack, hurt, idle, bow and cast: 80 frames an outfit)
   names the tiles, the metals and each outfit's frames.
 - `cloak/`: the hood and cape layer, per body (its own `manifest.json`).
 - `hoodfix/`: the few pixels a hooded frame needs beyond body plus cloak, per outfit and frame.
+- `weapon/`: where the strips' own warhammer is in each frame, per chest family - its pixels, the grip, the head
+  and where the body hid it (`manifest.json`, `tools/layered-armor/build_weapon_rig.py`) - so the body can hold the
+  weapon it uses, or none. The weapons themselves are drawn by the game, not stored.
 
 **Author.** DFO - made for the game (the owner's call, 2026-10-19: credited as DFO's own). Built with the scripts in
 `tools/layered-armor/` from hand-cleaned frame packages (`plate_materials_fixed`, `worn_armour_all_frames`), whose

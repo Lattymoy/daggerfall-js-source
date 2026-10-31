@@ -10900,7 +10900,7 @@ walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
   (test/server/yardsweep.test.js `SWEPT`, `tools/yardReseat.mjs` YARD_RESEAT_HIGH).
 - **The four hosts.** `scenes/world.js` WIRED: its decal pass already draws `yards.drawDecals`. `scenes/exterior.js`,
   `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no yard.
-- **Deploy.** acct230, no migration. The account service before the site: an older service refuses a piece over 4 m
+- **Deploy.** acct231 (acct230 on its branch, renumbered past main's at the merge), no migration. The account service before the site: an older service refuses a piece over 4 m
   (`yard-high`) and stores a hung picture unhung. An older site draws a hung picture as a billboard where it hangs.
 - **Pinned**: `test/scenes/yardwalls.test.js` (7: the law on synthetic houses, ARCH3D 709 and, past the Bay, Solitude's
   house in BANKBL00), and the pins moved on purpose - `test/net/yardheight.test.js` (the bound, a free piece at 4.5 m,

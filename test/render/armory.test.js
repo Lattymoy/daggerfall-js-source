@@ -36,9 +36,9 @@ const rd = (/** @type {string} */ p) => readFileSync(new URL(`../../${p}`, impor
 test('ARMORY the kit: five slot letters, each a piece of its slot or empty, never all empty - and the pieces it names, the kit of a wardrobe, a slot changed, the held left (mutants: a piece in the wrong slot passed; an empty kit a claim; a slot changed beside the one asked)', () => {
   assert.deepEqual(ARMORY_SLOTS, ['head', 'torso', 'arms', 'legs', 'weapon']);
   // PIN MOVED: GUILD-SHOP - the guild's line, one piece: the Insignia Armlet in the arms slot, the guild shop's
-  assert.equal(ARMORY_PIECES.length, 11, 'two lines of five, and the guild\'s armlet');
-  assert.equal(new Set(ARMORY_KEYS).size, 11, 'a key each');
-  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, s === 'arms' ? 3 : 2, `${s}: its codes its own`);
+  assert.equal(ARMORY_PIECES.length, 12, 'two lines of five, the guild\'s armlet and the Crystal Spurs');   // PIN MOVED (THANKS-POST): the update's gift
+  assert.equal(new Set(ARMORY_KEYS).size, 12, 'a key each');
+  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, s === 'arms' ? 4 : 2, `${s}: its codes its own`);   // PIN MOVED (THANKS-POST): the Crystal Spurs, the arms slot's fourth
   assert.deepEqual(armoryLinePieces('guild').map((p) => [p.key, p.slot, p.code, p.source]), [['insigniaarmlet', 'arms', 'c', 'guild']]);
   assert.deepEqual(armoryLinePieces('dagonfire').map((p) => [p.key, p.source]), [['burningcrown', 'broker'], ['emberheart', 'broker'], ['ashbound', 'broker'], ['cinderstride', 'broker'], ['breachbrand', 'broker']], 'the Dagonfire line, the Sigil Broker\'s');
   assert.ok(armoryLinePieces('eternal').every((p) => p.source === 'shop'), 'the Eternal line, the shop\'s');
@@ -64,12 +64,13 @@ test('ARMORY the kit: five slot letters, each a piece of its slot or empty, neve
   assert.equal(armoryKitHeld('aa000', []), null);
 });
 
-test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for $6 and the five together for $20, the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
+test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for 600 Aurum and the five together for 2,000 (PIN MOVED, AURUM-ONLY: $6 and $20), the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
   assert.equal(ARMORY_BROKER_PRICE, 75);
   assert.deepEqual(INSIGNIA.filter((o) => o.kind === 'armory').map((o) => [o.id, o.price]), armoryLinePieces('dagonfire').map((p) => [`armory:${p.key}`, 75]));
   const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
-  assert.deepEqual([set?.cents, set?.category], [2000, 'armory']);
-  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.cents), [600, 600, 600, 600, 600]);
+  // PIN MOVED (AURUM-ONLY): the set's $20 and a piece's $6 are 2,000 and 600 Aurum - the owner's "$1 = 100 Aurum"
+  assert.deepEqual([set?.price, set?.cents, set?.category], [2000, 0, 'armory']);
+  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.price), [600, 600, 600, 600, 600]);
   assert.deepEqual(shopKeysOf(set?.bit, 'armory'), armoryWarePieces('eternalset'), 'the set gives its five');
   const singles = SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').reduce((a, w) => a | w.bit, 0);
   assert.equal(shopOwns(singles, 'armory:eternalset'), true, 'five singles: the set is not sold again');

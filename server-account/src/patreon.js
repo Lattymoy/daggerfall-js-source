@@ -79,6 +79,8 @@
 
 import { timingSafeEqual } from './password.js';
 import { sealWith, openWith } from './sealed.js';   // SHOP: the sealing lifted out, one copy for both doors
+import { utcDay } from '../../src/net/marksLaw.js';   // PATRON-AURUM: a ledger line's day
+import { aurumSwitchOf } from '../../src/net/aurumLaw.js';   // AUDIT PATRON-AURUM A1: the switch
 
 /** The titles a Patreon tier may grant - TITLE-N's three and HERALD's, lowest first. A mapping in PATREON_TIERS to
  *  anything else (the Dungeon Master, a one-player title) is not read: those are granted by name, never by a pledge. */
@@ -107,7 +109,7 @@ export const PATREON_TOKEN = 'https://www.patreon.com/api/oauth2/token';
  *  library asks with (patreon-php's v2 identity call); the member resources come with them. */
 export const PATREON_IDENTITY = 'https://www.patreon.com/api/oauth2/v2/identity'
   + '?include=memberships.currently_entitled_tiers,memberships.campaign'
-  + '&fields%5Buser%5D=full_name&fields%5Bmember%5D=patron_status';
+  + '&fields%5Buser%5D=full_name&fields%5Bmember%5D=patron_status%2Ccampaign_lifetime_support_cents';
 /** Where Patreon sends the player back to, under whatever origin serves this Worker - read off the request, never typed
  *  (AUDIT-ACC F16's law), and it must be the redirect URI registered on the Patreon client, letter for letter. */
 export const PATREON_CALLBACK_PATH = '/v1/patreon/callback';
@@ -117,6 +119,13 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 /** A Patreon id - a user's or a tier's - is a run of digits. */
 const PATREON_ID_RE = /^[0-9]{1,24}$/;
+/** PATRON-AURUM: the most a member's lifetime total may say ($10 million) - past it the figure is not believed. */
+export const PATREON_CENTS_MAX = 1_000_000_000;
+/** A member's lifetime total to the campaign in cents (`campaign_lifetime_support_cents`), or undefined unstated. */
+const centsOf = (/** @type {any} */ attrs) => {
+  const c = attrs && typeof attrs === 'object' ? attrs.campaign_lifetime_support_cents : undefined;
+  return Number.isSafeInteger(c) && c >= 0 && c <= PATREON_CENTS_MAX ? c : undefined;
+};
 
 // ── CONFIG ──────────────────────────────────────────────────────────
 
@@ -204,37 +213,53 @@ export async function patreonExchange(/** @type {typeof fetch} */ fetch, /** @ty
       }).toString(),
     });
     const data = res.ok ? await res.json() : null;
-    return typeof data?.access_token === 'string' && data.access_token ? { token: data.access_token } : { error: 'patreon-down' };
+    // AUDIT PATRON-AURUM H1: the scopes Patreon granted, as it states them - a widened grant reads other campaigns
+    return typeof data?.access_token === 'string' && data.access_token ? { token: data.access_token, scope: typeof data.scope === 'string' ? data.scope : '' } : { error: 'patreon-down' };
   } catch {
     return { error: 'patreon-down' };
   }
 }
 
+/** AUDIT PATRON-AURUM H1: a grant of `identity` alone - the one scope that answers this campaign's membership only. */
+export const patreonScopeOk = (/** @type {unknown} */ scope) => typeof scope === 'string' && scope.split(/\s+/).filter(Boolean).join(' ') === 'identity';
+/** The campaign the config names (PATREON_CAMPAIGN_ID, its id on Patreon), or null where none is set. */
+export const patreonCampaignOf = (/** @type {any} */ env) => (typeof env?.PATREON_CAMPAIGN_ID === 'string' && PATREON_ID_RE.test(env.PATREON_CAMPAIGN_ID) ? env.PATREON_CAMPAIGN_ID : null);
+/** AUDIT PATRON-AURUM H1: the lifetime total a link may pay - the member's of the configured campaign, else only where
+ *  the grant was `identity` alone (so Patreon answered this client's campaign and no other); null otherwise. */
+export const patreonCentsPayable = (/** @type {any} */ who, /** @type {boolean} */ scopeOk, /** @type {any} */ env) => {
+  const campaign = patreonCampaignOf(env);
+  if (campaign) return who?.campaign === campaign ? who.cents ?? null : null;
+  return scopeOk ? who?.cents ?? null : null;
+};
+
 /**
- * WHO THE PLAYER IS ON PATREON, and what their membership pays for: `{ user, name, tiers, status }`. A user with no
- * membership of the campaign is still a user - linked now, they hold their tier the moment the webhook says they
- * pledged.
+ * WHO THE PLAYER IS ON PATREON, and what their membership pays for: `{ user, name, tiers, status, cents, campaign }` -
+ * `cents` their lifetime total to the campaign (PATRON-AURUM), null unstated. With `campaign`, that campaign's membership
+ * alone is read (AUDIT PATRON-AURUM H1). A user with no membership of the campaign is still a user - linked now, they
+ * hold their tier the moment the webhook says they pledged.
  */
-export function memberOfIdentity(/** @type {any} */ doc) {
+export function memberOfIdentity(/** @type {any} */ doc, /** @type {string|null} */ campaign = null) {
   const user = doc?.data?.id;
   if (typeof user !== 'string' || !PATREON_ID_RE.test(user)) return null;
   const name = typeof doc.data.attributes?.full_name === 'string' ? doc.data.attributes.full_name.slice(0, 80) : '';
   const refs = Array.isArray(doc.data.relationships?.memberships?.data) ? doc.data.relationships.memberships.data : [];
   const ids = new Set(refs.map((/** @type {any} */ r) => r?.id));
-  const member = (Array.isArray(doc.included) ? doc.included : []).find((/** @type {any} */ r) => r?.type === 'member' && ids.has(r.id));
-  if (!member) return { user, name, tiers: [], status: null };
+  const member = (Array.isArray(doc.included) ? doc.included : []).find((/** @type {any} */ r) => r?.type === 'member' && ids.has(r.id)
+    && (!campaign || r.relationships?.campaign?.data?.id === campaign));
+  if (!member) return { user, name, tiers: [], status: null, cents: null, campaign: null };
   const tiers = Array.isArray(member.relationships?.currently_entitled_tiers?.data)
     ? member.relationships.currently_entitled_tiers.data.map((/** @type {any} */ t) => t?.id).filter((/** @type {any} */ id) => typeof id === 'string' && PATREON_ID_RE.test(id))
     : [];
   const status = typeof member.attributes?.patron_status === 'string' ? member.attributes.patron_status : null;
-  return { user, name, tiers, status };
+  const of = member.relationships?.campaign?.data?.id;
+  return { user, name, tiers, status, cents: centsOf(member.attributes) ?? null, campaign: typeof of === 'string' && PATREON_ID_RE.test(of) ? of : null };
 }
 
-/** Ask Patreon with the player's own token: `{ user, name, tiers, status }`, or `{ error: 'patreon-down' }`. */
-export async function patreonIdentity(/** @type {typeof fetch} */ fetch, /** @type {string} */ token) {
+/** Ask Patreon with the player's own token: `{ user, name, tiers, status, cents, campaign }`, or `{ error: 'patreon-down' }`. */
+export async function patreonIdentity(/** @type {typeof fetch} */ fetch, /** @type {string} */ token, /** @type {string|null} */ campaign = null) {
   try {
     const res = await fetch(PATREON_IDENTITY, { headers: { authorization: `Bearer ${token}`, accept: 'application/json', 'user-agent': AGENT } });
-    const who = res.ok ? memberOfIdentity(await res.json()) : null;
+    const who = res.ok ? memberOfIdentity(await res.json(), campaign) : null;
     return who ?? { error: 'patreon-down' };
   } catch {
     return { error: 'patreon-down' };
@@ -243,27 +268,48 @@ export async function patreonIdentity(/** @type {typeof fetch} */ fetch, /** @ty
 
 // ── THE ROW ─────────────────────────────────────────────────────────
 
+// PATRON-AURUM (2026-10-30, the owner: "All current patreons should be granted aurem amounts according to their purchase
+// amount on patreon"; asked, the lifetime total read off Patreon, at the packs' $1 = 100 Aurum): a cent paid is an Aurum.
+// A ledger line `patreon` `<user>:<total>:<n>` carries what the total adds past every line that Patreon user was paid,
+// on any account, to the account linked now - `n` the user's lines before it, so a total reached again after a refund is
+// a line of its own. A moved link pays the new account only what is new; a total said twice or out of order pays nothing
+// more. AUDIT PATRON-AURUM P2: a charge Patreon calls refunded or fraud takes its fall back (bible/06-Systems/Aurum.md 3b).
+const PAID_SQL = "COALESCE((SELECT SUM(amount) FROM aurum_ledger WHERE kind = 'patreon' AND ref LIKE ?1 || ':%'), 0)";
+const NTH_SQL = "(SELECT COUNT(*) FROM aurum_ledger WHERE kind = 'patreon' AND ref LIKE ?1 || ':%')";
+/** The statement that pays Patreon user `user`'s lifetime total `cents` as Aurum to the account linked to them - or,
+ *  `back`, takes back what that total fell short of what was paid. */
+export function patreonAurumStatement(/** @type {any} */ db, /** @type {string} */ user, /** @type {number} */ cents, /** @type {number} */ nowS, back = false) {
+  return db.prepare(`INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)
+    SELECT id, 'patreon', ?1 || ':' || ?5 || ':' || ${NTH_SQL}, ?2 - ${PAID_SQL}, ?3, ?4 FROM players
+    WHERE patreon_user = ?1 AND handle IS NOT NULL AND ?2 ${back ? '<' : '>'} ${PAID_SQL}`).bind(user, cents, utcDay(nowS), nowS, String(cents));
+}
+/** AUDIT PATRON-AURUM P2: the charge words that undo a payment - a refund, or Patreon's own fraud call. */
+export const PATREON_UNDONE = Object.freeze(['Refunded', 'Fraud']);
+
 /**
- * THE ONE WRITE OF A LINK: the ticket's Patreon account onto the ticket's game account, with what Patreon says it pays
- * for at the yes - and off any other account that held it, in the same batch. Both statements are guarded on the game account
- * being a registered one, so a ticket naming a row that is gone (or never registered) moves nothing anywhere.
- * `{ ok, moved }`, or `{ error: 'patreon-needs-account' }`.
+ * THE ONE WRITE OF A LINK: the ticket's Patreon account onto the ticket's game account, with what Patreon says now -
+ * off any other account that held it, the total's Aurum paid (PATRON-AURUM), one batch. Guarded on a registered game
+ * account, so a ticket naming a row that is gone moves nothing. `{ ok, moved, aurum }` - `aurum` all Patreon has paid
+ * this account - or `{ error: 'patreon-needs-account' }`.
  * @param {{ db: any, nowS: number }} ctx
- * @param {{ p: string, u: string, t: string, s: string|null }} c the account, and Patreon's word on the membership now
+ * @param {{ p: string, u: string, t: string, s: string|null, c?: number|null }} c the account, and Patreon's word on the membership now
  */
 export async function linkPatreon({ db, nowS }, c) {
   if (typeof c?.u !== 'string' || !PATREON_ID_RE.test(c.u)) return { error: 'patreon-needs-account' };
   const tiers = tierIdsOf(c.t).join(',');
   const status = typeof c.s === 'string' ? c.s.slice(0, 32) : null;
   const registered = 'EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)';
-  const [off, on] = await db.batch([
+  const cents = Number.isSafeInteger(c.c) && /** @type {number} */ (c.c) >= 0 && /** @type {number} */ (c.c) <= PATREON_CENTS_MAX ? /** @type {number} */ (c.c) : 0;
+  const [off, on, , sum] = await db.batch([
     db.prepare(`UPDATE players SET patreon_user = NULL, patreon_tiers = NULL, patreon_status = NULL, patreon_at = NULL
       WHERE patreon_user = ?1 AND id <> ?2 AND ${registered}`).bind(c.u, c.p),
     db.prepare(`UPDATE players SET patreon_user = ?1, patreon_tiers = ?3, patreon_status = ?4, patreon_at = ?5
       WHERE id = ?2 AND handle IS NOT NULL`).bind(c.u, c.p, tiers, status, nowS),
+    patreonAurumStatement(db, c.u, cents, nowS),
+    db.prepare("SELECT COALESCE(SUM(amount), 0) AS n FROM aurum_ledger WHERE account = ?1 AND kind = 'patreon'").bind(c.p),
   ]);
   if (!(on?.meta?.changes > 0)) return { error: 'patreon-needs-account' };
-  return { ok: true, moved: off?.meta?.changes > 0 };
+  return { ok: true, moved: off?.meta?.changes > 0, aurum: Number(sum?.results?.[0]?.n ?? 0) };
 }
 
 /** Unlink: the four columns cleared, so nothing about a pledge is held or kept. */
@@ -330,8 +376,8 @@ export function patreonSignatureOk(/** @type {string} */ secret, /** @type {Uint
 }
 
 /**
- * WHAT A MEMBER PAYLOAD SAYS: `{ user, tiers, status }` - `tiers` and `status` undefined where the payload does not
- * state them, so a payload that leaves a field out leaves the stored one standing rather than reading as "none".
+ * WHAT A MEMBER PAYLOAD SAYS: `{ user, tiers, status, cents }` - each undefined where the payload does not state it,
+ * so a payload that leaves a field out leaves the stored one standing rather than reading as "none".
  */
 export function memberOfHook(/** @type {any} */ doc) {
   const m = doc?.data;
@@ -346,12 +392,14 @@ export function memberOfHook(/** @type {any} */ doc) {
   const status = attrs && typeof attrs === 'object' && 'patron_status' in attrs
     ? (typeof attrs.patron_status === 'string' ? attrs.patron_status.slice(0, 32) : null)
     : undefined;
-  return { user, tiers, status };
+  const charge = attrs && typeof attrs === 'object' && typeof attrs.last_charge_status === 'string' ? attrs.last_charge_status : undefined;
+  return { user, tiers, status, cents: centsOf(attrs), ...(charge !== undefined ? { charge } : {}) };
 }
 
 /**
  * PATREON'S WORD ON A MEMBER, written onto the account that member linked (if any). The signature first, before a byte
- * of the body is believed; then one UPDATE keyed on the Patreon user. A member nobody linked changes nothing and is
+ * of the body is believed; then one UPDATE keyed on the Patreon user, and the lifetime total's Aurum where the payload
+ * states it (PATRON-AURUM). A member nobody linked changes nothing and is
  * still acknowledged - Patreon retries what is refused, and it is not refused, it is simply nobody's yet (the link reads
  * Patreon afresh when it is made). `{ ok, applied }`, or `{ error }`: `patreon-closed`, `signature`, `body`.
  * @param {{ db: any, nowS: number }} ctx
@@ -373,11 +421,15 @@ export async function patreonWebhook({ db, nowS }, env, body, signature, event) 
   const tiers = ended ? '' : (m.tiers === undefined ? null : m.tiers.join(','));
   const statusStated = ended || m.status !== undefined;
   const status = ended ? 'former_patron' : (m.status ?? null);
-  const r = await db.prepare(`UPDATE players SET
+  const [r] = await db.batch([
+    db.prepare(`UPDATE players SET
       patreon_tiers = COALESCE(?2, patreon_tiers),
       patreon_status = CASE WHEN ?3 = 1 THEN ?4 ELSE patreon_status END,
       patreon_at = ?5
-    WHERE patreon_user = ?1`).bind(m.user, tiers, statusStated ? 1 : 0, status, nowS).run();
+    WHERE patreon_user = ?1`).bind(m.user, tiers, statusStated ? 1 : 0, status, nowS),
+    // A1: no Aurum while the switch is off for everyone - the next word after it opens pays what is new
+    ...(m.cents === undefined || aurumSwitchOf(env?.AURUM_OPEN) !== 'on' ? [] : [patreonAurumStatement(db, m.user, m.cents, nowS, PATREON_UNDONE.includes(/** @type {string} */ (m.charge)))]),
+  ]);
   return { ok: true, applied: r?.meta?.changes ?? 0 };
 }
 
@@ -462,7 +514,7 @@ export const PATREON_PAGES = Object.freeze({
 });
 
 /** The confirm page: whose Patreon, onto which game account, what it holds - and the one button that says yes. */
-export function patreonConfirmPage({ handle, name, titles, ticket, from = null }) {
+export function patreonConfirmPage({ handle, name, titles, ticket, from = null, aurum = 0 }) {
   return patreonPage({
     heading: 'Link Patreon',
     lines: [
@@ -470,18 +522,21 @@ export function patreonConfirmPage({ handle, name, titles, ticket, from = null }
       `Game account: ${handle}`,
       titles.length ? `Your pledge holds: ${titlesText(titles)}.` : 'No pledge holds a title yet - it arrives the moment one does.',
       ...(from ? [`This Patreon is linked to ${from} now. Linking moves it to ${handle}.`] : []),
+      'Every cent you have paid on Patreon becomes 1 Aurum, paid once.',
+      ...(aurum > 0 ? [`Linking pays ${handle} up to ${aurum.toLocaleString('en-US')} Aurum. It stays on that game account.`] : []),   // AUDIT PATRON-AURUM P3
       'Not your game account? Close this page and nothing is linked.',
     ],
     form: { ticket, label: `Link to ${handle}` },
   });
 }
 
-/** And the page after the yes. */
-export function patreonLinkedPage({ handle, titles }) {
+/** And the page after the yes - with the Aurum Patreon has paid the account (PATRON-AURUM), where it has paid any. */
+export function patreonLinkedPage({ handle, titles, aurum = 0 }) {
+  const paid = aurum > 0 ? [`Patreon has paid ${handle} ${aurum.toLocaleString('en-US')} Aurum.`] : [];
   return patreonPage({
     heading: 'Patreon linked',
     lines: titles.length
-      ? [`${handle} holds ${titlesText(titles)} now.`, 'Go back to the game and wear it from your account card.']
-      : [`${handle} is linked. Your title arrives the moment your pledge holds one.`, 'You can close this page.'],
+      ? [`${handle} holds ${titlesText(titles)} now.`, ...paid, 'Go back to the game and wear it from your account card.']
+      : [`${handle} is linked. Your title arrives the moment your pledge holds one.`, ...paid, 'You can close this page.'],
   });
 }

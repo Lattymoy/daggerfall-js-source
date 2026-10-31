@@ -242,8 +242,8 @@
   {
     "name": "WB9g-the-session-writes-no-aura",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, armory, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, armory, effects, nameAsAt })",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -271,8 +271,8 @@
   {
     "name": "WB9g-the-peers-aura-never-read",
     "file": "src/net/online.js",
-    "old": "title, ts, glyphs, au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "title, ts, glyphs, ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "title, ts, glyphs, au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "title, ts, glyphs, ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -290,8 +290,8 @@
   {
     "name": "WB9g-the-memory-loses-it",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, ak: p.ak ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, ak: p.ak ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, ak: p.ak ?? null, fx: p.fx ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, ak: p.ak ?? null, fx: p.fx ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -300,8 +300,8 @@
   {
     "name": "WB9g-the-re-stood-peer-bare",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, ak: knew.ak, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
-    "new": "gt: knew.gt, ak: knew.ak, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, ak: knew.ak, fx: knew.fx, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, ak: knew.ak, fx: knew.fx, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -355,7 +355,7 @@
   {
     "name": "WB9g-my-feet-never-told",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
+    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
     "new": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
     "tests": [
       "test/net/wb9g_insignia.test.js"

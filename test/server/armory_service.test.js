@@ -28,7 +28,7 @@ const closeGates = (/** @type {any} */ env, /** @type {any} */ who, /** @type {n
 
 test('ARMORY the law: five slots in the kit\'s order; ten pieces, two a slot - the Sigil Broker\'s Dagonfire, the shop\'s Eternal; a code a slot never shared (mutants: a slot dropped; two pieces one code; a line sold at the other\'s door)', () => {
   assert.deepEqual(ARMORY_SLOTS, ['head', 'torso', 'arms', 'legs', 'weapon']);
-  assert.deepEqual(ARMORY_SOURCE, { dagonfire: 'broker', eternal: 'shop', guild: 'guild' });   // GUILD-SHOP (PIN MOVED): the Insignia Armlet's line, the guild shop's
+  assert.deepEqual(ARMORY_SOURCE, { dagonfire: 'broker', eternal: 'shop', guild: 'guild', crystal: 'gift' });   // THANKS-POST (PIN MOVED): the Crystal Spurs' line, a gift; GUILD-SHOP (PIN MOVED): the Insignia Armlet's line, the guild shop's
   assert.deepEqual(ARMORY_PIECES.map((p) => [p.key, p.slot, p.code, p.line, p.source]), [
     ['burningcrown', 'head', 'a', 'dagonfire', 'broker'],
     ['emberheart', 'torso', 'a', 'dagonfire', 'broker'],
@@ -41,6 +41,7 @@ test('ARMORY the law: five slots in the kit\'s order; ten pieces, two a slot - t
     ['eternalgreaves', 'legs', 'b', 'eternal', 'shop'],
     ['eternaledge', 'weapon', 'b', 'eternal', 'shop'],
     ['insigniaarmlet', 'arms', 'c', 'guild', 'guild'],   // GUILD-SHOP (PIN MOVED): the arms slot's third, the guild shop's
+    ['crystalspurs', 'arms', 'd', 'crystal', 'gift'],   // THANKS-POST (PIN MOVED): the arms slot's fourth, the update's gift
   ]);
   assert.deepEqual(armoryLinePieces('dagonfire').map((p) => p.key), DAGONFIRE);
   assert.deepEqual(armoryLinePieces('eternal').map((p) => p.key), ETERNAL);
@@ -122,9 +123,9 @@ test('ARMORY the Broker\'s Dagonfire line: a piece a slot at 75 Deadlands Embers
   for (const k of DAGONFIRE) assert.equal(shopWareById(`armory:${k}`), null, `${k}: never sold for money`);
 });
 
-test('ARMORY the shop\'s Eternal line: the set whole at $20 (bit 256) and a piece a slot at $6; the set gives its five, each once; a ware is owned through the set or the singles - so neither is sold again (mutants: the set priced as the singles; a set giving one piece; a single sold over the set; the set sold over the five singles)', () => {
+test('ARMORY the shop\'s Eternal line: the set whole at 2,000 Aurum (bit 256) and a piece a slot at 600 (PIN MOVED, AURUM-ONLY: $20 and $6 at $1 = 100 Aurum); the set gives its five, each once; a ware is owned through the set or the singles - so neither is sold again (mutants: the set priced as the singles; a set giving one piece; a single sold over the set; the set sold over the five singles)', () => {
   const armory = SHOP_WARES.filter((w) => w.kind === 'armory');
-  assert.deepEqual(armory.map((w) => [w.id, w.cents, w.bit]), [
+  assert.deepEqual(armory.map((w) => [w.id, w.price, w.bit]), [   // PIN MOVED (AURUM-ONLY): each priced in Aurum
     ['armory:eternalset', 2000, 256],
     ['armory:eternalhalo', 600, 8], ['armory:eternalsigil', 600, 16], ['armory:eternalarmlets', 600, 32],
     ['armory:eternalgreaves', 600, 64], ['armory:eternaledge', 600, 128],

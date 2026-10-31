@@ -33,6 +33,12 @@ springing back, a pin set, a spool's false set, a slip and a pick snapping (bibl
 built by `tools/lockSfx.mjs` from the same kit and the same bake. DAGGER.SND has the picked lock's chime, which the world
 still plays as a lock opens; it has no tumblers.
 
+The `fx-kill-*`, `fx-portal-*` and `fx-season-*` files are ours outright as well: the kill effects' and the portal skins'
+own sounds - ash falling away, the void tearing, a pyre, a Dwemer resonance breaking, and four gates opening
+(bible/06-Systems/Storefront.md sections 4 and 5, STOREFRONT) - and the season's tremor and a Brass Fissure's hum
+(bible/06-Systems/Battle-Pass.md section 6), built by `tools/storefrontSfx.mjs` from the same kit and the same bake.
+DAGGER.SND has no body turning to ash, no gate of stone or brass and no earthquake.
+
 The `horse-*.wav` files are ours outright as well: the horse's snorts, blows, breaths and spook, and its hooves on grass,
 in snow and in water (bible/08-Audio/Audio.md HORSE-VOICE), built by `tools/horseSfx.mjs` from the same kit and the same
 bake. DAGGER.SND has one neigh, two clops on hard ground and the cart; it has no snort, no breath and no hoof on soft
@@ -137,6 +143,16 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `lock-false.wav` | lockpicking: a spool pin's false set | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a dull clunk and the plug turning back against the tension (LOCKPICK) |
 | `lock-slip.wav` | lockpicking: the pick slipping off a pin | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a thin steel scrape (LOCKPICK) |
 | `lock-snap.wav` | lockpicking: the pick snapping | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a sharp crack, and the broken tip ringing as it falls and lands (LOCKPICK) |
+| `fx-kill-ashen.wav` | kill effect: Ashen Shatter | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a soft rush falling away and the embers ticking as they cool (STOREFRONT) |
+| `fx-kill-voidrend.wav` | kill effect: Voidrend | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a swell drawn in, a hollow thump, a low ring beating as the tear closes (STOREFRONT) |
+| `fx-kill-pyre.wav` | kill effect: Daedric Pyre | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the whoomph of a body taking fire, its crackle, the roar dying down (STOREFRONT) |
+| `fx-kill-tonal.wav` | kill effect: Tonal Shatter | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a struck brass chord (C-G-C), cogs scattering and landing, a hiss of steam (STOREFRONT) |
+| `fx-portal-runic.wav` | portal skin: Runic Stone | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a cold three-bell chime and its shimmer over a breath of frost (STOREFRONT) |
+| `fx-portal-daedric.wav` | portal skin: Daedric Stone | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the ground rumbling, iron grinding as the arch comes up, a rush of fire (STOREFRONT) |
+| `fx-portal-aetheric.wav` | portal skin: Aetheric Stone | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a rising run of five bell notes over a swell that blooms as the ring closes (STOREFRONT) |
+| `fx-portal-brass.wav` | portal skin: Brass Gate | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a blast of steam, four cogs clanking home, the gate's beating hum (STOREFRONT) |
+| `fx-season-tremor.wav` | the season's tremor | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the ground's deep roll swelling and dying, stones rattling, brass grinding far under (STOREFRONT) |
+| `fx-season-hum.wav` | a Brass Fissure | `tools/storefrontSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - steam hissing from the crack over a low brass hum beating against itself (STOREFRONT) |
 | `horse-snort-1.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a forceful breath out through the nose's two bands (300 Hz, 1.6 kHz), fluttering at ~32 Hz |
 | `horse-snort-2.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade lower and longer |
 | `horse-snort-3.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade higher and shorter |

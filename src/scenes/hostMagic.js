@@ -94,7 +94,12 @@ import { egAllyLook } from '../ui/eliteGates/egAccess.js';   // EG-ZG (Elite-Gat
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // EG-ZG: an ally's flat drawn translucent, as a revealed foe's is (alpha alone)
 import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED: the ONE pair of hands, whose motion gates the click
 import { reportPlayerAttack } from '../combat/formulas.js';   // SPELL-NUMBERS: my spell's landing pops its number, as a blow's does
-import { spellHandUp, spellHandBusy, tellCastPending, CAST_PRESS } from '../combat/twoHands/spellHand.js';   // SPELL-HAND: a spell in the free hand beside a weapon - the swing is the weapon's
+import { spellHandUp, spellHandBusy, tellCastPending, CAST_PRESS } from '../combat/twoHands/spellHand.js';
+import { KillFx, KillFxPass, KILL_FX_PROGRAMS, KFX_GHOST_S, KILL_FX_EDGE } from '../render/killFx.js';   // STOREFRONT: the kill effects, drawn by every host through this engine
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // STOREFRONT: the viewer's less motion, read live
+import { setBatchDissolve } from '../systems/dissolve.js';   // STOREFRONT: a kill effect's ghost burnt away
+import '../systems/killEffects.js';   // STOREFRONT: my kills play the effect I wear, through this engine's door
+import { playStorefrontSound } from '../systems/storefrontSounds.js';   // STOREFRONT: a kill effect's own sound   // SPELL-HAND: a spell in the free hand beside a weapon - the swing is the weapon's
 export { CAST_PRESS };   // SPELL-HAND: the cast's own press, handed on - the hosts ask the magic door for it, never a two-hands module (TWO-HANDS, THE FOUR HOSTS)
 
 /** SUNBABY2: a sky fireball (skyFire) is drawn this many times its flat's size, its flash too - a ball a sun throws,
@@ -362,6 +367,9 @@ export function createPlayerMagic({
     lairHere: (at) => { try { return lairHere?.(at) ?? null; } catch { return null; } },   // RVN7: the host's word on where a deed is done (LAIR-DOOR: or on a pixel asked)
     isPuppet: (f) => !!f?.puppet || (typeof isPuppet === 'function' && !!isPuppet(f)),   // AUDIT FEUD 2: run by another client - no deed of mine (a rout)
     fx: (recipe, at, o) => { try { fx.technique(recipe, at, o); } catch { /* no effects drawn here */ } },   // UNQUIET (Revenants.md section 46): a revenant's flight craft - its leaving puff
+    killFx: (look, at, o) => playKill(look, at, o),   // STOREFRONT: a kill effect where a body falls (systems/killEffects.js, a peer's through net/peer/peerFx.js)
+    burst: (recipe, at, o) => !!killFx.start(recipe, at, { ...(o ?? {}), eye: renderer?._camPos ?? null }),   // STOREFRONT: a portal skin's opening and breath (scenes/portalFx.js)
+    eye: () => renderer?._camPos ?? null,   // STOREFRONT: the eye a peer's kill effect is measured from
   });
   /** The party mates as foe-shaped marks ({ally, id, name, ai:{feet, height}}) - the shape every target helper in
    *  spellcast.js already reads - for a spell that may be given (allyCastable) and is not a FREE ready (AUDIT
@@ -676,6 +684,57 @@ export function createPlayerMagic({
   // driver says it is done - the idle task waited the whole compile, 2.3-7.6 s of the real game's first seconds here
   if (renderer?.gl && globalThis.requestIdleCallback) void warmPrograms([{ start: () => startPrograms(renderer.gl, SPELL_IMPACT_PROGRAMS), run: () => { if (!fxPass && !fxBroken) fxPass = new SpellImpactPass(renderer.gl); }, need: () => !fxPass && !fxBroken }], { alive: () => !fxBroken });   // AUDIT SHADER-STALL: a spell's draw built it first - the warm stands down
   const impactSounds = createSpellImpactSounds(audio);
+  // STOREFRONT (bible/06-Systems/Storefront.md section 4): THE KILL EFFECTS - a burst where a foe falls to a wearer's blow
+  // (render/killFx.js), and the flat it stood in copied and burnt away in the look's colour (the ghost), the corpse lying
+  // under it as ever. Stepped, shifted, cleared and drawn with the impact sparks; its pass warmed at idle as theirs is.
+  const killFx = new KillFx({ reduced: () => prefersReducedMotion() });   // less motion read at each burst, so a change mid-session is followed
+  let killPass = null, killBroken = false;
+  if (renderer?.gl && globalThis.requestIdleCallback) void warmPrograms([{ start: () => startPrograms(renderer.gl, KILL_FX_PROGRAMS), run: () => { if (!killPass && !killBroken) killPass = new KillFxPass(renderer.gl); }, need: () => !killPass && !killBroken }], { alive: () => !killBroken });
+  /** @type {{ batch: any, age: number, life: number, edge: ReadonlyArray<number> }[]} */
+  const ghosts = [];
+  function playKill(/** @type {string} */ look, /** @type {number[]} */ at, /** @type {any} */ { h = 1.8, w = 0.8, ghost = null } = {}) {
+    if (!killFx.start(look, at, { h, w, eye: renderer?._camPos ?? null })) return false;
+    playStorefrontSound(audio, `storefront:kill-${look}`, at, 1, { maxDistance: 30 });   // its own sound (systems/storefrontSounds.js)
+    const life = KFX_GHOST_S[/** @type {keyof typeof KFX_GHOST_S} */ (look)];
+    if (ghost && life && renderer?.createBillboardBatch) {
+      try {
+        const g = renderer.createBillboardBatch(ghost.archive, ghost.record, { w: ghost.size.w, h: ghost.size.h }, [[0, 0, 0]], { dynamic: true });
+        g.origin = [ghost.origin[0], ghost.origin[1], ghost.origin[2]]; g.frame = ghost.frame; g.dye = ghost.dye; g.tint = ghost.tint; g.noShadow = true;
+        ghosts.push({ batch: g, age: 0, life, edge: KILL_FX_EDGE[/** @type {keyof typeof KILL_FX_EDGE} */ (look)] });
+        batches.push(g);
+      } catch { /* the burst stands alone */ }
+    }
+    return true;
+  }
+  function retireGhost(/** @type {number} */ i) {
+    const g = ghosts[i];
+    ghosts.splice(i, 1);
+    const k = batches.indexOf(g.batch);
+    if (k >= 0) batches.splice(k, 1);
+    try { renderer.destroyBillboardBatch(g.batch); } catch { /* gone */ }
+  }
+  function stepKills(/** @type {number} */ dt) {
+    killFx.step(dt);
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+      const g = ghosts[i];
+      g.age += Math.max(0, Math.min(0.05, dt || 0));
+      const share = Math.min(1, g.age / g.life);
+      setBatchDissolve(g.batch, Math.max(0.01, share), g.edge);
+      if (share >= 1) retireGhost(i);
+    }
+  }
+  function clearKills() { killFx.clear(); while (ghosts.length) retireGhost(ghosts.length - 1); }
+  /** The kill effects' pass under the frame's camera and fog - built at its first burst if the idle has not; one that will
+   *  not build leaves the ghosts burning alone. Answers how many it drew. */
+  function drawKills() {
+    if (!killFx.live || killBroken || !renderer?.gl || !renderer._proj || !renderer._view || !killFx.build()) return 0;
+    if (!killPass) { try { killPass = new KillFxPass(renderer.gl); } catch (e) { killBroken = true; console.warn('[magic] the kill effects pass would not build', e?.message ?? e); return 0; } }
+    renderer.endUiRun?.();
+    const eye = renderer._camPos;
+    const n = killPass.draw(killFx, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus, haze: renderer._haze });
+    if (n) renderer.markForeignPass?.();
+    return n;
+  }
   // ART-COLOUR: EACH ELEMENT'S BURST WEARS ITS OWN ART'S COLOUR. Once per element, the first time a missile of it flies
   // or lands, its archive (375-379, missileArchive) is asked for (it is warm by then: the missile itself draws from it)
   // and its impact flash's first frame - record 1, what the burst is drawn over - sampled the Thunderlock orb's way.
@@ -1473,6 +1532,7 @@ export function createPlayerMagic({
     setPlayerDoor(_door);
     stepSparks(dt);   // IMPACTFEEL (after the door: SET2 publishes it first thing each frame): the chunks' flight
     fx.step(dt);      // IMPACTFX: the light's
+    stepKills(dt);    // STOREFRONT: the kill effects and their ghosts
     mwFx.update(dt);  // MW-SPELLFX1: Morrowind's spell effects - their clocks, their places, their streams
     for (const m of missiles) if (!m.dead && m.spell && !m._artNoted) { m._artNoted = true; noteElementArt(m.spell.element); }   // ART-COLOUR: sampled while it flies, so its landing wears it
     // FA1: the missile flats' clock rides the module's OWN update, not
@@ -1774,6 +1834,7 @@ export function createPlayerMagic({
           if (m.firePos) m.firePos[a] += offset[a];
         }
       }
+      killFx.shift(offset); for (const g of ghosts) { g.batch.origin[0] += offset[0]; g.batch.origin[1] += offset[1]; g.batch.origin[2] += offset[2]; }   // STOREFRONT: and the kill effects
     },
     batches: () => batches,
     /** PEERLIGHT2: the others' Light spells this frame - `list` [{ id, feet, height, forward }] (scene frame), one
@@ -1804,14 +1865,19 @@ export function createPlayerMagic({
      *  `batches` (an impact flash mid-fade) frees with the rest.
      *  Terminal: no update runs after this. */
     destroy() {
+      // AUDIT-STOREFRONT II (lane C 2): both passes broken before anything else - an idle warm still waiting (no pass
+      // built yet) then stands down, never building one on this dead engine's context
+      killBroken = fxBroken = true;
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       candle.clear();
       for (const m of peerCandleMounts.values()) m.clear();   // PEERLIGHT2
       peerCandleMounts.clear();
       clearSparks(); fx.clear();   // IMPACTFX: the bursts die with the engine
+      clearKills();   // STOREFRONT: and the kill effects, ghosts and all
+      if (killPass) { const p = killPass; killPass = null; p.destroy(); }
       mwFx.destroy();   // MW-SPELLFX1: and the Morrowind effects, GL and all
-      if (fxPass) { const p = fxPass; fxPass = null; fxBroken = true; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
+      if (fxPass) { const p = fxPass; fxPass = null; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
       impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
@@ -1825,6 +1891,7 @@ export function createPlayerMagic({
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       clearSparks(); fx.clear();   // IMPACTFX: a load or a teleport leaves no burst behind in the old place
+      clearKills();   // STOREFRONT: nor a kill effect
       mwFx.clear();   // MW-SPELLFX1: nor a Morrowind effect
     },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
@@ -1833,14 +1900,15 @@ export function createPlayerMagic({
      *  nearest light there is and the sort would put it first anyway. */
     /** ART-COLOUR: each element's burst colour as drawn now, and whether it came from the art - for the console. */
     fxColours: () => fx.artColours(),
-    candleLight: () => candle.light() ?? fx.light(),   // IMPACTFX: a landing spell lights the walls for a moment (never over the Light effect's candle)
+    candleLight: () => candle.light() ?? fx.light() ?? killFx.light(),   // IMPACTFX: a landing spell lights the walls for a moment (never over the Light effect's candle); STOREFRONT: and a kill effect
     /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a weapon technique's burst, into this engine's own impact
      *  sparks (render/spellImpactFx.js `technique`) - the one pass drawFx already draws; the host's technique door calls it. */
     techniqueFx: (recipe, at, o) => fx.technique(recipe, at, o),
-    /** IMPACTFX: THE BURSTS' PASS - the hosts call this right after this engine's billboards, in their world pass,
-     *  under the renderer's own camera and fog. Answers whether it drew (it marks the foreign pass itself). */
+    /** IMPACTFX: THE BURSTS' PASS - the hosts call this in their world pass once its last opaque draw is done (it writes
+     *  no depth: whatever is drawn after it paints over it - AUDIT STOREFRONT RENDER L3), under the renderer's own camera
+     *  and fog. Answers whether it drew (it marks the foreign pass itself). */
     drawFx() {
-      const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path
+      const mw = drawKills() + Number(mwFx.draw()) > 0;   // STOREFRONT: the kill effects; MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path
       if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return mw;
       const n = fx.build();
       if (!n) return mw;

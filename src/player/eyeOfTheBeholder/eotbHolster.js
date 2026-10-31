@@ -54,14 +54,13 @@ export const holsterItemOfLook = (items, left = false) => (Array.isArray(items)
   ? items.find((it) => it?.equipSlot === (left ? HOLSTER_LEFT_SLOT : HOLSTER_HAND_SLOT)) ?? null : null);
 
 /**
- * A weapon picture stood upright: its long axis (the opaque pixels' principal axis) turned to the vertical, the widest
- * end on top, resampled at the sprites' pixel size (EOTB_FIGURE.mpp over PAPERDOLL_MPP source pixels a texel; a texel
- * takes its opaque samples' mean where three of nine are opaque). `img` and the answer are color32 RGBA bytes, row 0
- * the bottom. `mirror` is the same columns reversed. `w` and `h` are the quad in metres on a figure the sets' size.
- * Null with fewer than four opaque pixels. Pure.
+ * A weapon picture's long axis (the straight line through the most opaque pixels), the widest end toward +s: its mean
+ * (mx, my), the axis u and the across r (u turned a quarter clockwise), the opaque pixels' extents along (s0..s1) and
+ * across (w0..w1), and `rho`, the line's offset along its normal (nx, ny) from the mean. Null with fewer than four
+ * opaque pixels. Pure (LAYERED-WEAPONS holds the same picture in the hand, layeredWeapon.js heldPicture).
  * @param {{width:number,height:number,colors:ArrayLike<number>}} img
  */
-export function uprightWeaponPicture(img) {
+export function weaponPictureAxis(img) {
   const W = img?.width | 0, H = img?.height | 0, src = img?.colors;
   if (!(W > 0) || !(H > 0) || !src || src.length < W * H * 4) return null;
   let n = 0, mx = 0, my = 0;
@@ -108,6 +107,21 @@ export function uprightWeaponPicture(img) {
     if (r < w0) w0 = r;
     if (r > w1) w1 = r;
   }
+  return { mx, my, ux, uy, rx, ry, s0, s1, w0, w1, nx: COS[a], ny: SIN[a], rho: (best % (2 * R + 1)) - R };
+}
+
+/**
+ * A weapon picture stood upright: its long axis (the opaque pixels' principal axis) turned to the vertical, the widest
+ * end on top, resampled at the sprites' pixel size (EOTB_FIGURE.mpp over PAPERDOLL_MPP source pixels a texel; a texel
+ * takes its opaque samples' mean where three of nine are opaque). `img` and the answer are color32 RGBA bytes, row 0
+ * the bottom. `mirror` is the same columns reversed. `w` and `h` are the quad in metres on a figure the sets' size.
+ * Null with fewer than four opaque pixels. Pure.
+ * @param {{width:number,height:number,colors:ArrayLike<number>}} img
+ */
+export function uprightWeaponPicture(img) {
+  const ax = weaponPictureAxis(img);
+  if (!ax) return null;
+  const W = img.width | 0, H = img.height | 0, src = img.colors, { mx, my, ux, uy, rx, ry, s0, s1, w0, w1 } = ax;
   const step = EOTB_FIGURE.mpp / PAPERDOLL_MPP;
   const oh = Math.max(1, Math.ceil((s1 - s0 + 1) / step)), ow = Math.max(1, Math.ceil((w1 - w0 + 1) / step));
   const out = new Uint8Array(ow * oh * 4), mirror = new Uint8Array(ow * oh * 4);

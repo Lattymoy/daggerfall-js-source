@@ -30,7 +30,7 @@ test('WW7-3 the provinces\' kingdoms: seven crowns past the Bay, each its provin
   assert.equal(new Set(Object.values(KINGDOM_METALS)).size, Object.keys(KINGDOMS).length, 'no two crowns one metal');
   const slots = Object.values(CROWN_SIEGE_SLOT).map((s) => `${s.day}:${s.hour}`);
   assert.equal(new Set(slots).size, slots.length, 'no two crowns\' sieges at once');
-  assert.deepEqual(GLYPHS.slice(-8, -1) /* PIN MOVED (SHOP): the Origin joined the list last, after the crowns */, Object.values(SEAT_CROWN_GLYPHS).slice(3), 'the new crowns after every glyph a token carries');
+  assert.deepEqual(GLYPHS.slice(-14, -7) /* PIN MOVED (BLOOD-OF-COLDHARBOUR): the Coldharbour rose joined the list last */ /* PIN MOVED (STOREFRONT): the bundles' three and the Battle Pass's two joined the list last */ /* PIN MOVED (SHOP): the Origin joined the list last, after the crowns */, Object.values(SEAT_CROWN_GLYPHS).slice(3), 'the new crowns after every glyph a token carries');
   assert.deepEqual(seatGlyphsOf([{ tier: 'crown', region: 64 }, { tier: 'palace', region: 62 }, { tier: 'crown', region: 17 }]), ['tower', 'crownDF', 'crownSK']);
   assert.equal(seatArrivalLine({ name: 'Solitude', tier: 'crown', region: 64 }), 'Solitude, capital of the Kingdom of Skyrim. Its Crown Charter is unheld.');
 });

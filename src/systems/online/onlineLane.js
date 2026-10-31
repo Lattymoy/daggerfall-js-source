@@ -168,6 +168,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'chatChannelColours', 'chatPingSound',   // CHAT-COLOURS, PING1: how THIS player's chat is coloured and whether a ping chimes - a screen and an ear, nothing the room agrees on
   'chatTrade', 'chatLfg',   // CHAT-TRADE: whether THIS player listens to the Trade and LFG channels - their tabs, nothing the room agrees on
   'standingAll',   // EVERY-STANDING: whether THIS player's Standing page lists every faction's number - a page they read, nothing the room agrees on
+  'shopHidden',   // SHOP-HIDE: whether THIS player's pause screen draws the shop's gem - the device's own choice, nothing the room agrees on
   'reducedMotion',   // EG-G1: whether THIS player's HUD stands still (ui/eliteGates/egAccess.js) - an accessibility choice, nothing the room agrees on
   'townPanelFolded',   // NOTICE-PANEL: whether the town panel is folded to its name - a view of this screen's alone
   'capeShown',   // CAPE-TOGGLE: whether THIS player's cloak is drawn - their own look, which the room is told (systems/capeShown.js)

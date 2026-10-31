@@ -41,6 +41,7 @@ import { installWindowMotion } from '../windowMotion.js';   // PLUS1/WM1: window
 import { isEnhancedPlus } from '../../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 import { pageHas } from '../../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
+import { effectInkCss } from '../effectText.js';   // AUDIT-STOREFRONT II: the effects' inks, one table for the profile and the shop
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's row in its violet
@@ -1248,11 +1249,25 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .card button.acttitle.actnone { color: var(--dim); }
 /* a piece not held: tried on when pointed at, its way of being had said under the row - never worn from here */
 .card button.acttitle.actaura .actauraword { display: inline-block; }   /* an aura's or a piece's word, painted as its title's (badgeCss) */
-.card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal { opacity: 0.4; border-style: dashed; }
+.card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal, .card button.actarmory.locked.aura-guild, .card button.actarmory.locked.aura-crystal { opacity: 0.4; border-style: dashed; }   /* AUDIT lane 3 F5: every line's (net/armoryLaw.js ARMORY_LINES) */
 .card .slots-look { margin: 4px 0 0; min-height: 2.6em; }
+/* STOREFRONT (2026-10-29): the effects under the stage - the kill effect, the portals, the mount - three tiles, each in
+   its effect's own colour; the Mount slot's horse over its choices (ui/mountPreview.js). */
+.card .slots-under { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
+.card .slots-mount { display: flex; justify-content: center; margin: 6px 0 8px; padding: 8px; border: 2px solid var(--iron);
+  background: radial-gradient(circle at 50% 60%, #1b1826 0%, #08070c 80%); }
+.card .slots-mount canvas.mountpreview { width: min(100%, 300px); height: auto; image-rendering: pixelated; }
+.card button.acteffect.locked { opacity: 0.45; border-style: dashed; }
+${effectInkCss()}
+/* AUDIT-STOREFRONT II (lane E 7): narrow, the stage stands first and the picker right under it - a choice pointed at is
+   tried on in sight - and the slots two to a row under them */
 @container (max-width: 480px) {
-  .card .slots-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .card .slots-mid { grid-column: 1 / -1; order: -1; justify-self: center; width: min(100%, 240px); }
+  .card .acctslots { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 10px; }
+  .card .acctslots > *, .card .slots-stage > .slots-mid { grid-column: 1 / -1; }
+  .card .slots-stage { display: contents; }
+  .card .acctslots > .acctsechead { order: -3; }
+  .card .slots-mid { order: -2; justify-self: center; width: min(100%, 240px); }
+  .card .slots-picker { order: -1; margin: 8px 0 12px; }
 }
 /* PATREON-LINK - THE PATRON'S ROW. Link Patreon is a LINK (the account read carries it, so the press opens it at once,
    as TERMS1's document links do), worn as an .act so it reads as the button it is; what the pledge holds is a fact
@@ -1312,6 +1327,7 @@ ${badgeCss()}
 .card .acctportrait svg.accticon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn fills the well */
 .card .acticon { display: inline-flex; align-items: center; gap: 6px; }   /* WITCH1: an icon's button - its picture, then its word */
 .card .acticon svg.acticonart { flex: none; width: 22px; height: 22px; }
+.card .acteffect svg.acteffectart { flex: none; width: 22px; height: 22px; margin-right: 6px; vertical-align: middle; }
 .card .acctsilhouette { position: absolute; inset: 0; }
 .card .acctsilhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
   border-radius: 48% 48% 44% 44%; background: #3a424d; }
@@ -2661,7 +2677,10 @@ ${SUPPORT_MARKS_CSS}
   .px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 16px 10px; overflow: hidden; }
   .px-win.px-acctwin { max-height: calc(100dvh - 20px); }
 }
-.px-win.px-acctwin .px-body { padding: 22px 26px 24px; }
+.px-win.px-acctwin .px-body { padding: 22px 26px 24px;
+  overflow-anchor: none; }   /* AUDIT-STOREFRONT II (lane E 7): the narrow card shows the picker before the slots its markup puts first;
+  the browser's scroll anchor, chosen in markup order, then sat under a choice's words, and a choice's words grown moved
+  the row from under the pointer - tried on, left, tried on again. With no anchor, what grows pushes only what is below. */
 
 /* ═══ ONE AXIS ════════════════════════════════════════════════════
    Mac: "Nothing is centered". It was true and it read as rushed - a

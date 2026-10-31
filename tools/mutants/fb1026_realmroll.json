@@ -92,8 +92,8 @@
   {
     "name": "SEAT-SAVES-first-checkpoint-never-waits",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
-    "new": "      checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "old": "      else if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "new": "      else checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
