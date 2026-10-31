@@ -42,8 +42,8 @@
   {
     "name": "CASUAL-LIFE-still-no-lineage",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "title: t('legacy.choice.casual.title', 'Casual'),",
-    "new": "title: 'No lineage',",
+    "old": "          title: t('legacy.choice.casual.title', 'Casual'),",
+    "new": "          title: 'No lineage',",
     "tests": [
       "test/systems/legacy/casuallife.test.js"
     ],

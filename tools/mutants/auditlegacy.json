@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-LEGACY-B4-bloodline-open-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "title: 'Bloodline', locked: false,",
-    "new": "title: 'Bloodline', locked: !!online,",
+    "old": "      title: 'Bloodline',\n      locked: false,",
+    "new": "      title: 'Bloodline',\n      locked: !!online,",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ],

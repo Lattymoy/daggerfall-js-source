@@ -1112,8 +1112,8 @@
   {
     "name": "AUDIT-LEGACY-III-U8-the-end-unsaid-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "      'With no one left, the line ends.',\n      // AUDIT LEGACY III U8: online says where the line is kept BESIDE that - it replaced it, and the end went unsaid\n      BLOODLINE_ONLINE_LINE,",
-    "new": "      BLOODLINE_ONLINE_LINE,",
+    "old": "              'With no one left, the line ends.',\n              // AUDIT LEGACY III U8: online says where the line is kept BESIDE that - it replaced it, and the end went unsaid\n              BLOODLINE_ONLINE_LINE,",
+    "new": "              BLOODLINE_ONLINE_LINE,",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

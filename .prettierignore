@@ -1604,6 +1604,9 @@
 !/src/ui/item/itemMakerWindow.js
 !/src/ui/ketch/
 /src/ui/ketch/*/
+!/src/ui/legacy/
+/src/ui/legacy/*
+!/src/ui/legacy/legacyModelChoice.js
 !/src/ui/levelUp/
 /src/ui/levelUp/*/
 !/src/ui/map/

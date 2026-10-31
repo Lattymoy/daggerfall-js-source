@@ -72,8 +72,8 @@
   {
     "name": "LEGACY-CHOICE-no-third-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  const casual = online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "  const casual = false ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online",
+    "new": "  const casual = false",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LEGACY-CHOICE-third-offline",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  const casual = online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "  const casual = true ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online",
+    "new": "  const casual = true",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY-CHOICE-flat-screen",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
-    "new": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: false,",
+    "old": "    stacked: online,",
+    "new": "    stacked: false,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LEGACY-CHOICE-offline-words",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
-    "new": "  faceText: LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
+    "old": "    faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE,",
+    "new": "    faceText: LEGACY_MODEL_FACE,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "LEGACY-CHOICE-third-tag-echoes-its-title",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "[NO_LINEAGE]: 'No death cost' });",
-    "new": "[NO_LINEAGE]: 'Casual' });",
+    "old": "  [NO_LINEAGE]: 'No death cost',",
+    "new": "  [NO_LINEAGE]: 'Casual',",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "CASUAL-FIRST-casual-last",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  return Object.freeze([...casual, ...models]);",
-    "new": "  return Object.freeze([...models, ...casual]);",
+    "old": "  return Object.freeze([...casual, ...models]); // CASUAL-FIRST: Enter without reading costs nothing at all",
+    "new": "  return Object.freeze([...models, ...casual]); // CASUAL-FIRST: Enter without reading costs nothing at all",
     "tests": [
       "test/systems/legacychoice.test.js",
       "test/systems/legacy/casuallife.test.js"
