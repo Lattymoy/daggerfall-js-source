@@ -34,12 +34,13 @@ pack's payment goes back; it then buys nothing until it rises. What it bought st
   `AURUM_DEEDS`): close a Dagon's Breach 30, take an Elite Breach Redoubt that pays 30, kill a sea serpent 25, hold a
   fallen star 20, defend a town 15. Each is struck by a trigger on the relay-signed receipt's own row, in the claim's
   batch; no client asks for it.
-- *Coffers.* Every dungeon in every theatre holds one Aurum coffer, opened once ever per account, worth
-  `AURUM_CACHE_AURUM` (10). Its id is the dungeon's key (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, or
-  the whole map id past the Bay. Made levels, Abyss Dungeons, the arena and zone halls hold none. The coffer stands
+- *Coffers.* Every dungeon in every theatre holds one Aurum coffer, opened once ever per account. It pays 5 to 10
+  Aurum, its own by a hash of its id (`src/net/aurumCacheLaw.js` `aurumCacheAurumOf`), so every player finds one coffer
+  worth the same. Its id is the dungeon's key (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, or the
+  whole map id past the Bay. Made levels, Abyss Dungeons, the arena and zone halls hold none. The coffer stands
   beside a treasure pile chosen by hash, clear of other boxes, the same spot for every client
   (`src/scenes/aurumCacheHost.js` `aurumCacheFoot`). The HUD says one is hidden; the activate key opens it and says
-  "+10 Aurum". An emptied coffer stands open for that account for good.
+  what it paid ("+7 Aurum"). An emptied coffer stands open for that account for good.
 - *Patreon.* A cent of a patron's lifetime support (`campaign_lifetime_support_cents`, from the link and the member
   webhook) is an Aurum. The line pays only what the total adds past every line that Patreon user was ever paid, on any
   account, so a repeated or reordered total pays nothing more and an unlink takes nothing back. A `Refunded` or `Fraud`
@@ -72,12 +73,12 @@ day.
 - Aurum buys cosmetics only: never traded, never gold, never power (the owner).
 - Nothing costs money but Aurum packs; $1 = 100 Aurum; daily deals are a quarter off (the owner).
 - Coffers have no clock: one per dungeon, once per account, balanced so the economy is not flooded (the owner).
+- A coffer pays 5 to 10 Aurum, and no daily cap holds the claims (Mac).
 - Patrons are paid their Patreon lifetime total in Aurum, a cent an Aurum (the owner).
 - Coffers are secured against cheating (the owner): a claim (`/v1/aurum/cache`, `server-account/src/aurumCache.js`
   `claimCache`) needs the relay's Ed25519 proof that this account was welcomed into that dungeon's room, good
-  `CACHE_PROOF_TTL_S` (six hours) (`src/net/cacheProof.js`). At most `AURUM_CACHE_DAY_MAX` (10) claims a UTC day, so no
-  more than 100 Aurum a day from coffers. A coffer past the bound stays shut until UTC midnight. It is a progression
-  claim, asked of the seated realm character.
+  `CACHE_PROOF_TTL_S` (six hours) (`src/net/cacheProof.js`). Each account claims a cache once; nothing else bounds
+  the claims. It is a progression claim, asked of the seated realm character.
 - `AURUM_OPEN` is `on`, `dev` (developers only) or `off`; off, nothing sells, links and webhooks pay nothing, and
   claims are refused.
 - Aurum is never given or traded between players: a currency that moves is a market, and a market is power.
@@ -102,7 +103,7 @@ day.
 
 ## Open
 
-- A script that says hello into a dungeon room is welcomed, so the proof raises the bar but does not end it; the daily
-  bound is the floor.
+- A script that says hello into a dungeon room is welcomed, so the proof raises the bar but does not end it. With no
+  daily cap, such a script can take each coffer it is proved in, once.
 - The Terms of Service do not name Aurum; that text is the owner's to add.
 - The staff demand reads shop buys only, not pass spending.
