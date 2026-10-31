@@ -87,15 +87,21 @@ export async function preloadTravelControlArt(deps = {}) {
       // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then
       // `{ tex, w, h }` (loadImg's own shape, ui/native/nativePanel.js:"export async function loadImg").
       const px = toScreenOrder(await decodePng(bytes));
-      const tex = deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ?? null;
+      const tex =
+        deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ??
+        null;
       strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;
     }
-  } catch { strip = null; }
-  _art = { strip };   // RATE-LAW: no spinner art - the readout is text
+  } catch {
+    strip = null;
+  }
+  _art = { strip }; // RATE-LAW: no spinner art - the readout is text
   return _art;
 }
 export const travelControlArtLoaded = () => !!_art;
-export function _setTravelControlArtForTests(art) { _art = art; }
+export function _setTravelControlArtForTests(art) {
+  _art = art;
+}
 
 /** DISC22-E (2026-09-24, Tony H.: "When using Classic UI or GrimoireUI I'm not able to increase the speed from 10x in
  *  accelerated travel ... online"): DOES THE CLASSIC STRIP TAKE THIS CLICK? AUDIT-TO1 I2 gated it on DFU's
@@ -108,7 +114,13 @@ export function _setTravelControlArtForTests(art) { _art = art; }
  *  start value of 10. The gate is the LOCK itself now: a locked click (frozen coordinates) is still refused, a click
  *  with the pointer free reaches the strip. The enhanced strip is DOM and takes its own clicks. (RATE-LAW: the spinner
  *  is gone - the gate is Map's, Camp's and Exit's.) */
-export function stripTakesClick({ showing = false, paused = false, locked = false, button = 0, enhancedDom = false } = {}) {
+export function stripTakesClick({
+  showing = false,
+  paused = false,
+  locked = false,
+  button = 0,
+  enhancedDom = false,
+} = {}) {
   return !!showing && !paused && !locked && button === 0 && !enhancedDom;
 }
 
@@ -120,14 +132,14 @@ export class TravelControlUI {
    *  limits (RATE-LAW: the journey's ground sets the rate). */
   constructor(deps = {}) {
     this.deps = deps;
-    this.timeAcceleration = 1;       // RATE-LAW: the rate in force, written by the journey (travelOptions.js applyRate)
-    this.onRoad = false;             // RATE-LAW: and whether its ground is a road or a track
-    this.isShowing = false;          // :56
+    this.timeAcceleration = 1; // RATE-LAW: the rate in force, written by the journey (travelOptions.js applyRate)
+    this.onRoad = false; // RATE-LAW: and whether its ground is a road or a track
+    this.isShowing = false; // :56
     this.destinationName = '';
     this.message = '';
     this.messageTimer = 0;
     this.done = false;
-    this.isChoiceWindow = true;      // the port's raw-key routing flag
+    this.isChoiceWindow = true; // the port's raw-key routing flag
   }
 
   /** RATE-LAW: the journey says the rate its ground runs at (systems/timeScale.js travelRateOf). */
@@ -137,10 +149,15 @@ export class TravelControlUI {
   }
 
   /** :60-63, SetDestinationName. */
-  setDestinationName(name) { this.destinationName = String(name ?? ''); }
+  setDestinationName(name) {
+    this.destinationName = String(name ?? '');
+  }
 
   /** :156-163, ShowMessage - three seconds of unscaled time. */
-  showMessage(message) { this.message = String(message ?? ''); this.messageTimer = MESSAGE_SECONDS; }
+  showMessage(message) {
+    this.message = String(message ?? '');
+    this.messageTimer = MESSAGE_SECONDS;
+  }
 
   /** :186-193, OnPush - the panel appears (RATE-LAW: no spinner to clamp
    *  into a limit; the journey sets the rate as it starts). */
@@ -150,7 +167,11 @@ export class TravelControlUI {
   }
 
   /** :195-199, OnPop. */
-  _pop() { this.isShowing = false; this.message = ''; this.messageTimer = 0; }
+  _pop() {
+    this.isShowing = false;
+    this.message = '';
+    this.messageTimer = 0;
+  }
 
   /** DaggerfallPopupWindow.CloseWindow - the CAMP button and the C key
    *  (:136-141). The journey stops, the destination stays, so the map's
@@ -179,7 +200,10 @@ export class TravelControlUI {
   tick(dt) {
     if (this.messageTimer > 0) {
       this.messageTimer -= dt;
-      if (this.messageTimer <= 0) { this.message = ''; this.messageTimer = 0; }
+      if (this.messageTimer <= 0) {
+        this.message = '';
+        this.messageTimer = 0;
+      }
     }
   }
 
@@ -190,11 +214,27 @@ export class TravelControlUI {
   input(code, e = null) {
     if (!this.isShowing) return false;
     const key = typeof code === 'string' ? code : '';
-    if (firstHotkey(['TravelExit'], key, e) === 'TravelExit') { audio.playOneShot(SOUND.ButtonClick, 1); this.cancelWindow(); return true; }
-    if (key === 'KeyM') { audio.playOneShot(SOUND.ButtonClick, 1); this.deps.onOpenMap?.(); return true; }
-    if (key === 'KeyC') { audio.playOneShot(SOUND.ButtonClick, 1); this.closeWindow(); return true; }
+    if (firstHotkey(['TravelExit'], key, e) === 'TravelExit') {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.cancelWindow();
+      return true;
+    }
+    if (key === 'KeyM') {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.deps.onOpenMap?.();
+      return true;
+    }
+    if (key === 'KeyC') {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.closeWindow();
+      return true;
+    }
     // :177-178 - the gamepad's Back button closes it too.
-    if (key === 'Escape') { audio.playOneShot(SOUND.ButtonClick, 1); this.closeWindow(); return true; }
+    if (key === 'Escape') {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.closeWindow();
+      return true;
+    }
     return false;
   }
 
@@ -213,13 +253,23 @@ export class TravelControlUI {
   click(vx, vy) {
     if (!this.isShowing) return false;
     const x0 = Math.trunc((NATIVE_W - CONTROL_RECTS.panel[2]) / 2);
-    const px = vx - x0, py = vy;
+    const px = vx - x0,
+      py = vy;
     if (!inRect(CONTROL_RECTS.panel, px, py)) return false;
     audio.playOneShot(SOUND.ButtonClick, 1);
-    if (inRect(CONTROL_RECTS.map, px, py)) { this.deps.onOpenMap?.(); return true; }
-    if (inRect(CONTROL_RECTS.camp, px, py)) { this.closeWindow(); return true; }
-    if (inRect(CONTROL_RECTS.exit, px, py)) { this.cancelWindow(); return true; }
-    return true;   // the strip swallows a click that hit no button - the rate's readout among them (RATE-LAW)
+    if (inRect(CONTROL_RECTS.map, px, py)) {
+      this.deps.onOpenMap?.();
+      return true;
+    }
+    if (inRect(CONTROL_RECTS.camp, px, py)) {
+      this.closeWindow();
+      return true;
+    }
+    if (inRect(CONTROL_RECTS.exit, px, py)) {
+      this.cancelWindow();
+      return true;
+    }
+    return true; // the strip swallows a click that hit no button - the rate's readout among them (RATE-LAW)
   }
 
   /** :180-186, Draw. The mod also draws the HUD's vitals and compass
@@ -230,18 +280,22 @@ export class TravelControlUI {
     if (!this.isShowing) return;
     const m = nativeMetrics(canvas);
     const [, , pw, ph] = CONTROL_RECTS.panel;
-    const x0 = Math.trunc((NATIVE_W - pw) / 2);   // :99-101 - centred, top
-    if (_art?.strip?.tex) drawImg(renderer, _art.strip, m, x0, 0, pw, ph);   // AUDIT-TO1 E1: the uploaded strip, in drawImg's own shape
+    const x0 = Math.trunc((NATIVE_W - pw) / 2); // :99-101 - centred, top
+    if (_art?.strip?.tex) drawImg(renderer, _art.strip, m, x0, 0, pw, ph); // AUDIT-TO1 E1: the uploaded strip, in drawImg's own shape
     // :113-115 - the destination label is centred inside its own panel
     const [dx, dy, dw] = CONTROL_RECTS.dest;
-    if (this.destinationName) shadowText(renderer, font, this.destinationName, m, x0 + dx, dy, { align: 'center', w: dw });
+    if (this.destinationName)
+      shadowText(renderer, font, this.destinationName, m, x0 + dx, dy, { align: 'center', w: dw });
     // RATE-LAW: the rate in the recess the spinner sat in - its value row, at the mod's anchor; no arrows
     const [sx, sy] = CONTROL_RECTS.timeAccel;
     const [vx, vy, vw] = UD_SPINNER.value;
     shadowText(renderer, font, String(this.timeAcceleration), m, x0 + sx + vx, sy + vy, { align: 'center', w: vw });
     // :116-119 - the message, centred under the strip on the screen itself
-    if (this.message) shadowText(renderer, font, this.message, m, MESSAGE_POS[0], MESSAGE_POS[1], { align: 'center', w: NATIVE_W });
+    if (this.message)
+      shadowText(renderer, font, this.message, m, MESSAGE_POS[0], MESSAGE_POS[1], { align: 'center', w: NATIVE_W });
   }
 }
 
-export function createTravelControlUI(deps = {}) { return new TravelControlUI(deps); }
+export function createTravelControlUI(deps = {}) {
+  return new TravelControlUI(deps);
+}

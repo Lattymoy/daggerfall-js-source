@@ -1692,6 +1692,13 @@
 !/src/ui/town/townQuarters.js
 !/src/ui/tradeDoor.js
 !/src/ui/transportWindow.js
+!/src/ui/travel/
+/src/ui/travel/*
+!/src/ui/travel/travelControlUI.js
+!/src/ui/travel/travelJunctionMap.js
+!/src/ui/travel/travelMapOptions.js
+!/src/ui/travel/travelPaceControls.js
+!/src/ui/travel/travelPathsOverlay.js
 !/src/ui/tutorialPopup.js
 !/src/ui/tutorialsPane.js
 !/src/ui/uiCalmStyle.js

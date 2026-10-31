@@ -682,7 +682,7 @@ window (`townTalk.js:"if ((e.key === 'Enter' || e.key === ' ') && isDomControlTa
 The family. Earlier fixes each wrote the rule out for themselves, and no helper held it:
 - STEED-UI's saddle and helm panels (`enhancedSaddle.js:"AUDIT STEED-UI: a"`);
 - the held map's filters (`heldMap.js:"// NEVER THE FOCUS - out of the tab order"`) and the wild map's buttons;
-- the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;   // never the focus"`);
+- the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;"`);
 - the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1; //"`).
 
 The chat's own field already kept Tab (C7, `chatPanel.js:"else if (e.code === 'Tab') e.preventDefault();   // C7"`).

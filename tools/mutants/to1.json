@@ -400,8 +400,8 @@
   {
     "name": "draw-path-centre-only",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "  if ((data & 32) !== 0) { buf[offset + (width * 2) + 3] = px; buf[offset + (width * 2) + 4] = px; }  // E",
-    "new": "  if ((data & 32) !== 0) { buf[offset + (width * 2) + 3] = px; }  // E",
+    "old": "    buf[offset + width * 2 + 4] = px;\n  } // E",
+    "new": "  } // E",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "draw-path-diagonal-straight",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "  if ((data & 64) !== 0) { buf[offset + (width * 3) + 3] = px; buf[offset + (width * 4) + 4] = px; }  // NE",
-    "new": "  if ((data & 64) !== 0) { buf[offset + (width * 3) + 3] = px; buf[offset + (width * 4) + 3] = px; }  // NE",
+    "old": "    buf[offset + width * 4 + 4] = px;",
+    "new": "    buf[offset + width * 4 + 3] = px;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "here-pt",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "export const JUNCTION_HERE_PT = (JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25) - (3 * JUNCTION_MAP_WIDTH * 5) + (JUNCTION_MAP_W2 * 5) + 2;",
-    "new": "export const JUNCTION_HERE_PT = (JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25) - (2 * JUNCTION_MAP_WIDTH * 5) + (JUNCTION_MAP_W2 * 5) + 2;",
+    "old": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 3 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
+    "new": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 2 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "direction-index-north-down",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "    case 128: return here + w5;         // N",
-    "new": "    case 128: return here - w5;         // N",
+    "old": "      return here + w5; // N",
+    "new": "      return here - w5; // N",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "map-section-no-circle",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "      if (circular && height === width",
-    "new": "      if (false && height === width",
+    "old": "        circular &&",
+    "new": "        false &&",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -501,7 +501,7 @@
   {
     "name": "guild-halls-counted",
     "file": "src/ui/travel/travelMapOptions.js",
-    "old": "      continue;   // :404-406 - a guild hall is named, never counted",
+    "old": "      continue; // :404-406 - a guild hall is named, never counted",
     "new": "      // counted too",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -555,8 +555,8 @@
   {
     "name": "cancel-does-not-close",
     "file": "src/ui/travel/travelControlUI.js",
-    "old": "    this.deps.onCancel?.();\n    this.deps.onClose?.();",
-    "new": "    this.deps.onCancel?.();",
+    "old": "    this.deps.onCancel?.();\n    this.deps.onClose?.();\n  }",
+    "new": "    this.deps.onCancel?.();\n  }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -582,7 +582,7 @@
   {
     "name": "junction-redraw-every-frame",
     "file": "src/ui/travel/travelJunctionMap.js",
-    "old": "    if (this.lastDrawn && this.lastDrawn.x === mapPixel.x && this.lastDrawn.y === mapPixel.y\n      && this.lastDrawn.direction === direction) return false;",
+    "old": "    if (\n      this.lastDrawn &&\n      this.lastDrawn.x === mapPixel.x &&\n      this.lastDrawn.y === mapPixel.y &&\n      this.lastDrawn.direction === direction\n    )\n      return false;",
     "new": "    if (false) return false;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -801,7 +801,7 @@
     "name": "e3-filter-back-in-src-slot",
     "file": "src/ui/travel/travelJunctionMap.js",
     "old": "      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });",
-    "new": "      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s }, { filter: 'nearest' });",
+    "new": "      renderer.drawScreenQuad?.(\n        this._tex,\n        { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },\n        { filter: 'nearest' },\n      );",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "l6-containment-back-on-the-mods-page",
     "file": "src/ui/travel/travelMapOptions.js",
-    "old": "      // a neighbouring province's included. Kept as the mod draws it.",
-    "new": "      // a neighbouring province's included. Kept as the mod draws it.\n      if (deps.politicAt(mpX, mpY) - 128 !== selectedRegion) continue;",
+    "old": "      const summary = summaryAt(mpX, mpY);",
+    "new": "      if (deps.politicAt(mpX, mpY) - 128 !== selectedRegion) continue;\n      const summary = summaryAt(mpX, mpY);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
