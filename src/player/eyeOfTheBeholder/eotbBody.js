@@ -193,7 +193,8 @@ export function bodyState(s = {}) {
     heldWeapon: s.heldWeapon ?? null,   // LAYERED-WEAPONS: the item in the hand in use (weaponRig's eotbState)
     pairRight: s.pairRight ?? null, pairLeft: s.pairLeft ?? null, pairStrike: s.pairStrike ?? null,   // LAYERED-DUAL: a pair's two and the hand striking
     castElement: Number.isInteger(s.castElement) ? s.castElement : null, spellHand: !!s.spellHand,   // SPELL-BURST: the cast's element, the spell hand
-    toolInHand: !!s.toolInHand,   // AUDIT: a gathering act's tool in the hands (the weapon, sheathed, stays on the back)
+    layeredTool: s.layeredTool ?? null,   // AUDIT: a gathering act's tool, for the layered body alone (tick)
+    toolInHand: false,
     attacking: !!s.attacking,
     swingN: Number.isInteger(s.swingN) ? s.swingN : null,   // AUDIT PRE-MERGE 0929 S1: the rig's blow count, or none named
     castPlaying: !!s.castPlaying,
@@ -809,7 +810,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
         frameTimer = 0;
       } else frameTimer += dt;
     }
-    stateCurrent = chooseTable({ ...last, sheathed: last.sheathed && !last.toolInHand, readyStance: cfg.readyStance });   // AUDIT: a gathering act's tool held ready
+    stateCurrent = chooseTable({ ...last, sheathed: last.sheathed && !last.toolInHand, readyStance: cfg.readyStance });   // AUDIT: a gathering act's tool held ready (layered: tick)
     if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER
     if (isAnimating && !animating) animating = true;
     else if (!isAnimating && animating) animating = false;
@@ -1055,6 +1056,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      */
     tick(dt, state = {}) {
       last = bodyState(state);
+      // AUDIT: the layered body holds a gathering act's tool ready and swings it a blow a stroke; a skin as the rig says
+      if (cfg.wornArmour && last.layeredTool) last = { ...last, ...last.layeredTool };
       if (renderer && last.lycanthropyType !== preloadedForm) preload(true);   // PR-WW1: a curse caught (or changed) fetches its own beast
       if (renderer && last.horseLook !== preloadedLook) preloadHorse();   // COATS1: a look chosen fetches its mounted tables whole, as a set chosen does
       stepHorseQueue();   // AUDIT COATS3D A6: a few a frame

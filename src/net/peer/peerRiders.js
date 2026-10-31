@@ -504,7 +504,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         for (const o of WALK_ONE_SHOTS) {
           if ((pose[o.field] | 0) !== r.last[o.field]) {
             const frames = o.frames(pose[o.field] | 0);
-            if (frames.length) { r.shot = { table: o.table, tick: o.tick(frames), frames, i: 0, hands: walkerHeld(peer.look, pose) }; r.table = o.table; r.frame = frames[0]; r.clock = 0; }   // AUDIT: its hands as it starts
+            if (frames.length) { r.shot = { table: o.table, tick: o.tick(frames), frames, i: 0, hands: lgBody ? walkerHeld(peer.look, pose) : null }; r.table = o.table; r.frame = frames[0]; r.clock = 0; }   // AUDIT: its hands as it starts
           }
         }
       }

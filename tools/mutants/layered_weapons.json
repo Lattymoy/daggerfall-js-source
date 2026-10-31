@@ -1432,8 +1432,8 @@
   {
     "name": "SHEETS-tool-unheld",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    ...layeredTool(),   // AUDIT",
-    "new": "    // AUDIT",
+    "old": "    layeredTool: layeredTool(),   // AUDIT",
+    "new": "    layeredTool: null,   // AUDIT",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1468,5 +1468,15 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a cast's frames go with every other outfit's"
+  },
+  {
+    "name": "SHEETS-tool-on-skins",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (cfg.wornArmour && last.layeredTool) last =",
+    "new": "if (last.layeredTool) last =",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a skin swings the tool: the skin system changed"
   }
 ]

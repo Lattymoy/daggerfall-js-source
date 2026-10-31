@@ -240,8 +240,9 @@ metal tip at the free wrist (male 3-0, female 3-1) goes with the hammer (the rig
 chest ghosts the loose's bow, two and three limbs; the same frame in a chain chest is clean, so the loose takes its bow
 from that render in open air (`LOOSE_BOW_FROM`, `bowFrom`). A flinch holds the bow in the hammer's fist (the hurt
 frames' `bow`), as the art's free hand is flung out of reach. A frame drawn before its weapon's paper-doll picture came is
-`provisional`, and the stores decode it again after `PICTURE_RETRY_MS`. My own body holds a gathering act's tool ready
-(`layeredTool`), a blow a stroke, as the walkers draw it; and keeps a cast's frames with its outfit's.
+`provisional`, and the stores decode it again after `PICTURE_RETRY_MS`. My own layered body holds a gathering act's tool
+ready (`layeredTool`, its own field: a skin keeps the rig's state), a blow a stroke, as the walkers draw it; and keeps a
+cast's frames with its outfit's.
 
 **Known limits of the hands.** A pair shows one weapon where the art has no free hand. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by

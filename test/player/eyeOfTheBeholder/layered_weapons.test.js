@@ -836,7 +836,7 @@ test('AUDIT the hands: a spell hand keeps its weapon readied too; a shot is the 
   assert.equal(layeredSprite('MoveMelee', 1, 0, 4, L({ weapon: 'ls7' }), false).pair, null);
   // the hands as a clip starts, for all of it - mine and a walker's
   const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
-  assert.match(peerSrc, /i: 0, hands: walkerHeld\(peer\.look, pose\) \}/);
+  assert.match(peerSrc, /i: 0, hands: lgBody \? walkerHeld\(peer\.look, pose\) : null \}/, 'a worn-armour walker\'s alone');
   assert.match(peerSrc, /\.\.\.\(r\.shot\?\.hands \?\? walkerHeld\(peer\.look, pose\)\)/);
   // a walker's cast is the same look as its stance: its pictures go together
   assert.equal(spriteLookOf({ key: 'LA:male:c:7-2:lll@0!3' }), spriteLookOf({ key: 'LA:male:c:2-0:lll@0' }));
@@ -980,8 +980,12 @@ test('SHEETS a flinch holds the bow in the hammer\'s fist; a frame drawn before 
   // the tool: the rig hands it over, held ready, a blow a stroke; the weapon sheathed stays on the back
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /return tool \? \{ heldWeapon: tool, toolInHand: true, usingBow: false, spellcasting: false, attacking: strike, swingN: -\(2 \* toolBlows \+ 1\)/);
-  assert.match(rigSrc, /\.\.\.layeredTool\(\),/);
-  assert.equal(bodyState({ toolInHand: true }).toolInHand, true);
+  assert.match(rigSrc, /layeredTool: layeredTool\(\),/, 'its own field: the rig\'s state as it is');
+  const tool = { heldWeapon: { group: 'Weapons', templateIndex: 126, material: 0 }, toolInHand: true };
+  assert.deepEqual(bodyState({ layeredTool: tool }).layeredTool, tool);
+  assert.equal(bodyState({ layeredTool: tool }).toolInHand, false, 'not until the layered body takes it');
+  // only the layered body takes it (2026-10-31, the owner: "revert any work done for the skin system ... This is only for layered")
+  assert.match(bodySrc, /if \(cfg\.wornArmour && last\.layeredTool\) last = \{ \.\.\.last, \.\.\.last\.layeredTool \};/);
   assert.match(bodySrc, /chooseTable\(\{ \.\.\.last, sheathed: last\.sheathed && !last\.toolInHand,/);
   assert.match(bodySrc, /const drawn = grow === 1 && !FP && !last\.sheathed && !last\.toolInHand &&/, 'no weapon glow on the tool');
   // a cast's frames are the outfit's with its hands: kept when another outfit goes
