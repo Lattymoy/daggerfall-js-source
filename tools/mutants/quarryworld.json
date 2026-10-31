@@ -12,8 +12,8 @@
   {
     "name": "QUARRY-WORLD-none-in-the-band-none",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  return Object.freeze(land.filter(([, lv]) => off(lv) === best)",
-    "new": "  return Object.freeze(land.filter(([, lv]) => off(lv) === 0)",
+    "old": "      .filter(([, lv]) => off(lv) === best)",
+    "new": "      .filter(([, lv]) => off(lv) === 0)",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "QUARRY-WORLD-the-order-by-id",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0]).map(([id]) => id));",
-    "new": ".sort((a, b) => a[0] - b[0]).map(([id]) => id));",
+    "old": "      .sort((a, b) => a[1] - b[1] || a[0] - b[0])",
+    "new": "      .sort((a, b) => a[0] - b[0])",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "QUARRY-WORLD-the-posting-the-ladder",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  const quarry = bountyQuarry(level, wild);",
-    "new": "  const quarry = bountyTierFor(level).foes;",
+    "old": "  const quarry = bountyQuarry(level, wild); // QUARRY-WORLD: the land's own beasts in the tier's band",
+    "new": "  const quarry = bountyTierFor(level).foes; // QUARRY-WORLD: the land's own beasts in the tier's band",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "QUARRY-WORLD-the-purse-list-unread",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  const foes = foesList ?? bountyTierFor(l).foes;",
-    "new": "  const foes = bountyTierFor(l).foes;",
+    "old": "  const foes = foesList ?? bountyTierFor(l).foes; // QUARRY-WORLD: the rank among the beasts the posting drew from (bountyQuarry)",
+    "new": "  const foes = bountyTierFor(l).foes; // QUARRY-WORLD: the rank among the beasts the posting drew from (bountyQuarry)",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "QUARRY-WORLD-an-aquatic-on-land",
     "file": "src/systems/bounty/bountyQuarry.js",
-    "old": " && ENEMY_BASICS[id]?.behaviour !== 'Aquatic') ids.add(id);",
-    "new": ") ids.add(id);",
+    "old": "    for (const table of encounterTableChoices(index))\n      for (const id of table) if (isMonster(id) && ENEMY_BASICS[id]?.behaviour !== 'Aquatic') ids.add(id);",
+    "new": "    for (const table of encounterTableChoices(index)) for (const id of table) if (isMonster(id)) ids.add(id);",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "QUARRY-WORLD-one-choice-read",
     "file": "src/systems/bounty/bountyQuarry.js",
-    "old": "    for (const table of encounterTableChoices(index)) for (const id of table)",
-    "new": "    for (const table of encounterTableChoices(index).slice(0, 1)) for (const id of table)",
+    "old": "    for (const table of encounterTableChoices(index))",
+    "new": "    for (const table of encounterTableChoices(index).slice(0, 1))",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "QUARRY-WORLD-the-keep-never-cleared",
     "file": "src/systems/bounty/bountyQuarry.js",
-    "old": "    if (k !== key) { key = k; kept.clear(); }",
-    "new": "    if (k !== key) { key = k; }",
+    "old": "      kept.clear();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quarryworld.test.js"
     ],

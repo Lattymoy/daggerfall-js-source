@@ -19,8 +19,8 @@
 // is scenes/bountyHost.js; the window is ui/bounty/bountyWindow.js.
 
 import { MINUTES_PER_DAY } from '../gameDate.js';
-import { BOUNTY_POSE_MAX, worldPixelOk } from '../../net/wire.js';   // LAIR-WORLD: a town's pixel is the world's, the Bay's and past it
-import { t } from '../textManager.js';   // QUARRY-WORLD: the beasts' words in the player's language
+import { BOUNTY_POSE_MAX, worldPixelOk } from '../../net/wire.js'; // LAIR-WORLD: a town's pixel is the world's, the Bay's and past it
+import { t } from '../textManager.js'; // QUARRY-WORLD: the beasts' words in the player's language
 export { MINUTES_PER_DAY, BOUNTY_POSE_MAX };
 
 /** The per-mod save slot's vendor name (systems/modSaveData.js). */
@@ -51,11 +51,16 @@ export const BOUNTY_LEVEL_MAX = 99;
  *  above) - the band a board hunts the land's own wild in (bountyQuarry); the ladder's beasts are what a board posts
  *  where the land's wild is not known. */
 export const BOUNTY_TIERS = Object.freeze([
-  Object.freeze({ min: 1, max: 3, foes: Object.freeze([0, 3, 6]), levels: Object.freeze([1, 4]) }),            // Rat, Giant Bat, Spider
-  Object.freeze({ min: 4, max: 5, foes: Object.freeze([4, 5, 7]), levels: Object.freeze([4, 5]) }),            // Grizzly Bear, Sabretooth Tiger, Orc
-  Object.freeze({ min: 6, max: 10, foes: Object.freeze([8, 12, 13, 15, 17]), levels: Object.freeze([5, 10]) }),   // Centaur, Orc Sergeant, Harpy, Skeletal Warrior, Zombie
-  Object.freeze({ min: 11, max: 14, foes: Object.freeze([16, 19, 20, 21]), levels: Object.freeze([10, 13]) }),   // Giant, Mummy, Giant Scorpion, Orc Shaman
-  Object.freeze({ min: 15, max: Infinity, foes: Object.freeze([22, 23, 24, 27]), levels: Object.freeze([14, Infinity]) }),   // Gargoyle, Wraith, Orc Warlord, Daedroth
+  Object.freeze({ min: 1, max: 3, foes: Object.freeze([0, 3, 6]), levels: Object.freeze([1, 4]) }), // Rat, Giant Bat, Spider
+  Object.freeze({ min: 4, max: 5, foes: Object.freeze([4, 5, 7]), levels: Object.freeze([4, 5]) }), // Grizzly Bear, Sabretooth Tiger, Orc
+  Object.freeze({ min: 6, max: 10, foes: Object.freeze([8, 12, 13, 15, 17]), levels: Object.freeze([5, 10]) }), // Centaur, Orc Sergeant, Harpy, Skeletal Warrior, Zombie
+  Object.freeze({ min: 11, max: 14, foes: Object.freeze([16, 19, 20, 21]), levels: Object.freeze([10, 13]) }), // Giant, Mummy, Giant Scorpion, Orc Shaman
+  Object.freeze({
+    min: 15,
+    max: Infinity,
+    foes: Object.freeze([22, 23, 24, 27]),
+    levels: Object.freeze([14, Infinity]),
+  }), // Gargoyle, Wraith, Orc Warlord, Daedroth
 ]);
 
 /** A board's words for a pack of each beast, in the player's language, and the kind of trouble it is - which of the
@@ -97,7 +102,7 @@ const FOES = Object.freeze({
   36: ['dread', () => t('bounty.foes.ironAtronachs', 'Iron Atronachs')],
   37: ['dread', () => t('bounty.foes.fleshAtronachs', 'Flesh Atronachs')],
   38: ['dread', () => t('bounty.foes.iceAtronachs', 'Ice Atronachs')],
-  40: ['beast', () => t('bounty.foes.dragonlings', 'Dragonlings')],   // the dragonling's second look, the same beast
+  40: ['beast', () => t('bounty.foes.dragonlings', 'Dragonlings')], // the dragonling's second look, the same beast
   // Daggerfall Enemy Expansion's (systems/enemyExpansion/dexNames.js names each one)
   256: ['orc', () => t('bounty.foes.goblins', 'Goblins')],
   258: ['orc', () => t('bounty.foes.lizardMen', 'Lizard Men')],
@@ -119,7 +124,7 @@ const FOES = Object.freeze({
   280: ['beast', () => t('bounty.foes.mountainLions', 'Mountain Lions')],
   281: ['vermin', () => t('bounty.foes.mudcrabs', 'Mudcrabs')],
   282: ['giant', () => t('bounty.foes.ogres', 'Ogres')],
-  283: ['dread', () => t('bounty.foes.willOWisps', 'Will-o\'-wisps')],
+  283: ['dread', () => t('bounty.foes.willOWisps', "Will-o'-wisps")],
   288: ['vermin', () => t('bounty.foes.scamps', 'Scamps')],
   289: ['dread', () => t('bounty.foes.centurionSpheres', 'Centurion Spheres')],
 });
@@ -149,7 +154,12 @@ export function bountyQuarry(level, wild = null) {
   const off = (lv) => (lv < lo ? lo - lv : lv > hi ? lv - hi : 0);
   let best = Infinity;
   for (const [, lv] of land) best = Math.min(best, off(lv));
-  return Object.freeze(land.filter(([, lv]) => off(lv) === best).sort((a, b) => a[1] - b[1] || a[0] - b[0]).map(([id]) => id));
+  return Object.freeze(
+    land
+      .filter(([, lv]) => off(lv) === best)
+      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
+      .map(([id]) => id),
+  );
 }
 
 const clampLevel = (level) => Math.max(1, Math.min(BOUNTY_LEVEL_MAX, Math.trunc(Number(level) || 1)));
@@ -165,7 +175,8 @@ export function bountyTierFor(level) {
  *  tenth of it off, so four pay six tenths. The 15+ tier runs 150..200 on its own law below. */
 export const BOUNTY_FULL_PURSE = Object.freeze([50, 75, 90, 100]);
 /** The share of the full purse a pack of `n` pays: 4 -> 0.6, 5 -> 0.7 ... 8 -> 1. */
-export const purseShare = (n) => 0.6 + 0.1 * (Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, n | 0)) - BOUNTY_PACK_MIN);
+export const purseShare = (n) =>
+  0.6 + 0.1 * (Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, n | 0)) - BOUNTY_PACK_MIN);
 
 /**
  * The purse, by the MONSTER TIER the bounty's level hunts in (bountyTierFor) and the size of its pack.
@@ -182,11 +193,12 @@ export const purseShare = (n) => 0.6 + 0.1 * (Math.max(BOUNTY_PACK_MIN, Math.min
 export function bountyGold(level, count, mobileType, underground = false, foesList = null) {
   const l = clampLevel(level);
   const n = underground
-    ? BOUNTY_PACK_MIN + 2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN, Math.min(BOUNTY_DUNGEON_PACK_MAX, count | 0)) - BOUNTY_DUNGEON_PACK_MIN)
+    ? BOUNTY_PACK_MIN +
+      2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN, Math.min(BOUNTY_DUNGEON_PACK_MAX, count | 0)) - BOUNTY_DUNGEON_PACK_MIN)
     : Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, count | 0));
   const tier = BOUNTY_TIERS.indexOf(bountyTierFor(l));
   if (tier < BOUNTY_FULL_PURSE.length) return Math.round(BOUNTY_FULL_PURSE[tier] * purseShare(n));
-  const foes = foesList ?? bountyTierFor(l).foes;   // QUARRY-WORLD: the rank among the beasts the posting drew from (bountyQuarry)
+  const foes = foesList ?? bountyTierFor(l).foes; // QUARRY-WORLD: the rank among the beasts the posting drew from (bountyQuarry)
   const rank = Math.max(0, foes.indexOf(mobileType));
   const strength = foes.length > 1 ? rank / (foes.length - 1) : 1;
   return 150 + 10 * (n - BOUNTY_PACK_MIN) + Math.round(10 * strength);
@@ -214,10 +226,16 @@ export function bountyHash(...parts) {
   let h = 0x811c9dc5;
   for (const p of parts) {
     let v = Math.trunc(Number(p) || 0) >>> 0;
-    for (let k = 0; k < 4; k++) { h ^= v & 0xff; h = Math.imul(h, 0x01000193) >>> 0; v >>>= 8; }
+    for (let k = 0; k < 4; k++) {
+      h ^= v & 0xff;
+      h = Math.imul(h, 0x01000193) >>> 0;
+      v >>>= 8;
+    }
   }
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0;
-  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35) >>> 0;
   h ^= h >>> 16;
   return h >>> 0;
 }
@@ -245,7 +263,10 @@ export function bountyHuntKey(id) {
   return b ? `${b.slotKey}.t${bountyTierIndex(b.level)}` : null;
 }
 /** May a hunter of `level` hold this bounty (taken, shared, joined)? Only in its own tier. */
-export const bountyTierFits = (id, level) => { const b = parseBountyId(id); return !!b && bountyTierIndex(b.level) === bountyTierIndex(level); };
+export const bountyTierFits = (id, level) => {
+  const b = parseBountyId(id);
+  return !!b && bountyTierIndex(b.level) === bountyTierIndex(level);
+};
 
 /** BOUNTY-TIERLABEL (Mac, 2026-09-28: "can the quests also show which tier they are and what levels are put in the
  *  tier"): "Tier 2 (levels 4-5)", "Tier 5 (levels 15+)" - numbered from 1, as a player counts. */
@@ -260,7 +281,7 @@ export function parseBountyId(id) {
   const m = BOUNTY_ID_RE.exec(String(id ?? ''));
   if (!m) return null;
   const [day, px, py, slot, level] = m.slice(1).map(Number);
-  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;   // LAIR-WORLD: the world's pixel
+  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null; // LAIR-WORLD: the world's pixel
   return { day, px, py, slot, level, slotKey: bountySlotKey(day, px, py, slot) };
 }
 
@@ -277,10 +298,15 @@ export function bountySites(px, py, siteOk) {
     for (let dx = -BOUNTY_MAX_PX; dx <= BOUNTY_MAX_PX; dx++) {
       const d = Math.max(Math.abs(dx), Math.abs(dy));
       if (d < BOUNTY_MIN_PX) continue;
-      const x = px + dx, y = py + dy;
-      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too
+      const x = px + dx,
+        y = py + dy;
+      if (!worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, past the Bay too
       let ok = false;
-      try { ok = !!siteOk(x, y); } catch { ok = false; }
+      try {
+        ok = !!siteOk(x, y);
+      } catch {
+        ok = false;
+      }
       if (ok) out.push([x, y]);
     }
   }
@@ -305,13 +331,24 @@ export function bountyDungeons(px, py, dungeonAt, graveyardAt) {
   for (let dy = -BOUNTY_MAX_PX; dy <= BOUNTY_MAX_PX; dy++) {
     for (let dx = -BOUNTY_MAX_PX; dx <= BOUNTY_MAX_PX; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) < BOUNTY_MIN_PX) continue;
-      const x = px + dx, y = py + dy;
-      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too
+      const x = px + dx,
+        y = py + dy;
+      if (!worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, past the Bay too
       let name = null;
-      try { name = dungeonAt(x, y); } catch { name = null; }
+      try {
+        name = dungeonAt(x, y);
+      } catch {
+        name = null;
+      }
       // GRAVEYARD: a graveyard's hunt is fought in the open air outside it, never down in its crypt
       let grave = false;
-      if (name && typeof graveyardAt === 'function') { try { grave = !!graveyardAt(x, y); } catch { grave = false; } }
+      if (name && typeof graveyardAt === 'function') {
+        try {
+          grave = !!graveyardAt(x, y);
+        } catch {
+          grave = false;
+        }
+      }
       if (name) out.push({ px: x, py: y, name: String(name), graveyard: grave });
     }
   }
@@ -323,23 +360,29 @@ export const dungeonSlotsFor = (n) => (n >= 2 ? [2, 3] : n === 1 ? [3] : []).sli
 /** The compass word from one map pixel to another (the map's y runs south). */
 export function compassWord(dx, dy) {
   if (!dx && !dy) return 'nearby';
-  const a = (Math.atan2(-dy, dx) * 180) / Math.PI;   // east 0, north 90
+  const a = (Math.atan2(-dy, dx) * 180) / Math.PI; // east 0, north 90
   const words = ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'];
   return words[((Math.round(a / 45) % 8) + 8) % 8];
 }
 /** How far, in the words a town crier would use. */
 export function distanceWord(d) {
   if (d <= 3) return 'a short walk';
-  if (d <= 5) return 'half a day\'s walk';
+  if (d <= 5) return "half a day's walk";
   if (d <= 7) return 'a long walk';
-  return 'a day\'s ride';
+  return "a day's ride";
 }
 
 // ── the words ─────────────────────────────────────────────────────────
 /** Who pinned the notice up. */
 export const BOUNTY_POSTERS = Object.freeze([
-  'the Captain of the Guard', 'the town Reeve', 'a worried farmer', 'the Fighters Guild', 'the local magistrate',
-  'the shepherds\' guild', 'a traveling merchant', 'the temple\'s steward',
+  'the Captain of the Guard',
+  'the town Reeve',
+  'a worried farmer',
+  'the Fighters Guild',
+  'the local magistrate',
+  "the shepherds' guild",
+  'a traveling merchant',
+  "the temple's steward",
 ]);
 /** The notices, by kind of trouble. {foes} the beasts, {count} how many, {town}, {dir}, {far}. */
 export const BOUNTY_STORIES = Object.freeze({
@@ -351,7 +394,7 @@ export const BOUNTY_STORIES = Object.freeze({
   beast: Object.freeze([
     'I have seen {foes} out there, {far} {dir} of {town}. {count} of them at least. Get rid of them before they attack our children.',
     'Two shepherds went up into the hills {dir} of {town} and only one came back. He speaks of {foes}, {count} or more. Hunt them down.',
-    'Our cattle are being taken {dir} of the walls, and the tracks are not wolves\'. {count} {foes}, the hunters reckon. The town will pay for their pelts.',
+    "Our cattle are being taken {dir} of the walls, and the tracks are not wolves'. {count} {foes}, the hunters reckon. The town will pay for their pelts.",
   ]),
   orc: Object.freeze([
     'A band of {foes} has made camp {dir} of {town}, {far} out. {count} of them, bold enough to light fires. Break the camp before they come for the gates.',
@@ -374,7 +417,7 @@ export const BOUNTY_DUNGEON_STORIES = Object.freeze([
   '{count} {foes} have made their lair in {place}, {far} {dir} of {town}. They come up at night and are growing bolder. Go down there and put an end to them.',
   'The last patrol sent into {place} did not come back. The one survivor found crawling out speaks of {foes}, {count} of them, deep inside. Clear the place.',
   'Whatever sleeps in {place} has woken: {count} {foes} now roam its halls, and the farms {dir} of {town} lie in their shadow. Descend and cleanse it.',
-  'A reward is offered to any blade willing to enter {place}, {dir} of {town}, and slay the {foes} nesting there, {count} strong by the trappers\' count.',
+  "A reward is offered to any blade willing to enter {place}, {dir} of {town}, and slay the {foes} nesting there, {count} strong by the trappers' count.",
 ]);
 /** A notice that speaks of a farm - its granary, its orchard, its cattle, its sheep - stands a farm on its pixel
  *  (BOUNTY-FARM, scenes/bountyFarms.js). Read off the notice's own words, so a new story that names a farm gets one. */
@@ -386,7 +429,7 @@ export const BOUNTY_GRAVEYARD_STORIES = Object.freeze([
   '{count} {foes} have been seen at {place}, {far} {dir} of {town}. They stir among the stones after dark. Hunt them down before they reach the road.',
   'The gravedigger at {place} refuses to work after dusk: {foes}, {count} of them, have taken to the place. Put an end to them, {dir} of {town}, for good.',
   'Mourners were driven from {place}, {dir} of {town}, by {count} {foes}. Rid the graveyard of them.',
-  'A reward is offered to any blade willing to stand watch at {place}, {dir} of {town}, and slay the {foes} haunting it, {count} strong by the sexton\'s count.',
+  "A reward is offered to any blade willing to stand watch at {place}, {dir} of {town}, and slay the {foes} haunting it, {count} strong by the sexton's count.",
 ]);
 /** ...and a dungeon's names the place. */
 export const bountyDungeonMapLine = (place) => `Take a look at your map: ${place} is marked with a black circle.`;
@@ -402,10 +445,15 @@ export const BOUNTY_REWARD_STORIES = Object.freeze([
 export const BOUNTY_REWARD_TITLE = 'Bounty Fulfilled';
 
 /** Fill a story's blanks. */
-export const fillStory = (text, words) => String(text).replace(/\{(\w+)\}/g, (all, k) => (words[k] != null ? String(words[k]) : all));
+export const fillStory = (text, words) =>
+  String(text).replace(/\{(\w+)\}/g, (all, k) => (words[k] != null ? String(words[k]) : all));
 
 const pick = (list, h) => list[h % list.length];
-const capital = (s) => String(s).split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('-');
+const capital = (s) =>
+  String(s)
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('-');
 
 /**
  * One slot of a town's board, as a reader of `level` reads it - or null when the town has no ground to send anyone
@@ -442,10 +490,11 @@ export function bountyPosting({ day, px, py, name = '', slot, level, sites, dung
     if (s === slot) site = sites[i];
   }
   const [tx, ty] = site;
-  const quarry = bountyQuarry(level, wild);   // QUARRY-WORLD: the land's own beasts in the tier's band
+  const quarry = bountyQuarry(level, wild); // QUARRY-WORLD: the land's own beasts in the tier's band
   const mobileType = quarry[bountyHash(day, px, py, slot, SALT.beast) % quarry.length];
   const count = underground
-    ? BOUNTY_DUNGEON_PACK_MIN + (bountyHash(day, px, py, slot, SALT.count) % (BOUNTY_DUNGEON_PACK_MAX - BOUNTY_DUNGEON_PACK_MIN + 1))
+    ? BOUNTY_DUNGEON_PACK_MIN +
+      (bountyHash(day, px, py, slot, SALT.count) % (BOUNTY_DUNGEON_PACK_MAX - BOUNTY_DUNGEON_PACK_MIN + 1))
     : BOUNTY_PACK_MIN + (bountyHash(day, px, py, slot, SALT.count) % (BOUNTY_PACK_MAX - BOUNTY_PACK_MIN + 1));
   const foes = bountyFoesWord(mobileType);
   const kind = kindOf(mobileType);
@@ -453,20 +502,35 @@ export function bountyPosting({ day, px, py, name = '', slot, level, sites, dung
   const far = distanceWord(Math.max(Math.abs(tx - px), Math.abs(ty - py)));
   const town = name || 'town';
   const graveyard = !!place?.graveyard;
-  const template = pick(graveyard ? BOUNTY_GRAVEYARD_STORIES : place ? BOUNTY_DUNGEON_STORIES : BOUNTY_STORIES[kind], bountyHash(day, px, py, slot, SALT.story));
+  const template = pick(
+    graveyard ? BOUNTY_GRAVEYARD_STORIES : place ? BOUNTY_DUNGEON_STORIES : BOUNTY_STORIES[kind],
+    bountyHash(day, px, py, slot, SALT.story),
+  );
   const story = fillStory(template, { foes, count, town, dir, far, place: place?.name ?? '' });
   const lvl = clampLevel(level);
   return {
-    id: bountyId(day, px, py, slot, lvl), slotKey: bountySlotKey(day, px, py, slot), day, slot, level: lvl,
-    town: { px, py, name: town }, target: { px: tx, py: ty },
-    mobileType, count, foes,
-    kind: place ? 'dungeon' : 'field', place: place?.name ?? null, graveyard,
-    tier: bountyTierIndex(lvl) + 1, tierLabel: bountyTierLabel(lvl),   // BOUNTY-TIERLABEL
-    farm: !place && FARM_STORY_RE.test(template),   // BOUNTY-FARM: a farm stands on its pixel while it is held
+    id: bountyId(day, px, py, slot, lvl),
+    slotKey: bountySlotKey(day, px, py, slot),
+    day,
+    slot,
+    level: lvl,
+    town: { px, py, name: town },
+    target: { px: tx, py: ty },
+    mobileType,
+    count,
+    foes,
+    kind: place ? 'dungeon' : 'field',
+    place: place?.name ?? null,
+    graveyard,
+    tier: bountyTierIndex(lvl) + 1,
+    tierLabel: bountyTierLabel(lvl), // BOUNTY-TIERLABEL
+    farm: !place && FARM_STORY_RE.test(template), // BOUNTY-FARM: a farm stands on its pixel while it is held
     title: place ? `${foes} in ${place.name}` : `${foes} ${dir === 'nearby' ? 'nearby' : `to the ${capital(dir)}`}`,
-    story, mapLine: place ? bountyDungeonMapLine(place.name) : BOUNTY_MAP_LINE,
+    story,
+    mapLine: place ? bountyDungeonMapLine(place.name) : BOUNTY_MAP_LINE,
     poster: pick(BOUNTY_POSTERS, bountyHash(day, px, py, slot, SALT.poster)),
-    dir, far,
+    dir,
+    far,
     gold: bountyGold(lvl, count, mobileType, underground, quarry),
     item: bountyItemRule(lvl),
   };
@@ -499,8 +563,11 @@ export function rewardStory({ town = 'town', gold, itemName }, h = 0) {
 }
 
 /** The boards by position - x, then z, then y - as `[box, index]`; a board with no box takes no place. */
-const boardOrder = (boards) => (Array.isArray(boards) ? boards : []).map((b, i) => [b?.box, i]).filter(([b]) => Array.isArray(b))
-  .sort(([a], [b]) => (a[0] - b[0]) || (a[2] - b[2]) || (a[1] - b[1]));
+const boardOrder = (boards) =>
+  (Array.isArray(boards) ? boards : [])
+    .map((b, i) => [b?.box, i])
+    .filter(([b]) => Array.isArray(b))
+    .sort(([a], [b]) => a[0] - b[0] || a[2] - b[2] || a[1] - b[1]);
 
 /** Which of a town's boards are bounty boards (Mac, 2026-09-28: "always the half of the bounty boards in every city
  *  should share the same quests"): HALF of them, spread through the town - the boards sorted by position (x, then z,
@@ -527,11 +594,17 @@ export function questBoardIndices(boards) {
  *  @param {number[]|null} [centre]
  *  @returns {number} the Notice Board's index into `boards`, or -1 where every board is a bounty board */
 export function noticeBoardIndex(boards, bounty = questBoardIndices(boards), centre = null) {
-  let best = -1, near = Infinity;
+  let best = -1,
+    near = Infinity;
   for (const [box, i] of boardOrder(boards)) {
     if (bounty.has(i)) continue;
-    const d = Array.isArray(centre) ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1]) : 0;
-    if (d < near) { near = d; best = i; }
+    const d = Array.isArray(centre)
+      ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1])
+      : 0;
+    if (d < near) {
+      near = d;
+      best = i;
+    }
   }
   return best;
 }
@@ -552,7 +625,14 @@ export function noticeBoardIndex(boards, bounty = questBoardIndices(boards), cen
  *  under a lapse sweep online. */
 export const BOUNTY_LEDGER_VERSION = 2;
 /** @returns {BountyLedger} */
-export const newBountyLedger = () => ({ held: [], paid: [], dropped: [], paidAt: /** @type {Record<string, number>} */ ({}), droppedKilled: /** @type {Record<string, number>} */ ({}), v: BOUNTY_LEDGER_VERSION });
+export const newBountyLedger = () => ({
+  held: [],
+  paid: [],
+  dropped: [],
+  paidAt: /** @type {Record<string, number>} */ ({}),
+  droppedKilled: /** @type {Record<string, number>} */ ({}),
+  v: BOUNTY_LEDGER_VERSION,
+});
 
 /** A save record, read defensively - anything malformed is dropped rather than trusted. */
 export function readBountyLedger(rec) {
@@ -560,16 +640,24 @@ export function readBountyLedger(rec) {
   if (!rec || typeof rec !== 'object') return out;
   for (const h of Array.isArray(rec.held) ? rec.held : []) {
     if (!h || !parseBountyId(h.id) || out.held.some((x) => x.id === h.id)) continue;
-    out.held.push({ id: h.id, takenAt: Number.isFinite(h.takenAt) ? h.takenAt : 0, killed: Math.max(0, h.killed | 0), ...(h.shared ? { shared: true } : {}), ...(typeof h.from === 'string' ? { from: h.from.slice(0, 24) } : {}) });
+    out.held.push({
+      id: h.id,
+      takenAt: Number.isFinite(h.takenAt) ? h.takenAt : 0,
+      killed: Math.max(0, h.killed | 0),
+      ...(h.shared ? { shared: true } : {}),
+      ...(typeof h.from === 'string' ? { from: h.from.slice(0, 24) } : {}),
+    });
     if (out.held.length >= BOUNTY_ACTIVE_MAX) break;
   }
-  for (const k of ['paid', 'dropped']) for (const s of Array.isArray(rec[k]) ? rec[k] : []) if (typeof s === 'string' && s.length <= 40) out[k].push(s);
+  for (const k of ['paid', 'dropped'])
+    for (const s of Array.isArray(rec[k]) ? rec[k] : []) if (typeof s === 'string' && s.length <= 40) out[k].push(s);
   for (const k of /** @type {const} */ (['paidAt', 'droppedKilled'])) {
     const src = rec[k] && typeof rec[k] === 'object' && !Array.isArray(rec[k]) ? rec[k] : {};
     const into = /** @type {Record<string, number>} */ (out[k]);
-    for (const [slot, v] of Object.entries(src)) if (slot.length <= 40 && Number.isSafeInteger(v) && v >= 0) into[slot] = v;
+    for (const [slot, v] of Object.entries(src))
+      if (slot.length <= 40 && Number.isSafeInteger(v) && v >= 0) into[slot] = v;
   }
-  out.v = Number.isSafeInteger(rec.v) && rec.v >= 1 ? rec.v : 1;   // AUDIT REST II Q3: no mark - a ledger from before it
+  out.v = Number.isSafeInteger(rec.v) && rec.v >= 1 ? rec.v : 1; // AUDIT REST II Q3: no mark - a ledger from before it
   return out;
 }
 
@@ -607,7 +695,13 @@ export function takeBounty(ledger, id, nowMinutes, { shared = false, from = null
   if (ledger.held.length >= BOUNTY_ACTIVE_MAX) return { ok: false, reason: 'full' };
   // AUDIT 28 B2: a notice given up and taken again goes on from the kills it had - never a fresh pack to farm
   const killed = Math.max(0, ledger.droppedKilled?.[b.slotKey] ?? 0);
-  const row = { id, takenAt: nowMinutes, killed, ...(shared ? { shared: true } : {}), ...(from ? { from: String(from).slice(0, 24) } : {}) };
+  const row = {
+    id,
+    takenAt: nowMinutes,
+    killed,
+    ...(shared ? { shared: true } : {}),
+    ...(from ? { from: String(from).slice(0, 24) } : {}),
+  };
   ledger.held.push(row);
   ledger.dropped = ledger.dropped.filter((s) => s !== b.slotKey);
   if (ledger.droppedKilled) delete ledger.droppedKilled[b.slotKey];
@@ -632,7 +726,7 @@ export function payBounty(ledger, id, nowMinutes = null) {
   const [row] = ledger.held.splice(i, 1);
   const k = parseBountyId(row.id)?.slotKey;
   if (k && !ledger.paid.includes(k)) ledger.paid.push(k);
-  if (k && Number.isSafeInteger(nowMinutes)) (ledger.paidAt ??= {})[k] = nowMinutes;   // AUDIT 28 B1: WHEN - the pose's `t`
+  if (k && Number.isSafeInteger(nowMinutes)) (ledger.paidAt ??= {})[k] = nowMinutes; // AUDIT 28 B1: WHEN - the pose's `t`
   return row;
 }
 
@@ -645,14 +739,19 @@ export function lapseBounties(ledger, nowMinutes) {
 
 /** Forget paid and dropped slots older than yesterday - the board they were on is long gone. */
 export function pruneBountyLedger(ledger, today) {
-  const keep = (s) => { const d = Number(String(s).split('.')[0]); return Number.isFinite(d) && d >= today - 1; };
+  const keep = (s) => {
+    const d = Number(String(s).split('.')[0]);
+    return Number.isFinite(d) && d >= today - 1;
+  };
   ledger.paid = ledger.paid.filter(keep);
   ledger.dropped = ledger.dropped.filter(keep);
-  for (const k of ['paidAt', 'droppedKilled']) for (const slot of Object.keys(ledger[k] ?? {})) if (!keep(slot)) delete ledger[k][slot];
+  for (const k of ['paidAt', 'droppedKilled'])
+    for (const slot of Object.keys(ledger[k] ?? {})) if (!keep(slot)) delete ledger[k][slot];
 }
 
 /** Minutes a held bounty has left. */
-export const bountyMinutesLeft = (row, nowMinutes) => Math.max(0, BOUNTY_LIFETIME_MINUTES - (nowMinutes - (row?.takenAt ?? nowMinutes)));
+export const bountyMinutesLeft = (row, nowMinutes) =>
+  Math.max(0, BOUNTY_LIFETIME_MINUTES - (nowMinutes - (row?.takenAt ?? nowMinutes)));
 /** "14h 05m" / "38m". */
 export function bountyTimeText(minutes) {
   const m = Math.max(0, Math.ceil(minutes));
@@ -671,8 +770,15 @@ export function bountyTimeText(minutes) {
  */
 export function bountyPoseField(ledger, paidIds, { standing = () => false } = {}) {
   /** @type {Array<{ i:string, s?:number, c?:number, k?:number, a?:number, t?:number }>} */
-  const rows = ledger.held.map((h) => ({ i: h.id, ...(h.shared ? { s: 1 } : {}), ...(h.killed > 0 ? { k: h.killed } : {}), ...(standing(h.id) ? { a: 1 } : {}) }));
-  const paid = [...paidIds.entries()].map(([slot, id]) => ({ id, t: ledger.paidAt?.[slot] ?? -1 })).sort((a, b) => b.t - a.t);
+  const rows = ledger.held.map((h) => ({
+    i: h.id,
+    ...(h.shared ? { s: 1 } : {}),
+    ...(h.killed > 0 ? { k: h.killed } : {}),
+    ...(standing(h.id) ? { a: 1 } : {}),
+  }));
+  const paid = [...paidIds.entries()]
+    .map(([slot, id]) => ({ id, t: ledger.paidAt?.[slot] ?? -1 }))
+    .sort((a, b) => b.t - a.t);
   for (const { id, t } of paid) if (rows.length < BOUNTY_POSE_MAX) rows.push({ i: id, c: 1, ...(t >= 0 ? { t } : {}) });
   return rows.length ? { bq: rows.slice(0, BOUNTY_POSE_MAX) } : {};
 }
@@ -698,9 +804,12 @@ export function bountyIdAtLevel(id, level) {
  */
 export function bountyPackOwner(me, mates, huntKey, target, inside = 0) {
   if (!me) return me;
-  const rowOf = (p) => (Array.isArray(p?.bq) ? p.bq.find((r) => !r.c && bountyHuntKey(r.i) === huntKey) : null);   // BOUNTY-TIER: the same hunt - slot and tier
-  const live = (mates ?? []).filter((m) => m?.acct && m.p && m.online !== false && !(m.p.h === 0));   // the dead and the gone stand nothing
-  const standing = live.filter((m) => rowOf(m.p)?.a === 1).map((m) => String(m.acct)).sort();
+  const rowOf = (p) => (Array.isArray(p?.bq) ? p.bq.find((r) => !r.c && bountyHuntKey(r.i) === huntKey) : null); // BOUNTY-TIER: the same hunt - slot and tier
+  const live = (mates ?? []).filter((m) => m?.acct && m.p && m.online !== false && !(m.p.h === 0)); // the dead and the gone stand nothing
+  const standing = live
+    .filter((m) => rowOf(m.p)?.a === 1)
+    .map((m) => String(m.acct))
+    .sort();
   if (standing.length) return standing[0];
   let owner = me;
   for (const m of live) {
@@ -715,9 +824,10 @@ export function bountyPackOwner(me, mates, huntKey, target, inside = 0) {
  *  who fell or walked off hands on a hunt part done, never a fresh one. */
 export function bountyPartyKills(mates, huntKey) {
   let k = 0;
-  for (const m of mates ?? []) for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) {
-    if (!r.c && Number.isSafeInteger(r.k) && bountyHuntKey(r.i) === huntKey) k = Math.max(k, r.k);
-  }
+  for (const m of mates ?? [])
+    for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) {
+      if (!r.c && Number.isSafeInteger(r.k) && bountyHuntKey(r.i) === huntKey) k = Math.max(k, r.k);
+    }
   return k;
 }
 /** AUDIT 28 B1: whether a mate's clear of this hunt came after `takenAt` (the pose's `t`) - only then does it pay. */

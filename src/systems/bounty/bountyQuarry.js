@@ -23,7 +23,10 @@ import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';
 /** A monster's id: Daggerfall's (under 128) or Daggerfall Enemy Expansion's (256 to 383) - never a person's. */
 const isMonster = (id) => Number.isInteger(id) && ((id >= 0 && id < 128) || (id >= 256 && id < 384));
 /** A monster's level as the game loaded it (Daggerfall Enemy Expansion's and Meaner Monsters' edits, or Daggerfall's). */
-const levelLoaded = (id) => { const dex = dexLoaded(); return faunaLevelIn(id, dex, dex && mudexLoaded()); };
+const levelLoaded = (id) => {
+  const dex = dexLoaded();
+  return faunaLevelIn(id, dex, dex && mudexLoaded());
+};
 
 /**
  * THE LAND'S WILD on a pixel of `climateIndex` (MapsFile.getClimateIndex) and `fauna` (a zone's band past the Bay, null on
@@ -37,11 +40,15 @@ export function landWildOf(climateIndex, fauna, levelOf = levelLoaded) {
   for (const isDay of [true, false]) {
     const index = resolveEncounterTableIndex({ climateIndex, fauna, inLocationRect: false, isDay });
     if (index == null) continue;
-    for (const table of encounterTableChoices(index)) for (const id of table) if (isMonster(id) && ENEMY_BASICS[id]?.behaviour !== 'Aquatic') ids.add(id);
+    for (const table of encounterTableChoices(index))
+      for (const id of table) if (isMonster(id) && ENEMY_BASICS[id]?.behaviour !== 'Aquatic') ids.add(id);
   }
   /** @type {Array<[number, number]>} */
   const out = [];
-  for (const id of [...ids].sort((a, b) => a - b)) { const lv = levelOf(id); if (Number.isFinite(lv)) out.push([id, /** @type {number} */ (lv)]); }
+  for (const id of [...ids].sort((a, b) => a - b)) {
+    const lv = levelOf(id);
+    if (Number.isFinite(lv)) out.push([id, /** @type {number} */ (lv)]);
+  }
   return out;
 }
 
@@ -55,7 +62,10 @@ export function bountyLandWild(maps) {
   let key = '';
   return (/** @type {number} */ px, /** @type {number} */ py) => {
     const k = `${encounterTableGeneration()}|${tamrielLandVersion()}|${dexLoaded()}|${mudexLoaded()}`;
-    if (k !== key) { key = k; kept.clear(); }
+    if (k !== key) {
+      key = k;
+      kept.clear();
+    }
     const at = `${px},${py}`;
     if (!kept.has(at)) kept.set(at, landWildOf(maps.getClimateIndex(px, py), maps.getFaunaBand?.(px, py) ?? null));
     return kept.get(at);

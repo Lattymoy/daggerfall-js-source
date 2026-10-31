@@ -802,6 +802,12 @@
 !/src/systems/bookshelf.js
 !/src/systems/bossCards.js
 !/src/systems/bossTraits.js
+!/src/systems/bounty/
+/src/systems/bounty/*
+!/src/systems/bounty/bountyBoard.js
+!/src/systems/bounty/bountyJournal.js
+!/src/systems/bounty/bountyQuarry.js
+!/src/systems/bounty/bountyReward.js
 !/src/systems/breachBook.js
 !/src/systems/breath.js
 !/src/systems/buildBreather.js

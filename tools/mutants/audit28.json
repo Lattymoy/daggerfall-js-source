@@ -331,8 +331,8 @@
   {
     "name": "AUDIT28-B3-a-standing-pack-owns-nothing",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  if (standing.length) return standing[0];\n",
-    "new": "",
+    "old": "  if (standing.length) return standing[0];\n  let owner = me;",
+    "new": "  let owner = me;",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "AUDIT28-B3-the-gone-and-the-dead-own-it",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "m.p && m.online !== false && !(m.p.h === 0));",
-    "new": "m.p);",
+    "old": "  const live = (mates ?? []).filter((m) => m?.acct && m.p && m.online !== false && !(m.p.h === 0)); // the dead and the gone stand nothing",
+    "new": "  const live = (mates ?? []).filter((m) => m?.acct && m.p); // the dead and the gone stand nothing",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "AUDIT28-B7-the-oldest-clears-first",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": ".sort((a, b) => b.t - a.t);",
-    "new": ".sort((a, b) => a.t - b.t);",
+    "old": "    .sort((a, b) => b.t - a.t);",
+    "new": "    .sort((a, b) => a.t - b.t);",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]

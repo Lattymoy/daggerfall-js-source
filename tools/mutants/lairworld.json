@@ -65,8 +65,8 @@
   {
     "name": "LW-board-parse-held-to-the-bay",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;",
-    "new": "  if (px < 0 || py < 0 || px >= 1000 || py >= 500 || level < 1) return null;",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null; // LAIR-WORLD: the world's pixel",
+    "new": "  if (px < 0 || py < 0 || px >= 1000 || py >= 500 || level < 1) return null; // LAIR-WORLD: the world's pixel",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW-board-ground-held-to-the-bay",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too\n      let ok = false;",
-    "new": "      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let ok = false;",
+    "old": "        y = py + dy;\n      if (!worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, past the Bay too\n      let ok = false;",
+    "new": "        y = py + dy;\n      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let ok = false;",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW-board-dungeons-held-to-the-bay",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too\n      let name = null;",
-    "new": "      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let name = null;",
+    "old": "        y = py + dy;\n      if (!worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, past the Bay too\n      let name = null;",
+    "new": "        y = py + dy;\n      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let name = null;",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]
