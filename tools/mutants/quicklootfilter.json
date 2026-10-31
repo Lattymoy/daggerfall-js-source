@@ -65,7 +65,7 @@
   {
     "name": "QUICK-LOOT-FILTER-the-take-walks-the-full-list",
     "file": "src/systems/quickLootFilter.js",
-    "old": "return getPref(QL_HIDE_LEFT) === true ? items.filter((it) => !_leaves(it)) : items;",
+    "old": "return quickLootActive() && getPref(QL_HIDE_LEFT) === true ? items.filter((it) => !_leaves(it)) : items;",
     "new": "return items;",
     "tests": [
       "test/systems/quicklootfilter.test.js"
@@ -76,6 +76,60 @@
     "file": "src/systems/worldHover.js",
     "old": "const allLeft = empty && hoverItems(held).length > 0;",
     "new": "const allLeft = false;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-hoverHidden-ignores-the-row",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "  if (!quickLootActive()) return false;\n  if (keyIn",
+    "new": "  if (keyIn",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-hoverVisible-ignores-the-row",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return quickLootActive() && getPref(QL_HIDE_LEFT) === true",
+    "new": "return getPref(QL_HIDE_LEFT) === true",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-quantified-group-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "if (closedGroup && (c === '*'",
+    "new": "if (false && (c === '*'",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-backreference-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "if (/[1-9k]/.test(text[i + 1] ?? '')) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-lookaround-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "!(text[i + 2] === ':' || (text[i + 2] === '<' && text[i + 3] !== '=' && text[i + 3] !== '!'))) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-name-not-cut",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "test(String(name).slice(0, NAME_MATCH_MAX))",
+    "new": "test(String(name))",
     "tests": [
       "test/systems/quicklootfilter.test.js"
     ]

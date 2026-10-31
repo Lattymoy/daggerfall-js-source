@@ -49,6 +49,9 @@ const keyIn = (/** @type {string} */ key, /** @type {readonly string[]} */ list)
 /** The take-all's own word on a piece (quickLoot.js takeAllLeaves, which registers itself here): systems/quickLoot.js imports
  *  worldHover.js, so worldHover.js cannot import it back - the plaque asks through this seam. Until it registers, nothing is left. */
 let _leaves = (/** @type {any} */ _item) => false;
+/** The Quick loot row's own switch (quickLoot.js quickLootOn reads the same pref; it cannot be imported back here). Off is
+ *  Daggerfall's loot: no plaque is hidden, no body is out of the pick, no row is dropped from a list. */
+const quickLootActive = () => !!getPref('quickLoot');
 export function setTakeAllLeaves(/** @type {(item: any) => boolean} */ fn) { _leaves = fn; }
 
 /**
@@ -58,6 +61,7 @@ export function setTakeAllLeaves(/** @type {(item: any) => boolean} */ fn) { _le
  * @param {(item: any) => boolean} [leaves] whether the take-all leaves a piece - the registered takeAllLeaves unless handed one
  */
 export function hoverHidden(key, items, leaves = _leaves) {
+  if (!quickLootActive()) return false;
   if (keyIn(key, BODY_KEYS)) {
     if (!items.length) return getPref(QL_HIDE_EMPTY) === true;
     return getPref(QL_HIDE_DULL) === true && items.every(leaves);
@@ -82,8 +86,30 @@ export function bodyHidden(key, items) {
 // piece but a quest's item - a Raw meat is no gear - and ahead of every other box.
 /** @type {Map<string, RegExp|null>} */
 const _regex = new Map();
+/**
+ * REGEX-SAFE: whether a pattern is one the browser's matcher cannot be made to stall on. A name is matched on the main thread, and
+ * a pattern with a quantified group (`(a+)+`, `(a|aa)*`), a backreference or a lookaround can take exponential time on a name that
+ * almost matches. None of those is allowed. What is left - literals, classes, anchors, alternation, a quantifier on a single
+ * character or class - runs in time that grows with the pattern times the name, and both are bounded (QL_SKIP_TEXT_MAX, NAME_MATCH_MAX).
+ * Pure.
+ */
+export function regexIsSafe(/** @type {string} */ text) {
+  let inClass = false, closedGroup = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '\\') { if (/[1-9k]/.test(text[i + 1] ?? '')) return false; i++; closedGroup = false; continue; }   // \1 and \k<name> are backreferences
+    if (inClass) { if (c === ']') inClass = false; continue; }
+    if (c === '[') { inClass = true; closedGroup = false; continue; }
+    if (c === '(' && text[i + 1] === '?' && !(text[i + 2] === ':' || (text[i + 2] === '<' && text[i + 3] !== '=' && text[i + 3] !== '!'))) return false;   // (?= (?! (?<= (?<!
+    if (closedGroup && (c === '*' || c === '+' || c === '?' || (c === '{' && /^\{\d+(,\d*)?\}/.test(text.slice(i))))) return false;
+    closedGroup = c === ')';
+  }
+  return true;
+}
+/** The longest name a pattern is run against: the longest an item name is is far below it. */
+export const NAME_MATCH_MAX = 200;
 const compiled = (/** @type {string} */ text) => {
-  if (!_regex.has(text)) { let re = null; try { re = new RegExp(text, 'i'); } catch { re = null; } _regex.set(text, re); }   // a bad pattern matches nothing
+  if (!_regex.has(text)) { let re = null; try { re = regexIsSafe(text) ? new RegExp(text, 'i') : null; } catch { re = null; } _regex.set(text, re); }   // a bad or unsafe pattern matches nothing
   return _regex.get(text) ?? null;
 };
 /** Is a pattern a pattern? Pure - the drawer says so before it adds one. */
@@ -95,7 +121,7 @@ export const skipList = () => { const v = getPref(QL_SKIP); return Array.isArray
 export function skipMatches(/** @type {{ mode: string, text: string }} */ e, /** @type {string} */ name) {
   const n = String(name ?? '').toLowerCase(), t = e.text.trim().toLowerCase();
   if (!n) return false;
-  return e.mode === 'exact' ? n === t : e.mode === 'regex' ? !!compiled(e.text)?.test(name) : n.includes(t);
+  return e.mode === 'exact' ? n === t : e.mode === 'regex' ? !!compiled(e.text)?.test(String(name).slice(0, NAME_MATCH_MAX)) : n.includes(t);
 }
 /** Whether the player's skip list leaves this piece (a quest's item never). Pure over the prefs. */
 export function nameLeaves(/** @type {any} */ item) {
@@ -130,5 +156,5 @@ export const _resetMigration = () => { _migrated = false; _regex.clear(); };
  * @param {any[]} items the pile's pieces, holes already dropped
  */
 export function hoverVisible(items) {
-  return getPref(QL_HIDE_LEFT) === true ? items.filter((it) => !_leaves(it)) : items;
+  return quickLootActive() && getPref(QL_HIDE_LEFT) === true ? items.filter((it) => !_leaves(it)) : items;
 }

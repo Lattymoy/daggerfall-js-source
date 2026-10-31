@@ -8,7 +8,7 @@ import { setPref, resetPrefs, _resetForTests } from '../../src/systems/uiPrefs.j
 import { FEATURES, resolveControl } from '../../src/systems/features.js';
 import { RARITY_ORDER } from '../../src/systems/loot/lootRarity.js';
 import { MATERIAL_NAMES } from '../../src/systems/item/itemInfo.js';
-import { filterLeaves, hoverHidden, bodyHidden, nameLeaves, skipMatches, skipList, validSkipEntry, migrateQuickLootTier, _resetMigration, QL_SKIP, QL_RARITY_PREF, QL_MATERIAL_PREF, QL_MATERIAL_COMMON, QL_HIDE_EMPTY, QL_HIDE_DULL, QL_HIDE_DROPS, QL_HIDE_LEFT } from '../../src/systems/quickLootFilter.js';
+import { filterLeaves, hoverHidden, bodyHidden, hoverVisible, regexIsSafe, nameLeaves, skipMatches, skipList, validSkipEntry, migrateQuickLootTier, _resetMigration, QL_SKIP, QL_RARITY_PREF, QL_MATERIAL_PREF, QL_MATERIAL_COMMON, QL_HIDE_EMPTY, QL_HIDE_DULL, QL_HIDE_DROPS, QL_HIDE_LEFT } from '../../src/systems/quickLootFilter.js';
 import { takeAllLeaves } from '../../src/systems/quickLoot.js';
 import { resolveHover, hoverItemAt, hoverLines } from '../../src/systems/worldHover.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
@@ -201,4 +201,32 @@ test('QUICK-LOOT-FILTER the list: with "Filtered items inside the list" on, a bo
   assert.deepEqual(hoverLines([iron, daedric], Infinity).shown.map((r) => r.item), [iron, daedric], 'a glance (a cupboard\'s peek) lists all of it');
   assert.deepEqual(frame('container:3', [iron, daedric])?.rows.map((r) => r.item) ?? [], [iron, daedric], 'a cupboard\'s peek is unfiltered');
   assert.equal(takeAllLeaves(iron), true, 'and the take-all still leaves it - the list only hides it');
+});
+
+test('QUICK-LOOT-FILTER off: with the Quick loot row off no plaque is hidden, no body is out of the pick and no row is dropped from a list - whatever the hiding switches say (mutants: hoverHidden ignores the row; hoverVisible ignores the row)', () => {
+  const left = sword(WEAPON_MATERIALS.Iron);
+  only(['Daedric']);
+  for (const k of [QL_HIDE_EMPTY, QL_HIDE_DULL, QL_HIDE_DROPS, QL_HIDE_LEFT]) setPref(k, true);
+  assert.equal(hoverHidden('foeCorpse:7', []), true, 'on: an empty body is hidden');
+  assert.equal(hoverVisible([left]).length, 0, 'on: the row is dropped from the list');
+  setPref('quickLoot', false);
+  assert.equal(hoverHidden('foeCorpse:7', []), false, 'off: shown');
+  assert.equal(hoverHidden('foeCorpse:7', [left, left]), false);
+  assert.equal(hoverHidden('droppedLoot:2', [left]), false);
+  assert.equal(bodyHidden('foeCorpse:7', [left]), false, 'off: the body stays in the pick');
+  assert.deepEqual(hoverVisible([left]), [left], 'off: the list holds every row');
+});
+
+test('QUICK-LOOT-FILTER regex: a pattern that can stall the matcher is no pattern - a quantified group, a backreference, a lookaround (mutants: the group check dropped; the backreference check dropped; the lookaround check dropped; the name not cut)', () => {
+  for (const bad of ['(a+)+$', '(a|aa)*b', '(a*)*', '(?:a+){2,}', '(a)\\1', '(?<x>a)\\k<x>', '(?=a)a', '(?!a)b', '(?<=a)b', '(?<!a)b', '(a|b)?c', 'helm(et)? of'])
+    assert.equal(regexIsSafe(bad), false, `${bad} is refused`);
+  for (const ok of ['^(\\w+) spaulder$', '^[a-z ]+ ring$', 'a{2,3}b', '\\(a+\\)+', '[(]+', 'sword|axe', 'helm(?:et|m) of', '(?:fire|frost) blade', '(?<n>fire) blade'])
+    assert.equal(regexIsSafe(ok), true, `${ok} is allowed`);
+  assert.equal(validSkipEntry({ mode: 'regex', text: '(a+)+$' }), false, 'the drawer will not add it');
+  setPref(QL_SKIP, [{ mode: 'regex', text: '(a+)+$' }, { mode: 'regex', text: 'axe' }]);
+  assert.deepEqual(skipList(), [{ mode: 'regex', text: 'axe' }], 'one stored by an earlier build is dropped from the list');
+  const t0 = Date.now();
+  assert.equal(skipMatches({ mode: 'regex', text: '(a+)+$' }, 'a'.repeat(60) + '!'), false, 'and matches nothing');
+  assert.ok(Date.now() - t0 < 200, 'in no time');
+  assert.equal(skipMatches({ mode: 'regex', text: 'z$' }, 'a'.repeat(300) + 'z'), false, 'a name is cut to NAME_MATCH_MAX before it is matched');
 });
