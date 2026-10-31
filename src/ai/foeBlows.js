@@ -1,12 +1,12 @@
 // @ts-check
-// TACT4 - TELEGRAPHED BLOWS (bible/12-Enhanced-AI/Tactics-Arc.md; Mac, 2026-10-02: "Introducing new attack patterns
+// TACT4 - TELEGRAPHED BLOWS (Mac, 2026-10-02: "Introducing new attack patterns
 // and smaller telegraphed attacks (like our world boss) but not overdoing it"; his calls: one or two, tier-based -
 // level 10 and up, or an elite foe; since TELL7 a champion and a revenant too).
 //
 // The world boss's language at a foe's scale: a short wind-up with its shape drawn on the ground where it will land,
 // resolved by where the player's feet stand at the landing (net/gate/gateStrike.js's law). Three shapes at TACT4 - the LUNGE
 // (a short lane ahead), the SWEEP (a front cone), the SLAM (a disc just ahead) - and four since TELL6 (the RING, the
-// CHARGE, the LEAP, the AIMED shot: Feud-Arc.md 8.1), each family its own (ai/blowShapes.js). A blow is the foe's own
+// CHARGE, the LEAP, the AIMED shot:), each family its own (ai/blowShapes.js). A blow is the foe's own
 // blow, delayed and shaped: at the landing the brain (ai/tactics.js) forces the swing, and the host's ordinary hit
 // resolution asks `blowConnects` (the shape's verdict, in place of the reach test) and `blowScaled` (the shape's
 // weight on DFU's own damage roll - armour, skill and all).
@@ -18,7 +18,7 @@
 // With the Enhanced AI switch off the brain never starts one, and both helpers answer the classic value.
 
 import { tacticsNow } from './tacticsClock.js'; // AUDIT TACT: the foes' own time
-import { TELL, isElite } from './tells.js'; // TELL7: the tier, the cooldowns' one home
+import { TELL, isElite } from './tells.js'; // The tier, the cooldowns' one home
 
 export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js'; // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them
 import {
@@ -89,7 +89,7 @@ export function fitBlowToGround(b, collider) {
   };
   const h0 = at(b.origin[0], b.origin[2]);
   if (h0 == null) return b;
-  const far = b.ahead > 2 ? b.ahead : 2; // TELL6: a leap's disc lies on the ground at its point
+  const far = b.ahead > 2 ? b.ahead : 2; // A leap's disc lies on the ground at its point
   const hf = at(b.origin[0] + fx * far, b.origin[2] + fz * far),
     hw = at(b.origin[0] + wx * 2, b.origin[2] + wz * 2);
   const clamp = (v) => Math.max(-1, Math.min(1, v));
@@ -104,7 +104,7 @@ const DOWN = Object.freeze([0, -1, 0]);
 export function blowPhase(b, now) {
   if (!b) return null;
   if (b.cut != null) {
-    // TELL5: a feint cut - its fill frozen where it stopped, fading out dashed over FEINT_FADE
+    // A feint cut - its fill frozen where it stopped, fading out dashed over FEINT_FADE
     const after = now - b.cut;
     if (after > FEINT_FADE || after < 0) return null;
     return {
@@ -128,7 +128,7 @@ export function setLiveBlow(ai, b) {
   if (b) _live.set(ai, b);
   else _live.delete(ai);
 }
-/** AUDIT TELL (bible/12-Enhanced-AI/Feud-Arc.md 3.2, built at last): a wind-up its poise broke SHATTERS - its mark a
+/** AUDIT TELL (built at last): a wind-up its poise broke SHATTERS - its mark a
  *  white, cracked flash going out over BLOW_SHATTER, never a landing's look (which is white-hot and whole). */
 export const BLOW_SHATTER = 0.25;
 /** The shattering marks: `{ blow, at }`, drawn until BLOW_SHATTER past `at`. */
@@ -143,8 +143,8 @@ export function shatterBlow(ai, now) {
 /** Is any foe winding up within BLOW_NEAR of `feet`? (one at a time near the player) */
 export function windupNear(feet, now, except = null) {
   for (const [ai, b] of _live) {
-    if (ai === except || b.cut != null || gone(ai, now)) continue; // TELL5: a cut feint is no wind-up
-    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // TELL5: a landing about to chain is still its foe's one; TELL6: a charge running its lane too
+    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up
+    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too
     if (Math.hypot(b.origin[0] - feet[0], b.origin[2] - feet[2]) <= BLOW_NEAR) return true;
   }
   return false;
@@ -152,7 +152,7 @@ export function windupNear(feet, now, except = null) {
 /** What the ground draws now: each live blow within `range` of `near` (the player's feet in the host's frame) with its
  *  phase, and TELL2's `nearFloor` - the fog's floor for a mark within TELL_NEAR_M of the player; a blow past its flash is
  *  dropped from the registry here. */
-/** AUDIT ARENA-LADDER: a blow wound up between two fighters on the sand (`b.sand`, ai/tactics.js) is drawn for the
+/** A blow wound up between two fighters on the sand (`b.sand`, ai/tactics.js) is drawn for the
  *  stands - the colosseum is 93 m end to end, and a watcher on its far tier is past the 40 m a street's blow is drawn. */
 export const SAND_DRAW_RANGE = 100;
 export function drawableBlows(now, near = null, range = 40) {
@@ -210,7 +210,7 @@ export function blowConnects(ai, classic, now = tacticsNow()) {
   const v = ai?._blowVerdict;
   if (v == null) return classic;
   const fresh = now == null || ai._blowAt == null || now - ai._blowAt <= BLOW_VERDICT_LIFE;
-  // AUDIT ARENA-LADDER 2: a verdict is its mark's alone (`_blowFor`, the target key it landed on - ai/tactics.js): a foe
+  // A verdict is its mark's alone (`_blowFor`, the target key it landed on - ai/tactics.js): a foe
   // whose target changed between the landing and its damage frame (the motor turns on an attacker at once, the brain
   // only at its next tick) swings classically - a lunge landed on a bout-mate never decided a blow at me, nor mine one
   // at a foe in the street
@@ -226,13 +226,13 @@ export function blowConnects(ai, classic, now = tacticsNow()) {
   } // dodged: the weight is spent with it, and the dodge is told
   return v;
 }
-/** AUDIT ARENA-LADDER 2: the brain's own spelling of a foe's target (ai/tactics.js targetKey), registered upward - the
+/** The brain's own spelling of a foe's target (ai/tactics.js targetKey), registered upward - the
  *  brain imports this file. */
 let _blowTargetOf = null;
 export function setBlowTargetOf(fn) {
   _blowTargetOf = typeof fn === 'function' ? fn : null;
 }
-/** AUDIT ARENA-LADDER: A DODGED BLOW IS A MISS - the hosts' hit resolution returns before DFU's damage roll on a dodge,
+/** A DODGED BLOW IS A MISS - the hosts' hit resolution returns before DFU's damage roll on a dodge,
  *  so the formula's resolution observer (combat/formulas.js) never heard it: the arena's judges counted no miss for the
  *  fighter whose lunge was stepped out of, and its replay showed no swing. Keyed listeners (the formula's own shape):
  *  `fn(ai)` for the foe whose telegraphed blow was dodged. */
@@ -260,6 +260,6 @@ export function blowScaled(ai, dmg) {
 
 /** The colour a blow is drawn in - the boss's weight, a foe's ember. */
 export const BLOW_COLOR = Object.freeze([1.0, 0.42, 0.12]);
-/** TELL3 (section 5): an iron blow's colour - its mark, its glint. Never by colour alone: the mark's second rim and its
+/** An iron blow's colour - its mark, its glint. Never by colour alone: the mark's second rim and its
  *  hatch (render/telegraphStyle.js) say it too. */
 export const IRON_COLOR = Object.freeze([1.0, 0.12, 0.08]);

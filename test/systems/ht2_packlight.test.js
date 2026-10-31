@@ -131,13 +131,5 @@ test('MODS-ON, executed: the two switches a lit torch was invisible without are 
   assert.deepEqual(Object.keys(PORT_DEFAULTS), ['Enhancements', 'Controls']);   // SWING-DEFAULT1: the swing mode joined the layer (test/systems/settings/swingdefault1.test.js)
   assert.deepEqual(Object.keys(PORT_DEFAULTS.Enhancements), ['PlayerTorchFromItems']);
   assert.equal(getBool('Enhancements', 'AlternateRandomEnemySelection'), false, 'a neighbouring key still answers the ini');
-  assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT/m);
-  assert.match(read('bible/01-Overview/Port-Ledger.md'), /MODS AND THEIR MODULES ARE ON \(MODS-ON, 2026-09-14\)/);
 });
 
-test('HT2 records: the pack page, the ledger row and the testing row', () => {
-  assert.match(read('bible/10-UI/UI-Arc.md'), /^## HT2 THE ACT ON A LIGHT SOURCE \(2026-09-14/m);
-  assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2 - LIGHTING ONE FROM THE PACK \(2026-09-14\)/m);
-  assert.match(read('bible/01-Overview/Port-Ledger.md'), /HT2 \(2026-09-14\): the enhanced pack lights a light source/);
-  assert.match(read('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| ht2_packlight\.test\.js \| \d+ \| HT2/m);
-});

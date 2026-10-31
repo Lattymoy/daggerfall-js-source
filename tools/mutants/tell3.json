@@ -150,8 +150,8 @@
   {
     "name": "TELL3-iron-weighed",
     "file": "src/ai/tactics.js",
-    "old": "  if (b.guard === 'iron') return 'hold'; // TELL3: iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
-    "new": "  // TELL3: iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
+    "old": "  if (b.guard === 'iron') return 'hold'; // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
+    "new": "  // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js",
       "test/systems/tell1_poise.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "TELL3-brain-never-iron",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
-    "new": "  const guard = sig?.iron ? 'iron' : 'poise'; // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = sig?.iron ? 'iron' : 'poise'; // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "TELL3-brain-weightless",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
-    "new": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]

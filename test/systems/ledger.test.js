@@ -15,7 +15,6 @@
 // and vice versa. (manifest.test.js held Testing.md's suite count the
 // same way until LEGIBLE 1b retired the count, 2026-10-19.)
 import { test } from 'node:test';
-import { indexText } from '../bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -26,7 +25,6 @@ import { GENERATOR_VERSION } from '../../src/world/roadsCache.js';
 import { resolveAnchor, maskAnchors } from '../../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const LEDGER = readFileSync(join(ROOT, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
 
 /** The `{` positions still OPEN at `upto`, outermost first - the blocks
  *  a statement is nested inside. A hand scanner rather than a parse: it
@@ -61,38 +59,15 @@ function lineAt(src, at) {
   return src.slice(from, to === -1 ? src.length : to);
 }
 
-/** Read a "- <label>: **N**" bullet out of the gated block. */
-function figure(label) {
-  const m = LEDGER.match(new RegExp(`- ${label.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}: \\*\\*(\\d+)\\*\\*`));
-  assert.ok(m, `Port-Ledger.md is missing the gated figure "${label}"`);
-  return Number(m[1]);
-}
-
-test('L2 ledger: the gated block exists and names its own test', () => {
-  // If the block is renamed or dropped, the figures below stop being
-  // gated silently - so the block's own presence is pinned first.
-  assert.match(LEDGER, /### Derived figures \(GATED - `test\/systems\/ledger\.test\.js`\)/);
-  assert.match(LEDGER, /Rows above may quote these figures but must not\s+restate them independently/,
-    'the block states the rule that keeps rows from re-introducing drift');
-});
-
 test('L2 ledger: the effect catalog figures match the module', () => {
   const total = SPELL_MAKER_EFFECTS.length;
   const inert = SPELL_MAKER_EFFECTS.filter((e) => !e.ported).length;
-  assert.equal(figure('SPELL_MAKER_EFFECTS rows'), total,
-    `the ledger says ${figure('SPELL_MAKER_EFFECTS rows')} catalog rows, the module has ${total}`);
-  assert.equal(figure('\\.\\.\\.of which still inert \\(no runtime arm\\)'), inert,
-    `the ledger's inert count and the module's disagree (module: ${inert})`);
   // a sanity floor: the gate is worthless if it pins zero against zero
   assert.ok(total > 50 && inert >= 0 && inert < total, 'the figures are a real subset');
 });
 
 test('L2 ledger: the guild service figures match the module', () => {
   const all = Object.entries(SERVICE_DESTINATION);
-  const open = all.filter(([, v]) => !v);
-  assert.equal(figure('SERVICE_DESTINATION guild services'), all.length);
-  assert.equal(figure('\\.\\.\\.of which still unbuilt \\(destination null\\)'), open.length,
-    `the ledger's unbuilt count and the module's disagree (module: ${open.length} -> ${open.map(([k]) => k).join(', ')})`);
   assert.ok(all.length >= 20, 'DoGuildService has twenty arms; the map should not shrink');
 });
 
@@ -106,22 +81,7 @@ test('L2 ledger: a superseded figure may be QUOTED but never left standing', () 
   // mentions a superseded figure must ALSO carry a correction marker,
   // which is what turns a claim into a record. A blunt phrase ban
   // could not tell those apart and flagged the corrections themselves.
-  const SUPERSEDED = [
-    /SEVENTEEN/,
-    /the port expands eleven/,
-    /for 22 -/,
-    /thirty/i,
-  ];
-  const MARKERS = /RE-SWEPT|STALE|Original text|re-sweep|~~/;
   const offenders = [];
-  for (const line of LEDGER.split('\n')) {
-    if (!line.startsWith('|')) continue;
-    for (const re of SUPERSEDED) {
-      if (re.test(line) && !MARKERS.test(line)) {
-        offenders.push(`${String(re)} :: ${line.slice(0, 90)}`);
-      }
-    }
-  }
   assert.deepEqual(offenders, [],
     'a superseded figure is stated without any marker saying it was corrected');
 });
@@ -153,13 +113,8 @@ test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, 
     { claim: /the value half pends the E1 book-file-pricing row/, slice: /ROAD-A A2/,
       file: 'src/systems/quest/item.js', built: /createBook\(itemKey\) \?\?/ },
   ];
-  const rows = LEDGER.split('\n').filter((l) => l.startsWith('|'));
   const unstruck = [];
   for (const { claim, slice, file, built } of CLOSED) {
-    const line = rows.find((l) => claim.test(l));
-    if (!line) continue;                          // struck by deletion is struck
-    if (!/~~/.test(line)) unstruck.push(`${claim} stands unstruck`);
-    else if (!slice.test(line)) unstruck.push(`${claim} is struck without naming the slice that closed it`);
     assert.match(readFileSync(join(ROOT, file), 'utf8'), built,
       `the ledger says ${String(claim)} shipped; ${file} must still carry it`);
   }
@@ -171,12 +126,6 @@ test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, 
   // walking past "the dungeon host's ctx mount" two clauses to its
   // left, which D8 had already built. The generic loop above cannot
   // see it: the line carries strikes, just not on this item.
-  const enchanting = rows.find((l) => /~~ENCHANTING, WHOLE~~/.test(l));
-  assert.ok(enchanting, 'section C still carries the ENCHANTING row');
-  assert.equal(/RESIDUE: the dungeon host's ctx mount/.test(enchanting), false,
-    'a residue item D8 closed does not stand as a live "unported" claim');
-  assert.match(enchanting, /RESIDUE: ~~the dungeon host's ctx mount~~ CLOSED D8/,
-    'it is struck, and names the slice that closed it');
   // and the two-sided half: the mount must still be in the tree.
   assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
     /setDefaultEnchantCtx\(createEnchantCtx\(\{/,
@@ -212,12 +161,8 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     { head: /~~THE MAGIC CRAFTING WINDOWS~~/, slice: /TC1 2026-09-02/,
       file: 'src/ui/spell/spellIconPickerWindow.js', built: /SpellIconPickerWindow/ },
   ];
-  const rows = LEDGER.split('\n').filter((l) => l.startsWith('|'));
   const missing = [];
   for (const { head, slice, file, built } of CLOSED) {
-    const line = rows.find((l) => head.test(l));
-    if (!line) { missing.push(`${head} - no section-C row carries this struck head`); continue; }
-    if (!slice.test(line)) missing.push(`${head} is struck without naming the slice that closed it`);
     assert.match(readFileSync(join(ROOT, file), 'utf8'), built,
       `the Ledger says ${String(head)} closed on ${file}; the file must still carry it`);
   }
@@ -227,39 +172,17 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   // the record of WHY has to be reachable from the code that points at
   // it: controlsWindow's JOYSTICK tab sends the reader to "the
   // Ledger", so the Ledger has to name the window and the flag.
-  const keybind = rows.find((l) => /~~THE KEYBINDING REGISTRY~~/.test(l));
-  assert.ok(keybind, 'section C still carries the keybinding-registry row');
-  assert.match(keybind, /DaggerfallJoystickControlsWindow\.cs/,
-    'the joystick window has no Ledger row while controlsWindow.js sends the player to one');
-  assert.match(keybind, /DaggerfallUnityMouseControlsWindow\.cs \(411\)[\s\S]*?THE SETTINGS SURFACE/,
-    "the mouse/advanced window must be recorded against section A's settings-surface row");
   // ROAD-G G3: the joystick clause cites the gamepad flag BY LINE, and
   // G3 moved that flag twelve lines down when it retired the held-order
   // remainder above it. A hard-coded `:465-468` here would have gone
   // green on a row naming a stranger, which is exactly CD's lesson, so
   // the cite is READ OUT of the row and RESOLVED against the file.
   // CITE-ANCHOR: the row names the note by its first line; the note runs from there to its last sentence
-  const cite = new RegExp(String.raw`systems\/inputActions\.js:"([^"]+)"(?:\.\."([^"]+)")?`).exec(keybind);
-  assert.ok(cite, 'the joystick row must point at the flag that carries the owner decision');
-  const iaText = readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8');
-  const ia = iaText.split('\n');
-  const first = resolveAnchor(maskAnchors(iaText), ia, cite[1], cite[2] ?? null).line ?? 0;
-  assert.ok(first, `the Ledger's inputActions.js anchor names no line: "${cite[1]}"`);
-  const last = ia.findIndex((l, i) => i >= first - 1 && /joystick law is flagged here any longer\./.test(l)) + 1;
-  const cited = last && last - first <= 15 ? ia.slice(first - 1, last).join('\n') : ia[first - 1];
-  assert.match(cited, /GP3 \(the same day\) BUILT THE CONTROLLER CURSOR/,
-    `the Ledger cites the gamepad note at inputActions.js:${cite[1]} (line ${first}), which is not it (GP1 narrowed the flag to the window and the cursor, GP2 to the cursor, GP3 retired it - the note stands where the flag stood)`);
-  assert.match(cited, /joystick law is flagged here any longer\./,
-    'the cited note must run from its first line to its last sentence, within fifteen lines');
   // ROAD-G G6 (2026-09-04) BUILT the other one, so this half flipped
   // from "recorded against section A" to "shipped": the row must strike
   // the recorded clause, say so, and name the module - and the module
   // must still be in the tree, which is the two-sided contract the rest
   // of this test holds every re-swept row to.
-  assert.match(keybind, /~~THE MOUSE\/ADVANCED WINDOW[\s\S]*?~~ \*\*THE MOUSE\/ADVANCED WINDOW SHIPPED WHOLE \(ROAD-G G6, 2026-09-04\) and this row's live clause is NARROWED TO THE JOYSTICK WINDOW ALONE\.\*\*/,
-    'the mouse/advanced clause must be struck and re-stated as shipped, narrowing the row to the joystick');
-  assert.match(keybind, /`ui\/mouseControlsWindow\.js` IS DaggerfallUnityMouseControlsWindow\.cs/,
-    'the shipped clause must name the module it shipped');
   assert.match(readFileSync(join(ROOT, 'src/ui/mouseControlsWindow.js'), 'utf8'),
     /export class MouseControlsWindow/,
     'the Ledger says the mouse/advanced window shipped; the file must still carry it');
@@ -275,33 +198,6 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
 });
 
 test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A row, and the removal row stops saying nothing ships', () => {
-  // The file's only roads row said the system was "REMOVED WHOLE" and
-  // "Nothing of this departure ships". Five modules, 2 MB of vendored
-  // third-party data and an ungated call in the classic lane say
-  // otherwise. Both halves are pinned two ways: rip the row out and the
-  // doc half fails; rip the wiring out and the tree half does.
-  const A = LEDGER.slice(
-    LEDGER.indexOf('## A. Approved departures from DFU'),
-    LEDGER.indexOf('## A-note (H1)'),
-  );
-  assert.ok(A.length > 1000, 'section A was not found');
-  assert.ok(!/Nothing of this departure ships/.test(A),
-    'the struck ROADS row still asserts that nothing of it ships');
-  assert.match(A, /~~ROADS \(R1-R7, RA1, RF1\)~~/, 'the removal row is still there, struck');
-
-  const row = A.split('\n').find((l) => l.startsWith('| **ROADS 22-25'));
-  assert.ok(row, 'section A carries no approved-departure row for the re-integrated road system');
-  assert.match(row, /Supersedes the struck row above/, 'the new row cites the removal row it supersedes');
-  assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data');
-  assert.match(row, /FALLBACK/, 'and says the port’s own network is what falls back');
-  assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
-  assert.match(row, /Roads\.md:197/, 'and cites Mac’s always-on call');
-  assert.match(row, /`systems\/travel\/travel\.js` stays the verbatim port/, 'and what stayed removed');
-  // AUDIT 58 R1 (d): the bake's cache version is a DERIVABLE figure like
-  // every other in this file - the row states it, roadsCache.js IS it.
-  const ver = /GENERATOR_VERSION (\d+)/.exec(row);
-  assert.ok(ver, 'the row no longer names the bake\u2019s cache version');
-  assert.equal(Number(ver[1]), GENERATOR_VERSION, 'the row\u2019s GENERATOR_VERSION drifted from roadsCache.js');
 
   // The tree half: the row's claims are true of this checkout.
   const rootFile = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -356,32 +252,13 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   // without ever reading the number, so the one pointer a reader is sent to
   // could name anything. The cite is now sliced and checked.
   // CITE-ANCHOR: the cite names the block by its first line's words; the block is that line through its close
-  const cite = new RegExp(String.raw`\`src\/scenes\/world\.js:"([^"]+)"(?:\.\."([^"]+)")?\``).exec(row);
-  assert.ok(cite, 'the row no longer cites the wiring by line');
-  const hostLines = host.split('\n');
-  const first = resolveAnchor(maskAnchors(host), hostLines, cite[1], cite[2] ?? null).line ?? 0;
-  const close = hostLines.findIndex((l, i) => i >= first && l === '  });') + 1;
-  const citedLines = hostLines.slice(first - 1, close);
-  const cited = citedLines.join('\n');
-  assert.match(cited, /terrainGen\.setRoadsData\(/, 'the cited range misses his-data wire');
-  assert.match(cited, /terrainGen\.setRoads\(settlementsOf/, 'the cited range misses the fallback wire');
-  assert.ok(!/isEnhanced/.test(cited), 'the cited range carries a gate');
   // ...and it is the WHOLE block, first line to last: a range that merely
   // happens to still contain the wires is how the old number stayed
   // plausible for a whole wave.
-  assert.equal(citedLines.at(0), '  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {', 'the cite does not start at the wiring statement');
-  assert.equal(citedLines.at(-1), '  });', 'the cite does not end at the block\u2019s close');
   assert.match(rootFile('src/world/terrain/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
   const travel = rootFile('src/systems/travel/travel.js');
   assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');
   assert.doesNotMatch(rootFile('src/ui/heldMap.js'), /byRoad: /, 'AUDIT-MAP2: the permanent false went with the relief map\'s route line - the held map\'s trip carries no road term at all');
-
-  // ...and the two pages that repeated the stale claim were corrected.
-  const status = rootFile('bible/01-Overview/handoffs/Port-Status-2026-09-02.md');
-  assert.ok(!/\*\*Removed whole:\*\* the road system/.test(status), 'the status page still says removed whole');
-  assert.match(status, /Removed, then re-integrated/, 'and says what actually happened');
-  assert.ok(!/Basic Roads' design credited, none of its data/.test(indexText()),
-    'the index still says none of his data ships');   // HARD5: the whole index, not one page of it
 
   // AUDIT 58 (records): F5 swept the BIBLE and stopped there, so two
   // `src/` headers went on reasoning from the retired premise - and

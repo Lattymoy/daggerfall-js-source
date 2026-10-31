@@ -1,7 +1,5 @@
 // @ts-check
-// PVP-FLAG (the PvP rework, 2026-10-28/29 - the owner: "green to be no flag flagging gives a skull above your head and
-// villians get a red skull", "need to be instant", "make it a min", "u flag and un flag instanly", "u cant flag on a party
-// member", "flaggin is so yu dont hit a player when ur trying to kill a monster"): unflagged, my blows touch no player; the
+// PVP-FLAG (the PvP rework, 2026-10-28/29 - as the owner asked): unflagged, my blows touch no player; the
 // flag never shields its bearer. The flag goes up at once (Caps Lock or the HUD
 // button) from level 30; it comes down at once, but never within PVP_FLAG.lockMs of the last PvP blow given or taken. A
 // party member stays kin (net/wild/wildRef.js wildKin). The relay holds the same lock (wildRef.js wildZone). Pure. A

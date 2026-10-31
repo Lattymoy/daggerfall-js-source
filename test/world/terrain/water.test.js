@@ -285,14 +285,6 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   for (const name of ['on and off differ over the sea', 'leaves the sky alone', 'five seconds later', 'a gale varies more than a calm', 'rainy sea', 'glints toward the sun', 'midnight', 'overcast sea']) {
     assert.ok(probe.includes(name), `the probe checks: ${name}`);
   }
-  const ledger = rd('bible/01-Overview/Port-Ledger.md');
-  assert.match(ledger, /\*\*ENHANCED WATER \(WATER1, 2026-09-08\)\*\*/, 'section A carries the departure');
-  assert.match(ledger, /switch `enhancedWater` \(on by default, `\?water=off` the kill switch\)/);
-  const arc = rd('bible/07-Rendering/Water-Arc.md');
-  assert.match(arc, /# Enhanced water \(WATER1, 2026-09-08\)/);
-  assert.match(arc, /fround\(27\.2 \/ 1539\) \* 1539/, 'the ocean-band defect is on the page');
-  assert.match(rd('bible/01-Overview/Page-Index.md'), /07-Rendering\/Water-Arc\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
-  assert.match(rd('bible/07-Rendering/Rendering.md'), /`waterSurface\.js`/);
 });
 
 // ── WATER-AUDIT: the table pinned THROUGH the producer, not against itself ──

@@ -159,8 +159,7 @@ export function wildZone(
     x.flag = true; // PVP-VILLAIN: a villain is always in aggro
   else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;
   else if (fl === 1 || x.flag === undefined) x.flag = true;
-  // PVP-DEATH (the PvP rework, 2026-10-29 - the owner: "when u die u need to take away player protection form ebing killed
-  // again", "they go to town in a safe zone when dead"): a rise, or an entry after a death, has no safe passage
+  // PVP-DEATH (the PvP rework, 2026-10-29 - as the owner asked): a rise, or an entry after a death, has no safe passage
   const rose = z && x.down && now - x.downAt >= WILD_REF.riseMs;
   if (rose) {
     x.f = newFighter(lv, now);
@@ -194,7 +193,7 @@ export function wildZone(
   return x;
 }
 
-/** PVP-SAFE-HIT (the owner: "Let them hit them jit ge that back in safezone"): a fighter in a settlement's safe streets
+/** PVP-SAFE-HIT (as the owner asked): a fighter in a settlement's safe streets
  *  (`streets`, its own word) and no villain on the meter this room keeps strikes a villain alone, and nobody strikes it.
  *  A villain's word on the streets shields nothing: the meter is the referee's. Answers why a blow is refused, or null.
  *  @param {any} a the striker @param {any} t the struck */
@@ -624,7 +623,7 @@ export const wildFlagWord = (x, now) => ({
   ...wildRed(x),
 });
 
-/** PVP-BAR (the owner, 2026-10-29: "How does the health and shield bar look", then "Perfect" to its mockup): how often a
+/** PVP-BAR (as the owner asked to its mockup): how often a
  *  room looks for a flagged fighter's bar that moved - so each is said at most once in that time. */
 export const WILD_BAR = Object.freeze({ sayMs: 500 });
 

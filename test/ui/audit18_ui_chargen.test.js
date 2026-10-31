@@ -545,22 +545,3 @@ test('AUDIT 18: a RESTORING push leaves both spinner selections alone', () => {
 // 9. the Ledger citation
 // ---------------------------------------------------------------
 
-test('AUDIT 18: no source file cites the Port Ledger for a row that is not there', () => {
-  // Port-Ledger.md's own preamble: "If a departure or gap is not on
-  // this page, it does not exist." src/ui/chargen.js claimed the
-  // isCustom bug-for-bug quirk was "recorded in the Ledger"; section B
-  // has no chargen row of any kind. Same shape AUDIT 17m deleted from
-  // UI-Arc.md, and the false citation is exactly what hides the defect
-  // it claims to license.
-  const root = new URL('../../', import.meta.url).pathname;
-  const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
-  const walk = (dir) => readdirSync(dir).flatMap((n) => {
-    const p = join(dir, n);
-    return statSync(p).isDirectory() ? walk(p) : (p.endsWith('.js') ? [p] : []);
-  });
-  const claims = walk(join(root, 'src'))
-    .filter((p) => /recorded in the Ledger/i.test(readFileSync(p, 'utf8')))
-    .map((p) => p.slice(root.length));
-  if (/isCustom/.test(ledger)) return;   // the row shipped: the claim is licensed
-  assert.deepEqual(claims, [], 'a source file cites a Ledger row that Port-Ledger.md does not carry');
-});

@@ -1,188 +1,80 @@
-# Loading screens and the screenshot gallery (LOAD1, 2026-10-05)
+# Loading screens and the screenshot gallery
 
-Mac, 2026-10-05: *"We need to add loading screens where needed for the game in an enhanced UI type fashion, maybe make
-it where people can also use screenshots for the loading screen and a way to acces them in the menu."*
+Under the enhanced skin a loading screen covers the boot and every world move: fast travel, a teleport, Recall, a
+respawn, a save loaded in play, a dungeon's door. It names the place being loaded and the step, over one of the
+player's own screenshots or the menu's night sky. PrintScreen keeps shots in a gallery the player manages from the
+menu's **Screenshots** section. A "Preparing graphics" bar on the boot menus shows shader compiling.
 
-Before this slice the game's loads had no face. From the menu's choice to the first frame the player looked at a bare
-canvas (`#0e1013` behind an unpainted WebGL buffer), the boot's steps named only on the window's title (`main.js`
-`status`). In play, a dungeon's door built behind the live exterior and popped in; a fast travel, a guild teleport, a
-portal stone, a ship's cabin and the party's journey showed `hudFade`'s black; Recall, a respawn and a save loaded in
-play showed nothing at all. DFU has no loading screen either: its loads are `FadeBehaviour` (`ui/fadeLayer.js`). So
-this is the port's own (Port-Ledger section A, LOAD1), drawn ONLY under the enhanced skin.
+## How it works
 
-## What shipped
+**The screen** (`src/ui/loadingScreen.js`) is a full-screen layer at `LOADING_Z` (19): over the world and the death
+screen, under the crash banner. HUD pieces that stand higher are hidden while it is seen. It shows the place, the
+current step, a bar that runs but claims no percentage, a tip, and a screenshot with where and when it was taken, or
+the pixel ground (`src/ui/pixelGround.js`) drawn once per window size.
 
-| Piece | File | What it does |
-|---|---|---|
-| The loading screen | `src/ui/loadingScreen.js` | A full-screen DOM layer (z-index 19: over the world, the base HUD and the death screen's 18, under the crash banner's 20; the HUD pieces that stand higher - the gate's banner, title and damage cards, the siege and arena HUDs, the revenant cards, the pad's prompts - are hidden while it is seen, `body.ld-up`). The place being loaded, large; the skin's rule and gem; the step the load is on; a bar that RUNS but claims no percentage (no load in the port knows its length, and a bar that lies is worse than one that says "working"); behind it one of the player's screenshots with where and when it was taken - or, with none in the turn or on the row's Night sky, the menu's own pixel ground (PX1, `ui/pixelGround.js`), DRAWN ONCE per window size and kept (its drift is CSS), and a tip. |
-| The gallery | `src/systems/shotGallery.js` | Every PrintScreen shot kept in this browser's own IndexedDB (`dagger-shots`, store `shots`): a JPEG no longer than 1920 on its long side (quality 0.86) and a thumbnail no longer than 320 on its long side, with its place and the real time it was taken, in the loading screens' turn until the player takes it out. At most 120: a full gallery REFUSES the next shot and says so - it never drops the oldest on its own - and keeps run one at a time, so two presses inside one encode cannot both pass the count. A database that will not open (a private window, blocked site data) falls back to the tab's memory; a connection the browser closes is opened again. |
-| The pane | `src/ui/shotsPane.js` | The gallery on the menu: newest first, a tile's picture opens it large (Newer / Older / All screenshots), its switch takes it out of or back into the turn, Save writes the JPEG to the player's files, Delete asks once. Above them: Add pictures (a PNG, JPEG or WebP from the player's own files, dated by the file's own day; every one that cannot be read is said), the key's download switch, and a line saying what the loading screens show now. A new visit forgets the last one's armed Delete and open view; the keyboard stays on the pressed button through every refill (a deleted tile hands it to its neighbour); thumbnails are kept per shot and let go when their shot is. |
-| The key | `src/ui/screenshot.js` | KB1's PrintScreen (F8 by default) still saves the PNG, now on the player's `shotDownload` switch (on by default - KB1 as it shipped), and hands the same PNG to the gallery with the place read AT THE PRESS. The HUD says what the gallery answered. The gallery is a dynamic import: this file is on the entry's static graph, which BOOT2 holds at 64 files. |
-| The switch | `src/systems/features.js` `loading-screen` | The Features row (Interface, Enhanced): Your screenshots (default - the night sky while the gallery is empty), Night sky, Off. The player's own online. |
+**Holds.** A caller begins a hold and ends it; the screen stands while any hold is open, since one load can start
+inside another. `withLoading` ends a hold however its load ends.
+- An in-game hold shows only past `APPEAR_MS` (280 ms); the boot shows at once.
+- Once up, it stands at least `MIN_SHOWN_MS` (650 ms), then fades in `LOADING_FADE_MS`.
+- Every hold has a ceiling (`HOLD_MAX_MS`, 3 minutes; `BOOT_HOLD_MAX_MS`, 10), so a load that throws cannot trap the
+  player.
+- The place and step are set fresh by each load's first hold; a word set with no hold open paints nothing.
 
-## Where it shows - THE FOUR HOSTS
+**Where it is wired.** `src/scenes/world.js` holds the boot (`bootWorld` maps each boot status to a screen line) and
+every world move: each frame asks `worldMoveBusy()` and whether a door is mid-build, and `syncLoading` raises or ends
+one hold. The destination is named once the teleport starts, never the place being left. A building's door instead
+shows a small ring over the hotbar (`src/ui/interiorLoadMark.js`) so the street stays visible; a dungeon door raises
+the full screen. A full-screen video or a window takes the screen aside without ending its holds.
+`src/scenes/worldModes.js` raises `transitioning` for its doors, which the world frame reads.
+`src/scenes/dungeonContext.js` hands loads from other places to the world host.
 
-- `scenes/world.js` - **WIRED**, twice.
-  - THE BOOT. `bootWorld` begins a hold at its first line, before the realm's join (its first await), and wraps the
-    `status` main.js hands it: every step the boot names on the window's title is the screen's line too (`bootLine`
-    turns "loading data" into "Reading the game data", "building player pixel ..." into "Raising the land"), and
-    `status(null)` - the boot handing the first frame its turn - ends the hold. The start's place is set where the
-    boot streams it (unless a save is loading: the load's teleport names the save's place itself).
-  - EVERY WORLD MOVE. The frame asks AUDIT 68 S22's one question, `worldMoveBusy()` (`_seasonStraightening` - the
-    teleport core's own window - `_traveling`, `_teleporting`, `_recalling`, `_respawning`, `_loading`, the abyss), and a door's build
-    (`modes.transitioning`); `syncLoading` raises ONE hold on the first frame
-    it is true and ends it on the first it is false. Every mover lowers its flag in a `finally` (the teleport core's
-    from its build's wait on; a throw in its synchronous teardown above that is a crash - the banner stands over the
-    screen - and the hold's ceiling lets the screen go), so the screen cannot outlive the move. The question is asked
-    below the frame's head (AUDIT 39 #160's video wait, AUDIT 28 W7's look tick on the dt) and above the indoor mode's
-    return, so every drawn frame asks. The teleport core names its destination before its build is waited on (`_loadingDest`,
-    `placeAtPixel`), which the
-    frame asks again every frame the hold is open - a load knows where it is going only once its teleport starts, and
-    until then the screen names nothing (never the place being LEFT; `loadingPlaceOf`). The abyss wears its own name
-    over the pixel it borrows; the party landing's wait is said on the screen, over the chat line that says it. The
-    loop that raised the hold being claimed by another (`scenes/shared.js` `claimFrame`) lets it go - no frame of the
-    old loop will ever end it. A building's door is the exception the frame names itself (`syncInteriorLoad`, asked
-    before the hold ends): while that load is up the screen steps aside and a ring over the hotbar is the only mark
-    (`ui/interiorLoadMark.js`), so the street stays visible, and a door that finishes leaves the screen hidden through
-    its fade. A dungeon's door still raises the screen.
-  - ASIDE, NEVER OVER (AUDIT LOAD1 2, 6). A full-screen video (`holdFrame` - an infection dream can play on a fast
-    travel's arrival, the travel's screen still up) and a WINDOW (the frame asks every frame: `townTalk.overlayActive`
-    or the mode's own window - a pause, a level-up box; the boot's chargen says so itself, shown mid-boot before any
-    frame runs) take the screen aside, its holds untouched. When the last goes mid-load the screen waits for the
-    frame's next answer: back if the world is still moving, ending hidden if not - never a flash of the whole screen
-    before its fade.
-- `scenes/worldModes.js` - **WIRED THROUGH ITS HOST**: its building and dungeon doors (`gatedTransition`,
-  `interiorTransition`, `dungeonTransition`, `startInDungeon`, `restoreInterior`) raise `transitioning`, which the world
-  frame reads. A building's door also raises the ring (`markInteriorLoad` as the transition starts, and lowers it in
-  the same `finally` that lowers `transitioning`). The module's other builds stay the host's question.
-- `scenes/dungeonContext.js` - **NOTHING TO WIRE**: its own quickload restores in place synchronously (no frame passes
-  to cover), and a load from another place is handed to world.js's `worldQuickLoad` (`_loading`), which the frame
-  covers.
-- `scenes/dungeon.js`, `scenes/interior.js` - the `?dungeon`, `?interior`, `?shot` and `?nomenu` dev hosts, not
-  among the four: no menu door reaches them (every door ends in `bootWorld`, main.js), and `?shot` draws no screen by
-  law.
-- `scenes/exterior.js` - **FLAGGED**: the `?exterior` dev host. Its boot and its own modes' doors draw no loading
-  screen - no menu door reaches it, and its frame does not ask the question. A slice that makes it a player's route
-  wires `syncLoading` into its frame as world.js does.
+**The gallery** (`src/systems/shotGallery.js`) keeps every PrintScreen shot in the browser's IndexedDB
+(`dagger-shots`): a JPEG at most 1920 px on its long side, a 320 px thumbnail, its place and real time. At most
+`GALLERY_MAX` (120): a full gallery refuses the next shot and says so, never dropping the oldest. A database that will
+not open falls back to the tab's memory.
 
-## The laws, and why
+**The pane** (`src/ui/shotsPane.js`) lists shots newest first. A tile opens large; its switch takes it out of or back
+into the loading screens' turn; Save downloads it; Delete asks once. Add pictures imports PNG, JPEG or WebP files.
+Screenshots is on the enhanced door, the classic door and the pause shell.
 
-- **HOLDS, NOT A SWITCH.** A load can start inside another (the boot loads a save; a recall lands in a dungeon), so a
-  caller begins a hold and ends it, and the screen stands while any is open. `end` is idempotent; `withLoading` ends
-  however its load ends.
-- **A SHORT LOAD SHOWS NOTHING.** An in-game hold shows its screen only past `APPEAR_MS` (280 ms): a building's door
-  that costs a frame does not flash a screen. The boot passes 0 - it is never that short.
-- **A SHOWN SCREEN DOES NOT BLINK.** Once up it stands `MIN_SHOWN_MS` (650 ms), then fades in `LOADING_FADE_MS` (240 ms).
-- **A SCREEN NEVER SLOWS ITS LOAD** (AUDIT LOAD1 1). The menu redraws its sky every 125 ms, 100 ms a draw at 1080p:
-  under a load that is the main thread the load needs. The loading screen draws it once per window size and keeps it.
-- **NEVER TRAPS.** Every hold has a ceiling (`HOLD_MAX_MS`, 3 minutes; the boot's `BOOT_HOLD_MAX_MS`, 10): a load that
-  throws past its own end lets the screen go there, with a console line naming the hold. The frame's hold that a
-  ceiling let go is not raised again while the same move stays stuck. The crash banner stands above the screen.
-- **THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD** (Home, Process): the screen leaves `node` before it fades, so a
-  hold begun during the fade builds its own screen rather than reviving a dying one.
-- **A WORD SET BETWEEN LOADS NEVER STANDS ON THE NEXT ONE.** The place and the step are set afresh by the first hold of
-  a load, and a word set with no hold open paints nothing.
-- **EVERY ALLOCATION HAS AN OWNER.** The shot's object URL goes in the screen's teardown (the kept sky is one canvas
-  for the session); the pane's thumbnails go when their shot does, and with its gallery listener when the menu
-  unmounts (`releaseShotsPane`).
-- **A TIP NAMES NO KEY.** Keys are the player's to rebind, so a tip naming a default lies to whoever did; the pane's
-  own lines name the player's PrintScreen binding as the Controls page spells it.
-- **A RENDER OF GAME DATA IS GAME DATA** (Port-Doctrine). A screenshot is ARENA2's pixels, so it lives where the
-  player's ARENA2 lives - their own browser. Neither the gallery nor the pane reaches the network (pinned), and
-  nothing here touches the repository.
-- **THE PROBES SEE THE WORLD.** `?shot` (the fixed vantage every tool in `tools/` drives) and `?noloading` draw no
-  screen.
+**The key** (`src/ui/screenshot.js`, PrintScreen, F8 by default) saves the PNG when the `shotDownload` switch is on
+(default) and hands it to the gallery with the place read at the press. The read is queued (`oweToFrameFoot`) and paid
+at each host's frame foot right after `renderer.resolveFrame()` (`deliverOwedShots`), while the drawing buffer still
+holds the frame. A frame held by the frame-rate cap reaches no foot, so the shot waits for the next drawn frame.
 
-## The menu
+**The graphics bar** (`src/ui/gfxPrepBar.js`, raised by `main.js`) fills as the programs started at page load
+finish compiling (`src/render/glProgram.js` `startedPrograms`). Full, it says "Graphics ready". A warm cache shows
+ready at once; a browser without parallel shader compile shows no bar. It never holds Play. A Chromium tab gets a
+**Fix stutter** button that gives the shader cache folders to delete.
 
-`Screenshots` is on all three rails (the enhanced door, the classic door - the key keeps its shots under either skin -
-and the pause shell) and on the pause window's System page, through ONE pane function in both dispatch tables. On the
-door's face it is a plaque in the foot beside About (the centre runs under the menu's last rows on a 720-pixel
-screen; on a phone the two plaques stack at the right, inside the 132 px PX8 keeps for the foot). The classic skin's
-pane says the loading screens are the enhanced UI's.
+## Rules
 
-## Not done, said plainly
+- Loading screens are the enhanced skin's; shots can be used as loading screens and reached from the menu (Mac).
+- Features row `loading-screen` (pref `loadingScreen`): Your screenshots (default), Night sky, Off.
+- A tip names no key, since keys are rebindable.
+- A screenshot is ARENA2's pixels, so it stays in the player's browser: neither the gallery nor the pane reaches the
+  network.
+- `?shot` and `?noloading` draw no loading screen.
+- No all-black filter on shots: a dark scene is a real picture.
 
-- The stretch between the menu's choice and the world host's first line - the data gate (`ensureData`, which must
-  stand clear of the first visit's folder picker) and the host's own import (warmed behind the menu, BOOT1) - still
-  shows the bare canvas. Covering it is main.js's door, whose block the realm-birth pin executes.
-- The save window's own thumbnails (SS1's 320x200 JPEGs) are not in the gallery: they belong to their slots, and a
-  loading screen at that size would be a smear.
-- A screen does not cover `hudFade`'s smash to black before its delay; a fast travel reads black, then the screen.
-- `scenes/exterior.js` is flagged above.
+## Daggerfall Unity
 
-## AUDIT LOAD1 (2026-10-05, three lenses over the commit)
+DFU has no loading screen; its loads fade through `FadeBehaviour` (ours: `src/ui/fadeLayer.js`). The loading screen
+and gallery are DFO's own.
 
-Two dozen findings, no blocker; every one fixed or recorded above. The two majors: the menu's 125 ms sky redraw ran
-under every load (now drawn once), and the new character's wizard - shown mid-boot - stood under the boot's screen
-while still taking keys, an Escape on its race page reloading to the menu (now the screen steps aside for any window).
-The minors: the place left being said (never), the abyss's borrowed name, a film's end flashing the screen back, the
-cap raced by two presses, an armed Delete outliving its pane, the keyboard dropped on every refill, a refused database
-dead for the tab, unread imports silent, the higher HUD over the screen; and the record's own overclaims (the
-`finally`, "from the menu's choice", the thumbnail's width, the counts), corrected here.
+## Code and tests
 
-Pinned in `test/ui/load1_loading.test.js` (18 tests); every law's mutant is in `tools/mutants/load1.json` - 53, all dead
-(`node tools/mutate.mjs tools/mutants/load1.json`).
+- `src/ui/loadingScreen.js` - holds, timings, the screen
+- `src/systems/shotGallery.js` - the gallery store
+- `src/ui/shotsPane.js` - the menu pane
+- `src/ui/screenshot.js` - the key and the frame-foot read
+- `src/ui/gfxPrepBar.js` - the graphics bar
+- `test/ui/load1_loading.test.js` - the screen's laws, gallery and pane
+- `test/scenes/shot1_frame_foot.test.js` - every host foot pays owed shots after `resolveFrame`
+- `test/ui/gfxprepbar.test.js` - the graphics bar
 
-## SHOT1 (2026-10-07): the black shots
+## Open
 
-A player's gallery: `Wayrest · 7 Oct 2026` and a Daggerfall shot kept FULLY BLACK, both in towns, while a battle
-at Dak'fron with a crowd of actors came out whole.
-
-**The cause.** The renderer's WebGL context does not preserve its drawing buffer, so the canvas can be read only
-in the task that drew it. Once the compositor has the frame, the buffer reads back as cleared black. KB1 took the
-read on a `requestAnimationFrame` callback of its own. It assumed that callback would run after the host's
-callback in the same browser frame, so the read would land on the frame just drawn. The host broke that
-assumption two ways:
-
-- **The held frame.** Under a Frame Rate Cap, FPS-CAP1's `frameCapSkip` holds a frame back: it re-arms the host's
-  callback and draws nothing. A light scene on a fast screen runs past the cap, so the cap holds every other
-  browser frame (a town on a 120 Hz screen under a 60 cap), and the shot's callback could land on one of those, where the
-  buffer is the cleared black. A heavy scene, like the battle, runs under the cap, so no frame is held and the
-  read always followed a draw. That is why the battle's shot came out and the towns' did not.
-- **A press from inside the frame.** The pad's tick (`gamepad?.tick(dt)`, `ui/gamepadInput.js`) runs inside the
-  host's callback and sends its buttons as synthetic keydowns there. So the shot's callback was queued BEFORE the
-  host's own re-arm at its foot, and the next frame ran it first, ahead of the draw.
-
-**The fix: the shot rides the host's frame foot, as the save's shot always did (SS1, `capturePendingScreenshot`).**
-`takeScreenshot` no longer reads the canvas itself. It queues the read (`oweToFrameFoot`), and each host's drawn
-foot pays what it owes (`deliverOwedShots`). The foot is the line after `renderer.resolveFrame()`, beside SS1's
-save shot where the foot has one, while the buffer is still the frame just drawn. A held frame (the cap, a film's
-hold) reaches no foot, so the shot waits for the next frame that draws. Two presses before one foot are two
-shots of that frame (ASYNC NEVER DROPS). The queue is emptied before the reads run, so a shot asked for during a
-delivery belongs to the next frame (THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD). A read that throws is that
-shot's alone. No all-black filter: the cause is fixed, and a dark scene is a real picture.
-
-THE FOUR HOSTS:
-
-- `scenes/world.js`: **WIRED** at both feet, the exterior foot and the modal foot that ends an interior's or a
-  dungeon's frame.
-- `scenes/exterior.js`: **WIRED** at both feet.
-- `scenes/worldModes.js`: **WIRED THROUGH ITS HOST**. Its interior and dungeon key ladders are `routeKey`'s, but
-  its frames draw inside world.js's, and world.js's modal foot pays.
-- `scenes/dungeonContext.js`: **WIRED THROUGH ITS HOSTS**. It draws inside world.js's modal foot or the
-  `?dungeon` host's (`scenes/dungeon.js`, wired at both its feet, the overlay foot included).
-- `scenes/interior.js` (the `?interior` dev host) routes no PrintScreen of its own. Its one foot pays anyway, so
-  every drawn foot in the tree keeps the same law.
-
-Pinned in `test/scenes/shot1_frame_foot.test.js` (3 tests). The model is a canvas whose buffer holds the frame only
-between a draw and its present, driven by a host frame that the cap can hold or that a pad's press can come from
-inside. The source sweep checks that every `renderer.resolveFrame();` in the hosts is followed by the delivery,
-with only notes and SS1's save shot between; that the cap's held line never pays; that `ui/screenshot.js` takes
-no frame callback of its own; and that neither modal host has a foot of its own. The mutants are in
-`tools/mutants/shot1.json`: 12, all dead.
-
-## SHADER-EASE GFX-BAR and FIX-STUTTER (2026-10-29)
-
-The owner: in Chrome the game froze for 30-60 s in the world after each update, while shaders compiled.
-
-**GFX-BAR.** A "Preparing graphics" bar at the foot of either boot menu (`main.js` raises it, `ui/gfxPrepBar.js` draws
-it) fills as the programs started at page load report done. It reads
-`glProgram.js:"export const startedPrograms"`, never `startPrograms`' `ready()`, which starts again a program
-a build took; a taken program counts as done. Full, it says "Graphics ready" and holds while the menu stands.
-GFX-ALWAYS (as the owner asked): a warm cache, or a build done during the intro, shows ready at once.
-No KHR_parallel_shader_compile shows no bar. It never holds Play.
-
-**FIX-STUTTER.** A page cannot clear the browser's shader cache. A Chromium tab gets a Fix stutter button whose panel
-gives the Windows and Mac folders to delete, each path with Copy. The desktop app clears its own (CACHE-TURN). Pins:
-`test/ui/gfxprepbar.test.js`. Mutants: `tools/mutants/shader_bar.json`, 21, all dead; `gfx_always.json`, 4, all dead.
+- Between the menu's choice and the world host's first line (the data gate and the host's import) the canvas is bare.
+- `hudFade`'s black can show before the screen's delay passes on a fast travel.
+- The `?exterior` dev host draws no loading screen; its frame does not call `syncLoading`.

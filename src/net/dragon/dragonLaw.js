@@ -1,8 +1,7 @@
 // @ts-check
-// DRAGON2 (the owner: "a new rare random world encounter, a sort of world boss when found anywhere in the world";
+// DRAGON2 (as the owner asked;
 // bible/11-Multiplayer/Dwarven-Dragon.md sections 2 and 4): THE DRAGON'S LAW - which watches bring a dragon down, which
-// is the Aetherbright, where its site is rolled, how its fight is named. DRAGON-HIDDEN (the owner: "people are able to
-// predict the dragon spawn by looking at source code"): every roll takes a watch's omen `{w, s}`, its seed the relay's
+// is the Aetherbright, where its site is rolled, how its fight is named. DRAGON-HIDDEN (as the owner asked): every roll takes a watch's omen `{w, s}`, its seed the relay's
 // secret (net/dragon/dragonSeed.js), told only once its landing is past. DRAGON-CELL (2026-10-31, the owner chose
 // "Cell-scoped"): the seed picks a cell, and only a player near it is told. The site in the cell is the client's to find
 // over the world's own data (systems/dragon/dragonSite.js); the relay never reads a map. Pure. Not a DFU member. Ledger A (DRAGON).
@@ -13,8 +12,7 @@ import { PIXEL_UNITS, WORLD_CELL, mapPixelOfWire } from '../wire.js';
  *  DRAGON_CELLS_A_WATCH omens (dragonCandidates), each its own cell, and one comes down only where its cell has ground. */
 export const DRAGON_WATCH_MS = 3_600_000;
 export const DRAGON_WATCH_ONE_IN = 3;
-/** How long it stays before it climbs away unslain, ms. DRAGON-HIDDEN-TIME (2026-10-30, the owner: "dragon location and
- *  timer need to be random ... more so not traceable"): when in its watch it comes down is its seed's roll too, a whole
+/** How long it stays before it climbs away unslain, ms. DRAGON-HIDDEN-TIME (2026-10-30, as the owner asked): when in its watch it comes down is its seed's roll too, a whole
  *  second in the watch's first DRAGON_LAND_SPAN_MS (dragonLandOf) - never a fixed minute anyone counts. */
 export const DRAGON_LAND_SPAN_MS = 20 * 60_000;
 export const DRAGON_STAY_MS = 40 * 60_000;

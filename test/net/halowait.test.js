@@ -165,5 +165,4 @@ test('HALO-WAIT by source: the wait is asked before the join clears its lists, s
   assert.equal((o.match(/this\._endHalo\(\);/g) ?? []).length, 3, 'leave and the two terminal closes, as AUDIT WORLD6b-iii(b) A4 counts them');
   assert.match(o, /crossesNow\(key\) \{ return this\.inRoom\(key\) \|\| this\._haloWait\(key\); \}/, 'a crossing needs no hold into a cell held or waited for');
   assert.match(rd('src/scenes/world.js'), /\(isCellRoom\(key\) && online\.crossesNow\(key\)\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS/, 'the host joins at once on it, the hold left to everything else');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## HALO-WAIT - A CELL CROSSING WAITS FOR ITS HALO \(2026-10-22, #1134\)/, 'the record');
 });

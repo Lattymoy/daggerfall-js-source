@@ -44,7 +44,7 @@ export function guardedBlow(fighter, kind, want) {
   return want > 0 ? Math.max(1, Math.round((want * kept) / 100)) : 0;
 }
 
-/** PVP-WARD (the owner, 2026-10-29: "so 85% resist", "do it"): the share of a player's spell a fighter's resistances let
+/** PVP-WARD (as the owner asked): the share of a player's spell a fighter's resistances let
  *  through, per cent, by DFU's element (fire, frost, poison, shock, magic). Never under `min`: no resistance, immunity
  *  included, takes more than 85%. */
 export const PVP_WARD = Object.freeze({ min: 15, max: 100, elements: 5 });
@@ -69,8 +69,7 @@ export function shieldedBlow(fighter, shaft, want) {
   return Math.max(1, Math.round((want * (100 - off)) / 100));
 }
 
-/** PVP-EVADE (the owner, 2026-10-30: "if ur above other in lvl you shoulfd b harder to hit", "dodge mneed to worjk as well
- *  in pvp"): a player's swing or shaft that hit is still evaded whole - 0.05% for each point of live Dodging (gear
+/** PVP-EVADE (as the owner asked): a player's swing or shaft that hit is still evaded whole - 0.05% for each point of live Dodging (gear
  *  counted) to 25% at 500, 2% for each level the struck one stands over its striker to 20%, and a gear power's evade
  *  (the Raven's), all three to 40%. Spells are never evaded. The client reports Dodging and the power, the relay rolls. */
 export const PVP_EVADE = Object.freeze({

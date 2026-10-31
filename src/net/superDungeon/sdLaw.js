@@ -281,13 +281,13 @@ export function sdNameOf(s, city = '') {
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════
 //
-// SD-PARTY (2026-10-28, the owner: "we need to make this a party instance"): ONE room per slot AND party, `sd:<s>.<owner>`,
+// SD-PARTY (2026-10-28, as the owner asked): ONE room per slot AND party, `sd:<s>.<owner>`,
 // the owner the party's account digest (net/instanceRoom.js instanceOwnerOf - the Ketch's crew law); its door the owner,
 // staff and the owner's party (server/src/sdCopy.js). SD-SOLO ("if no one is in a party allow them to be put into a 8
 // player instance"): owner `p<n>`, a shared Hour of SD_PUB_SEATS, the next opened when it is full or won.
 const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
 const SD_OWNER = /^(?:[0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
-export const SD_PUB_SEATS = 40;   // SD-SOLO-40 (2026-10-28, the owner: "lets up the amount in a non party to 40")
+export const SD_PUB_SEATS = 40;   // SD-SOLO-40 (2026-10-28, as the owner asked)
 export const SD_PUB_MAX = 64;
 /** SD-SOLO: the shared Hour `n`'s owner, or null. @param {number} n */
 export const sdPubOwner = (n) => (Number.isSafeInteger(n) && n >= 0 && n < SD_PUB_MAX ? `p${n}` : null);

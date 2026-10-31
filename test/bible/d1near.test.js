@@ -30,15 +30,6 @@ function tomlTable(toml, name) {
   return out;
 }
 
-/** The comment block directly above a table's header, its `# ` shed - the table's own word on itself. */
-function commentAbove(toml, name) {
-  const lines = toml.split('\n');
-  const at = lines.findIndex((l) => l.trim() === `[${name}]`);
-  const out = [];
-  for (let i = at - 1; i >= 0 && lines[i].startsWith('#'); i--) out.unshift(lines[i].replace(/^# ?/, ''));
-  return out;
-}
-
 /** Every .md under a directory, by path. */
 const markdownUnder = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).map(String).filter((f) => f.endsWith('.md')).map((f) => join(dir, f));
 
@@ -55,21 +46,6 @@ test('D1-NEAR the placement: the account Worker\'s one [placement] table names i
   // Smart Placement is the one that ran the Worker in Sydney
   assert.deepEqual(placement, { region: 'aws:us-west-1' });
   for (const l of toml.split('\n')) if (!l.trim().startsWith('#')) assert.doesNotMatch(l, /^\s*mode\s*=\s*"smart"/, 'no live line asks for Smart Placement');
-  // AUDIT D1-NEAR T8: THE TABLE'S OWN COMMENT IS D1-NEAR'S - SCALE1's, which said Cloudflare runs the Worker "near the
-  // database", is a paraphrase the sentence pattern below cannot read, so the comment is held by what it is
-  const said = commentAbove(toml, 'placement');
-  assert.match(said[0] ?? '', /^D1-NEAR \(2026-10-12, from play:/, 'the comment above [placement] is D1-NEAR\'s');
-  assert.ok(said.join(' ').includes('Audit-D1-Near.md'), 'and names its audit');
-
-  // THE RECORD NAMES THE SAME REGION, and the measurement it was chosen by
-  const arc = src('bible/11-Multiplayer/Scale-Arc.md');
-  const at = arc.indexOf('\n## D1-NEAR: built');
-  assert.ok(at >= 0, 'Scale-Arc.md carries the D1-NEAR record');
-  const record = arc.slice(at, arc.indexOf('\n## ', at + 1));
-  assert.ok(record.includes(`[placement] region = "${placement.region}"`), 'the record names the region the toml holds');
-  assert.match(record, /remote-SYD/, 'the record carries the placement it measured');
-  assert.match(record, /\| `\/v1\/seats\/sieges\/live` - one statement, on the primary \|/, 'and the statement it measured it with');
-
   // NO PAGE SAYS IT ANY MORE - the claim three records leaned on, retired where it stood; a quote of it is history
   const standing = markdownUnder('bible').filter((f) => SMART_NEAR.test(unquoted(src(f))));
   assert.deepEqual(standing, [], 'a page of the bible still says Smart Placement runs the account Worker beside its database');

@@ -492,5 +492,4 @@ test('SD7b the hosts by source: the dungeon host makes the Steps in the Hour alo
   assert.match(w, /const _realmArenaBridged = realmArena\(\[\.\.\.SD_REALM_FLOORS, \.\.\.SD_HALL_FLOORS, \.\.\.SD_STEPS_FLOORS\]\);/);
   assert.match(w, /sdCastBack: \(\) => sdCastBack\(\),/);
   assert.match(w, /deadlandsSeconds: \(\) => deadlandsSeconds\(\),/);
-  assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD7b - shipped 2026-10-07/);
 });

@@ -180,8 +180,8 @@
   {
     "name": "TELL4-punish-no-stagger",
     "file": "src/ai/tactics.js",
-    "old": "  if (overreachOpen(ai)) return punishStruck(ai, ent, weight); // TELL4: an overreached foe - the first blow staggers it",
-    "new": "  if (overreachOpen(ai)) return null; // TELL4: an overreached foe - the first blow staggers it",
+    "old": "  if (overreachOpen(ai)) return punishStruck(ai, ent, weight); // An overreached foe - the first blow staggers it",
+    "new": "  if (overreachOpen(ai)) return null; // An overreached foe - the first blow staggers it",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "TELL4-release-keeps",
     "file": "src/ai/tactics.js",
-    "old": "  if (ai._tac?.state === 'overreach') {\n    ai._tac.state = 'wait';\n    endOverreach(ai);\n  } // TELL4: its window goes with its place",
-    "new": "  // TELL4: its window goes with its place",
+    "old": "  if (ai._tac?.state === 'overreach') {\n    ai._tac.state = 'wait';\n    endOverreach(ai);\n  } // Its window goes with its place",
+    "new": "  // Its window goes with its place",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]

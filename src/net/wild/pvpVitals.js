@@ -1,6 +1,5 @@
 // @ts-check
-// PVP-VITALS (2026-10-30, the owner: "we need to make sure players cant cheat health in pvp", "cheat health mana or
-// fatigue"): while its flag is up in the open zone, a fighter's three pools are the relay's. A game could freeze or set
+// PVP-VITALS (2026-10-30, as the owner asked): while its flag is up in the open zone, a fighter's three pools are the relay's. A game could freeze or set
 // its own bars, and the relay believed it. Now health rises by report only out of a credit the relay grants (a slow
 // regen, a potion on its own 15 s clock, a heal it saw paid for); magicka and fatigue are its ledgers, anchored at the
 // game's word while the flag is down, each refereed cast and swing paying the PvP bar's cheapest price or landing nothing;

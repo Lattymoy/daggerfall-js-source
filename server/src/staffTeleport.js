@@ -119,7 +119,7 @@ export function routeStaffTeleport(room, ws, a, m, now) {
   );
 }
 
-/** STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): an Admin or the Shadow Fang brings a player to where
+/** STAFF-PULL (2026-10-28, as the owner asked): an Admin or the Shadow Fang brings a player to where
  *  they stand. The hub sends that player's game the staff member's place (`pull`) on a ticket of its own, and only that
  *  socket's `landed` answers it. A frozen player stays put (`frozen`): the freeze holds them where they stood. */
 function routeStaffPull(room, ws, a, m, now, pending, result) {

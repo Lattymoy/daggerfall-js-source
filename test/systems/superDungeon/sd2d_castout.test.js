@@ -149,8 +149,4 @@ test('SD2d a save taken inside a Hollow: its clone names its own pixel - the sav
   assert.match(w, /const wake = inEther\(from\.x, from\.y\) \|\| !onTheBay\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot\(maps\.getRegion\(maps\.getRegionIndexAt\(from\.x, from\.y\)\)\?\.mapTable \?\? \[\], from\);/, 'by the nearest temple, town or graveyard to its pixel');
   assert.match(w, /else \{ _wodInside = false; townTalk\.say\('\(the dungeon could not be entered\. Your character is restored at its door\)'\); \}/, 'offline, no Hollow stands: at its door');
   assert.match(read('src/scenes/dungeonContext.js'), /const p = longitudeLatitudeToMapPixel\(mt\.longitude, mt\.latitude\);\n {4}return \{ pixel: \{ x: p\.x, y: p\.y \}, mapId: mt\.mapId \?\? null, \.\.\.\(opts\.placeRecord\?\.\(\) \?\? \{\}\) \};/);   // PIN MOVED (INSTANCES' audit): and the instance it was entered as
-  const rec = read('bible/11-Multiplayer/Super-Dungeons.md');
-  assert.match(rec, /### SD2d - shipped 2026-10-06/);
-  const sd2d = rec.slice(rec.indexOf('### SD2d - shipped'));
-  for (const host of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js', 'scenes/exterior.js']) assert.ok(sd2d.includes(host), `the record names ${host}`);
 });

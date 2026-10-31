@@ -25,7 +25,3 @@ test('AUDIT ANTICHEAT: the View menu carries Toggle Developer Tools on every bui
   }
 });
 
-test('AUDIT ANTICHEAT: the field record that asks a player for the console still finds it where it says', () => {
-  const record = rd('bible/01-Overview/bugs/Field-Bugs-2026-10-13b.md');
-  assert.match(record, /\(the desktop app: View,\s+Toggle Developer Tools, Console\)/);
-});

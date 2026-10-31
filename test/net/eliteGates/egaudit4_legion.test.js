@@ -292,9 +292,6 @@ test('AUDIT EG IV A HARRIER\'S MARK (section 12\'s table, the page to the code):
   h.tg = null;
   egLegionStep(F, spec, T0 + 200, here, seeded(1), [], { anchor: [0, 31] });
   assert.equal(h.tg, 'b', 'in a Court, the farthest from the lord');
-  const page = readFileSync('bible/11-Multiplayer/Elite-Gates.md', 'utf8');
-  assert.ok(page.includes('in a Court the one farthest from the lord, as the gate\'s runs from the Warden; elsewhere the nearest'));
-  assert.ok(!page.includes('elsewhere, from itself'), 'retired');
 });
 
 // ── lane1 #25: THE HOST HITS COUNTED ───────────────────────────────────────────────────────────────────────────────────

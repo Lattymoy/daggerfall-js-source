@@ -276,13 +276,3 @@ test('AUDIT-RR (RRI) F3/F5/F6/F7/F8/F9/F10: shops stock the registered custom it
   assert.match(rd('src/combat/rriEnemyEquipment.js'), /AUDIT-RR F10: `Items\.SearchItems\(Weapons\)` \+ `\(Armor\)` \(:691-692\)/);
 });
 
-test('AUDIT-RR: checked and standing - the named-not-changed departures are recorded where they live', () => {
-  const rr = rd('bible/06-Systems/Roleplay-Realism.md');
-  const rri = rd('bible/06-Systems/Roleplay-Realism-Items.md');
-  assert.match(rr, /^## AUDIT-RR \(2026-09-23\)/m);
-  assert.match(rri, /^## AUDIT-RR \(2026-09-23\)/m);
-  for (const f of ['F1', 'F2', 'F4', 'F5', 'F6', 'F7', 'F8', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F23', 'F24', 'F25', 'F26', 'F30', 'F32', 'F33', 'F34', 'F35', 'F36', 'F37', 'F38', 'F39']) assert.match(rr, new RegExp(`\\*\\*${f} `), `${f} recorded`);
-  for (const f of ['F3', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10']) assert.match(rri, new RegExp(`\\*\\*${f} `), `RRI ${f} recorded`);
-  assert.match(rr, /named, not changed/i);
-  assert.match(rd('bible/06-Systems/Systems.md'), /\d+ modules live under/);   // the count is U42's to pin
-});

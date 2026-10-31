@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-LINGER (the owner, 2026-10-29: "keep their body in game if they login in the window of cooldown"): a fighter whose
+// PVP-LINGER (as the owner asked): a fighter whose
 // last socket closes inside PVP_FLAG.lockMs of a PvP blow given or taken leaves its body standing in the zone, struck by
 // the referee's law, until the lock runs out. Its log-in takes the body back. The relay's half is
 // server/src/pvpLinger.js. Pure. A departure: DFU has no PvP.
@@ -11,7 +11,7 @@ import { WILD_REF } from './wildRef.js';
  *  another room, and the most bodies a room keeps. */
 export const PVP_LINGER = Object.freeze({ maxMs: 3 * PVP_FLAG.lockMs, sayMs: 20_000, askMs: 5_000, max: 64 });
 
-/** PVP-LINGER-RISE (the owner, asked: "So u respawn in town if u get killed and log back in?"): a body killed while its
+/** PVP-LINGER-RISE (as the owner asked): a body killed while its
  *  player was away is kept in its room's storage under this prefix, a week at most and 256 a room, and its player's
  *  next word that it stands in the zone is a death: its screen this long, then the zone's rise in a town. */
 export const LINGER_AWAY = Object.freeze({ prefix: 'wildaway:', keepMs: 7 * 24 * 3_600_000, max: 256, downMs: 10_000 });
