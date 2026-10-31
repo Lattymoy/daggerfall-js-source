@@ -136,7 +136,7 @@
   },
   {
     "name": "TREES-range-max",
-    "file": "src/world/rmbFlats.js",
+    "file": "src/world/natureArchives.js",
     "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
     "new": "archive >= NATURE_ARCHIVE_MIN && archive < NATURE_ARCHIVE_MAX;",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "TREES-range-min",
-    "file": "src/world/rmbFlats.js",
+    "file": "src/world/natureArchives.js",
     "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
     "new": "archive > NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
     "tests": [

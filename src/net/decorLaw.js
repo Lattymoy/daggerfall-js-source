@@ -28,6 +28,7 @@
 import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted piece's id and mark, one home
 import { TEMPLATES } from '../systems/item/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
+import { isNatureArchive } from '../world/natureArchives.js';   // AUDIT FB1031 Y6: a tree or a plant - a leaf
 import { t } from '../systems/textManager.js';   // DECOR-USE: the cooking station's name in the player's language
 import { TROPHY_TEMPLATE } from './trophyLaw.js';   // HUNTERS-MARK: a mounted trophy hangs
 
@@ -300,7 +301,7 @@ export function decorPieceOf(raw) {
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
   if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null;   // HOME-STATIONS: one's own item serves no craft
-  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]))) return null;   // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person
+  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0]))) return null;   // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none
   return { id: raw.id, ...what, ...place };
 }
 

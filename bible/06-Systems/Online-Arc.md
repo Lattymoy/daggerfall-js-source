@@ -10876,32 +10876,63 @@ restriction need to be looser on the exterior of houses, sure roads are a no go.
 walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
 
 - **Measured** over BLOCKS.BSA's town blocks (the freeware's data): of 8,058 residences, 2,042 are under 2 m (graveyard
-  plots and the like). Of the 6,016 houses, a quarter's walls stop at 3.22 m, half's at 6.45 m, three quarters' at
-  8.05 m. 1,633 houses stand a flat roof of 4 m² or more at 6.45 m, and 4 m refused every one.
+  plots and the like). Of the 6,016 houses, a house's top (yardLot's `top`, its box's) is at most 5.22 m for a quarter,
+  6.45 m for half and 8.45 m for three quarters; 713 (11.9%) are one storey, 3.22 m. 1,633 houses stand a flat roof of
+  4 m² or more at 6.45 m, and 4 m refused every one.
 - **The height.** `decorLaw.js:"export const DECOR_YARD_HIGH = 8;"`, at both ends. Above
   `homeYards.js:"export const YARD_FREE_HIGH = 4;"` a piece stands on or against its house: its middle or its ground on
-  the house's box seen from above, or touching it, and its foot no higher than the house's top (yardLot's `top`,
-  yardByHouse). Free of the house, Mac's 4 m holds, so no tower stands in the yard and none over a roof. The decorator
-  says "Too high. Above 4 m, a decoration must stand on or against the building, no higher than its roof." The service
-  knows no house and holds the 8 m alone.
+  what the house covers or touching it - its ground inside its walls and every level roof of it, past the walls too (a
+  porch's, a balcony's; modelFootParts `cover`) - or touching an upright face of it as high as its foot (`sides`: a
+  gable over a door), and its foot no higher than the house's top (yardLot's `top`, yardByHouse). Free of the house,
+  Mac's 4 m holds, so no tower stands in the yard and none over a roof. The decorator says "Too high. Above 4 m, a
+  decoration must stand on or against the building, no higher than its roof."
+- **The service holds 8 m alone (OPEN, AUDIT FB1031 Y4).** It knows no lot, road or house, so a crafted client can
+  stand a free piece anywhere in a yard to 8 m, and the service stores it and serves it to every client. The 4 m free of
+  the house is the client's alone, as the lot's edge and the road are.
 - **The walls.** A yard's catalogue picture set on a wall hangs flat on it, a hair off
-  (`decorPlacer.js:"if (wall && hangs) return mountAt("`), as one's own weapon hangs indoors (DECOR2c). It stood off the
+  (`decorPlacer.js:"if (s.hung) return mountAt("`), as one's own weapon hangs indoors (DECOR2c). It stood off the
   wall by half its width as a billboard (WALL-CLEAR). Its place says `hung` (decorPlaceOf, carried only when true, and
   stored by the service's placeJson), so every client draws it on the decal pass (decorIsMount), the yards' within
   reach (homeYards.js drawDecals). The service needs no `item`. Its ground is its quad seen from above, a line along the
-  wall (decorHungFoot). A model, one's own item, a person or a yard's plant never hangs; on the ground a picture is a
-  billboard, as before. A hung lantern lights at its flame, from its middle (decorLightLift).
+  wall (decorHungFoot). A model, one's own item, a person or a yard's plant never hangs, and the service refuses one
+  sent hung (decorPieceOf); on the ground a picture is a billboard, as before. A hung lantern lights at its flame, from
+  its middle (decorLightLift).
 - **Not changed.** YARD_DECK_MIN stays 4 m². No level roof inside a house's walls measures between 1.28 and 2.56 m², and
   every one of 1.28 or 2.56 m² is a stair's tread, 0.4 m a step (ARCH3D 455, 512, 707 to 710, 856, 857). The small
   balconies (563's 2.4 m², 605, 607, 608) stand past the ground floor's walls and were the yard's already. No porch rule:
   4 houses hold a level face of 2 m² or more outside the walls below 2 m, the landing of 856's and 857's stair. The road
   refuses as before, at every height.
+- **The Imperial City's courts keep 4 m (AUDIT FB1031 Y5).** A court stands BACKYARD.back (0.3 m) off its house's back
+  wall (`imperialBackyards.js:"export const BACKYARD = Object.freeze({"`; 0.3 m is the least gap in 19,957 courts of
+  cells 40-63 by 72-97, measured) and holds none of its roof, so no piece in it is on or against the house. The fabric
+  building's own ground and top (its plot's `q` and `h`) are at hand where lotOfFrame builds the court, and would change
+  no answer, so the court's `house` and `top` stay its door's box (2.8 m). Opening the gap is IC-BACKYARD's own law.
 - **History kept.** Migrations 0109 (YARD-SWEEP) and 0121 (the reseat) ran at 4 m and keep it
   (test/server/yardsweep.test.js `SWEPT`, `tools/yardReseat.mjs` YARD_RESEAT_HIGH).
 - **The four hosts.** `scenes/world.js` WIRED: its decal pass already draws `yards.drawDecals`. `scenes/exterior.js`,
   `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no yard.
-- **Deploy.** acct231 (acct230 on its branch, renumbered past main's at the merge), no migration. The account service before the site: an older service refuses a piece over 4 m
-  (`yard-high`) and stores a hung picture unhung. An older site draws a hung picture as a billboard where it hangs.
+- **Deploy.** acct231 (acct230 on its branch, renumbered past main's at the merge), no migration. The account service
+  before the site. A new site on an older service: a piece over 4 m is refused `yard-high`, which the decorator says as
+  "at most 8 m" (the new bound's words), and a hung picture is stored unhung. An older site on the new service stands
+  no piece over its own 4 m - not a chair on a 6.45 m roof, not a lantern hung at 5.5 m - and draws a hung picture
+  under 4 m as a billboard, its foot at the picture's middle.
+- **AUDIT FB1031 Y1 (2026-10-31).** "On or against its house" read the house's box, so the open ground in it (an L's
+  notch, a courtyard) took a free piece to the house's top - a chair 1.5 m off the house's ground in 4,309 of 6,016
+  houses. It reads what the house covers and its faces now (above): 44 houses still stand one there past 4 m, each
+  under a level roof of the house or against a face of it. No lantern hung on one of the 23,128 wall faces between
+  4.3 m and a house's top, nor a chair against one, is refused as free of it. The house's ground alone (lot.walls) would
+  have refused a flat roof over a porch (ARCH3D 601, 602), a gable over a door (212) and a roof at 6.45 m past the
+  ground floor's walls (633).
+- **AUDIT FB1031 Y2, Y6.** A billboard turned half round and moved onto a wall hung upside down, and a Duplicate dropped
+  `hung` - one copied off a wall facing -z hung at 180. A picture's spin on a wall is its own now, apart from its heading
+  as a billboard (createDecorPlacer `spin`, `yaw`); a turn turns the pose shown, and a Duplicate carries `hung`. The
+  service stored a crafted hung tree and every client drew it on the decal pass; decorPieceOf refuses a nature archive
+  hung, at both ends (`world/natureArchives.js`, a leaf). acct234, no migration, either order: no site sends one. No
+  host changed.
+- **Pinned (AUDIT FB1031)**: `test/scenes/fb1031_yard.test.js` (7: Newcester's THIEAL00 record 3, ARCH3D 213, and past
+  the Bay Solitude's RESIAL03 record 3, ARCH3D 203; ARCH3D 602 and 212; a house built in the test; the placer, the
+  decorator's Duplicate, the law and the service); `tools/mutants/fb1031_yard.json` (21, all dead); re-aimed by content:
+  yardwalls, decor1d, decor1e, decor2c, eavefoot, fb1003b_trees and the version records (acct234).
 - **Pinned**: `test/scenes/yardwalls.test.js` (7: the law on synthetic houses, ARCH3D 709 and, past the Bay, Solitude's
   house in BANKBL00), and the pins moved on purpose - `test/net/yardheight.test.js` (the bound, a free piece at 4.5 m,
   one past 8 m against a tall house),

@@ -316,7 +316,8 @@ function crossingLines(ups, h) {
  * cells a face covers outside the ground floor's `walls` (a step, a post with none), judged by the cell; the rest judged
  * by those walls' own lines, so a piece set against one touches the house and no more. `decks` are cells with a level
  * roof facing up (its lowest, [x0, z0, x1, z1, y]); `storeys` the walls standing YARD_STOREY_RISE over each deck's
- * height, [y, lines]; `solid` the rest. Measured once a model.
+ * height, [y, lines]; `solid` the rest. yardByHouse's: `cover` that ground inside the walls and every level roof, past
+ * them too (a porch's); `sides` each upright face's line and height [ax, az, bx, bz, y0, y1]. Measured once a model.
  */
 export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
   const kept = cell === YARD_FOOT_CELL ? footParts.get(positions) : null;
@@ -326,11 +327,11 @@ export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
     x0 = Math.min(x0, positions[i]); x1 = Math.max(x1, positions[i]);
     z0 = Math.min(z0, positions[i + 2]); z1 = Math.max(z1, positions[i + 2]);
   }
-  if (!(x1 > x0) || !(z1 > z0)) return { rects: [], loose: [], solid: [], decks: [], walls: [], storeys: [] };
+  if (!(x1 > x0) || !(z1 > z0)) return { rects: [], loose: [], solid: [], decks: [], walls: [], storeys: [], cover: [], sides: [] };
   const W = Math.ceil((x1 - x0) / cell), H = Math.ceil((z1 - z0) / cell), N = W * H;
   const hit = new Uint8Array(N), roof = new Uint8Array(N), out = new Uint8Array(N), crossed = new Uint8Array(N), side = new Uint8Array(N);
   const deck = new Float64Array(N).fill(NaN);
-  const walls = [], ups = [], seen = new Set();
+  const walls = [], ups = [], seen = new Set(), sides = [], seenSide = new Set();
   const at = (x, z) => Math.min(H - 1, Math.max(0, Math.floor((z - z0) / cell))) * W + Math.min(W - 1, Math.max(0, Math.floor((x - x0) / cell)));
   const upOf = (t) => {
     const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
@@ -351,7 +352,9 @@ export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
     const q = (v) => Math.round(v * 1000);
     const ka = `${q(best[0])},${q(best[1])}`, kb = `${q(best[2])},${q(best[3])}`;
     const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-    if (Math.min(ay, by, cy) >= YARD_ROOF_Y || seen.has(key)) continue;
+    const y0 = Math.min(ay, by, cy), y1 = Math.max(ay, by, cy), span = `${key}|${q(y0)}|${q(y1)}`;
+    if (!seenSide.has(span)) { seenSide.add(span); sides.push([...best, y0, y1]); }   // AUDIT FB1031 Y1: a gable's over a door too
+    if (y0 >= YARD_ROOF_Y || seen.has(key)) continue;
     seen.add(key);
     walls.push([...best, lineOf(best)]);   // EAVE-FOOT: the ground floor's
     const n = Math.ceil(len / (cell / 4));
@@ -389,6 +392,7 @@ export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
     if (!walls.length) { hit[i] = out[i] = 1; continue; }
     if (inside(i, x0 + ((i % W) + 0.5) * cell, z0 + (((i / W) | 0) + 0.5) * cell)) hit[i] = 1;
   }
+  const flatTop = Uint8Array.from(deck, (y) => (Number.isNaN(y) ? 0 : 1));   // AUDIT FB1031 Y1: past the walls too
   for (let i = 0; i < N; i++) if (!hit[i] || out[i]) deck[i] = NaN;
   const seenDeck = new Uint8Array(N);
   for (let i = 0; i < N; i++) {   // AUDIT FB1030 Y6: a deck too small to stand a yard's piece on is no deck
@@ -411,6 +415,8 @@ export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
     decks: cellRects(W, H, x0, z0, x1, z1, cell, (i) => (Number.isNaN(deck[i]) ? null : deck[i])),
     walls,
     storeys: heights.map((y) => [y, crossingLines(ups, y + YARD_STOREY_RISE)]),
+    cover: cellRects(W, H, x0, z0, x1, z1, cell, (i) => ((hit[i] && !out[i]) || flatTop[i] ? true : null)),
+    sides,
   };
   if (cell === YARD_FOOT_CELL) footParts.set(positions, parts);
   return parts;
@@ -431,6 +437,8 @@ export function footGroundAt(parts, m) {
   return {
     loose: footRectsAt(parts.loose, m), solid: footRectsAt(parts.solid, m), decks: footRectsAt(parts.decks, m),
     walls: footLinesAt(parts.walls, m), storeys: parts.storeys.map(([y, ls]) => [m[5] * y + m[13], footLinesAt(ls, m)]),
+    cover: footRectsAt(parts.cover, m),
+    sides: parts.sides.map(([ax, az, bx, bz, y0, y1]) => [...footLinesAt([[ax, az, bx, bz]], m)[0].slice(0, 4), m[5] * y0 + m[13], m[5] * y1 + m[13]]),
   };
 }
 
@@ -452,7 +460,8 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null, frame =
   const lines = (ls) => ls.map((l) => [l[0] - origin[0], l[1] - origin[2], l[2] - origin[0], l[3] - origin[2], l[4]]);
   const grounds = known && frame?.grounds?.length ? frame.grounds.map((g) => ({
     loose: g.loose.map(from), solid: g.solid.map(from), decks: g.decks.map((r) => [...from(r), r[4] - origin[1]]),
-    walls: lines(g.walls), storeys: g.storeys.map(([y, ls]) => [y - origin[1], lines(ls)]),
+    walls: lines(g.walls), storeys: g.storeys.map(([y, ls]) => [y - origin[1], lines(ls)]), cover: g.cover.map(from),
+    sides: g.sides.map((l) => [l[0] - origin[0], l[1] - origin[2], l[2] - origin[0], l[3] - origin[2], l[4] - origin[1], l[5] - origin[1]]),
   })) : null;
   return { house, walls, ...(grounds ? { grounds, loose: [] } : {}), lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1], top: box[4] - origin[1] };
 }
@@ -656,11 +665,17 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;
 }
-/** YARD-WALLS: whether a piece stands by its house - its middle or its ground (`ground`) on the house's box seen from above
- *  or touching it, its foot (`bottom`) no higher than the house's top. A lot that knows no top (hand-built) has none. */
+/** YARD-WALLS: whether a piece stands by its house - its middle or its ground (`ground`) on the house (its models'
+ *  `cover`; its walls, else its box, where none are known) or touching it, or touching an upright face of it as high as
+ *  its foot (`bottom`), and that foot no higher than the house's top. A lot that knows no top (hand-built) has none.
+ *  AUDIT FB1031 Y1: never its box - the open ground in it (an L's notch, a courtyard) took a free piece to 8 m in 4,309
+ *  of 6,016 houses; nor an owner's other house (yardJoinLots joins no grounds), whose top is not this lot's. */
 function yardByHouse(lot, x, z, ground, bottom) {
   if (!(bottom <= (lot.top ?? -Infinity) + YARD_DECK_SLACK)) return false;
-  return inRect(x, z, lot.house, YARD_EDGE_PAD) || yardFootMeets(ground, lot.house, -YARD_EDGE_PAD);
+  const own = lot.grounds ? lot.grounds.flatMap((g) => g.cover) : lot.walls ?? [lot.house];
+  if (own.some((r) => inRect(x, z, r, YARD_EDGE_PAD) || yardFootMeets(ground, r, -YARD_EDGE_PAD))) return true;
+  const pts = [[x, z], ...ground];
+  return (lot.grounds ?? []).some((g) => g.sides.some((l) => bottom >= l[4] - YARD_DECK_SLACK && bottom <= l[5] + YARD_DECK_SLACK && pts.some(([px, pz]) => gapToLines([l], px, pz) <= YARD_EDGE_PAD + 1e-3)));
 }
 /**
  * YARD-LINE (FIELD BUGS 2026-10-12b): WHETHER A NEIGHBOURING BUILDING HOLDS A LOT the ground between it and a yard is split

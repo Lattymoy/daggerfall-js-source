@@ -134,7 +134,11 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
   let measured = radius;   // the scan's, or what a copy was priced at - filled in once the scan reaches it
   const mount = !!entry.mount;
   const hangs = !mount && !!entry.hangs && entry.model == null;   // YARD-WALLS: a picture hung flat on a wall it is set on
-  const s = { yaw: from ? wrapTurn((mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };
+  // AUDIT FB1031 Y2: one that hangs keeps its spin on a wall (`spin`, a hung source's) apart from its heading as a
+  // billboard (`yaw`, a standing source's) - a heading of 180 taken as the spin hung it upside down. A turn turns the pose
+  // last given (`hung`).
+  const hungFrom = hangs && !!from?.hung;
+  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0, spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0, hung: hungFrom, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };
   // DECOR-FIGURE: one of Daggerfall's people takes no size step - placed or moved, it stands at scale 1, one grown before
   // brought back to its own size
   const figure = !decorEntrySized(entry);
@@ -169,7 +173,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     const n = [normal[0] / len, normal[1] / len, normal[2] / len];
     const level = Math.hypot(n[0], n[2]) > 1e-3;
     const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;
-    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];
+    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : s.yaw];
     const { right, up } = decorMountFrame([rot[0], rot[1], 0]);   // the surface's own axes, before the spin
     let p = [hit[0] - origin[0], hit[1] - origin[1], hit[2] - origin[2]];
     if (s.snap) {   // across the surface, never off it
@@ -191,7 +195,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     entry,
     state: () => ({ ...s, nudge: [...s.nudge] }),
     /** Turn by `deg` (a step, or a fine one). */
-    turn(deg) { s.yaw = wrapTurn(round(s.yaw + deg, 1)); },
+    turn(deg) { if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1)); else s.yaw = wrapTurn(round(s.yaw + deg, 1)); },
     /** Lift or lower by `d` metres, within the tool's own bound. */
     raise(d) { s.raise = round(Math.min(DECOR_RAISE_MAX, Math.max(DECOR_RAISE_MIN, s.raise + d)), 3); },
     /** NUDGE: push it [dx, dz] metres along the level, each axis within DECOR_NUDGE_MAX. */
@@ -246,7 +250,8 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       // WALL-CLEAR: a face within DECOR_HANG_NY of level is a wall - the piece stands clear of it, snapped along it
       const hl = nl > 0 ? Math.hypot(normal[0], normal[2]) : 0;
       const wall = !hang && hl > 0 && Math.abs(normal[1] / nl) < DECOR_HANG_NY;
-      if (wall && hangs) return mountAt(hit, origin, id, normal, camYaw, paid, true);   // YARD-WALLS: flat on the wall, not stood off it
+      s.hung = wall && hangs;
+      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true);   // YARD-WALLS: flat on the wall, not stood off it
       if (wall) {
         const n = [normal[0] / hl, normal[2] / hl];
         if (s.snap) {   // along the wall, never into it

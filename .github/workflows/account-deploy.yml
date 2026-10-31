@@ -82,6 +82,7 @@ on:
       - "src/net/decorLaw.js"
       - "src/net/yardCellLaw.js"
       - "src/world/npcFlatArchives.js"
+      - "src/world/natureArchives.js"
       - "src/net/homeVoteLaw.js"
       - "src/net/guild/guildLaw.js"
       - "src/net/repairLaw.js"

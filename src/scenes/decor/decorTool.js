@@ -1325,7 +1325,8 @@ export function createDecorTool(deps) {
     const known = entryOf(piece);
     const light = piece.light ? { color: [...piece.light.color], range: piece.light.range, intensity: piece.light.intensity } : null;
     const eye = at ?? (placing?.fly ? [...placing.fly] : null);
-    beginPlacing({ ...known, light, storage: !!piece.storage, station: null, item: null }, null, { rot: piece.rot, scale: piece.scale, paid: piece.paid, through: piece.id, ...(eye ? { at: eye } : {}) });
+    // AUDIT FB1031 Y2: a hung one's copy starts at its spin on the wall (its rot[2]), never its wall's heading as the spin
+    beginPlacing({ ...known, light, storage: !!piece.storage, station: null, item: null }, null, { rot: piece.rot, scale: piece.scale, paid: piece.paid, through: piece.id, ...(piece.hung ? { hung: true } : {}), ...(eye ? { at: eye } : {}) });
     return true;
   }
 

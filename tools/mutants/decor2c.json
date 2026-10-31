@@ -158,8 +158,8 @@
   {
     "name": "DECOR2c-the-surfaces-tilt-ignored",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
-    "new": "0, s.yaw];",
+    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : s.yaw];",
+    "new": "0, hung ? s.spin : s.yaw];",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "DECOR2c-the-spin-dropped",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
-    "new": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), 0];",
+    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : s.yaw];",
+    "new": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : 0];",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "DECOR2c-a-moved-mount-from-its-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "yaw: from ? wrapTurn((mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
-    "new": "yaw: from ? wrapTurn((from.rot?.[0]) ?? 0) : 0,",
+    "old": "yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
+    "new": "yaw: from ? wrapTurn((hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],

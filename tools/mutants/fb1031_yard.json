@@ -1,0 +1,191 @@
+[
+  {
+    "name": "AUDIT-FB1031-Y1-the-box-asked",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const own = lot.grounds ? lot.grounds.flatMap((g) => g.cover) : lot.walls ?? [lot.house];",
+    "new": "  const own = [lot.house];",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-joined-walls-read",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const own = lot.grounds ? lot.grounds.flatMap((g) => g.cover) : lot.walls ?? [lot.house];",
+    "new": "  const own = lot.walls ?? [lot.house];",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-level-roofs-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "(i) => ((hit[i] && !out[i]) || flatTop[i] ? true : null)),",
+    "new": "(i) => (hit[i] && !out[i] ? true : null)),",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-loose-ground-by-the-house",
+    "file": "src/scenes/homeYards.js",
+    "old": "(i) => ((hit[i] && !out[i]) || flatTop[i] ? true : null)),",
+    "new": "(i) => (hit[i] || flatTop[i] ? true : null)),",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-flat-roofs-read-as-its-decks",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const flatTop = Uint8Array.from(deck, (y) => (Number.isNaN(y) ? 0 : 1));   // AUDIT FB1031 Y1: past the walls too\n  for (let i = 0; i < N; i++) if (!hit[i] || out[i]) deck[i] = NaN;",
+    "new": "  for (let i = 0; i < N; i++) if (!hit[i] || out[i]) deck[i] = NaN;\n  const flatTop = Uint8Array.from(deck, (y) => (Number.isNaN(y) ? 0 : 1));",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-sides-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return (lot.grounds ?? []).some((g) => g.sides.some(",
+    "new": "  return false && (lot.grounds ?? []).some((g) => g.sides.some(",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-a-face-over-the-foot",
+    "file": "src/scenes/homeYards.js",
+    "old": " && bottom <= l[5] + YARD_DECK_SLACK && pts.some(",
+    "new": " && pts.some(",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-a-face-under-the-foot",
+    "file": "src/scenes/homeYards.js",
+    "old": "g.sides.some((l) => bottom >= l[4] - YARD_DECK_SLACK && ",
+    "new": "g.sides.some((l) => ",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-sides-touch",
+    "file": "src/scenes/homeYards.js",
+    "old": "gapToLines([l], px, pz) <= YARD_EDGE_PAD + 1e-3)));",
+    "new": "gapToLines([l], px, pz) <= 0)));",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-a-face-a-side-alone",
+    "file": "src/scenes/homeYards.js",
+    "old": "    if (!seenSide.has(span)) { seenSide.add(span); sides.push([...best, y0, y1]); }",
+    "new": "    if (!seenSide.has(key)) { seenSide.add(key); sides.push([...best, y0, y1]); }",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-sides-unplaced",
+    "file": "src/scenes/homeYards.js",
+    "old": "m[5] * y0 + m[13], m[5] * y1 + m[13]]),",
+    "new": "y0, y1]),",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y1-the-sides-unframed",
+    "file": "src/scenes/homeYards.js",
+    "old": "l[4] - origin[1], l[5] - origin[1]]),",
+    "new": "l[4], l[5]]),",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-heading-taken-as-the-spin",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,",
+    "new": "spin: from ? wrapTurn(from.rot?.[hungFrom ? 2 : 0] ?? 0) : 0,",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-hung-spin-taken-as-the-heading",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "hungFrom ? 0 : from.rot?.[0]",
+    "new": "hungFrom ? from.rot?.[2] : from.rot?.[0]",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-hung-pose-spun-by-the-heading",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "1), hung ? s.spin : s.yaw];",
+    "new": "1), s.yaw];",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-turn-never-spins",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "    turn(deg) { if (s.hung) s.spin",
+    "new": "    turn(deg) { if (false) s.spin",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-turn-turns-both",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "    turn(deg) { if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1)); else s.yaw = wrapTurn(round(s.yaw + deg, 1)); },",
+    "new": "    turn(deg) { s.spin = wrapTurn(round(s.spin + deg, 1)); s.yaw = wrapTurn(round(s.yaw + deg, 1)); },",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-pose-unkept",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "      s.hung = wall && hangs;\n      if (s.hung) return mountAt(",
+    "new": "      if (wall && hangs) return mountAt(",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y2-the-Duplicate-unhung",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "...(piece.hung ? { hung: true } : {}), ...(eye ? { at: eye } : {}) });",
+    "new": "...(eye ? { at: eye } : {}) });",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y6-a-plant-hung-by-the-law",
+    "file": "src/net/decorLaw.js",
+    "old": " || isNatureArchive(what.flat[0]))) return null;",
+    "new": ")) return null;",
+    "tests": [
+      "test/scenes/fb1031_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-Y6-the-leaf-off-the-deploy",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - \"src/world/natureArchives.js\"\n",
+    "new": "",
+    "tests": [
+      "test/server/accountdeploy.test.js"
+    ]
+  }
+]
