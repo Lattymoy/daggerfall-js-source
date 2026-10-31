@@ -31,7 +31,7 @@ test('CA1: every anchor in the docs names one line - its quote stands once in th
       if (a.error) bad.push(`${d}:${a.line} ${a.text} - ${a.error}`);
     }
   }
-  assert.ok(seen >= 1500, `only ${seen} anchors read - the docs or the anchor's spelling changed`);
+  assert.ok(seen >= 500, `only ${seen} anchors read - the docs or the anchor's spelling changed`);   // a floor against a reader that finds none; the bible's rewrite left about 900
   assert.deepEqual(bad, [], `anchors that name no line:\n${bad.join('\n')}`);
 });
 

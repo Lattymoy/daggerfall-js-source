@@ -146,7 +146,6 @@ test('WORLD6b-iii(c): by source - the record and the reader, the target, the ask
   assert.match(b, /judgeRoomClaim\(st\.rs, st\.base\.length, st\.full, \{ id: `\$\{legacy\}:\$\{p\}`, p, n: left \}\);/, 'LOOT-DUP: the places are RESERVED (judged taken) the moment the frame is accepted - splicing on the queue\'s boolean granted the same pile twice (AUDIT WORLD6b-iii(c) A3/C2)');   // PIN MOVED (OUTDOOR-LOOT): the owner's list is the state composed, so the reservation is a judgment of the places
   assert.match(b, /const granted = \{ to, held, at: _now\(\) \};\s*st\.granted = granted;\s*const back = \(\) => \{ if \(st\.granted === granted\) st\.granted = null; restoreHeld\(st, held\); \};\s*if \(!net\(\)\?\.onPeerHit\) \{ back\(\); return; \}\s*net\(\)\.onPeerHit\(frame, \{ dropped: back \}\);/, 'and put back - as new places - if the frame never leaves');   // AUDIT ONLINE2 F4: the grant kept a while for the taker's `back`
   assert.match(b, /const n = takeCorpseLoot\(\{ entity: \{ items: grant \} \}, playerEntity, h\.say \?\? \(\(\) => \{\}\)\);/, 'the one take law');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(c\): a puppet's corpse loot/, 'the record');
 });
 
 // LOOT-DUP (2026-09-15, AUDIT ONCRASH1's own finding): THE SAME PILE CANNOT BE GRANTED TWICE.

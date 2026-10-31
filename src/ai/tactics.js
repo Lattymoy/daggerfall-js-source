@@ -1,5 +1,5 @@
 // @ts-check
-// TACT2 - THE TACTICS BRAIN (bible/12-Enhanced-AI/Tactics-Arc.md; Mac, 2026-10-02: "enemy tactics like backing off and
+// TACT2 - THE TACTICS BRAIN (Mac, 2026-10-02: "enemy tactics like backing off and
 // knowing when to strike"; "have enemies aware of each other"; his calls: 2 melee + 2 ranged attack tokens; animals
 // and the cowardly human classes break and run, undead, daedra, constructs and guards never).
 //
@@ -9,24 +9,24 @@
 // step (`ai._tacDir`, at `ai._tacSpeed` of a walk, facing the target) and whether a blow may be struck
 // (`ai._tacStrike`, `ai._tacShoot`). With the switch off every one of those stays unset and the motor is DFU's.
 //
-//   - TOKENS. At most TACT_MELEE_TOKENS foes hold a melee token on one target, TACT_RANGED_TOKENS a ranged one. A
-//     holder walks in and strikes on DFU's own clock. The rest hold the RING - just outside reach - each on its own
-//     angle (a slot), circling slowly, never swinging.
-//   - THE STRIKE WINDOW. After its blow a holder backs out to the ring for a beat (RECOVER) and hands its token on:
-//     the next to go in is the foe that has waited longest. A foe that has waited past its PATIENCE goes in whatever
-//     the tokens say - nobody waits forever. A target whose back is turned on a waiting foe within reach is open: it
-//     strikes.
-//   - BACKING OFF. A foe that loses a share of its health in a short window backs out of reach and circles before it
-//     comes back. A coward (an animal, a thief's kind of class) at low health runs (DFU's flee).
-//   - KITING. A shooter backs away from a target closing inside its stand-off band - one burst, then it fights.
-//   - FEEDBACK (2026-10-02, lumin: "New monster AI is painful... a little too hard. The archers that just keep kiting you
-//     in a circle"; maya: "They keep walking backwards"): nobody backpedals after a target that presses it. A waiting
-//     foe the target walks up to fights; the step back after a blow is a hop; a hurt foe or a kiting archer turns and
-//     WALKS away (a foe walks the way it faces), at most once a cooldown; a shooter without a token stands off, never
-//     circles.
-//   - TELL1 (bible/12-Enhanced-AI/Feud-Arc.md section 3): POISE. A foe winding up holds through a blow - the doors write
-//     no knockback - and the blow's weight fills its poise meter; at its poise the wind-up breaks and the foe is
-//     STAGGERED (a held Hurt, nothing decided, a quarter more taken). Before it, any landed hit broke any wind-up.
+// TOKENS. At most TACT_MELEE_TOKENS foes hold a melee token on one target, TACT_RANGED_TOKENS a ranged one. A
+//    holder walks in and strikes on DFU's own clock. The rest hold the RING - just outside reach - each on its own
+//    angle (a slot), circling slowly, never swinging.
+//  - THE STRIKE WINDOW. After its blow a holder backs out to the ring for a beat (RECOVER) and hands its token on:
+//    the next to go in is the foe that has waited longest. A foe that has waited past its PATIENCE goes in whatever
+//    the tokens say - nobody waits forever. A target whose back is turned on a waiting foe within reach is open: it
+//    strikes.
+//  - BACKING OFF. A foe that loses a share of its health in a short window backs out of reach and circles before it
+//    comes back. A coward (an animal, a thief's kind of class) at low health runs (DFU's flee).
+//  - KITING. A shooter backs away from a target closing inside its stand-off band - one burst, then it fights.
+//  - FEEDBACK (2026-10-02, lumin: "New monster AI is painful... a little too hard. The archers that just keep kiting you
+//    in a circle"; maya: "They keep walking backwards"): nobody backpedals after a target that presses it. A waiting
+//    foe the target walks up to fights; the step back after a blow is a hop; a hurt foe or a kiting archer turns and
+//    WALKS away (a foe walks the way it faces), at most once a cooldown; a shooter without a token stands off, never
+//    circles.
+//  - TELL1: POISE. A foe winding up holds through a blow - the doors write
+//    no knockback - and the blow's weight fills its poise meter; at its poise the wind-up breaks and the foe is
+//    STAGGERED (a held Hurt, nothing decided, a quarter more taken). Before it, any landed hit broke any wind-up.
 //
 // One registry of tokens, by target: the local player is one key, every other target its own object.
 
@@ -52,8 +52,8 @@ import {
   BLOW_STALE,
   setBlowTargetOf,
 } from './foeBlows.js'; // TACT4; TELL3: iron; TELL5: the family, the shapes' lengths
-import { coverDistance } from './cover.js'; // TELL6: a charge's lane must be free of cover
-import { GRAVITY } from '../player/motor.js'; // TELL6c: a leap's hop on the motor's own gravity
+import { coverDistance } from './cover.js'; // A charge's lane must be free of cover
+import { GRAVITY } from '../player/motor.js'; // A leap's hop on the motor's own gravity
 import { tacticsNow, setTacticsClock, tickTactics } from './tacticsClock.js'; // AUDIT TACT D10/A3
 import {
   TELL,
@@ -72,9 +72,9 @@ import {
   feintChance,
   trackShare,
   chainMax,
-} from './tells.js'; // TELL1: poise and the stagger (bible/12-Enhanced-AI/Feud-Arc.md section 3); TELL3: a blow's guard; TELL4: the punish window; TELL5: patterns; TELL7: the cooldowns
-import { registerBlowTakenMod } from '../systems/blowTaken.js'; // TELL1: a staggered foe takes more - the leaf the formulas read
-import { noteFeud } from '../systems/feudLedger.js'; // RVN1: a blow of its I dodged, in its fight's ledger (a leaf - the brain brings no revenant system)
+} from './tells.js'; // Poise and the stagger; TELL3: a blow's guard; TELL4: the punish window; TELL5: patterns; TELL7: the cooldowns
+import { registerBlowTakenMod } from '../systems/blowTaken.js'; // A staggered foe takes more - the leaf the formulas read
+import { noteFeud } from '../systems/feudLedger.js'; // A blow of its I dodged, in its fight's ledger (a leaf - the brain brings no revenant system)
 
 export const tacticsSwitchOn = () => getPref('enhancedAI') === true;
 
@@ -124,7 +124,7 @@ export function isCoward(mobileId) {
   return ENEMY_BASICS[mobileId]?.affinity === 'Animal';
 }
 
-// AUDIT TACT (D10/A3): the foes' own time, ticked by the hosts (ai/tacticsClock.js) - never the wall's
+// AUDIT TACT: the foes' own time, ticked by the hosts (ai/tacticsClock.js) - never the wall's
 const clock = tacticsNow;
 export { tacticsNow, setTacticsClock, tickTactics };
 
@@ -160,13 +160,13 @@ export function offsetTactics(offset) {
 export const boardsHeld = () => _boards.size;
 
 const LOCAL = Object.freeze({ local: true });
-/** TELL8: a stagger or an overreach a puppet's owner says stands, on the puppet's entity until its owner says it ended -
+/** A stagger or an overreach a puppet's owner says stands, on the puppet's entity until its owner says it ended -
  *  finite, as the fold reads `Number.isFinite` (staggeredNow); its home here, so a foe handed over (tacticsStep) can tell
  *  its owner's word from its own. ai/puppetBlows.js writes it. */
 export const PUPPET_HELD_UNTIL = 1e9;
 /**
  * THE MARK - the feet a telegraphed blow is aimed at: mine for the local player's key (TACT4's law); TELL8
- * (bible/12-Enhanced-AI/Feud-Arc.md 10.2, OPEN 9) a PEER's the foe hunts (its candidate's, refreshed each frame in this
+ * (OPEN 9) a PEER's the foe hunts (its candidate's, refreshed each frame in this
  * frame's coordinates); and AUDIT ARENA-LADDER (the owner, 2026-10-05: "Ensure AI enemies sometimes receive telegraphed
  * attacks") on the arena's sand a BOUT-MATE's: a fighter of the same live bout on another side (the pair
  * characters/enemy/enemyTargets.js boutGate keeps, read off the two entities' own tags), so an exhibition's fighters, a Grand
@@ -186,8 +186,8 @@ function targetFeet(ai, key) {
     return null;
   return t.ai.feet;
 }
-/** AUDIT ARENA-LADDER: is a landing at the mark `key` (one targetFeet found) judged on this client - mine, or a
- *  bout-mate's on the sand? A peer's is the peer's own (TELL8 10.3). */
+/** Is a landing at the mark `key` (one targetFeet found) judged on this client - mine, or a
+ *  bout-mate's on the sand? A peer's is the peer's own. */
 const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);
 /** The board's key for an ai's target: the local player is one key; a peer by its owner; a foe by itself. */
 export function targetKey(ai) {
@@ -195,7 +195,7 @@ export function targetKey(ai) {
   if (!t || (t.isPlayer && !t.isPeer)) return LOCAL;
   return t.owner ?? t.peerId ?? t;
 }
-setBlowTargetOf(targetKey); // AUDIT ARENA-LADDER 2: a landed verdict is its mark's alone (ai/foeBlows.js blowConnects)
+setBlowTargetOf(targetKey); // A landed verdict is its mark's alone (ai/foeBlows.js blowConnects)
 function board(key) {
   let b = _boards.get(key);
   if (!b) _boards.set(key, (b = { melee: new Map(), ranged: new Map(), waiting: new Map() }));
@@ -220,14 +220,14 @@ export function releaseTactics(ai) {
   if (ai._tac?.state === 'overreach') {
     ai._tac.state = 'wait';
     endOverreach(ai);
-  } // TELL4: its window goes with its place
-  if (ai._tac?.state === 'chain') ai._tac.state = 'wait'; // TELL5: and a chain it had yet to wind up
+  } // Its window goes with its place
+  if (ai._tac?.state === 'chain') ai._tac.state = 'wait'; // And a chain it had yet to wind up
   if (ai._tac?.state === 'dash') {
     ai._tac.state = 'wait';
     ai._tac.dash = null;
     dropSwing(ai);
-  } // TELL6: and a charge mid-lane
-  setLiveBlow(ai, null); // TACT4: a wind-up dies with its foe's place
+  } // And a charge mid-lane
+  setLiveBlow(ai, null); // A wind-up dies with its foe's place
   clearBlowState(ai);
   ai._tacDir = null;
   ai._tacStrike = undefined;
@@ -236,7 +236,7 @@ export function releaseTactics(ai) {
   ai._wantAimed = false;
   ai._blowShot = null; // AUDIT TELL B4: an archer's aimed shot goes too (DFU's bow roll, whole again)
 }
-/** AUDIT TELL B1/B2 (bible/12-Enhanced-AI/Feud-Arc.md, the AUDIT TELL record): a wind-up, a charge's run or a chain's
+/** AUDIT TELL B1/B2 (the AUDIT TELL record): a wind-up, a charge's run or a chain's
  *  gap BROKEN where the brain was not asked - a paralysis or a Calm (the motor's CanAct), a flight, a pool not stepped
  *  (an interior visit, a held window): the mark gone, the held swing dropped, the cooldown begun, no verdict for any
  *  later swing. A blow is told or it is nothing. Answers whether there was one to break. */
@@ -265,14 +265,14 @@ function clearBlowState(ai) {
   ai._blowSwing = false;
   ai._blowFor = undefined;
 }
-/** TELL2: a wind-up's held swing dropped (its wind-up broke, a paralysis, its place gone) - the sprite and the attack
+/** A wind-up's held swing dropped (its wind-up broke, a paralysis, its place gone) - the sprite and the attack
  *  component let it go and strike nothing (characters/mobile/mobileUnit.js, characters/enemy/enemyAttack.js). */
 function dropSwing(ai) {
   ai._blowHold = 'cancel';
   ai._blowWind = false;
 }
 
-// ── TELL1: POISE AND THE STAGGER (bible/12-Enhanced-AI/Feud-Arc.md section 3; Mac: "player's can easily stun these
+// ── TELL1: POISE AND THE STAGGER (Mac: "player's can easily stun these
 // enemies") ───────────────────────────────────────────────────────────────────────────────────────────────────────
 /** Does a blow landing on this foe land on a wind-up? Then it HOLDS - the door writes no knockback and plays no Hurt -
  *  and its weight goes on the poise meter (`windupStruck`). The switch off, never. */
@@ -281,7 +281,7 @@ export function windupHolds(ai) {
   return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && !unseen(s, clock()) && tacticsSwitchOn(); // AUDIT TELL B1: a foe that cannot act holds nothing
 }
 /**
- * TELL1: a blow of weight `v` (ai/tells.js blowWeight) landed on a foe winding up - `ent` its entity, `weight` DFU's
+ * A blow of weight `v` (ai/tells.js blowWeight) landed on a foe winding up - `ent` its entity, `weight` DFU's
  * weight in classic units, kit and all (formulas.enemyWeightClassicUnits, as the door's knockback reads it). The meter
  * fills against the foe's poise (set at the first blow: its kind's health by its weight, by what it is); at the poise
  * the wind-up BREAKS - its mark gone, the blow's cooldown begun, its melee token handed on - and the foe is STAGGERED
@@ -291,19 +291,19 @@ export function windupHolds(ai) {
  * Answers null (no wind-up here: DFU's knockback, as ever), 'hold', 'break' or 'stagger'.
  */
 export function windupStruck(ai, ent, weight, v) {
-  if (ent?.staffBoss) return overreachOpen(ai) || windupHolds(ai) ? 'hold' : null; // BOSS-UNSHAKEN (mob 2026-10-25: "lets stop him from getting stunned"): a staff event's mini boss is never staggered
-  if (overreachOpen(ai)) return punishStruck(ai, ent, weight); // TELL4: an overreached foe - the first blow staggers it
+  if (ent?.staffBoss) return overreachOpen(ai) || windupHolds(ai) ? 'hold' : null; // "lets stop him from getting stunned"): a staff event's mini boss is never staggered
+  if (overreachOpen(ai)) return punishStruck(ai, ent, weight); // An overreached foe - the first blow staggers it
   if (!windupHolds(ai)) return null;
   const s = ai._tac,
     b = s.blow,
     now = clock();
-  if (b.guard === 'iron') return 'hold'; // TELL3: iron takes no poise - it lands (a paralysis alone stops it, windupTurn)
+  if (b.guard === 'iron') return 'hold'; // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)
   if (!Number.isFinite(b.poise)) b.poise = poiseOf(ent, weight);
   b.taken = (b.taken ?? 0) + (v > 0 ? v : 0);
   if (b.taken < b.poise) return 'hold';
   shatterBlow(ai, now);
   s.blow = null; // AUDIT TELL (3.2): its mark shatters
-  s.blowReady = now + blowCooldown(ent); // TELL7: by its tier
+  s.blowReady = now + blowCooldown(ent); // By its tier
   clearBlowState(ai);
   dropSwing(ai);
   handOn(ai, s, now);
@@ -324,7 +324,7 @@ function handOn(ai, s, now) {
     bd.waiting.set(ai, now);
   }
 }
-/** TELL1 (3.2): STAGGERED for its weight's length - one law for a broken wind-up and an overreach answered (TELL4). */
+/** STAGGERED for its weight's length - one law for a broken wind-up and an overreach answered. */
 function stagger(ai, s, ent, weight, now) {
   s.state = 'staggered';
   s.until = now + staggerSeconds(weight);
@@ -333,7 +333,7 @@ function stagger(ai, s, ent, weight, now) {
   if (ent) ent.staggerUntil = s.until; // ...and what every blow at it reads (the fold below)
   return 'stagger';
 }
-/** TELL2: the glint on a foe's body this frame - `[r, g, b, strength]` in its blow's colour, or null: no wind-up, or a
+/** The glint on a foe's body this frame - `[r, g, b, strength]` in its blow's colour, or null: no wind-up, or a
  *  feint (a feint never glints - the glint is the honest tell). `reduced` the viewer's reduced motion. */
 export function foeGlint(ai, now = clock(), reduced = false) {
   const s = ai?._tac,
@@ -350,7 +350,7 @@ export function foeGlint(ai, now = clock(), reduced = false) {
 }
 const _glint = [0, 0, 0, 0];
 /**
- * TELL9 (section 11.1): what the target bar's POISE TRACK shows for `ai` - null for a foe with no brain or with the
+ * What the target bar's POISE TRACK shows for `ai` - null for a foe with no brain or with the
  * switch off (no track at all: the classic motor's fight), else `{ state, fill, word }`: 'empty' outside a wind-up;
  * 'windup' amber, `fill` the meter's share of its poise (0 before the first blow sets it); 'iron' red and full, "Iron";
  * 'staggered' white and full, "Staggered"; 'open' through an overreach, "Open". A feint reads as any wind-up (the bar
@@ -368,22 +368,22 @@ export function poiseTrack(ai) {
   if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };
   return { state: 'windup', fill: b.poise > 0 ? Math.min(1, (b.taken ?? 0) / b.poise) : 0, word: '' };
 }
-/** TELL1: is this entity staggered now (on the brain's clock)? */
+/** Is this entity staggered now (on the brain's clock)? */
 export const staggeredNow = (ent, now = clock()) => Number.isFinite(ent?.staggerUntil) && now < ent.staggerUntil;
-// TELL1: a staggered foe takes a quarter more from every blow - the formulas' tail and a spell's landing read this
+// A staggered foe takes a quarter more from every blow - the formulas' tail and a spell's landing read this
 registerBlowTakenMod('tell-stagger', (attacker, target) => (staggeredNow(target) ? TELL.STAGGER_TAKEN : 1));
 
-// ── TELL4: THE PUNISH WINDOW (bible/12-Enhanced-AI/Feud-Arc.md section 6) ──────────────────────────────────────────
+// ── TELL4: THE PUNISH WINDOW ──────────────────────────────────────────
 /** Is this foe OVERREACHED now - its telegraphed blow landed on no feet, and it stands spent, open to an answer? */
 export function overreachOpen(ai) {
   const s = ai?._tac;
   return !!s && s.state === 'overreach' && clock() < s.until && tacticsSwitchOn();
 }
-/** TELL4: is this entity overreached now (on the brain's clock)? */
+/** Is this entity overreached now (on the brain's clock)? */
 export const overreachedNow = (ent, now = clock()) => Number.isFinite(ent?.overreachUntil) && now < ent.overreachUntil;
-// TELL4: an overreached foe takes 30% more from every blow - the same registry the stagger's quarter rides
+// An overreached foe takes 30% more from every blow - the same registry the stagger's quarter rides
 registerBlowTakenMod('tell-overreach', (attacker, target) => (overreachedNow(target) ? TELL.PUNISH_TAKEN : 1));
-/** TELL4: its blow missed me (`perfect`: my feet were inside it TELL_LATE before the landing) - OVERREACHED for
+/** Its blow missed me (`perfect`: my feet were inside it TELL_LATE before the landing) - OVERREACHED for
  *  `punishSeconds`: locked as a stagger locks (the motor's CanAct), its swing's follow-through standing (the sprite's
  *  `'spent'`), every blow it takes x`PUNISH_TAKEN`, the first that lands staggering it. It keeps its melee token. */
 function beginOverreach(ai, s, b, now, perfect, atMe = true) {
@@ -397,12 +397,12 @@ function beginOverreach(ai, s, b, now, perfect, atMe = true) {
   if (atMe && ent) {
     noteFeud(ent, 'dodged');
     if (perfect) noteFeud(ent, 'perfect');
-  } // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight
+  } // My dodge - a peer's is its own fight
   ai._tacStrike = false;
   ai._tacShoot = false;
   ai.moving = false;
 }
-/** TELL4: the window shut - by its time, a stagger, or its place gone. The swing goes with it: let go after its strike,
+/** The window shut - by its time, a stagger, or its place gone. The swing goes with it: let go after its strike,
  *  dropped before one (a stagger in the frame step between the landing and the strike - no strike, and never the list's
  *  later one under the stagger's Hurt). */
 function endOverreach(ai) {
@@ -411,7 +411,7 @@ function endOverreach(ai) {
   if (ent) ent.overreachUntil = 0;
   if (ai._blowHold === 'spent') dropSwing(ai);
 }
-/** TELL4: a blow landed on an overreached foe - it staggers (3.2's law: its weight's length, its token handed on), unless
+/** A blow landed on an overreached foe - it staggers (3.2's law: its weight's length, its token handed on), unless
  *  inside STAGGER_IMMUNE of its last stagger, where the blow is a plain one (null: DFU's knockback). */
 function punishStruck(ai, ent, weight) {
   const s = ai._tac,
@@ -481,7 +481,7 @@ export function tacticsStep(ai, dx, dz) {
   } // AUDIT TELL B4: DFU's bow roll whole again
   const now = clock();
   if (ai._tac?.puppet) {
-    // TELL8: a puppet's synthetic state (ai/puppetBlows.js) is no brain's - a foe handed to me thinks afresh
+    // A puppet's synthetic state (ai/puppetBlows.js) is no brain's - a foe handed to me thinks afresh
     setLiveBlow(ai, null);
     ai._tac = null;
     // AUDIT TELL B5: and its owner's words with it - the held swing (every later swing would stand at its raised arm), the
@@ -541,9 +541,9 @@ export function tacticsStep(ai, dx, dz) {
   const key = fighting ? targetKey(ai) : null;
   ai._tacStrike = undefined;
   ai._tacShoot = undefined;
-  ai._aimReady = false; // TELL6d: asked afresh each turn (the ranged branch)
+  ai._aimReady = false; // Asked afresh each turn (the ranged branch)
   if (ai._blowShot && now - ai._blowShot.at > BLOW_VERDICT_LIFE) ai._blowShot = null; // a shot never loosed goes stale, as a verdict does
-  // TELL1: staggered - the motor holds it (it cannot act, so the brain is rarely asked); spent, the beat after a blow
+  // Staggered - the motor holds it (it cannot act, so the brain is rarely asked); spent, the beat after a blow
   if (s.state === 'staggered') {
     if (now < s.until) {
       ai._tacStrike = false;
@@ -555,7 +555,7 @@ export function tacticsStep(ai, dx, dz) {
     s.until = now + TACT.RECOVER_MIN + Math.random() * (TACT.RECOVER_MAX - TACT.RECOVER_MIN);
     s.backUntil = now + TACT.RECOVER_HOP;
   }
-  // TELL4: overreached - locked as a stagger is; spent, the beat after a blow, its token handed on (TACT2's RECOVER)
+  // Overreached - locked as a stagger is; spent, the beat after a blow, its token handed on (TACT2's RECOVER)
   if (s.state === 'overreach') {
     if (now < s.until) {
       ai._tacStrike = false;
@@ -569,7 +569,7 @@ export function tacticsStep(ai, dx, dz) {
     s.backUntil = now + TACT.RECOVER_HOP;
     handOn(ai, s, now);
   }
-  // TELL5 (7.4): a chain - its landing's strike drawn, the next blow winds up from the new facing (it keeps its token)
+  // A chain - its landing's strike drawn, the next blow winds up from the new facing (it keeps its token)
   if (s.state === 'chain') {
     // AUDIT TELL B9: and the first blow's verdict spent first - a speed-drained sprite steps slower than the gap, and the
     // chain's held swing would re-hold the first blow's strike (CHAIN_SPEND_MAX the cap: a verdict nothing spends)
@@ -581,7 +581,7 @@ export function tacticsStep(ai, dx, dz) {
     }
     const ck = targetKey(ai),
       ent = ai.vitals?.(),
-      tf = ck === s.chainKey ? targetFeet(ai, ck) : null; // TELL8: at me, or at the peer it hunts; AUDIT TELL B8: the same one
+      tf = ck === s.chainKey ? targetFeet(ai, ck) : null; // At me, or at the peer it hunts; AUDIT TELL B8: the same one
     if (ent && tf && ai.canAct !== false && !skipped)
       beginWindup(ai, s, ent, s.chainShape, tf[0] - ai.feet[0], tf[2] - ai.feet[2], now, s.chainN);
     else {
@@ -589,9 +589,9 @@ export function tacticsStep(ai, dx, dz) {
       clearBlowState(ai);
     } // knocked, paralysed or turned away in the gap: the chain is spent
   }
-  // TELL6 (8.1): a charge running its lane - committed; the verdict swept between its turns
+  // A charge running its lane - committed; the verdict swept between its turns
   if (s.state === 'dash') return dashTurn(ai, s, now, skipped);
-  // TACT4: a wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight
+  // A wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight
   if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);
   if (s.key !== key) {
     releaseTactics(ai);
@@ -721,10 +721,10 @@ export function tacticsStep(ai, dx, dz) {
       ai.moving = false;
       return true;
     } // FEEDBACK: out past the edge, it turns back to shoot
-    // TELL6d (8.1): an archer of the whole set aims one shot in three - the attack component asks as its shot comes
+    // An archer of the whole set aims one shot in three - the attack component asks as its shot comes
     // (`_wantAimed`), and the brain winds it up instead: its line on the ground, locked; its landing looses it
     const ent = ai.vitals?.();
-    // RVN5 (16.1): a caster's signature, the pyre - with its token, as its shot or its spell would go: the casters' first tell
+    // A caster's signature, the pyre - with its token, as its shot or its spell would go: the casters' first tell
     const sig = ent?.revenant?.sigBlow;
     if (
       has &&
@@ -770,7 +770,7 @@ export function tacticsStep(ai, dx, dz) {
     s.state = 'engage';
   }
   if (s.state === 'engage' && !b.melee.has(ai) && !open) s.state = 'wait';
-  // TACT4: a telegraphed blow - a holder in reach of the tier, its cooldown spent, nobody else winding up near its mark
+  // A telegraphed blow - a holder in reach of the tier, its cooldown spent, nobody else winding up near its mark
   // TELL6: in reach, a blow of reach; out of it, a gap-closer whose lane is free (the charge, 5-12 m)
   // TELL8 (10.2): at a peer it hunts as at me - one wind-up near each target, the peer's own feet its judge; AUDIT
   // ARENA-LADDER: on the sand at a bout-mate (targetFeet)
@@ -782,7 +782,7 @@ export function tacticsStep(ai, dx, dz) {
     const tdx = tf[0] - ai.feet[0],
       tdz = tf[2] - ai.feet[2];
     const near = dist <= reach + 0.5;
-    // RVN5 (bible/12-Enhanced-AI/Feud-Arc.md 16.1): ITS SIGNATURE - a revenant's own blow, ahead of any other whenever its
+    // ITS SIGNATURE - a revenant's own blow, ahead of any other whenever its
     // own cooldown is spent and its shape reaches (its stand's `revenant.sigBlow`)
     const sig = ent?.revenant?.sigBlow;
     if (
@@ -796,7 +796,7 @@ export function tacticsStep(ai, dx, dz) {
       return windupTurn(ai, s, now, skipped);
     }
     const shapes = blowPool(ai, ent, dist, near, tdx, tdz);
-    // RVN2: an Arrow-wise revenant out of reach closes with its charge or its leap whenever its lane is free (no roll)
+    // An Arrow-wise revenant out of reach closes with its charge or its leap whenever its lane is free (no roll)
     if (
       shapes.length &&
       !windupNear(tf, now, ai) &&
@@ -838,11 +838,11 @@ function walkAway(ai, wx, wz, speed) {
   return true;
 }
 
-/** TACT4: a telegraphed blow wound up - `shape` aimed along (dx, dz). TELL3: its guard; TELL5: its drawn length (a
+/** A telegraphed blow wound up - `shape` aimed along (dx, dz). TELL3: its guard; TELL5: its drawn length (a
  *  chain's quick and undrawn), a feint one wind-up in FEINT_CHANCE for a blade of the higher tier (never two within
  *  FEINT_GAP; never a chain's). `chain` its place in a chain (0 the first). */
 function beginWindup(ai, s, ent, shape, dx, dz, now, chain = 0, sig = null) {
-  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3
+  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3
   const windup =
     chain > 0
       ? windupSeconds(TELL.CHAIN_WINDUP, ent, { guard, roll: null, floor: TELL.CHAIN_FLOOR })
@@ -863,16 +863,16 @@ function beginWindup(ai, s, ent, shape, dx, dz, now, chain = 0, sig = null) {
   b.trackedAt = now;
   b.n = ai._blowN = ((ai._blowN ?? 0) + 1) & 255; // AUDIT TELL O2: its serial on the wire (ai/puppetBlows.js `wn`)
   b.key = targetKey(ai); // AUDIT TELL B8: whom it is aimed at - a foe that turns on another breaks it (the owner and the struck peer agree)
-  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true; // AUDIT ARENA-LADDER: one at a bout-mate (no other mark is begun at) is drawn for the stands (foeBlows.js SAND_DRAW_RANGE)
+  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true; // One at a bout-mate (no other mark is begun at) is drawn for the stands (foeBlows.js SAND_DRAW_RANGE)
   if (shape === 'leap') {
     b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz));
     b.jumpAt = b.land - BLOW.leap.arc;
     fitBlowToGround(b, ai.collider);
-  } // TELL6c: its point - my feet now, locked
-  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz); // TELL6d: its line to me, locked
-  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz)); // RVN5: its disc at my feet, locked
+  } // Its point - my feet now, locked
+  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz); // Its line to me, locked
+  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz)); // Its disc at my feet, locked
   if (sig) {
-    // RVN5: its signature - x2.0, its own cooldown, a deeper WIND, called out (the pools say it once a stand)
+    // Its signature - x2.0, its own cooldown, a deeper WIND, called out (the pools say it once a stand)
     b.sig = true;
     b.mult = sig.mult;
     b.windPitch = sig.windPitch;
@@ -891,7 +891,7 @@ function beginWindup(ai, s, ent, shape, dx, dz, now, chain = 0, sig = null) {
     feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) &&
     Math.random() < feintChance(ent)
   ) {
-    // RVN2: a Patient one's one in three
+    // A Patient one's one in three
     b.feint = true;
     b.cutAt = b.start + TELL.FEINT_AT * (b.land - b.start);
     s.lastFeint = n;
@@ -899,11 +899,11 @@ function beginWindup(ai, s, ent, shape, dx, dz, now, chain = 0, sig = null) {
   s.blow = b;
   setLiveBlow(ai, b);
   s.state = 'windup';
-  const swings = shape !== 'aimed' && shape !== 'pyre'; // TELL6d: a shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell
+  const swings = shape !== 'aimed' && shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell
   ai._blowHold = swings;
-  ai._blowWind = swings; // TELL2: the swing begins now and stands at its raised arm until the landing
+  ai._blowWind = swings; // The swing begins now and stands at its raised arm until the landing
 }
-/** RVN4 (bible/12-Enhanced-AI/Feud-Arc.md 15.2): ITS LAST STAND'S ROAR - an iron ring about its feet wound up for
+/** ITS LAST STAND'S ROAR - an iron ring about its feet wound up for
  *  `seconds` and landing as the roar ends (TELL6a's shape; TELL6e's rattle and, iron, its knockdown), whatever its kind's shapes. Its
  *  wind-up before is dropped. The switch off, a puppet, or no brain yet: nothing (the pool holds the motor - the roar
  *  alone). Answers whether it was wound. */
@@ -928,10 +928,10 @@ export function beginRoar(ai, ent, seconds, now = clock()) {
   ai._blowWind = true;
   return true;
 }
-/** TACT4: the wind-up's turn - broken by a knock or a paralysis (a step the motor did not let the brain decide), else
+/** The wind-up's turn - broken by a knock or a paralysis (a step the motor did not let the brain decide), else
  *  stood, its aim locked, until the landing: where my feet stand decides it, and the swing comes now. */
 function windupTurn(ai, s, now, skipped) {
-  const cooled = now + blowCooldown(ai.vitals?.()); // TELL7: by its tier
+  const cooled = now + blowCooldown(ai.vitals?.()); // By its tier
   if (skipped || ai.canAct === false || ai.hurtKnock || ai.knockbackSpeed > 0) {
     setLiveBlow(ai, null);
     s.blow = null;
@@ -950,8 +950,8 @@ function windupTurn(ai, s, now, skipped) {
     return false;
   }
   const atMe = !!_me && key === LOCAL;
-  const tf = targetFeet(ai, key); // TELL8: my feet, or the peer's it is aimed at (the owner's view - 6.3)
-  // TELL5 (7.3): a feint - cut at FEINT_AT, and a plain DFU blow at once: DFU's damage and reach, no verdict, no weight
+  const tf = targetFeet(ai, key); // My feet, or the peer's it is aimed at (the owner's view - 6.3)
+  // A feint - cut at FEINT_AT, and a plain DFU blow at once: DFU's damage and reach, no verdict, no weight
   if (b0.feint && now >= b0.cutAt) {
     b0.cut = now; // its mark fades out dashed (ai/foeBlows.js blowPhase)
     s.blow = null;
@@ -964,9 +964,9 @@ function windupTurn(ai, s, now, skipped) {
     ai._tacStrike = true;
     return false;
   }
-  // TELL5 (7.2): a lunge (and TELL6's charge) turns after my feet through the first TRACK_SHARE of its wind-up, then locks
+  // A lunge (and TELL6's charge) turns after my feet through the first TRACK_SHARE of its wind-up, then locks
   if (tf && TELL.TRACKERS.includes(b0.kind) && now < b0.start + trackShare(ai.vitals?.()) * (b0.land - b0.start)) {
-    // RVN2: a Patient one tracks longer
+    // A Patient one tracks longer
     const y = trackYaw(
       b0.yaw,
       Math.atan2(tf[0] - b0.origin[0], tf[2] - b0.origin[2]),
@@ -979,12 +979,12 @@ function windupTurn(ai, s, now, skipped) {
       fitBlowToGround(b0, ai.collider);
     } // the foe turns with its mark
   }
-  // TELL4 (6.2): my feet, sampled once - the first turn inside TELL_LATE of the landing
+  // My feet, sampled once - the first turn inside TELL_LATE of the landing
   if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land)
     s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);
-  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0); // TELL6c: the jump
+  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0); // The jump
   if (now >= s.blow.land && b0.kind === 'aimed') {
-    // TELL6d: loosed along its line - the arrow's flight decides; no verdict, no window
+    // Loosed along its line - the arrow's flight decides; no verdict, no window
     ai._blowLandedAt = now;
     s.landed = { blow: b0, at: now }; // AUDIT TELL O2: its landing, for the wire
     if (atMe) ai._blowShot = { yaw: b0.yaw, at: now, fired: false }; // the attack component draws, the sprite looses
@@ -994,7 +994,7 @@ function windupTurn(ai, s, now, skipped) {
     return false;
   }
   if (now >= s.blow.land && b0.kind === 'pyre') {
-    // RVN5: its blast - a spell at my feet (the pool casts it), never a swing
+    // Its blast - a spell at my feet (the pool casts it), never a swing
     ai._blowLandedAt = now;
     s.landed = { blow: b0, at: now };
     const hit = !!tf && inBlow(b0, tf[0], tf[2]);
@@ -1004,7 +1004,7 @@ function windupTurn(ai, s, now, skipped) {
     if (tf && !hit) {
       beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe);
       return true;
-    } // TELL4: missed - it stands spent
+    } // Missed - it stands spent
     s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top
     return false;
   }
@@ -1012,15 +1012,15 @@ function windupTurn(ai, s, now, skipped) {
     if (b0.kind === 'leap') {
       ai._tacDir = null;
       ai.moving = false;
-    } // TELL6c: landed at its point
+    } // Landed at its point
     // AUDIT TACT A4/D6: only ever at its target - a wind-up whose foe has turned on another lands on no one here.
     // TELL8: at a peer as at me - the owner's view of the peer's feet decides its window; the peer's own, the blow.
     // AUDIT ARENA-LADDER: at a bout-mate on the sand as at me - both fighters run here, so the verdict is the blow's
     if (tf && s.blow.kind === 'charge') {
       beginDash(ai, s, s.blow, now, cooled);
       return true;
-    } // TELL6: its landing is its run
-    ai._blowLandedAt = now; // TELL2: the landing, for the LAND cue (scenes/hostCombat.js tellCues)
+    } // Its landing is its run
+    ai._blowLandedAt = now; // The landing, for the LAND cue (scenes/hostCombat.js tellCues)
     // AUDIT TELL B3: a leap lands on its disc only where its foe got to - a ledge or a wall that stopped the jump whiffs
     const arrived =
       b0.kind !== 'leap' ||
@@ -1053,12 +1053,12 @@ function windupTurn(ai, s, now, skipped) {
   return true;
 }
 
-/** TACT4: a landing at me decided - `verdict` (my feet in its shape; TELL6: a charge's run over them). The swing is
+/** A landing at me decided - `verdict` (my feet in its shape; TELL6: a charge's run over them). The swing is
  *  released; TELL5 a chain may follow, hit or miss; TELL4 a miss overreaches. TELL8 (6.3, 10.3): at a peer (`judged`
  *  false) the verdict is the owner's view of the peer's feet - it opens or withholds the window and the chain, never the
  *  damage (the struck peer's own judgement, through its puppet): no verdict, weight or effect is left to land here.
  *  AUDIT ARENA-LADDER: at a bout-mate on the sand (`judged`, `atMe` false) the verdict and its weight land as mine do,
- *  on that one alone (`_blowFor`); what a landing does to ME (TELL6e) is mine alone. */
+ *  on that one alone (`_blowFor`); what a landing does to ME is mine alone. */
 function resolveLanding(ai, s, b, verdict, now, cooled, atMe = true, judged = atMe) {
   ai._blowLandedAt = now;
   s.landed = { blow: b, at: now }; // AUDIT TELL O2: its landing, said to the peers for WIRE_LANDED_S (ai/puppetBlows.js)
@@ -1066,12 +1066,12 @@ function resolveLanding(ai, s, b, verdict, now, cooled, atMe = true, judged = at
   ai._blowMult = judged ? b.mult : undefined;
   ai._blowAt = now;
   ai._blowSwing = true;
-  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // AUDIT ARENA-LADDER 2: whose verdict it is
-  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)
-  ai._blowHold = false; // TELL2: the held swing strikes on its next frame
+  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // Whose verdict it is
+  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)
+  ai._blowHold = false; // The held swing strikes on its next frame
   s.blowReady = cooled;
   s.blow = null;
-  // TELL5 (7.4): a chain - hit or miss, a second blow at once; the punish window waits for its last. TELL6: never after a
+  // A chain - hit or miss, a second blow at once; the punish window waits for its last. TELL6: never after a
   // charge - its foe ends its lane past its target
   const ent = ai.vitals?.();
   const shapes = ent ? blowShapesOf(ent.mobileType, ent).filter((k) => !GAP_CLOSERS.includes(k)) : [];
@@ -1081,7 +1081,7 @@ function resolveLanding(ai, s, b, verdict, now, cooled, atMe = true, judged = at
     chains(blowFamily(ent?.mobileType), ent, shapes) &&
     Math.random() < TELL.CHAIN_CHANCE
   ) {
-    // RVN4: phase two chains to three
+    // Phase two chains to three
     const next = chainShape(b.kind, shapes);
     if (next) {
       s.state = 'chain';
@@ -1096,7 +1096,7 @@ function resolveLanding(ai, s, b, verdict, now, cooled, atMe = true, judged = at
       return true;
     }
   }
-  // TELL4 (6.1): it missed - OVERREACHED; inside at the late sample and out at the landing, a perfect dodge. AUDIT FEUD 2:
+  // It missed - OVERREACHED; inside at the late sample and out at the landing, a perfect dodge. AUDIT FEUD 2:
   // OUT, judged here - a leap a ledge stopped short, a charge a wall stopped, misses a target that never left its shape:
   // no dodge of its, and (FEUD BALANCE) no will broken by it
   if (!verdict) {
@@ -1109,23 +1109,23 @@ function resolveLanding(ai, s, b, verdict, now, cooled, atMe = true, judged = at
   return false;
 }
 
-// ── TELL6: THE GAP-CLOSERS (bible/12-Enhanced-AI/Feud-Arc.md section 8.1) ────────────────────────────────────────────
-/** TELL6: the shapes this foe may wind up from here - `near` (in reach) its blows of reach; out of reach the
+// ── TELL6: THE GAP-CLOSERS ────────────────────────────────────────────
+/** The shapes this foe may wind up from here - `near` (in reach) its blows of reach; out of reach the
  *  gap-closers whose lanes are free. TELL7: from its whole set. */
 export function blowPool(ai, ent, dist, near, dx, dz) {
   const all = throwsBlows(ent) ? blowShapesOf(ent.mobileType, ent) : [];
   return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) : all.filter((k) => gapCloses(ai, k, dist, dx, dz, ent));
 }
-/** TELL6d: does this foe aim its shots - a class archer (a bow) of the whole set (section 9: an ordinary archer of the
+/** Does this foe aim its shots - a class archer (a bow) of the whole set (section 9: an ordinary archer of the
  *  tier keeps DFU's plain shot, as TACT4 left it)? */
 export function aimsShots(ai, ent) {
   return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);
 }
-// TELL6d: an aimed shot that strikes weighs x BLOW.aimed.mult - the arrow says so at contact (formulas' blowInfo)
+// An aimed shot that strikes weighs x BLOW.aimed.mult - the arrow says so at contact (formulas' blowInfo)
 registerBlowTakenMod('tell-aimed', (attacker, target, weapon, info) => (info?.aimed ? BLOW.aimed.mult : 1));
 /** The shapes begun out of reach. */
 export const GAP_CLOSERS = Object.freeze(['charge', 'leap']);
-/** RVN5 (16.1): does its signature's shape reach its target now - a gap-closer out of reach with its lane free, the pyre
+/** Does its signature's shape reach its target now - a gap-closer out of reach with its lane free, the pyre
  *  in its range and in sight at me (its blast is cast at the local player alone), any other in reach? */
 export function signatureReaches(ai, ent, kind, dist, near, dx, dz) {
   if (GAP_CLOSERS.includes(kind)) return !near && gapCloses(ai, kind, dist, dx, dz, ent);
@@ -1158,7 +1158,7 @@ export function gapCloses(ai, kind, dist, dx, dz, ent = null) {
 const DOWN = Object.freeze([0, -1, 0]);
 /** AUDIT TELL B9: how long a chain waits past its gap for the first blow's verdict to be spent (s). */
 const CHAIN_SPEND_MAX = 0.6;
-/** TELL6c: the leap's jump - its last BLOW.leap.arc seconds, from where it crouched to its point, a hop on the motor's
+/** The leap's jump - its last BLOW.leap.arc seconds, from where it crouched to its point, a hop on the motor's
  *  own gravity; the verdict at its landing, at the point. */
 function leapStep(ai, b) {
   const tx = b.origin[0] + Math.sin(b.yaw) * b.ahead,
@@ -1183,7 +1183,7 @@ function leapStep(ai, b) {
   ai._tacShoot = false;
   return true;
 }
-/** TELL6: the charge's landing - its foe runs its lane, `cross` seconds end to end, along the collider (a wall ends it
+/** The charge's landing - its foe runs its lane, `cross` seconds end to end, along the collider (a wall ends it
  *  in a skid); the verdict is swept between its turns (the world boss's chargeStrikes law), once. Its held swing stands
  *  until the verdict. */
 function beginDash(ai, s, b, now, cooled) {
@@ -1224,7 +1224,7 @@ function dashTurn(ai, s, now, skipped = false) {
   }
   const h = [ai.feet[0], ai.feet[2]];
   const key = targetKey(ai),
-    tf = targetFeet(ai, key); // TELL8: my feet, or the peer's it runs at (the owner's view)
+    tf = targetFeet(ai, key); // My feet, or the peer's it runs at (the owner's view)
   const hit = !!tf && segDist(tf[0], tf[2], d.head[0], d.head[1], h[0], h[1]) <= BLOW.charge.halfW;
   d.head = h;
   if (hit || now >= d.until || ai._tacBlocked) {

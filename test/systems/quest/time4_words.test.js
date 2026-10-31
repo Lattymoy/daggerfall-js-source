@@ -59,17 +59,4 @@ test('TIME4 the figures the patch notes stated are the law\'s own: a day of 60 m
 test('TIME4 the bible says what was built, and the switch instant it names is the law\'s', () => {
   const iso = new Date(SWITCH.fromMs).toISOString().replace('.000Z', 'Z');
   assert.equal(iso, '2026-10-03T17:07:30Z');
-  const arc = rd('bible/06-Systems/Online-Time-Arc.md');
-  assert.match(arc, /\*\*Status: BUILT 2026-10-01 - TIME1, TIME2, TIME3 and TIME4\*\*/);
-  assert.ok(arc.includes(`**The sky switches at ${iso}**`), 'the design page names the law\'s instant - move both together (node tools/skyCutover.mjs)');
-  assert.match(arc, /### 6\.3a As built \(TIME3\)/);
-  assert.match(arc, /\*\*DECIDED 2026-10-01\*\*/);
-  assert.match(arc, /9\. \*\*Time zones\*\*/, 'Mac\'s idea, recorded and not built');
-  assert.ok(rd('bible/06-Systems/Online-Arc.md').includes(`a day every real\nhour from ${iso}`), 'WORLD5\'s note names the same instant');
-  assert.match(rd('bible/06-Systems/Lived-Time.md'), /ANSWERED AND BUILT 2026-10-01/);
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /\[TIME3, 2026-10-01 \(`Online-Time-Arc\.md` 6\.3a\): the quest's clock is the CHARACTER's own now\./);
-  assert.match(rd('bible/11-Multiplayer/World-Bosses.md'), /it RETIRES from the words/);
-  assert.match(rd('bible/03-World/Clock-Arc.md'), /\[TIME1, 2026-10-01/);
-  assert.match(rd('bible/06-Systems/Quest-Arc.md'), /## TIME3 - QUESTS ON TWO CLOCKS/);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /\| \*\*ONLINE, A SKY THAT TURNS, A FULL MOON'S NIGHT AND QUESTS ON YOUR OWN TIME \(TIME1-TIME4/);
 });

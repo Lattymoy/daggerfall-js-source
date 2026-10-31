@@ -250,14 +250,3 @@ test('AUDIT EG III KYN\'S VIGIL (section 14: "every hall\'s trial begins with th
   assert.equal(egLordsOf(P.B.F).length, 0, 'a span\'s crossing stands none');
 });
 
-// ── THE PAGE (RETIRING A FLAG DELETES THE SENTENCE) ──────────────────────────────────────────────────────────────────
-test('AUDIT EG III THE PAGE: EG-ZS\'s two flags (Spillover applied nowhere, Spotter\'s wake applied nowhere) are deleted with the halves built; section 12 says a struck Lurker wakes and every wave is held to the room under the cap; section 14\'s Kyn\'s Vigil names its escort and the halls it stands none in', () => {
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8');
-  const zs = page.slice(page.indexOf('### EG-ZS - '));
-  for (const gone of ['SPILLOVER (Arcana\'s Mastery', 'SPOTTER\'s first half', 'FLAGGED to the relay, where `hostHits` is its seam']) assert.ok(!zs.includes(gone), `retired: ${gone}`);
-  assert.ok(page.includes('dormant until a member passes within 6 m (an ambush) or a blow lands on it'), 'section 12: a struck Lurker wakes');
-  assert.ok(page.includes('Every wave is held to\n  the room under the cap (`egLegionRoom`'), 'section 12: the room under the cap');
-  // PIN MOVED (AUDIT EG IV, lane1 #1): the Vigil stands none in a Deepway whose chamber is a champion's either - before, the needle
-  // read "never in a Proving Walk or a Court"
-  assert.ok(page.includes('with its escort (`1 + ceil(n/3)`, section 8.5); never in a Proving Walk, a Court or a Deepway whose chamber is a champion\'s'), 'section 14: Kyn\'s Vigil as built');
-});

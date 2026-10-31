@@ -117,7 +117,7 @@ test('LEGIBLE 2 on real files: every anchor in the tree into two much-cited file
     docs: new Map(docPaths.filter((d) => /\b(notebook|listPicker)\.js:"/.test(read(d))).map((d) => [d, read(d)])),
     oldText: read, newText: (f) => newTexts.get(f) ?? read(f), changed: new Set(changedFiles), codeFiles: code,
   });
-  assert.ok(carried >= 30, `only ${carried} anchors carried`);
+  assert.ok(carried >= 10, `only ${carried} anchors carried`);   // the reference pages name code by path, so few anchors remain
   assert.deepEqual(failed.filter((f) => !f.why.includes('a person writes it')), [], 'a cite the carrier could not place');
   for (const file of changedFiles) {
     const after = newTexts.get(file), lines = after.split('\n'), masked = maskAnchors(after);

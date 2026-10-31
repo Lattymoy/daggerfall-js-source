@@ -119,16 +119,6 @@
     ]
   },
   {
-    "name": "AUDITREST2-Q-Q5-quest-arc-pair-back",
-    "file": "bible/06-Systems/Quest-Arc.md",
-    "old": "(`actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"`/`actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\"`)",
-    "new": "(`actions.js:\"action.spellID =\"`/`actions.js:\"CastSpellDo could not find\"`)",
-    "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
-    "tests": [
-      "test/systems/quest/auditrest2_quests.test.js"
-    ]
-  },
-  {
     "name": "AUDITREST2-Q-Q5-questguards-pair-back",
     "file": "test/systems/quest/questguards.test.js",
     "old": "(actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"/actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\") and the task",

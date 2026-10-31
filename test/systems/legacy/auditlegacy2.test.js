@@ -564,13 +564,6 @@ test('AUDIT LEGACY II U4-U10/U12/U13: the Family pages - no hidden scroll, a see
 // ---- lens F: the records -------------------------------------------------------------------------------------------
 
 test('AUDIT LEGACY II F1/F3-F5/F12/F14: the records say what is built', () => {
-  const arc = rd('bible/06-Systems/Legacy-Arc.md');
-  assert.doesNotMatch(arc, /capped at 10,000/, 'F1: the estate is 9,900');
-  assert.match(arc, /9,900/);
-  assert.match(arc, /struck down by the one played[^.]*leaves? no remains/, 'F3');
-  assert.doesNotMatch(arc, /the death's purse\) - offline too/, 'F5');
-  assert.match(arc, /LoadSettings[^.]*never clears/, 'F12');
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /\(15\) THE SWITCH REACHES ANY LIVING MEMBER OF THE BLOOD/, 'F4');
   assert.doesNotMatch(rd('src/systems/legacy/tree.js'), /&& false\)/, 'F14: no dead clause');
   // the layout is unchanged by it: a spouse who married in is never a root
   const f = foundFamily(person('c-a'), { id: 'fam-tr' });

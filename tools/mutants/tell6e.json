@@ -236,8 +236,8 @@
   {
     "name": "TELL6e-miss-stamped",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
-    "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ],

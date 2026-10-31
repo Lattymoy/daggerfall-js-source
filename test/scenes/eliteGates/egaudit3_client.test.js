@@ -423,17 +423,6 @@ test('AUDIT EG III lane4 #10 THE FRAME\'S LISTS ARE KEPT, NEVER MADE A FRAME: th
   assert.deepEqual(f.shield(), s1);
 });
 
-// ── lane4 #11: THE PAGE ─────────────────────────────────────────────────────────────────────────────────────────────
-test('AUDIT EG III lane4 #11 SECTION 29 SAYS HOW THE OVERLAYS ARE BUILT: the Vestige offer, the company\'s word and the recap are one panel on both skins and say so; there is no rest window; the confirm is a second press; the start window ends by its own choice - the two old sentences gone (RETIRING A FLAG DELETES THE SENTENCE)', () => {
-  const page = rd('bible/11-Multiplayer/Elite-Gates.md');
-  const s29 = between(page, '## 29. How the arc keeps the Process rules', '## 30. What it does not do, said so');
-  assert.ok(!s29.includes('The rest window,\n  the Vestige offer, the company\'s word, the confirm, the board window and the recap are each built from DFU windows'), 'the old native-window sentence gone');
-  assert.ok(!s29.includes('the start window, the rest window, the Vestige offer, the\n  company\'s word and the confirm are overlays. Each is closed by the room\'s `st` or `end`'), 'the old overlay sentence gone');
-  assert.match(s29, /one\s+DOM panel \(`ui\/eliteGates\/egHud\.js` `drawEgPanel`\) on both skins/);
-  assert.match(s29, /There is no rest window/);
-  assert.match(s29, /a question put out of its slot unanswered ending it as a cancel/);
-});
-
 // ── lane4 #12: THE START WINDOW'S QUESTION ──────────────────────────────────────────────────────────────────────────
 test('AUDIT EG III lane4 #12 THE START WINDOW NEVER ENDS WITHOUT A WORD: its question is DFU\'s YesNo box through egStartAsk, and a box put out of its slot unanswered (the overlay\'s replacement disposes it and tells it nothing) ends the window as a cancel - its onCancel told once; an answered box answers once; and the key turned while a window still asks says so (mutants: the disposal silent; a cancel twice; an answered box cancelled; the key silent)', async () => {
   let shown = null;

@@ -410,8 +410,8 @@
   {
     "name": "RVN5-iron-unread",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
-    "new": "  const guard = blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // TELL3: iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "RVN5-pyre-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz)); // RVN5: its disc at my feet, locked",
-    "new": "  if (shape === 'pyre') b.ahead = 0; // RVN5: its disc at my feet, locked",
+    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz)); // Its disc at my feet, locked",
+    "new": "  if (shape === 'pyre') b.ahead = 0; // Its disc at my feet, locked",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "RVN5-pyre-swing-held",
     "file": "src/ai/tactics.js",
-    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // TELL6d: a shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
-    "new": "  const swings = shape !== 'aimed'; // TELL6d: a shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "new": "  const swings = shape !== 'aimed'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -518,7 +518,7 @@
   {
     "name": "RVN5-miss-no-overreach",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && !hit) {\n      beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe);\n      return true;\n    } // TELL4: missed - it stands spent\n    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
+    "old": "    if (tf && !hit) {\n      beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe);\n      return true;\n    } // Missed - it stands spent\n    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "new": "    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "tests": [
       "test/systems/rvn5_sig.test.js"

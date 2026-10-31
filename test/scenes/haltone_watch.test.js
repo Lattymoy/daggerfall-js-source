@@ -187,7 +187,4 @@ test('HALT-ONE the hosts: the street\'s and a building\'s watch read the living 
   assert.match(W, /const exteriorFoes = createExteriorFoes\(\{\n {4}oneVoice: \(\) => livingWorldOn\(\),/, 'world.js: the street\'s foes');
   assert.match(M, /oneVoice: \(\) => livingWorldOn\(\), windowUp: \(\) => !!townTalk\?\.overlayActive,/, 'worldModes.js: a building\'s watch');
   assert.doesNotMatch(rd('src/scenes/exterior.js'), /oneVoice/, 'exterior.js: no living town, DFU\'s watch');
-  const bible = rd('bible/06-Systems/Living-World.md');
-  const rec = bible.slice(bible.indexOf('## HALT-ONE'), bible.indexOf('\n## ', bible.indexOf('## HALT-ONE') + 5));
-  for (const host of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/exterior.js', 'scenes/dungeonContext.js']) assert.ok(rec.includes(host), `the record names ${host}`);
 });

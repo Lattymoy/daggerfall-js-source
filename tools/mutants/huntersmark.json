@@ -166,8 +166,8 @@
   {
     "name": "MARKS-OF-MASTERY-titles-any-word",
     "file": "server-account/src/titles.js",
-    "old": "    if (Array.isArray(player?.masteryMarks))\n      for (const t of MASTERY_MARKS) if (player.masteryMarks.includes(t) && !held.includes(t)) held.push(t);",
-    "new": "    if (Array.isArray(player?.masteryMarks)) for (const t of player.masteryMarks) if (!held.includes(t)) held.push(t);",
+    "old": "    if (Array.isArray(player?.masteryMarks))\n      for (const t of MASTERY_MARKS)\n        if (player.masteryMarks.includes(t) && !held.includes(t) && !(namedFirst && t === DRAGON_TITLES.first))\n          held.push(t);",
+    "new": "    if (Array.isArray(player?.masteryMarks)) for (const t of player.masteryMarks) if (!held.includes(t) && !(namedFirst && t === DRAGON_TITLES.first)) held.push(t);",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]

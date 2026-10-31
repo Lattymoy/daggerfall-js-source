@@ -2797,6 +2797,9 @@
 !/tools/collectionsProbe.mjs
 !/tools/colliderBench.mjs
 !/tools/comeSailAwayExtract.mjs
+!/tools/commentRules.mjs
+!/tools/commentSweep.mjs
+!/tools/commentTags.mjs
 !/tools/compileStallProbe.mjs
 !/tools/computationPin.mjs
 !/tools/courtShadowProbe.mjs
@@ -3001,7 +3004,6 @@
 /tools/layered-armor/*
 !/tools/layered-armor/*.js
 !/tools/layered-armor/*.mjs
-!/tools/ledgerSweep.mjs
 !/tools/lefayProbe.mjs
 !/tools/levelUpProbe.mjs
 !/tools/lib/
