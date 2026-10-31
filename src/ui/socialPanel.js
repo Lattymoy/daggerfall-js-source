@@ -58,7 +58,7 @@ import { GUILD_RENAME_SILVER } from '../net/guild/guildShopLaw.js';   // GUILD2a
 import { guildWareName } from './guild/guildShopText.js';   // GUILD-SHOP: a ware's name in a silver line
 import { guildShopNodes } from './guild/guildShopPage.js';   // GUILD-SHOP: the Shop page
 import { guildLogoNodes } from './guild/guildLogoPage.js';   // GUILD-LOGO: the Arms page's logo card
-import { GUILD_WINDOW_CSS, guildWindowCrestNode, guildFieldHex, guildNavGroupAt, guildNavGroupName } from './guild/guildWindowLook.js';   // GUILD-SHOP: the window's look
+import { GUILD_WINDOW_CSS, guildCrestNode, guildFieldHex, guildNavGroupAt, guildNavGroupName } from './guild/guildWindowLook.js';   // GUILD-SHOP: the window's look
 import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guild/guildVaultLaw.js';   // GUILD2b: the vault
 import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
 import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
@@ -1561,7 +1561,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const head = el('div', 'dfsocial-letterhead dfsocial-guildhead');
     // GUILD-SHOP: the crest (its logo, or its shield on a ring) and the head washed in its field; the arms in words under the name
     head.style?.setProperty?.('--dfguild-field', guildFieldHex(v.heraldry));
-    head.append(guildWindowCrestNode(doc, svgPicture, v, v.heraldry ? heraldryText(v.heraldry) : 'An undrawn banner'));
+    head.append(guildCrestNode(doc, svgPicture, v, v.heraldry ? heraldryText(v.heraldry) : 'An undrawn banner'));
     const who = el('div', 'dfsocial-who');
     const stats = el('div', 'dfguild-stats');
     const stat = (label, value, sub = null) => {

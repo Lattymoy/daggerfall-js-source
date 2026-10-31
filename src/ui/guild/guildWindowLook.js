@@ -54,7 +54,7 @@ export function guildCrestSvg(/** @type {any} */ heraldry, size = 76) {
  * THE HEAD'S CREST - the approved logo in a gilt ring (`img`, its own address), or the crest of our drawing.
  * @param {any} doc @param {(svg: string, w: number, h: number, alt: string) => any} picture @param {any} v the guild's view @param {string} alt
  */
-export function guildWindowCrestNode(doc, picture, v, alt) {
+export function guildCrestNode(doc, picture, v, alt) {
   const src = v?.logo ? guildLogoSrc(v.logo) : null;
   if (!src) {
     const img = picture(guildCrestSvg(v?.heraldry), 76, 76, alt);
