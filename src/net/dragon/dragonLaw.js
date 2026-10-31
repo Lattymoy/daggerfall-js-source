@@ -77,6 +77,14 @@ export function dragonCellOf(o) {
   const n = dragonRoll(o, 7) % (DRAGON_CELLS.cols * DRAGON_CELLS.rows);
   return { cx: DRAGON_CELLS.cx0 + (n % DRAGON_CELLS.cols), cy: DRAGON_CELLS.cy0 + Math.floor(n / DRAGON_CELLS.cols) };
 }
+/** DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4): a dragon's place, its cell's number
+ *  in DRAGON_CELLS. A receipt carries it, so each dragon of a watch is its own kill and a forged site in its cell is not. */
+export const DRAGON_PLACES = DRAGON_CELLS.cols * DRAGON_CELLS.rows;
+/** A site's place, or -1 outside DRAGON_CELLS. @param {number} sx @param {number} sz */
+export function dragonPlaceOf(sx, sz) {
+  const [px, py] = mapPixelOfWire(sx, sz), cx = Math.floor(px / DRAGON_CELL_PX) - DRAGON_CELLS.cx0, cy = Math.floor(py / DRAGON_CELL_PX) - DRAGON_CELLS.cy0;
+  return cx >= 0 && cy >= 0 && cx < DRAGON_CELLS.cols && cy < DRAGON_CELLS.rows ? cy * DRAGON_CELLS.cols + cx : -1;
+}
 /** Is map pixel (px, py) within DRAGON_TELL_PX of an omen's cell - may a player standing there be told it?
  *  @param {{w: number, s: number}} o @param {number} px @param {number} py */
 export function dragonToldAt(o, px, py) {

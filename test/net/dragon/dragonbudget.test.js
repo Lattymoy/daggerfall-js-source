@@ -1,7 +1,7 @@
 // DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3; bible/11-Multiplayer/Dwarven-Dragon.md
 // DRAGON-BUDGET). One account is judged in at most DRAGON_JUDGED_CELLS_MAX cells a watch, on the hub, whatever sockets and
 // rooms it opens: a cell room asks the hub before it judges an account in a cell it has not, and hears nothing past the
-// count. Pinned: the hub's count; a sweep stopped at it while another account is told; one ask of the hub a cell; a hub
+// count. Pinned: the hub's count; a sweep stopped at it while another account is told; one ask of the hub a cell, none for a watch not about; a hub
 // that fails to answer refuses. tools/mutants/dragonbudget.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,7 +44,7 @@ test('DRAGON-BUDGET the hub: an account\'s cells a watch granted up to DRAGON_JU
   });
 });
 
-test('DRAGON-BUDGET a sweep: an account judged in DRAGON_JUDGED_CELLS_MAX cells hears nothing in one more - its dragon\'s cell too, by an `ask` or an `in` - while another account standing there is told; the hub asked once a cell (mutants: the budget unasked; asked of every ask; the `in` unbudgeted)', async () => {
+test('DRAGON-BUDGET a sweep: an account judged in DRAGON_JUDGED_CELLS_MAX cells hears nothing in one more - its dragon\'s cell too, by an `ask` or an `in` - while another account standing there is told; the hub asked once a cell, never for a watch not about (mutants: the budget unasked; asked of every ask; the `in` unbudgeted; told for any watch)', async () => {
   await withWorld(async ({ room, hub, say, set, now }) => {
     let asked = 0;
     const fetch = hub.room.fetch.bind(hub.room);
@@ -59,6 +59,8 @@ test('DRAGON-BUDGET a sweep: an account judged in DRAGON_JUDGED_CELLS_MAX cells 
       await say(b, a, { k: 'ask', w: W });
     }
     assert.equal(asked, Law.DRAGON_JUDGED_CELLS_MAX, 'the hub asked once a cell');
+    await say(b, a, { k: 'ask', w: W + 5 });
+    assert.equal(asked, Law.DRAGON_JUDGED_CELLS_MAX, 'AUDIT DRAGON-CELL III: an ask for a watch not about never reaches the hub');
     assert.equal(omens(a).length, 2 * Law.DRAGON_JUDGED_CELLS_MAX, 'each far cell judged: null');
     await b.pose(a, posed(SITE.px, SITE.py));
     await say(b, a, { k: 'ask', w: W });

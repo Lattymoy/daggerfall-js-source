@@ -303,19 +303,21 @@
   {
     "name": "DRAGON2-the-hub-told-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const body = { w: f.w,",
-    "new": "  if (false) {\n    try {\n      const body = { w: f.w,",
+    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const p = dragonPlaceOf(f.sx, f.sz);",
+    "new": "  if (false) {\n    try {\n      const p = dragonPlaceOf(f.sx, f.sz);",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH)."
   },
   {
     "name": "DRAGON2-the-hello-handed-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  say(room, ws, { k: 'rcpt', r: kept.r });\n}",
+    "old": "  for (const x of good) say(room, ws, { k: 'rcpt', r: x.r });\n}",
     "new": "}",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): the hub hands each kept receipt."
   }
 ]

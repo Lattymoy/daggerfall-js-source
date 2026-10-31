@@ -29,8 +29,9 @@ Severity as in the first audit: **bug**, **risk**, **doc**, **test-gap**, **nit*
 | E14 | - | test-gap | **The first audit's fake socket made three relay tests flaky.** It wrote `at` at connect, so under a parallel run a test's hello that came late was closed as "no hello" (GRANT3, EG-ZM, STAFF-PANEL5: each passes alone; on main, under the same load, none failed). | The fake writes no `at` again; the fight's tests age their own sockets (`test/dragonOmen.mjs` aged). |
 | E13 | C8, C9, C11, C12, C13, A4 | nit | Titles naming mutants no record held; "22 dead" where the audit retired two; the ledger's pins; two comments misplaced; the attachment's figures; the law row's replaced hash. | Records added, figures and notes written. |
 
-Still open, as the first audit left them: one reward a watch (D4) and a quest's reveal by name. Many sockets at once (D3)
-was closed after this audit by DRAGON-BUDGET (the owner: "Do it"): an account's cells a watch, on the hub.
+Still open, as the first audit left it: a quest's reveal by name. Closed after this audit: many sockets at once (D3), by
+DRAGON-BUDGET (the owner: "Do it"), an account's cells a watch on the hub; one reward a watch (D4), by DRAGON-EACH (the
+owner: "open up the rewards"), a kill keyed by watch, place and account.
 
 Re-aimed by content and run, dead: AUDIT-DRAGON-the-cache-unbounded, DRAGON-CELL-the-cover-unread, seven of
 `dragoncellaudit.json` (the two D2 records as reorders), and DRAGON-HIDDEN-the-watch-unread and -the-bytes-shortened.

@@ -6,7 +6,7 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, dragonJudgedCell, DRAGON_JUDGED_CELLS_MAX, DRAGON_CELLS_A_WATCH, DRAGON_CELL_PX, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, dragonJudgedCell, dragonPlaceOf, DRAGON_PLACES, DRAGON_JUDGED_CELLS_MAX, DRAGON_CELLS_A_WATCH, DRAGON_CELL_PX, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 import { dragonWatchKeyOf, dragonOmenSeeds } from '../../src/net/dragon/dragonSeed.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
@@ -329,9 +329,10 @@ async function fallOnce(room, id, f, now) {
   if (f.said) return;
   const key = await room._receiptKeyOf(), nowS = Math.floor(now / 1000);
   f.rc = {};
+  const p = dragonPlaceOf(f.sx, f.sz);   // DRAGON-EACH: each dragon of a watch its own kill
   for (const sub of Object.keys(f.players)) {
     if (!DRAGON_SEAM.earned(f, sub)) continue;
-    const q = { q: f.w, b: f.b, s: sub, c: rand32(), x: dragonBrain.dragonEarnedBy(f, sub), l: f.players[sub].lv, ...room._bodyMeasureOf(f, sub, DRAGON_SEAM.earned) };
+    const q = { q: f.w, ...(p >= 0 ? { p } : {}), b: f.b, s: sub, c: rand32(), x: dragonBrain.dragonEarnedBy(f, sub), l: f.players[sub].lv, ...room._bodyMeasureOf(f, sub, DRAGON_SEAM.earned) };
     try { f.rc[sub] = await mintDragonReceipt(q, key, { subtle: crypto.subtle, nowS }); } catch (e) { console.warn('[dragon] receipt refused', e?.message ?? e); }
   }
   f.said = true;
@@ -348,7 +349,8 @@ async function tellHub(room, id, f, now) {
   let ok = true;
   if (rooms?.idFromName && rooms?.get) {
     try {
-      const body = { w: f.w, rc: Object.entries(f.rc ?? {}), here: f.here ?? [], kin: dragonBrain.dragonKinOf(f) };
+      const p = dragonPlaceOf(f.sx, f.sz);
+      const body = { w: f.w, ...(p >= 0 ? { p } : {}), rc: Object.entries(f.rc ?? {}), here: f.here ?? [], kin: dragonBrain.dragonKinOf(f) };
       const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${DRAGON_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
       ok = !!res?.ok;
     } catch (e) { console.warn('[dragon] hub', e?.message ?? e); ok = false; }
@@ -358,9 +360,15 @@ async function tellHub(room, id, f, now) {
   await save(room, id, f, now, true);
 }
 
+/** DRAGON-EACH: an account's kept receipts, `[{ p, r, e }]` - one a dragon of its newest watch; a keep from before it, one. */
+function keptOf(v) {
+  if (!v || typeof v !== 'object') return [];
+  const l = Array.isArray(v.l) ? v.l : typeof v.r === 'string' ? [{ p: -1, r: v.r, e: v.e }] : [];
+  return l.filter((x) => x && typeof x.r === 'string' && Number.isFinite(x.e)).slice(-DRAGON_CELLS_A_WATCH);
+}
 /**
- * THE HUB'S HALF: a kill's receipts, from its cell. Each account's kept for its life (never over a newer watch's) and
- * handed now to the newest socket of every earner its cell did not hand it to. A dealer's party shares the kill: each
+ * THE HUB'S HALF: a kill's receipts, from its cell. Each account's kept for its life, one a dragon of its newest watch
+ * (never over a newer watch's), and handed now to the newest socket of every earner its cell did not hand it to. A dealer's party shares the kill: each
  * whose party holds a dealer's receipt, and who came and earned nothing, is minted a stander's.
  * @param {any} room @param {Request} request
  */
@@ -368,25 +376,27 @@ export async function dragonFellInternal(room, request) {
   let body = null;
   try { body = await request.json(); } catch { /* refused below */ }
   if (!Number.isSafeInteger(body?.w) || body.w < 0) return json({ ok: false }, 400);
-  const now = Date.now(), rc = new Map();
+  if (body.p !== undefined && !(Number.isSafeInteger(body.p) && body.p >= 0 && body.p < DRAGON_PLACES)) return json({ ok: false }, 400);
+  const now = Date.now(), rc = new Map(), p = body.p ?? -1;
   for (const e of Array.isArray(body.rc) ? body.rc.slice(0, dragonBrain.DRAGON_FIGHTERS_MAX) : []) {
     const r = Array.isArray(e) && typeof e[0] === 'string' ? validDragonOut({ k: 'rcpt', r: e[1] }) : null;
     const c = r ? readDragonReceipt(r.r) : null;
-    if (c && c.s === e[0] && c.q === body.w && now < c.e * 1000) rc.set(e[0], { r: r.r, e: c.e });
+    if (c && c.s === e[0] && c.q === body.w && (c.p ?? -1) === p && now < c.e * 1000) rc.set(e[0], { r: r.r, e: c.e });
   }
-  await kinShare(room, body, rc, now);
+  await kinShare(room, body, rc, now, p);
   const keys = [...rc.keys()].map((sub) => DRAGON_RC_PREFIX + sub);
   const had = keys.length ? await room.state.storage.get(keys) : new Map();
   const fresh = [...rc].filter(([sub]) => { const v = had.get(DRAGON_RC_PREFIX + sub); return !(v && typeof v === 'object' && Number.isSafeInteger(v.q) && v.q > body.w); });
   if (fresh.length) dg(room).noRcpt.clear();
-  for (let i = 0; i < fresh.length; i += 128) await room.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([sub, v]) => [DRAGON_RC_PREFIX + sub, { q: body.w, r: v.r, e: v.e }])));
+  const keepOf = (sub, v) => { const o = had.get(DRAGON_RC_PREFIX + sub), l = o?.q === body.w ? keptOf(o).filter((x) => x.p !== p) : []; return { q: body.w, l: [...l, { p, r: v.r, e: v.e }].slice(-DRAGON_CELLS_A_WATCH) }; };
+  for (let i = 0; i < fresh.length; i += 128) await room.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([sub, v]) => [DRAGON_RC_PREFIX + sub, keepOf(sub, v)])));
   const here = new Set(Array.isArray(body.here) ? body.here.filter((x) => typeof x === 'string').slice(0, dragonBrain.DRAGON_FIGHTERS_MAX) : []);
   const handed = new Set(fresh.map(([sub]) => sub));
   for (const [sub, [ws]] of room._siegeSockets()) if (handed.has(sub) && !here.has(sub)) say(room, ws, { k: 'rcpt', r: rc.get(sub).r });
   return json({ ok: true });
 }
 /** A party shares its kill: a stander's receipt for each of the kin whose party, as it stands now, holds a dealer's. */
-async function kinShare(room, body, rc, now) {
+async function kinShare(room, body, rc, now, p) {
   const kin = (Array.isArray(body?.kin) ? body.kin : []).slice(0, dragonBrain.DRAGON_FIGHTERS_MAX)
     .filter((e) => Array.isArray(e) && typeof e[0] === 'string' && e[0] && !rc.has(e[0]) && Number.isInteger(e[1]));
   if (!kin.length) return;
@@ -401,20 +411,21 @@ async function kinShare(room, body, rc, now) {
     const party = parties.get(recs.get(sub)?.party);
     if (!party?.members?.some((m) => m !== sub && dealers.has(m))) continue;
     try {
-      const r = await mintDragonReceipt({ q: body.w, b: look, s: sub, c: rand32(), x: 'stood', l: lv }, key, { subtle: crypto.subtle, nowS });
+      const r = await mintDragonReceipt({ q: body.w, ...(p >= 0 ? { p } : {}), b: look, s: sub, c: rand32(), x: 'stood', l: lv }, key, { subtle: crypto.subtle, nowS });
       const c = readDragonReceipt(r);
       if (c) rc.set(sub, { r, e: c.e });
     } catch (e) { console.warn('[dragon] kin receipt refused', e?.message ?? e); }
   }
 }
-/** The hub hands an account's kept receipt to its hello while it is good, and forgets an expired one. */
+/** The hub hands an account's kept receipts to its hello while they are good, and forgets the expired. */
 export async function dragonReceiptTo(room, ws, sub, now) {
   const s = dg(room);
   if (s.noRcpt.has(sub)) return;
   const k = DRAGON_RC_PREFIX + sub, kept = await room.state.storage.get(k);
   if (!kept || typeof kept !== 'object') { s.noRcpt.set(sub, 1); return; }
-  if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await room.state.storage.delete(k); return; }
-  say(room, ws, { k: 'rcpt', r: kept.r });
+  const all = keptOf(kept), good = all.filter((x) => now < x.e * 1000);
+  if (!good.length) { await room.state.storage.delete(k); return; }
+  for (const x of good) say(room, ws, { k: 'rcpt', r: x.r });
 }
 /** AUDIT DRAGON: THE HUB'S SWEEP OF THE DRAGON'S RECEIPTS (the serpent's AUDIT SERPENT S5 twin) - one page after `cur`,
  *  every receipt expired added to `dead` for the sweep's one delete, so an account that never comes back leaves none.
@@ -423,7 +434,7 @@ export async function dragonReceiptTo(room, ws, sub, now) {
 export async function sweepDragonReceipts(room, now, cur, dead, page) {
   const kept = await room.state.storage.list({ prefix: DRAGON_RC_PREFIX, limit: page, ...(cur ? { startAfter: cur } : {}) });
   let last = null;
-  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
+  for (const [k, v] of kept) { last = k; if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k); }
   return { last, full: kept.size >= page };
 }
 export { DRAGON_INTERNAL_FELL, DRAGON_INTERNAL_JUDGE };

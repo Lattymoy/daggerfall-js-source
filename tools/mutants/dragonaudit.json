@@ -56,20 +56,22 @@
   {
     "name": "AUDIT-DRAGON-none-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "old": "  for (const [k, v] of kept) { last = k; if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k); }",
     "new": "  for (const [k] of kept) { last = k; }",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-the-live-one-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "old": "  for (const [k, v] of kept) { last = k; if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k); }",
     "new": "  for (const [k] of kept) { last = k; dead.push(k); }",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-no-retry",

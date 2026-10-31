@@ -146,7 +146,7 @@ test('AUDIT DRAGON-HIDDEN A3, C2 the Aetherbright: its omen\'s look is its fight
     const dealt = await mintDragonReceipt({ q: SHINY.w, b: 1, s: 'acct-deal', c: 7, x: 'dealt', l: 20 }, priv, { subtle, nowS: Math.floor(now() / 1000) });
     const body = { w: SHINY.w, rc: [['acct-deal', dealt]], here: [], kin: [['acct-peer-0007', 18]] };
     assert.equal((await dragonFellInternal(hub.room, new Request('https://relay.internal/', { method: 'POST', body: JSON.stringify(body) }))).status, 200);
-    const c = readDragonReceipt(hub.store.get(`${DRAGON_RC_PREFIX}acct-peer-0007`)?.r);
+    const c = readDragonReceipt(hub.store.get(`${DRAGON_RC_PREFIX}acct-peer-0007`)?.l?.[0]?.r);   // PIN MOVED (DRAGON-EACH): the hub keeps a list, one a dragon
     assert.deepEqual([c?.s, c?.x, c?.l, c?.b], ['acct-peer-0007', 'stood', 18, 1], 'a party-mate\'s share, the Aetherbright\'s');
   }, { start: Law.dragonTimes(SHINY).landAt + 60_000, key: cellRoomOfWire(S.sx, S.sz) });
 });

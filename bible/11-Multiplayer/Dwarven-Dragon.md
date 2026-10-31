@@ -73,8 +73,7 @@ told the seed to every screen at the landing, and the seed named the pixel; now 
   `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch, all its sockets together, on the hub (DRAGON-BUDGET). The client asks again outside a told omen's reach, and after a null from another pixel, or the
   same one a minute on. No secret, no dragon.
 - **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
-  stand at once, three cells apart at least. An account is rewarded for one a watch: the account service keys a kill by
-  watch and account (AUDIT DRAGON-CELL D4, put to the owner).
+  stand at once, three cells apart at least. Each pays: a kill is keyed by watch, place and account (DRAGON-EACH).
 - **The shiny.** One omen in `DRAGON_SHINY_ONE_IN` (20) is the Aetherbright. The fight, its receipt and the account's
   row carry it.
 - **The fight's site.** The relay holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a
@@ -170,13 +169,15 @@ serpent's does.
 ## 8. The spoils and the tame
 
 **The receipt** (`net/dragon/dragonReceipt.js`, version `z1`): Ed25519 under the relay's one key, refused by every other
-verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
-`c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
+verifier and theirs by this one. Its claims: `q` the watch, `p` the place (its cell's number, `dragonPlaceOf`; none from a
+relay before DRAGON-EACH), `b` the dragon (0 brass, 1 Aetherbright), `s` the account, `c` the hoard's seed, `x` dealt or
+stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
 **The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct222).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
-The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
-watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
+The service counts one kill a (watch, place, account) in `dragon_kills` (migration 0203; place -1 for a receipt from
+before it), and gives the hoard to the claim whose id writes that dragon's `dragon_spoils` row, so a second browser is
+answered no. A guest is given its hoard and nothing else. The kill is
 the questline act `dragon-slain`. No Renown and no silver: the dragon pays its hoard and its tame.
 
 **The hoard** (`systems/dragon/dragonSpoils.js`, rolled on the receipt's seed, never past the character's level), within the
@@ -496,6 +497,15 @@ hub grants an account `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch - a rider cro
 world's 24,500 ground cells is held to 24 an account, whatever its sockets. A room keeps a cell granted; a hub that fails
 refuses. The count lives with the hub's instance, which a sleep forgets. Relay world298, re-hashed in
 place. Pinned by `test/net/dragon/dragonbudget.test.js` (3); `tools/mutants/dragonbudget.json`, 9 dead.
+
+**DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; acct231, migration 0203).** A
+kill was keyed by watch and account, so a second dragon in one watch paid nothing. The receipt now signs its dragon's
+place (`p`, its cell's number, `dragonLaw.js` dragonPlaceOf). The hub keeps an account's receipts of its newest watch,
+one a place (`dragonFights.js` keptOf), and the service keys the kill, the hoard and the tame by (watch, place,
+account). The client settles and spends one a dragon. A forged site has its cell's place, so it pays once. A receipt
+from before counts one a watch. Deploy the service first. Relay world298, re-hashed in place. Pinned by
+`test/net/dragon/dragoneach.test.js` (6); `tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct231 in nineteen
+files; the hub's keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep).
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

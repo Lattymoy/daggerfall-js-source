@@ -45,9 +45,10 @@
     "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const p = judgedPixel(a);",
     "new": "  const p = judgedPixel(a);",
     "tests": [
-      "test/net/dragon/dragonhidden.test.js"
+      "test/net/dragon/dragonhidden.test.js",
+      "test/net/dragon/dragonbudget.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content (AUDIT DRAGON-CELL)."
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content (AUDIT DRAGON-CELL). AUDIT DRAGON-CELL III: since DRAGON-BUDGET the hub refuses such a watch too, so the pin is that the hub is never asked (dragonbudget)."
   },
   {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
