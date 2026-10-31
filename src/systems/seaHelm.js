@@ -97,6 +97,38 @@ export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) 
  *  she raised sail and ran back at it). The host probes the water this far (scenes/world.js tvSeaSail). */
 export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);
 
+/** THE NO-WAY CLOCK of a sailed leg - game seconds since she came `gainM` nearer her mark (`noWayS`),
+ *  and the seconds she has spent steering off land since she last bettered her nearest (`detourS`). While she steers off
+ *  land (`st.helm.reach` > 0) the near mark follows her, so the way back counts; the detours' own clock still ends a boat
+ *  that rounds and rounds a dead end. The old clock ran against her nearest alone, and a headland a kilometre deep ended
+ *  every voyage behind it ("no way at sea"). */
+export const SEA_WAY = Object.freeze({ gainM: 20, noWayS: 180, detourS: 900 });
+/** The clock new, for a crossing begun or a leg begun (the host's `tvSea`; HOST-SPLIT: one call, not four sets). */
+export const seaClock = () => ({ best: Infinity, ref: Infinity, bestS: 0, detourS: 0 });
+/** One frame of the clock: `st` the crossing's state (`best` her nearest, `ref` the near mark, `bestS`, `detourS`, `helm`),
+ *  `dist` the metres to the mark, `gs` the game's seconds. True: no way - the leg is stopped. */
+export function seaNoWay(st, dist, gs) {
+  if (dist < st.best - SEA_WAY.gainM) {
+    st.best = dist;
+    st.ref = dist;
+    st.bestS = 0;
+    st.detourS = 0;
+    return false;
+  }
+  if ((st.helm?.reach ?? 0) > 0) {
+    st.ref = dist;
+    st.detourS = (st.detourS ?? 0) + gs;
+    return st.detourS > SEA_WAY.detourS;
+  }
+  if (dist < (st.ref ?? Infinity) - SEA_WAY.gainM) {
+    st.ref = dist;
+    st.bestS = 0;
+    return false;
+  }
+  st.bestS += gs;
+  return st.bestS > SEA_WAY.noWayS;
+}
+
 /** An angle folded into (-180, 180]. */
 export const foldDeg = (d) => {
   const a = (((d % 360) + 540) % 360) - 180;

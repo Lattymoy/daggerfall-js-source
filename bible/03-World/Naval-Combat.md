@@ -23,7 +23,10 @@ sea is shared. The player meets it at the helm of an armed boat (`Come-Sail-Away
   the traffic is directed by `src/systems/naval/navalDirector.js`.
 - **Ship life** (`src/systems/naval/shipLife.js`). A port's harbour is found off the terrain with its berths and mouth.
   Ships keep errands off their seed (moored, depart, voyage, arrive, patrol, lurk) along a bounded path over the water.
-  Ports also keep fishing boats (`src/systems/naval/fishingBoats.js`).
+  Each hull's water grid keeps her own beam clear, walks the built ground's tiles, and searches coarse cells where the
+  fine search runs out. A ship that comes no nearer her mark takes her next point or a detour. A departing ship makes
+  for the nearest harbour her grid reaches, else sails out where the water carries her. Ports also keep fishing boats
+  (`src/systems/naval/fishingBoats.js`), each working a ring of water her grid reaches.
 - **Boarding and plunder** (`src/systems/naval/navalBoarding.js`, `navalPlunder.js`). A struck ship within reach is
   hauled alongside by grapples and boarded; on foot a struck ship's side can be boarded too. Taken, the plunder window
   opens: its hold (DFU's loot tables), one thing to take, and its fate. A struck ship can be claimed as the captor's own
