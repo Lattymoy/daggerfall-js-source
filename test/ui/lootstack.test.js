@@ -315,7 +315,7 @@ test('LOOT-STACK the producers say which targets are bodies: the two surface poo
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
   assert.equal(t[0].body, true);
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.match(dc, /targets\.push\(\{ key: `corpse:\$\{i\}`, [^\n]*reach: CORPSE_ACTIVATION_DISTANCE, body: true(?:, skip: \(\) => bodyHidden\(`corpse:\$\{i\}`, api\.lootContents\(`corpse:\$\{i\}`\)\))? \}\);/, 'the dungeon\'s corpse mint');
+  assert.match(dc, /targets\.push\(\{ key: `corpse:\$\{i\}`, [^\n]*reach: CORPSE_ACTIVATION_DISTANCE, (?:body: true|\.\.\.bodyTarget\(`corpse:\$\{i\}`, api\.lootContents\)) \}\);/, 'the dungeon\'s corpse mint');
   assert.match(dc, /targets\.push\(\{ key: `loot:\$\{i\}`, [^\n]*reach: TREASURE_ACTIVATION_DISTANCE \}\);/, 'the dungeon\'s treasure piles carry no such word');
   const ls = rd('src/player/lootStack.js');
   assert.doesNotMatch(ls.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''), /startsWith|Corpse:|corpse:/, 'the law names no key vocabulary');

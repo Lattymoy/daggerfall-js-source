@@ -79,6 +79,8 @@ export function hoverHidden(key, items, leaves = _leaves) {
 export function bodyHidden(key, items) {
   return Array.isArray(items) && hoverHidden(key, items.filter(Boolean));
 }
+/** A dungeon body's pick fields: a body, and out of the pick while its plaque is down (player/activate.js reads `skip`). `contents(key)` is the host's list. */
+export const bodyTarget = (/** @type {string} */ key, /** @type {(key: string) => any[]|null|undefined} */ contents) => ({ body: true, skip: () => bodyHidden(key, contents(key)) });
 
 // ── SKIP BY NAME ────────────────────────────────────────────────────────────────────────────
 // A list of names the take-all leaves (and the plaque stays down for, with the boxes above): each entry `{ mode, text }`,

@@ -133,5 +133,23 @@
     "tests": [
       "test/systems/quicklootfilter.test.js"
     ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-dungeon-body-skip-never-true",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "({ body: true, skip: () => bodyHidden(key, contents(key)) })",
+    "new": "({ body: true, skip: () => false })",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-dungeon-body-list-read-once",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "({ body: true, skip: () => bodyHidden(key, contents(key)) })",
+    "new": "({ body: true, skip: ((l) => () => bodyHidden(key, l))(contents(key)) })",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
   }
 ]

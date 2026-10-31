@@ -306,7 +306,7 @@ import { avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js'; 
 import { activationTargets, liveFoeTargets, liveFoeFor, pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';   // SEARCH1: an Info look at a searchable
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: the ONE precedence the press and the plaque share
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
-import { bodyHidden } from '../systems/quickLootFilter.js';   // QUICK-LOOT-FILTER: a body the filter hides is out of the pick
+import { bodyTarget } from '../systems/quickLootFilter.js';   // QUICK-LOOT-FILTER: a body the filter hides is out of the pick
 import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionObjectName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
@@ -8592,7 +8592,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
       // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
       // 128-unit default the loot piles use.
-      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE, body: true, skip: () => bodyHidden(`corpse:${i}`, api.lootContents(`corpse:${i}`)) });   // QUICK-LOOT-FILTER: out of the pick when the plaque is down; LOOT-STACK: a body, the producer's word (player/lootStack.js)
+      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE, ...bodyTarget(`corpse:${i}`, api.lootContents) });   // QUICK-LOOT-FILTER: out of the pick when the plaque is down; LOOT-STACK: a body, the producer's word (player/lootStack.js)
     });
     // SEARCH1: the searchable models, at HALF a door's reach (SEARCH_REACH) - the ray's distance, the reach carried
     // beside it (MC-2's law: too far speaks the refusal rather than falling through)
