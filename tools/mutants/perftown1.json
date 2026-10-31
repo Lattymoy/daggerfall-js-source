@@ -2,7 +2,7 @@
   {
     "name": "PERF-TOWN1-1-the-size-cache-goes-and-every-person-remeasures",
     "file": "src/world/rmbFlats.js",
-    "old": "  let size = byRecord[record];\n  if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }",
+    "old": "  let size = byRecord[record];\n  if (!size) {\n    size = scaledBillboardSize(t.getSize(record), t.getScale(record));\n    byRecord[record] = size;\n  }",
     "new": "  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));",
     "tests": [
       "test/world/perftown1.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "PERF-TOWN1-2-the-cache-is-keyed-on-the-archive-so-a-replacement-goes-stale",
     "file": "src/world/rmbFlats.js",
-    "old": "  let byRecord = _mobileSize.get(t);\n  if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }",
-    "new": "  let byRecord = _mobileSize.get(t?.archive);\n  if (!byRecord) { byRecord = []; _mobileSize.set(t?.archive, byRecord); }",
+    "old": "  let byRecord = _mobileSize.get(t);\n  if (!byRecord) {\n    byRecord = [];\n    _mobileSize.set(t, byRecord);",
+    "new": "  let byRecord = _mobileSize.get(t?.archive);\n  if (!byRecord) {\n    byRecord = [];\n    _mobileSize.set(t?.archive, byRecord);",
     "tests": [
       "test/world/perftown1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-TOWN1-4-the-xml-scale-is-cached-too-so-a-toggled-mod-is-not-seen",
     "file": "src/world/rmbFlats.js",
-    "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
-    "new": "  return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
+    "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;",
+    "new": "  return size;",
     "tests": [
       "test/world/perftown1.test.js",
       "test/characters/enemy/meanerMonsters.test.js"

@@ -712,8 +712,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-raise-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/realm/raise',\n",
-    "new": "",
+    "old": "  '/v1/realm/raise',\n  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
+    "new": "  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "REZ-BLOODLINE-svc-cron-no-rez-holds",
     "file": "server-account/src/cron.js",
-    "old": "  ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],\n",
-    "new": "",
+    "old": "  ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],\n  // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,",
+    "new": "  // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

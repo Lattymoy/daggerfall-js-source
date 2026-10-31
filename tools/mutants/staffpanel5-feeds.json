@@ -533,8 +533,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-sweep-takes-kept",
     "file": "server-account/src/cron.js",
-    "old": "AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S})",
-    "new": "",
+    "old": "            `DELETE FROM encounter_reactions WHERE id IN (SELECT id FROM encounter_reactions WHERE at < ?1 AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S}) LIMIT ?2)`,",
+    "new": "            `DELETE FROM encounter_reactions WHERE id IN (SELECT id FROM encounter_reactions WHERE at < ?1  LIMIT ?2)`,",
     "why": "rows kept as evidence swept at 14 days",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-sweep-batches-kept",
     "file": "server-account/src/cron.js",
-    "old": "'staff_net_batches', 'reaction_batches']",
-    "new": "'staff_net_batches']",
+    "old": "  ['staff_net_rows', 'staff_foe_rows', 'staff_net_batches', 'reaction_batches'].map(",
+    "new": "  ['staff_net_rows', 'staff_foe_rows', 'staff_net_batches'].map(",
     "why": "reaction batch ids kept for ever",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-feed-behind-session",
     "file": "server-account/src/service.js",
-    "old": " && r !== '/v1/staff/net-feed'",
-    "new": "",
+    "old": "export const STAFF_ROUTES = new Set(\n  [...ROUTES].filter((r) => r.startsWith('/v1/staff/') && r !== '/v1/staff/net-feed'),\n); // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session",
+    "new": "export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/'))); // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session",
     "why": "the relay's feed listed as a staff session's door",
     "tests": [
       "test/server/staffpanel5feeds.test.js"

@@ -146,8 +146,8 @@
   {
     "name": "PROF12-first-pays-any",
     "file": "src/net/recipeLaw.js",
-    "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
-    "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
+    "old": "  !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
+    "new": "  !!potion && !potion.ingredients.some((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -727,7 +727,7 @@
     "name": "PROF12-cook-steps-unread",
     "file": "src/net/recipeLaw.js",
     "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
-    "new": "  const n = (clean ? 1 : 0);",
+    "new": "  const n = clean ? 1 : 0;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -1083,8 +1083,8 @@
   {
     "name": "PROF12-route-brew-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/disenchant',\n",
+    "old": "  '/v1/prof/brew',\n  '/v1/prof/disenchant',",
+    "new": "  '/v1/prof/disenchant',",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
@@ -1093,8 +1093,8 @@
   {
     "name": "PROF12-route-dis-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/brew',\n",
+    "old": "  '/v1/prof/disenchant',\n  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
+    "new": "  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"

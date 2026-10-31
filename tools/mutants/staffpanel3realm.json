@@ -442,8 +442,8 @@
   {
     "name": "STAFF-PANEL3-REALM-evidence-sweep-early",
     "file": "server-account/src/cron.js",
-    "old": "WHERE until <= ?1 LIMIT ?2)', ctx.nowS)",
-    "new": "WHERE until <= ?1 + 3600 LIMIT ?2)', ctx.nowS)",
+    "old": "            'DELETE FROM staff_evidence WHERE id IN (SELECT id FROM staff_evidence WHERE until <= ?1 LIMIT ?2)',",
+    "new": "            'DELETE FROM staff_evidence WHERE id IN (SELECT id FROM staff_evidence WHERE until <= ?1 + 3600 LIMIT ?2)',",
     "why": "a removal swept before its 30 days",
     "tests": [
       "test/server/staffpanel3realm.test.js"

@@ -173,8 +173,8 @@
   {
     "name": "SHAFT-SWEEP-the-end-alone",
     "file": "src/systems/spellcast.js",
-    "old": "  return from ? sweptSphereOverlapsCapsule(from, pos,",
-    "new": "  return false ? sweptSphereOverlapsCapsule(from, pos,",
+    "old": "  return from",
+    "new": "  return false",
     "tests": [
       "test/systems/shaftsweep.test.js"
     ]

@@ -213,8 +213,8 @@
   {
     "name": "QUICK-LOOT-the-bulk-corpse-take-walks-the-list-it-is-splicing",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }",
-    "new": "  for (const item of items) { if (takeOneInto(playerEntity, items, item)) n++; }",
+    "old": "  for (const item of [...items]) {",
+    "new": "  for (const item of items) {",
     "tests": [
       "test/scenes/mace_corpse_window.test.js",
       "test/systems/quickloot.test.js"

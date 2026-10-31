@@ -167,8 +167,8 @@
   {
     "name": "AUDITLWII2-S3-shut-marks",
     "file": "server-account/src/cron.js",
-    "old": ".sold : markPatronsShut(ctx))]",
-    "new": ".sold : 0)]",
+    "old": "  [\n    'patrons',\n    async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx)),\n  ],",
+    "new": "  ['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : 0)],",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

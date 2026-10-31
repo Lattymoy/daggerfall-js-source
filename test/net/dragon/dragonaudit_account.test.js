@@ -40,7 +40,7 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   assert.deepEqual(card.body.dragons, { slain: 1 }, 'a stranger is told the dragons slain, never the tames');
   const own = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${who.secret}` } })).json();
   assert.deepEqual(own.account.dragons, { slain: 1, tamed: 1 }, 'its own card, both');
-  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames',   \/\/ AUDIT DRAGON/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames', \/\/ AUDIT DRAGON/);
   assert.match(src('src/net/duel/duelRecord.js'), /\.\.\.\(Number\.isSafeInteger\(d\?\.dragons\?\.slain\) \? \{ dragons: \{ slain: d\.dragons\.slain \} \} : \{\}\),/, 'and the Inspect card keeps it');
 });
 

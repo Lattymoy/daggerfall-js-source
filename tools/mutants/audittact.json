@@ -268,8 +268,8 @@
   {
     "name": "ATACT-B3-people-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;",
-    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue;",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue; // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue; // AUDIT TACT B3: a person is no cover",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "ATACT-C6-wrong-axis",
     "file": "src/characters/foeSpacing.js",
-    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] });",
-    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] });",
+    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] }); // a door is thin across its doorway",
+    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] }); // a door is thin across its doorway",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

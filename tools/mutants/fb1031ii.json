@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-FB1031-II-R2-one-landing-clears-every-ask",
     "file": "src/systems/festival/festivalClient.js",
-    "old": ".finally(() => { _discardFlying.delete(ask); });",
-    "new": ".finally(() => { _discardFlying.clear(); });",
+    "old": "      _discardFlying.delete(ask);",
+    "new": "      _discardFlying.clear();",
     "tests": [
       "test/server/bound_destroy_service.test.js"
     ]

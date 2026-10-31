@@ -29,8 +29,8 @@
   {
     "name": "ONEBAG-the-bag-counted-against-itself",
     "file": "src/net/bagLaw.js",
-    "old": "l.some((x) => x !== item && isBagItem(x))",
-    "new": "l.some((x) => isBagItem(x))",
+    "old": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => x !== item && isBagItem(x)));",
+    "new": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => isBagItem(x)));",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]

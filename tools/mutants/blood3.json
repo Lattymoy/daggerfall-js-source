@@ -209,8 +209,8 @@
   {
     "name": "AUDITBLOOD3-the-lanterns-glint-drops-its-Fresnel-and-is-plastic-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];",
-    "new": "      if (g > 0.0) glint += att * g * uPointColors[i];",
+    "old": "      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe",
+    "new": "      if (g > 0.0) glint += att * g * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITBLOOD3-the-suns-glint-drops-its-Fresnel",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
-    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
+    "old": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDITBLOOD3-F10-the-shader-goes-back-to-claiming-a-rim-lip",
     "file": "src/render/enhancedLighting.js",
-    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE.",
-    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER.",
+    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE. A mark lit by",
+    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER. A mark lit by",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

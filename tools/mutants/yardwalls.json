@@ -83,8 +83,8 @@
   {
     "name": "YARD-WALLS-mount-unread",
     "file": "src/net/decorLaw.js",
-    "old": "  if (!it) return piece.hung === true;",
-    "new": "  if (!it) return false;",
+    "old": "  if (!it) return piece.hung === true; // YARD-WALLS: a catalogue picture hung flat on a yard's wall (decorPlaceOf `hung`)",
+    "new": "  if (!it) return false; // YARD-WALLS: a catalogue picture hung flat on a yard's wall (decorPlaceOf `hung`)",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "YARD-WALLS-flag-dropped",
     "file": "src/net/decorLaw.js",
-    "old": "...(name ? { name } : {}), ...(hung ? { hung } : {}) };",
-    "new": "...(name ? { name } : {}) };",
+    "old": "    ...(hung ? { hung } : {}),\n  };",
+    "new": "  };",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "YARD-WALLS-any-value-taken",
     "file": "src/net/decorLaw.js",
-    "old": "if (typeof storage !== 'boolean' || typeof hung !== 'boolean') return null;",
-    "new": "if (typeof storage !== 'boolean') return null;",
+    "old": "  if (typeof storage !== 'boolean' || typeof hung !== 'boolean') return null;",
+    "new": "  if (typeof storage !== 'boolean') return null;",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "YARD-WALLS-a-model-hung",
     "file": "src/net/decorLaw.js",
-    "old": "  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0]))) return null;",
-    "new": "  if (place.hung && (what.item || isNpcFlat(what.flat?.[0]) || isNatureArchive(what.flat?.[0]))) return null;",
+    "old": "  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0])))\n    return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none",
+    "new": "  if (place.hung && (what.item || isNpcFlat(what.flat?.[0]) || isNatureArchive(what.flat?.[0]))) return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "YARD-WALLS-trophy-throws",
     "file": "src/net/decorLaw.js",
-    "old": "decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE",
-    "new": "decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE",
+    "old": "  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
+    "new": "  decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "YARD-WALLS-wall-unhung",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true);   // YARD-WALLS: flat on the wall, not stood off it\n",
-    "new": "",
+    "old": "      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true); // YARD-WALLS: flat on the wall, not stood off it\n      if (wall) {",
+    "new": "      if (wall) {",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "YARD-WALLS-flag-unset",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "storage: false, paid, ...(hung ? { hung } : {}),",
-    "new": "storage: false, paid,",
+    "old": "      ...(hung ? { hung } : {}),\n    });",
+    "new": "    });",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "YARD-WALLS-spin-lost",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,",
-    "new": "spin: 0,",
+    "old": "    spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,",
+    "new": "    spin: 0,",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "YARD-WALLS-line-length",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];",
-    "new": "const q = [right[0] * a * hh + up[0] * b * hh, right[2] * a * hh + up[2] * b * hh];",
+    "old": "    const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];",
+    "new": "    const q = [right[0] * a * hh + up[0] * b * hh, right[2] * a * hh + up[2] * b * hh];",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "YARD-WALLS-a-plant-hangs",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": " && !decorIsFigure(entry) && !isNatureArchive(entry.flat[0]);",
-    "new": " && !decorIsFigure(entry);",
+    "old": "  !decorIsFigure(entry) &&\n  !isNatureArchive(entry.flat[0]);",
+    "new": "  !decorIsFigure(entry);",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "YARD-WALLS-yard-entry-unhung",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "station: null, ...(decorHangs(entry) ? { hangs: true } : {}) });",
-    "new": "station: null });",
+    "old": "export const decorYardEntry = (entry) => ({\n  ...entry,\n  storage: false,\n  light: null,\n  station: null,\n  ...(decorHangs(entry) ? { hangs: true } : {}),\n});",
+    "new": "export const decorYardEntry = (entry) => ({ ...entry, storage: false, light: null, station: null });",
     "tests": [
       "test/scenes/yardwalls.test.js"
     ],

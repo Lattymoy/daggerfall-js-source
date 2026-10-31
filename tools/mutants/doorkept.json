@@ -2,36 +2,46 @@
   {
     "name": "DOORKEPT-law-refused",
     "file": "src/net/decorLaw.js",
-    "old": "|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
-    "new": ")$/;",
-    "tests": ["test/server/basehide.test.js"]
+    "old": "  /^(?:m(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
+    "new": "  /^(?:m(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2}))$/;",
+    "tests": [
+      "test/server/basehide.test.js"
+    ]
   },
   {
     "name": "DOORKEPT-door-a-piece",
     "file": "src/scenes/decor/decorBase.js",
     "old": "DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k)))]",
     "new": "DECOR_BASE_KEY_RE.test(k)))]",
-    "tests": ["test/server/basehide.test.js"]
+    "tests": [
+      "test/server/basehide.test.js"
+    ]
   },
   {
     "name": "DOORKEPT-write-without-doors",
     "file": "src/scenes/decor/decorTool.js",
     "old": "keys: [...next, ...doorsOut].sort() });",
     "new": "keys: [...next].sort() });",
-    "tests": ["test/server/basehide.test.js"]
+    "tests": [
+      "test/server/basehide.test.js"
+    ]
   },
   {
     "name": "DOORKEPT-doors-unstood",
     "file": "src/scenes/decor/decorBase.js",
     "old": "  base.roomDoors?.apply?.(list);\n",
     "new": "",
-    "tests": ["test/server/basehide.test.js"]
+    "tests": [
+      "test/server/basehide.test.js"
+    ]
   },
   {
     "name": "DOORKEPT-door-before-the-answer",
     "file": "src/scenes/decor/decorTool.js",
     "old": "    const visit = deps.visit?.();\n    if (r.kind === 'home') {\n      const res = await deps.homeDecor?.hidden?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), keys: [...next, ...doorsOut].sort() });",
     "new": "    const visit = deps.visit?.();\n    for (const k of doorsMoving) { if (out) doors.hide(interiorDoorIndex(k)); else doors.show(interiorDoorIndex(k)); }\n    if (r.kind === 'home') {\n      const res = await deps.homeDecor?.hidden?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), keys: [...next, ...doorsOut].sort() });",
-    "tests": ["test/server/basehide.test.js"]
+    "tests": [
+      "test/server/basehide.test.js"
+    ]
   }
 ]

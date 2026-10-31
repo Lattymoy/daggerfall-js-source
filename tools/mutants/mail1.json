@@ -213,7 +213,7 @@
     "name": "MAIL-route-open",
     "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/mail/inbox']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n  '/v1/mail/inbox',\n]);",
     "tests": [
       "test/server/mail1.test.js"
     ],

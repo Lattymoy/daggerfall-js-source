@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-heading-taken-as-the-spin",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,",
-    "new": "spin: from ? wrapTurn(from.rot?.[hungFrom ? 2 : 0] ?? 0) : 0,",
+    "old": "    spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,",
+    "new": "    spin: from ? wrapTurn(from.rot?.[hungFrom ? 2 : 0] ?? 0) : 0,",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-hung-spin-taken-as-the-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "hungFrom ? 0 : from.rot?.[0]",
-    "new": "hungFrom ? from.rot?.[2] : from.rot?.[0]",
+    "old": "    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
+    "new": "    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-hung-pose-spun-by-the-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "1), hung ? s.spin : s.yaw];",
-    "new": "1), s.yaw];",
+    "old": "    const rot = [\n      wrapTurn(round(heading * DEG, 1)),\n      round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1),\n      hung ? s.spin : s.yaw,\n    ];",
+    "new": "    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-turn-never-spins",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "    turn(deg) { if (s.hung) s.spin",
-    "new": "    turn(deg) { if (false) s.spin",
+    "old": "      if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1));",
+    "new": "      if (false) s.spin = wrapTurn(round(s.spin + deg, 1));",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-turn-turns-both",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "    turn(deg) { if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1)); else s.yaw = wrapTurn(round(s.yaw + deg, 1)); },",
-    "new": "    turn(deg) { s.spin = wrapTurn(round(s.spin + deg, 1)); s.yaw = wrapTurn(round(s.yaw + deg, 1)); },",
+    "old": "      if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1));\n      else s.yaw = wrapTurn(round(s.yaw + deg, 1));",
+    "new": "      s.spin = wrapTurn(round(s.spin + deg, 1));\n      s.yaw = wrapTurn(round(s.yaw + deg, 1));",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-FB1031-Y2-the-pose-unkept",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      s.hung = wall && hangs;\n      if (s.hung) return mountAt(",
-    "new": "      if (wall && hangs) return mountAt(",
+    "old": "      s.hung = wall && hangs;\n      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true); // YARD-WALLS: flat on the wall, not stood off it",
+    "new": "      if (wall && hangs) return mountAt(hit, origin, id, normal, camYaw, paid, true); // YARD-WALLS: flat on the wall, not stood off it",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-FB1031-Y6-a-plant-hung-by-the-law",
     "file": "src/net/decorLaw.js",
-    "old": " || isNatureArchive(what.flat[0]))) return null;",
-    "new": ")) return null;",
+    "old": "  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0])))\n    return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none",
+    "new": "  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]))) return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none",
     "tests": [
       "test/scenes/fb1031_yard.test.js"
     ]

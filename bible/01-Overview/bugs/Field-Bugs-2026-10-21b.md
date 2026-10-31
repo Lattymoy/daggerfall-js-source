@@ -267,12 +267,12 @@ nothing said it, and that the page kept asking: every kill past the cap was stil
 THE LAW NOW.
 
 - The service says the day: a find answers `today`, the cakes found this UTC day with its own, and `capped: true` once
-  they are all found (`festival.js:"return { found, cakes: await cakesOf(db, player.id), today, ...(today >= FIND_CAKES_PER_DAY ? { capped: true } : {}) };"`);
+  they are all found (`festival.js:"const today = FIND_CAKES_PER_DAY".."return {"`);
   the account's festival answers `today` from the same row. A 200 still, so a page from before reads it as it did.
 - The page learns it (`festivalFindsToday`: a count said on an earlier UTC day is today's nought), says the day's end ONCE
   a UTC day an account - *"You have found all 120 Soul Cakes a day allows. More can be found from 8:00 PM."*, the hour the
   player's own clock reads at the next UTC midnight - and asks nothing more until the day turns
-  (`festivalClient.js:"if (festivalFindsToday().full) { sayDayFull(); return 0; }"`). The asks' own refusal ends the day
+  (`festivalClient.js:"if (festivalFindsToday().full)"`). The asks' own refusal ends the day
   the same way. A player back after the cap is told at the first kill.
 - The Wyrd Sister's window counts it under her name: *"Found today: 87 of 120 Soul Cakes."*, and once spent *"Found
   today: all 120 Soul Cakes. More from 8:00 PM."* - and its watch repaints when the UTC day turns with it open.

@@ -229,8 +229,8 @@
   {
     "name": "PASSAUDIT-2f-the-festival-never-reads-again",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) { _rest.unheard(); return 0; }   // a shut word read again\n",
-    "new": "",
+    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) {\n      _rest.unheard();\n      return 0;\n    } // a shut word read again\n    if (festivalState().open === false) return 0;",
+    "new": "    if (festivalState().open === false) return 0;",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "PASSAUDIT-3f-the-festival-refusal-unheard",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (!r?.ok) _rest.refused(r?.error);\n",
-    "new": "",
+    "old": "    if (!r?.ok) _rest.refused(r?.error);\n    const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too",
+    "new": "    const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "PASSAUDIT-3f-the-queued-finds-past-a-refusal",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "    if (_rest.resting()) return 0;   // a refusal ahead of it in the queue stood the page back\n",
-    "new": "",
+    "old": "    if (_rest.resting()) return 0; // a refusal ahead of it in the queue stood the page back\n    // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer",
+    "new": "    // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]

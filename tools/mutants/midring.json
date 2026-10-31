@@ -573,8 +573,8 @@
   {
     "name": "PIXEL-FADE-lane-mix-inverted",
     "file": "src/render/enhancedLighting.js",
-    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
-    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
+    "old": "  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
+    "new": "  tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
     "tests": [
       "test/render/midring.test.js"
     ]

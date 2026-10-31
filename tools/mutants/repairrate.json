@@ -59,8 +59,8 @@
   {
     "name": "KIT-CEILING-field-line-silent",
     "file": "src/net/recipeLaw.js",
-    "old": "condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE",
-    "new": "condition, once`];   // REPAIR-EASE",
+    "old": "    return [\n      `Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`,\n    ]; // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING",
+    "new": "    return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, once`]; // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING",
     "tests": [
       "test/systems/repair_rate.test.js",
       "test/systems/repair_ease.test.js"

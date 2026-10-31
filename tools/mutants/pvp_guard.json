@@ -92,8 +92,8 @@
   {
     "name": "PVP-WARD-the-dice-unprorated",
     "file": "src/systems/spellcast.js",
-    "old": "roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;",
-    "new": "roll > saving ? 100 : 0;",
+    "old": "  for (let roll = 1; roll <= 100; roll++)\n    sum += roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;",
+    "new": "  for (let roll = 1; roll <= 100; roll++) sum += roll > saving ? 100 : 0;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]

@@ -567,8 +567,8 @@
   {
     "name": "CHAP6B-ROUTE-LIST",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/chapters/back',   // CHAP6b: a member's backing in its chapter's Season\n",
-    "new": "",
+    "old": "  '/v1/chapters/back', // CHAP6b: a member's backing in its chapter's Season\n  '/v1/chapters/patron', // CHAP7a: a guild's bid for a chapter's patronage",
+    "new": "  '/v1/chapters/patron', // CHAP7a: a guild's bid for a chapter's patronage",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]

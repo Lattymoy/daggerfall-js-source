@@ -2,8 +2,8 @@
   {
     "name": "HOMEVENDOR-the-station-dropped",
     "file": "src/net/decorLaw.js",
-    "old": "'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader",
-    "new": "'jeweller']);   // HOME-VENDOR: a hired trader",
+    "old": "  'vendor',\n]); // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)   // MUSIC-BOX: a music box (systems/musicBox.js), after the cooking station so the stations counted from the end stand",
+    "new": "]); // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)   // MUSIC-BOX: a music box (systems/musicBox.js), after the cooking station so the stations counted from the end stand",
     "tests": [
       "test/net/homevendor_service.test.js",
       "test/ui/homestations.test.js"

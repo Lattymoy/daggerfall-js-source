@@ -10879,7 +10879,7 @@ walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
   plots and the like). Of the 6,016 houses, a house's top (yardLot's `top`, its box's) is at most 5.22 m for a quarter,
   6.45 m for half and 8.45 m for three quarters; 713 (11.9%) are one storey, 3.22 m. 1,633 houses stand a flat roof of
   4 m² or more at 6.45 m, and 4 m refused every one.
-- **The height.** `decorLaw.js:"export const DECOR_YARD_HIGH = 8;"`, at both ends. Above
+- **The height.** `decorLaw.js:"export const DECOR_YARD_HIGH ="`, at both ends. Above
   `homeYards.js:"export const YARD_FREE_HIGH = 4;"` a piece stands on or against its house: its middle or its ground on
   what the house covers or touching it - its ground inside its walls and every level roof of it, past the walls too (a
   porch's, a balcony's; modelFootParts `cover`) - or touching an upright face of it as high as its foot (`sides`: a
@@ -10890,7 +10890,7 @@ walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
   stand a free piece anywhere in a yard to 8 m, and the service stores it and serves it to every client. The 4 m free of
   the house is the client's alone, as the lot's edge and the road are.
 - **The walls.** A yard's catalogue picture set on a wall hangs flat on it, a hair off
-  (`decorPlacer.js:"if (s.hung) return mountAt("`), as one's own weapon hangs indoors (DECOR2c). It stood off the
+  (`decorPlacer.js:"if (s.hung) return"`), as one's own weapon hangs indoors (DECOR2c). It stood off the
   wall by half its width as a billboard (WALL-CLEAR). Its place says `hung` (decorPlaceOf, carried only when true, and
   stored by the service's placeJson), so every client draws it on the decal pass (decorIsMount), the yards' within
   reach (homeYards.js drawDecals). The service needs no `item`. Its ground is its quad seen from above, a line along the

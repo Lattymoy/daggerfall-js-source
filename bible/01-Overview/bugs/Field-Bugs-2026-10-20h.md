@@ -488,7 +488,7 @@ FOUND. A temple of Mara is a building of type Temple (14) whose faction is 24 (`
 88, the Benevolence of Mara, is its priestess). In Daggerfall's own layout all 445 are TEMPAAC0.RMB #21 (each god has
 its own block: Kynareth TEMPAAH0 #13, 641; Arkay TEMPAAA0 #0, 396; Akatosh TEMPAAD0 #22, 235; and so on). The statue
 there is flat TEXTURE.097 record 7, 55 x 91 px, record scale 0, at (64, 0, -48), and
-`rmbFlats.js:"export function billboardSize(t, record) {"` draws it 1.375 x 2.275 m - DFU's size (MeshReader.cs:324-332,
+`rmbFlats.js:"export function billboardSize"` draws it 1.375 x 2.275 m - DFU's size (MeshReader.cs:324-332,
 DaggerfallBillboard.cs:257-260, DaggerfallInterior.cs:869). With both town packs served (the default offline, and online
 by the room's settings) there are 448: 282 in Beautiful Villages' TEMPASC0 #9 (151 of them the wilderness temples named
 "... of Mara"), 122 in Beautiful Cities' TEMPAAC0 #21, 26 in TEMPBSC0 #12 and 18 in TEMPBAC0 #21. The four pack blocks
@@ -503,7 +503,7 @@ TEXTURE.210 record 24, a 4.55 m lamp in the classic data (1,498 placements) - no
 rooms is scaled as the pack's author wrote it, by `rmbLayout.js:"export function modelScaleVector(obj) {"`'s rule
 (RMBLayout.cs:74-77, DaggerfallInterior.cs:445), Mara's tapestry 45147 at 1.3 and 1.5 among them, and each placement is
 drawn and collided from the same mesh and matrix. In the five room variants every flat's body (PROP-BODIES) sits
-inside its drawn picture, at its foot (`propBodies.js:"  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));"`,
+inside its drawn picture, at its foot (`propBodies.js:"(footShare(t, record, size) * w)"`,
 from `interiorContext.js:"collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));"`); no flat
 without a picture has one (the 0.025 m statue is under STEP_OFFSET), and no floor or ceiling cuts a body but one 2 cm
 ceiling touch (211.47, the pack design's lower storey). Outside, the Mara blocks hold no statue: the tallest flats are
@@ -534,11 +534,11 @@ NOT CHANGED (for the owner, with the reporter's word):
 count), the English catalog and the thirteen complete languages' drafts.
 
 FOUND. The Stores keep four origins, not three: own, bought, gold, and since AUDIT BAG-CRAFT A1
-(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN = 'loose';"`) - units a
+(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN"`) - units a
 put-in brought from the pack that the service never handed out. Two doors make them: a station's own shortfall
 (`profBook.js` ensureInStores with `work`) and the Stores page's Put in of uncounted goods
 (`profPages.js:"LOOT-LOOSE: what the service counts by"`) - every looted, traded or counter-bought stack. A station spends
-them first (`bagLaw.js:"export const STATION_ORIGINS = "`), and one loose unit among a craft's inputs walls the whole
+them first (`bagLaw.js:"export const STATION_ORIGINS"`), and one loose unit among a craft's inputs walls the whole
 piece: A1 marked it `products.bought_with = 'gold'` (`professions.js:"const boughtWith = "`), so it lists for gold alone,
 as a pack's piece does; a temper with a loose input does the same. But migration 0041 wrote that column as "A PIECE'S
 LAST PURCHASE", and the disenchant read it so - its origin was `p.bought_with === 'gold' ? 'gold' : ...` (alchemy.js line

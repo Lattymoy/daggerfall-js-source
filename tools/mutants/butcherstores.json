@@ -4,14 +4,18 @@
     "file": "server-account/src/professions.js",
     "old": "const butcheryStores = isBody && carry && body?.butcheryStores === true;",
     "new": "const butcheryStores = false;",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-not-scoped-to-bodies",
     "file": "server-account/src/professions.js",
     "old": "const butcheryStores = isBody && carry && body?.butcheryStores === true;",
     "new": "const butcheryStores = carry && body?.butcheryStores === true;",
-    "tests": ["test/net/butcherstores.test.js"],
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ],
     "note": "A tree's Resin would leave the bag too."
   },
   {
@@ -19,7 +23,9 @@
     "file": "server-account/src/professions.js",
     "old": "const butcheryStores = isBody && carry && body?.butcheryStores === true;",
     "new": "const butcheryStores = isBody && carry;",
-    "tests": ["test/net/butcherstores.test.js"],
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ],
     "note": "An older client's meat would land in the Stores and be minted too."
   },
   {
@@ -27,62 +33,80 @@
     "file": "server-account/src/professions.js",
     "old": "const TX = carry && !butcheryStores ? 'prof_carried' : 'prof_stores';",
     "new": "const TX = carry ? 'prof_carried' : 'prof_stores';",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-room-off-the-carried-count",
     "file": "server-account/src/professions.js",
     "old": "  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${TX} WHERE",
     "new": "  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-row-unmarked",
     "file": "server-account/src/professions.js",
     "old": "extraQty, trophy, carry ? 1 : 0, schooled, ROOMX, butcheryStores ? 1 : 0),",
     "new": "extraQty, trophy, carry ? 1 : 0, schooled, ROOMX, 0),",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-extraCarried-answered",
     "file": "server-account/src/professions.js",
     "old": "...(row.extra && Number(row.extra_stores) !== 1 ? { extraCarried:",
     "new": "...(row.extra ? { extraCarried:",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-client-flag-unasked",
     "file": "src/net/profBook.js",
     "old": "{ carry: true, butcheryStores: true, ...heldBody(h) }",
     "new": "{ carry: true, ...heldBody(h) }",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-client-meat-minted",
     "file": "src/net/profBook.js",
     "old": "    if (d.extra && !extraStored(d)) add(d.extra, Number(d.extraQty) || 1);",
     "new": "    if (d.extra) add(d.extra, Number(d.extraQty) || 1);",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-older-service-meat-unminted",
     "file": "src/net/bagLaw.js",
-    "old": "&& typeof d.extra === 'string' && d.extraCarried == null;",
-    "new": "&& typeof d.extra === 'string';",
-    "tests": ["test/net/butcherstores.test.js"]
+    "old": "export const extraStored = (d) => d?.carry === true && typeof d.extra === 'string' && d.extraCarried == null;",
+    "new": "export const extraStored = (d) => d?.carry === true && typeof d.extra === 'string';",
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-line-says-the-bag",
     "file": "src/scenes/gatherHost.js",
     "old": "${stored ? t('gather.goods.andStores', ', and {goods} to your Stores', { goods: extra }) : ''}",
     "new": "${stored ? '' : ''}",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   },
   {
     "name": "BUTCHER-STORES-card-says-carried",
     "file": "src/ui/haulCards.js",
     "old": "where: xCarried ? 'Carried' : 'Stores' }",
     "new": "where }",
-    "tests": ["test/net/butcherstores.test.js"]
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
   }
 ]

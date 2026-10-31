@@ -572,8 +572,8 @@
   {
     "name": "AUDIT2-BAG1-K11-none-carried-said-as-the-bag",
     "file": "src/net/bagLaw.js",
-    "old": "  if (!(p.bag > 0) && !(p.pack > 0) && p.left > 0) return",
-    "new": "  if (false) return",
+    "old": "  if (!(p.bag > 0) && !(p.pack > 0) && p.left > 0) return `- all ${left}: no room in your bag or pack`;",
+    "new": "  if (false) return `- all ${left}: no room in your bag or pack`;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "AUDIT2-BAG1-K8-moved-unsaid",
     "file": "src/net/bagLaw.js",
-    "old": "  return n > 0 ? ` ${n} of the materials",
-    "new": "  return false ? ` ${n} of the materials",
+    "old": "  return n > 0 ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
+    "new": "  return false ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -734,8 +734,8 @@
   {
     "name": "AUDIT2-BAG1-S8-the-twin-cutting",
     "file": "server-account/src/motherlodes.js",
-    "old": "twin: 'NOT EXISTS (SELECT 1 FROM motherlode_strikes WHERE player = ?1 AND rid = ?5)' })",
-    "new": "twin: '(1 OR ?1 OR ?5)' })",
+    "old": "          twin: 'NOT EXISTS (SELECT 1 FROM motherlode_strikes WHERE player = ?1 AND rid = ?5)',",
+    "new": "          twin: '(1 OR ?1 OR ?5)',",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "AUDIT2-BAG1-S8-cut-against-a-stale-count",
     "file": "server-account/src/motherlodes.js",
-    "old": "seen: seenOk(body?.seen) ? body.seen : null,",
-    "new": "seen: null,",
+    "old": "          seen: seenOk(body?.seen) ? body.seen : null,",
+    "new": "          seen: null,",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]

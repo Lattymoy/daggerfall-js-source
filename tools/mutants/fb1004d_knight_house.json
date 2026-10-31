@@ -263,8 +263,8 @@
   {
     "name": "KNIGHT-HOUSE-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/homes/deed',\n",
-    "new": "",
+    "old": "  '/v1/homes/deed',\n  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
+    "new": "  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct238';",
-    "new": "export const ACCOUNT_VERSION = 'acct76';",
+    "old": "export const ACCOUNT_VERSION = 'acct238'; // acct238: AUDIT FB1031 W1 W3 W4 (acct236 on its branch, renumbered past MUSIC-BOX acct231 and PORTAL-BOOK acct232 at the merge of main; 2026-10-31, WITNESS-MAP's audit; bible/06-Systems/Professions-Arc.md section 61, bible/11-Multiplayer/Scale-Arc.md WITNESS-TILES) - the held map's witnessed ground laid once a UTC day as 64-pixel tiles keyed by the world pixel (witnessTiles.js; migration 0205, witness_tiles and witness_tile_days), by the Motherlodes pick's own scan, or by the minute's job on a day picked before them; POST /v1/prof/ground { character, tiles } answers up to 64 tiles by their keys - two primary-key reads, a replica route and a busy read, never a scan of world_witness - or `laid: false` before the day is laid. The writ board's kept ground is as it was before acct237. Deploy the account service before the site: an older one answers the site's ask 404 or `bad-region`, and the map waits and asks again.",
+    "new": "export const ACCOUNT_VERSION = 'acct76'; // acct238: AUDIT FB1031 W1 W3 W4 (acct236 on its branch, renumbered past MUSIC-BOX acct231 and PORTAL-BOOK acct232 at the merge of main; 2026-10-31, WITNESS-MAP's audit; bible/06-Systems/Professions-Arc.md section 61, bible/11-Multiplayer/Scale-Arc.md WITNESS-TILES) - the held map's witnessed ground laid once a UTC day as 64-pixel tiles keyed by the world pixel (witnessTiles.js; migration 0205, witness_tiles and witness_tile_days), by the Motherlodes pick's own scan, or by the minute's job on a day picked before them; POST /v1/prof/ground { character, tiles } answers up to 64 tiles by their keys - two primary-key reads, a replica route and a busy read, never a scan of world_witness - or `laid: false` before the day is laid. The writ board's kept ground is as it was before acct237. Deploy the account service before the site: an older one answers the site's ask 404 or `bad-region`, and the map waits and asks again.",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],

@@ -185,8 +185,8 @@
   {
     "name": "AUDIT30-L3-a-lone-surrogate-kept",
     "file": "src/net/recipeLaw.js",
-    "old": ".filter((ch) => !/^[\\ud800-\\udfff]$/.test(ch)).join('').trim();",
-    "new": ".join('').trim();",
+    "old": "    .filter((ch) => !/^[\\ud800-\\udfff]$/.test(ch))\n    .join('')",
+    "new": "    .join('')",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT30-L3-a-pair-split-at-the-cut",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (/[\\ud800-\\udbff]$/.test(n)) n = n.slice(0, -1);\n",
-    "new": "",
+    "old": "  if (/[\\ud800-\\udbff]$/.test(n)) n = n.slice(0, -1);\n  n = n.trim();",
+    "new": "  n = n.trim();",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]

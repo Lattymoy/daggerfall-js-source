@@ -22,8 +22,8 @@
     "name": "SS1-a-record-unbinding-its-row",
     "file": "src/systems/item/itemBound.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - a binding of its nature is isBoundByNature now (isBound adds the realm lock)",
-    "old": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
-    "new": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || (item?.bound !== false && templateByIndex(item?.templateIndex)?.bound === true);",
+    "old": "  item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "new": "  item?.bound === true || (item?.bound !== false && templateByIndex(item?.templateIndex)?.bound === true);",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -223,7 +223,7 @@
   {
     "name": "SS3-a-peers-list-keeps-a-bound-piece",
     "file": "src/systems/item/itemBound.js",
-    "old": "export const unbound = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !isBound(it)) : list);",
+    "old": "export const unbound = (/** @type {any[] | null} */ list) =>\n  Array.isArray(list) ? list.filter((it) => !isBound(it)) : list;",
     "new": "export const unbound = (/** @type {any[] | null} */ list) => list;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
@@ -269,7 +269,7 @@
     "name": "SS4-the-mark-ignored",
     "file": "src/systems/item/itemBound.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - a binding of its nature is isBoundByNature now (isBound adds the realm lock)",
-    "old": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "old": "export const isBoundByNature = (/** @type {any} */ item) =>\n  item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
     "new": "export const isBoundByNature = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.bound === true;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"

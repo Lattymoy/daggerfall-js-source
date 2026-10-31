@@ -23,28 +23,72 @@
 // ArmorMaterialTypes - plate 0x0200 + the metal, chain 0x0100); the item is minted by DFU's own law and the quality
 // laid on it after. Not a DFU member: DFU crafts nothing. Ledger A (the professions' row).
 import {
-  INGOTS, TIER_RANKS, topTierOf, actBand, minedMaterial, WOODS, PINE_PLANK, RESIN, HEARTWOOD, LINEN, WOOL, BEAR_HIDE, CLOTHS, HIDES,
-  CURED_LEATHER, HARDENED_LEATHER, SKINNING_KNIFE, COUNTER_ONLY, CUT_STONE, MORTAR, PROF_RANK_MAX,   // PROF11: the mason's stone
-  GEMS, PEARL, SIEGE_GEM,   // PROF10: the gems a jeweller sets, and a Lapidary's Siege-cracked one
-  GRADED_GEMS, gemGradeOfKey,   // CLOTH-GEMS: and every grade of them
-  WORK_RECIPES, trackOf, ingredientKeys,   // FIRST-BUDGET: a mason's works and a brew among the first-makes, each its track's
+  INGOTS,
+  TIER_RANKS,
+  topTierOf,
+  actBand,
+  minedMaterial,
+  WOODS,
+  PINE_PLANK,
+  RESIN,
+  HEARTWOOD,
+  LINEN,
+  WOOL,
+  BEAR_HIDE,
+  CLOTHS,
+  HIDES,
+  CURED_LEATHER,
+  HARDENED_LEATHER,
+  SKINNING_KNIFE,
+  COUNTER_ONLY,
+  CUT_STONE,
+  MORTAR,
+  PROF_RANK_MAX, // PROF11: the mason's stone
+  GEMS,
+  PEARL,
+  SIEGE_GEM, // PROF10: the gems a jeweller sets, and a Lapidary's Siege-cracked one
+  GRADED_GEMS,
+  gemGradeOfKey, // CLOTH-GEMS: and every grade of them
+  WORK_RECIPES,
+  trackOf,
+  ingredientKeys, // FIRST-BUDGET: a mason's works and a brew among the first-makes, each its track's
 } from './professionLaw.js';
-import { GEM_GRADE_PRICE } from '../systems/loot/gemGrades.js';   // CLOTH-GEMS: a grade's ladder, one home (a leaf)
-import { POTION_RECIPES } from '../systems/potionRecipes.js';   // FIRST-BUDGET: DFU's twenty, a brew's first-makes (the leaf imports nothing)
-import { GROUP_TEMPLATE_INDICES } from '../systems/item/itemTemplatesData.js';   // PROF10: DFU's Jewellery enum, one home
-import { CLOTHING_DYES } from '../characters/dyes.js';   // DFU's ten clothing dyes (DyeColors 0-9), one home
-import { textCaught } from './nameFilter.js';   // TEXT-F1: a mark's words, read as a name's (nameFilter.js imports nothing)
+import { GEM_GRADE_PRICE } from '../systems/loot/gemGrades.js'; // CLOTH-GEMS: a grade's ladder, one home (a leaf)
+import { POTION_RECIPES } from '../systems/potionRecipes.js'; // FIRST-BUDGET: DFU's twenty, a brew's first-makes (the leaf imports nothing)
+import { GROUP_TEMPLATE_INDICES } from '../systems/item/itemTemplatesData.js'; // PROF10: DFU's Jewellery enum, one home
+import { CLOTHING_DYES } from '../characters/dyes.js'; // DFU's ten clothing dyes (DyeColors 0-9), one home
+import { textCaught } from './nameFilter.js'; // TEXT-F1: a mark's words, read as a name's (nameFilter.js imports nothing)
 
 // ─── THE METALS (PROF0 4.1) ──────────────────────────────────────────
 
 /** The DFU material each ingot makes (WeaponMaterialTypes: Iron 0, Steel 1, Silver 2, Elven 3, Dwarven 4, Mithril 5,
  *  Adamantium 6, Ebony 7, Orcish 8, Daedric 9). Warforged Steel counts as Ebony, with a step (PROF0 4.7). */
 export const INGOT_MATERIAL = Object.freeze({
-  'ingot:iron': 0, 'ingot:steel': 1, 'ingot:silver': 2, 'ingot:moonstone': 3, 'ingot:dwarven': 4, 'ingot:mithril': 5,
-  'ingot:adamantium': 6, 'ingot:ebony': 7, 'ingot:orichalcum': 8, 'ingot:daedric': 9, 'ingot:warforged': 7,
+  'ingot:iron': 0,
+  'ingot:steel': 1,
+  'ingot:silver': 2,
+  'ingot:moonstone': 3,
+  'ingot:dwarven': 4,
+  'ingot:mithril': 5,
+  'ingot:adamantium': 6,
+  'ingot:ebony': 7,
+  'ingot:orichalcum': 8,
+  'ingot:daedric': 9,
+  'ingot:warforged': 7,
 });
 /** DFU's material names (itemInfo.js MATERIAL_NAMES), by material - the recipe's word for its metal. */
-const METAL_WORDS = Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
+const METAL_WORDS = Object.freeze([
+  'Iron',
+  'Steel',
+  'Silver',
+  'Elven',
+  'Dwarven',
+  'Mithril',
+  'Adamantium',
+  'Ebony',
+  'Orcish',
+  'Daedric',
+]);
 /** The ingot a Warforged piece is made from counts a quality step (PROF0 4.7, 9.2). */
 export const WARFORGED = 'ingot:warforged';
 /** DFU's armour materials (ItemEnums.cs ArmorMaterialTypes): leather, chain, and plate above the metal. */
@@ -54,52 +98,107 @@ export const ARMOR_PLATE = 0x0200;
 
 // ─── THE PRODUCTS (PROF0 9.3) ────────────────────────────────────────
 
-const TIN = 'metal:tin', COPPER = 'metal:copper', LEATHER = 'leather:cured', OAK = 'plank:oak', PINE = 'plank:pine';
+const TIN = 'metal:tin',
+  COPPER = 'metal:copper',
+  LEATHER = 'leather:cured',
+  OAK = 'plank:oak',
+  PINE = 'plank:pine';
 /**
  * @typedef {{ id: string, name: string, kind: 'weapon'|'plate'|'shield'|'chain'|'tool'|'kit', templateIndex: number,
  *   ingots: number, also: readonly (readonly [string, number])[] }} Product
  */
 /** @returns {Product} */
-const product = (id, name, kind, templateIndex, ingots, also = []) => Object.freeze({ id, name, kind, templateIndex, ingots, also: Object.freeze(also.map((a) => Object.freeze(a))) });
+const product = (id, name, kind, templateIndex, ingots, also = []) =>
+  Object.freeze({ id, name, kind, templateIndex, ingots, also: Object.freeze(also.map((a) => Object.freeze(a))) });
 /** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. SMITH-RRI: and
  *  Roleplay & Realism: Items' two (rriItems.js 513, 514), whose class online always registers (onlineLane.js). The Light
  *  Flail is the Mace's and the Flail's row; the Archer's Axe, 3 kg, half the Battle Axe's 6, takes half its 4 ingots. */
 export const WEAPON_PRODUCTS = Object.freeze([
-  product('dagger', 'Dagger', 'weapon', 113, 1, [[TIN, 1]]), product('tanto', 'Tanto', 'weapon', 114, 1, [[TIN, 1]]),
-  product('shortsword', 'Shortsword', 'weapon', 116, 2, [[TIN, 1]]), product('wakizashi', 'Wakizashi', 'weapon', 117, 2, [[TIN, 1]]),
-  product('broadsword', 'Broadsword', 'weapon', 118, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('saber', 'Saber', 'weapon', 119, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('longsword', 'Longsword', 'weapon', 120, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('katana', 'Katana', 'weapon', 121, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('mace', 'Mace', 'weapon', 124, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('flail', 'Flail', 'weapon', 125, 3, [[COPPER, 1], [LEATHER, 1]]),
-  product('warhammer', 'Warhammer', 'weapon', 126, 4, [[COPPER, 1], [OAK, 1]]),
-  product('battleaxe', 'Battle Axe', 'weapon', 127, 4, [[COPPER, 1], [OAK, 1]]),
-  product('waraxe', 'War Axe', 'weapon', 128, 4, [[COPPER, 1], [OAK, 1]]),
-  product('claymore', 'Claymore', 'weapon', 122, 5, [[COPPER, 1], [LEATHER, 1]]),
-  product('daikatana', 'Dai-katana', 'weapon', 123, 5, [[COPPER, 1], [LEATHER, 1]]),
-  product('lightflail', 'Light Flail', 'weapon', 514, 3, [[COPPER, 1], [LEATHER, 1]]),   // SMITH-RRI
-  product('archersaxe', 'Archer\'s Axe', 'weapon', 513, 2, [[COPPER, 1], [OAK, 1]]),   // SMITH-RRI
+  product('dagger', 'Dagger', 'weapon', 113, 1, [[TIN, 1]]),
+  product('tanto', 'Tanto', 'weapon', 114, 1, [[TIN, 1]]),
+  product('shortsword', 'Shortsword', 'weapon', 116, 2, [[TIN, 1]]),
+  product('wakizashi', 'Wakizashi', 'weapon', 117, 2, [[TIN, 1]]),
+  product('broadsword', 'Broadsword', 'weapon', 118, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('saber', 'Saber', 'weapon', 119, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('longsword', 'Longsword', 'weapon', 120, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('katana', 'Katana', 'weapon', 121, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('mace', 'Mace', 'weapon', 124, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('flail', 'Flail', 'weapon', 125, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('warhammer', 'Warhammer', 'weapon', 126, 4, [
+    [COPPER, 1],
+    [OAK, 1],
+  ]),
+  product('battleaxe', 'Battle Axe', 'weapon', 127, 4, [
+    [COPPER, 1],
+    [OAK, 1],
+  ]),
+  product('waraxe', 'War Axe', 'weapon', 128, 4, [
+    [COPPER, 1],
+    [OAK, 1],
+  ]),
+  product('claymore', 'Claymore', 'weapon', 122, 5, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('daikatana', 'Dai-katana', 'weapon', 123, 5, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]),
+  product('lightflail', 'Light Flail', 'weapon', 514, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]), // SMITH-RRI
+  product('archersaxe', "Archer's Axe", 'weapon', 513, 2, [
+    [COPPER, 1],
+    [OAK, 1],
+  ]), // SMITH-RRI
 ]);
 /** The plate (DFU 102-108): Cuirass 6 and 2 Cured Leather, Greaves 4, Helm 2, the pauldrons, Gauntlets and Boots 2. */
 export const PLATE = Object.freeze([
-  product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 2]]), product('greaves', 'Greaves', 'plate', 104, 4, [[LEATHER, 1]]),
-  product('helm', 'Helm', 'plate', 107, 2, [[LEATHER, 1]]), product('lpauldron', 'Left Pauldron', 'plate', 105, 2, [[LEATHER, 1]]),
-  product('rpauldron', 'Right Pauldron', 'plate', 106, 2, [[LEATHER, 1]]), product('gauntlets', 'Gauntlets', 'plate', 103, 2, [[LEATHER, 1]]),
+  product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 2]]),
+  product('greaves', 'Greaves', 'plate', 104, 4, [[LEATHER, 1]]),
+  product('helm', 'Helm', 'plate', 107, 2, [[LEATHER, 1]]),
+  product('lpauldron', 'Left Pauldron', 'plate', 105, 2, [[LEATHER, 1]]),
+  product('rpauldron', 'Right Pauldron', 'plate', 106, 2, [[LEATHER, 1]]),
+  product('gauntlets', 'Gauntlets', 'plate', 103, 2, [[LEATHER, 1]]),
   product('boots', 'Boots', 'plate', 108, 2, [[LEATHER, 1]]),
 ]);
 /** The shields (DFU 109-112): the Buckler 3 and Cured Leather; Round, Kite and Tower 3, 4 and 5 and an Oak Plank. */
 export const SHIELDS = Object.freeze([
-  product('buckler', 'Buckler', 'shield', 109, 3, [[LEATHER, 1]]), product('roundshield', 'Round Shield', 'shield', 110, 3, [[OAK, 1]]),
-  product('kiteshield', 'Kite Shield', 'shield', 111, 4, [[OAK, 1]]), product('towershield', 'Tower Shield', 'shield', 112, 5, [[OAK, 1]]),
+  product('buckler', 'Buckler', 'shield', 109, 3, [[LEATHER, 1]]),
+  product('roundshield', 'Round Shield', 'shield', 110, 3, [[OAK, 1]]),
+  product('kiteshield', 'Kite Shield', 'shield', 111, 4, [[OAK, 1]]),
+  product('towershield', 'Tower Shield', 'shield', 112, 5, [[OAK, 1]]),
 ]);
 /** The chain (the plate's seven - DFU has no chain shield): the plate piece's ingots x 0.75 rounded up, nothing else. */
-export const CHAIN = Object.freeze(PLATE.map((p) => product(`chain-${p.id}`, p.name, 'chain', p.templateIndex, Math.ceil(p.ingots * 0.75))));
+export const CHAIN = Object.freeze(
+  PLATE.map((p) => product(`chain-${p.id}`, p.name, 'chain', p.templateIndex, Math.ceil(p.ingots * 0.75))),
+);
 /** Foraging's tools (FORAGE0 14.7), at Iron: their templates are Foraging's own (foragingLaw.js FT). PROF7: and the
  *  Skinning Knife (603, the port's own - FORAGE0 14.7's row), 1 Iron Ingot and 1 Pine Plank at rank 0. */
 export const TOOLS = Object.freeze([
-  product('woodaxe', 'Wood-Axe', 'tool', 1600, 2, [[PINE, 1]]), product('pickaxe', 'Pick-Axe', 'tool', 1601, 2, [[PINE, 1]]),
-  product('sickle', 'Sickle', 'tool', 1602, 1, [[PINE, 1]]), product('spade', 'Spade', 'tool', 1606, 2, [[OAK, 1]]),
+  product('woodaxe', 'Wood-Axe', 'tool', 1600, 2, [[PINE, 1]]),
+  product('pickaxe', 'Pick-Axe', 'tool', 1601, 2, [[PINE, 1]]),
+  product('sickle', 'Sickle', 'tool', 1602, 1, [[PINE, 1]]),
+  product('spade', 'Spade', 'tool', 1606, 2, [[OAK, 1]]),
   product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]]),
 ]);
 /** A tool's tier: the Spade's rank 10 (FORAGE0 14.7) is tier 2's; the rest tier 1. */
@@ -126,7 +225,8 @@ export const KIT_CEILING_HIGH = 0.9;
 export const KIT_HIGH_QUALITY = 3;
 /** CRAFT5: the share of a piece's condition a kit mends it to - a Superior or Masterwork kit's nine tenths, any other's
  *  three quarters. @param {any} kit */
-export const kitReach = (kit) => (Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING);
+export const kitReach = (kit) =>
+  Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING;
 
 /** The metals a recipe is made in: every ingot but the Daedric's and the Warforged's for the tools (Iron alone). */
 const SMITH_INGOTS = Object.freeze(INGOTS.map((i) => i.key));
@@ -144,19 +244,46 @@ const KIT_INGOTS = Object.freeze(SMITH_INGOTS.filter((k) => k !== WARFORGED));
  *   CRAFT2: `pattern` the piece's word whatever it is made of (patternsOf - "Longsword"), `madeOf` what this recipe makes
  *   it of ("Mithril"; "" where a pattern is made one way)
  */
-const FAMILY = Object.freeze({ weapon: 'weapons', plate: 'armour', shield: 'armour', chain: 'armour', tool: 'tools', kit: 'kits' });
+const FAMILY = Object.freeze({
+  weapon: 'weapons',
+  plate: 'armour',
+  shield: 'armour',
+  chain: 'armour',
+  tool: 'tools',
+  kit: 'kits',
+});
 /** @returns {Recipe} */
 function recipeOf(p, metal) {
   const m = INGOT_MATERIAL[metal];
   const tier = p.kind === 'tool' ? (TOOL_TIER[p.id] ?? 1) : minedMaterial(metal).tier;
-  const material = p.kind === 'plate' || p.kind === 'shield' ? ARMOR_PLATE + m : p.kind === 'chain' ? ARMOR_CHAIN : p.kind === 'weapon' ? m : 0;
+  const material =
+    p.kind === 'plate' || p.kind === 'shield'
+      ? ARMOR_PLATE + m
+      : p.kind === 'chain'
+        ? ARMOR_CHAIN
+        : p.kind === 'weapon'
+          ? m
+          : 0;
   const word = metal === WARFORGED ? 'Warforged' : METAL_WORDS[m];
   const name = p.kind === 'chain' ? `Chain ${p.name}` : p.kind === 'tool' ? p.name : `${word} ${p.name}`;
   return Object.freeze({
-    id: `${p.id}:${metal.slice('ingot:'.length)}`, product: p.id, name, kind: p.kind, family: FAMILY[p.kind], profession: 'smithing',
-    templateIndex: p.templateIndex, metal, material, tier, rank: TIER_RANKS[tier - 1],
-    pattern: p.kind === 'chain' ? `Chain ${p.name}` : p.name, madeOf: word,   // CRAFT2
-    inputs: Object.freeze([Object.freeze({ key: metal, n: p.ingots }), ...p.also.map(([key, n]) => Object.freeze({ key, n }))]),
+    id: `${p.id}:${metal.slice('ingot:'.length)}`,
+    product: p.id,
+    name,
+    kind: p.kind,
+    family: FAMILY[p.kind],
+    profession: 'smithing',
+    templateIndex: p.templateIndex,
+    metal,
+    material,
+    tier,
+    rank: TIER_RANKS[tier - 1],
+    pattern: p.kind === 'chain' ? `Chain ${p.name}` : p.name,
+    madeOf: word, // CRAFT2
+    inputs: Object.freeze([
+      Object.freeze({ key: metal, n: p.ingots }),
+      ...p.also.map(([key, n]) => Object.freeze({ key, n })),
+    ]),
   });
 }
 /** EVERY RECIPE the anvil knows, in its window's order: the weapons, the plate, the shields at every metal; the chain
@@ -172,64 +299,274 @@ export const SMITH_RECIPES = Object.freeze([
 
 /** A staff's or bow's DFU material is its wood's tier's (9.3): Pine Iron, Oak Steel, Cherry Silver, Teak Elven,
  *  Mahogany Mithril; the two tier-6 woods split between the tier's metals - Ironwood Adamantium, Ghostwood Ebony. */
-export const WOOD_MATERIAL = Object.freeze({ pine: 0, oak: 1, cherry: 2, teak: 3, mahogany: 5, ironwood: 6, ghostwood: 7 });
+export const WOOD_MATERIAL = Object.freeze({
+  pine: 0,
+  oak: 1,
+  cherry: 2,
+  teak: 3,
+  mahogany: 5,
+  ironwood: 6,
+  ghostwood: 7,
+});
 /** DFU's weapons Carpentry makes: the Staff (115), the Short Bow (129), the Long Bow (130), the Arrow (131). */
-export const STAFF_TEMPLATE = 115, SHORT_BOW_TEMPLATE = 129, LONG_BOW_TEMPLATE = 130, ARROWS_TEMPLATE = 131;
+export const STAFF_TEMPLATE = 115,
+  SHORT_BOW_TEMPLATE = 129,
+  LONG_BOW_TEMPLATE = 130,
+  ARROWS_TEMPLATE = 131;
 /** Arrows a craft makes - one stack, DFU's own most (CreateWeapon's arrow arm rolls 1-20). */
 export const ARROWS_STACK = 20;
 /** DFU's Twigs (a plant of both lands - PlantIngredients1 and 2, template 8), as the Stores keep it twice. */
-export const TWIGS_NORTH = 'p1:8', TWIGS_SOUTH = 'p2:8';
+export const TWIGS_NORTH = 'p1:8',
+  TWIGS_SOUTH = 'p2:8';
 /** The Ram Kit (PROF0 4.8's 690) - a siege work, rank 60 (9.3). */
 export const RAM_KIT_TEMPLATE = 690;
 export const RAM_KIT_RANK = 60;
 const woodName = (id) => WOODS.find((w) => w.id === id)?.name ?? id;
 const woodTier = (id) => WOODS.find((w) => w.id === id)?.tier ?? 1;
 /** @returns {Recipe} */
-function carpentry({ id, name, kind, family, templateIndex, wood = null, tier = wood ? woodTier(wood) : 1, rank = TIER_RANKS[tier - 1], material = 0, inputs, stack = 0, later = null, pattern = name, madeOf = wood ? woodName(wood) : '' }) {
+function carpentry({
+  id,
+  name,
+  kind,
+  family,
+  templateIndex,
+  wood = null,
+  tier = wood ? woodTier(wood) : 1,
+  rank = TIER_RANKS[tier - 1],
+  material = 0,
+  inputs,
+  stack = 0,
+  later = null,
+  pattern = name,
+  madeOf = wood ? woodName(wood) : '',
+}) {
   return Object.freeze({
-    id, product: id.slice(0, id.indexOf(':')), name, kind, family, profession: 'carpentry', templateIndex, metal: null,
-    wood: wood ? `plank:${wood}` : null, material, tier, rank, ...(stack ? { stack } : {}), ...(later ? { later } : {}), pattern, madeOf,   // CRAFT2
+    id,
+    product: id.slice(0, id.indexOf(':')),
+    name,
+    kind,
+    family,
+    profession: 'carpentry',
+    templateIndex,
+    metal: null,
+    wood: wood ? `plank:${wood}` : null,
+    material,
+    tier,
+    rank,
+    ...(stack ? { stack } : {}),
+    ...(later ? { later } : {}),
+    pattern,
+    madeOf, // CRAFT2
     inputs: Object.freeze(inputs.map(([key, n]) => Object.freeze({ key, n }))),
   });
 }
 const plank = (w) => `plank:${w}`;
 /** The four woods of DFU's furniture (templates 221-232: Oak, Cherry, Mahogany, Teak, each at its offset). */
 /** @type {ReadonlyArray<[string, number]>} */
-const FURNITURE_WOODS = Object.freeze([['oak', 0], ['cherry', 1], ['mahogany', 2], ['teak', 3]]);
+const FURNITURE_WOODS = Object.freeze([
+  ['oak', 0],
+  ['cherry', 1],
+  ['mahogany', 2],
+  ['teak', 3],
+]);
 /** DFU's four beds by their rarity column (1 Plain Single, 2 Plain Double, 3 Fancy Single, 4 Fancy Double) - each the
  *  wood of that tier (PROF0 25): FOUND, a bed names no wood. */
 /** @type {ReadonlyArray<[string, string, number, string]>} */
 const BEDS = Object.freeze([
-  ['bed-plain-single', 'Plain Single Bed', 217, 'pine'], ['bed-plain-double', 'Plain Double Bed', 219, 'oak'],
-  ['bed-fancy-single', 'Fancy Single Bed', 218, 'cherry'], ['bed-fancy-double', 'Fancy Double Bed', 220, 'teak'],
+  ['bed-plain-single', 'Plain Single Bed', 217, 'pine'],
+  ['bed-plain-double', 'Plain Double Bed', 219, 'oak'],
+  ['bed-fancy-single', 'Fancy Single Bed', 218, 'cherry'],
+  ['bed-fancy-double', 'Fancy Double Bed', 220, 'teak'],
 ]);
 /** EVERY RECIPE the workbench knows, in its window's order: the staves and bows at every wood; the arrows (the northern
  *  Twigs', the southern's and - PROF7 - the Harpy's feathers'); the furniture; the Basket; the Ram Kit (named, never made
  *  - PROF0 25). */
 export const CARPENTRY_RECIPES = Object.freeze([
-  ...WOODS.map((w) => carpentry({ id: `staff:${w.id}`, name: `${w.name} Staff`, kind: 'staff', family: 'staves', templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Staff' })),
-  ...WOODS.map((w) => carpentry({ id: `shortbow:${w.id}`, name: `${w.name} Short Bow`, kind: 'bow', family: 'bows', templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3], [RESIN.key, 1]], pattern: 'Short Bow' })),
-  ...WOODS.map((w) => carpentry({ id: `longbow:${w.id}`, name: `${w.name} Long Bow`, kind: 'bow', family: 'bows', templateIndex: LONG_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 4], [RESIN.key, 1]], pattern: 'Long Bow' })),
-  carpentry({ id: 'arrows:north', name: 'Arrows (northern Twigs)', kind: 'arrows', family: 'arrows', templateIndex: ARROWS_TEMPLATE, wood: 'pine', stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 4]], pattern: 'Arrows', madeOf: 'northern Twigs' }),
-  carpentry({ id: 'arrows:south', name: 'Arrows (southern Twigs)', kind: 'arrows', family: 'arrows', templateIndex: ARROWS_TEMPLATE, wood: 'pine', stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_SOUTH, 4]], pattern: 'Arrows', madeOf: 'southern Twigs' }),
+  ...WOODS.map((w) =>
+    carpentry({
+      id: `staff:${w.id}`,
+      name: `${w.name} Staff`,
+      kind: 'staff',
+      family: 'staves',
+      templateIndex: STAFF_TEMPLATE,
+      wood: w.id,
+      material: WOOD_MATERIAL[w.id],
+      inputs: [[plank(w.id), 3]],
+      pattern: 'Staff',
+    }),
+  ),
+  ...WOODS.map((w) =>
+    carpentry({
+      id: `shortbow:${w.id}`,
+      name: `${w.name} Short Bow`,
+      kind: 'bow',
+      family: 'bows',
+      templateIndex: SHORT_BOW_TEMPLATE,
+      wood: w.id,
+      material: WOOD_MATERIAL[w.id],
+      inputs: [
+        [plank(w.id), 3],
+        [RESIN.key, 1],
+      ],
+      pattern: 'Short Bow',
+    }),
+  ),
+  ...WOODS.map((w) =>
+    carpentry({
+      id: `longbow:${w.id}`,
+      name: `${w.name} Long Bow`,
+      kind: 'bow',
+      family: 'bows',
+      templateIndex: LONG_BOW_TEMPLATE,
+      wood: w.id,
+      material: WOOD_MATERIAL[w.id],
+      inputs: [
+        [plank(w.id), 4],
+        [RESIN.key, 1],
+      ],
+      pattern: 'Long Bow',
+    }),
+  ),
+  carpentry({
+    id: 'arrows:north',
+    name: 'Arrows (northern Twigs)',
+    kind: 'arrows',
+    family: 'arrows',
+    templateIndex: ARROWS_TEMPLATE,
+    wood: 'pine',
+    stack: ARROWS_STACK,
+    inputs: [
+      [PINE_PLANK.key, 1],
+      ['ingot:iron', 1],
+      [TWIGS_NORTH, 4],
+    ],
+    pattern: 'Arrows',
+    madeOf: 'northern Twigs',
+  }),
+  carpentry({
+    id: 'arrows:south',
+    name: 'Arrows (southern Twigs)',
+    kind: 'arrows',
+    family: 'arrows',
+    templateIndex: ARROWS_TEMPLATE,
+    wood: 'pine',
+    stack: ARROWS_STACK,
+    inputs: [
+      [PINE_PLANK.key, 1],
+      ['ingot:iron', 1],
+      [TWIGS_SOUTH, 4],
+    ],
+    pattern: 'Arrows',
+    madeOf: 'southern Twigs',
+  }),
   // PROF7 (PROF0 9.3's own fletching, waiting on Hunting since PROF4): one Harpy Feathers for the four Twigs - the same
   // quiver, since an arrow takes no quality for "one step lower" to act on (PROF0 25, 29)
-  carpentry({ id: 'arrows:harpy', name: 'Arrows (Harpy Feathers)', kind: 'arrows', family: 'arrows', templateIndex: ARROWS_TEMPLATE, wood: 'pine', stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], ['hide:harpy', 1]], pattern: 'Arrows', madeOf: 'Harpy Feathers' }),
-  ...FURNITURE_WOODS.map(([w, i]) => carpentry({ id: `table-large:${w}`, name: `Large ${woodName(w)} Table`, kind: 'furniture', family: 'furniture', templateIndex: 221 + i, wood: w, inputs: [[plank(w), 6]], pattern: 'Large Table' })),
-  ...FURNITURE_WOODS.map(([w, i]) => carpentry({ id: `table-small:${w}`, name: `Small ${woodName(w)} Table`, kind: 'furniture', family: 'furniture', templateIndex: 225 + i, wood: w, inputs: [[plank(w), 3]], pattern: 'Small Table' })),
-  ...FURNITURE_WOODS.map(([w, i]) => carpentry({ id: `chair:${w}`, name: `${woodName(w)} Chair`, kind: 'furniture', family: 'furniture', templateIndex: 229 + i, wood: w, inputs: [[plank(w), 2]], pattern: 'Chair' })),
-  ...BEDS.map(([p, name, t, w]) => carpentry({ id: `${p}:${w}`, name, kind: 'furniture', family: 'furniture', templateIndex: t, wood: w, inputs: [[plank(w), 8], [LINEN.key, 2]] })),
-  carpentry({ id: 'basket:pine', name: 'Basket', kind: 'tool', family: 'tools', templateIndex: 1607, wood: 'pine', inputs: [[PINE_PLANK.key, 2]] }),
-  carpentry({ id: 'ramkit:oak', name: 'Ram Kit', kind: 'siege', family: 'siege', templateIndex: RAM_KIT_TEMPLATE, wood: 'oak', tier: 5, rank: RAM_KIT_RANK, inputs: [[plank('oak'), 40], ['ingot:iron', 20], [BEAR_HIDE.key, 4]] }),
+  carpentry({
+    id: 'arrows:harpy',
+    name: 'Arrows (Harpy Feathers)',
+    kind: 'arrows',
+    family: 'arrows',
+    templateIndex: ARROWS_TEMPLATE,
+    wood: 'pine',
+    stack: ARROWS_STACK,
+    inputs: [
+      [PINE_PLANK.key, 1],
+      ['ingot:iron', 1],
+      ['hide:harpy', 1],
+    ],
+    pattern: 'Arrows',
+    madeOf: 'Harpy Feathers',
+  }),
+  ...FURNITURE_WOODS.map(([w, i]) =>
+    carpentry({
+      id: `table-large:${w}`,
+      name: `Large ${woodName(w)} Table`,
+      kind: 'furniture',
+      family: 'furniture',
+      templateIndex: 221 + i,
+      wood: w,
+      inputs: [[plank(w), 6]],
+      pattern: 'Large Table',
+    }),
+  ),
+  ...FURNITURE_WOODS.map(([w, i]) =>
+    carpentry({
+      id: `table-small:${w}`,
+      name: `Small ${woodName(w)} Table`,
+      kind: 'furniture',
+      family: 'furniture',
+      templateIndex: 225 + i,
+      wood: w,
+      inputs: [[plank(w), 3]],
+      pattern: 'Small Table',
+    }),
+  ),
+  ...FURNITURE_WOODS.map(([w, i]) =>
+    carpentry({
+      id: `chair:${w}`,
+      name: `${woodName(w)} Chair`,
+      kind: 'furniture',
+      family: 'furniture',
+      templateIndex: 229 + i,
+      wood: w,
+      inputs: [[plank(w), 2]],
+      pattern: 'Chair',
+    }),
+  ),
+  ...BEDS.map(([p, name, t, w]) =>
+    carpentry({
+      id: `${p}:${w}`,
+      name,
+      kind: 'furniture',
+      family: 'furniture',
+      templateIndex: t,
+      wood: w,
+      inputs: [
+        [plank(w), 8],
+        [LINEN.key, 2],
+      ],
+    }),
+  ),
+  carpentry({
+    id: 'basket:pine',
+    name: 'Basket',
+    kind: 'tool',
+    family: 'tools',
+    templateIndex: 1607,
+    wood: 'pine',
+    inputs: [[PINE_PLANK.key, 2]],
+  }),
+  carpentry({
+    id: 'ramkit:oak',
+    name: 'Ram Kit',
+    kind: 'siege',
+    family: 'siege',
+    templateIndex: RAM_KIT_TEMPLATE,
+    wood: 'oak',
+    tier: 5,
+    rank: RAM_KIT_RANK,
+    inputs: [
+      [plank('oak'), 40],
+      ['ingot:iron', 20],
+      [BEAR_HIDE.key, 4],
+    ],
+  }),
 ]);
 // ─── OUTFITTING (PROF0 9.3, 29) ──────────────────────────────────────
 
 /** The leather armour (9.3): DFU's seven body pieces at Leather (ArmorMaterialTypes 0 - DFU has every one in leather),
  *  in Cured Leather, or in Hardened Leather for "the tier 4-6 leathers' step" - a quality step, as a Warforged ingot's. */
-export const LEATHER_PIECES = Object.freeze([
-  ['cuirass', 'Cuirass', 102, 6], ['greaves', 'Greaves', 104, 4], ['helm', 'Helm', 107, 2], ['lpauldron', 'Left Pauldron', 105, 2],
-  ['rpauldron', 'Right Pauldron', 106, 2], ['gauntlets', 'Gauntlets', 103, 2], ['boots', 'Boots', 108, 2],
-].map((a) => Object.freeze(a)));
+export const LEATHER_PIECES = Object.freeze(
+  [
+    ['cuirass', 'Cuirass', 102, 6],
+    ['greaves', 'Greaves', 104, 4],
+    ['helm', 'Helm', 107, 2],
+    ['lpauldron', 'Left Pauldron', 105, 2],
+    ['rpauldron', 'Right Pauldron', 106, 2],
+    ['gauntlets', 'Gauntlets', 103, 2],
+    ['boots', 'Boots', 108, 2],
+  ].map((a) => Object.freeze(a)),
+);
 /**
  * DFU's CLOTHING (MensClothing 141-181, WomensClothing 182-216), each its 9.3 size - small a bolt, middle two, large
  * three, boots a bolt and a Cured Leather. Every one takes a dye: AUDIT 32 L3 - DFU's "unchangeable" shirts (178, 179,
@@ -238,36 +575,103 @@ export const LEATHER_PIECES = Object.freeze([
  * names most; DECIDED for the rest: the Loincloth small, the Wrap and the Peasant Blouse middle, the Toga large (PROF0
  * 29). DFU's look-alike shirts are told apart by their own enum names (ItemEnums.cs), as the startingGear port quotes them.
  */
-export const GARMENTS = Object.freeze([
-  [141, 'Straps', 's'], [142, 'Armbands', 's'], [143, 'Kimono', 'l'], [144, 'Fancy Armbands', 's'], [145, 'Sash', 's'],
-  [146, 'Eodoric', 'm'], [147, 'Shoes', 's'], [148, 'Tall Boots', 'b'], [149, 'Boots', 'b'], [150, 'Sandals', 's'],
-  [151, 'Casual Pants', 'm'], [152, 'Breeches', 'm'], [153, 'Short Skirt', 'm'], [154, 'Casual Cloak', 'l'],
-  [155, 'Formal Cloak', 'l'], [156, 'Khajiit Suit', 'l'], [157, 'Dwynnen Surcoat', 'l'], [158, 'Short Tunic', 'm'],
-  [159, 'Formal Tunic', 'm'], [160, 'Toga', 'l'], [161, 'Reversible Tunic', 'm'], [162, 'Loincloth', 's'],
-  [163, 'Plain Robes', 'l'], [164, 'Priest Robes', 'l'], [165, 'Short Shirt', 'm'], [166, 'Short Shirt, belted', 'm'],
-  [167, 'Long Shirt', 'm'], [168, 'Long Shirt, belted', 'm'], [169, 'Short Shirt, closed', 'm'],
-  [170, 'Short Shirt, closed (second cut)', 'm'], [171, 'Long Shirt, closed', 'm'], [172, 'Long Shirt, closed (second cut)', 'm'],
-  [173, 'Open Tunic', 'm'], [174, 'Wrap', 'm'], [175, 'Long Skirt', 'm'], [176, 'Anticlere Surcoat', 'l'],
-  [177, 'Challenger Straps', 's'], [178, 'Short Shirt, unchangeable', 'm'], [179, 'Long Shirt, unchangeable', 'm'],
-  [180, 'Vest', 'm'], [181, 'Champion Straps', 's'],
-  [182, 'Brassiere', 's'], [183, 'Formal Brassiere', 's'], [184, 'Peasant Blouse', 'm'], [185, 'Eodoric', 'm'],
-  [186, 'Shoes', 's'], [187, 'Tall Boots', 'b'], [188, 'Boots', 'b'], [189, 'Sandals', 's'], [190, 'Casual Pants', 'm'],
-  [191, 'Casual Cloak', 'l'], [192, 'Formal Cloak', 'l'], [193, 'Khajiit Suit', 'l'], [194, 'Formal Eodoric', 'm'],
-  [195, 'Evening Gown', 'l'], [196, 'Day Gown', 'l'], [197, 'Casual Dress', 'l'], [198, 'Strapless Dress', 'l'],
-  [199, 'Loincloth', 's'], [200, 'Plain Robes', 'l'], [201, 'Priestess Robes', 'l'], [202, 'Short Shirt', 'm'],
-  [203, 'Short Shirt, belted', 'm'], [204, 'Long Shirt', 'm'], [205, 'Long Shirt, belted', 'm'], [206, 'Short Shirt, closed', 'm'],
-  [207, 'Short Shirt, closed and belted', 'm'], [208, 'Long Shirt, closed', 'm'], [209, 'Long Shirt, closed and belted', 'm'],
-  [210, 'Open Tunic', 'm'], [211, 'Wrap', 'm'], [212, 'Long Skirt', 'm'], [213, 'Tights', 's'],
-  [214, 'Short Shirt, unchangeable', 'm'], [215, 'Long Shirt, unchangeable', 'm'], [216, 'Vest', 'm'],
-].map((a) => Object.freeze(a)));
+export const GARMENTS = Object.freeze(
+  [
+    [141, 'Straps', 's'],
+    [142, 'Armbands', 's'],
+    [143, 'Kimono', 'l'],
+    [144, 'Fancy Armbands', 's'],
+    [145, 'Sash', 's'],
+    [146, 'Eodoric', 'm'],
+    [147, 'Shoes', 's'],
+    [148, 'Tall Boots', 'b'],
+    [149, 'Boots', 'b'],
+    [150, 'Sandals', 's'],
+    [151, 'Casual Pants', 'm'],
+    [152, 'Breeches', 'm'],
+    [153, 'Short Skirt', 'm'],
+    [154, 'Casual Cloak', 'l'],
+    [155, 'Formal Cloak', 'l'],
+    [156, 'Khajiit Suit', 'l'],
+    [157, 'Dwynnen Surcoat', 'l'],
+    [158, 'Short Tunic', 'm'],
+    [159, 'Formal Tunic', 'm'],
+    [160, 'Toga', 'l'],
+    [161, 'Reversible Tunic', 'm'],
+    [162, 'Loincloth', 's'],
+    [163, 'Plain Robes', 'l'],
+    [164, 'Priest Robes', 'l'],
+    [165, 'Short Shirt', 'm'],
+    [166, 'Short Shirt, belted', 'm'],
+    [167, 'Long Shirt', 'm'],
+    [168, 'Long Shirt, belted', 'm'],
+    [169, 'Short Shirt, closed', 'm'],
+    [170, 'Short Shirt, closed (second cut)', 'm'],
+    [171, 'Long Shirt, closed', 'm'],
+    [172, 'Long Shirt, closed (second cut)', 'm'],
+    [173, 'Open Tunic', 'm'],
+    [174, 'Wrap', 'm'],
+    [175, 'Long Skirt', 'm'],
+    [176, 'Anticlere Surcoat', 'l'],
+    [177, 'Challenger Straps', 's'],
+    [178, 'Short Shirt, unchangeable', 'm'],
+    [179, 'Long Shirt, unchangeable', 'm'],
+    [180, 'Vest', 'm'],
+    [181, 'Champion Straps', 's'],
+    [182, 'Brassiere', 's'],
+    [183, 'Formal Brassiere', 's'],
+    [184, 'Peasant Blouse', 'm'],
+    [185, 'Eodoric', 'm'],
+    [186, 'Shoes', 's'],
+    [187, 'Tall Boots', 'b'],
+    [188, 'Boots', 'b'],
+    [189, 'Sandals', 's'],
+    [190, 'Casual Pants', 'm'],
+    [191, 'Casual Cloak', 'l'],
+    [192, 'Formal Cloak', 'l'],
+    [193, 'Khajiit Suit', 'l'],
+    [194, 'Formal Eodoric', 'm'],
+    [195, 'Evening Gown', 'l'],
+    [196, 'Day Gown', 'l'],
+    [197, 'Casual Dress', 'l'],
+    [198, 'Strapless Dress', 'l'],
+    [199, 'Loincloth', 's'],
+    [200, 'Plain Robes', 'l'],
+    [201, 'Priestess Robes', 'l'],
+    [202, 'Short Shirt', 'm'],
+    [203, 'Short Shirt, belted', 'm'],
+    [204, 'Long Shirt', 'm'],
+    [205, 'Long Shirt, belted', 'm'],
+    [206, 'Short Shirt, closed', 'm'],
+    [207, 'Short Shirt, closed and belted', 'm'],
+    [208, 'Long Shirt, closed', 'm'],
+    [209, 'Long Shirt, closed and belted', 'm'],
+    [210, 'Open Tunic', 'm'],
+    [211, 'Wrap', 'm'],
+    [212, 'Long Skirt', 'm'],
+    [213, 'Tights', 's'],
+    [214, 'Short Shirt, unchangeable', 'm'],
+    [215, 'Long Shirt, unchangeable', 'm'],
+    [216, 'Vest', 'm'],
+  ].map((a) => Object.freeze(a)),
+);
 /** The bolts a garment's size asks (9.3). */
 export const GARMENT_BOLTS = Object.freeze({ s: 1, m: 2, l: 3, b: 1 });
 /** DFU's clothing groups: the men's and the women's. */
 export const garmentGroup = (templateIndex) => (templateIndex <= 181 ? 'MensClothing' : 'WomensClothing');
 /** DFU's rugs, tapestries and skins (Furniture 237-245), in 9.3's cloth: rugs 3 Wool, tapestries 4 Wool - FOUND, DFU's
  *  furniture takes no dye, so "a dye" has nothing to colour - and the skins of a pelt, Large two, Small one. */
-export const RUGS = Object.freeze([[237, 'Small Plain Rug'], [238, 'Large Plain Rug'], [239, 'Small Fine Rug'], [240, 'Large Fine Rug']]);
-export const TAPESTRIES = Object.freeze([[241, 'Large Tapestry'], [242, 'Medium Tapestry'], [243, 'Small Tapestry']]);
+export const RUGS = Object.freeze([
+  [237, 'Small Plain Rug'],
+  [238, 'Large Plain Rug'],
+  [239, 'Small Fine Rug'],
+  [240, 'Large Fine Rug'],
+]);
+export const TAPESTRIES = Object.freeze([
+  [241, 'Large Tapestry'],
+  [242, 'Medium Tapestry'],
+  [243, 'Small Tapestry'],
+]);
 /** The pelts the skins are cut from: a fur's hide, never silk, chitin, scales, feathers or shell - DEX-HIDES (FIELD BUGS
  *  2026-10-20h): and the Wolf Pelt and the Boar Hide, Daggerfall Enemy Expansion's furs. */
 export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger', 'hide:wolf', 'hide:boar']);
@@ -275,39 +679,139 @@ export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:t
 export const FISHING_NET_TEMPLATE = 1603;
 const tierOfKey = (key) => minedMaterial(key)?.tier ?? 1;
 /** @returns {Recipe} */
-function outfitting({ id, name, kind, family, templateIndex, tier, material = 0, inputs, pattern = name, madeOf = '', ...more }) {
+function outfitting({
+  id,
+  name,
+  kind,
+  family,
+  templateIndex,
+  tier,
+  material = 0,
+  inputs,
+  pattern = name,
+  madeOf = '',
+  ...more
+}) {
   return Object.freeze({
-    id, product: id.slice(0, id.indexOf(':')), name, kind, family, profession: 'outfitting', templateIndex, metal: null,
-    material, tier, rank: TIER_RANKS[tier - 1], ...more, pattern, madeOf, inputs: Object.freeze(inputs.map(([key, n]) => Object.freeze({ key, n }))),
+    id,
+    product: id.slice(0, id.indexOf(':')),
+    name,
+    kind,
+    family,
+    profession: 'outfitting',
+    templateIndex,
+    metal: null,
+    material,
+    tier,
+    rank: TIER_RANKS[tier - 1],
+    ...more,
+    pattern,
+    madeOf,
+    inputs: Object.freeze(inputs.map(([key, n]) => Object.freeze({ key, n }))),
   });
 }
 /** EVERY RECIPE the loom knows, in its window's order: the leather armour in its two leathers; every garment in each
  *  cloth; the rugs, tapestries and skins; the Fishing-Net. */
 export const OUTFITTING_RECIPES = Object.freeze([
-  ...LEATHER_PIECES.flatMap(([id, name, t, n]) => [CURED_LEATHER, HARDENED_LEATHER].map((l) => outfitting({
-    id: `leather-${id}:${l === CURED_LEATHER ? 'cured' : 'hardened'}`, name: `${l === CURED_LEATHER ? 'Leather' : 'Hardened Leather'} ${name}`,
-    kind: 'leather', family: 'leather', templateIndex: /** @type {number} */ (t), tier: l.tier, material: ARMOR_LEATHER,
-    leather: l.key, inputs: [[l.key, /** @type {number} */ (n)]], pattern: /** @type {string} */ (name), madeOf: l.name,   // CRAFT2
-  }))),
-  ...GARMENTS.flatMap(([t, name, size]) => CLOTHS.map((c) => outfitting({
-    id: `garment-${t}:${c.key.slice('cloth:'.length)}`, name: `${c.name.replace(/ Bolt$/, '')} ${name}`, kind: 'garment', family: 'clothing',
-    templateIndex: /** @type {number} */ (t), tier: c.tier, group: garmentGroup(t), cloth: c.key, dyes: true, pattern: /** @type {string} */ (name), madeOf: c.name.replace(/ Bolt$/, ''),
-    inputs: [[c.key, GARMENT_BOLTS[/** @type {string} */ (size)]], ...(size === 'b' ? [[CURED_LEATHER.key, 1]] : [])],
-  }))),
-  ...RUGS.map(([t, name]) => outfitting({ id: `rug-${t}:wool`, name: /** @type {string} */ (name), kind: 'furniture', family: 'furnishings', templateIndex: /** @type {number} */ (t), tier: WOOL.tier, inputs: [[WOOL.key, 3]], madeOf: 'Wool' })),
-  ...TAPESTRIES.map(([t, name]) => outfitting({ id: `tapestry-${t}:wool`, name: /** @type {string} */ (name), kind: 'furniture', family: 'furnishings', templateIndex: /** @type {number} */ (t), tier: WOOL.tier, inputs: [[WOOL.key, 4]], madeOf: 'Wool' })),
-  ...PELTS.flatMap((p) => [[244, 'Large Skins', 2], [245, 'Small Skins', 1]].map(([t, name, n]) => outfitting({
-    id: `skins-${t}:${p.slice('hide:'.length)}`, name: `${name} (${HIDES.find((h) => h.key === p)?.name ?? p})`, kind: 'furniture', family: 'furnishings',
-    templateIndex: /** @type {number} */ (t), tier: tierOfKey(p), inputs: [[p, /** @type {number} */ (n)]],
-    pattern: /** @type {string} */ (name), madeOf: HIDES.find((h) => h.key === p)?.name ?? p,   // CRAFT2
-  }))),
-  outfitting({ id: 'fishingnet:linen', name: 'Fishing-Net', kind: 'tool', family: 'tools', templateIndex: FISHING_NET_TEMPLATE, tier: LINEN.tier, inputs: [[LINEN.key, 2]], madeOf: 'Linen' }),
+  ...LEATHER_PIECES.flatMap(([id, name, t, n]) =>
+    [CURED_LEATHER, HARDENED_LEATHER].map((l) =>
+      outfitting({
+        id: `leather-${id}:${l === CURED_LEATHER ? 'cured' : 'hardened'}`,
+        name: `${l === CURED_LEATHER ? 'Leather' : 'Hardened Leather'} ${name}`,
+        kind: 'leather',
+        family: 'leather',
+        templateIndex: /** @type {number} */ (t),
+        tier: l.tier,
+        material: ARMOR_LEATHER,
+        leather: l.key,
+        inputs: [[l.key, /** @type {number} */ (n)]],
+        pattern: /** @type {string} */ (name),
+        madeOf: l.name, // CRAFT2
+      }),
+    ),
+  ),
+  ...GARMENTS.flatMap(([t, name, size]) =>
+    CLOTHS.map((c) =>
+      outfitting({
+        id: `garment-${t}:${c.key.slice('cloth:'.length)}`,
+        name: `${c.name.replace(/ Bolt$/, '')} ${name}`,
+        kind: 'garment',
+        family: 'clothing',
+        templateIndex: /** @type {number} */ (t),
+        tier: c.tier,
+        group: garmentGroup(t),
+        cloth: c.key,
+        dyes: true,
+        pattern: /** @type {string} */ (name),
+        madeOf: c.name.replace(/ Bolt$/, ''),
+        inputs: [
+          [c.key, GARMENT_BOLTS[/** @type {string} */ (size)]],
+          ...(size === 'b' ? [[CURED_LEATHER.key, 1]] : []),
+        ],
+      }),
+    ),
+  ),
+  ...RUGS.map(([t, name]) =>
+    outfitting({
+      id: `rug-${t}:wool`,
+      name: /** @type {string} */ (name),
+      kind: 'furniture',
+      family: 'furnishings',
+      templateIndex: /** @type {number} */ (t),
+      tier: WOOL.tier,
+      inputs: [[WOOL.key, 3]],
+      madeOf: 'Wool',
+    }),
+  ),
+  ...TAPESTRIES.map(([t, name]) =>
+    outfitting({
+      id: `tapestry-${t}:wool`,
+      name: /** @type {string} */ (name),
+      kind: 'furniture',
+      family: 'furnishings',
+      templateIndex: /** @type {number} */ (t),
+      tier: WOOL.tier,
+      inputs: [[WOOL.key, 4]],
+      madeOf: 'Wool',
+    }),
+  ),
+  ...PELTS.flatMap((p) =>
+    [
+      [244, 'Large Skins', 2],
+      [245, 'Small Skins', 1],
+    ].map(([t, name, n]) =>
+      outfitting({
+        id: `skins-${t}:${p.slice('hide:'.length)}`,
+        name: `${name} (${HIDES.find((h) => h.key === p)?.name ?? p})`,
+        kind: 'furniture',
+        family: 'furnishings',
+        templateIndex: /** @type {number} */ (t),
+        tier: tierOfKey(p),
+        inputs: [[p, /** @type {number} */ (n)]],
+        pattern: /** @type {string} */ (name),
+        madeOf: HIDES.find((h) => h.key === p)?.name ?? p, // CRAFT2
+      }),
+    ),
+  ),
+  outfitting({
+    id: 'fishingnet:linen',
+    name: 'Fishing-Net',
+    kind: 'tool',
+    family: 'tools',
+    templateIndex: FISHING_NET_TEMPLATE,
+    tier: LINEN.tier,
+    inputs: [[LINEN.key, 2]],
+    madeOf: 'Linen',
+  }),
 ]);
 /** A garment's dyes (9.3: "itemDye.js's colours"): DFU's ten clothing dyes; a crafted garment is sewn in the one the
  *  crafter chose, or none (DFU's Unchanged). */
 export const GARMENT_DYES = CLOTHING_DYES;
 /** Whether `dye` may be asked of recipe `r`: a garment that takes one, and one of DFU's ten - or none asked at all. */
-export const dyeOk = (r, dye) => (dye == null ? true : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye));
+export const dyeOk = (r, dye) =>
+  dye == null
+    ? true
+    : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye);
 
 // ─── PROF11: MASONRY'S STONE DECOR (PROF0 3.3, 9.3) ─────────────────
 
@@ -335,24 +839,79 @@ export const SCULPTOR = 'sculptor';
  *   120, the Bench 90, the Plinth 60; its weight a piece of stone's (200, 150, 120, 80 kg) - delivered, never carried.
  */
 export const STONE_DECOR = Object.freeze([
-  Object.freeze({ id: 'column', name: 'Stone Column', templateIndex: 696, model: 62315, cut: 12, mortar: 3, price: 150, weight: 200 }),
-  Object.freeze({ id: 'bench', name: 'Stone Bench', templateIndex: 697, model: 62322, cut: 8, mortar: 2, price: 90, weight: 120 }),
-  Object.freeze({ id: 'font', name: 'Stone Font', templateIndex: 698, model: 41220, cut: 10, mortar: 3, price: 120, weight: 150 }),
-  Object.freeze({ id: 'plinth', name: 'Statue Plinth', templateIndex: 699, model: 74091, cut: 6, mortar: 2, price: 60, weight: 80 }),
+  Object.freeze({
+    id: 'column',
+    name: 'Stone Column',
+    templateIndex: 696,
+    model: 62315,
+    cut: 12,
+    mortar: 3,
+    price: 150,
+    weight: 200,
+  }),
+  Object.freeze({
+    id: 'bench',
+    name: 'Stone Bench',
+    templateIndex: 697,
+    model: 62322,
+    cut: 8,
+    mortar: 2,
+    price: 90,
+    weight: 120,
+  }),
+  Object.freeze({
+    id: 'font',
+    name: 'Stone Font',
+    templateIndex: 698,
+    model: 41220,
+    cut: 10,
+    mortar: 3,
+    price: 120,
+    weight: 150,
+  }),
+  Object.freeze({
+    id: 'plinth',
+    name: 'Statue Plinth',
+    templateIndex: 699,
+    model: 74091,
+    cut: 6,
+    mortar: 2,
+    price: 60,
+    weight: 80,
+  }),
 ]);
 /** The stone decor's templates. */
 export const STONE_DECOR_TEMPLATES = Object.freeze(STONE_DECOR.map((d) => d.templateIndex));
 /** The one DFU model a stone piece stands as, by its template, or null for anything else. */
-export const stoneDecorModel = (templateIndex) => STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.model ?? null;
+export const stoneDecorModel = (templateIndex) =>
+  STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.model ?? null;
 /** EVERY RECIPE the mason's bench carves (its cut and its mix are works - professionLaw MASON_RECIPES): the four, in
  *  9.3's order, `kind` furniture (minted among the home's things, systems/smithItems.js), `family` stonework. */
 /** @type {readonly Recipe[]} */
-export const MASONRY_RECIPES = Object.freeze(STONE_DECOR.map((d) => Object.freeze({
-  id: `${d.id}:stone`, product: d.id, name: d.name, kind: 'furniture', family: 'stonework', profession: 'masonry',
-  templateIndex: d.templateIndex, metal: null, material: 0, tier: CUT_STONE.tier, rank: TIER_RANKS[CUT_STONE.tier - 1], spec: SCULPTOR,
-  pattern: d.name, madeOf: '',   // CRAFT2: one way each
-  inputs: Object.freeze([Object.freeze({ key: CUT_STONE.key, n: d.cut }), Object.freeze({ key: MORTAR.key, n: d.mortar })]),
-})));
+export const MASONRY_RECIPES = Object.freeze(
+  STONE_DECOR.map((d) =>
+    Object.freeze({
+      id: `${d.id}:stone`,
+      product: d.id,
+      name: d.name,
+      kind: 'furniture',
+      family: 'stonework',
+      profession: 'masonry',
+      templateIndex: d.templateIndex,
+      metal: null,
+      material: 0,
+      tier: CUT_STONE.tier,
+      rank: TIER_RANKS[CUT_STONE.tier - 1],
+      spec: SCULPTOR,
+      pattern: d.name,
+      madeOf: '', // CRAFT2: one way each
+      inputs: Object.freeze([
+        Object.freeze({ key: CUT_STONE.key, n: d.cut }),
+        Object.freeze({ key: MORTAR.key, n: d.mortar }),
+      ]),
+    }),
+  ),
+);
 
 // ─── PROF9: COOKING'S DISHES (PROF0 3.3, 9.3; section 35) ────────────
 
@@ -378,41 +937,104 @@ export const MASONRY_RECIPES = Object.freeze(STONE_DECOR.map((d) => Object.freez
  */
 /** @type {readonly Dish[]} */
 export const DISHES = Object.freeze([
-  Object.freeze({ id: 'stew', name: 'Hunter\'s Stew', templateIndex: 685, tier: 1, herb: 13, herbName: 'Root Bulb',
+  Object.freeze({
+    id: 'stew',
+    name: "Hunter's Stew",
+    templateIndex: 685,
+    tier: 1,
+    herb: 13,
+    herbName: 'Root Bulb',
     inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:mushroom', 1])]),
-    effect: Object.freeze({ stats: Object.freeze({ endurance: 5 }), minutes: 120 }) }),
-  Object.freeze({ id: 'supper', name: 'Fisherman\'s Supper', templateIndex: 686, tier: 1, herb: 9, herbName: 'Green Leaves',
+    effect: Object.freeze({ stats: Object.freeze({ endurance: 5 }), minutes: 120 }),
+  }),
+  Object.freeze({
+    id: 'supper',
+    name: "Fisherman's Supper",
+    templateIndex: 686,
+    tier: 1,
+    herb: 9,
+    herbName: 'Green Leaves',
     inputs: Object.freeze([Object.freeze(['food:fish', 2]), Object.freeze(['food:egg', 1])]),
-    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 120 }) }),
-  Object.freeze({ id: 'tart', name: 'Orchard Tart', templateIndex: 687, tier: 2, herb: 17, herbName: 'Yellow Berries',
+    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 120 }),
+  }),
+  Object.freeze({
+    id: 'tart',
+    name: 'Orchard Tart',
+    templateIndex: 687,
+    tier: 2,
+    herb: 17,
+    herbName: 'Yellow Berries',
     inputs: Object.freeze([Object.freeze(['food:apple', 2]), Object.freeze(['food:egg', 1])]),
-    effect: Object.freeze({ stamina: 20, minutes: 240 }) }),
-  Object.freeze({ id: 'feast', name: 'Feast of the Hearth', templateIndex: 688, tier: 6, herb: null, herbName: null,
-    inputs: Object.freeze([Object.freeze(['food:meat', 4]), Object.freeze(['food:fish', 4]), Object.freeze(['food:apple', 2]),
-      Object.freeze(['food:orange', 2]), Object.freeze(['food:mushroom', 2]), Object.freeze(['food:egg', 2])]),
-    effect: Object.freeze({ stats: Object.freeze({ strength: 5, endurance: 5, willpower: 5 }), minutes: 1440, party: true }) }),
+    effect: Object.freeze({ stamina: 20, minutes: 240 }),
+  }),
+  Object.freeze({
+    id: 'feast',
+    name: 'Feast of the Hearth',
+    templateIndex: 688,
+    tier: 6,
+    herb: null,
+    herbName: null,
+    inputs: Object.freeze([
+      Object.freeze(['food:meat', 4]),
+      Object.freeze(['food:fish', 4]),
+      Object.freeze(['food:apple', 2]),
+      Object.freeze(['food:orange', 2]),
+      Object.freeze(['food:mushroom', 2]),
+      Object.freeze(['food:egg', 2]),
+    ]),
+    effect: Object.freeze({
+      stats: Object.freeze({ strength: 5, endurance: 5, willpower: 5 }),
+      minutes: 1440,
+      party: true,
+    }),
+  }),
 ]);
 /** The dishes' templates (4.8's 685-688). */
 export const DISH_TEMPLATES = Object.freeze(DISHES.map((d) => d.templateIndex));
 /** A dish's row by its product id ('stew'), its recipe's id ('stew:north') or its template (685), or null. */
-export const dishOf = (what) => (typeof what === 'number' ? DISHES.find((d) => d.templateIndex === what)
-  : typeof what === 'string' ? DISHES.find((d) => d.id === what || what.startsWith(`${d.id}:`)) : null) ?? null;
+export const dishOf = (what) =>
+  (typeof what === 'number'
+    ? DISHES.find((d) => d.templateIndex === what)
+    : typeof what === 'string'
+      ? DISHES.find((d) => d.id === what || what.startsWith(`${d.id}:`))
+      : null) ?? null;
 /** @returns {Recipe} */
 function dishRecipe(d, suffix, herbKey, word) {
   return Object.freeze({
-    id: `${d.id}:${suffix}`, product: d.id, name: word ? `${d.name} (${word} ${d.herbName})` : d.name, kind: 'dish', family: 'dishes',
-    profession: 'cooking', templateIndex: d.templateIndex, metal: null, material: 0, tier: d.tier, rank: TIER_RANKS[d.tier - 1],
-    pattern: d.name, madeOf: word ? `${word} ${d.herbName}` : '',   // CRAFT2: the herb's way
-    inputs: Object.freeze([...d.inputs, ...(herbKey ? [[herbKey, 1]] : [])].map(([key, n]) => Object.freeze({ key: String(key), n: Number(n) }))),
+    id: `${d.id}:${suffix}`,
+    product: d.id,
+    name: word ? `${d.name} (${word} ${d.herbName})` : d.name,
+    kind: 'dish',
+    family: 'dishes',
+    profession: 'cooking',
+    templateIndex: d.templateIndex,
+    metal: null,
+    material: 0,
+    tier: d.tier,
+    rank: TIER_RANKS[d.tier - 1],
+    pattern: d.name,
+    madeOf: word ? `${word} ${d.herbName}` : '', // CRAFT2: the herb's way
+    inputs: Object.freeze(
+      [...d.inputs, ...(herbKey ? [[herbKey, 1]] : [])].map(([key, n]) =>
+        Object.freeze({ key: String(key), n: Number(n) }),
+      ),
+    ),
   });
 }
 /** EVERY RECIPE THE FIRE KNOWS, in its window's order: each herb dish twice (the northern herb's, the southern's), then
  *  the feast. */
 /** @type {readonly Recipe[]} */
-export const COOKING_RECIPES = Object.freeze(DISHES.flatMap((d) => (d.herb == null ? [dishRecipe(d, 'hearth', null, null)]
-  : [dishRecipe(d, 'north', `p1:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')])));
+export const COOKING_RECIPES = Object.freeze(
+  DISHES.flatMap((d) =>
+    d.herb == null
+      ? [dishRecipe(d, 'hearth', null, null)]
+      : [dishRecipe(d, 'north', `p1:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')],
+  ),
+);
 /** The Cook (3.3: "+1 serving a dish"), Cooking's choice at 50; the Chef and the Provisioner its two at 100. */
-export const COOK = 'cook', CHEF = 'chef', PROVISIONER = 'provisioner';
+export const COOK = 'cook',
+  CHEF = 'chef',
+  PROVISIONER = 'provisioner';
 /** The Chef (3.3: "feasts last +50%"): a feast's time, half again. */
 export const CHEF_FEAST = 1.5;
 /**
@@ -421,7 +1043,8 @@ export const CHEF_FEAST = 1.5;
  * a Chef's other dishes (a Chef's choice is a feast's) and every other piece. DECIDED: the dish's, never its eater's - a
  * Chef's feast bought at the market lasts as long in the buyer's hands as in the Chef's.
  */
-export const HAND_CHEF = 1, HAND_PROVISIONER = 2;
+export const HAND_CHEF = 1,
+  HAND_PROVISIONER = 2;
 export function dishHand(r, spec100) {
   if (!r || r.kind !== 'dish') return null;
   if (spec100 === PROVISIONER) return HAND_PROVISIONER;
@@ -429,9 +1052,19 @@ export function dishHand(r, spec100) {
   return null;
 }
 /** A dish's effect's minutes - a Chef's feast half again. */
-export const dishMinutes = (d, hand = null) => (d?.effect.party === true && hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST) : d?.effect.minutes ?? 0);
+export const dishMinutes = (d, hand = null) =>
+  d?.effect.party === true && hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST) : (d?.effect.minutes ?? 0);
 /** DFU's attribute order (statMods.js STAT_KEYS_ORDER - pinned equal): a Fortify Attribute's subType. */
-const STAT_SUBTYPE = Object.freeze({ strength: 0, intelligence: 1, willpower: 2, agility: 3, endurance: 4, personality: 5, speed: 6, luck: 7 });
+const STAT_SUBTYPE = Object.freeze({
+  strength: 0,
+  intelligence: 1,
+  willpower: 2,
+  agility: 3,
+  endurance: 4,
+  personality: 5,
+  speed: 6,
+  luck: 7,
+});
 /** The level a dish's effect is laid on at - the cast frame's own most (net/wire.js CAST_LEVEL_MAX, pinned equal), so
  *  a feast shared through ALLY-CAST's frame lasts exactly as long at the table as at its eater's. */
 export const DISH_LEVEL = 30;
@@ -449,10 +1082,24 @@ export function dishSpell(d, hand = null) {
   if (!stats.length) return null;
   const minutes = dishMinutes(d, hand);
   return {
-    name: d.name, element: 4, rangeType: 0, icon: DISH_ICON,
+    name: d.name,
+    element: 4,
+    rangeType: 0,
+    icon: DISH_ICON,
     effects: stats.map(([stat, n]) => ({
-      type: 9, subType: STAT_SUBTYPE[stat], durationBase: 0, durationMod: Math.round(minutes / DISH_LEVEL), durationPerLevel: 1,
-      chanceBase: 0, chanceMod: 0, chancePerLevel: 1, magnitudeBaseLow: n, magnitudeBaseHigh: n, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
+      type: 9,
+      subType: STAT_SUBTYPE[stat],
+      durationBase: 0,
+      durationMod: Math.round(minutes / DISH_LEVEL),
+      durationPerLevel: 1,
+      chanceBase: 0,
+      chanceMod: 0,
+      chancePerLevel: 1,
+      magnitudeBaseLow: n,
+      magnitudeBaseHigh: n,
+      magnitudeLevelBase: 0,
+      magnitudeLevelHigh: 0,
+      magnitudePerLevel: 1,
     })),
   };
 }
@@ -486,7 +1133,11 @@ export const JEWEL_METALS = Object.freeze([
 /** The Cloth Amulet's cloth (9.3: "1 Linen"), Linen's own tier (1, rank 0); the Wand's woods (9.3: "Ironwood or
  *  Ghostwood Planks"), their own tier (6, rank 70) - the jeweller's crown piece. Neither adds points: 9.3 names the metals'. */
 const JEWEL_CLOTH = Object.freeze({ id: 'linen', key: LINEN.key, word: '', tier: LINEN.tier, points: 0 });
-const JEWEL_WOODS = Object.freeze(['ironwood', 'ghostwood'].map((w) => Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: woodTier(w), points: 0 })));
+const JEWEL_WOODS = Object.freeze(
+  ['ironwood', 'ghostwood'].map((w) =>
+    Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: woodTier(w), points: 0 }),
+  ),
+);
 /** THE GEMS A JEWELLER SETS (4.6): DFU's eight (professionLaw GEMS - the veins') and the sea's Pearl (DFU 77, Fishing's) -
  *  CLOTH-GEMS (Professions-Arc 50; the owner: accept every grade): and the port's thirty-two graded ones (professionLaw
  *  GRADED_GEMS - Gem-Sockets 4: Chipped, Flawed, Flawless and Perfect, the socket loot), each its own recipe, brought in by
@@ -494,7 +1145,10 @@ const JEWEL_WOODS = Object.freeze(['ironwood', 'ghostwood'].map((w) => Object.fr
 export const JEWEL_GEMS = Object.freeze([...GEMS.map((g) => g.key), PEARL.key, ...GRADED_GEMS.map((g) => g.key)]);
 /** A gem's word, DFU's template's name ('gem:ruby' Ruby - pinned equal to the rows, test/net/prof10_law.test.js); a graded
  *  one's its row's ('gem:flawless-ruby' Flawless Ruby - systems/gems.js GEM_GRADE_ROWS, the same names). */
-export const gemWord = (key) => (typeof key === 'string' && key.startsWith('gem:') ? GRADED_GEMS.find((g) => g.key === key)?.name ?? key[4].toUpperCase() + key.slice(5) : '');
+export const gemWord = (key) =>
+  typeof key === 'string' && key.startsWith('gem:')
+    ? (GRADED_GEMS.find((g) => g.key === key)?.name ?? key[4].toUpperCase() + key.slice(5))
+    : '';
 /**
  * THE EIGHT PIECES (9.3: "Ring - 1 Silver, Gold or Platinum (+ a gem); Mark - 1 metal + 1 gem; Bracelet - 2 metal; Bracer
  * - 2 metal + 1 Cured Leather; Amulet - 2 metal + 1 gem; Torc - 3 metal; Cloth Amulet - 1 Linen + 1 gem; Wand - 2 Ironwood
@@ -504,7 +1158,15 @@ export const gemWord = (key) => (typeof key === 'string' && key.startsWith('gem:
  * table), `n` the units of its metal (or cloth, or planks), `gem` whether it takes one ('may' the Ring's "(+ a gem)",
  * 'yes', or none), `also` the rest.
  */
-const jewelPiece = (id, word, enumAt, n, gem = null, also = []) => Object.freeze({ id, word, templateIndex: GROUP_TEMPLATE_INDICES.Jewellery[enumAt], n, gem, also: Object.freeze(also.map((a) => Object.freeze(a))) });
+const jewelPiece = (id, word, enumAt, n, gem = null, also = []) =>
+  Object.freeze({
+    id,
+    word,
+    templateIndex: GROUP_TEMPLATE_INDICES.Jewellery[enumAt],
+    n,
+    gem,
+    also: Object.freeze(also.map((a) => Object.freeze(a))),
+  });
 export const JEWEL_PIECES = Object.freeze([
   jewelPiece('ring', 'Ring', 2, 1, 'may'),
   jewelPiece('mark', 'Mark', 4, 1, 'yes'),
@@ -516,27 +1178,50 @@ export const JEWEL_PIECES = Object.freeze([
   jewelPiece('wand', 'Wand', 7, 2, 'yes'),
 ]);
 /** The bases a piece is made of: the Cloth Amulet its Linen, the Wand its two woods, every other piece the three metals. */
-export const jewelBases = (pieceId) => (pieceId === 'clothamulet' ? [JEWEL_CLOTH] : pieceId === 'wand' ? [...JEWEL_WOODS] : [...JEWEL_METALS]);
+export const jewelBases = (pieceId) =>
+  pieceId === 'clothamulet' ? [JEWEL_CLOTH] : pieceId === 'wand' ? [...JEWEL_WOODS] : [...JEWEL_METALS];
 /** @returns {Recipe} */
 function jewelRecipe(p, base, gem) {
   return Object.freeze({
-    id: `${p.id}:${base.id}${gem ? `:${gem.slice('gem:'.length)}` : ''}`, product: p.id, name: [base.word, gemWord(gem), p.word].filter(Boolean).join(' '),
-    kind: 'jewel', family: 'jewellery', profession: 'jewelcrafting', templateIndex: p.templateIndex,
-    metal: base.key.startsWith('metal:') ? base.key : null, wood: base.key.startsWith('plank:') ? base.key : null,
-    cloth: base.key.startsWith('cloth:') ? base.key : null, gem: gem ?? null, material: 0, tier: base.tier, rank: TIER_RANKS[base.tier - 1],
-    pattern: p.word, madeOf: [base.word || 'Linen', gemWord(gem)].filter(Boolean).join(' '),   // CRAFT2
-    inputs: Object.freeze([[base.key, p.n], ...p.also, ...(gem ? [[gem, 1]] : [])].map(([key, n]) => Object.freeze({ key: String(key), n: Number(n) }))),
+    id: `${p.id}:${base.id}${gem ? `:${gem.slice('gem:'.length)}` : ''}`,
+    product: p.id,
+    name: [base.word, gemWord(gem), p.word].filter(Boolean).join(' '),
+    kind: 'jewel',
+    family: 'jewellery',
+    profession: 'jewelcrafting',
+    templateIndex: p.templateIndex,
+    metal: base.key.startsWith('metal:') ? base.key : null,
+    wood: base.key.startsWith('plank:') ? base.key : null,
+    cloth: base.key.startsWith('cloth:') ? base.key : null,
+    gem: gem ?? null,
+    material: 0,
+    tier: base.tier,
+    rank: TIER_RANKS[base.tier - 1],
+    pattern: p.word,
+    madeOf: [base.word || 'Linen', gemWord(gem)].filter(Boolean).join(' '), // CRAFT2
+    inputs: Object.freeze(
+      [[base.key, p.n], ...p.also, ...(gem ? [[gem, 1]] : [])].map(([key, n]) =>
+        Object.freeze({ key: String(key), n: Number(n) }),
+      ),
+    ),
   });
 }
 /** EVERY RECIPE THE JEWELLER'S BENCH KNOWS, in its window's order: each piece in 9.3's order, each of its bases, the plain
  *  piece where it may go without a gem (the Ring), then a recipe a gem - DFU's eight and the Pearl. */
 /** @type {readonly Recipe[]} */
-export const JEWELCRAFTING_RECIPES = Object.freeze(JEWEL_PIECES.flatMap((p) => jewelBases(p.id).flatMap((base) => [
-  ...(p.gem === 'yes' ? [] : [jewelRecipe(p, base, null)]),
-  ...(p.gem ? JEWEL_GEMS.map((g) => jewelRecipe(p, base, g)) : []),
-])));
+export const JEWELCRAFTING_RECIPES = Object.freeze(
+  JEWEL_PIECES.flatMap((p) =>
+    jewelBases(p.id).flatMap((base) => [
+      ...(p.gem === 'yes' ? [] : [jewelRecipe(p, base, null)]),
+      ...(p.gem ? JEWEL_GEMS.map((g) => jewelRecipe(p, base, g)) : []),
+    ]),
+  ),
+);
 /** Jewelcrafting's four (3.3): the Gemcutter and the Goldsmith at 50, the Master Jeweller and the Lapidary at 100. */
-export const GEMCUTTER = 'gemcutter', GOLDSMITH = 'goldsmith', MASTER_JEWELLER = 'master-jeweller', LAPIDARY = 'lapidary';
+export const GEMCUTTER = 'gemcutter',
+  GOLDSMITH = 'goldsmith',
+  MASTER_JEWELLER = 'master-jeweller',
+  LAPIDARY = 'lapidary';
 /** A set gem's points (9.3: "a set gem +10%"), and a Gemcutter's more (3.3: "a set gem adds +10% enchantment points"). */
 export const GEM_POINTS = 10;
 export const GEMCUTTER_POINTS = 10;
@@ -546,7 +1231,10 @@ export const GEMCUTTER_POINTS = 10;
  * on its grade's own ladder, the price's (gemGrades.js GEM_GRADE_PRICE): a Chipped 2.5, a Flawed 5, a Flawless 20, a
  * Perfect 40. A Gemcutter's +10% is the cutter's hand, never the stone's, and stands beside it whole. 0 for no gem.
  */
-export const gemPointsPct = (key) => { const g = gemGradeOfKey(key); return g ? GEM_POINTS * GEM_GRADE_PRICE[g] : 0; };
+export const gemPointsPct = (key) => {
+  const g = gemGradeOfKey(key);
+  return g ? GEM_POINTS * GEM_GRADE_PRICE[g] : 0;
+};
 /**
  * THE JEWELLER'S HAND (the record's `f`, the service's `products.hand` - the cook's column, PROF9): what of the jeweller's
  * choice at 50 a piece carries wherever it goes - 1 a GOLDSMITH's Silver piece (3.3: "Silver counts as Gold" - DECIDED: the
@@ -555,7 +1243,8 @@ export const gemPointsPct = (key) => { const g = gemGradeOfKey(key); return g ? 
  * every other piece. A choice at 50 is one of the two, so a piece carries one hand at most. DECIDED: the piece's, never
  * its wearer's - a Gemcutter's ring bought at the market holds its points in the buyer's hands.
  */
-export const JEWEL_HAND_GOLDSMITH = 1, JEWEL_HAND_GEMCUTTER = 2;
+export const JEWEL_HAND_GOLDSMITH = 1,
+  JEWEL_HAND_GEMCUTTER = 2;
 export function jewelHand(r, spec50) {
   if (!r || r.kind !== 'jewel') return null;
   if (spec50 === GOLDSMITH && r.metal === JEWEL_METALS[0].key) return JEWEL_HAND_GOLDSMITH;
@@ -563,17 +1252,23 @@ export function jewelHand(r, spec50) {
   return null;
 }
 /** Whether hand `f` is one a recipe's piece may carry: a Goldsmith's on a Silver piece, a Gemcutter's on a gemmed one. */
-export const jewelHandOk = (r, f) => r?.kind === 'jewel' && ((f === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key) || (f === JEWEL_HAND_GEMCUTTER && !!r.gem));
+export const jewelHandOk = (r, f) =>
+  r?.kind === 'jewel' &&
+  ((f === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key) || (f === JEWEL_HAND_GEMCUTTER && !!r.gem));
 /** THE POINTS A PIECE ADDS (9.3: "The piece's enchantment points: Silver +0%, Gold +10%, Platinum +20%, a set gem +10%
  *  (Gemcutter +10% more)"), percent over its DFU template's: its metal's (a Goldsmith's Silver Gold's), and its gem's. */
 export function jewelPointsPct(r, hand = null) {
   if (!r || r.kind !== 'jewel') return 0;
-  const metal = hand === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key ? JEWEL_METALS[1].points : JEWEL_METALS.find((m) => m.key === r.metal)?.points ?? 0;
-  return metal + (r.gem ? gemPointsPct(r.gem) + (hand === JEWEL_HAND_GEMCUTTER ? GEMCUTTER_POINTS : 0) : 0);   // CLOTH-GEMS: the gem's grade's share
+  const metal =
+    hand === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key
+      ? JEWEL_METALS[1].points
+      : (JEWEL_METALS.find((m) => m.key === r.metal)?.points ?? 0);
+  return metal + (r.gem ? gemPointsPct(r.gem) + (hand === JEWEL_HAND_GEMCUTTER ? GEMCUTTER_POINTS : 0) : 0); // CLOTH-GEMS: the gem's grade's share
 }
 /** A piece's enchantment points - its DFU template's (`templatePoints`, the Ring's 1,800) and the share it adds, floored:
  *  the budget DFU's item maker reads off the piece (systems/enchanting.js itemEnchantmentPower). */
-export const jewelPoints = (r, templatePoints, hand = null) => Math.floor((Math.max(0, Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);
+export const jewelPoints = (r, templatePoints, hand = null) =>
+  Math.floor((Math.max(0, Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);
 /** Whether a recipe takes a Lapidary's Siege-cracked Gem (3.3: "Siege-cracked Gems set as any gem"): a piece that sets a
  *  gem - the cracked one stands in for the recipe's, and the piece is the recipe's (its gem the one chosen). CLOTH-GEMS:
  *  a PLAIN gem's - 3.3's "any gem" is DFU's eight and the Pearl, and a cracked stone set as a Perfect one would be worth a
@@ -583,7 +1278,8 @@ export const takesCracked = (r) => !!r && r.kind === 'jewel' && !!r.gem && gemGr
  *  - Jewelcrafting's Master Jeweller ("jewellery Masterwork chance +5%"). CRAFT3: both are the Smithing track's to
  *  choose now (one at 100), so each acts on its own discipline's work as it did - the Masterwright's on the smith's, the
  *  Master Jeweller's on the jeweller's (`r` the recipe; none asked, the smith's). */
-export const masterworkSpec = (spec100, r = null) => (r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright');
+export const masterworkSpec = (spec100, r = null) =>
+  r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright';
 
 // ─── PROF10: THE FACET (PROF0 9.4) ───────────────────────────────────
 
@@ -595,23 +1291,46 @@ export const masterworkSpec = (spec100, r = null) => (r?.profession === 'jewelcr
  * `windowDeg` wide x the attribute band, widening by `masterWiden` at Master - catches it. Let pass `turns` times round
  * and the facet is lost. Every facet caught is a clean act. Each stop at least `gapS` after the last.
  */
-export const FACET_ACT = Object.freeze({ facets: 3, gemFacets: 5, degPerS: 60, windowDeg: 10, masterWiden: 0.5, turns: 2, lightLo: 60, lightHi: 300, gapS: 0.3 });
+export const FACET_ACT = Object.freeze({
+  facets: 3,
+  gemFacets: 5,
+  degPerS: 60,
+  windowDeg: 10,
+  masterWiden: 0.5,
+  turns: 2,
+  lightLo: 60,
+  lightHi: 300,
+  gapS: 0.3,
+});
 /** Jewelcrafting's attribute pair - DECIDED: (WIL + LUC) / 2, the patience to let the stone turn and the fortune of where
  *  it breaks (no other act reads Luck), on Foraging's four bands. */
 export const facetBand = ({ willpower, luck }) => actBand(Math.trunc((willpower + luck) / 2));
 /** The facets a recipe's piece takes: a gemmed piece's five, every other piece's three. */
 export const facetCount = (r) => (r?.gem ? FACET_ACT.gemFacets : FACET_ACT.facets);
 /** The facet's window at a rank, x the band: degrees wide, centred on the light - 10 at Novice to 15 at Master. */
-export const facetWindow = (rank, band = 1) => FACET_ACT.windowDeg * band * (1 + (FACET_ACT.masterWiden * Math.max(0, Math.min(PROF_RANK_MAX, rank))) / PROF_RANK_MAX);
+export const facetWindow = (rank, band = 1) =>
+  FACET_ACT.windowDeg *
+  band *
+  (1 + (FACET_ACT.masterWiden * Math.max(0, Math.min(PROF_RANK_MAX, rank))) / PROF_RANK_MAX);
 /** The angle between two bearings, degrees: 0 to 180. */
-export const bearingGap = (a, b) => { const d = Math.abs((((a - b) % 360) + 360) % 360); return Math.min(d, 360 - d); };
+export const bearingGap = (a, b) => {
+  const d = Math.abs((((a - b) % 360) + 360) % 360);
+  return Math.min(d, 360 - d);
+};
 
 /** Every recipe, the anvil's, the workbench's and (PROF7) the loom's - PROF11: and the mason's bench's carvings; PROF9:
  *  and the fire's dishes; PROF10: and the jeweller's bench's pieces. */
-export const RECIPES = Object.freeze([...SMITH_RECIPES, ...CARPENTRY_RECIPES, ...OUTFITTING_RECIPES, ...MASONRY_RECIPES, ...COOKING_RECIPES, ...JEWELCRAFTING_RECIPES]);
+export const RECIPES = Object.freeze([
+  ...SMITH_RECIPES,
+  ...CARPENTRY_RECIPES,
+  ...OUTFITTING_RECIPES,
+  ...MASONRY_RECIPES,
+  ...COOKING_RECIPES,
+  ...JEWELCRAFTING_RECIPES,
+]);
 const BY_ID = new Map(RECIPES.map((r) => [r.id, r]));
 /** A recipe by its id (`longsword:mithril`, `chain-cuirass:steel`, `kit:iron`, `table-small:oak`), or null. */
-export const recipeById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? null : null);
+export const recipeById = (id) => (typeof id === 'string' ? (BY_ID.get(id) ?? null) : null);
 
 // ─── CRAFT2: PATTERNS, NOT A MATRIX (Professions-Arc 41.2) ─────────────
 
@@ -622,7 +1341,7 @@ export const recipeById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? nul
  * product id is two professions'.
  * @param {Recipe|null} r
  */
-export const recipePattern = (r) => r?.product ?? null;   // AUDIT24 one-home: not src/tools/depthCopyCheck.js's patternOf (a depth pattern, no kin)
+export const recipePattern = (r) => r?.product ?? null; // AUDIT24 one-home: not src/tools/depthCopyCheck.js's patternOf (a depth pattern, no kin)
 /**
  * @typedef {{ id: string, name: string, recipes: readonly Recipe[] }} Pattern
  */
@@ -640,7 +1359,8 @@ export function patternsOf(list) {
 /** Every recipe unlocks by rank (the found ones come with the writs, PROF6); a recipe whose slice is to come (`later`)
  *  is named and never made. PROF11: a recipe that asks a specialisation (`spec` - the Sculptor's stone decor) opens
  *  only to a track standing under it at 100 (`specs`, specsAt's `{ 50, 100 }`) - asked without, it is shut. */
-export const recipeOpen = (r, rank, specs = null) => !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);
+export const recipeOpen = (r, rank, specs = null) =>
+  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);
 /** Whether a recipe may take a Heartwood for one of its planks (PROF0 25): it asks a plank and takes a quality. */
 export const takesHeartwood = (r) => !!r && takesQuality(r) && r.inputs.some((i) => i.key.startsWith('plank:'));
 /**
@@ -650,7 +1370,10 @@ export const takesHeartwood = (r) => !!r && takesQuality(r) && r.inputs.some((i)
  * @param {Recipe} r @param {{ heartwood?: boolean, joiner?: boolean, cracked?: boolean }} [opts]
  */
 export function recipeInputs(r, { heartwood = false, joiner = false, cracked = false } = {}) {
-  let inputs = r.inputs.map((i) => ({ key: i.key, n: joiner && r.family === 'furniture' && i.key.startsWith('plank:') ? Math.ceil(i.n / 2) : i.n }));
+  let inputs = r.inputs.map((i) => ({
+    key: i.key,
+    n: joiner && r.family === 'furniture' && i.key.startsWith('plank:') ? Math.ceil(i.n / 2) : i.n,
+  }));
   if (heartwood && takesHeartwood(r)) {
     const p = /** @type {{ key: string, n: number }} */ (inputs.find((i) => i.key.startsWith('plank:')));
     p.n -= 1;
@@ -681,7 +1404,11 @@ export function qualityOdds(margin, { masterwright = false } = {}) {
   const odds = [...QUALITY_ROWS.find((r) => Math.max(0, margin) <= r.upTo).odds];
   if (masterwright) {
     let left = MASTERWRIGHT_POINTS;
-    for (let q = 0; q < MASTERWORK && left > 0; q++) { const take = Math.min(left, odds[q]); odds[q] -= take; left -= take; }
+    for (let q = 0; q < MASTERWORK && left > 0; q++) {
+      const take = Math.min(left, odds[q]);
+      odds[q] -= take;
+      left -= take;
+    }
     odds[MASTERWORK] += MASTERWRIGHT_POINTS - left;
   }
   return odds;
@@ -689,7 +1416,10 @@ export function qualityOdds(margin, { masterwright = false } = {}) {
 /** The quality a unit `u` in [0, 1) rolls on the odds. */
 export function rollQuality(u, odds) {
   let at = u * 100;
-  for (let q = 0; q < odds.length; q++) { if (at < odds[q]) return q; at -= odds[q]; }
+  for (let q = 0; q < odds.length; q++) {
+    if (at < odds[q]) return q;
+    at -= odds[q];
+  }
   return odds.length - 1;
 }
 /** The steps a craft takes, each source at most one (PROF0 9.2): the clean act (the honest bound, 5.1), the family's
@@ -698,9 +1428,14 @@ export function rollQuality(u, odds) {
  *  Leather - one step between them (9.2's "Heartwood or a Warforged ingot"; 9.3's "the tier 4-6 leathers' step"). */
 export function qualitySteps(r, { clean = false, spec50 = null, heartwood = false } = {}) {
   let steps = clean ? 1 : 0;
-  if ((spec50 === 'weaponsmith' && r.family === 'weapons') || (spec50 === 'armoursmith' && r.family === 'armour')
-    || (spec50 === 'bowyer' && r.family === 'bows') || (spec50 === 'tailor' && r.family === 'clothing')
-    || (spec50 === 'leatherworker' && r.family === 'leather')) steps++;
+  if (
+    (spec50 === 'weaponsmith' && r.family === 'weapons') ||
+    (spec50 === 'armoursmith' && r.family === 'armour') ||
+    (spec50 === 'bowyer' && r.family === 'bows') ||
+    (spec50 === 'tailor' && r.family === 'clothing') ||
+    (spec50 === 'leatherworker' && r.family === 'leather')
+  )
+    steps++;
   if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;
   return steps;
 }
@@ -720,13 +1455,14 @@ export const QUALITY_EFFECTS = Object.freeze([
 export const TOOL_LIFE = Object.freeze([37, 50, 57, 65, 65]);
 /** Whether a recipe's piece takes a quality at all: a Repair Kit does not (it is measured by its work); PROF4: nor
  *  arrows (DFU mints a quiver at condition 0 - nothing for a quality to act on) nor the Ram Kit (a siege work). */
-export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';   // PROF9: nor a dish - it is eaten, and its worth is its effect
+export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect
 /** CRAFT5 (Professions-Arc 41.8): whether a recipe's craft ROLLS a quality - every piece that takes one, and a Repair Kit,
  *  whose quality is its reach (kitReach), never its condition or its weight; the kit stays out of everything takesQuality
  *  rules (a commission's least quality, an auction's Masterwork). */
 export const rollsQuality = (r) => takesQuality(r) || r?.kind === 'kit';
 /** PROF4: a Master Joiner's furniture carries the maker's mark at any quality (PROF0 3.3); a Masterwork always does. */
-export const carriesMark = (r, quality, spec100 = null) => quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');
+export const carriesMark = (r, quality, spec100 = null) =>
+  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');
 
 // ─── THE XP AND THE COUNT (PROF0 3.2, 3.3) ───────────────────────────
 
@@ -750,7 +1486,9 @@ export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((
 /** WOVEN-PAYS (AUDIT WOVEN-PAYS, FIELD BUGS 2026-10-26b): THE CLOTH S1 COUNTS WHEN IT IS BOUGHT WITH SILVER - every key the
  *  judged recipes are made of (counterMade: Linen and Wool), so the service counts each bolt of them a character buys
  *  with silver (server-account/src/professions.js `prof_silver_cloth`, migration 0177). */
-export const JUDGED_CLOTH = Object.freeze([...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key)))]);
+export const JUDGED_CLOTH = Object.freeze([
+  ...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key))),
+]);
 /**
  * AUDIT 32 S1 (CLOTH-GEMS, 2026-10-25; the player SaberGGaming's "Profession oversights", the owner: "No band aids"):
  * whether a craft's first lays on its XP (FIRST-BUDGET: firstCraftXp, its share) - every recipe's, and one S1 judges
@@ -798,7 +1536,8 @@ export const firstCraftKin = (r) => (!r ? [] : Object.freeze([...(KIN.get(firstC
  * here, beside the recipe's (firstCraftPays), for a brew is among its track's first-makes.
  * @param {{ ingredients: readonly number[] }|null|undefined} potion
  */
-export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));
+export const brewFirstPays = (potion) =>
+  !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));
 /**
  * FIRST-BUDGET (SaberGGaming's report, 2026-10-25: Provisioning is slow; the owner: "No band aids"), RETUNED (the owner,
  * asked: "Match Smithing's pace"): A FIRST-MAKE PAYS ITS TRACK'S SHARE, SET SO EVERY CRAFTING TRACK REACHES MASTER IN THE
@@ -835,12 +1574,15 @@ const firstMake = (/** @type {string} */ track, /** @type {string} */ key) => {
   if (!keys.includes(key)) keys.push(key);
   FIRST_MAKES.set(track, keys);
 };
-for (const r of RECIPES) if (firstCraftPays(r, true)) firstMake(trackOf(r.profession), /** @type {string} */ (firstCraftKey(r)));   // CLOTH-GEMS: every recipe's first can pay - one S1 judges where its units are own
+for (const r of RECIPES)
+  if (firstCraftPays(r, true)) firstMake(trackOf(r.profession), /** @type {string} */ (firstCraftKey(r))); // CLOTH-GEMS: every recipe's first can pay - one S1 judges where its units are own
 for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);
 for (const p of POTION_RECIPES) if (brewFirstPays(p)) firstMake(trackOf('alchemy'), p.name);
 /** What each first-make pays, by its track and its key: its track's share. */
 const FIRST_XP = new Map();
-for (const [track, keys] of FIRST_MAKES) for (const k of keys) FIRST_XP.set(`${track} ${k}`, /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[track] ?? 0);
+for (const [track, keys] of FIRST_MAKES)
+  for (const k of keys)
+    FIRST_XP.set(`${track} ${k}`, /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[track] ?? 0);
 /** A track's first-makes (a discipline answers its craft's), in the tables' order - empty for a track that has none. */
 export const firstMakesOf = (track) => Object.freeze([...(FIRST_MAKES.get(trackOf(track)) ?? [])]);
 /** What a first-make pays on `track` (a discipline its craft's), by its key - 0 for a key that is none of the track's. */
@@ -848,7 +1590,8 @@ export const firstMakeXp = (track, key) => FIRST_XP.get(`${trackOf(track)} ${key
 /** A recipe's first time's XP: its track's first-make share (its pattern at its tier the key), where its first pays - CLOTH-GEMS: a
  *  recipe S1 judges (counterMade) only where `own`, no bolt it uses counted as bought with silver (firstCraftPays - WOVEN-PAYS).
  *  The service binds the share asked as own (`own` true) and its decision says whether the units are (its `p`). */
-export const firstCraftXp = (r, own = false) => (!r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));
+export const firstCraftXp = (r, own = false) =>
+  !r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r));
 /** A mason's work's first time's XP (a cut, a mix - smeltAtForge keys it by the work): Building's first-make share -
  *  0 for every other work of the forge's table (a smelt, a burn, a saw, a cure, a weave, a transmutation pays no first). */
 export const workFirstXp = (w) => (!w?.xp ? 0 : firstMakeXp(w.xp, w.id));
@@ -866,13 +1609,17 @@ export function firstMakesSpent(made, track) {
   if (!made) return null;
   const mine = new Set(firstMakesOf(track));
   const out = new Set();
-  for (const id of made.crafts ?? []) { const k = firstCraftKey(recipeById(id)); if (k && mine.has(k)) out.add(k); }
+  for (const id of made.crafts ?? []) {
+    const k = firstCraftKey(recipeById(id));
+    if (k && mine.has(k)) out.add(k);
+  }
   for (const k of [...(made.works ?? []), ...(made.brews ?? [])]) if (mine.has(k)) out.add(k);
   return out;
 }
 /** The pieces a craft makes: one, a Quartermaster's kit two (3.3); PROF9: a Cook's dish two (3.3: "+1 serving a dish" -
  *  a choice at 50). */
-export const craftCount = (r, spec100, spec50 = null) => ((r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1);
+export const craftCount = (r, spec100, spec50 = null) =>
+  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1;
 
 // ─── THE HEAT (PROF0 9.4) ────────────────────────────────────────────
 
@@ -907,11 +1654,22 @@ export const PROVENANCE_RE = /^[0-9a-f]{16}$/;
  */
 /** AUDIT 30 A1: `step` - the widest stretch of the board one sample stands for; a stroke's jump between two pointer events is
  *  measured along its chord at this spacing, so a flick is scored as the straight line it drew. */
-export const PLANE_ACT = Object.freeze({ tol: 0.18, masterWiden: 0.5, minS: 1.2, maxS: 4, headX: 0.08, footX: 0.98, waveA: 0.35, waves: 1.5, step: 0.025 });
+export const PLANE_ACT = Object.freeze({
+  tol: 0.18,
+  masterWiden: 0.5,
+  minS: 1.2,
+  maxS: 4,
+  headX: 0.08,
+  footX: 0.98,
+  waveA: 0.35,
+  waves: 1.5,
+  step: 0.025,
+});
 /** Carpentry's attribute pair (PROF0 25): (AGI + WIL) / 2, a steady hand, on Foraging's four bands. */
 export const planeBand = ({ agility, willpower }) => actBand(Math.trunc((agility + willpower) / 2));
 /** The plane's tolerance at a rank, x the band. */
-export const planeTolerance = (rank, band = 1) => PLANE_ACT.tol * band * (1 + PLANE_ACT.masterWiden * Math.max(0, Math.min(100, rank)) / 100);
+export const planeTolerance = (rank, band = 1) =>
+  PLANE_ACT.tol * band * (1 + (PLANE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);
 /** The grain's line at `x` in [0, 1] for an act's `phase`: a share of the half-height, up positive. */
 export const grainAt = (x, phase) => PLANE_ACT.waveA * Math.sin(2 * Math.PI * (PLANE_ACT.waves * x + phase));
 
@@ -926,7 +1684,7 @@ export const STITCH_ACT = Object.freeze({ stitches: 8, beatS: 0.75, bandW: 0.2, 
 /** Outfitting's attribute pair (PROF0 29): (AGI + SPD) / 2 - a quick, sure hand on the beat, Foraging's four bands. */
 export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + speed) / 2));
 /** Where the beat stands at `t` seconds, 0 to 1 - the beat itself at 0 (and 1). */
-export const beatAt = (t) => ((t / STITCH_ACT.beatS) % 1 + 1) % 1;
+export const beatAt = (t) => (((t / STITCH_ACT.beatS) % 1) + 1) % 1;
 /** Whether the beat at phase `u` is within a band `w` wide centred on it. */
 export const onBeat = (u, w) => u <= w / 2 || u >= 1 - w / 2;
 
@@ -941,14 +1699,22 @@ export const onBeat = (u, w) => u <= w / 2 || u >= 1 - w / 2;
  * (Mining's deepest veins', 5-6 - the Sculptor's finest work); each at least `gapS` after the last (the glint's swing);
  * every one true is a clean act.
  */
-export const CHISEL_ACT = Object.freeze({ lines: 5, strikes: 4, carveStrikes: 7, markS: 1.2, masterMarkS: 2.0, gapS: 0.45 });
+export const CHISEL_ACT = Object.freeze({
+  lines: 5,
+  strikes: 4,
+  carveStrikes: 7,
+  markS: 1.2,
+  masterMarkS: 2.0,
+  gapS: 0.45,
+});
 /** Masonry's attribute pair - DECIDED: (STR + END) / 2, the mallet's weight and the arm that keeps it up all day (no
  *  other act reads Endurance), on Foraging's four bands. */
 export const chiselBand = ({ strength, endurance }) => actBand(Math.trunc((strength + endurance) / 2));
 /** The strikes a work or a recipe's chisel takes: a carving's (the stone decor) seven, a cut's or a mix's four. */
 export const chiselStrikes = (r) => (r?.family === 'stonework' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes);
 /** How long a mark stands, seconds: 1.2 (2.0 at Master) x the band - the glint's own numbers. */
-export const chiselMarkS = (rank, band = 1) => (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;
+export const chiselMarkS = (rank, band = 1) =>
+  (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;
 
 // ─── PROF11: THE BENCH'S XP (PROF0 3.2) ─────────────────────────────
 
@@ -983,7 +1749,18 @@ export function masonXp(units, rank, { clean = false } = {}) {
  * and x `skillet` with C&C's Skillet in the pack. A pan taken off in its window is done; taken off early it is raw; left
  * to 1 it burns and the next goes on. Every pan done is a clean act. Each take at least `gapS` after the last.
  */
-export const PAN_ACT = Object.freeze({ pans: 3, feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12, masterWiden: 0.5, skillet: 1.5, paceLo: 0.85, paceHi: 1.2, gapS: 0.3 });
+export const PAN_ACT = Object.freeze({
+  pans: 3,
+  feastPans: 5,
+  burnS: 3.0,
+  lo: 0.6,
+  w: 0.12,
+  masterWiden: 0.5,
+  skillet: 1.5,
+  paceLo: 0.85,
+  paceHi: 1.2,
+  gapS: 0.3,
+});
 /** Cooking's attribute pair - DECIDED: (INT + PER) / 2, the cook's judgement and a host's touch (no other act reads
  *  Personality), on Foraging's four bands. */
 export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((intelligence + personality) / 2));
@@ -991,7 +1768,11 @@ export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((in
 export const panCount = (r) => (dishOf(r?.id ?? '')?.effect.party === true ? PAN_ACT.feastPans : PAN_ACT.pans);
 /** The pan's window at a rank, x the band, x C&C's Skillet: [lo, hi], never past 0.95 (a pan is never done at burnt). */
 export function panWindow(rank, band = 1, skillet = false) {
-  const w = PAN_ACT.w * band * (1 + (PAN_ACT.masterWiden * Math.max(0, Math.min(PROF_RANK_MAX, rank))) / PROF_RANK_MAX) * (skillet ? PAN_ACT.skillet : 1);
+  const w =
+    PAN_ACT.w *
+    band *
+    (1 + (PAN_ACT.masterWiden * Math.max(0, Math.min(PROF_RANK_MAX, rank))) / PROF_RANK_MAX) *
+    (skillet ? PAN_ACT.skillet : 1);
   return [PAN_ACT.lo, Math.min(0.95, PAN_ACT.lo + w)];
 }
 
@@ -1021,7 +1802,10 @@ export function makerName(name) {
   if (typeof name !== 'string') return null;
   // AUDIT 30 L3: a lone surrogate dropped before the cut (by code point - no lookbehind, SAFARI1), and a pair the cut
   // would split dropped whole - a name as the record signs it is well-formed, so it stays in its bound and reads back
-  const whole = Array.from(name.replace(/[\u0000-\u001f\u007f]/g, '')).filter((ch) => !/^[\ud800-\udfff]$/.test(ch)).join('').trim();
+  const whole = Array.from(name.replace(/[\u0000-\u001f\u007f]/g, ''))
+    .filter((ch) => !/^[\ud800-\udfff]$/.test(ch))
+    .join('')
+    .trim();
   let n = whole.slice(0, MAKER_MAX);
   if (/[\ud800-\udbff]$/.test(n)) n = n.slice(0, -1);
   n = n.trim();
@@ -1042,24 +1826,36 @@ export const markedName = (maker, name) => `${maker}'s ${name}`;
  *  as the item maker reads them (systems/enchanting.js craftedJewelPoints, client-side - this law is the Worker's too),
  *  the item's own where none is handed in. */
 export function pieceLines(item, points = null) {
-  if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
+  if (item?.fieldKit === true)
+    return [
+      `Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`,
+    ]; // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
   // CRAFT4: a found piece a temper raised says its quality (temperLaw.js - Fine or Superior; a found piece is Standard)
-  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];
-  if (Number.isInteger(item.kitMetal)) {   // KIT-CEILING; CRAFT5: a kit's quality its reach
+  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance))
+    return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK
+      ? [QUALITY_NAMES[item.quality]]
+      : [];
+  if (Number.isInteger(item.kitMetal)) {
+    // KIT-CEILING; CRAFT5: a kit's quality its reach
     const reach = `Mends a quarter of a ${METAL_WORDS[item.kitMetal] ?? ''} piece's condition, up to ${Math.round(kitReach(item) * 100)}%, once`;
-    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK ? [QUALITY_NAMES[item.quality], reach] : [reach];
+    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK
+      ? [QUALITY_NAMES[item.quality], reach]
+      : [reach];
   }
-  if (recipeById(item.recipe)?.kind === 'dish') {   // PROF9: a dish says what it does, its keeping and its cook
+  if (recipeById(item.recipe)?.kind === 'dish') {
+    // PROF9: a dish says what it does, its keeping and its cook
     const out = [dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)];
     if (item.noRot === true) out.push('Never spoils');
     if (typeof item.maker === 'string' && item.maker) out.push(`Cooked by ${item.maker}`);
     return out;
   }
   const out = [];
-  if (Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK) out.push(QUALITY_NAMES[item.quality]);
+  if (Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK)
+    out.push(QUALITY_NAMES[item.quality]);
   if (typeof item.maker === 'string' && item.maker) out.push(`Made by ${item.maker}`);
   // PROF10: a piece of jewellery says the points its metal and its gem gave it - the budget the item maker reads
   const pts = Number.isSafeInteger(points) ? points : item.enchantmentPoints;
-  if (recipeById(item.recipe)?.kind === 'jewel' && Number.isSafeInteger(pts)) out.push(`${pts.toLocaleString('en-US')} enchantment points`);
+  if (recipeById(item.recipe)?.kind === 'jewel' && Number.isSafeInteger(pts))
+    out.push(`${pts.toLocaleString('en-US')} enchantment points`);
   return out;
 }

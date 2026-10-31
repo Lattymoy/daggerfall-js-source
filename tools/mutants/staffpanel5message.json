@@ -242,8 +242,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-sweep-dropped",
     "file": "server-account/src/cron.js",
-    "old": "  ['staff-messages', (ctx) =>",
-    "new": "  ['staff-messages-x', (ctx) =>",
+    "old": "    'staff-messages',",
+    "new": "    'staff-messages-x',",
     "why": "the rows never swept",
     "tests": [
       "test/server/staffpanel5message.test.js"

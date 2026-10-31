@@ -28,7 +28,16 @@ in float vFade;
  *  traveller, easing over `ease`; open from the head to `above` m over it, so a bush is whole (AUDIT CANOPY-SEE C2); and
  *  opening as the eye climbs from `rise` to `risen` m, so the rise from a third-person eye pops nothing (C3). A tree in
  *  it keeps `keep` of its fragments by the screen-door (EG-ZN's 4 of 16). Wants vBBWorld, uCamPos and uFocus. */
-export const TREE_SEE = Object.freeze({ core: 0.11, rim: 0.06, near: 2, ease: 10, above: 3, rise: 12, risen: 30, keep: 0.25 });
+export const TREE_SEE = Object.freeze({
+  core: 0.11,
+  rim: 0.06,
+  near: 2,
+  ease: 10,
+  above: 3,
+  rise: 12,
+  risen: 30,
+  keep: 0.25,
+});
 const f4 = (v) => v.toFixed(4);
 
 /** The texel as sampled, kept before the flats' margin clear - straight after both maps are sampled. */

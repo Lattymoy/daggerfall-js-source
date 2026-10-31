@@ -2524,7 +2524,7 @@ inside the cover of a flat drawn wider than its foot (35 nature records of ARENA
 foot 0.68 m, cover 1.29 m) and a young tree's low crown. A foe pressed behind the rock or a young banyan's trunk was
 shot through it, and a foe's arrow and bolt hit me pressed behind the rock. Now a ray with an end in a proxy -
 its start, a sight ray's end, a struck body's point - stops only where it crosses its MIDDLE inside it, where the
-ray passes nearest its axis (`cover.js:"export const COVER_MIDDLE_GRACE = 0.35;"`, a body's radius about it). Near side of the middle, a body sees and is seen, shoots and is shot; behind it, neither.
+ray passes nearest its axis (`cover.js:"export const COVER_MIDDLE_GRACE"`, a body's radius about it). Near side of the middle, a body sees and is seen, shoots and is shot; behind it, neither.
 
 **AUDIT FB1031 F2, F3 - what a missile may strike.** Each flight lists only that (`hostMagic.js` `missileBodies`,
 `arrowFlight.js` `shaftBodies`, `spellcast.js` `dungeonMissileBodies`): a foe's bolt the player alone, a foe's shaft

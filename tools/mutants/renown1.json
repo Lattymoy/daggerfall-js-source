@@ -367,7 +367,7 @@
     "name": "RENOWN1-route-open-to-strangers",
     "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/renown/xp']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n  '/v1/renown/xp',\n]);",
     "tests": [
       "test/net/renown1.test.js"
     ]

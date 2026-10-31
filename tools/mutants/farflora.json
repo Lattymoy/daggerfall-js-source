@@ -470,8 +470,8 @@
   {
     "name": "FAR-FLORA-the-lane-mix",
     "file": "src/render/enhancedLighting.js",
-    "old": "elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);",
-    "new": "elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);",
+    "old": "  vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);   // FAR-FLORA: the canopy over the ground, lit as the trees are near",
+    "new": "  vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);   // FAR-FLORA: the canopy over the ground, lit as the trees are near",
     "tests": [
       "test/render/farflora.test.js"
     ]

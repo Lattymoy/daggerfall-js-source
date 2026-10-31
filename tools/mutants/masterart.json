@@ -4,105 +4,140 @@
     "file": "src/net/masterLaw.js",
     "old": "export const MASTER_LINES = 3;",
     "new": "export const MASTER_LINES = 4;",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-two-effects",
     "file": "src/net/masterLaw.js",
     "old": "export const MASTER_PROCS_MAX = 1;",
     "new": "export const MASTER_PROCS_MAX = 2;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-bows-dropped",
     "file": "src/net/masterLaw.js",
     "old": "export const MASTER_KINDS = Object.freeze(['weapon', 'staff', 'bow', 'plate',",
     "new": "export const MASTER_KINDS = Object.freeze(['weapon', 'staff', 'plate',",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-wand-let-in",
     "file": "src/net/masterLaw.js",
     "old": "&& rollsQuality(r) && wearableItem(shapeOf(r));",
     "new": "&& rollsQuality(r);",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-count-at-most",
     "file": "src/net/masterLaw.js",
     "old": "keys.length !== MASTER_LINES) return 'count';",
     "new": "keys.length > MASTER_LINES) return 'count';",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-twice-let-through",
     "file": "src/net/masterLaw.js",
     "old": "if (new Set(keys).size !== keys.length) return 'twice';",
     "new": "if (new Set(keys).size < 0) return 'twice';",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-effects-unread",
     "file": "src/net/masterLaw.js",
     "old": "> MASTER_PROCS_MAX) return 'procs';",
     "new": "> MASTER_PROCS_MAX + 1) return 'procs';",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-roll-past-the-top",
     "file": "src/net/masterLaw.js",
     "old": "const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
     "new": "const value = lo + Math.floor(rolls() * (hi + 2 - lo));",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-roll-short-of-the-top",
     "file": "src/net/masterLaw.js",
     "old": "const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
     "new": "const value = lo + Math.floor(rolls() * (hi - lo));",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-rare-band",
     "file": "src/net/masterLaw.js",
     "old": "export const masterBand = (id) => AFFIX_RANGES[id]?.legendary ?? null;",
     "new": "export const masterBand = (id) => AFFIX_RANGES[id]?.rare ?? null;",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-record-lines-any-version",
     "file": "src/net/productRecord.js",
     "old": "if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
     "new": "if (c.l !== undefined && !(c.q === MASTERWORK && masterRecordLinesValid(c.l))) return false;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-record-lines-any-quality",
     "file": "src/net/productRecord.js",
     "old": "if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
     "new": "if (c.l !== undefined && !(c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-record-bound-512",
     "file": "src/net/productRecord.js",
     "old": "export const PRODUCT_RECORD_MAX = 704;",
     "new": "export const PRODUCT_RECORD_MAX = 512;",
-    "tests": ["test/net/masterart_law.test.js", "test/net/audit30_laws.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/audit30_laws.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-record-without-lines",
     "file": "src/net/productRecord.js",
     "old": "...(l == null ? {} : { l }) };",
     "new": "};",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-mint-any-version",
     "file": "src/systems/smithItems.js",
     "old": "&& version >= MINT_V_MASTER && Array.isArray(lines) && applyMasterWork(item, lines);",
     "new": "&& version >= MINT_V_LINES && Array.isArray(lines) && applyMasterWork(item, lines);",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-rare-roll-over-the-lines",
@@ -111,307 +146,400 @@
     "new": "if (eff.rarity && rarityEligible(item)) {",
     "equivalent": true,
     "why": "rarityEligible refuses a piece that already wears a tier (LR4: one roll per item), so the Master's lines laid first keep the Rare roll off by that law too; the guard says it where it acts",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-pieces-without-lines",
     "file": "src/systems/smithItems.js",
     "old": "version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }",
     "new": "version: mintVersionOf(p.record) }",
-    "tests": ["test/net/masterart_service.test.js", "test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js",
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-law-count-unread",
     "file": "src/systems/item/itemLaw.js",
     "old": "if (item.quality !== MASTERWORK || body.length !== MASTER_LINES || procs.length",
     "new": "if (item.quality !== MASTERWORK || body.length > MASTER_LINES || procs.length",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-law-quality-unread",
     "file": "src/systems/item/itemLaw.js",
     "old": "if (item.quality !== MASTERWORK || body.length !== MASTER_LINES || procs.length",
     "new": "if (body.length !== MASTER_LINES || procs.length",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-law-band-floor",
     "file": "src/systems/item/itemLaw.js",
     "old": "    if (!band || !(a.value >= band[0] && a.value <= band[1])) out.push('affixes');",
     "new": "    if (!band || !(a.value >= 1 && a.value <= band[1])) out.push('affixes');",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-law-enchantment-let-through",
     "file": "src/systems/item/itemLaw.js",
     "old": "  if (Array.isArray(item.enchantments) && item.enchantments.length) out.push('enchantments');",
     "new": "  if (Array.isArray(item.enchantments) && item.enchantments.length > 1) out.push('enchantments');",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-law-no-master-branch",
     "file": "src/systems/item/itemLaw.js",
     "old": "  if (isMasterWork(item)) return [...out, ...masterFindings(item, body, procs, techs, gems)];",
     "new": "  if (isMasterWork(item) && false) return [...out, ...masterFindings(item, body, procs, techs, gems)];",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-judge-lines-unread",
     "file": "server-account/src/judge.js",
     "old": "&& (piece.l === undefined || piece.l === recordLines(row.record));",
     "new": "&& (piece.l === undefined || piece.l !== '');",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-maker-takes-a-legendary",
     "file": "src/systems/enchanting.js",
     "old": "if (item?.rarity === 'legendary') return null;",
     "new": "if (item?.rarity === 'artifact') return null;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-rank-99",
     "file": "server-account/src/masterWork.js",
     "old": "if (rank < MASTER_RANK || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
     "new": "if (rank < MASTER_RANK - 1 || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-catalysts-unspent",
     "file": "server-account/src/masterWork.js",
     "old": "...spends.filter((s) => s.cat > 0).flatMap((s) => spendStatements(",
     "new": "...spends.filter((s) => s.cat > 99).flatMap((s) => spendStatements(",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-loose-catalysts",
     "file": "server-account/src/masterWork.js",
     "old": "AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
     "new": "AND ${workableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-shared-key-read-once",
     "file": "server-account/src/masterWork.js",
     "old": "by.set(c.key, { key: c.key, in: was?.in ?? 0, cat: (was?.cat ?? 0) + c.n });",
     "new": "by.set(c.key, { key: c.key, in: 0, cat: (was?.cat ?? 0) + c.n });",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-record-without-lines",
     "file": "server-account/src/masterWork.js",
     "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
     "new": "u: dye ?? null, v: MINT_V_MASTER }",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-day-unbounded",
     "file": "server-account/migrations/0179_master_work.sql",
     "old": "  UNIQUE (player, char_id, day),",
     "new": "  UNIQUE (player, rid, day),",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-service-day-status",
     "file": "server-account/src/index.js",
     "old": "'prof-master-day': 409,",
     "new": "'prof-master-day': 400,",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-progress-route-unseated",
     "file": "server-account/src/progress.js",
     "old": "  '/v1/prof/master': Object.freeze(['prof', true]),",
     "new": "  '/v1/prof/mastr': Object.freeze(['prof', true]),",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-book-day-unnoted",
     "file": "src/net/profBook.js",
     "old": "state.master = { made: state.master.made === true || Number(r.data?.day) === masterDayOf(now() / 1000), last: r.data };",
     "new": "state.master = { made: false, last: r.data };",
-    "tests": ["test/net/masterart_service.test.js", "test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js",
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-book-asks-the-craft",
     "file": "src/net/profBook.js",
     "old": ": Array.isArray(w.master) ? door.master(",
     "new": ": Array.isArray(null) ? door.master(",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-box-below-master",
     "file": "src/ui/professions/masterBox.js",
     "old": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK) return null;",
     "new": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK - 1) return null;",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-box-ready-two-lines",
     "file": "src/ui/professions/masterBox.js",
     "old": "&& masterChoiceRefusal(r, picks) === null && needs.every",
     "new": "&& masterChoiceRefusal(r, picks) !== 'procs' && needs.every",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-box-catalysts-unread",
     "file": "src/ui/professions/masterBox.js",
     "old": "needs.every((c) => c.have >= c.need)",
     "new": "needs.every((c) => c.have >= 0)",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-box-shared-key-unread",
     "file": "src/ui/professions/masterBox.js",
     "old": "have: Math.max(0, workOf(book, i.key) - cat(i.key))",
     "new": "have: Math.max(0, workOf(book, i.key) - 0 * cat(i.key))",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-box-lines-unhanded",
     "file": "src/ui/professions/masterBox.js",
     "old": "const res = await go([...picks]);",
     "new": "const res = await go([]);",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-door-asks-dropped",
     "file": "src/scenes/world.js",
     "old": "seat, ...more }, profMintCraft);",
     "new": "seat }, profMintCraft);",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-loom-unwired",
     "file": "src/ui/professions/profPages.js",
     "old": "drawMasterBox(box, kit, r, { station: 'loom', book, state: _loom, free, rerender, name: p.name, go: (lines) => p.craft(r.id, { clean: false, dye, master: lines }) });",
     "new": "void 0;",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "MASTER-ART-craft-word-xp",
     "file": "src/ui/craftXpWords.js",
-    "old": "if (data?.master === true) return t('prof.craft.master', '(a Master\\'s work)');",
-    "new": "if (data?.master === 1) return t('prof.craft.master', '(a Master\\'s work)');",
-    "tests": ["test/net/masterart_service.test.js"]
+    "old": "  if (data?.master === true) return t('prof.craft.master', \"(a Master's work)\"); // MASTER-ART: no experience past Master to say",
+    "new": "  if (data?.master === 1) return t('prof.craft.master', \"(a Master's work)\"); // MASTER-ART: no experience past Master to say",
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-values-read-at-the-band",
     "file": "src/net/masterLaw.js",
     "old": "(l).map(([id, value, ...p]) => (p.length ? { id, param: p[0], value } : { id, value }));",
     "new": "(l).map(([id, value, ...p]) => (p.length ? { id, param: p[0], value: masterBand(id)?.[1] ?? value } : { id, value: masterBand(id)?.[1] ?? value }));",
-    "tests": ["test/net/masterart_law.test.js", "test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js",
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-record-signs-the-keys",
     "file": "server-account/src/masterWork.js",
     "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
     "new": "u: dye ?? null, v: MINT_V_MASTER, l: lines }",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-row-keeps-the-keys",
     "file": "server-account/src/masterWork.js",
     "old": "JSON.stringify(signed), seed, nowS, nonce];",
     "new": "JSON.stringify(lines), seed, nowS, nonce];",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-record-two-lines",
     "file": "src/net/masterLaw.js",
     "old": "if (!Array.isArray(l) || l.length !== MASTER_LINES) return false;",
     "new": "if (!Array.isArray(l) || l.length > MASTER_LINES) return false;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-record-line-twice",
     "file": "src/net/masterLaw.js",
     "old": "return seen.size === l.length;",
     "new": "return seen.size > 0;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-record-value-any",
     "file": "src/net/masterLaw.js",
     "old": "!LINE_WORD_RE.test(x[0]) || !Number.isSafeInteger(x[1])) return false;",
     "new": "!LINE_WORD_RE.test(x[0]) || x[1] === undefined) return false;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB1-bound-640",
     "file": "src/net/productRecord.js",
     "old": "export const PRODUCT_RECORD_MAX = 704;",
     "new": "export const PRODUCT_RECORD_MAX = 640;",
-    "tests": ["test/net/masterart_law.test.js"]
+    "tests": [
+      "test/net/masterart_law.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB2-plain-record-let-through",
     "file": "server-account/src/judge.js",
     "old": "&& (piece.l === undefined || piece.l === recordLines(row.record));",
     "new": "&& (piece.l === undefined || recordLines(row.record) === '' || piece.l === recordLines(row.record));",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB3-goods-unheld",
     "file": "server-account/src/masterWork.js",
     "old": "const held = spends.map((s, i) => {",
     "new": "const held = spends.filter((s) => s.cat > 0).map((s, i) => {",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB3-rank-off-smithing",
     "file": "server-account/src/masterWork.js",
     "old": "const track = await trackRow(db, player.id, character, craft);",
     "new": "const track = await trackRow(db, player.id, character, 'smithing');",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB4-box-goods-unread",
     "file": "src/ui/professions/masterBox.js",
     "old": "    && (goods.every((g) => g.have >= g.n) || goodsFromRaw(r, book, goods));",
     "new": "    && (true || goodsFromRaw(r, book, goods));",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB4-box-stand-in-goods",
     "file": "src/ui/professions/masterBox.js",
     "old": "return recipeInputs(r).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
     "new": "return recipeInputs(r, { heartwood: true }).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB4-box-chain-unread",
     "file": "src/ui/professions/masterBox.js",
     "old": "  return chainPlan(inputs, held, { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) }).ok === true;",
     "new": "  return chainPlan(inputs, held, { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) }).ok === 'yes';",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB5-any-answer-today",
     "file": "src/net/profBook.js",
     "old": "state.master = { made: state.master.made === true || Number(r.data?.day) === masterDayOf(now() / 1000), last: r.data };",
     "new": "state.master = { made: true, last: r.data };",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB6-book-four-counted",
     "file": "src/net/profBook.js",
     "old": "const cats = lines ? await book.ensureInStores(MASTER_CATALYSTS.map((k) => ({ key: k.key, n: k.n }))) : { ok: true };",
     "new": "const cats = lines ? await book.ensureInStores(MASTER_CATALYSTS.map((k) => ({ key: k.key, n: k.n + share(k) }))) : { ok: true };",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB6-book-shared-unheld",
     "file": "src/net/profBook.js",
     "old": "const both = lines && cats.ok ? await book.ensureInStores(",
     "new": "const both = lines && false ? await book.ensureInStores(",
-    "tests": ["test/net/masterart_service.test.js"]
+    "tests": [
+      "test/net/masterart_service.test.js"
+    ]
   },
   {
     "name": "AUDIT-HB6-box-catalyst-asks-the-good",
     "file": "src/ui/professions/masterBox.js",
     "old": "need: c.n, have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
     "new": "need: c.n + (c.key === 'gem:pearl' ? 1 : 0), have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
-    "tests": ["test/ui/professions/masterart_ui.test.js"]
+    "tests": [
+      "test/ui/professions/masterart_ui.test.js"
+    ]
   }
 ]

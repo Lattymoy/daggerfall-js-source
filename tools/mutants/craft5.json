@@ -29,8 +29,8 @@
   {
     "name": "CRAFT5-law-reach-any",
     "file": "src/net/recipeLaw.js",
-    "old": "(Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING)",
-    "new": "(kit?.quality >= KIT_HIGH_QUALITY - 2 ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "old": "export const kitReach = (kit) =>\n  Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING;",
+    "new": "export const kitReach = (kit) => (kit?.quality >= KIT_HIGH_QUALITY - 2 ? KIT_CEILING_HIGH : KIT_CEILING);",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CRAFT5-law-reach-float",
     "file": "src/net/recipeLaw.js",
-    "old": "(Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING)",
-    "new": "(kit?.quality >= 1.5 ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "old": "export const kitReach = (kit) =>\n  Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING;",
+    "new": "export const kitReach = (kit) => (kit?.quality >= 1.5 ? KIT_CEILING_HIGH : KIT_CEILING);",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CRAFT5-lines-kit-75",
     "file": "src/net/recipeLaw.js",
-    "old": "up to ${Math.round(kitReach(item) * 100)}%, once`;",
-    "new": "up to ${Math.round(KIT_CEILING * 100)}%, once`;",
+    "old": "    const reach = `Mends a quarter of a ${METAL_WORDS[item.kitMetal] ?? ''} piece's condition, up to ${Math.round(kitReach(item) * 100)}%, once`;",
+    "new": "    const reach = `Mends a quarter of a ${METAL_WORDS[item.kitMetal] ?? ''} piece's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`;",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "CRAFT5-lines-kit-no-quality",
     "file": "src/net/recipeLaw.js",
-    "old": "    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK ? [QUALITY_NAMES[item.quality], reach] : [reach];",
+    "old": "    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK\n      ? [QUALITY_NAMES[item.quality], reach]\n      : [reach];",
     "new": "    return [reach];",
     "tests": [
       "test/net/craft5_consumables.test.js"

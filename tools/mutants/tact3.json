@@ -2,8 +2,8 @@
   {
     "name": "TACT3a-same-pool-pushed",
     "file": "src/characters/foeSpacing.js",
-    "old": "      if (group[i] === group[j]) continue;   // the pool's own spaceFoes has the pair\n",
-    "new": "\n",
+    "old": "      if (group[i] === group[j]) continue; // the pool's own spaceFoes has the pair\n      const b = bodies[j].ai.feet,",
+    "new": "      const b = bodies[j].ai.feet,",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "TACT3a-no-push-cap",
     "file": "src/characters/foeSpacing.js",
-    "old": "  for (let i = 0; i < n; i++) if (nudge(bodies[i].ai, push[i * 2], push[i * 2 + 1], FOE_SPACING_SPEED * dt, collider)) moved++;",
+    "old": "  for (let i = 0; i < n; i++)\n    if (nudge(bodies[i].ai, push[i * 2], push[i * 2 + 1], FOE_SPACING_SPEED * dt, collider)) moved++;",
     "new": "  for (let i = 0; i < n; i++) if (nudge(bodies[i].ai, push[i * 2], push[i * 2 + 1], Infinity, collider)) moved++;",
     "tests": [
       "test/player/tact3.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "TACT3a-skip-ignored",
     "file": "src/characters/foeSpacing.js",
-    "old": "  pools.forEach((pool, g) => { for (const f of pool ?? []) if (!skip(f)) { bodies.push(f); group.push(g); } });",
-    "new": "  pools.forEach((pool, g) => { for (const f of pool ?? []) { bodies.push(f); group.push(g); } });",
+    "old": "    for (const f of pool ?? [])\n      if (!skip(f)) {\n        bodies.push(f);\n        group.push(g);\n      }",
+    "new": "    for (const f of pool ?? []) {\n      bodies.push(f);\n      group.push(g);\n    }",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TACT3a-edge-rule-off",
     "file": "src/characters/foeSpacing.js",
-    "old": "  if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) { feet[0] = _was[0]; feet[1] = _was[1]; feet[2] = _was[2]; return false; }",
-    "new": "  if (false) { feet[0] = _was[0]; feet[1] = _was[1]; feet[2] = _was[2]; return false; }",
+    "old": "  const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);\n  if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) {",
+    "new": "  const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);\n  if (false) {",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TACT3b-pass-through-cleared",
     "file": "src/characters/foeSpacing.js",
-    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break;   // on its way through",
-    "new": "        if (false) break;   // on its way through",
+    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break; // on its way through",
+    "new": "        if (false) break; // on its way through",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TACT3b-sill-sanctuary",
     "file": "src/characters/foeSpacing.js",
-    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break;   // on its way through",
-    "new": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3 || Math.abs(da) < DOORWAY_DEPTH) break;   // on its way through",
+    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break; // on its way through",
+    "new": "        if ((Math.sign(da) !== side && Math.abs(da) > 0.3) || Math.abs(da) < DOORWAY_DEPTH) break; // on its way through",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TACT3b-wrong-side",
     "file": "src/characters/foeSpacing.js",
-    "old": "      const need = side * DOORWAY_DEPTH - along;",
-    "new": "      const need = DOORWAY_DEPTH - along;",
+    "old": "      const need = side * DOORWAY_DEPTH - along; // to the threshold's edge on its own side",
+    "new": "      const need = DOORWAY_DEPTH - along; // to the threshold's edge on its own side",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TACT3b-storey-ignored",
     "file": "src/characters/foeSpacing.js",
-    "old": "      if (dy < -2.5 || dy > 1) continue;   // another storey",
-    "new": "      if (dy < -2.5) continue;   // another storey",
+    "old": "      if (dy < -2.5 || dy > 1) continue; // another storey",
+    "new": "      if (dy < -2.5) continue; // another storey",
     "tests": [
       "test/player/tact3.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TACT3a-no-share",
     "file": "src/characters/foeSpacing.js",
-    "old": "      const share = 0.5 * (FOE_SPACING_GAP - d);   // half each, as spaceFoes",
-    "new": "      const share = 0;   // half each, as spaceFoes",
+    "old": "      const share = 0.5 * (FOE_SPACING_GAP - d); // half each, as spaceFoes",
+    "new": "      const share = 0; // half each, as spaceFoes",
     "tests": [
       "test/player/tact3.test.js"
     ]

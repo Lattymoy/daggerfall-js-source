@@ -455,8 +455,8 @@
   {
     "name": "HUNTERS-MARK-trophy-not-a-mount",
     "file": "src/net/decorLaw.js",
-    "old": " || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;",
-    "new": " || it.g === DECOR_ARMOR_GROUP;",
+    "old": "  return (\n    (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||\n    it.g === DECOR_ARMOR_GROUP ||\n    it.t === TROPHY_TEMPLATE\n  );",
+    "new": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "HUNTERS-MARK-trophy-p-unchecked",
     "file": "src/net/decorLaw.js",
-    "old": "piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
-    "new": "piece.item?.t === TROPHY_TEMPLATE;",
+    "old": "export const decorIsTrophy = (piece) =>\n  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
+    "new": "export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ],

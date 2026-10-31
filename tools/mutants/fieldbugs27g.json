@@ -29,8 +29,8 @@
   {
     "name": "STATION-FEES-first-pass",
     "file": "src/net/decorLaw.js",
-    "old": "alchemy: 50_000, spells: 100_000, enchant: 200_000",
-    "new": "alchemy: 5_000, spells: 10_000, enchant: 20_000",
+    "old": "  alchemy: 50_000,\n  spells: 100_000,\n  enchant: 200_000,",
+    "new": "  alchemy: 5_000,\n  spells: 10_000,\n  enchant: 20_000,",
     "tests": [
       "test/ui/homestations.test.js"
     ]

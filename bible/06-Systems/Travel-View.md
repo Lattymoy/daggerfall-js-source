@@ -3599,7 +3599,7 @@ owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the c
 - **Measured** (`tools/horizonTreesProbe.mjs`, the freeware, Bay pixel 2046,325, the eye 300 m up, Land View 5): of the
   band ring's 185,688 trees, 45,068 (24.3%) stood wholly behind the middle ring's ground and 16,110 (8.7%) behind it in
   part (a 12 m tree) - every one drawn whole over the hill before.
-- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot) {"`): the middle ring keeps the heights it draws
+- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot)"`): the middle ring keeps the heights it draws
   (`render/midRing.js` groundHeights, `MidRingMesh.build`), and the far ring hands them to the band's draw with their corner
   in the band's frame (`farRing.js:"_bandGround(origin) {"`). The band uploads them once a ring as a half float a vertex,
   filtered, on GROUND_UNIT (`farTrees.js:"_ground(ground) {"`). Its vertex program takes the eye from the view and reads
@@ -3607,7 +3607,7 @@ owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the c
   left to the depth test its ground already passes (FLORA-GROUND's slot bits), a point past the ring not read - and the
   highest line the ground lifts at the tree, less GROUND_SLACK (1.5 m: the drawn triangles against the heights'
   bilinear, the half float's step), is the tree's cut: a tree under it whole is not drawn, and both fragment programs draw
-  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt(eye, foot, ground, built = () => false) {"`)
+  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt"`)
   is the law the pins and the probe read; the vertex program was run against it in WebGL2 by transform feedback (64 trees
   over a synthetic ridge with two built pixels: every whole-hidden verdict the same, the cut within 0.004 of a tree's
   height). The frames checked on the freeware: the ring's height under each band tree's foot is the tree's own ground
@@ -4089,7 +4089,7 @@ from above is still never met in play.
 `bearingDegrees` 0), past CAMP-FAR's rule: with the camera facing the way the band came, every anchor stood in the view
 39-51 m off and popped up mid-screen (2,000 of 2,000 in a 65-degree view). Now it keeps its bearing only outside the
 view; inside it the band stands just outside the view's edge on its own side, CAMP-FAR's FOV plus 0-4 degrees
-(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0, backM = 0) {"`,
+(`travelBands.js:"export function bandStandBearing"`,
 called in place in `world.js` bandStand, so the host does not grow). Under the Overworld a band still stands where it
 was watched coming (OW5b B2). It reads the camera, never the place: every province's.
 

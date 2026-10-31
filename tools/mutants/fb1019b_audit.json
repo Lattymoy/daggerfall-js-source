@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-1019-L1-1-raiser-luck-unheld",
     "file": "src/systems/unleveledLoot.js",
-    "old": "  _raiserLuck = luckNow; _raiserLevel = level;",
-    "new": "  _raiserLevel = level;",
+    "old": "  _raiserLuck = luckNow;\n  _raiserLevel = level; // AUDIT SUGGESTIONS-1019 L1-1: the raiser's, for every roll the raise reaches",
+    "new": "  _raiserLevel = level; // AUDIT SUGGESTIONS-1019 L1-1: the raiser's, for every roll the raise reaches",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-1019-L1-2-over-max",
     "file": "src/systems/unleveledLoot.js",
-    "old": "  if (Number.isFinite(item.maxCondition) && item.currentCondition > item.maxCondition) item.currentCondition = item.maxCondition;\n",
-    "new": "",
+    "old": "  if (Number.isFinite(item.maxCondition) && item.currentCondition > item.maxCondition)\n    item.currentCondition = item.maxCondition;\n  item.foundCondition = item.currentCondition; // ASF-DEATH",
+    "new": "  item.foundCondition = item.currentCondition; // ASF-DEATH",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-1019-L1-4-switch-ignored",
     "file": "src/systems/unleveledLoot.js",
-    "old": "  return materialSwitch(rampMetal(level), matSwitchList());",
-    "new": "  return rampMetal(level);",
+    "old": "  return materialSwitch(rampMetal(level), matSwitchList()); // AUDIT SUGGESTIONS-1019 L1-4: through the Mods pane's switches, as the mod's own metals go",
+    "new": "  return rampMetal(level); // AUDIT SUGGESTIONS-1019 L1-4: through the Mods pane's switches, as the mod's own metals go",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-1019-L6-8-orcish-plate-left-orcish",
     "file": "src/systems/unleveledLoot.js",
-    "old": "  return dropArmor(loot, 0x0200 + metal, rolls);   // 520 Orcish",
-    "new": "  return dropArmor(loot, 520, rolls);   // 520 Orcish",
+    "old": "  return dropArmor(loot, 0x0200 + metal, rolls); // 520 Orcish",
+    "new": "  return dropArmor(loot, 520, rolls); // 520 Orcish",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],

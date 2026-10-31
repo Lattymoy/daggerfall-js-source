@@ -113,8 +113,8 @@
   {
     "name": "RAID4-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/raid/claim',\n",
-    "new": "",
+    "old": "  '/v1/raid/claim',\n  '/v1/serpent/claim', // SERPENT1: a sea serpent's receipt",
+    "new": "  '/v1/serpent/claim', // SERPENT1: a sea serpent's receipt",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

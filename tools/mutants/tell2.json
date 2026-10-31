@@ -401,8 +401,8 @@
   {
     "name": "TELL2-el-undecoded",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec4(elDecode(uGlint.rgb), uGlint.a)",
-    "new": "uGlint",
+    "old": "  lit = glintLit(lit, albedo + emission, vec4(elDecode(uGlint.rgb), uGlint.a));   // TELL2: the body lifted toward its blow's colour, in the lane's linear light",
+    "new": "  lit = glintLit(lit, albedo + emission, uGlint);   // TELL2: the body lifted toward its blow's colour, in the lane's linear light",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

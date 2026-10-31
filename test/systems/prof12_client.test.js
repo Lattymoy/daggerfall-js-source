@@ -411,7 +411,7 @@ test('PROF12 wiring: the alchemy station an Alchemist\'s (open for trade) or a h
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/prof\/brew': \(\) => brewAtStation\(ctx, who\.player, env, body\),/);
   assert.match(idx, /'\/v1\/prof\/disenchant': \(\) => disenchantPiece\(\{ \.\.\.ctx, bucket: env\.SAVES \}, who\.player, env, body\),/);
-  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew', '\/v1\/prof\/disenchant',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew',\n\s*'\/v1\/prof\/disenchant',/);
   assert.match(src('src/ui/professions/profPages.js'), /\['jeweller', \(d\) => drawJewellerBench\(d, rerender, kit\)\],   \/\/ PROF10\n\s*\['alchemy', \(d\) => drawAlchemyStation\(d, rerender, kit\)\],   \/\/ PROF12\n\s*\['enchant', \(d\) => drawEnchantingStation\(d, rerender, kit\)\],   \/\/ PROF12/);   // PIN MOVED (MENU-ORDER)
   assert.equal(POTENT.pct, 25);
 });

@@ -182,8 +182,8 @@
   {
     "name": "MA-a-proxy-born-without-its-mark",
     "file": "src/ai/cover.js",
-    "old": "h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };",
-    "new": "h: size.h * COVER_HEIGHT_FRAC, lift: 0 };",
+    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
+    "new": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MA-a-tree-s-crown-born-without-its-mark",
     "file": "src/ai/cover.js",
-    "old": "h: h - from, lift: from, _mark: 0 },",
-    "new": "h: h - from, lift: from },",
+    "old": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from, _mark: 0 },",
+    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from },",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MA-a-body-born-without-its-mark",
     "file": "src/world/propBodies.js",
-    "old": "{ c, r, h, lift: 0, body: true, nature, _mark: 0 }",
-    "new": "{ c, r, h, lift: 0, body: true, nature }",
+    "old": "const body = (c, r, h, nature) =>\n  r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, nature, _mark: 0 } : null; // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
+    "new": "const body = (c, r, h, nature) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, nature } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "MA-C2-the-mark-born-first",
     "file": "src/ai/cover.js",
-    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };",
-    "new": "  return { _mark: 0, c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 };",
+    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
+    "new": "  return { _mark: 0, c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "MA-C2-a-jungle-body-born-without-its-mark",
     "file": "src/world/propBodies.js",
-    "old": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true, _mark: 0 };",
-    "new": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true };",
+    "old": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true, _mark: 0 }; // MEM-AUDIT: born with the index's mark",
+    "new": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true }; // MEM-AUDIT: born with the index's mark",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

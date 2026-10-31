@@ -16,8 +16,8 @@
 // PURE: the host hands the clock, the land's test and the traveller's feet; everything here is arithmetic.
 // ═══════════════════════════════════════════════════════════════════
 import { seededRng } from '../wind/wind.js';
-import { NATIVE_PER_M } from './travelDungeons.js';   // one home: native units a metre
-import { worldPixelOk } from '../../net/wire.js';   // ETHER-OW: a chaser's place is a pixel of the world (TV-BEYOND's law)
+import { NATIVE_PER_M } from './travelDungeons.js'; // one home: native units a metre
+import { worldPixelOk } from '../../net/wire.js'; // ETHER-OW: a chaser's place is a pixel of the world (TV-BEYOND's law)
 
 /** The band's world: a cell of this many map pixels square has one chance of a band a life. */
 export const BAND_CELL_PX = 2;
@@ -26,8 +26,8 @@ export const BAND_LIFE_MS = 12 * 60 * 1000;
 /** The chance a cell holds a band in a life (by day, by night). OW6 (2026-09-29, the player: "Enemies should spawn in
  *  varying numbers and roam more often"): half as many again by day, a third more by night - 0.3 and 0.45 left a
  *  league of empty road between most bands. */
-export const BAND_CHANCE_DAY = 0.75;   // was 0.45: a band in three cells of four, so the nearest one is about a quarter nearer
-export const BAND_CHANCE_NIGHT = 0.9;   // was 0.6
+export const BAND_CHANCE_DAY = 0.75; // was 0.45: a band in three cells of four, so the nearest one is about a quarter nearer
+export const BAND_CHANCE_NIGHT = 0.9; // was 0.6
 /** A wandering band's pace (m/s) and how long it keeps one heading (ms). OW6: a brisk walk, turning oftener - from the
  *  Overworld's height (150-450 m up) a band at 1.3 m/s on 75 s legs read as one standing still. */
 export const BAND_WANDER_MPS = 2;
@@ -66,24 +66,38 @@ export const BAND_STAND_TRIES = 5;
  *  AUDIT FB1031 II K6: the view's edge is its HORIZONTAL half-view (`fovDegrees` is the vertical, `aspect` the frame's
  *  width over its height) and the pack's spread past it (`spacingM` about an anchor `nearM` off at the nearest), FOV
  *  plus 2 at the least: at 32:9 the vertical FOV's edge stood 94% of bands with a member in view. */
-export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0, backM = 0) {
+export function bandStandBearing(
+  yaw,
+  camYaw,
+  fovDegrees,
+  seen = false,
+  aspect = 1,
+  nearM = Infinity,
+  spacingM = 0,
+  backM = 0,
+) {
   const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * (aspect > 0 ? aspect : 1)) * 180) / Math.PI;
   const spread = (Math.asin(Math.min(1, spacingM / nearM)) * 180) / Math.PI;
   // AUDIT FB1031 III W1: the eye stands `backM` behind the feet in third person (11.4 m zoomed out), so the edge turns out
   // by the law of sines till the nearest member clears it from the eye: at 21:9 zoomed out 96% of bands stood one in view
-  const base = Math.max(fovDegrees + 2, half + spread + 2), r = Math.max(1, nearM - spacingM);
+  const base = Math.max(fovDegrees + 2, half + spread + 2),
+    r = Math.max(1, nearM - spacingM);
   const turn = backM > 0 ? (Math.asin(Math.min(1, (backM * Math.sin((base * Math.PI) / 180)) / r)) * 180) / Math.PI : 0;
-  const edge = base + turn, off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
-  return seen || Math.abs(off) >= edge ? { yawRad: yaw, bearingDegrees: 0 } : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
+  const edge = base + turn,
+    off = ((((((yaw - camYaw) * 180) / Math.PI) % 360) + 540) % 360) - 180;
+  return seen || Math.abs(off) >= edge
+    ? { yawRad: yaw, bearingDegrees: 0 }
+    : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
 }
 /** The bands the host is asked about: the cells within this many map pixels of the traveller. */
 export const BAND_REACH_PX = 6;
 const PIXEL_NATIVE = 32768;
 /** The bands' own salt - a band is never a storm. */
-const BAND_SEED = 0x42414e44;   // 'BAND'
+const BAND_SEED = 0x42414e44; // 'BAND'
 
 /** A cell's life's seed. */
-const seedOf = (cx, cy, life) => (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663) ^ Math.imul(life, 83492791) ^ BAND_SEED) >>> 0;
+const seedOf = (cx, cy, life) =>
+  (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663) ^ Math.imul(life, 83492791) ^ BAND_SEED) >>> 0;
 
 /**
  * THE BAND a cell holds in a life, or null: `{ id, cx, cy, life, seed, born: {x, z} (native), bornMs }`. `night` is
@@ -95,20 +109,24 @@ export function bandOf({ cx, cy, life, night, ok }) {
   const r = seededRng(seed);
   if (r() >= (night ? BAND_CHANCE_NIGHT : BAND_CHANCE_DAY)) return null;
   const span = BAND_CELL_PX * PIXEL_NATIVE;
-  const x = cx * span + r() * span, z = cy * span + r() * span;
-  if (!ok(x, z)) return null;   // born in the water or a town: no band this life
+  const x = cx * span + r() * span,
+    z = cy * span + r() * span;
+  if (!ok(x, z)) return null; // born in the water or a town: no band this life
   return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, night, born: { x, z }, bornMs: life * BAND_LIFE_MS };
 }
 
 /** AUDIT OW3 T7-4: the seed a band's MAKE is rolled from - its own stream, never the birth's (whose first draw is under
  *  the spawn chance by construction, so the table's d100 could never pass 45 and its > 80 picks never came). */
-export const bandMakeSeed = (band) => (band.seed ^ 0x4d414b45) >>> 0;   // 'MAKE'
+export const bandMakeSeed = (band) => (band.seed ^ 0x4d414b45) >>> 0; // 'MAKE'
 
 /** OW6: how many a band is (1..BAND_SIZE_WEIGHTS.length), off its own stream - the same number for every player. */
 export function bandSizeOf(band) {
   const total = BAND_SIZE_WEIGHTS.reduce((a, w) => a + w, 0);
-  let x = seededRng((band.seed ^ 0x53495a45) >>> 0)() * total;   // 'SIZE'
-  for (let i = 0; i < BAND_SIZE_WEIGHTS.length; i++) { x -= BAND_SIZE_WEIGHTS[i]; if (x < 0) return i + 1; }
+  let x = seededRng((band.seed ^ 0x53495a45) >>> 0)() * total; // 'SIZE'
+  for (let i = 0; i < BAND_SIZE_WEIGHTS.length; i++) {
+    x -= BAND_SIZE_WEIGHTS[i];
+    if (x < 0) return i + 1;
+  }
   return BAND_SIZE_WEIGHTS.length;
 }
 
@@ -118,7 +136,7 @@ export function bandSizeOf(band) {
  *  12 or over - most a traveller can face, some to run from, and the label says which. (Offline there is one player,
  *  and the band reads theirs.) */
 export function bandLevelOf(band) {
-  const u = seededRng((band.seed ^ 0x4c45564c) >>> 0)();   // 'LEVL'
+  const u = seededRng((band.seed ^ 0x4c45564c) >>> 0)(); // 'LEVL'
   return 1 + Math.floor(BAND_LEVEL_MAX * u * u);
 }
 
@@ -131,9 +149,11 @@ export function bandLevelOf(band) {
  */
 export function wanderAt(band, ms, ok) {
   const r = seededRng((band.seed ^ 0x5157) >>> 0);
-  let x = band.born.x, z = band.born.z, heading = r() * Math.PI * 2;
+  let x = band.born.x,
+    z = band.born.z,
+    heading = r() * Math.PI * 2;
   let t = Math.max(0, Math.min(BAND_LIFE_MS, ms - band.bornMs));
-  const legNative = (dt) => (BAND_WANDER_MPS * dt / 1000) * NATIVE_PER_M;
+  const legNative = (dt) => ((BAND_WANDER_MPS * dt) / 1000) * NATIVE_PER_M;
   const full = legNative(BAND_LEG_MS);
   while (t > 0) {
     const dt = Math.min(t, BAND_LEG_MS);
@@ -141,10 +161,16 @@ export function wanderAt(band, ms, ok) {
     // AUDIT OW3 T7-6: a leg's way is chosen by its WHOLE end, whatever part of it is walked - so a leg part-walked never
     // flips mid-way (a band that jumped eighty metres in a quarter second beside the water)
     let go = ok(x + Math.sin(heading) * full, z + Math.cos(heading) * full);
-    if (!go) { heading += Math.PI; go = ok(x + Math.sin(heading) * full, z + Math.cos(heading) * full); }
-    if (go) { x += Math.sin(heading) * d; z += Math.cos(heading) * d; }
+    if (!go) {
+      heading += Math.PI;
+      go = ok(x + Math.sin(heading) * full, z + Math.cos(heading) * full);
+    }
+    if (go) {
+      x += Math.sin(heading) * d;
+      z += Math.cos(heading) * d;
+    }
     t -= dt;
-    if (dt === BAND_LEG_MS) heading += (r() - 0.5) * Math.PI;   // the next leg bends up to a quarter turn either way
+    if (dt === BAND_LEG_MS) heading += (r() - 0.5) * Math.PI; // the next leg bends up to a quarter turn either way
   }
   return { x, z, heading };
 }
@@ -161,13 +187,16 @@ export const bandPixelOf = (mapPixel) => ({ x: mapPixel.x, y: 499 - mapPixel.y }
  */
 export function bandsNear({ at, ms, night, ok, reach = BAND_REACH_PX }) {
   const life = Math.floor(ms / BAND_LIFE_MS);
-  const c0x = Math.floor((at.x - reach) / BAND_CELL_PX), c1x = Math.floor((at.x + reach) / BAND_CELL_PX);
-  const c0y = Math.floor((at.y - reach) / BAND_CELL_PX), c1y = Math.floor((at.y + reach) / BAND_CELL_PX);
+  const c0x = Math.floor((at.x - reach) / BAND_CELL_PX),
+    c1x = Math.floor((at.x + reach) / BAND_CELL_PX);
+  const c0y = Math.floor((at.y - reach) / BAND_CELL_PX),
+    c1y = Math.floor((at.y + reach) / BAND_CELL_PX);
   const out = [];
-  for (let cy = c0y; cy <= c1y; cy++) for (let cx = c0x; cx <= c1x; cx++) {
-    const b = bandOf({ cx, cy, life, night, ok });
-    if (b) out.push(b);
-  }
+  for (let cy = c0y; cy <= c1y; cy++)
+    for (let cx = c0x; cx <= c1x; cx++) {
+      const b = bandOf({ cx, cy, life, night, ok });
+      if (b) out.push(b);
+    }
   return out;
 }
 
@@ -187,18 +216,21 @@ export const bandSight = (night) => (night ? BAND_SIGHT_NIGHT_M : BAND_SIGHT_DAY
  *   (`now` and `gainAt` on the chase's own clock - the host's, which a hold does not run)
  */
 export function bandChaseStep({ pos, feet, dt, scale = 1, contact, gainAt, now, best }) {
-  const dx = feet.x - pos.x, dz = feet.z - pos.z;
-  const dist = Math.hypot(dx, dz) / NATIVE_PER_M;   // metres
+  const dx = feet.x - pos.x,
+    dz = feet.z - pos.z;
+  const dist = Math.hypot(dx, dz) / NATIVE_PER_M; // metres
   const step = Math.min(Math.max(0, dist - contact), BAND_CHASE_MPS * dt * Math.max(1, scale));
-  const k = dist > 1e-6 ? (step / dist) : 0;
+  const k = dist > 1e-6 ? step / dist : 0;
   const np = { x: pos.x + dx * k, z: pos.z + dz * k };
   const left = dist - step;
   // AUDIT OW3 T7-3: closing is a METRE nearer than the nearest yet, and the clock runs from the last one - a band gaining
   // a few centimetres a frame closed on nobody (the nearest was the last frame's) and gave every chase up at two minutes
   const gained = left < best - 1;
-  const closer = gained ? left : best, at = gained ? now : gainAt;
+  const closer = gained ? left : best,
+    at = gained ? now : gainAt;
   if (left <= contact) return { pos: np, dist: left, best: closer, gainAt: at, what: 'contact' };
-  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS) return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };
+  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS)
+    return { pos: np, dist: left, best: closer, gainAt: at, what: 'lost' };
   return { pos: np, dist: left, best: closer, gainAt: at, what: null };
 }
 
@@ -225,7 +257,11 @@ export const BAND_WORD_MS = 3000;
  *  carries (net/wire.js worldPixelOk, TV-BEYOND's law). ETHER-OW (2026-10-13): it was the Bay's 1000 x 500 alone - and
  *  the bands and raiders are born on the Eltheric Ocean's box too (scenes/world.js bandOk, tvRaidOpen), so every chase
  *  said there was thrown out by the peers who heard it. */
-const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));
+const chaserPlaceOk = (x, z) =>
+  Number.isInteger(x) &&
+  Number.isInteger(z) &&
+  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&
+  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));
 
 /**
  * A CHASE WORD - the band word I say, and OW6's raiders' (systems/seaRaiders.js), one law for any chaser: `[[id, x, z,
@@ -236,8 +272,14 @@ const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && wo
  */
 export function chaseWordOf(chases, spent) {
   const out = [];
-  for (const [id, c] of chases ?? []) { if (out.length >= BANDS_WIRE_MAX) break; out.push([id, Math.round(c.pos.x), Math.round(c.pos.z), 1]); }
-  for (const id of spent ?? []) { if (out.length >= BANDS_WIRE_MAX) break; out.push([id, 0, 0, 2]); }
+  for (const [id, c] of chases ?? []) {
+    if (out.length >= BANDS_WIRE_MAX) break;
+    out.push([id, Math.round(c.pos.x), Math.round(c.pos.z), 1]);
+  }
+  for (const id of spent ?? []) {
+    if (out.length >= BANDS_WIRE_MAX) break;
+    out.push([id, 0, 0, 2]);
+  }
   return out;
 }
 
@@ -248,7 +290,8 @@ export const bandWordOf = (chases, spent) => chaseWordOf(chases, spent);
  * @param {unknown} raw @param {RegExp} idRe */
 export function validChaseWord(raw, idRe) {
   if (!Array.isArray(raw)) return [];
-  const out = [], seen = new Set();
+  const out = [],
+    seen = new Set();
   for (const e of raw) {
     if (out.length >= BANDS_WIRE_MAX) break;
     if (!Array.isArray(e) || e.length !== 4) continue;

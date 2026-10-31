@@ -20,8 +20,8 @@
   {
     "name": "CRAFT-HALL-kin-read-as-recipe",
     "file": "src/net/recipeLaw.js",
-    "old": "for (const id of made.crafts ?? []) { const k = firstCraftKey(recipeById(id));",
-    "new": "for (const id of made.crafts ?? []) { const k = id;",
+    "old": "    const k = firstCraftKey(recipeById(id));",
+    "new": "    const k = id;",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CRAFT-HALL-null-read-as-empty",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (!made) return null;\n  const mine = new Set(firstMakesOf(track));",
-    "new": "  if (!made) made = {};\n  const mine = new Set(firstMakesOf(track));",
+    "old": "  if (!made) return null;",
+    "new": "  if (!made) made = {};",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CRAFT-HALL-track-filter-gone",
     "file": "src/net/recipeLaw.js",
-    "old": "if (k && mine.has(k)) out.add(k); }",
-    "new": "if (k) out.add(k); }",
+    "old": "    if (k && mine.has(k)) out.add(k);",
+    "new": "    if (k) out.add(k);",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CRAFT-HALL-spent-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "  if (owed === false) return capLine(profession, pay, xp) ||",
-    "new": "  if (owed !== true) return capLine(profession, pay, xp) ||",
+    "old": "  if (owed === false)",
+    "new": "  if (owed !== true)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CRAFT-HALL-owed-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "    return capLine(profession, pay, xp + more) || (owed === true\n",
-    "new": "    return capLine(profession, pay, xp + more) || (owed !== false\n",
+    "old": "      (owed === true",
+    "new": "      (owed !== false",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]

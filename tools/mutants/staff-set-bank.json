@@ -324,8 +324,8 @@
   {
     "name": "STAFF-SET-BANK-the-service-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains',",
-    "new": "'/v1/staff/fix/mend', '/v1/staff/fix/letter', '/v1/staff/gains',",
+    "old": "  '/v1/staff/fix/bank',\n  '/v1/staff/fix/letter',",
+    "new": "  '/v1/staff/fix/letter',",
     "why": "the service routes the bank door",
     "tests": [
       "test/server/staffsetbank.test.js"

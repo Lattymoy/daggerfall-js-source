@@ -1,17 +1,137 @@
 [
-  {"name": "CANOPY-SEE-no-window", "file": "src/render/lowPolyTreesGlsl.js", "old": "if (vFade > 1.5 && uFocus.w > 0.5) {", "new": "if (false) {", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-flats-cut", "file": "src/render/lowPolyTreesGlsl.js", "old": "if (vFade > 1.5 && uFocus.w > 0.5) {", "new": "if (uFocus.w > 0.5) {", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-focus-unasked", "file": "src/render/lowPolyTreesGlsl.js", "old": "if (vFade > 1.5 && uFocus.w > 0.5) {", "new": "if (vFade > 1.5) {", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-keep-none", "file": "src/render/lowPolyTreesGlsl.js", "old": "risen: 30, keep: 0.25 });", "new": "risen: 30, keep: 0 });", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-keep-unread", "file": "src/render/lowPolyTreesGlsl.js", "old": "${f4(1 - TREE_SEE.keep)} * seeOpen", "new": "seeOpen", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-cone-wider", "file": "src/render/lowPolyTreesGlsl.js", "old": "TREE_SEE = Object.freeze({ core: 0.11, rim: 0.06,", "new": "TREE_SEE = Object.freeze({ core: 0.11, rim: 0.2,", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-cone-unread", "file": "src/render/lowPolyTreesGlsl.js", "old": "step(0.0, seeAlong) * (1.0 - smoothstep(", "new": "step(0.0, seeAlong) * (1.0 - 0.0 * smoothstep(", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-rim-hard", "file": "src/render/lowPolyTreesGlsl.js", "old": "smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, ", "new": "step(${f4(TREE_SEE.core + TREE_SEE.rim / 2)}, ", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-traveller-cut", "file": "src/render/lowPolyTreesGlsl.js", "old": "      * (1.0 - smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong))\n", "new": "      * 1.0\n", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-near-end-hard", "file": "src/render/lowPolyTreesGlsl.js", "old": "smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong)", "new": "step(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease / 2)}, seeAlong)", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-eye-s-back-cut", "file": "src/render/lowPolyTreesGlsl.js", "old": "float seeOpen = step(0.0, seeAlong) * ", "new": "float seeOpen = ", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-high-end", "file": "src/render/lowPolyTreesGlsl.js", "old": "if (bayer4(gl_FragCoord.xy) + 0.03125 < ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;", "new": "if (bayer4(gl_FragCoord.xy) + 0.03125 >= 1.0 - ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "CANOPY-SEE-the-well-back", "file": "src/scenes/grahtHost.js", "old": "          const lod = grahtLodOf(Math.hypot(dh, y - ey) / s), b = v * GRAHT_LODS + lod;", "new": "          if (focus && Math.hypot(x - focus[0], z - focus[2]) < R) continue;\n          const lod = grahtLodOf(Math.hypot(dh, y - ey) / s), b = v * GRAHT_LODS + lod;", "tests": ["test/world/graht1_oaks.test.js"]},
-  {"name": "AUDIT-CANOPY-SEE-C2-the-height-unasked", "file": "src/render/lowPolyTreesGlsl.js", "old": "smoothstep(uFocus.y, uFocus.y + ${f4(TREE_SEE.above)}, vBBWorld.y) * ", "new": "", "tests": ["test/render/canopysee.test.js"]},
-  {"name": "AUDIT-CANOPY-SEE-C3-the-rise-unasked", "file": "src/render/lowPolyTreesGlsl.js", "old": " * smoothstep(${f4(TREE_SEE.rise)}, ${f4(TREE_SEE.risen)}, seeD);", "new": ";", "tests": ["test/render/canopysee.test.js"]}
+  {
+    "name": "CANOPY-SEE-no-window",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade > 1.5 && uFocus.w > 0.5) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-flats-cut",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade > 1.5 && uFocus.w > 0.5) {",
+    "new": "  if (uFocus.w > 0.5) {",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-focus-unasked",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade > 1.5 && uFocus.w > 0.5) {",
+    "new": "  if (vFade > 1.5) {",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-keep-none",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  keep: 0.25,",
+    "new": "  keep: 0,",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-keep-unread",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "    if (bayer4(gl_FragCoord.xy) + 0.03125 < ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;",
+    "new": "    if (bayer4(gl_FragCoord.xy) + 0.03125 < seeOpen) discard;",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-cone-wider",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  rim: 0.06,",
+    "new": "  rim: 0.2,",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-cone-unread",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "    float seeOpen = step(0.0, seeAlong) * (1.0 - smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "new": "    float seeOpen = step(0.0, seeAlong) * (1.0 - 0.0 * smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-rim-hard",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "    float seeOpen = step(0.0, seeAlong) * (1.0 - smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "new": "    float seeOpen = step(0.0, seeAlong) * (1.0 - step(${f4(TREE_SEE.core + TREE_SEE.rim / 2)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-traveller-cut",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "      * (1.0 - smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong))",
+    "new": "      * 1.0",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-near-end-hard",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "      * (1.0 - smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong))",
+    "new": "      * (1.0 - step(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease / 2)}, seeAlong))",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-eye-s-back-cut",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "    float seeOpen = step(0.0, seeAlong) * (1.0 - smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "new": "    float seeOpen = (1.0 - smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-high-end",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "    if (bayer4(gl_FragCoord.xy) + 0.03125 < ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;",
+    "new": "    if (bayer4(gl_FragCoord.xy) + 0.03125 >= 1.0 - ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "CANOPY-SEE-the-well-back",
+    "file": "src/scenes/grahtHost.js",
+    "old": "          const lod = grahtLodOf(Math.hypot(dh, y - ey) / s),",
+    "new": "          if (focus && Math.hypot(x - focus[0], z - focus[2]) < R) continue;\n          const lod = grahtLodOf(Math.hypot(dh, y - ey) / s),",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CANOPY-SEE-C2-the-height-unasked",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "      * smoothstep(uFocus.y, uFocus.y + ${f4(TREE_SEE.above)}, vBBWorld.y) * smoothstep(${f4(TREE_SEE.rise)}, ${f4(TREE_SEE.risen)}, seeD);",
+    "new": "      * smoothstep(${f4(TREE_SEE.rise)}, ${f4(TREE_SEE.risen)}, seeD);",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CANOPY-SEE-C3-the-rise-unasked",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "      * smoothstep(uFocus.y, uFocus.y + ${f4(TREE_SEE.above)}, vBBWorld.y) * smoothstep(${f4(TREE_SEE.rise)}, ${f4(TREE_SEE.risen)}, seeD);",
+    "new": "      * smoothstep(uFocus.y, uFocus.y + ${f4(TREE_SEE.above)}, vBBWorld.y);",
+    "tests": [
+      "test/render/canopysee.test.js"
+    ]
+  }
 ]

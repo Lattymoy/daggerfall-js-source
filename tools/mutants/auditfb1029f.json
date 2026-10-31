@@ -56,8 +56,8 @@
   {
     "name": "AUDITFB1029F-A5-rest-a-piece",
     "file": "src/net/decorLaw.js",
-    "old": "!DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null;",
-    "new": "!DECOR_ID_RE.test(raw.id)) return null;",
+    "old": "  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null; // AUDIT FB1029f A5: the home's rest row's id is no piece's",
+    "new": "  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id)) return null; // AUDIT FB1029f A5: the home's rest row's id is no piece's",
     "tests": [
       "test/systems/decor/restguest.test.js"
     ]

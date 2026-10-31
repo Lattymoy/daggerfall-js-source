@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-DRAGON-the-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/dragon/tames',   // AUDIT DRAGON: the tames the service drew, read back\n",
-    "new": "",
+    "old": "  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back\n  '/v1/star/claim', // STAR7: a fallen star's receipt",
+    "new": "  '/v1/star/claim', // STAR7: a fallen star's receipt",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]

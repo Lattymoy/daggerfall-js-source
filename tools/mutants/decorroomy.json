@@ -20,8 +20,8 @@
   {
     "name": "DECORROOMY-no-step",
     "file": "src/net/decorLaw.js",
-    "old": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2 / DECOR_CAP_STEP) * DECOR_CAP_STEP",
-    "new": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2)",
+    "old": "  const n = Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2 / DECOR_CAP_STEP) * DECOR_CAP_STEP;",
+    "new": "  const n = Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]

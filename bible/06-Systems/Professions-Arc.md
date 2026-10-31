@@ -6211,7 +6211,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   Dagon's Breach (`systems/riteChest.js` RITE_HEART, a reagent drawn a heart one time in twelve and a half - WB12d, its
   row the Stores' own since). Both are the very item the pack holds as the forge's input.
 - **Through the loose door, never the market.** No door of the service counts a heart, so it enters the Stores only by a
-  station's put-in (`bagLaw.js:"export const looseOrder = (o) => o === 'work';"` - the forge's shortfall, or the Stores page's
+  station's put-in (`bagLaw.js:"export const looseOrder"` - the forge's shortfall, or the Stores page's
   Put in, LOOT-LOOSE), as `loose`, a station's alone. It is the loose door's as section 50's graded gems are
   (`professionLaw.js:"export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));"`): out of the catalogue, no buy order
   for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
@@ -6581,7 +6581,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 ### 57.1 What stood
 
-- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' }),"`).
+- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' })"`).
   Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);"`).
 
 - Law 7 (section 1) and 41.1 said it outright: a crafted piece is never the best a slot holds. The Legendary band came
@@ -6845,7 +6845,7 @@ migration 0205). The day's Motherlodes pick already scans every pixel confirmed 
 (`server-account/src/motherlodes.js:"export async function confirmedGroundBefore"`); its batch lays that ground as
 tiles and drops yesterday's (`server-account/src/witnessTiles.js:"export function witnessTileStatements"`), under the
 day's mark (`witness_tile_days`), so two racing layings keep one. A day picked before the tiles, the deploy's, is laid
-by the minute's job with a scan of its own (`server-account/src/cron.js:"await layWitnessTiles(ctx, day"`). A
+by the minute's job with a scan of its own (`server-account/src/cron.js:"await layWitnessTiles"`). A
 province, the sea past the Bay and the grid's corner are tiles like the Bay's: no region and no Bay bound.
 
 **The read**: `POST /v1/prof/ground { character, tiles: [[tx, ty]...] }`

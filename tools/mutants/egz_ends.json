@@ -649,8 +649,8 @@
   {
     "name": "EGZM-job-page-of-one",
     "file": "server-account/src/cron.js",
-    "old": "spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
-    "new": "spendLapsedStakes(ctx.db, ctx.nowS, 1), SWEEP_ROWS, ctx.budget)],",
+    "old": "  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
+    "new": "  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, 1), SWEEP_ROWS, ctx.budget)],",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]

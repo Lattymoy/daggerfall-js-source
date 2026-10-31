@@ -135,8 +135,8 @@
   {
     "name": "AUDIT32-L3-shirts-undyed",
     "file": "src/net/recipeLaw.js",
-    "old": "group: garmentGroup(t), cloth: c.key, dyes: true,",
-    "new": "group: garmentGroup(t), cloth: c.key, dyes: ![178, 179, 214, 215].includes(/** @type {number} */ (t)),",
+    "old": "        dyes: true,",
+    "new": "        dyes: ![178, 179, 214, 215].includes(/** @type {number} */ (t)),",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "AUDIT32-S1-law-any-counter-input",
     "file": "src/net/recipeLaw.js",
-    "old": "r.inputs.every((i) => COUNTER_ONLY.includes(i.key))",
-    "new": "r.inputs.some((i) => COUNTER_ONLY.includes(i.key))",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.some((i) => COUNTER_ONLY.includes(i.key));",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "AUDIT32-S1-law-empty-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every(",
-    "new": "export const counterMade = (r) => !!r && r.inputs.every(",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/clothgems_law.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "AUDIT32-S1-law-null-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
-    "new": "export const firstCraftPays = (r, own = false) => (",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !counterMade(r) || own === true;",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/clothgems_law.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "AUDIT32-S1-law-pays-all",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
-    "new": "export const firstCraftPays = (r, own = false) => !!r || (",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !!r || !counterMade(r) || own === true;",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js",

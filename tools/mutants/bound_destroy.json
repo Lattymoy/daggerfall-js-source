@@ -172,7 +172,7 @@
   {
     "name": "BOUND-DESTROY-rid-fresh-on-retry",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  const ask = _discard?.kind === kind && _discard.n === n && _discard.account === me ? _discard : (_discard = { kind, n, rid: saleRid(), account: me });",
+    "old": "  const ask =\n    _discard?.kind === kind && _discard.n === n && _discard.account === me\n      ? _discard\n      : (_discard = { kind, n, rid: saleRid(), account: me });",
     "new": "  const ask = (_discard = { kind, n, rid: saleRid(), account: me });",
     "tests": [
       "test/systems/item/bound_destroy.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "BOUND-DESTROY-restack-skipped",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  learn(r.data);\n  _doors.saved();\n  return { ok: true, text: '' };\n}\nsetCountedDiscard",
-    "new": "  _doors.saved();\n  return { ok: true, text: '' };\n}\nsetCountedDiscard",
+    "old": "  learn(r.data);\n  _doors.saved();",
+    "new": "  _doors.saved();",
     "tests": [
       "test/systems/item/bound_destroy.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "BOUND-DESTROY-service-guard-gone",
     "file": "server-account/src/festival.js",
-    "old": "      WHERE (SELECT ${col} FROM players WHERE id = ?1) >= ?4 ON CONFLICT DO NOTHING RETURNING rid`)",
-    "new": "      WHERE 1 ON CONFLICT DO NOTHING RETURNING rid`)",
+    "old": "      WHERE (SELECT ${col} FROM players WHERE id = ?1) >= ?4 ON CONFLICT DO NOTHING RETURNING rid`,",
+    "new": "      WHERE 1 ON CONFLICT DO NOTHING RETURNING rid`,",
     "tests": [
       "test/server/bound_destroy_service.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "BOUND-DESTROY-service-count-twice",
     "file": "server-account/src/festival.js",
-    "old": "SET ${col} = ${col} - ?2 WHERE id = ?1 AND ${col} >= ?2 AND changes() > 0`)",
-    "new": "SET ${col} = ${col} - ?2 WHERE id = ?1 AND ${col} >= ?2`)",
+    "old": "    db\n      .prepare(`UPDATE players SET ${col} = ${col} - ?2 WHERE id = ?1 AND ${col} >= ?2 AND changes() > 0`)\n      .bind(player.id, n),",
+    "new": "    db.prepare(`UPDATE players SET ${col} = ${col} - ?2 WHERE id = ?1 AND ${col} >= ?2`).bind(player.id, n),",
     "tests": [
       "test/server/bound_destroy_service.test.js"
     ],
@@ -372,7 +372,7 @@
   {
     "name": "BOUND-DESTROY-service-kind-proto",
     "file": "server-account/src/festival.js",
-    "old": "  const col = Object.hasOwn(DISCARD_COLUMNS, body?.kind) ? DISCARD_COLUMNS[/** @type {'cakes'|'bowls'} */ (body.kind)] : null;",
+    "old": "  const col = Object.hasOwn(DISCARD_COLUMNS, body?.kind)\n    ? DISCARD_COLUMNS[/** @type {'cakes'|'bowls'} */ (body.kind)]\n    : null;",
     "new": "  const col = DISCARD_COLUMNS[body?.kind] ?? null;",
     "tests": [
       "test/server/bound_destroy_service.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "BOUND-DESTROY-service-guest",
     "file": "server-account/src/festival.js",
-    "old": "return { error: 'rid' };\n  if (!player?.handle) return { error: 'guest' };\n  const { db, nowS } = ctx;\n  const had",
-    "new": "return { error: 'rid' };\n  if (false) return { error: 'guest' };\n  const { db, nowS } = ctx;\n  const had",
+    "old": "  if (typeof rid !== 'string' || !SALE_RID_RE.test(rid)) return { error: 'rid' };\n  if (!player?.handle) return { error: 'guest' };",
+    "new": "  if (typeof rid !== 'string' || !SALE_RID_RE.test(rid)) return { error: 'rid' };\n  if (false) return { error: 'guest' };",
     "tests": [
       "test/server/bound_destroy_service.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "BOUND-DESTROY-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/festival/discard',   // BOUND-DESTROY",
-    "new": "  // BOUND-DESTROY",
+    "old": "  '/v1/festival/discard', // BOUND-DESTROY: the account's cakes or bowls let go (festival.js discardFestival)",
+    "new": "  // BOUND-DESTROY: the account's cakes or bowls let go (festival.js discardFestival)",
     "tests": [
       "test/server/bound_destroy_service.test.js"
     ],

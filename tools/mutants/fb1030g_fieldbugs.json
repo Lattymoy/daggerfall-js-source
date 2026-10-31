@@ -2,8 +2,8 @@
   {
     "name": "WALL-SHAFT-swept-ignored",
     "file": "src/ai/cover.js",
-    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
-    "new": "  if (false) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
+    "new": "  if (false) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WALL-SHAFT-the-farther-taken",
     "file": "src/ai/cover.js",
-    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen);",
-    "new": "  if (swept) return coverStep(Math.max(cov, wall), Infinity, reach, radius, stepLen);",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
+    "new": "  if (swept) return coverStep(Math.max(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "AUDIT-WALL-SHAFT-W1-no-sight-check",
     "file": "src/systems/spellcast.js",
-    "old": "  return d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d);",
+    "old": "  return (\n    d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d)\n  );",
     "new": "  return d <= radius + bodyRadius;",
     "tests": [
       "test/combat/wallshaft.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-WALL-SHAFT-W1-to-the-hit-surface",
     "file": "src/systems/spellcast.js",
-    "old": "[feet[0], qy, feet[2]], d);",
-    "new": "[feet[0], qy, feet[2]], d - bodyRadius);",
+    "old": "    d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d)",
+    "new": "    d <= radius + bodyRadius &&\n    !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d - bodyRadius)",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]

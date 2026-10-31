@@ -445,8 +445,8 @@
   {
     "name": "CRAFT4-svc-routes",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/temper', '/v1/prof/reforge',\n",
-    "new": "",
+    "old": "  '/v1/prof/temper',\n  '/v1/prof/reforge',\n  // MASTER-ART: a Master's work (masterWork.js) - the same doors",
+    "new": "  // MASTER-ART: a Master's work (masterWork.js) - the same doors",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "CRAFT4-found-quality-unsaid",
     "file": "src/net/recipeLaw.js",
-    "old": "return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];",
-    "new": "return [];",
+    "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance))\n    return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK\n      ? [QUALITY_NAMES[item.quality]]\n      : [];",
+    "new": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return [];",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]

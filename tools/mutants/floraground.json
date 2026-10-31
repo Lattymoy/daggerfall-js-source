@@ -144,8 +144,8 @@
   {
     "name": "FLORA-GROUND-the-slot-unwritten",
     "file": "src/render/farTrees.js",
-    "old": "      u[k * TREE_STRIDE + 14] = si; u[k * TREE_STRIDE + 15] = sj;\n",
-    "new": "",
+    "old": "      u[k * TREE_STRIDE + 14] = si;\n      u[k * TREE_STRIDE + 15] = sj;\n      k++;",
+    "new": "      k++;",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "FLORA-GROUND-the-slot-read-off-the-wrong-bytes",
     "file": "src/render/farTrees.js",
-    "old": "gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 14);",
-    "new": "gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 12);",
+    "old": "    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 14); // FLORA-GROUND: its pixel's slot",
+    "new": "    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 12); // FLORA-GROUND: its pixel's slot",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "FLORA-GROUND-no-drop",
     "file": "src/render/farTrees.js",
-    "old": "  if (slot >= 0 && ((uBuilt[slot >> 5] >> (slot & 31)) & 1) != 0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // FLORA-GROUND: its pixel the stream's now\n",
-    "new": "",
+    "old": "  if (slot >= 0 && ((uBuilt[slot >> 5] >> (slot & 31)) & 1) != 0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // FLORA-GROUND: its pixel the stream's now\n  vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);   // the view's own eye, in the scene",
+    "new": "  vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);   // the view's own eye, in the scene",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "FLORA-GROUND-the-bits-not-rewritten",
     "file": "src/render/farTrees.js",
-    "old": "    this._builtNow(built);   // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once\n",
-    "new": "",
+    "old": "    this._builtNow(built); // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once\n    this._groundNow(); // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it",
+    "new": "    this._groundNow(); // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "FLORA-GROUND-the-key-blind-to-the-map",
     "file": "src/render/farTrees.js",
-    "old": "const d = this.drawn, key = d ? `${d.baseX},${d.baseY},${built ? (built.changes ?? built.size) : -1}` : '';",
-    "new": "const d = this.drawn, key = d ? `${d.baseX},${d.baseY}` : '';",
+    "old": "      key = d ? `${d.baseX},${d.baseY},${built ? (built.changes ?? built.size) : -1}` : '';",
+    "new": "      key = d ? `${d.baseX},${d.baseY}` : '';",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "FLORA-GROUND-the-bits-not-uploaded",
     "file": "src/render/farTrees.js",
-    "old": "    gl.uniform1iv(u.uBuilt, this.builtBits);   // FLORA-GROUND: the built pixels' trees stood down\n",
-    "new": "",
+    "old": "    gl.uniform1iv(u.uBuilt, this.builtBits); // FLORA-GROUND: the built pixels' trees stood down\n    gl.uniform4f(",
+    "new": "    gl.uniform4f(",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "FLORA-GROUND-the-ground-unread",
     "file": "src/render/farTrees.js",
-    "old": "    this._groundNow();   // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it\n",
-    "new": "",
+    "old": "    this._groundNow(); // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it\n    const key = `${curX},${curY},${radius}`;",
+    "new": "    const key = `${curX},${curY},${radius}`;",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "FLORA-GROUND-the-kept-kept",
     "file": "src/render/farTrees.js",
-    "old": "    this._groundEpoch = epoch;\n    this.kept.clear();\n",
-    "new": "    this._groundEpoch = epoch;\n",
+    "old": "    this.kept.clear();\n    this._gen = (this._gen ?? 0) + 1;",
+    "new": "    this._gen = (this._gen ?? 0) + 1;",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-graht-frame-blind-to-its-lift",
     "file": "src/scenes/grahtHost.js",
-    "old": "const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1];",
-    "new": "const y0 = tr[i + 1];",
+    "old": "          const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1]; // its root as drawn - its place (its bodies, its cover) the walk ground's",
+    "new": "          const y0 = tr[i + 1]; // its root as drawn - its place (its bodies, its cover) the walk ground's",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]

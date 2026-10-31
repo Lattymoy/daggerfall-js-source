@@ -222,8 +222,8 @@
   {
     "name": "PROF4-staff-two-planks",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Staff' })),",
-    "new": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 2]], pattern: 'Staff' })),",
+    "old": "      inputs: [[plank(w.id), 3]],",
+    "new": "      inputs: [[plank(w.id), 2]],",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "PROF4-shortbow-no-resin",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3], [RESIN.key, 1]], pattern: 'Short Bow' })),",
-    "new": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Short Bow' })),",
+    "old": "      inputs: [\n        [plank(w.id), 3],\n        [RESIN.key, 1],\n      ],",
+    "new": "      inputs: [[plank(w.id), 3]],",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "PROF4-arrows-three-twigs",
     "file": "src/net/recipeLaw.js",
-    "old": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 4]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
-    "new": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 3]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
+    "old": "      [TWIGS_NORTH, 4],",
+    "new": "      [TWIGS_NORTH, 3],",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "PROF4-small-table-four",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 3]], pattern: 'Small Table' })),",
-    "new": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 4]], pattern: 'Small Table' })),",
+    "old": "      inputs: [[plank(w), 3]],",
+    "new": "      inputs: [[plank(w), 4]],",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js",
@@ -261,8 +261,8 @@
   {
     "name": "PROF4-bed-one-linen",
     "file": "src/net/recipeLaw.js",
-    "old": "inputs: [[plank(w), 8], [LINEN.key, 2]] })),",
-    "new": "inputs: [[plank(w), 8], [LINEN.key, 1]] })),",
+    "old": "        [LINEN.key, 2],",
+    "new": "        [LINEN.key, 1],",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -271,8 +271,8 @@
   {
     "name": "PROF4-bed-double-pine",
     "file": "src/net/recipeLaw.js",
-    "old": "['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
-    "new": "['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
+    "old": "  ['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
+    "new": "  ['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "PROF4-mahogany-elven",
     "file": "src/net/recipeLaw.js",
-    "old": "teak: 3, mahogany: 5, ironwood: 6, ghostwood: 7 });",
-    "new": "teak: 3, mahogany: 4, ironwood: 6, ghostwood: 7 });",
+    "old": "  mahogany: 5,",
+    "new": "  mahogany: 4,",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "PROF4-joiner-floor",
     "file": "src/net/recipeLaw.js",
-    "old": "Math.ceil(i.n / 2) : i.n }));",
-    "new": "Math.floor(i.n / 2) : i.n }));",
+    "old": "    n: joiner && r.family === 'furniture' && i.key.startsWith('plank:') ? Math.ceil(i.n / 2) : i.n,",
+    "new": "    n: joiner && r.family === 'furniture' && i.key.startsWith('plank:') ? Math.floor(i.n / 2) : i.n,",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "PROF4-heartwood-no-plank-taken",
     "file": "src/net/recipeLaw.js",
-    "old": "    p.n -= 1;\n",
-    "new": "    p.n -= 0;\n",
+    "old": "    p.n -= 1;",
+    "new": "    p.n -= 0;",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -319,8 +319,8 @@
   {
     "name": "PROF4-bowyer-staves",
     "file": "src/net/recipeLaw.js",
-    "old": "(spec50 === 'bowyer' && r.family === 'bows') || (spec50 === 'tailor'",
-    "new": "(spec50 === 'bowyer' && r.family === 'staves') || (spec50 === 'tailor'",
+    "old": "    (spec50 === 'bowyer' && r.family === 'bows') ||",
+    "new": "    (spec50 === 'bowyer' && r.family === 'staves') ||",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "PROF4-arrows-take-quality",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';",
-    "new": "r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish';",
+    "old": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "new": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "PROF4-joiner-marks",
     "file": "src/net/recipeLaw.js",
-    "old": "(r?.family === 'furniture' && spec100 === 'master-joiner');",
-    "new": "(r?.family === 'furniture' && spec100 === 'joiner');",
+    "old": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');",
+    "new": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'joiner');",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -359,7 +359,7 @@
   {
     "name": "PROF4-ram-kit-made",
     "file": "src/net/recipeLaw.js",
-    "old": "export const recipeOpen = (r, rank, specs = null) => !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
+    "old": "export const recipeOpen = (r, rank, specs = null) =>\n  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
     "new": "export const recipeOpen = (r, rank, specs = null) => !!r && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
     "tests": [
       "test/net/prof4_law.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "PROF4-plane-wider",
     "file": "src/net/recipeLaw.js",
-    "old": "export const PLANE_ACT = Object.freeze({ tol: 0.18,",
-    "new": "export const PLANE_ACT = Object.freeze({ tol: 0.25,",
+    "old": "  tol: 0.18,",
+    "new": "  tol: 0.25,",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -389,8 +389,8 @@
   {
     "name": "PROF4-plane-no-master",
     "file": "src/net/recipeLaw.js",
-    "old": "PLANE_ACT.tol * band * (1 + PLANE_ACT.masterWiden * Math.max(0, Math.min(100, rank)) / 100);",
-    "new": "PLANE_ACT.tol * band;",
+    "old": "export const planeTolerance = (rank, band = 1) =>\n  PLANE_ACT.tol * band * (1 + (PLANE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);",
+    "new": "export const planeTolerance = (rank, band = 1) => PLANE_ACT.tol * band;",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -399,8 +399,8 @@
   {
     "name": "PROF4-decor-mark-alone",
     "file": "src/net/decorLaw.js",
-    "old": "...(pv && mk ? { mk } : {}) };",
-    "new": "...(mk ? { mk } : {}) };",
+    "old": "  return { t, g, m, v, a, p, ...(pv ? { pv } : {}), ...(pv && mk ? { mk } : {}) };",
+    "new": "  return { t, g, m, v, a, p, ...(pv ? { pv } : {}), ...(mk ? { mk } : {}) };",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -815,8 +815,8 @@
   {
     "name": "PROF4-no-workbench-station",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "old": "  'workbench',\n  'cooking',\n  'music',",
+    "new": "  'cooking',",
     "tests": [
       "test/ui/homestations.test.js",
       "test/net/prof2_client.test.js",

@@ -50,7 +50,7 @@ keep a heal or a count.
 A cast carries its spell's element (`el`, DFU's 0-4: fire, frost, poison, shock, magic;
 `siegeCombat.js:"export const pvpSpellElement = (sp) =>"`). The struck player reports, per element, what its Resist
 effects let through, then its own saving throw - race, Willpower and gear, as a monster's spell meets it - summed over
-the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept("`, the report's
+the dice (`spellcast.js:"export function savingLands"`; `pvpGuard.js:"export function pvpWardKept("`, the report's
 `w`). The caster's stand-in rolls no save. The referee holds each share to at least 15 - the owner's "85% resist", immunity included - and
 takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCast("`).
 

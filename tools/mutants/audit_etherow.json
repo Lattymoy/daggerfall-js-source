@@ -193,8 +193,8 @@
   {
     "name": "AEOW-T-chaser-z-unread",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE));",
+    "old": "  Number.isInteger(x) &&\n  Number.isInteger(z) &&\n  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&\n  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "AEOW-T-chaser-z-any-number",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  Number.isInteger(x) &&\n  Number.isInteger(z) &&\n  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&\n  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  Number.isInteger(x) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "AEOW-T-chaser-x-trunc",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.trunc(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(Math.floor(x / PIXEL_NATIVE)) &&",
+    "new": "  worldPixelOk(Math.trunc(x / PIXEL_NATIVE)) &&",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "AEOW-T-chaser-z-500",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(500 - Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  worldPixelOk(500 - Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "AEOW-T-chaser-z-row-unflipped",
     "file": "src/systems/travel/travelBands.js",
-    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
-    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(Math.floor(z / PIXEL_NATIVE));",
+    "old": "  worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "  worldPixelOk(Math.floor(z / PIXEL_NATIVE));",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],

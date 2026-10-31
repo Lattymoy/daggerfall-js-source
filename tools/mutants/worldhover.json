@@ -415,8 +415,8 @@
   {
     "name": "WORLD-HOVER-a-body-answers-nothing-it-holds",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
-    "new": "  if (!entry || entry.corpseDisabled) return null;\n  return null;",
+    "old": "  return entry.entity?.items ?? null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "WORLD-HOVER-a-disabled-body-is-still-listed",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
-    "new": "  if (!entry) return null;\n  return entry.entity?.items ?? null;",
+    "old": "  if (!entry || entry.corpseDisabled) return null;",
+    "new": "  if (!entry) return null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

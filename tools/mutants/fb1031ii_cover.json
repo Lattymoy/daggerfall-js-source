@@ -1,26 +1,219 @@
 [
-  {"name": "FB1031II-K1-the-end-met-at-its-side", "file": "src/ai/cover.js", "old": "  if (startIn || endIn) {", "new": "  if (startIn) {", "tests": ["test/characters/fb1031ii_cover.test.js", "test/characters/fb1031_foes.test.js"]},
-  {"name": "FB1031II-K1-the-middle-beside-the-line", "file": "src/ai/cover.js", "old": " && mx * mx + mz * mz <= rr)) return Infinity;", "new": ")) return Infinity;", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K1-a-hold-s-grace-unread", "file": "src/ai/cover.js", "old": ") / a - mid > COVER_MIDDLE_GRACE)) return Infinity;", "new": ") / a - mid > 0)) return Infinity;", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K1-met-at-the-middle", "file": "src/ai/cover.js", "old": "const at = endIn ? Math.max(0, mid - COVER_MIDDLE_GRACE) : mid;", "new": "const at = mid;", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K1-met-where-it-enters-only", "file": "src/ai/cover.js", "old": "    if (at <= maxDist) best = at;   // from outside: where it enters, if sooner\n", "new": "", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K3-the-push-alone-dropped", "file": "src/characters/foeSpacing.js", "old": " || (side !== 0 && nudge(ai, nx * push, nz * push, R, collider))", "new": "", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-stand-ins-unread", "file": "src/systems/spellcast.js", "old": "    for (const b of standIns ?? []) if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);\n", "new": "", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-a-struck-stand-in-named", "file": "src/systems/spellcast.js", "old": "b.ai?.feet && !struck(b) && !(m.technique", "new": "b.ai?.feet && !(m.technique", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-opponent-named-for-a-technique", "file": "src/systems/spellcast.js", "old": " && !(m.technique && b.rival != null)) out.push(b.ai);", "new": ") out.push(b.ai);", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-host-unwired", "file": "src/scenes/dungeonContext.js", "old": "playerHeight, m.fromPlayer ? [gateBossBody(), arenaRivalBody(), ...gateCrystalBodies(), ...gateHostBodies()] : null));", "new": "playerHeight, null));", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-prefabs-unnamed-for-mine", "file": "src/scenes/hostMagic.js", "old": ", ...(m.dragon ? [] : corpsePrefabBodies(foes()))], null, playerHeight);", "new": "], null, playerHeight);", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-prefabs-unnamed-for-the-drawn", "file": "src/scenes/hostMagic.js", "old": "q.height)), ...corpsePrefabBodies(foes())], playerFeet, playerHeight);", "new": "q.height))], playerFeet, playerHeight);", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K4-the-prefab-s-foot-at-its-centre", "file": "src/scenes/corpseMarker.js", "old": "feet: [s.center[0], s.center[1] - s.radius, s.center[2]]", "new": "feet: [s.center[0], s.center[1], s.center[2]]", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-a-technique-s-player-named", "file": "src/combat/arrowFlight.js", "old": "(sparedByPlayer(t.ref) || (m.technique && (playerBody(t.ref) ||", "new": "(sparedByPlayer(t.ref) || (m.technique && (false ||", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-one-the-technique-struck-named", "file": "src/combat/arrowFlight.js", "old": " || m.technique.struck?.includes(t.ref))))) continue;", "new": ")))) continue;", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-the-drawn-list-s-peers-dropped", "file": "src/scenes/hostMagic.js", "old": "...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height)), ...corpsePrefabBodies", "new": "...corpsePrefabBodies", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-the-caster-in-its-own-drawn-list", "file": "src/scenes/hostMagic.js", "old": "q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person", "new": "q && Array.isArray(q.feet)).map((q) => person", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-a-shipmate-s-bolt-names-me", "file": "src/scenes/hostMagic.js", "old": "isShipmate(m.casterFoe) ? null : playerFeet", "new": "playerFeet", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K5-the-dungeon-s-struck-filter", "file": "src/systems/spellcast.js", "old": "f.companion == null && !struck(f)", "new": "f.companion == null", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K6-the-aspect-unread", "file": "src/systems/travel/travelBands.js", "old": " * (aspect > 0 ? aspect : 1))", "new": " * 1)", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K6-the-spread-unread", "file": "src/systems/travel/travelBands.js", "old": "Math.max(fovDegrees + 2, half + spread + 2)", "new": "Math.max(fovDegrees + 2, half + 2)", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K6-the-jitter-unallowed", "file": "src/systems/travel/travelBands.js", "old": "half + spread + 2), r = ", "new": "half + spread), r = ", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K6-the-host-hands-no-aspect", "file": "src/scenes/world.js", "old": "!!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, ", "new": "!!travelView?.active, 1, Infinity, 0, ", "tests": ["test/characters/fb1031ii_cover.test.js"]},
-  {"name": "FB1031II-K6-the-host-hands-no-near", "file": "src/scenes/world.js", "old": "canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(", "new": "canvas.clientHeight), Infinity, PACK_SPACING, Math.hypot(", "tests": ["test/characters/fb1031ii_cover.test.js"]}
+  {
+    "name": "FB1031II-K1-the-end-met-at-its-side",
+    "file": "src/ai/cover.js",
+    "old": "  if (startIn || endIn) {",
+    "new": "  if (startIn) {",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js",
+      "test/characters/fb1031_foes.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K1-the-middle-beside-the-line",
+    "file": "src/ai/cover.js",
+    "old": "    if (!((!startIn || mid > COVER_MIDDLE_GRACE) && mid >= 0 && y >= cy && y <= top && mx * mx + mz * mz <= rr))\n      return Infinity;",
+    "new": "    if (!((!startIn || mid > COVER_MIDDLE_GRACE) && mid >= 0 && y >= cy && y <= top)) return Infinity;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K1-a-hold-s-grace-unread",
+    "file": "src/ai/cover.js",
+    "old": "      if (!(((hx - ox) * d[0] + (hz - oz) * d[2]) / a - mid > COVER_MIDDLE_GRACE)) return Infinity;",
+    "new": "      if (!(((hx - ox) * d[0] + (hz - oz) * d[2]) / a - mid > 0)) return Infinity;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K1-met-at-the-middle",
+    "file": "src/ai/cover.js",
+    "old": "    const at = endIn ? Math.max(0, mid - COVER_MIDDLE_GRACE) : mid;",
+    "new": "    const at = mid;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K1-met-where-it-enters-only",
+    "file": "src/ai/cover.js",
+    "old": "    if (at <= maxDist) best = at; // from outside: where it enters, if sooner\n  }",
+    "new": "  }",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K3-the-push-alone-dropped",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (\n        nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider) ||\n        (side !== 0 && nudge(ai, nx * push, nz * push, R, collider))\n      )\n        moved++; // to its edge in one frame",
+    "new": "      if (nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider)) moved++; // to its edge in one frame",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-stand-ins-unread",
+    "file": "src/systems/spellcast.js",
+    "old": "    for (const b of standIns ?? [])\n      if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);\n    return out;",
+    "new": "    return out;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-a-struck-stand-in-named",
+    "file": "src/systems/spellcast.js",
+    "old": "    for (const b of standIns ?? [])\n      if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);",
+    "new": "    for (const b of standIns ?? []) if (b && !b.dead && b.ai?.feet && !(m.technique && b.rival != null)) out.push(b.ai);",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-opponent-named-for-a-technique",
+    "file": "src/systems/spellcast.js",
+    "old": "    for (const b of standIns ?? [])\n      if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);",
+    "new": "    for (const b of standIns ?? []) if (b && !b.dead && b.ai?.feet && !struck(b)) out.push(b.ai);",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-host-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "playerHeight, m.fromPlayer ? [gateBossBody(), arenaRivalBody(), ...gateCrystalBodies(), ...gateHostBodies()] : null));",
+    "new": "playerHeight, null));",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-prefabs-unnamed-for-mine",
+    "file": "src/scenes/hostMagic.js",
+    "old": ", ...(m.dragon ? [] : corpsePrefabBodies(foes()))], null, playerHeight);",
+    "new": "], null, playerHeight);",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-prefabs-unnamed-for-the-drawn",
+    "file": "src/scenes/hostMagic.js",
+    "old": "q.height)), ...corpsePrefabBodies(foes())], playerFeet, playerHeight);",
+    "new": "q.height))], playerFeet, playerHeight);",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K4-the-prefab-s-foot-at-its-centre",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "    if (s)\n      out.push({\n        ai: { feet: [s.center[0], s.center[1] - s.radius, s.center[2]], height: 2 * s.radius, radius: s.radius },\n      });",
+    "new": "    if (s) out.push({ ai: { feet: [s.center[0], s.center[1], s.center[2]], height: 2 * s.radius, radius: s.radius } });",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-a-technique-s-player-named",
+    "file": "src/combat/arrowFlight.js",
+    "old": "(sparedByPlayer(t.ref) || (m.technique && (playerBody(t.ref) ||",
+    "new": "(sparedByPlayer(t.ref) || (m.technique && (false ||",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-one-the-technique-struck-named",
+    "file": "src/combat/arrowFlight.js",
+    "old": " || m.technique.struck?.includes(t.ref))))) continue;",
+    "new": ")))) continue;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-the-drawn-list-s-peers-dropped",
+    "file": "src/scenes/hostMagic.js",
+    "old": "...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height)), ...corpsePrefabBodies",
+    "new": "...corpsePrefabBodies",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-the-caster-in-its-own-drawn-list",
+    "file": "src/scenes/hostMagic.js",
+    "old": "q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person",
+    "new": "q && Array.isArray(q.feet)).map((q) => person",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-a-shipmate-s-bolt-names-me",
+    "file": "src/scenes/hostMagic.js",
+    "old": "isShipmate(m.casterFoe) ? null : playerFeet",
+    "new": "playerFeet",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K5-the-dungeon-s-struck-filter",
+    "file": "src/systems/spellcast.js",
+    "old": "      foes?.filter((f) => f.companion == null && !struck(f)),",
+    "new": "      foes?.filter((f) => f.companion == null),",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K6-the-aspect-unread",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "  const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * (aspect > 0 ? aspect : 1)) * 180) / Math.PI;",
+    "new": "  const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * 1) * 180) / Math.PI;",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K6-the-spread-unread",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "  const base = Math.max(fovDegrees + 2, half + spread + 2),",
+    "new": "  const base = Math.max(fovDegrees + 2, half + 2),",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K6-the-jitter-unallowed",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "  const base = Math.max(fovDegrees + 2, half + spread + 2),",
+    "new": "  const base = Math.max(fovDegrees + 2, half + spread),",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K6-the-host-hands-no-aspect",
+    "file": "src/scenes/world.js",
+    "old": "!!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, ",
+    "new": "!!travelView?.active, 1, Infinity, 0, ",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-K6-the-host-hands-no-near",
+    "file": "src/scenes/world.js",
+    "old": "canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(",
+    "new": "canvas.clientHeight), Infinity, PACK_SPACING, Math.hypot(",
+    "tests": [
+      "test/characters/fb1031ii_cover.test.js"
+    ]
+  }
 ]

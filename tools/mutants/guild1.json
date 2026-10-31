@@ -706,8 +706,8 @@
   {
     "name": "GUILD1-a-route-misspelt",
     "file": "server-account/src/service.js",
-    "old": "'/v1/guilds/withdraw', '/v1/guilds/handover',",
-    "new": "'/v1/guilds/withdraw', '/v1/guilds/hand-over',",
+    "old": "  '/v1/guilds/handover',",
+    "new": "  '/v1/guilds/hand-over',",
     "tests": [
       "test/server/guild1.test.js"
     ]

@@ -56,7 +56,7 @@
   {
     "name": "CRAFT3-law-masterwork-unscoped",
     "file": "src/net/recipeLaw.js",
-    "old": "export const masterworkSpec = (spec100, r = null) => (r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright');",
+    "old": "export const masterworkSpec = (spec100, r = null) =>\n  r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright';",
     "new": "export const masterworkSpec = (spec100, r = null) => spec100 === 'masterwright' || spec100 === MASTER_JEWELLER;",
     "tests": [
       "test/net/craft3_five.test.js"

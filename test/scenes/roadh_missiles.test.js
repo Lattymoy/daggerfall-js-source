@@ -367,7 +367,7 @@ test('ROAD-H H2: DoAreaOfEffect is an OverlapSphere against CAPSULES - the rim i
       `missileHitsCapsule is sphereOverlapsCapsule at the missile radius (y=${y})`);
   }
   assert.match(src('systems/spellcast.js'),
-    /export function missileHitsCapsule\(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS, from = null\) \{\n\s*return from \? sweptSphereOverlapsCapsule\(from, pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\)\n\s*: sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\);\n\}/,
+    /export function missileHitsCapsule\(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS, from = null\) \{\n\s*return from\n\s*\? sweptSphereOverlapsCapsule\(from, pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\)\n\s*: sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\);\n\s*\}/,
     'and it is a call, not a second copy - carrying the measured body through (AUDIT 65 CV-2)');
 });
 

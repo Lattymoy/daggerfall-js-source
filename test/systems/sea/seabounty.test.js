@@ -373,7 +373,7 @@ test('SEA-BOUNTY the seams by source: the relay passes the room and signs it wit
   assert.match(idx, /'\/v1\/sea\/bounty\/board': async \(\) => seaBountyBoard\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/post': async \(\) => seaBountyPost\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/collect': async \(\) => seaBountyCollect\(sctx, who\.player, body\),/);
-  assert.match(src('server-account/src/service.js'), /'\/v1\/sea\/bounty\/board', '\/v1\/sea\/bounty\/post', '\/v1\/sea\/bounty\/collect',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/sea\/bounty\/board',\n\s*'\/v1\/sea\/bounty\/post',\n\s*'\/v1\/sea\/bounty\/collect',/);
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/sea\/seaBountyLaw\.js"/);
   const w = src('src/scenes/world.js');
   assert.match(w, /session: realmSession, checkpoint: onlineCheckpoint, wallet: realmWallet, region: _questRegionIndex,/);

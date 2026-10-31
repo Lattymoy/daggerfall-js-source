@@ -200,8 +200,8 @@
   {
     "name": "WD3-FIELD-NO-CLIMATE",
     "file": "src/world/rmbFlats.js",
-    "old": "  if (natureArchive >= NATURE_ARCHIVE_MIN && natureArchive <= NATURE_ARCHIVE_MAX) {\n    for (const obj of rmb.misc3dObjectRecords ?? []) {",
-    "new": "  if (true) {\n    for (const obj of rmb.misc3dObjectRecords ?? []) {",
+    "old": "  if (natureArchive >= NATURE_ARCHIVE_MIN && natureArchive <= NATURE_ARCHIVE_MAX) {",
+    "new": "  if (true) {",
     "tests": [
       "test/world/wd3_standins.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WD3-BASE-NAME-THREE-DIGITS",
     "file": "src/net/decorLaw.js",
-    "old": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:",
-    "new": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2})|intdoor:",
+    "old": "  /^(?:m(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
+    "new": "  /^(?:m(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2})|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
     "tests": [
       "test/server/basehide.test.js"
     ],

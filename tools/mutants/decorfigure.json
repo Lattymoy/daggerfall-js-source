@@ -22,8 +22,8 @@
   {
     "name": "DECOR-FIGURE-drawn-at-record",
     "file": "src/net/decorLaw.js",
-    "old": "export const decorDrawnScale = (piece) => (decorIsFigure(piece) ? 1 : piece?.scale ?? 1);",
-    "new": "export const decorDrawnScale = (piece) => (piece?.scale ?? 1);",
+    "old": "export const decorDrawnScale = (piece) => (decorIsFigure(piece) ? 1 : (piece?.scale ?? 1));",
+    "new": "export const decorDrawnScale = (piece) => piece?.scale ?? 1;",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DECOR-FIGURE-step-taken",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (figure) return;\n",
-    "new": "",
+    "old": "      if (figure) return;\n      const next = up ? s.scale * DECOR_SCALE_STEP : s.scale / DECOR_SCALE_STEP;",
+    "new": "      const next = up ? s.scale * DECOR_SCALE_STEP : s.scale / DECOR_SCALE_STEP;",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "HOME-VOTE-II-C1-item-a-way-past",
     "file": "src/net/decorLaw.js",
-    "old": "    if (isNpcFlat(flat[0])) return null;\n",
-    "new": "",
+    "old": "    if (isNpcFlat(flat[0])) return null;\n    const own = decorItemOf(item);",
+    "new": "    const own = decorItemOf(item);",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],

@@ -46,7 +46,7 @@ import { EL_GLSL } from './enhancedLighting.js';
 import { BAYER_MEAN } from './orderedDither.js';
 import { classicLook } from './classicShadowLane.js';
 import { pipelinePictures } from './farFlora.js';
-import { bandTreeArt } from '../world/terrain/floraCover.js';   // TESA-LANDS: a band tree of a zone's own archive
+import { bandTreeArt } from '../world/terrain/floraCover.js'; // TESA-LANDS: a band tree of a zone's own archive
 
 /** HORIZON-TREES: the samples of a tree's sight line read over the middle ring's ground (the eye's end and the tree's not). */
 export const HORIZON_STEPS = 24;
@@ -67,14 +67,25 @@ export const GROUND_SLACK = 1.5;
 export function skylineAt(eye, foot, ground, built = () => false) {
   let cut = -1e9;
   if (!ground?.heights) return cut;
-  const { heights, side, cell, x0, z0 } = ground, dx = foot[0] - eye[0], dz = foot[2] - eye[2];
+  const { heights, side, cell, x0, z0 } = ground,
+    dx = foot[0] - eye[0],
+    dz = foot[2] - eye[2];
   for (let k = 1; k < HORIZON_STEPS; k++) {
-    const t = k / HORIZON_STEPS, x = eye[0] + dx * t, z = eye[2] + dz * t;
+    const t = k / HORIZON_STEPS,
+      x = eye[0] + dx * t,
+      z = eye[2] + dz * t;
     if (built(x, z)) continue;
-    const gx = (x - x0) / cell, gz = (z - z0) / cell;
+    const gx = (x - x0) / cell,
+      gz = (z - z0) / cell;
     if (gx < 0 || gz < 0 || gx > side - 1 || gz > side - 1) continue;
-    const ix = Math.min(side - 2, Math.floor(gx)), iz = Math.min(side - 2, Math.floor(gz)), wx = gx - ix, wz = gz - iz, v = iz * side + ix;
-    const h = (heights[v] * (1 - wx) + heights[v + 1] * wx) * (1 - wz) + (heights[v + side] * (1 - wx) + heights[v + side + 1] * wx) * wz;
+    const ix = Math.min(side - 2, Math.floor(gx)),
+      iz = Math.min(side - 2, Math.floor(gz)),
+      wx = gx - ix,
+      wz = gz - iz,
+      v = iz * side + ix;
+    const h =
+      (heights[v] * (1 - wx) + heights[v + 1] * wx) * (1 - wz) +
+      (heights[v + side] * (1 - wx) + heights[v + side + 1] * wx) * wz;
     cut = Math.max(cut, eye[1] + (h - GROUND_SLACK - eye[1]) / t);
   }
   return cut;
@@ -115,7 +126,8 @@ export const BAND_NO_SLOT = 255;
 /** FLORA-GROUND: pixel (px, py)'s slot about base (baseX, baseY) - [i east, j south], or BAND_NO_SLOT each past the
  *  reach. Pure. */
 export function bandSlot(px, py, baseX, baseY) {
-  const i = px - baseX + BAND_REACH, j = baseY - py + BAND_REACH;
+  const i = px - baseX + BAND_REACH,
+    j = baseY - py + BAND_REACH;
   return i >= 0 && j >= 0 && i < BAND_SIDE && j < BAND_SIDE ? [i, j] : [BAND_NO_SLOT, BAND_NO_SLOT];
 }
 /** FLORA-GROUND: the built bits about base (baseX, baseY) - slot (i, j)'s bit j * BAND_SIDE + i, set where `built` (the
@@ -137,8 +149,11 @@ export const UPLOAD_SLICE = 512 * 1024;
 
 /** ?fartrees=off - the band's kill door (the canopy alone past the grid). */
 export function farTreesDisabled(search = globalThis.location?.search) {
-  try { return /[?&]fartrees=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]fartrees=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -148,7 +163,8 @@ export function farTreesDisabled(search = globalThis.location?.search) {
  * @returns {Array<[number, number]>}
  */
 export function bandPixels(cx, cy, radius, built = null, ring = BAND_RING) {
-  const out = [], r = radius + ring;
+  const out = [],
+    r = radius + ring;
   for (let y = cy - r; y <= cy + r; y++) {
     for (let x = cx - r; x <= cx + r; x++) {
       const c = Math.max(Math.abs(x - cx), Math.abs(y - cy));
@@ -173,16 +189,24 @@ export function treeHash(px, py, k) {
  * sprite's coordinate runs down from its top, gl_PointCoord). Pure.
  */
 export function layerPicture(pic, side = TREE_LAYER) {
-  const out = new Uint8Array(side * side * 4), s = Math.max(pic.width, pic.height) / side;
-  const w = pic.width / s, h = pic.height / s, x0 = (side - w) / 2, y0 = side - h;
+  const out = new Uint8Array(side * side * 4),
+    s = Math.max(pic.width, pic.height) / side;
+  const w = pic.width / s,
+    h = pic.height / s,
+    x0 = (side - w) / 2,
+    y0 = side - h;
   for (let j = 0; j < side; j++) {
     const sy = Math.floor((j - y0 + 0.5) * s);
     if (sy < 0 || sy >= pic.height) continue;
     for (let i = 0; i < side; i++) {
       const sx = Math.floor((i - x0 + 0.5) * s);
       if (sx < 0 || sx >= pic.width) continue;
-      const a = (sy * pic.width + sx) * 4, b = (j * side + i) * 4;
-      out[b] = pic.data[a]; out[b + 1] = pic.data[a + 1]; out[b + 2] = pic.data[a + 2]; out[b + 3] = pic.data[a + 3];
+      const a = (sy * pic.width + sx) * 4,
+        b = (j * side + i) * 4;
+      out[b] = pic.data[a];
+      out[b + 1] = pic.data[a + 1];
+      out[b + 2] = pic.data[a + 2];
+      out[b + 3] = pic.data[a + 3];
     }
   }
   return out;
@@ -197,20 +221,28 @@ export function layerPicture(pic, side = TREE_LAYER) {
 export function* bandInstanceSteps(pixels, baseX, baseY, layerOf) {
   let total = 0;
   for (const p of pixels) total += p.trees.length >> 2;
-  const data = new ArrayBuffer(total * TREE_STRIDE), f = new Float32Array(data), u = new Uint8Array(data);
+  const data = new ArrayBuffer(total * TREE_STRIDE),
+    f = new Float32Array(data),
+    u = new Uint8Array(data);
   let k = 0;
   for (const p of pixels) {
     yield;
-    const ox = (p.px - baseX) * TERRAIN_SIZE, oz = (baseY - p.py) * TERRAIN_SIZE, t = p.trees;
-    const [si, sj] = bandSlot(p.px, p.py, baseX, baseY);   // FLORA-GROUND: its pixel's slot - stood down once built
+    const ox = (p.px - baseX) * TERRAIN_SIZE,
+      oz = (baseY - p.py) * TERRAIN_SIZE,
+      t = p.trees;
+    const [si, sj] = bandSlot(p.px, p.py, baseX, baseY); // FLORA-GROUND: its pixel's slot - stood down once built
     for (let i = 0; i < t.length; i += 4) {
-      const [a, r] = bandTreeArt(p.archive, t[i + 3]);   // TESA-LANDS: its own archive's art where it carries one
+      const [a, r] = bandTreeArt(p.archive, t[i + 3]); // TESA-LANDS: its own archive's art where it carries one
       const layer = layerOf(a, r);
       if (layer === undefined) continue;
       const o = k * (TREE_STRIDE / 4);
-      f[o] = ox + t[i]; f[o + 1] = t[i + 1]; f[o + 2] = oz + t[i + 2];
-      u[k * TREE_STRIDE + 12] = layer; u[k * TREE_STRIDE + 13] = treeHash(p.px, p.py, i >> 2);
-      u[k * TREE_STRIDE + 14] = si; u[k * TREE_STRIDE + 15] = sj;
+      f[o] = ox + t[i];
+      f[o + 1] = t[i + 1];
+      f[o + 2] = oz + t[i + 2];
+      u[k * TREE_STRIDE + 12] = layer;
+      u[k * TREE_STRIDE + 13] = treeHash(p.px, p.py, i >> 2);
+      u[k * TREE_STRIDE + 14] = si;
+      u[k * TREE_STRIDE + 15] = sj;
       k++;
     }
   }
@@ -276,7 +308,7 @@ void main() {
   gl_PointSize = clamp(px, 1.0, 64.0);
 }`;
 
-const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 
 const FS_HEAD = `#version 300 es
 precision highp float;
@@ -334,7 +366,8 @@ export const TREES_FS = FS;
 export const TREES_VS = VS;
 
 /** The band's program text for a lane: none the classic's, the lighting lane's own, the classic-shadow lane's look over it. */
-export const treesFsFor = (lane) => (!lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS);
+export const treesFsFor = (lane) =>
+  !lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS;
 // SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
 /** @param {any} lane the far ring's lane, or null */
 export const farTreesPrograms = (lane) => [/** @type {const} */ ([VS, treesFsFor(lane)])];
@@ -353,39 +386,73 @@ export class FarTreesBand {
     this.lane = lane;
     this.program = buildProgram(gl, VS, treesFsFor(lane), 'far trees');
     this.u = {};
-    for (const name of ['uProj', 'uView', 'uOrigin', 'uSides', 'uBand', 'uBandFrom', 'uHazeFrom', 'uTrees', 'uAmbient', 'uSunScale', 'uSunColor',
-      'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uFogLaw', 'uCloudShadowMap', 'uCloudShadowRect',
-      'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt', 'uBuilt', 'uGround', 'uGroundAt']) this.u[name] = gl.getUniformLocation(this.program, name);
-    this.builtBits = new Int32Array(BAND_BUILT_WORDS);   // FLORA-GROUND: the drawn base's built slots
+    for (const name of [
+      'uProj',
+      'uView',
+      'uOrigin',
+      'uSides',
+      'uBand',
+      'uBandFrom',
+      'uHazeFrom',
+      'uTrees',
+      'uAmbient',
+      'uSunScale',
+      'uSunColor',
+      'uMoonScale',
+      'uMoonColor',
+      'uFogColor',
+      'uFogStart',
+      'uFogEnd',
+      'uRimStart',
+      'uRimEnd',
+      'uHazeHold',
+      'uFogLaw',
+      'uCloudShadowMap',
+      'uCloudShadowRect',
+      'uCloudShadowFar',
+      'uCloudFar',
+      'uJungleHaze',
+      'uHazeEye',
+      'uELExposure',
+      'uAdapt',
+      'uBuilt',
+      'uGround',
+      'uGroundAt',
+    ])
+      this.u[name] = gl.getUniformLocation(this.program, name);
+    this.builtBits = new Int32Array(BAND_BUILT_WORDS); // FLORA-GROUND: the drawn base's built slots
     this._builtKey = '';
-    this._groundEpoch = source?.groundEpoch ?? 0;   // FLORA-GROUND: the ground the kept trees were laid on
-    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array, arts: string[] }>} */ this.kept = new Map();   // TESA-LANDS: `arts` the Tree pictures its trees are ("archive,record")
-    this.layers = new Map();   // "archive,record" -> layer
+    this._groundEpoch = source?.groundEpoch ?? 0; // FLORA-GROUND: the ground the kept trees were laid on
+    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array, arts: string[] }>} */ this.kept =
+      new Map(); // TESA-LANDS: `arts` the Tree pictures its trees are ("archive,record")
+    this.layers = new Map(); // "archive,record" -> layer
     this.sides = new Float32Array(TREE_LAYERS);
-    this.arts = new Map();     // "archive,record" -> 'asking' | 'ready' | 'none' | 'full'
-    this.version = 0;          // the arts read: an assembly before one landed is laid again
+    this.arts = new Map(); // "archive,record" -> 'asking' | 'ready' | 'none' | 'full'
+    this.version = 0; // the arts read: an assembly before one landed is laid again
     // TESA-LANDS (AUDIT): THE ATLAS'S LAYERS ARE LENT, NOT SPENT. The Bay's eight nature archives hold 60 Trees and past it a
     // zone's recipe draws on any of them, so a journey outgrew the 48 layers and the band left a province's trees out for
     // the rest of the session. A picture is read where a wanted pixel's tree is of it, and a full atlas lends the layer of
     // a picture no wanted pixel, no drawn set and no set being laid is of (`_layerFor`).
-    this._wanted = new Set();  // the arts the wanted pixels' trees are
+    this._wanted = new Set(); // the arts the wanted pixels' trees are
     this._drawnArts = new Set();
     this._layingArts = new Set();
     this.tex = null;
-    this.groundTex = null;     // HORIZON-TREES: the middle ring's heights, as the ring last handed them
-    this._groundOf = null;     // ...and which heights those are
-    this.drawn = null;         // { buffer, vao, count, baseX, baseY }
-    this._laying = null;       // { buffer, vao, ... } being filled
+    this.groundTex = null; // HORIZON-TREES: the middle ring's heights, as the ring last handed them
+    this._groundOf = null; // ...and which heights those are
+    this.drawn = null; // { buffer, vao, count, baseX, baseY }
+    this._laying = null; // { buffer, vao, ... } being filled
     this._asking = false;
     this._want = [];
     this._setKey = '';
     this._laidKey = '';
-    this.fade = BAND_FADE;   // the rim's dither (pixels past the grid's radius)
-    this.canopyFade = BAND_FADE;   // where the far ring lays its canopy back over the ground (the same metres: a crossfade)
+    this.fade = BAND_FADE; // the rim's dither (pixels past the grid's radius)
+    this.canopyFade = BAND_FADE; // where the far ring lays its canopy back over the ground (the same metres: a crossfade)
   }
 
   /** The pixels the band stands (bandPixels; a probe's bench may stand others). */
-  pixelsFor(cx, cy, radius, built) { return bandPixels(cx, cy, radius, built); }
+  pixelsFor(cx, cy, radius, built) {
+    return bandPixels(cx, cy, radius, built);
+  }
 
   /**
    * The band's turn of a frame (render/farRing.js punchHole's): its pixels asked again when the traveller's pixel or the
@@ -395,10 +462,16 @@ export class FarTreesBand {
    * past the Bay).
    */
   frame({ curX, curY, radius, built, climateOf, forests, landform, lands = false, work }) {
-    this._builtNow(built);   // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once
-    this._groundNow();   // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it
+    this._builtNow(built); // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once
+    this._groundNow(); // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it
     const key = `${curX},${curY},${radius}`;
-    if (key !== this._setKey) { this._setKey = key; this._want = this.pixelsFor(curX, curY, radius, built); this._wantAt = [curX, curY]; this._failed = false; this._unfull(); }
+    if (key !== this._setKey) {
+      this._setKey = key;
+      this._want = this.pixelsFor(curX, curY, radius, built);
+      this._wantAt = [curX, curY];
+      this._failed = false;
+      this._unfull();
+    }
     const missing = this._want.filter(([x, y]) => !this.kept.has(`${x},${y}`));
     if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform, lands);
     this._wanted.clear();
@@ -409,7 +482,7 @@ export class FarTreesBand {
     for (const a of this._wanted) this._art(a);
     const laidKey = `${key}|${this.version}`;
     if (missing.length || this._laying || laidKey === this._laidKey) return;
-    for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;   // its art still being read
+    for (const a of this._wanted) if (this.arts.get(a) === 'asking') return; // its art still being read
     this._laidKey = laidKey;
     this._lay(work, curX, curY);
   }
@@ -417,7 +490,8 @@ export class FarTreesBand {
   /** FLORA-GROUND: the drawn instances' built bits (bandBuiltBits about the drawn base), written again when the built map
    *  or the drawn base moves - a plain Map (no `changes`) by its size. */
   _builtNow(built) {
-    const d = this.drawn, key = d ? `${d.baseX},${d.baseY},${built ? (built.changes ?? built.size) : -1}` : '';
+    const d = this.drawn,
+      key = d ? `${d.baseX},${d.baseY},${built ? (built.changes ?? built.size) : -1}` : '';
     if (key === this._builtKey) return;
     this._builtKey = key;
     if (d) bandBuiltBits(d.baseX, d.baseY, built, this.builtBits);
@@ -439,30 +513,46 @@ export class FarTreesBand {
   }
 
   _ask(missing, climateOf, forests, landform, lands = false) {
-    const pixels = new Int32Array(missing.length * 4), archives = [];
+    const pixels = new Int32Array(missing.length * 4),
+      archives = [];
     missing.forEach(([x, y], k) => {
       const c = getWorldClimateSettings(climateOf(x, y));
-      pixels[k * 4] = x; pixels[k * 4 + 1] = y; pixels[k * 4 + 2] = c.natureArchive; pixels[k * 4 + 3] = c.climateType;
+      pixels[k * 4] = x;
+      pixels[k * 4 + 1] = y;
+      pixels[k * 4 + 2] = c.natureArchive;
+      pixels[k * 4 + 3] = c.climateType;
       archives.push(c.natureArchive);
     });
     this._asking = true;
     const gen = (this._gen = (this._gen ?? 0) + 1);
-    Promise.resolve(this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform, lands: !!lands }) ?? null).then((trees) => {
-      if (gen !== this._gen) return;
-      this._asking = false;
-      if (!trees) { this._failed = true; return; }   // no worker, or it failed: the band stands down until the set moves
-      missing.forEach(([x, y], k) => {
-        const t = trees[k] ?? new Float32Array(0), own = new Set();
-        for (let i = 3; i < t.length; i += 4) own.add(bandTreeArt(archives[k], t[i]).join(','));   // TESA-LANDS: each tree's own picture, of whatever archive
-        this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: t, arts: [...own] });
-      });
-      this._forget();
-    }, () => { if (gen === this._gen) this._asking = false; });
+    Promise.resolve(
+      this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform, lands: !!lands }) ?? null,
+    ).then(
+      (trees) => {
+        if (gen !== this._gen) return;
+        this._asking = false;
+        if (!trees) {
+          this._failed = true;
+          return;
+        } // no worker, or it failed: the band stands down until the set moves
+        missing.forEach(([x, y], k) => {
+          const t = trees[k] ?? new Float32Array(0),
+            own = new Set();
+          for (let i = 3; i < t.length; i += 4) own.add(bandTreeArt(archives[k], t[i]).join(',')); // TESA-LANDS: each tree's own picture, of whatever archive
+          this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: t, arts: [...own] });
+        });
+        this._forget();
+      },
+      () => {
+        if (gen === this._gen) this._asking = false;
+      },
+    );
   }
 
   /** The kept pixels past twice the band's reach of the traveller let go (the book holds the band and a crossing's worth). */
   _forget() {
-    const [cx, cy] = this._wantAt ?? [0, 0], keep = Math.sqrt(this._want.length) + 4;
+    const [cx, cy] = this._wantAt ?? [0, 0],
+      keep = Math.sqrt(this._want.length) + 4;
     for (const [k, p] of this.kept) if (Math.max(Math.abs(p.px - cx), Math.abs(p.py - cy)) > keep) this.kept.delete(k);
   }
 
@@ -470,23 +560,40 @@ export class FarTreesBand {
    *  no Tree, or no picture - or 'full': no layer to lend it, asked again when the drawn set or the wanted one moves). */
   _art(key) {
     if (this.arts.has(key)) return;
-    const [archive, record] = key.split(',').map(Number), read = this.read();
-    if (!TREE_RECORDS[archive]?.includes(record)) { this.arts.set(key, 'none'); return; }
+    const [archive, record] = key.split(',').map(Number),
+      read = this.read();
+    if (!TREE_RECORDS[archive]?.includes(record)) {
+      this.arts.set(key, 'none');
+      return;
+    }
     if (!read) return;
     this.arts.set(key, 'asking');
-    Promise.all([read.picture(archive, record).catch(() => null), read.size(archive, record).catch(() => null)]).then(([pic, size]) => {
-      if (!this.gl || this.arts.get(key) !== 'asking') return;
-      if (!pic?.width || !(size?.h > 0)) { this.arts.set(key, 'none'); this.version++; return; }
-      const layer = this._layerFor();
-      if (layer < 0) { this.arts.set(key, 'full'); this.version++; return; }
-      this._upload(layer, layerPicture(pic));
-      const gl = this.gl;
-      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
-      this.layers.set(key, layer);
-      this.sides[layer] = Math.max(size.w, size.h);
-      this.arts.set(key, 'ready');
-      this.version++;
-    }, () => this.arts.set(key, 'none'));
+    Promise.all([read.picture(archive, record).catch(() => null), read.size(archive, record).catch(() => null)]).then(
+      ([pic, size]) => {
+        if (!this.gl || this.arts.get(key) !== 'asking') return;
+        if (!pic?.width || !(size?.h > 0)) {
+          this.arts.set(key, 'none');
+          this.version++;
+          return;
+        }
+        const layer = this._layerFor();
+        if (layer < 0) {
+          this.arts.set(key, 'full');
+          this.version++;
+          return;
+        }
+        this._upload(layer, layerPicture(pic));
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
+        gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+        this.layers.set(key, layer);
+        this.sides[layer] = Math.max(size.w, size.h);
+        this.arts.set(key, 'ready');
+        this.version++;
+      },
+      () => this.arts.set(key, 'none'),
+    );
   }
 
   /** A layer for a picture: the next unused, else one lent back from a picture no wanted pixel, drawn set or set being
@@ -512,7 +619,8 @@ export class FarTreesBand {
   /** Whether _layerFor would answer a layer now. */
   _lendable() {
     if (this.layers.size < TREE_LAYERS) return true;
-    for (const k of this.layers.keys()) if (!this._wanted.has(k) && !this._drawnArts.has(k) && !this._layingArts.has(k)) return true;
+    for (const k of this.layers.keys())
+      if (!this._wanted.has(k) && !this._drawnArts.has(k) && !this._layingArts.has(k)) return true;
     return false;
   }
 
@@ -538,14 +646,21 @@ export class FarTreesBand {
     const pixels = this._want.map(([x, y]) => this.kept.get(`${x},${y}`));
     const laying = new Set();
     for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);
-    this._layingArts = laying;   // its pictures' layers held until it is swapped in, and then while it is drawn
+    this._layingArts = laying; // its pictures' layers held until it is swapped in, and then while it is drawn
     // TESA-LANDS' second audit (lane D): and a picture that lands while the set is laid, held by it too - the set's trees ask
     // their layers as they are laid, and a layer it took that the set had not named could be lent away under its drawing
-    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => { const k = `${a},${r}`, l = this.layers.get(k); if (l !== undefined) laying.add(k); return l; });
+    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => {
+      const k = `${a},${r}`,
+        l = this.layers.get(k);
+      if (l !== undefined) laying.add(k);
+      return l;
+    });
     const self = this;
     function* steps() {
       const v = yield* it;
-      const gl = self.gl, buffer = gl.createBuffer(), bytes = v.count * TREE_STRIDE;   // the trees drawn: a record with no layer was left out
+      const gl = self.gl,
+        buffer = gl.createBuffer(),
+        bytes = v.count * TREE_STRIDE; // the trees drawn: a record with no layer was left out
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, Math.max(TREE_STRIDE, bytes), gl.DYNAMIC_DRAW);
       for (let at = 0; at < bytes; at += UPLOAD_SLICE) {
@@ -557,11 +672,14 @@ export class FarTreesBand {
       return { buffer, count: v.count };
     }
     this._laying = { gen: this._gen };
-    work.push({ it: steps(), done: ({ buffer, count }) => {
-      this._laying = null;
-      if (!this.gl) return;
-      this._swap(buffer, count, baseX, baseY);
-    } });
+    work.push({
+      it: steps(),
+      done: ({ buffer, count }) => {
+        this._laying = null;
+        if (!this.gl) return;
+        this._swap(buffer, count, baseX, baseY);
+      },
+    });
   }
 
   _swap(buffer, count, baseX, baseY) {
@@ -574,7 +692,7 @@ export class FarTreesBand {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 12);
     gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 14);   // FLORA-GROUND: its pixel's slot
+    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 14); // FLORA-GROUND: its pixel's slot
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this._free(this.drawn);
@@ -591,7 +709,9 @@ export class FarTreesBand {
   }
 
   /** The instances drawn now (the probes' read and the pins'). */
-  get count() { return this.drawn?.count ?? 0; }
+  get count() {
+    return this.drawn?.count ?? 0;
+  }
 
   /**
    * Drawn inside the far ring's pass (its depth state: at the far plane, tested, never written): `s` the pass's - the lens,
@@ -602,14 +722,21 @@ export class FarTreesBand {
    */
   draw(s) {
     if (!this.drawn?.count || !this.tex) return;
-    const gl = this.gl, u = this.u;
+    const gl = this.gl,
+      u = this.u;
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(u.uProj, false, s.proj);
     gl.uniformMatrix4fv(u.uView, false, s.view);
     gl.uniform3f(u.uOrigin, s.origin[0], s.origin[1], s.origin[2]);
     gl.uniform1fv(u.uSides, this.sides);
-    gl.uniform1iv(u.uBuilt, this.builtBits);   // FLORA-GROUND: the built pixels' trees stood down
-    gl.uniform4f(u.uBand, (s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[1]) * TERRAIN_SIZE, s.viewportH, s.proj[5]);
+    gl.uniform1iv(u.uBuilt, this.builtBits); // FLORA-GROUND: the built pixels' trees stood down
+    gl.uniform4f(
+      u.uBand,
+      (s.radius + this.fade[0]) * TERRAIN_SIZE,
+      (s.radius + this.fade[1]) * TERRAIN_SIZE,
+      s.viewportH,
+      s.proj[5],
+    );
     gl.uniform3f(u.uBandFrom, s.origin[0] + 0.5 * TERRAIN_SIZE, 0, s.origin[2] + 0.5 * TERRAIN_SIZE);
     gl.uniform4fv(u.uHazeFrom, s.hazeFrom);
     gl.uniform3fv(u.uAmbient, s.ambient);
@@ -623,20 +750,23 @@ export class FarTreesBand {
     gl.uniform1f(u.uRimStart, s.rimStart);
     gl.uniform1f(u.uRimEnd, s.rimEnd);
     gl.uniform1f(u.uHazeHold, s.hold);
-    gl.uniform2f(u.uFogLaw, s.law ?? 0, s.density ?? 0);   // AUDIT FB1031 L2: a weather's own factor, as the ring's
+    gl.uniform2f(u.uFogLaw, s.law ?? 0, s.density ?? 0); // AUDIT FB1031 L2: a weather's own factor, as the ring's
     const { haze } = s;
-    gl.uniform4fv(u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the frame's haze, as the ring's - off when none is handed
+    gl.uniform4fv(u.uJungleHaze, haze ?? NO_HAZE); // BANTHA1: the frame's haze, as the ring's - off when none is handed
     gl.uniform3fv(u.uHazeEye, s.hazeEye);
     gl.uniform1f(u.uCloudFar, s.cloudFar);
     gl.uniform2f(u.uCloudShadowFar, s.cloudFar, 1);
     gl.uniform4fv(u.uCloudShadowRect, s.cloudRect);
     gl.uniform1i(u.uCloudShadowMap, s.cloudUnit);
-    if (this.lane) { gl.uniform1f(u.uELExposure, s.exposure); gl.uniform1i(u.uAdapt, 11); }
+    if (this.lane) {
+      gl.uniform1f(u.uELExposure, s.exposure);
+      gl.uniform1i(u.uAdapt, 11);
+    }
     gl.activeTexture(gl.TEXTURE0 + TREES_UNIT);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(u.uTrees, TREES_UNIT);
-    const g = this._ground(s.ground);   // HORIZON-TREES: the nearer ground's skyline
+    const g = this._ground(s.ground); // HORIZON-TREES: the nearer ground's skyline
     gl.activeTexture(gl.TEXTURE0 + GROUND_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, g ? this.groundTex : null);
     gl.activeTexture(gl.TEXTURE0);
@@ -678,7 +808,7 @@ export class FarTreesBand {
     this.drawn = null;
     if (this.tex) gl.deleteTexture(this.tex);
     this.tex = null;
-    if (this.groundTex) gl.deleteTexture(this.groundTex);   // HORIZON-TREES
+    if (this.groundTex) gl.deleteTexture(this.groundTex); // HORIZON-TREES
     this.groundTex = null;
     this._groundOf = null;
     if (this.program) gl.deleteProgram(this.program);

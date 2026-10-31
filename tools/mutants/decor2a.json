@@ -2,8 +2,8 @@
   {
     "name": "DECOR2a-a-group-unbounded",
     "file": "src/net/decorLaw.js",
-    "old": "if (!small(g, 63) || !small(m, 0xffff)",
-    "new": "if (!small(m, 0xffff)",
+    "old": "  if (!small(g, 63) || !small(m, 0xffff) || !small(v, 255) || !small(a, 255) || !small(p, 0xffff)) return null;",
+    "new": "  if (!small(m, 0xffff) || !small(v, 255) || !small(a, 255) || !small(p, 0xffff)) return null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DECOR2a-the-template-unbounded",
     "file": "src/net/decorLaw.js",
-    "old": "if (!Number.isSafeInteger(t) || t < 0 || t > DECOR_TEMPLATE_MAX) return null;",
-    "new": "if (!Number.isSafeInteger(t)) return null;",
+    "old": "  if (!Number.isSafeInteger(t) || t < 0 || t > DECOR_TEMPLATE_MAX) return null;",
+    "new": "  if (!Number.isSafeInteger(t)) return null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DECOR2a-an-item-on-a-model",
     "file": "src/net/decorLaw.js",
-    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
-    "new": "return own ? { model, flat: null, item: own } : null;",
+    "old": "    return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "    return own ? { model, flat: null, item: own } : null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DECOR2a-a-bad-item-passed-over",
     "file": "src/net/decorLaw.js",
-    "old": "return own ? { model: null, flat: [flat[0], flat[1]], item: own } : null;",
-    "new": "return own ? { model: null, flat: [flat[0], flat[1]], item: own } : { model: null, flat: [flat[0], flat[1]] };",
+    "old": "    return own ? { model: null, flat: [flat[0], flat[1]], item: own } : null;",
+    "new": "    return own ? { model: null, flat: [flat[0], flat[1]], item: own } : { model: null, flat: [flat[0], flat[1]] };",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DECOR2a-the-cost-allowed",
     "file": "src/net/decorLaw.js",
-    "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
-    "new": "(what.item && (place.storage || place.station))",
+    "old": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
+    "new": "  if (!what || !place || (what.item && (place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
     "tests": [
       "test/systems/decor2a.test.js",
       "test/server/decor1.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "DECOR2a-the-hold-allowed",
     "file": "src/net/decorLaw.js",
-    "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
-    "new": "(what.item && (place.paid !== 0 || place.station))",
+    "old": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
+    "new": "  if (!what || !place || (what.item && (place.paid !== 0 || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
     "tests": [
       "test/systems/decor2a.test.js",
       "test/server/decor1.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "DECOR2a-the-spellbook-set-down",
     "file": "src/net/decorLaw.js",
-    "old": "new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit,",
-    "new": "new Set([TEMPLATES.Letter_of_credit,",
+    "old": "  new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]),",
+    "new": "  new Set([TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]),",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "DECOR2a-a-free-piece-priced",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (free) return 0;\n",
-    "new": "",
+    "old": "      if (free) return 0;\n      return measured != null && measured > 0 ? decorPrice(measured, s.scale) : null;",
+    "new": "      return measured != null && measured > 0 ? decorPrice(measured, s.scale) : null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "DECOR2a-the-descriptor-left-off",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,",
-    "new": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: null,",
+    "old": "        item: entry.item ?? null,",
+    "new": "        item: null,",
     "tests": [
       "test/systems/decor2a.test.js"
     ]

@@ -64,7 +64,7 @@ FOUND, on the code. The account's count (`players.eg_keys`) is the balance. The 
 on every preflight, open and claim answer. A pack that holds no face is given a fresh stack
 (`weirKey.js:"  if (want > 0) items.push(weirKeys(want));"`). But a face could leave the pack. The row was `bound` and not
 `packOnly`, and a bound piece goes to the player's wagon and storage
-(`itemBound.js:"export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);"` - a home's chest, a ship's hold and a
+(`itemBound.js:"export const BOUND_KEEPS"` - a home's chest, a ship's hold and a
 companion's pack are all the pack's `storage`). So a key stowed in the wagon disappeared from the pack. At the next ask
 the pack was given a new face, and every ten minutes that happened again. Driven on the real client (`createEgClient`,
 one key held): seven stows over seventy minutes left the wagon holding seven faces and the pack one. Emptied back, the
@@ -76,7 +76,7 @@ allowed to go.
 
 THE FIX - THE FACE IS THE PACK'S ALONE. The row is pack-only
 (`weirKeyRow.js:"  packOnly: true,   // KEY-FACE: the face never leaves the pack"`), the Wallet's and the Card Binder's
-law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly = "`). Every door that already reads it
+law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly"`). Every door that already reads it
 now keeps the face in the pack:
 - both skins' put to the wagon, to storage, to a container, to the ground and to a reward tray, and the enhanced pack's
   drag and its bulk Store, which refuse it with *Weir Key stays in your pack.*;

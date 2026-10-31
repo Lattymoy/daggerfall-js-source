@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-PERFURL-A3-constructor-aliased",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return pageParam('volumetrics', search) !== 'off';   // PERF-URL",
-    "new": "  const P = globalThis.URLSearchParams; return new P(search).get('volumetrics') !== 'off';",
+    "old": "  return pageParam('volumetrics', search) !== 'off'; // PERF-URL",
+    "new": "  const P = globalThis.URLSearchParams;\n  return new P(search).get('volumetrics') !== 'off';",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PERFURL-A3-constructor-split",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return pageParam('haze', search) !== 'off';   // PERF-URL",
-    "new": "  return new\n    URLSearchParams(search).get('haze') !== 'off';",
+    "old": "  return pageParam('haze', search) !== 'off'; // PERF-URL",
+    "new": "  return new URLSearchParams(search).get('haze') !== 'off';",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

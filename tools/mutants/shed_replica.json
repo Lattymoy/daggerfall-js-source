@@ -1,62 +1,62 @@
 [
- {
-  "name": "SHEDREPLICA-replica-read-shed",
-  "file": "server-account/src/index.js",
-  "old": "    if (shed && !anyReplica) return overloaded(origin);",
-  "new": "    if (shed) return overloaded(origin);",
-  "tests": [
-   "test/server/shed_replica.test.js"
-  ],
-  "note": "an overloaded isolate answers half the service 503 while the replica sits idle"
- },
- {
-  "name": "SHEDREPLICA-primary-first",
-  "file": "server-account/src/index.js",
-  "old": "const db = anyReplica ? replicaDb(env.DB, REPLICA_ANY) :",
-  "new": "const db = anyReplica ? replicaDb(env.DB) :",
-  "tests": [
-   "test/server/shed_replica.test.js"
-  ],
-  "note": "the shed read's session starts at the primary it was shed to spare"
- },
- {
-  "name": "SHEDREPLICA-every-busy-read-through",
-  "file": "server-account/src/index.js",
-  "old": "    if (shed && !anyReplica) return overloaded(origin);",
-  "new": "    if (false) return overloaded(origin);",
-  "tests": [
-   "test/server/shed_replica.test.js"
-  ],
-  "note": "a busy read no replica may serve asks the overloaded primary"
- },
- {
-  "name": "SHEDREPLICA-writers-to-replica",
-  "file": "server-account/src/index.js",
-  "old": " && !SHED_NO_REPLICA.has(path);",
-  "new": ";",
-  "tests": [
-   "test/net/busy_heart.test.js"
-  ],
-  "note": "the heartbeat's beat and the motherlodes' claim written to the overloaded primary from a replica's session"
- },
- {
-  "name": "SHEDREPLICA-heartbeat-to-replica",
-  "file": "server-account/src/service.js",
-  "old": "new Set(['/v1/heartbeat', '/v1/prof/motherlodes'])",
-  "new": "new Set(['/v1/prof/motherlodes'])",
-  "tests": [
-   "test/net/busy_heart.test.js"
-  ],
-  "note": "every tab's beat an UPDATE on the overloaded primary"
- },
- {
-  "name": "SHEDREPLICA-motherlodes-to-replica",
-  "file": "server-account/src/service.js",
-  "old": "new Set(['/v1/heartbeat', '/v1/prof/motherlodes'])",
-  "new": "new Set(['/v1/heartbeat'])",
-  "tests": [
-   "test/net/busy_heart.test.js"
-  ],
-  "note": "the day's claim and pick written to the overloaded primary"
- }
+  {
+    "name": "SHEDREPLICA-replica-read-shed",
+    "file": "server-account/src/index.js",
+    "old": "    if (shed && !anyReplica) return overloaded(origin);",
+    "new": "    if (shed) return overloaded(origin);",
+    "tests": [
+      "test/server/shed_replica.test.js"
+    ],
+    "note": "an overloaded isolate answers half the service 503 while the replica sits idle"
+  },
+  {
+    "name": "SHEDREPLICA-primary-first",
+    "file": "server-account/src/index.js",
+    "old": "const db = anyReplica ? replicaDb(env.DB, REPLICA_ANY) :",
+    "new": "const db = anyReplica ? replicaDb(env.DB) :",
+    "tests": [
+      "test/server/shed_replica.test.js"
+    ],
+    "note": "the shed read's session starts at the primary it was shed to spare"
+  },
+  {
+    "name": "SHEDREPLICA-every-busy-read-through",
+    "file": "server-account/src/index.js",
+    "old": "    if (shed && !anyReplica) return overloaded(origin);",
+    "new": "    if (false) return overloaded(origin);",
+    "tests": [
+      "test/server/shed_replica.test.js"
+    ],
+    "note": "a busy read no replica may serve asks the overloaded primary"
+  },
+  {
+    "name": "SHEDREPLICA-writers-to-replica",
+    "file": "server-account/src/index.js",
+    "old": " && !SHED_NO_REPLICA.has(path);",
+    "new": ";",
+    "tests": [
+      "test/net/busy_heart.test.js"
+    ],
+    "note": "the heartbeat's beat and the motherlodes' claim written to the overloaded primary from a replica's session"
+  },
+  {
+    "name": "SHEDREPLICA-heartbeat-to-replica",
+    "file": "server-account/src/service.js",
+    "old": "export const SHED_NO_REPLICA = new Set(['/v1/heartbeat', '/v1/prof/motherlodes']);",
+    "new": "export const SHED_NO_REPLICA = new Set(['/v1/prof/motherlodes']);",
+    "tests": [
+      "test/net/busy_heart.test.js"
+    ],
+    "note": "every tab's beat an UPDATE on the overloaded primary"
+  },
+  {
+    "name": "SHEDREPLICA-motherlodes-to-replica",
+    "file": "server-account/src/service.js",
+    "old": "export const SHED_NO_REPLICA = new Set(['/v1/heartbeat', '/v1/prof/motherlodes']);",
+    "new": "export const SHED_NO_REPLICA = new Set(['/v1/heartbeat']);",
+    "tests": [
+      "test/net/busy_heart.test.js"
+    ],
+    "note": "the day's claim and pick written to the overloaded primary"
+  }
 ]

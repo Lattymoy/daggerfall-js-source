@@ -210,8 +210,8 @@
   {
     "name": "GHOSTFENCE-a-built-foot-unread",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "    if (exact.has(i)) fine[i] = ",
-    "new": "    if (false && exact.has(i)) fine[i] = ",
+    "old": "      if (exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
+    "new": "      if (false && exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "GHOSTFENCE-the-middle-ring-uneased",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "    else if (m !== null) { fine[i] = m; kind[i] = 1; }",
-    "new": "    else if (m !== null) { fine[i] = m; kind[i] = 0; }",
+    "old": "        kind[i] = 1;",
+    "new": "        kind[i] = 0;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "GHOSTFENCE-a-built-foot-eased",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "  if (h.z > 0.5 && uMorph.z > 0.5) {",
-    "new": "  if (uMorph.z > 0.5) {",
+    "old": "  if (h.z > 0.5 && uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
+    "new": "  if (uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "GHOSTFENCE-the-margin-thin",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "fade: Object.freeze([4000, 12000, 45000]), period: 40, reach: 60000, margin: 250,",
-    "new": "fade: Object.freeze([4000, 12000, 45000]), period: 40, reach: 60000, margin: 50,",
+    "old": "  margin: 250,",
+    "new": "  margin: 50,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "GHOSTFENCE-the-middle-ring-mirrored",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell",
-    "new": "gz = ((by - mid.baseY) * TERRAIN_SIZE) / cell",
+    "old": "      gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
+    "new": "      gz = ((by - mid.baseY) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "GHOSTFENCE-the-far-ring-off-its-centres",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "const fi = bx - 0.5 - ring.baseX + ring.radius",
-    "new": "const fi = bx - ring.baseX + ring.radius",
+    "old": "    const fi = bx - 0.5 - ring.baseX + ring.radius,",
+    "new": "    const fi = bx - ring.baseX + ring.radius,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

@@ -21,14 +21,26 @@ const v3 = (a) => `vec3(${a.map(f1).join(', ')})`;
  *  light it keeps drawn wider, the curtain's fade (its start and end, metres from the eye) and the halos' end, its
  *  motion's period, how far it is drawn at all, and the depth under the cone's profile a point may lie unhidden. */
 export const GLOW = Object.freeze({
-  ghost: Object.freeze([0.5, 1.0, 0.82]), curtain: 0.55, halo: 1.4, dayGlow: 0.3,
-  haloR: 3.2, haloPx: 2.5, haloFloor: 0.3, fade: Object.freeze([4000, 12000, 45000]), period: 40, reach: 60000, margin: 250,
+  ghost: Object.freeze([0.5, 1.0, 0.82]),
+  curtain: 0.55,
+  halo: 1.4,
+  dayGlow: 0.3,
+  haloR: 3.2,
+  haloPx: 2.5,
+  haloFloor: 0.3,
+  fade: Object.freeze([4000, 12000, 45000]),
+  period: 40,
+  reach: 60000,
+  margin: 250,
 });
 
 /** `?fenceglow=off` - the fence's glow not drawn (its pylons stand). */
 export function fenceGlowDisabled(search = globalThis.location?.search) {
-  try { return /[?&]fenceglow=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]fenceglow=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 // ── THE FEET THE PIXEL BUILD STOOD ────────────────────────────────
@@ -38,14 +50,18 @@ let _feetStamp = 0;
 /** A built pixel's feet (scenes/ghostfenceBuild.js): the fence's frame they were stood for, its pylons' indices and the
  *  heights they stand at, its curtain points' indices (run x (CURTAIN_STEPS + 1) + step) and their ground (world units, the
  *  pixel's own). Read while the far ring holds the pixel built and the frame is the same (AUDIT RED-MOUNTAIN N6). */
-export function noteFenceFeet(pkey, feet) { _feet.set(pkey, feet); _feetStamp++; }
+export function noteFenceFeet(pkey, feet) {
+  _feet.set(pkey, feet);
+  _feetStamp++;
+}
 /** The feet noted, and a stamp that moves when any is. */
 export const fenceFeet = () => ({ map: _feet, stamp: _feetStamp });
 
 /** A cell's height at (u, v) in 0..1 on the two triangles every ring draws it as (render/farRing.js writeRingCells,
  *  midRing.js cellTemplates: the diagonal from its first corner to its last), from its corners h00, h10 (u), h01 (v), h11.
  *  AUDIT RED-MOUNTAIN N5: read bilinearly, a foot stood up to 19 m off the drawn ground. */
-export const cellHeight = (h00, h10, h01, h11, u, v) => (u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01));
+export const cellHeight = (h00, h10, h01, h11, u, v) =>
+  u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01);
 
 /**
  * WHERE THE GLOW STANDS on the ground the views draw (world units), for each pylon and each curtain point (`pylons`,
@@ -56,7 +72,8 @@ export const cellHeight = (h00, h10, h01, h11, u, v) => (u >= v ? h00 + u * (h10
  *   ring?: { baseX: number, baseY: number, radius: number, side: number, positions: ArrayLike<number>, ground?: ArrayLike<number> | null } | null }} layers
  */
 export function fenceGround(frame, { feet = null, built = null, mid = null, ring = null }) {
-  const exactP = new Map(), exactC = new Map();
+  const exactP = new Map(),
+    exactC = new Map();
   if (feet && built) {
     for (const [k, v] of feet.map) {
       if (v.frame !== frame || !built.has(k)) continue;
@@ -66,30 +83,43 @@ export function fenceGround(frame, { feet = null, built = null, mid = null, ring
   }
   const ringAt = (bx, by) => {
     if (!ring) return null;
-    const fi = bx - 0.5 - ring.baseX + ring.radius, fj = by - 0.5 - ring.baseY + ring.radius;
-    const i = Math.floor(fi), j = Math.floor(fj);
+    const fi = bx - 0.5 - ring.baseX + ring.radius,
+      fj = by - 0.5 - ring.baseY + ring.radius;
+    const i = Math.floor(fi),
+      j = Math.floor(fj);
     if (i < 0 || j < 0 || i + 1 >= ring.side || j + 1 >= ring.side) return null;
     const h = (a, b) => (ring.ground ? ring.ground[b * ring.side + a] : ring.positions[(b * ring.side + a) * 3 + 1]);
     return cellHeight(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fi - i, fj - j);
   };
   const midAt = (bx, by) => {
     if (!mid) return null;
-    const side = (2 * mid.radius + 1) * mid.sub + 1, cell = TERRAIN_SIZE / mid.sub;
-    const gx = ((bx - mid.baseX) * TERRAIN_SIZE) / cell + mid.radius * mid.sub, gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;
-    const i = Math.floor(gx), j = Math.floor(gz);
+    const side = (2 * mid.radius + 1) * mid.sub + 1,
+      cell = TERRAIN_SIZE / mid.sub;
+    const gx = ((bx - mid.baseX) * TERRAIN_SIZE) / cell + mid.radius * mid.sub,
+      gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;
+    const i = Math.floor(gx),
+      j = Math.floor(gz);
     if (i < 0 || j < 0 || i + 1 >= side || j + 1 >= side) return null;
-    const H = mid.heights, at = (a, b) => H[b * side + a];
+    const H = mid.heights,
+      at = (a, b) => H[b * side + a];
     return cellHeight(at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1), gx - i, gz - j);
   };
   const lay = (count, placeOf, exact) => {
-    const fine = new Float32Array(count), coarse = new Float32Array(count), kind = new Uint8Array(count);
+    const fine = new Float32Array(count),
+      coarse = new Float32Array(count),
+      kind = new Uint8Array(count);
     for (let i = 0; i < count; i++) {
-      const [gx, gy] = placeOf(i), bx = gx / 128, by = BAY_H + 1 - gy / 128;
-      const c = ringAt(bx, by), m = exact.has(i) ? null : midAt(bx, by);
+      const [gx, gy] = placeOf(i),
+        bx = gx / 128,
+        by = BAY_H + 1 - gy / 128;
+      const c = ringAt(bx, by),
+        m = exact.has(i) ? null : midAt(bx, by);
       coarse[i] = c ?? 0;
       if (exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));
-      else if (m !== null) { fine[i] = m; kind[i] = 1; }
-      else if (c !== null) fine[i] = c;
+      else if (m !== null) {
+        fine[i] = m;
+        kind[i] = 1;
+      } else if (c !== null) fine[i] = c;
       else kind[i] = 2;
     }
     return { fine, coarse, kind };
@@ -109,25 +139,71 @@ export function fenceGround(frame, { feet = null, built = null, mid = null, ring
  * @param {import('../world/tamriel/ghostfence.js').GhostfenceFrame} frame
  */
 export function glowMeshes(frame) {
-  const [px, py] = sampleToPixel(frame.cx, frame.cy), ox = px * 128, oy = (BAY_H - py) * 128;
+  const [px, py] = sampleToPixel(frame.cx, frame.cy),
+    ox = px * 128,
+    oy = (BAY_H - py) * 128;
   const local = (gx, gy) => [(gx - ox) * SAMPLE_M, (gy - oy) * SAMPLE_M];
-  const n = frame.n, per = CURTAIN_STEPS + 1, curtain = [], curtainOf = [];
+  const n = frame.n,
+    per = CURTAIN_STEPS + 1,
+    curtain = [],
+    curtainOf = [];
   for (let i = 0; i < n; i++) {
     for (let k = 0; k < CURTAIN_STEPS; k++) {
-      const [ax, az] = local(...ghostfenceCurtainPoint(frame, i, k)), [bx, bz] = local(...ghostfenceCurtainPoint(frame, i, k + 1));
-      const sa = (i + k / CURTAIN_STEPS) * GHOSTFENCE_DIALS.spacing, sb = (i + (k + 1) / CURTAIN_STEPS) * GHOSTFENCE_DIALS.spacing, pa = i * per + k, pb = pa + 1;
-      for (const [x, z, s, v, q] of [[ax, az, sa, 0, pa], [bx, bz, sb, 0, pb], [bx, bz, sb, 1, pb], [ax, az, sa, 0, pa], [bx, bz, sb, 1, pb], [ax, az, sa, 1, pa]]) { curtain.push(x, z, s, v); curtainOf.push(q); }
+      const [ax, az] = local(...ghostfenceCurtainPoint(frame, i, k)),
+        [bx, bz] = local(...ghostfenceCurtainPoint(frame, i, k + 1));
+      const sa = (i + k / CURTAIN_STEPS) * GHOSTFENCE_DIALS.spacing,
+        sb = (i + (k + 1) / CURTAIN_STEPS) * GHOSTFENCE_DIALS.spacing,
+        pa = i * per + k,
+        pb = pa + 1;
+      for (const [x, z, s, v, q] of [
+        [ax, az, sa, 0, pa],
+        [bx, bz, sb, 0, pb],
+        [bx, bz, sb, 1, pb],
+        [ax, az, sa, 0, pa],
+        [bx, bz, sb, 1, pb],
+        [ax, az, sa, 1, pa],
+      ]) {
+        curtain.push(x, z, s, v);
+        curtainOf.push(q);
+      }
     }
   }
-  const halo = [], haloOf = [], corners = [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]];
-  const orb = (gx, gy, lift, k) => { const [x, z] = local(gx, gy); for (const [cx, cy] of corners) { halo.push(x, z, cx, cy, lift); haloOf.push(k); } };
-  const gateLift = GHOSTGATE.height + GHOSTGATE.cornice + GHOSTGATE.top[2] + GHOSTGATE.orb.over, mid = (GHOSTGATE.passage + GHOSTGATE.half) / 2 / SAMPLE_M;
+  const halo = [],
+    haloOf = [],
+    corners = [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, -1],
+      [1, 1],
+      [-1, 1],
+    ];
+  const orb = (gx, gy, lift, k) => {
+    const [x, z] = local(gx, gy);
+    for (const [cx, cy] of corners) {
+      halo.push(x, z, cx, cy, lift);
+      haloOf.push(k);
+    }
+  };
+  const gateLift = GHOSTGATE.height + GHOSTGATE.cornice + GHOSTGATE.top[2] + GHOSTGATE.orb.over,
+    mid = (GHOSTGATE.passage + GHOSTGATE.half) / 2 / SAMPLE_M;
   for (let i = 0; i < n; i++) {
-    const gx = frame.pts[2 * i], gy = frame.pts[2 * i + 1];
-    if (i !== frame.gate) { orb(gx, gy, PYLON.orb.at, i); continue; }
+    const gx = frame.pts[2 * i],
+      gy = frame.pts[2 * i + 1];
+    if (i !== frame.gate) {
+      orb(gx, gy, PYLON.orb.at, i);
+      continue;
+    }
     for (const s of [-1, 1]) orb(gx + s * frame.tan[2 * i] * mid, gy + s * frame.tan[2 * i + 1] * mid, gateLift, i);
   }
-  return { px, py, curtain: new Float32Array(curtain), curtainOf: Int32Array.from(curtainOf), halo: new Float32Array(halo), haloOf: Int32Array.from(haloOf) };
+  return {
+    px,
+    py,
+    curtain: new Float32Array(curtain),
+    curtainOf: Int32Array.from(curtainOf),
+    halo: new Float32Array(halo),
+    haloOf: Int32Array.from(haloOf),
+  };
 }
 
 const COMMON = `uniform mat4 uVP;
@@ -144,7 +220,9 @@ const { HEAD, HIDE, NOISE, HAZE } = FIRE_GLSL;
 const NIGHT = `float nightOf(float light) { return 1.0 - ${f1(1 - GLOW.dayGlow)} * clamp(light, 0.0, 1.0); }
 `;
 
-export const FENCE_CURTAIN_VS = HEAD + `layout(location = 0) in vec4 aCorner;   // x, z; metres along the fence; 0 foot, 1 top
+export const FENCE_CURTAIN_VS =
+  HEAD +
+  `layout(location = 0) in vec4 aCorner;   // x, z; metres along the fence; 0 foot, 1 top
 layout(location = 1) in vec3 aFoot;     // fine, coarse, eased
 ${COMMON}out vec2 vSide;
 out vec3 vWorld;
@@ -157,7 +235,9 @@ void main() {
   gl_Position = uVP * vec4(w, 1.0);
 }`;
 
-export const FENCE_CURTAIN_FS = HEAD + `in vec2 vSide;
+export const FENCE_CURTAIN_FS =
+  HEAD +
+  `in vec2 vSide;
 in vec3 vWorld;
 uniform float uTime;
 uniform float uLight;
@@ -176,7 +256,9 @@ void main() {
   o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.curtain)} * nightOf(uLight) * fade * (1.0 - hazeOf(vWorld))), 0.0);
 }`;
 
-export const FENCE_HALO_VS = HEAD + `layout(location = 0) in vec4 aCorner;   // x, z; the quad's corner
+export const FENCE_HALO_VS =
+  HEAD +
+  `layout(location = 0) in vec4 aCorner;   // x, z; the quad's corner
 layout(location = 1) in float aLift;
 layout(location = 2) in vec3 aFoot;
 ${COMMON}uniform vec3 uRight;
@@ -197,7 +279,9 @@ void main() {
   gl_Position = uVP * vec4(c + (uRight * aCorner.z + uUp * aCorner.w) * r, 1.0);
 }`;
 
-export const FENCE_HALO_FS = HEAD + `in vec2 vCorner;
+export const FENCE_HALO_FS =
+  HEAD +
+  `in vec2 vCorner;
 in vec3 vWorld;
 in float vShare;
 uniform float uLight;
@@ -210,10 +294,17 @@ void main() {
 }`;
 
 /** FIRST-USE: the glow's two programs, as its constructor builds them. */
-export const GLOW_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FENCE_CURTAIN_VS, FENCE_CURTAIN_FS], [FENCE_HALO_VS, FENCE_HALO_FS]]));
+export const GLOW_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [FENCE_CURTAIN_VS, FENCE_CURTAIN_FS],
+    [FENCE_HALO_VS, FENCE_HALO_FS],
+  ])
+);
 
 function mat4Multiply(out, a, b) {
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   return out;
 }
 
@@ -224,37 +315,74 @@ export class GhostfenceGlow {
     this.gl = gl;
     this.curtainProgram = buildProgram(gl, FENCE_CURTAIN_VS, FENCE_CURTAIN_FS, 'ghostfence curtain');
     this.haloProgram = buildProgram(gl, FENCE_HALO_VS, FENCE_HALO_FS, 'ghostfence halo');
-    const names = [...FIRE_COMMON_UNIFORMS, 'uOrigin', 'uMorph', 'uMorphFrom', 'uTime', 'uLight', 'uRight', 'uUp', 'uPx'];
+    const names = [
+      ...FIRE_COMMON_UNIFORMS,
+      'uOrigin',
+      'uMorph',
+      'uMorphFrom',
+      'uTime',
+      'uLight',
+      'uRight',
+      'uUp',
+      'uPx',
+    ];
     this.cu = fireLocations(gl, this.curtainProgram, names);
     this.hu = fireLocations(gl, this.haloProgram, names);
     gl.useProgram(null);
-    this.mesh = null; this._frame = null; this._groundKey = null;
-    this._vp = new Float32Array(16); this._origin = new Float32Array(3);
-    this._lensKey = ''; this._lens = null;
-    this._bufs = []; this._vaos = [];
+    this.mesh = null;
+    this._frame = null;
+    this._groundKey = null;
+    this._vp = new Float32Array(16);
+    this._origin = new Float32Array(3);
+    this._lensKey = '';
+    this._lens = null;
+    this._bufs = [];
+    this._vaos = [];
     this.drawn = 0;
   }
 
   /** The meshes for the fence's frame, built when it moves (the trace landing, a fit). */
   update(frame) {
-    if (!frame) { this.mesh = null; this._frame = null; return; }
+    if (!frame) {
+      this.mesh = null;
+      this._frame = null;
+      return;
+    }
     if (frame === this._frame) return;
-    this._frame = frame; this._groundKey = null;
+    this._frame = frame;
+    this._groundKey = null;
     this._free();
-    const gl = this.gl, m = glowMeshes(frame);
-    const buffer = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); this._bufs.push(b); return b; };
-    const vao = () => { const v = gl.createVertexArray(); gl.bindVertexArray(v); this._vaos.push(v); return v; };
+    const gl = this.gl,
+      m = glowMeshes(frame);
+    const buffer = (data, usage) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+      this._bufs.push(b);
+      return b;
+    };
+    const vao = () => {
+      const v = gl.createVertexArray();
+      gl.bindVertexArray(v);
+      this._vaos.push(v);
+      return v;
+    };
     this.curtainVao = vao();
     buffer(m.curtain, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 16, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 16, 0);
     this.curtainFoot = buffer(new Float32Array(m.curtainOf.length * 3), gl.DYNAMIC_DRAW);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 12, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 12, 0);
     this.haloVao = vao();
     buffer(m.halo, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 20, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 16);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 20, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 16);
     this.haloFoot = buffer(new Float32Array(m.haloOf.length * 3), gl.DYNAMIC_DRAW);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 12, 0);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 12, 0);
     gl.bindVertexArray(null);
     this.mesh = m;
   }
@@ -265,16 +393,24 @@ export class GhostfenceGlow {
     const key = [ground.feet?.stamp, ground.built?.changes ?? ground.built?.size, ground.mid, ground.ring];
     if (this._groundKey && key.every((k, i) => k === this._groundKey[i])) return;
     this._groundKey = key;
-    const gl = this.gl, m = /** @type {any} */ (this.mesh), g = fenceGround(/** @type {any} */ (this._frame), ground);
+    const gl = this.gl,
+      m = /** @type {any} */ (this.mesh),
+      g = fenceGround(/** @type {any} */ (this._frame), ground);
     const fill = (of, at, buf) => {
       const out = new Float32Array(of.length * 3);
-      for (let v = 0; v < of.length; v++) { const k = of[v]; out[3 * v] = at.fine[k]; out[3 * v + 1] = at.coarse[k]; out[3 * v + 2] = at.kind[k]; }
+      for (let v = 0; v < of.length; v++) {
+        const k = of[v];
+        out[3 * v] = at.fine[k];
+        out[3 * v + 1] = at.coarse[k];
+        out[3 * v + 2] = at.kind[k];
+      }
       for (let q = 0; q < of.length; q += 6) {
         let none = false;
         for (let c = 0; c < 6; c++) none ||= at.kind[of[q + c]] === 2;
         if (none) for (let c = 0; c < 6; c++) out[3 * (q + c) + 2] = 2;
       }
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, out, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, out, gl.DYNAMIC_DRAW);
     };
     fill(m.curtainOf, g.points, this.curtainFoot);
     fill(m.haloOf, g.pylons, this.haloFoot);
@@ -287,19 +423,29 @@ export class GhostfenceGlow {
    */
   draw(pass) {
     this.drawn = 0;
-    const m = this.mesh, { ringOrigin, baseX, baseY, view, worldProj, fovY, aspect, far, eye, light, seconds, cone, ground, morph } = pass;
+    const m = this.mesh,
+      { ringOrigin, baseX, baseY, view, worldProj, fovY, aspect, far, eye, light, seconds, cone, ground, morph } = pass;
     if (!m || !eye || !worldProj || !ground?.ring) return;
-    const gl = this.gl, o = this._origin;
-    o[0] = ringOrigin[0] + (m.px - baseX) * TERRAIN_SIZE; o[1] = ringOrigin[1]; o[2] = ringOrigin[2] - (m.py - baseY) * TERRAIN_SIZE;
-    const f = /** @type {any} */ (this._frame), cx = o[0] + (f.cx - m.px * 128) * SAMPLE_M, cz = o[2] + (f.cy - (BAY_H - m.py) * 128) * SAMPLE_M;
+    const gl = this.gl,
+      o = this._origin;
+    o[0] = ringOrigin[0] + (m.px - baseX) * TERRAIN_SIZE;
+    o[1] = ringOrigin[1];
+    o[2] = ringOrigin[2] - (m.py - baseY) * TERRAIN_SIZE;
+    const f = /** @type {any} */ (this._frame),
+      cx = o[0] + (f.cx - m.px * 128) * SAMPLE_M,
+      cz = o[2] + (f.cy - (BAY_H - m.py) * 128) * SAMPLE_M;
     if (Math.hypot(eye[0] - cx, eye[2] - cz) > GLOW.reach) return;
     this._feetFor(ground);
     const key = `${fovY},${aspect},${far},${pass.worldFar}`;
-    if (key !== this._lensKey) { this._lens = mirrorProjectionX(perspective(fovY, aspect, pass.worldFar * 0.98, far)); this._lensKey = key; }
-    const t = ((seconds % GLOW.period) + GLOW.period) % GLOW.period / GLOW.period;
+    if (key !== this._lensKey) {
+      this._lens = mirrorProjectionX(perspective(fovY, aspect, pass.worldFar * 0.98, far));
+      this._lensKey = key;
+    }
+    const t = (((seconds % GLOW.period) + GLOW.period) % GLOW.period) / GLOW.period;
     const px = (2 * Math.tan(fovY / 2)) / Math.max(1, gl.drawingBufferHeight);
     gl.depthMask(false);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
@@ -330,21 +476,25 @@ export class GhostfenceGlow {
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     gl.depthRange(0, 1);
-    gl.depthMask(true); gl.depthFunc(gl.LESS); gl.enable(gl.CULL_FACE);   // the world's state back: drawn after the flats
+    gl.depthMask(true);
+    gl.depthFunc(gl.LESS);
+    gl.enable(gl.CULL_FACE); // the world's state back: drawn after the flats
   }
 
   _free() {
     const gl = this.gl;
     for (const b of this._bufs) gl.deleteBuffer(b);
     for (const v of this._vaos) gl.deleteVertexArray(v);
-    this._bufs = []; this._vaos = [];
+    this._bufs = [];
+    this._vaos = [];
   }
 
   /** Free the GL objects (every allocation has an owner: the far ring's dispose). */
   dispose() {
     this._free();
-    this.gl.deleteProgram(this.curtainProgram); this.gl.deleteProgram(this.haloProgram);
-    this.mesh = null; this._frame = null;
+    this.gl.deleteProgram(this.curtainProgram);
+    this.gl.deleteProgram(this.haloProgram);
+    this.mesh = null;
+    this._frame = null;
   }
 }
-

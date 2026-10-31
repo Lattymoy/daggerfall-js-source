@@ -1,144 +1,144 @@
 [
- {
-  "name": "WM-route-unserved",
-  "file": "server-account/src/index.js",
-  "old": "          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),",
-  "new": "",
-  "tests": [
-   "test/ui/fb1031_witness.test.js"
-  ],
-  "note": "the route not served"
- },
- {
-  "name": "WM-not-busy",
-  "file": "src/net/busyLaw.js",
-  "old": "  ['/v1/prof/ground', 'POST'],",
-  "new": "",
-  "tests": [
-   "test/ui/fb1031_witness.test.js",
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the map's read asked through an overload"
- },
- {
-  "name": "WM-book-asked-shut",
-  "file": "src/net/profBook.js",
-  "old": "if (_groundBusy || state.open !== true ||",
-  "new": "if (_groundBusy || state.open === false ||",
-  "tests": [
-   "test/ui/fb1031_witness.test.js"
-  ],
-  "note": "asked before the professions are known open"
- },
- {
-  "name": "WM-book-in-flight",
-  "file": "src/net/profBook.js",
-  "old": "      if (_groundBusy || state.open !== true",
-  "new": "      if (state.open !== true",
-  "tests": [
-   "test/ui/fb1031_witness.test.js"
-  ],
-  "note": "a read for each region in view at once"
- },
- {
-  "name": "WM-open-always",
-  "file": "src/ui/witnessMapMark.js",
-  "old": "    open: () => book?.state?.open === true,",
-  "new": "    open: () => true,",
-  "tests": [
-   "test/ui/fb1031_witness.test.js"
-  ],
-  "note": "the switch shown with the professions shut"
- },
- {
-  "name": "WM-square-off-pixel",
-  "file": "src/ui/witnessMapMark.js",
-  "old": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, s, s);",
-  "new": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, 1, 1);",
-  "tests": [
-   "test/ui/witness_map.test.js",
-   "test/ui/fb1031_witness.test.js"
-  ],
-  "note": "a paper pixel where a map pixel stands"
- },
- {
-  "name": "WM-switch-unread",
-  "file": "src/ui/heldMap.js",
-  "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
-  "new": "    const wit = zoomBand(v.scale) === 'far' ? null",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the key's switch hides nothing"
- },
- {
-  "name": "WM-far-read",
-  "file": "src/ui/heldMap.js",
-  "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
-  "new": "    const wit = this.filters.witnessed ? null",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the far band asks every region of the Bay"
- },
- {
-  "name": "WM-legend-gone",
-  "file": "src/ui/heldMap.js",
-  "old": "    if (this._witnessed.length) {   // WITNESS-MAP",
-  "new": "    if (false) {   // WITNESS-MAP",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the wash unexplained"
- },
- {
-  "name": "WM-legend-hidden",
-  "file": "src/ui/heldMap.js",
-  "old": " && !this._witnessed.length && !this._vendor",
-  "new": " && !this._vendor",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "a legend of the wash alone never shown"
- },
- {
-  "name": "WM-key-row-shut",
-  "file": "src/ui/heldMap.js",
-  "old": "    if (this.deps.witnessed?.open?.()) {",
-  "new": "    if (this.deps.witnessed) {",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the switch shown with the professions shut"
- },
- {
-  "name": "WM-store-not-saved",
-  "file": "src/systems/travel/travelMapState.js",
-  "old": "    filterWitnessed: _filters.witnessed,   // WITNESS-MAP\n",
-  "new": "",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the switch forgotten across a save"
- },
- {
-  "name": "WM-store-no-flag",
-  "file": "src/systems/travel/travelMapState.js",
-  "old": "streams: false, witnessed: false });",
-  "new": "streams: false });",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the switch no flag of the store - its press refused"
- },
- {
-  "name": "WM-world-unwired",
-  "file": "src/scenes/world.js",
-  "old": "      witnessed: profBook ? witnessMapReader(profBook) : null,",
-  "new": "      witnessed: null,",
-  "tests": [
-   "test/ui/witness_map.test.js"
-  ],
-  "note": "the live game's map handed no reader"
- }
+  {
+    "name": "WM-route-unserved",
+    "file": "server-account/src/index.js",
+    "old": "          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),",
+    "new": "",
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ],
+    "note": "the route not served"
+  },
+  {
+    "name": "WM-not-busy",
+    "file": "src/net/busyLaw.js",
+    "old": "  ['/v1/prof/ground', 'POST'], // WITNESS-MAP: the held map's witnessed tiles, asked as its view moves (AUDIT FB1031 W3: a replica's read)",
+    "new": "  // WITNESS-MAP: the held map's witnessed tiles, asked as its view moves (AUDIT FB1031 W3: a replica's read)",
+    "tests": [
+      "test/ui/fb1031_witness.test.js",
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the map's read asked through an overload"
+  },
+  {
+    "name": "WM-book-asked-shut",
+    "file": "src/net/profBook.js",
+    "old": "if (_groundBusy || state.open !== true ||",
+    "new": "if (_groundBusy || state.open === false ||",
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ],
+    "note": "asked before the professions are known open"
+  },
+  {
+    "name": "WM-book-in-flight",
+    "file": "src/net/profBook.js",
+    "old": "      if (_groundBusy || state.open !== true",
+    "new": "      if (state.open !== true",
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ],
+    "note": "a read for each region in view at once"
+  },
+  {
+    "name": "WM-open-always",
+    "file": "src/ui/witnessMapMark.js",
+    "old": "    open: () => book?.state?.open === true,",
+    "new": "    open: () => true,",
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ],
+    "note": "the switch shown with the professions shut"
+  },
+  {
+    "name": "WM-square-off-pixel",
+    "file": "src/ui/witnessMapMark.js",
+    "old": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, s, s);",
+    "new": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, 1, 1);",
+    "tests": [
+      "test/ui/witness_map.test.js",
+      "test/ui/fb1031_witness.test.js"
+    ],
+    "note": "a paper pixel where a map pixel stands"
+  },
+  {
+    "name": "WM-switch-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
+    "new": "    const wit = zoomBand(v.scale) === 'far' ? null",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the key's switch hides nothing"
+  },
+  {
+    "name": "WM-far-read",
+    "file": "src/ui/heldMap.js",
+    "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
+    "new": "    const wit = this.filters.witnessed ? null",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the far band asks every region of the Bay"
+  },
+  {
+    "name": "WM-legend-gone",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._witnessed.length) {   // WITNESS-MAP",
+    "new": "    if (false) {   // WITNESS-MAP",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the wash unexplained"
+  },
+  {
+    "name": "WM-legend-hidden",
+    "file": "src/ui/heldMap.js",
+    "old": " && !this._witnessed.length && !this._vendor",
+    "new": " && !this._vendor",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "a legend of the wash alone never shown"
+  },
+  {
+    "name": "WM-key-row-shut",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this.deps.witnessed?.open?.()) {",
+    "new": "    if (this.deps.witnessed) {",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the switch shown with the professions shut"
+  },
+  {
+    "name": "WM-store-not-saved",
+    "file": "src/systems/travel/travelMapState.js",
+    "old": "    filterWitnessed: _filters.witnessed, // WITNESS-MAP\n    sleepInn: p.sleepModeInn,",
+    "new": "    sleepInn: p.sleepModeInn,",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the switch forgotten across a save"
+  },
+  {
+    "name": "WM-store-no-flag",
+    "file": "src/systems/travel/travelMapState.js",
+    "old": "  witnessed: false,\n}); // ROADS 24: water too; WITNESS-MAP: the held map's witnessed ground",
+    "new": "}); // ROADS 24: water too; WITNESS-MAP: the held map's witnessed ground",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the switch no flag of the store - its press refused"
+  },
+  {
+    "name": "WM-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      witnessed: profBook ? witnessMapReader(profBook) : null,",
+    "new": "      witnessed: null,",
+    "tests": [
+      "test/ui/witness_map.test.js"
+    ],
+    "note": "the live game's map handed no reader"
+  }
 ]

@@ -925,8 +925,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/mod/hidden-seen',    // STAFF-PANEL5-HIDDEN",
-    "new": "  // '/v1/mod/hidden-seen',    // STAFF-PANEL5-HIDDEN",
+    "old": "  '/v1/mod/hidden-seen', // STAFF-PANEL5-HIDDEN: the relay's door in - a hidden staff subject entered a private home, proven by its signature (staffHidden.js takeHiddenSeen)",
+    "new": "  // '/v1/mod/hidden-seen',    // STAFF-PANEL5-HIDDEN: the relay's door in - a hidden staff subject entered a private home, proven by its signature (staffHidden.js takeHiddenSeen)",
     "why": "the relay's door unlisted",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

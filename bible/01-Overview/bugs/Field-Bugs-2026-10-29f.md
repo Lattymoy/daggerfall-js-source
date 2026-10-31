@@ -54,7 +54,7 @@ FOUND. A house held DECOR_CAP, 200 pieces, whatever its size. The freeware's hou
 996 m2; Sentinel's widest are 655 and 983.
 
 DECIDED. A room holds DECOR_CAP to 200 m2 of ground and as much more for each as much more, in tens, to DECOR_CAP_MAX
-(600): `net/decorLaw.js:"export function decorCapOf(groundM2) {"`. The ground is HOME-PRICE's measure, the one the
+(600): `net/decorLaw.js:"export function decorCapOf"`. The ground is HOME-PRICE's measure, the one the
 price is set from. The service measures nothing (it has no ARENA2), so a claim's ground is kept only where the price is
 the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). The price and the blocks are the
 client's word, as HOME-PRICE's price always was, so a forged client can name a wider ground (AUDIT FB1029f A2):
@@ -106,7 +106,7 @@ PINS: `test/scenes/yardlight.test.js`, `test/world/audityardlight.test.js` (move
 ## 6. NUDGE - sideways steps, and some clipping
 
 FIXED. Four bar buttons and Numpad 4, 6, 8 and 2 push a piece along the level axis nearest the eye's left, right, away
-and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {"`).
+and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep"`).
 The push is applied after WALL-CLEAR's clearance, so a piece may sit into a wall or another piece as far as its owner
 chooses (item 14). A hung piece slides along its surface.
 

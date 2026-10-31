@@ -75,5 +75,5 @@ test('SILVER no word a player reads says Drakes any more - the Bank, the account
   assert.match(src('src/ui/marketTab.js'), /\[\['marks', 'Priced in silver'\], \['gold', 'Priced in gold'\]\]/);
   // and the metal stands as it was
   assert.match(src('src/net/professionLaw.js'), /made\('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver'\)/);
-  assert.match(src('src/net/recipeLaw.js'), /METAL_WORDS = Object\.freeze\(\['Iron', 'Steel', 'Silver',/);
+  assert.match(src('src/net/recipeLaw.js'), /METAL_WORDS = Object\.freeze\(\[\n\s*'Iron',\n\s*'Steel',\n\s*'Silver',/);
 });

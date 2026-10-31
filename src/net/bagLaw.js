@@ -42,7 +42,7 @@
 // service itself handed out: law 3's guarantee, kept with the door open
 // one way more.
 // ═══════════════════════════════════════════════════════════════════
-import { STORES_MAX, WITHDRAW_MAX } from './professionLaw.js';   // AUDIT2 BAG1 D16: the bounds this law shares, one home
+import { STORES_MAX, WITHDRAW_MAX } from './professionLaw.js'; // AUDIT2 BAG1 D16: the bounds this law shares, one home
 
 /** The bag's template, in the professions' reserved range (Professions-Arc 4.8: 600 was unused). */
 export const BAG_TEMPLATE = 600;
@@ -58,10 +58,26 @@ export const BAG_BASE_PRICE = 250;
  *  (`hasNoEncumbrance`, template 93), one to a slot. Rarity 10: no shelf rolls it - a General Store shelves it by name
  *  (shopStock.js), online only. */
 export const BAG_ROW = Object.freeze({
-  index: BAG_TEMPLATE, name: 'Materials Bag', baseWeight: 1, hitPoints: 0, capacityOrTarget: 0, basePrice: BAG_BASE_PRICE,
-  enchantmentPoints: 0, rarity: 10, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 205, worldTextureRecord: 44,
-  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,
+  index: BAG_TEMPLATE,
+  name: 'Materials Bag',
+  baseWeight: 1,
+  hitPoints: 0,
+  capacityOrTarget: 0,
+  basePrice: BAG_BASE_PRICE,
+  enchantmentPoints: 0,
+  rarity: 10,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 205,
+  worldTextureRecord: 44,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
+  hasNoEncumbrance: true,
 });
 
 /** Whether a record IS a Materials Bag - its template and its group, the one spelling every rule reads (the save's
@@ -71,7 +87,8 @@ export const isBagItem = (item) => item?.templateIndex === BAG_TEMPLATE && item?
 export const hasBag = (items) => Array.isArray(items) && items.some(isBagItem);
 /** ONE-BAG (2026-10-04, Mac: "you shouldnt be able to hold multiple gathering bags"): whether any of `lists` - the pack, a
  *  trade's basket, the wagon - holds a Materials Bag other than `item` (the one being taken, which may sit in one of them). */
-export const holdsOtherBag = (lists, item = null) => (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => x !== item && isBagItem(x)));
+export const holdsOtherBag = (lists, item = null) =>
+  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => x !== item && isBagItem(x)));
 
 /** The bag as a capacity the transfer ladder reads (systems/inventorySession.js storeCapacityOf's shape - the
  *  companion's pack's): its kg and its words ("Your Materials Bag cannot carry any more."). */
@@ -97,7 +114,11 @@ export const CLAMP_ORDER = Object.freeze(['gold', 'bought', 'own']);
  *  (professions.js spendStatements) - and never gold's, which no station may spend (GOLD-MARKET's wall). BAG-CRAFT
  *  (FIELD BUGS 2026-10-09c): `work`, a station's - `spend`'s order for the counted units, then the units the count does
  *  not hold (`looseOrder`). */
-export const DEPOSIT_ORDERS = Object.freeze({ all: CLAMP_ORDER, spend: Object.freeze(['bought', 'own']), work: Object.freeze(['bought', 'own']) });
+export const DEPOSIT_ORDERS = Object.freeze({
+  all: CLAMP_ORDER,
+  spend: Object.freeze(['bought', 'own']),
+  work: Object.freeze(['bought', 'own']),
+});
 export const depositOrderOk = (o) => typeof o === 'string' && Object.hasOwn(DEPOSIT_ORDERS, o);
 /** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not just
  *  the store"): whether a deposit by `o` may move units the carried count does not hold - a looted Red Rose, a log
@@ -183,10 +204,17 @@ const STAYS_WHY = Object.freeze({
  *  did). AUDIT2 BAG1 K10: every rest was said as "no room" - a withdrawal busy, unanswered or refused too. */
 export function madeWhere(p) {
   if (!p || typeof p !== 'object') return '';
-  const bag = p.bag | 0, pack = p.pack | 0, stored = Math.max(0, p.stored | 0), coming = Math.max(0, p.coming | 0);
-  const to = bag > 0 && pack > 0 ? 'Into your bag and pack' : pack > 0 ? 'Into your pack' : bag > 0 ? 'Into your bag' : '';
+  const bag = p.bag | 0,
+    pack = p.pack | 0,
+    stored = Math.max(0, p.stored | 0),
+    coming = Math.max(0, p.coming | 0);
+  const to =
+    bag > 0 && pack > 0 ? 'Into your bag and pack' : pack > 0 ? 'Into your pack' : bag > 0 ? 'Into your bag' : '';
   const said = [];
-  if (coming) said.push(`${coming} on ${coming === 1 ? 'its' : 'their'} way from your Stores: the counting-house has not answered yet`);
+  if (coming)
+    said.push(
+      `${coming} on ${coming === 1 ? 'its' : 'their'} way from your Stores: the counting-house has not answered yet`,
+    );
   if (stored) {
     const stay = `${stored} ${stored === 1 ? 'stays' : 'stay'} in your Stores`;
     said.push(p.why === 'refused' ? stay : `${stay}: ${STAYS_WHY[p.why] ?? STAYS_WHY.room}`);
@@ -223,7 +251,8 @@ export const BAG_WORDS = Object.freeze({
   noRoom: 'No room in your bag or pack',
   /** PACK-OVER (FIELD BUGS 2026-10-04): a harvest's goods minted into the pack past its weight - said beside the haul card,
    *  which counts the goods and not the weight (scenes/gatherHost.js) */
-  overWeight: 'Your pack is over its weight. Put materials in your Stores in any town, or carry them in a Materials Bag.',
+  overWeight:
+    'Your pack is over its weight. Put materials in your Stores in any town, or carry them in a Materials Bag.',
   /** the Stores page, away from a town */
   town: 'Your Stores are kept in town. Go to any town to put materials in or take them out.',
 });

@@ -1,1083 +1,1083 @@
 [
- {
-  "name": "GF2-BLOWSHAKE-a-blow-looks-up",
-  "file": "src/systems/gatherBlow.js",
-  "old": "plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
-  "new": "plain: f({ cam: f({ pitch: 0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-clean-one-no-deeper",
-  "file": "src/systems/gatherBlow.js",
-  "old": "clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
-  "new": "clean: f({ cam: f({ pitch: -0.5, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-a-shake-on-a-tool",
-  "file": "src/systems/gatherBlow.js",
-  "old": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }) }),",
-  "new": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }), shake: 1 }),",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-skin-unread",
-  "file": "src/systems/gatherBlow.js",
-  "old": "if (!row || !enhanced() || reduced()) return false;",
-  "new": "if (!row || reduced()) return false;",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-reduced-motion-unread",
-  "file": "src/systems/gatherBlow.js",
-  "old": "if (!row || !enhanced() || reduced()) return false;",
-  "new": "if (!row || !enhanced()) return false;",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-motion-unscaled",
-  "file": "src/systems/gatherBlow.js",
-  "old": "  kick(row.cam, row.hands, m);\n",
-  "new": "  kick(row.cam, row.hands, 1);\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-off-moves-it",
-  "file": "src/systems/gatherBlow.js",
-  "old": "  if (!(m > 0)) return false;\n",
-  "new": "  if (m < 0) return false;\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-clean-row-crossed",
-  "file": "src/systems/gatherBlow.js",
-  "old": "?.[clean ? 'clean' : 'plain'];",
-  "new": "?.[clean ? 'plain' : 'clean'];",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-glint-read-plain",
-  "file": "src/systems/gatherBlow.js",
-  "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
-  "new": "clean: st?.last === 'clean' });",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-clean-cut-read-plain",
-  "file": "src/systems/gatherBlow.js",
-  "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
-  "new": "clean: st?.last === 'glint' });",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-kick-at-the-press",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (!((a.act.state?.landed | 0) > was)) return false;\n",
-  "new": "    if (!(Number(a.act.landsIn) > 0)) return false;\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-blow-never-read",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    const was = a.act.state?.landed | 0;\n",
-  "new": "    const was = Infinity;\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-follow-unstepped",
-  "file": "src/scenes/gatherHost.js",
-  "old": "        for (const sw of swings) stepAct(sw, dt, {});",
-  "new": "        for (const sw of swings) sw.act.tick(dt, {});",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-default-feel-dropped",
-  "file": "src/scenes/gatherHost.js",
-  "old": "  const feel = deps.feel ?? gatherBlowFeel;\n",
-  "new": "  const feel = deps.feel ?? (() => false);\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-throw-let-through",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    try { feel(b.kind, b.clean); } catch { /* the view's answer never stops an act */ }\n",
-  "new": "    feel(b.kind, b.clean);\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-door-skipped",
-  "file": "src/combat/technique/techniqueFx.js",
-  "old": "    kickFx(row.cam, row.hands, m);   // GATHER-FEEL II: the springs' one door\n",
-  "new": "    /* the door skipped */\n",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-BLOWSHAKE-the-setting-silent",
-  "file": "src/ui/enhanced/enhancedMenu.js",
-  "old": "'How much a weapon technique shakes and tilts the view and dips your hands. On the Enhanced skin, it also sets how far your hands dip when you gather.',",
-  "new": "'How much a weapon technique shakes and tilts the view and dips your hands.',",
-  "tests": [
-   "test/systems/gf2_blowshake.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-a-share-past-one-kept",
-  "file": "src/systems/veinCrack.js",
-  "old": "  c[0] = Math.min(1, share);\n",
-  "new": "  c[0] = share;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-field-reallocated",
-  "file": "src/systems/veinCrack.js",
-  "old": "  const c = batch.crack ?? (batch.crack = [0, 0]);\n",
-  "new": "  const c = (batch.crack = [0, 0]);\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-nought-cracked",
-  "file": "src/systems/veinCrack.js",
-  "old": "  if (!(share > 0)) { if (batch.crack) batch.crack = null; return; }\n",
-  "new": "  if (!(share >= 0)) { if (batch.crack) batch.crack = null; return; }\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-seed-unwrapped",
-  "file": "src/systems/veinCrack.js",
-  "old": "  c[1] = Number.isFinite(seed) ? seed - Math.floor(seed) : 0;\n",
-  "new": "  c[1] = seed;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-one-pattern-for-every-vein",
-  "file": "src/systems/veinCrack.js",
-  "old": "  return (h >>> 0) / 4294967296;\n",
-  "new": "  return 0.5;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-early-out-lost",
-  "file": "src/systems/veinCrack.js",
-  "old": "  if (uCrack.x <= 0.0) return 1.0;\n",
-  "new": "  if (uCrack.x < 0.0) return 1.0;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-heart-light",
-  "file": "src/systems/veinCrack.js",
-  "old": "heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ?",
-  "new": "heart * 0.45 ?",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-heart-a-corner",
-  "file": "src/systems/veinCrack.js",
-  "old": "  float heart = length(texel / size - 0.5) * 1.6;\n",
-  "new": "  float heart = length(texel / size) * 1.6;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-cell-moved",
-  "file": "src/systems/veinCrack.js",
-  "old": "export const VEIN_CRACK_CELL = 7;",
-  "new": "export const VEIN_CRACK_CELL = 5;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-shade-lighter",
-  "file": "src/systems/veinCrack.js",
-  "old": "? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
-  "new": "? 0.5 : 1.0;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-seam-wide",
-  "file": "src/systems/veinCrack.js",
-  "old": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 1.0) return 1.0;",
-  "new": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 2.5) return 1.0;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-seed-unread",
-  "file": "src/systems/veinCrack.js",
-  "old": " + uCrack.y * 61.7) * 43758.5453); }",
-  "new": " + 0.0) * 43758.5453); }",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-send-dropped",
-  "file": "src/render/renderer.js",
-  "old": "      if (ck || this._bbCrackOn) { gl.uniform2f(this.bbUCrack, ck ? ck[0] : 0, ck ? ck[1] : 0); this._bbCrackOn = !!ck; }\n",
-  "new": "      /* the send dropped */\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-frame-reset-dropped",
-  "file": "src/render/renderer.js",
-  "old": "      gl.uniform2f(this.bbUCrack, 0, 0);   // VEIN-CRACKS: every flat whole until a worked vein's batch says otherwise\n",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-classic-albedo-whole",
-  "file": "src/render/renderer.js",
-  "old": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0)) * veinCrackShade(uv);",
-  "new": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0));",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-lane-albedo-whole",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));",
-  "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-born-without-the-field",
-  "file": "src/render/renderer.js",
-  "old": "dissolve: undefined, crack: undefined, tint: undefined,",
-  "new": "dissolve: undefined, tint: undefined,",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-worked-vein-shared",
-  "file": "src/scenes/gatherHost.js",
-  "old": "${lone ? `#${n.key}` : ''}`;",
-  "new": "`;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-apart-only-at-the-first-blow",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (k.cracks && !act.loose) { worked = t.node.key; if (!act.dungeon) restandAt(t.px, t.py); }\n",
-  "new": "    if (k.cracks && !act.loose) { worked = t.node.key; }\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-share-unread",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (!done) crackTo(a.node.key, Number(a.act.progress) || 0);\n",
-  "new": "    if (!done) crackTo(a.node.key, 0.25);\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-escape-leaves-them-open",
-  "file": "src/scenes/gatherHost.js",
-  "old": "cancel() { if (!act) return false; letGo(act);",
-  "new": "cancel() { if (!act) return false; ear.stop(act.act);",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-a-refusal-leaves-them-open",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (a && !a.loose) unwork(a);   // VEIN-CRACKS: refused",
-  "new": "    if (false) unwork(a);   // VEIN-CRACKS: refused",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-breaking-a-vein-that-stands",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    shed(a, k, chunksFor(done && a.fell === true, b.clean));\n",
-  "new": "    shed(a, k, chunksFor(done, b.clean));\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-chunks-never-moved",
-  "file": "src/scenes/gatherHost.js",
-  "old": "      deps.renderer.moveBillboardBatch?.(bu.batch, centers);\n",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-chunks-never-freed",
-  "file": "src/scenes/gatherHost.js",
-  "old": "      if (!live) { dropBurst(bu); continue; }\n",
-  "new": "      if (!live) continue;\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-wash-dropped",
-  "file": "src/scenes/gatherHost.js",
-  "old": "    if (look.tint) b.tint = look.tint;   // VEIN-WASH: the ore's own wash, as its flats wear it\n",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-a-torn-pixel-moved-on",
-  "file": "src/scenes/gatherHost.js",
-  "old": "      for (const bu of bursts) if (bu.entry === entry) { bu.gone = true; bu.batch = null; }   // ...its chunks' too (on its list, freed with it; stepBursts lets them go)\n",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-deep-crack-unheld",
-  "file": "src/scenes/gatherHost.js",
-  "old": "        if (b && k.cracks) holdCrack(n.key, b);",
-  "new": "        if (false) holdCrack(n.key, b);",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-deep-chunks-static",
-  "file": "src/scenes/gatherHost.js",
-  "old": "VEIN_CHUNKS.scale, at, { dynamic: true });",
-  "new": "VEIN_CHUNKS.scale, at, { dynamic: false });",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-dungeon-left-keeps-them",
-  "file": "src/scenes/gatherHost.js",
-  "old": "      for (const bu of bursts) if (bu.dungeon === d) dropBurst(bu);   // VEIN-CRACKS: its chunks, through its doors (stepBursts lets them go)\n",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-dispose-keeps-them",
-  "file": "src/scenes/gatherHost.js",
-  "old": "for (const bu of bursts) dropBurst(bu); bursts = []; cracks.clear();",
-  "new": "bursts = []; cracks.clear();",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-face-away",
-  "file": "src/systems/gatherBlow.js",
-  "old": "    const p = [at[0] + dx * C.face + sx * across, at[1] + high, at[2] + dz * C.face + sz * across];",
-  "new": "    const p = [at[0] - dx * C.face + sx * across, at[1] + high, at[2] - dz * C.face + sz * across];",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-gravity-unsquared",
-  "file": "src/systems/gatherBlow.js",
-  "old": "    c.p[1] += c.v[1] * s - 0.5 * g * s * s;",
-  "new": "    c.p[1] += c.v[1] * s - 0.5 * g * s;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-through-the-floor",
-  "file": "src/systems/gatherBlow.js",
-  "old": "    if (left > dt) { c.t += s; return true; }",
-  "new": "    if (true) { c.t += s; return true; }",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-sink-never",
-  "file": "src/systems/gatherBlow.js",
-  "old": "export const chunkSink = (c, h) => (c.rest < VEIN_CHUNKS.restS ? 0 :",
-  "new": "export const chunkSink = (c, h) => (true ? 0 :",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-box-too-small",
-  "file": "src/systems/gatherBlow.js",
-  "old": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight + w / 2;",
-  "new": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight * 0.5 + w / 2;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-breaking-count",
-  "file": "src/systems/gatherBlow.js",
-  "old": "  plain: 3, clean: 5, last: 7,",
-  "new": "  plain: 3, clean: 5, last: 5,",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-mine-uncracked",
-  "file": "src/scenes/mineHost.js",
-  "old": "    cracks: true,\n",
-  "new": "    cracks: false,\n",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-deep-vein-lifted-off-its-floor",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0;",
-  "new": "PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0.5;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ],
-  "note": "the merge of MINE-PERKS stood a dungeon vein on its floor and retired DVEIN_UP_M (the 0.5 m it stood up its wall, its chunks falling that far below its foot): lifted again, V8 fails"
- },
- {
-  "name": "GF2-VEINCRACKS-the-world-drops-the-options",
-  "file": "src/scenes/world.js",
-  "old": "stand: (a, r, s, c, o) => ctx.standProfFlats(a, r, s, c, o),",
-  "new": "stand: (a, r, s, c, o) => ctx.standProfFlats(a, r, s, c),",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-dungeon-static",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "base.h * scale }, centers, { dynamic });",
-  "new": "base.h * scale }, centers);",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-VEINCRACKS-the-landing-at-the-steps-end",
-  "file": "src/systems/gatherBlow.js",
-  "old": "    const s = left <= dt ? Math.max(0, left) : dt;   // the step's time aloft, at most to its landing",
-  "new": "    const s = dt;",
-  "tests": [
-   "test/systems/gf2_veincracks.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-an-act-past-the-table",
-  "file": "src/net/wire.js",
-  "old": "const act = Number.isInteger(ga) && ga >= 1 && ga <= POSE_GATHER_ACTS;",
-  "new": "const act = Number.isInteger(ga) && ga >= 1 && ga <= POSE_GATHER_ACTS + 1;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-beat-of-no-count",
-  "file": "src/net/wire.js",
-  "old": "Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
-  "new": "Number.isInteger(gb) && gb >= 1",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-beat-only-with-its-act",
-  "file": "src/net/wire.js",
-  "old": "    ...(Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
-  "new": "    ...(act && Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-throw-with-no-act",
-  "file": "src/net/wire.js",
-  "old": "...(act && Number.isInteger(gm)",
-  "new": "...(Number.isInteger(gm)",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-dropped-at-the-door",
-  "file": "src/net/wire.js",
-  "old": "    ...gatherOf(ga, gb, gm),",
-  "new": "    ",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-an-act-not-news",
-  "file": "src/net/wire.js",
-  "old": "|| (a.ga | 0) !== (b.ga | 0) || (a.gb | 0)",
-  "new": "|| (a.gb | 0)",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-beat-not-news",
-  "file": "src/net/wire.js",
-  "old": "|| (a.gb | 0) !== (b.gb | 0) || (a.gm | 0)",
-  "new": "|| (a.gm | 0)",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-throw-not-news",
-  "file": "src/net/wire.js",
-  "old": "|| (a.gm | 0) !== (b.gm | 0);",
-  "new": ";",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-lerp-drops-a-lone-beat",
-  "file": "src/net/online.js",
-  "old": "...(to.gb ? { gb: to.gb } : {}),   // PEER-ACTS",
-  "new": "...(to.ga && to.gb ? { gb: to.gb } : {}),   // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-lerp-drops-the-act",
-  "file": "src/net/online.js",
-  "old": "    ...(to.ga ? { ga: to.ga, ...(to.gm ? { gm: to.gm } : {}) } : {}), ...(to.gb",
-  "new": "    ...(to.gb",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-cancelled-act-named",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!st || st.cancelled) return 0;",
-  "new": "if (!st) return 0;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-count-unwrapped",
-  "file": "src/net/peer/peerGather.js",
-  "old": "n = (n % 255) + 1;",
-  "new": "n = n + 1;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-kind-crossed",
-  "file": "src/net/peer/peerGather.js",
-  "old": "gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind);",
-  "new": "gb = n * 16;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-frame-counted-twice",
-  "file": "src/net/peer/peerGather.js",
-  "old": "      if (act !== heard) { heard = act; prev = {}; }\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
-  "new": "      heard = act; prev = {};\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-throw-while-winding",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0)",
-  "new": "if (st.kind === 'fish')",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-beats-only-with-an-act",
-  "file": "src/net/peer/peerGather.js",
-  "old": "      if (gb) out.gb = gb;",
-  "new": "      if (gb && ga) out.gb = gb;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-knife-unsent",
-  "file": "src/net/peer/peerGather.js",
-  "old": "knife: 'knife', slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
-  "new": "slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-act-dropped-with-the-last-press",
-  "file": "src/scenes/gatherHost.js",
-  "old": "poseAct: () => pose.fields(act?.act ?? follow?.act ?? null),",
-  "new": "poseAct: () => pose.fields(act?.act ?? null),",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-act-unheard-by-the-pose",
-  "file": "src/scenes/gatherHost.js",
-  "old": "        pose.frame(act.act);   // PEER-ACTS",
-  "new": "        // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-arm-unspread",
-  "file": "src/scenes/world.js",
-  "old": "      ...(gatherHost?.poseAct() ?? {}),   // PEER-ACTS",
-  "new": "      // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-an-old-act-replayed",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!s) { this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }); return; }",
-  "new": "if (!s) { s = { ga: 0, gb: 0, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }; this.peers.set(id, s); }",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-blow-on-the-swings-frame",
-  "file": "src/net/peer/peerGather.js",
-  "old": "s.held.push({ due: t + PEER_BLOW_DELAY_S[tool] * 1000,",
-  "new": "s.held.push({ due: t,",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-place-the-feet",
-  "file": "src/net/peer/peerGather.js",
-  "old": "=> [feet[0] + Math.sin(yaw) * reach, feet[1] + high, feet[2] + Math.cos(yaw) * reach];",
-  "new": "=> [feet[0], feet[1], feet[2]];",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-tools-crossed",
-  "file": "src/net/peer/peerGather.js",
-  "old": "const BLOW_SAYS = f({ chop: f({ blow: 'chop', clean: 'chopClean' }), mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
-  "new": "const BLOW_SAYS = f({ mine: f({ blow: 'chop', clean: 'chopClean' }), chop: f({ blow: 'pick', clean: 'pickGlint' }) });",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-clean-blow-plain",
-  "file": "src/net/peer/peerGather.js",
-  "old": "mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
-  "new": "mine: f({ blow: 'pick', clean: 'pick' }) });",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-last-blow-unheard",
-  "file": "src/net/peer/peerGather.js",
-  "old": "const tool = doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;",
-  "new": "const tool = doing === 'chop' || doing === 'mine' ? doing : null;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-kneel-lost",
-  "file": "src/net/peer/peerGather.js",
-  "old": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket') { this._say('kneel', place); cued = true; }",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-knife-kneels",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (doing === 'hand' || doing === 'steady' || doing === 'basket') {",
-  "new": "if (doing === 'hand' || doing === 'steady' || doing === 'basket' || doing === 'trace') {",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-net-lands-at-the-body",
-  "file": "src/net/peer/peerGather.js",
-  "old": "          s.net = peerNetAt(shown, feet, yaw) ?? place;",
-  "new": "          s.net = place;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-water-silent",
-  "file": "src/net/peer/peerGather.js",
-  "old": "else if (t >= s.plipAt) { if (ok) this._say('plip'",
-  "new": "else if (t >= s.plipAt) { if (false) this._say('plip'",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-catch-silent",
-  "file": "src/net/peer/peerGather.js",
-  "old": "else if (t >= s.thrashAt) { if (ok) this._say('thrash'",
-  "new": "else if (t >= s.thrashAt) { if (false) this._say('thrash'",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-net-in-unheard",
-  "file": "src/net/peer/peerGather.js",
-  "old": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place);",
-  "new": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], place);",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-classic-skin-silent",
-  "file": "src/net/peer/peerGather.js",
-  "old": "const cue = say.classic ? PROF_CUES[/** @type {keyof typeof PROF_CUES} */ (say.classic)] : null;",
-  "new": "const cue = null;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-out-of-earshot-replayed",
-  "file": "src/net/peer/peerGather.js",
-  "old": "    s.ga = ga;\n    if (gb > 0) s.gb = gb;\n  }",
-  "new": "    if (ok) s.ga = ga;\n    if (ok && gb > 0) s.gb = gb;\n  }",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-held-blow-kept-out-of-earshot",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!ok) s.held.length = 0;",
-  "new": "if (false) s.held.length = 0;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-no-floor",
-  "file": "src/net/peer/peerGather.js",
-  "old": "const cueOk = t - s.cueAt >= PEER_GATHER_CUE_MS;",
-  "new": "const cueOk = true;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-rebase-keeps",
-  "file": "src/net/peer/peerGather.js",
-  "old": "    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
-  "new": "    void offset;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-forget-keeps",
-  "file": "src/net/peer/peerGather.js",
-  "old": "forget(id) { this.peers.delete(id); }",
-  "new": "forget(id) {}",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-sound-unwired",
-  "file": "src/net/remotePlayers.js",
-  "old": "      this._syncGatherSound(peer, toScene, eye);   // PEER-ACTS",
-  "new": "      // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-switch-ignored",
-  "file": "src/net/remotePlayers.js",
-  "old": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false && peerInEarshot(f, eye));",
-  "new": "this._gatherSounds.update(peer.id, peer.shown, f, peerInEarshot(f, eye));",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-earshot-ignored",
-  "file": "src/net/remotePlayers.js",
-  "old": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false && peerInEarshot(f, eye));",
-  "new": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false);",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-sweep",
-  "file": "src/net/remotePlayers.js",
-  "old": "    for (const id of [...this._gatherSounds.peers.keys()]) if (!seen.has(id)) this._gatherSounds.forget(id);",
-  "new": "",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-recentre",
-  "file": "src/net/remotePlayers.js",
-  "old": "    this._gatherSounds.rebase(offset);   // PEER-ACTS",
-  "new": "    // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-sprite-never-strikes-for-an-act",
-  "file": "src/net/remotePlayers.js",
-  "old": "an !== entry.lastAn) || acted != null;",
-  "new": "an !== entry.lastAn);",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-sprite-forgets-the-act",
-  "file": "src/net/remotePlayers.js",
-  "old": "lastAn: an, gather, peer,",
-  "new": "lastAn: an, peer,",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-sprite-never-kneels",
-  "file": "src/net/remotePlayers.js",
-  "old": "peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;",
-  "new": "stepped;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-kneel-over-a-one-shot",
-  "file": "src/net/remotePlayers.js",
-  "old": "peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ?",
-  "new": "peerKneeling(shown) && !moving ?",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-kneel-over-a-walk",
-  "file": "src/net/remotePlayers.js",
-  "old": "peerKneeling(shown) && !moving && !bundle",
-  "new": "peerKneeling(shown) && !bundle",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-body-holds-no-tool",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
-  "new": "const want = b.wolf ? null : (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-weapon-drawn-at-a-herb",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "const drawn = act ? !!tool : !!shown.wd;",
-  "new": "const drawn = !!shown.wd;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-strike-the-swings",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "b.pending = { strike: GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)], hold",
-  "new": "b.pending = { strike: 'StrikeDown', hold",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-body-blow-lost",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "if (acted === 'blow' && tool && ",
-  "new": "if (false && tool && ",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-dead-replay",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "peerGatherSwing(b.gather ??= {}, shown); return; }   // PEER-ACTS",
-  "new": "return; }   // PEER-ACTS",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-crouch-lost",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "c.sneaking = peerKneeling(shown);",
-  "new": "c.sneaking = false;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-walkers-stance-the-poses",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "export const walkerHands = (pose) => (gatherActOf(pose)",
-  "new": "export const walkerHands = (pose) => (false",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-strokes-crossed",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "export const WALK_GATHER_STROKES = Object.freeze({ blow: 1, throw: 0 });",
-  "new": "export const WALK_GATHER_STROKES = Object.freeze({ blow: 0, throw: 1 });",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-walkers-blow-lost",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "      if (acted) {\n        const o = ",
-  "new": "      if (false) {\n        const o = ",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-lane-first-sight-a-swing",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!seen.init) { seen.init = true; seen.ga = ga; seen.gb = gb; return null; }",
-  "new": "if (!seen.init) { seen.init = true; seen.ga = 0; seen.gb = 0; }",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-a-pluck-swings",
-  "file": "src/net/peer/peerGather.js",
-  "old": "const k = gatherBeatOf(gb); if (k === 'blow' || k === 'clean') out = 'blow';",
-  "new": "out = 'blow';",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-idle-misses-a-lone-beat",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
-  "new": "if (!ga && !s.ga && !s.held.length) return;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- },
- {
-  "name": "GF2-PEERACTS-the-idle-drops-a-blow-in-the-air",
-  "file": "src/net/peer/peerGather.js",
-  "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
-  "new": "if (!ga && !s.ga && !fresh) return;",
-  "tests": [
-   "test/systems/gf2_peeracts.test.js"
-  ]
- }
+  {
+    "name": "GF2-BLOWSHAKE-a-blow-looks-up",
+    "file": "src/systems/gatherBlow.js",
+    "old": "plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "new": "plain: f({ cam: f({ pitch: 0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-clean-one-no-deeper",
+    "file": "src/systems/gatherBlow.js",
+    "old": "clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "new": "clean: f({ cam: f({ pitch: -0.5, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-a-shake-on-a-tool",
+    "file": "src/systems/gatherBlow.js",
+    "old": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }) }),",
+    "new": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }), shake: 1 }),",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-skin-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "if (!row || !enhanced() || reduced()) return false;",
+    "new": "if (!row || reduced()) return false;",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-reduced-motion-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "if (!row || !enhanced() || reduced()) return false;",
+    "new": "if (!row || !enhanced()) return false;",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-motion-unscaled",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  kick(row.cam, row.hands, m);\n",
+    "new": "  kick(row.cam, row.hands, 1);\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-off-moves-it",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  if (!(m > 0)) return false;\n",
+    "new": "  if (m < 0) return false;\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-clean-row-crossed",
+    "file": "src/systems/gatherBlow.js",
+    "old": "?.[clean ? 'clean' : 'plain'];",
+    "new": "?.[clean ? 'plain' : 'clean'];",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-glint-read-plain",
+    "file": "src/systems/gatherBlow.js",
+    "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
+    "new": "clean: st?.last === 'clean' });",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-clean-cut-read-plain",
+    "file": "src/systems/gatherBlow.js",
+    "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
+    "new": "clean: st?.last === 'glint' });",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-kick-at-the-press",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (!((a.act.state?.landed | 0) > was)) return false;\n",
+    "new": "    if (!(Number(a.act.landsIn) > 0)) return false;\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-blow-never-read",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    const was = a.act.state?.landed | 0;\n",
+    "new": "    const was = Infinity;\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-follow-unstepped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        for (const sw of swings) stepAct(sw, dt, {});",
+    "new": "        for (const sw of swings) sw.act.tick(dt, {});",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-default-feel-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  const feel = deps.feel ?? gatherBlowFeel;\n",
+    "new": "  const feel = deps.feel ?? (() => false);\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-throw-let-through",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    try { feel(b.kind, b.clean); } catch { /* the view's answer never stops an act */ }\n",
+    "new": "    feel(b.kind, b.clean);\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-door-skipped",
+    "file": "src/combat/technique/techniqueFx.js",
+    "old": "    kickFx(row.cam, row.hands, m);   // GATHER-FEEL II: the springs' one door\n",
+    "new": "    /* the door skipped */\n",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-BLOWSHAKE-the-setting-silent",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "'How much a weapon technique shakes and tilts the view and dips your hands. On the Enhanced skin, it also sets how far your hands dip when you gather.',",
+    "new": "'How much a weapon technique shakes and tilts the view and dips your hands.',",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-a-share-past-one-kept",
+    "file": "src/systems/veinCrack.js",
+    "old": "  c[0] = Math.min(1, share);\n",
+    "new": "  c[0] = share;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-field-reallocated",
+    "file": "src/systems/veinCrack.js",
+    "old": "  const c = batch.crack ?? (batch.crack = [0, 0]);\n",
+    "new": "  const c = (batch.crack = [0, 0]);\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-nought-cracked",
+    "file": "src/systems/veinCrack.js",
+    "old": "  if (!(share > 0)) { if (batch.crack) batch.crack = null; return; }\n",
+    "new": "  if (!(share >= 0)) { if (batch.crack) batch.crack = null; return; }\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-seed-unwrapped",
+    "file": "src/systems/veinCrack.js",
+    "old": "  c[1] = Number.isFinite(seed) ? seed - Math.floor(seed) : 0;\n",
+    "new": "  c[1] = seed;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-one-pattern-for-every-vein",
+    "file": "src/systems/veinCrack.js",
+    "old": "  return (h >>> 0) / 4294967296;\n",
+    "new": "  return 0.5;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-early-out-lost",
+    "file": "src/systems/veinCrack.js",
+    "old": "  if (uCrack.x <= 0.0) return 1.0;\n",
+    "new": "  if (uCrack.x < 0.0) return 1.0;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-heart-light",
+    "file": "src/systems/veinCrack.js",
+    "old": "heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ?",
+    "new": "heart * 0.45 ?",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-heart-a-corner",
+    "file": "src/systems/veinCrack.js",
+    "old": "  float heart = length(texel / size - 0.5) * 1.6;\n",
+    "new": "  float heart = length(texel / size) * 1.6;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-cell-moved",
+    "file": "src/systems/veinCrack.js",
+    "old": "export const VEIN_CRACK_CELL = 7;",
+    "new": "export const VEIN_CRACK_CELL = 5;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-shade-lighter",
+    "file": "src/systems/veinCrack.js",
+    "old": "? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
+    "new": "? 0.5 : 1.0;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-seam-wide",
+    "file": "src/systems/veinCrack.js",
+    "old": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 1.0) return 1.0;",
+    "new": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 2.5) return 1.0;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-seed-unread",
+    "file": "src/systems/veinCrack.js",
+    "old": " + uCrack.y * 61.7) * 43758.5453); }",
+    "new": " + 0.0) * 43758.5453); }",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-send-dropped",
+    "file": "src/render/renderer.js",
+    "old": "      if (ck || this._bbCrackOn) { gl.uniform2f(this.bbUCrack, ck ? ck[0] : 0, ck ? ck[1] : 0); this._bbCrackOn = !!ck; }\n",
+    "new": "      /* the send dropped */\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-frame-reset-dropped",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniform2f(this.bbUCrack, 0, 0);   // VEIN-CRACKS: every flat whole until a worked vein's batch says otherwise\n",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-classic-albedo-whole",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0)) * veinCrackShade(uv);",
+    "new": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0));",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-lane-albedo-whole",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
+    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-born-without-the-field",
+    "file": "src/render/renderer.js",
+    "old": "dissolve: undefined, crack: undefined, tint: undefined,",
+    "new": "dissolve: undefined, tint: undefined,",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-worked-vein-shared",
+    "file": "src/scenes/gatherHost.js",
+    "old": "${lone ? `#${n.key}` : ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-apart-only-at-the-first-blow",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (k.cracks && !act.loose) { worked = t.node.key; if (!act.dungeon) restandAt(t.px, t.py); }\n",
+    "new": "    if (k.cracks && !act.loose) { worked = t.node.key; }\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-share-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (!done) crackTo(a.node.key, Number(a.act.progress) || 0);\n",
+    "new": "    if (!done) crackTo(a.node.key, 0.25);\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-escape-leaves-them-open",
+    "file": "src/scenes/gatherHost.js",
+    "old": "cancel() { if (!act) return false; letGo(act);",
+    "new": "cancel() { if (!act) return false; ear.stop(act.act);",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-a-refusal-leaves-them-open",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a && !a.loose) unwork(a);   // VEIN-CRACKS: refused",
+    "new": "    if (false) unwork(a);   // VEIN-CRACKS: refused",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-breaking-a-vein-that-stands",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    shed(a, k, chunksFor(done && a.fell === true, b.clean));\n",
+    "new": "    shed(a, k, chunksFor(done, b.clean));\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-chunks-never-moved",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      deps.renderer.moveBillboardBatch?.(bu.batch, centers);\n",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-chunks-never-freed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!live) { dropBurst(bu); continue; }\n",
+    "new": "      if (!live) continue;\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-wash-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (look.tint) b.tint = look.tint;   // VEIN-WASH: the ore's own wash, as its flats wear it\n",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-a-torn-pixel-moved-on",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      for (const bu of bursts) if (bu.entry === entry) { bu.gone = true; bu.batch = null; }   // ...its chunks' too (on its list, freed with it; stepBursts lets them go)\n",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-deep-crack-unheld",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (b && k.cracks) holdCrack(n.key, b);",
+    "new": "        if (false) holdCrack(n.key, b);",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-deep-chunks-static",
+    "file": "src/scenes/gatherHost.js",
+    "old": "VEIN_CHUNKS.scale, at, { dynamic: true });",
+    "new": "VEIN_CHUNKS.scale, at, { dynamic: false });",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-dungeon-left-keeps-them",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      for (const bu of bursts) if (bu.dungeon === d) dropBurst(bu);   // VEIN-CRACKS: its chunks, through its doors (stepBursts lets them go)\n",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-dispose-keeps-them",
+    "file": "src/scenes/gatherHost.js",
+    "old": "for (const bu of bursts) dropBurst(bu); bursts = []; cracks.clear();",
+    "new": "bursts = []; cracks.clear();",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-face-away",
+    "file": "src/systems/gatherBlow.js",
+    "old": "    const p = [at[0] + dx * C.face + sx * across, at[1] + high, at[2] + dz * C.face + sz * across];",
+    "new": "    const p = [at[0] - dx * C.face + sx * across, at[1] + high, at[2] - dz * C.face + sz * across];",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-gravity-unsquared",
+    "file": "src/systems/gatherBlow.js",
+    "old": "    c.p[1] += c.v[1] * s - 0.5 * g * s * s;",
+    "new": "    c.p[1] += c.v[1] * s - 0.5 * g * s;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-through-the-floor",
+    "file": "src/systems/gatherBlow.js",
+    "old": "    if (left > dt) { c.t += s; return true; }",
+    "new": "    if (true) { c.t += s; return true; }",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-sink-never",
+    "file": "src/systems/gatherBlow.js",
+    "old": "export const chunkSink = (c, h) => (c.rest < VEIN_CHUNKS.restS ? 0 :",
+    "new": "export const chunkSink = (c, h) => (true ? 0 :",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-box-too-small",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight + w / 2;",
+    "new": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight * 0.5 + w / 2;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-breaking-count",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  plain: 3, clean: 5, last: 7,",
+    "new": "  plain: 3, clean: 5, last: 5,",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-mine-uncracked",
+    "file": "src/scenes/mineHost.js",
+    "old": "    cracks: true,\n",
+    "new": "    cracks: false,\n",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-deep-vein-lifted-off-its-floor",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0;",
+    "new": "PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0.5;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ],
+    "note": "the merge of MINE-PERKS stood a dungeon vein on its floor and retired DVEIN_UP_M (the 0.5 m it stood up its wall, its chunks falling that far below its foot): lifted again, V8 fails"
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-world-drops-the-options",
+    "file": "src/scenes/world.js",
+    "old": "stand: (a, r, s, c, o) => ctx.standProfFlats(a, r, s, c, o),",
+    "new": "stand: (a, r, s, c, o) => ctx.standProfFlats(a, r, s, c),",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-dungeon-static",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "base.h * scale }, centers, { dynamic });",
+    "new": "base.h * scale }, centers);",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-VEINCRACKS-the-landing-at-the-steps-end",
+    "file": "src/systems/gatherBlow.js",
+    "old": "    const s = left <= dt ? Math.max(0, left) : dt;   // the step's time aloft, at most to its landing",
+    "new": "    const s = dt;",
+    "tests": [
+      "test/systems/gf2_veincracks.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-an-act-past-the-table",
+    "file": "src/net/wire.js",
+    "old": "const act = Number.isInteger(ga) && ga >= 1 && ga <= POSE_GATHER_ACTS;",
+    "new": "const act = Number.isInteger(ga) && ga >= 1 && ga <= POSE_GATHER_ACTS + 1;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-beat-of-no-count",
+    "file": "src/net/wire.js",
+    "old": "Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
+    "new": "Number.isInteger(gb) && gb >= 1",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-beat-only-with-its-act",
+    "file": "src/net/wire.js",
+    "old": "    ...(Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
+    "new": "    ...(act && Number.isInteger(gb) && gb >= POSE_GATHER_BEAT_MIN",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-throw-with-no-act",
+    "file": "src/net/wire.js",
+    "old": "...(act && Number.isInteger(gm)",
+    "new": "...(Number.isInteger(gm)",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-dropped-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "    ...gatherOf(ga, gb, gm),",
+    "new": "    ",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-an-act-not-news",
+    "file": "src/net/wire.js",
+    "old": "|| (a.ga | 0) !== (b.ga | 0) || (a.gb | 0)",
+    "new": "|| (a.gb | 0)",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-beat-not-news",
+    "file": "src/net/wire.js",
+    "old": "|| (a.gb | 0) !== (b.gb | 0) || (a.gm | 0)",
+    "new": "|| (a.gm | 0)",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-throw-not-news",
+    "file": "src/net/wire.js",
+    "old": "|| (a.gm | 0) !== (b.gm | 0);",
+    "new": ";",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-lerp-drops-a-lone-beat",
+    "file": "src/net/online.js",
+    "old": "...(to.gb ? { gb: to.gb } : {}),   // PEER-ACTS",
+    "new": "...(to.ga && to.gb ? { gb: to.gb } : {}),   // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-lerp-drops-the-act",
+    "file": "src/net/online.js",
+    "old": "    ...(to.ga ? { ga: to.ga, ...(to.gm ? { gm: to.gm } : {}) } : {}), ...(to.gb",
+    "new": "    ...(to.gb",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-cancelled-act-named",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!st || st.cancelled) return 0;",
+    "new": "if (!st) return 0;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-count-unwrapped",
+    "file": "src/net/peer/peerGather.js",
+    "old": "n = (n % 255) + 1;",
+    "new": "n = n + 1;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-kind-crossed",
+    "file": "src/net/peer/peerGather.js",
+    "old": "gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind);",
+    "new": "gb = n * 16;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-frame-counted-twice",
+    "file": "src/net/peer/peerGather.js",
+    "old": "      if (act !== heard) { heard = act; prev = {}; }\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
+    "new": "      heard = act; prev = {};\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-throw-while-winding",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0)",
+    "new": "if (st.kind === 'fish')",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-beats-only-with-an-act",
+    "file": "src/net/peer/peerGather.js",
+    "old": "      if (gb) out.gb = gb;",
+    "new": "      if (gb && ga) out.gb = gb;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-knife-unsent",
+    "file": "src/net/peer/peerGather.js",
+    "old": "knife: 'knife', slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
+    "new": "slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-act-dropped-with-the-last-press",
+    "file": "src/scenes/gatherHost.js",
+    "old": "poseAct: () => pose.fields(act?.act ?? follow?.act ?? null),",
+    "new": "poseAct: () => pose.fields(act?.act ?? null),",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-act-unheard-by-the-pose",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        pose.frame(act.act);   // PEER-ACTS",
+    "new": "        // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-arm-unspread",
+    "file": "src/scenes/world.js",
+    "old": "      ...(gatherHost?.poseAct() ?? {}),   // PEER-ACTS",
+    "new": "      // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-an-old-act-replayed",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!s) { this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }); return; }",
+    "new": "if (!s) { s = { ga: 0, gb: 0, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }; this.peers.set(id, s); }",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-blow-on-the-swings-frame",
+    "file": "src/net/peer/peerGather.js",
+    "old": "s.held.push({ due: t + PEER_BLOW_DELAY_S[tool] * 1000,",
+    "new": "s.held.push({ due: t,",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-place-the-feet",
+    "file": "src/net/peer/peerGather.js",
+    "old": "=> [feet[0] + Math.sin(yaw) * reach, feet[1] + high, feet[2] + Math.cos(yaw) * reach];",
+    "new": "=> [feet[0], feet[1], feet[2]];",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-tools-crossed",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const BLOW_SAYS = f({ chop: f({ blow: 'chop', clean: 'chopClean' }), mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
+    "new": "const BLOW_SAYS = f({ mine: f({ blow: 'chop', clean: 'chopClean' }), chop: f({ blow: 'pick', clean: 'pickGlint' }) });",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-clean-blow-plain",
+    "file": "src/net/peer/peerGather.js",
+    "old": "mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
+    "new": "mine: f({ blow: 'pick', clean: 'pick' }) });",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-last-blow-unheard",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const tool = doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;",
+    "new": "const tool = doing === 'chop' || doing === 'mine' ? doing : null;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-kneel-lost",
+    "file": "src/net/peer/peerGather.js",
+    "old": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket') { this._say('kneel', place); cued = true; }",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-knife-kneels",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (doing === 'hand' || doing === 'steady' || doing === 'basket') {",
+    "new": "if (doing === 'hand' || doing === 'steady' || doing === 'basket' || doing === 'trace') {",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-net-lands-at-the-body",
+    "file": "src/net/peer/peerGather.js",
+    "old": "          s.net = peerNetAt(shown, feet, yaw) ?? place;",
+    "new": "          s.net = place;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-water-silent",
+    "file": "src/net/peer/peerGather.js",
+    "old": "else if (t >= s.plipAt) { if (ok) this._say('plip'",
+    "new": "else if (t >= s.plipAt) { if (false) this._say('plip'",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-catch-silent",
+    "file": "src/net/peer/peerGather.js",
+    "old": "else if (t >= s.thrashAt) { if (ok) this._say('thrash'",
+    "new": "else if (t >= s.thrashAt) { if (false) this._say('thrash'",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-net-in-unheard",
+    "file": "src/net/peer/peerGather.js",
+    "old": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place);",
+    "new": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], place);",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-classic-skin-silent",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const cue = say.classic ? PROF_CUES[/** @type {keyof typeof PROF_CUES} */ (say.classic)] : null;",
+    "new": "const cue = null;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-out-of-earshot-replayed",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    s.ga = ga;\n    if (gb > 0) s.gb = gb;\n  }",
+    "new": "    if (ok) s.ga = ga;\n    if (ok && gb > 0) s.gb = gb;\n  }",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-held-blow-kept-out-of-earshot",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!ok) s.held.length = 0;",
+    "new": "if (false) s.held.length = 0;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-no-floor",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const cueOk = t - s.cueAt >= PEER_GATHER_CUE_MS;",
+    "new": "const cueOk = true;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-rebase-keeps",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
+    "new": "    void offset;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-forget-keeps",
+    "file": "src/net/peer/peerGather.js",
+    "old": "forget(id) { this.peers.delete(id); }",
+    "new": "forget(id) {}",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-sound-unwired",
+    "file": "src/net/remotePlayers.js",
+    "old": "      this._syncGatherSound(peer, toScene, eye);   // PEER-ACTS",
+    "new": "      // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-switch-ignored",
+    "file": "src/net/remotePlayers.js",
+    "old": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false && peerInEarshot(f, eye));",
+    "new": "this._gatherSounds.update(peer.id, peer.shown, f, peerInEarshot(f, eye));",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-earshot-ignored",
+    "file": "src/net/remotePlayers.js",
+    "old": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false && peerInEarshot(f, eye));",
+    "new": "this._gatherSounds.update(peer.id, peer.shown, f, getPref('peerAttackSounds') !== false);",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-sweep",
+    "file": "src/net/remotePlayers.js",
+    "old": "    for (const id of [...this._gatherSounds.peers.keys()]) if (!seen.has(id)) this._gatherSounds.forget(id);",
+    "new": "",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-recentre",
+    "file": "src/net/remotePlayers.js",
+    "old": "    this._gatherSounds.rebase(offset);   // PEER-ACTS",
+    "new": "    // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-sprite-never-strikes-for-an-act",
+    "file": "src/net/remotePlayers.js",
+    "old": "an !== entry.lastAn) || acted != null;",
+    "new": "an !== entry.lastAn);",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-sprite-forgets-the-act",
+    "file": "src/net/remotePlayers.js",
+    "old": "lastAn: an, gather, peer,",
+    "new": "lastAn: an, peer,",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-sprite-never-kneels",
+    "file": "src/net/remotePlayers.js",
+    "old": "peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;",
+    "new": "stepped;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-kneel-over-a-one-shot",
+    "file": "src/net/remotePlayers.js",
+    "old": "peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ?",
+    "new": "peerKneeling(shown) && !moving ?",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-kneel-over-a-walk",
+    "file": "src/net/remotePlayers.js",
+    "old": "peerKneeling(shown) && !moving && !bundle",
+    "new": "peerKneeling(shown) && !bundle",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-body-holds-no-tool",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
+    "new": "const want = b.wolf ? null : (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-weapon-drawn-at-a-herb",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "const drawn = act ? !!tool : !!shown.wd;",
+    "new": "const drawn = !!shown.wd;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-strike-the-swings",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "b.pending = { strike: GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)], hold",
+    "new": "b.pending = { strike: 'StrikeDown', hold",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-body-blow-lost",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "if (acted === 'blow' && tool && ",
+    "new": "if (false && tool && ",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-dead-replay",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "peerGatherSwing(b.gather ??= {}, shown); return; }   // PEER-ACTS",
+    "new": "return; }   // PEER-ACTS",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-crouch-lost",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "c.sneaking = peerKneeling(shown);",
+    "new": "c.sneaking = false;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-walkers-stance-the-poses",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "export const walkerHands = (pose) => (gatherActOf(pose)",
+    "new": "export const walkerHands = (pose) => (false",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-strokes-crossed",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "export const WALK_GATHER_STROKES = Object.freeze({ blow: 1, throw: 0 });",
+    "new": "export const WALK_GATHER_STROKES = Object.freeze({ blow: 0, throw: 1 });",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-walkers-blow-lost",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      if (acted) {\n        const o = ",
+    "new": "      if (false) {\n        const o = ",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-lane-first-sight-a-swing",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!seen.init) { seen.init = true; seen.ga = ga; seen.gb = gb; return null; }",
+    "new": "if (!seen.init) { seen.init = true; seen.ga = 0; seen.gb = 0; }",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-a-pluck-swings",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const k = gatherBeatOf(gb); if (k === 'blow' || k === 'clean') out = 'blow';",
+    "new": "out = 'blow';",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-idle-misses-a-lone-beat",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
+    "new": "if (!ga && !s.ga && !s.held.length) return;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  },
+  {
+    "name": "GF2-PEERACTS-the-idle-drops-a-blow-in-the-air",
+    "file": "src/net/peer/peerGather.js",
+    "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
+    "new": "if (!ga && !s.ga && !fresh) return;",
+    "tests": [
+      "test/systems/gf2_peeracts.test.js"
+    ]
+  }
 ]

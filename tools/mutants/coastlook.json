@@ -227,8 +227,8 @@
   {
     "name": "COAST-LOOK-lane-blend-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n",
-    "new": "",
+    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own",
+    "new": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "COAST-LOOK-lane-kinds-undecoded",
     "file": "src/render/enhancedLighting.js",
-    "old": "${groundEdgeGlsl('elDecode')}",
-    "new": "${groundEdgeGlsl()}",
+    "old": "${groundEdgeGlsl('elDecode')}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)",
+    "new": "${groundEdgeGlsl()}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "COAST-LOOK-lane-snow-one-kind",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS)",
-    "new": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS)",
+    "old": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
+    "new": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
     "tests": [
       "test/render/coastlook.test.js"
     ]

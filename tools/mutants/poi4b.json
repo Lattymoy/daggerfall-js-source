@@ -77,8 +77,8 @@
   {
     "name": "POI4B-the-path-takes-a-poi-id",
     "file": "server-account/src/service.js",
-    "old": "  m = /^shelf\\/(lib-[0-9a-f]{12})$/.exec(rest);",
-    "new": "  m = /^shelf\\/([a-z]+-[0-9a-f]{12})$/.exec(rest);",
+    "old": "  m = /^shelf\\/(lib-[0-9a-f]{12})$/.exec(rest); // POI-4b: one library entry",
+    "new": "  m = /^shelf\\/([a-z]+-[0-9a-f]{12})$/.exec(rest); // POI-4b: one library entry",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

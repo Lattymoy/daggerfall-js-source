@@ -154,7 +154,7 @@ test('RF1: the read sites - one accessor per channel in the formulas, the field 
   assert.deepEqual(read('src/systems/statMods.js').match(/^import [^\n]*/gm), ["import { mentoredStat } from './mentorMode.js';   // SOFTCAP1: mentor mode's overlay - a leaf, so this file stays cycle-free"], 'statMods stays a leaf (but for the leaf mentorMode)');
   assert.doesNotMatch(read('src/systems/mentorMode.js'), /^import /m, 'mentorMode is import-free');
   assert.match(read('src/systems/skills.js'), /mod \+= entity\._mods\?\.skills\?\.\[skillId\] \?\? 0;/, 'skillValue');
-  assert.match(read('src/systems/spellcast.js'), /saving \+= entityResistMod\(target, RESIST_NAMES/, 'the saving throw');
+  assert.match(read('src/systems/spellcast.js'), /saving \+= entityResistMod\(\n\s*target,\n\s*RESIST_NAMES/, 'the saving throw');
   assert.match(read('src/ui/native/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll');
   assert.match(read('src/systems/worldTick.js'), /enchantmentMagicRound\(entity, r \+ 1, \{[\s\S]*?\}\);\s*\/\/ RF1[\s\S]*?computeEntityMods\(entity\);/, 'the magic round, after the enchant fold');
   assert.match(read('src/systems/entityMods.js'), /addEquipChangeListener\(computeEntityMods\);/, 'the equip seam');

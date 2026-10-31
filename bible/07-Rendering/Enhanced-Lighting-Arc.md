@@ -2308,7 +2308,7 @@ of a night street frame.
 **Why they cost so much.** LC1 lists a light in every cell its sphere's box touches. A window's light falls only in
 its beam - from the lamp through the glass to its reach - and in its glass's glow beside it. Measured over 500 lights
 of every turn and size, that volume is an eighth of the sphere's box for a lit room's lamp (12.6 percent; 3.8 for the
-sun through a building's glass), and every fragment in the rest walked the light only to be turned away. `windowLightBox` (`src/render/windowLight.js:"export function windowLightBox(l, beam, out, at, spill = true) {"`)
+sun through a building's glass), and every fragment in the rest walked the light only to be turned away. `windowLightBox` (`src/render/windowLight.js:"export function windowLightBox"`)
 bounds the beam and the glow in the glass's own frame, and `buildLightClusterBoxes` lists a box by its three
 half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {"`).
 
@@ -2335,7 +2335,7 @@ too, and so does the classic look's shadow lane (IIL "With shadows") in its bloo
 than without it, at either share, since SIMD lanes that take different filters run both, on SwiftShader as on a GPU.
 
 **Farther from the player.** Past the nearest 128 tiles, a street's lit windows are gathered out to 160 m
-(`WL_FAR_GATHER`) as rows (`src/render/windowLight.js:"export function cellRows(ap, first, t) {"`): a storey's run of
+(`WL_FAR_GATHER`) as rows (`src/render/windowLight.js:"export function cellRows"`): a storey's run of
 one wall's tiles, up to 10. Each tile is lit by its own lamp through its own glass, as the near tier lights it, to float
 rounding. 127 rows ride a second uniform block (binding 4) and a third band of LC1's grid, so neither tier's lists can
 crowd the other's out. A tile is the near tier's inside its cut and the row's past it, by one fade, and the two sum to

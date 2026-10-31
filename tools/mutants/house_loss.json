@@ -116,8 +116,8 @@
   {
     "name": "HOUSE-LOSS-no-undo-route",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/realm/undo',\n",
-    "new": "",
+    "old": "  '/v1/realm/undo',\n  // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone",
+    "new": "  // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone",
     "tests": [
       "test/systems/house_loss.test.js"
     ]

@@ -703,8 +703,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-lane-terrain-falloff-linear",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att *",
-    "new": "    float att = sh * clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    acc += att *",
+    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);",
+    "new": "    float att = sh * clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);",
     "tests": [
       "test/render/grasslit2.test.js"
     ]

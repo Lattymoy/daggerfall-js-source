@@ -2,8 +2,8 @@
   {
     "name": "DECOR2c-the-arrows-hung",
     "file": "src/net/decorLaw.js",
-    "old": "it.t !== DECOR_ARROW_TEMPLATE)",
-    "new": "true)",
+    "old": "  return (\n    (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||\n    it.g === DECOR_ARMOR_GROUP ||\n    it.t === TROPHY_TEMPLATE\n  );",
+    "new": "  return (it.g === DECOR_WEAPONS_GROUP && true) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!piece || !Array.isArray(piece.flat)) return false;",
+    "old": "  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!piece || !Array.isArray(piece.flat)) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "DECOR2c-no-flat-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!piece || piece.model != null) return false;",
+    "old": "  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!piece || piece.model != null) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
@@ -140,8 +140,8 @@
   {
     "name": "DECOR2c-the-walls-heading-ignored",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
-    "new": "const heading = (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "old": "    const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "new": "    const heading = (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "DECOR2c-a-floor-read-backwards",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
-    "new": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0);",
+    "old": "    const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "new": "    const heading = level ? Math.atan2(n[0], n[2]) : Number.isFinite(camYaw) ? camYaw : 0;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "DECOR2c-the-surfaces-tilt-ignored",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : s.yaw];",
-    "new": "0, hung ? s.spin : s.yaw];",
+    "old": "    const rot = [\n      wrapTurn(round(heading * DEG, 1)),\n      round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1),\n      hung ? s.spin : s.yaw,\n    ];",
+    "new": "    const rot = [wrapTurn(round(heading * DEG, 1)), 0, hung ? s.spin : s.yaw];",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "DECOR2c-the-spin-dropped",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : s.yaw];",
-    "new": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), hung ? s.spin : 0];",
+    "old": "      hung ? s.spin : s.yaw,",
+    "new": "      hung ? s.spin : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "DECOR2c-the-hair-into-the-wall",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
-    "new": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise - n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
+    "old": "    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
+    "new": "    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise - n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
@@ -186,8 +186,8 @@
   {
     "name": "DECOR2c-the-lift-off-the-surface",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
-    "new": "p = [0, 1, 2].map((i) => p[i] + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
+    "old": "    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
+    "new": "    p = [0, 1, 2].map((i) => p[i] + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "DECOR2c-a-moved-mount-from-its-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
-    "new": "yaw: from ? wrapTurn((hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
+    "old": "    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
+    "new": "    yaw: from ? wrapTurn((hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "DECOR2c-a-mount-set-as-it-stands",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);\n",
-    "new": "",
+    "old": "      if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);\n      // DECOR-SHELL (a player: \"its model disappearing\"): A FACE THAT LOOKS DOWN - a ceiling, a shelf's underside - is",
+    "new": "      // DECOR-SHELL (a player: \"its model disappearing\"): A FACE THAT LOOKS DOWN - a ceiling, a shelf's underside - is",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]

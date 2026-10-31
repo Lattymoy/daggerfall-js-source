@@ -232,8 +232,8 @@
   {
     "name": "WALLET1-bound-put-pack-only",
     "file": "src/systems/item/itemBound.js",
-    "old": "isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));",
-    "new": "isBound(item) && !BOUND_KEEPS.includes(kind);",
+    "old": "  isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));",
+    "new": "  isBound(item) && !BOUND_KEEPS.includes(kind);",
     "why": "the law lets a pack-only piece into the wagon and the storage",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "WALLET1-pack-only-unread",
     "file": "src/systems/item/itemBound.js",
-    "old": "templateByIndex(item?.templateIndex)?.packOnly === true;",
-    "new": "false;",
+    "old": "export const isPackOnly = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.packOnly === true;",
+    "new": "export const isPackOnly = (/** @type {any} */ item) => false;",
     "why": "no piece is pack-only",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "WALLET1-pack-only-words",
     "file": "src/systems/item/itemBound.js",
-    "old": "`${name || 'That'} stays in your pack.`",
-    "new": "`${name || 'That'} is bound to you.`",
+    "old": "export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} stays in your pack.`;",
+    "new": "export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} is bound to you.`;",
     "why": "the refusal in another piece's words",
     "tests": [
       "test/systems/wallet1.test.js"

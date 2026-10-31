@@ -155,8 +155,8 @@
   {
     "name": "bounce-back",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n",
-    "new": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n    acc += 0.18 * elAttenuation(d, uPointLights[i].w) * (0.5 - 0.5 * n.y) * uPointColors[i];\n",
+    "old": "    if (wet > 0.0) {",
+    "new": "    acc += 0.18 * elAttenuation(d, uPointLights[i].w) * (0.5 - 0.5 * n.y) * uPointColors[i];\n    if (wet > 0.0) {",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]

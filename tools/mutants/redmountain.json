@@ -232,8 +232,8 @@
   {
     "name": "RED-MOUNTAIN-the-lake-on-the-floor",
     "file": "src/render/redMountainFire.js",
-    "old": "ly = floorY + FIRE.lakeOver;",
-    "new": "ly = floorY;",
+    "old": "    ly = floorY + FIRE.lakeOver;",
+    "new": "    ly = floorY;",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "RED-MOUNTAIN-a-river-on-its-floor",
     "file": "src/render/redMountainFire.js",
-    "old": "y: lv[i] * STREAMING_TERRAIN_SCALE + FIRE.riverOver,",
-    "new": "y: lv[i] * STREAMING_TERRAIN_SCALE,",
+    "old": "      pts.push({\n        x,\n        z,\n        y: lv[i] * STREAMING_TERRAIN_SCALE + FIRE.riverOver,\n        sx: -ez / el,\n        sz: ex / el,\n        half,\n        along: line.s[i] / run,\n      });",
+    "new": "      pts.push({ x, z, y: lv[i] * STREAMING_TERRAIN_SCALE, sx: -ez / el, sz: ex / el, half, along: line.s[i] / run });",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -279,7 +279,7 @@
   {
     "name": "RED-MOUNTAIN-the-profile-even",
     "file": "src/render/redMountainFire.js",
-    "old": "export const profileR = (i) => ((i / (FIRE.profile - 1)) ** 2) * RED_MOUNTAIN_REACH;",
+    "old": "export const profileR = (i) => (i / (FIRE.profile - 1)) ** 2 * RED_MOUNTAIN_REACH;",
     "new": "export const profileR = (i) => (i / (FIRE.profile - 1)) * RED_MOUNTAIN_REACH;",
     "tests": [
       "test/world/redmountain.test.js"
@@ -297,8 +297,8 @@
   {
     "name": "RED-MOUNTAIN-the-lane's-ring-in-the-haze",
     "file": "src/render/enhancedLighting.js",
-    "old": "uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
-    "new": "uRimStart, uRimEnd, uHazeHold)));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
+    "new": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
     "tests": [
       "test/world/redmountain.test.js"
     ]

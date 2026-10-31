@@ -74,8 +74,8 @@
   {
     "name": "KTR-the-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/ketch/claim',   // KETCH: a Tonal Warden's receipt - the Ketchmaster's hold, once a voyage an account\n",
-    "new": "",
+    "old": "  '/v1/ketch/claim', // KETCH: a Tonal Warden's receipt - the Ketchmaster's hold, once a voyage an account\n  '/v1/eg/keys', // EG-PLAY: the Weir Keys held, the live breach, the day's Rehearsal",
+    "new": "  '/v1/eg/keys', // EG-PLAY: the Weir Keys held, the live breach, the day's Rehearsal",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]

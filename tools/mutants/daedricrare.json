@@ -4,56 +4,73 @@
     "file": "src/systems/unleveledLoot.js",
     "old": "export const DAEDRIC_KEEP = 0.1;",
     "new": "export const DAEDRIC_KEEP = 0.2;",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-share-nudged",
     "file": "src/systems/unleveledLoot.js",
     "old": "export const DAEDRIC_KEEP = 0.1;",
     "new": "export const DAEDRIC_KEEP = 0.11;",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-comparison-turned",
     "file": "src/systems/unleveledLoot.js",
-    "old": "metal !== 9 || rolls() < DAEDRIC_KEEP ? metal",
-    "new": "metal !== 9 || rolls() <= DAEDRIC_KEEP ? metal",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "old": "  metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList());",
+    "new": "  metal !== 9 || rolls() <= DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList());",
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-draw-always",
     "file": "src/systems/unleveledLoot.js",
-    "old": "metal !== 9 || rolls() < DAEDRIC_KEEP ? metal",
-    "new": "rolls() < DAEDRIC_KEEP || metal !== 9 ? metal",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "old": "  metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList());",
+    "new": "  rolls() < DAEDRIC_KEEP || metal !== 9 ? metal : materialSwitch(7, matSwitchList());",
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-keep-unasked",
     "file": "src/systems/unleveledLoot.js",
-    "old": "  const metal = daedricKept(rampedMetal(9, level, rolls), rolls);",
-    "new": "  const metal = rampedMetal(9, level, rolls);",
-    "tests": ["test/systems/daedricrare.test.js", "test/systems/fb1019b_metalramp.test.js"]
+    "old": "  const metal = daedricKept(rampedMetal(9, level, rolls), rolls); // METAL-RAMP, then DAEDRIC-RARE",
+    "new": "  const metal = rampedMetal(9, level, rolls); // METAL-RAMP, then DAEDRIC-RARE",
+    "tests": [
+      "test/systems/daedricrare.test.js",
+      "test/systems/fb1019b_metalramp.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-step-down-orcish",
     "file": "src/systems/unleveledLoot.js",
-    "old": "? metal : materialSwitch(7, matSwitchList()));",
-    "new": "? metal : materialSwitch(8, matSwitchList()));",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "old": "  metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList());",
+    "new": "  metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(8, matSwitchList());",
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-switch-ignored",
     "file": "src/systems/unleveledLoot.js",
-    "old": "? metal : materialSwitch(7, matSwitchList()));",
-    "new": "? metal : 7);",
-    "tests": ["test/systems/daedricrare.test.js"]
+    "old": "const daedricKept = (metal, rolls) =>\n  metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList());",
+    "new": "const daedricKept = (metal, rolls) => (metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : 7);",
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ]
   },
   {
     "name": "DAEDRIC-RARE-drop-rate-moved",
     "file": "src/systems/unleveledLoot.js",
-    "old": "(enemyId === 31 && num > 70)",
-    "new": "(enemyId === 31 && num > 80)",
-    "tests": ["test/systems/daedricrare.test.js"],
+    "old": "    (enemyId === 31 && num > 70) ||",
+    "new": "    (enemyId === 31 && num > 80) ||",
+    "tests": [
+      "test/systems/daedricrare.test.js"
+    ],
     "note": "The mod's own rate is not this slice's to move: the measured share pins it."
   }
 ]

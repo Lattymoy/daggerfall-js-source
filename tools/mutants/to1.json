@@ -791,8 +791,8 @@
   {
     "name": "g4-mark-per-window-again",
     "file": "src/systems/travel/travelMapState.js",
-    "old": "export function setTravelMapMarkedMapId(id) { _markedMapId = Number.isFinite(id) ? id : -1; }",
-    "new": "export function setTravelMapMarkedMapId(id) { _markedMapId = id; }",
+    "old": "  _markedMapId = Number.isFinite(id) ? id : -1;",
+    "new": "  _markedMapId = id;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

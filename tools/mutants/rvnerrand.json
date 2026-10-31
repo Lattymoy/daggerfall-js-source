@@ -200,8 +200,8 @@
   {
     "name": "RVN-ERRAND-kit-given-abroad",
     "file": "src/systems/revenant/revenantGear.js",
-    "old": "  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad',",
-    "new": "  if (false) return t('rvn.gear.no.abroad',",
+    "old": "  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.'); // AUDIT RVN F10",
+    "new": "  if (false) return t('rvn.gear.no.abroad', 'It is abroad with its kit.'); // AUDIT RVN F10",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
