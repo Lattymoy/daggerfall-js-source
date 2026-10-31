@@ -101,6 +101,11 @@ Each is dated, says what was decided and why, and names what it costs.
   relay's ground gate already turns away a build on another ground in every room that rides it. So the ground's print
   reads two dressed plans' prints (`Plans`), and a change to a door's key moves `GROUND_LAW` as a change to the ground
   does. No plan law of its own, no new door on the relay. Cost: a dressing change costs a relay version.
+- **RD-21 (2026-10-31) A town grows along its roads.** The owner, 2026-10-31: "Ensure the Crescent layout with more
+  organic". A ring of equal bands round a square read as a planned crescent. A grown town's sectors now start at its
+  square's own edge along their span, and reach out as squarely as they face a road leaving it: a road's sector its whole
+  depth, a sixth of a turn off any road none. A road keeps the cells it crosses and takes only its plots, so houses line
+  it. Ends are left ragged. Cost: a town with no road grows a thin, broken belt.
 
 ## RMBC0 - what stands (AUDITED, 2026-10-31)
 
@@ -318,9 +323,15 @@ moves it 14.1 m. `GROUND_LAW` 6 holds it, because law 6 has not shipped.
 
 Seen in the game (`tools/townGrowthProbe.mjs`, ARENA2): Arkbridge, a village of the Daggerfall region, stood 28 outskirts
 buildings with every mesh, no page error. From the air its core stands as it always did, and the ring wraps it where no
-road, water or town ground bars a cell. A ring round a square leaves about 5 m of street at the core's corners and about
-45 m at its sides, so the outskirts read as a crescent of rows more than as a town that grew. A layout that follows the
-roads out is the next shape (RD-11's third).
+road, water or town ground bars a cell. That first ring read as a crescent: about 5 m of street at the core's corners and
+45 m at its sides, every sector as deep as the next. RD-21 grew it along the roads instead.
+
+ORGANIC (RD-21): `coreEdge` starts each sector at the square's edge along its span (a corner inside the span counts),
+a street out and a setback of up to 6 m; a core takes 16 to 22 narrower sectors so its inner line follows the square.
+`roadsOut` reads the bearings a town's roads leave by, each run of path tiles on a circle past its corners one road at
+its middle; `roadReach` gives each sector a depth by how squarely it faces one. A road is a soft bar: `roadAcross`
+keeps where in a cell it runs, and the dressing's `onRoad` leaves those plots unbuilt. A sector stops early more often
+the further out it reaches. `SETTLEMENT_GENERATOR_VERSION` is 3; published plans are unchanged but for their version.
 
 ## RMBC7 - publication and the online check (BUILT, 2026-10-31)
 
@@ -366,8 +377,7 @@ land with no road cut into it (`standSettlementGround`'s `bare`), so no network 
 
 ## Next slices
 
-- **A layout that follows the roads out** (RD-11's third): outskirts along a town's approach roads, so a grown town
-  reads as grown and not as a crescent.
+- **A street tree**: RD-11's third layout for a settlement of its own (a branching street, not a ring or an arc).
 
 ## THE FOUR HOSTS (Home.md)
 

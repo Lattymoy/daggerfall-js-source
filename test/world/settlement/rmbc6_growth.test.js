@@ -63,24 +63,32 @@ test('RMBC6 the outskirts keep the contract round a core that never moves: its p
   }
 });
 
-test('RMBC6 barred ground: no cell on a road, the town\'s own ground, a camp or water, none within the margin of the pixel\'s edge (mutants: the bounds, the barred sweep, each bar)', () => {
+test('RMBC6 barred ground: no cell on the town\'s own ground, a camp or water, none within the margin of the pixel\'s edge; a road bars a building, never its cell (mutants: the bounds, the barred sweep, each bar, the road soft)', () => {
   const rect = rectOf(3), paths = new Uint8Array(T * T), mask = new Uint8Array(T * T), tilemap = new Uint8Array(T * T).fill(2);
   for (let x = 0; x < T; x++) paths[64 * T + x] = 1;   // a road across, north 64
   for (let y = 0; y < 30; y++) for (let x = 90; x < 128; x++) tilemap[y * T + x] = 0;   // a lake in the south-east
   for (let y = 70; y < 90; y++) for (let x = 20; x < 40; x++) mask[y * T + x] = 1;   // the town's fields
   const camps = [{ xMin: 90, xMax: 110, yMin: 95, yMax: 115 }];
-  const bars = { paths, mask, tilemap, camps };
-  const g = standTownGrowth(200, 200, ground(0, rect), village(5003, 'IliacBay'), rect, bars);
+  const g = standTownGrowth(200, 200, ground(0, rect), village(5003, 'IliacBay'), rect, { paths, mask, tilemap, camps });
   assert.ok(g);
-  const blocked = growthBlocked(bars), far = T * SAMPLE_M - GROWTH_MARGIN;
+  const hard = growthBlocked({ mask, tilemap, camps }), road = growthBlocked({ paths }), far = T * SAMPLE_M - GROWTH_MARGIN;
   for (const pad of g.layout.pads.filter((p) => !p.legacy)) {
     for (const [e, n] of pad.poly) assert.ok(e >= GROWTH_MARGIN && e <= far && n >= GROWTH_MARGIN && n <= far, `${pad.id} inside the margin`);
     for (let e = 0; e < T * SAMPLE_M; e += 3) for (let n = 0; n < T * SAMPLE_M; n += 3) {
-      if (pointInRing([e, n], pad.poly)) assert.ok(!blocked(e, n), `${pad.id} on barred ground at ${e}, ${n}`);
+      if (pointInRing([e, n], pad.poly)) assert.ok(!hard(e, n), `${pad.id} on barred ground at ${e}, ${n}`);
     }
   }
-  assert.ok(blocked(10, 64 * SAMPLE_M + 1) && blocked(100 * SAMPLE_M, 10) && blocked(25 * SAMPLE_M, 75 * SAMPLE_M) && blocked(95 * SAMPLE_M, 100 * SAMPLE_M));
-  assert.ok(!blocked(30 * SAMPLE_M, 30 * SAMPLE_M));
+  const { plan } = dressSettlement(g.input, g.layout);
+  for (const b of plan.buildings) for (let t = 0; t <= 1; t += 0.125) for (let s = 0; s <= 1; s += 0.125) {
+    const [a, b1, c, d] = b.footprint, e = (a[0] * (1 - t) + b1[0] * t) * (1 - s) + (d[0] * (1 - t) + c[0] * t) * s, n = (a[1] * (1 - t) + b1[1] * t) * (1 - s) + (d[1] * (1 - t) + c[1] * t) * s;
+    assert.ok(!road(e, n), `${b.anchor} on the road`);
+  }
+  const crossed = g.layout.cells.filter((c) => c.road?.length);
+  assert.ok(crossed.length > 0, 'the road crosses cells it keeps');
+  assert.ok(plan.buildings.some((b) => crossed.some((c) => c.id === b.pad)), 'and houses stand beside it in them');
+  assert.ok(hard(10, 64 * SAMPLE_M + 1) === false && road(10, 64 * SAMPLE_M + 1), 'a road is no hard bar');
+  assert.ok(hard(100 * SAMPLE_M, 10) && hard(25 * SAMPLE_M, 75 * SAMPLE_M) && hard(95 * SAMPLE_M, 100 * SAMPLE_M));
+  assert.ok(!hard(30 * SAMPLE_M, 30 * SAMPLE_M));
   // a town by its pixel's west edge: its west cells would cross the margin, and are not built
   const west = { xMin: 14, xMax: 38, yMin: 52, yMax: 76 }, w = standTownGrowth(200, 200, ground(0, west), village(5006, 'IliacBay'), west, {});
   assert.ok(w && w.layout.pads.some((p) => !p.legacy));

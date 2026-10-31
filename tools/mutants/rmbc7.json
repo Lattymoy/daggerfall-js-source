@@ -38,8 +38,8 @@
   {
     "name": "RMBC7-growth-ledgered",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "roads: [], keys: /** @type {'anchored'} */ ('anchored'),",
-    "new": "roads: [],",
+    "old": "roads, keys: /** @type {'anchored'} */ ('anchored'),",
+    "new": "roads,",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js",
       "test/world/settlement/rmbc6_growth.test.js"

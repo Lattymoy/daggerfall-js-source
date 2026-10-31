@@ -30,6 +30,13 @@ export const generateSettlement = (input) => dressSettlement(input, LAYOUT_OF(in
  * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L
  * @returns {{ plan: SettlementPlan, ledger: IdLedger, report: any }}
  */
+/** ORGANIC: whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
+ *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
+export function onRoad(road, start, end, margin) {
+  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;
+  return false;
+}
+
 export function dressSettlement(input, L) {
   const { place, origin, seed, params = {} } = input;
   const A = SETTLEMENT_ARCHETYPES[input.archetype], st = SETTLEMENT_STYLES[input.style];
@@ -51,7 +58,8 @@ export function dressSettlement(input, L) {
   // D - each band's street along its inner edge, each sector's lane; districts by sector
   const streets = [], plots = [], features = [], districts = [];
   for (let j = 0; j < sectors; j++) {
-    const [u0, u1] = edges[j], r0 = ring ? inner : inner + vOut;
+    if (L.core && reachOf[j] < 1) continue;   // ORGANIC: a sector its town's roads left unbuilt is no district
+    const [u0, u1] = edges[j], r0 = L.core ? radii[j][0] : ring ? inner : inner + vOut;
     const poly = [...along(frame, grids[j], u0, u1, outR(j)), ...(r0 > 1 ? along(frame, grids[j], u0, u1, r0).reverse() : [frame.c])];
     districts.push({ id: `d${j}`, purpose: gateSectors.includes(j) ? 'market' : 'residential', poly: dedupe(poly) });
   }
@@ -75,6 +83,7 @@ export function dressSettlement(input, L) {
     if (n < 1) continue;
     for (const [s0, s1] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j)) {
       const p0 = us + s0, p1 = us + s1, local = plots.filter((p) => p.pad === c.id).length;
+      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // ORGANIC: the road runs here - its plots either side
       const id = `${c.id}.p${local}`;
       const poly = [...along(frame, grids[c.j], p0, p1, rf), ...along(frame, grids[c.j], p0, p1, rf + depth).reverse()];
       plots.push({ id, pad: c.id, poly, street: `s${c.k}.${c.j}`, district: `d${c.j}` });

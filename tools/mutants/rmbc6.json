@@ -206,5 +206,105 @@
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
+  },
+  {
+    "name": "ORGANIC-corner-unread",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
+    "new": "return Math.max(at(from), at(to));",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-ends-mean",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
+    "new": "return corner <= to ? half * Math.SQRT2 : Math.min(at(from), at(to));",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-hug-gone",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "(core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner)",
+    "new": "(core ? core.half * Math.SQRT2 + ws : inner)",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-reach-flat",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  if (core) roadReach(reachOf, edges, roads, bands, rng);   // ORGANIC: a core's outskirts reach out along its roads",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-lean-gone",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "const lean = Math.max(0, 1 - off / (TAU / 6));",
+    "new": "const lean = 0.5;",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-road-floor",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "off < TAU / 24 ? 1 : 0, bands);",
+    "new": "0, bands);",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-run-start",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "if (!hit[a] && start >= 0) { out.push((((first + (start + k - 1) / 2) % steps) * 360) / steps); start = -1; }",
+    "new": "if (!hit[a] && start >= 0) { out.push((((first + start) % steps) * 360) / steps); start = -1; }",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-wrap-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "for (const turn of [-TAU, 0, TAU, 2 * TAU])",
+    "new": "for (const turn of [0])",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-road-hard",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null })",
+    "new": "blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null })",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-plot-on-road",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "ORGANIC-roads-unread",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": ", roadsOut(bars.paths ?? null, centre, half));",
+    "new": ", []);",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
   }
 ]

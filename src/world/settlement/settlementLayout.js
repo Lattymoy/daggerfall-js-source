@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 2;   // 2: RMBC9 - each district its own draw, each plot by its cell and number
+export const SETTLEMENT_GENERATOR_VERSION = 3;   // 3: ORGANIC - a core's outskirts hug it and follow its roads. 2: RMBC9 - each district its own draw, each plot by its cell and number
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -28,7 +28,7 @@ export const CUT_STEPS_MAX = 2.5;
 
 /**
  * @typedef {readonly [number, number]} Pt
- * @typedef {{ heightAt: (east: number, north: number) => number, waterAt?: (east: number, north: number) => boolean, blockedAt?: (east: number, north: number) => boolean }} SiteEnv
+ * @typedef {{ heightAt: (east: number, north: number) => number, waterAt?: (east: number, north: number) => boolean, blockedAt?: (east: number, north: number) => boolean, roadAt?: (east: number, north: number) => boolean }} SiteEnv
  * @typedef {{ place: number, origin: { px: number, py: number, east: number, north: number }, seed: number, archetype: string, style: string,
  *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', districtSeeds?: Record<string, number>, protectedKeys?: number[],
  *   published?: any[], params?: { size?: number, density?: number, bands?: number, sectors?: number, open?: number },
@@ -149,7 +149,7 @@ export function layoutSettlement(input, env) {
   const bandDepth = ws + plotDepth + st.back + gap;
   const bands = clampWithin(Math.round(params.bands ?? A.bands), 1, 8);
   const size = pick(A.size, 3) * sizeK * (A.frame === 'auto' && !ring ? 2.2 : 1);   // an auto village's size is a radius
-  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, 16);
+  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // ORGANIC: a core's narrower, to hug it
   const depthAll = bands * bandDepth;
 
   let frame, inner, uStart, uSpan, vOut = 0;
@@ -184,13 +184,15 @@ export function layoutSettlement(input, env) {
 
   // B - the cells: sector edges, each sector's band radii, the arc grid a sector's bands share
   const edges = splits(rng, sectors, uSpan, 6).map(([a, b]) => [a + uStart, b + uStart]);
+  const innerOf = (/** @type {number} */ j) => (core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner);   // ORGANIC: a core's hugged, set back a little or more
   const radii = edges.map((_, j) => {
-    const out = [inner];
+    const out = [innerOf(j)];
     for (let k = 1; k <= bands; k++) out.push(out[k - 1] + bandDepth + (rng(7, j, k) - 0.5) * ws * 0.8);
     return out;
   });
   // a ring town leaves some outer sectors unbuilt, so its edge is ragged; never a gate's
   const reachOf = edges.map((_, j) => (ring && bands > 1 && rng(15, j) < 0.25 ? bands - 1 : bands));
+  if (core) roadReach(reachOf, edges, roads, bands, rng);   // ORGANIC: a core's outskirts reach out along its roads
   const grids = edges.map(([u0, u1], j) => {
     const m = Math.max(2, Math.ceil(((u1 - u0) * radii[j][bands]) / ARC_STEP));
     return Array.from({ length: m + 1 }, (_, i) => u0 + ((u1 - u0) * i) / m);
@@ -216,6 +218,7 @@ export function layoutSettlement(input, env) {
   for (let j = 0; j < sectors; j++) {
     const [u0, u1] = edges[j];
     for (let k = 1; k <= reachOf[j]; k++) {
+      if (core && k > 1 && rng(19, j, k) < 0.18 * (k - 1)) { reachOf[j] = k - 1; break; }   // ORGANIC: an end left ragged
       const ai = radii[j][k - 1] + gap / 2, bi = radii[j][k] - gap / 2;
       const outer = along(frame, grids[j], u0 + inset(bi, gap / 2), u1 - inset(bi, gap / 2), bi);
       const innerArc = along(frame, grids[j], u0 + inset(ai, gap / 2), u1 - inset(ai, gap / 2), ai).reverse();
@@ -246,6 +249,8 @@ export function layoutSettlement(input, env) {
     c.h = islands ? c.top + deck : c.natural;
   }
   for (const c of [...cells.values()]) if (!c.core && ((!islands && c.wet > 0.25) || cellBarred(c.poly, env, input.bounds))) cells.delete(c.id);
+  // ORGANIC: a road crossing a cell keeps it - where in the cell it runs is kept, and the dressing builds beside it
+  if (env.roadAt) for (const cell of cells.values()) if (!cell.core) cell.road = roadAcross(cell.poly, env.roadAt, frame.c);
   const gateBand = ring ? bands : 1;
   for (const j of gateSectors) {
     const g = cells.get(cellId(gateBand, j));
@@ -328,8 +333,29 @@ export function layoutSettlement(input, env) {
     version: SETTLEMENT_GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
     islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks,
     core: core ? { centre: core.centre, half: core.half } : null,
-    cells: [...cells.values()].map((c) => ({ id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
+    cells: [...cells.values()].map((c) => ({ ...(c.road?.length ? { road: c.road } : {}), id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
   };
+}
+
+/** RMBC6 ORGANIC: how far from a square's middle its edge stands at the furthest along a sector's span - at a corner if
+ *  the span holds one (half a side times the root of two), else at whichever end is nearer a corner.
+ *  @param {number} half @param {number} from @param {number} to */
+export function coreEdge(half, from, to) {
+  const at = (/** @type {number} */ angle) => half / Math.max(Math.abs(dsin(angle)), Math.abs(dcos(angle)));
+  const corner = TAU / 8 + Math.ceil((from - TAU / 8) / (TAU / 4)) * (TAU / 4);
+  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));
+}
+
+/** RMBC6 ORGANIC: each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth,
+ *  one a sixth of a turn off any road none; with no road, about a band all round. Written into `reachOf`. */
+export function roadReach(reachOf, edges, roads, bands, rng) {
+  const ways = roads.map((deg) => (deg * Math.PI) / 180);
+  for (let j = 0; j < edges.length; j++) {
+    const mid = (edges[j][0] + edges[j][1]) / 2;
+    const off = ways.length ? Math.min(...ways.map((w) => Math.abs(datan2(dsin(mid - w), dcos(mid - w))))) : TAU / 10;
+    const lean = Math.max(0, 1 - off / (TAU / 6));
+    reachOf[j] = clampWithin(Math.round(bands * lean + (rng(15, j) - 0.45) * 1.2), off < TAU / 24 ? 1 : 0, bands);
+  }
 }
 
 /** RMBC6: the cells round a fixed core whose cut passes `limit`, dropped, and what no longer reaches the core after them; the
@@ -358,6 +384,22 @@ export function cellBarred(poly, env, bounds) {
   for (const [e, n] of poly) { west = Math.min(west, e); east = Math.max(east, e); south = Math.min(south, n); north = Math.max(north, n); }
   for (let e = west + 1.5; e < east; e += 3) for (let n = south + 1.5; n < north; n += 3) if (insideRing(poly, e, n) && env.blockedAt(e, n)) return true;
   return false;
+}
+
+/** ORGANIC: the bearings from the frame's centre of every 3 m point inside a cell a road takes, sorted, rounded to a
+ *  thousandth of a radian - where the dressing leaves a plot unbuilt. @param {readonly Pt[]} poly
+ *  @param {(east: number, north: number) => boolean} roadAt @param {Pt} centre */
+export function roadAcross(poly, roadAt, centre) {
+  let west = Infinity, east = -Infinity, south = Infinity, north = -Infinity;
+  for (const [e, n] of poly) { west = Math.min(west, e); east = Math.max(east, e); south = Math.min(south, n); north = Math.max(north, n); }
+  const seen = new Set();
+  for (let e = west + 1.5; e < east; e += 3) for (let n = south + 1.5; n < north; n += 3) {
+    if (!insideRing(poly, e, n) || !roadAt(e, n)) continue;
+    let angle = compassBearing(e - centre[0], n - centre[1]);
+    if (angle < 0) angle += TAU;
+    seen.add(Math.round(angle * 1000) / 1000);
+  }
+  return [...seen].sort((a, b) => a - b);
 }
 
 /** Whether (e, n) is inside a ring (even-odd). @param {readonly Pt[]} ring @param {number} e @param {number} n */

@@ -5,6 +5,7 @@
 // GROWTH_MARGIN of the pixel's edge, so the carve and its ease meet no neighbour. Worker-safe (world/ alone): the terrain
 // worker lays the outskirts out and carves them; the host dresses the same layout from the same input.
 import { hash32 } from '../blockHash.js';
+import { dsin, dcos } from './exactMath.js';
 import { layoutSettlement } from './settlementLayout.js';
 import { carveSettlementGround } from './settlementGround.js';
 import { sampleEnv, SAMPLE_M } from './settlementStand.js';
@@ -39,17 +40,41 @@ export function townGrowthJob(location, style, regionIndex) {
 /**
  * The settlement input of a town's outskirts: the same from the same job, pixel and rect, on the worker and the host.
  * @param {GrowthJob} job @param {number} px @param {number} py @param {TileRect} rect @param {number} coreY its ground, metres
+ * @param {number[]} [roads] ORGANIC: the bearings its roads leave by (roadsOut)
  */
-export function growthInput(job, px, py, rect, coreY) {
+export function growthInput(job, px, py, rect, coreY, roads = []) {
   const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
   const half = (Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR;
   const far = TILES * SAMPLE_M - GROWTH_MARGIN;
   return {
     place: job.place, origin: { px, py, east: 0, north: 0 }, seed: job.seed, archetype: 'outskirts', style: job.style,
-    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads: [], keys: /** @type {'anchored'} */ ('anchored'),   // RD-19: no ledger ships
-    params: { bands: job.type === 0 ? 2 : 1, density: 0.7, open: 0.45 },   // a ring, two round a city; half its plots left open
+    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // RD-19: no ledger ships
+    params: { bands: job.type === 0 ? 4 : 3, density: 0.7, open: 0.4 },   // ORGANIC: as deep as its roads lead, thinning off them
     core: { centre, half, y: coreY }, bounds: { e0: GROWTH_MARGIN, e1: far, n0: GROWTH_MARGIN, n1: far },
   };
+}
+
+/**
+ * ORGANIC: the bearings a town's roads leave it by, degrees clockwise from north - its path tiles met on a circle a street
+ * past its square's corners, each run of them one road at its middle; none where no path or every way is one.
+ * @param {Uint8Array|null} paths @param {number[]} centre @param {number} half
+ */
+export function roadsOut(paths, centre, half) {
+  if (!paths) return [];
+  const steps = 360, radius = half * Math.SQRT2 + 12, hit = new Uint8Array(steps);
+  for (let a = 0; a < steps; a++) {
+    const angle = (a / steps) * 2 * Math.PI, x = Math.floor((centre[0] + radius * dsin(angle)) / SAMPLE_M), y = Math.floor((centre[1] + radius * dcos(angle)) / SAMPLE_M);
+    hit[a] = x >= 0 && y >= 0 && x < TILES && y < TILES && paths[y * TILES + x] ? 1 : 0;
+  }
+  const first = hit.indexOf(0);
+  if (first < 0) return [];
+  const out = [];
+  for (let k = 1, start = -1; k <= steps; k++) {
+    const a = (first + k) % steps;
+    if (hit[a] && start < 0) start = k;
+    if (!hit[a] && start >= 0) { out.push((((first + (start + k - 1) / 2) % steps) * 360) / steps); start = -1; }
+  }
+  return out;
 }
 
 /**
@@ -73,9 +98,12 @@ export function growthBlocked({ paths = null, mask = null, tilemap = null, camps
  * @param {TileRect} rect @param {Parameters<typeof growthBlocked>[0]} bars
  */
 export function standTownGrowth(px, py, samples, job, rect, bars) {
-  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null }) };
+  // ORGANIC: a road bars a building, never a cell - the town's ground, a camp and water bar the cell
+  const roads = bars.paths ?? null;
+  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };
   const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
-  const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100);
+  const half = (Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR;
+  const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100, roadsOut(bars.paths ?? null, centre, half));
   const layout = layoutSettlement(input, env);
   const built = layout.pads.filter((pad) => !pad.legacy);
   if (built.length < 2) return null;
