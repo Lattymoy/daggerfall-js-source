@@ -9,7 +9,7 @@
 // deepWatersFish.js.
 //
 // THE SPECIES. Seven, each an item the player can take (templates 9001 -
-// 9007, the mod's ItemTemplates.json), with a spawn weight, a billboard
+// 9007, systems/deepWater/deepWatersFishRows.js, which names them), with a spawn weight, a billboard
 // height and aspect, a school size, the water biomes it lives in and the
 // band of the sea's depth it keeps to (a weight that falls off over 0.18
 // of the depth past either edge).
@@ -35,6 +35,7 @@ import { WATER_BIOME, climateToBiome } from './underwater/underwaterDecorations.
 import { rangeInt, rangeFloat } from '../systems/unleveledLoot.js';   // Random.Range(int, int) and (float, float)
 import { insideUnitSphere } from '../scenes/magicCandle.js';          // Random.insideUnitSphere
 import { roundToInt } from '../systems/mathf.js';                   // Mathf.RoundToInt
+import { FISH_NAMES } from '../systems/deepWater/deepWatersFishRows.js';   // OWN-WORK3: one name a fish, its item's and its species'
 
 export { rangeInt, rangeFloat, insideUnitSphere };
 
@@ -82,15 +83,15 @@ export function passiveFishSpecies(templateIndex, itemName, textureRecord, spawn
 
 const B = WATER_BIOME;
 const species = passiveFishSpecies;
-/** PassiveFishSpeciesCatalog.All, in its order. */
+/** PassiveFishSpeciesCatalog.All, in its order, under our own names (OWN-WORK3). */
 export const PASSIVE_FISH_SPECIES = Object.freeze([
-  species(9001, 'Longnose Butterflyfish', 42, 10, 0.5, 1.3958334, 'longnose_butterflyfish', 1, 1, 8, 16, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2.2),
-  species(9002, 'Largemouth Bass', 43, 4, 1.2, 2.2962964, 'largemouth_bass', 1.3, 1.3, 1, 2, B.Temperate | B.Swamp | B.Desert, 0, 0.45, 0.9, 1.25, 1.8, 3.2),
-  species(9003, 'Canary Rockfish', 44, 8, 0.5, 2.7333333, 'canary_rockfish', 1.2, 1.2, 2, 4, B.OpenOcean | B.Temperate | B.Cold | B.Desert, 0.35, 1, 0.85, 1.15, 1.3, 2.4),
-  species(9004, 'Crucian Carp', 45, 6, 1.2, 1.64, 'crucian_carp', 0.8, 0.8, 1, 3, B.Temperate | B.Swamp, 0, 0.4, 0.85, 1.2, 1.6, 3),
-  species(9005, 'Mackerel', 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),
-  species(9006, 'White Zebra Angelfish', 47, 2, 0.4, 0.625, 'white_zebra_angelfish', 1.3, 1.3, 1, 1, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2),
-  species(9007, 'Finulon', 41, 5, 1.8, 1.7083334, 'finulon', 1.2, 1.2, 1, 1, B.OpenOcean | B.Cold, 0.6, 1, 0.8, 1.1, 1.4, 2.6),
+  species(9001, FISH_NAMES[9001], 42, 10, 0.5, 1.3958334, 'longnose_butterflyfish', 1, 1, 8, 16, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2.2),
+  species(9002, FISH_NAMES[9002], 43, 4, 1.2, 2.2962964, 'largemouth_bass', 1.3, 1.3, 1, 2, B.Temperate | B.Swamp | B.Desert, 0, 0.45, 0.9, 1.25, 1.8, 3.2),
+  species(9003, FISH_NAMES[9003], 44, 8, 0.5, 2.7333333, 'canary_rockfish', 1.2, 1.2, 2, 4, B.OpenOcean | B.Temperate | B.Cold | B.Desert, 0.35, 1, 0.85, 1.15, 1.3, 2.4),
+  species(9004, FISH_NAMES[9004], 45, 6, 1.2, 1.64, 'crucian_carp', 0.8, 0.8, 1, 3, B.Temperate | B.Swamp, 0, 0.4, 0.85, 1.2, 1.6, 3),
+  species(9005, FISH_NAMES[9005], 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),
+  species(9006, FISH_NAMES[9006], 47, 2, 0.4, 0.625, 'white_zebra_angelfish', 1.3, 1.3, 1, 1, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2),
+  species(9007, FISH_NAMES[9007], 41, 5, 1.8, 1.7083334, 'finulon', 1.2, 1.2, 1, 1, B.OpenOcean | B.Cold, 0.6, 1, 0.8, 1.1, 1.4, 2.6),
 ]);
 
 /** A species by its item template, or null. */

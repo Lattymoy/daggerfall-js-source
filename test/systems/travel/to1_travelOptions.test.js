@@ -78,117 +78,92 @@ import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { mapPixelToWorldCoords } from '../../../src/world/streamingWorld.js';
 import { setPaceGround, setTravelPace, _resetTravelPace } from '../../../src/systems/travel/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { stringBreach } from '../../../tools/plainText.mjs';   // OWN-WORK3: our own words, held to PLAIN-TEXT
+import { TRAVEL_OPTIONS_1_11_KEYS, RATE_LAW_RETIRED } from './travelOptionsKeys.mjs';
 /** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
  *  leaving a road takes it back to x60: test/systems/travel/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
 const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const root = new URL('../../..', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, root), 'utf8');
-const VENDOR = 'vendor/travel-options/';
+const VENDOR = 'vendor/travel-options/';   // OWN-WORK3: the author's three pictures, which stay until wave 3
 
-// ─── the vendored record ──────────────────────────────────────────────
+// ─── our own record (OWN-WORK3: the mod's settings, presets and string table left the tree) ───
 
-/** RATE-LAW: the mod's TimeAcceleration section, which the port no longer declares. */
-const RATE_LAW_RETIRED = Object.freeze(['TimeAcceleration.DefaultStartingAcceleration', 'TimeAcceleration.AlwaysUseStartingAcceleration', 'TimeAcceleration.AccelerationLimit']);
-
-test('TO1: the settings are the mod\'s own modsettings.json, key for key, type for type (RATE-LAW: less its TimeAcceleration section)', () => {
-  const shipped = JSON.parse(read(`${VENDOR}modsettings.json`));
+test('TO1: the settings - our own table, key for key (OWN-WORK3; the keys are Travel Options 1.11\'s, a saved setting\'s name; RATE-LAW: less its TimeAcceleration section)', () => {
   const ours = MOD_SETTINGS[TRAVEL_OPTIONS_VENDOR].keys;
   assert.equal(MOD_SETTINGS[TRAVEL_OPTIONS_VENDOR].author, 'Hazelnut');
-  // the port's own Enabled in front, then the mod's, section-dot-name
-  assert.equal(Object.keys(ours)[0], 'Enabled');
-  assert.equal(ours.Enabled.default, true, 'MO1: every vendored mod ships on');
-  // PLAIN-TEXT (2026-10-19): the one shipped key that does nothing here (no Real Grass in the game) says so - its words, exactly
-  const PLAIN = { 'GeneralOptions.AllowRealGrass': 'Has no effect here: Real Grass isn\u2019t included.' };
-  let n = 0;
-  const shippedNames = new Set();
-  for (const section of shipped.Sections) {
-    for (const k of section.Keys) {
-      n++;
-      const key = `${section.Name}.${k.Name}`;
-      shippedNames.add(key);
-      const def = ours[key];
-      // RATE-LAW (2026-10-04, Mac: "Remove travel options dials"): THE ONE SECTION THE PORT LEAVES OUT, named so a second
-      // cannot go quietly - the spinner's starting value, its always-start switch and its limit (systems/timeScale.js
-      // travelRateOf: a journey runs at its ground's rate)
-      if (RATE_LAW_RETIRED.includes(key)) { assert.equal(def, undefined, `${key} is retired, never declared`); continue; }
-      assert.ok(def, `${key} is declared`);
-      assert.equal(def.description, PLAIN[key] ?? k.Description, `${key}'s description is the mod's own, or its plain rewording`);
-      const kind = k.$type.split('.').pop();
-      if (kind === 'ToggleKey') {
-        // TO-FIELD2 (Mac, 2026-09-18: "travel options instantly
-        // transports you to a destination and theres no travel"). The
-        // SECOND default the port ships differently, said here beside
-        // the first so a third cannot ride in quietly.
-        // IsPlayerControlledTravel is an AND over three toggles, and the
-        // popup opens with `sleepModeInn = true` - classic's own default
-        // - so with this key false the second clause was false and EVERY
-        // default trip fell to DFU's fast travel. The mod is opt-in over
-        // vanilla for Hazelnut; here the walked journey IS the feature.
-        if (key === 'StopAtInnsTravel.PlayerControlledInnsTravel') {
-          assert.equal(k.Value, false, 'the mod ships it OFF - if this moved, re-decide the departure');
-          assert.equal(def.default, true, 'the port ships it ON, so a default trip is walked');
-        } else assert.equal(def.default, k.Value, `${key}'s default`);
-      }
-      else if (kind === 'SliderIntKey') {
-        assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], `${key}'s range`);
-      } else if (kind === 'MultipleChoiceKey') {
-        // AUDIT-TO1 I1: the ONE default the port ships differently, said
-        // here so a second one cannot ride in quietly: the follow key
-        // moves from F (SOC5's SocialInteract) to K, the one letter of
-        // the mod's own six nothing in the port or a vendored mod answers
-        // (G, O, X are Handheld Torches'). The options are the mod's.
-        if (key === 'RoadsIntegration.FollowPathsKey') {
-          assert.equal(k.Value, 1, 'the mod ships F (index 1) - if this moved, re-decide the departure');
-          assert.equal(def.default, 3, 'the port ships K (index 3)');
-          assert.equal(def.options[def.default], 'K');
-          assert.equal(def.keyChoice, true, 'and declares itself a key choice for the HT4 walk');
-        } else assert.equal(def.default, k.Value, `${key}'s default index`);
-        assert.deepEqual([...def.options], k.Options, `${key}'s options`);
-      } else if (kind === 'TextKey') {
-        assert.equal(def.default, k.Value); assert.equal(def.text, true);
-      } else if (kind === 'ColorKey') {
-        assert.ok(isColorKey(def), `${key} is a ColorKey`);
-        assert.deepEqual(colorKeyRgba(def.default), [k.Value.r, k.Value.g, k.Value.b, k.Value.a], `${key}'s colour`);
-      } else assert.fail(`${key}: unknown kind ${kind}`);
-    }
-  }
-  assert.equal(n, 51, 'the mod ships fifty-one keys across twelve sections');
-  // TRAVEL-NAV1: plus the port's own steering switch - a key the mod does
-  // not ship (HT-WAIST's shape on Handheld Torches), named so a third
-  // cannot ride in unnoticed
-  // PIN MOVED (OW-TOGGLE): and its first-person switch (test/systems/travel/ow_toggle.test.js)
-  // PIN MOVED (TO-ROADS): and that switch's roads (test/systems/travel/fb0929d_toroads.test.js)
-  assert.equal(Object.keys(ours).length, n - RATE_LAW_RETIRED.length + 4, 'and the port declares them all but the retired three, plus Enabled, its own AvoidObstacles, FirstPersonTravel and FirstPersonTravelFollowsRoads');
-  assert.deepEqual(Object.keys(ours).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel', 'GeneralOptions.FirstPersonTravelFollowsRoads'],
+  assert.equal(Object.keys(ours)[0], 'Enabled', 'the port\'s own Enabled in front');
+  const kind = (d) => (d.color ? ['color', d.default] : d.text ? ['text', d.default] : d.options ? ['choice', d.default, [...d.options]]
+    : d.min !== undefined ? ['range', d.default, d.min, d.max] : ['toggle', d.default]);
+  const C = (hex) => ['color', hex];
+  assert.deepEqual(Object.fromEntries(Object.entries(ours).map(([k, d]) => [k, kind(d)])), {
+    Enabled: ['toggle', true],
+    'CautiousTravel.PlayerControlledCautiousTravel': ['toggle', true], 'CautiousTravel.SpeedPenalty': ['range', 20, 5, 40],
+    'CautiousTravel.MaxChanceToAvoidEncounter': ['range', 95, 60, 100], 'CautiousTravel.HealthMinimumPercentage': ['range', 5, 0, 25],
+    'CautiousTravel.FatigueMinimumValue': ['range', 5, 0, 50],
+    // TO-FIELD2 (Mac, 2026-09-18): ON, so a default trip is walked (the mod shipped it off)
+    'StopAtInnsTravel.PlayerControlledInnsTravel': ['toggle', true],
+    'ShipTravel.OnlyFromPorts': ['toggle', true], 'ShipTravel.OnlyToPorts': ['toggle', false],
+    'GeneralOptions.AllowTargetingMapCoordinates': ['toggle', true], 'GeneralOptions.LocationPause': ['choice', 0, ['Never', 'Near a place', 'Inside a place']],
+    'GeneralOptions.AllowWeather': ['toggle', false], 'GeneralOptions.AllowAnnoyingSounds': ['toggle', false], 'GeneralOptions.AllowRealGrass': ['toggle', false],
+    'GeneralOptions.AvoidObstacles': ['toggle', true], 'GeneralOptions.FirstPersonTravel': ['toggle', false], 'GeneralOptions.FirstPersonTravelFollowsRoads': ['toggle', false],
+    'Teleportation.EnablePaidTeleportation': ['toggle', false],
+    'RoadsIntegration.Enable': ['toggle', true], 'RoadsIntegration.VariableSizeDots': ['toggle', true],
+    // AUDIT-TO1 I1: K, index 3 - the one letter of the six nothing else answers (the mod shipped F, SOC5's SocialInteract)
+    'RoadsIntegration.FollowPathsKey': ['choice', 3, ['None', 'F', 'G', 'K', 'O', 'X', 'Your own key']],
+    'RoadsIntegration.FollowPathsCustomKeyBind': ['text', ''], 'RoadsIntegration.EnableWaterways': ['toggle', false],
+    'RoadsIntegration.EnableStreamsToggle': ['toggle', false], 'RoadsIntegration.MarkLocationColor': C('#ffeb05ff'),
+    'FastTravelCostScaling.FastTravelCostScaleFactor': ['range', 1, 1, 10], 'FastTravelCostScaling.ShipTravelCostScaleFactor': ['range', 1, 1, 10],
+    'RoadsJunctionMap.Enable': ['toggle', true], 'RoadsJunctionMap.PersistentMap': ['toggle', false], 'RoadsJunctionMap.ToggleMapOffPaths': ['toggle', true],
+    'RoadsJunctionMap.ScreenSize': ['range', 75, 40, 200], 'RoadsJunctionMap.ScreenPositionX': ['range', 235, 0, 280], 'RoadsJunctionMap.ScreenPositionY': ['range', 10, 0, 160],
+    'RoadsJunctionMap.FilterMode': ['choice', 0, ['Point', 'Bilinear', 'Trilinear']], 'RoadsJunctionMap.Circular': ['toggle', true],
+    'RoadsJunctionMap.PlayerColor': C('#ff0000ff'), 'RoadsJunctionMap.Opaque': ['toggle', false], 'RoadsJunctionMap.BackgroundColor': C('#327f19ff'),
+    // DFU's own travel-map colors (DaggerfallTravelMapWindow), a place kind each
+    'LocationColours.DungeonLabyrinth': C('#d77727ff'), 'LocationColours.DungeonKeep': C('#bf571bff'), 'LocationColours.DungeonRuin': C('#ab330fff'),
+    'LocationColours.Graveyard': C('#930f07ff'), 'LocationColours.Coven': C('#0f0f0fff'), 'LocationColours.Farm': C('#9b696aff'),
+    'LocationColours.WealthyHome': C('#bc8a8aff'), 'LocationColours.PoorHome': C('#7e5159ff'), 'LocationColours.Temple': C('#b0cdffff'),
+    'LocationColours.Cult': C('#447cc0ff'), 'LocationColours.Tavern': C('#8c5637ff'), 'LocationColours.City': C('#e3b490ff'),
+    'LocationColours.Hamlet': C('#c18564ff'), 'LocationColours.Village': C('#a56446ff'),
+  });
+  assert.equal(TRAVEL_OPTIONS_1_11_KEYS.length, 51, 'the mod named fifty-one keys across twelve sections');
+  assert.deepEqual(TRAVEL_OPTIONS_1_11_KEYS.filter((k) => !(k in ours)), [...RATE_LAW_RETIRED], 'RATE-LAW: the one section the port leaves out');
+  assert.deepEqual(Object.keys(ours).filter((k) => !TRAVEL_OPTIONS_1_11_KEYS.includes(k)).sort(), ['Enabled', 'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel', 'GeneralOptions.FirstPersonTravelFollowsRoads'],
     'the port\'s four keys, and nothing else');
-  // the five unnamed spacer sections carry no keys and are not declared
-  assert.deepEqual(shipped.Sections.filter((s) => !s.Keys.length).map((s) => s.Name), ['__', '-', '_', '--', '.']);
+  assert.ok(isColorKey(ours['LocationColours.City']));
+  assert.deepEqual(colorKeyRgba(ours['LocationColours.City'].default), [227, 180, 144, 255]);
+  assert.equal(ours['RoadsIntegration.FollowPathsKey'].keyChoice, true, 'a key choice, for the HT4 walk');
+  // the words are our own, each within PLAIN-TEXT's limits
+  for (const k of TRAVEL_OPTIONS_1_11_KEYS.filter((n) => n in ours)) assert.equal(stringBreach(ours[k].description), null, k);
+  assert.equal(ours['CautiousTravel.SpeedPenalty'].description, 'How much slower a cautious journey goes, in percent.');
+  assert.equal(ours['LocationColours.Coven'].description, 'The color of this kind of place on the travel map.');
+  assert.equal(ours['GeneralOptions.AllowRealGrass'].description, 'Has no effect here: Real Grass isn\u2019t included.');
 });
 
-test('TO1: the words are the mod\'s own CSV, entry for entry', () => {
-  const csv = read(`${VENDOR}TravelOptionsModData.csv`);
-  // Key,Value with quoted values that may carry newlines and commas
-  // Key,Value, the values quoted and free to carry commas and NEWLINES
-  // (the two help screens are whole pages). A key always starts a line.
-  // ...and the shipped file's line endings are Windows'. The port's own
-  // text is LF (ui/messageBox.js splits on it and a stray \r would draw
-  // as a glyph), so the comparison normalises rather than carrying CRLF
-  // into the module - the one thing about this table that is not byte
-  // for byte, and it is stated here rather than left to be found.
-  const rows = [...csv.matchAll(/(?:^|\n)([A-Za-z0-9]+),"((?:[^"]|"")*)"/g)]
-    .map((m) => [m[1], m[2].replace(/""/g, '"').replace(/\r\n/g, '\n')]);
-  assert.equal(rows.length, 44, 'the shipped table');
-  for (const [k, v] of rows) {
-    assert.equal(TRAVEL_OPTIONS_TEXT[k], v, `${k} is the mod's own text`);
-    assert.equal(localize(k), v);
-  }
-  assert.equal(Object.keys(TRAVEL_OPTIONS_TEXT).length, rows.length, 'and nothing was invented');
+test('TO1: the words - our own, key for key (OWN-WORK3: the mod\'s string table left the tree with the four keys nothing read)', () => {
+  assert.deepEqual({ ...TRAVEL_OPTIONS_TEXT, HelpInfoSDF: undefined }, {
+    MsgArrived: 'You reach your destination.', MsgArrivedJunc: 'The way divides here.', MsgEnemies: 'Enemies block your way!',
+    MsgAvoidFail: 'You were seen before you could slip away!', MsgAvoidSuccess: 'You slip past the danger unseen.',
+    MsgLowHealth: 'You are badly hurt. Your journey stops.', MsgLowFatigue: 'You are too tired to go on. Rest first.',
+    MsgOcean: 'You are at sea. Only a ship can take you on from here.', MsgNearLocation: 'Your journey stops near {1}, a {0}.',
+    MsgEnterLocation: 'Your journey stops in {1}, a {0}.', MsgCircumnavigate: 'Going around {0}.',
+    MsgNoPath: 'No road or track leads that way from here.', MsgFollowRoad: 'Along a road', MsgFollowTrack: 'Along a dirt track',
+    MsgTargetCoords: 'Map spot {0}, {1}', MsgNewRegion: 'You cross into {0}.',
+    DirectionN: 'N', DirectionNE: 'NE', DirectionE: 'E', DirectionSE: 'SE', DirectionS: 'S', DirectionSW: 'SW', DirectionW: 'W', DirectionNW: 'NW', DirectionNone: 'none',
+    TipMap: 'Open the map', TipCamp: 'Make camp', MsgResume: 'Go on to {0}?', MsgTeleportCost: 'The guild charges {0} gold to send you there. Pay it?',
+    MsgPlayerControlled: 'You travel it yourself', MsgTimeFormat: ' about {0} hr {1} min',
+    MsgNoPort: 'There is no port here to sail from.', MsgNoDestPort: 'There is no port there to sail to.',
+    MsgNoSailing: 'No sea lies on this route. You do not need a ship.', MsgGuildHalls: 'Guilds here: ', MsgNoKnowledge: 'You know nothing about {0}.',
+    LocationTypeDungeonKeep: 'Keep', LocationTypeDungeonLabyrinth: 'Labyrinth', LocationTypeDungeonRuin: 'Ruin', HelpInfoSDF: undefined,
+  });
+  assert.equal(TRAVEL_OPTIONS_TEXT.HelpInfoSDF.split('\n').length, 16, 'the help box\'s rows');
+  for (const k of Object.keys(TRAVEL_OPTIONS_TEXT)) assert.equal(localize(k), TRAVEL_OPTIONS_TEXT[k]);
+  for (const k of ['MsgFollow', 'MsgTimeFormatNoSDF', 'MsgNotVisited', 'HelpInfo']) assert.equal(localize(k), '', `${k}: nothing read it, so it went`);
   assert.equal(localize('NoSuchKey'), '', 'Localize answers empty for a key it does not carry (:1336-1341)');
   // C#'s composite format, positional
-  assert.equal(format(TRAVEL_OPTIONS_TEXT.MsgNearLocation, 'town', 'Daggerfall'),
-    'Paused the journey since a town called Daggerfall is nearby.');
-  assert.equal(format(TRAVEL_OPTIONS_TEXT.MsgTargetCoords, 12, 34), 'Map coordinates: 12, 34.');
+  assert.equal(format(TRAVEL_OPTIONS_TEXT.MsgNearLocation, 'town', 'Wayrest'), 'Your journey stops near Wayrest, a town.');
+  assert.equal(format(TRAVEL_OPTIONS_TEXT.MsgNearLocation, 'town', 'Solitude'), 'Your journey stops near Solitude, a town.', 'and past the Bay');
+  assert.equal(format(TRAVEL_OPTIONS_TEXT.MsgTargetCoords, 12, 34), 'Map spot 12, 34');
   assert.equal(format('{0} {9}', 'a'), 'a {9}', 'an index with no argument is left alone, never "undefined"');
   assert.equal(directionText(NE), 'NE');
   assert.equal(directionText(0), TRAVEL_OPTIONS_TEXT.DirectionNone);
@@ -203,17 +178,16 @@ test('TO1: the three vendored textures are the bundle\'s own pixels, byte for by
   assert.deepEqual(size(png(`${VENDOR}Textures/TOcontrolUI.png`)), [320, 27], 'the control strip');
   assert.deepEqual(size(png(`${VENDOR}Textures/TOportsOff.png`)), [45, 11], 'the ports button, off');
   assert.deepEqual(size(png(`${VENDOR}Textures/TOportsOn.png`)), [45, 11], '...and on');
-  assert.equal(createHash('sha256').update(png(`${VENDOR}Textures/TOcontrolUI.png`)).digest('hex').length, 64);
   // the README says they are RE-ENCODES and names the tool that makes them
   const readme = read(`${VENDOR}README.md`);
   assert.match(readme, /RE-ENCODES, not the author's own files/);
   assert.match(readme, /tools\/travelOptionsAssets\.mjs/);
   assert.match(read('tools/travelOptionsAssets.mjs'), /export function encodePng/);
-  // and the manifest is the shipped one
-  const manifest = JSON.parse(read(`${VENDOR}travel-options.dfmod.json`));
-  assert.equal(manifest.ModTitle, 'TravelOptions');
-  assert.equal(manifest.ModVersion, '1.11');
-  assert.equal(manifest.GUID, '93f3ad1c-83cc-40ac-b762-96d2f47f2e05');
+  // OWN-WORK3: our listing of the art, each file and its sha256, in place of the bundle's manifest
+  const listing = JSON.parse(read(`${VENDOR}travel-options.files.json`));
+  assert.deepEqual([listing.ModTitle, listing.ModVersion, listing.ModAuthor], ['TravelOptions', '1.11', 'Hazelnut']);
+  assert.deepEqual(listing.Files, ['TOcontrolUI.png', 'TOportsOff.png', 'TOportsOn.png']);
+  for (const f of listing.Files) assert.equal(createHash('sha256').update(png(`${VENDOR}Textures/${f}`)).digest('hex'), listing.Sha256[f], f);
 });
 
 // ─── the settings, resolved ───────────────────────────────────────────
@@ -1162,10 +1136,10 @@ test('TO1: the eight mod messages other mods send this one', () => {
 test('TO1: the help text names the follow key and the two bindings', () => {
   const { to } = rig({ deps: { binding: (a) => (a === 'TravelExit' ? 'V' : a === 'FollowPaths' ? 'K' : 'M') } });
   const help = to.helpText();
-  assert.match(help, /^Travel Options Help/);
-  assert.match(help, /K - Follow road or track/, 'the follow key is the registry\'s FollowPaths binding (KB1) - K by default, since AUDIT-TO1 I1');
-  assert.match(help, /V - Exit travel/);
-  assert.match(help, /M - Open travel map when stopped/);
+  assert.match(help, /^Travel help/);
+  assert.match(help, /\nK - follow a road or track\n/, 'the follow key is the registry\'s FollowPaths binding (KB1) - K by default, since AUDIT-TO1 I1');
+  assert.match(help, /\nV - end the journey/);
+  assert.match(help, /\nM - when stopped, open the travel map/);
   assert.ok(!help.includes('{0}'), 'every placeholder is filled');
 });
 

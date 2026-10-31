@@ -55,5 +55,5 @@ test('DRAKES no word a player reads says Marks any more - the account card, the 
   // and the unrelated marks stand: DFU's Mark slots, the King's Mark, the map's middle-click, the blood marks
   assert.match(src('src/ui/enhanced/enhancedInventory.js'), /\[EQUIP_SLOTS\.Mark0\]: \{ x: 44, y: 296, label: 'Mark', off: true \}/);
   assert.match(src('src/systems/loot/lootRarity.js'), /name: "King's Mark"/);
-  assert.match(src('src/systems/travel/travelOptionsText.js'), /MiddleClick - Mark a location/);
+  assert.match(src('src/systems/travel/travelOptionsText.js'), /Middle click - mark a place/);   // OWN-WORK3: our own help words
 });

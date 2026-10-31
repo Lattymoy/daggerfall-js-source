@@ -439,10 +439,10 @@ test('RRI2 skillBasedStartingSpells: the spellbook by the six skills (:916-968),
   const byIndex = new Map([1, 2, 38, 44, 94, 97].map((i) => [i, { index: i, name: `classic ${i}`, effects: [] }]));
   const career = { primarySkills: [SKILLS.Destruction, SKILLS.Mysticism, SKILLS.Thaumaturgy], majorSkills: [SKILLS.Alteration, SKILLS.Illusion, SKILLS.Restoration] };
   const spells = assignSkillSpellbook(career, byIndex);
-  assert.deepEqual(spells.map((s) => s.name), ['Arcane Arrow', 'Minor Shock', 'Knock', 'Knick-Knack', 'classic 1', 'classic 94', 'classic 2', 'Rise', 'Gentle Fall', 'Candle', 'Salve Bruise'],
-    'primary: Destruction both, Mysticism both + Door Jam + Recall, Thaumaturgy Buoyancy + Rise; major: one each');
-  assert.deepEqual(assignSkillSpellbook({ primarySkills: [SKILLS.Thaumaturgy, SKILLS.Restoration], majorSkills: [SKILLS.Archery] }, byIndex).map((s) => s.name), ['classic 2', 'Rise', 'Salve Bruise', 'Smelling Salts', 'classic 97']);
-  assert.deepEqual(assignSkillSpellbook({ primarySkills: [], majorSkills: [SKILLS.Thaumaturgy, SKILLS.Restoration] }, byIndex).map((s) => s.name), ['classic 2', 'Salve Bruise'], 'as a major skill: Buoyancy alone, the bruise alone');
+  assert.deepEqual(spells.map((s) => s.name), ['Spell Dart', 'Static Touch', 'Unbar', 'Conjure Trinket', 'classic 1', 'classic 94', 'classic 2', 'Lift', 'Featherfall', 'Glimmer', 'Mend Bruise'],
+    'primary: Destruction both, Mysticism both + Door Jam + Recall, Thaumaturgy Buoyancy + Lift; major: one each (OWN-WORK3: our names)');
+  assert.deepEqual(assignSkillSpellbook({ primarySkills: [SKILLS.Thaumaturgy, SKILLS.Restoration], majorSkills: [SKILLS.Archery] }, byIndex).map((s) => s.name), ['classic 2', 'Lift', 'Mend Bruise', 'Second Wind', 'classic 97']);
+  assert.deepEqual(assignSkillSpellbook({ primarySkills: [], majorSkills: [SKILLS.Thaumaturgy, SKILLS.Restoration] }, byIndex).map((s) => s.name), ['classic 2', 'Mend Bruise'], 'as a major skill: Buoyancy alone, the bruise alone');
   // the records: EffectBundleSettings the other way round (EntityEffectBroker.cs:950-1027)
   const ms = RRI_SPELLS.minorShock;
   assert.equal(ms.rangeType, 1, 'ByTouch'); assert.equal(ms.element, 3, 'Shock'); assert.equal(ms.icon, 37);
@@ -459,7 +459,7 @@ test('RRI2 skillBasedStartingSpells: the spellbook by the six skills (:916-968),
   for (const sp of Object.values(RRI_SPELLS)) { assert.ok(Number.isFinite(sp.cost) && sp.cost >= 5, `${sp.name} costs`); assert.ok(sp.index >= 990 && sp.rri, 'the port\'s own index'); }
   assert.equal(new Set(Object.values(RRI_SPELLS).map((s) => s.index)).size, 9);
   // the seam
-  assert.equal(assignStartingSpells(0, byIndex, career).map((s) => s.name)[0], 'Arcane Arrow', 'on: the mod\'s book');
+  assert.equal(assignStartingSpells(0, byIndex, career).map((s) => s.name)[0], 'Spell Dart', 'on: the mod\'s book');
   on('skillBasedStartingSpells', false);
   assert.deepEqual(assignStartingSpells(0, byIndex, career).map((s) => s.index), [1, 2, 97], 'off: the Mage set, the ids the map holds (37 and 8 are not in this map)');
   reset();

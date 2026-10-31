@@ -2,28 +2,26 @@
 // for it (:41-53 the two quest tables, :241-256 the list, the factions
 // and the merchant service, :259-297 the two PlayerGPS subscribers,
 // :300-311 the building key, :414-484 the custom armor service,
-// :659-706 the three factions) - Hazelnut, MIT. The quests themselves
-// (RRMSTARM0-2 and QuestList-RoleplayRealism.txt) are vendored verbatim
-// under vendor/roleplay-realism/Quests/ and ride the quest pack's own
-// globs; the fort (locationnew-RRfort01-16, RRFORT01.RMB) and the
-// armorer's shop variant (ARMRAM03.RMB-765-building14_master) are the
-// world-data half, RR3b.
+// :659-706 the three factions) - Hazelnut, MIT. OWN-WORK3: the quests
+// are DFO's own words on the release's logic (systems/roleplayRealism/
+// quests/), and the keep, its block and the armorer's shop are our own
+// world data (rrWorld.js). Every line the player reads is ours.
 import { DIRECTION_HINTS } from '../talk/talk.js';
 import { ARMOR_MATERIAL } from '../armorMaterials.js';
 import { groupTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';
 import { customItemsForGroup } from '../item/itemTemplates.js';   // FORAGE1: GetCustomItemsForGroup's one home
 
-/** RoleplayRealismModData.csv - the quest line's own lines. */
+/** OWN-WORK3: the quest line's own lines and names, DFO's. */
 export const RR_TEXT = Object.freeze({
-  fortVerynear1: 'You see many heavy bootprints in the mud and even spot a discarded shield.',
-  fortVerynear2: 'These are definite tracks from of a band of warriors somewhere nearby.',
-  fortNear: 'You spot signs of recent activity in the area that seem to lead to the {0}.',
-  customArmor: 'Custom Armor',
-  dharjenCustomArmor: 'Dharjen Custom Armor',
-  notEnoughMaterials: 'Sorry I have not yet sourced enough rare materials to make you armor.',
-  lordVerathonName: 'Lord Verathon',
-  captainUlthegaName: 'Captain Ulthega',
-  orthusDharjenName: 'Orthus Dharjen',
+  fortVerynear1: 'Boot prints churn the mud here, and a dented shield lies in the grass.',
+  fortVerynear2: 'Armed men passed this way, and not long ago.',
+  fortNear: 'Fresh tracks lead off to the {0}.',
+  customArmor: 'Commission Armor',
+  dharjenCustomArmor: 'Hale\'s Armory',
+  notEnoughMaterials: 'My stock of rare metals is too thin to make you anything worth wearing yet.',
+  lordVerathonName: 'Lord Edric Vane',
+  captainUlthegaName: 'Captain Moira Dunn',
+  orthusDharjenName: 'Brannoc Hale',
 });
 
 // ---- the quest tables (:41-53) -----------------------------------------------

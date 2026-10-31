@@ -37,7 +37,7 @@ import { Collider } from '../../../src/player/collider.js';
 import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { loadTables, rmbBlock, town, worldOf, mark, SPAWN, ITEM, ENTER } from '../../fb1004dTowns.mjs';
-import { ARENA2, HAVE_ARENA2, SKIP, BV, BC, packJson, openTowns, everyLocation } from '../../fb1004dArena.mjs';
+import { BV, BC } from '../../fb1004dArena.mjs';
 
 loadTables();
 const { House1, House2, House4 } = BUILDING_TYPES;
@@ -47,7 +47,7 @@ const flat = ([x, y, z]) => ({ x: x * UNIT, y: -y * UNIT, z: z * UNIT });
 
 // ---- the vendored packs, read as the door reads them ----
 
-const PACKS = { [BV]: packJson(BV), [BC]: packJson(BC) };
+// OWN-WORK3: the town packs are retired - the curation's list is held as a literal below, no longer read off them
 const CLASSIC = Symbol('a piece of the player\'s BLOCKS.BSA');
 /** A pack value with its nodes, rows and runs expanded as the door's reader expands them (formats/worldData/worldDataPack.js
  *  openWorldDataPack: the pack's own ROW_CODECS, WD1's patchJson for a node's `$o`) - a `$c`, a piece of the player's own
@@ -87,46 +87,6 @@ function setAt(P, name, path) {
   return undefined;
 }
 const isMarker = (f, record, [x, y, z]) => f.TextureArchive === 199 && f.TextureRecord === record && f.XPos === x && f.YPos === y && f.ZPos === z;
-
-test('QUEST-MARKERS, the list against the vendored packs (no game data): every building it names is its pack\'s own block - that pack\'s alone, so the key names one block - of the design\'s building type, the author\'s own interior, holding each listed marker exactly where the list says', () => {
-  let places = 0, markers = 0;
-  for (const d of CURATED_QUEST_MARKERS) {
-    assert.equal(d.design, `${d.where[0][1]}#${d.where[0][2]}`, 'a design is named for its first building');
-    markers += d.markers.length;
-    for (const m of d.markers) {
-      assert.ok(m.record === SPAWN || m.record === ITEM, 'a quest marker: 199.11 or 199.18');
-      assert.notDeepEqual(m.to, m.at, 'moved');
-    }
-    for (const [vendor, block, record] of d.where) {
-      places++;
-      const file = `${block}.json`, P = PACKS[vendor];
-      assert.ok(P.files[file] !== undefined, `${vendor} carries ${file}`);
-      for (const other of Object.keys(PACKS)) if (other !== vendor) assert.equal(PACKS[other].files[file], undefined, `${file} is ${vendor}'s alone`);
-      assert.equal(buildingDataFromJson(buildingAt(P, file, record)).buildingType, d.buildingType, `${block} #${record}: the design's building type`);
-      const sub = setAt(P, file, 'RmbBlock.SubRecords')?.[record];
-      assert.ok(sub && sub !== CLASSIC && sub.Interior && sub.Interior !== CLASSIC, `${block} #${record}: the author's own interior, carried in the pack`);
-      for (const m of d.markers) {
-        assert.equal(sub.Interior.BlockFlatObjectRecords.filter((f) => isMarker(f, m.record, m.at)).length, 1, `${vendor} ${block} #${record}: 199.${m.record} at ${m.at}`);
-      }
-    }
-  }
-  // FIELD BUGS 2026-10-05 SEALED-CELLAR: and fourteen designs past a shut hatch, 128 interiors, fourteen markers
-  assert.deepEqual([CURATED_QUEST_MARKERS.length, places, markers], [20, 179, 22], 'twenty designs in 179 of the packs\' building interiors, 22 markers');
-});
-
-test('QUEST-MARKERS: Beautiful Cities\' library is the author\'s own design - DALIBRBL01 #14 and DALIBRBL03 #3 carry their interiors in the pack, made over LIBRAL01 and LIBRAL03, while the pack\'s own LIBRAL01 #14 and LIBRAL03 #3 are Daggerfall\'s (a reference into the player\'s BLOCKS.BSA)', () => {
-  const P = PACKS[BC];
-  assert.deepEqual(entryOf(P, 'DALIBRBL01.RMB.json')[1].slice(0, 2), ['b', 'LIBRAL01.RMB'], 'made over Daggerfall\'s LIBRAL01');
-  assert.deepEqual(entryOf(P, 'DALIBRBL03.RMB.json')[1], ['f', 'LIBRAL03.RMB.json'], 'made over the pack\'s LIBRAL03');
-  for (const [block, record] of [['DALIBRBL01.RMB', 14], ['DALIBRBL03.RMB', 3]]) {
-    const sub = setAt(P, `${block}.json`, 'RmbBlock.SubRecords')[record];
-    assert.notEqual(sub.Interior, CLASSIC, `${block} #${record}: the author's interior`);
-    assert.equal(buildingDataFromJson(setAt(P, `${block}.json`, 'RmbBlock.FldHeader.BuildingDataList')[record]).buildingType, BUILDING_TYPES.Library);
-  }
-  for (const [block, record] of [['LIBRAL01.RMB', 14], ['LIBRAL03.RMB', 3]]) {
-    assert.equal(setAt(P, `${block}.json`, 'RmbBlock.SubRecords')[record].Interior, CLASSIC, `${block} #${record}: Daggerfall's own library`);
-  }
-});
 
 // ---- the key ----
 
@@ -342,71 +302,3 @@ test('QUEST-MARKERS, the four hosts by source: the building stands (worldModes.j
   }
 });
 
-// ---- the player's own towns ----
-
-test('QUEST-MARKERS, gated on ARENA2_PATH: every building of the world\'s towns the door serves in a listed design - 13,084 of them, in 4,073 towns, with both packs on (1,105 in 665 before SEALED-CELLAR) - has each of the design\'s markers curated where it stands', { skip: SKIP }, async () => {
-  const say = console.log; console.log = () => {};
-  let t;
-  try { t = await openTowns({ mods: true }); } finally { console.log = say; }
-  const listed = new Map();   // block -> [[record, design]]
-  for (const d of CURATED_QUEST_MARKERS) for (const [, block, record] of d.where) (listed.get(block) ?? listed.set(block, []).get(block)).push([record, d]);
-  let buildings = 0;
-  const towns = new Set(), missed = [];
-  for (const { loc } of everyLocation(t.maps)) {
-    const ext = loc?.exterior?.exteriorData;
-    for (let i = 0; i < (ext?.blockNames.length ?? 0); i++) {
-      const name = ext.blockNames[i];
-      if (!listed.has(name)) continue;
-      t.maps.getRmbBlockName(loc, i % ext.width, Math.floor(i / ext.width));   // the town's own read: its blocks come next
-      const dfBlock = t.blocks.getBlockByName(name);
-      if (!dfBlock?.fromWorldData) continue;
-      for (const [record, d] of listed.get(name)) {
-        if (dfBlock.rmbBlock.fldHeader.buildingDataList[record]?.buildingType !== d.buildingType) continue;
-        buildings++; towns.add(`${loc.regionIndex}:${loc.locationIndex}`);
-        const flats = dfBlock.rmbBlock.subRecords[record].interior.blockFlatObjectRecords;
-        for (const m of d.markers) {
-          const f = flats.find((x) => x.textureArchive === 199 && x.textureRecord === m.record && [x.xPos, x.yPos, x.zPos].join() === m.at.join());
-          if (!f || JSON.stringify(curatedMarkerSpot(dfBlock, record, f.textureRecord, f.xPos, f.yPos, f.zPos)) !== JSON.stringify(m.to)) missed.push(`${loc.name} ${name} #${record}`);
-        }
-      }
-    }
-  }
-  assert.deepEqual(missed, [], 'every listed marker, curated in every town that stands it');
-  // FIELD BUGS 2026-10-05 SEALED-CELLAR: 1,105 in 665 towns before the hatches' fourteen designs
-  assert.deepEqual([buildings, towns.size], [13084, 4073]);
-});
-
-// ---- the measure, again, on the player's own data ----
-
-const GEOMETRY = HAVE_ARENA2 && existsSync(join(ARENA2, 'ARCH3D.BSA'));
-test('QUEST-MARKERS, gated on ARENA2_PATH: tools/townQuestMarkers.mjs measures the listed buildings again off the player\'s ARCH3D and BLOCKS.BSA and finds the list, marker for marker - each floor spot a floor the walk from the door reaches and sees - and Daggerfall\'s own LIBRAL01 #14 and LIBRAL03 #3 hold no marker where the author\'s library does', { skip: GEOMETRY ? false : 'ARENA2_PATH not set (or no ARCH3D.BSA)' }, async () => {
-  const T = await import('../../../tools/townQuestMarkers.mjs');
-  const say = console.log; console.log = () => {};
-  let data, list;
-  try {
-    data = await T.openTownData(ARENA2);
-    list = await T.measureTownPacks(data, { only: CURATED_QUEST_MARKERS.flatMap((d) => d.where) });
-  } finally { console.log = say; }
-  assert.deepEqual(JSON.parse(JSON.stringify(list)), JSON.parse(JSON.stringify(CURATED_QUEST_MARKERS)), 'the committed list is the measure');
-  for (const d of CURATED_QUEST_MARKERS) {
-    const [vendor, block, record] = d.where[0];
-    const { dfBlock, index } = data.packBlock(vendor, block);
-    const { tris, layout } = await T.interiorTriangles(data.getModel, dfBlock, index >= 0 ? index : 99999, record);
-    const walk = T.walkFloor(tris, layout.markers.filter((m) => m.type === ENTER || m.type === 4));
-    for (const m of d.markers) {
-      const at = { x: m.at[0] * UNIT, y: -m.at[1] * UNIT, z: m.at[2] * UNIT }, to = { x: m.to[0] * UNIT, y: -m.to[1] * UNIT, z: m.to[2] * UNIT };
-      assert.ok(!walk.sees(at), `${d.design}: 199.${m.record} at ${m.at} - no player reaches it`);
-      // ...void or inside a solid, or (FIELD BUGS 2026-10-05 SEALED-CELLAR) on a floor past a shut hatch, whose far side reaches it
-      const hatch = T.hatchesOf(layout.markers, walk).find((h) => T.walkFloor(tris, [h.far]).sees(at));
-      assert.ok(['void', 'insideSolid'].includes(T.rayVerdict(tris, at)) || hatch, `${d.design}: 199.${m.record} at ${m.at} - lost in geometry, or sealed`);
-      if (hatch) assert.ok(Math.hypot(to.x - hatch.near.x, to.z - hatch.near.z) < 8, `${d.design}: its spot by the hatch`);
-      assert.equal(T.rayVerdict(tris, to), 'ok', `${d.design}: its spot ${m.to} is a floor`);
-      assert.ok(walk.sees(to), `${d.design}: the walk from the door reaches it`);
-    }
-  }
-  for (const [name, record] of [['LIBRAL01.RMB', 14], ['LIBRAL03.RMB', 3]]) {
-    const own = data.blocks.readClassicBlock(data.blocks.getBlockIndex(name)).rmbBlock.subRecords[record].interior.blockFlatObjectRecords;
-    const library = CURATED_QUEST_MARKERS.find((d) => d.design.startsWith('DALIBRBL')).markers;
-    for (const m of library) assert.ok(!own.some((f) => f.textureArchive === 199 && f.xPos === m.at[0] && f.yPos === m.at[1] && f.zPos === m.at[2]), `${name} #${record}: no marker at ${m.at}`);
-  }
-});

@@ -1,15 +1,13 @@
-// ARENA1: the player's data as the arena tests read it - MAPS.BSA, BLOCKS.BSA and ARCH3D.BSA out of ARENA2_PATH,
-// and Beautiful Cities' and Villages' packs on the door for the city's other layout. Null without ARENA2.
+// ARENA1: the player's data as the arena tests read it - MAPS.BSA, BLOCKS.BSA and ARCH3D.BSA out of ARENA2_PATH. The town
+// packs that gave the city its other layout are retired (OWN-WORK3). Null without ARENA2.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { gunzipSync } from 'node:zlib';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { dfMeshToModel } from '../src/world/meshReader.js';
-import { openWorldDataPack } from '../src/formats/worldData/worldDataPack.js';
-import { registerWorldDataPack, installWorldDataReplacement, bindWorldDataBlocks, quietLocationOverrides, _resetWorldDataReplacement } from '../src/formats/worldData/worldDataReplacement.js';
+import { installWorldDataReplacement, bindWorldDataBlocks, _resetWorldDataReplacement } from '../src/formats/worldData/worldDataReplacement.js';
 import { setValue } from '../src/systems/settings/settings.js';
 import { installArena, _resetArena } from '../src/world/arena/arenaCity.js';
 import { _resetLayoutPins } from '../src/systems/layoutPins.js';
@@ -32,10 +30,10 @@ export function loadBlocks() {
 }
 
 /**
- * A fresh door: AssetInjection as asked, the blocks bound, the town packs on it when `packs`, the arena installed
- * when `arena`. Answers { maps, blocks }.
+ * A fresh door: AssetInjection as asked, the blocks bound, the arena installed when `arena`. Answers { maps, blocks }.
+ * OWN-WORK3: `packs` is read for the callers that still name it, and loads nothing - the town packs are retired.
  */
-export async function bootDoor({ packs = false, arena = true, injection = true } = {}) {
+export async function bootDoor({ packs: _packs = false, arena = true, injection = true } = {}) {
   _resetWorldDataReplacement();
   _resetLayoutPins();
   _resetArena();
@@ -43,13 +41,6 @@ export async function bootDoor({ packs = false, arena = true, injection = true }
   installWorldDataReplacement();
   const blocks = loadBlocks();
   bindWorldDataBlocks(blocks);
-  if (packs) {
-    for (const [v, pr] of [['beautiful-villages', 10], ['beautiful-cities', 20]]) {
-      const pack = openWorldDataPack(JSON.parse(gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString()), { blocks });
-      registerWorldDataPack(pack, () => true, { priority: pr });
-    }
-    quietLocationOverrides(true);
-  }
   if (arena) await installArena({ readBin: async () => vendorBytes('Models/864102.bin'), log: null });
   return { maps: loadMaps(), blocks };
 }

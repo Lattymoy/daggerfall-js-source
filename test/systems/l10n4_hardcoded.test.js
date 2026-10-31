@@ -386,6 +386,7 @@ const HARDCODED = {
   'src/systems/decor/decorFurnish.js': 4,
   'src/systems/decor/decorItems.js': 2,
   'src/systems/decor/decorMods.js': 16,
+  'src/systems/deepWater/deepWatersFishRows.js': 7,   // OWN-WORK3: the seven fish's canonical names, one table for the item and the species (passiveFish.js's five went with them) - item names, which a language reads by template (Internal_Items)
   'src/systems/dfmodTextures.js': 3,
   'src/systems/diseases.js': 9,
   'src/systems/dragon/dragonMount.js': 1,   // DRAGON5: the Dwarven Dragon's row name - English, as every custom row's is (upkeepItemRows.js)
@@ -412,7 +413,8 @@ const HARDCODED = {
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
   'src/systems/foeTitle.js': 1,
   'src/systems/foraging/foragingInstall.js': 8,
-  'src/systems/foraging/foragingLaw.js': 64,
+  'src/systems/foraging/foragingItems.js': 1,   // OWN-WORK3: the Wood Bundle's canonical name, its row's (a language reads an item by template)
+  'src/systems/foraging/foragingLaw.js': 51,   // OWN-WORK3: our own lines for the build's (-13)
   'src/systems/gate/gateOmen.js': 10,
   'src/systems/gate/gateSpoils.js': 4,   // PORTAL-BOOK: the Portal Book's canonical name, a template row's
   'src/systems/gateTier.js': 4,
@@ -462,7 +464,7 @@ const HARDCODED = {
   'src/systems/map/mapWaypoints.js': 6,
   'src/systems/masterSkills.js': 52,
   'src/systems/merchantYards.js': 9,
-  'src/systems/modSettings.js': 241,
+  'src/systems/modSettings.js': 235,   // OWN-WORK3: the town packs' settings left with them
   'src/systems/musicSheetRow.js': 1,   // MUSIC-BOX: the row's name, its catalogue column - each sheet carries its own name through t()
   'src/systems/mysticism.js': 1,
   'src/systems/naval/captainLedger.js': 15,
@@ -519,7 +521,7 @@ const HARDCODED = {
   'src/systems/revenant/revenantFeud.js': 27,
   'src/systems/revenant/revenantPersonality.js': 621,
   'src/systems/revenant/revenantTrophy.js': 16,
-  'src/systems/roleplayRealism/rrQuestLine.js': 9,
+  'src/systems/roleplayRealism/rrQuestLine.js': 8,
   'src/systems/roleplayRealism/rrRealism.js': 18,
   'src/systems/roleplayRealismItems/rriItems.js': 5,
   'src/systems/roleplayRealismItems/rriKits.js': 5,
@@ -571,7 +573,7 @@ const HARDCODED = {
   'src/systems/travel/travelBands.js': 1,
   'src/systems/travel/travelDungeons.js': 1,
   'src/systems/travel/travelOptions.js': 1,
-  'src/systems/travel/travelOptionsText.js': 30,
+  'src/systems/travel/travelOptionsText.js': 28,   // OWN-WORK3: our own words, the four unread keys gone (-2)
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
   'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
@@ -632,7 +634,7 @@ const HARDCODED = {
   'src/ui/chatPanel.js': 18,
   'src/ui/classicLootPanel.js': 1,
   'src/ui/companionRoster.js': 17,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
-  'src/ui/credits.js': 84,
+  'src/ui/credits.js': 76,   // OWN-WORK3: the town packs' two credits ended
   'src/ui/cursor.js': 1,
   'src/ui/deathScreen.js': 2,
   'src/ui/decorPanel.js': 96,
@@ -822,7 +824,6 @@ const HARDCODED = {
   'src/world/lefayMonument.js': 11,
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
-  'src/world/passiveFish.js': 5,
   'src/world/eliteGates/pseudoArchives.js': 58,   // AURUM-CACHES: +1, the coffer's row (AURUM_COFFER_ARCHIVE) - the registry's own words for a developer; FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows; STOREFRONT: +1, the Brass Fissure's art row (FISSURE_ARCHIVE) - the registry's own words for a developer
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,

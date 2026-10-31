@@ -35,33 +35,33 @@ const NO_LEATHER = { weaponArmorShieldsBitfield: 1 << 6 };
 test('DISC29-B: a Magic or Rare piece keeps its make\'s word - brigandine, fur and mail', () => {
   _resetModSettings();
   const helm = mint(522, ARMOR_MATERIAL.Iron);
-  assert.equal(helm.name, 'Brigandine Helmet', 'the mint: the class\'s CurrentVariant setter');
+  assert.equal(helm.name, 'Plated Cap', 'the mint: the class\'s CurrentVariant setter (OWN-WORK3: our words)');
   applyRarity(helm, 'rare', stream(0.1, 0.1, 0.3, 0.8, 0.5));   // PIN MOVED (AFFIX-LINES): its first pick the armour's own lean - a Rare is named as its lines fall, and this one's must give a prefix
   assert.equal(helm.rarity, 'rare');
-  assert.match(helm.name, /^\S.* Brigandine Helmet .+$/, 'a Rare: the prefix, the made name, the suffix');
+  assert.match(helm.name, /^\S.* Plated Cap .+$/, 'a Rare: the prefix, the made name, the suffix');
   assert.equal(helm.name, rarityName(helm, 'rare', helm.affixes));
 
   const fur = mint(521, ARMOR_MATERIAL.Chain);   // the light set folds Chain to Leather with message 1: fur
   assert.equal(fur.material, ARMOR_MATERIAL.Leather);
   assert.equal(fur.message, 1);
-  assert.equal(fur.name, 'Fur Cuisse');
+  assert.equal(fur.name, 'Fur-lined Trousers');
   applyRarity(fur, 'magic', stream(0.2, 0.4, 0.9));
-  assert.match(fur.name, /(^|\s)Fur Cuisse(\s|$)/, 'read AFTER the fold, the word is the same one the mint wrote');
+  assert.match(fur.name, /(^|\s)Fur-lined Trousers(\s|$)/, 'read AFTER the fold, the word is the same one the mint wrote');
 
   const hauberk = mint(515, ARMOR_MATERIAL.Steel);
-  assert.equal(hauberk.name, 'Mail Hauberk');
+  assert.equal(hauberk.name, 'Chain Coat');
   applyRarity(hauberk, 'magic', stream(0.7, 0.1, 0.5));
-  assert.match(hauberk.name, /(^|\s)Mail Hauberk(\s|$)/);
+  assert.match(hauberk.name, /(^|\s)Chain Coat(\s|$)/);
 
   const jerkin = mint(520, ARMOR_MATERIAL.Leather);   // leather has no word
   applyRarity(jerkin, 'magic', stream(0.3, 0.3, 0.3));
-  assert.doesNotMatch(jerkin.name, /Brigandine|Fur|Mail/);
-  assert.match(jerkin.name, /(^|\s)Jerkin(\s|$)/);
+  assert.doesNotMatch(jerkin.name, /Plated|Fur-lined|Chain/);
+  assert.match(jerkin.name, /(^|\s)Jacket(\s|$)/);
 
   const classic = mint(102, ARMOR_MATERIAL.Iron);   // a classic cuirass: no class, no word
   applyRarity(classic, 'magic', stream(0.3, 0.3, 0.3));
   assert.match(classic.name, /(^|\s)Cuirass(\s|$)/);
-  assert.doesNotMatch(classic.name, /Brigandine|Mail/);
+  assert.doesNotMatch(classic.name, /Plated|Chain/);
 });
 
 test('DISC29-B: the refusal stands, and the name now says why - a brigandine piece is leather to the class check', () => {
@@ -71,7 +71,7 @@ test('DISC29-B: the refusal stands, and the name now says why - a brigandine pie
   assert.equal(rriNativeMaterialValue(jerkin) >> 8, 0, 'NativeMaterialValue: the leather byte, by the mod\'s design');
   assert.equal(isForbiddenEquip(NO_LEATHER, jerkin), true, 'refused, as DFU with the mod refuses it');
   assert.equal(isForbiddenEquip(NO_LEATHER, mint(102, ARMOR_MATERIAL.Iron)), false, 'a classic iron cuirass is plate');
-  assert.match(itemLongName(jerkin), /Brigandine Jerkin/, 'the list says brigandine');
+  assert.match(itemLongName(jerkin), /Plated Jacket/, 'the list says plated');
 });
 
 test('DISC29-B: rriVariantWord - the class\'s own rule, and nothing while the mod is off', () => {
@@ -96,7 +96,7 @@ test('DISC29-B: repairRarityNames gives a save\'s old names the word, once, and 
   const piece = mint(522, ARMOR_MATERIAL.Iron);
   applyRarity(piece, 'rare', stream(0.1, 0.6, 0.3, 0.8, 0.5));
   const fixed = piece.name;
-  const old = fixed.replace('Brigandine Helmet', 'Helmet');   // the bare template's build, as the ladder wrote it before
+  const old = fixed.replace('Plated Cap', 'Cap');   // the bare template's build, as the ladder wrote it before
   const stale = { ...piece, name: old };
   const renamed = { ...piece, name: 'My Lucky Helmet' };
   const leather = mint(522, ARMOR_MATERIAL.Leather);
@@ -111,7 +111,7 @@ test('DISC29-B: repairRarityNames gives a save\'s old names the word, once, and 
   assert.equal(renamed.name, 'My Lucky Helmet', 'a name that is not the old build is not ours to move');
   assert.equal(list[2].name, leather.name, 'a make with no word');
   assert.equal(legendary.name, old, 'a Legendary is its record\'s name');
-  assert.equal(plain.name, 'Brigandine Helmet', 'a common piece kept its mint\'s name all along');
+  assert.equal(plain.name, 'Plated Cap', 'a common piece kept its mint\'s name all along');
   assert.equal(repairRarityNames(list), 0, 'idempotent');
   assert.equal(repairRarityNames(undefined), 0);
 });
@@ -121,7 +121,7 @@ test('DISC29-B: across a load - a save\'s pack and wagon come back with the word
   const piece = mint(520, ARMOR_MATERIAL.Steel);
   applyRarity(piece, 'magic', stream(0.9, 0.2, 0.4));
   const fixed = piece.name;
-  const old = fixed.replace('Brigandine Jerkin', 'Jerkin');
+  const old = fixed.replace('Plated Jacket', 'Jacket');
   assert.notEqual(old, fixed);
   const entity = {
     name: 'Julian', gender: 'male', careerIndex: 0, level: 5, reflexes: 2, health: 30, maxHealth: 30, magicka: 0, maxMagicka: 0,

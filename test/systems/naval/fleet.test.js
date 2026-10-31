@@ -35,6 +35,7 @@ import { addItem } from '../../../src/systems/inventory.js';
 import { drawFleetPage, whereWords, refitLine, resetFleetPage, fleetPageShown, FLEET_PAGE_SECTIONS } from '../../../src/ui/fleetPage.js';
 import { setHoldingsProvider, _setHoldingsIconForTests } from '../../../src/ui/holdingsPages.js';
 import { checkName } from '../../../src/net/nameFilter.js';
+import { FORAGING_ITEM_ROWS } from '../../../src/systems/foraging/foragingItems.js';   // OWN-WORK3: Foraging's rows, our own
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const AT = [100, 34, 200], DIR = [0, 0, 1];
@@ -90,8 +91,7 @@ test('FLEET the materials: what in the world each is - the Wood-Axe\'s Wood Bund
   assert.deepEqual([...MATERIALS.pitch.templates], [14, 653]);
   const T = JSON.parse(read('src/characters/itemTemplates.json'));
   assert.deepEqual([71, 14].map((i) => T.find((t) => t.index === i).name), ['Iron', 'Pine Branch'], 'DFU\'s own ingredients');
-  const F = JSON.parse(read('vendor/foraging/ItemTemplates.json'));
-  assert.equal(F.find((t) => t.index === 1604).name, 'Wood Bundle');
+  assert.equal(FORAGING_ITEM_ROWS.find((t) => t.index === 1604).name, 'Wood Bundle', 'Foraging\'s, our own row (OWN-WORK3)');
   const pack = [item(1604, 2), item(50), item(645)], hold = [item(1604, 4)];
   assert.equal(materialCount([pack, hold], 'timber'), 7);
   assert.equal(takeMaterials([pack, hold], 'timber', 8), false);

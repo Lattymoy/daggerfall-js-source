@@ -43,7 +43,7 @@ function rig({ online = true } = {}) {
 
 test('FORAGE4: the wait page takes no key and no click - the wait is the cost; a second wait joins the one standing; the end closes it once', () => {
   const closed = [];
-  const w = new WaitWindow({ busy: 'Chop and Gather Wood...', seconds: 3, onClosed: (s) => closed.push(s) });
+  const w = new WaitWindow({ busy: 'Woodcutting...', seconds: 3, onClosed: (s) => closed.push(s) });
   for (const k of ['Escape', 'back', 'confirm', 'KeyY', 'KeyN']) w.input(k);
   assert.equal(w.done, false, 'no key ends the wait - Escape, nor the action townTalk hands for it');
   assert.equal(w.click(0, 0), true, 'a click is swallowed...');
@@ -116,7 +116,7 @@ function waiting(skin, fn) {
   try {
     return withDom((dom) => {
       const closed = [];
-      const win = new WaitWindow({ busy: 'Chop and Gather Wood...', seconds: 4, onClosed: (finished) => closed.push(finished) });
+      const win = new WaitWindow({ busy: 'Woodcutting...', seconds: 4, onClosed: (finished) => closed.push(finished) });
       return fn({ dom, win, closed, r: recorder() });
     });
   } finally {
@@ -128,14 +128,14 @@ function waiting(skin, fn) {
 test('ENH-NOTICE3: the wait page is the notice panel, redrawn per frame, and released when it ends or is taken (mutants: WAIT-parchment-drawn-under-the-panel, WAIT-panel-painted-once-and-left-stale, WAIT-no-release-on-close)', () => {
   waiting('enhanced', ({ dom, win, closed, r }) => {
     win.draw(r, WAIT_CANVAS, WAIT_FONT);
-    assert.deepEqual(noticeTexts(dom), ['Chop and Gather Wood...', '.'], 'the wait\'s line and its first dot are the panel\'s');
+    assert.deepEqual(noticeTexts(dom), ['Woodcutting...', '.'], 'the wait\'s line and its first dot are the panel\'s');
     assert.equal(win._box, null, 'mutants: the parchment laid out under the panel');
     assert.equal(enhancedNoticeKeys().length, 1, 'one page, one panel');
     assert.ok(win._noticeKey, 'the per-frame door minted this owner a key');
     // A PER-FRAME DOOR, so the dots really move
     win.tick(2);
     win.draw(r, WAIT_CANVAS, WAIT_FONT);
-    assert.deepEqual(noticeTexts(dom), ['Chop and Gather Wood...', win.dots], 'mutants: the panel painted once and left stale while the wait runs');
+    assert.deepEqual(noticeTexts(dom), ['Woodcutting...', win.dots], 'mutants: the panel painted once and left stale while the wait runs');
     assert.ok(win.dots.length > 1 && win.dots.length <= BUSY_DOTS);
     // THE END: `_end` is this window's one close door, and the panel leaves with it
     win.tick(2);
@@ -159,7 +159,7 @@ test('ENH-NOTICE3: the classic skin keeps the wait\'s parchment, drawn, and buil
     try { win.draw(r, WAIT_CANVAS, WAIT_FONT); } finally { _setMessageBoxArtForTests(null); }
     assert.ok(r.quads.some((q) => String(q.tex).startsWith('spop:')), 'the parchment is painted');
     assert.ok(win._box, 'the message-box layout is minted');
-    assert.deepEqual(win._box.rows.map((row) => row.text), ['Chop and Gather Wood...', '.'], 'with the wait\'s line and its dots');
+    assert.deepEqual(win._box.rows.map((row) => row.text), ['Woodcutting...', '.'], 'with the wait\'s line and its dots');
     assert.equal(win._noticeKey, undefined, 'mutants: a key minted on the classic skin');
     assert.deepEqual(enhancedNoticeKeys(), [], 'no panel');
     assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false, 'and no stack was ever built');
@@ -176,7 +176,7 @@ test('AUDIT HUNT-OUT C1: the real townTalk host takes the pointer\'s move and it
     fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
     playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] }, regionIndex: 0,
   });
-  const w = new WaitWindow({ busy: 'Chop and Gather Wood...', seconds: 4 });
+  const w = new WaitWindow({ busy: 'Woodcutting...', seconds: 4 });
   tt.showOverlay(w);
   assert.equal(tt.hover({ clientX: 40, clientY: 40 }), true, 'the move is the page\'s');
   assert.equal(tt.pointer('up', { clientX: 40, clientY: 40, button: 0 }), true, 'and so is the release');
@@ -206,26 +206,26 @@ test('FORAGE4: a wait is its game time at 8 real seconds an hour - Food 8 s, Cho
   assert.equal(WAIT_PER_HOUR, 8);
   for (const [gameSeconds, real] of [[3600, 8], [5400, 12], [7200, 16]]) {
     const { wait, entity } = rig();
-    assert.equal(wait.add(gameSeconds, 'Chop and Gather Wood'), real);
-    assert.deepEqual(entity.foragingWait, { seconds: real, label: 'Chop and Gather Wood', held: [] });
+    assert.equal(wait.add(gameSeconds, 'Woodcutting'), real);
+    assert.deepEqual(entity.foragingWait, { seconds: real, label: 'Woodcutting', held: [] });
   }
   // AUDIT HUNT-OUT: to the hundredth - seven minutes is 0.93 s, not 0.9333... nor 0.9
   assert.equal(waitRealSeconds(7), 0.93);
   assert.equal(rig().wait.add(420), 0.93, 'and the quest\'s seconds go through it');
-  assert.equal(waitLine('Chop and Gather Wood'), 'Chop and Gather Wood...', 'the page says the quest\'s own DisplayName');
+  assert.equal(waitLine('Woodcutting'), 'Woodcutting...', 'the page says the quest\'s own DisplayName');
   assert.equal(waitLine(null), 'Time passes...');
 });
 
 test('FORAGE4: the page opens only when the slot is free, writes its seconds left for the save, and clears at its end', () => {
   const { wait, entity, s } = rig();
   s.busy = true;   // the tool's result box, the pack
-  wait.add(5400, 'Chop and Gather Wood');
+  wait.add(5400, 'Woodcutting');
   assert.equal(wait.tick(), null, 'the box and the pack close first');
   assert.equal(s.win, null);
   s.busy = false;
   const page = wait.tick();
   assert.equal(s.win, page);
-  assert.equal(page.busy, 'Chop and Gather Wood...');
+  assert.equal(page.busy, 'Woodcutting...');
   assert.ok(page instanceof WaitWindow);
   page.tick(5);
   wait.tick();
@@ -240,7 +240,7 @@ test('FORAGE4: the page opens only when the slot is free, writes its seconds lef
 
 test('FORAGE4: a foe near, or a window taking the slot, ends the wait with the rest forgiven', () => {
   const a = rig();
-  a.wait.add(7200, 'Mine for Gems or Elements');
+  a.wait.add(7200, 'Mining');
   const page = a.wait.tick();
   page.tick(2);
   a.foe.near = true;
@@ -260,7 +260,7 @@ test('FORAGE4: the quest\'s boxes wait behind the page - held while it is pendin
   const shown = [];
   assert.equal(wait.holds(), false);
   s.busy = true;
-  wait.add(3600, 'Forage for some Food');
+  wait.add(3600, 'Gathering Food');
   assert.equal(wait.holds(), true, 'pending behind the pack is holding too - a bonus\'s line comes after the work');
   wait.hold(() => shown.push('bonus'));
   wait.hold(() => shown.push('second'));
@@ -276,11 +276,11 @@ test('FORAGE4: the quest\'s boxes wait behind the page - held while it is pendin
 
 test('FORAGE4: a reload reopens the page with its seconds; offline a saved wait is forgiven; a save-edited one is cut to the max', () => {
   const { wait, entity, s } = rig();
-  entity.foragingWait = { seconds: 9.5, label: 'Forage for Plants' };   // as ENTITY_FIELDS restores it
+  entity.foragingWait = { seconds: 9.5, label: 'Gathering Plants' };   // as ENTITY_FIELDS restores it
   const page = wait.tick();
   assert.equal(s.win, page);
   assert.equal(page.remaining, 9.5);
-  assert.equal(page.busy, 'Forage for Plants...');
+  assert.equal(page.busy, 'Gathering Plants...');
   const off = rig({ online: false });
   off.entity.foragingWait = { seconds: 12, label: 'x' };
   assert.equal(off.wait.tick(), null);
@@ -300,14 +300,14 @@ test('FORAGE4: a reload reopens the page with its seconds; offline a saved wait 
 test('FORAGE4: QAE\'s raise time is the host\'s wait online and the clock offline - MERGE 2 (main\'s LIVED1): and the character\'s own time online too', () => {
   const calls = [];
   const quest = (online) => ({
-    displayName: 'Chop and Gather Wood',
+    displayName: 'Woodcutting',
     hooks: { sharedClock: () => online, raiseTime: (s) => calls.push(['clock', s]), waitOnline: (s, q) => calls.push(['wait', s, q.displayName]), nowSeconds: () => 0 },
     showMessagePopup() {},
   });
   const t = new RaiseTime(null);
   t.createNew('raise time by 1:30', quest(true)).update(null);
   t.createNew('raise time by 1:30', quest(false)).update(null);
-  assert.deepEqual(calls, [['wait', 5400, 'Chop and Gather Wood'], ['clock', 5400], ['clock', 5400]], 'online the wait AND the character\'s own clock; offline the one clock');
+  assert.deepEqual(calls, [['wait', 5400, 'Woodcutting'], ['clock', 5400], ['clock', 5400]], 'online the wait AND the character\'s own clock; offline the one clock');
   assert.ok(QUEST_CTX_CONTRACT.includes('waitOnline'), 'the bridge\'s contract names the door');
 });
 
@@ -329,14 +329,14 @@ test('FORAGE4 done-when: online, the Wood-Axe\'s quest gives a 12-second wait an
     releaseQuestItem: () => {}, makeHeldQuestItemsPermanent: () => {}, getGuild: () => null, regionPriceAdjustment: () => 0,
   });
   for (const a of questActionsExtensionTemplates()) m.registerAction(a);
-  const src = rd('vendor/foraging/Quests/ChopWoodQuest.txt').split(/\r?\n/);
+  const src = rd('src/systems/foraging/quests/ChopWoodQuest.txt').split(/\r?\n/);
   const ow = console.warn, ol = console.log; console.warn = () => {}; console.log = () => {};
   try {
     m.scheduleQuest(src, 0, { rolls: () => 0.99 });
     for (let i = 0; i < 6; i++) m.tick();
   } finally { console.warn = ow; console.log = ol; }
   assert.equal(clock.length, 1, 'MERGE 2 (LIVED1): the host\'s raiseTime, the character\'s OWN clock, takes the quest\'s time once - the shared clock is never the host\'s to move');
-  assert.deepEqual(entity.foragingWait, { seconds: 12, label: 'Chop and Gather Wood', held: [] });
+  assert.deepEqual(entity.foragingWait, { seconds: 12, label: 'Woodcutting', held: [] });
   assert.equal(entity.fatigue, 105 * FATIGUE_MULTIPLIER * 0.8, '20% of the maximum, as offline');
   const page = wait.tick();
   assert.equal(page.remaining, 12);

@@ -23,18 +23,18 @@ test('DW-E3: the seven species are PassiveFishSpeciesCatalog.All - weights, size
     s.textureName, s.cruiseSpeedMultiplier, s.fleeSpeedMultiplier, s.minSchoolSize, s.maxSchoolSize, s.biomes, s.minDepthFraction, s.maxDepthFraction,
     s.minHeightMultiplier, s.maxHeightMultiplier, s.fleeDartHoldMin, s.fleeDartHoldMax]);
   assert.deepEqual(rows, [
-    [9001, 'Longnose Butterflyfish', 216, 42, 10, f32(0.5), f32(1.3958334), 'longnose_butterflyfish', 1, 1, 8, 16, B.Tropical, 0, f32(0.35), f32(0.85), f32(1.15), f32(1.1), f32(2.2)],
-    [9002, 'Largemouth Bass', 216, 43, 4, f32(1.2), f32(2.2962964), 'largemouth_bass', f32(1.3), f32(1.3), 1, 2, B.Temperate | B.Swamp | B.Desert, 0, f32(0.45), f32(0.9), f32(1.25), f32(1.8), f32(3.2)],
-    [9003, 'Canary Rockfish', 216, 44, 8, f32(0.5), f32(2.7333333), 'canary_rockfish', f32(1.2), f32(1.2), 2, 4, B.OpenOcean | B.Temperate | B.Cold | B.Desert, f32(0.35), 1, f32(0.85), f32(1.15), f32(1.3), f32(2.4)],
-    [9004, 'Crucian Carp', 216, 45, 6, f32(1.2), f32(1.64), 'crucian_carp', f32(0.8), f32(0.8), 1, 3, B.Temperate | B.Swamp, 0, f32(0.4), f32(0.85), f32(1.2), f32(1.6), 3],
-    [9005, 'Mackerel', 216, 46, 15, f32(0.8), f32(2.2666667), 'mackerel', f32(1.1), f32(1.1), 5, 12, B.Any, f32(0.1), 1, f32(0.8), f32(1.2), f32(0.9), f32(1.8)],
-    [9006, 'White Zebra Angelfish', 216, 47, 2, f32(0.4), f32(0.625), 'white_zebra_angelfish', f32(1.3), f32(1.3), 1, 1, B.Tropical, 0, f32(0.35), f32(0.85), f32(1.15), f32(1.1), 2],
-    [9007, 'Finulon', 216, 41, 5, f32(1.8), f32(1.7083334), 'finulon', f32(1.2), f32(1.2), 1, 1, B.OpenOcean | B.Cold, f32(0.6), 1, f32(0.8), f32(1.1), f32(1.4), f32(2.6)],
+    [9001, 'Gold Butterflyfish', 216, 42, 10, f32(0.5), f32(1.3958334), 'longnose_butterflyfish', 1, 1, 8, 16, B.Tropical, 0, f32(0.35), f32(0.85), f32(1.15), f32(1.1), f32(2.2)],
+    [9002, 'Rusttail Bass', 216, 43, 4, f32(1.2), f32(2.2962964), 'largemouth_bass', f32(1.3), f32(1.3), 1, 2, B.Temperate | B.Swamp | B.Desert, 0, f32(0.45), f32(0.9), f32(1.25), f32(1.8), f32(3.2)],
+    [9003, 'Ember Rockfish', 216, 44, 8, f32(0.5), f32(2.7333333), 'canary_rockfish', f32(1.2), f32(1.2), 2, 4, B.OpenOcean | B.Temperate | B.Cold | B.Desert, f32(0.35), 1, f32(0.85), f32(1.15), f32(1.3), f32(2.4)],
+    [9004, 'Bronze Carp', 216, 45, 6, f32(1.2), f32(1.64), 'crucian_carp', f32(0.8), f32(0.8), 1, 3, B.Temperate | B.Swamp, 0, f32(0.4), f32(0.85), f32(1.2), f32(1.6), 3],
+    [9005, 'Grey Mackerel', 216, 46, 15, f32(0.8), f32(2.2666667), 'mackerel', f32(1.1), f32(1.1), 5, 12, B.Any, f32(0.1), 1, f32(0.8), f32(1.2), f32(0.9), f32(1.8)],
+    [9006, 'Banded Angelfish', 216, 47, 2, f32(0.4), f32(0.625), 'white_zebra_angelfish', f32(1.3), f32(1.3), 1, 1, B.Tropical, 0, f32(0.35), f32(0.85), f32(1.15), f32(1.1), 2],
+    [9007, 'Pale Grouper', 216, 41, 5, f32(1.8), f32(1.7083334), 'finulon', f32(1.2), f32(1.2), 1, 1, B.OpenOcean | B.Cold, f32(0.6), 1, f32(0.8), f32(1.1), f32(1.4), f32(2.6)],
   ]);
   assert.deepEqual(FISH_TEMPLATE_INDICES, [9001, 9002, 9003, 9004, 9005, 9006, 9007]);
   assert.equal(FISH_ITEM_GROUP, 9, 'ItemGroups.UselessItems2');
   assert.ok(isFishTemplateIndex(9004) && !isFishTemplateIndex(9008) && !isFishTemplateIndex(288));
-  assert.equal(speciesOfTemplate(9007).itemName, 'Finulon');
+  assert.equal(speciesOfTemplate(9007).itemName, 'Pale Grouper', 'OWN-WORK3: our names, one a fish (Iliac Puddle No More 1.2.2 named the species and the item apart)');
   assert.deepEqual(fishBillboardSize(PASSIVE_FISH_SPECIES[0], 1), { w: f32(1.3958334), h: 1 }, 'GetFishBillboardSize: height x aspect');
   // the constructor's clamps
   const odd = passiveFishSpecies(1, 'x', 0, 1, 1, 1, 'x', 1, 1, 0, -3, WATER_BIOME.None, 0.9, 0.2, 0.01, 0.005, 0.05, 0.01);
@@ -51,21 +51,21 @@ test('DW-E3: DepthWeight01 is 1 in the band and falls to 0 over 0.18 past it; Ef
   assert.equal(depthWeight01(rock, 0.35), 1); assert.equal(depthWeight01(rock, 1), 1);
   near(depthWeight01(rock, 0.26), f32(1 - f32(f32(0.35 - 0.26) / f32(0.18))), 1e-6, 'nine hundredths under the band: half');
   assert.equal(depthWeight01(rock, 0.1), 0, 'past the softness: none');
-  assert.equal(effectiveWeight(fin, WATER_BIOME.Tropical, 0.8), 0, 'the Finulon keeps to the open ocean and the cold');
+  assert.equal(effectiveWeight(fin, WATER_BIOME.Tropical, 0.8), 0, 'the Pale Grouper keeps to the open ocean and the cold');
   assert.equal(effectiveWeight(fin, WATER_BIOME.Cold, 0.8), 5);
   assert.equal(effectiveWeight(mack, WATER_BIOME.Desert, 0.5), 15, 'the mackerel is everywhere');
   // tropical (229), shallow: butterflyfish 10, mackerel 15 x its weight at 0.05 (0.05 under 0.1: 1 - 0.05/0.18), angelfish 2
   const spawnable = PASSIVE_FISH_SPECIES;
   const wMack = f32(15 * depthWeight01(mack, 0.05));
   const total = f32(f32(10 + wMack) + 2);
-  assert.equal(pickSpecies(spawnable, 229, 0.05, () => 0).itemName, 'Longnose Butterflyfish');
-  assert.equal(pickSpecies(spawnable, 229, 0.05, () => f32(9.99 / total)).itemName, 'Longnose Butterflyfish');
-  assert.equal(pickSpecies(spawnable, 229, 0.05, () => f32(10.01 / total)).itemName, 'Mackerel', 'the list walked in the catalog\'s order');
-  assert.equal(pickSpecies(spawnable, 229, 0.05, () => 0.9999).itemName, 'White Zebra Angelfish');
+  assert.equal(pickSpecies(spawnable, 229, 0.05, () => 0).itemName, 'Gold Butterflyfish');
+  assert.equal(pickSpecies(spawnable, 229, 0.05, () => f32(9.99 / total)).itemName, 'Gold Butterflyfish');
+  assert.equal(pickSpecies(spawnable, 229, 0.05, () => f32(10.01 / total)).itemName, 'Grey Mackerel', 'the list walked in the catalog\'s order');
+  assert.equal(pickSpecies(spawnable, 229, 0.05, () => 0.9999).itemName, 'Banded Angelfish');
   // a desert pixel at the very bottom: only the rockfish (0.35..1) and the mackerel (0.1..1) - and the bass's band is 0..0.45
-  assert.equal(pickSpecies([PASSIVE_FISH_SPECIES[5]], 223, 0.9, () => 0.5).itemName, 'White Zebra Angelfish', 'nothing lives here: the bare weight picks');
-  assert.equal(pickSpeciesByWeight(spawnable, () => 0).itemName, 'Longnose Butterflyfish');
-  assert.equal(pickSpeciesByWeight(spawnable, () => 49.5 / 50).itemName, 'Finulon', 'Random.Range(0, 50) = 49: the last');
+  assert.equal(pickSpecies([PASSIVE_FISH_SPECIES[5]], 223, 0.9, () => 0.5).itemName, 'Banded Angelfish', 'nothing lives here: the bare weight picks');
+  assert.equal(pickSpeciesByWeight(spawnable, () => 0).itemName, 'Gold Butterflyfish');
+  assert.equal(pickSpeciesByWeight(spawnable, () => 49.5 / 50).itemName, 'Pale Grouper', 'Random.Range(0, 50) = 49: the last');
   assert.equal(pickSpecies([], 229, 0.5, () => 0.5), null, 'no spawnable species: none');
 });
 
@@ -307,43 +307,73 @@ test('DW-E3: the pulse - a dozen destroys and the queued spawns every frame; the
 });
 
 // ── the fish as items, their pictures, and the host ─────────────────
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { preloadTextureRecord, decodedTextureTopDown, setTextureDeriveContext, isVendorArchive } from '../../../src/systems/textureReplacement.js';
 import { DEEP_WATERS_FISH_TEMPLATES, createFishItem, normalizeFishItems, installDeepWatersFishIcons, fishIconArchive, FISH_GROUP } from '../../../src/systems/deepWater/deepWatersFishItems.js';
 import { createDeepWatersFish, createFishPictures, fishBoxDepth, FISH_CUTOFF } from '../../../src/scenes/deepWater/deepWatersFish.js';
 import { rayUprightCapsule } from '../../../src/world/passiveFish.js';
+import { SURVIVAL_TEMPLATES } from '../../../src/systems/survival/items.js';   // OWN-WORK3: the price rule reads Raw Fish's
+import { TEMPLATE } from '../../../src/systems/survival/food.js';
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
-test('DW-E3: the fish items are the mod\'s ItemTemplates.json row for row, each drawn from an archive of its own (the treasure piles keep TEXTURE.216); TryCreateFishItem mints the template in UselessItems2; NormalizeFishItemCollection puts a stray fish back, its stack and condition kept (mutants: the remap, the group)', () => {
-  const shipped = JSON.parse(rd('vendor/iliac-puddle-no-more/ItemTemplates.json'));
-  assert.equal(shipped.length, 7);
-  for (const row of shipped) {
+test('DW-E3 / OWN-WORK3: the fish items are our own rows - the names one a fish, the weight and the price by their rules over the species - each drawn from an archive of its own (the treasure piles keep TEXTURE.216); TryCreateFishItem mints the template in UselessItems2; NormalizeFishItemCollection puts a stray fish back, its stack and condition kept, and renames an old catch (mutants: the remap, the group, a row, a name)', () => {
+  // OWN-WORK3 (2026-10-31): Iliac Puddle No More 1.2.2 shipped its own seven rows; ours replace them on the same indices
+  // (saves hold them). [index, name, kilos, gold, condition, rarity, not repairable]
+  assert.deepEqual(DEEP_WATERS_FISH_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.basePrice, t.hitPoints, t.rarity, t.isNotRepairable]), [
+    [9001, 'Gold Butterflyfish', 0.25, 7, 1, 20, true],
+    [9002, 'Rusttail Bass', 3.5, 26, 1, 20, true],
+    [9003, 'Ember Rockfish', 0.25, 8, 1, 20, true],
+    [9004, 'Bronze Carp', 3.5, 21, 1, 20, true],
+    [9005, 'Grey Mackerel', 1, 7, 1, 20, true],
+    [9006, 'Banded Angelfish', 0.1, 30, 1, 20, true],
+    [9007, 'Pale Grouper', 11.5, 47, 1, 20, true],
+  ]);
+  const rawFishPrice = SURVIVAL_TEMPLATES.find((r) => r.index === TEMPLATE.RawFish).basePrice;
+  const steps = [0.1, 0.25, 0.5, ...Array.from({ length: 60 }, (_, i) => 1 + i / 2)];
+  for (const row of DEEP_WATERS_FISH_TEMPLATES) {
     const t = templateByIndex(row.index);
     assert.ok(t?.custom, `${row.index} registered`);
-    for (const k of Object.keys(row)) {
-      if (k === 'worldTextureArchive' || k === 'worldTextureRecord') continue;
-      assert.deepEqual(t[k], row[k], `${row.index}.${k}`);
-    }
-    assert.equal(row.worldTextureArchive, 216, 'the mod names TEXTURE.216 ...');
-    assert.equal(t.worldTextureArchive, fishIconArchive(row.index), '... the port the fish\'s own archive');
+    assert.equal(t.name, row.name);
+    assert.equal(t.worldTextureArchive, fishIconArchive(row.index), 'the fish\'s own archive, not TEXTURE.216');
     assert.equal(t.worldTextureRecord, 0);
+    const s = speciesOfTemplate(row.index);
+    assert.equal(s.itemName, row.name, 'one name a fish: its item\'s and its species\'');
+    const kg = (s.billboardHeight / f32(0.8)) ** 3;   // the Grey Mackerel's 0.8 m weighs Raw Fish's kilo
+    assert.equal(row.baseWeight, steps.reduce((a, b) => (Math.abs(b - kg) < Math.abs(a - kg) ? b : a)), `${row.name}: the weight rule`);
+    assert.equal(row.basePrice, Math.round(rawFishPrice * row.baseWeight + 60 / s.spawnWeight), `${row.name}: the price rule`);
   }
-  assert.equal(DEEP_WATERS_FISH_TEMPLATES.find((t) => t.index === 9007).name, 'Juvenile Finulon', 'the item is the template\'s name, not the species\'');
   const item = createFishItem(PASSIVE_FISH_SPECIES[4]);
   assert.equal(item.group, 'UselessItems2'); assert.equal(FISH_GROUP, 'UselessItems2');
-  assert.equal(item.templateIndex, 9005); assert.equal(item.name, 'Mackerel');
+  assert.equal(item.templateIndex, 9005); assert.equal(item.name, 'Grey Mackerel');
   assert.equal(createFishItem(null), null);
   const enchantments = [{ type: 1, param: 2 }];
   const stray = { ...createFishItem(PASSIVE_FISH_SPECIES[1]), group: 'MiscItems', stackCount: 3, currentCondition: 1, maxCondition: 1,
     name: 'Old Bass', material: 5, dyeColor: 2, flags: 4, value: 999, message: 7, worldTextureArchive: 216, worldTextureRecord: 43, id: 'u1', enchantments };
   const other = { group: 'MiscItems', templateIndex: 200, name: 'x' };
   assert.equal(normalizeFishItems([stray, other, null]), 1);
-  assert.equal(stray.group, 'UselessItems2'); assert.equal(stray.name, 'Largemouth Bass');
+  assert.equal(stray.group, 'UselessItems2'); assert.equal(stray.name, 'Rusttail Bass');
   assert.deepEqual([stray.stackCount, stray.currentCondition, stray.maxCondition], [3, 1, 1], 'the stack and the condition given back');
-  assert.deepEqual([stray.material, stray.dyeColor, stray.flags, stray.value, stray.message, stray.worldTextureArchive], [0, undefined, 0, 100, 0, undefined], 'SetItem: the template\'s data over the item\'s');
+  assert.deepEqual([stray.material, stray.dyeColor, stray.flags, stray.value, stray.message, stray.worldTextureArchive], [0, undefined, 0, 26, 0, undefined], 'SetItem: the template\'s data over the item\'s');
   assert.equal(stray.id, 'u1'); assert.equal(stray.enchantments, enchantments, 'what SetItem does not write, kept');
   assert.equal(other.group, 'MiscItems', 'not a fish: left alone');
+  const kept = { ...createFishItem(PASSIVE_FISH_SPECIES[6]), name: 'An Old Name', value: 999 };   // a catch saved before OWN-WORK3
+  assert.equal(normalizeFishItems([kept]), 0, 'in its group: nothing put back');
+  assert.deepEqual([kept.name, kept.value], ['Pale Grouper', 999], 'OWN-WORK3: renamed by its index, its worth its own');
+});
+
+test('OWN-WORK3: the folder is the fish pictures, our listing of them and the README - the listing names the seven in the catalog\'s order, each by its sha256, as the tool writes it (the authority the doctrine gate reads under Flats/)', async () => {
+  const dir = 'vendor/iliac-puddle-no-more';
+  assert.deepEqual(readdirSync(new URL(`../../../${dir}`, import.meta.url), { recursive: true }).map(String).sort(),
+    ['Flats', ...PASSIVE_FISH_SPECIES.map((sp) => `Flats/${sp.textureName}.png`).sort(), 'README.md', 'iliac-puddle-no-more.files.json'].sort(), 'art, its listing and the README: nothing else');
+  const text = rd(`${dir}/iliac-puddle-no-more.files.json`);
+  const listing = JSON.parse(text);
+  assert.deepEqual(listing.Files, PASSIVE_FISH_SPECIES.map((sp) => `Flats/${sp.textureName}.png`));
+  const png = (n) => readFileSync(new URL(`../../../${dir}/Flats/${n}.png`, import.meta.url));
+  for (const f of listing.Files) assert.equal(createHash('sha256').update(readFileSync(new URL(`../../../${dir}/${f}`, import.meta.url))).digest('hex'), listing.Sha256[f], f);
+  const { fishListing } = await import('../../../tools/iliacPuddleAssets.mjs');
+  assert.equal(fishListing(png), text, 'the tool writes the listing byte for byte');
 });
 
 test('DW-E3: the icons - each fish\'s archive a stand-in of one record, built from its picture with the aspect restored (LoadFishIconTexture\'s fallback, RestoreIconAspect) (mutants: the aspect, the archive)', async () => {
@@ -419,7 +449,7 @@ test('DW-E3: the fish pictures load once each, edge-cleaned, bottom-up; a specie
   assert.equal(made.length, 6, 'six pictures, once');
   assert.equal(cleaned, 6);
   assert.deepEqual([...made[0][0].data].filter((_, i) => i % 4 === 0), [2, 1], 'the rows turned bottom-up');
-  assert.equal(pics.spawnable().length, 6, 'the Finulon without its picture is not spawnable');
+  assert.equal(pics.spawnable().length, 6, 'the Pale Grouper without its picture is not spawnable');
   assert.equal(pics.failed, 1);
 });
 

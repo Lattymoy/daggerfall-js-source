@@ -322,13 +322,8 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // through each other's boulders - the roads' own reason, word for
   // word. Its one switch is the room's.
   'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }),   // WOD-PEAKS: and its spires the room's too - they level the ground and stand rock
-  // WD3 (2026-10-01, Mac: "ensure this doesn't conflict or regress anything (For example housing customization)"): the
-  // towns themselves. Beautiful Villages and Beautiful Cities lay 7,727 of Daggerfall's places out again - new streets,
-  // new walls, every building where its block now stands - so two players who disagree walk two towns, one through the
-  // other's houses, and a building KEY (an online home's, a shared quest's) names two different buildings. The switch is
-  // the room's. The homes bought before them keep the towns they were bought in, for everyone (net/homeLaw.js WD3).
-  'beautiful-villages': Object.freeze({ Enabled: true }),
-  'beautiful-cities': Object.freeze({ Enabled: true }),
+  // WD3's two town mods were the room's here until OWN-WORK3 (2026-10-31) retired them: every town is Daggerfall's,
+  // dressed by our own law alike for every player (world/townDress.js), and has no switch.
   // RAID2 (2026-09-27, Mac on World Events - Raiding Parties online: "1. Server 2. Keep"): the towns' raids are the
   // WORLD's - the day's roll is the shared day's, one player runs each raid and every other stands its raiders as
   // puppets and fights them, and a raid's deaths are every owner's summed. A player with the switch off would walk a

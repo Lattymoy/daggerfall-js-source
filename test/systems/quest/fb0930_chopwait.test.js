@@ -2,7 +2,7 @@
 // and some quests when the game crashed and now im stuck in an endless loop of logging in, been stuck on the treecutting
 // animation and it locks up all my controls til it crashes again."
 //
-// Online the Wood-Axe's ChopWoodQuest raises time by 1:30, which is Foraging's wait page ("Chop and Gather Wood...", no
+// Online the Wood-Axe's ChopWoodQuest raises time by 1:30, which is Foraging's wait page ("Woodcutting...", no
 // Escape - scenes/foragingWait.js, FORAGE4), and every quest box is held behind it; the held boxes ride the save (AUDIT
 // 28 F6). The page's end released them, and a released box is the host's showQuestBox, whose first question is the
 // wait's `holds()` - true while any box is still held. With two boxes behind the page (two chops, each quest's find) the
@@ -71,7 +71,7 @@ function host(entity) {
 
 const T = new URL('../../../vendor/dfu-quests/Tables/', import.meta.url);
 loadQuestTables(Object.fromEntries(readdirSync(T).map((f) => [f.replace(/\.txt$/, ''), readFileSync(new URL(f, T), 'utf8')])));
-const CHOP = rd('vendor/foraging/Quests/ChopWoodQuest.txt').split(/\r?\n/);
+const CHOP = rd('src/systems/foraging/quests/ChopWoodQuest.txt').split(/\r?\n/);
 const chopper = () => ({
   name: 'Tester', gender: 'male', level: 5, careerIndex: 0, health: 50, maxHealth: 100, magicka: 10, maxMagicka: 50,
   fatigue: 105 * FATIGUE_MULTIPLIER, stats: { intelligence: 62, strength: 55, agility: 50, endurance: 50, luck: 45, willpower: 50, personality: 50, speed: 50 },
@@ -96,8 +96,8 @@ function chop(m, rolls) {
     for (let i = 0; i < 8; i++) m.tick();
   } finally { console.warn = ow; console.log = ol; }
 }
-const find = (what) => ({ box: { rows: ['While chopping and gathering wood,', `you chanced upon a ${what}`, 'that someone must have lost or discarded.'] } });
-const line = (what) => `you chanced upon a ${what}`;
+const find = (what) => ({ box: { rows: ['Under the felled tree lies a forgotten', `${what}. Its owner never came back for it.`] } });   // OWN-WORK3: our words
+const line = (what) => `${what}. Its owner never came back for it.`;
 /** The character through the save and back, as a checkpoint and a login carry it (systems/save/save.js ENTITY_FIELDS). */
 function relog(entity) {
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(entity, { position: [0, 0, 0], classicMinutes: 0, locationKey: 'world' })));
@@ -114,16 +114,16 @@ test('CHOP-WAIT: two chops\' finds behind the page - the page\'s end shows each 
     const H = host(e);
     const m = machine(e, H);
     chop(m, [0.99, 0.85]);   // two Wood-Axe uses behind the pack
-    assert.deepEqual(e.foragingWait, { seconds: 24, label: 'Chop and Gather Wood', held: [find('Ichor'), find('Map')] }, 'the premise: both finds held behind one 24-second page');
+    assert.deepEqual(e.foragingWait, { seconds: 24, label: 'Woodcutting', held: [find('Ichor'), find('Map')] }, 'the premise: both finds held behind one 24-second page');
     const page = H.wait.tick();
-    assert.equal(page.busy, 'Chop and Gather Wood...');
+    assert.equal(page.busy, 'Woodcutting...');
     page.tick(24);
     H.wait.tick();
     assert.deepEqual(H.shown, [], 'the finished page still holds the slot this frame (AUDIT 28 H6)');
     H.s.drain();
     H.wait.tick();   // the frame that hung the tab
     assert.deepEqual(H.shown, [line('Ichor')], 'the first find, shown - the second waits for the slot');
-    assert.deepEqual(e.foragingWait, { seconds: 0, label: 'Chop and Gather Wood', held: [find('Map')] }, 'the record keeps what is still to be read');
+    assert.deepEqual(e.foragingWait, { seconds: 0, label: 'Woodcutting', held: [find('Map')] }, 'the record keeps what is still to be read');
     H.read();
     assert.deepEqual(H.shown, [line('Ichor'), line('Map')], 'then the second, once');
     assert.equal(e.foragingWait, null, 'the record is gone with them');
@@ -134,7 +134,7 @@ test('CHOP-WAIT: two chops\' finds behind the page - the page\'s end shows each 
     chop(m, [0.99]);
     assert.equal(H.wait.holds(), true, 'a third chop is a wait again');
     assert.deepEqual(H.shown, [line('Ichor'), line('Map')], 'its find held behind its page, not over it');
-    assert.deepEqual(e.foragingWait, { seconds: 12, label: 'Chop and Gather Wood', held: [find('Ichor')] });
+    assert.deepEqual(e.foragingWait, { seconds: 12, label: 'Woodcutting', held: [find('Ichor')] });
     assert.deepEqual(warned, [], 'no box threw');
   } finally { warn.mock.restore(); }
 });
@@ -146,7 +146,7 @@ test('CHOP-WAIT: the stuck save logs in - the page reopens with what was left, a
     const before = chopper();
     chop(machine(before, host(before)), [0.99, 0.85]);
     const e = relog(before);   // the checkpoint mid-wait, and the login
-    assert.deepEqual(e.foragingWait, { seconds: 24, label: 'Chop and Gather Wood', held: [find('Ichor'), find('Map')] }, 'the premise: the save carries the page and both finds');
+    assert.deepEqual(e.foragingWait, { seconds: 24, label: 'Woodcutting', held: [find('Ichor'), find('Map')] }, 'the premise: the save carries the page and both finds');
     const H = host(e);
     const page = H.wait.tick();
     assert.equal(page.remaining, 24, 'the page reopens');
@@ -158,7 +158,7 @@ test('CHOP-WAIT: the stuck save logs in - the page reopens with what was left, a
     H.read();
     assert.deepEqual(H.shown, [line('Ichor'), line('Map')]);
     assert.equal(e.foragingWait, null);
-    assert.deepEqual(mid.foragingWait, { seconds: 0, label: 'Chop and Gather Wood', held: [find('Map')] });
+    assert.deepEqual(mid.foragingWait, { seconds: 0, label: 'Woodcutting', held: [find('Map')] });
     const H2 = host(mid);
     assert.equal(H2.wait.tick(), null, 'no page - the wait was done');
     assert.deepEqual(H2.shown, [line('Map')], 'the find still to be read, and not the one read before');

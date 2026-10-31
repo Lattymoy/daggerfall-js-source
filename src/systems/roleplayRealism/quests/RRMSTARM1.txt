@@ -1,0 +1,915 @@
+-- OWN-WORK3: DFO Online's own words. The QBN is Roleplay & Realism 1.8's (MIT, Copyright (C) 2020 Hazelnut), verbatim.
+-- BAY-OWN: the release's logic stands the keep in the Wrothgarian Mountains and sends the smith to Pjiga, Penmore or Paponirea by region.
+Quest: RRMSTARM1
+DisplayName: The Smith in the Keep
+QRC:
+
+QuestFail:  [1003]
+<ce> __fort_ has stopped hunting you and barred its
+<ce> doors. _armorer_ stays a prisoner in the ____fort_.
+
+QuestComplete:  [1004]
+<ce> You brought _armorer_ out of __fort_, all the
+<ce> way up in the ____fort_. Well done, Master
+<ce> %pcl. Visit us when you pass this way again.
+<ce>
+<ce> [You note where _armorer_
+<ce> meant to go, and say goodbye.]
+
+RumorsDuringQuest:  [1005]
+<ce> The soldiers at __fort_ in the
+<ce> ____fort_ wear such fine armor.
+<ce> Who makes it for them, I wonder?
+
+RumorsPostsuccess:  [1007]
+<ce> You are the %ra who got _armorer_
+<ce> out of __fort_. Lords think they
+<ce> can treat common folk like dirt.
+<ce> Good to see one learn otherwise.
+
+QuestLogEntry: [1010]
+On %qdt:
+ In __guild_, _contact_ of the guild spoke of a
+ master armorer, _armorer_, missing for years. I
+ am to find where the well-armored troops come
+ from, and whether they explain %g3 absence.
+
+Message: 1011
+on %qdt:
+ _armorer_ is held at __fort_ by _lord_, a bandit
+ playing lord. A Brotherhood contract on his daughter
+ binds him. Get it, and _armorer_ is free. Our contact
+ in __guild_ may help, or _lord_ wants a million gold.
+
+Message: 1012
+on %qdt:
+ _contact_ in __guild_ has arranged for me
+ to meet the Brotherhood. I am to find
+ _dbContact_ at _dbTavern_ in __dbTavern_.
+
+Message: 1013
+on %qdt:
+ The Brotherhood never sanctioned the contract.
+ For my good name with them, they will deal with
+ their renegade and send me the contract within a
+ week. Whoever took _lord_'s gold will regret it.
+
+Message: 1014
+on %qdt:
+ The Brotherhood never sanctioned the
+ contract, but they are in no hurry. I
+ may take it from the renegade myself,
+ if I harm no other member. The renegade
+ waits at _dbHideout_ in __dbHideout_.
+
+Message: 1015
+on %qdt:
+ _armorer_ is free of _lord_ and __fort_.
+ He has gone south to Pjiga in Mournoth,
+ to open a forge and train an apprentice.
+
+Message: 1016
+on %qdt:
+ _armorer_ is free of _lord_ and __fort_.
+ He has gone west to Penmore in Glenpoint,
+ to open a forge and train an apprentice.
+
+Message: 1017
+on %qdt:
+ _armorer_ is free of _lord_ and __fort_. He
+ has gone southwest to Paponirea in Tigonus,
+ to open a forge and train an apprentice.
+
+Message: 1018
+on %qdt:
+ In __guild_, _contact_ has hired rangers to find
+ where the armored troops come from. A letter
+ will come when they return, in three days or so.
+
+Message: 1019
+on %qdt:
+ In __guild_, _contact_ gave me notes from three trusted
+ witnesses. They may point to the troops and their leader.
+
+Message: 1020
+<ce> [A guard to your left calls out as you enter.]
+<ce>
+<ce> Oi, %ra! Over here, on your left. What do
+<ce> you want? Go and see _captain_ in the great
+<ce> hall. Keep your blade sheathed, or else.
+
+Message: 1021
+<ce> [Behind you, a guard spots you talking and shouts.]
+<ce>
+<ce> Who let you back here? We have no love for
+<ce> sneaks. You will not leave alive, %ra.
+
+Message: 1022
+<ce> [As another of his men falls, the lord shouts.]
+<ce>
+<ce> %oth! This %ra fights like a Daedra. Stop, all
+<ce> of you! We yield, Master %pcl. Take _armorer_
+<ce> and go. No smith is worth this many dead.
+
+Message: 1023
+<ce> Argh! You will pay for that in blood, %ra!
+
+Message: 1024
+<ce> You are back at __fort_ without the renegade's
+<ce> contract. To free _armorer_ now, you must pay a million
+<ce> gold or fight the whole garrison. Neither comes cheap.
+
+Message: 1025
+<ce> All of __fort_ is out for your blood now. Its
+<ce> soldiers will hunt you for the next two days.
+
+Message: 1026
+<ce> At last you find __fort_, deep in the hills of
+<ce> the ____guild_, far from any road. It is an old
+<ce> hall, newly repaired, and a large company lives
+<ce> in it. It may be more dangerous than it looks.
+
+Message: 1027
+<ce> Witnesses, from _contact_:
+1: Armored men took a Moorton Farm
+shepherd's sheep and went east.
+<ce>
+2: _captain_ took Hawkwing Orchard's wine
+south (not Hawking Orchard, to the west).
+<ce>
+3: Soldiers going northeast forced mourners
+off the Masterhart Graveyard road.
+<ce>
+
+-- The lord
+Message: 1030
+<ce> What is this, a stray %ra? You walk in and
+<ce> address me? Captain! Throw this fool out!
+
+Message: 1031
+<ce> From the Fighters Guild, are you? My captain
+<ce> told you to behave. Do, or my guards get
+<ce> some practice. Does the guild want
+<ce> something? It will cost you. Out with it.
+
+Message: 1032
+<ce> Who makes our armor? Ha. Who makes yours, %ra? We keep our
+<ce> own smith, of course. Surprised that we have one so fine
+<ce> out here? He works for us alone. You are out of luck.
+
+Message: 1033
+<ce> Anything else? No? Then stop wasting my time, %ra.
+
+Message: 1034
+<ce> _armorer_ wants to leave? And who forges our armor
+<ce> then? No, %ra, he stays. Pay me a million gold for
+<ce> a new smith, and he goes. I take letters of credit.
+<ce>
+<ce> [He smirks and waves you off.]
+
+Message: 1035
+<ce> You actually brought it? Well. That will do. Take
+<ce> _armorer_ and go, guildmaster. A bargain, for you.
+<ce>
+<ce> [He can barely hide his glee.]
+
+Message: 1036
+<ce> %oth! Where did you get that? The Brotherhood
+<ce> failed me. I misjudged you, %ra. Fine, take
+<ce> _armorer_. Your guild rank is all that lets you
+<ce> leave alive. Never cross our path again, %ra.
+
+Message: 1037
+<ce> Get out. Now!
+
+Message: 1038
+<ce> You were told not to approach
+<ce> _lord_ before _captain_ speaks
+<ce> with you. Ignore that warning?
+
+-- The captain and the guards
+Message: 1040
+<ce> What do you want here, %ra? A Fighters Guild
+<ce> master? We have no quarrel with the guild. Keep
+<ce> it that way. Walk where you like and speak with
+<ce> our lord. Make trouble, and we cut you down.
+
+Message: 1041
+<ce> Where does our armor come from? You are a
+<ce> nosy %ra. Ask our lord, and mind your step.
+
+Message: 1042
+<ce> You want _armorer_? Careful. _lord_ is
+<ce> very fond of our smith and his work.
+
+Message:  1043
+<ce> If the guild would not come after us,
+<ce> I would have you gutted. Take the
+<ce> smith and get out. Never come back.
+
+Message: 1044
+<ce> Where did you get that? Curse you.
+<ce> _lord_ will be in a foul mood for weeks.
+
+Message: 1048
+<ce> What are you looking at? Go on, give us a
+<ce> reason. We like a fight, and you will do.
+
+Message: 1049
+on %qdt:
+ _armorer_ is free of _lord_ and __fort_.
+ I am bringing him to __guild_, to our
+ _guild_, to decide what comes next.
+
+-- The armorer
+Message: 1050
+<ce> Who are you? Go away, before the guards
+<ce> see us together and kill us both!
+
+Message: 1051
+<ce> [He keeps glancing behind you.]
+<ce>
+<ce> Who are you? Go away. I cannot be seen talking to you.
+
+Message: 1052
+<ce> I heard you asked the lord about me, and you still
+<ce> live. Then we can talk. I am _armorer_, Master
+<ce> %pcl, and a prisoner here. Two years I have forged
+<ce> for these bandits. Their lord is no noble.
+
+Message: 1053
+<ce> How did I end up here? Drink and dice. After my wife died, I
+<ce> sold my forge and wandered. One night I gambled with a
+<ce> 'lord' up here, lost badly, and agreed to work off the debt.
+
+Message: 1054
+<ce> Three months, we said. When they ended, they kept me.
+<ce> They bought a Brotherhood contract on my daughter, to be
+<ce> carried out if I run. She is all I have left. So I stay.
+
+Message: 1055
+<ce> You have the contract, %pcf? Tell me how
+<ce> another day. I am free! Show _lord_ the
+<ce> contract, so his game ends, and then we go.
+
+Message: 1058
+<ce> %oth, %ra, you are mad! Nobody beats a
+<ce> whole garrison alone. Dibella keep you.
+
+Message: 1059
+<ce> %oth! Thank you, %pcf. I never
+<ce> thought I would see this day.
+<ce> Let us get out of here.
+
+-- The guild contact
+Message: 1060
+<ce> Welcome to __guild_, Master %pcl. I am _contact_,
+<ce> and glad you came. A local 'noble' has soldiers
+<ce> in very fine armor, and nobody knows who he is or
+<ce> where he lives. Three witnesses saw them.
+
+Message: 1061
+<ce> Some rangers here could track these soldiers
+<ce> down, but they want 7000 gold. Or you can search
+<ce> yourself, with my notes from the witnesses. Shall
+<ce> I hire the rangers? You would pay the 7000.
+
+Message: 1161
+<ce> No 7000 gold? Then shall I call off the rangers? You
+<ce> would track them yourself, with my witness notes.
+
+Message: 1062
+<ce> Fair enough, it is a lot of gold. Here are
+<ce> my notes from the three witnesses. Tell me
+<ce> what you find, and tread carefully. From
+<ce> these reports, they are not a forgiving lot.
+
+Message: 1063
+<ce> Very well. Bring me the gold and the rangers start
+<ce> at once. They want coin, not letters of credit.
+
+Message: 1064
+<ce> Thank you for the gold, Master %pcl. My own purse
+<ce> could never cover it. The rangers leave now.
+<ce> Rough country and vague directions, so three or
+<ce> four days. I will write when they report.
+
+Message:  1065
+<ce> A young Redguard in mismatched armor strides up
+<ce> with a letter. "The guild sends this, Master %pcl."
+<--->
+<ce> A Nord woman bristling with weapons and scars slaps
+<ce> a crumpled letter in your palm and walks off.
+<--->
+<ce> An armored Argonian sways up and holds out a
+<ce> letter in one claw. "For you, Master %pcl," it
+<ce> hisses, then bows and slips into the crowd.
+
+Message: 1066
+Master %pcn,
+ 
+    The rangers found them. They hold an old hall
+ in the hills east of __guild_, far from any road.
+<ce>
+    It is called __fort_. A map
+ is enclosed. Tread carefully.
+ 
+<ce> _contact_
+
+Message: 1067
+<ce> A Brotherhood contract on his daughter?
+<ce> That is vile! I will arrange a meeting.
+<ce> They will see a master of our guild, but
+<ce> helping is another matter. Go to _dbTavern_
+<ce> in __dbTavern_. Be careful with them.
+
+Message: 1068
+<ce> I hope the contract is yours soon and
+<ce> _armorer_ walks free, %pcf. Be careful. The
+<ce> guild needs the Brotherhood's good will.
+
+Message: 1069
+<ce> Well done, Master %pcl! With the contract
+<ce> you can free _armorer_. Bring him here, and
+<ce> we will find him a quiet place to live.
+
+-- The armorer, free
+Message: 1070
+<ce> Welcome to __guild_, _armorer_. Master %pcl,
+<ce> the guild will set him up with a new forge in
+<ce> some quiet town. Where would you like to live,
+<ce> _armorer_? Far from the ____guild_, I expect.
+
+Message: 1071
+<ce> I do not know. I am glad to be out of _lord_'s
+<ce> hands. I owe you everything, Master %pcl. I will
+<ce> take an apprentice and teach. But for you, %pcf,
+<ce> I will still forge armor. Come and see me.
+
+Message: 1072
+<ce> Which way should I go? West, south, or the warm
+<ce> southwest? What do you think, Master %pcl?
+
+Message: 1075
+<ce> Then I go south, %pcf, to Pjiga in Mournoth. Come by
+<ce> whenever you are near, or when you need armor made. My
+<ce> forge is always open to you. Farewell, and thank you!
+
+Message: 1076
+<ce> Then I go west, %pcf, to Penmore in Glenpoint. Come by
+<ce> whenever you are near, or when you need armor made. My
+<ce> forge is always open to you. Farewell, and thank you!
+
+Message: 1077
+<ce> Then I go southwest to the sun, %pcf, to Paponirea in
+<ce> Tigonus. Come by whenever you are near, or when you need
+<ce> armor made. My door is always open to you. Farewell!
+
+-- The Brotherhood's contact
+Message: 1080
+<ce> Greetings, Master %pcl. We knew nothing of
+<ce> this contract, a commoner's daughter held
+<ce> over a smith's head. Our contracts are sacred
+<ce> to the Night Mother, not tools for a wage
+<ce> dispute. Our member sold one out of greed.
+
+Message: 1081
+<ce> Keep your blade clean, %pcn. You are a friend to us. We
+<ce> will deal with the renegade and send you the contract
+<ce> within days. When you are done with it, burn it.
+
+Message: 1082
+<ce> We will deal with the renegade in time, but we are in
+<ce> no hurry. You may deal with them first. Harm no other
+<ce> member, or we hunt you, unless you can pay dearly.
+<ce> Find the traitor at _dbHideout_ in __dbHideout_.
+
+Message: 1083
+<ce> You reach into your pack and find a
+<ce> sealed note you did not put there.
+<--->
+<ce> A hand presses a parchment into yours.
+<ce> Footsteps hurry away, and the courier is gone.
+<--->
+<ce> A girl steps up. "Letter for
+<ce> %pcn." She hands it over and runs.
+
+Message: 1090
+<ce> The Dark Brotherhood's contract with _lord_. It
+<ce> lets _lord_ have _armorer_'s daughter killed if
+<ce> he ever leaves _fort_ without _lord_'s leave.
+
+Message: 1091
+<ce> You talk street talk until the renegade relaxes. Then
+<ce> one fast strike crushes the throat. You lower the body
+<ce> without a sound. No one saw. Take the contract and go.
+
+Message: 1092
+<ce> You slip up behind the renegade unseen
+<ce> and lift the contract without a sound.
+
+Message: 1093
+<ce> You slip up behind the renegade unseen and drive your
+<ce> blade through the neck. You catch the body and lower
+<ce> it quietly. No one saw. Take the contract and go.
+
+Message: 1094
+<ce> [Your trick fails. The renegade sees through it.]
+<ce>
+<ce> You should not have come. I hate surprises.
+<ce> My friends and I will cut you to pieces.
+
+-- Journal notes
+Message: 1105
+_armorer_ now keeps a forge in Pjiga, Mournoth.
+
+Message: 1106
+_armorer_ now keeps a forge in Penmore, Glenpoint.
+
+Message: 1107
+_armorer_ now keeps a forge in Paponirea, Tigonus.
+
+QBN:
+
+-- local guild hall
+Place _guild_ local fighters
+-- fortified mansion house
+Place _fortExt_ permanent Northrock_Fort_Ext
+Place _fort_ permanent Northrock_Fort
+-- remote tavern & pawn shop
+Place _dbTavern_ remote tavern
+Place _dbHideout_ remote clothingshop
+
+Person _contact_ faction The_Fighters_Guild
+Person _armorer_ named Orthus_Dharjen
+
+Person _lord_ named Lord_Verathon
+Person _captain_ named Captain_Ulthega
+
+Person _dbContact_ faction The_Dark_Brotherhood male
+Foe _darkBrother_ is Assassin
+Foe _dbFriend1_ is Thief
+Foe _dbFriend2_ is Nightblade
+
+Foe _doorGuard_ is Warrior
+Foe _guard1_ is Warrior
+Foe _guard2_ is Warrior
+Foe _guard3_ is Warrior
+Foe _guard4_ is Warrior
+Foe _guard5_ is Warrior
+Foe _guard6_ is Warrior
+Foe _guard7_ is Warrior
+Foe _guard8_ is Warrior
+Foe _guard9_ is Warrior
+Foe _guard10_ is Warrior
+
+Foe _soldiers_ is 8 Warrior
+Foe _soldiersChase_ is 2 Warrior
+
+Item _letter1_ letter used 1066
+Item _reports_ letter used 1027
+Item _dbContract_ letter used 1090
+
+Clock _trackers_ 03.03:00
+Clock _dbDeal_ 06.05:00
+Clock _killAll_ 02.00:00
+
+-- rescues: 1Mill, kill 60 within 2 days, retrieve DB contract (steal, critKill, backstab, fight, highrep)
+-- db renegade solutions: stealth+pickpocket or crit+streetwise or stealth+backstab - mess up & fight & costs 100k gp & -rep if hit comrades
+-- states: intro,ask,request,denied,permit,rescued
+
+-- Quest start-up:
+    place npc _contact_ at _guild_
+    place npc _armorer_ at _fort_ marker 0
+    place npc _lord_ at _fort_ marker 1
+    place npc _captain_ at _fort_ marker 2
+    place foe _doorGuard_ at _fort_ marker 3
+    restrain foe _doorGuard_
+    place foe _guard1_ at _fort_ marker 4
+    place foe _guard2_ at _fort_ marker 5
+    place foe _guard3_ at _fort_ marker 6
+    place foe _guard4_ at _fort_ marker 7
+    place foe _guard5_ at _fort_ marker 8
+    place foe _guard6_ at _fort_ marker 9
+    place foe _guard7_ at _fort_ marker 10
+    place foe _guard8_ at _fort_ marker 11
+    place foe _guard9_ at _fort_ marker 12
+    place foe _guard10_ at _fort_ marker 13
+    restrain foe _guard1_
+    restrain foe _guard2_
+    restrain foe _guard3_
+    restrain foe _guard4_
+    restrain foe _guard5_
+    restrain foe _guard6_
+    restrain foe _guard7_
+    restrain foe _guard8_
+    restrain foe _guard9_
+    restrain foe _guard10_
+    pc at _fortExt_ set _atFort_ saying 1026
+    pc at _fort_ set _insideFort_ saying 1020
+    pc at _dbHideout_ set _inHideout_
+    give item _dbContract_ to _darkBrother_
+    have _dbContract_ set _haveContract_
+
+-- Guild contact speech to find the fort & meet DB
+_clickedContact_ task:
+    clicked npc _contact_
+
+_clearNpcClicks_ task:
+    when _atFort_
+    clear _clickedContact_ _clickedCaptain_ _clickedArmorer_
+
+_contactFirst_ task:
+    when _clickedContact_ and not _request_ and not _metContact_
+    say 1060
+    log 1010 step 0
+    prompt 1061 yes _negotiateTrackers_ no _talkToWitnesses_
+
+_talkToWitnesses_ task:
+    get item _reports_
+    say 1062
+    log 1019 step 1
+    unset _negotiateTrackers_ _payForTrackers_
+    clear _clickedContact_
+    setvar _metContact_
+
+_negotiateTrackers_ task:
+    say 1063
+    clear _clickedContact_ _cancelTrackers_ _payForTrackers_
+    setvar _metContact_
+
+_payForTrackers_ task:
+    when _clickedContact_ and not _request_ and _metContact_ and _negotiateTrackers_
+    pay 7000 gold do _employTrackers_ otherwise do _cancelTrackers_
+
+_employTrackers_ task:
+    say 1064
+    log 1018 step 1
+    start timer _trackers_
+    unset _cancelTrackers_ _payForTrackers_
+
+_cancelTrackers_ task:
+    prompt 1161 yes _talkToWitnesses_ no _negotiateTrackers_
+    clear _clickedContact_ _cancelTrackers_ _payForTrackers_
+
+_trackers_ task:
+    reveal _fort_
+    give pc _letter1_ notify 1065
+
+_contactQuery_ task:
+    when _clickedContact_ and _request_ and not _meetDB_ and not _rescued_
+    say 1067
+    log 1012 step 3
+    setvar _meetDB_
+    place npc _dbContact_ at _dbTavern_
+    repute with _dbContact_ exceeds 30 do _dbRepHigh_
+    clear _clickedContact_
+
+_contactContract_ task:
+    when _clickedContact_ and _haveContract_
+    say 1069
+    unset _contactMeetDB_
+    clear _clickedContact_
+
+_contactMeetDB_ task:
+    when _clickedContact_ and _request_ and _meetDB_ and not _rescued_ and not _haveContract_
+    say 1068
+    clear _clickedContact_
+
+-- Successfully rescued, direction to settle?
+_contactRescued_ task:
+    when _clickedContact_ and _rescued_
+    say 1070
+    say 1071
+    promptmulti 1072 4:noChoice _dirRand_ 24:south _headS_ 25:west _headW_ 28:swest _headSW_ 
+
+_dirRand_ task:
+    pick one of _headS_ _headW_ _headSW_
+
+_headS_ task:
+    worldupdate building ARMRAM03.RMB 14 at 240 in region 52 variant _master
+    say 1075
+    log 1015 step 5
+    journal note 1105
+    drop _armorer_ face
+    give pc nothing
+    end quest
+
+_headW_ task:
+    worldupdate building ARMRAM03.RMB 14 at 33 in region 18 variant _master
+    say 1076
+    log 1016 step 5
+    journal note 1106
+    drop _armorer_ face
+    give pc nothing
+    end quest
+
+_headSW_ task:
+    worldupdate building ARMRAM03.RMB 14 at 44 in region 48 variant _master
+    say 1077
+    log 1017 step 5
+    journal note 1107
+    drop _armorer_ face
+    give pc nothing
+    end quest
+
+
+-- DB contact speech
+_dbContactMeet_ task:
+    clicked npc _dbContact_ 
+    say 1080
+
+_dbContactHiRep_ task:
+    when _dbContactMeet_ and _dbRepHigh_
+    say 1081
+    log 1013 step 4
+    start timer _dbDeal_
+
+_dbContactLoRep_ task:
+    when _dbContactMeet_ and not _dbRepHigh_
+    say 1082
+    log 1014 step 4
+    place foe _darkBrother_ at _dbHideout_
+    restrain foe _darkBrother_
+
+_dbDeal_ task:
+    destroy _dbContact_
+    give pc _dbContract_ notify 1083
+
+-- Renegade brother
+_clickedBrother_ task:
+    clicked foe _darkBrother_
+
+_inHideout_ task:
+    destroy _dbContact_
+
+_dbCritKill_ task:
+    when _clickedBrother_ and _critKill_
+    say 1091
+    kill foe _darkBrother_
+    
+_dbThief_ task:
+    when _clickedBrother_ and _thief_ and not _critKill_
+    get item _dbContract_ saying 1092
+    
+_dbBackstab_ task:
+    when _clickedBrother_ and _backKill_ and not _thief_ and not _critKill_
+    say 1093
+    kill foe _darkBrother_
+    
+_dbStartFight_ task:
+    when _clickedBrother_ and not _thief_ and not _critKill_ and not _backKill_
+    unset _dbCritKill_ _dbThief_ _dbBackstab_
+    injured _darkBrother_
+    say 1094
+
+_dbFight_ task:
+    when _inHideout_ and _dbStartFight_
+    enemies makehostile
+    create foe _dbFriend1_ every 0 minutes 1 times with 100% success
+    create foe _dbFriend1_ every 0 minutes 1 times with 100% success
+    create foe _dbFriend2_ every 0 minutes 1 times with 100% success
+
+_injuredDBfriend_ task:
+    injured _dbFriend1_
+    injured _dbFriend2_
+    start quest RRMSTARM2
+
+_noContract_ task:
+    when _clickedBrother_ and _atFort_ and not _haveContract_
+    say 1024
+
+variable _metContact_
+variable _dbRepHigh_
+variable _meetDB_
+variable _haveContract_
+variable _atFort_
+variable _insideFort_
+variable _hostile_
+variable _intro_
+variable _ask_
+variable _request_
+variable _denied_
+variable _permit_
+variable _rescued_
+
+_clickedLord_ task:
+    clicked npc _lord_
+
+_clickedCaptain_ task:
+    clicked npc _captain_
+
+_clickedArmorer_ task:
+    clicked npc _armorer_
+
+_attackedGuard_ task:
+    injured _doorGuard_
+    injured _guard1_
+    injured _guard2_
+    injured _guard3_
+    injured _guard4_
+    injured _guard5_
+    injured _guard6_
+    injured _guard7_
+    injured _guard8_
+    injured _guard9_
+    injured _guard10_
+    say 1023
+    setvar _hostile_
+
+_clickedDoorGuard_ task:
+    clicked foe _doorGuard_ 
+    say 1048
+
+_makeHostile_ task:
+    when _hostile_ and _insideFort_
+    clear _permit_
+    start timer _killAll_
+    enemies makehostile
+    create foe _soldiers_ every 1 minutes 2 times with 100% success
+    create foe _soldiers_ every 2 minutes indefinitely with 100% success
+
+_chaseHostile_ task:
+    when _hostile_ and not _insideFort_ and _atFort_
+    say 1025
+    create foe _soldiersChase_ every 1 minutes 4 times with 100% success
+
+_submission_ task:
+    killed 60 _soldiers_ saying 1022
+    unset _clickedCaptain_ _clickedLord_ _lordPaid_ _hostile_
+    stop timer _killAll_
+    enemies clear
+    setvar _permit_
+
+_cancelHostile_ task:
+    when _permit_ and _hostile_ and not _rescued_
+    stop timer _killAll_
+    enemies clear
+    unset _hostile_
+
+_cancelKillAll_ task:
+    when _rescued_ and _hostile_ and _atFort_
+    stop timer _killAll_
+
+_killAll_ task:
+    end quest saying 1003
+
+
+-- Lord speech
+_lordNoIntro_ task:
+    when _clickedLord_ and not _intro_
+    prompt 1038 yes _lordAnger_ no _lordAvoid_
+
+_lordAvoid_ task:
+    clear _clickedLord_
+
+_lordAnger_ task:
+    say 1030
+    setvar _hostile_
+
+_lordNoIntro2_ task:
+    when _clickedLord_ and not _intro_ and _lordAvoid_
+    start task _lordAnger_
+
+_lordIntro_ task:
+    when _clickedLord_ and _intro_ and not _ask_ and not _hostile_
+    say 1031
+    say 1032
+    setvar _ask_
+    clear _clickedLord_
+
+_lordAsk_ task:
+    when _clickedLord_ and _intro_ and _ask_ and not _request_
+    say 1033
+    clear _clickedLord_
+
+-- request freedom
+_lordRequest_ task:
+    when _clickedLord_ and _request_ and not _permit_ and not _hostile_ and not _denied_ and not _haveContract_
+    say 1034
+    setvar _denied_
+    clear _clickedLord_
+
+_lordForce_ task:
+    when _clickedLord_ and _haveContract_ and not _permit_
+    say 1036
+    clear _clickedLord_ _clickedArmorer_ _clickedCaptain_
+    setvar _permit_
+    take _dbContract_ from pc
+
+_lordPay_ task:
+    when _clickedLord_ and _denied_ and not _haveContract_ and not _permit_
+    pay 1000000 money do _lordPaid_ otherwise do _lordGoAway_
+
+_lordGoAway_ task:
+    say 1033
+    clear _lordPay_ _clickedLord_ _lordGoAway_
+
+_lordPaid_ task:
+    say 1035
+    clear _clickedCaptain_ _clickedLord_ _clickedArmorer_
+    unset _lordPay_
+    setvar _permit_
+
+_lordHavePermit_ task:
+    when _clickedLord_ and _request_ and _permit_ and not _hostile_
+    say 1037
+
+
+-- Captain speech:
+_captainNoIntro_ task:
+    when _clickedCaptain_ and not _intro_ and not _hostile_
+    say 1040
+    setvar _intro_
+    clear _clickedCaptain_
+
+_captainIntro_ task:
+    when _clickedCaptain_ and _intro_ and not _ask_
+    say 1041
+    clear _clickedCaptain_
+
+_captainAsk_ task:
+    when _clickedCaptain_ and _intro_ and _ask_ and not _request_
+    say 1042
+    clear _clickedCaptain_
+
+_captainShow_ task:
+    when _clickedCaptain_ and _request_ and _haveContract_ and not _permit_
+    say 1044
+    clear _clickedCaptain_
+
+_captainHavePermit_ task:
+    when _clickedCaptain_ and _permit_ and not _hostile_
+    say 1043
+
+
+-- Armorer speech
+_armorerHostile_ task:
+    when _clickedArmorer_ and _hostile_ and not _permit_
+    say 1058
+    clear _clickedArmorer_
+
+_armorerNoIntro_ task:
+    when _clickedArmorer_ and not _intro_ and not _hostile_ and not _permit_
+    say 1050
+    clear _clickedArmorer_
+
+_seenTrespassing_ task:
+    when _armorerNoIntro_ and not _stealth_
+    setvar _hostile_
+    say 1021
+
+_armorerIntro_ task:
+    when _clickedArmorer_ and _intro_ and not _ask_ and not _permit_
+    say 1051
+    clear _clickedArmorer_
+
+_armorerAsk_ task:
+    when _clickedArmorer_ and _intro_ and _ask_ and not _request_
+    say 1052
+    say 1053
+    say 1054
+    log 1011 step 2
+    setvar _request_
+    clear _clickedArmorer_
+
+_armorerContract_ task:
+    when _clickedArmorer_ and _insideFort_ and _haveContract_ and not _permit_
+    say 1055
+    clear _clickedArmorer_
+
+_rescue_ task:
+    when _clickedArmorer_ and _permit_ 
+    say 1059
+    log 1049 step 5
+    hide npc _armorer_ 
+	add _armorer_ face
+    change repute with _armorer_ by +80
+    setvar _rescued_
+    clear _clickedContact_
+    unset _contactMeetDB_ _contactContract_
+
+-- Skill checks
+_stealth_ task:
+    when skill Stealth is at least 80
+
+_streetwise_ task:
+    when skill Streetwise is at least 60
+
+_pickpocket_ task:
+    when skill Pickpocket is at least 50
+
+_crit_ task:
+    when skill CriticalStrike is at least 70
+
+_backstab_ task:
+    when skill Backstabbing is at least 60
+
+_thief_ task:
+    when _stealth_ and _pickpocket_
+
+_backKill_ task:
+    when _stealth_ and _backstab_
+
+_critKill_ task:
+    when _streetwise_ and _crit_

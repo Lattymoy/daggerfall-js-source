@@ -255,8 +255,7 @@
     "old": "(worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));",
     "new": "false;",
     "tests": [
-      "test/world/atlas/f1_atlas_layer.test.js",
-      "test/world/atlas/f1_atlas_packs.test.js"
+      "test/world/atlas/f1_atlas_layer.test.js"
     ]
   },
   {

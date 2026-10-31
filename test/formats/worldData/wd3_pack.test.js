@@ -7,11 +7,11 @@
 // is carried whole); the reader (a file rebuilt from a classic block, a node shared, a classic node referenced with
 // the author's edits to it, rows, runs, the run op; a file based on another, kept once; the shipped form - every entry
 // and node JSON text - read the same; what it lets go); its refusals, each by name; the gzip and the hash the loader
-// reads a pack through; the vendored packs' form against the authors' manifests - and, with ARENA2_PATH set, that
-// EVERY file of both packs rebuilds the author's file sha256 for sha256 out of the player's own BSA files.
+// reads a pack through. OWN-WORK3 (2026-10-31): both town mods are retired and their packs left the tree, so the
+// vendored packs' form and their sha256 rebuild over ARENA2 went with them; the format and its reader are held here.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -20,16 +20,10 @@ import zlib from 'node:zlib';
 import { PACK_FORMAT, ROW_CODECS, ROW_ENCODERS, runLength, openWorldDataPack, readPackText, packFileSha256, classicIndicesOf } from '../../../src/formats/worldData/worldDataPack.js';
 import { blockToDfuJson, patchJson, canonicalJson } from '../../../src/formats/worldData/worldDataJson.js';
 import { canonicalSha256 } from '../../../src/formats/worldData/worldDataPatch.js';
-import { BlocksFile } from '../../../src/formats/blocksFile.js';
-import { MapsFile } from '../../../src/formats/mapsFile.js';
 import { parseFullSerializerJson, dfuWorldDataName, serialisePack } from '../../../tools/worldDataPackBuild.mjs';
 import { tinyRmb, fakeBlocks } from '../../wd3Fakes.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const ARENA2 = process.env.ARENA2_PATH;
-const HAVE_ARENA2 = !!ARENA2 && existsSync(join(ARENA2, 'BLOCKS.BSA')) && existsSync(join(ARENA2, 'MAPS.BSA'));
-const VENDORS = ['beautiful-villages', 'beautiful-cities'];
-const packOf = (v) => JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString('utf8'));
 const sha = (json) => createHash('sha256').update(canonicalJson(json)).digest('hex');
 
 const SUB0 = ['RmbBlock', 'SubRecords', 0];
@@ -193,7 +187,7 @@ test('WD3 pack reader refuses, by name: a block that is not the one named at its
 });
 
 // ---- the bytes ----------------------------------------------------------------------------------------------------------
-test('WD3 pack bytes: readPackText inflates the vendored gzip and passes a server\'s already-inflated text through; packFileSha256 is the canonical form\'s sha256 - WD1\'s hash, the builder\'s hash', async () => {
+test('WD3 pack bytes: readPackText inflates a gzipped pack and passes a server\'s already-inflated text through; packFileSha256 is the canonical form\'s sha256 - WD1\'s hash, the builder\'s hash', async () => {
   const text = JSON.stringify({ format: PACK_FORMAT, b: [1, 2, 3], s: 'Gänsefleisch' });
   assert.equal(await readPackText(new Uint8Array(zlib.gzipSync(Buffer.from(text)))), text);
   assert.equal(await readPackText(new TextEncoder().encode(text)), text, 'Vite\'s dev server answers a .gz with Content-Encoding: gzip - the bytes come inflated');
@@ -215,78 +209,7 @@ test('WD3 builder: FullSerializer\'s own escapes (\\0, \\a) read as the characte
 });
 
 // ---- the vendored packs ---------------------------------------------------------------------------------------------------
-test('WD3 the vendored packs: one gzipped pack a mod, its manifest\'s title, author and version, every world-data file the manifest lists and nothing else, every base well formed, a file based on a file never more than two deep and never on itself', () => {
-  const COUNTS = { 'beautiful-villages': { location: 7317, block: 209 }, 'beautiful-cities': { location: 410, block: 611 } };
-  for (const v of VENDORS) {
-    const pack = packOf(v);
-    const manifest = JSON.parse(readFileSync(join(ROOT, `vendor/${v}/${v}.dfmod.json`), 'utf8'));
-    assert.equal(pack.format, PACK_FORMAT, v);
-    assert.equal(pack.vendor, v);
-    assert.deepEqual(pack.mod, { title: manifest.ModTitle, author: manifest.ModAuthor, version: manifest.ModVersion }, `${v}: the manifest's own words`);
-    const names = Object.keys(pack.files);
-    const loc = names.filter((n) => /^location-\d+-\d+\.json$/.test(n)), blk = names.filter((n) => /^[A-Z0-9]+(?:\.[A-Z0-9]+)*\.RMB\.json$/.test(n));
-    assert.deepEqual({ location: loc.length, block: blk.length }, COUNTS[v], `${v}: the counts the README states`);
-    assert.equal(loc.length + blk.length, names.length, `${v}: no file DFU's door would not ask for`);
-    const listed = new Set(manifest.Files.map((f) => dfuWorldDataName(f)).filter(Boolean));
-    assert.deepEqual(names.filter((n) => !listed.has(n)), [], `${v}: every packed file is one the manifest ships`);
-    assert.deepEqual([...listed].filter((n) => !pack.files[n]), [], `${v}: every file the manifest ships is packed`);
-    const entry = (n) => JSON.parse(pack.files[n]);
-    const depth = (n, seen = new Set()) => {
-      assert.ok(!seen.has(n), `${v}: ${n} is based on itself`);
-      const base = entry(n)[1];
-      return base[0] === 'f' ? 1 + depth(base[1], new Set([...seen, n])) : 0;
-    };
-    for (const n of names) {
-      const [h, base, ops] = entry(n);
-      assert.match(h, /^[0-9a-f]{64}$/, n);
-      assert.ok(Array.isArray(ops), n);
-      if (n.startsWith('location-')) {
-        const [, r, i] = /^location-(\d+)-(\d+)\.json$/.exec(n).map(Number);
-        assert.deepEqual(base.slice(0, 3), ['l', r, i], `${v}: ${n} is an edit of its own classic location`);
-        assert.equal(typeof base[3], 'string');
-      } else if (base[0] === 'b') {
-        assert.ok(Number.isInteger(base[2]) && base[2] >= 0 && /\.RMB$/.test(base[1]), `${v}: ${n}`);
-      } else {
-        assert.equal(base[0], 'f', `${v}: ${n}`);
-        assert.ok(pack.files[base[1]], `${v}: ${n}'s base ${base[1]} is in the pack`);
-        assert.ok(pack.bases.includes(base[1]), `${v}: ${base[1]} named up front`);
-        assert.ok(depth(n) <= 2, `${v}: ${n} at most two files deep`);
-      }
-    }
-  }
-});
-
-test('WD3 with ARENA2: EVERY file of both packs rebuilds the author\'s file out of the player\'s own MAPS.BSA and BLOCKS.BSA, sha256 for sha256 - 7,526 and 1,021 files', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
-  const blocks = new BlocksFile();
-  assert.ok(blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA')))));
-  const maps = new MapsFile();
-  assert.ok(maps.load(new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK')))));
-  const counts = {}, ownNames = {};
-  for (const v of VENDORS) {
-    const raw = packOf(v);
-    // a block of one of Daggerfall's own names is an edit of that very block; a new one, of the classic block (or the
-    // pack's own file) nearest it - and a classic base is the block BLOCKS.BSA holds at that index
-    let own = 0;
-    for (const [n, e] of Object.entries(raw.files)) {
-      const [, base] = JSON.parse(e);
-      if (base[0] === 'b') assert.equal(blocks.getBlockName(base[2]), base[1], `${v}: ${n}`);
-      if (n.startsWith('location-')) continue;
-      const index = blocks.getBlockIndex(n.slice(0, -5));
-      if (index >= 0) { assert.deepEqual(base, ['b', n.slice(0, -5), index], `${v}: ${n} is Daggerfall's own block, edited`); own++; }
-    }
-    ownNames[v] = own;
-    const p = openWorldDataPack(raw, { blocks });
-    const bad = [];
-    for (const name of p.names()) if (sha(p.rebuild(name, maps)) !== p.sha256Of(name)) bad.push(name);
-    assert.deepEqual(bad, [], `${v}: files that do not rebuild the author's`);
-    counts[v] = p.names().length;
-    p.release();
-  }
-  assert.deepEqual(counts, { 'beautiful-villages': 7526, 'beautiful-cities': 1021 });
-  assert.deepEqual(ownNames, { 'beautiful-villages': 156, 'beautiful-cities': 178 }, 'the READMEs\' counts of Daggerfall\'s own blocks rebuilt');
-});
-
-test('WD3 a pack\'s classic references are checked BY NAME (AUDIT WD3 P5) - `classicNames` names the block each `$c` reads, as a `b` base names its own: a BLOCKS.BSA in another order refuses the file (the classic stands) where it read another block\'s pieces; every `$c` of both vendored packs is named; with ARENA2, by the names the player\'s BLOCKS.BSA gives', () => {
+test('WD3 a pack\'s classic references are checked BY NAME (AUDIT WD3 P5) - `classicNames` names the block each `$c` reads, as a `b` base names its own: a BLOCKS.BSA in another order refuses the file (the classic stands) where it read another block\'s pieces', () => {
   const ref = { $c: [7, ['RmbBlock', 'FldHeader', 'BuildingDataList', 0]] };
   const make = (classicNames) => ({ format: PACK_FORMAT, vendor: 't', ...(classicNames ? { classicNames } : {}), files: { 'A.json': ['x', ['b', 'TINYAA00.RMB', 7], [['s', ['RmbBlock', 'FldHeader', 'BuildingDataList', 1], ref]]] }, nodes: [] });
   assert.deepEqual(classicIndicesOf(make(null)), [7]);
@@ -294,16 +217,5 @@ test('WD3 a pack\'s classic references are checked BY NAME (AUDIT WD3 P5) - `cla
   assert.equal(read({ 7: 'TINYAA00.RMB' }), 101, 'the named block read');
   assert.equal(read(null), 101, 'a pack from before the names reads as it did');
   assert.throws(() => read({ 7: 'OTHRAA00.RMB' }), /wants OTHRAA00\.RMB at block 7, BLOCKS\.BSA has TINYAA00\.RMB/, 'another block at the index: refused');
-  for (const v of ['beautiful-villages', 'beautiful-cities']) {
-    const pack = JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString('utf8'));
-    const used = classicIndicesOf(pack);
-    assert.ok(used.length > 50, `${v}: ${used.length}`);
-    assert.deepEqual(Object.keys(pack.classicNames).map(Number).sort((a, b) => a - b), used, `${v}: every reference named, no other`);
-    assert.ok(Object.values(pack.classicNames).every((n) => /^[A-Z0-9]{3,8}\.RMB$/.test(n)), v);   // Daggerfall's own names, TEST.RMB and WAY3.RMB among them
-    if (HAVE_ARENA2) {
-      const blocks = new BlocksFile(); blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
-      for (const [i, n] of Object.entries(pack.classicNames)) assert.equal(blocks.getBlockName(Number(i)), n, `${v}: block ${i}`);
-    }
-  }
   assert.match(readFileSync(join(ROOT, 'tools/worldDataPackBuild.mjs'), 'utf8'), /out\.classicNames = Object\.fromEntries\(classicIndicesOf\(out\)\.map\(\(i\) => \[i, blocks\.getBlockName\(i\)\]\)\);/, 'the builder names them');
 });

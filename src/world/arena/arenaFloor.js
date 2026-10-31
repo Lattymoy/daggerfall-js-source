@@ -75,7 +75,7 @@ const FLAT_LIGHT_R = Object.freeze({ '210:15': 160, '210:17': 150, '210:19': 260
  *
  * WHICH CLOTH. The Blue's is 42558, the one classic banner a peer's catalogue names by its colour ("Banner_Blue_Large",
  * the same LocationHelper.cs). No catalogue in the tree names a red one; the Red's is 42557, the large banner beside it in
- * ARCH3D's run (hung as wall cloth in a Roleplay & Realism interior, vendor/roleplay-realism/WorldData), so the two banners
+ * ARCH3D's run (hung as wall cloth in a Roleplay & Realism 1.8 interior, the release's armorer's shop), so the two banners
  * hang the same size and shape and differ in colour - recorded to be looked at by eye: a classic record that does not read
  * red is one number here to change.
  */

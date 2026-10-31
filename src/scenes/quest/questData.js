@@ -12,7 +12,6 @@
 // tables load from one place.
 
 import { loadQuestTables } from '../../systems/quest/tables.js';
-import { applyForageFix } from '../../systems/foraging/foragingLaw.js';   // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
 import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatches.js';   // SHAM-TRAIL: the port's patches over DFU's own quests, applied as they are read
 import { questlineLines } from '../../systems/questlines/qlPatches.js';   // QL4: a flagship quest's branch, patched in while the questlines' switch is on (bible/06-Systems/Questlines-Arc.md 2.3)
 
@@ -30,10 +29,11 @@ const ownQuestFiles = import.meta.glob('../../systems/quest/own/*.txt', { query:
 // (the manifest's LooseQuestsList: DFU's GetQuest finds a loaded mod's
 // quest by name, AnyModContainsQuest; the source seam here is that).
 const modQuestFiles = {
-  ...import.meta.glob('../../../vendor/roleplay-realism/Quests/*.txt', { query: '?raw', import: 'default' }),
+  // OWN-WORK3: Roleplay & Realism's list and its three quests in our own words, on the release's logic
+  ...import.meta.glob('../../systems/roleplayRealism/quests/*.txt', { query: '?raw', import: 'default' }),
   ...import.meta.glob('../../../vendor/warm-ashes-ships/Quests/*.txt', { query: '?raw', import: 'default' }),
-  // FORAGE1: Foraging's list and its 22 quests, verbatim - FORAGE-FIX's patches applied as they are read (below)
-  ...import.meta.glob('../../../vendor/foraging/Quests/*.txt', { query: '?raw', import: 'default' }),
+  // FORAGE1: Foraging's list and its 22 quests - OWN-WORK3: our own words, FORAGE-FIX's mends written in
+  ...import.meta.glob('../../systems/foraging/quests/*.txt', { query: '?raw', import: 'default' }),
   // QL12-QL16: the questlines' own quests (systems/questlines/qlLines.js), the port's scripts on DFU's machine
   ...import.meta.glob('../../systems/questlines/quests/*.txt', { query: '?raw', import: 'default' }),
   // START1: the starts' own quests (systems/starts/starts.js), the port's scripts on DFU's machine
@@ -75,16 +75,9 @@ export async function loadQuestPack() {
     }));
     await Promise.all(Object.entries(modQuestFiles).map(async ([path, load]) => {
       const name = baseName(path);
-      const text = stripBom(await load());
-      // FORAGE-FIX (bible/06-Systems/Foraging.md 12): Foraging's quest and list patches (Q7-Q9, Q13) over the author's
-      // own text - never an edit of it. A patch that no longer finds its line is a changed file: it warns and the
-      // author's text loads as shipped, so one mod's patch can never take the whole pack (and the scene) down with it.
-      let patched = text;
-      if (path.includes('/vendor/foraging/')) {
-        try { patched = applyForageFix(name, text); } catch (e) { console.warn(`[questData] ${e.message} - loaded as shipped`); }
-      }
-      if (name.startsWith('QuestList-')) tables.set(name, patched);
-      else { quests.set(name, patched.split(/\r?\n/)); patchable.delete(name); }   // a mod's quest of the name is the mod's, unpatched
+      const text = stripBom(await load());   // OWN-WORK3: Foraging's quests carry their FORAGE-FIX mends themselves
+      if (name.startsWith('QuestList-')) tables.set(name, text);
+      else { quests.set(name, text.split(/\r?\n/)); patchable.delete(name); }   // a mod's quest of the name is the mod's, unpatched
     }));
     loadQuestTables(Object.fromEntries(tables));
     return {

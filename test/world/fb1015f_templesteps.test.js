@@ -44,7 +44,7 @@ const boxOf = (m) => {
 const r3 = (v) => v.map((x) => +x.toFixed(3) || 0);
 
 // ---- the packs' own records, as the door serves them ------------------------------------------------------------
-const packs = Object.fromEntries(['beautiful-villages', 'beautiful-cities'].map((v) => [v, JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'))]));
+
 const P = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
 function whole(pack, name, key) {
   const nodes = (pack._nodes ??= pack.nodes.map(P));
@@ -66,7 +66,7 @@ function whole(pack, name, key) {
   }
   return [];
 }
-const BV = packs['beautiful-villages'];
+// OWN-WORK3: the town packs are retired - no author's block is read here now
 const blockOf = (pack, name, subs = true) => layoutRmbBlock(blockFromJson({ Name: name, RmbBlock: { FldHeader: {}, SubRecords: subs ? whole(pack, name, 'SubRecords') : [], Misc3dObjectRecords: whole(pack, name, 'Misc3dObjectRecords'), MiscFlatObjectRecords: [] } }, 9300)).models;
 const origin = (m) => [m.matrix[12], m.matrix[13], m.matrix[14]];
 /** A stand-in's top over its origin, read off the built mesh (the placement's own scale is 1 for every one here). */
@@ -78,55 +78,6 @@ test('TEMPLE-STEPS: the pack\'s two stone blocks are one mesh, +-160 x +-80 x +-
   assert.deepEqual({ ...RMBRP_BLOCK_SCALE }, { 53160: 1, 53170: 2 });
   assert.deepEqual([boxOf(RMBRP_PIECES[53160]())].map(({ lo, hi }) => [r3(lo), r3(hi)])[0], [[-1.6, -0.8, -1.6], [1.6, 0.8, 1.6]], 'the landing: 3.2 x 1.6 x 3.2 m');
   assert.deepEqual([boxOf(RMBRP_PIECES[53170]())].map(({ lo, hi }) => [r3(lo), r3(hi)])[0], [[-3.2, -1.6, -3.2], [3.2, 1.6, 3.2]], 'the foundation: 6.4 x 3.2 x 6.4 m, no sink');
-});
-
-test('TEMPLE-STEPS: the author\'s own layout is the measure - TEMPASF1\'s landing tops meet the temple\'s step and the stair\'s foot, its foundations\' tops the temple\'s floor; TEMPASH4\'s foundations meet face to face, their feet the stair\'s foot', () => {
-  const F1 = blockOf(BV, 'TEMPASF1.RMB');
-  const temple = F1.find((m) => m.modelIdNum === 401), floor = origin(temple)[1];
-  const landings = F1.filter((m) => m.modelIdNum === 53160).sort((a, b) => origin(b)[1] - origin(a)[1]);
-  const stair = F1.find((m) => m.modelIdNum === 21728), foundations = F1.filter((m) => m.modelIdNum === 53170);
-  assert.equal(landings.length, 2); assert.equal(foundations.length, 3);
-  // Daggerfall's stair 21728 stands on its origin, its foot; the temple's floor is its origin, its door's step two units up
-  assert.ok(Math.abs(origin(landings[0])[1] + topOver(53160) - (floor + 0.05)) < 0.01, `the upper landing's top ${(origin(landings[0])[1] + topOver(53160)).toFixed(3)} is the door's step (the floor ${floor.toFixed(3)} and two units)`);
-  assert.ok(Math.abs(origin(landings[1])[1] + topOver(53160) - origin(stair)[1]) < 0.01, 'the lower landing\'s top is the stair\'s foot');
-  for (const f of foundations) {
-    const top = origin(f)[1] + topOver(53170);
-    assert.ok(top - floor >= 0.02 && top - floor <= 0.051, `a foundation's top ${top.toFixed(3)} at the temple's floor ${floor.toFixed(3)} (the author's two units)`);
-  }
-  // TEMPASH4 (its subrecords are the player's own BLOCKS.BSA's; its misc models are carried whole)
-  const H4 = blockOf(BV, 'TEMPASH4.RMB', false);
-  const fh = H4.filter((m) => m.modelIdNum === 53170), sh = H4.find((m) => m.modelIdNum === 21728);
-  assert.equal(fh.length, 5);
-  for (const f of fh) assert.ok(Math.abs(origin(f)[1] + bottomUnder(53170) - origin(sh)[1]) < 0.01, 'each foundation\'s foot the stair\'s');
-  const gaps = fh.map((f) => Math.min(...fh.filter((g) => g !== f).map((g) => Math.hypot(origin(g)[0] - origin(f)[0], origin(g)[2] - origin(f)[2]))));
-  assert.ok(gaps.filter((d) => Math.abs(d - 2 * topOver(53170) * 2) < 0.05).length >= 2, `foundations tiled a foundation's width apart (6.4 m): ${gaps.map((d) => d.toFixed(2))}`);
-});
-
-test('TEMPLE-STEPS: every rock at its prefab\'s scale (2 to 8) over its mesh\'s own box - no further out - and the packs\' 245 rocks stand out of the ground they were laid on (143 had stood wholly under it)', () => {
-  assert.deepEqual({ ...RMBRP_ROCK_SCALE }, {
-    53006: 6, 53012: 5, 53014: 4, 53017: 6, 53020: 4, 53023: 2, 53029: 6, 53030: 8, 53031: 6, 53032: 3, 53033: 4, 53035: 4,
-    53036: 6, 53037: 4, 53038: 4, 53039: 4, 53040: 3, 53042: 4, 53054: 8, 53064: 6, 53083: 6, 53085: 8, 53086: 4,
-  });
-  assert.deepEqual(Object.keys(RMBRP_ROCK_SCALE), Object.keys(RMBRP_ROCKS));
-  // 53086's box sits a fifth of its width off its origin: the boulder with it
-  const [x0, x1, , , z0, z1] = RMBRP_ROCKS[53086].map((v) => v * 4), b = boxOf(RMBRP_PIECES[53086]());
-  assert.ok(Math.abs((b.lo[0] + b.hi[0]) / 2 - (x0 + x1) / 2) < 0.6 && b.lo[0] < -3 && b.hi[0] < x1 + 1e-5 && b.lo[2] >= z0 - 1e-5 && b.hi[2] <= z1 + 1e-5, `53086 over ${[x0, x1]} x ${[z0, z1]}`);
-  // every rock the two packs lay, against the ground the block draws under it (its hills, or its plane)
-  let rocks = 0, buried = 0;
-  for (const pack of Object.values(packs)) {
-    for (const f of Object.keys(pack.files)) {
-      if (!f.endsWith('.RMB.json')) continue;
-      const laid = blockOf(pack, f.slice(0, -5), false), seat = blockHillSeat(laid);
-      for (const m of laid) {
-        if (!RMBRP_ROCKS[m.modelIdNum]) continue;
-        rocks++;
-        const M = m.matrix, top = M[13] + boxOf(RMBRP_PIECES[m.modelIdNum]()).hi[1] * Math.hypot(M[4], M[5], M[6]);
-        if (top < Math.max(seat?.topAt(M[12], M[14]) ?? 0, 0) + 0.02) buried++;
-      }
-    }
-  }
-  assert.equal(rocks, 245);
-  assert.equal(buried, 2, `${buried} wholly under the drawn ground - where a stand-in hill's median stands over the pack's own`);
 });
 
 test('TEMPLE-STEPS: a stall is the pack\'s mesh as Unity imports it (x mirrored: its high back on -x, its counter at the origin) at its prefab\'s 0.75', () => {

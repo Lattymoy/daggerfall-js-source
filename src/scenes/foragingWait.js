@@ -42,7 +42,7 @@ export const WAIT_PER_HOUR = 8;
 /** A wait of `minutes` game minutes, in real seconds (to the hundredth). */
 export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100;
 
-/** The page's line: the quest's own DisplayName, the author's words ("Chop and Gather Wood..."). */
+/** The page's line: the quest's own DisplayName ("Woodcutting..."). */
 export const waitLine = (label) => `${label || 'Time passes'}...`;
 /** The longest wait a SAVED record may hold: eight game hours, the build's Mining quadruple (Q7) - a save edited to a
  *  day of waiting is cut to this, never obeyed. A wait built in play is the sum of what the quests raised, uncut. */

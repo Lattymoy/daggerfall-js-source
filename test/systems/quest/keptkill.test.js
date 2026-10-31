@@ -170,13 +170,14 @@ test('KEPT-KILL: the party pose carries `qk` - at most eight rows of a quest nam
 
 test('KEPT-KILL: every quest the game reads and every Foe it declares fits the row\'s law - a kill of any of them can be said', () => {
   let quests = 0, foes = 0;
-  for (const dir of ['dfu-quests', 'roleplay-realism', 'warm-ashes-ships', 'foraging']) {
-    for (const f of readdirSync(join(ROOT, 'vendor', dir, 'Quests'))) {
+  // OWN-WORK3: Foraging's and Roleplay & Realism's quests are our own files now
+  for (const dir of ['vendor/dfu-quests/Quests', 'src/systems/roleplayRealism/quests', 'vendor/warm-ashes-ships/Quests', 'src/systems/foraging/quests']) {
+    for (const f of readdirSync(join(ROOT, dir))) {
       if (!f.endsWith('.txt') || f.startsWith('QuestList-')) continue;
       const name = f.replace(/\.txt$/, '');
       assert.match(name, KEPT_KILL_QUEST_RE, `${dir}/${f}: its name`);
       quests++;
-      for (const line of read(join(ROOT, 'vendor', dir, 'Quests', f)).split(/\r?\n/)) {
+      for (const line of read(join(ROOT, dir, f)).split(/\r?\n/)) {
         const m = /^\s*Foe\s+(\S+)\s+is\s/i.exec(line);
         if (!m) continue;
         assert.match(getInnerSymbolName(m[1]), KEPT_KILL_SYMBOL_RE, `${dir}/${f}: Foe ${m[1]}`);

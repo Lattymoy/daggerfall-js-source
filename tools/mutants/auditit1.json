@@ -135,19 +135,9 @@
     ]
   },
   {
-    "name": "AUDIT-IT1-G2-a-file-with-no-rmb-read",
-    "file": "src/world/immersiveTravelGates.js",
-    "old": "  if (!rmb || !appends) return json;",
-    "new": "  if (!appends) return json;",
-    "tests": [
-      "test/systems/auditit1.test.js"
-    ],
-    "note": "OWN-WORK2: re-aimed from the retired patch reader - a served file with no RMB half is served as it is."
-  },
-  {
     "name": "AUDIT-IT1-G2-the-install-unguarded",
     "file": "src/scenes/modWorldData.js",
-    "old": "    try { installImmersiveTravelGates(immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
+    "old": "    try { installImmersiveTravelGates(immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate stand: ${e?.message ?? e}`); }",
     "new": "    installImmersiveTravelGates(immersiveTravelLoaded);",
     "tests": [
       "test/systems/auditit1.test.js"

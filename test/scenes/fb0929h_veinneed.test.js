@@ -119,7 +119,7 @@ test('VEIN-NEED: the row the plaque has lit keeps its need too - E on a lit refu
   } finally { setForagingHost(null); }
 });
 
-test('VEIN-NEED: the pack\'s Pick-Axe is Foraging\'s own use - "You cannot mine in here!" is the mod\'s line, and the vein\'s act never asks it', () => {
+test('VEIN-NEED: the pack\'s Pick-Axe is Foraging\'s own use - "There is no rock to work in here." is Foraging\'s line (OWN-WORK3: our words), and the vein\'s act never asks it', () => {
   _resetModSettings();
   const heard = [];
   registerPresenter({ hudText: (line) => { heard.push(line); return true; }, priority: 99 });
@@ -129,8 +129,8 @@ test('VEIN-NEED: the pack\'s Pick-Axe is Foraging\'s own use - "You cannot mine 
     const pick = createForagingItem(FT.PickAxe);
     const r = useForagingTool(pick, [pick], { entity });
     assert.equal(r?.refused, true);
-    assert.deepEqual(heard, ['You cannot mine in here!'], 'the mod\'s line, 1:1 (FORAGE0 law 1)');
-    assert.equal(FORAGING_REFUSALS[FT.PickAxe].inside, 'You cannot mine in here!');
+    assert.deepEqual(heard, ['There is no rock to work in here.'], 'Foraging\'s inside check (FORAGE0 law 1), in our words');
+    assert.equal(FORAGING_REFUSALS[FT.PickAxe].inside, 'There is no rock to work in here.');
     assert.equal(pick.currentCondition, 50, 'a refusal wears nothing');
     assert.equal(foragingRefusal(FT.PickAxe, UNDERGROUND, DUNGEON_SKIP), null, 'a dungeon vein skips inside, settlement, daylight and sea (PROF0 23)');
   } finally { setForagingHost(null); }

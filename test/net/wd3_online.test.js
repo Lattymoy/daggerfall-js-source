@@ -159,16 +159,14 @@ test('WD3 online, the client: the homes\' towns asked at the boot, before the fi
   assert.match(src('src/systems/online/onlineHomes.js'), /layout: layout \|\| null, \.\.\.\(ground \? \{ ground: ground\[0\], townBlocks: ground\[1\] \} : \{\}\) \}\);   \/\/ DECOR-ROOMY   \/\/ WD3 \(AUDIT WD3 B2\)/, 'always said, null for Daggerfall\'s own');
 });
 
-test('WD3 online, the room: both switches are the room\'s (forced on - two players who disagreed would walk two towns, one through the other\'s houses), each a mod\'s one Enabled, on by default', () => {
+test('WD3 online, the room (OWN-WORK3): the two town mods are retired - no switch of theirs, nothing the room forces; a home\'s stamp still names them, as the service keeps it (mutant: a switch left forced)', () => {
   for (const v of ['beautiful-villages', 'beautiful-cities']) {
-    assert.deepEqual({ ...ONLINE_ROOM_MOD_KEYS[v] }, { Enabled: true }, v);
-    assert.deepEqual(Object.keys(MOD_SETTINGS[v].keys), ['Enabled']);
-    assert.equal(MOD_SETTINGS[v].keys.Enabled.default, true);
-    assert.equal(MOD_SETTINGS[v].author, 'carademono');
+    assert.equal(ONLINE_ROOM_MOD_KEYS[v], undefined, v);
+    assert.equal(MOD_SETTINGS[v], undefined, v);
   }
-  assert.equal(MOD_SETTINGS['beautiful-villages'].title, 'Beautiful Villages of Daggerfall');
-  assert.equal(MOD_SETTINGS['beautiful-cities'].title, 'Beautiful Cities of Daggerfall');
+  assert.deepEqual(HOME_LAYOUT_MODS, ['beautiful-villages', 'beautiful-cities'], 'a stamp the service holds still reads');
 });
+
 
 test('WD3 online, a building\'s room is its layout\'s (AUDIT WD3 B3) - the layout mods serving its town ride in the room key\'s high bits, so two players whose town stands in two layouts never share a room (its doors, chests and memory), a memory kept from before the mods lands on no other building, and Daggerfall\'s own town keeps the rooms it always had; the room, its memory and the scene agree', async () => {
   const { roomKeyFor } = await import('../../src/net/online.js');

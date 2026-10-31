@@ -135,7 +135,7 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
   const rows = (id) => [{ text: `record ${id}`, center: true }];
   const bread = createSurvivalItem(TEMPLATE.Bread, { foodStage: FOOD_STAGE.Stale });
   const t = survivalInfoTokens(bread);
-  assert.deepEqual(t.map((r) => r.text), ['Stale Bread', 'Weight: 1.50 kilograms', 'Nourishes for 90 minutes (stale)']);
+  assert.deepEqual(t.map((r) => r.text), ['Stale Bread', 'Weight: 0.50 kilograms', 'Nourishes for 90 minutes (stale)']);   // PIN MOVED: OWN-WORK3, a loaf (1.5)
   assert.deepEqual(itemInfoRows(bread, rows).map((r) => r.text), t.map((r) => r.text), 'the box reads the built tokens, not a record');
   const fish = createSurvivalItem(TEMPLATE.RawFish);
   assert.equal(survivalInfoTokens(fish).at(-1).text, 'Raw. Cook it at a fire.');

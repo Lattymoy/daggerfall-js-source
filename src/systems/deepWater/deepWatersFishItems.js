@@ -5,9 +5,8 @@
 // RegisterCustomItem, UselessItems2), the pictures its PassiveFishResources
 // gives them, and the item a fish carries (TryCreateFishItem).
 //
-// THE TEMPLATES are the mod's own ItemTemplates.json (vendored verbatim,
-// tools/iliacPuddleAssets.mjs): names, weights, prices, rarity 20, not
-// repairable - "Juvenile Finulon" at 30 kg among them.
+// THE TEMPLATES are our own (OWN-WORK3, deepWatersFishRows.js): our names,
+// weights and prices by the rules written there, rarity 20, not repairable.
 //
 // THE PICTURES. The mod writes each fish's icon into ItemHelper's image
 // cache (CacheInventoryIcons) under TEXTURE.216 records 41-47, undyed,
@@ -22,7 +21,7 @@
 // powers of two).
 // ═══════════════════════════════════════════════════════════════════
 
-import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES } from './deepWatersFishRows.js';   // INT1: the rows' leaf - the item law reads them headless
+import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES, FISH_NAMES } from './deepWatersFishRows.js';   // INT1: the rows' leaf - the item law reads them headless
 import { registerCustomTemplates, setItemFields, mintCondition, registerCustomItemGroup } from '../item/itemTemplates.js';   // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from '../modSettings.js';
 import { addVendorTextures, decodePng } from '../textureReplacement.js';
@@ -93,7 +92,8 @@ const SET_ITEM_FIELDS = Object.freeze([
  * NormalizeFishItemCollection: a fish item that is not in UselessItems2
  * put back there - SetItem(UselessItems2, its template), which keeps the
  * item's UID and everything SetItem does not write (its enchantments, its
- * quest tie, its poison) - and its stack and condition given back.
+ * quest tie, its poison) - and its stack and condition given back. Ours
+ * besides: a fish named other than its template takes the template's name.
  * @param {Array<any>} items
  * @returns {number} how many were put back
  */
@@ -101,6 +101,7 @@ export function normalizeFishItems(items) {
   let n = 0;
   for (let i = 0; i < (items?.length ?? 0); i++) {
     const it = items[i];
+    if (it && isFishTemplateIndex(it.templateIndex) && it.name !== FISH_NAMES[it.templateIndex]) it.name = FISH_NAMES[it.templateIndex];   // OWN-WORK3: a catch from before the rename, renamed by its index
     if (!it || it.group === FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;
     const { stackCount, currentCondition, maxCondition } = it;
     const fresh = createFishItem(speciesOfTemplate(it.templateIndex));

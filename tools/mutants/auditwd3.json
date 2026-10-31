@@ -18,24 +18,6 @@
     ]
   },
   {
-    "name": "AWD3-PACK-BEHIND-CLOSED-DOOR",
-    "file": "src/scenes/modWorldData.js",
-    "old": "      const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
-    "new": "      const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
-    "tests": [
-      "test/systems/wd3_door.test.js"
-    ]
-  },
-  {
-    "name": "AWD3-PIN-BEHIND-CLOSED-DOOR",
-    "file": "src/scenes/modWorldData.js",
-    "old": "  if (!worldDataDoorOpen()) return false;",
-    "new": "",
-    "tests": [
-      "test/systems/wd3_door.test.js"
-    ]
-  },
-  {
     "name": "AWD3-HELD-SCENE-OVERWRITTEN",
     "file": "src/scenes/worldModes.js",
     "old": "    if (_sceneHeldForLayout === name) {\n      const alt = layoutSceneName(name, _visitLayout);",
@@ -120,15 +102,6 @@
       "test/world/wd3_standins.test.js"
     ],
     "note": "FIELD BUGS 2026-10-15f TEMPLE-STEPS re-aimed it: the foundation as AUDIT WD3 T1 left it - 16 m square at the FBX node's scale, sunk 2.4 m so its top cleared the door - which buried the temples' stairs and landings"
-  },
-  {
-    "name": "AWD3-STANDINS-ALWAYS-ON",
-    "file": "src/scenes/modWorldData.js",
-    "old": "    installTownStandIns(townPacksLive);",
-    "new": "    installTownStandIns();",
-    "tests": [
-      "test/systems/wd3_door.test.js"
-    ]
   },
   {
     "name": "AWD3-CLAIM-WRITE-UNGUARDED",

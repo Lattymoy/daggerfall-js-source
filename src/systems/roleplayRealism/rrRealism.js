@@ -1,21 +1,10 @@
-// RR1 - ROLEPLAY & REALISM 1.8 (Hazelnut, MIT; vendor/roleplay-realism/
-// Scripts/RoleplayRealism.cs and the four small classes beside it): the
-// laws InitMod (:108-258) registers, hooks or replaces under each
-// module switch, restated one function per C# member. The formula
-// overrides (archery, climbing, weapon speed, weapon materials,
-// equipment damage, the classic strength bonus, the bank loan), the
-// ship gate, the encumbrance penalty, the douse on leaving a dungeon,
-// the purification potion, the class enemies' appearance, the
-// underworld guilds' expulsion, the bed (the Fighters' hand-to-hand is
-// RETIRED - FGH2H-R, below).
-// The variant NPC sprites, enhanced riding and the refined training
-// window are RR2; the Master Armorer quest line, its fort and its
-// factions are RR3.
-//
-// A leaf: modSettings (the switches), weapons (a material's modifier),
-// mobileTypes (the tables' keys). Everything that reads an
-// entity or the scene is handed in by its caller, and rrInstall.js
-// registers the seams.
+// RR1 - ROLEPLAY & REALISM 1.8 (Hazelnut, MIT; the release's RoleplayRealism.cs and the four small classes beside it):
+// the laws InitMod (:108-258) registers, hooks or replaces under each module switch, one function per C# member - the
+// formula overrides (archery, climbing, weapon speed, weapon materials, equipment damage, the classic strength bonus,
+// the bank loan), the ship gate, the encumbrance penalty, the douse on leaving a dungeon, the purification potion, the
+// class enemies' appearance, the underworld guilds' expulsion and the bed (the Fighters' hand-to-hand is RETIRED,
+// FGH2H-R). RR2 is the variant sprites, riding and training; RR3 the Master Armorer line. OWN-WORK3: the player's lines
+// are DFO's own (bible/06-Systems/Roleplay-Realism.md). A leaf: rrInstall.js registers the seams.
 import { modSetting } from '../modSettings.js';
 import { WEAPONS, weaponMaterialModifier } from '../../characters/weapons.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
@@ -73,7 +62,7 @@ export function rrAdjustWeaponAttackDamage(damage, weaponAnimTime, weapon) {
  *  so mid-screen; otherwise DFU's own formula, restated (skill + 30 for
  *  a Khajiit, x2 under the Climbing effect, clamped 5..95; Lerp(base,
  *  100, skill%) + Lerp(0, 10, luck%), the C# int cast). */
-export const NO_CLIMB_HOLDING_WEAPON = "You can't climb whilst holding your weapon.";   // RoleplayRealismModData.csv noClimbHoldingWeapon
+export const NO_CLIMB_HOLDING_WEAPON = 'Put your weapon away to climb.';   // OWN-WORK3: our line for the release's noClimbHoldingWeapon
 /** AUDIT CLIMB1 F10: the same rule for the port's enhanced climb (player/parkour.js registerParkourGate) - a mantle
  *  or a clamber over a thin top is a climb, and the mod's own row promises "no climbing with a weapon out": a drawn
  *  weapon that is not bare hands answers the mod's line, anything else null. (A vault is a leap and is not asked.) */
@@ -294,7 +283,7 @@ export const enemyAppearanceApplied = () => _appearanceOriginals.size > 0;
  *  DarkBrotherhood.cs:132-135); Join floors the reputation at 2 ("a 1
  *  quest failure buffer"); Leave sends the death squad
  *  (`CreateFoeSpawner(false, type, count, min, max)`); TokensExpulsion
- *  is the mod's own text (RoleplayRealismModData.csv). */
+ *  is DFO's own text (OWN-WORK3). */
 export const RR_UNDERWORLD = Object.freeze({
   ThievesGuild: Object.freeze({
     joinReputationFloor: 2,
@@ -303,12 +292,12 @@ export const RR_UNDERWORLD = Object.freeze({
     // blank one before the last; %pcn is the player's name, expanded
     // by the box (MacroHelper)
     expulsion: Object.freeze([
-      "%pcn, you've disappointed us yet again with your bleedin'",
-      'shoddy work and our patience has run as dry as a desert.',
-      "An' without bringing in nearly enough dough or gaining",
-      'powerful connections, is not sufficient to save your skin.',
+      '%pcn, you have let us down once too often.',
+      'Your take is thin and your friends are few,',
+      'and neither one buys you another chance.',
+      'The guild is done with you.',
       '',
-      "You're bloody done as a thief, get 'em lads!",
+      'Lads, show our friend the way out. The hard way.',
     ]),
   }),
   DarkBrotherhood: Object.freeze({
@@ -317,11 +306,11 @@ export const RR_UNDERWORLD = Object.freeze({
     // TokensExpulsion (DarkBrotherhoodRR.cs:24-35): four centred lines, a
     // blank one after the second
     expulsion: Object.freeze([
-      "%pcn, you have disappointed us yet again, and you've not",
-      'made powerful enough connections to save your reputation.',
+      '%pcn, you have failed us again, and no one',
+      'of weight will speak for you now.',
       '',
-      "Our patience is limited and it's worn thin. Now your",
-      'membership, and by extension your life, is forfeit!',
+      'The Brotherhood forgives nothing. You leave us',
+      'the way every failure leaves us: in a coffin.',
     ]),
   }),
 });
@@ -438,14 +427,14 @@ export function rrTrainingCost(baseCost, skillValue, trainingMax, variable = tru
 export const rrIntensiveCost = (trainingCost, level) => (trainingCost + level * 8 + 72) * 5;
 /** The week button is offered `if (intensive && skillValue < trainingMax - 4)` (:86). */
 export const rrIntensiveOffered = (intensive, skillValue, trainingMax) => !!intensive && skillValue < trainingMax - 4;
-/** RoleplayRealismModData.csv - the training window's lines; `{0}` the
- *  skill name or the intensive cost, `%a` the session's cost. */
+/** OWN-WORK3: the training window's lines, DFO's own; `{0}` the skill
+ *  name or the five days' cost, `%a` the session's cost. */
 export const RR_TRAINING_LINES = Object.freeze({
-  trainingSkill1: 'Training your {0} skill will cost %a gold for a single session.',
-  trainingSkill2: 'You can also pay extra to train intensively for five days if you wish,',
-  trainingSkill3: 'with a training session each day, this will cost {0} gold in total.',
-  trainingSkill4: 'So, would you like to train your {0} skill with me?',
-  trainingSkillIntense1: 'You have spent the last 4 days intensively training your ',
-  trainingSkillIntense2: '{0} skill, and have improved it significantly.',
-  trainingSkillIntense3: "Now it's time to begin your fifth and final session...",
+  trainingSkill1: 'One session of {0} costs %a gold.',
+  trainingSkill2: 'Or train hard for five days, a session each day,',
+  trainingSkill3: 'for {0} gold in all.',
+  trainingSkill4: 'Shall we work on your {0}?',
+  trainingSkillIntense1: 'Four hard days of drills have sharpened your',
+  trainingSkillIntense2: '{0} skill a great deal.',
+  trainingSkillIntense3: 'Now for the fifth and last session.',
 });

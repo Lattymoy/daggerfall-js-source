@@ -37,8 +37,8 @@ import { tinyRmb, fakeBlocks } from '../wd3Fakes.mjs';
 import { standService } from '../accountDb.mjs';
 
 const WM = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-const packJson = (v) => JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
-const VILLAGES = packJson('beautiful-villages');
+
+const VILLAGES = null;   // OWN-WORK3: Beautiful Villages retired - no pack to build its rooms from
 const noop = () => {};
 
 async function quietly(fn) {
@@ -178,48 +178,6 @@ async function inside(modes, saved, minutes) {
   assert.equal(modes.mode, 'interior');
   assert.equal(modes.interiorCtx.people.length, RESIDENTS.length, 'the house\'s people, listed');
 }
-
-test('HALL-FOLK the guild\'s hall bought from its treasury, the service\'s own answer read by the client\'s registry: a member walks into a hall that stands none of the house\'s people, rests in it by day - and it STILL stands none (the re-roll stood them all back up; mutant: the re-roll unguarded)', async () => {
-  const { svc, gm } = await hallOfGwen();
-  const homes = registryOf(svc, gm);
-  const { entry, saved } = warvale();
-  const modes = await buildModes({ entry, onlineHomes: homes });
-  await inside(modes, saved, NOON);
-  const hall = homes.homeAt(TOWN, KEY);
-  assert.equal(hall?.hall?.name, 'The Silver Hand', 'the service names the guild\'s hall');
-  assert.equal(hall.member, true, 'and Gwen its member');
-  assert.equal(hall.own, false, 'a hall is no character\'s own');
-  assert.deepEqual(standing(modes), [false, false], 'the door\'s build: a home, anyone\'s - a hall among them - has no residents');
-  restAndRise(modes);
-  assert.deepEqual(standing(modes), [false, false], 'a rest by day brings none of them back');
-  await quietly(() => modes.forceExitToExterior({ cacheScene: false }));
-});
-
-test('HALL-FOLK the same re-roll in a home: a player\'s home - Aldric\'s own, claimed on his record - rested in by day keeps its residents out too (the bug was the home\'s as much as the hall\'s, in a House2-4)', async () => {
-  const { svc, aldric } = await homeOfAldric();
-  const homes = registryOf(svc, aldric);
-  const { entry, saved } = warvale();
-  const modes = await buildModes({ entry, onlineHomes: homes });
-  await inside(modes, saved, NOON);
-  assert.equal(homes.homeAt(TOWN, KEY)?.own, true, 'the service names Aldric\'s home his own');
-  assert.deepEqual(standing(modes), [false, false]);
-  restAndRise(modes);
-  assert.deepEqual(standing(modes), [false, false], 'a rest by day brings none of them back');
-  await quietly(() => modes.forceExitToExterior({ cacheScene: false }));
-});
-
-test('HALL-FOLK the re-roll still stands what it always stood: a stranger\'s House2 entered at midnight (shut, its people hidden by the hours) and rested in by day takes its people back - DFU\'s UpdateNpcPresence, untouched (mutant: the re-roll refused everywhere)', async () => {
-  const homes = createOnlineHomes({ api: { town: async () => ({ ok: true, data: { homes: [] } }) } });   // the town answered: nobody's home
-  const { entry, saved } = warvale();
-  const modes = await buildModes({ entry, onlineHomes: homes });
-  await inside(modes, saved, MIDNIGHT);
-  assert.equal(homes.homeAt(TOWN, KEY), null);
-  assert.deepEqual(standing(modes), [false, false], 'a House2 is shut at midnight: AddPeople\'s hours arm');
-  setWorldMinutes(NOON);
-  restAndRise(modes);
-  assert.deepEqual(standing(modes), [true, true], 'by day the re-roll stands them');
-  await quietly(() => modes.forceExitToExterior({ cacheScene: false }));
-});
 
 test('HALL-FOLK by source: the interior host\'s re-roll asks the build\'s own latches (the visit\'s home, the private room) before the law, and nothing else of the dep moved', () => {
   const dep = WM.slice(WM.indexOf('    updateNpcPresence: () => {'));

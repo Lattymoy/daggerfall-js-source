@@ -22,6 +22,7 @@ import { createProfHud } from '../../../src/ui/professions/profHud.js';
 import { accountRefusalText } from '../../../src/net/accountClient.js';
 import { WORLD_MAP_TILE_DIM } from '../../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
+import { FORAGING_ITEM_ROWS } from '../../../src/systems/foraging/foragingItems.js';   // OWN-WORK3: Foraging's rows, our own
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WOODS = 231, OCEAN = 223;
@@ -160,8 +161,8 @@ test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refus
   assert.equal(fishPlan({ ...base, storesFull: true }).ready, false);
   assert.equal(fishPlan({ ...base, counting: true }).rest, 'being counted');
   const bass = PASSIVE_FISH_SPECIES.find((s) => s.templateIndex === 9002);
-  assert.equal(haulLine({ qty: 2, gem: PEARL.key, extra: 'hide:slaughterfish', extraQty: 1 }, bass), '+2 Largemouth Bass, as Raw Fish, a Pearl and Slaughterfish Scales to your Stores', '5.2\'s toast: "+2 Largemouth Bass, as Raw Fish"');
-  assert.equal(haulLine({ qty: 1 }, bass), '+1 Largemouth Bass, as Raw Fish to your Stores');
+  assert.equal(haulLine({ qty: 2, gem: PEARL.key, extra: 'hide:slaughterfish', extraQty: 1 }, bass), '+2 Rusttail Bass, as Raw Fish, a Pearl and Slaughterfish Scales to your Stores', '5.2\'s toast: "+2 Rusttail Bass, as Raw Fish" (OWN-WORK3: our name)');
+  assert.equal(haulLine({ qty: 1 }, bass), '+1 Rusttail Bass, as Raw Fish to your Stores');
   assert.equal(haulLine({ qty: 2 }, null), '+2 Raw Fish to your Stores');
   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the service says it no more - kept, without its forty, for one not yet redeployed
   assert.match(accountRefusalText('prof-fish-cap'), /^Your account has hauled all the nets a day allows, across your characters\./);
@@ -245,7 +246,7 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no 
     assert.deepEqual([k.plan(cast, { rank, keyLabel: () => 'E' }).rest, k.plan(cast, { rank, keyLabel: () => 'E' }).ready], ['Fishing 7', true], 'by night as by day');
     assert.equal(k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' }).act?.state.kind, 'fish', 'and started');
     w = world({ enemiesNear: true });
-    assert.deepEqual(k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' }), { refused: 'You cannot fish with enemies nearby!' }, 'Foraging\'s own line');
+    assert.deepEqual(k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' }), { refused: 'You cannot cast a net with enemies close by.' }, 'Foraging\'s own line');
     w = world();
     const a = k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' });
     assert.equal(a.act.state.kind, 'fish');
@@ -283,7 +284,7 @@ test('PROF8 schools: the day\'s two stood on water (none on dry ground), their f
     assert.ok(nodes.every((n) => k.gone(n)), 'never a target');
     const [flat] = k.goneFlatsOf(nodes[0], entry);
     assert.deepEqual([flat.archive, flat.record, flat.centers.length], [...SCHOOL_PICTURE, 3], 'the Fish item\'s own picture, three on the water');
-    const fish = JSON.parse(src('vendor/foraging/ItemTemplates.json')).find((t) => t.index === 1605);
+    const fish = FORAGING_ITEM_ROWS.find((t) => t.index === 1605);   // OWN-WORK3: our own row
     assert.deepEqual([fish.worldTextureArchive, fish.worldTextureRecord], [...SCHOOL_PICTURE], 'Foraging\'s Fish, DFU\'s own picture');
     const [cast] = k.looseNodesOf({ entity: { items: [NET] }, dungeon: false });
     assert.match(k.plan(cast, { rank: () => 0, keyLabel: () => 'E' }).rest, /^Fishing 0 - a school rises 8 m east$/);

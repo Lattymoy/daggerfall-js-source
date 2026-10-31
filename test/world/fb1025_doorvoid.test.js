@@ -227,17 +227,15 @@ test('BAD-CELL: a listed room drops the misplaced 31000 and keeps a 31000 standi
 // ── with ARENA2 ───────────────────────────────────────────────────────────────────────────────────────────
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_ARENA2 = !!ARENA2 && ['BLOCKS.BSA', 'ARCH3D.BSA'].every((f) => existsSync(join(ARENA2, f)));
-const packJson = (v) => JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
 
-/** Daggerfall's own BLOCKS.BSA and ARCH3D.BSA, the town packs, and a pipeline over them (fb1004d_voidentry's). */
+/** Daggerfall's own BLOCKS.BSA and ARCH3D.BSA and a pipeline over them (fb1004d_voidentry's) - OWN-WORK3: the town packs
+ *  are retired, so Daggerfall's own blocks alone. */
 async function arena2() {
   const { BlocksFile } = await import('../../src/formats/blocksFile.js');
   const { Arch3dFile } = await import('../../src/formats/arch3dFile.js');
   const { patchSeams } = await import('../../src/world/arch3dSeams.js');
   const { installTownStandIns } = await import('../../src/world/townStandIns.js');
   const { customModelBuilt, customAliasFor } = await import('../../src/world/customModels.js');
-  const { openWorldDataPack } = await import('../../src/formats/worldData/worldDataPack.js');
-  const { blockFromJson } = await import('../../src/formats/worldData/worldDataReplacement.js');
   const blocks = new BlocksFile(); assert.ok(blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA')))));
   const arch = new Arch3dFile(); assert.ok(arch.load(new Uint8Array(readFileSync(join(ARENA2, 'ARCH3D.BSA')))));
   installTownStandIns(() => true);
@@ -253,14 +251,7 @@ async function arena2() {
     return built.get(id);
   };
   const deps = { renderer: fakeRenderer, getGpuMesh, cpuModels, getTexture: noPictures, uploadRecord: noop, uploadRecordFrame: noop, palette: null, getMachineryParts: null };
-  const packs = {};
-  let next = 5000;
-  for (const v of ['beautiful-villages', 'beautiful-cities']) {
-    const pack = openWorldDataPack(packJson(v), { blocks });
-    packs[v] = { names: pack.names().filter((n) => /\.RMB\.json$/i.test(n)).map((n) => n.replace(/\.json$/i, '')),
-      block: (n) => { const i = blocks.getBlockIndex(n); return blockFromJson(pack.rebuild(`${n}.json`), i >= 0 ? i : next++); } };
-  }
-  return { blocks, deps, packs };
+  return { blocks, deps };
 }
 /** Every building record of `block` with an exterior door, and that door (the first) - the room the player walks into. */
 async function buildingsOf(block, deps) {
@@ -282,12 +273,11 @@ async function quietly(fn) {
   try { return await fn(); } finally { [console.warn, console.log] = saved; }
 }
 
-test('BAD-CELL with ARENA2: Daggerfall\'s own listed rooms lose their misplaced 31000 as DFU\'s do, and Beautiful Cities\' seven keep their own room cell - FIGHGL00 #1\'s ground-floor corner has its floor', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 300000 }, async () => {
-  const { blocks, deps, packs } = await arena2();
+test('BAD-CELL with ARENA2: Daggerfall\'s own listed rooms lose their misplaced 31000 as DFU\'s do', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 300000 }, async () => {
+  const { blocks, deps } = await arena2();
   const getModel = (id) => deps.cpuModels.get(id);
   const LISTED = [[51, [1]], [84, [8, 9, 10, 11]], [88, [2, 3, 4]], [96, [2, 5, 6]], [106, [1]], [154, [0, 1, 2]], [155, [0, 1, 2, 3]], [156, [0, 1]], [158, [6, 7]], [159, [0]], [169, [5, 8]], [388, [2, 3, 4, 5]], [502, [2]], [513, [1, 2, 12]], [514, [0, 5, 6]], [516, [0]], [534, [10]], [537, [5]], [538, [12]], [574, [10, 12]], [575, [12, 13]], [597, [7, 8]], [601, [6, 7]], [680, [7, 8]], [697, [0, 1, 2, 3]], [1195, [1]], [1278, [1, 2, 3, 4]]];
   let classicDropped = 0;
-  const packKept = [];
   await quietly(async () => {
     for (const [bi, records] of LISTED) {
       const block = blocks.getBlock(bi);
@@ -297,37 +287,13 @@ test('BAD-CELL with ARENA2: Daggerfall\'s own listed rooms lose their misplaced 
         assert.equal(placed.filter((p) => p.modelIdNum === 31000).length, 0, `${block.name} #${ri}`);
         classicDropped++;
       }
-      const name = blocks.getBlockName(bi);
-      for (const [v, pack] of Object.entries(packs)) {
-        if (!pack.names.includes(name)) continue;
-        const served = pack.block(name);
-        for (const ri of records) {
-          const rec = served.rmbBlock.subRecords[ri];
-          if (!rec?.interior?.block3dObjectRecords?.some((o) => o.modelIdNum === 31000)) continue;
-          for (const o of rec.interior.block3dObjectRecords) await deps.getGpuMesh(o.modelIdNum);
-          if (layoutInterior(served, bi, ri, getModel).placements.some((p) => p.modelIdNum === 31000)) packKept.push(`${v}:${name}#${ri}`);
-        }
-      }
     }
   });
   assert.equal(classicDropped, 60, 'every record of the table');
-  assert.deepEqual(packKept.sort(), ['beautiful-cities:FIGHGL00.RMB#1', 'beautiful-cities:GENRGL01.RMB#2', 'beautiful-cities:GENRGL01.RMB#3',
-    'beautiful-cities:GENRGL01.RMB#4', 'beautiful-cities:RESIGL03.RMB#1', 'beautiful-cities:RESIGL04.RMB#3', 'beautiful-cities:TVRNGL04.RMB#6']);
-  // the corner the field report fell through: FIGHGL00 #1's ground-floor cell, entered at its own door
-  const fighgl00 = packs['beautiful-cities'].block('FIGHGL00.RMB');
-  const door = (await buildingsOf(fighgl00, deps)).get(1);
-  const ctx = await quietly(() => buildInteriorContext(deps, fighgl00, fighgl00.index, 1, 300, 0, door.matrix, {}));
-  try {
-    const cell = ctx.drawList.find((d) => d.mesh?.id === 31000);
-    assert.ok(cell, 'the cell stands');
-    const [cx, cz] = [(cell.aabb.min[0] + cell.aabb.max[0]) / 2, (cell.aabb.min[2] + cell.aabb.max[2]) / 2];
-    const below = ctx.collider.raycast([cx, cell.aabb.min[1] + 0.5, cz], [0, -1, 0], 1);
-    assert.ok(below < 0.6, `a floor under the corner (${below})`);
-  } finally { ctx.destroy(); }
 });
 
-test('DOOR-VOID with ARENA2: every house a player can own, in both town packs and Daggerfall\'s own blocks - the doors sealed are exactly the doors to nothing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
-  const { blocks, deps, packs } = await arena2();
+test('DOOR-VOID with ARENA2: every house a player can own in Daggerfall\'s own blocks - the doors sealed are exactly the doors to nothing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
+  const { blocks, deps } = await arena2();
   const { isResidence, BUILDING_TYPES } = await import('../../src/world/buildingNames.js');
   const sealed = [];
   let rooms = 0, doors = 0;
@@ -352,15 +318,12 @@ test('DOOR-VOID with ARENA2: every house a player can own, in both town packs an
     }
   }
   await quietly(async () => {
-    for (const [v, pack] of Object.entries(packs)) await sweep(v, pack.names, pack.block);
     const classic = [];
     for (let i = 0; i < blocks.count; i++) { const n = blocks.getBlockName(i); if (/\.RMB$/i.test(n ?? '')) classic.push(n); }
     await sweep('classic', classic, (n) => blocks.getBlock(blocks.getBlockIndex(n)));
   });
-  assert.deepEqual({ rooms, doors }, { rooms: 10439, doors: 30831 });
-  // the town packs: Beautiful Cities' House2, a door on a lip of floor half a metre deep - placed in towns, sold as homes
-  assert.deepEqual(sealed.filter((s) => !s.startsWith('classic:')),
-    ['beautiful-cities:DARKAB00.RMB#0:door:1', 'beautiful-cities:DARKAB01.RMB#0:door:1', 'beautiful-cities:DARKAB02.RMB#0:door:1']);
+  assert.deepEqual({ rooms, doors }, { rooms: 5898, doors: 20800 });   // OWN-WORK3: Daggerfall's own blocks alone (both packs' and Daggerfall's were 10,439 and 30,831)
+  assert.deepEqual(sealed.filter((s) => !s.startsWith('classic:')), [], 'OWN-WORK3: no town pack is swept now');
   // Daggerfall's own: fifty, every one in a block no location of MAPS.BSA places
   assert.deepEqual(sealed.filter((s) => s.startsWith('classic:')).map((s) => s.slice('classic:'.length)), [
     'ALCHAS03.RMB#0:door:1', 'ALCHAS03.RMB#5:door:0', 'ALCHAS03.RMB#5:door:12', 'ALCHAS03.RMB#5:door:13', 'ALCHAS03.RMB#6:door:0',

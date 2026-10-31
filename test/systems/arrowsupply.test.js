@@ -297,7 +297,7 @@ test('FLETCH: Use a piece of wood and it is its own weight in arrows - Twigs two
 test('BENCH-ARROWS (FIELD BUGS 2026-10-15c, the Discord: "Crafting arrows at the workbench is useless"): a piece of wood fletches its weight over the CLASSIC Arrow\'s, whatever a mod patches - under Roleplay & Realism: Items (on by default, forced online) a Twig is two arrows, a Pine Branch four, a Wood Bundle ten, so four Twigs are eight in the field and the workbench\'s twenty stay the better trade (mutants: the patched Arrow read)', () => {
   registerTemplateOverrides(RRI_TEMPLATE_PATCHES);
   try {
-    assert.equal(templateByIndex(ARROW_TEMPLATE).baseWeight, 0.1, 'the mod\'s Arrow stands');
+    assert.equal(templateByIndex(ARROW_TEMPLATE).baseWeight, 0.05, 'the mod\'s Arrow stands (OWN-WORK3: our patch)');
     assert.deepEqual([fletchYield({ templateIndex: 8 }), fletchYield({ templateIndex: 14 }), fletchYield(createForagingItem(FT.WoodBundle))], [2, 4, 10]);
     const pack = [{ group: 'PlantIngredients1', templateIndex: 8, stackCount: 4 }];
     assert.deepEqual(useItem(pack[0], pack, {}), { kind: 'text', text: 'You fletch 2 arrows from the Twigs.' });

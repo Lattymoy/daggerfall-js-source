@@ -1,21 +1,9 @@
-// RR2 - THE NPC SPRITE VARIANTS. RoleplayRealism.cs :775-1077 (Hazelnut,
-// MIT): OnTransitionToInterior_VariantShopTavernNPCsprites (a shop's or
-// tavern's `182_0/1/2` keeper re-materialised to the mod's own
-// `197_N` sprites by the building's quality) and
-// OnTransitionToInterior_VariantResidenceNPCsprites (four of five
-// residents re-drawn as the townsfolk walkers of the climate's race, with
-// a face to match). DFU rewrites the interior's Billboards after the
-// transition; the port's interior context stands its people once, so
-// the same decision is asked as each person is listed - `rrVariantPerson`
-// - and the answer is what the billboard draws. The seven `197_N-0`
-// textures are the mod's own art, shipped under public/art/roleplay-
-// realism/ and registered on the replacement door for archive 197 (a
-// classic archive, kludgeTown) with the XML scale beside each.
-//
-// The Villager Variety arm (:948-978 - that mod's own image for the
-// resident, asked over the mod message bus) has no counterpart: the port
-// does not carry that mod, so `materialSet` is false and the billboard
-// takes the walker's archive, exactly the C#'s else.
+// RR2 - THE NPC SPRITE VARIANTS (RoleplayRealism.cs :775-1077, Hazelnut, MIT): a shop's or tavern's 182 keeper drawn
+// as one of the seven `197_N` pictures by the building's quality, and four of five residents as the townsfolk walkers
+// of the climate's race, with a face to match. DFU rewrites the interior's billboards after the transition; the port
+// asks `rrVariantPerson` as each person is listed. Five pictures ship under public/art/roleplay-realism/, two are
+// rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety arm (:948-978) has no
+// counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, walkerRace, raceOfPeople } from '../../characters/mobile/mobilePerson.js';
 import { getWorldClimateSettings } from '../../formats/mapsFile.js';
 import { BUILDING_TYPES, isResidence } from '../../world/buildingNames.js';
@@ -34,16 +22,18 @@ export const RR_ART_DIR = 'art/roleplay-realism';
 export const rrArtUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
   new URL(`${RR_ART_DIR}/${encodeURIComponent(name)}.png`, root).href;
 
-/** The mod's Textures/197_N-0.xml, verbatim: `<scaleX>` / `<scaleY>` per
- *  record (TextureReplacement's billboard scale). */
+/** OWN-WORK3: each record's billboard scale (TextureReplacement's `scaleX`, `scaleY`), by our rule - a variant keeper
+ *  stands as big as the classic keeper it replaces (182_0 for records 0-3, 182_1 for 4-5, 182_2 for 6): that keeper's
+ *  size with its record scale, over the 197 record's size, to three places. RR_KEEPER_OF says whose. */
+export const RR_KEEPER_OF = Object.freeze({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 2 });
 export const RR_NPC_XML_SCALE = Object.freeze({
-  0: [1.205, 0.987], 1: [1.516, 0.950], 2: [1.205, 0.938], 3: [1.237, 1.333],
-  4: [1, 0.98], 5: [1.2, 1.03], 6: [3, 0.8],
+  0: [1.205, 0.987], 1: [1.516, 0.95], 2: [1.205, 0.938], 3: [1.237, 1.333],
+  4: [0.762, 1.036], 5: [1.471, 1.106], 6: [3.09, 0.729],
 });
 export const RR_NPC_ARCHIVE = 197;
 export const RR_NPC_RECORDS = Object.freeze([0, 1, 2, 3, 4, 5, 6]);
-/** The mod's Textures/Buttons: BUTTONS.RCI records 21..37 (indexButtons.txt
- *  names them - 21 is "5 Days", the training window's week button). */
+/** BUTTONS.RCI records 21..37, the pictures the release drew - 21 is "5 Days", the training window's week
+ *  button (RR_WEEK_BUTTON). */
 export const RR_BUTTON_RECORDS = Object.freeze([21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]);
 
 // ---- the shop / tavern keeper (:775-849) ---------------------------------

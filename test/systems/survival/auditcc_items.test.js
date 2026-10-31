@@ -1,13 +1,13 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 import { SURVIVAL_RULES, SURVIVAL_STORED } from '../../../src/systems/survival/difficulty.js';
 import { SURVIVAL_PREF } from '../../../src/systems/survival/switch.js';
 import { setPref, _resetForTests } from '../../../src/systems/uiPrefs.js';
 import { newSurvival, survivalMinute } from '../../../src/systems/survival/needs.js';
-import { TEMPLATE, foodStage, waterIn } from '../../../src/systems/survival/food.js';
-import { createSurvivalItem, spoilFood, provisionsStock, drinkAtSource, useSurvivalItem, SURVIVAL_TEMPLATES } from '../../../src/systems/survival/items.js';
+import { TEMPLATE, FOOD, foodStage, waterIn } from '../../../src/systems/survival/food.js';
+import { createSurvivalItem, spoilFood, provisionsStock, drinkAtSource, useSurvivalItem, SURVIVAL_TEMPLATES, foodPrice } from '../../../src/systems/survival/items.js';
 import { campMenu, CAMP_TEXT, CAMP_KIND, FIRE_MINUTES, PLACE_AHEAD, TENT_MODEL } from '../../../src/systems/survival/camp.js';
 import { hoodUp, sunlit } from '../../../src/systems/survival/temperature.js';
 import { createCamps } from '../../../src/scenes/camps.js';
@@ -77,9 +77,9 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
   assert.deepEqual([look(createSurvivalItem(TEMPLATE.Bread, { foodStage: 4 })), look(corpse)], [[4, 'Putrid Bread', 534, 1], [2, 'Mouldy Raw Fish', 535, 0]]);
   // the card: putrid cannot be eaten (it read "Nourishes for 36 minutes (putrid)"); a raw one can still be cooked
   assert.deepEqual(pack.map((it) => survivalInfoTokens(it).map((t) => t.text)), [
-    ['Putrid Bread', 'Weight: 1.50 kilograms', 'Putrid. Too disgusting to force down.'],
+    ['Putrid Bread', 'Weight: 0.50 kilograms', 'Putrid. Too disgusting to force down.'],   // PIN MOVED: OWN-WORK3, a loaf (1.5)
     ['Putrid Raw Fish', 'Weight: 1.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],   // PIN MOVED: CRAFT-PAYS, a raw fish a kilo (2)
-    ['Putrid Apple', 'Weight: 0.10 kilograms', 'Putrid. Too disgusting to force down.'],
+    ['Putrid Apple', 'Weight: 0.25 kilograms', 'Putrid. Too disgusting to force down.'],   // PIN MOVED: OWN-WORK3, a fruit (0.1)
   ]);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Bread, { foodStage: 3 }))[2].text, 'Nourishes for 45 minutes (rotten)', 'a stage short of putrid still feeds, by its stage');
   // and the Use names what it is: the real door (useItem.js), which refuses it
@@ -124,25 +124,34 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
   assert.deepEqual(offFallback.items.map((i) => i.templateIndex), [113]);
 });
 
-test('AUDIT C&C I10: no camp word that nothing says - "Turn Climates & Calories on to make camp." went with the gate it named (ENDLESS PROVISIONS); and the vendored README declares every column the port\'s rows change from the mod\'s own', () => {
+test('AUDIT C&C I10 / OWN-WORK3: no camp word that nothing says - "Turn Climates & Calories on to make camp." went with the gate it named (ENDLESS PROVISIONS); and the rows are our own, pinned as literals, the food prices by their rule', () => {
   assert.equal(Object.values(CAMP_TEXT).includes('Turn Climates & Calories on to make camp.'), false);
   assert.equal(Object.hasOwn(CAMP_TEXT, 'arcOff'), false);
-  const mod = JSON.parse(read('vendor/climates-calories/ItemTemplates.json'));
-  const changed = [];
-  for (const t of SURVIVAL_TEMPLATES) {
-    const m = mod.find((r) => r.index === t.index);
-    if (!m) continue;   // 541, the port's own Campfire
-    for (const k of ['name', 'baseWeight', 'hitPoints', 'basePrice', 'rarity', 'worldTextureArchive', 'worldTextureRecord']) if (m[k] !== t[k]) changed.push([t.name, k, m[k], t[k]]);
+  // OWN-WORK3 (2026-10-31): Climates & Calories 1.7.1 shipped its own rows for 530-540; ours stand on the same indices
+  // and pictures. [name, kilos, gold, condition, rarity, archive, record]
+  assert.deepEqual(SURVIVAL_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.basePrice, t.hitPoints, t.rarity, t.worldTextureArchive, t.worldTextureRecord]), [
+    [530, 'Camping Equipment', 5, 50, 50, 1, 204, 8],
+    [531, 'Rations', 0.5, 12, 10, 1, 205, 17],
+    [532, 'Apple', 0.25, 2, 90, 1, 213, 1],
+    [533, 'Orange', 0.25, 2, 90, 1, 213, 0],
+    [534, 'Bread', 0.5, 6, 95, 1, 211, 31],
+    [535, 'Raw Fish', 1, 3, 50, 1, 211, 9],
+    [536, 'Cooked Fish', 0.5, 7, 80, 1, 211, 10],
+    [537, 'Meat', 0.5, 16, 90, 1, 211, 40],
+    [538, 'Raw Meat', 1, 7, 60, 1, 538, 2],
+    [539, 'Waterskin', 0.5, 7, 10, 1, 539, 0],
+    [540, 'Skillet', 2, 60, 100, 1, 218, 4],
+    [541, 'Campfire', 3, 40, 8, 1, 210, 6],
+  ]);
+  // the rule: two gold an hour of the meal's worth, four for meat, half again for food that never spoils
+  for (const t of [TEMPLATE.Rations, TEMPLATE.Apple, TEMPLATE.Bread, TEMPLATE.RawFish, TEMPLATE.CookedFish, TEMPLATE.Meat, TEMPLATE.RawMeat]) {
+    const f = FOOD[t], meat = t === TEMPLATE.Meat || t === TEMPLATE.RawMeat;
+    assert.equal(foodPrice(t), Math.max(1, Math.round((f.satiety / 60) * (meat ? 4 : 2) * (f.keeps == null ? 1.5 : 1))), `${f.name}: the price rule`);
+    if (f.keeps != null) assert.equal(SURVIVAL_TEMPLATES.find((r) => r.index === t).hitPoints, f.keeps, `${f.name}: its condition is its keeping`);
   }
-  assert.deepEqual(changed, [
-    ['Raw Fish', 'baseWeight', 2, 1], ['Cooked Fish', 'baseWeight', 1.5, 0.5], ['Cooked Fish', 'basePrice', 4, 6], ['Meat', 'baseWeight', 2, 0.5], ['Meat', 'basePrice', 50, 15],
-    ['Raw Meat', 'baseWeight', 2, 1], ['Raw Meat', 'basePrice', 10, 8], ['Waterskin', 'baseWeight', 2, 0.5], ['Skillet', 'basePrice', 500, 60],
-  ], 'the nine columns the port changes (PIN MOVED: CRAFT-PAYS, the four food weights - five before)');
-  const readme = read('vendor/climates-calories/README.md').replace(/\s+/g, ' ');
-  for (const said of ['the meat 50 to 15', 'the skillet 500 to 60', 'the cooked fish 4 to 6', 'the raw meat 10 to 8', 'the waterskin\'s weight, 2 kilos to half a kilo', 'changes nine columns', 'the raw meat and the raw fish 2 kilos to 1', 'the meat 2 kilos to half a kilo and the cooked fish 1.5 to half a kilo', 'a row renaming 149, the men\'s Boots, "Shoes", which the port does not carry']) {
-    assert.ok(readme.includes(said), `the README says: ${said}`);
-  }
-  assert.equal(mod.find((r) => r.index === 149).name, 'Shoes', 'the vendored file\'s 149 row, which the README names');
+  // the folder is the mod's art and its README: the thirteen icons, the four rebuilt pictures' specs (derived.json)
+  assert.deepEqual(readdirSync(new URL('../../../vendor/climates-calories', import.meta.url)).sort(), ['README.md', 'Textures', 'derived.json']);
+  assert.equal(readdirSync(new URL('../../../vendor/climates-calories/Textures', import.meta.url)).filter((f) => f.endsWith('.png')).length, 13);
 });
 
 test('AUDIT C&C I11: AN EMPTY SKIN IS NAMED EMPTY WHEREVER IT IS MINTED - the provisions shelf\'s and the general store\'s, by the law a drink and a fill name it by (food.js waterskinName); A COLD CAMP OFFERS NO COOK - the cooking list only refused at it - and its Stoke or Relight lights it; a lit one cooks', async () => {

@@ -8,18 +8,13 @@
 // town lays WALLAA08-11 out, and the stand reaches its gates through world/townWalls.js gateFurniture, as it reaches
 // a city's past the Bay and a capital's (world/capitalCarriages.js).
 //
-// THE LAYER (the owner's "Add carriages to either"): a town mod that serves a gate file of its own - Beautiful Cities'
-// four gates and 52 composites on them - takes the stand as a layer on the world-data door
-// (formats/worldData/worldDataReplacement.js registerWorldDataLayer), moved the least step that clears that file's
-// houses, props, roads and the gate's lane (`standShift`). The author's records stood where his edit put them.
+// OWN-WORK3 (2026-10-31): Beautiful Cities is retired, and with it the layer that laid the stand onto its own gate
+// files. Every gate is Daggerfall's (TS7's walls) or a capital's, and the stand stands as drawn on each.
 
-import { registerWorldDataLayer } from '../formats/worldData/worldDataReplacement.js';
 import { isWallCarrier } from './townShape.js';   // TS7: a city walled on its outline carries its carriages
-import { GATE_CLEAR, GATE_OPENING, WALL_MODELS } from './townWalls.js';   // read in calls only: townWalls reads carriageRecordsOf
-import { ROAD_RECORDS } from './road/roadEdge.js';
 
-/** The four gate blocks (WALLAA08-11) and Beautiful Cities' composites on them: `WALLAA08.RMB.json`,
- *  `WALLAA08.FARMAA00.RMB.json` - the gate is the name's first part. */
+/** The four gate blocks (WALLAA08-11), by a file name of theirs: `WALLAA08.RMB.json` - the gate is the name's first
+ *  part (a composite on one, `WALLAA08.FARMAA00.RMB.json`, a town mod's, is read the same). */
 export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\.[A-Z0-9]+)?\.RMB\.json$/;
 /** OW-HUBS (FIELD BUGS 2026-10-04e): whether a town stands a carriage at its gate - one of its exterior blocks is a
  *  gate the mod edits (`IT_GATE_FILE`, read off the block's own name: 'WALLAA08.RMB', or a composite on it). Pure; the
@@ -41,9 +36,9 @@ export const STAND_DRIVER_FACTION = 8642;
  * OWN-WORK2: THE CARRIAGE STAND, ours. Each thing `at` [along, out] metres in its gate's frame: along the wall on the
  * model's +x side (the gate's opening lies on its -x side, GATE_OPENING), out of the town. The carriage stands 26 m along,
  * clear of the road out and the start marker, its shafts pointing down the road; its team between the shafts, the hay
- * beside them, the driver at the front corner nearest the gate, the signpost where the stand begins. Chosen so 48 of
- * Beautiful Cities' 56 gate files and Solitude's ledge stand it as drawn, and TS7 stands it outside all 410 walls. The
- * carriage is Daggerfall's ARCH3D 41214, the horses TEXTURE.201's, the hay and the signpost 212's.
+ * beside them, the driver at the front corner nearest the gate, the signpost where the stand begins. Chosen so Solitude's
+ * ledge stands it as drawn, and TS7 stands it outside all 410 walls. The carriage is Daggerfall's ARCH3D 41214, the
+ * horses TEXTURE.201's, the hay and the signpost 212's.
  */
 export const CARRIAGE_STAND = Object.freeze([
   Object.freeze({ what: 'carriage', model: 41214, at: Object.freeze([26, 10]) }),
@@ -63,8 +58,6 @@ export const STAND_DRIVERS = Object.freeze({
 });
 /** Daggerfall's own height for each kind: 41214 at -31 (127 of its 138 classic placements), every misc flat at -4. */
 const STAND_Y = Object.freeze({ model: -31, flat: -4 });
-const BLOCK_SIDE = 102.4;
-const list = (v) => (Array.isArray(v) || ArrayBuffer.isView(v) ? v : []);   // a served file is another mod's: read what is there, never throw
 
 /** The stand on gate `gate` (its block's name, 'WALLAA08'), as a block's records, shifted [along, out] metres by
  *  `shift`; null for another name. */
@@ -87,74 +80,6 @@ export function standRecords(gate, shift = [0, 0]) {
   return out;
 }
 
-/** What a served gate file stands outside its wall, for the stand to keep clear of: `(x, z, reach)`, block metres (x
- *  east, z north) - in the block, and clear by its reach of the file's town-map bytes (a house's or the wall's; a
- *  ground flat's 0xfb none), its models and flats (TS7's reaches, GATE_CLEAR) and its road tiles. */
-export function gateFileClear(json) {
-  const rmb = json?.RmbBlock ?? {}, am = list(rmb.FldHeader?.AutoMapData), tiles = list(rmb.FldHeader?.GroundData?.GroundTiles);
-  const things = [];
-  for (const m of list(rmb.Misc3dObjectRecords)) things.push([m.XPos * 0.025, (m.ZPos + 4096) * 0.025, GATE_CLEAR.model]);
-  for (const t of list(rmb.MiscFlatObjectRecords)) things.push([t.XPos * 0.025, (t.ZPos + 4096) * 0.025, GATE_CLEAR.flat]);
-  for (const s of list(rmb.SubRecords)) {
-    // a subrecord's things, as TS7 reads its gate (world/townWalls.js townWall): its place, turned by its rotation
-    const sx = (s?.XPos ?? 0) * 0.025, sz = (4096 - (s?.ZPos ?? 0)) * 0.025, r = ((s?.YRotation ?? 0) * Math.PI) / 1024, c = Math.cos(r), n = Math.sin(r);
-    const at = (o) => [sx + (o.XPos ?? 0) * 0.025 * c - (o.ZPos ?? 0) * 0.025 * n, sz + (o.XPos ?? 0) * 0.025 * n + (o.ZPos ?? 0) * 0.025 * c];
-    for (const o of list(s?.Exterior?.Block3dObjectRecords)) if (!Object.values(WALL_MODELS).includes(o.ModelIdNum)) things.push([...at(o), GATE_CLEAR.model]);
-    for (const t of list(s?.Exterior?.BlockFlatObjectRecords)) things.push([...at(t), GATE_CLEAR.flat]);
-  }
-  const square = (x, z, x0, z0, side) => Math.hypot(Math.max(x0, Math.min(x, x0 + side)) - x, Math.max(z0, Math.min(z, z0 + side)) - z);
-  const C = BLOCK_SIDE / 64, T = BLOCK_SIDE / 16;
-  return (x, z, reach) => {
-    if (x < reach || z < reach || x > BLOCK_SIDE - reach || z > BLOCK_SIDE - reach) return false;
-    for (let gz = Math.floor((z - reach) / C); gz <= Math.floor((z + reach) / C); gz++) for (let gx = Math.floor((x - reach) / C); gx <= Math.floor((x + reach) / C); gx++) {
-      const v = am[(63 - gz) * 64 + gx] ?? 0;
-      if (v && v !== 0xfb && square(x, z, gx * C, gz * C, C) < reach) return false;
-    }
-    for (let ty = Math.floor((z - reach) / T); ty <= Math.floor((z + reach) / T); ty++) for (let tx = Math.floor((x - reach) / T); tx <= Math.floor((x + reach) / T); tx++) {
-      const t = tiles[(15 - ty) * 16 + tx];   // the JSON's tiles y-outer from the north row (formats/worldData/worldDataReplacement.js groundDataFromJson)
-      if (t && ROAD_RECORDS.includes(t.TextureRecord ?? ((t.TileBitfield ?? 0) & 0x3f)) && square(x, z, tx * T, ty * T, T) < reach) return false;
-    }
-    return things.every(([px, pz, r]) => Math.hypot(px - x, pz - z) >= r + reach);
-  };
-}
-
-/** How far the stand moves to stand clear on a served gate file: [along, out] metres, the nearest in diamonds of
- *  GATE_CLEAR.step out to twice GATE_CLEAR.most (capitalCarriages' CARRIAGE_MOST), every thing outside the gate's line and
- *  off its lane (the opening, straight out) by its reach; [0, 0] - as designed - where none does. */
-export function standShift(json, gate) {
-  const f = IT_GATE_FRAMES[gate];
-  if (!f) return [0, 0];
-  const clear = gateFileClear(json), ut = [f.out[1], -f.out[0]], { step } = GATE_CLEAR, most = 2 * GATE_CLEAR.most;
-  const items = CARRIAGE_STAND.map((s) => ({ at: s.at, reach: s.model ? GATE_CLEAR.model : GATE_CLEAR.flat }));
-  const ok = (da, db) => items.every(({ at: [a, b], reach }) => {
-    const p = a + da, q = b + db;
-    if (q <= reach || Math.abs(p - GATE_OPENING.along) < GATE_OPENING.half + reach) return false;
-    return clear(f.at[0] + p * ut[0] + q * f.out[0], f.at[1] + p * ut[1] + q * f.out[1], reach);
-  });
-  for (let r = 0; r <= most + 1e-9; r += step) {
-    for (let a = -r; a <= r + 1e-9; a += step) {
-      const b = r - Math.abs(a);
-      for (const db of b > 1e-9 ? [b, -b] : [0]) if (ok(a, db)) return [Math.round(a * 10) / 10 + 0, Math.round(db * 10) / 10 + 0];   // + 0: never -0
-    }
-  }
-  return [0, 0];
-}
-
-/** The two arrays the stand appends to. */
-const ARRAYS = Object.freeze(['Misc3dObjectRecords', 'MiscFlatObjectRecords']);
-/** The served file with the stand's records appended - a new document; the served one is untouched, and its header's
- *  counts as they were (DFU lays a block out by its arrays). */
-export function layGateRecords(json, appends) {
-  const rmb = json?.RmbBlock;
-  if (!rmb || !appends) return json;
-  const next = { ...rmb };
-  for (const k of ARRAYS) {
-    if (!appends[k]?.length) continue;
-    next[k] = [...(Array.isArray(rmb[k]) ? rmb[k] : []), ...appends[k].map((r) => ({ ...r }))];
-  }
-  return { ...json, RmbBlock: next };
-}
-
 /** TS7: the stand on a gate (its block's name, 'WALLAA08.RMB') as drawn, while the mod is loaded - what a city walled
  *  on its outline carries to that gate (world/townWalls.js gateFurniture) and a capital to its (capitalCarriages.js);
  *  null else. */
@@ -164,16 +89,9 @@ export function carriageRecordsOf(gateName) {
   return standRecords(String(gateName ?? '').toUpperCase().replace(/\.RMB$/, ''));
 }
 
-/** The stand, live: `isOn` the mod's switch as loaded for the game. Registers the layer; answers whether it did. */
+/** The stand, live: `isOn` the mod's switch as loaded for the game. Answers true. OWN-WORK3: no layer is laid on a
+ *  served gate file - every gate's stand is TS7's (world/townWalls.js gateFurniture) or a capital's. */
 export function installImmersiveTravelGates(isOn) {
   _isOn = typeof isOn === 'function' ? isOn : () => true;
-  return registerWorldDataLayer({
-    vendor: 'immersive-travel',
-    isOn: _isOn,
-    match: (fileName) => IT_GATE_FILE.test(fileName),
-    apply: (json, fileName) => {
-      const gate = IT_GATE_FILE.exec(fileName)?.[1];
-      return layGateRecords(json, standRecords(gate, standShift(json, gate)));
-    },
-  });
+  return true;
 }

@@ -1,0 +1,106 @@
+[
+  {
+    "name": "TOWN-DRESS-road-unread",
+    "file": "src/world/townDress.js",
+    "old": "if (weight(gx, gy) === ROAD_WEIGHT) return false;",
+    "new": "if (weight(gx, gy) === -1) return false;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "a piece's disc may reach onto the road"
+  },
+  {
+    "name": "TOWN-DRESS-door-unread",
+    "file": "src/world/townDress.js",
+    "old": "for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r)) return false;",
+    "new": "for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r) && false) return false;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "a crate before a shop's door"
+  },
+  {
+    "name": "TOWN-DRESS-lot-unread",
+    "file": "src/world/townDress.js",
+    "old": "if (lot > 0) for (const l of lotNear.at(x, z, r + lot)) if (inBox(l, x, z, r + lot)) return false;",
+    "new": "",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "goods and plants on a home's lot"
+  },
+  {
+    "name": "TOWN-DRESS-a-home-is-no-lot",
+    "file": "src/world/townDress.js",
+    "old": "const lotHolder = (t) => (t >= B.House1 && t <= B.House4) || t === B.HouseForSale || t === B.GuildHall;",
+    "new": "const lotHolder = (t) => t === B.HouseForSale;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "a House2's walls taken for open ground"
+  },
+  {
+    "name": "TOWN-DRESS-approach-shortened",
+    "file": "src/world/townDress.js",
+    "old": "export const DOOR_CLEAR_M = 4;",
+    "new": "export const DOOR_CLEAR_M = 2;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "HILL-HOUSE's four metres before a door halved"
+  },
+  {
+    "name": "TOWN-DRESS-capital-dressed",
+    "file": "src/world/townDress.js",
+    "old": "if (!rule || dfLocation?.capital || !loc?.blocks?.length || !nav?.grid) return null;",
+    "new": "if (!rule || !loc?.blocks?.length || !nav?.grid) return null;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "a capital's own plan dressed over"
+  },
+  {
+    "name": "TOWN-DRESS-climate-unread",
+    "file": "src/world/townDress.js",
+    "old": "const climate = dfLocation.climate?.zoneClimateType ?? dfLocation.climate?.climateType ?? CLIMATE_BASE_TYPES.Temperate;",
+    "new": "const climate = CLIMATE_BASE_TYPES.Temperate;",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "a desert well wears the woodland's flowers"
+  },
+  {
+    "name": "TOWN-DRESS-counter-moved",
+    "file": "src/world/townDress.js",
+    "old": "counterY: 0.92,",
+    "new": "counterY: 0.75,",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "the wares stand over the counter, not on it"
+  },
+  {
+    "name": "TOWN-DRESS-awning-off-the-frame",
+    "file": "src/world/townDress.js",
+    "old": "yb = S.backH + slope * o + 0.02",
+    "new": "yb = S.backH + slope * o + 0.5",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "the awning's back edge lifted off its posts"
+  },
+  {
+    "name": "TOWN-DRESS-block-edited-in-place",
+    "file": "src/world/townDress.js",
+    "old": "  if (!dfBlock?.rmbBlock || (!adds?.flats?.length && !adds?.models?.length)) return dfBlock;",
+    "new": "  if (!dfBlock?.rmbBlock || (!adds?.flats?.length && !adds?.models?.length)) return dfBlock;\n  dfBlock.rmbBlock.miscFlatObjectRecords.push(...adds.flats);",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "the block BLOCKS.BSA cached takes the dress - another town of its name with it"
+  },
+  {
+    "name": "TOWN-DRESS-stall-uncarved",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        carveTownDress(nav, townDress);   // TOWN-DRESS: and round the market's stalls",
+    "new": "",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "the walkers walk through the stalls"
+  },
+  {
+    "name": "OWN-WORK3-retired-pin-honoured",
+    "file": "src/scenes/modWorldData.js",
+    "old": "export async function ensureWorldDataPack(_vendor) { return false; }",
+    "new": "export async function ensureWorldDataPack(_vendor) { return true; }",
+    "tests": ["test/world/townDress.test.js", "test/systems/wd3_door.test.js"],
+    "note": "a retired layout's pin honoured with no pack to serve it - a house deed wakes in a stranger's house"
+  },
+  {
+    "name": "OWN-WORK3-dropped-line-unchanged",
+    "file": "src/systems/layoutPins.js",
+    "old": "export const PINS_DROPPED_LINE = 'Some of your places stood in a town layout this game no longer has, so they cannot be used.';",
+    "new": "export const PINS_DROPPED_LINE = 'Some of your places could not be shown as you left them. Switch on Replace Game Artwork, or check your connection, then reload.';",
+    "tests": ["test/world/townDress.test.js"],
+    "note": "the player told to switch something on that cannot bring the layout back"
+  }
+]

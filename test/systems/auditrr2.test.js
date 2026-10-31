@@ -120,12 +120,12 @@ test('AUDIT-RR2 G6: a peer\'s negative weight is refused on the wire (a stored w
 test('AUDIT-RR2 G7: a fur piece folded before the weight field existed takes the fold\'s stored number on the way in - the jerkin 2 kg off (ItemJerkin.cs:43), the rest the template\'s', () => {
   _resetModSettings();
   assert.equal(rriStoredWeight({ group: 'Armor', templateIndex: 520, material: ARMOR_MATERIAL.Leather, message: 1 }), RRI_TEMPLATES.find((t) => t.index === 520).baseWeight - 2);
-  assert.equal(rriStoredWeight({ group: 'Armor', templateIndex: 523, material: ARMOR_MATERIAL.Leather, message: 1 }), 1.4);
+  assert.equal(rriStoredWeight({ group: 'Armor', templateIndex: 523, material: ARMOR_MATERIAL.Leather, message: 1 }), 1, 'OWN-WORK3: our Half-boots\' row');
   assert.equal(rriStoredWeight({ group: 'Armor', templateIndex: 523, material: ARMOR_MATERIAL.Leather, message: 0 }), null, 'plain leather derives');
   assert.equal(rriStoredWeight({ group: 'Armor', templateIndex: 515, material: ARMOR_MATERIAL.Chain, message: 1 }), null, 'the chain set has no fold');
-  const old = setItemFields({ group: 'Armor', templateIndex: 520, material: ARMOR_MATERIAL.Leather, message: 1, rriVariant: true, name: 'Fur Jerkin' });
-  assert.equal(old.weightInKg, 6);
-  assert.equal(unitWeightInKg(old), 6);
+  const old = setItemFields({ group: 'Armor', templateIndex: 520, material: ARMOR_MATERIAL.Leather, message: 1, rriVariant: true, name: 'Fur-lined Jacket' });
+  assert.equal(old.weightInKg, 4.25, 'OWN-WORK3: our Jacket\'s 6.25, 2 kg off');
+  assert.equal(unitWeightInKg(old), 4.25);
   const kept = setItemFields({ ...old, weightInKg: 0.25 });
   assert.equal(kept.weightInKg, 0.25, 'a stored weight (Feather Weight) is not overwritten');
 });

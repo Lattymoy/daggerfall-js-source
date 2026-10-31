@@ -78,7 +78,7 @@ THE FOUR HOSTS: `scenes/world.js` places a town's ports (`townPlacesFor`), so it
 `scenes/worldModes.js` presses the yards wherever they stand, `scenes/dungeonContext.js` stands no street, and
 `scenes/exterior.js` stands no port (FLAGGED, `scenes/portHost.js`).
 
-Tests `test/world/westheadnorth.test.js` (5, one on ARENA2) and `test/world/westheadnorth_bc.test.js` (1, on ARENA2;
+Tests `test/world/westheadnorth.test.js` (5, one on ARENA2) and `test/world/westheadnorth_bc.test.js` (DELETED) (1, on ARENA2;
 `test/bayPortGround.mjs` builds either layout's ground). Mutants `tools/mutants/westheadnorth.json` (16, all dead, with ARENA2 and without it). The
 audit's record: `01-Overview/audits/Audit-Westhead-Hand-Wraps.md`.
 

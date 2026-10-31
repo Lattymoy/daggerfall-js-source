@@ -1,6 +1,6 @@
 // RRI2 - ROLEPLAY & REALISM: ITEMS, THE NINE MODULES PAST THE ITEMS.
-// The laws of RoleplayRealismItemsMod.cs (Hazelnut & Ralzar, MIT;
-// vendor/roleplay-realism-items/Scripts/) that InitMod registers when
+// The laws of RoleplayRealismItemsMod.cs (Hazelnut & Ralzar, MIT; the
+// 1.3 release's script, noticed in LICENSE) that InitMod registers when
 // each module switch is on: the loot rewrite, bandaging, condition
 // prices, store-quality condition, weapon balance, the alchemist's
 // potions. Every function names the C# member it restates; the ones

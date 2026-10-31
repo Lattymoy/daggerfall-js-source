@@ -1,0 +1,191 @@
+-- OWN-WORK3: DFO Online's own words. The QBN is Roleplay & Realism 1.8's (MIT, Copyright (C) 2020 Hazelnut), verbatim.
+Quest: RRMSTARM2
+DisplayName: Blood Owed
+QRC:
+
+QuestComplete:  [1004]
+<ce> The Brotherhood has its price and calls off
+<ce> its knives. You can stop watching the shadows.
+
+RumorsDuringQuest:  [1005]
+<ce> They say the Dark Brotherhood holds a grudge
+<ce> against a master of the Fighters Guild.
+
+QuestLogEntry: [1010]
+on %qdt:
+ I hurt other members of the Brotherhood while
+ I took back the contract. They will come for
+ me. I hope gold settles it before blood does.
+
+Message:  1011
+on %qdt:
+ I did not pay _dbContact_ in time. The price is
+ now 200,000 gold, and their enforcers will collect
+ it. I should visit a bank and watch my back.
+
+Message:  1012
+on %qdt:
+ I have failed the Brotherhood twice. They
+ will send killers until I am dead. If I carry
+ a fortune, they may take one last payment.
+
+Message:  1020
+ %pcn,
+ 
+    You hurt our members when we told you not to.
+<ce>
+    For your rank, we take gold in place of
+ blood. Pay _dbContact_ 100,000 within three
+ weeks, at _dbFront_ in __dbFront_, ____dbFront_.
+<ce>
+    After that, we take blood.
+
+Message: 1021
+<ce> You hurt another member of the Brotherhood, as
+<ce> you were warned not to. They will come to
+<ce> collect. Keep your eyes open and your purse full.
+
+Message: 1022
+<ce> Your time to pay _dbContact_ has run out. Carry 200,000
+<ce> gold, and hope their killers take it when they find you.
+
+Message: 1030
+<ce> A note sits in your pack that
+<ce> was not there an hour ago.
+<--->
+<ce> Someone brushes past and leaves a folded note in
+<ce> your hand. When you turn, the street is empty.
+<--->
+<ce> A silent child presses a sealed note on you
+<ce> and runs off before you can ask a thing.
+
+
+-- Dark Brother contact
+Message: 1080
+<ce> Master %pcl. Have you come to settle
+<ce> your debt with the Brotherhood?
+
+Message: 1081
+<ce> You had one chance to pay, and you wasted it. Our
+<ce> enforcers will find you. Have twice the sum ready,
+<ce> Master %pcl, or be hunted to your grave. Now leave.
+
+Message: 1082
+<ce> The gold is enough. I will call off the enforcers.
+<ce> Your name with us is still stained, Master %pcl,
+<ce> so keep out of our way. Mephala keep you.
+
+Message: 1083
+<ce> That is not the sum. Are you
+<ce> trying to cheat us, %ra?
+
+Message: 1096
+<ce> A Brotherhood enforcer corners you
+<ce> and demands 200,000 gold for the
+<ce> members you hurt. You pay, and live.
+
+Message: 1097
+<ce> A Brotherhood enforcer corners you and demands
+<ce> 200,000 gold for the members you hurt. You cannot
+<ce> pay. The enforcer signals the killers nearby.
+
+Message: 1098
+<ce> A Brotherhood enforcer corners you and demands
+<ce> 300,000 gold, your last chance. You pay, and live.
+
+Message: 1099
+<ce> A Brotherhood enforcer corners you and demands
+<ce> 300,000 gold, your last chance. You cannot
+<ce> pay, and the killers in the shadows close in.
+
+
+QBN:
+
+Item _letter1_ letter used 1020
+
+Place _dbFront_ remote apothecary
+
+Person _dbContact_ faction The_Dark_Brotherhood male
+
+Foe _dbEnforcers_ is 6 Assassin
+Foe _dbKillSquad_ is 10 Assassin
+
+Clock _dbLetterDel_ 3.00:00
+Clock _dbWindow_ 26.00:00
+Clock _dbAngered_ 10.00:00
+Clock _dbFurious_ 30.00:00
+
+-- Quest start-up:
+    place npc _dbContact_ at _dbFront_
+    change repute with _dbContact_ by -10
+    start timer _dbLetterDel_
+    log 1010 step 0
+    
+_notify_ task:
+    when pc exits anywhere
+    say 1021
+
+_dbLetterDel_ task:
+    give pc _letter1_ notify 1030
+    start timer _dbWindow_
+
+_dbWindow_ task:
+    say 1022
+    log 1011 step 1
+    change repute with _dbContact_ by -30
+    destroy _dbContact_
+    start timer _dbAngered_
+
+_dbContactPay_ task:
+    clicked npc _dbContact_
+    prompt 1080 yes _dbContactMoney_ no _dbContactNoPay_
+
+_dbContactMoney_ task:
+    pay 100000 money do _dbContactPaid_ otherwise do _dbContactNoMoney_
+
+_dbContactNoMoney_ task:
+    say 1083
+    start task _dbContactNoPay_
+
+_dbContactPaid_ task:
+    say 1082
+    enemies clear
+    give pc nothing
+    end quest saying 1004
+
+_dbContactNoPay_ task:
+    say 1081
+    log 1011 step 1
+    change repute with _dbContact_ by -20
+    destroy _dbContact_
+    stop timer _dbWindow_
+    start timer _dbAngered_
+
+_dbAngered_ task:
+    pay 200000 money do _dbPaid_ otherwise do _dbEnforce_
+
+_dbPaid_ task:
+    say 1096
+    give pc nothing
+    end quest saying 1004
+
+_dbEnforce_ task:
+    create foe _dbEnforcers_ every 0 minutes 1 times with 100% success
+    send _dbEnforcers_ every 900 minutes with 100% success
+    say 1097
+    log 1012 step 2
+    start timer _dbFurious_
+
+_dbFurious_ task:
+    pay 300000 money do _dbPaid2_ otherwise do _dbKillYou_
+
+_dbPaid2_ task:
+    say 1098
+    give pc nothing
+    end quest saying 1004
+
+_dbKillYou_ task:
+    create foe _dbKillSquad_ every 2 minutes indefinitely with 100% success
+    create foe _dbEnforcers_ every 1 minutes indefinitely with 100% success
+    say 1099
+

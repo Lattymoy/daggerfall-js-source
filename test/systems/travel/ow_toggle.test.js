@@ -19,6 +19,7 @@ import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.
 import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
+import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // OWN-WORK3: the mod's own key names
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -32,8 +33,7 @@ test('OW-TOGGLE THE SWITCH: the port\'s own key on Travel Options\' pane - OFF b
   // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - "Takes effect at once" kept (AUDIT OW5 T1: read live - the
   // tile's "when the world next loads" is the mod's other keys'); the note that the switch is the port's own is gone
   assert.equal(def.description, 'Makes time accelerated journeys in first person, on the ground. Off, the enhanced interface makes them in the Overworld view. Takes effect at once.');
-  const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
-  assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
+  assert.ok(!TRAVEL_OPTIONS_1_11_KEYS.includes(KEY), 'not one of the mod\'s own keys (OWN-WORK3: travelOptionsKeys.mjs)');
   assert.ok(MOD_CURATED['travel-options'].includes(KEY) && modDials('travel-options').includes(KEY), 'reachable: on the tile');
   _resetModSettings();
   assert.equal(modSetting(TRAVEL_OPTIONS_VENDOR, KEY), false, 'the shipped store: off');

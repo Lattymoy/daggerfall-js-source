@@ -28,11 +28,11 @@ const jerkin = (material, message = 0) => ({ templateIndex: RRI_JERKIN_TEMPLATE,
 
 test('MW-BRIG4: every metal the Jerkin is a brigandine in wears the brigandine, in its own painting - Iron to Daedric; the leather and the fur keep retail\'s cuirass', () => {
   assert.deepEqual(BRIGANDINE_METALS, ['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
-  // the table is the mod's own word, both ways: a jerkin wears the brigandine exactly when its name says Brigandine
+  // the table is the item's own word, both ways: a jerkin wears the brigandine exactly when its name says Plated (OWN-WORK3)
   for (const [name, m] of Object.entries(ARMOR_MATERIAL)) {
     for (const message of [0, 1]) {
       const own = ownArmorModelFor(jerkin(m, message));
-      assert.equal(Boolean(own), rriVariantWord(jerkin(m, message)) === 'Brigandine ', `${name} jerkin (message ${message})`);
+      assert.equal(Boolean(own), rriVariantWord(jerkin(m, message)) === 'Plated ', `${name} jerkin (message ${message})`);
     }
   }
   const steel = OWN_MW_ARMOR.find((a) => a.id === 'daggerfall_brigandine_steel');

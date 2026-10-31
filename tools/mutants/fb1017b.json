@@ -90,14 +90,14 @@
     "why": "the browser's pack never applies the patch"
   },
   {
-    "name": "SHAM-TRAIL-forage-unshared",
-    "file": "src/systems/foraging/foragingLaw.js",
-    "old": "  return patches ? applyTextPatches('FORAGE-FIX', questName, patches, text) : text;",
-    "new": "  return text;",
+    "name": "FORAGE-FIX-mend-lost",
+    "file": "src/systems/foraging/quests/MiningQuest.txt",
+    "old": "\twhen _gems_ and not _rich_\n",
+    "new": "\twhen _gems_ and not _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n",
     "tests": [
       "test/systems/quest/foragefix.test.js",
       "test/systems/foraging/forage1_law.test.js"
     ],
-    "why": "FORAGE-FIX's patches lost with the law moved to its one home"
+    "why": "OWN-WORK3: a Q7 mend lost from Foraging's own quest file"
   }
 ]

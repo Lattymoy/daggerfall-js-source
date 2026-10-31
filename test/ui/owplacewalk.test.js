@@ -75,7 +75,7 @@ test('OW-PLACE-WALK the hand-off: Begin on a city, a mark, a quest\'s place or a
 
   const land = heldMap();
   pressAt(land, LAND, { on: 'land', label: 'Skyrim', city: null });
-  assert.deepEqual(begin(land).pick, { pixel: LAND, name: 'Map coordinates: 1600, -250.' }, 'bare land: the spot, no place');
+  assert.deepEqual(begin(land).pick, { pixel: LAND, name: 'Map spot 1600, -250' }, 'bare land: the spot, no place');
 
   const quest = heldMap();
   const qp = quest._questPlace({ px: 1590, py: -260, placeName: 'The Haunt' });
@@ -103,7 +103,7 @@ test('OW-PLACE-WALK the hand-off: Begin on a city, a mark, a quest\'s place or a
   bay._ensureWorldModel = () => ({ marks: [] });
   bay._pickAt(0.5, 0.5);
   assert.equal(bay._panel, 'travel');
-  assert.deepEqual(begin(bay).pick, { pixel: { x: 3, y: 3 }, name: 'Map coordinates: 3, 3.' }, 'the Bay\'s spot: unchanged');
+  assert.deepEqual(begin(bay).pick, { pixel: { x: 3, y: 3 }, name: 'Map spot 3, 3' }, 'the Bay\'s spot: unchanged');
 });
 
 test('OW-PLACE-WALK the flag: "Travel here" on a flag on the land past the Bay opens the walked panel on its pixel and hands a bare spot; on the sea past the Bay, and on the teleport map, nothing (mutants: the flag held to the Bay; the sea flag walked)', () => {
@@ -111,7 +111,7 @@ test('OW-PLACE-WALK the flag: "Travel here" on a flag on the land past the Bay o
   assert.equal(win._flagTravels({ mx: LAND.x + 0.5, my: LAND.y + 0.5 }), true);
   win._waypointTravel({ mx: LAND.x + 0.5, my: LAND.y + 0.5 });
   assert.deepEqual([win._selected?.pastBay, win._selected?.walk, win._panel, win._panelState?.trip?.walked], [true, true, 'travel', true]);
-  assert.deepEqual(begin(win), { kind: 'coords', pick: { pixel: LAND, name: 'Map coordinates: 1600, -250.' }, opts: win.commits.at(-1).opts });
+  assert.deepEqual(begin(win), { kind: 'coords', pick: { pixel: LAND, name: 'Map spot 1600, -250' }, opts: win.commits.at(-1).opts });
 
   const sea = heldMap();
   assert.equal(sea._flagTravels({ mx: SEA.x + 0.5, my: SEA.y + 0.5 }), false, 'the sea is no walk');
@@ -164,7 +164,7 @@ test('OW-PLACE-WALK the host: a place handed as its pixel is the Overworld\'s jo
   assert.deepEqual([unknown.routed, unknown.walked], [[], [[LAND.x, LAND.y, true]]], 'no place there the Overworld knows: the spot');
 
   const spot = host({ known: new Map([[`${LAND.x},${LAND.y}`, { name: 'Somewhere', known: true }]]) });
-  spot.onTravelToCoords({ pixel: LAND, name: 'Map coordinates: 1600, -250.' }, { playerControlled: true });
+  spot.onTravelToCoords({ pixel: LAND, name: 'Map spot 1600, -250' }, { playerControlled: true });
   assert.deepEqual([spot.asked, spot.routed, spot.walked], [[], [], [[LAND.x, LAND.y, true]]], 'a bare spot: never asked as a place');
 
   const wet = host({ sea: new Set([`${SEA.x},${SEA.y}`]) });

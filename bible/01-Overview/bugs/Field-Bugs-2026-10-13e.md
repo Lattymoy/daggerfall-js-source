@@ -134,7 +134,7 @@ a loaded machine). The real meshes, the gated sweep and what a bank buries were 
 2026-10-15f TEMPLE-STEPS: the banks buried no door, but they buried Merdale's temple flight (by up to 1.25 m) and
 TEMPASF1's and TEMPASH4's stairs - a pad buries nothing the author left in the open now.
 
-`test/world/fb1013e_hillseat.test.js` (8, one on ARENA2_PATH); `tools/mutants/fb1013e_hillseat.json` (18, all dead). No pin
+`test/world/fb1013e_hillseat.test.js` (DELETED) (8, one on ARENA2_PATH); `tools/mutants/fb1013e_hillseat.json` (18, all dead). No pin
 moved.
 
 ## WRIT-WALL: a writ's card names what it will not take (2)
@@ -411,7 +411,7 @@ holding a 512 map draws no lo map (the landing's worst lo frame 126 faces to 54)
 by content, dead: `disc28.json`'s DISC28-I-getitem-not-replayed (the re-armed set grew) and `housing.json`'s
 HOME-DOORS-the-early-record-dropped (the early record now drops a peer's lock). `test/scenes/citedrift.test.js`'s vendor table
 carries the mod's `.cs:701-702` that DOOR-NAME's comment cites.
-`test/world/fb1013e_hillseat.test.js` (8, one on ARENA2_PATH); `tools/mutants/fb1013e_hillseat.json` 18, all dead.
+`test/world/fb1013e_hillseat.test.js` (DELETED) (8, one on ARENA2_PATH); `tools/mutants/fb1013e_hillseat.json` 18, all dead.
 `test/systems/professions/fb1013e_writwall.test.js` (3); `tools/mutants/fb1013e_writwall.json` 13, all dead.
 `test/systems/fb1013e_macemax.test.js` (4); `tools/mutants/fb1013e_macemax.json` 8, all dead.
 `test/systems/fb1013e_craftprocs.test.js` (5); `tools/mutants/fb1013e_craftprocs.json` 26, all dead.

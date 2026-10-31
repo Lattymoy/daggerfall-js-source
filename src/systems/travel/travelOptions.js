@@ -37,8 +37,8 @@
 //     for ("Must set fixed delta time to scale the fixed (physics)
 //     updates as well").
 //   - `SDFFontRendering` (:1256) - picks between two help texts and
-//     two time formats. The port keeps both strings and takes the SDF
-//     arm (systems/travel/travelOptionsText.js says why).
+//     two time formats. The port takes the SDF arm, in its own words
+//     (OWN-WORK3, systems/travel/travelOptionsText.js).
 
 import { pickNearPlaceMiddle } from './travelPathMode.js';   // AUDIT UPDATE II B4: a location's middle, the click's own law
 import { modSetting, colorKeyRgba } from '../modSettings.js';

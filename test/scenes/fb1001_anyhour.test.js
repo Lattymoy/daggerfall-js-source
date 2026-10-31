@@ -126,7 +126,7 @@ test('ANY-HOUR: the instruction - at 21:00 and at 03:00 every gathering act star
       assert.equal(foragingActRefusal(FT.FishingNet), null, `${hour}:00 - the net's act`);
       // and what the act still asks: a foe near, at any hour
       setForagingHost({ world: () => ({ ...wild(hour), enemiesNear: true }), monthValue: () => 5, entity: () => null, professionsOpen: () => true });
-      assert.equal(foragingActRefusal(FT.PickAxe), 'You cannot mine with enemies nearby!', 'the other checks stand');
+      assert.equal(foragingActRefusal(FT.PickAxe), 'You cannot work the rock with enemies close by.', 'the other checks stand');
     } finally { s.done(); }
   }
 });

@@ -123,6 +123,8 @@ import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel'
 import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
+import { townDressFor } from './townDressHost.js';   // TOWN-DRESS (OWN-WORK3): our own lamps, goods, flora and market
+import { carveTownDress } from '../world/townDress.js';
 
 /** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
 const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
@@ -494,6 +496,7 @@ export function createPixelBuild(host) {
     let lefaySpot = null;    // LEFAY1: a monument - its id and spot in the location frame (world/lefayMonument.js monumentSpotOf), null anywhere but Gothway Garden and the Imperial City's centre
     let yardSites = null;    // MERCHANT-YARDS: a city's or a town's Stable and Wagon Yard - their sites in the location frame, null in any other place
     let portSites = null;    // SHIPYARDS: a port town's shipyard and lighthouse - their sites in the location frame, null in any other place
+    let townDress = null;    // TOWN-DRESS (OWN-WORK3): the town's own dressing (world/townDress.js), null where none
     let personBatches = null;
     let locBlocks = null;    // T3d: the layout blocks for the Where-is directory
     let witchFloor = null;   // WITCH1: the town's street, where the Witches' Festival's dressing stands (below)
@@ -523,6 +526,9 @@ export function createPixelBuild(host) {
       const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather
       if (yardTown) yardSites = places.yards;
       if (portTown) portSites = places.ports;
+      // TOWN-DRESS (OWN-WORK3, scenes/townDressHost.js): the town dressed by our own law, on what its yards, port and
+      // monument left - before its blocks are drawn, so its pieces are drawn, lit and solid as the blocks' own are
+      townDress = farView ? null : await townDressFor(loc, dfLocation, { walkShut, yards: yardSites, ports: portSites, lefay: lefaySpot, enhancedWater: waterSwitchOn(), breathe: () => breather.breathe(), modelOf: async (id) => ((await getGpuMesh(id, () => breather.breathe())) ? cpuModels.get(id) : null) });
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
       witchFloor = locLocal[1] + BLOCK_FLATS_OFFSET_Y * GLOBAL_SCALE;   // WITCH1: as the block's own flats stand
@@ -847,6 +853,7 @@ export function createPixelBuild(host) {
         if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse
         carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS: and off a capital's works over Daggerfall's blocks
+        carveTownDress(nav, townDress);   // TOWN-DRESS: and round the market's stalls
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {

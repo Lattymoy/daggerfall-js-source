@@ -182,9 +182,9 @@
   },
   {
     "name": "FORAGE1-21-the-list-left-unmended",
-    "file": "src/systems/foraging/foragingLaw.js",
-    "old": "    { old: ', Commoner, ', new: ', Commoners, ', count: 2 },",
-    "new": "    { old: ', Commoner, ', new: ', Commoner, ', count: 2 },",
+    "file": "src/systems/foraging/quests/QuestList-ForagingQuests.txt",
+    "old": "FetchWood01, Commoners, N, 0, 0,",
+    "new": "FetchWood01, Commoner, N, 0, 0,",
     "tests": [
       "test/systems/foraging/forage1_law.test.js",
       "test/systems/quest/foragefix.test.js"
@@ -281,10 +281,10 @@
     ]
   },
   {
-    "name": "FORAGE1-32-the-list-read-unpatched",
+    "name": "FORAGE1-32-the-list-read-as-a-quest",
     "file": "src/scenes/quest/questData.js",
-    "old": "      if (name.startsWith('QuestList-')) tables.set(name, patched);",
-    "new": "      if (name.startsWith('QuestList-')) tables.set(name, text);",
+    "old": "      if (name.startsWith('QuestList-')) tables.set(name, text);",
+    "new": "      if (name.startsWith('QuestList-')) quests.set(name, text.split(/\\r?\\n/));",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]

@@ -45,7 +45,9 @@ test('NO-BETHESDA2: every picture Handheld Torches\' manifest names is a file or
 
 test('NO-BETHESDA2: every picture Climates & Calories draws is a file, a spec or ours - one of them, never two, never none', () => {
   const drawn = [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES];
-  const names = manifestNames(`${CC}/climates-calories.dfmod.json`);
+  // OWN-WORK3 (2026-10-31): the twenty pictures Climates & Calories 1.7.1's manifest named, as a literal - the manifest left the tree
+  const names = ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_0-0', '536_1-0', '537_0-0', '537_1-0',
+    '538_0-0', '538_1-0', '538_2-0', '539_0-0', '50_7-0', '67_10-0', 'RALZARTAVERN', 'BLANKMENU_TAVERN'];
   assert.deepEqual(names.filter((n) => !drawn.includes(n)), ['RALZARTAVERN', 'BLANKMENU_TAVERN'], 'the port draws all but the two tavern menus');
   // PIN MOVED (NO-BETHESDA3, 2026-10-31): the rotten cooked fish is ours - our rot over the player's record (rotPicture.js)
   for (const n of drawn) assert.equal([isFile(CC, n), derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a file, a spec or ours - exactly one`);

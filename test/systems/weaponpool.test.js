@@ -12,7 +12,7 @@ import { GROUP_TEMPLATE_INDICES } from '../../src/systems/item/itemTemplatesData
 import { createWeapon, weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipment.js';
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE } from '../../src/systems/thunderlock.js';
 import { RRI_TEMPLATES, RRI_TEMPLATE_PATCHES } from '../../src/systems/roleplayRealismItems/rriItems.js';
-import { repoolWeaponConditions } from '../../src/systems/conditionRepair.js';
+import { repoolWeaponConditions, RRI_RELEASE_POOLS } from '../../src/systems/conditionRepair.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { mintPiece } from '../../src/systems/smithItems.js';
 import { applyRarity, legendaryById } from '../../src/systems/loot/lootRarity.js';
@@ -63,13 +63,15 @@ test('WEAPON-POOL: every weapon type mints one pool, the Warhammer\'s 1,600, thr
   // the paperdoll viewer's pure builder reads the same law, its arrow included
   assert.deepEqual(GROUP_TEMPLATE_INDICES.Weapons.map((i) => MATERIALS.map((m) => buildWeapon(i, m).maxCondition)),
     GROUP_TEMPLATE_INDICES.Weapons.map((i) => MATERIALS.map((m) => weaponOfMaterial(i, m).maxCondition)));
-  // ROLEPLAY & REALISM: ITEMS: its two weapons (an Archer's Axe and a Light Flail at 500) and its patches to eight
-  // classic rows (a Tanto at 40, a Short Bow at 80 ...) take the pool as every other type does
+  // ROLEPLAY & REALISM: ITEMS: its two weapons (a Hatchet and a Short Flail) and the eight classic rows its 1.3 release
+  // patched (a Tanto at 40, a Short Bow at 80 ... - OWN-WORK3: a save's fact, RRI_RELEASE_POOLS) take the pool as every
+  // other type does
   registerCustomTemplates(RRI_TEMPLATES);
-  registerTemplateOverrides(RRI_TEMPLATE_PATCHES);
+  registerTemplateOverrides([...RRI_RELEASE_POOLS].map(([index, hitPoints]) => ({ index, hitPoints })));
   try {
-    const patched = RRI_TEMPLATE_PATCHES.filter((p) => p.hitPoints != null).map((p) => p.index);
+    const patched = [...RRI_RELEASE_POOLS.keys()];
     assert.deepEqual(patched, [114, 116, 117, 118, 121, 123, 129, 130]);
+    assert.deepEqual(RRI_TEMPLATE_PATCHES.filter((p) => p.hitPoints != null), [], 'our patches leave a weapon\'s hit points to the pool');
     assert.equal(templateByIndex(WEAPONS.Tanto).hitPoints, 40, 'the patch is laid over the row');
     for (const i of [513, 514, ...patched]) assert.deepEqual(ladderOf((m) => createWeapon(i, m, () => 0.5)), want, `${templateByIndex(i).name} (${i})`);
   } finally {
@@ -181,8 +183,9 @@ test('WEAPON-POOL: the fingerprint is the old mint\'s own number - Daggerfall\'s
     [[1600, 400], [4800, 4800], [1600, 800], [1200, 1200], [2080, 416], [2400, 7], [2400, 2]]);
   assert.deepEqual(stays.map((it) => [it.maxCondition, it.currentCondition]), [[4096, 4096], [50, 50], [50, undefined], [50, 50]]);
   assert.deepEqual(others.map((it) => [it.maxCondition, it.currentCondition]), othersBefore, 'clothing, jewellery and a torch keep their rows');
-  // a classic Tanto at 50 moves with the mod ON as well - its patch laid over the row at this load
-  registerTemplateOverrides(RRI_TEMPLATE_PATCHES);
+  // a classic Tanto at 50 moves with a patch laid over its row at this load as well - the 1.3 release's, as a save made
+  // under it loads (OWN-WORK3: our own patches leave the row as it is)
+  registerTemplateOverrides([...RRI_RELEASE_POOLS].map(([index, hitPoints]) => ({ index, hitPoints })));
   try {
     const tanto50 = old(WEAPONS.Tanto, WEAPON_MATERIALS.Iron, 50, 50);
     // AUDIT WEAPON-POOL P7: and rows whose neighbours differ - the Tanto's 50 is the Dagger's beside it, so it alone could

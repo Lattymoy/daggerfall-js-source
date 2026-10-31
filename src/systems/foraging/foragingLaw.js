@@ -1,26 +1,13 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// FORAGE1-FORAGE2 (2026-09-28): FORAGING 1.7 (Harbinger451) - THE LAW.
-// Mac: "Heres this for life skills"; "Yes, permission"; "Your lead".
-// bible/06-Systems/Foraging.md is the record; this file is every rule
-// the mod's compiled script and its quests hold, pure: the templates, the
-// six tools' checks in their order with their lines, the rolls, the
-// yields' lines, the foods, the console command, the quest names, Quest
-// Actions Extension's arithmetic, FORAGE-FIX's patch table, and (FORAGE3)
-// the three loot hooks' tables and draws.
-//
-// THE SOURCE is the mod's DLL, read as IL (vendor/foraging/il/, offsets
-// IL_xxxx in hex); the templates and quests are vendored verbatim beside
-// it and imported, never re-typed. Nothing here touches a host: the
-// install (foragingInstall.js) asks the world, and hands this file the
-// answers.
-//
-// RANDOMNESS. Every draw is UnityEngine.Random.Range(0, n) on ints -
-// uniform, the max exclusive (PickOneOf, IL_0dc5) - taken from `rng`, a
-// function answering [0, 1), so a test can pin a draw.
-// ═══════════════════════════════════════════════════════════════════
+// FORAGE1-FORAGE2 (2026-09-28): FORAGING 1.7 (Harbinger451) - THE LAW. Mac: "Heres this for life skills"; "Yes,
+// permission"; "Your lead". bible/06-Systems/Foraging.md is the record: every rule the mod's build holds, pure. The
+// source is Foraging 1.7's compiled script (Foraging.dll), read as IL (offsets IL_xxxx in hex). OWN-WORK3 (2026-10-31):
+// the rows (foragingItems.js), the lines below and the quests (quests/) are our own; the rules are the build's. Nothing
+// here touches a host: the install (foragingInstall.js) asks the world and hands this file the answers. Every draw is
+// UnityEngine.Random.Range(0, n) on ints (PickOneOf, IL_0dc5), taken from `rng`, a function answering [0, 1).
 
-import FORAGING_TEMPLATES_JSON from '../../../vendor/foraging/ItemTemplates.json' with { type: 'json' };
+import { FORAGING_ITEM_ROWS } from './foragingItems.js';   // OWN-WORK3: our own twelve rows
 import { CLIMATES, LOCATION_TYPES, DUNGEON_TYPES } from '../../formats/mapsFile.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { LOOT_CONTAINER_TYPES } from '../sceneCache.js';
@@ -28,7 +15,6 @@ import { dice100 } from '../../combat/formulas.js';   // Dice100.SuccessRoll, on
 import { isPlayerInTown } from '../nearbyObjects.js';
 import { ON_EXTERIOR_WATER } from '../../player/exteriorSurface.js';
 import { SEA_REGION } from '../../net/nodeLaw.js';   // PROF8: the sea coast's region, one home
-import { applyTextPatches } from '../quest/questPatches.js';   // SHAM-TRAIL: FORAGE-FIX's exact-count law, one home
 import { TEMPLATE as CC_TEMPLATE } from '../survival/food.js';   // Climates & Calories' own ids, imported (ONE DFU MEMBER, ONE EXPORT)
 // PROF1: the draws, the bands, the day and the Basket's blocks live in foragingCore.js - pure, so the account service rolls
 // the Basket's food with the IL's own tables (bible/06-Systems/Professions-Arc.md 22) - and are this module's still.
@@ -44,21 +30,21 @@ export const FORAGING_GROUP = 'UselessItems2';
 /** `RegisterQuestList("ForagingQuests")` (IL_02e5). */
 export const FORAGING_QUEST_LIST = 'ForagingQuests';
 
-/** The twelve templates, by name (ItemTemplates.json). */
+/** The twelve templates, by name (foragingItems.js). */
 export const FT = Object.freeze({
   WoodAxe: 1600, PickAxe: 1601, Sickle: 1602, FishingNet: 1603, WoodBundle: 1604, Fish: 1605,
   Spade: 1606, Basket: 1607, Apple: 1608, Orange: 1609, Mushroom: 1610, Egg: 1611,
 });
 
-/** The mod's own rows, verbatim. */
-export const FORAGING_TEMPLATES = Object.freeze(FORAGING_TEMPLATES_JSON.map((t) => Object.freeze({ ...t })));
+/** The twelve rows (OWN-WORK3: our own, foragingItems.js). */
+export const FORAGING_TEMPLATES = FORAGING_ITEM_ROWS;
 export const isForagingTemplate = (templateIndex) => templateIndex >= FT.WoodAxe && templateIndex <= FT.Egg;
 
 /** The six tools, in the console command's order (DCE7: 1600, 1601, 1602, 1603, 1606, 1607). */
 export const TOOL_TEMPLATES = Object.freeze([FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.Spade, FT.Basket]);
 export const isForagingTool = (templateIndex) => TOOL_TEMPLATES.includes(templateIndex);
 
-/** The author's seven pictures (Textures/<archive>_0-0.png): archive = the texture name's number. */
+/** The author's seven pictures (vendor/foraging/Textures/<archive>_0-0.png): archive = the texture name's number. */
 export const FORAGING_TEXTURE_ARCHIVES = Object.freeze([11600, 11601, 11602, 11603, 11604, 11605, 11606]);
 
 // ---- draws and bands -------------------------------------------------
@@ -66,37 +52,37 @@ export const FORAGING_TEXTURE_ARCHIVES = Object.freeze([11600, 11601, 11602, 116
 
 // ---- the six checks --------------------------------------------------
 
-/** Each tool's refusals, verbatim (the IL's ldstr), keyed by the check. */
+/** Each tool's refusals, keyed by the check: OWN-WORK3, our own words (the build's said the same facts). */
 export const FORAGING_REFUSALS = Object.freeze({
   [FT.WoodAxe]: Object.freeze({
-    inside: 'You cannot find wood to chop in here!', town: 'You cannot chop wood in a settlement!',
-    daylight: 'You need daylight to chop wood effectively!', sea: 'You cannot find wood to chop out here!',
-    enemies: 'You cannot chop wood with enemies nearby!', encumbered: 'You cannot chop wood when fully encumbered!',
+    inside: 'There are no trees to cut in here.', town: 'You cannot cut trees inside a settlement.',
+    daylight: 'It is too dark to swing an axe safely.', sea: 'There are no trees to cut out here.',
+    enemies: 'You cannot cut wood with enemies close by.', encumbered: 'You are carrying too much to cut wood.',
   }),
   [FT.PickAxe]: Object.freeze({
-    inside: 'You cannot mine in here!', town: 'You cannot mine in a settlement!',
-    daylight: 'You need daylight to mine effectively!', sea: 'You cannot mine out here!',
-    enemies: 'You cannot mine with enemies nearby!', encumbered: 'You cannot mine when fully encumbered!',
+    inside: 'There is no rock to work in here.', town: 'You cannot dig for ore inside a settlement.',
+    daylight: 'It is too dark to see the seams in the rock.', sea: 'There is no rock to work out here.',
+    enemies: 'You cannot work the rock with enemies close by.', encumbered: 'You are carrying too much to work the rock.',
   }),
   [FT.Sickle]: Object.freeze({
-    inside: 'You cannot forage for plants in here!', town: 'You cannot forage for plants in a settlement!',
-    daylight: 'You need daylight to forage for plants effectively!', sea: 'You cannot forage for plants out here!',
-    enemies: 'You cannot forage for plants with enemies nearby!', encumbered: 'You cannot forage for plants when fully encumbered!',
+    inside: 'There are no plants to cut in here.', town: 'You cannot cut plants inside a settlement.',
+    daylight: 'It is too dark to tell one plant from another.', sea: 'There are no plants to cut out here.',
+    enemies: 'You cannot cut plants with enemies close by.', encumbered: 'You are carrying too much to cut plants.',
   }),
   [FT.FishingNet]: Object.freeze({
-    inside: 'You cannot fish in here!', town: 'You cannot fish in a settlement!',
-    daylight: 'You need daylight to fish effectively!', enemies: 'You cannot fish with enemies nearby!',
-    encumbered: 'You cannot fish when fully encumbered!', water: 'You need to be in water or on the ocean to fish!',
+    inside: 'There is no water to fish in here.', town: 'You cannot cast a net inside a settlement.',
+    daylight: 'It is too dark to see where the fish are.', enemies: 'You cannot cast a net with enemies close by.',
+    encumbered: 'You are carrying too much to cast a net.', water: 'Stand in water, or be out at sea, to cast a net.',
   }),
   [FT.Spade]: Object.freeze({
-    inside: 'You cannot dig up a grave here!', town: 'You cannot dig up a grave in a settlement!',
-    cemetery: 'You can only dig up a grave in a cemetery!', enemies: 'You cannot dig up a grave with enemies nearby!',
-    encumbered: 'You cannot dig up a grave when fully encumbered!',
+    inside: 'There is no grave to dig in here.', town: 'You cannot open a grave inside a settlement.',
+    cemetery: 'Graves are dug in a cemetery, not here.', enemies: 'You cannot open a grave with enemies close by.',
+    encumbered: 'You are carrying too much to dig.',
   }),
   [FT.Basket]: Object.freeze({
-    inside: 'You cannot forage for food here!', town: 'You cannot forage for food in a settlement!',
-    daylight: 'You need daylight to forage for food effectively!', sea: 'You cannot forage for food out here!',
-    enemies: 'You cannot forage for food with enemies nearby!', encumbered: 'You cannot forage for food when fully encumbered!',
+    inside: 'There is no wild food to find in here.', town: 'You cannot gather wild food inside a settlement.',
+    daylight: 'It is too dark to find anything worth eating.', sea: 'There is no wild food to find out here.',
+    enemies: 'You cannot gather food with enemies close by.', encumbered: 'You are carrying too much to gather food.',
   }),
 });
 
@@ -195,8 +181,8 @@ export function woodAxeBundles({ intelligence, strength, climate }, rng) {
 }
 const COUNT_WORDS = Object.freeze(['', 'one', 'two', 'three', 'four']);
 export function woodAxeMessage(n) {
-  if (n <= 0) return 'You were unable to chop and gather any usable wood!';
-  return `You were able to chop and gather ${COUNT_WORDS[n]} Wood Bundle${n === 1 ? '' : 's'}!`;
+  if (n <= 0) return 'You find no wood worth cutting.';
+  return `You cut and tie ${COUNT_WORDS[n]} Wood Bundle${n === 1 ? '' : 's'}.`;
 }
 
 // ---- the Pick-Axe (IL_1328-IL_1622) -----------------------------------
@@ -221,8 +207,8 @@ export function sickleQuest(climate, monthValue) {
 export const FISH_TABLES = Object.freeze([[0, 0, 0, 1, 1, 2], [0, 0, 1, 1, 2, 2], [0, 1, 2, 2, 3, 3], [1, 2, 2, 3, 3, 4]].map((r) => Object.freeze(r)));
 export const fishingCount = ({ intelligence, agility }, rng) => pickOneOf(FISH_TABLES[attributeBand(attributeAverage(intelligence, agility))], rng);
 export function fishingMessage(n) {
-  if (n <= 0) return "You cast your Fishing Net, but don't catch any Fish!";
-  return `You cast your Fishing Net and catch ${COUNT_WORDS[n]} Fish!`;
+  if (n <= 0) return 'Your net comes up empty.';
+  return `Your net comes up with ${COUNT_WORDS[n]} Fish.`;
 }
 
 // ---- the Spade (IL_2280-IL_2619) --------------------------------------
@@ -258,11 +244,11 @@ export const fruitTemplate = (fruit, cc) => (cc ? CC_FRUIT[fruit] : (fruit === '
  * dropped (2, Egg) in block C and (4, Egg) in block E.
  */
 export function basketFind({ count, food, block }, cc) {
-  if (!(count > 0) || count > 4) return { templateIndex: null, count: 0, message: 'You could not find any food to forage!' };
-  if (food === 4) return { templateIndex: FT.Egg, count, message: `You manage to find ${COUNT_WORDS[count]} Egg${count === 1 ? '' : 's'}!` };
+  if (!(count > 0) || count > 4) return { templateIndex: null, count: 0, message: 'You find nothing fit to eat.' };
+  if (food === 4) return { templateIndex: FT.Egg, count, message: `You find ${COUNT_WORDS[count]} Egg${count === 1 ? '' : 's'}.` };
   const name = food === 3 ? 'Mushroom' : BASKET_BLOCKS[block].fruit;
   const templateIndex = food === 3 ? FT.Mushroom : fruitTemplate(name, cc);
-  return { templateIndex, count, message: `You manage to pick ${COUNT_WORDS[count]} ${name}${count === 1 ? '' : 's'}!` };
+  return { templateIndex, count, message: `You gather ${COUNT_WORDS[count]} ${name}${count === 1 ? '' : 's'}.` };
 }
 
 // ---- after a use -----------------------------------------------------
@@ -270,27 +256,27 @@ export function basketFind({ count, food, block }, cc) {
 /** The quest each tool starts after its yield (the Pick-Axe, Sickle and Spade pick theirs above). */
 export const TOOL_QUESTS = Object.freeze({ [FT.WoodAxe]: 'ChopWoodQuest', [FT.FishingNet]: 'FishingQuest', [FT.Basket]: 'ForageFoodQuest' });
 
-/** "Your <Tool> broke." - the tool's own name, as the template names it. */
-export const brokeMessage = (templateIndex, name = null) => `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} broke.`;   // PROF7: a tool not Foraging's by its own name (the Skinning Knife)
+/** "Your <Tool> is worn out." - the tool's own name, as the template names it. */
+export const brokeMessage = (templateIndex, name = null) => `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} is worn out.`;   // PROF7: a tool not Foraging's by its own name (the Skinning Knife)
 
 // ---- the foods (IL_4a63-IL_4c2a) --------------------------------------
 
-/** `IncreaseFatigue(n, true)` (n points), then health or magicka; one item eaten. */
+/** `IncreaseFatigue(n, true)` (n points), then health or magicka; one item eaten. The lines are ours (OWN-WORK3). */
 export const FOODS = Object.freeze({
-  [FT.Fish]: Object.freeze({ text: 'You eat a fish and feel better for it!', fatigue: 15, health: 5, magicka: 0 }),
-  [FT.Apple]: Object.freeze({ text: 'You eat an Apple and feel better for it!', fatigue: 10, health: 5, magicka: 0 }),
-  [FT.Orange]: Object.freeze({ text: 'You eat an Orange and feel better for it!', fatigue: 10, health: 5, magicka: 0 }),
-  [FT.Mushroom]: Object.freeze({ text: 'You eat a Mushroom and feel better for it!', fatigue: 5, health: 0, magicka: 10 }),
-  [FT.Egg]: Object.freeze({ text: 'You eat an Egg and feel better for it!', fatigue: 15, health: 10, magicka: 0 }),
+  [FT.Fish]: Object.freeze({ text: 'You eat the Fish. You feel stronger.', fatigue: 15, health: 5, magicka: 0 }),
+  [FT.Apple]: Object.freeze({ text: 'You eat the Apple. You feel refreshed.', fatigue: 10, health: 5, magicka: 0 }),
+  [FT.Orange]: Object.freeze({ text: 'You eat the Orange. You feel refreshed.', fatigue: 10, health: 5, magicka: 0 }),
+  [FT.Mushroom]: Object.freeze({ text: 'You eat the Mushroom. Your mind feels clearer.', fatigue: 5, health: 0, magicka: 10 }),
+  [FT.Egg]: Object.freeze({ text: 'You eat the Egg. You feel stronger.', fatigue: 15, health: 10, magicka: 0 }),
 });
 
 // ---- the console command (IL_4c54-IL_4cd6) ----------------------------
 
 export const FORAGING_COMMAND = Object.freeze({
   name: 'Foraging_Tools',
-  description: "Adds one of each Foraging Tool to player's inventory.",
-  usage: 'Foraging_Tools 0/1 n',
-  answer: 'Foraging Tools added',
+  description: 'Gives you one of each of the six Foraging tools.',
+  usage: 'Foraging_Tools',
+  answer: 'One of each Foraging tool is in your pack.',
   /** DECIDED (FORAGE0 8): online the door is the player's own setting, so the tools are not given there. */
   refusedOnline: 'Foraging Tools are not given online.',
 });
@@ -414,48 +400,7 @@ export const raiseTimeSeconds = (hours, minutes) => Math.max(0, hours) * 3600 + 
 /** ReducePlayerFatigue: `max(1, (int)(CurrentFatigue - MaxFatigue * N / 100f))`, raw (x64) values. */
 export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - max * percent / 100));
 
-// ---- FORAGE-FIX (FORAGE0 12): the quest patches ----------------------
-//
-// The vendored quests stay verbatim; these are applied when the pack is
-// read, each an exact old text with how many times it must occur - a
-// patch that finds its text any other number of times throws, so a
-// changed file can never be patched silently wrong.
-
-const RICH = '\n_rich_ task:\n\twhen _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n';
-const miningPatches = () => Object.freeze([
-  // Q7: one task fires - bounty on rich ground, scarce elsewhere, as the author meant.
-  { old: '_mountainwoods_ task:\n\tclimate mountainwoods\n', new: `_mountainwoods_ task:\n\tclimate mountainwoods\n${RICH}`, count: 1 },
-  { old: '\twhen _elements_ and _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n', new: '\twhen _elements_ and _rich_\n', count: 1 },
-  { old: '\twhen _gems_ and _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n', new: '\twhen _gems_ and _rich_\n', count: 1 },
-  { old: '\twhen _elements_ and not _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n', new: '\twhen _elements_ and not _rich_\n', count: 1 },
-  { old: '\twhen _gems_ and not _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n', new: '\twhen _gems_ and not _rich_\n', count: 1 },
-].map(Object.freeze));
-const fetchPatches = (n) => Object.freeze([
-  // Q8: bundles are group 9 (UselessItems2), not 20.
-  { old: `\tplayer possesses ${n} items class 20 subclass 1604`, new: `\tplayer possesses ${n} items class 9 subclass 1604`, count: 1 },
-  { old: `\tplayer handsover ${n} items class 20 subclass 1604`, new: `\tplayer handsover ${n} items class 9 subclass 1604`, count: 1 },
-].map(Object.freeze));
-export const FORAGE_FIX_PATCHES = Object.freeze({
-  // Q13: the list files the four fetch quests under `Commoner` and `Noble`, which name no social group - DFU's
-  // ParseQuestList files a row only under an exact FactionFile.SocialGroups name (QuestListsManager.cs:223-251), so the
-  // quests were never offered, in DFU or here. `Commoners` and `Nobility` are the groups the author meant.
-  'QuestList-ForagingQuests': Object.freeze([
-    { old: ', Commoner, ', new: ', Commoners, ', count: 2 },
-    { old: ', Noble, ', new: ', Nobility, ', count: 2 },
-  ].map(Object.freeze)),
-  MiningQuest: miningPatches(), MiningQuestWeak: miningPatches(), MiningQuestWeaker: miningPatches(), MiningQuestWeakest: miningPatches(),
-  FetchWood01: fetchPatches(2), FetchWood02: fetchPatches(4), FetchWood03: fetchPatches(6), FetchWood04: fetchPatches(8),
-  // Q9: the fifth and sixth plants made permanent, not the fourth again.
-  ForageSummerPlantsQuest: Object.freeze([
-    { old: '\tget item _plant5_\n\tmake _plant4_ permanent\n', new: '\tget item _plant5_\n\tmake _plant5_ permanent\n', count: 2 },
-    { old: '\tget item _plant6_\n\tmake _plant4_ permanent\n', new: '\tget item _plant6_\n\tmake _plant6_ permanent\n', count: 1 },
-  ].map(Object.freeze)),
-});
-
-/** A quest's (or the list's) text with its FORAGE-FIX patches applied (unchanged when it has none). Line endings are
- *  read as LF first - a checkout that turned the files to CRLF patches the same. Throws on a mismatch. SHAM-TRAIL: the
- *  law is quest/questPatches.js applyTextPatches, which DFU's own quests' patches share. */
-export function applyForageFix(questName, text) {
-  const patches = FORAGE_FIX_PATCHES[questName];
-  return patches ? applyTextPatches('FORAGE-FIX', questName, patches, text) : text;
-}
+// ---- FORAGE-FIX (FORAGE0 12): the quests' four mends ----------------
+// OWN-WORK3: the quests are our own files (quests/), and Q7, Q8, Q9 and Q13 are written into them: one Mining task
+// fires (`_rich_`), the fetch quests ask for class 9, the fifth and sixth plants are kept, and the list files the fetch
+// quests under Commoners and Nobility. Q10 is basketFind's above; Q11 is quest/questActionsExtension.js's.

@@ -129,26 +129,3 @@ test('ROCK-SMEAR: the underside and the crown are mapped from above, and every s
   assert.ok(flat.length >= 8, 'the boulder\'s underside');
   for (const f of flat) assert.ok(Math.abs(f.sMin - 1) < 1e-6 && Math.abs(f.sMax - 1) < 1e-6, `the underside, a repeat a metre each way (${f.sMin.toFixed(4)}, ${f.sMax.toFixed(4)})`);
 });
-
-test('ROCK-SMEAR: the report - Ipsmoth\'s four blocks stand the pack\'s rocks, nine of them on its water\'s tiles, every one a stand-in this law dresses', () => {
-  const pack = JSON.parse(zlib.gunzipSync(readFileSync(new URL('../../vendor/beautiful-villages/WorldDataPack/beautiful-villages.pack.json.gz', import.meta.url))).toString('utf8'));
-  const loc = JSON.parse(pack.files['location-36-183.json']);
-  assert.equal(loc[1][3], 'Ipsmoth');
-  const names = loc[2].find((o) => o[0] === 's' && o[1].join('.') === 'Exterior.ExteriorData.BlockNames')[2];
-  assert.deepEqual(names, ['GENRAS03.RMB', 'CLOTAS01.RMB', 'RESIAS06.RMB', 'FARMAA03.RMB']);
-  const WATER = new Set([0, 5, 6, 7, 48, 20, 21, 22, 49, 30, 31, 32, 50, 8, 23, 33, 34, 35, 36]);   // world/water/waterCorners.js's records
-  let rocks = 0, wet = 0;
-  for (const name of names) {
-    const [, , ops] = JSON.parse(pack.files[`${name}.json`]);
-    const get = (path) => ops.find((o) => o[0] === 's' && o[1].join('.') === path)?.[2];
-    const tiles = get('RmbBlock.FldHeader.GroundData.GroundTiles')?.$t;
-    for (const m of get('RmbBlock.Misc3dObjectRecords')?.$m ?? []) {
-      if (!RMBRP_ROCKS[m[0]]) continue;
-      rocks++;
-      assert.ok(RMBRP_ROCK_SCALE[m[0]] >= 2, `${m[0]}: stood at its prefab's scale`);
-      const col = Math.floor(m[2] / 256), row = 15 - Math.floor((m[4] + 4096) / 256);
-      if (tiles && WATER.has(tiles[row * 16 + col][1] & 0x3f)) wet++;
-    }
-  }
-  assert.deepEqual([rocks, wet], [16, 9]);
-});

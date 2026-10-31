@@ -73,6 +73,14 @@ cooked fish.
 
 ### Open: the owner's call
 
+- **Homes made in the town packs' layouts (OWN-WORK3).** A house, room, quest site or anchor a save stamped with
+  Beautiful Villages' or Beautiful Cities' layout now sleeps (`systems/layoutPins.js`). Online, `homes.layout` still
+  names the packs: those homes sleep and their towns refuse new claims until each is moved to a classic house of the
+  same town, as ARENA4b moved the arena's. This must be settled before the branch reaches players.
+- **Words still the authors' outside the retired files.** About 100 dish and drink names in
+  `systems/survival/tavernMenu.js` and the meal and camp lines (`SURVIVAL_USE_TEXT`, `CAMP_TEXT`) are Climates &
+  Calories'; several look like another game's recipe names. Foraging's and Roleplay & Realism's quests keep the
+  authors' QBN logic byte for byte, as DFU's quests keep DFU's.
 
 - **Bethesda's words in Daggerfall Unity's MIT data.** `vendor/dfu-quests` carries DFU's 265 quest scripts, whose
   messages are Daggerfall's quest text (eight runs of 68 to 77 bytes match the QRC files byte for byte). Its
@@ -92,21 +100,19 @@ cooked fish.
 
 ## The inventory
 
-Forty directories under `vendor/` held an outside author's work on 2026-10-31. OWN-WORK1 retired twelve of them and
-OWN-WORK2 four more (the next section). The 24 left are below, sorted by what replacing them needs. "Runtime" means the game loads the
+Forty directories under `vendor/` held an outside author's work on 2026-10-31. OWN-WORK1 retired twelve of them,
+OWN-WORK2 four and OWN-WORK3 two more (the next section). The 22 left are below, sorted by what replacing them needs. "Runtime" means the game loads the
 files, so a replacement has to exist before the directory can go. The registry (`Mod-Registry.md`) keeps each one's
 provenance until it is retired.
 
 | vendor | author | what the tree carries | runtime | kind | wave |
 |---|---|---|---|---|---|
-| `beautiful-villages` | carademono | one world-data pack, 7,317 locations and 209 blocks | yes | world data | 2 |
-| `beautiful-cities` | carademono | one world-data pack, 410 cities and 611 blocks | yes | world data | 2 |
-| `climates-calories` | Ralzar | item templates, 13 item icons (the rules are already an overhaul) | yes | data, art | 2 |
-| `foraging` | Harbinger451 | 12 item templates, 22 quests, 7 textures, the assembly and its IL | yes | data, words, art | 2 |
-| `travel-options` | Hazelnut | the string table, settings, 3 UI textures | yes | words, art | 2 |
-| `roleplay-realism` | Hazelnut | quests, world data, 7 scripts, 5 sprites | yes | mixed | 2 |
-| `roleplay-realism-items` | Hazelnut and Ralzar | item templates, string table, 15 scripts, 230 sprites | yes | mixed | 2 |
-| `iliac-puddle-no-more` | jet082 | 7 fish templates, 7 fish pictures, the assembly (the coastline bake is already ours) | yes | data, art | 2 |
+| `climates-calories` | Ralzar | 13 item icons (OWN-WORK3: the rows, prices and words are ours) | yes | art | 3 |
+| `foraging` | Harbinger451 | 7 textures (OWN-WORK3: the items, words and 22 quests are ours) | yes | art | 3 |
+| `travel-options` | Hazelnut | 3 UI textures (OWN-WORK3: the settings and words are ours) | yes | art | 3 |
+| `roleplay-realism` | Hazelnut | 5 sprites, 19 more rebuilt (OWN-WORK3: the quests, world, settings and words are ours) | yes | art | 3 |
+| `roleplay-realism-items` | Hazelnut and Ralzar | 230 sprites, 50 more rebuilt (OWN-WORK3: the items, spells and words are ours) | yes | art | 3 |
+| `iliac-puddle-no-more` | jet082 | 7 fish pictures (OWN-WORK3: the fish, settings' words and coastline are ours) | yes | art | 3 |
 | `diverse-weapons` | RealAKP | 12,612 weapon sprites (59 MB under `public/art/`), the script | yes | art | 3 |
 | `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | 3 |
 | `eye-of-the-beholder` | RedRoryOTheGlen | 166 sprites, the assembly's IL | yes | art | 3 |
@@ -124,8 +130,9 @@ provenance until it is retired.
 | `snowfall` | demifiend000 | 168 repainted winter textures (the second exception), the assembly and its IL | yes | art, Bethesda-derived | 3 |
 | `class-skins` | not named for the pack | 1,683 repainted class sprites (the fourth exception) | yes | art, Bethesda-derived | 3 |
 
-Wave 2 replaces data, tables and words: our own text, our own tables and our own world edits. Wave 3 replaces art
-and sound, and it is the largest. The four packs marked Bethesda-derived serve both of the arc's goals: our own
+Wave 2 replaced data, tables and words: our own text, our own tables and our own world edits (OWN-WORK2 and
+OWN-WORK3, 2026-10-31). A folder that held art too is cut down to its art, listed by a file of ours, and waits for
+wave 3. Wave 3 replaces art and sound, and it is the largest. The four packs marked Bethesda-derived serve both of the arc's goals: our own
 art in their place also takes Bethesda's silhouettes out of the tree.
 
 ## Retired from vendor/
@@ -151,6 +158,8 @@ still carries the files.
 | `mudex` | MUDEX 1.0.1 (`Ralzar81/MUDEX` @ `6b66655`) | Ralzar | approved (Mac, 2026-10-20: "Approve MUDEX"; the repository states no licence) - **RECORD OPEN** | manifest, two tables (35 monster lines, 89 encounter tables) | `systems/enemyExpansion/dexMeaner.js` (OWN-WORK2: our own rules and courts, not MUDEX's), `systems/enemyExpansion/dexSwitches.js`, `net/foeBounds.js` | 2026-10-31, `c2fbbbbfa` |
 | `immersive-travel` | Immersive Travel 1.5 | kkgobkk | granted (the owner handed the zip over 2026-10-04: "let this be the next mod we integrate 1:1") - **RECORD OPEN** | manifest, settings (22 keys), the assembly and its IL dump, the author's edit of the four city-gate blocks | `systems/immersiveTravel.js`, `systems/immersiveTravelTables.js`, `world/immersiveTravelGates.js` (OWN-WORK2: our own carriage stand; no gate block is edited), `systems/modSettings.js` | 2026-10-31, `c2fbbbbfa` |
 | `roads-hazelnut` | Basic Roads 1.3.1 (`ajrb/dfunity-mods`, `BasicRoads/`) | Hazelnut | code MIT ("Copyright (C) 2020 Hazelnut", in `LICENSE`); the data no licence text, granted to Mac 2026-09-02 - **RECORD OPEN** | four 500,000-byte path masks (roads, tracks, rivers, streams) | `world/roadsProducer.js`, `world/road/riverNetwork.js`, `world/road/roadNetwork.js` (OWN-WORK2: our own Bay network, the provinces' rule), `world/road/roadPainter.js` (his MIT painter, ported) | 2026-10-31, `c2fbbbbfa` |
+| `beautiful-villages` | Beautiful Villages of Daggerfall 1.4.2 | carademono | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | manifest, one world-data pack (7,317 locations, 209 blocks: the author's edit of MAPS.BSA and BLOCKS.BSA) | `world/townDress.js`, `scenes/townDressHost.js` (OWN-WORK3: every town dressed by our own rules; no town laid out again), `world/townStandIns.js`, `systems/layoutPins.js` | 2026-10-31, `8d110d8f7`; credit ended |
+| `beautiful-cities` | Beautiful Cities of Daggerfall 0.5.0 | carademono | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | manifest, one world-data pack (410 cities, 611 blocks: the author's edit of MAPS.BSA and BLOCKS.BSA) | `world/townDress.js`, `scenes/townDressHost.js`, `world/townStandIns.js`, `systems/layoutPins.js` | 2026-10-31, `8d110d8f7`; credit ended |
 
 The MIT rows keep their notice because our JS restates their code closely: `unleveledLoot.js` method by method,
 `meanerMonsters.js` the mod's 24-row table value for value, `worldTooltips.js` the mod's tables word for word.

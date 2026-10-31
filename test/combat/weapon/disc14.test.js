@@ -46,7 +46,7 @@ test('DISC14-A: in both hosts that ride, the weapons draw over the mount - the m
     assert.ok(src.indexOf('drawHud(renderer', draws[0]) > draws[0], `${file}: and the HUD over both`);
     assert.ok(src.includes(`if (${gate}) weaponRig.draw({ paralyzed });`), `${file}: under the walk block's own gate`);
   }
-  assert.match(rd('vendor/roleplay-realism/Scripts/EnhancedRiding.cs'), /Draw horse texture behind other HUD elements & weapons[^\n]*\n\s*GUI\.depth = 2;/, 'the law, in the vendored mod');
+  assert.match(rd('src/player/mountRig.js'), /OnGUI draws at depth 2, UNDER the HUD's own elements/, 'the law (Roleplay & Realism 1.8\'s EnhancedRiding: GUI.depth 2), where our rig restates it');
 });
 
 // ── DISC14-B: REVERTED by DISC16-B (2026-09-24, Mac: "Weapon widget preset needs to be defaulted on with diverse

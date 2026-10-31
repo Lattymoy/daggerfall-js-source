@@ -83,8 +83,8 @@ test('AUDIT 68 S31-enhanced-rename-mutates-shared-spell: the enhanced book renam
     book.destroy();
     assert.equal(mine[0].name, 'Night Lamp', 'the player\'s book carries the rename');
     assert.equal(mine[0].custom, true, 'marked custom, as the classic book marks it');
-    assert.equal(RRI_SPELLS.candle.name, 'Candle', 'the shared record is untouched');
-    assert.equal(theirs[0].name, 'Candle', 'and so is every other book holding it');
+    assert.equal(RRI_SPELLS.candle.name, 'Glimmer', 'the shared record is untouched (OWN-WORK3: our name)');
+    assert.equal(theirs[0].name, 'Glimmer', 'and so is every other book holding it');
     // The rename survives a save: a custom entry is written whole, never as the bare index.
     const snap = snapshotPlayer({ stats: {}, skills: [], skillUses: [], items: [], spells: mine }, {});
     assert.equal(snap.spells[0].name, 'Night Lamp');

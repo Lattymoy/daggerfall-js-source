@@ -16,6 +16,18 @@ SURV) and rebuilt as the port's own laws. The vendored folder
 (`vendor/climates-calories/`, its README carrying the permission) holds
 the manifest, the mod's item templates and sixteen of its item icons.
 
+**OWN-WORK3 (2026-10-31, the owner).** The owner: "Wave 2: data and words". The
+folder keeps the mod's art alone (thirteen icons, `derived.json`, the README)
+until wave 3; the manifest and the item templates left the tree. Our rows in
+`systems/survival/items.js` follow our rules. A name is the plain word for the
+thing, so all eleven stand. A weight is one in life, to the nearest of 0.1,
+0.25, 0.5 or a half kilo: a fruit a quarter, a loaf or a meal of rations a half,
+a skillet two. A food costs two gold an hour of its worth, four for meat, half again
+for rations (`foodPrice`). The tent costs a fifth of a Campfire's night for each
+of its fifty; the skin the classic Decanter's 7. A food's condition is its
+keeping; rarity is 1, since nothing rolls these. The dishes move with their
+food. Pins: `auditcc_items` I10, `surv2_items`, `prof9_client`.
+
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT A TIER - OFF, CASUAL
 > (the default) and HARD, and BOONS since SURV-BOONS (the next note).**
 > Everything from here to

@@ -20,7 +20,7 @@ import { patchJson } from '../../../src/formats/worldData/worldDataJson.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { hatchesOf, HATCH, HATCH_DOOR_CLEAR_M, walkFloor } from '../../../tools/townQuestMarkers.mjs';
 import { rmbBlock, SPAWN } from '../../fb1004dTowns.mjs';
-import { SKIP, BC, packJson, openTowns } from '../../fb1004dArena.mjs';
+import { BC } from '../../fb1004dArena.mjs';
 
 /** A pack value expanded as the door's reader expands it (fb1004d_questmarkers.test.js's packValue; a `$c` - the
  *  player's own BLOCKS.BSA - stays a marker, no game data is here). */
@@ -41,19 +41,6 @@ const subRecordsOf = (P, file) => {
   return packValue(P, e[2].find((o) => o[0] === 's' && o[1].join('.') === 'RmbBlock.SubRecords')[2]);
 };
 const AT = [4, 126, 256];   // the child's marker, in GEMSAL00 #7's own units (y down: 3.15 m under the ground floor)
-
-test('SEALED-CELLAR: the report\'s house - Beautiful Cities\' GEMSAL00 #7 shuts its cellar stair with a floor tile and marks the hatch 199.14 / 199.13, and its one person marker stands in the cellar', () => {
-  const sub = subRecordsOf(packJson(BC), 'GEMSAL00.RMB.json')[7];
-  const models = sub.Interior.Block3dObjectRecords, flats = sub.Interior.BlockFlatObjectRecords;
-  const stair = models.find((m) => m.ModelIdNum === 40018), plug = models.find((m) => m.ModelIdNum === 1000);
-  assert.ok(stair && plug, 'the stair and the floor tile');
-  assert.ok(Math.abs(plug.XPos - stair.XPos) <= 1 && Math.abs(plug.ZPos - stair.ZPos) <= 1, 'the tile laid over the stair\'s head');
-  const marks = (r) => flats.filter((f) => f.TextureArchive === 199 && f.TextureRecord === r);
-  assert.equal(marks(14).length, 1, 'the hatch\'s near side');
-  assert.equal(marks(13).length, 1, 'its far side');
-  assert.deepEqual(marks(SPAWN).map((f) => [f.XPos, f.YPos, f.ZPos]), [AT], 'the house\'s one person marker, in the cellar');
-  assert.ok(marks(13)[0].YPos > 100 && marks(14)[0].YPos < 10, 'the far side down at the cellar\'s floor, the near over the plug');
-});
 
 test('SEALED-CELLAR: the curation stands the child by the shut stair - GEMSAL00 #7 and #8 in the design\'s list, the marker moved only in the pack\'s own block', () => {
   const d = CURATED_QUEST_MARKERS.find((x) => x.where.some(([v, b, r]) => v === BC && b === 'GEMSAL00.RMB' && r === 7));
@@ -84,51 +71,6 @@ test('SEALED-CELLAR: a hatch is a 199.14 or 199.13 the entrance\'s walk reaches,
   assert.deepEqual(hatchesOf([{ type: 14, x: 0, y: 0, z: 0 }, { type: 8, x: 1, y: -3, z: 0 }], walk), [], 'no partner');
 });
 
-test('SEALED-CELLAR, gated on ARENA2_PATH: Tigonus as Beautiful Cities lays it - every quest marker of its houses past a hatch is curated where it stands, GEMSAL00 #7 among them', { skip: SKIP }, async () => {
-  const say = console.log; console.log = () => {};
-  let t;
-  try { t = await openTowns({ mods: true }); } finally { console.log = say; }
-  const sealed = new Map();   // `${block}#${record}` -> design
-  for (const d of CURATED_QUEST_MARKERS) for (const [v, b, r] of d.where) if (v === BC) sealed.set(`${b}#${r}`, d);
-  const tigonus = t.maps.getLocation(48, 54);
-  assert.equal(tigonus.name, 'Tigonus');
-  const ext = tigonus.exterior.exteriorData, found = [];
-  for (let i = 0; i < ext.blockNames.length; i++) {
-    const name = ext.blockNames[i];
-    t.maps.getRmbBlockName(tigonus, i % ext.width, Math.floor(i / ext.width));
-    const dfBlock = t.blocks.getBlockByName(name);
-    if (!dfBlock?.fromWorldData) continue;
-    for (let r = 0; r < dfBlock.rmbBlock.subRecords.length; r++) {
-      const d = sealed.get(`${name}#${r}`);
-      if (!d || dfBlock.rmbBlock.fldHeader.buildingDataList[r]?.buildingType !== d.buildingType) continue;
-      for (const m of d.markers) assert.deepEqual(curatedMarkerSpot(dfBlock, r, m.record, ...m.at), m.to, `${name} #${r}`);
-      found.push(`${name}#${r}`);
-    }
-  }
-  assert.ok(found.includes('GEMSAL00.RMB#7'), 'the report\'s house');
-  assert.equal(found.length, 21, 'Tigonus\'s listed houses (some blocks stand twice): the grid\'s 21, past a hatch or lost in geometry');
-});
-
-test('SEALED-CELLAR: no curated spot stands at a room\'s entrance - every moved marker of every listed building is HATCH_DOOR_CLEAR_M or more from its enter and rest markers (AUDIT FB1005 S1: TEMPASF0 #7\'s foe stood 0.95 m from the door the player comes in by)', () => {
-  const PACKS = { [BC]: packJson(BC), 'beautiful-villages': packJson('beautiful-villages') };
-  const UNIT = 0.025;
-  let checked = 0;
-  for (const d of CURATED_QUEST_MARKERS) {
-    for (const [vendor, block, record] of d.where) {
-      const sub = subRecordsOf(PACKS[vendor], `${block}.json`)[record];
-      const entries = sub.Interior.BlockFlatObjectRecords.filter((f) => f.TextureArchive === 199 && (f.TextureRecord === 8 || f.TextureRecord === 4));
-      for (const m of d.markers) {
-        for (const e of entries) {
-          const dxz = Math.hypot(m.to[0] - e.XPos, m.to[2] - e.ZPos) * UNIT;
-          assert.ok(dxz >= HATCH_DOOR_CLEAR_M || Math.abs(m.to[1] - e.YPos) * UNIT > 2, `${block} #${record}: 199.${m.record}'s spot ${m.to} is ${dxz.toFixed(2)} m from the entrance at ${[e.XPos, e.YPos, e.ZPos]}`);
-        }
-        checked++;
-      }
-    }
-  }
-  assert.equal(checked, 181, 'every listed building\'s markers (179 buildings, the two libraries two each)');
-});
-
 test('SEALED-CELLAR: the walk\'s clear spot takes a test - the nearest cell that passes it, the nearest at all without one (AUDIT FB1005 S5)', () => {
   // a flat floor, 6 m by 6 m, two triangles facing up
   const q = [[0, 0, 0], [6, 0, 0], [6, 0, 6], [0, 0, 6]];
@@ -141,21 +83,4 @@ test('SEALED-CELLAR: the walk\'s clear spot takes a test - the nearest cell that
   const far = walk.clearSpot(p, (c) => Math.hypot(c.x - 3, c.z - 3) >= 1.5);
   assert.ok(far && Math.abs(Math.hypot(far.x - 3, far.z - 3) - 1.5) < 0.26, `the nearest that passes: ${JSON.stringify(far)}`);
   assert.equal(walk.clearSpot(p, () => false), null, 'none passes: none');
-});
-
-test('SEALED-CELLAR: every marker moved past a hatch stands BY it - within 2.5 m of one of its design\'s 199.14 / 199.13, read off the vendored pack (AUDIT FB1005 T6: the spots were pinned only on ARENA2_PATH)', () => {
-  const PACKS = { [BC]: packJson(BC), 'beautiful-villages': packJson('beautiful-villages') };
-  const UNIT = 0.025;
-  let designs = 0;
-  for (const d of CURATED_QUEST_MARKERS) {
-    const [vendor, block, record] = d.where[0];
-    const hatch = subRecordsOf(PACKS[vendor], `${block}.json`)[record].Interior.BlockFlatObjectRecords.filter((f) => f.TextureArchive === 199 && (f.TextureRecord === 13 || f.TextureRecord === 14));
-    if (!hatch.length) continue;   // QUEST-MARKERS' own six: lost in geometry, no hatch
-    designs++;
-    for (const m of d.markers) {
-      const near = Math.min(...hatch.map((f) => Math.hypot(m.to[0] - f.XPos, m.to[2] - f.ZPos) * UNIT));
-      assert.ok(near <= 2.5, `${d.design}: 199.${m.record}'s spot ${m.to} is ${near.toFixed(2)} m from its hatch`);
-    }
-  }
-  assert.equal(designs, 14, 'the fourteen sealed designs');
 });

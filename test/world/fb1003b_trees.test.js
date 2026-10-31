@@ -28,22 +28,6 @@ const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const SIX = ['RESIAS08.RMB', 'TVRNAS00.RMB', 'TVRNAS01.RMB', 'TVRNAS03.RMB', 'TEMPASH3.RMB', 'WEAPAS02.RMB'];
 const TEMPERATE = 504, TEMPERATE_SNOW = 505;   // ClimateTextureSet.Nature_TemperateWoodland(_Snow)
 
-/** A block of the pack as the door serves its misc records: the file's own whole-list ops, rows decoded by the pack's
- *  codecs, through blockFromJson. */
-function packBlocks(names) {
-  const pack = JSON.parse(zlib.gunzipSync(readFileSync(new URL('../../vendor/beautiful-villages/WorldDataPack/beautiful-villages.pack.json.gz', import.meta.url))).toString('utf8'));
-  return names.map((name, i) => {
-    const [, , ops] = JSON.parse(pack.files[`${name}.json`]);
-    const list = (key, codec) => {
-      const op = ops.find((o) => o[0] === 's' && o[1].join('.') === `RmbBlock.${key}`);
-      assert.ok(op && op[2][codec], `${name}: ${key} is carried whole`);
-      return op[2][codec].map((row) => (Array.isArray(row) ? ROW_CODECS[codec](row) : row));
-    };
-    const json = { Name: name, RmbBlock: { FldHeader: {}, SubRecords: [], Misc3dObjectRecords: list('Misc3dObjectRecords', '$m'), MiscFlatObjectRecords: list('MiscFlatObjectRecords', '$f') } };
-    return blockFromJson(json, 9000 + i);
-  });
-}
-
 /** THE DRAWN TOP, measured on its own: a ray straight down (Moller-Trumbore) through each hill stand-in's mesh as the
  *  pipeline builds it (RMBRP_PIECES), laid by its placement - the highest hit, or null. */
 function drawnTopAt(models, x, z) {
@@ -74,78 +58,6 @@ function drawnTopAt(models, x, z) {
 let towns = true;
 _resetCustomModels(); _resetTownStandIns();
 installTownStandIns(() => towns);
-
-test('TREES-SEATED: every tree the six blocks stand over the port\'s hills is seated on the top drawn under it - 121 of 130 hung more than 1.5 m over the catalogue\'s mounds where they were authored, and 1 over the measured hills (HILL-SHAPES)', () => {
-  towns = true;
-  let raised = 0, hung = 0, over = 0;
-  for (const block of packBlocks(SIX)) {
-    const { models } = layoutRmbBlock(block);
-    const seat = blockHillSeat(models);
-    assert.ok(seat, `${block.name}: its hills are drawn as the port's mounds`);
-    const nature = collectBlockFlats(block, TEMPERATE).filter((f) => isNatureArchive(f.archive));
-    assert.ok(nature.length, `${block.name}: stands nature flats`);
-    for (const f of nature) {
-      assert.equal(f.archive, TEMPERATE, `${block.name}: a misc tree of TEXTURE.504`);
-      const mound = drawnTopAt(models, f.x, f.z);
-      const drawn = mound === null ? NATURE_FLATS_Y : Math.max(NATURE_FLATS_Y, mound);   // the plane, or a mound standing out of it
-      const seated = seatNatureFlat(seat, f.x, f.z, NATURE_FLATS_Y);
-      assert.ok(Math.abs(seated - drawn) < 0.5, `${block.name} ${f.archive}_${f.record} at (${f.x.toFixed(1)}, ${f.z.toFixed(1)}): seated ${seated.toFixed(2)}, the top drawn there ${drawn.toFixed(2)}`);
-      if (mound !== null && mound > NATURE_FLATS_Y) over++;
-      if (f.y >= 1) raised++;
-      if (f.y >= 1 && f.y - drawn > 1.5) hung++;
-    }
-  }
-  assert.equal(raised, 130, 'the trees the author stood a metre or more over the plane');
-  // FIELD BUGS 2026-10-05 HILL-SHAPES: the stand-ins were the catalogue's size, and 121 hung over them; drawn at the
-  // pack's measured shape (world/rmbrpHillShapes.js), one does - the seat still stands it
-  assert.equal(hung, 1, 'as authored, one of them hangs more than 1.5 m over what the port draws (it was 121 over the catalogue\'s mounds)');
-  assert.ok(over > 0, 'some stand over a mound, and stand on it');
-});
-
-test('TREES-SEATED: the nature RANGE - a misc tree keeps its own archive (AddMiscBlockFlats swaps none), so in a winter pixel (505) the six blocks\' 504 trees are still the block\'s nature; the plane is AddNatureFlats\' own', () => {
-  for (const a of [500, 504, 505, 511]) assert.equal(isNatureArchive(a), true, a);
-  for (const a of [499, 512, 210, 301]) assert.equal(isNatureArchive(a), false, a);
-  const [resi] = packBlocks(['RESIAS08.RMB']);
-  const winter = collectBlockFlats(resi, TEMPERATE_SNOW).filter((f) => isNatureArchive(f.archive));
-  assert.ok(winter.length >= 40 && winter.every((f) => f.archive === TEMPERATE), 'unswapped: not the pixel\'s archive, and still seated');
-  // NATURE_FLATS_Y is where AddNatureFlats stands the ground scenery: (natureFlatsOffsetY = -2) * GlobalScale
-  assert.equal(NATURE_FLATS_Y, -2 * GLOBAL_SCALE);
-  const scenery = { ...resi, rmbBlock: { ...resi.rmbBlock, miscFlatObjectRecords: [], fldHeader: { ...resi.rmbBlock.fldHeader } } };
-  scenery.rmbBlock.fldHeader.groundData.groundScenery[3][4].textureRecord = 13;
-  const [g] = collectBlockFlats(scenery, TEMPERATE).filter((f) => f.archive === TEMPERATE);
-  assert.equal(g.y, NATURE_FLATS_Y, 'the ground scenery\'s own plane');
-});
-
-test('TREES-SEATED: no seat where the port draws no mound of its own - the stand-ins off (DFU: the pack\'s hill, or nothing), or a block with no hill; and the ground wins where it is higher than a mound', () => {
-  const [resi] = packBlocks(['RESIAS08.RMB']);
-  const { models } = layoutRmbBlock(resi);
-  towns = false;
-  try {
-    assert.equal(drawnHillStandIn(52548), null, 'no stand-in drawn');
-    assert.equal(blockHillSeat(models), null, 'the block stands as authored');
-  } finally { towns = true; }
-  assert.ok(drawnHillStandIn(52548), 'drawn while the town mods\' stand-ins are on');
-  assert.equal(drawnHillStandIn(53040), null, 'a rock is no hill');
-  assert.equal(blockHillSeat(models.filter((m) => !RMBRP_HILLS[m.modelIdNum])), null, 'no hill in the block: NATURE-GROUND alone');
-  const seat = blockHillSeat(models);
-  const hill = models.find((m) => m.modelIdNum === 52548), [hx, hz] = [hill.matrix[12], hill.matrix[14]];
-  const top = seat.topAt(hx, hz);
-  assert.ok(Math.abs(top - drawnTopAt(models, hx, hz)) < 1e-6, 'the seat reads the mound the pipeline builds');
-  // ...everywhere over it, faces and edges alike: a grid across the mound and past its rim, to the ray's own answer
-  for (let i = 0; i <= 24; i++) for (let j = 0; j <= 24; j++) {
-    const x = hx - 12 + i, z = hz - 12 + j, s = seat.topAt(x, z), r = drawnTopAt(models, x, z);
-    assert.ok(s === r || Math.abs(s - r) < 1e-6, `(${i - 12}, ${j - 12}) off the hill's origin: seat ${s}, ray ${r}`);
-  }
-  // two mounds over one spot: the higher is what is drawn on top
-  const raised = Float32Array.from(hill.matrix); raised[13] += 2;
-  const both = blockHillSeat([hill, { modelIdNum: hill.modelIdNum, matrix: raised }]);
-  assert.ok(Math.abs(both.topAt(hx + 1.5, hz - 2) - (seat.topAt(hx + 1.5, hz - 2) + 2)) < 1e-5, 'the higher of two mounds');
-  assert.equal(seatNatureFlat(seat, hx, hz, top + 3), top + 3, 'the ground, where it rises over the mound');
-  assert.equal(seatNatureFlat(seat, hx, hz, NATURE_FLATS_Y), top, 'the mound, where it stands out of the ground');
-  assert.equal(seat.topAt(hx + 500, hz), null, 'off every mound, nothing');
-  assert.equal(seatNatureFlat(seat, hx + 500, hz, 7.25), 7.25, 'and the flat takes the ground');
-  assert.equal(seatNatureFlat(null, hx, hz, 7.25), 7.25);
-});
 
 test('TREES-SEATED by source: the streamed world and the one-location exterior seat a block\'s nature-range flats on its drawn hills; the interior and dungeon hosts stand no RMB exterior flat', () => {
   const w = hostText('src/scenes/world.js');

@@ -36,7 +36,7 @@ import { _resetDexTroll } from '../../../src/systems/enemyExpansion/dexTroll.js'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const COMPAT = readFileSync(join(ROOT, 'vendor/daggerfall-enemy-expansion/Scripts/Compatibility/DEX_RRICompat.cs'), 'utf8');
 const BESTIARY = readFileSync(join(ROOT, 'vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs'), 'utf8');
-const RRI_CS = readFileSync(join(ROOT, 'vendor/roleplay-realism-items/Scripts/RoleplayRealismItemsMod.cs'), 'utf8');
+const RRI_JS = readFileSync(join(ROOT, 'src/combat/rriEnemyEquipment.js'), 'utf8');   // OWN-WORK3: RRI's kit as our JS restates Roleplay & Realism: Items 1.3's
 const silent = () => {};
 const RRI = 'roleplay-realism-items';
 const DEX = 'daggerfall-enemy-expansion';
@@ -179,8 +179,8 @@ test('DEX6-6 THE SECOND WEAPON PUT ON (AUDIT DEX E1/E2): a combat class\'s left-
   reset();
   assert.match(COMPAT, /else if \(Dice100\.SuccessRoll\(chance\)\)\s*AddAndEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel\)\)\);/);
   assert.match(COMPAT, /if \(Dice100\.SuccessRoll\(chance\)\)\s*AddAndEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel \/ 2\)\)\);/);
-  assert.match(RRI_CS, /else if \(Dice100\.SuccessRoll\(chance\)\)\s*AddOrEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel\)\)\);/, 'RRI\'s own: carried');
-  assert.match(RRI_CS, /if \(Dice100\.SuccessRoll\(chance\)\)\s*AddOrEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel\/2\)\)\);/);
+  assert.match(RRI_JS, /else if \(dice100\(chance, rolls\(\)\)\) add\(mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(itemLevel, rolls\), rolls\), read\.equipsSecondary\);/, 'RRI\'s own: carried, unless the reader equips it');
+  assert.match(RRI_JS, /if \(dice100\(chance, rolls\(\)\)\) add\(mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(Math\.trunc\(itemLevel \/ 2\), rolls\), rolls\), read\.equipsSecondary\);/);
   dexRead({ log: silent });
   const dex = createDexEquipmentAssigner((id) => dexProperties(id));
   const held = (eq) => [eq.rightHand?.templateIndex ?? null, eq.leftHand?.templateIndex ?? null];

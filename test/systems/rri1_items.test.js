@@ -1,8 +1,8 @@
 // RRI1 - ROLEPLAY & REALISM: ITEMS 1.3 (Hazelnut & Ralzar), THE ITEMS,
-// 1:1 (2026-09-23). The fourteen custom item classes read off the
-// author's source (vendor/roleplay-realism-items/Scripts/), the template
-// rows and patches its ItemTemplates.json merges, the 280 sprites with
-// their <rect>s, and the mod's switches. The pins execute the classes
+// 1:1 (2026-09-23). The fourteen custom item classes as the release's
+// scripts write them, the template rows and patches (OWN-WORK3: ours,
+// by RRI_ROW_RULE), the 280 sprites with their <rect>s, and the mod's
+// switches (our words). The pins execute the classes
 // through the port's OWN law sites - DFU's virtual dispatch is a table
 // here, and a table nobody dispatches to is not a port - and hold each
 // answer to the C#.
@@ -14,7 +14,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  RRI_MOD, RRI_VENDOR, RRI_TEMPLATES, RRI_TEMPLATE_PATCHES, RRI_CLASSES, RRI_TEXT, FIRST_FEMALE_ARCHIVE,
+  RRI_MOD, RRI_VENDOR, RRI_TEMPLATES, RRI_TEMPLATE_PATCHES, RRI_ROW_RULE, RRI_ROW_FROM, RRI_CLASSES, RRI_TEXT, FIRST_FEMALE_ARCHIVE,
   leatherMaterialArmorValue, chainmailMaterialArmorValue, customItemClass, rriCustomItemsForGroup, rriVariantFields, rriSpriteEntries, rriEnabled, rriModule,
 } from '../../src/systems/roleplayRealismItems/rriItems.js';
 import { installRoleplayRealismItems, _resetRoleplayRealismItems, rriSpriteUrl } from '../../src/systems/roleplayRealismItems/rriInstall.js';
@@ -56,41 +56,68 @@ function fresh({ enabledAtBoot = true } = {}) {
 }
 function done() { _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismItems(); registerTemplateOverrides([]); registerCustomArmorValue(null); for (const c of Object.values(RRI_CLASSES)) registerSwingSound(c.index, null); }
 
-test('RRI1 templates: the fourteen rows verbatim from ItemTemplates.json, registered past the classic 288; the twenty patches merged over classic rows while the mod is on at boot, and not otherwise', () => {
-  const json = JSON.parse(rd('vendor/roleplay-realism-items/ItemTemplates.json'));
-  const custom = json.filter((r) => r.index >= 513);
-  const patches = json.filter((r) => r.index < 513);
-  assert.equal(custom.length, 14); assert.equal(patches.length, 20);
-  assert.deepEqual(RRI_TEMPLATES.map((t) => ({ ...t })), custom, 'the rows are the file\'s');
-  assert.deepEqual(RRI_TEMPLATE_PATCHES.map((t) => ({ ...t })), patches, 'the patches are the file\'s');
+test('RRI1 templates (OWN-WORK3): the fourteen rows by our rule from the classic slot piece, registered past the classic 288; our seven patches merged over classic rows while the mod is on at boot, and not otherwise', () => {
+  // the rule, against the classic rows: weight to 0.05 kg, the rest whole; order, pictures and body record the slot's
+  const r05 = (x) => Number((Math.round(x / 0.05) * 0.05).toFixed(2));
+  for (const t of RRI_TEMPLATES) {
+    const [set, from] = RRI_ROW_FROM[t.index], f = RRI_ROW_RULE[set], c = ITEM_TEMPLATES[from], weapon = set === 'weapon';
+    assert.deepEqual([t.baseWeight, t.hitPoints, t.basePrice, t.enchantmentPoints, t.rarity], [r05(c.baseWeight * f.weight), Math.round(c.hitPoints * f.hitPoints), Math.round(c.basePrice * f.price), Math.round(c.enchantmentPoints * f.enchantment), f.rarity], `${t.name}: by the rule from ${c.name}`);
+    assert.deepEqual([t.drawOrderOrEffect, t.worldTextureArchive, t.worldTextureRecord, t.isBluntWeapon], [c.drawOrderOrEffect, c.worldTextureArchive, c.worldTextureRecord, c.isBluntWeapon], `${t.name}: the slot's facts`);
+    assert.deepEqual([t.playerTextureArchive, t.playerTextureRecord, t.variants, t.isOneHanded], weapon ? [t.index, 0, 0, true] : [c.playerTextureArchive, c.playerTextureRecord, 1, false], `${t.name}: the art's archive`);
+  }
+  assert.deepEqual({ ...RRI_ROW_RULE.chain }, { weight: 0.75, hitPoints: 0.6, price: 0.7, enchantment: 0.85, rarity: 3 });
+  assert.deepEqual({ ...RRI_ROW_RULE.light }, { weight: 0.5, hitPoints: 0.4, price: 0.55, enchantment: 0.7, rarity: 2 });
+  assert.deepEqual({ ...RRI_ROW_RULE.weapon }, { weight: 0.5, hitPoints: 0.5, price: 0.75, enchantment: 0.9, rarity: 1 });
+  assert.deepEqual(RRI_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.hitPoints, t.basePrice, t.enchantmentPoints]), [
+    [513, 'Hatchet', 3, 600, 15, 473], [514, 'Short Flail', 3.5, 500, 11, 405],
+    [515, 'Coat', 9.4, 2458, 70, 340], [516, 'Leggings', 1.9, 1843, 56, 43], [517, 'Left Sleeve', 1.5, 1229, 42, 34], [518, 'Right Sleeve', 1.5, 1229, 42, 34], [519, 'Footguards', 1.5, 1536, 35, 149],
+    [520, 'Jacket', 6.25, 1638, 55, 280], [521, 'Trousers', 1.25, 1229, 44, 35], [522, 'Cap', 1.25, 1024, 44, 630], [523, 'Half-boots', 1, 1024, 28, 122], [524, 'Gloves', 0.65, 819, 28, 280],
+    [525, 'Left Armguard', 1, 819, 33, 28], [526, 'Right Armguard', 1, 819, 33, 28],
+  ], 'our rows, our names');
+  assert.deepEqual(RRI_TEMPLATE_PATCHES.map((t) => ({ ...t })), [
+    { index: 131, baseWeight: 0.05 }, { index: 247, baseWeight: 0.4 }, { index: 249, baseWeight: 0.1 }, { index: 252, baseWeight: 0.2 },
+    { index: 275, baseWeight: 0.05 }, { index: 278, baseWeight: 0.05 }, { index: 279, baseWeight: 0.05 },
+  ], 'our patches: small goods weigh what they would');
   try {
     fresh();
-    assert.equal(templateByIndex(513).name, "Archer's Axe"); assert.equal(templateByIndex(513).custom, true);
-    assert.equal(templateByIndex(526).name, 'Right Vambrace'); assert.equal(templateByIndex(526).playerTextureArchive, 245);
+    assert.equal(templateByIndex(513).name, 'Hatchet'); assert.equal(templateByIndex(513).custom, true);
+    assert.equal(templateByIndex(526).name, 'Right Armguard'); assert.equal(templateByIndex(526).playerTextureArchive, 245);
     // the patches: ItemHelper.LoadItemTemplates merges by index at load
-    assert.equal(templateOverrideCount(), 20);
-    assert.equal(templateByIndex(121).baseWeight, 3.5, 'a Katana at 3.5 kg (was 2.5)'); assert.equal(templateByIndex(121).weight, 3.5, 'the port\'s alias follows');
-    assert.equal(templateByIndex(121).hitPoints, 350); assert.equal(templateByIndex(121).name, 'Katana', 'the rest of the row is the classic row');
-    assert.equal(templateByIndex(247).worldTextureRecord, 16, 'the torch draws record 16'); assert.equal(templateByIndex(247).worldTexRecord, 16);
-    assert.equal(templateByIndex(131).baseWeight, 0.1, 'an arrow at 0.1');
-    assert.equal(ITEM_TEMPLATES[121].baseWeight, 2.5, 'the frozen DFU table is untouched');
+    assert.equal(templateOverrideCount(), 7);
+    assert.equal(templateByIndex(247).baseWeight, 0.4, 'a torch at 0.4 kg (was 0.5)'); assert.equal(templateByIndex(247).weight, 0.4, 'the port\'s alias follows');
+    assert.equal(templateByIndex(247).worldTextureRecord, 6, 'its picture the classic one'); assert.equal(templateByIndex(247).name, 'Torch', 'the rest of the row is the classic row');
+    assert.equal(templateByIndex(131).baseWeight, 0.05, 'an arrow at 0.05');
+    assert.equal(templateByIndex(121).baseWeight, 2.5, 'a Katana is Daggerfall\'s');
+    assert.equal(ITEM_TEMPLATES[247].baseWeight, 0.5, 'the frozen DFU table is untouched');
     // off at boot: no patches (DFU would not have loaded the mod)
     fresh({ enabledAtBoot: false });
-    assert.equal(templateOverrideCount(), 0); assert.equal(templateByIndex(121).baseWeight, 2.5);
-    assert.equal(templateByIndex(513)?.name, "Archer's Axe", 'the rows stay registered - a saved Archer\'s Axe still resolves');
+    assert.equal(templateOverrideCount(), 0); assert.equal(templateByIndex(247).baseWeight, 0.5);
+    assert.equal(templateByIndex(513)?.name, 'Hatchet', 'the rows stay registered - a saved Hatchet still resolves');
   } finally { done(); }
 });
 
-test('RRI1 switches: the mod\'s eleven modules and Enabled on the Mods pane, the mod\'s own words; a class answers only while the mod and its own switch are on (RegisterCustomItem under newWeapons / newArmor)', () => {
+test('RRI1 switches: the mod\'s eleven modules and Enabled on the Mods pane, our own words (OWN-WORK3); a class answers only while the mod and its own switch are on (RegisterCustomItem under newWeapons / newArmor)', () => {
   const m = MOD_SETTINGS[RRI_VENDOR];
-  const shipped = JSON.parse(rd('vendor/roleplay-realism-items/modsettings.json'));
-  const keys = shipped.Sections.flatMap((s) => s.Keys);
-  assert.equal(keys.length, 11);
-  for (const k of keys) { assert.equal(m.keys[k.Name].default, k.Value, k.Name); assert.equal(m.keys[k.Name].description, k.Description, k.Name); }
+  const OURS = {
+    lootRebalance: 'Foes and loot piles carry loot that fits them.',
+    bandaging: 'Bandages stack, and a bandage heals you by your Medical skill.',
+    conditionBasedPrices: 'A worn item is worth less, and loot you find is often worn.',
+    storeQualityItemCondition: 'A poorer shop sells used goods.',
+    realisticEnemyEquipment: 'Foes carry gear that suits their class, in any state of wear.',
+    skillBasedStartingEquipment: 'You start with gear for your skills.',
+    skillBasedStartingSpells: 'You start with spells for your magic skills.',
+    weaponBalance: 'A heavier weapon swings slower and hits harder, so every weapon has a use.',
+    newWeapons: 'Adds the Hatchet and the Short Flail.',
+    newArmor: 'Adds light and chain armor for the chest, arms, legs, hands, feet and head.',
+    alchemistPotions: 'Alchemists sell a few random potions at twice the price.',
+  };
+  for (const [k, words] of Object.entries(OURS)) { assert.equal(m.keys[k].default, true, k); assert.equal(m.keys[k].description, words, k); }
   assert.equal(Object.keys(m.keys).length, 12, 'plus Enabled');
   assert.equal(m.keys.Enabled.default, true, 'MO1');
-  const manifest = JSON.parse(rd('vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json'));
-  assert.equal(manifest.GUID, RRI_MOD.guid); assert.equal(manifest.ModVersion, RRI_MOD.version); assert.equal(manifest.ModAuthor, RRI_MOD.author); assert.equal(manifest.ModTitle, RRI_MOD.title);
+  assert.equal(m.keys.Enabled.description, 'Two new weapons, a light and a chain armor set in every metal, and lighter arrows, paper and small goods.');
+  assert.deepEqual({ ...RRI_MOD }, { guid: '68589945-3fbb-4d58-81a3-3066f3f08539', title: 'RoleplayRealism-Items', version: '1.3', author: 'Hazelnut & Ralzar' });
+  const listing = JSON.parse(rd('vendor/roleplay-realism-items/roleplay-realism-items.files.json'));
+  assert.equal(listing.GUID, RRI_MOD.guid); assert.equal(listing.ModVersion, RRI_MOD.version); assert.equal(listing.ModAuthor, RRI_MOD.author); assert.equal(listing.ModTitle, RRI_MOD.title);
   try {
     _resetModSettings();
     assert.equal(rriEnabled(), true); assert.equal(rriModule('newWeapons'), true);
@@ -146,9 +173,9 @@ test('RRI1 the armor classes: the two material tables cell for cell, the slots, 
   try {
     fresh();
     // through the port's one armor-value read
-    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 515, material: M.Iron }), 6, 'a Mail Hauberk');
-    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 520, material: M.Leather, message: 1 }), 5, 'a Fur Jerkin');
-    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 520, material: M.Daedric }), 14, 'a Daedric Brigandine Jerkin');
+    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 515, material: M.Iron }), 6, 'an Iron Chain Coat');
+    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 520, material: M.Leather, message: 1 }), 5, 'a Fur-lined Jacket');
+    assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 520, material: M.Daedric }), 14, 'a Daedric Plated Jacket');
     assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 522, material: M.Iron }), 5, 'the helmet takes the light table');
     assert.equal(itemArmorValue({ group: 'Armor', templateIndex: 102, material: M.Iron }), 7, 'a classic cuirass keeps GetMaterialArmorValue');
     // the slots (GetEquipSlot)
@@ -161,33 +188,33 @@ test('RRI1 the armor classes: the two material tables cell for cell, the slots, 
     assert.equal(RRI_CLASSES[520].nativeMaterialValue({ material: M.Iron }), M.Leather, 'the light set by 0x0200');
     assert.equal(RRI_CLASSES[520].nativeMaterialValue({ material: M.Chain }), M.Chain, 'below Iron, unchanged');
     // GetEnchantmentPower: points + floor(points * the RAW material's multiplier)
-    assert.equal(itemEnchantmentPower({ group: 'Armor', templateIndex: 515, material: M.Daedric }), 360 + Math.floor(360 * armorEnchantmentMultiplier(M.Daedric)));
-    assert.equal(itemEnchantmentPower({ group: 'Armor', templateIndex: 522, material: M.Leather }), 740 + Math.floor(740 * armorEnchantmentMultiplier(M.Leather)));
+    assert.equal(itemEnchantmentPower({ group: 'Armor', templateIndex: 515, material: M.Daedric }), 340 + Math.floor(340 * armorEnchantmentMultiplier(M.Daedric)));
+    assert.equal(itemEnchantmentPower({ group: 'Armor', templateIndex: 522, material: M.Leather }), 630 + Math.floor(630 * armorEnchantmentMultiplier(M.Leather)));
     assert.equal(equipSoundFor({ group: 'Armor', templateIndex: 520, material: M.Iron }), SOUND.EquipLeather, 'the light set: EquipLeather (417)');
     assert.equal(equipSoundFor({ group: 'Armor', templateIndex: 515, material: M.Iron }), null, 'the chain set: SoundClips.None, as the base class');
     assert.equal(SOUND.EquipLeather, 417);
   } finally { done(); }
 });
 
-test('RRI1 the CurrentVariant setter, once at the mint: a plate material is Brigandine / Mail in the name, Chain on the light set is FUR - folded to Leather, message 1, the jerkin 2 kg lighter - and a second read does not prefix twice', () => {
+test('RRI1 the CurrentVariant setter, once at the mint: a plate material is Plated / Chain in the name (OWN-WORK3: our words), Chain on the light set is FUR-LINED - folded to Leather, message 1, the jerkin 2 kg lighter - and a second read does not prefix twice', () => {
   try {
     fresh();
-    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Chain, weightInKg: 8 }), { name: 'Fur Jerkin', material: M.Leather, message: 1, weightInKg: 6 });
-    assert.deepEqual(rriVariantFields({ templateIndex: 523, name: 'Boots', material: M.Chain }), { name: 'Fur Boots', material: M.Leather, message: 1, weightInKg: 1.4 }, 'the other light pieces keep the CHAIN stage\'s weight - the template\'s, stored (AUDIT-RR F5)');
-    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Iron }), { name: 'Brigandine Jerkin' });
-    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Leather }), {}, 'leather is leather');
-    assert.deepEqual(rriVariantFields({ templateIndex: 515, name: 'Hauberk', material: M.Daedric }), { name: 'Mail Hauberk' });
-    assert.deepEqual(rriVariantFields({ templateIndex: 515, name: 'Hauberk', material: M.Chain }), {}, 'the chain set has no fur');
-    assert.equal(rriVariantFields({ templateIndex: 513, name: "Archer's Axe" }), null, 'a weapon has no setter');
+    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jacket', material: M.Chain, weightInKg: 8 }), { name: 'Fur-lined Jacket', material: M.Leather, message: 1, weightInKg: 6 });
+    assert.deepEqual(rriVariantFields({ templateIndex: 523, name: 'Half-boots', material: M.Chain }), { name: 'Fur-lined Half-boots', material: M.Leather, message: 1, weightInKg: 1 }, 'the other light pieces keep the CHAIN stage\'s weight - the template\'s, stored (AUDIT-RR F5)');
+    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jacket', material: M.Iron }), { name: 'Plated Jacket' });
+    assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jacket', material: M.Leather }), {}, 'leather is leather');
+    assert.deepEqual(rriVariantFields({ templateIndex: 515, name: 'Coat', material: M.Daedric }), { name: 'Chain Coat' });
+    assert.deepEqual(rriVariantFields({ templateIndex: 515, name: 'Coat', material: M.Chain }), {}, 'the chain set has no fur');
+    assert.equal(rriVariantFields({ templateIndex: 513, name: 'Hatchet' }), null, 'a weapon has no setter');
     assert.equal(rriVariantFields({ templateIndex: 102, name: 'Cuirass', material: M.Iron }), null);
-    assert.deepEqual(RRI_TEXT, { mail: 'Mail ', fur: 'Fur ', brig: 'Brigandine ' }, 'the string table');
+    assert.deepEqual(RRI_TEXT, { mail: 'Chain ', fur: 'Fur-lined ', brig: 'Plated ' }, 'OWN-WORK3: our three words');
     const minted = setItemFields({ group: 'Armor', templateIndex: 520, material: M.Chain });
-    assert.equal(minted.name, 'Fur Jerkin'); assert.equal(minted.material, M.Leather); assert.equal(minted.message, 1); assert.equal(minted.rriVariant, true);
+    assert.equal(minted.name, 'Fur-lined Jacket'); assert.equal(minted.material, M.Leather); assert.equal(minted.message, 1); assert.equal(minted.rriVariant, true);
     const again = setItemFields(minted);
-    assert.equal(again.name, 'Fur Jerkin', 'marked: not "Fur Fur Jerkin"');
+    assert.equal(again.name, 'Fur-lined Jacket', 'marked: not "Fur-lined Fur-lined Jacket"');
     const brig = setItemFields({ group: 'Armor', templateIndex: 520, material: M.Iron });
-    assert.equal(brig.name, 'Brigandine Jerkin');
-    assert.equal(setItemFields(setItemFields(brig)).name, 'Brigandine Jerkin', 'a plate material keeps its material, so the mark alone stops the second prefix');
+    assert.equal(brig.name, 'Plated Jacket');
+    assert.equal(setItemFields(setItemFields(brig)).name, 'Plated Jacket', 'a plate material keeps its material, so the mark alone stops the second prefix');
     assert.equal(setItemFields({ group: 'Armor', templateIndex: 102, material: M.Iron }).name, 'Cuirass', 'a classic row is untouched');
   } finally { done(); }
 });
@@ -290,20 +317,22 @@ test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered a
   assert.deepEqual(specs.filter((n) => files.includes(n)), [], 'a picture both rebuilt and carried');
   assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !files.includes(n) && !specs.includes(n)), [], 'index names with neither a file nor a spec');
   assert.equal(files.length, 230); assert.equal(specs.length, 50);
-  assert.match(rd('test/tooling/doctrine.test.js'), /\['public\/art\/roleplay-realism-items\/',\n\s+\{ manifest: 'vendor\/roleplay-realism-items\/roleplay-realism-items\.dfmod\.json',/);
+  // OWN-WORK3: the release's pictures, our listing - every carried file and every spec is one of them, and nothing else is
+  const listed = JSON.parse(rd('vendor/roleplay-realism-items/roleplay-realism-items.files.json')).Files.map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
+  assert.deepEqual([...listed].sort(), [...files, ...specs].sort(), 'the listing names the 280, carried or rebuilt');
 });
 
 test('RRI1 the random makers: CreateRandomWeapon rolls over 19 + the registered custom weapons, CreateRandomArmor over 11 + the custom armor, with the class\'s variant writes; off, the classic rolls', () => {
   try {
     fresh();
     const at = (k, n) => () => (k + 0.5) / n;   // a roll that lands on slot k of n
-    assert.equal(createRandomWeapon(1, at(19, 21)).templateIndex, 513, 'slot 19 of 21: the Archer\'s Axe');
+    assert.equal(createRandomWeapon(1, at(19, 21)).templateIndex, 513, 'slot 19 of 21: the Hatchet');
     assert.equal(createRandomWeapon(1, at(20, 21)).templateIndex, 514);
     assert.equal(createRandomWeapon(1, at(0, 21)).templateIndex, 113, 'slot 0: the dagger, as before');
     assert.equal(createRandomWeapon(1, at(18, 21)).templateIndex, 131, 'slot 18: arrows, as before');
     const hauberk = createRandomArmor(1, at(11, 23));
-    assert.equal(hauberk.templateIndex, 515, 'slot 11 of 23: the Hauberk');
-    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Mail Hauberk'); else assert.equal(hauberk.name, 'Hauberk');   // AUDIT-RR F6: the ctor's template name, then the class's prefix
+    assert.equal(hauberk.templateIndex, 515, 'slot 11 of 23: the Coat');
+    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Chain Coat'); else assert.equal(hauberk.name, 'Coat');   // AUDIT-RR F6: the ctor's template name, then the class's prefix
     assert.ok(Number.isFinite(hauberk.value), 'priced at the mint, at the rolled material');
     assert.equal(createRandomArmor(1, at(22, 23)).templateIndex, 526);
     assert.equal(createRandomArmor(1, at(10, 23)).templateIndex, 112, 'slot 10: the tower shield, as before');
@@ -321,10 +350,9 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...credit.vendor], [RRI_VENDOR]);
   assert.match(credit.link, /nexusmods\.com\/daggerfallunity\/mods\/61/);
   assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `roleplay-realism-items` \|/);
-  for (const f of ['README.md', 'roleplay-realism-items.dfmod.json', 'modsettings.json', 'ItemTemplates.json', 'RoleplayRealismItemsModData.csv', 'Scripts/RoleplayRealismItemsMod.cs', 'Scripts/ItemJerkin.cs', 'Scripts/ItemHauberk.cs', 'Scripts/ItemArchersAxe.cs']) {
-    assert.ok(tracked('vendor/roleplay-realism-items').includes(`vendor/roleplay-realism-items/${f}`), f);
-  }
-  assert.match(rd('vendor/roleplay-realism-items/Scripts/ItemJerkin.cs'), /License:\s+MIT License/);
+  // OWN-WORK3: the directory is its art alone - the README, the rebuilt pictures' specs and the pictures' listing
+  assert.deepEqual(tracked('vendor/roleplay-realism-items').sort(), ['vendor/roleplay-realism-items/README.md', 'vendor/roleplay-realism-items/derived-art.json', 'vendor/roleplay-realism-items/roleplay-realism-items.files.json']);
+  assert.match(rd('LICENSE'), /Roleplay & Realism: Items 1\.3\n\nMIT License\n\nCopyright \(C\) 2020 Hazelnut\nCopyright \(C\) 2020 \(Authors: Hazelnut & Ralzar\)/, 'our JS restates the release\'s MIT scripts: the notice travels in LICENSE');
   // the dispatch, one line at each law site
   assert.match(rd('src/systems/item/itemTemplates.js'), /const cls = customItemClass\(item\.templateIndex\);\n\s+if \(cls\) \{\n\s+const bodyArchive = playerArchiveFor\(item, t, identity\);/);
   assert.match(rd('src/ui/paperDoll.js'), /if \(item\.group === 'Weapons' && item\.equipSlot === EQUIP_SLOTS\.RightHand && getItemHands\(item\) === ITEM_HANDS\.Either\) record \+= 1;\n\s+const m = item\.material \?\? 0;/);

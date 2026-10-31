@@ -22,7 +22,6 @@ import { createExteriorFoes } from '../../../src/scenes/exteriorFoes.js';
 import { entryTarget } from '../../../src/ui/quest/questLens.js';
 import { applyQuestPatches, applyTextPatches, entryLines, ENTRY_WIDTH, QUEST_PATCHES, SHAM_TRAIL_MESSAGE, SHAM_TRAIL_STEP } from '../../../src/systems/quest/questPatches.js';
 import * as tm from '../../../src/systems/textManager.js';
-import { applyForageFix } from '../../../src/systems/foraging/foragingLaw.js';
 import { loadTables, questScript, mark, rmbBlock, town, worldOf, SPAWN, ITEM } from '../../fb1004dTowns.mjs';
 
 loadTables();
@@ -219,8 +218,7 @@ test('SHAM-TRAIL, the patch law: each patch finds its text in the vendored sourc
   const lines = patched();
   const reveal = lines.slice(lines.indexOf('_revealsham_ task:'), lines.indexOf('_revealsham_ task:') + 10);
   assert.deepEqual(reveal.slice(-3), ['\tclear _talkguardian_', `\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}`, ''], 'filed after the reveal\'s own actions');
-  // FORAGE-FIX's mismatch still names its table
-  assert.throws(() => applyForageFix('FetchWood01', 'nothing'), /^Error: FORAGE-FIX: FetchWood01 holds /);
+  // OWN-WORK3: FORAGE-FIX's mends are written into Foraging's own quests, so no Foraging table shares this law now
 });
 
 test('SHAM-TRAIL, the words: the entry is the text core\'s (quest.possessedChild.shamTrail), read as the quest is read - in French the French row, laid in journal lines, its four names expanded, and English again byte for byte; every whole language keeps the four names', () => {
@@ -263,7 +261,7 @@ test('SHAM-TRAIL, the wiring: the browser\'s pack patches DFU\'s own quests as e
   assert.match(src, /import \{ applyQuestPatches, QUEST_PATCHES \} from '\.\.\/\.\.\/systems\/quest\/questPatches\.js';/);
   assert.match(src, /try \{ return applyQuestPatches\(name, text\)\.split\(\/\\r\?\\n\/\); \} catch \(e\) \{/);
   assert.match(src, /if \(QUEST_PATCHES\[name\]\) patchable\.set\(name, text\);/);
-  assert.match(src, /quests\.set\(name, patched\.split\(\/\\r\?\\n\/\)\); patchable\.delete\(name\);/);
+  assert.match(src, /quests\.set\(name, text\.split\(\/\\r\?\\n\/\)\); patchable\.delete\(name\);/);   // OWN-WORK3: a mod's text, read as it stands
   // PIN MOVED (QL4): the read is the questlines' too - a flagship quest's branch patched over it while their switch is on
   // PIN MOVED (AUDIT QUESTLINES BRANCH-12): and a shared copy's shape read as its own stamp read it - the read's second argument
   assert.match(src, /getQuestSourceLines: \(name, questlines\) => questlineLines\(name, \(patchable\.has\(name\) \? patchedLines\(name, patchable\.get\(name\)\) : null\) \?\? quests\.get\(name\) \?\? null, questlines\),/);

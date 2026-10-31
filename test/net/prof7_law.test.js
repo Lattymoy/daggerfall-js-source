@@ -122,9 +122,9 @@ test('PROF7 law: the knife\'s checks in Foraging\'s voice - never inside nor day
   assert.equal(says({ climate: 223 }), KNIFE_REFUSALS.sea);
   assert.equal(says({ enemiesNear: true, carriedWeight: 500 }), KNIFE_REFUSALS.enemies, 'the order: enemies before the load');
   assert.equal(says({ carriedWeight: 100 }), KNIFE_REFUSALS.encumbered);
-  assert.equal(brokeMessage(603, 'Skinning Knife'), 'Your Skinning Knife broke.');
-  assert.equal(brokeMessage(1601, 'A Renamed Pick'), 'Your Pick-Axe broke.', 'Foraging\'s own by its own row');
-  assert.equal(brokeMessage(603), 'Your tool broke.');
+  assert.equal(brokeMessage(603, 'Skinning Knife'), 'Your Skinning Knife is worn out.');
+  assert.equal(brokeMessage(1601, 'A Renamed Pick'), 'Your Pick-Axe is worn out.', 'Foraging\'s own by its own row');
+  assert.equal(brokeMessage(603), 'Your tool is worn out.');
 });
 
 // ─── THE TRACE (5.2) ─────────────────────────────────────────────────

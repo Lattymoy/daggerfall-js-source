@@ -111,7 +111,7 @@ export const CATEGORIES = Object.freeze([
     sec("weather", "Weather & ambience", [
       "feat:weather-events", "feat:mod-better-ambience"]),
     sec("towns", "Towns & people", [
-      "feat:living-world", "feat:mod-beautiful-villages", "feat:mod-beautiful-cities", "feat:mod-windmills-kamer", "feat:mod-kings-gambit", "feat:town-watch"]),
+      "feat:living-world", "feat:mod-windmills-kamer", "feat:mod-kings-gambit", "feat:town-watch"]),
     sec("encounters", "Wilderness & encounters", [
       "feat:mod-world-of-daggerfall", "feat:wilderness-camps", "feat:road-encounters", "feat:mod-world-events-raiding-parties"]),
     sec("travel", "Travel", [

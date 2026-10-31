@@ -36,7 +36,6 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import zlib from 'node:zlib';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,7 +58,6 @@ export async function openTownData(arena2) {
   const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { BlocksFile } = await import('../src/formats/blocksFile.js');
   const { Arch3dFile } = await import('../src/formats/arch3dFile.js');
-  const { openWorldDataPack } = await import('../src/formats/worldData/worldDataPack.js');
   const { dfMeshToModel } = await import('../src/world/meshReader.js');
   const { patchSeams } = await import('../src/world/arch3dSeams.js');
   const { MACHINERY, MACHINERY_MODEL_ID } = await import('../src/world/windmillMesh.js');
@@ -69,11 +67,7 @@ export async function openTownData(arena2) {
   W._resetWorldDataReplacement();
   setValue('Enhancements', 'AssetInjection', 'True');
   W.installWorldDataReplacement(); W.bindWorldDataBlocks(blocks);
-  const packs = {};
-  for (const [v, priority] of VENDORS) {
-    packs[v] = openWorldDataPack(JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString('utf8')), { blocks });
-    W.registerWorldDataPack(packs[v], () => true, { priority });
-  }
+  const packs = {};   // OWN-WORK3: the town packs are retired - the towns stand as Daggerfall lays them
   W.latchWorldDataDoor(); W.quietLocationOverrides(true);
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
   const arch = new Arch3dFile(); arch.load(bytes('ARCH3D.BSA'));
@@ -345,7 +339,7 @@ export async function measureTownPacks(data, { only = null, log = () => {} } = {
   const designs = new Map(), measured = new Map();
   const wanted = only ? new Set(only.map(([v, b, r]) => `${v}|${b}|${r}`)) : null;
   for (const [vendor] of VENDORS) {
-    const names = data.packs[vendor].names().filter((n) => n.endsWith('.RMB.json')).map((n) => n.slice(0, -5)).sort();
+    const names = data.packs[vendor]?.names().filter((n) => n.endsWith('.RMB.json')).map((n) => n.slice(0, -5)).sort() ?? [];   // OWN-WORK3: no pack, no building
     for (const name of names) {
       if (wanted && ![...wanted].some((w) => w.startsWith(`${vendor}|${name}|`))) continue;
       const { dfBlock, index } = data.packBlock(vendor, name);

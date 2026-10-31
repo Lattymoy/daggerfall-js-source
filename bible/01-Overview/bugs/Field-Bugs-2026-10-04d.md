@@ -74,7 +74,7 @@ furniture by its whole box, so robes on a mattress or a shelf could not be picke
 branch's copy (`worldTooltips.js` questStandName and the two namers) was withdrawn for main's (`questStandItem`), with
 its pins and mutants; main's `test/systems/fb1004c_robes.test.js` holds the law.
 
-Kept from this branch, as the record's regression pins (`test/systems/quest/fb1004d_questtrace.test.js`, 2): the trace - O0A0AL00 on
+Kept from this branch, as the record's regression pins (`test/systems/quest/fb1004d_questtrace.test.js`, 2, DELETED): the trace - O0A0AL00 on
 the real parser and machine in Beautiful Villages' Moorham Manor (Shalgora), the robes standing at the farmhouse's own
 199.18 item marker and the click handing them over with message 1018 and the note - and where the robes on the
 reporter's paperdoll came from: a wardrobe mints clothing by the PLAYER's gender (StockHouseContainer,
@@ -134,8 +134,8 @@ same cross-section, so the corridor has no opening left. Checked clean: the gate
 match the drawn meshes in both exterior hosts; a stand-in with no mesh is neither drawn nor collided; the House5 boxes
 have no size; the terrain flattens as Daggerfall Unity flattens it. The author's farms stand inside the ring and reach
 at most 50 units into a wall piece (house `215` in `WALLAA06/12/13.FARMAA01`; fence `518` 27; windmill `41600` 3 off the
-face) - as Daggerfall Unity places them, recorded and unchanged. `test/world/fb1004d_citywalls.test.js` (three over the packs,
-one on the player's data); `tools/mutants/fb1004d_citywalls.json` (5, all dead).
+face) - as Daggerfall Unity places them, unchanged. `test/world/fb1004d_citywalls.test.js` (DELETED: three over the packs,
+one on the player's data); `tools/mutants/fb1004d_citywalls.json` (DELETED: 5, all dead).
 
 **CROPS** (`world/flatFields.js` sowField, cropRecordsFor, blockSolids, CROP_OVERLAP_RADIUS; `world/rmbFlats.js`;
 `world/rmbLayout.js`; `scenes/world.js` and `scenes/exterior.js` hand the climate and the block's solids). The crop

@@ -27,7 +27,7 @@ import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { ROW_CODECS } from '../../src/formats/worldData/worldDataPack.js';
 import { patchJson } from '../../src/formats/worldData/worldDataJson.js';
 import { loadTables, worldOf, questScript } from '../fb1004dTowns.mjs';
-import { SKIP, BV, BC, packJson, openTowns, everyLocation, seeded } from '../fb1004dArena.mjs';
+import { BV, BC } from '../fb1004dArena.mjs';
 
 loadTables();
 const TEMPLES = CURATED_CLASSIC.find((c) => c.why === 'a temple with no house')?.locations ?? [];
@@ -58,12 +58,7 @@ function setAt(P, name, path) {
   return undefined;
 }
 
-const BVP = packJson(BV), BCP = packJson(BC);
-const keyOfFile = (n) => { const [, r, l] = /^location-(\d+)-(\d+)\.json$/.exec(n); return makeLocationKey(Number(r), Number(l)); };
-/** Every location file of Beautiful Villages' pack that lays TEMPASA2 out alone - read off the pack, whatever the
- *  curation lists. */
-const ALONE = Object.keys(BVP.files).filter((n) => /^location-\d+-\d+\.json$/.test(n))
-  .filter((n) => JSON.stringify(setAt(BVP, n, 'Exterior.ExteriorData.BlockNames')) === '["TEMPASA2.RMB"]').map(keyOfFile).sort((a, b) => a - b);
+// OWN-WORK3: Beautiful Villages' pack is retired - the list is pinned as a literal (CURATED_CLASSIC) and no longer read off it
 
 /** The pins as world.js's boot first holds them: the mods loaded, and no town's type or grid known yet. */
 function boot({ typeOf = () => null, gridOf = () => null } = {}) {
@@ -114,19 +109,6 @@ test('TEMPLE-HOME, the door: a temple\'s location is served Daggerfall\'s own fr
   _resetWorldDataReplacement();
 });
 
-test('TEMPLE-HOME, the list against the vendored pack (no game data): the location files of Beautiful Villages\' pack that lay TEMPASA2 out alone are 34 of Arkay\'s temples, Beautiful Cities carrying none of them; TEMPASA2\'s buildings are the temple and House5s, no house a quest seats anyone in; and the curation lists exactly those 34', () => {
-  assert.equal(ALONE.length, 34);
-  for (const key of ALONE) {
-    const file = locationReplacementFilename(key % 100, Math.floor(key / 100));
-    assert.equal(BCP.files[file], undefined, `${BC} does not carry ${file}`);
-    assert.match(entryOf(BVP, file)[1][3], / of Arkay$/, `${file} is one of Arkay's temples`);
-  }
-  const types = setAt(BVP, 'TEMPASA2.RMB.json', 'RmbBlock.FldHeader.BuildingDataList').map((b) => BUILDING_TYPES[b.BuildingType] ?? b.BuildingType);
-  assert.deepEqual([...new Set(types)].sort((a, b) => a - b), [BUILDING_TYPES.Temple, BUILDING_TYPES.House5], 'the temple and House5s');
-  assert.ok(!types.some((t) => VALID_HOUSE_TYPES.includes(t)), 'no House1-4 (Place.cs validHouseTypes)');
-  assert.deepEqual([...TEMPLES].sort((a, b) => a - b), ALONE, 'the curation lists every one, and no other');
-});
-
 // ---- the player's own temples ----
 
 /** Where a quest person's local home (AssignHomeTown's `Place _x_home_ local house`) asked in `loc` is placed: 'here',
@@ -154,36 +136,3 @@ function askTemple(t, loc, name, rolls) {
   const say = console.log, warn = console.warn; console.log = () => {}; console.warn = () => {};
   try { return machine.parseQuestForLists(questScript(name), 0, { rolls }); } catch { return null; } finally { console.log = say; console.warn = warn; }
 }
-
-test('TEMPLE-HOME, gated on ARENA2_PATH: with both packs on, each of the 34 stands Daggerfall\'s own temple (TEMPAAA0), where a person\'s local home is placed and C0B00Y01 and C0B00Y03 are always made; a save pinning the mod back in stands its TEMPASA2, which holds no house - PIN MOVED (QUEST-AUDIT II NEAR-SITE): the mods took the temple\'s houses, so the home and the two quests\' houses are taken in the nearest towns, and the two are always made where the audit found them fail - and every other temple of the world has a house of its own under the mods', { skip: SKIP }, async () => {
-  const say = console.log; console.log = () => {};
-  let t;
-  try { t = await openTowns({ mods: true }); } finally { console.log = say; }
-  const locOf = (key) => t.maps.getLocation(key % 100, Math.floor(key / 100));
-  const DRAWS = 8, QUESTS = ['C0B00Y01', 'C0B00Y03'];
-  const failed = { ours: { C0B00Y01: 0, C0B00Y03: 0 }, mods: { C0B00Y01: 0, C0B00Y03: 0 } };
-  for (const key of ALONE) {
-    const loc = locOf(key);
-    assert.equal(loc.mapTableData.locationType, 5, `${loc.name}: a ReligionTemple`);
-    assert.deepEqual(loc.exterior.exteriorData.blockNames, ['TEMPAAA0.RMB'], `${loc.name}: Daggerfall's own temple`);
-    assert.equal(homePlaced(t, loc), 'here', `${loc.name}: a local home`);
-    for (const q of QUESTS) for (let i = 1; i <= DRAWS; i++) if (!askTemple(t, loc, q, seeded(i * 7919 + key))) failed.ours[q]++;
-    t.LP.setLayoutPins(new Map([[key, { out: new Set(), in: new Set([BV]), stamp: STAMP, why: 'quest' }]]));
-    const modded = locOf(key);
-    assert.deepEqual(modded.exterior.exteriorData.blockNames, ['TEMPASA2.RMB'], `${loc.name}: the save's pin stands the mod's temple`);
-    assert.equal(homePlaced(t, modded), 'near', `${loc.name}: no house for a local home there - the nearest town's`);
-    for (const q of QUESTS) for (let i = 1; i <= DRAWS; i++) if (!askTemple(t, modded, q, seeded(i * 7919 + key))) failed.mods[q]++;
-    t.LP.setLayoutPins(new Map());
-  }
-  const asked = ALONE.length * DRAWS;
-  assert.deepEqual(failed.ours, { C0B00Y01: 0, C0B00Y03: 0 }, `never failing in Daggerfall's temples (${asked} asks each)`);
-  // PIN MOVED (QUEST-AUDIT II NEAR-SITE): 15 in 16 and 1 in 2 of these failed before
-  assert.deepEqual(failed.mods, { C0B00Y01: 0, C0B00Y03: 0 }, `never failing in the mod's temple either (${asked} asks each)`);
-  // no other temple of the world is left without a house by the mods
-  const bare = [];
-  for (const { r, l, loc: other } of everyLocation(t.maps)) {
-    if (other?.mapTableData?.locationType !== 5 || ALONE.includes(makeLocationKey(r, l))) continue;
-    if (homePlaced(t, other) !== 'here') bare.push(other.name);
-  }
-  assert.deepEqual(bare, []);
-});

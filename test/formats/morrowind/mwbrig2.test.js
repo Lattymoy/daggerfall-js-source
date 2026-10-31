@@ -192,8 +192,8 @@ test('MW-BRIG2: through the binder - a skinned-from-body part is drawn skinned, 
 });
 
 test('MW-BRIG2: the item - the Steel Brigandine Jerkin (since MW-BRIG4 every brigandine metal\'s), one piece worn as a cuirass, skinned from chest, groin, thighs and knees', () => {
-  assert.equal(RRI_TEMPLATES.find((t) => t.index === RRI_JERKIN_TEMPLATE)?.name, 'Jerkin');
-  assert.equal(rriVariantWord(STEEL_JERKIN), 'Brigandine ');
+  assert.equal(RRI_TEMPLATES.find((t) => t.index === RRI_JERKIN_TEMPLATE)?.name, 'Jacket', 'OWN-WORK3: our name for the template');
+  assert.equal(rriVariantWord(STEEL_JERKIN), 'Plated ', 'and our word for its brigandine build');
   // MW-BRIG4: every metal the jerkin is a brigandine in wears it (test/formats/morrowind/mwbrig4.test.js); the leather and fur jerkins
   // keep their retail cuirass
   for (const [name, m] of Object.entries(ARMOR_MATERIAL)) {

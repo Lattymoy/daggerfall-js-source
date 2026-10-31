@@ -37,31 +37,6 @@ import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host wh
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const TEMPERATE = 504, DESERT = 503;   // the nature archives (ClimateTextureSet)
 
-// ---- the pack's own records, as the door serves them (no game data: every record named is carried whole) ----------
-const pack = JSON.parse(zlib.gunzipSync(readFileSync(new URL('../../vendor/beautiful-cities/WorldDataPack/beautiful-cities.pack.json.gz', import.meta.url))).toString('utf8'));
-const P = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
-const nodes = pack.nodes.map(P);
-function expand(v) {
-  if (Array.isArray(v)) return v.map(expand);
-  if (!v || typeof v !== 'object') return v;
-  const keys = Object.keys(v);
-  assert.ok(!keys.includes('$c') && !keys.includes('$o'), 'a record carried whole, not read from the player\'s BLOCKS.BSA');
-  if (v.$n !== undefined) return expand(nodes[v.$n]);
-  const k = keys.find((key) => ROW_CODECS[key]);
-  if (k) return v[k].map((row) => (Array.isArray(row) || typeof row === 'number' ? ROW_CODECS[k](row) : expand(row)));
-  return Object.fromEntries(keys.map((key) => [key, expand(v[key])]));
-}
-/** A list the file (or a file it is built on) sets whole, or [] where it is Daggerfall's own. */
-function whole(name, key) {
-  for (let n = `${name}.json`; n;) {
-    const [, base, ops] = P(pack.files[n]);
-    const op = ops.find((o) => o[0] === 's' && o[1].join('.') === `RmbBlock.${key}`);
-    if (op) return expand(op[2]);
-    n = base[0] === 'f' ? base[1] : null;
-  }
-  return [];
-}
-const packBlock = (name, index = 9200) => blockFromJson({ Name: name, RmbBlock: { FldHeader: {}, SubRecords: whole(name, 'SubRecords'), Misc3dObjectRecords: whole(name, 'Misc3dObjectRecords'), MiscFlatObjectRecords: [] } }, index);
 const crops = (flats) => flats.filter((f) => f.archive === CROP_ARCHIVE || (f.archive === 511 && f.record === 22));
 
 /** Independent of the code under test: a point's distance to a triangle - the plane's where the foot falls inside it,
@@ -115,21 +90,6 @@ test('CROPS the grid: GenerateBillboardPositions over an int range - an 85 m fie
 });
 
 // ---- the batch: its foot, its axes --------------------------------------------------------------------------------------
-test('CROPS the batch: every plant\'s foot the misc model\'s own y (RMBLayout.AddProps: propsOffsetY under the record), and the grid in the world\'s axes - a field turned by its record sows the same plants (mutants: the foot, the turn)', () => {
-  const block = packBlock('FARMAA12.RMB');   // two 35 x 85 m fields, the shape a turn would swap
-  const fields = block.rmbBlock.misc3dObjectRecords;
-  assert.deepEqual(fields.map((o) => [o.modelIdNum, o.xPos, o.yPos, o.zPos, o.yRotation]), [[53212, 1024, 0, -2048, 0], [53212, 3072, 0, -2048, 0]], 'the pack\'s two fields');
-  const sown = crops(collectBlockFlats(block, TEMPERATE));
-  assert.equal(sown.length, 2 * 9 * 22);
-  assert.equal(PROPS_OFFSET_Y, -4);
-  assert.ok(sown.every((f) => f.y === PROPS_OFFSET_Y * GLOBAL_SCALE), 'a tenth of a metre under the record, where the batch stands');
-  for (const turn of [512, 1024, -1536]) {
-    const turned = { ...block, rmbBlock: { ...block.rmbBlock, misc3dObjectRecords: fields.map((o) => ({ ...o, yRotation: turn })) } };
-    assert.deepEqual(crops(collectBlockFlats(turned, TEMPERATE)), sown, `turned ${turn}: the batch's turn is never read`);
-  }
-  const [lo, hi] = [Math.min(...sown.map((f) => f.x)), Math.max(...sown.map((f) => f.x))];
-  assert.ok(lo >= 1024 * GLOBAL_SCALE - 17.5 && hi <= 3072 * GLOBAL_SCALE + 17.5, 'each field 35 m along x, as laid');
-});
 
 // ---- the clearance --------------------------------------------------------------------------------------------------------
 test('CROPS the clearance (IsOverlapping): every point of the grid is asked at the batch\'s foot with overlapCheckRadius - 1 m - and a point refused is not sown, every other is, in order (mutants: the refusal, the radius)', () => {
@@ -180,40 +140,7 @@ test('CROPS the block\'s solids: a metre from any face of a placed model, by its
   }
 });
 
-test('CROPS a real composite: WALLAA02.FARMAA13 - a corner tower and four 35 m fields - sown through the producers with the block\'s solids as the port draws them keeps every plant over a metre off them (here the DET chimney the author stands on the tower: 323 of 324 sown; the tower, its wall decorations and the city wall are Daggerfall\'s own, read with ARCH3D)', () => {
-  towns = true;
-  const block = packBlock('WALLAA02.FARMAA13.RMB');
-  const { models } = layoutRmbBlock(block);
-  assert.deepEqual(models.map((m) => m.modelIdNum).sort((a, b) => a - b), [444, 45076, 45076, 45076, 45076, 45077, 45181, 45181, 52991, 53214, 53214, 53214, 53214], 'the tower subrecord and the fields, as the pack lays them');
-  const drawn = (placed) => customModelFor(placed.modelIdNum);   // the stand-ins the pipeline builds; ARCH3D's own are none here
-  const open = crops(collectBlockFlats(block, TEMPERATE));
-  const kept = crops(collectBlockFlats(block, TEMPERATE, { solid: blockSolids(models, drawn) }));
-  assert.deepEqual([open.length, kept.length], [324, 323]);
-  for (const f of kept) assert.ok(nearestFace(models, drawn, [f.x, f.y, f.z]) > 1, `a plant at (${f.x.toFixed(2)}, ${f.z.toFixed(2)}) within a metre of the chimney`);
-  const refused = open.length - kept.length;
-  assert.equal(refused, 1);
-  towns = false;
-  try {
-    assert.equal(crops(collectBlockFlats(block, TEMPERATE, { solid: blockSolids(models, drawn) })).length, 0, 'the fields are the towns\' stand-ins too');
-  } finally { towns = true; }
-});
-
 // ---- the plant ----------------------------------------------------------------------------------------------------------
-test('CROPS the plant: the second desert sows its own record (20) where the first sows 2 - told by the climate, not the nature archive both share; winter\'s stubble still first; each plant GetRandomRecord\'s pick, not the two in turn (mutants: Desert2, the pick)', () => {
-  assert.deepEqual(cropRecordsFor(DESERT, CLIMATES.Desert2), [CROP_ARCHIVE, [20]]);
-  assert.deepEqual(cropRecordsFor(DESERT, CLIMATES.Desert), [CROP_ARCHIVE, [2]]);
-  assert.deepEqual(cropRecordsFor(DESERT), [CROP_ARCHIVE, [2]], 'no climate handed: the nature archive\'s');
-  assert.deepEqual(cropRecordsFor(TEMPERATE, CLIMATES.Woodlands), [CROP_ARCHIVE, [19, 21]]);
-  assert.deepEqual(cropRecordsFor(505, CLIMATES.Desert2), [511, [22]], 'a snowed archive is winter');
-  const block = packBlock('FARMAA10.RMB');
-  assert.ok(crops(collectBlockFlats(block, DESERT, { climateIndex: CLIMATES.Desert2 })).every((f) => f.archive === CROP_ARCHIVE && f.record === 20), 'the producer hands the climate on');
-  assert.ok(crops(collectBlockFlats(block, DESERT, { climateIndex: CLIMATES.Desert })).every((f) => f.record === 2));
-  const field = crops(collectBlockFlats(block, TEMPERATE));
-  const n19 = field.filter((f) => f.record === 19).length;
-  assert.ok(n19 > field.length * 0.4 && n19 < field.length * 0.6, `both records, at random (${n19} of ${field.length})`);
-  assert.ok(field.some((f, i) => i > 0 && f.record === field[i - 1].record), 'not taken in turn');
-  assert.deepEqual(crops(collectBlockFlats(block, TEMPERATE)), field, 'the same every visit');
-});
 
 // ---- the hosts ----------------------------------------------------------------------------------------------------------
 test('CROPS by source: the streamed world and the one-location exterior hand a field\'s batch the climate and the block\'s solids - the models each drew and collided; the interior and dungeon hosts sow no field', () => {

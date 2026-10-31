@@ -137,7 +137,7 @@ test('FB1020c CROWD-CLEAR: a clear marker with no floor under it is passed over 
 // ---- the player's own halls ----
 
 const DATA = HAVE_ARENA2 && ['ARCH3D.BSA', 'FACTION.TXT', 'TEXTURE.182'].every((f) => existsSync(join(ARENA2, f)));
-test('FB1020c CROWD-CLEAR, gated on ARENA2_PATH: over every building interior of BLOCKS.BSA and both town packs, the law moves a Person as wide as Ysolde (the Mages Guild\'s female flat, FACTION.TXT) off its drawn marker in exactly the hall of MAGEAA11 #0 and MAGEAA12 #18 - Daggerfall\'s own and Beautiful Cities\' - each time off the guild\'s questor, and in no other building', { skip: DATA ? false : 'ARENA2_PATH not set (or no ARCH3D.BSA, FACTION.TXT, TEXTURE.182)' }, async () => {
+test('FB1020c CROWD-CLEAR, gated on ARENA2_PATH: over every building interior of BLOCKS.BSA (OWN-WORK3: the town packs retired), the law moves a Person as wide as Ysolde (the Mages Guild\'s female flat, FACTION.TXT) off its drawn marker in exactly the hall of MAGEAA11 #0 and MAGEAA12 #18 - Daggerfall\'s own and Beautiful Cities\' - each time off the guild\'s questor, and in no other building', { skip: DATA ? false : 'ARENA2_PATH not set (or no ARCH3D.BSA, FACTION.TXT, TEXTURE.182)' }, async () => {
   const T = await import('../../../tools/townQuestMarkers.mjs');
   const { FactionFile, flatArchive, flatRecord } = await import('../../../src/formats/factionFile.js');
   const say = console.log; console.log = () => {};
@@ -172,15 +172,7 @@ test('FB1020c CROWD-CLEAR, gated on ARENA2_PATH: over every building interior of
     const name = data.blocks.getBlockName(b);
     if (name?.endsWith('.RMB')) sweep('classic', name, data.blocks.readClassicBlock(b));
   }
-  for (const [vendor] of T.VENDORS) {
-    for (const name of data.packs[vendor].names().filter((n) => n.endsWith('.RMB.json')).map((n) => n.slice(0, -5))) {
-      let dfBlock = null;
-      try { dfBlock = data.packBlock(vendor, name).dfBlock; } catch { continue; }   // a block the door rebuilds only within a town
-      sweep(vendor, name, dfBlock);
-    }
-  }
-  assert.deepEqual(moved.sort(), [
-    'beautiful-cities MAGEAA11.RMB #0 f40 off 182.15 f63', 'beautiful-cities MAGEAA12.RMB #18 f40 off 182.15 f63',
+  assert.deepEqual(moved.sort(), [   // OWN-WORK3: Beautiful Cities' copies of the hall left with its pack
     'classic MAGEAA11.RMB #0 f40 off 182.15 f63', 'classic MAGEAA12.RMB #18 f40 off 182.15 f63',
   ]);
 });

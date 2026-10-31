@@ -47,31 +47,6 @@ const onTheBox = (a, box) => [-1, 1].every((e) => {
   return x >= box[0] - BANNER_WALL_PAD_M && x <= box[3] + BANNER_WALL_PAD_M && z >= box[2] - BANNER_WALL_PAD_M && z <= box[5] + BANNER_WALL_PAD_M;
 });
 
-test('BANNER-WALL: Wildertown\'s small box house (ARCH3D 118), its door the last stretch of its wall - one banner, on the wall; the cloth that hung past the corner is gone; every Wildertown door\'s banners hang on their walls, 259 of 364 still two (mutant: both hung, one in the air)', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, async () => {
-  const frames = await framesOf('Wildertown');
-  const box118 = [...frames.values()].filter((f) => f.model === 118 && f.door);
-  assert.ok(box118.length >= 1, 'the town stands the small box house');
-  let one = 0;
-  for (const f of box118) {
-    const got = hallBannerAnchors(f);
-    assert.ok(got.length >= 1 && got.length <= 2);
-    for (const a of got) assert.ok(onTheBox(a, f.box), `on its wall: ${a.top.map((v) => v.toFixed(2))}`);
-    if (got.length === 1) one++;
-  }
-  assert.ok(one >= 1, 'a door at its wall\'s end hangs the one');
-  const kept = [0, 0, 0];
-  for (const f of frames.values()) {
-    if (!f.door) continue;
-    const got = hallBannerAnchors(f);
-    if (!got) continue;
-    kept[got.length]++;
-    for (const a of got) assert.ok(onTheBox(a, f.box), 'no cloth past its building');
-  }
-  // measured on the vendored packs (systems/layoutPins.js LAYOUT_MOD_VERSIONS): of the town's 364 doors a man goes through,
-  // 259 keep their pair and 105 one - before, all 364 hung two, and 105 of those cloths hung past their building
-  assert.deepEqual(kept, [0, 105, 259], `none, one, two: ${kept}`);
-});
-
 test('BANNER-WALL the law: a door in its wall\'s middle hangs two; one at the wall\'s end, the one on the wall; a door no wider than its wall, none; a frame without a door or a box, null', () => {
   const box = [0, 0, 0, 10, 6, 6];   // a house 10 m along x, its front at z = 0, its door facing -z
   const door = (x0, x1) => ({ a: [x0, 0, 0], b: [x1, 2.2, 0] });

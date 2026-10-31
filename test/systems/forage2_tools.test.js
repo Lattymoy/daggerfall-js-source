@@ -4,8 +4,8 @@
 // its quest and its wear; a tool at its last point breaks with DFU's popup and the mod's line and is gone; a check
 // that fails speaks its line and gives nothing; the switch off makes every tool inert; the foods; the console
 // command (refused online); Quest Actions Extension's four actions as Foraging's quests use them (Q11 mended); every
-// Foraging quest, patched, parses on the port's machine with no line left unread but DFU's own ignored one; and the
-// hosts' wiring.
+// Foraging quest (OWN-WORK3: our own, its mends written in) parses on the port's machine with no line left unread but
+// DFU's own ignored one; and the hosts' wiring.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -18,7 +18,6 @@ import {
 } from '../../src/systems/foraging/foragingInstall.js';
 import { FT, FORAGING_REFUSALS, FORAGING_COMMAND, fishTemplate } from '../../src/systems/foraging/foragingLaw.js';
 import { RaiseTime, ReducePlayerFatigue, PlayerPossesses, PlayerHandsover, questActionsExtensionTemplates, lengthOrStackCount } from '../../src/systems/quest/questActionsExtension.js';
-import { applyForageFix } from '../../src/systems/foraging/foragingLaw.js';
 import { itemUseHandler, registerItemUseHandler } from '../../src/systems/item/itemTemplates.js';
 import { fletch } from '../../src/systems/fletching.js';   // FLETCH: the Wood Bundle's one Use
 import { registerPresenter } from '../../src/systems/notify.js';
@@ -32,7 +31,7 @@ import { FATIGUE_MULTIPLIER } from '../../src/systems/statMods.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
-const QUESTS = join(ROOT, 'vendor/foraging/Quests');
+const QUESTS = join(ROOT, 'src/systems/foraging/quests');   // OWN-WORK3: our own quests
 
 /** HUD lines and popups, as the one door hands them to a host. */
 const heard = [];
@@ -65,7 +64,7 @@ test('FORAGE2: the Wood-Axe in the Woodlands at noon - two bundles, its line in 
   const axe = createForagingItem(FT.WoodAxe);
   const pack = [axe];
   const r = useForagingTool(axe, pack, { entity: e });
-  assert.deepEqual(r, { kind: 'foraging', text: 'You were able to chop and gather two Wood Bundles!' });
+  assert.deepEqual(r, { kind: 'foraging', text: 'You cut and tie two Wood Bundles.' });
   assert.deepEqual(e.items.map((i) => i.templateIndex), [FT.WoodBundle, FT.WoodBundle], 'into the pack, not the collection used from');
   assert.equal(e.items[0].group, 'UselessItems2');
   assert.deepEqual(started, ['ChopWoodQuest']);
@@ -100,7 +99,7 @@ test('FORAGE2: at its last point the tool still works, then DFU\'s popup and the
   const r = useForagingTool(pick, pack, { entity: e });
   assert.equal(r.text, null, 'the Pick-Axe shows no box');
   assert.deepEqual(started, ['MiningQuestWeaker'], '(62 + 50) / 2 = 56');
-  assert.deepEqual(heard, ['Pick-Axe has broken.', 'Your Pick-Axe broke.']);
+  assert.deepEqual(heard, ['Pick-Axe has broken.', 'Your Pick-Axe is worn out.']);
   assert.deepEqual(pack, []);
   heard.length = 0;
   setForagingHost({ world: () => OPEN, monthValue: () => 9, entity: () => e, startQuest: () => false });
@@ -122,7 +121,7 @@ test('FORAGE2: the Sickle by climate and month, the Spade in a cemetery by night
   started = host({ ...OPEN, exteriorWater: 'WaterWalking' });
   _setForagingRandomForTests(draws([5, 6]));
   const r = useForagingTool(createForagingItem(FT.FishingNet), [], { entity: e });
-  assert.equal(r.text, 'You cast your Fishing Net and catch two Fish!', '(62 + 50) / 2 = 56: {0,0,1,1,2,2}[5]');
+  assert.equal(r.text, 'Your net comes up with two Fish.', '(62 + 50) / 2 = 56: {0,0,1,1,2,2}[5]');
   assert.deepEqual(e.items.map((i) => i.templateIndex), [fishTemplate(survivalOn()), fishTemplate(survivalOn())]);
   assert.deepEqual(started, ['FishingQuest']);
   _setForagingRandomForTests(null);
@@ -134,7 +133,7 @@ test('FORAGE2: the Basket in the woods in Frostfall - block D, two Mushrooms, Fo
   const started = host(OPEN, 9);
   _setForagingRandomForTests(draws([3, 6], [1, 5]));
   const r = useForagingTool(createForagingItem(FT.Basket), [], { entity: e });
-  assert.equal(r.text, 'You manage to pick two Mushrooms!');
+  assert.equal(r.text, 'You gather two Mushrooms.');
   assert.deepEqual(e.items.map((i) => i.templateIndex), [FT.Mushroom, FT.Mushroom]);
   assert.deepEqual(started, ['ForageFoodQuest']);
   _setForagingRandomForTests(null);
@@ -153,7 +152,7 @@ test('FORAGE2: the foods - fatigue in points, health or magicka, one eaten, a HU
   assert.equal(e.magicka, 15);
   assert.equal(e.fatigue, (40 + 15 + 5) * FATIGUE_MULTIPLIER);
   assert.deepEqual(pack, []);
-  assert.deepEqual(heard, ['You eat an Egg and feel better for it!', 'You eat a Mushroom and feel better for it!']);
+  assert.deepEqual(heard, ['You eat the Egg. You feel stronger.', 'You eat the Mushroom. Your mind feels clearer.']);
   const two = createForagingItem(FT.Apple); two.stackCount = 2;
   const shelf = [two];
   eatForagingFood(two, shelf, { entity: e });
@@ -259,7 +258,7 @@ test('QAE: player possesses counts pack and wagon, no quest items; handsover tak
     'the build\'s class 20 (Q8) never finds a group-9 bundle');
 });
 
-test('FORAGE1: every Foraging quest, patched, parses on the port\'s machine - only DFU\'s own ignored line left unread', () => {
+test('FORAGE1: every Foraging quest (OWN-WORK3: ours, its mends written in) parses on the port\'s machine - only DFU\'s own ignored line left unread', () => {
   const T = join(ROOT, 'vendor/dfu-quests/Tables');
   loadQuestTables(Object.fromEntries(readdirSync(T).map((f) => [f.replace(/\.txt$/, ''), readFileSync(join(T, f), 'utf8')])));
   const m = new QuestMachine({ nowSeconds: () => 0 });
@@ -270,7 +269,7 @@ test('FORAGE1: every Foraging quest, patched, parses on the port\'s machine - on
   const ow = console.warn; console.warn = () => {};
   try {
     for (const name of names) {
-      const q = m.parseQuestForLists(applyForageFix(name, readFileSync(join(QUESTS, `${name}.txt`), 'utf8')).split(/\r?\n/), 0, { rolls: () => 0 });
+      const q = m.parseQuestForLists(readFileSync(join(QUESTS, `${name}.txt`), 'utf8').split(/\r?\n/), 0, { rolls: () => 0 });
       assert.ok(q, name);
       for (const task of q.tasks.values()) for (const line of task.pendingActionLines ?? []) unread.add(line.trim().replace(/_\w+_/, '_x_'));
       const qae = [...q.tasks.values()].flatMap((t) => t.actions).filter((a) => a instanceof RaiseTime || a instanceof ReducePlayerFatigue || a instanceof PlayerPossesses || a instanceof PlayerHandsover);
@@ -280,7 +279,7 @@ test('FORAGE1: every Foraging quest, patched, parses on the port\'s machine - on
   assert.deepEqual([...unread], ['update-quest-item _x_ Leveled'], 'the one line DFU drops');
 });
 
-test('FORAGE1: the wiring - boot installs it, both exterior hosts register QAE\'s actions and answer the checks, the loader patches', () => {
+test('FORAGE1: the wiring - boot installs it, both exterior hosts register QAE\'s actions and answer the checks, the loader reads our quests', () => {
   const shared = rd('src/scenes/shared.js');
   assert.match(shared, /installForaging\(\);[^\n]*\n\s*installWarmAshesShips\(\);/, 'at boot, before any quest bridge');
   for (const p of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
@@ -291,9 +290,9 @@ test('FORAGE1: the wiring - boot installs it, both exterior hosts register QAE\'
   }
   assert.match(rd('src/scenes/worldModes.js'), /player\.onExteriorWaterMethod = 'None';/);
   const loader = rd('src/scenes/quest/questData.js');
-  assert.match(loader, /vendor\/foraging\/Quests\/\*\.txt/);
-  assert.match(loader, /if \(path\.includes\('\/vendor\/foraging\/'\)\) \{\n\s*try \{ patched = applyForageFix\(name, text\); \} catch/, 'a failed patch warns and loads the shipped text');
-  assert.match(loader, /if \(name\.startsWith\('QuestList-'\)\) tables\.set\(name, patched\);/, 'Q13: the list is patched too');
+  assert.match(loader, /'\.\.\/\.\.\/systems\/foraging\/quests\/\*\.txt'/, 'OWN-WORK3: our own quests');
+  assert.doesNotMatch(loader, /vendor\/foraging|applyForageFix/, 'nothing of the author\'s files, and no patch: the mends are in ours');
+  assert.match(loader, /if \(name\.startsWith\('QuestList-'\)\) tables\.set\(name, text\);/, 'Q13: the list is a table, read as it stands');
   assert.match(rd('src/scenes/world.js'), /enemiesNear: exterior \? \(duelEnemyNear\(\) \|\| areEnemiesNearby\(/, 'DUEL1: a duel is an enemy near');
 });
 
@@ -306,8 +305,8 @@ test('FORAGE1: a General Store and a Pawn Shop shelve the tools by DFU\'s own cu
   const foraging = (shelf) => shelf.map((i) => i.templateIndex).filter((t) => t >= 1600 && t <= 1611).sort((a, b) => a - b);
   // every stock roll passes (Random.Range(0, 100) = 0): rarity against the shop's quality decides
   const general = foraging(stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 20 }, player(), { rolls: () => 0 }));
-  assert.deepEqual(general, [1600, 1601, 1602, 1603, 1604, 1606, 1607, 1610, 1611], 'the tools and the bundle (rarity 10), the Mushroom and the Egg (5) - never the fish or the fruit (100)');
-  assert.deepEqual(foraging(stockShopShelf({ buildingType: BUILDING_TYPES.PawnShop, quality: 9 }, player(), { rolls: () => 0 })), [1610, 1611], 'a shop of quality 9 shelves no tool');
+  assert.deepEqual(general, [1600, 1601, 1602, 1603, 1604, 1606, 1607], 'OWN-WORK3: the tools and the bundle (rarity 10) - never the five foods (100: found, not sold)');
+  assert.deepEqual(foraging(stockShopShelf({ buildingType: BUILDING_TYPES.PawnShop, quality: 9 }, player(), { rolls: () => 0 })), [], 'a shop of quality 9 shelves no tool');
   setModSetting('foraging', 'Enabled', false);
   assert.deepEqual(customItemsForGroup('UselessItems2'), []);
   assert.deepEqual(foraging(stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 20 }, player(), { rolls: () => 0 })), []);

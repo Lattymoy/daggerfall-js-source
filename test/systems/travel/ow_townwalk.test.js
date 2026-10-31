@@ -302,7 +302,7 @@ test('OW-TOWN-WALK the host\'s gates: the journey\'s grid carves each OPEN city 
   const rep = r.go(mid(500, 250));
   assert.equal(rep.stopped, 'shut', 'stopped');
   assert.equal(r.to.state.autopilot, null, 'nothing walks on');
-  assert.equal(TRAVEL_NAV_TEXT.MsgGatesShut, 'Paused the journey since the city gates are shut for the night.');
+  assert.equal(TRAVEL_NAV_TEXT.MsgGatesShut, 'Your journey stops. The city gates are shut for the night.');
   assert.ok(words.length === 0);
 });
 

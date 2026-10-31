@@ -42,7 +42,6 @@ import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './item/itemTempl
 import { scaleFoundMark, markFound } from './item/foundMark.js';   // AUDIT MEND-THIRD: the mark's one home
 import { ARROW_TEMPLATE } from './inventory.js';
 import { WEAPONS, WEAPON_MATERIALS, conditionMultipliersByMaterial } from '../characters/weapons.js';
-import { RRI_TEMPLATE_PATCHES } from './roleplayRealismItems/rriItems.js';
 import { QUALITY_EFFECTS } from '../net/recipeLaw.js';
 
 /** The groups an equip check reads condition for. */
@@ -74,15 +73,16 @@ export function repairUnmintedConditions(items) {
   return n;
 }
 
-/** Roleplay & Realism: Items' hitPoints patches to classic weapon rows (a Tanto at 40, a Short Bow at 80): a piece
- *  minted while the mod was on carries its patch's pool, whether or not the mod is on at this load. */
-const RRI_ROW_POOLS = new Map(RRI_TEMPLATE_PATCHES.map((/** @type {any} */ p) => [p.index, p.hitPoints]));
+/** The hit points Roleplay & Realism: Items 1.3 patched onto classic weapon rows (a Tanto at 40, a Short Bow at 80): a
+ *  piece minted under that release carries its patch's pool. OWN-WORK3 dropped the patches; an old save's pieces
+ *  still do, so these are a fact of the save, kept. */
+export const RRI_RELEASE_POOLS = new Map([[114, 40], [116, 400], [117, 150], [118, 700], [121, 350], [123, 450], [129, 80], [130, 120]]);
 
 /** The pools a weapon of this template may have been minted on before WEAPON-POOL: Daggerfall's row, a custom
  *  template's own, and the mod's patch of the row.
  * @param {number} templateIndex
  * @returns {number[]} */
-const rowPools = (templateIndex) => [ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]
+const rowPools = (templateIndex) => [ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]
   .filter((hp) => typeof hp === 'number');
 
 /** A pool through a piece's own mint: the material ladder (mintCondition's arithmetic - no material is x4 / 4), then a

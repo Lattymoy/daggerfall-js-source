@@ -141,25 +141,6 @@ function onItsWall(col, f, a) {
   }));
 }
 
-test('AUDIT RPT1026 J2 BANNER-WALL: Wildertown under the town packs, its frames as the pixel build makes them - every cloth a door hangs has its building\'s own face behind both its ends, met by the real collider; the doors on a vestibule or in a porch hang the one on their wall, none in the air; no door loses both (mutant: the box alone)', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, async () => {
-  const { frames, col } = await townFrames('Wildertown');
-  const kept = [0, 0, 0], boxed = [0, 0, 0];
-  const lost = new Map();
-  for (const f of frames.values()) {
-    if (!f.door) continue;
-    const got = hallBannerAnchors(f);
-    if (!got) continue;
-    kept[got.length]++;
-    const alone = hallBannerAnchors({ box: f.box, door: f.door, normal: f.normal });
-    boxed[alone.length]++;
-    for (const a of got) assert.ok(onItsWall(col, f, a), `key ${f.key} (ARCH3D ${f.model}): a cloth at ${a.top.map((v) => v.toFixed(2))} hangs before no wall`);
-    for (const a of alone) if (!onItsWall(col, f, a)) lost.set(f.model, (lost.get(f.model) ?? 0) + 1);
-  }
-  assert.deepEqual(boxed, [0, 105, 259], 'the box alone (RPT1026-WORLD BANNER-WALL\'s law): 105 doors hang one, 259 two');
-  assert.deepEqual(kept, [0, 124, 240], 'with the wall asked: 19 doors more hang one, none hangs none');
-  assert.ok((lost.get(326) ?? 0) >= 1 && (lost.get(339) ?? 0) >= 1, `the vestibule's and the porch's doors among them: ${JSON.stringify([...lost])}`);
-});
-
 test('AUDIT RPT1026 J2 the law: a door in a flat wall hangs two; one on a vestibule standing out of its facade hangs the one its wall is behind; a frame with no models asks the box alone, as before', () => {
   // a wall along x at z = 0, facing -z, 10 m long and 6 high - one quad, its two triangles
   const quad = (x0, x1, z) => ({ positions: new Float32Array([x0, 0, z, x1, 0, z, x1, 6, z, x0, 6, z]), indices: new Uint32Array([0, 1, 2, 0, 2, 3]) });

@@ -1,12 +1,10 @@
-# Climates & Calories 1.7.1 - Ralzar (overhauled, not ported; its item art vendored)
+# Climates & Calories 1.7.1 - Ralzar (its item pictures only; the rest is our own code)
 
 **Climates & Calories 1.7.1** for Daggerfall Unity 1.0, by **Ralzar**
-(the manifest's ContactInfo is the DFU forums). The mod's own
-description: "Introduces temperature effects based on climates,
-seasons, weather and clothes etc. Also adds food items and starvation
-effects." The shipped bundle carries a compiled DLL (no C# source),
-eleven item templates (530-540), twenty small textures and a tent
-model (all twenty read out of the bundle with `src/formats/unity/unityBundle.js`).
+(the manifest's ContactInfo is the DFU forums; GUID
+`7975b109-1381-485b-bdfd-8d076bb5d0c9`). The mod's own description:
+"Introduces temperature effects based on climates, seasons, weather and
+clothes etc. Also adds food items and starvation effects."
 
 Mac (Lattymoy) handed the shipped zip
 (`Climates_and_Calories-49-1-7-1-1707751069`) over on 2026-09-17:
@@ -16,80 +14,37 @@ overhaul this mod, figure out bugs and implement it to our desire."
 **Permission: the author's, relayed by Mac (2026-09-17) - an overhaul,
 not a 1:1 port, with the mod's own item art carried.**
 
-## What is here
+## What is here, and why
 
-- `climates-calories.dfmod.json` - the shipped bundle's manifest,
-  verbatim (title, version 1.7.1, author, DFUnity 1.0.0, GUID
-  `7975b109-1381-485b-bdfd-8d076bb5d0c9`, the 36 files it was built
-  from, and its six dependencies - Roleplay & Realism, Filling Food,
-  Climates & Cloaks, Travel Options, Roleplay Realism Items, Ironman
-  Options - none of which the port carries; the overhaul stands alone).
-- `ItemTemplates.json` - the mod's own template rows, verbatim: 530
-  Camping Equipment, 531 Rations, 532 Apple, 533 Orange, 534 Bread, 535
-  Raw Fish, 536 Cooked Fish, 537 Meat, 538 Raw Meat, 539 Waterskin,
-  540 Skillet - and a row renaming 149, the men's Boots, "Shoes", which
-  the port does not carry (DFU's Boots stand).
-  `src/systems/survival/items.js` restates them as the port's custom
-  templates (same indices, same names, same textures) and changes nine
-  columns: four prices - the meat 50 to 15 and the skillet 500 to 60,
-  where the mod's were typos, the cooked fish 4 to 6 and the raw meat
-  10 to 8 - and the waterskin's weight, 2 kilos to half a kilo, because
-  the port weighs the water in it on top of the skin (two kilos full);
-  and (CRAFT-PAYS, 2026-10-21) four food weights: the raw meat and the
-  raw fish 2 kilos to 1, the meat 2 kilos to half a kilo and the cooked
-  fish 1.5 to half a kilo, because a cut is a kilo and cooking takes
-  its water.
-  It adds 541, the port's own Campfire (eight nights of fuel, REST2).
-- `Textures/` - thirteen of the mod's twenty PNGs; with the four in
-  `derived.json` and our own rotten cooked fish (below), the eighteen the
-  port draws, in two kinds.
+- `Textures/` - thirteen of the mod's pictures, the author's own art: the
+  spoiled faces of each food (`532_0-0` a mouldy apple, `532_1-0` a rotten
+  one, and so on through 537), raw meat's three (`538_0-0` to `538_2-0`)
+  and the waterskin (`539_0-0`). There is no `TEXTURE.532` in ARENA2, so
+  the pipeline stands a shell in for each archive
+  (`vendorTextureStandIn`).
+- `derived.json` - four pictures that are Daggerfall's own records
+  (NO-BETHESDA2): the tent's canvas (TEXTURE.050 record 7) and pole
+  (TEXTURE.067 record 10), the mouldy cooked fish (TEXTURE.211 record 10)
+  and the mouldy bread (record 31 with the author's mould on it, kept as
+  edits). The game builds each from the player's own ARENA2
+  (`src/systems/rebuiltPicture.js`).
 
-  SIXTEEN ARE ARCHIVES OF THEIR OWN: the spoiled face of each food
-  (`532_0-0` a mouldy apple, `532_1-0` a rotten one, and so on through
-  537), raw meat's three (`538_0-0`, `538_1-0`, `538_2-0` - the fresh
-  one, which the template names) and the waterskin (`539_0-0`). There
-  is no `TEXTURE.532` in ARENA2 and never will be, so the pipeline
-  stands a shell in for the file (`vendorTextureStandIn`). Verified
-  against the shipped bundle's own Texture2Ds, all sixteen: same size,
-  same pixels, same way up.
+They stay until wave 3 of the owner's arc (OWN-WORK, "removing mods from
+outside authors and instead replacing them with our own work"), which
+replaces outside art with our own. Wave 2 replaced the mod's data and
+words. The rotten cooked fish is already ours (NO-BETHESDA3,
+`src/systems/survival/rotPicture.js`).
 
-  TWO ARE RECORDS OF REAL ARCHIVES (SURV-TENT, 2026-09-19): the tent's
-  reskins, a 32x32 tan canvas at `50_7-0` and a 64x8 dark pole at
-  `67_10-0`. The camp stands the mod's model 41606 and these are how
-  the mod dresses it; without them the tent wore whatever the base game
-  put on that model. `TEXTURE.050` and `TEXTURE.067` are real files
-  carrying dozens of other records, so these register WITHOUT the
-  stand-in flag - the archive still loads and only these two records
-  swap.
+## What left the tree (OWN-WORK3, 2026-10-31)
 
-  The two tavern menu backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`)
-  are still not carried, and have nowhere to go: the port draws its
-  tavern menu in its own panel.
-- `derived.json` - four of the eighteen are Daggerfall's own pictures
-  (NO-BETHESDA2, 2026-10-31), so they are not carried: the tent's
-  canvas IS TEXTURE.050 record 7 and its pole TEXTURE.067 record 10,
-  the mouldy cooked fish (`536_0-0`) IS the cooked fish, TEXTURE.211
-  record 10, and the mouldy bread (`534_0-0`) is the bread, record 31,
-  with the author's mould on it - all in PAL.PAL.
-  `tools/classicDerive.mjs` wrote a spec for each (the record, the
-  palette, the author's pixels), and the game builds it from the
-  player's own ARENA2 (`src/systems/rebuiltPicture.js`), the same
-  pixels the PNG gave.
-- The rotten cooked fish (`536_1-0`) is not here (NO-BETHESDA3,
-  2026-10-31; the owner: "Drop the rotten fish icon", "Also rebuild the
-  rotten fish ourself"). The author's picture was the cooked fish
-  re-shaded - Daggerfall's outline, 97% of its pixels moved a little.
-  The game draws its own in its place: our rot
-  (`src/systems/survival/rotPicture.js`) over the player's own
-  TEXTURE.211 record 10, built at runtime. No pixel of the author's
-  picture is used.
+The manifest and the mod's item templates (530-540, and a row renaming
+DFU's 149 "Shoes", which the port never carried). The rules were rebuilt
+as our own survival arc from 2026-09-18 (SURV1-SURV7; nothing of the DLL
+is carried). Our code is the record now:
 
-## What the port does with it
+- the item rows, by our own rules: `src/systems/survival/items.js`
+  (`SURVIVAL_TEMPLATES`, `foodPrice`);
+- food, spoiling and eating: `src/systems/survival/food.js`;
+- the rest of the arc: `bible/06-Systems/Climates-Calories.md`.
 
-The rules were read off the DLL's IL (`tools/ilDump.py`) - the reading
-is in `bible/06-Systems/Systems-Arc.md` under SURV - and rebuilt as
-the port's own survival arc: a felt temperature, five needs, food that
-spoils, camps and campfires as shared world objects, a costed rest.
-(Its hunting, restated as SURV6, was removed from the port on
-2026-10-04, HUNT-OUT.) Nothing of the mod's code is carried; its numbers were the
-starting point and its item art is what a player sees.
+The commit before OWN-WORK3 still holds the files.

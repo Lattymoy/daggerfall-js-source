@@ -7,7 +7,7 @@
 //
 // The vendored quests stay verbatim (vendor/dfu-quests/README.md); a patch is an exact old text with how many times it
 // must occur, and one that finds its text any other number of times throws, so a changed file is never patched silently
-// wrong (FORAGE-FIX's law, which is this file's applyTextPatches now - one home for both tables).
+// wrong (FORAGE-FIX's law, this file's applyTextPatches; OWN-WORK3 wrote Foraging's mends into its own quests).
 //
 // C0B00Y02, The Possessed Child. `pick one of _sham_ _real_` at the start: half the quests are a guardian's scam. The
 // priest's 1019 promises the Daedroth in both ("When the exorcism is complete, it will leave her and appear elsewhere

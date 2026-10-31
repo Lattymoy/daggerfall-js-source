@@ -1,85 +1,76 @@
-// TO1: THE MOD'S OWN WORDS - TravelOptionsModData.csv, the string table
-// `TravelOptionsMod.Localize` reads (:1322-1341), restated here key for
-// key. The CSV itself is vendored beside it
-// (vendor/travel-options/TravelOptionsModData.csv) and
-// test/systems/travel/to1_travelOptions.test.js reads that file and asserts this table
-// matches it entry for entry, so the two cannot drift: the vendored
-// file is the record, this is what the game reads without a fetch.
-//
-// The `{0}` placeholders are the mod's own (C# composite formatting);
-// `format` below fills them positionally, which is all any of these
-// need - none uses an alignment or a format specifier.
-//
-// TWO PAIRS ARE A DFU SETTING'S. `HelpInfoSDF`/`HelpInfo` and
-// `MsgTimeFormat`/`MsgTimeFormatNoSDF` are picked by
-// `DaggerfallUnity.Settings.SDFFontRendering` (:1256, and
-// TravelOptionsPopUp.cs:126-133) - whether DFU is drawing text with
-// signed-distance-field fonts or the classic bitmap one. The port's
-// text is neither: ui/text.js draws the classic FONT.FNT glyphs at
-// whatever scale the panel asks. It takes the SDF arm of both, which
-// is the one whose layout does not assume the narrower classic
-// measure, and carries the other strings so nothing is lost.
-import { t } from '../textManager.js';   // L10N4: the port's own words below (TRAVEL_NAV_TEXT), never the mod's table
+// TO1: TRAVEL OPTIONS' WORDS, BY THE KEY `TravelOptionsMod.Localize` reads (:1322-1341). OWN-WORK3 (2026-10-31): our
+// own words for every key the game shows; the mod's string table (TravelOptionsModData.csv) left the tree, and so did
+// its four keys nothing read (MsgFollow, MsgTimeFormatNoSDF, MsgNotVisited, HelpInfo). The `{0}` placeholders are C#
+// composite formatting, filled by `format` below. The compass letters and the three dungeon kinds are the classic
+// game's own words. HelpInfoSDF is the help the H key shows: its three keys are the bindings (travelOptions.js helpText).
+import { t } from '../textManager.js';   // L10N4: the port's own words below (TRAVEL_NAV_TEXT)
 
 export const TRAVEL_OPTIONS_TEXT = Object.freeze({
-  MsgArrived: "You have arrived at your destination.",
-  MsgArrivedJunc: "You've arrived at a junction.",
-  MsgEnemies: "Enemies are seeking to prevent your travel...",
-  MsgAvoidFail: "You failed to avoid an encounter!",
-  MsgAvoidSuccess: "You successfully avoided an encounter.",
-  MsgLowHealth: "You are close to the point of death!",
-  MsgLowFatigue: "You are exhausted and should rest.",
-  MsgOcean: "You've found yourself in the sea, maybe you should travel on a ship.",
-  MsgNearLocation: "Paused the journey since a {0} called {1} is nearby.",
-  MsgEnterLocation: "Paused the journey as you've entered a {0} called {1}.",
-  MsgCircumnavigate: "Circumnavigating {0}.",
-  MsgNoPath: "There's no path here to follow in that direction.",
-  MsgFollowRoad: "Following a road.",
-  MsgFollowTrack: "Following a dirt track.",
-  MsgTargetCoords: "Map coordinates: {0}, {1}.",
-  MsgNewRegion: "You have entered the region of {0}.",
-  DirectionN: "N",
-  DirectionNE: "NE",
-  DirectionE: "E",
-  DirectionSE: "SE",
-  DirectionS: "S",
-  DirectionSW: "SW",
-  DirectionW: "W",
-  DirectionNW: "NW",
-  DirectionNone: "none",
-  TipMap: "Consult Map",
-  TipCamp: "Stop to Camp",
-  MsgResume: "Resume your journey to {0}?",
-  MsgFollow: "Do you want to follow this road?",
-  MsgTeleportCost: "Teleportation will cost you {0} gold, is that acceptable?",
-  MsgPlayerControlled: "Player Controlled Journey",
-  MsgTimeFormat: " {0} hours {1} mins (approx)",
-  MsgTimeFormatNoSDF: "~ {0} hours {1} mins",
-  MsgNoPort: "You cannot travel by ship from here, since there's no port.",
-  MsgNoDestPort: "You cannot travel by ship to there, as that location has no port.",
-  MsgNoSailing: "Your journey doesn't cross any ocean, so a ship is not needed.",
-  MsgNotVisited: "You have not visited this location yet, so can't fast travel there.",
-  MsgGuildHalls: "Guild Halls:    ",
-  MsgNoKnowledge: "You have no knowledge of {0}.",
-  LocationTypeDungeonKeep: "Keep",
-  LocationTypeDungeonLabyrinth: "Labyrinth",
-  LocationTypeDungeonRuin: "Ruin",
-  HelpInfoSDF: "Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location (for example as a destination for road following)\nI - Location information known to character (press while hovering or after selecting)\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey, or to choose a new destination",
-  HelpInfo: "Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location\nI - Location information known to character\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey,\n    or to choose a new destination",
+  MsgArrived: 'You reach your destination.',
+  MsgArrivedJunc: 'The way divides here.',
+  MsgEnemies: 'Enemies block your way!',
+  MsgAvoidFail: 'You were seen before you could slip away!',
+  MsgAvoidSuccess: 'You slip past the danger unseen.',
+  MsgLowHealth: 'You are badly hurt. Your journey stops.',
+  MsgLowFatigue: 'You are too tired to go on. Rest first.',
+  MsgOcean: 'You are at sea. Only a ship can take you on from here.',
+  MsgNearLocation: 'Your journey stops near {1}, a {0}.',
+  MsgEnterLocation: 'Your journey stops in {1}, a {0}.',
+  MsgCircumnavigate: 'Going around {0}.',
+  MsgNoPath: 'No road or track leads that way from here.',
+  MsgFollowRoad: 'Along a road',
+  MsgFollowTrack: 'Along a dirt track',
+  MsgTargetCoords: 'Map spot {0}, {1}',
+  MsgNewRegion: 'You cross into {0}.',
+  DirectionN: 'N',
+  DirectionNE: 'NE',
+  DirectionE: 'E',
+  DirectionSE: 'SE',
+  DirectionS: 'S',
+  DirectionSW: 'SW',
+  DirectionW: 'W',
+  DirectionNW: 'NW',
+  DirectionNone: 'none',
+  TipMap: 'Open the map',
+  TipCamp: 'Make camp',
+  MsgResume: 'Go on to {0}?',
+  MsgTeleportCost: 'The guild charges {0} gold to send you there. Pay it?',
+  MsgPlayerControlled: 'You travel it yourself',
+  MsgTimeFormat: ' about {0} hr {1} min',
+  MsgNoPort: 'There is no port here to sail from.',
+  MsgNoDestPort: 'There is no port there to sail to.',
+  MsgNoSailing: 'No sea lies on this route. You do not need a ship.',
+  MsgGuildHalls: 'Guilds here: ',
+  MsgNoKnowledge: 'You know nothing about {0}.',
+  LocationTypeDungeonKeep: 'Keep',
+  LocationTypeDungeonLabyrinth: 'Labyrinth',
+  LocationTypeDungeonRuin: 'Ruin',
+  HelpInfoSDF: `Travel help
+
+The travel map
+
+Left click - choose where to go: a region, a place or a spot
+Right click - zoom in or out
+Middle click - mark a place, such as the end of a road you mean to follow
+I - what you know of a place (point at it, or choose it first)
+
+On the journey
+
+{0} - follow a road or track
+M - look at the travel map (or press the map button)
+C - stop and make camp (or press the camp button)
+{1} - end the journey (or press the exit button)
+{2} - when stopped, open the travel map to go on or to pick a new place`,
 });
 
-/** TRAVEL-NAV1: THE PORT'S OWN WORDS, kept OUT of the table above - that
- *  table is the mod's CSV and its pin asserts nothing was invented in it.
- *  The steering (systems/travel/travelSteer.js) is the port's, so its two stops
- *  speak here, in the mod's own voice: "Paused the journey since ..." is
- *  MsgNearLocation's sentence, and a stopped journey is resumed from the
- *  map exactly as the mod's own stops are. */
+/** TRAVEL-NAV1: THE PORT'S OWN WORDS for the steering's stops (systems/travel/travelSteer.js), kept beside the
+ *  table above: a stopped journey is resumed from the map exactly as the table's own stops are. */
 export const TRAVEL_NAV_TEXT = Object.freeze({
-  MsgBlocked: "Paused the journey since the way ahead is blocked.",
-  MsgStuck: "Paused the journey since you're making no headway.",
+  MsgBlocked: 'Your journey stops. The way ahead is blocked.',
+  MsgStuck: 'Your journey stops. You are making no headway.',
   // OW-TOWN-WALK: a walled city's way out behind its gates (DaggerfallCityGate's night, offline) - the port's newest words, read
   // in the player's language (L10N4)
-  get MsgGatesShut() { return t('travel.nav.gatesShut', 'Paused the journey since the city gates are shut for the night.'); },
+  get MsgGatesShut() { return t('travel.nav.gatesShut', 'Your journey stops. The city gates are shut for the night.'); },
 });
 
 /** C#'s `string.Format` for the placeholders these strings use: `{0}`,

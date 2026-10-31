@@ -36,7 +36,7 @@ function rig() {
 
 test('AUDIT 28 F1: waits joined in play are their SUM - twenty uses cost twenty waits; only a SAVED record is cut to the max', () => {
   const { wait, entity } = rig();
-  for (let i = 0; i < 20; i++) wait.add(5400, 'Chop and Gather Wood');   // twenty Wood-Axe uses behind the pack
+  for (let i = 0; i < 20; i++) wait.add(5400, 'Woodcutting');   // twenty Wood-Axe uses behind the pack
   assert.equal(entity.foragingWait.seconds, 240, '20 x 12 s');
   for (let i = 0; i < 5; i++) wait.tick();
   assert.equal(entity.foragingWait.seconds, 240, 'never re-cut on a read');
@@ -47,7 +47,7 @@ test('AUDIT 28 F1: waits joined in play are their SUM - twenty uses cost twenty 
 
 test('AUDIT 28 F6: the boxes held behind the wait ride the save - a reload gives them back, in order, once the page is done', () => {
   const a = rig();
-  a.wait.add(3600, 'Forage for some Food');
+  a.wait.add(3600, 'Gathering Food');
   a.wait.hold(() => {}, { box: { rows: ['You find a bird\'s nest.'] } });
   a.wait.hold(() => {}, { reward: { templateIndex: 1609 } });
   a.wait.hold(() => {});   // a prompt's answer - this page's alone

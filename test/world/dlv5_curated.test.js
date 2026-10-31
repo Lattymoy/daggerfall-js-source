@@ -205,7 +205,7 @@ test('DLV5 THE INSTALL: each record on the world-data door at its index, its blo
   const made = W.getDFBlockReplacementData(CURATED_BLOCK_INDEX + 7, curatedBlockName(7));
   assert.deepEqual([made?.name, asked], [curatedBlockName(7), [23]], 'made of BLOCKS.BSA\'s own base, by its index');
   W._resetWorldDataReplacement();
-  assert.match(readFileSync(new URL('../../src/scenes/modWorldData.js', import.meta.url), 'utf8'), /\n {4}installShipRefit\(boundWorldDataBlocks\(\)\);[^\n]*\n {4}installCuratedBlocks\(\);[^\n]*\n {4}const door = latchWorldDataDoor\(\);/, 'installed with the port\'s own blocks, before the door is latched and any is read');   // PIN MOVED (the merges of URBANIZER U3 and the ships' refit: the towns' art, then the ships' files, first)
+  assert.match(readFileSync(new URL('../../src/scenes/modWorldData.js', import.meta.url), 'utf8'), /\n {4}installShipRefit\(boundWorldDataBlocks\(\)\);[^\n]*\n {4}installCuratedBlocks\(\);[^\n]*\n {4}latchWorldDataDoor\(\);/, 'installed with the port\'s own blocks, before the door is latched and any is read');   // PIN MOVED (OWN-WORK3: the latch's answer unread, no pack to gate); PIN MOVED (the merges of URBANIZER U3 and the ships' refit: the towns' art, then the ships' files, first)
 });
 
 test('DLV5 EVERY SHIPPED RECORD ON THE FREEWARE\'S BLOCKS: its base an interior block of a dungeon of each of its types; each drop takes something; each anchor\'s heart and vault on a floor of the made block (ARENA2)', { skip: NO_ARENA2 }, async () => {

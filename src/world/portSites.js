@@ -94,12 +94,11 @@ export const LIGHT_APART_CAP = 40;
 /** WESTHEAD-NORTH (the owner, 2026-10-29, after players bought homes by its north shipyard): a port place that stands as
  *  near a cell as fits (portSite's `near`), not by the sea's distance - a row a layout. Westhead Moor's pre-#1184 places
  *  are off its ground since TS7. Daggerfall's cell is an aim on the north strip past the wall (its old corner, 1, 437,
- *  would pull it back west); Beautiful Cities' is its old place's middle. BAY-OWN: a Bay town's own places
+ *  would pull it back west). OWN-WORK3: Beautiful Cities' row went with the mod. BAY-OWN: a Bay town's own places
  *  (bible/01-Overview/bugs/Field-Bugs-2026-10-28.md). */
 export const PORT_PLACES_NEAR = Object.freeze({
   1368614887: Object.freeze([   // Westhead Moor
     Object.freeze({ layout: 'classic', shipyard: Object.freeze([156, 406]) }),
-    Object.freeze({ layout: 'beautiful-cities', shipyard: Object.freeze([188, 429]) }),
   ]),
 });
 /** WESTHEAD-NORTH (AUDIT A2): a town's row for the layout it stands in (`stamp`, matched by `match` - the host's layout

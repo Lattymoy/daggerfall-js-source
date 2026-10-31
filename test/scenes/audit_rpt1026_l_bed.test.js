@@ -26,8 +26,8 @@ import { createRestDeps } from '../../src/scenes/shared.js';
 import { createRestWindow } from '../../src/ui/restDoor.js';
 import { setWorldMinutes, setSharedClock, setOwnMinutes } from '../../src/systems/worldTick.js';
 
-const packJson = (v) => JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
-const VILLAGES = packJson('beautiful-villages');
+
+const VILLAGES = null;   // OWN-WORK3: Beautiful Villages retired - no pack to build its rooms from
 const noop = () => {};
 async function quietly(fn) {
   const saved = [console.warn, console.error, console.log];
@@ -93,38 +93,6 @@ async function buildModes(entry) {
   }));
   return { modes, player };
 }
-
-test('AUDIT RPT1026 L3: a bed pressed in a building is a bed\'s rest - and stays one when the rest asks first (poisoned or diseased: REST-WARN\'s box, the window opened on its Yes) (mutants: auditl-bed-press-unmarked, auditl-bed-press-place-unread)', async () => {
-  const { entry, saved } = warvale();
-  const { modes, player } = await buildModes(entry);
-  setWorldMinutes(12 * 60);
-  assert.equal(await quietly(() => modes.restoreInterior(saved, null)), true, 'the room stands and the player is in it');
-  assert.equal(modes.mode, 'interior');
-  player.grounded = true;   // standing on the room's floor (the rest's grounded check)
-  playerEntity.activeEffects = [];
-  try {
-    // the bed pressed, nothing ailing: the window opens at once, under the press
-    await quietly(() => modes.restFromBed());
-    const w1 = modes.topWindow();
-    assert.ok(w1 && !(w1 instanceof DecisionBoxWindow), 'the rest window, at once');
-    assert.equal(playerEntity.restKind, 'bed', 'a bed\'s rest (BED-PRESS-INDOOR)');
-    await quietly(() => { w1.input?.('back'); w1.keyup?.('back'); });
-    assert.equal(w1.done, true, 'shut');
-    // the bed pressed while poisoned: the rest asks first, and the window opens on the Yes
-    assert.ok(startPoison(playerEntity, POISONS.Nux_Vomica, 0, () => 0), 'poisoned (not yet working - the waiting kind the rest warns of)');
-    await quietly(() => modes.restFromBed());
-    const box = modes.topWindow();
-    assert.ok(box instanceof DecisionBoxWindow, 'REST-WARN asks first');
-    await quietly(() => box.input('KeyY'));
-    const w2 = modes.topWindow();
-    assert.ok(w2 && w2 !== box && !(w2 instanceof DecisionBoxWindow), 'the rest window, on the Yes');
-    assert.equal(playerEntity.restKind, 'bed', 'the bed pressed is still the bed\'s rest');
-    await quietly(() => { w2.input?.('back'); w2.keyup?.('back'); });
-  } finally {
-    playerEntity.activeEffects = [];
-    await quietly(() => modes.forceExitToExterior({ cacheScene: false }));
-  }
-});
 
 test('AUDIT RPT1026 L3: the law, in the one door and the one bag - a window a bed\'s press opened rests in the bed and stands on it, offline and online; any other window keeps the host\'s word; the street\'s ship bed carries its press through the box too (mutants: auditl-bed-press-unmarked, auditl-bed-press-place-unread, auditl-bed-press-point-unread, auditl-bed-press-street-dropped, auditl-bed-press-kept)', () => {
   const sleeper = () => ({ health: 5, maxHealth: 60, fatigue: 0, magicka: 0, maxMagicka: 30, stats: { endurance: 50, strength: 50, willpower: 50, agility: 50 }, skills: [], career: {}, activeEffects: [] });

@@ -2,6 +2,15 @@
 
 > DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the town's hangings and rugs (archive 38202), drawn here in WD3, wear their own drawn charges again (DF-ART's swap to Daggerfall's tapestries reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`).
 
+**OWN-WORK3 (2026-10-31, the owner).** "removing mods from outside authors and instead replacing them with our own
+work". Both mods are retired and their packs left the tree. Every town of Tamriel built from Daggerfall's blocks stands
+as Daggerfall lays it, dressed by our own law (`world/townDress.js`, wired by `scenes/townDressHost.js`): lamps along its
+streets, trade goods at its shops, taverns and temples, the zone's plants round its wells, and a market of our own stalls
+near its middle, on what its yards and port left. No building moves, so every building key stands. Lost: the authors'
+layouts, their new buildings, walls, gates, docks and gardens, and their redecorated rooms. A house, room or quest a save
+made in their layout sleeps (`layoutPins.js`); online, a town holding such a home takes no other until a move is written.
+The stand-ins stand at every boot, for the decor catalogue. What follows is history.
+
 carademono's two town mods, ported 1:1: **Beautiful Villages of Daggerfall
 1.4.2** (7,317 villages, hamlets, farms, manors and temples, and every
 roadside tavern through its blocks) and **Beautiful Cities of Daggerfall
@@ -445,7 +454,7 @@ statics and its collider bucket, both freed with the pixel; the fixed city (`?ex
 its life; TREES-SEATED's seat reads them. Every point of every such footprint stands within 0.15 m of what is drawn -
 the hills, the pads, or the author's own models under it (a temple on its foundations, a stair on its landing) - but
 two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
-pack's own hill too (`test/world/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
+pack's own hill too (`test/world/fb1013e_hillseat.test.js`, DELETED; the packs swept with the player's ARCH3D on `ARENA2_PATH`).
 
 **The pack's items** (TOWN-ITEMS, 2026-10-29; Mac: "we need to do comprehensive replacements"). The bottles, bread
 and ham of archive `1210` on the towns' shelves and tables wore pictures from a vendored mod, taken out that day. Each

@@ -437,12 +437,11 @@ test('WD3 a quest\'s building site whose town stands in another layout is chosen
   assert.match(hostText('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/);
 });
 
-test('WD3 the versions every stamp was made against (AUDIT WD3 B5) - two stamps are one layout whatever versions they name while each mod ships one; a vendored pack of another version may move buildings under every stamped record, so it is held to LAYOUT_MOD_VERSIONS until a layout migration is written', async () => {
+test('WD3 the versions every stamp was made against (AUDIT WD3 B5) - two stamps are one layout whatever versions they name; OWN-WORK3: both mods are retired, their versions kept as the stamps name them, and no pack of either is in the tree to move a building under a stamped record', async () => {
   const { LAYOUT_MOD_VERSIONS } = await import('../../src/systems/layoutPins.js');
-  const zlib = await import('node:zlib');
+  const { existsSync } = await import('node:fs');
   assert.deepEqual(Object.keys(LAYOUT_MOD_VERSIONS), LAYOUT_MODS);
-  for (const v of LAYOUT_MODS) {
-    const pack = JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
-    assert.equal(pack.mod?.version, LAYOUT_MOD_VERSIONS[v], `${v}: a new version is a layout migration, not a file swap`);
-  }
+  assert.deepEqual(LAYOUT_MOD_VERSIONS, { 'beautiful-villages': '1.4.2', 'beautiful-cities': '0.5.0' });
+  for (const v of LAYOUT_MODS) assert.equal(existsSync(new URL(`../../vendor/${v}`, import.meta.url)), false, `${v}: retired`);
 });
+

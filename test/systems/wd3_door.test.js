@@ -25,16 +25,18 @@ import { makeLocationKey, readingLocationKeyOf, setLastLocationKeyTo, getLocatio
 import { MapsFile } from '../../src/formats/mapsFile.js';
 import { blockToDfuJson, locationToDfuJson } from '../../src/formats/worldData/worldDataJson.js';
 import { setValue, resetToDefaults } from '../../src/systems/settings/settings.js';
-import { WORLD_DATA_PRIORITY } from '../../src/scenes/modWorldData.js';
 import { layoutRmbBlock, WINDMILL_MODEL_ID } from '../../src/world/rmbLayout.js';
 import { rrMasterArmBuildingKey, rrMasterArmBuildingKeyIn, RR_ARMORER_BLOCK, RR_ARMORER_RECORD } from '../../src/systems/roleplayRealism/rrQuestLine.js';
+import { rrKeepLocationJson } from '../../src/systems/roleplayRealism/rrWorld.js';
 import { tinyRmb, fakeBlocks } from '../wd3Fakes.mjs';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const BV = 'beautiful-villages', BC = 'beautiful-cities';
-const LOC = JSON.parse(src('vendor/roleplay-realism/WorldData/locationnew-RRfort01-16.json'));
-/** A location file: the fort's, renamed and laid out on `blockNames`. */
+/** The two town mods' load order as the door read it (OWN-WORK3: both retired, the door's law kept) - Cities after Villages. */
+const WORLD_DATA_PRIORITY = Object.freeze({ [BV]: 10, [BC]: 20 });
+const LOC = rrKeepLocationJson();   // OWN-WORK3: our keep's location file (systems/roleplayRealism/rrWorld.js)
+/** A location file: the keep's, renamed and laid out on `blockNames`. */
 const locJson = (name, blockNames = ['FIGHBM00.RMB']) => {
   const j = structuredClone(LOC);
   j.Name = name; j.Exterior.ExteriorData.AnotherName = name; j.Exterior.ExteriorData.BlockNames = blockNames;
@@ -58,7 +60,6 @@ const quiet = (t) => t.mock.method(console, 'log', () => {});
 
 test('WD3 the door: a name two mods carry answers from the mod loaded LATER - Beautiful Cities\' FIGHBM00 over Villages\', as ModManager.TryGetAsset walks the load order backwards; a mod switched off never hides the one under it, the order the files arrived in is no part of it, a mod\'s file registered again replaces its own, and WD1\'s files stand under both', (t) => {
   quiet(t);
-  assert.deepEqual(WORLD_DATA_PRIORITY, { [BV]: 10, [BC]: 20 }, 'Beautiful Cities (DFU 1.1.1) loads after Beautiful Villages (DFU 1.0.0)');
   const on = { [BV]: true, [BC]: true };
   for (const order of [[BV, BC], [BC, BV]]) {
     door();
@@ -285,22 +286,14 @@ test('WD3 the decor catalogue stays what DAGGERFALL furnishes - its blocks read 
   assert.match(src('src/systems/decor/decorScan.js'), /const b = blocks\.readClassicBlock \? blocks\.readClassicBlock\(next\) : blocks\.getBlock\(next\);/);
 });
 
-test('WD3 the loader: each pack a URL the build emits (never a chunk), fetched only when its mod is loaded for the game - the switch read once and latched, a town never moving under the player; a pack a save\'s pins let in loaded switched off; the stand-ins installed when a pack opens; the rebuild spot-checked in the background', () => {
+test('OWN-WORK3 the loader: no town pack is in the build or fetched - no layout mod is loaded, a pin into one is never honoured (its records sleep), and the port\'s own stand-ins and our stall stand at every boot (mutants: a pack glob kept; a pin honoured)', async () => {
   const M = src('src/scenes/modWorldData.js');
-  assert.match(M, /import\.meta\.glob\('\.\.\/\.\.\/vendor\/\*\/WorldDataPack\/\*\.pack\.json\.gz', \{ eager: true, query: '\?url', import: 'default' \}\)/);
-  assert.match(M, /const door = latchWorldDataDoor\(\);/);
-  assert.match(M, /const got = on && door \? await loadPackFrom\(vendor, url, \(\) => true\) : 0;\n {6}latchModLoaded\(vendor, got > 0\);\n {6}if \(on && door && !got\) _missing\.add\(vendor\);/, 'a closed door loads no pack and stamps none (AUDIT WD3 P2); a pack that did not load is a mod not loaded, and said (B1)');
-  assert.match(M, /const counts = await Promise\.all\(Object\.entries\(globPacks\(\)\)\.map\(/, 'the packs fetched side by side (AUDIT WD3 B4)');
-  assert.match(M, /signal: AbortSignal\.timeout\(PACK_FETCH_TIMEOUT_MS\)/, 'and never held for ever');
-  assert.match(M, /if \(!name\.startsWith\('location-'\) && \(blocks\+\+ % 8\) !== 0\) return;/, 'one block in eight spot-checked');
-  assert.match(src('src/formats/worldData/worldDataPack.js'), /if \(typeof globalThis\.process === 'undefined' \|\| !globalThis\.process\.versions\?\.node\) throw new Error\('this browser cannot inflate the pack \(no DecompressionStream\)'\);/, 'a browser never reaches for node:zlib');
-  assert.match(M, /if \(!worldDataDoorOpen\(\)\) return false;/, 'and honours no pin into one');
-  assert.match(M, /configureLayoutPins\(\{ vendorOn: \(v\) => modLatchedOn\(v\) === true, vendorVersion: \(v\) => _packs\.get\(v\)\?\.mod\?\.version \?\? '' \}\);/);
-  assert.match(M, /_pending\.set\(vendor, loadPackFrom\(vendor, entry\[1\], \(\) => false\)\.finally\(\(\) => _pending\.delete\(vendor\)\)\);\n {2}return \(await _pending\.get\(vendor\)\) > 0;/, 'a pinned pack answers only where a pin lets it in, fetched once however many ask');
-  assert.match(M, /const n = registerWorldDataPack\(pack, isOn, \{ priority: WORLD_DATA_PRIORITY\[vendor\] \?\? 0 \}\);\n(?: {4}\/\/.*\n) {4}installTownStandIns\(townPacksLive\);/);
-  assert.match(M, /const townPacksLive = \(\) => \{ const pinned = vendorsPinnedIn\(\); return \[\.\.\._packs\.keys\(\)\]\.some\(\(v\) => modLatchedOn\(v\) === true \|\| pinned\.has\(v\)\); \};/, 'the stand-ins on while a town pack serves a town (AUDIT WD3 T2)');
-  assert.match(M, /if \(name\.startsWith\('location-'\) && \(locations\+\+ % 64\) !== 0\) return;/, 'one location in 64 (and one block in 8 - AUDIT WD3 B4)');
-  assert.match(M, /console\.error\(`\[worlddata\] \$\{vendor\}: the pack did not load \(\$\{e\?\.message \?\? e\}\) - its towns stand classic`\);/);
+  assert.doesNotMatch(M, /WorldDataPack\/|\.pack\.json|loadPackFrom|registerWorldDataPack/, 'no pack glob, no fetch');
+  assert.match(M, /configureLayoutPins\(\{ vendorOn: \(\) => false, vendorVersion: \(\) => '' \}\);/);
+  assert.match(M, /\n {4}installTownDress\(\);[^\n]*\n {4}installTownStandIns\(\);/);
+  const { ensureWorldDataPack, worldDataPacksMissing } = await import('../../src/scenes/modWorldData.js');
+  for (const v of [BV, BC]) assert.equal(await ensureWorldDataPack(v), false, `${v}: never on the door`);
+  assert.deepEqual(worldDataPacksMissing(), []);
 });
 
 test('WD3 a guild hall entry naming a guild this game carries none of (AUDIT WD3 G4) - faction 1000, the Archaeologists Guild\'s, on four of Beautiful Villages\' villages - draws for no hall: each hall takes its own guild\'s entry (Tulaedax: the Fighters\' hall 41, the Mages\' 40, where DFU without that mod handed the Fighters\' hall 1000 and the Mages\' 41)', async () => {

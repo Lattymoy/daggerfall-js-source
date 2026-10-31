@@ -407,10 +407,30 @@ the bare TEMPLATE's name (`systems/loot/lootRarity.js rarityName`), so the long 
 `test/systems/disc29_rarity.test.js` (6), `test/systems/if1_immersivefootsteps.test.js` (the boots' ladder);
 `tools/mutants/disc29.json` (DISC29-B, 11). `01-Overview/bugs/Field-Bugs-2026-09-28f.md`, DISC29-B.
 
+## OWN-WORK3 - our own data and words
+
+**OWN-WORK3 (2026-10-31, the owner).** The owner: "removing mods from outside authors and instead replacing them with
+our own work". Wave 2 took the mod's data and words out of `vendor/roleplay-realism-items/`. The release's fifteen
+scripts stay restated in `systems/roleplayRealismItems/` and `combat/rriEnemyEquipment.js`, its MIT notice in
+`LICENSE`, and the 230 sprites stay until wave 3. `roleplay-realism-items.files.json` names the release's 280 pictures
+for the doctrine gate and `tools/rriExtract.mjs`. Our design decisions are the list below, pinned in `rri1_items` and
+`rri2_realism`. A piece saved before keeps the name it was minted with.
+
+- **The rows** (`rriItems.js` RRI_ROW_RULE). Each piece answers to the classic piece of its slot. Weapons take x0.5
+  weight, x0.5 hit points, x0.75 price, x0.9 enchantment and rarity 1; the chain set x0.75, x0.6, x0.7, x0.85, rarity
+  3; the light set x0.5, x0.4, x0.55, x0.7, rarity 2. The index, paper-doll order, world picture and body record are
+  facts, kept.
+- **The patches.** What a player carries by the dozen weighs what it would: an arrow and paper 0.05 kg, a bandage 0.1,
+  oil 0.2, a torch 0.4. Every other classic row stands. The release's weapon hit points stay as a save's fact
+  (`conditionRepair.js` RRI_RELEASE_POOLS).
+- **The words.** Hatchet and Short Flail; Coat, Leggings, Left and Right Sleeve, Footguards; Jacket, Trousers, Cap,
+  Half-boots, Gloves, Left and Right Armguard; Chain, Fur-lined and Plated before a name; the spells Static Touch,
+  Spell Dart, Featherfall, Glimmer, Conjure Trinket, Mend Bruise, Second Wind, Lift and Unbar; the settings' text.
+
 ## Record
 
-`vendor/roleplay-realism-items/`. Suites `test/systems/rri1_items.test.js` (9),
-`test/systems/rri2_realism.test.js` (11), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
+`vendor/roleplay-realism-items/` (the art), `src/systems/roleplayRealismItems/` (OWN-WORK3). Suites `test/systems/rri1_items.test.js` (9),
+`test/systems/rri2_realism.test.js` (13), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
 (11), `tools/mutants/rri2.json` (18). The shipped set:
 `public/art/roleplay-realism-items/` (230 PNGs; NO-BETHESDA2 rebuilds the other 50 from
 `vendor/roleplay-realism-items/derived-art.json`, suite `test/systems/rr_nobethesda2.test.js`),

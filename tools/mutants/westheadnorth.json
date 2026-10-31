@@ -80,14 +80,6 @@
     "note": "AUDIT A2: the first row in every layout"
   },
   {
-    "name": "WESTHEAD-NORTH-bc-row-dropped",
-    "file": "src/world/portSites.js",
-    "old": "    Object.freeze({ layout: 'beautiful-cities', shipyard: Object.freeze([188, 429]) }),",
-    "new": "",
-    "tests": ["test/world/westheadnorth.test.js", "test/world/westheadnorth_bc.test.js"],
-    "note": "AUDIT A2: Beautiful Cities' layout back on TS7's west side"
-  },
-  {
     "name": "WESTHEAD-NORTH-row-any-layout",
     "file": "src/world/portSites.js",
     "old": ".find((row) => match(row.layout, stamp))",

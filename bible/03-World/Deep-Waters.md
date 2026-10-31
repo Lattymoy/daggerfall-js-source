@@ -10,6 +10,18 @@ in the Bottom of the Ocean*.
 "The Iliac Puddle is now the Iliac Bay." Vanilla Daggerfall's sea is a
 flat sheet of water a hand deep over a flat seabed; the mod carves it out.
 
+**OWN-WORK3 (2026-10-31, the owner).** The owner: "Wave 2: data and words". The
+folder keeps the seven fish pictures and our listing of them
+(`iliac-puddle-no-more.files.json`) until wave 3; the manifest, the settings,
+the item templates and the assembly left the tree. The fish rows are ours
+(`systems/deepWater/deepWatersFishRows.js`): one name a fish, its item's and
+its species', the mark a fisher sees and the kind, no place in it - the Gold
+Butterflyfish, the Rusttail Bass, the Pale Grouper. A fish weighs Raw Fish's
+kilo at the Grey Mackerel's height, by the cube of its own, and costs its meat at
+Raw Fish's price plus 60 over its spawn weight. A catch from before takes its
+new name (`normalizeFishItems`). Every setting's description is ours; the
+defaults stay the sea's ported tuning. Pins: `dwe_fish`.
+
 ## The slices
 
 | slice | what | the port's modules |

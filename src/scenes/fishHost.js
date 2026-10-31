@@ -122,11 +122,11 @@ export function keyRng(key) {
  *  water column, from the haul's own key. */
 export const speciesOfHaul = (key, climate) => pickSpecies(PASSIVE_FISH_SPECIES, Number(climate) || 0, 0.5, keyRng(String(key)));
 
-/** A haul's goods in one line (GATHER-SAID): the species named, as Raw Fish - "+2 Largemouth Bass, as Raw Fish, a Pearl
+/** A haul's goods in one line (GATHER-SAID): the species named, as Raw Fish - "+2 Rusttail Bass, as Raw Fish, a Pearl
  *  and Slaughterfish Scales to your Stores". */
 export function haulLine(d, species) {
   const n = Number(d.qty) || 1;
-  // a fish's name is its plural too ("2 Largemouth Bass", "2 Mackerel"), as Raw Fish's is
+  // a fish's name is its plural too ("2 Rusttail Bass", "2 Grey Mackerel"), as Raw Fish's is
   const fish = species ? `${n} ${species.itemName}, as ${materialCountLabel(FISH_KEY, n)}` : `${n} ${materialCountLabel(FISH_KEY, n)}`;
   const goods = [fish];
   if (d.gem) goods.push(d.gem === PEARL.key ? 'a Pearl' : `a ${materialCountLabel(d.gem, 1)}`);

@@ -91,7 +91,7 @@ stays off behind a sheet. Drawn fists put the torch away, so it never lights one
 
 ## Verification
 
-`test/world/westheadnorth.test.js` (5), `test/world/westheadnorth_bc.test.js` (1, ARENA2),
+`test/world/westheadnorth.test.js` (5), `test/world/westheadnorth_bc.test.js` (DELETED) (1, ARENA2),
 `test/combat/handwraps.test.js` (7), `test/combat/handwraps_arm.test.js` (4), `test/combat/handwraps_audit.test.js` (7).
 Mutants: `tools/mutants/westheadnorth.json` 16, all dead with ARENA2 and without it, and `tools/mutants/handwraps.json` 55,
 all dead. 21 records in other lists named lines these fixes rewrote; each was re-aimed by content and dies.

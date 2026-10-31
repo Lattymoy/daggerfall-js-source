@@ -8,7 +8,7 @@
 // WorldDataVariants and the WorldUpdate action.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
@@ -37,12 +37,15 @@ import { staticNpcRoute } from '../../../src/systems/guild/guildServiceFlow.js';
 import { ARMOR_MATERIAL } from '../../../src/systems/armorMaterials.js';
 import { groupTemplates } from '../../../src/systems/item/itemTemplates.js';
 import { DIRECTION_HINTS } from '../../../src/systems/talk/talk.js';
+import { createHash } from 'node:crypto';
+import { splitQuest, rawMessages, sharedRunsIn } from '../../../tools/ownQuestCheck.mjs';
+import { stringBreach } from '../../../tools/plainText.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 const V = 'roleplay-realism';
 const on = (key, v = true) => setModSetting(V, key, v);
-const QUESTS = 'vendor/roleplay-realism/Quests';
+const QUESTS = 'src/systems/roleplayRealism/quests';   // OWN-WORK3: our own words on the release's logic
 const questLines = (name) => rd(`${QUESTS}/${name}.txt`).replace(/^﻿/, '').split(/\r?\n/);
 const tableSources = () => {
   const sources = {};
@@ -54,40 +57,111 @@ const tableSources = () => {
 _resetModSettings();
 installRoleplayRealism();
 
-test('RR3 the record: the four quest files vendored, the list\'s three rows, the csv lines, the tables\' rows', () => {
-  for (const f of ['QuestList-RoleplayRealism', 'RRMSTARM0', 'RRMSTARM1', 'RRMSTARM2']) assert.ok(existsSync(join(ROOT, `${QUESTS}/${f}.txt`)), f);
-  const author = '/home/user/dfunity-mods/RoleplayRealism/Quests';
-  if (existsSync(author)) for (const f of ['QuestList-RoleplayRealism', 'RRMSTARM0', 'RRMSTARM1', 'RRMSTARM2']) assert.equal(rd(`${QUESTS}/${f}.txt`), readFileSync(join(author, `${f}.txt`), 'utf8'), `${f}: verbatim`);
+/** OWN-WORK3: the three quests' QBN - Roleplay & Realism 1.8's logic, verbatim (MIT) - by its sha256, and each message's
+ *  macro set, the release's own (held to it message by message when the words were written, with tools/ownQuestCheck.mjs
+ *  checkText). A changed QBN or a lost macro is a change to the quest, made on purpose. */
+const RR_QBN_SHA256 = Object.freeze({
+  RRMSTARM0: '2b6c3d8fa22f00aa31e652f7fe122e9adc27be223d9c8ace2464db9bb249b472',
+  RRMSTARM1: 'e237daf93e582dd85be4b9103cc7fd6d72a6faba7f22c11d67ad296d78507928',
+  RRMSTARM2: 'ef4fe5bd9e42a9f1e19e310bb61e1e535e721786e509750a0f96b42ffaeb6692',
+});
+const RR_MESSAGE_MACROS = Object.freeze({
+  RRMSTARM0: {
+    1000: '%g %g2 ____guild_', 1001: '', 1002: '%pcl ____guild_ __guild_', 1003: '____guild_',
+    1010: '%g3 %qdt ____guild_ ___qgiver_ __guild_ _qgiver_', 1011: '%qdt ____guild_ __guild_',
+    1012: '%qdt ____guild_', 1020: '%pcl ____guild_ __guild_', 1021: '__guild_',
+  },
+  RRMSTARM1: {
+    1003: '____fort_ __fort_ _armorer_', 1004: '%pcl ____fort_ __fort_ _armorer_', 1005: '____fort_ __fort_',
+    1007: '%ra __fort_ _armorer_', 1010: '%g3 %qdt __guild_ _armorer_ _contact_',
+    1011: '%qdt __fort_ __guild_ _armorer_ _lord_',
+    1012: '%qdt __dbTavern_ __guild_ _contact_ _dbContact_ _dbTavern_', 1013: '%qdt _lord_',
+    1014: '%qdt __dbHideout_ _dbHideout_', 1015: '%qdt __fort_ _armorer_ _lord_',
+    1016: '%qdt __fort_ _armorer_ _lord_', 1017: '%qdt __fort_ _armorer_ _lord_', 1018: '%qdt __guild_ _contact_',
+    1019: '%qdt __guild_ _contact_', 1020: '%ra _captain_', 1021: '%ra', 1022: '%oth %pcl %ra _armorer_',
+    1023: '%ra', 1024: '__fort_ _armorer_', 1025: '__fort_', 1026: '____guild_ __fort_', 1027: '_captain_ _contact_',
+    1030: '%ra', 1031: '', 1032: '%ra', 1033: '%ra', 1034: '%ra _armorer_', 1035: '_armorer_',
+    1036: '%oth %ra _armorer_', 1037: '', 1038: '_captain_ _lord_', 1040: '%ra', 1041: '%ra',
+    1042: '_armorer_ _lord_', 1043: '', 1044: '_lord_', 1048: '',
+    1049: '%qdt __fort_ __guild_ _armorer_ _guild_ _lord_', 1050: '', 1051: '', 1052: '%pcl _armorer_', 1053: '',
+    1054: '', 1055: '%pcf _lord_', 1058: '%oth %ra', 1059: '%oth %pcf', 1060: '%pcl __guild_ _contact_', 1061: '',
+    1062: '', 1063: '', 1064: '%pcl', 1065: '%pcl', 1066: '%pcn __fort_ __guild_ _contact_',
+    1067: '__dbTavern_ _dbTavern_', 1068: '%pcf _armorer_', 1069: '%pcl _armorer_',
+    1070: '%pcl ____guild_ __guild_ _armorer_', 1071: '%pcf %pcl _lord_', 1072: '%pcl', 1075: '%pcf', 1076: '%pcf',
+    1077: '%pcf', 1080: '%pcl', 1081: '%pcn', 1082: '__dbHideout_ _dbHideout_', 1083: '%pcn',
+    1090: '_armorer_ _fort_ _lord_', 1091: '', 1092: '', 1093: '', 1094: '', 1105: '_armorer_', 1106: '_armorer_',
+    1107: '_armorer_', 1161: '',
+  },
+  RRMSTARM2: {
+    1004: '', 1005: '', 1010: '%qdt', 1011: '%qdt _dbContact_', 1012: '%qdt',
+    1020: '%pcn ____dbFront_ __dbFront_ _dbContact_ _dbFront_', 1021: '', 1022: '_dbContact_', 1030: '',
+    1080: '%pcl', 1081: '%pcl', 1082: '%pcl', 1083: '%ra', 1096: '', 1097: '', 1098: '', 1099: '',
+  },
+});
+const MACRO = /____[a-zA-Z0-9.]+_|___[a-zA-Z0-9.]+_|__[a-zA-Z0-9.]+_|_[a-zA-Z0-9.]+_|==[a-zA-Z0-9.]+_|=#[a-zA-Z0-9.]+_|=[a-zA-Z0-9.]+_|%\w+/g;
+const foldMacro = (t) => (/^%[gG]/.test(t) ? t.toLowerCase() : t);
+
+test('RR3 the record: our own quest files (OWN-WORK3), the list\'s three rows, our lines, the tables\' rows', () => {
+  assert.deepEqual(readdirSync(join(ROOT, QUESTS)).sort(), ['QuestList-RoleplayRealism.txt', 'RRMSTARM0.txt', 'RRMSTARM1.txt', 'RRMSTARM2.txt']);
   const list = rd(`${QUESTS}/QuestList-RoleplayRealism.txt`);
-  assert.match(list, /^RRMSTARM0, FightersGuild, M, 9, 1, Mountain Rumors$/m);
-  assert.match(list, /^RRMSTARM1, FightersGuild, M, 101, 0, The Master Armorer$/m);
-  assert.match(list, /^RRMSTARM2, FightersGuild, M, 101, 0, A Careless Price$/m);
-  const csv = rd('vendor/roleplay-realism/RoleplayRealismModData.csv');
-  for (const [k, v] of Object.entries(RR_TEXT)) assert.ok(csv.includes(`${k},"${v}"`), k);
+  assert.match(list, /^RRMSTARM0, FightersGuild, M, 9, 1, Talk of a Missing Smith$/m);
+  assert.match(list, /^RRMSTARM1, FightersGuild, M, 101, 0, The Smith in the Keep$/m);
+  assert.match(list, /^RRMSTARM2, FightersGuild, M, 101, 0, Blood Owed$/m);
+  assert.deepEqual({ ...RR_TEXT }, {
+    fortVerynear1: 'Boot prints churn the mud here, and a dented shield lies in the grass.',
+    fortVerynear2: 'Armed men passed this way, and not long ago.',
+    fortNear: 'Fresh tracks lead off to the {0}.',
+    customArmor: 'Commission Armor', dharjenCustomArmor: 'Hale\'s Armory',
+    notEnoughMaterials: 'My stock of rare metals is too thin to make you anything worth wearing yet.',
+    lordVerathonName: 'Lord Edric Vane', captainUlthegaName: 'Captain Moira Dunn', orthusDharjenName: 'Brannoc Hale',
+  }, 'OWN-WORK3: our lines and names');
   assert.equal(RR_QUEST_LIST, 'RoleplayRealism');
-  assert.deepEqual(RR_PLACES_TABLE.map((r) => r.split(',')[0].trim()), ['Aldleigh', 'Northrock_Fort_Ext', 'Northrock_Fort']);
+  assert.deepEqual(RR_PLACES_TABLE.map((r) => r.split(',')[0].trim()), ['Aldleigh', 'Northrock_Fort_Ext', 'Northrock_Fort'], 'the symbols the release\'s QBN names');
   assert.deepEqual(RR_FACTIONS_TABLE.map((r) => Number(r.split(',')[3])), [1020, 1021, 1022]);
   assert.deepEqual(RR_FACTION_IDS, { LordVerathon: 1020, CaptainUlthega: 1021, OrthusDharjen: 1022 });
-  // the mod's Quests/ folder rides the pack loader's globs
+  // our Quests/ home rides the pack loader's globs, as the starts' and the questlines' own quests do
   const qd = rd('src/scenes/quest/questData.js');
-  assert.match(qd, /import\.meta\.glob\('\.\.\/\.\.\/\.\.\/vendor\/roleplay-realism\/Quests\/\*\.txt'/);
-  // FORAGE-FIX (2026-09-28): a list is read as a quest is, and only Foraging's own is patched - RR's rides as shipped
-  assert.match(qd, /const text = stripBom\(await load\(\)\);\n[\s\S]*?let patched = text;\n\s*if \(path\.includes\('\/vendor\/foraging\/'\)\) \{/);
-  assert.match(qd, /if \(name\.startsWith\('QuestList-'\)\) tables\.set\(name, patched\);/);
+  assert.match(qd, /import\.meta\.glob\('\.\.\/\.\.\/systems\/roleplayRealism\/quests\/\*\.txt'/);
+  assert.match(qd, /if \(name\.startsWith\('QuestList-'\)\) tables\.set\(name, /);
+});
+
+test('RR3 our own words: each quest keeps the release\'s QBN and every message\'s macros, and its words keep PLAIN-TEXT, TAMRIEL-WIDE and no six-word run of DFU\'s quest text (or ARENA2\'s, where it is set)', () => {
+  for (const name of ['RRMSTARM0', 'RRMSTARM1', 'RRMSTARM2']) {
+    const text = rd(`${QUESTS}/${name}.txt`).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+    const parts = splitQuest(text);
+    assert.ok(parts.header.some((l) => l.startsWith('-- OWN-WORK3: DFO Online\'s own words. The QBN is Roleplay & Realism 1.8\'s (MIT, Copyright (C) 2020 Hazelnut), verbatim.')), `${name}: the credit line`);
+    assert.equal(createHash('sha256').update(parts.qbn).digest('hex'), RR_QBN_SHA256[name], `${name}: the release's QBN, byte for byte`);
+    const bayOwn = parts.header.some((l) => l.startsWith('-- BAY-OWN:'));
+    const macros = {};
+    for (const m of rawMessages(parts.qrc)) {
+      const at = `${name} message ${m.id}`;
+      macros[m.id] = [...new Set((m.body.join(' ').match(MACRO) ?? []).map(foldMacro))].sort().join(' ');
+      for (const v of m.body.join('\n').split('<--->')) {
+        const said = v.replace(/<ce>/g, ' ').split(/\s+/).filter(Boolean).join(' ');
+        assert.equal(stringBreach(said), null, `${at}: PLAIN-TEXT`);
+        assert.ok(bayOwn || !/\b(Iliac|the Bay|Daggerfall|High Rock|Hammerfell)\b/i.test(said), `${at}: a Bay name with no BAY-OWN line`);
+        assert.ok(!/TODO/.test(said), `${at}: TODO`);
+      }
+      for (const l of m.body) assert.ok((l.startsWith('<ce>') ? l.slice(4).trim() : l.trimEnd()).length <= 60, `${at}: a line past 60 characters`);
+      assert.deepEqual(sharedRunsIn(m.body.join(' ')), [], `${at}: a run of DFU's words`);
+    }
+    assert.deepEqual(macros, RR_MESSAGE_MACROS[name], `${name}: every message, with the release's macros`);
+  }
+  assert.deepEqual(['RRMSTARM0', 'RRMSTARM1', 'RRMSTARM2'].map((n) => /^DisplayName: (.*)$/m.exec(rd(`${QUESTS}/${n}.txt`))[1]), ['Talk of a Missing Smith', 'The Smith in the Keep', 'Blood Owed'], 'our names');
 });
 
 // ---- RegisterFactionIds (:659-706) + FactionFile.RegisterCustomFaction + AddCustomFactions ----
 test('RR3 the three factions: the registry, the records verbatim, the dictionary carries them with the relink, the talk reader too', () => {
   const [lord, captain, armorer] = RR_CUSTOM_FACTIONS;
   assert.deepEqual([lord.id, lord.parent, lord.type, lord.name, lord.summon, lord.region, lord.power, lord.face, lord.race, lord.flat1, lord.sgroup, lord.ggroup, lord.children],
-    [1020, 0, 4, 'Lord Verathon', -1, 16, 10, 12, 2, (183 << 7) + 20, 3, 0, [1021]]);
+    [1020, 0, 4, 'Lord Edric Vane', -1, 16, 10, 12, 2, (183 << 7) + 20, 3, 0, [1021]]);
   assert.deepEqual([captain.id, captain.parent, captain.name, captain.region, captain.power, captain.face, captain.flat1, captain.sgroup, captain.children],
-    [1021, 1020, 'Captain Ulthega', 16, 2, 57, (180 << 7) + 2, 4, null]);
+    [1021, 1020, 'Captain Moira Dunn', 16, 2, 57, (180 << 7) + 2, 4, null]);
   assert.deepEqual([armorer.id, armorer.parent, armorer.name, armorer.region, armorer.power, armorer.face, armorer.flat1, armorer.sgroup],
-    [1022, 0, 'Orthus Dharjen', 17, 2, 380, (334 << 7) + 14, SOCIAL_GROUPS.Merchants]);
+    [1022, 0, 'Brannoc Hale', 17, 2, 380, (334 << 7) + 14, SOCIAL_GROUPS.Merchants]);
   // the install registered them (the mod is on by default)
   assert.equal(customFactions().size, 3);
-  assert.equal(customFactions().get(1022).name, 'Orthus Dharjen');
+  assert.equal(customFactions().get(1022).name, 'Brannoc Hale');
   assert.equal(customFactions().get(1022).ally1, 0, 'the record is FactionData whole - the fields the mod leaves are zero');
   assert.equal(registerCustomFaction(1022, { name: 'x' }), false, 'an id in use is refused');
   // AddCustomFactions (:139-155): into a dictionary that lacks them, relinked
@@ -99,12 +173,12 @@ test('RR3 the three factions: the registry, the records verbatim, the dictionary
   // lord's own [1021] gains the relinked 1021 - and every parented faction in the dictionary is listed under its parent
   // twice after a custom faction with a parent lands. The port's relinkChildren is the same walk.
   assert.deepEqual(dict.get(1020).children, [1021, 1021], 'the mod\'s own child list, plus the relink - DFU\'s own doubling');
-  assert.equal(nameToId.get('Captain Ulthega'), 1021);
+  assert.equal(nameToId.get('Captain Moira Dunn'), 1021);
   assert.equal(addCustomFactions(dict), false, 'already there: nothing added, no relink');
   assert.notEqual(dict.get(1020), customFactions().get(1020), 'a copy, as the C# struct is');
   // Reset (:331): a fresh player dictionary carries them
   const rep = createFactionRep(new Map([[41, { id: 41, name: 'The Fighters Guild', parent: 0, children: null }]]));
-  assert.equal(rep.dict.get(1022)?.name, 'Orthus Dharjen');
+  assert.equal(rep.dict.get(1022)?.name, 'Brannoc Hale');
   assert.ok(Object.isFrozen(customFactions().get(1020)));
   assert.match(rd('src/scenes/townTalk.js'), /addCustomFactions\(factions\.factionDict, factions\.factionNameToId\);/, 'the talk reader stands in for PlayerEntity.FactionData');
   assert.ok(typeof FactionFile === 'function');
@@ -270,11 +344,11 @@ test('RR3 the fort\'s tracks and the armorer\'s discovery: nine pixels, the comp
   assert.deepEqual(rrFortProximityLines(937, 51), near('east'));
   assert.deepEqual(rrFortProximityLines(937, 50), near('southeast'));
   assert.deepEqual(rrFortProximityLines(936, 51), []); assert.deepEqual(rrFortProximityLines(938, 53), []);
-  assert.equal(rrFortProximityLines(938, 50)[0], 'You spot signs of recent activity in the area that seem to lead to the south.');
+  assert.equal(rrFortProximityLines(938, 50)[0], 'Fresh tracks lead off to the south.');
   assert.deepEqual([52, 18, 48, 17].map(rrMasterArmBuildingKey), [131342, 197134, 131598, 0]);
   assert.equal(RR_ARMORER_BLOCK, 'ARMRAM03.RMB'); assert.equal(RR_ARMORER_RECORD, 14);
   const variantOf = (r, l, block, rec) => (r === 52 && l === 7 && block === 'ARMRAM03.RMB' && rec === 14 ? 'master' : null);
-  assert.deepEqual(rrMasterArmorerDiscovery({ regionIndex: 52, locationIndex: 7 }, variantOf), { buildingKey: 131342, name: 'Dharjen Custom Armor' });
+  assert.deepEqual(rrMasterArmorerDiscovery({ regionIndex: 52, locationIndex: 7 }, variantOf), { buildingKey: 131342, name: 'Hale\'s Armory' });
   assert.equal(rrMasterArmorerDiscovery({ regionIndex: 52, locationIndex: 8 }, variantOf), null, 'no variant set: nothing');
   assert.equal(rrMasterArmorerDiscovery(null, variantOf), null);
   const w = rd('src/scenes/world.js');
@@ -334,7 +408,7 @@ test('RR3 the custom armor: the level gate, the material ladder\'s breaks, the v
 // ---- Services.RegisterMerchantService (:146-175) --------------------------------------
 test('RR3 the merchant service: the registry, the gate, the route, the popup\'s label and body', () => {
   assert.equal(hasCustomMerchantService(1022), true, 'the install registered Orthus Dharjen\'s');
-  assert.equal(getCustomMerchantServiceLabel(1022), 'Custom Armor');
+  assert.equal(getCustomMerchantServiceLabel(1022), 'Commission Armor');
   assert.equal(typeof getCustomMerchantService(1022), 'function');
   assert.equal(registerMerchantService(1022, () => {}, 'x'), false, 'a faction with one is refused');
   assert.equal(hasCustomMerchantService(1023), false); assert.equal(getCustomMerchantService(1023), null); assert.equal(getCustomMerchantServiceLabel(1023), '?');   // AUDIT-RR2 G17: Services.cs:173-179

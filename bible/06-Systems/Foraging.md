@@ -1070,3 +1070,23 @@ search's Escape was never heard either. The patch table's count corrected (Q10 a
 `test/systems/audit28_forage.test.js` (10); `tools/mutants/audit28.json` F1-F7, H6, H7, H11, H12; `forage4.json` and
 `auditsurv.json` re-aimed, every one dead. (HUNT-OUT, 2026-10-04: H7's test and record retired with the hunt page -
 the wait page takes no key; `audit28_forage.test.js` holds 9.)
+
+## OWN-WORK3 - our own data and words (2026-10-31)
+
+**OWN-WORK3 (2026-10-31, the owner).** "Removing mods from outside authors and instead replacing them with our own
+work", wave 2: data and words. Foraging's twelve rows are our own (`systems/foraging/foragingItems.js`), its lines our
+own words (`foragingLaw.js`), and its list and 22 quests our own files (`systems/foraging/quests/`), loaded as the
+starts' quests are. Each quest keeps the build's tasks, ids, macros and symbols, with FORAGE-FIX's Q7, Q8, Q9 and Q13
+written in, so the patch table is gone; `test/systems/foraging/foragingAsBuilt.mjs` takes the mends out again to pin
+each fault. The manifest, the templates, the assembly, its IL, the quests and the readme left `vendor/foraging/`, which
+keeps the author's seven pictures until wave 3 (`foraging.files.json` lists them). The rules are still the build's, read
+off its IL, and its IL offsets stay as the cites. Our decisions are below.
+
+| What | Ours | Why |
+|---|---|---|
+| ids 1600-1611, group 9, the names, the pictures | kept | facts: saves, the quests' `subclass 1604` and the recipes name the ids; every minted item carries its name; the pictures are the art's seven archives and Daggerfall's own five records |
+| weight | Wood-Axe 3.0, Pick-Axe 3.5, Sickle 1.0, Fishing-Net 2.0, Spade 3.0, Basket 0.5, Wood Bundle 2.5, Fish 0.5, fruit 0.2, Mushroom and Egg 0.1 kg | what a person would carry; the bundle is ten arrows' wood (`systems/fletching.js` weighs a piece in arrows) |
+| uses | the six tools 50, the goods 1 | a Standard tool of the professions (`net/recipeLaw.js` TOOL_LIFE) and the Skinning Knife; a good does not wear |
+| price | Pick-Axe 110, Wood-Axe 90, Spade 80, Fishing-Net 70, Sickle 60, Basket 30, Wood Bundle 15, Fish 6, Mushroom 5, Orange and Egg 4, Apple 3 gold | near the Skinning Knife's 100, so a new character can buy a tool; the bundle as the rest's Firewood is priced (8 for 1.5 kg) |
+| shelved | the tools and the Wood Bundle (rarity 10); never the five foods (100) | fresh food is found, not sold; a fetch quest's bundles can be bought |
+| words | every refusal, yield, food and console line, the quests' messages and names, the list's notes | the game's voice (`10-UI/Voice.md`); the quests are Woodcutting, Fishing, Gathering Food, Gathering Plants, Mining, Grave Digging, Wood for the Hearth, Laying in Firewood, Wood for the Pyre and Timber for the Gallows |

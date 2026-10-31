@@ -1,0 +1,28 @@
+-- OWN-WORK3: Foraging's quest list, DFO Online's own. The rows are Foraging 1.7's, with FORAGE-FIX Q13's groups.
+-- name: the quest's file. group: who offers it (None: a tool starts it). membership: N, any player.
+-- minReq: the reputation it needs. flag: unused. notes: what starts it.
+
+schema: *name, group, membership, minReq, flag, notes
+
+ChopWoodQuest, None, N, 0, 0, the Wood-Axe: the cost of the work and a chance of a find
+FishingQuest, None, N, 0, 0, the Fishing-Net: a chance of a find in the net
+ForageFoodQuest, None, N, 0, 0, the Basket: the cost of the search and a chance of a find
+ForageAridPlantsQuest, None, N, 0, 0, the Sickle in a desert: plants and then a chance of a find
+ForageSummerPlantsQuest, None, N, 0, 0, the Sickle in a swamp or a rainforest or a summer woodland
+ForageWinterPlantsQuest, None, N, 0, 0, the Sickle in the mountains or the subtropics or a winter woodland
+GraveRobbingQuest, None, N, 0, 0, the Spade in a cemetery: the strongest
+GraveRobbingQuestWeak, None, N, 0, 0, the Spade in a cemetery
+GraveRobbingQuestWeaker, None, N, 0, 0, the Spade in a cemetery
+GraveRobbingQuestWeakest, None, N, 0, 0, the Spade in a cemetery: the weakest
+GraveRobbingCNQuest, None, N, 0, 0, the Spade with Cheb's Necromancy: never in this game
+GraveRobbingCNQuestWeak, None, N, 0, 0, the Spade with Cheb's Necromancy: never in this game
+GraveRobbingCNQuestWeaker, None, N, 0, 0, the Spade with Cheb's Necromancy: never in this game
+GraveRobbingCNQuestWeakest, None, N, 0, 0, the Spade with Cheb's Necromancy: never in this game
+MiningQuest, None, N, 0, 0, the Pick-Axe: gems or metals and the strongest
+MiningQuestWeak, None, N, 0, 0, the Pick-Axe: gems or metals
+MiningQuestWeaker, None, N, 0, 0, the Pick-Axe: gems or metals
+MiningQuestWeakest, None, N, 0, 0, the Pick-Axe: gems or metals and the weakest
+FetchWood01, Commoners, N, 0, 0, two Wood Bundles for a hearth
+FetchWood02, Commoners, N, 10, 0, four Wood Bundles for a woodpile
+FetchWood03, Nobility, N, 0, 0, six Wood Bundles for a witch's pyre
+FetchWood04, Nobility, N, 10, 0, eight Wood Bundles for a gallows

@@ -239,17 +239,17 @@ function spell(i, name, target, element, icon, effects) {
   rec.cost = classicCastingCost(rec);
   return Object.freeze(rec);
 }
-/** RoleplayRealismItemsModData.csv - the spell names. */
+/** OWN-WORK3: the nine spells' names, DFO's own - each says what the spell does. */
 export const RRI_SPELLS = Object.freeze({
-  minorShock: spell(0, 'Minor Shock', TARGET.ByTouch, ELEMENT.Shock, 37, [effect('DamageHealth', { magnitude: [2, 10, 1, 2, 1] })]),           // "2-10 + 1-2 per 1 lev"
-  arcaneArrow: spell(1, 'Arcane Arrow', TARGET.SingleTargetAtRange, ELEMENT.Magic, 57, [effect('DamageHealth', { magnitude: [5, 6, 1, 1, 2] })]),
-  gentleFall: spell(2, 'Gentle Fall', TARGET.CasterOnly, ELEMENT.Magic, 31, [effect('Slowfall', { duration: [2, 1, 2] })]),
-  candle: spell(3, 'Candle', TARGET.CasterOnly, ELEMENT.Magic, 22, [effect('LightNormal', { duration: [4, 4, 1] })]),
-  knickKnack: spell(4, 'Knick-Knack', TARGET.CasterOnly, ELEMENT.Magic, 26, [effect('CreateItem', { duration: [4, 1, 2] })]),
-  salveBruise: spell(5, 'Salve Bruise', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('HealHealth', { magnitude: [3, 6, 0, 0, 1] })]),
-  smellingSalts: spell(6, 'Smelling Salts', TARGET.CasterOnly, ELEMENT.Magic, 10, [effect('HealFatigue', { magnitude: [3, 6, 0, 0, 1] })]),
-  rise: spell(7, 'Rise', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('Levitate', { duration: [1, 1, 2] })]),
-  knock: spell(8, 'Knock', TARGET.CasterOnly, ELEMENT.Magic, 3, [effect('Open', { duration: [1, 1, 0], chance: [8, 0, 2] })]),
+  minorShock: spell(0, 'Static Touch', TARGET.ByTouch, ELEMENT.Shock, 37, [effect('DamageHealth', { magnitude: [2, 10, 1, 2, 1] })]),           // "2-10 + 1-2 per 1 lev"
+  arcaneArrow: spell(1, 'Spell Dart', TARGET.SingleTargetAtRange, ELEMENT.Magic, 57, [effect('DamageHealth', { magnitude: [5, 6, 1, 1, 2] })]),
+  gentleFall: spell(2, 'Featherfall', TARGET.CasterOnly, ELEMENT.Magic, 31, [effect('Slowfall', { duration: [2, 1, 2] })]),
+  candle: spell(3, 'Glimmer', TARGET.CasterOnly, ELEMENT.Magic, 22, [effect('LightNormal', { duration: [4, 4, 1] })]),
+  knickKnack: spell(4, 'Conjure Trinket', TARGET.CasterOnly, ELEMENT.Magic, 26, [effect('CreateItem', { duration: [4, 1, 2] })]),
+  salveBruise: spell(5, 'Mend Bruise', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('HealHealth', { magnitude: [3, 6, 0, 0, 1] })]),
+  smellingSalts: spell(6, 'Second Wind', TARGET.CasterOnly, ELEMENT.Magic, 10, [effect('HealFatigue', { magnitude: [3, 6, 0, 0, 1] })]),
+  rise: spell(7, 'Lift', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('Levitate', { duration: [1, 1, 2] })]),
+  knock: spell(8, 'Unbar', TARGET.CasterOnly, ELEMENT.Magic, 3, [effect('Open', { duration: [1, 1, 0], chance: [8, 0, 2] })]),
 });
 
 // ---- AssignSkillSpells (:916-968) -------------------------------------------

@@ -175,6 +175,7 @@ export function sweepBlock(models, getModel, { drawn = drawnHillStandIn, pads = 
 export function eachPackBlock(data, each, only = null) {
   for (const [vendor] of VENDORS) {
     const p = data.packs[vendor];
+    if (!p) continue;   // OWN-WORK3: the town packs are retired
     for (const file of p.names()) {
       if (!file.endsWith('.RMB.json')) continue;
       const name = file.slice(0, -5);

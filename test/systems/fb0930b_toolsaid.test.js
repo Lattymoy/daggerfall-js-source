@@ -53,7 +53,7 @@ const WOODS = CLIMATES.Woodlands, GLENUMBRA = 59;
 const WILD = Object.freeze({ inside: false, insideDungeon: false, insideCastle: false, locationType: LOCATION_TYPES.None, inLocationRect: false,
   hour: 12, climate: WOODS, region: 17, enemiesNear: false, carriedWeight: 10, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' });
 const player = () => ({ stats: { intelligence: 62, strength: 55, agility: 50, endurance: 50, luck: 45 }, items: [], wagonItems: [], fatigue: 40 * FATIGUE_MULTIPLIER, health: 20, maxHealth: 100, magicka: 5, maxMagicka: 50 });
-const CHOP = 'You were able to chop and gather three Wood Bundles!';
+const CHOP = 'You cut and tie three Wood Bundles.';
 const PROFESSION_TOOLS = Object.freeze([FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.Basket, FT.FishingNet]);
 const tick = () => new Promise((r) => setImmediate(r));
 
@@ -307,7 +307,7 @@ test('TOOL-USE: the Pick-Axe at a vein mines it - in the wild, and underground (
       assert.equal(silver.tier, 3, 'an unconfirmed dungeon: Silver');
       d.face(silver);
       const r = d.hotbar(FT.PickAxe);
-      assert.deepEqual(heard, [], `rank ${rank}: "You cannot mine in here!" is not said`);
+      assert.deepEqual(heard, [], `rank ${rank}: "There is no rock to work in here." is not said`);
       if (rank === 0) {
         assert.deepEqual([r.kind, d.host.acting(), d.said], ['refused', false, ['Mine Silver: needs Mining 25 - your Mining is 0']], 'the vein says what it needs, at once');
       } else {
@@ -397,7 +397,7 @@ test('TOOL-USE: the open pack\'s Use - its window holds the world off - says the
     s.world = { ...WILD, inside: true };
     heard.length = 0;
     s.pack(FT.PickAxe);
-    assert.deepEqual(heard, [lineOf(FT.PickAxe)], 'the line alone - "You cannot mine in here!" was Foraging\'s');
+    assert.deepEqual(heard, [lineOf(FT.PickAxe)], 'the line alone - "There is no rock to work in here." is Foraging\'s');
   } finally { s.done(); }
 });
 

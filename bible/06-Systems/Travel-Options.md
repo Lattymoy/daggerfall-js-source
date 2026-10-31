@@ -50,7 +50,7 @@ and the journey runs to the next junction on its own.
 | `src/systems/travel/travelSteer.js` | **the port's own** (TRAVEL-NAV, below) - the walk round what stands in the way: the feelers through the collider, the fan, the stand-off, the stop |
 | `src/systems/travel/travelPaths.js` | the compass, the map-pixel bands and the direction arithmetic - a leaf, no DOM and no world |
 | `src/systems/travel/travelPorts.js` | `portLocationIds`, the 417-entry hand-written table of harbours |
-| `src/systems/travel/travelOptionsText.js` | `TravelOptionsModData.csv`, restated; the vendored file is the record and a pin holds them equal |
+| `src/systems/travel/travelOptionsText.js` | the words for the keys `Localize` reads - our own since OWN-WORK3 (below); the mod's string table left the tree |
 | `src/systems/timeScale.js` | Unity's `Time.timeScale`, which the port did not have |
 | `src/ui/travel/travelControlUI.js` | `TravelControlUI.cs` - the 320x27 strip, rect for rect |
 | `src/ui/travel/travelJunctionMap.js` | the junction mini-map panel |
@@ -1532,6 +1532,31 @@ reads, and the section about a road past the Bay asks 800 and lights 252.
 Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (8 here, and the
 junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
 content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
+
+## OWN-WORK3 - our own data and words (2026-10-31)
+
+**OWN-WORK3 (2026-10-31, the owner).** "Removing mods from outside authors and instead replacing them with our own
+work", wave 2: data and words. Travel Options' manifest, settings file, twelve presets, string table and readme left
+`vendor/travel-options/`, which keeps the author's three UI pictures until wave 3 (`travel-options.files.json` lists
+them). The words are our own: the Localize table (`systems/travel/travelOptionsText.js`), which lost the four keys
+nothing read (MsgFollow, MsgTimeFormatNoSDF, MsgNotVisited, HelpInfo), and the settings' descriptions and choices
+(`systems/modSettings.js`). The steering's three stops say "Your journey stops." as the table's do. The settings are our
+own table, pinned as literals in `test/systems/travel/to1_travelOptions.test.js`; the keys stay the mod's, because a
+player's saved setting is named by them. The code stays a port of the MIT scripts, and `LICENSE` names travelOptions
+beside Basic Roads' painter, with Hazelnut's and Jedidia's notices. Our decisions are below.
+
+| What | Ours | Why |
+|---|---|---|
+| the 51 key names, section-dot-name | kept | a saved setting's name (`test/systems/travel/travelOptionsKeys.mjs`) |
+| Cautiously: 20% slower (5-40), at most 95% to slip past (60-100), stops at 5% health (0-25) and 5 fatigue (0-50) | as they stood | the walked journey has been played and pinned at them since TO1; a change is a balance slice of its own |
+| Cautiously and Inns walked | both on | TO-FIELD2: a default trip is walked (the mod shipped Inns off) |
+| ships | from a port only, to anywhere | a harbor to leave from is the journey's one need |
+| the map | any spot can be picked; no stop at places; no weather or footsteps on a sped-up journey | the defaults the journey was tuned with; each is the player's to change |
+| roads | on, small dots, no rivers or streams; the follow key K | AUDIT-TO1 I1: K is the one letter of the six nothing else answers |
+| the junction map | on, 75 px at 235, 10, point filter, a circle, a red marker on green | the top right, clear of the control strip |
+| the place colors | DFU's own travel-map colors | the reference (DaggerfallTravelMapWindow) |
+| fast travel's inn and ship costs | x1 (1-10) | the classic prices unless the player raises them |
+| the presets | not carried | the port never offered them; the defaults above are the one set |
 
 ## Pins
 

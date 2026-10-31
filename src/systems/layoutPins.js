@@ -26,7 +26,8 @@
 import { setLayoutPinOracle, worldDataVendorCarries, locationReplacementFilename, blockReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
 
 /** The world-data mods that MOVE BUILDINGS in towns - the only ones a pin speaks for. A mod that adds scenery to a
- *  dungeon or a ship's deck moves no building a save keeps by key. */
+ *  dungeon or a ship's deck moves no building a save keeps by key. OWN-WORK3 (2026-10-31): both are retired and no
+ *  pack of theirs is loaded; they stay named so a save's stamps still read, and a record stamped with one sleeps. */
 export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
 
 /**
@@ -38,8 +39,9 @@ export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-citie
  */
 export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.2', 'beautiful-cities': '0.5.0' });
 
-/** AUDIT WD3 B6: said when a town a save holds could not be stood in the layout it was left in. */
-export const PINS_DROPPED_LINE = 'Some of your places could not be shown as you left them. Switch on Replace Game Artwork, or check your connection, then reload.';
+/** AUDIT WD3 B6: said when a town a save holds could not be stood in the layout it was left in - OWN-WORK3: a retired
+ *  town mod's, the one layout no pack stands now. */
+export const PINS_DROPPED_LINE = 'Some of your places stood in a town layout this game no longer has, so they cannot be used.';
 
 /** The layout of a town no layout mod serves. */
 export const CLASSIC_LAYOUT = 'classic';

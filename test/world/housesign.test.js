@@ -17,7 +17,6 @@ import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { openWorldDataPack } from '../../src/formats/worldData/worldDataPack.js';
 import { installWorldDataReplacement, bindWorldDataBlocks, registerWorldDataPack, quietLocationOverrides, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
-import { WORLD_DATA_PRIORITY } from '../../src/scenes/modWorldData.js';
 import { loadBlocks, loadMaps } from '../arena1Data.mjs';
 
 const TAVERN_SIGN = 43727;   // TVRNAM00's sign (SIGN-HOUSE)
@@ -117,56 +116,3 @@ test('HOUSE-SIGN the game\'s own blocks (ARENA2): of BLOCKS.BSA\'s 668 shops\' s
 });
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'vendor');
-const townPack = (vendor) => JSON.parse(gunzipSync(readFileSync(join(VENDOR, vendor, 'WorldDataPack', `${vendor}.pack.json.gz`))).toString('utf8'));
-
-test('HOUSE-SIGN Beautiful Villages and Beautiful Cities, both on as they ship: of their blocks\' 482 shops\' signs, the seven at a house\'s door come down and every other stands - a sign within reach of a house\'s door stands where its own shop\'s door is nearer (mutants: the house test dropped; the sign range closed)', { skip: skipReal }, () => {
-  const { modelOf } = game();
-  const lookup = (id) => modelOf(id)?.doors;
-  _resetWorldDataReplacement();
-  try {
-    // the door as the game opens it (scenes/modWorldData.js): both packs in their load order, the town mods' rows quiet
-    installWorldDataReplacement();
-    const blocks = loadBlocks();
-    bindWorldDataBlocks(blocks);
-    const blockNames = new Set();
-    const locationFiles = [];
-    for (const [vendor, priority] of Object.entries(WORLD_DATA_PRIORITY)) {
-      const pack = openWorldDataPack(townPack(vendor), { blocks });
-      registerWorldDataPack(pack, () => true, { priority });
-      for (const name of pack.names()) {
-        if (name.endsWith('.RMB.json')) blockNames.add(name.slice(0, -'.json'.length));
-        const at = /^location-(\d+)-(\d+)\.json$/.exec(name);
-        if (at) locationFiles.push([Number(at[1]), Number(at[2])]);
-      }
-    }
-    quietLocationOverrides(true);
-    // a block of the mods' own name has an index once a location that places it is read, as the game reads its towns
-    const maps = loadMaps();
-    for (const [region, location] of locationFiles) maps.getLocation(region, location);
-
-    let signs = 0;
-    const down = [];
-    for (const name of [...blockNames].sort()) {
-      const dfBlock = blocks.getBlockByName(name);
-      if (!dfBlock?.rmbBlock) continue;   // a variant no location places (a wall's ROAD) - no shop's sign in any
-      const block = { dfBlock, layout: layoutRmbBlock(dfBlock) };
-      for (const placed of block.layout.models) {
-        if (placed.recordIndex != null || !isShopSignModel(placed.modelIdNum)) continue;
-        signs++;
-        if (isHouseSign(placed, block, lookup)) down.push(`${name} ${placed.modelIdNum} record ${signedBuildingOf(placed, block, lookup)}`);
-      }
-    }
-    assert.equal(signs, 482);
-    assert.deepEqual(down, [
-      'DABOOKBL01.RMB 43727 record 1',
-      'GEMSAL02.RMB 43726 record 18',
-      'MARKAB01.RMB 43736 record 7',
-      'TVRNAS00.RMB 43727 record 5',
-      'TVRNAS04.RMB 43727 record 6',
-      'TVRNAS06.RMB 43727 record 5',
-      'TVRNAS07.RMB 43727 record 8',
-    ]);
-  } finally {
-    _resetWorldDataReplacement();
-  }
-});

@@ -683,11 +683,34 @@ real producer; literals off the real ceiling of 90); mutants
 `tools/mutants/enc_ceil.json` (3, all dead).
 `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
+## OWN-WORK3 - our own data and words
+
+**OWN-WORK3 (2026-10-31, the owner).** The owner: "removing mods from outside authors and instead replacing them with
+our own work". Wave 2 took the mod's data and words out of `vendor/roleplay-realism/`. The release's scripts stay
+restated in `systems/roleplayRealism/`, its MIT notice in `LICENSE`, and its pictures stay until wave 3 (the directory's
+README). Every line the player reads is ours: the settings' text, the climbing refusal, the two guilds' expulsions, the
+training window, the tracks near the keep, the armorer's service and shop, and the three names (Lord Edric Vane,
+Captain Moira Dunn, Brannoc Hale). Our design decisions are the list below. `rr1_realism`, `rr2_realism`,
+`rr3_questline` and `rr3b_worlddata` pin them as literals.
+
+- **The quests.** `systems/roleplayRealism/quests/` holds the list and the three quests in our words on the release's
+  QBN: Talk of a Missing Smith, The Smith in the Keep, Blood Owed. Each message was held to the release's with
+  `tools/ownQuestCheck.mjs` checkText; the test pins the QBN's sha256, every message's macros, PLAIN-TEXT and no
+  six-word run of DFU's or ARENA2's quest text. BAY-OWN: the logic sets the line in the Wrothgarian Mountains.
+- **The scales.** Each 197 keeper stands as big as the classic keeper it replaces (`rrVariants.js` RR_KEEPER_OF). The
+  release's first four were that rule already; records 4-6 follow it now.
+- **The keep.** Grayhold, at the release's pixel (938,51, beside the Aldleigh its logic names), a wealthy home on the
+  map. Its block is the player's own PALAGA04.RMB: the court stood down, and fourteen quest markers stand where the
+  court stood (`rrWorld.js` rrKeepMarkers). The building is House6, Lord Vane's, quality 16.
+- **The armory.** The player's own ARMRAM03 record 14, an Armorer of faction 1022, quality 18, seed 1022, with Brannoc
+  Hale (182.24) at its quest marker. Kept as facts: the location and faction ids, the files' DFU names and the three
+  towns the logic sends the smith to.
+
 ## Record
 
-`vendor/roleplay-realism/`. Suites `test/systems/rr1_realism.test.js` (12),
-`test/systems/rr2_realism.test.js` (12), `test/systems/quest/rr3_questline.test.js` (11),
-`test/systems/talk/rr3b_worlddata.test.js` (9), `test/systems/auditrr.test.js` (15), `test/systems/auditrr2.test.js` (17),
+`vendor/roleplay-realism/` (the art), `src/systems/roleplayRealism/` (OWN-WORK3). Suites `test/systems/rr1_realism.test.js` (12),
+`test/systems/rr2_realism.test.js` (12), `test/systems/quest/rr3_questline.test.js` (12),
+`test/systems/talk/rr3b_worlddata.test.js` (11), `test/systems/auditrr.test.js` (15), `test/systems/auditrr2.test.js` (17),
 `test/systems/rr_nobethesda2.test.js` (3, NO-BETHESDA2, shared with the Items page). Campaigns `tools/mutants/rr1.json`
 (18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),

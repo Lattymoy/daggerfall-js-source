@@ -11,9 +11,9 @@
 //
 //   node tools/rriExtract.mjs "<path to roleplayrealism-items.dfmod>"
 //
-// What the folder may hold is the mod's own manifest (vendor/roleplay-
-// realism-items/roleplay-realism-items.dfmod.json; test/tooling/doctrine.test.js
-// derives the folder's membership from it).
+// What the folder may hold is the release's pictures, its manifest's Files
+// cut to its PNGs (vendor/roleplay-realism-items/roleplay-realism-items.files.json,
+// OWN-WORK3; test/tooling/doctrine.test.js derives the folder's membership from it).
 //
 // NO-BETHESDA2 (2026-10-31): a picture DERIVED names (tools/classicDerive.mjs) is Daggerfall's own record and is
 // rebuilt from the player's ARENA2, so it is indexed but never written. Run classicDerive after this when the bundle
@@ -29,7 +29,7 @@ import { isMain } from './lib/isMain.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT_DIR = 'public/art/roleplay-realism-items';
 export const INDEX_FILE = 'src/systems/roleplayRealismItems/rriIndex.js';
-export const MANIFEST = 'vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json';
+export const MANIFEST = 'vendor/roleplay-realism-items/roleplay-realism-items.files.json';
 export const DERIVED = 'vendor/roleplay-realism-items/derived-art.json';
 
 /** The `<rect>` of one XML text asset, or null. XMLManager.GetRect

@@ -119,8 +119,8 @@
   {
     "name": "WEAPON-POOL-fingerprint-without-daggerfalls-row",
     "file": "src/systems/conditionRepair.js",
-    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
-    "new": "[templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]",
+    "new": "[templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]",
     "tests": [
       "test/systems/weaponpool.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WEAPON-POOL-fingerprint-without-a-custom-row",
     "file": "src/systems/conditionRepair.js",
-    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
-    "new": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]",
+    "new": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]",
     "tests": [
       "test/systems/weaponpool.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "WEAPON-POOL-fingerprint-without-the-mods-patch",
     "file": "src/systems/conditionRepair.js",
-    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]",
     "new": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints]",
     "tests": [
       "test/systems/weaponpool.test.js"

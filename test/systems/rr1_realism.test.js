@@ -55,36 +55,46 @@ const sword = (material = 0) => mint({ group: 'Weapons', templateIndex: WEAPONS.
 
 installRoleplayRealism();
 
-test('RR1 the record: the manifest, the switches (27 keys - 26 on the pane, fightersTeachHandToHand retired - the mod\'s words and defaults), the install once', () => {
-  assert.equal(RR_MOD.guid, 'd828b782-46e9-40e7-8ae6-19cde308032e');
-  const vendored = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.dfmod.json'));
-  assert.equal(vendored.GUID, RR_MOD.guid); assert.equal(vendored.ModVersion, '1.8');
-  const settings = JSON.parse(rd('vendor/roleplay-realism/modsettings.json'));
+test('RR1 the record: the release, the switches (27 keys - 26 on the pane, fightersTeachHandToHand retired - our own words and defaults), the install once', () => {
+  assert.equal(RR_MOD.guid, 'd828b782-46e9-40e7-8ae6-19cde308032e'); assert.equal(RR_MOD.version, '1.8');
   const keys = MOD_SETTINGS[V].keys;
-  // PLAIN-TEXT (2026-10-19): five of the mod's lines (a typo, "DPS", "DFU") said plainly for a player - their words, exactly
-  const PLAIN = {
-    'underworldExpulsion': 'Enables underworld guilds to expel members for poor performance... with prejudice.',
-    'weaponSpeed': 'Lowers weapon damage per second for characters with high Speed.',
-    'classicStrengthDamageBonus': 'Shows the strength damage bonus at half, as the classic game did.',
-    'variantResidents': 'Fills 80% of houses with the townsfolk you see walking around, instead of random adventurers',
-    'EnhancedRiding.followTerrainSoftenFactor': 'How much the ride smooths out slopes, from 0 (none) to 32 (most).',
+  // OWN-WORK3: every description is ours, and every default our own choice (the 1.8 release ships shipPorts and
+  // equipDamage on and GallopingInTowns off - SHIP-PORTS, WEAR-VANILLA, TOWN-GALLOP)
+  const OURS = {
+    bedSleeping: [true, 'Click a bed to sleep in it.'],
+    advancedArchery: [true, 'How long you draw a bow changes its aim and its damage.'],
+    encumbranceEffects: [true, 'A heavy load slows you and tires you.'],
+    bandaging: [true, 'A bandage heals you by your Medical skill.'],
+    shipPorts: [false, 'You can board your ship only from a port town.'],
+    underworldExpulsion: [true, 'The Thieves Guild and the Dark Brotherhood expel a failing member and send killers after them.'],
+    climbingRestriction: [true, 'You cannot climb with a weapon drawn.'],
+    weaponSpeed: [true, 'Swing speed comes from Speed and Strength together, by how the weapon is held.'],
+    weaponMaterials: [true, 'A better metal adds less to your aim, so skill matters most.'],
+    equipDamage: [false, 'Armor wears five times faster from blows.'],
+    enemyAppearance: [true, 'Human foes look like their class.'],
+    purificationPotion: [true, 'The Purification potion cures poison in place of invisibility.'],
+    autoExtinguishLight: [true, 'Your light goes out when you leave a dungeon by day.'],
+    classicStrengthDamageBonus: [false, 'Strength adds half its damage bonus, as in the classic game.'],
+    variantNpcs: [true, 'Shopkeepers and innkeepers look different by the quality of the place.'],
+    variantResidents: [true, 'Most people at home look like the townsfolk in the street.'],
+    loanAmountPerLevel: [4, 'The most a bank lends you for each of your levels.'],
+    'EnhancedRiding.enhancedRiding': [true, 'A better view from the saddle, and galloping.'],
+    'EnhancedRiding.RealisticMovement': [true, 'A horse or a cart moves slowly backward and sideways.'],
+    'EnhancedRiding.followTerrainEnabled': [true, 'Your mount tilts with the ground.'],
+    'EnhancedRiding.followTerrainSoftenFactor': [8, 'How much the ride smooths slopes: 0 is none, 32 the most.'],
+    'EnhancedRiding.GallopingInTowns': [true, 'You can gallop in towns.'],
+    'EnhancedRiding.TrampleCivilians': [true, 'A gallop into townsfolk hurts them, and it is a crime.'],
+    'RefinedTraining.refinedTraining': [true, 'Pick the skill first, then see its price.'],
+    'RefinedTraining.variableTrainingPrice': [true, 'Training a low skill costs less.'],
+    'RefinedTraining.intensiveTraining': [false, 'Offers five days of training, a session each day, for a higher price.'],
   };
-  let n = 0;
-  for (const sec of settings.Sections) {
-    for (const k of sec.Keys) {
-      const name = sec.Name === 'Modules' ? k.Name : `${sec.Name}.${k.Name}`;
-      if (name === 'fightersTeachHandToHand') { assert.equal(keys[name], undefined, 'FGH2H-R: the ONE retired switch - the base guild counts HandToHand beside Giantish'); n++; continue; }
-      assert.ok(keys[name], `${name} is on the pane`);
-      assert.equal(keys[name].description, PLAIN[name] ?? k.Description, `${name}: the mod's own words, or their plain rewording`);
-      const expected = typeof k.Value === 'string' ? (k.Value === 'True' ? true : k.Value === 'False' ? false : Number(k.Value)) : k.Value;
-      if (name === 'shipPorts') { assert.equal(expected, true); assert.equal(keys[name].default, false, 'SHIP-PORTS: a recorded departure from the mod\'s defaults - the boat stays reachable from anywhere until a player asks for the port rule'); n++; continue; }
-      if (name === 'equipDamage') { assert.equal(expected, true); assert.equal(keys[name].default, false, 'WEAR-VANILLA: the second recorded departure - armour wears at DFU\'s rate, not x5'); n++; continue; }
-      if (name === 'EnhancedRiding.GallopingInTowns') { assert.equal(expected, false); assert.equal(keys[name].default, true, 'TOWN-GALLOP: the third recorded departure - a horse gallops in a town as out of one, and nothing holds it to the walk there'); n++; continue; }
-      assert.equal(keys[name].default, expected, `${name}: the mod's own default`);
-      n++;
-    }
+  for (const [name, [def, words]] of Object.entries(OURS)) {
+    assert.ok(keys[name], `${name} is on the pane`);
+    assert.equal(keys[name].default, def, `${name}: our default`);
+    assert.equal(keys[name].description, words, `${name}: our words`);
   }
-  assert.equal(n, 27, 'eighteen modules, six riding keys, three training keys');
+  assert.equal(keys.fightersTeachHandToHand, undefined, 'FGH2H-R: the ONE retired switch - the base guild counts HandToHand beside Giantish');
+  assert.deepEqual(Object.keys(keys).filter((k) => k !== 'Enabled').sort(), Object.keys(OURS).sort(), 'eighteen modules less the retired one, six riding keys, three training keys');
   assert.deepEqual(keys.loanAmountPerLevel.options, ['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']);
   assert.equal(roleplayRealismInstalled(), true);
   assert.equal(installRoleplayRealism(), false, 'once');
@@ -121,7 +131,7 @@ test('RR1 climbingRestriction: a drawn weapon that is not bare hands answers 0 w
   const said = [];
   assert.equal(rrClimbingChance(50, { climbing: 40, luck: 50, weaponDrawn: true, weaponMelee: false, say: (t) => said.push(t) }), 0);
   assert.deepEqual(said, [NO_CLIMB_HOLDING_WEAPON]);
-  assert.equal(NO_CLIMB_HOLDING_WEAPON, "You can't climb whilst holding your weapon.", 'the csv');
+  assert.equal(NO_CLIMB_HOLDING_WEAPON, 'Put your weapon away to climb.', 'OWN-WORK3: our line');
   assert.equal(rrClimbingChance(50, { climbing: 40, luck: 50, weaponDrawn: true, weaponMelee: true }), climbingChance(50, 40, 50), 'bare hands drawn: DFU\'s formula');
   assert.equal(rrClimbingChance(50, { climbing: 40, luck: 50, khajiit: true, enhanced: true }), climbingChance(50, 40, 50, { khajiit: true, enhanced: true }));
   setWeaponPoseProbe(() => ({ weaponDrawn: true, weaponType: 0 }));
@@ -385,7 +395,9 @@ test('RR1 underworldExpulsion: the two guild classes - expulsion allowed, the jo
   assert.deepEqual(RR_UNDERWORLD.ThievesGuild.squad(9), [{ mobileType: MOBILE_TYPES.Rogue, count: 10, minDistance: 1, maxDistance: 8 }, { mobileType: MOBILE_TYPES.Thief, count: 10, minDistance: 1, maxDistance: 4 }], '4 + (int)(9 / 1.5)');
   assert.deepEqual(RR_UNDERWORLD.DarkBrotherhood.squad(9), [{ mobileType: MOBILE_TYPES.Assassin, count: 8, minDistance: 1, maxDistance: 5 }, { mobileType: MOBILE_TYPES.Nightblade, count: 8, minDistance: 4, maxDistance: 16 }], '4 + 9 / 2');
   assert.equal(RR_UNDERWORLD.ThievesGuild.expulsion.length, 6); assert.equal(RR_UNDERWORLD.ThievesGuild.expulsion[4], '', 'the NewLineToken');
-  assert.equal(RR_UNDERWORLD.DarkBrotherhood.expulsion[0], "%pcn, you have disappointed us yet again, and you've not");
+  assert.equal(RR_UNDERWORLD.DarkBrotherhood.expulsion.length, 5); assert.equal(RR_UNDERWORLD.DarkBrotherhood.expulsion[2], '', 'the NewLineToken');
+  assert.equal(RR_UNDERWORLD.DarkBrotherhood.expulsion[0], '%pcn, you have failed us again, and no one', 'OWN-WORK3: our lines');
+  assert.equal(RR_UNDERWORLD.ThievesGuild.expulsion[0], '%pcn, you have let us down once too often.');
   // the rank law: a negative reputation expels where DFU's class clamps to 0
   const tg = GUILDS.ThievesGuild;
   const store = createFactionRep(new Map([[tg.factionId, { id: tg.factionId, rep: -3 }]]));

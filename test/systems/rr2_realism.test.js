@@ -11,10 +11,10 @@ import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../src/system
 import {
   RR_RIDING, rrRidingOn, rrRidingSetting, rrCanRunRiding, rrRidingInputLimits, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj,
   rrRidingNeckBand, rrChargeDamage, rrTrampleOutcome, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, rrRefinedTrainingOn,
-  rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_TRAINING_LINES,
+  rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_TRAINING_LINES, RR_MOD,
 } from '../../src/systems/roleplayRealism/rrRealism.js';
 import {
-  RR_NPC_XML_SCALE, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrArtUrl, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
+  RR_NPC_XML_SCALE, RR_KEEPER_OF, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrArtUrl, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
   rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED,
 } from '../../src/systems/roleplayRealism/rrVariants.js';
 import { installRoleplayRealism, setRrHostSeams, rrHostSeams } from '../../src/systems/roleplayRealism/rrInstall.js';
@@ -39,9 +39,11 @@ import { SKILLS, SKILL_NAMES, permanentSkillValue } from '../../src/systems/skil
 import { TRAINING_SKILLS, trainingPrice, trainingMax } from '../../src/systems/guild/guildServices.js';
 import { NOT_ENOUGH_GOLD_ID } from '../../src/systems/guild/guildServiceActions.js';
 import { handToHandMinDamage, handToHandMaxDamage } from '../../src/combat/formulas.js';
+import { TextureFile } from '../../src/formats/textureFile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'TEXTURE.197')) ? process.env.ARENA2_PATH : null;
 const V = 'roleplay-realism';
 const on = (key, v = true) => setModSetting(V, key, v);
 // MO1: every vendored mod's Enabled defaults TRUE, so "off" is said, not assumed
@@ -51,14 +53,22 @@ const off = () => { reset(); on('Enabled', false); };
 installRoleplayRealism();
 
 // ---- the record --------------------------------------------------------------
-test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest names - each a file under public/art or a spec rebuilt from ARENA2 (NO-BETHESDA2), never both - the eleven switches', () => {
-  for (const r of RR_NPC_RECORDS) {
-    const xml = rd(`vendor/roleplay-realism/Textures/${RR_NPC_ARCHIVE}_${r}-0.xml`);
-    const sx = Number(/<scaleX>([\d.]+)<\/scaleX>/.exec(xml)[1]), sy = Number(/<scaleY>([\d.]+)<\/scaleY>/.exec(xml)[1]);
-    assert.deepEqual(RR_NPC_XML_SCALE[r], [sx, sy], `197_${r}-0.xml`);
+test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stands as big as the classic keeper it replaces), the 24 pictures the release\'s listing names - each a file under public/art or a spec rebuilt from ARENA2 (NO-BETHESDA2), never both - the eleven switches', () => {
+  assert.deepEqual({ ...RR_NPC_XML_SCALE }, { 0: [1.205, 0.987], 1: [1.516, 0.95], 2: [1.205, 0.938], 3: [1.237, 1.333], 4: [0.762, 1.036], 5: [1.471, 1.106], 6: [3.09, 0.729] });
+  assert.deepEqual({ ...RR_KEEPER_OF }, { 0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 2 }, '182_0 for the shop keeper\'s four, 182_1 the tavern keeper\'s two, 182_2 for one');
+  if (ARENA2) {
+    // the rule, read off the player's own TEXTURE.182 and TEXTURE.197: the keeper's size with its record scale over the 197 record's
+    const tf = (a) => { const t = new TextureFile(); t.load(new Uint8Array(readFileSync(join(ARENA2, `TEXTURE.${a}`))), `TEXTURE.${a}`); return t; };
+    const t182 = tf(182), t197 = tf(197), r3 = (x) => Math.round(x * 1000) / 1000;
+    for (const r of RR_NPC_RECORDS) {
+      const k = t182.getSize(RR_KEEPER_OF[r]), f = (256 + t182.getScale(RR_KEEPER_OF[r]).width) / 256, v = t197.getSize(r);
+      assert.deepEqual(RR_NPC_XML_SCALE[r], [r3((k.width * f) / v.width), r3((k.height * f) / v.height)], `197_${r}-0`);
+    }
   }
-  const manifest = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.dfmod.json'));
-  const named = new Set(manifest.Files.filter((f) => f.endsWith('.png')).map((f) => f.split('/').pop()));
+  const listing = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.files.json'));
+  assert.equal(listing.GUID, RR_MOD.guid); assert.equal(listing.ModVersion, RR_MOD.version);
+  const named = new Set(listing.Files.map((f) => f.split('/').pop()));
+  assert.equal(named.size, 24, 'the release\'s 24 pictures, and nothing else');
   const shipped = readdirSync(join(ROOT, 'public/art/roleplay-realism')).filter((f) => f.endsWith('.png')).sort();
   const rebuilt = Object.keys(RR_DERIVED).map((n) => `${n}.png`);
   assert.deepEqual(shipped, ['197_0-0.png', '197_1-0.png', '197_2-0.png', '197_3-0.png', '197_6-0.png'], 'the authors\' own five');
@@ -67,7 +77,7 @@ test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest
   assert.deepEqual([...shipped, ...rebuilt].sort(), [...RR_NPC_RECORDS.map((r) => `197_${r}-0.png`), ...RR_BUTTON_RECORDS.map((r) => `BUTTONS.RCI_${r}-0.png`)].sort(), '7 sprites + 17 buttons, every one somewhere');
   for (const f of [...shipped, ...rebuilt]) assert.ok(named.has(f), `${f} is the mod's own`);
   assert.deepEqual(RR_BUTTON_RECORDS, Array.from({ length: 17 }, (_, i) => 21 + i));
-  assert.ok(!existsSync(join(ROOT, 'vendor/roleplay-realism/Textures/197_0-0.png')), 'one copy: the served one');
+  assert.deepEqual(readdirSync(join(ROOT, 'vendor/roleplay-realism')).sort(), ['README.md', 'derived-art.json', 'roleplay-realism.files.json'], 'OWN-WORK3: the directory is its art alone');
   assert.equal(rrArtUrl('197_3-0', 'http://h/x/'), 'http://h/x/art/roleplay-realism/197_3-0.png');
   const keys = MOD_SETTINGS[V].keys;
   for (const k of ['variantNpcs', 'variantResidents', 'EnhancedRiding.enhancedRiding', 'EnhancedRiding.RealisticMovement', 'EnhancedRiding.followTerrainEnabled',
@@ -75,9 +85,13 @@ test('RR2 the record: the seven XML scales verbatim, the 24 sprites the manifest
     'RefinedTraining.variableTrainingPrice', 'RefinedTraining.intensiveTraining']) assert.ok(keys[k], k);
   assert.equal(RR_RIDING.lookPitchRatio, 2.6); assert.equal(RR_RIDING.samples, 16); assert.equal(RR_RIDING.pitchMaxOffset, 18);
   assert.equal(RR_RIDING.chargeKnockback, 100); assert.equal(RR_RIDING.chargeFatigueMultiplier, 15);
-  // the csv's training lines
-  const csv = rd('vendor/roleplay-realism/RoleplayRealismModData.csv');
-  for (const [k, v] of Object.entries(RR_TRAINING_LINES)) assert.ok(csv.includes(`${k},"${v}"`), k);
+  // OWN-WORK3: the training lines are ours
+  assert.deepEqual({ ...RR_TRAINING_LINES }, {
+    trainingSkill1: 'One session of {0} costs %a gold.', trainingSkill2: 'Or train hard for five days, a session each day,',
+    trainingSkill3: 'for {0} gold in all.', trainingSkill4: 'Shall we work on your {0}?',
+    trainingSkillIntense1: 'Four hard days of drills have sharpened your', trainingSkillIntense2: '{0} skill a great deal.',
+    trainingSkillIntense3: 'Now for the fifth and last session.',
+  });
 });
 
 // ---- the shop and tavern keeper (:775-849) -----------------------------------------
@@ -171,7 +185,7 @@ test('RR2 the art on its doors: the XML scale and the 197 sprites under variantN
   assert.equal(hasTextureReplacement(197, 2), false, 'the module alone gates it');
   on('variantNpcs');
   assert.deepEqual(billboardXmlScale(197, 1), { x: 1.516, y: 0.950 });
-  assert.deepEqual(billboardXmlScale(197, 6), { x: 3, y: 0.8 });
+  assert.deepEqual(billboardXmlScale(197, 6), { x: 3.09, y: 0.729 }, 'OWN-WORK3: our scale, the 182_2 keeper\'s size');
   for (const r of RR_BUTTON_RECORDS) assert.equal(buttonArtRegistered(r), true, `button ${r}`);
   assert.equal(buttonArtRegistered(20), false, 'the classic file ends at 20 and is not touched');
   assert.equal(asked.length, 0, 'lazy: nothing fetched at install');
@@ -398,9 +412,9 @@ test('RR2 refined training flow: the intensive offer, the week button - four day
   const cost = rrTrainingCost(trainingPrice(member, 3), 20, 50, true);
   const iCost = rrIntensiveCost(cost, 3);
   assert.deepEqual(f.top.buttonsMulti, [MB_BUTTONS.Yes, RR_WEEK_BUTTON, MB_BUTTONS.No], 'Yes, "5 Days", No');
-  assert.equal(f.top.rows[0].text, `Training your ${SKILL_NAMES[skill]} skill will cost ${cost} gold for a single session.`);
-  assert.equal(f.top.rows[3].text, `with a training session each day, this will cost ${iCost} gold in total.`);
-  assert.equal(f.top.rows[5].text, `So, would you like to train your ${SKILL_NAMES[skill]} skill with me?`);
+  assert.equal(f.top.rows[0].text, `One session of ${SKILL_NAMES[skill]} costs ${cost} gold.`);
+  assert.equal(f.top.rows[3].text, `for ${iCost} gold in all.`);
+  assert.equal(f.top.rows[5].text, `Shall we work on your ${SKILL_NAMES[skill]}?`);
   assert.equal(f.top.onButton(MB_BUTTONS.No), null, 'No: nothing');
   const next = f.top.onButton(RR_WEEK_BUTTON);
   assert.deepEqual(intensive, [[skill, 4, 4]], 'RaiseTime(SecondsPerDay * 4) and SetPermanentSkillValue(+4) before the fifth session');

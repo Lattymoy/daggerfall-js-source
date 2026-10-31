@@ -74,13 +74,13 @@ test('WESTHEAD-NORTH: the kept record keys on the row\'s value - a moved row is 
   _resetPortSites();
 });
 
-test('WESTHEAD-NORTH: the table holds Westhead Moor\'s shipyard alone, a row for Daggerfall\'s layout and one for Beautiful Cities\'; a row is handed only in its own layout - the host asks the town\'s layout pins (mutants: the row not handed; a row in any layout)', () => {
+test('WESTHEAD-NORTH: the table holds Westhead Moor\'s shipyard alone, a row for Daggerfall\'s layout (OWN-WORK3: Beautiful Cities\' went with the mod); a row is handed only in its own layout - the host asks the town\'s layout pins (mutants: the row not handed; a row in any layout)', () => {
   assert.deepEqual(Object.keys(PORT_PLACES_NEAR), [String(WESTHEAD)]);
-  assert.deepEqual(PORT_PLACES_NEAR[WESTHEAD].map((r) => [r.layout, Object.keys(r).filter((k) => k !== 'layout')]), [['classic', ['shipyard']], ['beautiful-cities', ['shipyard']]]);
+  assert.deepEqual(PORT_PLACES_NEAR[WESTHEAD].map((r) => [r.layout, Object.keys(r).filter((k) => k !== 'layout')]), [['classic', ['shipyard']]]);
   const near = (stamp) => portPlacesNear(WESTHEAD, stamp, layoutsMatch)?.shipyard ?? null;
   assert.deepEqual(near('classic'), [156, 406]);
   assert.deepEqual(near(undefined), [156, 406], 'no stamp: Daggerfall\'s layout');
-  assert.deepEqual(near('beautiful-cities@0.5.0'), [188, 429], 'whatever version the stamp names');
+  assert.equal(near('beautiful-cities@0.5.0'), null, 'a retired layout: no row');
   assert.equal(near('beautiful-villages@1.4.2'), null, 'a layout with no row: none');
   assert.equal(portPlacesNear(7, 'classic', () => true), null, 'another town: none');
   const w = hostText('src/scenes/world.js');

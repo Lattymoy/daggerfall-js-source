@@ -14,8 +14,9 @@
 //   node tools/travelOptionsAssets.mjs <path-to>/traveloptions.dfmod [outDir]
 //
 // Default outDir is vendor/travel-options/Textures. It also prints the
-// bundle's five text assets' sizes, which is how the vendored
-// modsettings.json / modpresets.json / CSV were taken.
+// bundle's five text assets' sizes (OWN-WORK3: the settings, presets and
+// string table they held left the tree; our own words and settings are the
+// record now).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { createHash } from 'node:crypto';

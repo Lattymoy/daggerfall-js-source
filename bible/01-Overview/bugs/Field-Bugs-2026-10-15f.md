@@ -171,7 +171,7 @@ THE FOUR HOSTS: world.js and exterior.js lay the town blocks through these stand
 unchanged (the doors are read off the meshes they already pass in); worldModes.js and dungeonContext.js lay out no town
 block. Pinned by `test/world/fb1015f_templesteps.test.js` (7); `tools/mutants/fb1015f_templesteps.json` (21, all dead - three
 need ARENA2_PATH). PINS MOVED: `test/world/wd3_standins.test.js`'s sizes for 53160, 53170, the rocks and the stalls, and its
-door sweep rewritten as the three laws; `test/world/fb1013e_hillseat.test.js`'s ARENA2 sweep reads the producer's meshes;
+door sweep rewritten as the three laws; `test/world/fb1013e_hillseat.test.js` (DELETED)'s ARENA2 sweep reads the producer's meshes;
 `tools/mutants/auditwd3.json` AWD3-FOUNDATION-CENTRED re-aimed. Audit-WD3's T1 retired; Field-Bugs-2026-10-13e's NOT SEEN
 narrowed; Port-Ledger's HILL-SEAT row narrowed.
 

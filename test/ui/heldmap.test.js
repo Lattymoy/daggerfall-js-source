@@ -1376,7 +1376,7 @@ test('TIER1 window: online a dungeon\'s mark reads "Region : Location (Elite Dun
     assert.equal(online.label, 'Daggerfall : Old Ruin (Elite Dungeon, Small)');
     assert.equal(online.otherLabel, 'Daggerfall : Old Ruin', 'a place the host names no tier for reads as DFU reads it');
     assert.equal(online.rows[0], 'Elite Dungeon, Small', 'the box opens with the tier - a dungeon\'s box is DFU\'s refusal, and the tier is known all the same');
-    assert.match(online.rows[1], /^You have no knowledge of /, '...and the refusal stays');
+    assert.match(online.rows[1], /^You know nothing about /, '...and the refusal stays');
     assert.ok(!online.otherRows.includes('Elite Dungeon, Small'));
     const offline = run(null);
     assert.equal(offline.label, 'Daggerfall : Old Ruin', 'offline no tier is named');
@@ -1717,13 +1717,13 @@ test('MAP2 I and H: the building list through locationInfoRows in a box any key 
     assert.equal(win._selected?.name, 'Wayrest');
     win.input('KeyI');
     assert.equal(win._info.title, 'Wayrest');
-    assert.deepEqual(win._info.rows, ['Guild Halls:    Fighters Guild'], 'the guild hall NAMED, never counted');
+    assert.deepEqual(win._info.rows, ['Guilds here: Fighters Guild'], 'the guild hall NAMED, never counted');
     assert.deepEqual(win._info.cells, ['Alchemist  2'], 'the shops counted by type');
     // ENH-NOTICE3: on the enhanced skin (this suite's default) the
     // words are the notice panel's and the .hmbox stays shut - the
     // classic arm of that is pinned below, in the ENH-NOTICE3 test.
     assert.equal(win._chrome.box.style.display, 'none');
-    assert.deepEqual(noticeTexts(), ['Wayrest', 'Guild Halls:    Fighters Guild', 'Alchemist  2']);
+    assert.deepEqual(noticeTexts(), ['Wayrest', 'Guilds here: Fighters Guild', 'Alchemist  2']);
     win.input('KeyS');
     assert.equal(win._info, null, 'ANY key closes it...');
     assert.equal(win._panelState?.opts?.speedCautious ?? true, true, '...and does nothing else that press');

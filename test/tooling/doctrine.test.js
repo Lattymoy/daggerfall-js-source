@@ -444,7 +444,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/handheld-torches/Textures/112358_0-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 3"],
   ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
   // CLIMATES & CALORIES (SURV2, vendor/climates-calories/Textures/).
-  // Fourteen PNGs, carried on the author's permission
+  // Thirteen PNGs, carried on the author's permission
   // (vendor/climates-calories/README.md): the spoiled faces, raw meat's
   // three, the waterskin. NO-BETHESDA2 rebuilds four that are Daggerfall's
   // own records - two faces, the tent's canvas and pole (derived.json). Archives 532-539 are
@@ -933,7 +933,7 @@ const BUNDLE_ART = new Map([
   // out of the bundle's Texture2D objects. A directory row: membership is
   // derived from the shipped manifest's Files, so it cannot widen.
   ['vendor/foraging/Textures/',
-    { manifest: 'vendor/foraging/foraging.dfmod.json',
+    { manifest: 'vendor/foraging/foraging.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
       why: "THIRD-PARTY - Foraging 1.7 (Harbinger451), carried on Mac's word of the author's permission; the mod's own pixel art - the Wood-Axe, Pick-Axe, Sickle, Fishing-Net, Wood Bundle, Egg and Spade - written as PNG from the bundle's Texture2D objects (see vendor/foraging/README.md)" }],
   ['vendor/eye-of-the-beholder/Textures/',
     { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
@@ -949,7 +949,7 @@ const BUNDLE_ART = new Map([
   // Beholder's is: membership is DERIVED from the bundle's own
   // manifest, so the port cannot quietly widen it.
   ['vendor/travel-options/Textures/',
-    { manifest: 'vendor/travel-options/travel-options.dfmod.json',
+    { manifest: 'vendor/travel-options/travel-options.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
       why: "THIRD-PARTY - Travel Options 1.11 (Hazelnut, MIT); the mod's own UI chrome - the 320x27 control strip and the two ports-filter buttons - re-encoded from the bundle's Texture2D objects by tools/travelOptionsAssets.mjs (see the vendor README: these are the PIXELS, not the author's file bytes)" }],
   // SW1b (2026-09-19, the deep audit): the 600 shield sprites landed and
   // this row did not, so the wider raster rule reddened on 600 files the
@@ -973,11 +973,11 @@ const BUNDLE_ART = new Map([
   // classic Daggerfall does not have (there is no ARENA2 original of a
   // hauberk or an archer's axe).
   ['public/art/roleplay-realism-items/',
-    { manifest: 'vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json',
+    { manifest: 'vendor/roleplay-realism-items/roleplay-realism-items.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
       why: "THIRD-PARTY - Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar); the mod's own inventory and paper-doll sprites for its fourteen custom items in every metal, and the helmet's masks - re-encoded from the bundle's Texture2D objects by tools/rriExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README). NO-BETHESDA2: the 50 that are Daggerfall's own records (46 helmet masks, the four Dwarven helmets) are rebuilt from the player's files (derived-art.json), not carried" }],
   ['public/art/roleplay-realism/',
-    { manifest: 'vendor/roleplay-realism/roleplay-realism.dfmod.json',
-      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own five variant shop and tavern keeper sprites (197_0-0 .. 197_3-0 and 197_6-0, the XML scale beside each under vendor/) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README). NO-BETHESDA2: 197_4-0, 197_5-0 and the seventeen BUTTONS.RCI records 21-37 are Daggerfall's own records under the author's paint, rebuilt from the player's files (derived-art.json), not carried" }],
+    { manifest: 'vendor/roleplay-realism/roleplay-realism.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
+      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own five variant shop and tavern keeper sprites (197_0-0 .. 197_3-0 and 197_6-0, our scale beside each in src/systems/roleplayRealism/rrVariants.js) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README). NO-BETHESDA2: 197_4-0, 197_5-0 and the seventeen BUTTONS.RCI records 21-37 are Daggerfall's own records under the author's paint, rebuilt from the player's files (derived-art.json), not carried" }],
   // OVH2 (2026-09-24, Mac: "Our first overhaul option will be the file attached"): GrimoireUI's 139 pictures - the
   // mod's own hand-drawn UI (parchment, wood and new lettering over Daggerfall's screen layouts), vendored byte for
   // byte the way Roleplay & Realism's BUTTONS.RCI repaints are. A LOOSE-FILE pack ships no .dfmod, so its authority is
@@ -1026,7 +1026,7 @@ const BUNDLE_ART = new Map([
   // DW-E3: Iliac Puddle No More's seven fish - the author's own pictures (no classic record covers any: the
   // extractor measures each against every TEXTURE file, DS1's search, and refuses one a record covers).
   ['vendor/iliac-puddle-no-more/Flats/',
-    { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.dfmod.json',
+    { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.files.json',   // OWN-WORK3: the manifest left with the rows; our listing names the seven
       why: "THIRD-PARTY - Iliac Puddle No More 1.2.2 (jet082); the mod's own seven fish, decoded from the bundle's Texture2D objects (DXT5, the first mip - the pixels the game samples) by tools/iliacPuddleAssets.mjs (see the vendor README)" }],
   // VE4 (2026-10-05, Mac: "Approved and yes", then "Put it in the codebase"): VANILLA ENHANCED - THE ONE DERIVED PACK.
   // Every row above carries a modder's OWN art, and several say so against this very rule. These carry Daggerfall's

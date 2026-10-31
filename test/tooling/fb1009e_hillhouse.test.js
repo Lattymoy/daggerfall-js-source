@@ -87,20 +87,3 @@ test('HILL-HOUSE by source: the door applies it beside the temple summoners on b
   const both = src.match(/curateBlockPeople\(dfBlock, liveAsset\(blockReplacementFilename\(blockName, variant\)\)\?\.vendor\);[^\n]*\n(\s*\/\/[^\n]*\n)?\s*curateBlockPlacements\(dfBlock, liveAsset\(blockReplacementFilename\(blockName, variant\)\)\?\.vendor\);/g);
   assert.equal(both?.length, 2);
 });
-
-test('HILL-HOUSE with ARENA2: the committed row is the measurement on the player\'s data - the author\'s spot walled by the hills, the row\'s the nearest clear ground at the author\'s facing, its automap cells the footprint\'s - and the block the door mints stands the house there', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
-  const { openTownData } = await import('../../tools/townQuestMarkers.mjs');
-  const { measurePlacements, placementContext, placementIssues } = await import('../../tools/curatedPlacements.mjs');
-  const data = await openTownData(ARENA2);
-  const [m] = await measurePlacements(data, CURATED_PLACEMENTS);
-  const r = CURATED_PLACEMENTS[0];
-  assert.ok(m.authored.includes('a hill at the door') && m.authored.includes('a hill'), `the author's spot: ${m.authored}`);
-  assert.deepEqual([m.block, m.record, m.model, m.from, m.to, m.automap], [r.block, r.record, r.model, { ...r.from }, { ...r.to }, [...r.automap]]);
-  assert.equal(m.metres, 24.8);
-  const ctx = placementContext(data, r.vendor, r.block, r.record);
-  assert.deepEqual(placementIssues(ctx, r.to.xPos, r.to.zPos, r.to.yRotation), [], 'clear ground, a clear door');
-  const { dfBlock } = data.packBlock(r.vendor, r.block);
-  assert.equal(curateBlockPlacements(dfBlock, r.vendor), 1);
-  assert.deepEqual([dfBlock.rmbBlock.subRecords[6].xPos, dfBlock.rmbBlock.subRecords[6].zPos], [3808, 2176]);
-  assert.equal(dfBlock.rmbBlock.fldHeader.buildingDataList[6].buildingType, 18, 'the pack\'s House2 - the house a quest seats its person in');
-});

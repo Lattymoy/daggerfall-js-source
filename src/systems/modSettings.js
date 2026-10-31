@@ -183,34 +183,10 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // WD3 (2026-10-01): BEAUTIFUL VILLAGES OF DAGGERFALL 1.4.2 and BEAUTIFUL
-  // CITIES OF DAGGERFALL 0.5.0 (carademono). No modsettings of their own -
-  // 7,317 and 410 places laid out again, their blocks with them - so one
-  // switch each: the port's Enabled, read once when the game loads
-  // (scenes/modWorldData.js latches it - a town never moves under the
-  // player), online the room's (systems/online/onlineLane.js).
-  'beautiful-villages': Object.freeze({
-    title: 'Beautiful Villages of Daggerfall',
-    author: 'carademono',
-    keys: Object.freeze({
-      Enabled: Object.freeze({
-        default: true,
-        description: 'Villages, hamlets, farms, manors and temples get new layouts, and roadside taverns are rebuilt. '
-          + 'A town where you own a house, rent a room or have a quest building stays as you found it.',
-      }),
-    }),
-  }),
-  'beautiful-cities': Object.freeze({
-    title: 'Beautiful Cities of Daggerfall',
-    author: 'carademono',
-    keys: Object.freeze({
-      Enabled: Object.freeze({
-        default: true,
-        description: 'Cities get new layouts, with new districts, walls, gates, markets and docks. A city where you '
-          + 'own a house, rent a room or have a quest building stays as you found it.',
-      }),
-    }),
-  }),
+  // WD3's BEAUTIFUL VILLAGES 1.4.2 and BEAUTIFUL CITIES 0.5.0 (carademono) are
+  // retired (OWN-WORK3, 2026-10-31): their switches went with them, and a
+  // stored value for either is let go on load (migrate, below). The towns are
+  // Daggerfall's, dressed by our own law with no switch (world/townDress.js).
   // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
   // own - a travel hook, a quest action and six world-data variants - so
   // one switch.
@@ -262,8 +238,8 @@ export const MOD_SETTINGS = Object.freeze({
   // DW-A (2026-09-25): ILIAC PUDDLE NO MORE 1.2.2 (jet082). Its one section,
   // General, restated flat with the section in front of each name (the
   // Immersive Footsteps convention), in the shipped order with the shipped
-  // defaults, ranges and descriptions - the typo in "Spawn underwate
-  // enemies" is the mod's own. Plus the port's `Enabled` (MO1: on). The
+  // defaults and ranges - the sea's tuning, ported. OWN-WORK3: every
+  // description is our own words. Plus the port's `Enabled` (MO1: on). The
   // steppers are the Mods pane's: a metre for the depth, a twentieth on
   // the 0..1 sliders, a quarter on the swim multiplier (its floor).
   'iliac-puddle-no-more': Object.freeze({
@@ -277,35 +253,35 @@ export const MOD_SETTINGS = Object.freeze({
             + 'with a breath meter among fish, weed, coral, shipwrecks, sunken loot and whatever lives in the deep.');
         },
       }),
-      'General.WaterDepth': Object.freeze({ default: 250.0, min: 5.0, max: 250.0, float: true, step: 1, get description() { return t('mods.iliacPuddleNoMore.General.WaterDepth.description', 'Maximum water depth'); } }),
+      'General.WaterDepth': Object.freeze({ default: 250.0, min: 5.0, max: 250.0, float: true, step: 1, get description() { return t('mods.iliacPuddleNoMore.General.WaterDepth.description', 'How deep the sea gets, in meters'); } }),
       'General.SpawnWaterSurfaces': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.SpawnWaterSurfaces.description', 'Show the water surface'); } }),
-      'General.SpawnUnderwaterEnemies': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.SpawnUnderwaterEnemies.description', 'Spawn underwater enemies'); } }),
-      'General.EnemyFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.EnemyFrequency.description', 'Enemy frequency rate'); } }),
+      'General.SpawnUnderwaterEnemies': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.SpawnUnderwaterEnemies.description', 'Hostile creatures in the deep sea'); } }),
+      'General.EnemyFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.EnemyFrequency.description', 'How often a creature appears in the deep'); } }),
       // SEA-CAP (2026-09-26, SquidKamer: "puddle no more is too aggressive ... it summoned an army of everything"; Mac:
-      // "Yes, cap at 32"): THE PORT'S DEFAULT IS 32, not the 128 the mod ships (vendor modsettings.json). The pulse
+      // "Yes, cap at 32"): THE PORT'S DEFAULT IS 32, not the 128 Iliac Puddle No More 1.2.2 ships. The pulse
       // fills every sea pixel within 200 m of an outdoor player from nothing to the cap in about two seconds, each foe
       // hostile and told where the player is, and in a browser a hundred and twenty-eight of them is a crowd the AI
       // cannot carry. The range is the mod's own - a player offline may still raise it to 256. Ledger A.
-      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum underwater enemies at once'); } }),
-      'General.PassiveFishFrequency': Object.freeze({ default: 0.8, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.PassiveFishFrequency.description', 'Fish frequency rate'); } }),
-      'General.MaxLiveFish': Object.freeze({ default: 720, min: 0, max: 1080, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveFish.description', 'Maximum fish at once'); } }),
-      'General.SpawnUnderwaterDecorations': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.SpawnUnderwaterDecorations.description', 'Decorate the seafloor'); } }),
+      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'The most deep-sea creatures near you at one time'); } }),
+      'General.PassiveFishFrequency': Object.freeze({ default: 0.8, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.PassiveFishFrequency.description', 'How many fish swim in the sea'); } }),
+      'General.MaxLiveFish': Object.freeze({ default: 720, min: 0, max: 1080, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveFish.description', 'The most fish near you at one time'); } }),
+      'General.SpawnUnderwaterDecorations': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.SpawnUnderwaterDecorations.description', 'Weed, coral and rocks on the seafloor'); } }),
       'General.DecorationPopulateRadius': Object.freeze({ default: 2, min: 1, max: 3, get description() { return t('mods.iliacPuddleNoMore.General.DecorationPopulateRadius.description', 'How far from you the seafloor is decorated, in map squares. At 3 nothing pops in'); } }),
-      'General.DecorationFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.DecorationFrequency.description', 'Decoration rate'); } }),
-      'General.MaxDecorationsPerTile': Object.freeze({ default: 1080, min: 64, max: 2160, get description() { return t('mods.iliacPuddleNoMore.General.MaxDecorationsPerTile.description', 'Maximum decorations per map square. Lower runs faster'); } }),
-      'General.SeafloorLootRate': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.SeafloorLootRate.description', 'Random loot rate'); } }),
-      'General.MaxLiveLootObjects': Object.freeze({ default: 192, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveLootObjects.description', 'Maximum loose loot at once'); } }),
-      'General.TreasureClusterRate': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.TreasureClusterRate.description', 'Wreckage treasure rate'); } }),
-      'General.MaxLiveTreasureClusters': Object.freeze({ default: 12, min: 0, max: 32, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveTreasureClusters.description', 'Maximum wrecks'); } }),
-      'General.TreasureCove': Object.freeze({ default: false, get description() { return t('mods.iliacPuddleNoMore.General.TreasureCove.description', 'More and better loot'); } }),
-      'General.WaterSurfaceTopTransparency': Object.freeze({ default: 0.7, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.WaterSurfaceTopTransparency.description', 'Water surface transparency from above'); } }),
-      'General.WaterSurfaceBottomTransparency': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.WaterSurfaceBottomTransparency.description', 'Water surface transparency from below'); } }),
-      'General.DarkerSurfaceWater': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.DarkerSurfaceWater.description', 'Darker surface water tint'); } }),
-      'General.UnderwaterFogStrength': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.UnderwaterFogStrength.description', 'Underwater fog strength'); } }),
-      'General.UnderwaterFogDistance': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.UnderwaterFogDistance.description', 'Underwater fog view distance'); } }),
-      'General.SwimSpeedMultiplier': Object.freeze({ default: 1.0, min: 0.25, max: 30.0, float: true, step: 0.25, get description() { return t('mods.iliacPuddleNoMore.General.SwimSpeedMultiplier.description', 'Multiplies your swimming speed outdoors'); } }),
-      'General.EnableSwimStroke': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.EnableSwimStroke.description', 'Press Run while swimming for a burst of speed'); } }),
-      'General.ArgonianInfiniteBreath': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.ArgonianInfiniteBreath.description', 'Argonians never drown'); } }),
+      'General.DecorationFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.DecorationFrequency.description', 'How much weed, coral and rock covers the seafloor'); } }),
+      'General.MaxDecorationsPerTile': Object.freeze({ default: 1080, min: 64, max: 2160, get description() { return t('mods.iliacPuddleNoMore.General.MaxDecorationsPerTile.description', 'The most weed, coral and rock in one map square. Fewer runs faster'); } }),
+      'General.SeafloorLootRate': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.SeafloorLootRate.description', 'How much loose treasure lies on the seafloor'); } }),
+      'General.MaxLiveLootObjects': Object.freeze({ default: 192, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveLootObjects.description', 'The most loose treasure near you at one time'); } }),
+      'General.TreasureClusterRate': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.TreasureClusterRate.description', 'How many wrecks lie on the seafloor'); } }),
+      'General.MaxLiveTreasureClusters': Object.freeze({ default: 12, min: 0, max: 32, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveTreasureClusters.description', 'The most wrecks near you at one time'); } }),
+      'General.TreasureCove': Object.freeze({ default: false, get description() { return t('mods.iliacPuddleNoMore.General.TreasureCove.description', 'More treasure in the deep, and better'); } }),
+      'General.WaterSurfaceTopTransparency': Object.freeze({ default: 0.7, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.WaterSurfaceTopTransparency.description', 'How clear the water looks from above'); } }),
+      'General.WaterSurfaceBottomTransparency': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.WaterSurfaceBottomTransparency.description', 'How clear the surface looks from under the water'); } }),
+      'General.DarkerSurfaceWater': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.DarkerSurfaceWater.description', 'Darkens the surface of the sea'); } }),
+      'General.UnderwaterFogStrength': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.UnderwaterFogStrength.description', 'How thick the haze is under the water'); } }),
+      'General.UnderwaterFogDistance': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, get description() { return t('mods.iliacPuddleNoMore.General.UnderwaterFogDistance.description', 'How far you can see under the water'); } }),
+      'General.SwimSpeedMultiplier': Object.freeze({ default: 1.0, min: 0.25, max: 30.0, float: true, step: 0.25, get description() { return t('mods.iliacPuddleNoMore.General.SwimSpeedMultiplier.description', 'How fast you swim in open water, as a multiple of your speed'); } }),
+      'General.EnableSwimStroke': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.EnableSwimStroke.description', 'Press Run in the water for a fast stroke'); } }),
+      'General.ArgonianInfiniteBreath': Object.freeze({ default: true, get description() { return t('mods.iliacPuddleNoMore.General.ArgonianInfiniteBreath.description', 'Argonians can breathe under water'); } }),
     }),
   }),
   // OH-A (2026-09-26): THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0
@@ -546,9 +522,9 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // RRI1: Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar) - eleven
-  // modules, each a bool in the mod's [Modules] section, the mod's own
-  // words. `Enabled` is the mod being loaded at all: the fourteen custom
-  // items and the twenty template patches ride it.
+  // modules, each a bool in the mod's [Modules] section; OWN-WORK3: the
+  // words are ours. `Enabled` is the mod being loaded at all: the
+  // fourteen custom items and the template patches ride it.
   'roleplay-realism-items': Object.freeze({
     title: 'Roleplay & Realism: Items',
     author: 'Hazelnut & Ralzar',
@@ -556,21 +532,20 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({
         default: true,
         get description() {
-          return t('mods.roleplayRealismItems.Enabled.description', 'Adds 2 new weapons and light and medium armor sets in every metal, and changes what items weigh and '
-            + 'cost.');
+          return t('mods.roleplayRealismItems.Enabled.description', 'Two new weapons, a light and a chain armor set in every metal, and lighter arrows, paper and small goods.');
         },
       }),
-      lootRebalance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.lootRebalance.description', 'Rebalances loot on mobs and in piles'); } }),
-      bandaging: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.bandaging.description', 'Allows bandages to stack, and to be used for healing based on medical skill'); } }),
-      conditionBasedPrices: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.conditionBasedPrices.description', 'Item prices are based on condition and loot you find can be quite worn out'); } }),
-      storeQualityItemCondition: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.storeQualityItemCondition.description', 'Items in shops can be in a used condition dependent on the quality of the store'); } }),
-      realisticEnemyEquipment: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.realisticEnemyEquipment.description', 'Enemy equipment is realistic for their class and can be variable condition'); } }),
-      skillBasedStartingEquipment: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.skillBasedStartingEquipment.description', 'Player starting equipment is based on skills'); } }),
-      skillBasedStartingSpells: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.skillBasedStartingSpells.description', 'Player starting spells are based on skills'); } }),
-      weaponBalance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.weaponBalance.description', 'Balances weapon attack speed and damage ranges against weight to give more valid choices'); } }),
-      newWeapons: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.newWeapons.description', 'Adds two new weapons to the game, Archers Axe and Light Flail'); } }),
-      newArmor: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.newArmor.description', 'Adds new chest, arm, leg and foot armor pieces to the game'); } }),
-      alchemistPotions: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.alchemistPotions.description', 'Adds random potions for sale at alchemist stores, for a premium price'); } }),
+      lootRebalance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.lootRebalance.description', 'Foes and loot piles carry loot that fits them.'); } }),
+      bandaging: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.bandaging.description', 'Bandages stack, and a bandage heals you by your Medical skill.'); } }),
+      conditionBasedPrices: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.conditionBasedPrices.description', 'A worn item is worth less, and loot you find is often worn.'); } }),
+      storeQualityItemCondition: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.storeQualityItemCondition.description', 'A poorer shop sells used goods.'); } }),
+      realisticEnemyEquipment: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.realisticEnemyEquipment.description', 'Foes carry gear that suits their class, in any state of wear.'); } }),
+      skillBasedStartingEquipment: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.skillBasedStartingEquipment.description', 'You start with gear for your skills.'); } }),
+      skillBasedStartingSpells: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.skillBasedStartingSpells.description', 'You start with spells for your magic skills.'); } }),
+      weaponBalance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.weaponBalance.description', 'A heavier weapon swings slower and hits harder, so every weapon has a use.'); } }),
+      newWeapons: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.newWeapons.description', 'Adds the Hatchet and the Short Flail.'); } }),
+      newArmor: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.newArmor.description', 'Adds light and chain armor for the chest, arms, legs, hands, feet and head.'); } }),
+      alchemistPotions: Object.freeze({ default: true, get description() { return t('mods.roleplayRealismItems.alchemistPotions.description', 'Alchemists sell a few random potions at twice the price.'); } }),
     }),
   }),
   'roleplay-realism': Object.freeze({
@@ -586,36 +561,36 @@ export const MOD_SETTINGS = Object.freeze({
             + 'enemies, harsher guild expulsions, and beds you can click to sleep in.');
         },
       }),
-      // the mod's own descriptions (modsettings.json, Modules)
-      bedSleeping: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.bedSleeping.description', 'Allows sleep to be initiated by clicking on a bed.'); } }),
-      advancedArchery: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.advancedArchery.description', 'Alters to-hit and damage done by arrows depending on the length of draw.'); } }),
-      encumbranceEffects: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.encumbranceEffects.description', 'Provides speed and fatigue penalties when carrying too much weight.'); } }),
-      bandaging: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.bandaging.description', 'Allows bandages to be used for healing based on medical skill.'); } }),
-      shipPorts: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.shipPorts.description', 'Player can only board their ship when in a port town.'); } }),   // SHIP-PORTS (2026-09-23, Sir McMobdon on Discord: "cant access my boat anymore"): the mod ships this ON, the port ships it OFF - a restriction nobody chose took the boat away from every owner the day the mod landed, and the switch was nowhere a player could reach; recorded on the RR page
-      underworldExpulsion: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.underworldExpulsion.description', 'Enables underworld guilds to expel members for poor performance... with prejudice.'); } }),
-      climbingRestriction: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.climbingRestriction.description', 'Prevents climbing with a weapon drawn.'); } }),
-      weaponSpeed: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.weaponSpeed.description', 'Lowers weapon damage per second for characters with high Speed.'); } }),
-      weaponMaterials: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.weaponMaterials.description', 'Moderates the to-hit bonuses of weapon materials so skill remains key factor'); } }),
-      equipDamage: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.equipDamage.description', 'Increases equipment damage proportional to max condition.'); } }),   // WEAR-VANILLA (2026-10-01): the mod ships it ON (armour x5), the port OFF - see the overhaul's wear modules above; the room's too (onlineLane.js)
-      enemyAppearance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.enemyAppearance.description', 'Remixes human enemy appearance based on class'); } }),
-      purificationPotion: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.purificationPotion.description', 'Changes purification potion to cure poison rather than grant invisibility'); } }),
-      autoExtinguishLight: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.autoExtinguishLight.description', 'Automatically extinguish any light sources when you exit a dungeon'); } }),
-      classicStrengthDamageBonus: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.classicStrengthDamageBonus.description', 'Shows the strength damage bonus at half, as the classic game did.'); } }),
-      variantNpcs: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.variantNpcs.description', 'Enable variant NPC sprites in shops & taverns'); } }),
-      variantResidents: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.variantResidents.description', 'Fills 80% of houses with the townsfolk you see walking around, instead of random adventurers'); } }),
+      // OWN-WORK3: the descriptions are ours
+      bedSleeping: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.bedSleeping.description', 'Click a bed to sleep in it.'); } }),
+      advancedArchery: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.advancedArchery.description', 'How long you draw a bow changes its aim and its damage.'); } }),
+      encumbranceEffects: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.encumbranceEffects.description', 'A heavy load slows you and tires you.'); } }),
+      bandaging: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.bandaging.description', 'A bandage heals you by your Medical skill.'); } }),
+      shipPorts: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.shipPorts.description', 'You can board your ship only from a port town.'); } }),   // SHIP-PORTS (2026-09-23, Sir McMobdon on Discord: "cant access my boat anymore"): the mod ships this ON, the port ships it OFF - a restriction nobody chose took the boat away from every owner the day the mod landed, and the switch was nowhere a player could reach; recorded on the RR page
+      underworldExpulsion: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.underworldExpulsion.description', 'The Thieves Guild and the Dark Brotherhood expel a failing member and send killers after them.'); } }),
+      climbingRestriction: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.climbingRestriction.description', 'You cannot climb with a weapon drawn.'); } }),
+      weaponSpeed: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.weaponSpeed.description', 'Swing speed comes from Speed and Strength together, by how the weapon is held.'); } }),
+      weaponMaterials: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.weaponMaterials.description', 'A better metal adds less to your aim, so skill matters most.'); } }),
+      equipDamage: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.equipDamage.description', 'Armor wears five times faster from blows.'); } }),   // WEAR-VANILLA (2026-10-01): the mod ships it ON (armour x5), the port OFF - see the overhaul's wear modules above; the room's too (onlineLane.js)
+      enemyAppearance: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.enemyAppearance.description', 'Human foes look like their class.'); } }),
+      purificationPotion: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.purificationPotion.description', 'The Purification potion cures poison in place of invisibility.'); } }),
+      autoExtinguishLight: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.autoExtinguishLight.description', 'Your light goes out when you leave a dungeon by day.'); } }),
+      classicStrengthDamageBonus: Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.classicStrengthDamageBonus.description', 'Strength adds half its damage bonus, as in the classic game.'); } }),
+      variantNpcs: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.variantNpcs.description', 'Shopkeepers and innkeepers look different by the quality of the place.'); } }),
+      variantResidents: Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.variantResidents.description', 'Most people at home look like the townsfolk in the street.'); } }),
       // fightersTeachHandToHand RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it") - see RETIRED_KEYS below
-      loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), get description() { return t('mods.roleplayRealism.loanAmountPerLevel.description', 'Sets the maximum amount per level that can be borrowed from banks'); } }),
+      loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), get description() { return t('mods.roleplayRealism.loanAmountPerLevel.description', 'The most a bank lends you for each of your levels.'); } }),
       // EnhancedRiding (RR2)
-      'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.enhancedRiding.description', 'Enable enhanced horse riding module, improving presentation and allowing galloping.'); } }),
-      'EnhancedRiding.RealisticMovement': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.RealisticMovement.description', 'Makes the horse and cart movement backwards and sideways more realistic and limited.'); } }),
-      'EnhancedRiding.followTerrainEnabled': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.followTerrainEnabled.description', 'Enables terrain following when riding.'); } }),
-      'EnhancedRiding.followTerrainSoftenFactor': Object.freeze({ default: 8, min: 0, max: 32, get description() { return t('mods.roleplayRealism.EnhancedRiding.followTerrainSoftenFactor.description', 'How much the ride smooths out slopes, from 0 (none) to 32 (most).'); } }),
-      'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.GallopingInTowns.description', 'Enables galloping (sprinting) while riding horses in towns.'); } }),   // TOWN-GALLOP (2026-10-13, Mac: "Remove forced horse walking in towns"): the mod ships this OFF, the port ships it ON - off, the mod's CanRun refused the run in every town, and horse care's horse walked there with Run held (HORSE-WALK); the room's too (onlineLane.js ONLINE_WHOLE_MODS reads this default); no tile ever reached the switch (FT14), so no saved off stands to reset; TrampleCivilians, the mod's own, rides with it; recorded on the RR page
-      'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.TrampleCivilians.description', 'Enables the crime of trampling innocent townsfolk when galloping in a town. Be careful!'); } }),
+      'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.enhancedRiding.description', 'A better view from the saddle, and galloping.'); } }),
+      'EnhancedRiding.RealisticMovement': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.RealisticMovement.description', 'A horse or a cart moves slowly backward and sideways.'); } }),
+      'EnhancedRiding.followTerrainEnabled': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.followTerrainEnabled.description', 'Your mount tilts with the ground.'); } }),
+      'EnhancedRiding.followTerrainSoftenFactor': Object.freeze({ default: 8, min: 0, max: 32, get description() { return t('mods.roleplayRealism.EnhancedRiding.followTerrainSoftenFactor.description', 'How much the ride smooths slopes: 0 is none, 32 the most.'); } }),
+      'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.GallopingInTowns.description', 'You can gallop in towns.'); } }),   // TOWN-GALLOP (2026-10-13, Mac: "Remove forced horse walking in towns"): the mod ships this OFF, the port ships it ON - off, the mod's CanRun refused the run in every town, and horse care's horse walked there with Run held (HORSE-WALK); the room's too (onlineLane.js ONLINE_WHOLE_MODS reads this default); no tile ever reached the switch (FT14), so no saved off stands to reset; TrampleCivilians, the mod's own, rides with it; recorded on the RR page
+      'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.EnhancedRiding.TrampleCivilians.description', 'A gallop into townsfolk hurts them, and it is a crime.'); } }),
       // RefinedTraining (RR2)
-      'RefinedTraining.refinedTraining': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.RefinedTraining.refinedTraining.description', 'Enable refined skill training service.'); } }),
-      'RefinedTraining.variableTrainingPrice': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.RefinedTraining.variableTrainingPrice.description', 'Makes price of training based on skill level as well as player level.'); } }),
-      'RefinedTraining.intensiveTraining': Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.RefinedTraining.intensiveTraining.description', 'Enables intensive training option for a session per day for five days, for extra cost.'); } }),
+      'RefinedTraining.refinedTraining': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.RefinedTraining.refinedTraining.description', 'Pick the skill first, then see its price.'); } }),
+      'RefinedTraining.variableTrainingPrice': Object.freeze({ default: true, get description() { return t('mods.roleplayRealism.RefinedTraining.variableTrainingPrice.description', 'Training a low skill costs less.'); } }),
+      'RefinedTraining.intensiveTraining': Object.freeze({ default: false, get description() { return t('mods.roleplayRealism.RefinedTraining.intensiveTraining.description', 'Offers five days of training, a session each day, for a higher price.'); } }),
     }),
   }),
   'shield-widget': Object.freeze({
@@ -1165,18 +1140,18 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
-  // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections
-  // as modsettings.json ships them, the key named section-dot-name;
-  // descriptions are the mod's own, verbatim. The shipped file's five
-  // unnamed spacer sections ("__", "-", "_", "--", ".") carry no keys
-  // and are noted where they fall. Plus the port's `Enabled` (MO1: on).
+  // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections,
+  // the key named section-dot-name (a saved setting's own name). OWN-WORK3
+  // (2026-10-31): the descriptions and choices are our own words, the
+  // defaults our decisions (bible/06-Systems/Travel-Options.md). The mod's
+  // five spacer sections carry no keys. Plus the port's `Enabled` (MO1: on).
   //
   // A key with `color` is a ColorKey - DFU has the kind natively
   // (ModSettings.ColorKey) and the port did not until this mod, which
   // has seventeen of them: the fourteen travel-map location colours,
   // the middle-click mark, and the junction map's player and background.
-  // The value is an `#rrggbbaa` string; the mod's own presets write the
-  // same eight hex digits without the hash ("D77727FF"), and
+  // The value is an `#rrggbbaa` string; Travel Options 1.11's presets wrote
+  // the same eight hex digits without the hash ("D77727FF"), and
   // `colorKeyRgba` below reads either.
   'travel-options': Object.freeze({
     title: 'Travel Options',
@@ -1190,11 +1165,11 @@ export const MOD_SETTINGS = Object.freeze({
             + 'roads. Off brings back the classic travel map with fast travel only.');
         },
       }),
-      'CautiousTravel.PlayerControlledCautiousTravel': Object.freeze({ default: true, get description() { return t('mods.travelOptions.CautiousTravel.PlayerControlledCautiousTravel.description', "Enables the travel option \"Cautiously\" to initiate time accelerated travel, instead of vanilla fast travel"); } }),
-      'CautiousTravel.SpeedPenalty': Object.freeze({ default: 20, min: 5, max: 40, get description() { return t('mods.travelOptions.CautiousTravel.SpeedPenalty.description', "Speed penalty for travelling cautiously, as a percentage"); } }),
-      'CautiousTravel.MaxChanceToAvoidEncounter': Object.freeze({ default: 95, min: 60, max: 100, get description() { return t('mods.travelOptions.CautiousTravel.MaxChanceToAvoidEncounter.description', "Maximum chance to avoid an encounter when travelling cautiously, as a percentage"); } }),
-      'CautiousTravel.HealthMinimumPercentage': Object.freeze({ default: 5, min: 0, max: 25, get description() { return t('mods.travelOptions.CautiousTravel.HealthMinimumPercentage.description', "Level of health that will automatically pause the journey when travelling cautiously, as a percentage"); } }),
-      'CautiousTravel.FatigueMinimumValue': Object.freeze({ default: 5, min: 0, max: 50, get description() { return t('mods.travelOptions.CautiousTravel.FatigueMinimumValue.description', "Level of fatigue that will automatically pause the journey when travelling cautiously, absolute value"); } }),
+      'CautiousTravel.PlayerControlledCautiousTravel': Object.freeze({ default: true, get description() { return t('mods.travelOptions.CautiousTravel.PlayerControlledCautiousTravel.description', 'Choose Cautiously and you make the journey yourself, sped up, in place of fast travel.'); } }),
+      'CautiousTravel.SpeedPenalty': Object.freeze({ default: 20, min: 5, max: 40, get description() { return t('mods.travelOptions.CautiousTravel.SpeedPenalty.description', 'How much slower a cautious journey goes, in percent.'); } }),
+      'CautiousTravel.MaxChanceToAvoidEncounter': Object.freeze({ default: 95, min: 60, max: 100, get description() { return t('mods.travelOptions.CautiousTravel.MaxChanceToAvoidEncounter.description', 'The best chance, in percent, that a cautious journey slips past an encounter.'); } }),
+      'CautiousTravel.HealthMinimumPercentage': Object.freeze({ default: 5, min: 0, max: 25, get description() { return t('mods.travelOptions.CautiousTravel.HealthMinimumPercentage.description', 'A cautious journey stops when your health falls to this percent.'); } }),
+      'CautiousTravel.FatigueMinimumValue': Object.freeze({ default: 5, min: 0, max: 50, get description() { return t('mods.travelOptions.CautiousTravel.FatigueMinimumValue.description', 'A cautious journey stops when your fatigue falls to this many points.'); } }),
       // TO-FIELD2 (Mac, 2026-09-18): "travel options instantly transports
       // you to a destination and theres no travel". DEPARTURE FROM THE
       // MOD'S SHIPPED DEFAULT, on Mac's word, and it is the whole of that
@@ -1209,18 +1184,18 @@ export const MOD_SETTINGS = Object.freeze({
       // mod is opt-in over vanilla; here the walked journey IS the
       // feature, so it is on. The key is still a key: turning it off in
       // the Mods pane restores the mod's own default exactly.
-      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: true, get description() { return t('mods.travelOptions.StopAtInnsTravel.PlayerControlledInnsTravel.description', "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel"); } }),
-      'ShipTravel.OnlyFromPorts': Object.freeze({ default: true, get description() { return t('mods.travelOptions.ShipTravel.OnlyFromPorts.description', "Restricts ship travel to be possible only from places with ports"); } }),
-      'ShipTravel.OnlyToPorts': Object.freeze({ default: false, get description() { return t('mods.travelOptions.ShipTravel.OnlyToPorts.description', "Restricts ship travel to be possible only if destination has a port, if from ports setting is enabled"); } }),
-      'GeneralOptions.AllowTargetingMapCoordinates': Object.freeze({ default: true, get description() { return t('mods.travelOptions.GeneralOptions.AllowTargetingMapCoordinates.description', "Allows travel map to target any coordinates using time accelerated travel"); } }),
-      'GeneralOptions.LocationPause': Object.freeze({ default: 0, options: lazyWords(() => t('mods.travelOptions.option.off', 'off'), () => t('mods.travelOptions.option.nearby', 'nearby'), () => t('mods.travelOptions.option.entered', 'entered')), get description() { return t('mods.travelOptions.GeneralOptions.LocationPause.description', "Auto pause when encountering a game location during real time accelerated travel"); } }),
-      'GeneralOptions.AllowWeather': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.AllowWeather.description', "Allows weather effects during time accelerated travel"); } }),
-      'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.AllowAnnoyingSounds.description', "Allows footstep and hoof sounds during time accelerated travel"); } }),
+      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: true, get description() { return t('mods.travelOptions.StopAtInnsTravel.PlayerControlledInnsTravel.description', 'Choose to stop at Inns and you make the journey yourself, sped up, in place of fast travel.'); } }),
+      'ShipTravel.OnlyFromPorts': Object.freeze({ default: true, get description() { return t('mods.travelOptions.ShipTravel.OnlyFromPorts.description', 'You can sail only from a place with a port.'); } }),
+      'ShipTravel.OnlyToPorts': Object.freeze({ default: false, get description() { return t('mods.travelOptions.ShipTravel.OnlyToPorts.description', 'With the setting above on, you can sail only to a place with a port.'); } }),
+      'GeneralOptions.AllowTargetingMapCoordinates': Object.freeze({ default: true, get description() { return t('mods.travelOptions.GeneralOptions.AllowTargetingMapCoordinates.description', 'Any spot on the travel map can be the end of a sped-up journey, as well as a named place.'); } }),
+      'GeneralOptions.LocationPause': Object.freeze({ default: 0, options: lazyWords(() => t('mods.travelOptions.option.off', 'Never'), () => t('mods.travelOptions.option.nearby', 'Near a place'), () => t('mods.travelOptions.option.entered', 'Inside a place')), get description() { return t('mods.travelOptions.GeneralOptions.LocationPause.description', 'Stop a sped-up journey when you come near a place, or when you enter one.'); } }),
+      'GeneralOptions.AllowWeather': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.AllowWeather.description', 'Show the weather during a sped-up journey.'); } }),
+      'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.AllowAnnoyingSounds.description', 'Play footsteps and hoofbeats during a sped-up journey.'); } }),
       'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.AllowRealGrass.description', 'Has no effect here: Real Grass isn’t included.'); } }),
       // TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation
       // to properly route around objects and stopping before running into
       // buildings"): THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
-      // on Handheld Torches' - the vendored modsettings.json does not carry
+      // on Handheld Torches' - Travel Options 1.11's settings do not carry
       // it and its words say so. ON: a journey steers round buildings,
       // walls and rocks and pauses short of what it cannot pass
       // (systems/travel/travelSteer.js). OFF: the mod's own beeline, exactly.
@@ -1233,7 +1208,7 @@ export const MOD_SETTINGS = Object.freeze({
       'GeneralOptions.FirstPersonTravel': Object.freeze({ default: false, get description() { return t('mods.travelOptions.GeneralOptions.FirstPersonTravel.description', 'Makes time accelerated journeys in first person, on the ground. Off, the enhanced interface makes them in the Overworld view. Takes effect at once.'); } }),
       // TO-ROADS (FIELD BUGS 2026-09-29d, SylviaBun on the Discord: "Travel Options First Person doesn't follow roads like
       // Overworld Travel Options does" - "A way to toggle this behavior to match or not would be nice"): THE PORT'S OWN
-      // KEY beside First-Person Travel, the same shape - not in the vendored modsettings.json, on the tile, read live. ON,
+      // KEY beside First-Person Travel, the same shape - not in Travel Options 1.11's settings, on the tile, read live. ON,
       // with First-Person Travel on: a journey picked on the travel map is the Overworld's route - its planner, its legs,
       // its refusals (scenes/world.js tvRoutesJourneys) - walked in first person, the view not raised. OFF, the default:
       // First-Person Travel is the mod's own straight journey, the original travel option Mac asked back.
@@ -1241,12 +1216,12 @@ export const MOD_SETTINGS = Object.freeze({
       // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"): the
       // mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration, AccelerationLimit)
       // is not declared - the spinner it started and bounded is gone, and a journey runs at its ground's rate
-      // (systems/timeScale.js travelRateOf). The vendored modsettings.json keeps the three; test/systems/travel/to1_travelOptions.test.js
+      // (systems/timeScale.js travelRateOf). Travel Options 1.11's settings had the three; test/systems/travel/to1_travelOptions.test.js
       // names them as the one section the port leaves out.
-      'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, get description() { return t('mods.travelOptions.Teleportation.EnablePaidTeleportation.description', "Enable paid Mages teleportation service for all guild members, before rank 8"); } }),
+      'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, get description() { return t('mods.travelOptions.Teleportation.EnablePaidTeleportation.description', 'Mages Guild members below rank 8 can pay the guild to teleport them.'); } }),
       // the shipped file's spacer section "__" carries no keys
-      'RoadsIntegration.Enable': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsIntegration.Enable.description', "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons"); } }),
-      'RoadsIntegration.VariableSizeDots': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsIntegration.VariableSizeDots.description', "All locations, except for cities & towns, are rendered as smaller dots"); } }),
+      'RoadsIntegration.Enable': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsIntegration.Enable.description', 'The travel map draws cities and towns as larger dots, and shows roads and tracks with a button for each.'); } }),
+      'RoadsIntegration.VariableSizeDots': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsIntegration.VariableSizeDots.description', 'Every place but a city or a town is drawn as a smaller dot.'); } }),
       // AUDIT-TO1 I1: the mod ships index 1, "F" - and F is the key SOC5
       // spent on SocialInteract (inputActions.js DEFAULT_BINDINGS), the
       // same collision HT4 moved Handheld Torches' light toggle off.
@@ -1259,42 +1234,42 @@ export const MOD_SETTINGS = Object.freeze({
       // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
       // the HT4 pin walks this choice list as it walks a TextKey and
       // never has to guess whether "U" is a key or a bob shape.
-      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: lazyWords(() => localizedText('none', 'None'), 'F', 'G', 'K', 'O', 'X', () => t('mods.travelOptions.option.customKeyBind', 'Custom Key Bind')), get description() { return t('mods.travelOptions.RoadsIntegration.FollowPathsKey.description', "Sets the key to initiate time accelerated travelling following paths if roads integration enabled"); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
-      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, get description() { return t('mods.travelOptions.RoadsIntegration.FollowPathsCustomKeyBind.description', "Custom key bind for following paths used if CustomBind set above"); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
-      'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsIntegration.EnableWaterways.description', "Enhances the travel map with rivers and streams with a toggle button"); } }),
-      'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsIntegration.EnableStreamsToggle.description', "Adds a streams toggle button separate from rivers button"); } }),
-      'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, get description() { return t('mods.travelOptions.RoadsIntegration.MarkLocationColor.description', "The colour used to highlight locations using middle mouse button on travel map"); } }),
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: lazyWords(() => localizedText('none', 'None'), 'F', 'G', 'K', 'O', 'X', () => t('mods.travelOptions.option.customKeyBind', 'Your own key')), get description() { return t('mods.travelOptions.RoadsIntegration.FollowPathsKey.description', 'The key that starts a sped-up journey along the road or track you stand on.'); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, get description() { return t('mods.travelOptions.RoadsIntegration.FollowPathsCustomKeyBind.description', 'Your own key for following a road, used when the setting above asks for it.'); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsIntegration.EnableWaterways.description', 'The travel map shows rivers and streams, with a button to show or hide them.'); } }),
+      'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsIntegration.EnableStreamsToggle.description', 'Streams get a button of their own, apart from the rivers.'); } }),
+      'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, get description() { return t('mods.travelOptions.RoadsIntegration.MarkLocationColor.description', 'The color of a place you mark on the travel map with the middle mouse button.'); } }),
       // the shipped file's spacer section "-" carries no keys
-      'FastTravelCostScaling.FastTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, get description() { return t('mods.travelOptions.FastTravelCostScaling.FastTravelCostScaleFactor.description', "Scales the cost of inns when using standard fast travel, suggest x4-x6 for Climate & Calories."); } }),
-      'FastTravelCostScaling.ShipTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, get description() { return t('mods.travelOptions.FastTravelCostScaling.ShipTravelCostScaleFactor.description', "Scales the cost of ships when using standard fast travel, suggest x2-x3 for Climate & Calories."); } }),
+      'FastTravelCostScaling.FastTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, get description() { return t('mods.travelOptions.FastTravelCostScaling.FastTravelCostScaleFactor.description', 'Multiplies what the inns cost on fast travel. With Climates & Calories, four to six times suits it.'); } }),
+      'FastTravelCostScaling.ShipTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, get description() { return t('mods.travelOptions.FastTravelCostScaling.ShipTravelCostScaleFactor.description', "Multiplies what a ship's passage costs on fast travel. With Climates & Calories, two to three times suits it."); } }),
       // the shipped file's spacer section "_" carries no keys
-      'RoadsJunctionMap.Enable': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.Enable.description', "Enables the junction mini-map"); } }),
-      'RoadsJunctionMap.PersistentMap': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsJunctionMap.PersistentMap.description', "Set this to have the junction mini-map always displayed when following paths"); } }),
-      'RoadsJunctionMap.ToggleMapOffPaths': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.ToggleMapOffPaths.description', "Set this to have the junction mini-map toggled when follow key pressed and not on a path"); } }),
-      'RoadsJunctionMap.ScreenSize': Object.freeze({ default: 75, min: 40, max: 200, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenSize.description', "The width and height the mini-map is rendered on the screen"); } }),
-      'RoadsJunctionMap.ScreenPositionX': Object.freeze({ default: 235, min: 0, max: 280, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenPositionX.description', "The X coordinate the mini-map is rendered on the screen"); } }),
-      'RoadsJunctionMap.ScreenPositionY': Object.freeze({ default: 10, min: 0, max: 160, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenPositionY.description', "The Y coordinate the mini-map is rendered on the screen"); } }),
-      'RoadsJunctionMap.FilterMode': Object.freeze({ default: 0, options: lazyWords(() => t('mods.travelOptions.option.point', 'Point'), () => t('mods.travelOptions.option.bilinear', 'Bilinear'), () => t('mods.travelOptions.option.trilinear', 'Trilinear')), get description() { return t('mods.travelOptions.RoadsJunctionMap.FilterMode.description', "Pixel filtering to use when rendering the mini-map"); } }),
-      'RoadsJunctionMap.Circular': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.Circular.description', "Draw the mini-map in a circle around the player"); } }),
-      'RoadsJunctionMap.PlayerColor': Object.freeze({ default: '#ff0000ff', color: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.PlayerColor.description', "The colour of the player position and direction indicator"); } }),
-      'RoadsJunctionMap.Opaque': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsJunctionMap.Opaque.description', "Render the mini-map with an opaque background color"); } }),
-      'RoadsJunctionMap.BackgroundColor': Object.freeze({ default: '#327f19ff', color: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.BackgroundColor.description', "The opaque background color to use for the mini-map"); } }),
+      'RoadsJunctionMap.Enable': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.Enable.description', 'Show a small map of the roads when you reach a junction.'); } }),
+      'RoadsJunctionMap.PersistentMap': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsJunctionMap.PersistentMap.description', 'Keep the junction map on screen the whole time you follow a road.'); } }),
+      'RoadsJunctionMap.ToggleMapOffPaths': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.ToggleMapOffPaths.description', 'Off a road, the follow key shows or hides the junction map.'); } }),
+      'RoadsJunctionMap.ScreenSize': Object.freeze({ default: 75, min: 40, max: 200, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenSize.description', 'How wide and tall the junction map is on screen.'); } }),
+      'RoadsJunctionMap.ScreenPositionX': Object.freeze({ default: 235, min: 0, max: 280, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenPositionX.description', 'How far from the left of the screen the junction map sits.'); } }),
+      'RoadsJunctionMap.ScreenPositionY': Object.freeze({ default: 10, min: 0, max: 160, get description() { return t('mods.travelOptions.RoadsJunctionMap.ScreenPositionY.description', 'How far from the top of the screen the junction map sits.'); } }),
+      'RoadsJunctionMap.FilterMode': Object.freeze({ default: 0, options: lazyWords(() => t('mods.travelOptions.option.point', 'Point'), () => t('mods.travelOptions.option.bilinear', 'Bilinear'), () => t('mods.travelOptions.option.trilinear', 'Trilinear')), get description() { return t('mods.travelOptions.RoadsJunctionMap.FilterMode.description', "How the junction map's pixels are smoothed."); } }),
+      'RoadsJunctionMap.Circular': Object.freeze({ default: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.Circular.description', 'Draw the junction map as a circle around you.'); } }),
+      'RoadsJunctionMap.PlayerColor': Object.freeze({ default: '#ff0000ff', color: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.PlayerColor.description', 'The color of the marker that shows where you are and which way you face.'); } }),
+      'RoadsJunctionMap.Opaque': Object.freeze({ default: false, get description() { return t('mods.travelOptions.RoadsJunctionMap.Opaque.description', 'Give the junction map a solid background.'); } }),
+      'RoadsJunctionMap.BackgroundColor': Object.freeze({ default: '#327f19ff', color: true, get description() { return t('mods.travelOptions.RoadsJunctionMap.BackgroundColor.description', "The color of the junction map's solid background."); } }),
       // the shipped file's spacer section "--" carries no keys
       // the shipped file's spacer section "." carries no keys
-      'LocationColours.DungeonLabyrinth': Object.freeze({ default: '#d77727ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.DungeonKeep': Object.freeze({ default: '#bf571bff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.DungeonRuin': Object.freeze({ default: '#ab330fff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Graveyard': Object.freeze({ default: '#930f07ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Coven': Object.freeze({ default: '#0f0f0fff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Farm': Object.freeze({ default: '#9b696aff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.WealthyHome': Object.freeze({ default: '#bc8a8aff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.PoorHome': Object.freeze({ default: '#7e5159ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Temple': Object.freeze({ default: '#b0cdffff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Cult': Object.freeze({ default: '#447cc0ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Tavern': Object.freeze({ default: '#8c5637ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.City': Object.freeze({ default: '#e3b490ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Hamlet': Object.freeze({ default: '#c18564ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
-      'LocationColours.Village': Object.freeze({ default: '#a56446ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', "The colour shown on the travel map"); } }),
+      'LocationColours.DungeonLabyrinth': Object.freeze({ default: '#d77727ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.DungeonKeep': Object.freeze({ default: '#bf571bff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.DungeonRuin': Object.freeze({ default: '#ab330fff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Graveyard': Object.freeze({ default: '#930f07ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Coven': Object.freeze({ default: '#0f0f0fff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Farm': Object.freeze({ default: '#9b696aff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.WealthyHome': Object.freeze({ default: '#bc8a8aff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.PoorHome': Object.freeze({ default: '#7e5159ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Temple': Object.freeze({ default: '#b0cdffff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Cult': Object.freeze({ default: '#447cc0ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Tavern': Object.freeze({ default: '#8c5637ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.City': Object.freeze({ default: '#e3b490ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Hamlet': Object.freeze({ default: '#c18564ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
+      'LocationColours.Village': Object.freeze({ default: '#a56446ff', color: true, get description() { return t('mods.travelOptions.LocationColours.description', 'The color of this kind of place on the travel map.'); } }),
     }),
   }),
   // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL - kkgobkk's

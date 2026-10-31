@@ -1,17 +1,17 @@
-// FORAGE-FIX (2026-09-28): the quest and list patches RUN - each pinned on
-// the port's own quest machine and list manager, patched against the
-// author's text as shipped (bible/06-Systems/Foraging.md 12). A patch that
-// only matched its line would pass forage1_law; these fail unless the
-// patched quest does what the author meant, and the unpatched one still
+// FORAGE-FIX (2026-09-28): the quest and list mends RUN - each pinned on
+// the port's own quest machine and list manager (bible/06-Systems/Foraging.md
+// 12). OWN-WORK3 (2026-10-31): our quests carry the mends, and the build's
+// logic is our file with them taken out (foragingAsBuilt.mjs). These fail
+// unless the mended quest does what the author meant, and the build's still
 // shows the fault it mends.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
-import { applyForageFix, FT } from '../../../src/systems/foraging/foragingLaw.js';
+import { FT } from '../../../src/systems/foraging/foragingLaw.js';
+import { ROOT, ownQuest, asBuilt, AS_BUILT } from '../foraging/foragingAsBuilt.mjs';
 import { createForagingItem } from '../../../src/systems/foraging/foragingInstall.js';
 import { questActionsExtensionTemplates } from '../../../src/systems/quest/questActionsExtension.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
@@ -20,13 +20,10 @@ import { QuestListsManager, registerQuestList, _resetQuestLists } from '../../..
 import { SOCIAL_GROUPS } from '../../../src/formats/factionFile.js';
 import { FATIGUE_MULTIPLIER } from '../../../src/systems/statMods.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const QUESTS = join(ROOT, 'vendor/foraging/Quests');
 const TABLES = join(ROOT, 'vendor/dfu-quests/Tables');
 loadQuestTables(Object.fromEntries(readdirSync(TABLES).map((f) => [f.replace(/\.txt$/, ''), readFileSync(join(TABLES, f), 'utf8')])));
 
-const raw = (name) => readFileSync(join(QUESTS, `${name}.txt`), 'utf8');
-const lines = (name, patched) => (patched ? applyForageFix(name, raw(name)) : raw(name)).split(/\r?\n/);
+const lines = (name, patched) => (patched ? ownQuest(name) : asBuilt(name)).split(/\r?\n/);
 
 /** A machine over one player: the climate, the clock QAE raises, the pack and the wagon. */
 function machine({ climate = 231, patched = true, int = 62, setup = null } = {}) {
@@ -139,7 +136,7 @@ test('Q8 + Q11: a patched firewood errand takes its bundles from the pack and th
 });
 
 test('Q13: the patched list files the four errands under Commoners and Nobility; the build\'s Commoner and Noble filed nothing', () => {
-  const list = raw('QuestList-ForagingQuests');
+  const list = ownQuest('QuestList-ForagingQuests');
   const manager = (text) => {
     _resetQuestLists();
     registerQuestList('ForagingQuests');
@@ -150,8 +147,8 @@ test('Q13: the patched list files the four errands under Commoners and Nobility;
     };
     return new QuestListsManager({ readListTable: (n) => tables[n] ?? null });
   };
-  const fixed = manager(applyForageFix('QuestList-ForagingQuests', list));
-  const built = manager(list);
+  const fixed = manager(list);
+  const built = manager(asBuilt('QuestList-ForagingQuests'));
   _resetQuestLists();
   for (const [name, group] of [['FetchWood01', 'Commoners'], ['FetchWood02', 'Commoners'], ['FetchWood03', 'Nobility'], ['FetchWood04', 'Nobility']]) {
     const meta = fixed.findQuestMeta(name);
@@ -163,12 +160,17 @@ test('Q13: the patched list files the four errands under Commoners and Nobility;
   assert.deepEqual(fixed.findQuestMeta('ChopWoodQuest'), built.findQuestMeta('ChopWoodQuest'), 'the other rows untouched');
 });
 
-test('FORAGE-FIX: a checkout that turned the files to CRLF patches the same as the shipped LF', () => {
-  for (const name of ['MiningQuest', 'FetchWood01', 'ForageSummerPlantsQuest']) {
-    const lf = raw(name).replace(/\r\n/g, '\n');
-    const crlf = lf.replace(/\n/g, '\r\n');
-    assert.equal(applyForageFix(name, crlf), applyForageFix(name, lf), name);
+test('FORAGE-FIX (OWN-WORK3): our quests carry the four mends, each line as often as it should be, and none of the build\'s', () => {
+  assert.deepEqual(Object.keys(AS_BUILT).sort(), ['FetchWood01', 'FetchWood02', 'FetchWood03', 'FetchWood04', 'ForageSummerPlantsQuest', 'MiningQuest', 'MiningQuestWeak', 'MiningQuestWeaker', 'MiningQuestWeakest', 'QuestList-ForagingQuests']);
+  for (const [name, mends] of Object.entries(AS_BUILT)) {
+    const ours = ownQuest(name);
+    for (const m of mends) {
+      assert.equal(ours.split(m.old).length - 1, m.count, `${name} carries its mend: ${m.old.trim()}`);
+      if (!m.old.includes(m.new)) assert.equal(ours.includes(m.new), false, `${name} keeps none of the build's: ${m.new.trim()}`);   // Q7's task is an insertion
+    }
   }
-  const lf = raw('QuestList-ForagingQuests').replace(/\r\n/g, '\n');
-  assert.equal(applyForageFix('QuestList-ForagingQuests', raw('QuestList-ForagingQuests')), applyForageFix('QuestList-ForagingQuests', lf), 'the list ships CRLF');
+  assert.doesNotMatch(ownQuest('MiningQuest'), /and _desert_ or/);
+  assert.match(ownQuest('FetchWood03'), /player handsover 6 items class 9 subclass 1604/);
+  assert.doesNotMatch(ownQuest('QuestList-ForagingQuests'), /, (Commoner|Noble), /);
+  assert.doesNotMatch(ownQuest('MiningQuest'), /\r/, 'our files are LF');
 });

@@ -35,6 +35,7 @@ import { FIXED_DT, MAX_FRAME_DT, CAPSULE_RADIUS, STEP_OFFSET, SLOPE_LIMIT_DEG, D
 import { MOD_SETTINGS, modSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { mapPixelToWorldCoords, worldCoordToMapPixel, SCENE_MAP_RATIO } from '../../../src/world/streamingWorld.js';
+import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // OWN-WORK3: the mod's own key names
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DEG = Math.PI / 180;
@@ -441,7 +442,7 @@ test('TRAVEL-NAV2 NO HEADWAY: a body that keeps moving and gets no nearer is sto
     if (toGo < best - P.headwayGain) { best = toGo; lastGain = walked; }
     out = steer.step(inp, open, steer.output);
   }
-  assert.equal(out.stop, 'stuck', 'no headway is a stop - "Paused the journey since you\'re making no headway."');
+  assert.equal(out.stop, 'stuck', 'no headway is a stop - "Your journey stops. You are making no headway."');
   assert.equal(P.headwayBudget, 2 * P.detourBudget, 'twice the detour budget: a detour honestly going round ends on its own budget first (the wall above stops as blocked, not stuck)');
   assert.ok(walked - lastGain > P.headwayBudget && walked - lastGain <= P.headwayBudget + 1.01, `stopped the frame it walked the budget past its last metre of headway (${(walked - lastGain).toFixed(2)} m)`);
   assert.equal(out.forward, 0, 'and the frame that stops it moves nothing');
@@ -928,10 +929,10 @@ test('TRAVEL-NAV1 THE STOP: a way the steering cannot find ends the journey in t
   bare.to.beginTravel({ pixel: { x: 502, y: 250 }, name: 'Daggerfall', mapId: 199102 }, false);
   assert.equal(bare.to.update(FRAME).stopped, 'blocked');
   assert.equal(bare.to.state.autopilot, null, 'no panel to do it: the journey is stopped here');
-  // the words are the port's, kept OUT of the mod's CSV table
+  // the words are the port's, kept OUT of the Localize table
   for (const v of Object.values(TRAVEL_NAV_TEXT)) {
-    assert.ok(!Object.values(TRAVEL_OPTIONS_TEXT).includes(v), 'not in the mod\'s table');
-    assert.match(v, /^Paused the journey since /, 'in the mod\'s voice (MsgNearLocation\'s sentence)');
+    assert.ok(!Object.values(TRAVEL_OPTIONS_TEXT).includes(v), 'not in the Localize table');
+    assert.match(v, /^Your journey stops\. /, 'in the table\'s voice (OWN-WORK3: MsgNearLocation\'s "Your journey stops near ...")');
   }
   // an open way: the journey runs on
   const open = rig(() => null);
@@ -1117,7 +1118,7 @@ test('TRAVEL-NAV1 raycastHit\'s `out`: the caller\'s own result, written and ret
 
 // ─── the switch and the host ────────────────────────────────────────────
 
-test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by default, saying what it does, on the tile, read into the settings; the vendored modsettings.json does not carry it', () => {
+test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by default, saying what it does, on the tile, read into the settings; not one of the mod\'s own keys', () => {
   const KEY = 'GeneralOptions.AvoidObstacles';
   const def = MOD_SETTINGS['travel-options'].keys[KEY];
   assert.ok(def, 'declared');
@@ -1125,8 +1126,7 @@ test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by def
   assert.equal(typeof def.default, 'boolean', 'a toggle');
   // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - the note that the switch is the port's own is gone
   assert.equal(def.description, 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into something it can\u2019t get round.');
-  const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
-  assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
+  assert.ok(!TRAVEL_OPTIONS_1_11_KEYS.includes(KEY), 'not one of the mod\'s own keys (OWN-WORK3: travelOptionsKeys.mjs)');
   assert.ok(MOD_CURATED['travel-options'].includes(KEY) && modDials('travel-options').includes(KEY), 'reachable: on the tile');
   _resetModSettings();
   assert.equal(readTravelOptionsSettings().avoidObstacles, true, 'the shipped store: on');

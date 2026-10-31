@@ -1,0 +1,82 @@
+-- OWN-WORK3: DFO Online's own words. The QBN is Roleplay & Realism 1.8's (MIT, Copyright (C) 2020 Hazelnut), verbatim.
+-- BAY-OWN: the release's logic stands this line in the Wrothgarian Mountains - its keep, Aldleigh beside it, and three Bay towns for the smith.
+Quest: RRMSTARM0
+DisplayName: Talk of a Missing Smith
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Guild friends in the mountains talk of a famed master
+<ce> armorer. %G vanished, and nobody has heard of %g2
+<ce> since. Now a lord's soldiers in the ____guild_ wear
+<ce> armor in that smith's style. Will you look into it?
+
+RefuseQuest:  [1001]
+<ce> A guild master has no time for every rumor,
+<ce> I know. I still think this one deserves
+<ce> you. Perhaps another master will take it.
+
+AcceptQuest:  [1002]
+<ce> Thank you, Master %pcl. Go to our hall in __guild_,
+<ce> in the ____guild_. A contact there will tell you
+<ce> all we know. They wait six months, and no longer.
+
+QuestFail:  [1003]
+<ce> You never went to the ____guild_. We may never learn
+<ce> what became of the smith. I hope the talk was wrong.
+
+QuestLogEntry: [1010]
+On %qdt:
+ In ___qgiver_, _qgiver_ asked me to find a
+ master armorer, long missing. I am to go
+ to __guild_ in the ____guild_ and learn
+ whether its soldiers explain %g3 absence.
+
+Message: 1011
+On %qdt:
+ I made the journey to __guild_ in the ____guild_.
+ I hope it leads me to the missing smith.
+
+Message: 1012
+On %qdt:
+ I never found the time to go to the
+ ____guild_. Perhaps the missing smith lives
+ quietly somewhere, and nothing was wrong.
+
+Message: 1020
+<ce> Will you go to __guild_ in the ____guild_ soon,
+<ce> Master %pcl? Talk like this does not wait for long.
+
+Message: 1021
+<ce> You are in __guild_, where the talk of
+<ce> the missing smith began. Our contact
+<ce> waits for you at the guild hall here.
+
+QBN:
+
+-- Town west of Northrock_Fort 
+Place _guild_ permanent Aldleigh
+
+Person _qgiver_ group Questor
+
+Clock _investigate_ 182.00:00 
+
+-- Quest start-up:
+    log 1010 step 0
+    start timer _investigate_
+    pc at _guild_ do _beginInvestigation_ saying 1021
+
+_beginInvestigation_ task:
+    start quest RRMSTARM1
+    stop timer _investigate_
+    log 1011 step 1
+    give pc nothing
+    end quest
+
+_investigate_ task:
+    log 1012 step 1
+    end quest saying 1003
+
+-- Return to questgiver
+_qgclicked_ task:
+    clicked npc _qgiver_ say 1020
+    clear _qgclicked_

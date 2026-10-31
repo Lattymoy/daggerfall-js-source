@@ -781,10 +781,10 @@ export class TravelPopUpWindow {
     const pieces = this.deps.goldPieces?.() ?? this.deps.gold?.() ?? 0;
     shadowText(renderer, font, String(pieces), m, LABEL_POS.gold[0], LABEL_POS.gold[1]);
     // TO1 (TravelOptionsPopUp.cs:121-134): a WALKED trip has no fare -
-    // the cost row says so in the mod's own words - and its time row
+    // the cost row says so (OWN-WORK3: in our own words) - and its time row
     // is HOURS AND MINUTES rather than a count of days, because the
     // journey starts now and the days are the ones you will live
-    // through. `MsgTimeFormat` is the SDF spelling (the port's text is
+    // through. `MsgTimeFormat` is the SDF arm's (the port's text is
     // neither of DFU's two fonts - systems/travel/travelOptionsText.js).
     if (this.walkedTrip) {
       shadowText(renderer, font, TO_TEXT.MsgPlayerControlled, m, LABEL_POS.cost[0], LABEL_POS.cost[1]);

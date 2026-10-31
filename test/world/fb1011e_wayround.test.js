@@ -159,7 +159,7 @@ test('WAY-ROUND, two tables a lane apart (a room 6 by 8, a pillar by the first):
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_ARENA2 = !!ARENA2 && ['MAPS.BSA', 'BLOCKS.BSA', 'ARCH3D.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(join(ARENA2, f)));
 
-test('WAY-ROUND with ARENA2: every tavern the towns lay, with the town packs and without, its tables stood, leaves the player\'s capsule every floor it had from the entrance - the Gold Dungeon (Menakat) stands none, the Dancing Castle (Pilliweyn) its chips table where it stood and no gold table in its hall\'s way east', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 900000 }, async () => {
+test('WAY-ROUND with ARENA2: every tavern the towns lay (OWN-WORK3: Daggerfall\'s own; the packs retired), its tables stood, leaves the player\'s capsule every floor it had from the entrance - the Gold Dungeon (Menakat) stands none, the Dancing Castle (Pilliweyn) its chips table where it stood and no gold table in its hall\'s way east', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 900000 }, async () => {
   const { openTowns, everyLocation } = await import('../fb1004dArena.mjs');
   const { Arch3dFile } = await import('../../src/formats/arch3dFile.js');
   const { dfMeshToModel } = await import('../../src/world/meshReader.js');
@@ -266,22 +266,8 @@ test('WAY-ROUND with ARENA2: every tavern the towns lay, with the town packs and
     // of one hall keep one of 22 cells); WALK-WHOLE's tables cut off up to 72 square metres (DARKAB00 #1: 7,228 of
     // 10,934 cells), and 82 layouts with the packs and 65 without lost more than a fifth of a square metre
     const sliver = ({ cuts }) => cuts.every(([, cut]) => cut <= 25) || cuts.filter(([, c]) => c > 25).map(([k, c]) => `${k} ${c}`).join(', ');
-    const on = await sweep(true);
-    assert.equal(sliver(on), true, 'with the packs: no floor cut off');
-    assert.equal(on.layouts.size, 254, 'every tavern layout the towns lay');
-    assert.equal(on.taverns, 18164);
-    // the Discord's two: the Gold Dungeon's floor holds the table only in its corridor - it stands none; the Dancing
-    // Castle's hall keeps its chips table where it stood, and the gold table that stood in its way east is gone
-    const named = (n) => [...on.layouts.entries()].find(([, t]) => t.names.includes(n))?.[0];
-    assert.equal(named('Menakat/The Gold Dungeon'), 'GENRGL00.RMB#7');
-    assert.equal(named('Pilliweyn/The Dancing Castle'), 'GEMSAM01.RMB#1');
-    assert.equal(on.tablesBy.get('GENRGL00.RMB#7').length, 0);
-    const dancing = on.tablesBy.get('GEMSAM01.RMB#1');
-    assert.equal(dancing.length, 1);
-    assert.deepEqual(dancing[0].aabb.min.map((v) => Math.round(v * 100) / 100), [-3.95, 0.02, -7.05], 'the chips table where it stood');
-    // how many tables the taverns stand now, by tavern: none where no floor is out of the way, one where the hall holds
-    // one (WALK-WHOLE stood two in 15,246 and one in 2,891 - the 27 with none have no floor at all)
-    assert.deepEqual(on.count, [1935, 2931, 13298]);
+    // OWN-WORK3: the town packs are retired - the Discord's two taverns (the Gold Dungeon, the Dancing Castle) stood in
+    // their layout, and Daggerfall's own taverns are every tavern now
     const off = await sweep(false);
     assert.equal(sliver(off), true, 'without the packs: no floor cut off');
     assert.equal(off.layouts.size, 199);

@@ -54,6 +54,9 @@ import { customAliasFor, hasCustomModel } from '../../world/customModels.js';
 import { hasTextureReplacement } from '../textureReplacement.js';
 import { decorKey, isDecorModEntry } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
 
+// OWN-WORK3 (2026-10-31): the town mods are retired. Their stand-ins stand at every boot (scenes/modWorldData.js), so
+// every piece is offered and every piece a player placed still stands; the counts below are the last measure.
+
 /** THE MODS' PIECES THAT STAND INSIDE - offered in every room (and a yard): model id or `archive_record` -> how many
  *  times the mods stand it (measured, 2026-10-29: Beautiful Villages 1.4.2 and Beautiful Cities 0.5.0, over the
  *  player's own BLOCKS.BSA). */

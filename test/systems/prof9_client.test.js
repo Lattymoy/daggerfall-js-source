@@ -374,10 +374,10 @@ test('PROF9 items: the four dishes registered (685-688) on C&C\'s own rows - the
   assert.deepEqual({ ...DISH_FOODS }, { stew: TEMPLATE.Meat, supper: TEMPLATE.CookedFish, tart: TEMPLATE.Bread, feast: TEMPLATE.Meat });
   const cc = (t) => SURVIVAL_TEMPLATES.find((r) => r.index === t);
   assert.deepEqual(DISH_TEMPLATE_ROWS.map((r) => [r.index, r.name, r.worldTextureArchive, r.worldTextureRecord, r.baseWeight, r.basePrice, r.hitPoints, r.stackable, r.rarity]), [
-    [685, 'Hunter\'s Stew', cc(537).worldTextureArchive, cc(537).worldTextureRecord, 0.5, 45, 90, false, 10],   // PIN MOVED: CRAFT-PAYS, the Meat's half kilo (2)
-    [686, 'Fisherman\'s Supper', cc(536).worldTextureArchive, cc(536).worldTextureRecord, 0.5, 18, 80, false, 10],   // PIN MOVED: CRAFT-PAYS, the Cooked Fish's (1.5)
-    [687, 'Orchard Tart', cc(534).worldTextureArchive, cc(534).worldTextureRecord, 1.5, 15, 95, false, 10],
-    [688, 'Feast of the Hearth', cc(537).worldTextureArchive, cc(537).worldTextureRecord, 2, 180, 90, false, 10],   // PIN MOVED: CRAFT-PAYS, four Meats' (8)
+    [685, 'Hunter\'s Stew', cc(537).worldTextureArchive, cc(537).worldTextureRecord, 0.5, 48, 90, false, 10],   // PIN MOVED: CRAFT-PAYS, the Meat's half kilo (2); OWN-WORK3, three of its 16 (45)
+    [686, 'Fisherman\'s Supper', cc(536).worldTextureArchive, cc(536).worldTextureRecord, 0.5, 21, 80, false, 10],   // PIN MOVED: CRAFT-PAYS, the Cooked Fish's (1.5); OWN-WORK3, three of its 7 (18)
+    [687, 'Orchard Tart', cc(534).worldTextureArchive, cc(534).worldTextureRecord, 0.5, 18, 95, false, 10],   // PIN MOVED: OWN-WORK3, the loaf's half kilo and three of its 6 (1.5, 15)
+    [688, 'Feast of the Hearth', cc(537).worldTextureArchive, cc(537).worldTextureRecord, 2, 192, 90, false, 10],   // PIN MOVED: CRAFT-PAYS, four Meats' (8); OWN-WORK3, twelve of its 16 (180)
   ]);
   for (const t of [685, 686, 687, 688]) assert.equal(templateByIndex(t)?.name, DISH_TEMPLATE_ROWS.find((r) => r.index === t).name);
   const tart = mintPiece({ recipe: 'tart:south', quality: -1, seed: 1, maker: 'Ann', hand: 2 }, PROV);

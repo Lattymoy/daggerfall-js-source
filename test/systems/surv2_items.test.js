@@ -38,25 +38,25 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 const player = () => ({ stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, items: [], activeEffects: [], health: 50, fatigue: 3000, raceId: 1 });
 
-test('SURV2: the twelve templates register above DFU\'s 288 and answer through templateByIndex with the mod\'s columns', () => {
+test('SURV2: the twelve templates register above DFU\'s 288 and answer through templateByIndex with our own columns (OWN-WORK3)', () => {
   assert.ok(customTemplateCount() >= 12);
   assert.equal(SURVIVAL_TEMPLATES.length, 12);
   const apple = templateByIndex(TEMPLATE.Apple);
   assert.equal(apple.name, 'Apple');
   assert.equal(apple.custom, true);
-  assert.deepEqual([apple.worldTextureArchive, apple.worldTextureRecord, apple.baseWeight, apple.hitPoints, apple.basePrice], [213, 1, 0.1, 90, 1], 'the mod\'s own row');
+  assert.deepEqual([apple.worldTextureArchive, apple.worldTextureRecord, apple.baseWeight, apple.hitPoints, apple.basePrice], [213, 1, 0.25, 90, 2], 'our own row (OWN-WORK3: Climates & Calories 1.7.1 shipped 0.1 kilos and 1 gold)');
   assert.equal(templateByIndex(TEMPLATE.Rations).stackable, true);
   assert.equal(templateByIndex(TEMPLATE.Campfire).name, 'Campfire');   // REST2: the Campfire, a tool rather than a kit of matches
   assert.equal(templateByIndex(TEMPLATE.Campfire).hitPoints, CAMPFIRE_USES, 'REST2: eight nights of fuel');
   assert.equal(templateByIndex(TEMPLATE.CampingEquipment).hitPoints, CAMPING_USES);
   assert.equal(templateByIndex(5).name, 'Turquoise', 'DFU\'s own table is untouched');
   assert.equal(templateByIndex(300), null, 'a hole stays a hole');
-  const shipped = JSON.parse(read('vendor/climates-calories/ItemTemplates.json')).filter((r) => r.index >= 530);
-  for (const r of shipped) {
-    const t = templateByIndex(r.index);
-    assert.equal(t.name, r.name, `${r.index} keeps the mod's name`);
-    assert.deepEqual([t.worldTextureArchive, t.worldTextureRecord], [r.worldTextureArchive, r.worldTextureRecord], `${r.name} keeps the mod's picture`);
-  }
+  // OWN-WORK3: the names and the pictures 530-540 stand on, as literals (the vendored rows left the tree)
+  assert.deepEqual([530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540].map((i) => [i, templateByIndex(i).name, templateByIndex(i).worldTextureArchive, templateByIndex(i).worldTextureRecord]), [
+    [530, 'Camping Equipment', 204, 8], [531, 'Rations', 205, 17], [532, 'Apple', 213, 1], [533, 'Orange', 213, 0], [534, 'Bread', 211, 31],
+    [535, 'Raw Fish', 211, 9], [536, 'Cooked Fish', 211, 10], [537, 'Meat', 211, 40], [538, 'Raw Meat', 538, 2], [539, 'Waterskin', 539, 0],
+    [540, 'Skillet', 218, 4],
+  ]);
 });
 
 test('SURV2: minting - condition as uses, a stack for rations only, a full skin by default, a spoiled stage dresses the name and the icon', () => {
@@ -72,7 +72,7 @@ test('SURV2: minting - condition as uses, a stack for rations only, a full skin 
   assert.equal(unitWeightInKg(skin), 2.5, 'half a kilo of skin and two of water');
   assert.equal(unitWeightInKg(createSurvivalItem(TEMPLATE.Waterskin, { water: 0 })), 0.5);
   assert.equal(createSurvivalItem(TEMPLATE.Waterskin, { water: 0 }).name, 'Empty Waterskin', 'AUDIT C&C I11 (PIN MOVED): named by its water at the mint, as a drink names it - the shelf sells it empty and says so');
-  assert.equal(itemWeight(sack), 3.0, 'three sacks of rations');
+  assert.equal(itemWeight(sack), 1.5, 'three sacks of rations (PIN MOVED: OWN-WORK3, a meal is half a kilo)');
   const kit = createSurvivalItem(TEMPLATE.Campfire, { condition: 2 });
   assert.equal(kit.currentCondition, 2);
   assert.equal(kit.maxCondition, CAMPFIRE_USES);

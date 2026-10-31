@@ -1,0 +1,9 @@
+-- OWN-WORK3: the Master Armorer line's quest list, DFO Online's own. The rows are Roleplay & Realism 1.8's offer
+-- rules (MIT, Copyright (C) 2020 Hazelnut): a Fighters Guild master at rank 9 is offered the first quest once, and
+-- the first quest starts the other two.
+
+schema: *name, group, membership, minReq, flag, notes
+
+RRMSTARM0, FightersGuild, M, 9, 1, Talk of a Missing Smith
+RRMSTARM1, FightersGuild, M, 101, 0, The Smith in the Keep
+RRMSTARM2, FightersGuild, M, 101, 0, Blood Owed

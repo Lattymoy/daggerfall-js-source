@@ -1,77 +1,31 @@
-# Roleplay & Realism: Items 1.3 - Hazelnut & Ralzar (ported 1:1, in slices)
+# Roleplay & Realism: Items 1.3 - Hazelnut & Ralzar: the art left (OWN-WORK3)
 
-**Roleplay & Realism: Items 1.3** for Daggerfall Unity, by **Hazelnut &
-Ralzar** (Nexus mod 61; every script's header: MIT). The mod's own
-description: "Modular roleplay and realism: item, loot and gameplay
-modifications." ContactInfo: https://forums.dfworkshop.net.
+**Roleplay & Realism: Items 1.3** for Daggerfall Unity, by **Hazelnut & Ralzar** (Nexus mod 61). The scripts'
+headers: MIT ("Copyright (C) 2020 Hazelnut"; the mod's own script "Copyright (C) 2020", "Authors: Hazelnut &
+Ralzar"). Mac handed the shipped zip over on 2026-09-23.
 
-Mac (Lattymoy) handed the shipped zip
-(`RoleplayRealism-Items-1.3-61-1-3-1707669833.zip`) over on 2026-09-23:
-"lets also get this integrated alongside this".
+**Permission: [Mac: record the authors' permission, or the link to it, here. The code is MIT by every script's header;
+the sprites are the authors' own art and carry no licence line of their own.]**
 
-**Permission: [Mac: record the author's permission, or the link to it,
-here - the earlier mod records carry theirs in this line. The code is
-MIT by every script's header; the 280 sprites are the authors' own art
-and carry no licence line of their own.]**
+## What is here, and why
 
-## What is here
+Wave 2 of the Own Work arc (`bible/01-Overview/Own-Work.md`, 2026-10-31) replaced the mod's data and words with DFO's
+own. Its sprites stay until wave 3 replaces the art. So this directory holds the art alone:
 
-- `roleplay-realism-items.dfmod.json` - the bundle's manifest, verbatim
-  (title `RoleplayRealism-Items`, version 1.3, authors, DFUnity 1.0.0,
-  GUID `68589945-3fbb-4d58-81a3-3066f3f08539`, the 517 files it was
-  built from).
-- `modsettings.json` - the shipped settings: one section, eleven
-  modules.
-- `ItemTemplates.json` - the fourteen custom item rows (513-526) and the
-  twenty patches to classic rows the mod merges at load.
-- `RoleplayRealismItemsModData.csv` - the string table: the three name
-  prefixes and the nine new spells' names.
-- `Scripts/` - the fifteen scripts, verbatim from the authors'
-  repository (`ajrb/dfunity-mods` @ `0af2ec9`,
-  `RoleplayRealismItems/Scripts/`): the mod (`RoleplayRealismItemsMod.cs`,
-  1,178 lines) and the fourteen item classes. The shipped bundle
-  carries the compiled DLL and no source; its manifest, settings,
-  templates and string table were diffed against the repository's and
-  are identical, so the repository's source at that commit is taken as
-  the shipped 1.3.
+- `derived-art.json` - the specs of the 50 sprites that are Daggerfall's own records under the authors' paint (46
+  helmet masks, four Dwarven helmets). The game builds each from the player's ARENA2 (NO-BETHESDA2).
+- `roleplay-realism-items.files.json` - the release's 280 sprites, its manifest's file list cut to its PNGs. It is
+  what `test/tooling/doctrine.test.js` and `tools/rriExtract.mjs` admit under `public/art/roleplay-realism-items/`,
+  where the authors' own 230 ship. Their paper-doll rects stay in `src/systems/roleplayRealismItems/rriIndex.js`.
 
-## Where the art is
+## What left, and what took its place
 
-The bundle's 280 textures - the fourteen items' inventory and paper-doll
-sprites in every metal (`520_10-0_Iron`, the bare name for leather),
-the helmet's paper-doll masks (`522_13-0_Mask`) and the two weapons'
-two records - ship with the port under `public/art/roleplay-realism-
-items/`, by the exact name Daggerfall Unity asks for, the way Diverse
-Weapons' do: re-encoded from the bundle's Texture2D objects by
-`tools/rriExtract.mjs` as indexed PNG where the picture fits one (99
-of them) and RGBA where it does not, each file read back and compared
-to its texel before the next is written - every drawn pixel identical.
-The `<rect>` beside 232 of them (the paper-doll placement
-`TextureReplacement.OverridePaperdollItemRect` reads) is written into
-`src/systems/roleplayRealismItems/rriIndex.js` beside each sprite's size. What the folder
-may hold is this manifest's own file list (`test/tooling/doctrine.test.js`
-derives the folder's membership from it).
+The manifest, settings, `ItemTemplates.json`, the string table and the fifteen C# scripts. The commit before
+OWN-WORK3 still carries them.
 
-**NO-BETHESDA2 (2026-10-31, the owner).** Fifty of the 280 are
-Daggerfall's own records - 73-84% of their drawn pixels exactly - and
-are no longer carried: 46 of the helmet's 48 paper-doll masks and the
-four Dwarven helmets, all archive 522, over TEXTURE.245 record 27 and
-TEXTURE.251 records 27 and 31. `derived-art.json` here holds each
-one's spec: the record, the palette and the pixels the authors changed
-(`tools/classicDerive.mjs`). The game builds them from the player's
-own ARENA2, and `rriIndex.js` names them (`RRI_DERIVED`). What
-`public/art/roleplay-realism-items/` carries now is the authors' own
-230; `tools/rriExtract.mjs` indexes a derived sprite and does not write
-it.
+- The scripts: `src/systems/roleplayRealismItems/` and `src/combat/rriEnemyEquipment.js` restate them (`LICENSE`
+  carries the MIT notice).
+- The rows and patches: our own, by our rule from the classic slot piece (`rriItems.js` RRI_ROW_RULE).
+- The words: our item names, our three name words, our nine spell names and our settings text.
 
-## What is ported, and where
-
-- **RRI1** (2026-09-23): the fourteen item classes as
-  `src/systems/roleplayRealismItems/rriItems.js` (DFU's virtuals, dispatched from each of the
-  port's law sites), the template rows and patches, the art on the
-  texture-replacement door, the random makers' custom slots
-  (`newWeapons`, `newArmor`). `bible/06-Systems/Roleplay-Realism-Items.md`
-  is the page.
-- The mod's other nine modules (loot tables, bandaging, condition
-  prices, store condition, enemy kits, starting kits and spells, weapon
-  balance, alchemist potions) follow in RRI2.
+`bible/06-Systems/Roleplay-Realism-Items.md` is the page.

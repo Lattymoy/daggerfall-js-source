@@ -11,7 +11,7 @@
 //
 // WHAT IT IS NOW: a chance, on purpose. A shop's keeper - the three keeper pictures the mod's law reads (182_0, 182_1,
 // 182_2: rrVariants.js rrShopTavernRecord - 182_2 the bug's own), or (AUDIT FIVE-ASKS D4) whoever stands in the shop's
-// own faction, the merchant drawn on any picture (a quality-20 armorer's 182_7, faction 1022 - Roleplay & Realism's
+// own faction, the merchant drawn on any picture (the armory's smith, faction 1022 - Roleplay & Realism's
 // ARMRAM03 building 14) - in a shop - stands as that lamp one day in LAMP_KEEPER_ODDS. The faction is the RMB's own, never
 // FACTION.TXT's (loaded late, and not on every client by then), so the pick stays every client's. The pick is
 // the room's own (`isLampKeeper`: the town, the building, the person's record and the day), so every client that walks

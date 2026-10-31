@@ -1,7 +1,7 @@
 // QL1 (bible/06-Systems/Questlines-Arc.md section 2.5): THE QUEST PACK AS THE GAME READS IT, OFF THE DISK - the node
 // twin of scenes/quest/questData.js (browser-only: Vite's glob), for the sheets' and the branches' pins. The same order
-// of reads: DFU's vendored quests (ours in their place, OWN-WORDS1) with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests with
-// Foraging's (FORAGE-FIX), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a
+// of reads: DFU's vendored quests (ours in their place, OWN-WORDS1) with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests
+// (Foraging's our own, FORAGE-FIX written in - OWN-WORK3), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a
 // machine that knows every line the pack says: DFU's 82, Jagget's four (Foraging's quests), the questlines' six (AUDIT QUESTLINES DOC-29: said three; AUDIT STAR8 S1: `ql gone`).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -10,7 +10,6 @@ import { loadQuestTables, addIntoQuestTables } from '../src/systems/quest/tables
 import { RR_PLACES_TABLE, RR_FACTIONS_TABLE } from '../src/systems/roleplayRealism/rrQuestLine.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { applyQuestPatches, QUEST_PATCHES } from '../src/systems/quest/questPatches.js';
-import { applyForageFix } from '../src/systems/foraging/foragingLaw.js';
 import { questActionsExtensionTemplates } from '../src/systems/quest/questActionsExtension.js';
 import { questlineActionTemplates } from '../src/systems/questlines/qlActions.js';
 import { questlineLines } from '../src/systems/questlines/qlPatches.js';
@@ -21,9 +20,9 @@ const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
 /** Where each quest's file is: DFU's pack, then each mod's folder (its QuestList- files are tables, not quests). */
 export const QUEST_DIRS = Object.freeze([
   ['dfu', 'vendor/dfu-quests/Quests'],
-  ['roleplay-realism', 'vendor/roleplay-realism/Quests'],
+  ['roleplay-realism', 'src/systems/roleplayRealism/quests'],   // OWN-WORK3: Roleplay & Realism's quests in our own words
   ['warm-ashes-ships', 'vendor/warm-ashes-ships/Quests'],
-  ['foraging', 'vendor/foraging/Quests'],
+  ['foraging', 'src/systems/foraging/quests'],   // OWN-WORK3: Foraging's quests in our own words
   ['questlines', 'src/systems/questlines/quests'],
   ['starts', 'src/systems/starts/quests'],   // START1: the starts' own quests (systems/starts/starts.js)
 ]);
@@ -64,14 +63,13 @@ export function loadTables() {
   _tables = true;
 }
 
-/** A quest's text as the pack reads it before the questlines' branch: the port's patches over DFU's, Foraging's fix over
- *  Foraging's. Null for a quest the pack does not hold. */
+/** A quest's text as the pack reads it before the questlines' branch: the port's patches over DFU's (Foraging's carry
+ *  their mends). Null for a quest the pack does not hold. */
 export function baseText(name) {
   const f = QUEST_FILES.get(String(name).toUpperCase());
   if (!f) return null;
   const text = read(f.path);
   if (f.dir === 'dfu' && QUEST_PATCHES[f.name]) return applyQuestPatches(f.name, text);
-  if (f.dir === 'foraging') return applyForageFix(f.name, text);
   return text;
 }
 

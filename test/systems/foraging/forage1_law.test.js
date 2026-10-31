@@ -1,11 +1,11 @@
 // FORAGE1-FORAGE2 - FORAGING 1.7 (Harbinger451), THE LAW (2026-09-28, Mac: "Heres this for life skills";
 // "Your lead"). bible/06-Systems/Foraging.md is the record. The pins hold src/systems/foraging/foragingLaw.js to the
-// mod's own build: every line it speaks is one of the IL's string literals, the templates are the vendored
-// rows, every table is the IL's (FORAGE0 section 6, read off <PrivateImplementationDetails> and the inline
-// stelem arrays), every check comes in its tool's order, and FORAGE-FIX patches only the lines it names.
+// mod's own build: every table is the IL's (FORAGE0 section 6, read off <PrivateImplementationDetails> and the inline
+// stelem arrays) and every check comes in its tool's order. OWN-WORK3 (2026-10-31): the rows, the lines and the quests
+// are our own, pinned here as literals, and the quests carry FORAGE-FIX's mends.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,18 +15,17 @@ import {
   WOOD_BUNDLE_TABLES, woodAxeBundles, woodAxeMessage, MINING_QUESTS, pickAxeQuest, sickleQuest,
   FISH_TABLES, fishingCount, fishingMessage, GRAVE_QUESTS, GRAVE_CN_QUESTS, spadeQuest,
   basketBlock, BASKET_BLOCKS, basketDraw, basketFind, fishTemplate, fruitTemplate, TOOL_QUESTS, brokeMessage,
-  FOODS, FORAGING_COMMAND, raiseTimeSeconds, reduceFatigueBy, FORAGE_FIX_PATCHES, applyForageFix,
+  FOODS, FORAGING_COMMAND, raiseTimeSeconds, reduceFatigueBy,
   attributeAverage, attributeBand, pickOneOf,
 } from '../../../src/systems/foraging/foragingLaw.js';
 import { CLIMATES, LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { ON_EXTERIOR_WATER } from '../../../src/player/exteriorSurface.js';
 import { TEMPLATE as CC } from '../../../src/systems/survival/food.js';
+import { stringBreach } from '../../../tools/plainText.mjs';
+import { FORAGING_QUESTS, ownQuest, asBuilt, AS_BUILT } from './foragingAsBuilt.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const V = join(ROOT, 'vendor/foraging');
-const IL = readFileSync(join(V, 'il/Foraging.il.txt'), 'utf8');
-const LITERALS = new Set([...IL.matchAll(/ldstr\s+"([^"]*)"/g)].map((m) => m[1]));
-const quest = (name) => readFileSync(join(V, 'Quests', `${name}.txt`), 'utf8');
+const ART = join(ROOT, 'vendor/foraging/Textures');   // the author's seven pictures, which stay until wave 3
 /** A draw that answers `i` of an `n`-long list: Random.Range(0, n) == i. */
 const at = (i, n) => () => (i + 0.5) / n;
 
@@ -37,40 +36,80 @@ const OPEN = Object.freeze({
   swimming: false, exteriorWater: ON_EXTERIOR_WATER.None,
 });
 
-test('FORAGE1: the twelve templates are the vendored rows, group 9, and nothing else registers in their range', () => {
-  const rows = JSON.parse(readFileSync(join(V, 'ItemTemplates.json'), 'utf8'));
-  assert.deepEqual(FORAGING_TEMPLATES.map((t) => ({ ...t })), rows);
-  assert.deepEqual(FORAGING_TEMPLATES.map((t) => t.index), [1600, 1601, 1602, 1603, 1604, 1605, 1606, 1607, 1608, 1609, 1610, 1611]);
+test('FORAGE1: the twelve templates (OWN-WORK3: our own rows), group 9, and nothing else registers in their range', () => {
+  // id, name, kg, uses, gold, rarity, picture - the ids, names and pictures facts, the rest our design (Foraging.md OWN-WORK3)
+  assert.deepEqual(FORAGING_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.hitPoints, t.basePrice, t.rarity, t.worldTextureArchive, t.worldTextureRecord]), [
+    [1600, 'Wood-Axe', 3.0, 50, 90, 10, 11600, 0], [1601, 'Pick-Axe', 3.5, 50, 110, 10, 11601, 0],
+    [1602, 'Sickle', 1.0, 50, 60, 10, 11602, 0], [1603, 'Fishing-Net', 2.0, 50, 70, 10, 11603, 0],
+    [1604, 'Wood Bundle', 2.5, 1, 15, 10, 11604, 0], [1605, 'Fish', 0.5, 1, 6, 100, 211, 9],
+    [1606, 'Spade', 3.0, 50, 80, 10, 11606, 0], [1607, 'Basket', 0.5, 50, 30, 10, 205, 9],
+    [1608, 'Apple', 0.2, 1, 3, 100, 213, 1], [1609, 'Orange', 0.2, 1, 4, 100, 213, 0],
+    [1610, 'Mushroom', 0.1, 1, 5, 100, 504, 23], [1611, 'Egg', 0.1, 1, 4, 100, 11605, 0],
+  ]);
+  for (const t of FORAGING_TEMPLATES) {
+    assert.deepEqual([t.capacityOrTarget, t.enchantmentPoints, t.variants, t.drawOrderOrEffect, t.playerTextureArchive, t.playerTextureRecord], [0, 0, 0, 0, 0, 0], t.name);
+    assert.deepEqual([t.isBluntWeapon, t.isLiquid, t.isOneHanded, t.isIngredient, t.stackable], [false, false, false, false, undefined], `${t.name}: none of them stack`);
+  }
   assert.equal(FORAGING_GROUP, 'UselessItems2');
   assert.deepEqual(TOOL_TEMPLATES, [1600, 1601, 1602, 1603, 1606, 1607], "the console command's DCE7 order");
-  assert.deepEqual(FORAGING_TEMPLATES.filter((t) => TOOL_TEMPLATES.includes(t.index)).map((t) => t.hitPoints), [50, 50, 50, 50, 50, 50]);
-  assert.deepEqual(FORAGING_TEXTURE_ARCHIVES, readdirSync(join(V, 'Textures')).map((f) => Number(f.split('_')[0])).sort());
-  assert.equal(FORAGING_QUEST_LIST, 'ForagingQuests');
-  assert.ok(LITERALS.has(FORAGING_QUEST_LIST));
+  assert.deepEqual(FORAGING_TEXTURE_ARCHIVES, readdirSync(ART).map((f) => Number(f.split('_')[0])).sort());
+  assert.equal(FORAGING_QUEST_LIST, 'ForagingQuests', 'RegisterQuestList("ForagingQuests"), IL_02e5');
 });
 
-test('FORAGE1: the Wood-Axe\'s six refusals, word for word (ForagingMain.WoodAxe\'s ldstr, typed here from the IL)', () => {
-  assert.deepEqual(FORAGING_REFUSALS[FT.WoodAxe], {
-    inside: 'You cannot find wood to chop in here!',
-    town: 'You cannot chop wood in a settlement!',
-    daylight: 'You need daylight to chop wood effectively!',
-    sea: 'You cannot find wood to chop out here!',
-    enemies: 'You cannot chop wood with enemies nearby!',
-    encumbered: 'You cannot chop wood when fully encumbered!',
+test('FORAGE1: the six tools\' refusals, word for word (OWN-WORK3: our own words for the build\'s checks)', () => {
+  assert.deepEqual(FORAGING_REFUSALS, {
+    [FT.WoodAxe]: {
+      inside: 'There are no trees to cut in here.', town: 'You cannot cut trees inside a settlement.',
+      daylight: 'It is too dark to swing an axe safely.', sea: 'There are no trees to cut out here.',
+      enemies: 'You cannot cut wood with enemies close by.', encumbered: 'You are carrying too much to cut wood.',
+    },
+    [FT.PickAxe]: {
+      inside: 'There is no rock to work in here.', town: 'You cannot dig for ore inside a settlement.',
+      daylight: 'It is too dark to see the seams in the rock.', sea: 'There is no rock to work out here.',
+      enemies: 'You cannot work the rock with enemies close by.', encumbered: 'You are carrying too much to work the rock.',
+    },
+    [FT.Sickle]: {
+      inside: 'There are no plants to cut in here.', town: 'You cannot cut plants inside a settlement.',
+      daylight: 'It is too dark to tell one plant from another.', sea: 'There are no plants to cut out here.',
+      enemies: 'You cannot cut plants with enemies close by.', encumbered: 'You are carrying too much to cut plants.',
+    },
+    [FT.FishingNet]: {
+      inside: 'There is no water to fish in here.', town: 'You cannot cast a net inside a settlement.',
+      daylight: 'It is too dark to see where the fish are.', enemies: 'You cannot cast a net with enemies close by.',
+      encumbered: 'You are carrying too much to cast a net.', water: 'Stand in water, or be out at sea, to cast a net.',
+    },
+    [FT.Spade]: {
+      inside: 'There is no grave to dig in here.', town: 'You cannot open a grave inside a settlement.',
+      cemetery: 'Graves are dug in a cemetery, not here.', enemies: 'You cannot open a grave with enemies close by.',
+      encumbered: 'You are carrying too much to dig.',
+    },
+    [FT.Basket]: {
+      inside: 'There is no wild food to find in here.', town: 'You cannot gather wild food inside a settlement.',
+      daylight: 'It is too dark to find anything worth eating.', sea: 'There is no wild food to find out here.',
+      enemies: 'You cannot gather food with enemies close by.', encumbered: 'You are carrying too much to gather food.',
+    },
   });
 });
 
-test('FORAGE1: every line the law speaks is one of the IL\'s own string literals', () => {
+test('FORAGE1: every line the law speaks is a plain sentence (OWN-WORK3: our own, PLAIN-TEXT\'s limits)', () => {
   const lines = [];
   for (const t of TOOL_TEMPLATES) lines.push(...Object.values(FORAGING_REFUSALS[t]), brokeMessage(t));
   for (let n = 0; n <= 4; n++) lines.push(woodAxeMessage(n), fishingMessage(n));
   for (const block of Object.keys(BASKET_BLOCKS)) for (const food of [2, 3, 4]) for (let n = 0; n <= 4; n++) lines.push(basketFind({ count: n, food, block }, false).message);
   lines.push(...Object.values(FOODS).map((f) => f.text));
-  lines.push(FORAGING_COMMAND.name, FORAGING_COMMAND.description, FORAGING_COMMAND.usage, FORAGING_COMMAND.answer);
-  lines.push(...MINING_QUESTS, ...GRAVE_QUESTS, ...GRAVE_CN_QUESTS, ...Object.values(TOOL_QUESTS));
-  lines.push(sickleQuest(CLIMATES.Desert, 0), sickleQuest(CLIMATES.Swamp, 0), sickleQuest(CLIMATES.Mountain, 5));
-  const missing = [...new Set(lines)].filter((l) => !LITERALS.has(l));
-  assert.deepEqual(missing, [], 'a line the build never says');
+  lines.push(FORAGING_COMMAND.description, FORAGING_COMMAND.answer, FORAGING_COMMAND.refusedOnline);
+  for (const l of new Set(lines)) {
+    assert.equal(stringBreach(l), null, l);
+    assert.match(l, /^[A-Z].*[.!]$/, `${l}: a whole sentence`);
+  }
+  assert.deepEqual(Object.values(FOODS).map((f) => f.text), ['You eat the Fish. You feel stronger.', 'You eat the Apple. You feel refreshed.',
+    'You eat the Orange. You feel refreshed.', 'You eat the Mushroom. Your mind feels clearer.', 'You eat the Egg. You feel stronger.']);
+  assert.deepEqual([FORAGING_COMMAND.name, FORAGING_COMMAND.description, FORAGING_COMMAND.usage, FORAGING_COMMAND.answer],
+    ['Foraging_Tools', 'Gives you one of each of the six Foraging tools.', 'Foraging_Tools', 'One of each Foraging tool is in your pack.']);
+  assert.deepEqual([brokeMessage(FT.Sickle), brokeMessage(603, 'Skinning Knife'), brokeMessage(603)], ['Your Sickle is worn out.', 'Your Skinning Knife is worn out.', 'Your tool is worn out.']);
+  // the quest names the law starts are the build's (its ldstr), and so the list's
+  assert.deepEqual([...MINING_QUESTS, ...GRAVE_QUESTS, ...Object.values(TOOL_QUESTS)], ['MiningQuestWeakest', 'MiningQuestWeaker', 'MiningQuestWeak', 'MiningQuest',
+    'GraveRobbingQuestWeakest', 'GraveRobbingQuestWeaker', 'GraveRobbingQuestWeak', 'GraveRobbingQuest', 'ChopWoodQuest', 'FishingQuest', 'ForageFoodQuest']);
 });
 
 test('FORAGE1: each tool asks its checks in its own order, and the earlier failure speaks', () => {
@@ -133,9 +172,9 @@ test('FORAGE1: the Wood-Axe\'s eight lists, desert 224 and 225 only, and its lin
   assert.equal(woodAxeBundles({ intelligence: 62, strength: 55, climate: CLIMATES.Woodlands }, at(3, 5)), 2, 'average 58: {0,0,1,2,3}[3]');
   assert.equal(woodAxeBundles({ intelligence: 62, strength: 55, climate: CLIMATES.Desert2 }, at(4, 5)), 1);
   assert.equal(woodAxeBundles({ intelligence: 62, strength: 55, climate: CLIMATES.Mountain }, at(4, 5)), 3, 'Mountain is not desert');
-  assert.equal(woodAxeMessage(1), 'You were able to chop and gather one Wood Bundle!');
-  assert.equal(woodAxeMessage(4), 'You were able to chop and gather four Wood Bundles!');
-  assert.equal(woodAxeMessage(0), 'You were unable to chop and gather any usable wood!');
+  assert.equal(woodAxeMessage(1), 'You cut and tie one Wood Bundle.');
+  assert.equal(woodAxeMessage(4), 'You cut and tie four Wood Bundles.');
+  assert.equal(woodAxeMessage(0), 'You find no wood worth cutting.');
 });
 
 test('FORAGE1: the bands and the average are C#\'s', () => {
@@ -164,7 +203,8 @@ test('FORAGE1: the net\'s four lists, and a fish is C&C\'s Raw Fish while C&C is
   assert.equal(fishingCount({ intelligence: 80, agility: 80 }, at(0, 6)), 1);
   assert.equal(fishTemplate(true), CC.RawFish);
   assert.equal(fishTemplate(false), FT.Fish);
-  assert.equal(fishingMessage(2), 'You cast your Fishing Net and catch two Fish!');
+  assert.equal(fishingMessage(2), 'Your net comes up with two Fish.');
+  assert.equal(fishingMessage(0), 'Your net comes up empty.');
 });
 
 test('FORAGE1: the Basket\'s five blocks, INT alone, and its finds - FORAGE-FIX Q10 fills the C&C holes', () => {
@@ -182,14 +222,14 @@ test('FORAGE1: the Basket\'s five blocks, INT alone, and its finds - FORAGE-FIX 
   let i = 0; const draws = [(3 + 0.5) / 6, (1 + 0.5) / 5];
   const d = basketDraw({ intelligence: 62, climate: CLIMATES.Woodlands, monthValue: 9 }, () => draws[i++]);
   assert.deepEqual(d, { block: 'D', count: 2, food: 3 });
-  assert.deepEqual(basketFind(d, false), { templateIndex: FT.Mushroom, count: 2, message: 'You manage to pick two Mushrooms!' });
-  assert.deepEqual(basketFind({ block: 'D', count: 1, food: 2 }, true), { templateIndex: CC.Apple, count: 1, message: 'You manage to pick one Apple!' });
-  assert.deepEqual(basketFind({ block: 'B', count: 3, food: 2 }, false), { templateIndex: FT.Orange, count: 3, message: 'You manage to pick three Oranges!' });
+  assert.deepEqual(basketFind(d, false), { templateIndex: FT.Mushroom, count: 2, message: 'You gather two Mushrooms.' });
+  assert.deepEqual(basketFind({ block: 'D', count: 1, food: 2 }, true), { templateIndex: CC.Apple, count: 1, message: 'You gather one Apple.' });
+  assert.deepEqual(basketFind({ block: 'B', count: 3, food: 2 }, false), { templateIndex: FT.Orange, count: 3, message: 'You gather three Oranges.' });
   assert.equal(fruitTemplate('Orange', true), CC.Orange);
   // Q10: the build's C&C branch found nothing for these two; the fix finds the eggs
-  assert.deepEqual(basketFind({ block: 'C', count: 2, food: 4 }, true), { templateIndex: FT.Egg, count: 2, message: 'You manage to find two Eggs!' });
-  assert.deepEqual(basketFind({ block: 'E', count: 4, food: 4 }, true), { templateIndex: FT.Egg, count: 4, message: 'You manage to find four Eggs!' });
-  assert.equal(basketFind({ block: 'A', count: 0, food: 3 }, false).templateIndex, null);
+  assert.deepEqual(basketFind({ block: 'C', count: 2, food: 4 }, true), { templateIndex: FT.Egg, count: 2, message: 'You find two Eggs.' });
+  assert.deepEqual(basketFind({ block: 'E', count: 4, food: 4 }, true), { templateIndex: FT.Egg, count: 4, message: 'You find four Eggs.' });
+  assert.deepEqual(basketFind({ block: 'A', count: 0, food: 3 }, false), { templateIndex: null, count: 0, message: 'You find nothing fit to eat.' });
 });
 
 test('FORAGE1: the foods\' numbers, fixed', () => {
@@ -206,38 +246,28 @@ test('FORAGE1: Quest Actions Extension\'s arithmetic', () => {
   assert.equal(reduceFatigueBy(640, 6400, 10), 1);
 });
 
-test('FORAGE-FIX: every patch finds its verbatim line the named number of times, and changes only that', () => {
-  assert.deepEqual(Object.keys(FORAGE_FIX_PATCHES).sort(), ['FetchWood01', 'FetchWood02', 'FetchWood03', 'FetchWood04', 'ForageSummerPlantsQuest', 'MiningQuest', 'MiningQuestWeak', 'MiningQuestWeaker', 'MiningQuestWeakest', 'QuestList-ForagingQuests']);
-  for (const name of Object.keys(FORAGE_FIX_PATCHES)) {
-    const before = quest(name);
-    const after = applyForageFix(name, before);
-    for (const p of FORAGE_FIX_PATCHES[name]) {
-      assert.equal(before.split(p.old).length - 1, p.count, `${name}: ${p.old.trim()}`);
-      assert.ok(after.includes(p.new), `${name} carries its fix`);
-    }
+test('FORAGE-FIX (OWN-WORK3): our quests carry the mends - taken out again, each gives back the build\'s line the named number of times', () => {
+  for (const [name, mends] of Object.entries(AS_BUILT)) {
+    const built = asBuilt(name);
+    for (const m of mends) assert.equal(built.split(m.new).length - 1, m.count, `${name}: ${m.new.trim()}`);
   }
-  const mining = applyForageFix('MiningQuest', quest('MiningQuest'));
-  assert.match(mining, /_rich_ task:\n\twhen _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_\n/);
-  assert.match(mining, /\twhen _elements_ and not _rich_\n/);
-  assert.doesNotMatch(mining, /and _desert_ or/);
-  assert.match(applyForageFix('FetchWood03', quest('FetchWood03')), /player handsover 6 items class 9 subclass 1604/);
-  const summer = applyForageFix('ForageSummerPlantsQuest', quest('ForageSummerPlantsQuest'));
-  assert.equal((quest('ForageSummerPlantsQuest').match(/make _plant4_ permanent/g) ?? []).length, 6, 'the build: the fourth plant made permanent six times');
-  assert.equal((summer.match(/make _plant4_ permanent/g) ?? []).length, 3, 'the fix: once in each of _4plant_, _5plant_, _6plant_ - the fourth plant\'s own');
+  const summer = ownQuest('ForageSummerPlantsQuest');
+  assert.equal((asBuilt('ForageSummerPlantsQuest').match(/make _plant4_ permanent/g) ?? []).length, 6, 'the build: the fourth plant made permanent six times');
+  assert.equal((summer.match(/make _plant4_ permanent/g) ?? []).length, 3, 'ours: once in each of _4plant_, _5plant_, _6plant_ - the fourth plant\'s own');
   assert.equal((summer.match(/make _plant6_ permanent/g) ?? []).length, 1);
-  const list = applyForageFix('QuestList-ForagingQuests', quest('QuestList-ForagingQuests'));
+  const list = ownQuest('QuestList-ForagingQuests');
   assert.match(list, /^FetchWood01, Commoners, N, 0, 0,/m, 'Q13');
   assert.match(list, /^FetchWood04, Nobility, N, 10, 0,/m, 'Q13');
-  assert.doesNotMatch(list, /, (Commoner|Noble), /);
-  assert.equal(applyForageFix('ChopWoodQuest', quest('ChopWoodQuest')), quest('ChopWoodQuest'), 'an unpatched quest is untouched');
-  assert.throws(() => applyForageFix('FetchWood01', 'nothing here'), /FORAGE-FIX/);
+  assert.equal(asBuilt('ChopWoodQuest'), ownQuest('ChopWoodQuest'), 'a quest with no mend is the build\'s logic as it stands');
+  assert.throws(() => asBuilt('FetchWood01', 'nothing here'), /AS-BUILT/);
 });
 
-test('FORAGE1: the quests the law names are the vendored files, and the list names them all', () => {
-  const files = readdirSync(join(V, 'Quests')).map((f) => f.replace(/\.txt$/, ''));
+test('FORAGE1: the quests the law names are our files, and the list names them all', () => {
+  const files = readdirSync(FORAGING_QUESTS).map((f) => f.replace(/\.txt$/, ''));
   for (const q of [...MINING_QUESTS, ...GRAVE_QUESTS, ...GRAVE_CN_QUESTS, ...Object.values(TOOL_QUESTS), 'ForageAridPlantsQuest', 'ForageWinterPlantsQuest', 'ForageSummerPlantsQuest']) {
     assert.ok(files.includes(q), q);
   }
-  const list = readFileSync(join(V, 'Quests/QuestList-ForagingQuests.txt'), 'utf8');
+  assert.equal(files.length, 23, 'the 22 quests and the list');
+  const list = ownQuest('QuestList-ForagingQuests');
   for (const f of files.filter((n) => !n.startsWith('QuestList'))) assert.match(list, new RegExp(`^${f},`, 'm'), f);
 });

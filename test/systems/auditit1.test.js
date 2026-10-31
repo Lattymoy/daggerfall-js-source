@@ -245,20 +245,17 @@ test('AUDIT IT1 H-L2: a driver\'s sheet is a new CarriageMap - its own filters (
 
 // ── the gate world data (world/immersiveTravelGates.js, scenes/modWorldData.js) ──
 // OWN-WORK2 (2026-10-31): the author's gate patches left the tree with their tool, and AUDIT IT1 G1 (the editor's round
-// trip they carried) with them. G2 stands for our own stand: no served file can stop a world loading.
-import { layGateRecords, standRecords, standShift, installImmersiveTravelGates } from '../../src/world/immersiveTravelGates.js';
+// trip they carried) with them. G2 stands for our own stand: no served file can stop a world loading. OWN-WORK3: the
+// layer onto Beautiful Cities' gate files went with that mod - the stand is laid on no file.
+import { standRecords, installImmersiveTravelGates } from '../../src/world/immersiveTravelGates.js';
 
-test('AUDIT IT1 G2 (OWN-WORK2): the layer lays our stand on whatever a gate\'s name serves, never throwing - a file with no RMB half, no town map, no ground or subrecords with no exterior is served as it is or stands the stand as drawn; the install guarded (mutant: a file with no RMB half read)', () => {
-  const stand = standRecords('WALLAA08');
-  assert.deepEqual(layGateRecords({ Name: 'WALLAA08.RMB' }, stand), { Name: 'WALLAA08.RMB' }, 'no RMB half: served as it is');
-  assert.equal(layGateRecords(null, stand), null);
-  const bare = { Name: 'WALLAA08.RMB', RmbBlock: { SubRecords: [{ XPos: 10 }], Misc3dObjectRecords: 'not a list' } };
-  assert.deepEqual(standShift(bare, 'WALLAA08'), [0, 0], 'nothing to read: as drawn');
-  assert.deepEqual(layGateRecords(bare, stand).RmbBlock.Misc3dObjectRecords, stand.Misc3dObjectRecords, 'an array that is none: the stand\'s alone');
-  assert.deepEqual(standShift(bare, 'WALLAA07'), [0, 0]);
-  assert.equal(typeof installImmersiveTravelGates, 'function');
+test('AUDIT IT1 G2 (OWN-WORK3): the stand is records of its own for a gate\'s name, none for another; the install never throws and is guarded in the loader (mutant: the guard dropped)', () => {
+  assert.equal(standRecords('WALLAA08').MiscFlatObjectRecords.length, 5);
+  assert.equal(standRecords('WALLAA07'), null);
+  assert.equal(installImmersiveTravelGates(null), true);
+  assert.equal(installImmersiveTravelGates(() => false), true);
   const src = read('src/scenes/modWorldData.js');
-  assert.match(src, /try \{\s*\n?\s*installImmersiveTravelGates\(/, 'the install guarded: a world loads whatever the layer says');
+  assert.match(src, /try \{\s*\n?\s*installImmersiveTravelGates\(/, 'the install guarded: a world loads whatever the stand says');
 });
 
 // ── the host and the online lane (systems/immersiveTravel.js, scenes/world.js, ui/merchant/merchantServiceDoor.js) ────────────
@@ -291,7 +288,7 @@ test('AUDIT IT1 W4/G3: the mod is loaded for the game - off at the start, no fac
   const w = read('src/scenes/world.js');
   assert.match(w, /const immersiveSettingsIfOn = \(\) => \(immersiveTravelLoaded\(\) \? readImmersiveTravelSettings\(\) : null\);/);
   assert.match(w, /if \(!immersiveTravelLoaded\(\) \|\| \(kind !== IT_POPUP\.carriage && kind !== IT_POPUP\.seafarer\)\) return null;/);
-  assert.match(read('src/scenes/modWorldData.js'), /installImmersiveTravelGates\(immersiveTravelLoaded\);/);   // PIN MOVED (OWN-WORK2): the stand's layer, no patch of the mod's
+  assert.match(read('src/scenes/modWorldData.js'), /installImmersiveTravelGates\(immersiveTravelLoaded\);/);   // PIN MOVED (OWN-WORK3): the stand's latch, no layer; (OWN-WORK2): no patch of the mod's
   assert.match(read('src/systems/features.js'), /modFeature\('immersive-travel', \(\) => t\('features\.mod\.immersiveTravel\.effect', 'Takes effect the next time you start the game; loading a save is not enough\. Fares and rules change at the next map\.'/);
 });
 

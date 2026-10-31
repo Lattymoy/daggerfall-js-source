@@ -85,17 +85,3 @@ test('DOMES sound: every face wound to its normal and turned out of the dome (or
     }
   }
 });
-
-test('DOMES placed: the pack\'s ten - misc records over their buildings\' roofs, 238 units up (5.95 m) on the markets and gem stores and 114 (2.85 m) on the pawnshops, where the drum\'s foot stands (the profile above: five centimetres over the record)', () => {
-  const pack = JSON.parse(zlib.gunzipSync(readFileSync(new URL('../../vendor/beautiful-cities/WorldDataPack/beautiful-cities.pack.json.gz', import.meta.url))).toString('utf8'));
-  const P = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
-  const placed = [];
-  for (const [name, entry] of Object.entries(pack.files)) {
-    const op = P(entry)[2].find((o) => o[0] === 's' && o[1].join('.') === 'RmbBlock.Misc3dObjectRecords');
-    for (const row of op?.[2]?.$m ?? []) if (Array.isArray(row) && DOMES[row[0]]) placed.push(`${name.replace('.RMB.json', '')} ${row[0]} ${-row[3] - 4}`);
-  }
-  assert.deepEqual(placed.sort(), [
-    'DAGEMSBL00 53194 238', 'DAGEMSBL00 53194 238', 'GEMSBL00 53194 237', 'GEMSGL00 53194 237', 'MARKAB00 53182 238',
-    'MARKAB01 53182 238', 'PAWNBL00 53187 114', 'PAWNBL00 53187 114', 'PAWNGL00 53187 114', 'PAWNGL00 53187 114',
-  ]);
-});

@@ -382,8 +382,8 @@
   {
     "name": "DW-E3-mackerel-weight",
     "file": "src/world/passiveFish.js",
-    "old": "species(9005, 'Mackerel', 46, 15,",
-    "new": "species(9005, 'Mackerel', 46, 14,",
+    "old": "species(9005, FISH_NAMES[9005], 46, 15,",
+    "new": "species(9005, FISH_NAMES[9005], 46, 14,",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -976,8 +976,8 @@
   {
     "name": "DW-E3-template-remap-dropped",
     "file": "src/systems/deepWater/deepWatersFishRows.js",
-    "old": "  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,",
-    "new": "  ...t,",
+    "old": "  worldTextureArchive: fishIconArchive(index), worldTextureRecord: 0, isNotRepairable: true,",
+    "new": "  isNotRepairable: true,",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -1560,6 +1560,33 @@
     "new": "        const g = r.group;",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK3-a-fish-row-moved",
+    "file": "src/systems/deepWater/deepWatersFishRows.js",
+    "old": "[9005, 1, 7]",
+    "new": "[9005, 1.5, 7]",
+    "tests": [
+      "test/systems/item/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK3-the-species-named-apart",
+    "file": "src/world/passiveFish.js",
+    "old": "species(9007, FISH_NAMES[9007],",
+    "new": "species(9007, 'Grouper',",
+    "tests": [
+      "test/systems/item/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK3-an-old-catch-keeps-its-name",
+    "file": "src/systems/deepWater/deepWatersFishItems.js",
+    "old": "    if (it && isFishTemplateIndex(it.templateIndex) && it.name !== FISH_NAMES[it.templateIndex]) it.name = FISH_NAMES[it.templateIndex];",
+    "new": "",
+    "tests": [
+      "test/systems/item/dwe_fish.test.js"
     ]
   }
 ]

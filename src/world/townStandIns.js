@@ -1,6 +1,6 @@
 // WD3 (2026-10-01): THE PIECES BEAUTIFUL VILLAGES AND BEAUTIFUL CITIES BORROW, STOOD IN BY THE PORT.
 //
-// The two town mods are world data (src/formats/worldData/worldDataPack.js), and their blocks place pieces of five peer mods
+// The two town mods were world data (src/formats/worldData/worldDataPack.js), and their blocks placed pieces of five peer mods
 // the port does not carry - Daggerfall Expanded Textures, Diep's Rosy's Resources, New Paintings, the RMB Resource
 // Pack and DET's Harvestable Crops - and eighteen beds of their own whose prefabs point at nothing (their meshes and
 // textures are Daggerfall's, recoloured). Mac's answer for a peer the port lacks was "Build your own" (2026-09-25), and the
@@ -22,8 +22,8 @@
 //     pictures of the same things (TOWN_ITEMS, below);
 //   - the cloth and the drawn sprites: world/townPictures.js, world/standInSprites.js.
 //
-// All of it stands behind the town mods' own load (scenes/modWorldData.js installs it when a town pack is opened -
-// for the game, or for a save whose towns are pinned to it), and costs a game that has neither mod nothing.
+// OWN-WORK3 (2026-10-31): the two town mods are retired and no town places these now. They stand at every boot
+// (scenes/modWorldData.js), so the pieces a player set in a room or a yard from the decor catalogue still stand.
 
 import { registerCustomModel, registerModelAlias, customModelFor } from './customModels.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';

@@ -1,9 +1,8 @@
 // SURV2 - THE SURVIVAL ITEMS: the templates, the minting, the shops'
 // provisions, the starting kit, the use handlers and the mod's own
-// icons. After Climates & Calories' ItemTemplates.json (vendored at
-// vendor/climates-calories/, indices 530-540 verbatim in name and
-// texture, the prices retuned where the mod's were typos) plus the
-// port's own campfire at 541 (Mac: "a new campfire item players can
+// icons. The rows began as Climates & Calories 1.7.1's (indices 530-540)
+// and are our own since OWN-WORK3, by the rules over SURVIVAL_TEMPLATES;
+// 541 is the port's own campfire (Mac: "a new campfire item players can
 // buy and place").
 //
 // WHAT AN ITEM CARRIES. A food carries `foodStage` (food.js) and, once
@@ -32,29 +31,42 @@ export const CAMPING_USES = 50;
 /** ENDLESS PROVISIONS: a full meal's worth of satiety - the Off meal gives back satiety / this of the stamina pool. */
 export const OFF_MEAL_FULL_MINUTES = 960;
 
-/** The rows, registered at import (so any mint that names an index
- *  finds it). Columns are DFU's ItemTemplates.txt's. */
+/** OWN-WORK3 (2026-10-31): THE FOOD PRICE RULE. Two gold an hour of the meal's worth (FOOD satiety), four for meat (it
+ *  is hunted), half again for food that never spoils (the drying); rounded, at least one. */
+const MEAT = new Set([TEMPLATE.RawMeat, TEMPLATE.Meat]);
+export const foodPrice = (t) => Math.max(1, Math.round((FOOD[t].satiety / 60) * (MEAT.has(t) ? 4 : 2) * (FOOD[t].keeps == null ? 1.5 : 1)));
+/** The Campfire's price (REST2), and the gold a night of it is worth, which prices the tent. */
+const CAMPFIRE_PRICE = 40;
+/** The classic Decanter, the old table's dearest vessel for drink: the Waterskin's price. */
+const DECANTER = ITEM_TEMPLATES[84];
+
+/** The rows, registered at import (so any mint that names an index finds it). Columns are DFU's ItemTemplates.txt's.
+ *  OWN-WORK3: our own rules. A NAME is the plain word for the thing. A WEIGHT is one in life, to the nearest of 0.1,
+ *  0.25, 0.5, then half kilos. A PRICE is foodPrice's, or the gear's own reason beside it. CONDITION is a food's keeping
+ *  (FOOD keeps), a tent's or a Campfire's nights; the rations, the skin and the skillet keep the count saves hold.
+ *  RARITY 1: nothing rolls these by rarity. The indices and the pictures are facts saves and the art hold. */
 export const SURVIVAL_TEMPLATES = Object.freeze([
-  { index: TEMPLATE.CampingEquipment, name: 'Camping Equipment', baseWeight: 5.0, hitPoints: CAMPING_USES, basePrice: 150, rarity: 1, worldTextureArchive: 204, worldTextureRecord: 8 },
-  { index: TEMPLATE.Rations, name: 'Rations', baseWeight: 1.0, hitPoints: 10, basePrice: 20, rarity: 1, worldTextureArchive: 205, worldTextureRecord: 17, stackable: true },
-  { index: TEMPLATE.Apple, name: 'Apple', baseWeight: 0.1, hitPoints: 90, basePrice: 1, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 1 },
-  { index: TEMPLATE.Orange, name: 'Orange', baseWeight: 0.1, hitPoints: 90, basePrice: 2, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 0 },
-  { index: TEMPLATE.Bread, name: 'Bread', baseWeight: 1.5, hitPoints: 95, basePrice: 5, rarity: 3, worldTextureArchive: 211, worldTextureRecord: 31 },
+  // a canvas tent, its poles and a bedroll: five kilos; a fifth of a Campfire's night a night, for its fifty
+  { index: TEMPLATE.CampingEquipment, name: 'Camping Equipment', baseWeight: 5.0, hitPoints: CAMPING_USES, basePrice: Math.round((CAMPING_USES * CAMPFIRE_PRICE) / CAMPFIRE_USES / 5), rarity: 1, worldTextureArchive: 204, worldTextureRecord: 8 },
+  { index: TEMPLATE.Rations, name: 'Rations', baseWeight: 0.5, hitPoints: 10, basePrice: foodPrice(TEMPLATE.Rations), rarity: 1, worldTextureArchive: 205, worldTextureRecord: 17, stackable: true },   // a meal of hard bread, cheese and dried meat
+  { index: TEMPLATE.Apple, name: 'Apple', baseWeight: 0.25, hitPoints: FOOD[TEMPLATE.Apple].keeps, basePrice: foodPrice(TEMPLATE.Apple), rarity: 1, worldTextureArchive: 213, worldTextureRecord: 1 },   // a fruit is a fifth of a kilo
+  { index: TEMPLATE.Orange, name: 'Orange', baseWeight: 0.25, hitPoints: FOOD[TEMPLATE.Orange].keeps, basePrice: foodPrice(TEMPLATE.Orange), rarity: 1, worldTextureArchive: 213, worldTextureRecord: 0 },
+  { index: TEMPLATE.Bread, name: 'Bread', baseWeight: 0.5, hitPoints: FOOD[TEMPLATE.Bread].keeps, basePrice: foodPrice(TEMPLATE.Bread), rarity: 1, worldTextureArchive: 211, worldTextureRecord: 31 },   // a loaf
   // CRAFT-PAYS (2026-10-21, the Discord's #feature-feedback: "Food is too heavy. Especially meat... meat should reduce in
-  // weight once cooked becasue most of that weight will be water"; bible/06-Systems/Professions-Arc.md section 48): the
-  // mod's raw meat and raw fish weighed two kilos a piece and kept it all through the fire. A cut is a kilo, and cooked it
-  // is half that - the water gone - so a cooked Meat weighs a quarter of what it did and a Cooked Fish a third (AUDIT
-  // CRAFT-WRITS T7: "a quarter" was the Meat's alone). The dishes stand on these rows
-  // (professions/profTemplates.js DISH_TEMPLATE_ROWS) and lighten with them; Bread and Rations are the mod's.
-  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 1.0, hitPoints: 50, basePrice: 4, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 9 },
-  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 0.5, hitPoints: 80, basePrice: 6, rarity: 10, worldTextureArchive: 211, worldTextureRecord: 10 },
-  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 0.5, hitPoints: 90, basePrice: 15, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 40 },
-  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 1.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
-  { index: TEMPLATE.Waterskin, name: 'Waterskin', baseWeight: 0.5, hitPoints: 10, basePrice: 10, rarity: 1, worldTextureArchive: 539, worldTextureRecord: 0 },
-  { index: TEMPLATE.Skillet, name: 'Skillet', baseWeight: 5.0, hitPoints: 100, basePrice: 60, rarity: 5, worldTextureArchive: 218, worldTextureRecord: 4 },
+  // weight once cooked becasue most of that weight will be water"; bible/06-Systems/Professions-Arc.md section 48): a cut
+  // is a kilo, and cooked it is half that, the water gone. The dishes stand on these rows
+  // (professions/profTemplates.js DISH_TEMPLATE_ROWS) and move with them.
+  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 1.0, hitPoints: FOOD[TEMPLATE.RawFish].keeps, basePrice: foodPrice(TEMPLATE.RawFish), rarity: 1, worldTextureArchive: 211, worldTextureRecord: 9 },
+  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 0.5, hitPoints: FOOD[TEMPLATE.CookedFish].keeps, basePrice: foodPrice(TEMPLATE.CookedFish), rarity: 1, worldTextureArchive: 211, worldTextureRecord: 10 },
+  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 0.5, hitPoints: FOOD[TEMPLATE.Meat].keeps, basePrice: foodPrice(TEMPLATE.Meat), rarity: 1, worldTextureArchive: 211, worldTextureRecord: 40 },
+  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 1.0, hitPoints: FOOD[TEMPLATE.RawMeat].keeps, basePrice: foodPrice(TEMPLATE.RawMeat), rarity: 1, worldTextureArchive: 538, worldTextureRecord: 2 },
+  // the skin alone (its water is weighed apart), at the Decanter's price
+  { index: TEMPLATE.Waterskin, name: 'Waterskin', baseWeight: 0.5, hitPoints: 10, basePrice: DECANTER?.basePrice ?? 7, rarity: 1, worldTextureArchive: 539, worldTextureRecord: 0 },
+  // an iron pan, two kilos; AUDIT C&C's 60 gold
+  { index: TEMPLATE.Skillet, name: 'Skillet', baseWeight: 2.0, hitPoints: 100, basePrice: 60, rarity: 1, worldTextureArchive: 218, worldTextureRecord: 4 },
   // AUDIT REST II H7: its condition is its FUEL (REST2's nights), never wear - a repair counter refilled eight nights for
   // less than one Firewood's three (isNotRepairable: "This cannot be repaired.", DFU's own refusal)
-  { index: TEMPLATE.Campfire, name: 'Campfire', baseWeight: 3.0, hitPoints: CAMPFIRE_USES, basePrice: 40, rarity: 1, worldTextureArchive: TORCH?.worldTextureArchive ?? 205, worldTextureRecord: TORCH?.worldTextureRecord ?? 17, isNotRepairable: true },
+  { index: TEMPLATE.Campfire, name: 'Campfire', baseWeight: 3.0, hitPoints: CAMPFIRE_USES, basePrice: CAMPFIRE_PRICE, rarity: 1, worldTextureArchive: TORCH?.worldTextureArchive ?? 205, worldTextureRecord: TORCH?.worldTextureRecord ?? 17, isNotRepairable: true },
 ]);
 registerCustomTemplates(SURVIVAL_TEMPLATES);
 

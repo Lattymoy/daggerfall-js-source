@@ -42,6 +42,7 @@ import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { travelPathUsesRoads, TRAVEL_PATH_TEXT, setTravelPathMode } from '../../../src/systems/travel/travelPathMode.js';
 import { freePull } from '../../../src/systems/travel/freePull.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
+import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // OWN-WORK3: the mod's own key names
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -59,8 +60,7 @@ test('TO-ROADS THE SWITCH: the port\'s own key beside First-Person Travel - OFF 
   // (read live, as First-Person Travel is - AUDIT OW5 T1; the tile's "when the world next loads" is the mod's other keys');
   // the note that the switch is the port's own is gone from the pane
   assert.equal(def.description, 'With First Person Travel on, journeys follow the roads and tracks as Overworld journeys do, and a place with no way there by land can\u2019t be picked. Off, you head straight for your destination. Takes effect at once.');
-  const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
-  assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
+  assert.ok(!TRAVEL_OPTIONS_1_11_KEYS.includes(KEY), 'not one of the mod\'s own keys (OWN-WORK3: travelOptionsKeys.mjs)');
   const tile = MOD_CURATED['travel-options'];
   assert.equal(tile.indexOf(KEY), tile.indexOf(FIRST_PERSON) + 1, 'on the tile, right after the switch it serves');
   assert.ok(modDials('travel-options').includes(KEY), 'reachable: a dial the drawer draws (TORCH-BIND\'s lesson)');

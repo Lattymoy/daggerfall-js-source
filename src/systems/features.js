@@ -1207,11 +1207,8 @@ export const FEATURES = Object.freeze([
   // wilderness itself. Read at the world's mount, like the roads it
   // consults: the loader's list is built once per world.
   modFeature('world-of-daggerfall', () => t('features.effect.worldLoads', 'Takes effect when the world next loads.'), 'world'),
-  // WD3 (2026-10-01): BEAUTIFUL VILLAGES and BEAUTIFUL CITIES - `world`, the towns themselves. The world-data
-  // loader reads each switch once, when the game loads (scenes/modWorldData.js latches it), so a town never moves
-  // under the player; online the room owns both.
-  modFeature('beautiful-villages', () => t('features.mod.beautifulTowns.effect', 'Takes effect the next time you start the game; loading a save is not enough. Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
-  modFeature('beautiful-cities', () => t('features.mod.beautifulTowns.effect', 'Takes effect the next time you start the game; loading a save is not enough. Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
+  // WD3's BEAUTIFUL VILLAGES and BEAUTIFUL CITIES rows went with the mods (OWN-WORK3, 2026-10-31): the towns are
+  // Daggerfall's, dressed by our own law with no switch (world/townDress.js).
   // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
   // hook reads the switch as a journey starts; an ambush already at sea
   // finishes either way.

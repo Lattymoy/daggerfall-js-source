@@ -3,16 +3,14 @@
 // its numbers - the world half of the measurement pass the proposal "A Foundation for Scale" asked for. CLASSIC reads the
 // files as Daggerfall shipped them (no world-data door); SERVED reads them as the game serves them - the game's own
 // installs on the door and the listed places past the Bay (capitals, Arena's) on the player's trace. WORLD adds every
-// place the countryside and the lairs roll past the Bay. PACKS adds the vendored town packs as a player who loads both.
+// place the countryside and the lairs roll past the Bay.
 // The door is one per process, so a run is one of the four.
 //   ARENA2_PATH=... node tools/atlasMeasure.mjs            the classic files
 //   ARENA2_PATH=... node tools/atlasMeasure.mjs --served   as the game serves them, the listed places past the Bay
 //   ARENA2_PATH=... node tools/atlasMeasure.mjs --world    served, and every rolled place past the Bay
-//   ARENA2_PATH=... node tools/atlasMeasure.mjs --packs    served, and the town packs on
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import zlib from 'node:zlib';
 import { isMain } from './lib/isMain.mjs';
 import { createAtlas, fillAtlas } from '../src/world/atlas/atlas.js';
 import { servedBlockOf } from '../src/world/atlas/atlasServed.js';
@@ -24,28 +22,24 @@ import * as GRID from '../src/world/worldWide/worldGrid.js';
 import { landServedBytes } from '../src/world/land/landLayer.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-/** The town packs and their load order (scenes/modWorldData.js WORLD_DATA_PRIORITY). */
-export const TOWN_PACKS = Object.freeze([['beautiful-villages', 10], ['beautiful-cities', 20]]);
-
 /** TESA12's fit of the Bay on the player's trace (test/tesa12_places.test.js pins its 283 places on it). */
 export const TRACE_FIT = Object.freeze({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
 
 /**
  * The atlas of the world from an ARENA2 directory. `served`: through the door with the game's own installs, and the
  * places past the Bay as the places host stands them (the capitals' slices and Arena's places listed); `world`: and the
- * countryside's and the lairs' rolled places over every province (minutes); `packs`: and the town packs (once a process -
- * the door and the trace are the process's). A mod's added location is bundled under its own source ('additions'),
+ * countryside's and the lairs' rolled places over every province (minutes) - once a process (the door and the trace are
+ * the process's). OWN-WORK3: the town packs are retired, and the `packs` option with them. A mod's added location is bundled under its own source ('additions'),
  * beside the registry's Bay (HUB1 keeps it out of the game's registry: it stands on one client and not another).
- * @param {string} arena2 @param {{ served?: boolean, packs?: boolean, world?: boolean }} [o]
+ * @param {string} arena2 @param {{ served?: boolean, world?: boolean }} [o]
  */
-export async function loadWorldAtlas(arena2, { served = false, packs = false, world = false } = {}) {
-  served ||= packs || world;
+export async function loadWorldAtlas(arena2, { served = false, world = false } = {}) {
+  served ||= world;
   const bytes = (/** @type {string} */ n) => landServedBytes(n, new Uint8Array(readFileSync(join(arena2, n))));   // the land's rows on the Bay, as fetchBytes serves them
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   if (served) {
     await installServed(blocks);
-    if (packs) await loadTownPacks(blocks);
   }
   /** @type {Map<number, any>} */ const locOf = new Map();
   const locs = [], added = [];
@@ -75,19 +69,6 @@ export async function loadWorldAtlas(arena2, { served = false, packs = false, wo
   }
   const names = Array.from({ length: blocks.count }, (_, i) => blocks.getBlockName(i));
   return { atlas, places, filled, rolled, blockNames: names, maps, blocks, tamriel: tp };
-}
-
-/** The town packs on the door, each rebuilt from the player's own blocks, in their load order (scenes/modWorldData.js). */
-async function loadTownPacks(/** @type {any} */ blocks) {
-  const W = await import('../src/formats/worldData/worldDataReplacement.js');
-  const { openWorldDataPack } = await import('../src/formats/worldData/worldDataPack.js');
-  const { setValue } = await import('../src/systems/settings/settings.js');
-  setValue('Enhancements', 'AssetInjection', 'True');
-  for (const [v, priority] of TOWN_PACKS) {
-    const json = JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString('utf8'));
-    W.registerWorldDataPack(openWorldDataPack(json, { blocks }), () => true, { priority });
-  }
-  W.quietLocationOverrides(true);
 }
 
 /** The world past the Bay as the world host stands it: the places host (scenes/tamrielPlacesHost.js createTamrielPlaces)
@@ -169,15 +150,15 @@ export function rolledPlacesPastBay(tp) {
 if (isMain(import.meta.url)) {
   const arena2 = process.env.ARENA2_PATH;
   if (!arena2) { console.error('set ARENA2_PATH (sh tools/fetch-data.sh fetches it)'); process.exit(2); }
-  const packs = process.argv.includes('--packs'), world = process.argv.includes('--world'), served = packs || world || process.argv.includes('--served');
+  const world = process.argv.includes('--world'), served = world || process.argv.includes('--served');
   const log = console.log;
   if (served) console.log = () => {};   // the door's own "Found a new DFBlock" lines, one a pack's block
-  const { atlas, filled, rolled, blockNames } = await loadWorldAtlas(arena2, { served, packs, world });
+  const { atlas, filled, rolled, blockNames } = await loadWorldAtlas(arena2, { served, world });
   console.log = log;
   const c = atlas.counts();
   const unusedRmb = atlas.unused(blockNames, 'rmb'), allRmb = blockNames.filter((n) => /\.RMB$/i.test(n));
   const unusedRdb = atlas.unused(blockNames, 'rdb'), allRdb = blockNames.filter((n) => /\.RDB$/i.test(n));
-  console.log(packs ? 'PACKS (served, and the town packs on)' : world ? 'WORLD (served, and every rolled place past the Bay)' : served ? 'SERVED (the door, the game\'s installs, the listed places past the Bay)' : 'CLASSIC (the files as shipped)');
+  console.log(world ? 'WORLD (served, and every rolled place past the Bay)' : served ? 'SERVED (the door, the game\'s installs, the listed places past the Bay)' : 'CLASSIC (the files as shipped)');
   if (rolled) console.log(`rolled past the Bay: ${rolled.rows} places (${rolled.unlocated.length} unlocated)`);
   console.log(`places ${c.places} (${filled.unlocated.length} unlocated), regions ${c.regions}, buildings ${c.buildings}, doors ${c.doors}, dungeons ${c.dungeons}`);
   console.log(`exterior slots ${c.exteriorSlots} over ${c.rmb} blocks (mean reuse ${(c.exteriorSlots / Math.max(1, c.rmb)).toFixed(1)}); dungeon slots ${c.dungeonSlots} over ${c.rdb} blocks`);

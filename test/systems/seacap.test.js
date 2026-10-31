@@ -6,7 +6,6 @@
 // may still raise it to 256. What the spawner reads is the setting (scenes/deepWater/deepWatersHost.js deepWatersEnemySettings).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { ONLINE_ROOM_MOD_KEYS, onlineForcedModSetting } from '../../src/systems/online/onlineLane.js';
 import { deepWatersEnemySettings } from '../../src/scenes/deepWater/deepWatersHost.js';
@@ -14,9 +13,8 @@ import { deepWatersEnemySettings } from '../../src/scenes/deepWater/deepWatersHo
 const V = 'iliac-puddle-no-more', K = 'General.MaxLiveEnemies';
 
 test('SEA-CAP: the port stands at most 32 of the deep\'s foes by default - the mod ships 128, and its range stays', () => {
-  const shipped = JSON.parse(readFileSync(new URL(`../../vendor/${V}/modsettings.json`, import.meta.url), 'utf8'))
-    .Sections.find((s) => s.Name === 'General').Keys.find((k) => k.Name === 'MaxLiveEnemies');
-  assert.equal(shipped.Value, 128, 'the mod\'s own value, recorded as the departure\'s other side');
+  // OWN-WORK3 (2026-10-31): Iliac Puddle No More 1.2.2's MaxLiveEnemies, as a literal - its settings file left the tree
+  const shipped = { Value: 128, Min: 0, Max: 256 };
   const def = MOD_SETTINGS[V].keys[K];
   assert.equal(def.default, 32);
   assert.equal(def.min, shipped.Min ?? 0);

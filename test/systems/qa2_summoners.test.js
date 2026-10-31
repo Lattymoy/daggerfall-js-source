@@ -132,21 +132,3 @@ test('QUEST-AUDIT II TEMPLE-SUMMONER: the rows are the 24 designs of Beautiful V
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_GEOMETRY = !!ARENA2 && ['MAPS.BSA', 'BLOCKS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK', 'ARCH3D.BSA'].every((f) => existsSync(join(ARENA2, f)));
-test('QUEST-AUDIT II TEMPLE-SUMMONER, gated on ARENA2_PATH (with ARCH3D): the rows are the measurement - every design laid out over the player\'s geometry, walked from its entrance, its summoner at the nearest clear floor to its priest (tools/templeSummoners.mjs)', { skip: HAVE_GEOMETRY ? false : 'ARENA2_PATH (with ARCH3D.BSA) not set' }, async () => {
-  const { openTownData } = await import('../../tools/townQuestMarkers.mjs');
-  const { measureSummoners } = await import('../../tools/templeSummoners.mjs');
-  const log = console.log; console.log = () => {};
-  let rows;
-  try { rows = await measureSummoners(await openTownData(ARENA2)); } finally { console.log = log; }
-  assert.deepEqual(rows, CURATED_TEMPLE_SUMMONERS.map(({ block, record, deity, person: p }) => ({ block, record, deity, person: { ...p } })));
-  // AUDIT QA2 B1, in the producer's own shape: every row's temple, served by the door from the vendored pack as a town
-  // lays it (TEMPASA2's JSON names itself TEMPAS2.RMB), stands exactly its summoner, at its spot, under a name seed no
-  // other person of the room holds
-  for (const r of CURATED_TEMPLE_SUMMONERS) {
-    const b = getDFBlockReplacementData(-1, r.block);
-    const people = collectInteriorPeople(b.rmbBlock.subRecords[r.record]);
-    const s = people.filter((p) => SUMMONER_FACTIONS.includes(p.factionID));
-    assert.deepEqual(s.map((p) => [p.factionID, p.rawX, p.rawY, p.rawZ, p.position]), [[r.person.factionID, r.person.xPos, r.person.yPos, r.person.zPos, r.person.position]], `${r.block} #${r.record}`);
-    assert.equal(people.filter((p) => p.position === r.person.position).length, 1, `${r.block}: its name seed its own`);
-  }
-});

@@ -1,12 +1,9 @@
-// RR3b - Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest
-// line's WORLD DATA - Northrock Fort (locationnew-RRfort01-16.json, a
-// new location in the Wrothgarian Mountains), its block (RRFORT01.RMB.
-// json) and the armorer's shop as the quest rebuilds it (ARMRAM03.RMB-
-// 765-building14_master.json) - through WorldDataReplacement.cs, ported
-// whole as formats/worldData/worldDataReplacement.js: the door MapsFile and
-// BlocksFile ask (MapsFile.cs:984, :999, :1027; BlocksFile.cs:214, :273,
-// :385, :850), the converters from DFU's JSON to the port's reader
-// shapes, RMBLayout's replacement arm and the save file's variants.
+// RR3b - Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest line's WORLD DATA - a new location in the
+// Wrothgarian Mountains, its block and the armorer's shop as the quest rebuilds it - through WorldDataReplacement.cs,
+// ported whole as formats/worldData/worldDataReplacement.js: the door MapsFile and BlocksFile ask (MapsFile.cs:984, :999,
+// :1027; BlocksFile.cs:214, :273, :385, :850), the converters, RMBLayout's replacement arm and the save's variants.
+// OWN-WORK3: the three files are our own (systems/roleplayRealism/rrWorld.js) - here made of a made-up palace and smithy
+// in DFU's shape (the converters' fixture), and with ARENA2 of the player's own blocks.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -26,15 +23,53 @@ import { longitudeLatitudeToMapPixel, LOCATION_TYPES, DUNGEON_TYPES, CLIMATES, F
 import { BLOCK_TYPES } from '../../../src/formats/blocksFile.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { mergeNamedBuildings } from '../../../src/systems/talk/talkTopics.js';
-import { RR_ARMORER_BLOCK, RR_ARMORER_RECORD, rrMasterArmBuildingKey } from '../../../src/systems/roleplayRealism/rrQuestLine.js';
+import { RR_ARMORER_BLOCK, RR_ARMORER_RECORD, rrMasterArmBuildingKey, RR_FACTION_IDS } from '../../../src/systems/roleplayRealism/rrQuestLine.js';
+import {
+  rrKeepLocationJson, rrKeepBlockJson, rrArmoryJson, rrKeepMarkers, installRoleplayRealismWorld, RR_KEEP_NAME, RR_KEEP_FILE, RR_KEEP_BLOCK, RR_KEEP_BLOCK_FILE,
+  RR_ARMORY_FILE, RR_KEEP_FROM, RR_ARMORY_FROM, RR_KEEP_QUALITY, RR_ARMORY_QUALITY, RR_ARMORY_SEED, RR_SMITH_FLAT, RR_KEEP_MARKERS,
+} from '../../../src/systems/roleplayRealism/rrWorld.js';
+import { BlocksFile } from '../../../src/formats/blocksFile.js';
 import { hostText } from '../../hostText.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
-const WD = 'vendor/roleplay-realism/WorldData';
-const FILES = ['locationnew-RRfort01-16.json', 'RRFORT01.RMB.json', 'ARMRAM03.RMB-765-building14_master.json'];
-const json = (n) => JSON.parse(rd(`${WD}/${n}`));
-const LOC = json(FILES[0]), BLK = json(FILES[1]), BLD = json(FILES[2]);
+const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'BLOCKS.BSA')) ? process.env.ARENA2_PATH : null;
+// a made-up palace and smithy in DFU's world-data shape - no record of Daggerfall's
+const tiles = Array.from({ length: 256 }, (_, i) => ({ TileBitfield: i & 0xff, TextureRecord: i % 56, IsRotated: (i & 1) === 1, IsFlipped: (i & 2) === 2 }));
+const scenery = Array.from({ length: 256 }, (_, i) => ({ TextureRecord: (i % 7) - 1 }));
+const model = (id, x, z) => ({ ModelId: String(id), ModelIdNum: id, ObjectType: 3, XPos: x, YPos: 2, ZPos: z, XRotation: 0, YRotation: 512, ZRotation: 0 });
+const flat = (a, r, x, z, faction = 0) => ({ Position: 100 + x, XPos: x, YPos: -129, ZPos: z, TextureArchive: a, TextureRecord: r, FactionID: faction, Flags: 17 });
+const person = (a, r, x, z, faction, flags = 9) => ({ Position: 200 + x, XPos: x, YPos: -129, ZPos: z, TextureArchive: a, TextureRecord: r, FactionID: faction, Flags: flags });
+const door = (x, z) => ({ Position: 300 + x, XPos: x, YPos: -174, ZPos: z, YRotation: 1024, OpenRotation: 90, DoorModelIndex: 0 });
+const data = (models, flats = [], people = [], doors = [], sec3 = 0, headerModels = models.length) => ({
+  Header: { Num3dObjectRecords: headerModels, NumFlatObjectRecords: flats.length, NumSection3Records: sec3, NumPeopleRecords: people.length, NumDoorRecords: doors.length },
+  Block3dObjectRecords: models, BlockFlatObjectRecords: flats, BlockSection3Records: Array.from({ length: sec3 }, (_, i) => ({ XPos: i, YPos: 0, ZPos: -i })),
+  BlockPeopleRecords: people, BlockDoorRecords: doors,
+});
+const block = (name, index, buildings, subRecords, miscFlats = []) => ({
+  Position: 2304725, Index: index, Name: name, Type: 'Rmb',
+  RmbBlock: {
+    FldHeader: { NumBlockDataRecords: subRecords.length, NumMisc3dObjectRecords: 0, NumMiscFlatObjectRecords: miscFlats.length, BuildingDataList: buildings,
+      GroundData: { Header: [1, 2, 3, 4, 5, 6, 7, 8], GroundTiles: tiles, GroundScenery: scenery }, AutoMapData: Array.from({ length: 4096 }, (_, i) => i % 251), Name: name },
+    SubRecords: subRecords, Misc3dObjectRecords: [], MiscFlatObjectRecords: miscFlats,
+  },
+});
+const PALACE = block('PALAGA04.RMB', 78, [{ NameSeed: 0, FactionId: 852, Sector: 0, LocationId: 0, BuildingType: 'Palace', Quality: 18 }], [{
+  XPos: 1984, ZPos: 768, YRotation: 0,
+  Exterior: data([model(730, 0, 0), model(6800, 100, 0)], [], [], [], 0, 1),   // a header that undercounts, as DFU's editor can write one
+  Interior: data([model(31403, 0, 0), model(31406, 0, 300), model(41122, 50, 50)],
+    [flat(199, 8, 0, -192), flat(199, 11, 512, -320), flat(199, 11, -384, 448), flat(199, 18, -376, -328), flat(199, 20, -536, -384), flat(199, 20, 80, 16), flat(210, 18, 536, -432)],
+    [person(183, 3, -272, -336, 853), person(183, 7, -56, -48, 852), person(183, 3, 32, -80, 853), person(183, 4, 272, 16, 853)],
+    [door(199, -297), door(535, -257)], 5),
+}], [flat(210, 28, 0, 0), flat(210, 28, 10, 0)]);
+const shop = { XPos: 640, ZPos: 384, YRotation: 512, Exterior: data([model(500, 0, 0)]),
+  Interior: data([model(10720, 0, 189), model(41001, 160, -48)], [flat(207, 9, 152, 56), flat(199, 18, 208, -88), flat(199, 11, -192, 312)], [person(182, 59, 184, 272, 510, 13)], [door(215, -129), door(7, -297)]) };
+const SMITHY = block('ARMRAM03.RMB', 765, Array.from({ length: 15 }, (_, i) => ({ NameSeed: 0, FactionId: 0, Sector: 0, LocationId: 0, BuildingType: i === 14 ? 'WeaponSmith' : 'House1', Quality: 8 })),
+  Array.from({ length: 15 }, (_, i) => (i === 14 ? shop : { XPos: i, ZPos: i, YRotation: 0, Exterior: data([model(500, 0, 0)]), Interior: data([]) })));
+const classicBlocks = { getBlockName: (i) => ({ 78: 'PALAGA04.RMB', 765: 'ARMRAM03.RMB' })[i] ?? null, readClassicBlock: (i) => blockFromJson(i === 78 ? PALACE : SMITHY, i) };
+const FILES = [RR_KEEP_FILE, RR_KEEP_BLOCK_FILE, RR_ARMORY_FILE];
+const LOC = rrKeepLocationJson(), BLK = rrKeepBlockJson(classicBlocks), BLD = rrArmoryJson(classicBlocks);
+const json = (n) => structuredClone({ [FILES[0]]: LOC, [FILES[1]]: BLK, [FILES[2]]: BLD }[n]);
 const BSA_COUNT = 1000;
 const fakeBlocks = (classic = {}) => ({ count: BSA_COUNT, getBlockIndex: (n) => classic[n] ?? -1 });
 const fakeRegion = () => ({ name: 'Wrothgarian Mountains', locationCount: 2, mapNames: ['Aldleigh', 'Bhoriane'], mapTable: [{ mapId: 1, locationId: 0 }, { mapId: 2, locationId: 0 }], mapNameLookup: new Map([['Aldleigh', 0], ['Bhoriane', 1]]), mapIdLookup: new Map([[1, 0], [2, 1]]) });
@@ -46,64 +81,104 @@ const fresh = ({ bind = true } = {}) => {
   if (bind) bindWorldDataBlocks(fakeBlocks());
 };
 
-test('RR3b the record: the three files vendored verbatim, DFU\'s file names, the quest\'s three `_master` lines at the three shops', () => {
-  const author = '/home/user/dfunity-mods/RoleplayRealism/WorldData';
-  for (const n of FILES) {
-    assert.ok(existsSync(join(ROOT, WD, n)), n);
-    if (existsSync(author)) assert.equal(rd(`${WD}/${n}`), readFileSync(join(author, n), 'utf8'), `${n}: verbatim`);
-  }
+test('RR3b the record: our three files by DFU\'s names (OWN-WORK3), what each is made of, the quest\'s three `_master` lines at the three shops', () => {
+  assert.deepEqual(FILES, ['locationnew-RRfort01-16.json', 'RRFORT01.RMB.json', 'ARMRAM03.RMB-765-building14_master.json'], 'the names the release\'s quest and a save hold');
+  assert.deepEqual({ ...RR_KEEP_FROM }, { block: 'PALAGA04.RMB', index: 78, record: 0 });
+  assert.deepEqual({ ...RR_ARMORY_FROM }, { block: 'ARMRAM03.RMB', index: 765, record: 14 });
+  assert.deepEqual([RR_KEEP_NAME, RR_KEEP_BLOCK, RR_KEEP_QUALITY, RR_ARMORY_QUALITY, RR_ARMORY_SEED, [...RR_SMITH_FLAT], RR_KEEP_MARKERS], ['Grayhold', 'RRFORT01.RMB', 16, 18, 1022, [182, 24], 14], 'our choices');
+  assert.throws(() => rrKeepBlockJson({ ...classicBlocks, getBlockName: () => 'X.RMB' }), /wants PALAGA04\.RMB at block 78/, 'a BLOCKS.BSA with another block there');
   assert.equal(regionReplacementFilename(16), 'region-16.json');
   assert.equal(locationReplacementFilename(16, 2), 'location-16-2.json');
   assert.equal(locationReplacementFilename(16, 2, '_v'), 'location-16-2_v.json');
   assert.equal(blockReplacementFilename('RRFORT01.RMB'), 'RRFORT01.RMB.json');
   assert.equal(buildingReplacementFilename('ARMRAM03.RMB', 765, 14, '_master'), FILES[2]);
-  const q = rd('vendor/roleplay-realism/Quests/RRMSTARM1.txt');
+  const q = rd('src/systems/roleplayRealism/quests/RRMSTARM1.txt');
   const lines = [...q.matchAll(/worldupdate building ARMRAM03\.RMB 14 at (\d+) in region (\d+) variant (\S+)/g)].map((m) => [Number(m[2]), Number(m[1]), m[3]]);
   assert.deepEqual(lines, [[52, 240, '_master'], [18, 33, '_master'], [48, 44, '_master']], 'Pjiga, Penmore, Paponirea - the three regions the building key knows');
   for (const [region] of lines) assert.notEqual(rrMasterArmBuildingKey(region), 0);
   assert.equal(RR_ARMORER_BLOCK, 'ARMRAM03.RMB'); assert.equal(RR_ARMORER_RECORD, 14);
   assert.equal(AUTO_MAP_DATA_SIZE, 4096);
+  // the install: the location always, the block and the shop with the player's blocks
+  _resetWorldDataReplacement();
+  assert.equal(installRoleplayRealismWorld(null), 1, 'no BLOCKS.BSA: the location alone');
+  assert.equal(installRoleplayRealismWorld(classicBlocks), 3);
+  assert.equal(installRoleplayRealismWorld({ ...classicBlocks, getBlockName: () => 'X.RMB' }), 1, 'a block that will not build is said, and the keep stands unbuilt');
+  assert.match(rd('src/scenes/modWorldData.js'), /installRoleplayRealismWorld\(boundWorldDataBlocks\(\)\);/, 'the loader lays them on, with the bound BLOCKS.BSA');
+  _resetWorldDataReplacement();
+});
+
+test('RR3b our keep: the palace\'s court stood down and the lord\'s household stood in its places - the first quest marker, the ruler\'s seat, the place nearest it, the place nearest the door, then the rest in order', () => {
+  const i = PALACE.RmbBlock.SubRecords[0].Interior;
+  const at = (p) => [p.XPos, p.ZPos];
+  assert.deepEqual(rrKeepMarkers(i, 852).map(at), [[512, -320], [-56, -48], [32, -80], [-272, -336], [272, 16], [-384, 448], [-536, -384], [80, 16]],
+    'armorer, lord, captain, door guard, the court left, the other quest marker, the guard posts');
+  assert.deepEqual(rrKeepMarkers(i, 999).map(at).slice(0, 2), [[512, -320], [-272, -336]], 'no person of the faction: the first of the court takes the seat');
+  const interior = BLK.RmbBlock.SubRecords[0].Interior;
+  assert.deepEqual(interior.BlockPeopleRecords, [], 'the court stood down');
+  const quest = interior.BlockFlatObjectRecords.filter((f) => f.TextureArchive === 199 && f.TextureRecord === 11);
+  assert.deepEqual(quest.map(at), rrKeepMarkers(i, 852).map(at), 'the hall\'s markers, and the palace\'s own quest markers gone');
+  assert.equal(interior.Header.NumFlatObjectRecords, interior.BlockFlatObjectRecords.length); assert.equal(interior.Header.NumPeopleRecords, 0);
+  assert.equal(interior.BlockFlatObjectRecords.filter((f) => f.TextureArchive === 199 && f.TextureRecord === 18).length, 1, 'its item marker kept');
+  assert.equal(BLK.Name, 'RRFORT01.RMB'); assert.equal(BLK.RmbBlock.FldHeader.Name, 'RRFORT01.RMB');
+  assert.equal(BLK.RmbBlock.FldHeader.BuildingDataList[0].LocationId, 0x73A1, 'the hall the quest walks into'); assert.equal(BLK.RmbBlock.FldHeader.BuildingDataList[0].Quality, RR_KEEP_QUALITY);
+  assert.equal(BLK.RmbBlock.FldHeader.BuildingDataList[0].FactionId, RR_FACTION_IDS.LordVerathon, 'the lord\'s own house'); assert.equal(BLK.RmbBlock.FldHeader.BuildingDataList[0].BuildingType, BUILDING_TYPES.House6, 'no palace: no court, no residents');
+  assert.deepEqual(PALACE.RmbBlock.SubRecords[0].Interior.BlockPeopleRecords.length, 4, 'the made-up palace untouched');
+});
+
+test('RR3b our keep and shop, with ARENA2: the player\'s own palace hall with fourteen markers and no court, the player\'s own smithy with Brannoc Hale at its quest marker', { skip: ARENA2 ? false : 'ARENA2_PATH not set - the real blocks skipped' }, () => {
+  const blocks = new BlocksFile(); blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const keep = blockFromJson(rrKeepBlockJson(blocks), 1295);
+  const hall = keep.rmbBlock.subRecords[0].interior;
+  assert.equal(keep.name, 'RRFORT01.RMB');
+  assert.equal(hall.blockFlatObjectRecords.filter((f) => f.textureArchive === 199 && f.textureRecord === 11).length, 14, 'markers 0-13, one for each person the quest places');
+  assert.equal(hall.blockPeopleRecords.length, 0);
+  assert.deepEqual(keep.rmbBlock.subRecords[0].exterior.block3dObjectRecords.map((m) => m.modelIdNum), [730], 'the palace as Daggerfall built it');
+  const shop = buildingReplacementFromJson(rrArmoryJson(blocks));
+  assert.deepEqual([shop.factionId, shop.buildingType, shop.quality, shop.nameSeed], [1022, BUILDING_TYPES.Armorer, 18, 1022]);
+  const hale = shop.rmbSubRecord.interior.blockPeopleRecords.at(-1);
+  assert.deepEqual([hale.textureArchive, hale.textureRecord, hale.factionID, hale.xPos, hale.zPos, hale.flags & 32], [182, 24, 1022, -192, 312, 0], 'at the smithy\'s quest marker, a man');
+  assert.equal(shop.rmbSubRecord.interior.blockPeopleRecords.length, 2, 'the keeper stays');
 });
 
 // ---- the converters -------------------------------------------------------------
-test('RR3b the location converter: Northrock Fort in the port\'s DFLocation shape - the pixel, the enums, the climate by the world climate, the building, the block names', () => {
+test('RR3b the location converter: our keep in the port\'s DFLocation shape - the pixel, the enums, the climate by the world climate, the building, the block names', () => {
   const loc = locationFromJson(LOC);
-  assert.equal(loc.name, 'Northrock Fort'); assert.equal(loc.regionName, 'Wrothgarian Mountains'); assert.equal(loc.regionIndex, 16);
+  assert.equal(loc.name, 'Grayhold'); assert.equal(loc.regionName, 'Wrothgarian Mountains'); assert.equal(loc.regionIndex, 16);
   assert.equal(loc.loaded, true); assert.equal(loc.hasDungeon, false); assert.equal(loc.politic, 144, 'region + 128');
-  assert.deepEqual(longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude), { x: 938, y: 51 }, 'the fort\'s pixel - the tracks\' centre');
+  assert.deepEqual(longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude), { x: 938, y: 51 }, 'the keep\'s pixel - the tracks\' centre, the site the release\'s quest logic binds');
   assert.equal(loc.mapTableData.mapId, 51938);
-  assert.equal(loc.mapTableData.locationType, LOCATION_TYPES.ReligionCult, '"ReligionCult" spelled');
+  assert.equal(loc.mapTableData.locationType, LOCATION_TYPES.HomeWealthy, '"HomeWealthy" spelled - our choice, a lord\'s house on the map');
   assert.equal(loc.mapTableData.dungeonType, DUNGEON_TYPES.NoDungeon, '"NoDungeon" spelled');
   assert.equal(loc.mapTableData.discovered, false); assert.equal(loc.mapTableData.locationId, 0, 'AddLocationToRegion copies it in');
   assert.equal(loc.climate.worldClimate, CLIMATES.Mountain); assert.equal(loc.climate.people, FACTION_RACES.Nord);
   assert.equal(loc.climate.groundArchive, LOC.Climate.GroundArchive, 'the port\'s table agrees with the JSON\'s inline fields');
   assert.equal(loc.climate.natureArchive, LOC.Climate.NatureArchive); assert.equal(loc.climate.skyBase, LOC.Climate.SkyBase);
   const h = loc.exterior.recordElement.header;
-  assert.equal(h.locationId, 0x73A0, 'Northrock_Fort_Ext\'s p1'); assert.equal(h.x, 30736384); assert.equal(h.y, 14680064); assert.equal(h.isExterior, 32768); assert.equal(h.locationName, 'Northrock Fort');
+  assert.equal(h.locationId, 0x73A0, 'Northrock_Fort_Ext\'s p1'); assert.equal(h.x, 30736384); assert.equal(h.y, 14680064); assert.equal(h.isExterior, 32768); assert.equal(h.locationName, 'Grayhold');
   assert.equal(loc.exterior.recordElement.doorCount, 0);
   assert.equal(loc.exterior.buildingCount, 1);
   const b = loc.exterior.buildings[0];
   assert.equal(b.locationId, 0x73A1, 'Northrock_Fort\'s p1 - the building the quest walks into');
-  assert.equal(b.factionId, 852); assert.equal(b.buildingType, BUILDING_TYPES.House6, '"House6" spelled'); assert.equal(b.quality, 11); assert.equal(b.nameSeed, 6248);
+  assert.equal(b.factionId, 1020, 'the lord\'s own'); assert.equal(b.buildingType, BUILDING_TYPES.House6, '"House6" spelled'); assert.equal(b.quality, 16); assert.equal(b.nameSeed, 0);
   assert.equal(b.serviceTimeLimit, 0, 'the 26-byte record whole');
   const ed = loc.exterior.exteriorData;
-  assert.equal(ed.anotherName, 'Northrock Fort'); assert.equal(ed.mapId, 51938); assert.equal(ed.width, 1); assert.equal(ed.height, 1); assert.equal(ed.portTownAndUnknown, 0);
+  assert.equal(ed.anotherName, 'Grayhold'); assert.equal(ed.mapId, 51938); assert.equal(ed.width, 1); assert.equal(ed.height, 1); assert.equal(ed.portTownAndUnknown, 0);
   assert.deepEqual(ed.blockNames, ['RRFORT01.RMB']);
   assert.deepEqual(loc.dungeon, { recordElement: null, header: null, blocks: null });
   assert.equal(locationFromJson({ Name: 'x' }, 3).regionName, 'Daggerfall Bluffs', 'a bare record: the region\'s name, the defaults');
 });
 
-test('RR3b the block converter: RRFORT01.RMB in the port\'s DFBlock shape - the FLD header from the subrecords, the ground data un-flattened y-outer x-inner, every record kind', () => {
+test('RR3b the block converter: our keep\'s block in the port\'s DFBlock shape - the FLD header from the subrecords, the ground data un-flattened y-outer x-inner, every record kind', () => {
   const blk = blockFromJson(BLK, 1000);
   assert.equal(blk.name, 'RRFORT01.RMB'); assert.equal(blk.index, 1000); assert.equal(blk.type, BLOCK_TYPES.Rmb); assert.equal(blk.position, BLK.Position);
   const fh = blk.rmbBlock.fldHeader;
-  assert.equal(fh.numBlockDataRecords, 1); assert.equal(fh.numMisc3dObjectRecords, 0); assert.equal(fh.numMiscFlatObjectRecords, 4);
+  assert.equal(fh.numBlockDataRecords, 1); assert.equal(fh.numMisc3dObjectRecords, 0); assert.equal(fh.numMiscFlatObjectRecords, 2);
   assert.equal(fh.blockPositions.length, 32);
   assert.deepEqual(fh.blockPositions[0], { unknown1: 0, unknown2: 0, xPos: BLK.RmbBlock.SubRecords[0].XPos, zPos: BLK.RmbBlock.SubRecords[0].ZPos, yRotation: BLK.RmbBlock.SubRecords[0].YRotation });
   assert.equal(fh.buildingDataList.length, 32, 'the 32-slot list, the JSON\'s entries first');
-  assert.equal(fh.buildingDataList[0].factionId, 852); assert.equal(fh.buildingDataList[0].buildingType, BUILDING_TYPES.House6); assert.equal(fh.buildingDataList[0].quality, 18);
+  assert.equal(fh.buildingDataList[0].factionId, 1020); assert.equal(fh.buildingDataList[0].buildingType, BUILDING_TYPES.House6); assert.equal(fh.buildingDataList[0].quality, 16);
   assert.equal(fh.buildingDataList[1].buildingType, -1, 'AUDIT-RR2 G19: the padding is None');
-  assert.equal(fh.name, BLK.RmbBlock.FldHeader.Name); assert.equal(fh.otherNames, null);
+  assert.equal(fh.name, 'RRFORT01.RMB'); assert.equal(fh.otherNames, null);
   assert.ok(fh.autoMapData instanceof Uint8Array); assert.equal(fh.autoMapData.length, 4096);
   assert.ok(fh.groundData.header instanceof Uint8Array); assert.equal(fh.groundData.header.length, 8);
   // DFBlock.RmbGroundDataConverter (DFBlock.cs:1124-1185): flattened y-outer, x-inner
@@ -118,9 +193,9 @@ test('RR3b the block converter: RRFORT01.RMB in the port\'s DFBlock shape - the 
   assert.equal(sc.tileBitfield, sc.textureRecord < 0 ? 255 : (sc.textureRecord + 1) * 4, 'the reader\'s bitfield, inverted');
   const sub = blk.rmbBlock.subRecords[0];
   assert.deepEqual([sub.xPos, sub.zPos, sub.yRotation], [BLK.RmbBlock.SubRecords[0].XPos, BLK.RmbBlock.SubRecords[0].ZPos, BLK.RmbBlock.SubRecords[0].YRotation]);
-  assert.equal(sub.exterior.block3dObjectRecords.length, 18); assert.equal(sub.exterior.header.num3dObjectRecords, BLK.RmbBlock.SubRecords[0].Exterior.Header.Num3dObjectRecords, 'the header as the JSON wrote it (1 here, against 18 records - DFU walks the array, and so does the port)');
-  assert.equal(sub.interior.block3dObjectRecords.length, 73); assert.equal(sub.interior.blockFlatObjectRecords.length, 40);
-  assert.equal(sub.interior.blockSection3Records.length, 50); assert.equal(sub.interior.blockPeopleRecords.length, 2); assert.equal(sub.interior.blockDoorRecords.length, 6);
+  assert.equal(sub.exterior.block3dObjectRecords.length, 2); assert.equal(sub.exterior.header.num3dObjectRecords, 1, 'the header as the JSON wrote it (1 here, against 2 records - DFU walks the array, and so does the port)');
+  assert.equal(sub.interior.block3dObjectRecords.length, 3); assert.equal(sub.interior.blockFlatObjectRecords.length, 13, 'the palace\'s seven, less its two quest markers, and the hall\'s eight');
+  assert.equal(sub.interior.blockSection3Records.length, 5); assert.equal(sub.interior.blockPeopleRecords.length, 0, 'the court stood down'); assert.equal(sub.interior.blockDoorRecords.length, 2);
   const m0 = BLK.RmbBlock.SubRecords[0].Exterior.Block3dObjectRecords[0], m = sub.exterior.block3dObjectRecords[0];
   assert.equal(m.modelId, String(m0.ModelId)); assert.equal(m.modelIdNum, m0.ModelIdNum); assert.equal(m.objectType, m0.ObjectType);
   assert.deepEqual([m.xPos, m.yPos, m.zPos, m.xRotation, m.yRotation, m.zRotation], [m0.XPos, m0.YPos, m0.ZPos, m0.XRotation, m0.YRotation, m0.ZRotation]);
@@ -128,25 +203,28 @@ test('RR3b the block converter: RRFORT01.RMB in the port\'s DFBlock shape - the 
   const f0 = BLK.RmbBlock.SubRecords[0].Interior.BlockFlatObjectRecords[0], f = sub.interior.blockFlatObjectRecords[0];
   assert.deepEqual([f.textureArchive, f.textureRecord, f.factionID, f.flags, f.position], [f0.TextureArchive, f0.TextureRecord, f0.FactionID, f0.Flags, f0.Position]);
   assert.equal(f.textureBitfield, ((f0.TextureArchive << 7) | f0.TextureRecord) & 0xffff, 'the bitfield the reader keeps, rebuilt');
-  const p = sub.interior.blockPeopleRecords[0], p0 = BLK.RmbBlock.SubRecords[0].Interior.BlockPeopleRecords[0];
+  const p = blockFromJson(PALACE, 78).rmbBlock.subRecords[0].interior.blockPeopleRecords[0], p0 = PALACE.RmbBlock.SubRecords[0].Interior.BlockPeopleRecords[0];
   assert.equal(p.textureArchive, p0.TextureArchive); assert.equal(p.factionID, p0.FactionID);
   const d = sub.interior.blockDoorRecords[0], d0 = BLK.RmbBlock.SubRecords[0].Interior.BlockDoorRecords[0];
   assert.deepEqual([d.xPos, d.yPos, d.zPos, d.yRotation, d.openRotation, d.doorModelIndex], [d0.XPos, d0.YPos, d0.ZPos, d0.YRotation, d0.OpenRotation, 0]);
-  assert.equal(blk.rmbBlock.miscFlatObjectRecords.length, 4); assert.equal(blk.rmbBlock.misc3dObjectRecords.length, 0);
+  assert.equal(blk.rmbBlock.miscFlatObjectRecords.length, 2); assert.equal(blk.rmbBlock.misc3dObjectRecords.length, 0);
   assert.equal(blk.rdbBlock, null);
   assert.equal(blockFromJson({ Name: 'X.RMB' }, 7).type, BLOCK_TYPES.Rmb, 'a nameless type: by the extension');
   assert.deepEqual(rmbBlockDataFromJson(null).header.num3dObjectRecords, 0);
   assert.equal(groundDataFromJson(null).groundTiles[15][15].textureRecord, 0);
 });
 
-test('RR3b the building converter: the armorer\'s shop - faction 1022, an Armorer of quality 20, seed 632, the rebuilt interior, its automap', () => {
+test('RR3b the building converter: our armory - faction 1022, an Armorer of quality 18, seed 1022, the smithy\'s interior with Brannoc Hale, no automap of its own', () => {
   const b = buildingReplacementFromJson(BLD);
-  assert.equal(b.factionId, 1022); assert.equal(b.buildingType, BUILDING_TYPES.Armorer); assert.equal(b.quality, 20); assert.equal(b.nameSeed, 632);
+  assert.equal(b.factionId, 1022); assert.equal(b.buildingType, BUILDING_TYPES.Armorer); assert.equal(b.quality, 18); assert.equal(b.nameSeed, 1022);
   assert.deepEqual([b.rmbSubRecord.xPos, b.rmbSubRecord.zPos, b.rmbSubRecord.yRotation], [640, 384, 512]);
   assert.equal(b.rmbSubRecord.exterior.block3dObjectRecords.length, 1);
-  assert.equal(b.rmbSubRecord.interior.block3dObjectRecords.length, 33); assert.equal(b.rmbSubRecord.interior.blockFlatObjectRecords.length, 21);
+  assert.equal(b.rmbSubRecord.interior.block3dObjectRecords.length, 2); assert.equal(b.rmbSubRecord.interior.blockFlatObjectRecords.length, 3, 'the smithy\'s own, as it stands');
   assert.equal(b.rmbSubRecord.interior.blockPeopleRecords.length, 2); assert.equal(b.rmbSubRecord.interior.blockDoorRecords.length, 2);
-  assert.ok(b.autoMapData instanceof Uint8Array); assert.equal(b.autoMapData.length, 4096);
+  const hale = b.rmbSubRecord.interior.blockPeopleRecords[1];
+  assert.deepEqual([hale.textureArchive, hale.textureRecord, hale.factionID, hale.xPos, hale.zPos, hale.flags], [182, 24, 1022, -192, 312, 13], 'at the quest marker, with the keeper\'s flags');
+  assert.equal(b.autoMapData, null, 'the block\'s own automap stands');
+  assert.ok(buildingReplacementFromJson({ ...BLD, AutoMapData: Array.from({ length: 4096 }, () => 30) }).autoMapData instanceof Uint8Array, 'a file\'s own automap is bytes');
   assert.equal(buildingReplacementFromJson({}).autoMapData, null);
   // ApplyBuildingReplacementAutoMapData (:494-508): 30 means "leave it"
   const block = new Uint8Array(4096).fill(7);
@@ -160,25 +238,25 @@ test('RR3b the building converter: the armorer\'s shop - faction 1022, an Armore
 });
 
 // ---- the door ----------------------------------------------------------------
-test('RR3b the region: the fort added to region 16 with its index and id, cached and re-laid on a re-read region, another region none, the gate', () => {
+test('RR3b the region: the keep added to region 16 with its index and id, cached and re-laid on a re-read region, another region none, the gate', () => {
   fresh();
   assert.equal(assetInjectionOn(), true);
   const region = fakeRegion();
   assert.equal(getDFRegionAdditionalLocationData(16, region), true);
-  assert.equal(region.locationCount, 3); assert.equal(region.mapNames[2], 'Northrock Fort');
+  assert.equal(region.locationCount, 3); assert.equal(region.mapNames[2], 'Grayhold');
   assert.equal(region.mapTable[2].mapId, 51938); assert.equal(region.mapTable[2].locationId, 0x73A0, 'the id ReadLocationIdFast reads instead of peeking the BSA');
-  assert.equal(region.mapNameLookup.get('Northrock Fort'), 2); assert.equal(region.mapIdLookup.get(51938), 2);
-  assert.equal(getNewDFLocationIndex(16, 'Northrock Fort'), 2); assert.equal(getNewDFLocationIndex(16, 'nowhere'), -1); assert.equal(getNewDFLocationIndex(17, 'Northrock Fort'), -1);
+  assert.equal(region.mapNameLookup.get('Grayhold'), 2); assert.equal(region.mapIdLookup.get(51938), 2);
+  assert.equal(getNewDFLocationIndex(16, 'Grayhold'), 2); assert.equal(getNewDFLocationIndex(16, 'nowhere'), -1); assert.equal(getNewDFLocationIndex(17, 'Grayhold'), -1);
   // a re-read of the same region (the reader rebuilt its own from the BSA) gets the cached additions laid on again
   const again = fakeRegion();
   assert.equal(getDFRegionAdditionalLocationData(16, again), true);
-  assert.equal(again.locationCount, 3); assert.equal(again.mapNames[2], 'Northrock Fort'); assert.equal(again.mapIdLookup.get(51938), 2);
+  assert.equal(again.locationCount, 3); assert.equal(again.mapNames[2], 'Grayhold'); assert.equal(again.mapIdLookup.get(51938), 2);
   assert.equal(getDFRegionAdditionalLocationData(17, fakeRegion()), false, 'no file for region 17');
   registerWorldDataAsset('locationnew-late-17.json', { ...LOC, Name: 'Late Fort', RegionIndex: 17 });
   assert.equal(getDFRegionAdditionalLocationData(17, fakeRegion()), false, 'cached as none - a file landing later is not seen (only look for added locations once per region)');
   // the new location by its index (AddLocationToRegion stored it under its key)
   const loc = getDFLocationReplacementData(16, 2);
-  assert.equal(loc.name, 'Northrock Fort'); assert.equal(loc.locationIndex, 2); assert.equal(loc.exterior.recordElement.header.unknown2, 2, 'Unknown2 = locationIndex');
+  assert.equal(loc.name, 'Grayhold'); assert.equal(loc.locationIndex, 2); assert.equal(loc.exterior.recordElement.header.unknown2, 2, 'Unknown2 = locationIndex');
   assert.equal(getDFLocationReplacementData(16, 2), loc, 'the same record');
   assert.equal(getDFLocationReplacementData(16, 0), null, 'a classic index: no file');
   assert.equal(getDFLocationReplacementData(16, 0), null, 'cached as none');
@@ -236,7 +314,7 @@ test('RR3b the building: nothing without the variant (cached as none under NoVar
   setBuildingVariant('ARMRAM03.RMB', 14, '_master', makeLocationKey(52, 240));   // the quest's first line
   setLastLocationKeyTo(52, 240);
   const b = getBuildingReplacementData('ARMRAM03.RMB', 765, 14);
-  assert.equal(b.factionId, 1022); assert.equal(b.buildingType, BUILDING_TYPES.Armorer); assert.equal(b.nameSeed, 632);
+  assert.equal(b.factionId, 1022); assert.equal(b.buildingType, BUILDING_TYPES.Armorer); assert.equal(b.nameSeed, 1022);
   assert.equal(getBuildingReplacementData('ARMRAM03.RMB', 765, 14), b, 'cached under its variant');
   setLastLocationKeyTo(52, 241);
   assert.equal(getBuildingReplacementData('ARMRAM03.RMB', 765, 14), null, 'another location: the cached none');
@@ -245,10 +323,10 @@ test('RR3b the building: nothing without the variant (cached as none under NoVar
   setBuildingVariant('ARMRAM03.RMB', 14, '_master');   // everywhere
   assert.equal(getBuildingReplacementData('ARMRAM03.RMB', 765, 14), b, 'AnyLocationKey');
   // the variant of a NEW location: loaded from `locationnew-*-16<variant>.json` when set
-  registerWorldDataAsset('locationnew-RRfort01-16_v.json', { ...LOC, Name: 'Northrock Fort' , Exterior: { ...LOC.Exterior, BuildingCount: 0, Buildings: [] } });
+  registerWorldDataAsset('locationnew-RRfort01-16_v.json', { ...LOC, Name: 'Grayhold', Exterior: { ...LOC.Exterior, BuildingCount: 0, Buildings: [] } });
   getDFRegionAdditionalLocationData(16, fakeRegion());
   setNewLocationIndexResolver((region, name) => getNewDFLocationIndex(region, name));
-  setNewLocationVariant(16, 'Northrock Fort', '_v');
+  setNewLocationVariant(16, 'Grayhold', '_v');
   const v = getDFLocationReplacementData(16, 2);
   assert.equal(v.exterior.buildingCount, 0, 'the variant\'s record'); assert.equal(v.locationIndex, 2);
   assert.equal(loadNewDFLocationVariant(16, 2, '_v'), false, 'already loaded');
@@ -283,8 +361,8 @@ test('RR3b the readers ask the door: MapsFile\'s three asks and BlocksFile\'s fo
   const block = { dfBlock: { name: 'ARMRAM03.RMB', index: 765, rmbBlock: { fldHeader: { buildingDataList: list, numBlockDataRecords: 16, otherNames: null }, subRecords: new Array(16) } } };
   const pool = [{ nameSeed: 9001, factionId: 77, sector: 1, locationId: 3, buildingType: BUILDING_TYPES.Armorer, quality: 9 }];
   const merged = mergeNamedBuildings(pool, [block], { locationIndex: 240 }).get(block);
-  assert.equal(merged[14].factionId, 1022, 'the replacement\'s faction'); assert.equal(merged[14].quality, 20); assert.equal(merged[14].buildingType, BUILDING_TYPES.Armorer);
-  assert.equal(merged[14].nameSeed, 632 + 240, 'NameSeed + LocationIndex - varied by location');
+  assert.equal(merged[14].factionId, 1022, 'the replacement\'s faction'); assert.equal(merged[14].quality, 18); assert.equal(merged[14].buildingType, BUILDING_TYPES.Armorer);
+  assert.equal(merged[14].nameSeed, 1022 + 240, 'NameSeed + LocationIndex - varied by location');
   assert.equal(merged[14].sector, 1, 'the pool draw\'s other fields were copied first');
   // and the draw was handed back: a second armorer in the block takes it
   const list2 = list.map((e, i) => (i === 15 ? entry(15, BUILDING_TYPES.Armorer) : e));

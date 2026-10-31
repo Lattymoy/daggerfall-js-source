@@ -10,7 +10,7 @@ import { OVERHAUL_PANELS } from '../../src/systems/overhauls.js';
 import { UI_PACKS } from '../../src/systems/uiPack.js';
 import { ENVIRONMENT_PACK_MODS } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';   // ALIKR1 / SNOWFALL1: the shipped environment packs
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
-import { retiredKeys } from '../ownWork.mjs';   // OWN-WORK1: the keys Own-Work.md records as retired
+import { retiredKeys, endedCredits } from '../ownWork.mjs';   // OWN-WORK1: the keys Own-Work.md records as retired
 
 // CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
 // want to give credit to the mod developer who created it").
@@ -54,7 +54,9 @@ test('OWN-WORK1: a retired credit names a key Own-Work.md records, and no folder
       assert.ok(!(r.vendor ?? []).includes(k), `"${r.title}" names ${k} as both vendored and retired`);
     }
   }
-  assert.deepEqual([...retired].filter((k) => !named.includes(k)), [], 'a retired key has lost its credit on the About screen');
+  const ended = endedCredits();   // OWN-WORK3: our design replaced theirs, and the row says the credit ended
+  assert.deepEqual([...retired].filter((k) => !named.includes(k) && !ended.has(k)), [], 'a retired key has lost its credit on the About screen');
+  assert.deepEqual([...ended].filter((k) => named.includes(k)), [], 'a credit the record ended is still on the About screen');
 });
 
 test('CR1: a mod row carries what a modder is owed - title, author, what it is, the terms it is carried under', () => {

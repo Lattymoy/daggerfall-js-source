@@ -86,7 +86,7 @@ most at Ageliret (1.1 to 3.3 m), all under 3.5 m: their berths moved onto the ra
 DEPARTURE (named; Port-Ledger section A, ACROSS-EDGE): DFU keeps a pixel's edge the land's own.
 
 Tests `test/world/fb1029_ground.test.js` (6 on synthetic ground: the law; the producers agree; the levels; the records'
-frame; the towns; the wiring) and `test/world/fb1029_ground_real.test.js` (ARENA2: Kalunnunu's 3 x 3, its harbour, the
+frame; the towns; the wiring) and `test/world/fb1029_ground_real.test.js` (DELETED) (ARENA2: Kalunnunu's 3 x 3, its harbour, the
 bake's sea, Tunmont, Naresa, Chesterbrugh and Sentinel). Mutants `tools/mutants/fb1029_ground.json` (ACROSS-EDGE's 38:
 37 dead, MEET-reach-3x3 recorded equivalent).
 

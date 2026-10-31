@@ -425,27 +425,6 @@ test('WD3 the pipeline: a record its stand-in archive has no picture for (1230_1
 });
 
 // ---- with the player's own data -------------------------------------------------------------------------------------------
-/** Every block file of both packs, rebuilt; `each(record, where)` for every model and flat they place. */
-function packPlacements(blocks, maps, each) {
-  for (const v of ['beautiful-villages', 'beautiful-cities']) {
-    const p = openWorldDataPack(JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString('utf8')), { blocks });
-    for (const name of p.names()) {
-      if (!name.endsWith('.RMB.json')) continue;
-      const rmb = p.rebuild(name, maps).RmbBlock;
-      for (const s of rmb.SubRecords) {
-        for (const side of ['Exterior', 'Interior']) {
-          const h = s[side];
-          h.Block3dObjectRecords.forEach((m, i) => each({ kind: 'model', id: m.ModelIdNum, side, index: i }));
-          h.BlockFlatObjectRecords.forEach((f, i) => each({ kind: 'flat', archive: f.TextureArchive, record: f.TextureRecord, side, index: i }));
-          h.BlockPeopleRecords.forEach((f) => each({ kind: 'person', archive: f.TextureArchive, record: f.TextureRecord, side }));
-        }
-      }
-      for (const m of rmb.Misc3dObjectRecords) each({ kind: 'model', id: m.ModelIdNum, side: 'Misc' });
-      for (const f of rmb.MiscFlatObjectRecords) each({ kind: 'flat', archive: f.TextureArchive, record: f.TextureRecord, side: 'Misc' });
-    }
-    p.release();
-  }
-}
 function loadArena2() {
   const blocks = new BlocksFile(); assert.ok(blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA')))));
   const maps = new MapsFile(); assert.ok(maps.load(new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK')))));
@@ -469,111 +448,12 @@ const NOT_STOOD_IN = Object.freeze({
   flats: ['10025_1', '1200_4', '1200_9', '1210_13', '1210_16', '1210_24', '1230_11', '1230_15', '1230_2', '1230_22', '1230_3', '1230_5', '1230_6', '1230_9'],
 });
 
-test('WD3 with ARENA2: every model and flat the two packs place is Daggerfall\'s own, stood in by the port, or one of the named few nothing stands (as DFU without the peers) - 2,014 models and 623 flats', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
-  resetAll();
-  installPortStandIns();   // the boot's (scenes/shared.js), as the game stands them
-  installTownStandIns(() => true);
-  const { blocks, maps, arch, texture } = loadArena2();
-  const models = new Map(), flats = new Map();
-  packPlacements(blocks, maps, (p) => {
-    if (p.kind === 'model') models.set(p.id, (models.get(p.id) ?? 0) + 1);
-    else { const k = `${p.archive}_${p.record}`; flats.set(k, (flats.get(k) ?? 0) + 1); }
-  });
-  const count = { classic: 0, standIn: 0 }, missing = [];
-  for (const id of models.keys()) {
-    if (customAliasFor(id) || hasCustomModel(id) || flatFieldFor(id)) count.standIn++;   // CITY-WALL: registered - the wall piece is built only once the pipeline hands it the 445
-    else if (arch.getRecordIndex(id) >= 0) count.classic++;
-    else missing.push(id);
-  }
-  assert.deepEqual([models.size, count.classic, count.standIn], [2014, 1777, 225]);
-  assert.deepEqual(missing.sort((a, b) => a - b), NOT_STOOD_IN.models);
-  const fcount = { classic: 0, standIn: 0 }, fmissing = [];
-  for (const k of flats.keys()) {
-    const [a, r] = k.split('_').map(Number);
-    if (hasTextureReplacement(a, r)) fcount.standIn++;
-    else if (a <= LAST_CLASSIC_TEXTURE_ARCHIVE && texture(a) && r < texture(a).recordCount) fcount.classic++;
-    else fmissing.push(k);
-  }
-  assert.deepEqual([flats.size, fcount.classic, fcount.standIn], [623, 503, 106]);
-  assert.deepEqual(fmissing.sort(), [...NOT_STOOD_IN.flats].sort());
-  // ...and every stand-in drawn from a classic record names one the player's data has
-  const sources = [
-    ...TOWN_BEDCLOTHS.map((r) => [90, r]), ...CLASSIC_PAINTINGS.map(([r]) => [48, r]), ...Object.values(TOWN_CLUTTER), ...Object.values(TOWN_GARDEN),
-    ...Object.values(DET_FLAT_STAND_INS).flatMap((rs) => Object.values(rs)), ...Object.values(DET_TOWN_FLATS).flatMap((rs) => Object.values(rs).map(([a, r]) => [a, r])),
-  ];
-  for (const [a, r] of sources) assert.ok(texture(a) && r < texture(a).recordCount, `${a}_${r} is the player's`);
-  for (const id of TOWN_BED_MODELS) assert.ok(arch.getRecordIndex(id) >= 0, `${id} in ARCH3D`);
-  resetAll();
-});
-
-test('WD3 with ARENA2: HOUSING - every built-in piece a town\'s interior lays can be named, so its owner can take it out of the room: every flat\'s archive and record and every model\'s id fit BASE-HIDE\'s name', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
-  const { blocks, maps } = loadArena2();
-  const bad = new Set();
-  let flats = 0, models = 0;
-  packPlacements(blocks, maps, (p) => {
-    if (p.side !== 'Interior') return;
-    if (p.kind === 'flat') { flats++; const k = decorBaseFlatKey(9999, p.archive, p.record); if (!DECOR_BASE_KEY_RE.test(k)) bad.add(k); }
-    if (p.kind === 'model') { models++; const k = decorBaseModelKey(9999, p.id); if (!DECOR_BASE_KEY_RE.test(k)) bad.add(k); }
-  });
-  assert.ok(flats > 50000 && models > 100000, `${flats} flats, ${models} models`);
-  assert.deepEqual([...bad], [], 'a piece no name can name would be refused whole online and come back at the next load offline');
-});
-
 // FIELD BUGS 2026-10-15f TEMPLE-STEPS (Discord: "The entrance to The School of Julianos in Makehda is blocked"): this
 // sweep read each door's point and one metre out, and held the stand-ins as boxes to them - so the foundation drawn
 // 16 m square, sunk until its top cleared that point (AUDIT WD3 T1), passed while it buried TEMPASF1's and TEMPASH4's
 // temple stairs and landings, the approach the author built to the door. Now tools/townSolidsSweep.mjs's three laws,
 // over each pack's own blocks as the door serves them (curated - HILL-HOUSE's house stands where the door stands it),
 // the pipeline's meshes and the host's hills and pads.
-test('WD3 with ARENA2: THE SOLIDS THE PORT STANDS IN A TOWN (FIELD BUGS 2026-10-15f TEMPLE-STEPS) - no structure it stands in for the RMB Resource Pack holds another model the author placed past a touch, but what the pack\'s own meshes hold; no HILL-SEAT pad stands over anything the author left in the open; and every exterior door\'s step and the four metres before it are clear of every solid the port generates, but the author\'s own named', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
-  resetAll();
-  const WDR = await import('../../src/formats/worldData/worldDataReplacement.js');
-  const { openTownData } = await import('../../tools/townQuestMarkers.mjs');
-  const { sweepTownPacks, TOUCH_M, RMBRP_STRUCTURES } = await import('../../tools/townSolidsSweep.mjs');
-  assert.equal(TOUCH_M, 0.06, 'a touch: the two classic units the author\'s own models overlap by, and a centimetre');
-  assert.deepEqual([...RMBRP_STRUCTURES].sort(), [53140, 53141, 53142, 53143, 53144, 53160, 53170, 53182, 53187, 53194, 53210]);
-  const quiet = console.log; console.log = () => {};
-  let r;
-  try {
-    r = sweepTownPacks(await openTownData(ARENA2));
-  } finally {
-    console.log = quiet;
-    WDR._resetWorldDataReplacement();
-  }
-  assert.ok(r.blocks > 800 && r.doors > 10000, `${r.blocks} blocks, ${r.doors} doors`);
-  // HELD: what each structure holds is what the pack's own meshes hold (measured with them, the pack's boxes being the
-  // stand-ins' own): the docks' stairs tucked under their decks, TEMPASF1's landing half under its foundation and the
-  // timbers the author ran through another, TEMPASH4's rocks laid at its foundations' feet
-  assert.deepEqual(r.held, [
-    'beautiful-villages GENRAS00.RMB: 53141#103 holds 53143#102 (9 vertices, 0.2 m in)',
-    'beautiful-villages GENRAS04.RMB: 53140#93 holds 53143#92 (9 vertices, 0.2 m in)',
-    'beautiful-villages GENRAS04.RMB: 53140#93 holds 53143#94 (9 vertices, 0.2 m in)',
-    'beautiful-villages TEMPASF1.RMB: 53170#70 holds 53160#73 (9 vertices, 1.49 m in)',
-    'beautiful-villages TEMPASF1.RMB: 53170#91 holds 45076#64 (9 vertices, 0.9 m in)',
-    'beautiful-villages TEMPASF1.RMB: 53170#91 holds 45076#65 (9 vertices, 0.9 m in)',
-    'beautiful-villages TEMPASH4.RMB: 53170#21 holds 53039#15 (6 vertices, 0.54 m in)',
-    'beautiful-villages TEMPASH4.RMB: 53170#23 holds 53039#15 (16 vertices, 1.12 m in)',
-    'beautiful-villages TEMPASH4.RMB: 53170#24 holds 53036#27 (39 vertices, 1.43 m in)',
-    'beautiful-villages TEMPASH4.RMB: 53170#25 holds 53030#28 (11 vertices, 0.44 m in)',
-  ]);
-  // PADS: none - a pad is the port's own (Merdale's TEMPASD1 flight lay under them by up to 1.25 m)
-  assert.deepEqual(r.pads, []);
-  // APPROACH: the author's own, each measured with the pack's own hills and rocks where the pack has them (Daggerfall
-  // Unity with the pack stands the same there): TVRNAS00's house stands its back door under the pack's hill (1.14 m of
-  // it; its front door is clear), WEAPAS01's a hill 2.75 m before a door (0.3 m of it), TVRNAS01's and DARKAA02's rocks
-  // two to three metres before a door (0.7-0.8 m of them) - and DARKAA02's 53031, the boulder's round rim a hand's breadth
-  // into the approach a metre out where the pack's own rock is irregular and clear of it; TEMPAAC0's chimney flue
-  // (45076, Daggerfall Expanded Textures, a piece no one here has seen) 3.75 m before a side door
-  assert.deepEqual(r.approach, [
-    'beautiful-villages TVRNAS00.RMB: door 0 of 125#0 - a hill 0.82 m into it, 0 m out',
-    'beautiful-villages TVRNAS01.RMB: door 1 of 339#12 - 53023#48 0.76 m into it, 3 m out',
-    'beautiful-villages WEAPAS01.RMB: door 0 of 117#21 - a hill 0.6 m into it, 2.5 m out',
-    'beautiful-cities DARKAA02.RMB: door 0 of 326#33 - 53031#101 0.13 m into it, 1 m out',
-    'beautiful-cities DARKAA02.RMB: door 0 of 326#33 - 53029#102 0.69 m into it, 2 m out',
-    'beautiful-cities TEMPAAC0.RMB: door 1 of 320#0 - 45076#58 0.4 m into it, 3.75 m out',
-  ]);
-  resetAll();
-});
 
 test('WD3 with ARENA2: the alias beds are built by the pipeline from the player\'s own ARCH3D - Daggerfall\'s bed, every vertex its own, its bedclothes the colour\'s recoloured pictures', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
   resetAll();
@@ -604,44 +484,6 @@ test('WD3 the towns\' scenery is never a person (AUDIT WD3 G1) - a street flat c
   assert.match(W, /if \(!pn\.width\) return;\n(?: {6}\/\/.*\n)+ {6}if \(pn\.textureArchive != null && !isNpcFlat\(pn\.textureArchive\)\) return;\n {6}targets\.push\(\{ key: `person:\$\{i\}`/);
   for (const a of [334, 346, 357, 175, 184]) assert.equal(isNpcFlat(a), true, String(a));
   for (const a of [210, 10021, 10024, 10010, 201, 1200]) assert.equal(isNpcFlat(a), false, String(a));
-});
-
-test('WD3 with ARENA2: the port\'s curation (AUDIT WD3 G2) - every one of the 274 roadside taverns laid out on Beautiful Villages\' TVRNAS00/06 stands Daggerfall\'s own block, a tavern in it; the 301 village cells laying them out stand the author\'s', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
-  const W = await import('../../src/formats/worldData/worldDataReplacement.js');
-  const LP = await import('../../src/systems/layoutPins.js');
-  const { setValue } = await import('../../src/systems/settings/settings.js');
-  const { blocks, maps: _m } = loadArena2();
-  W._resetWorldDataReplacement(); LP._resetLayoutPins();
-  setValue('Enhancements', 'AssetInjection', 'True');
-  W.installWorldDataReplacement(); W.bindWorldDataBlocks(blocks);
-  for (const [v, pr] of [['beautiful-villages', 10], ['beautiful-cities', 20]]) {
-    W.registerWorldDataPack(openWorldDataPack(JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString()), { blocks }), () => true, { priority: pr });
-  }
-  W.quietLocationOverrides(true);
-  const maps = new MapsFile(); maps.load(new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))));
-  const locOf = (k) => maps.getLocation(k % 100, Math.floor(k / 100));
-  LP.configureLayoutPins({ vendorOn: () => true, gridOf: (k) => locOf(k)?.exterior?.exteriorData?.blockNames ?? null, locationTypeOf: (k) => locOf(k)?.mapTableData?.locationType ?? null });
-  const log = console.log; console.log = () => {};
-  let taverns = 0, withTavern = 0, villages = 0, authors = 0;
-  try {
-    for (let r = 0; r < maps.regionCount; r++) {
-      const reg = maps.getRegion(r); if (!reg) continue;
-      for (let l = 0; l < reg.locationCount; l++) {
-        const loc = maps.getLocation(r, l);
-        const names = loc.exterior?.exteriorData?.blockNames ?? [];
-        const w = loc.exterior?.exteriorData?.width ?? 1;
-        names.forEach((n, i) => {
-          if (!/^TVRNAS0[06]\.RMB$/.test(n)) return;
-          const name = maps.getRmbBlockName(loc, i % w, Math.floor(i / w));
-          const served = W.getDFBlockReplacementData(blocks.getBlockIndex(name), name);
-          const types = (served ?? blocks.getBlock(blocks.getBlockIndex(name))).rmbBlock.fldHeader.buildingDataList.map((b) => b.buildingType);
-          if (loc.mapTableData.locationType === 6) { taverns++; if (!served && types.includes(15)) withTavern++; } else { villages++; if (served) authors++; }
-        });
-      }
-    }
-  } finally { console.log = log; }
-  assert.deepEqual([taverns, withTavern, villages, authors], [274, 274, 301, 301]);
-  W._resetWorldDataReplacement(); LP._resetLayoutPins();
 });
 
 test('WD3 a stand-in\'s clear placeholder is never its key\'s for good (AUDIT WD3 T3) - a picture asked under the key later (a fetch that failed, then landed) takes its place; a real picture is kept as ever, and a placeholder never displaces one', async () => {

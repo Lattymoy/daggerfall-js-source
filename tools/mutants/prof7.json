@@ -225,8 +225,8 @@
   {
     "name": "PROF7-broke-as-a-tool",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "?.name ?? name ?? 'tool'} broke.`;",
-    "new": "?.name ?? 'tool'} broke.`;",
+    "old": "?.name ?? name ?? 'tool'} is worn out.`;",
+    "new": "?.name ?? 'tool'} is worn out.`;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
