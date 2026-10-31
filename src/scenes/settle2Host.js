@@ -1,15 +1,17 @@
 // @ts-check
 // WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): THE WORLD 2.0 TOWNS IN THE STREAMED WORLD - each
-// installed region's towns (world/settle2/settle2Towns.js) a location on its pixel, stood in the index when the build asks
-// (spawnStandHost.js _locationToBuild asks it first past the Bay), and a row in the world's places. A town stands only where
-// the registry gives it its pixel: a place listed before it there (a capital, an Arena place) keeps the pixel, and the town
-// says so once and stands nowhere. Constructed by tamrielPlacesHost.js, after the places past the Bay are listed.
+// installed region's town a location on its pixel, stood when the build asks (spawnStandHost.js asks it first past the Bay),
+// and a row in the world's places. It stands only where the registry gives it its pixel (a capital or an Arena place listed
+// before it keeps its own; the town says so once), and only with the Landforms row on (scenes/shared.js landformsOn, read
+// once as world.js reads it): off, its region's ground is not streamed and a town would float, so none stands, none is
+// listed, and the world's own places take its pixel. Constructed by tamrielPlacesHost.js after the places past the Bay.
 import { getWorldClimateSettings, REGION_NAMES } from '../formats/mapsFile.js';
 import { settle2TownAt } from '../world/settle2/settle2Towns.js';
 import { synthesizeSettle2Location, settle2PlaceRows } from '../world/settle2/settle2Location.js';
 import { installSettle2 } from '../world/settle2/settle2Blocks.js';
 import { gen2Stamp } from '../world/gen2/gen2Ground.js';
 import { townClimateAt } from '../world/urban/townLook.js';
+import { landformsOn } from './shared.js';
 
 /** The towns' source in the world's places. */
 export const SETTLE2_SOURCE = 'wg2-settle';
@@ -19,10 +21,11 @@ let _live = null;
 export const settle2LocationAt = (px, py) => _live?.locationAt(px, py) ?? null;
 
 /**
- * @param {{ locationIndex: Map<string, any>, worldPlaces: any, maps: any, base: any, host: { _locIndexGen: number } }} deps
- * `base` the template a town's location takes its fields from (null: no town stands).
+ * @param {{ locationIndex: Map<string, any>, worldPlaces: any, maps: any, base: any, host: { _locIndexGen: number }, landform?: boolean }} deps
+ * `base` the template a town's location takes its fields from (null: no town stands); `landform` the Landforms row.
  */
-export function createSettle2Places({ locationIndex, worldPlaces, maps, base, host }) {
+export function createSettle2Places({ locationIndex, worldPlaces, maps, base, host, landform = landformsOn() }) {
+  if (!landform) { _live = null; return { locationAt: () => null, peekAt: () => null }; }
   installSettle2();
   worldPlaces?.registerLive(SETTLE2_SOURCE, { stamp: () => [gen2Stamp()], rows: settle2PlaceRows });
   const told = new Set();

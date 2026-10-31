@@ -3,21 +3,23 @@
 // footing made from its prefab's numbers (prefabs.json's 'massing'), as a model family (world/customModels.js). The id is
 // the shape, never the building: one GPU mesh serves every building of that shape. The frame is its subrecord's: the door
 // at the origin facing -z, x along the front, z in from it, y up from the floor. Pictures are Daggerfall's exterior sets
-// under their mountain archives, swapped to the location's climate as a block's models are.
+// under their mountain archives, swapped to the location's climate as a block's models are. A stilt house's legs, deck
+// and stair are its platform's (settle2Features.js), so its shell starts at its floor.
 import { MeshBuilder } from '../detStandIns.js';
-import { registerCustomModelFamily } from '../customModels.js';
 
 /** The first shell id: past the Imperial City's doors (world/imperialFabricBuildings.js 7,200,000). */
 export const SETTLE2_SHELL_MODEL = 8_000_000;
-const CODE_BITS = 28;
+/** A kind's codes (a building's shell is kind 0; settle2Features.js the rest), and the kinds the lane holds. */
+export const SETTLE2_CODE_BITS = 28;
+export const SETTLE2_KINDS = 7;
+const CODE_BITS = SETTLE2_CODE_BITS;
 /** A storey's height, metres; the step a width, a depth or a footing is kept to. */
 export const SHELL_STOREY_M = 3.2;
 export const SHELL_STEP_M = 0.5;
 /** The wall sets by index: a city's stone, a village's half-timber, a tavern's, a temple's (TEXTURE.1xx). */
 export const SHELL_WALLS = Object.freeze([112, 164, 158, 161]);
-/** The roofs' set (TEXTURE.169: thatch, moss, tile, shingle) and the timber of a stilt house's legs and stair. */
+/** The roofs' set (TEXTURE.169: thatch, moss, tile, shingle). */
 export const SHELL_ROOF = 169;
-const TIMBER = Object.freeze([171, 3]);
 const BAY_M = 1.6;
 
 /** @typedef {{ w: number, d: number, storeys: number, roof: number, wall: number, roofRec: number, foot: number, stilts: boolean }} ShellShape */
@@ -29,7 +31,7 @@ export function shellModelId(s) {
     | ((s.wall & 3) << 18) | ((s.roofRec & 3) << 20) | (Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22) | ((s.stilts ? 1 : 0) << 27);
   return SETTLE2_SHELL_MODEL + code;
 }
-/** Is a model id a shell's. @param {number} id */
+/** Is a model id a building's shell (kind 0). @param {number} id */
 export const isShellId = (id) => id >= SETTLE2_SHELL_MODEL && id < SETTLE2_SHELL_MODEL + 2 ** CODE_BITS;
 /** The shape a shell id holds, or null. @param {number} id @returns {ShellShape|null} */
 export function shellShapeOf(id) {
@@ -55,15 +57,10 @@ function wall(mb, set, a, b, n, base, top, door) {
     }
   }
 }
-/** A box from (x0, y0, z0) to (x1, y1, z1), every face out. */
-function block(mb, tex, x0, y0, z0, x1, y1, z1) {
-  mb.box(tex, [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], [x1 - x0, y1 - y0, z1 - z0], 1 / BAY_M);
-}
-
 /**
- * A SHELL'S MODEL (dfMeshToModel's shape, metres): its four walls over its storeys and down its footing, its roof - flat
- * behind a parapet, or a gable with its ridge along the front - and on stilts its legs, its deck and a stair from the
- * ground to its door. No door of its own: the door model stands at the origin (world/imperialFabricBuildings.js).
+ * A SHELL'S MODEL (dfMeshToModel's shape, metres): its four walls over its storeys and down its footing (none on stilts),
+ * its roof - flat behind a parapet, or a gable with its ridge along the front. No door of its own: the door model stands at
+ * the origin (world/imperialFabricBuildings.js).
  * @param {number} id
  */
 export function shellModel(id) {
@@ -92,29 +89,6 @@ export function shellModel(id) {
     mb.quad([set, 1], [hw - i, y0, 0], [hw - i, y0, d], [hw - i, y1, d], [hw - i, y1, 0], [-1, 0, 0], [[0, -0.16], [1, -0.16], [1, 0], [0, 0]]);
     mb.quad([set, 1], [-hw + i, y0, d], [-hw + i, y0, 0], [-hw + i, y1, 0], [-hw + i, y1, d], [1, 0, 0], [[0, -0.16], [1, -0.16], [1, 0], [0, 0]]);
   }
-  if (s.stilts && s.foot > 0) stilts(mb, s, hw, d);
   return mb.build();
 }
 const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
-/** A stilt house's underside: a deck a hand under its floor and out past its door, a leg every bay or so, and a stair of
- *  rises under the 0.5 m a body steps (player/collider.js STEP_OFFSET) from the ground to the deck before the door. */
-function stilts(mb, s, hw, d) {
-  const deck = 0.25, out = 1.2, foot = s.foot;
-  block(mb, TIMBER, -hw - 0.2, -deck, -out, hw + 0.2, 0, d + 0.2);
-  const nx = Math.max(2, Math.round(s.w / 3) + 1), nz = Math.max(2, Math.round(d / 3) + 1);
-  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
-    if (i > 0 && i < nx - 1 && j > 0 && j < nz - 1) continue;
-    const x = -hw + (s.w * i) / (nx - 1), z = (d * j) / (nz - 1);
-    block(mb, TIMBER, x - 0.15, -foot - 0.3, z - 0.15, x + 0.15, -deck, z + 0.15);
-  }
-  const n = Math.max(1, Math.ceil(foot / 0.3)), rise = foot / n, run = 0.32;
-  for (let k = 0; k < n; k++) block(mb, TIMBER, -0.7, -foot - 0.3, -out - (n - k) * run, 0.7, -foot + (k + 1) * rise, -out - (n - k - 1) * run);
-}
-
-let _installed = false;
-/** The shells' family, once: solid, its pictures swapped for the climate as a block's are. */
-export function installSettle2Shells() {
-  if (_installed) return;
-  _installed = true;
-  registerCustomModelFamily({ owns: isShellId, build: shellModel, keep: 256, climateFree: false });
-}

@@ -7,7 +7,8 @@
 // footprint and storeys, a donor's people stood in it (world/interior/fabricInterior.js). Roads and the plaza paint the
 // ground; the town map's bytes are its buildings, and outside its footprint the walkers' grid is shut.
 import { settle2TownOf, settle2BlockName, settle2BlockOf, settle2BlockIndex, settle2BlockAt, settle2Base, sceneOf } from './settle2Towns.js';
-import { shellModelId, installSettle2Shells } from './settle2Shell.js';
+import { shellModelId } from './settle2Shell.js';
+import { settle2Features, installSettle2Models } from './settle2Features.js';
 import { FABRIC_DONORS, fabricDonorOf, fabricDoorModelId, installFabricDoors, automapByteOf } from '../imperialFabricBuildings.js';
 import { fabricInteriorGrid, fabricInteriorPlan, fabricInteriorRecord } from '../interior/fabricInterior.js';
 import { portBlockJson, startMarkerAt, CAPITAL_NO_GROUND, CAPITAL_CLOSED_BYTE } from '../tamrielCapitals.js';
@@ -16,11 +17,13 @@ import { ROTATION_DIVISOR, RMB_DIMENSION } from '../../formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../meshReader.js';
 import { hash32, BLOCK_M } from '../blockHash.js';
 import { TERRAIN_SIZE } from '../terrain/terrainSampler.js';
+import { PROPS_OFFSET_Y } from '../rmbLayout.js';
+import { PAD_MARGIN_M as PAD_MARGIN } from '../gen2/padLaw.js';
 import { GUILD_FACTION_IDS } from '../../systems/guild/guildFactions.js';
 
 const SALT = 0x5e72, B = BLOCK_M, PX = TERRAIN_SIZE, TILE = B / 16, AUTO = B / 64;
-/** Ground records: Daggerfall's stone and dirt (the climate's own set). */
-const STONE = 3, DIRT = 1;
+/** Ground records: Daggerfall's stone, dirt and its farms' furrowed crop ground (the climate's own set). */
+const STONE = 3, DIRT = 1, CROPS = 54;
 /** Each style's look: [wall set (settle2Shell.js SHELL_WALLS), roof (0 flat, 1 gable), roof picture]. */
 const STYLE_LOOK = Object.freeze({
   redguard: [0, 0, 2], khajiit: [0, 0, 2], dunmer: [0, 0, 1], nord: [0, 1, 3], breton: [1, 1, 3], imperial: [0, 1, 2],
@@ -69,7 +72,7 @@ export function settle2Record(at, b) {
   const { town, px, py } = at, [bx, by, rec] = b.slot, [w, d] = b.footprint, area = w * d;
   const key = hash32(SALT, town.ordinal, bx, by, rec), pool = settle2PoolOf(b.role, area), donor = fabricDonorOf(pool, key, area);
   const look = STYLE_LOOK[town.style] ?? STYLE_LOOK.imperial, wall = b.role === 'tavern' ? 2 : b.role === 'temple' ? 3 : look[0];
-  const foot = footOf(b, (x, y) => at.region.heightAt(x, y)), stilts = b.ground?.kind === 'stilts';
+  const stilts = b.ground?.kind === 'stilts', foot = stilts ? 0 : footOf(b, (x, y) => at.region.heightAt(x, y));   // a stilt house's legs its platform's
   const shell = shellModelId({ w, d, storeys: Math.max(1, b.storeys | 0), roof: look[1], wall, roofRec: look[2], foot, stilts });
   const door = b.doors[0] ?? { x: b.at.x + (b.at.dir[0] * d) / 2 / PX, y: b.at.y + (b.at.dir[1] * d) / 2 / PX, z: b.at.z, dir: b.at.dir };
   const factionId = b.role === 'temple' ? FABRIC_DONORS[donor].faction : b.role === 'guild' ? GUILD_FACTION_IDS.FightersGuild : 0;
@@ -104,9 +107,26 @@ function townPlan(at) {
   const base = settle2Base(town), ground = (x, y) => sceneOf(at.region.heightAt(x, y)) - base;
   const ways = [[town.plaza.x + town.plaza.r / 3 / PX, town.plaza.y], ...town.entrances.map((e) => [e.at[0] - (e.dir[0] * 6) / PX, e.at[1] - (e.dir[1] * 6) / PX])];
   const markers = ways.map(([x, y]) => [...L(x, y), ground(x, y)]);
-  plan = { records, rects, segs, markers, outline: town.footprint.map(([x, y]) => L(x, y)), plaza: { c: L(town.plaza.x, town.plaza.y), r: town.plaza.r }, raised };
+  // its features (settle2Features.js) - each a misc model at its anchor - its fields' crop ground, and the walkers kept off
+  // a terrace's edge (but at its stair) and off the well and the stalls
+  const feats = settle2Features(town, (x, y) => at.region.heightAt(x, y), (x, y) => at.region.waterAt(x, y));
+  const features = feats.placed.map((f) => ({ ...f, c: L(f.at[0], f.at[1]), h: sceneOf(f.z) - base }));
+  const fields = feats.fields.map(([x0, y0, x1, y1]) => [...L(x0, y1), ...L(x1, y0)]);
+  for (const f of features) rects.push(...closedAt(f, town.buildings.find((b) => b.at.x === f.at[0] && b.at.y === f.at[1])));
+  plan = { records, rects, segs, markers, features, fields, outline: town.footprint.map(([x, y]) => L(x, y)), plaza: { c: L(town.plaza.x, town.plaza.y), r: town.plaza.r }, raised };
   _plans.set(at.town, plan);
   return plan;
+}
+/** The walkers' grid shut under a feature (the town map's closed byte): a terrace's ring but its stair's gap, a well, a stall. */
+function closedAt(f, b) {
+  const n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]], C = CAPITAL_CLOSED_BYTE, band = 0.8, r = (c, hw, hd) => ({ c, n, t, hw, hd, byte: C });
+  const off = (c, a, k) => [c[0] + a[0] * k, c[1] + a[1] * k];
+  if (f.kind === 'well') return [r(f.c, 1.3, 1.3)];
+  if (f.kind === 'stall') return [r(off(f.c, n, -0.4), 1.4, 1.2)];
+  if (f.kind !== 'retaining' || !b) return [];
+  const hw = b.footprint[0] / 2 + PAD_MARGIN, hd = b.footprint[1] / 2 + PAD_MARGIN, g = 1.2;
+  return [r(off(f.c, n, -hd), hw + band, band), r(off(f.c, t, hw), band, hd), r(off(f.c, t, -hw), band, hd),
+    r(off(off(f.c, n, hd), t, (hw + g) / 2), (hw - g) / 2, band), r(off(off(f.c, n, hd), t, -(hw + g) / 2), (hw - g) / 2, band)];
 }
 const segD2 = (s, x, z) => {
   const vx = s.b[0] - s.a[0], vz = s.b[1] - s.a[1], l = vx * vx + vz * vz;
@@ -135,6 +155,13 @@ const inRect = (r, x, z) => { const dx = x - r.c[0], dz = z - r.c[1]; return Mat
 
 const EMPTY_DATA = Object.freeze({ Header: Object.freeze({ Num3dObjectRecords: 0, NumFlatObjectRecords: 0, NumSection3Records: 0, NumPeopleRecords: 0, NumDoorRecords: 0 }), Block3dObjectRecords: [], BlockFlatObjectRecords: [], BlockSection3Records: [], BlockPeopleRecords: [], BlockDoorRecords: [] });
 const model = (id, yPos) => ({ ModelId: String(id), ModelIdNum: id, ObjectType: 0, XPos: 0, YPos: yPos, ZPos: 0, XRotation: 0, YRotation: 0, ZRotation: 0 });
+/** A feature as its block's misc model (rmbLayout.js miscModelMatrix: x, (-y + PROPS_OFFSET_Y), z + RMBDimension), turned as a
+ *  subrecord is (settle2SubRecordFrame's law). */
+function miscAt(f, ox, oz) {
+  const yRotation = Math.round(((Math.atan2(-f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR);
+  return { ModelId: String(f.id), ModelIdNum: f.id, ObjectType: 0, XPos: Math.round((f.c[0] - ox) / GLOBAL_SCALE), YPos: -Math.round(f.h / GLOBAL_SCALE) + PROPS_OFFSET_Y,
+    ZPos: Math.round((f.c[1] - oz) / GLOBAL_SCALE) - RMB_DIMENSION, XRotation: 0, YRotation: yRotation, ZRotation: 0 };
+}
 
 /**
  * A TOWN'S BLOCK AT CELL (bx, by) as the world-data door's JSON: its ground (its roads and its plaza, the land's own
@@ -152,12 +179,14 @@ export function settle2BlockJson(at, bx, by) {
     const X = ox + (tx + 0.5) * TILE, Z = oz + (tz + 0.5) * TILE, px = X - plan.plaza.c[0], pz = Z - plan.plaza.c[1];
     if (px * px + pz * pz <= pr2) { tiles[tz * 16 + tx] = plan.raised ? DIRT : STONE; continue; }
     for (const s of segs) if (segD2(s, X, Z) <= s.half * s.half) { tiles[tz * 16 + tx] = s.rec; break; }
+    if (tiles[tz * 16 + tx] === CAPITAL_NO_GROUND && plan.fields.some(([x0, z0, x1, z1]) => X >= x0 && X < x1 && Z >= z0 && Z < z1)) tiles[tz * 16 + tx] = CROPS;
   }
   for (let az = 0; az < 64; az++) rowInside(plan.outline, oz + (az + 0.5) * AUTO, ox, AUTO, 64, inside, az * 64);
   const tile = (x, z) => tiles[Math.floor(z / TILE) * 16 + Math.floor(x / TILE)];
   const closed = (x, z) => !inside[Math.floor(z / AUTO) * 64 + Math.floor(x / AUTO)];
   const flats = plan.markers.filter(([x, z]) => x >= ox && x < ox + B && z >= oz && z < oz + B).map(([x, z, h]) => startMarkerAt(x - ox, z - oz, h));
-  const json = portBlockJson(settle2BlockName(at.town.ordinal, bx, by), { tile, closed, flats });
+  const models = plan.features.filter(({ c }) => c[0] >= ox && c[0] < ox + B && c[1] >= oz && c[1] < oz + B).map((f) => miscAt(f, ox, oz));
+  const json = portBlockJson(settle2BlockName(at.town.ordinal, bx, by), { tile, closed, flats, models });
   const auto = json.RmbBlock.FldHeader.AutoMapData;
   for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) {
     const X = ox + (ax + 0.5) * AUTO, Z = oz + (63 - ay + 0.5) * AUTO, r = rects.find((q) => inRect(q, X, Z));
@@ -245,7 +274,7 @@ let _installed = false;
 export function installSettle2() {
   if (_installed) return;
   _installed = true;
-  installSettle2Shells();
+  installSettle2Models();
   installFabricDoors();
   registerPortBlockFamily({ indexOf: settle2FamilyIndexOf, nameOf: settle2FamilyNameOf, make: settle2Block, keep: 192 });
 }

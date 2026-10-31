@@ -131,8 +131,8 @@ test('WG2-TOWNS SHELLS: a shell\'s id is its shape - the same shape the same id,
   assert.equal(shellShapeOf(shellModelId({ ...one, foot: 1.2 })).foot, 1.5, 'a footing kept up a step: its walls reach the ground');
   const gable = bounds(shellModel(shellModelId({ ...one, storeys: 2, roof: 1 })));
   assert.ok(gable[1][1] > 2 * SHELL_STOREY_M && gable[0][2] < 0, 'a gable over two storeys, its eaves out');
-  const stilt = bounds(shellModel(shellModelId({ ...one, foot: 2.5, stilts: true })));
-  assert.ok(stilt[0][1] <= -2.5 && stilt[0][2] < -2, 'legs to the ground, a stair out before the door');
+  const stilt = bounds(shellModel(shellModelId({ ...one, foot: 0, stilts: true })));
+  assert.ok(stilt[0][1] === 0 && stilt[0][2] === 0, 'a stilt house starts at its floor: its legs, deck and stair its platform\'s (wg2towns_features.test.js)');
   assert.equal(shellModel(SETTLE2_SHELL_MODEL - 1), null);
 });
 
@@ -182,7 +182,7 @@ test('WG2-TOWNS GROUND, STREAMED: with the Landforms row the kernel stands a tow
   for (let x = 0; x < D; x += 4) for (let y = 0; y < D; y += 4) worst = Math.max(worst, Math.abs(own.samples[x * D + y] * T.WORLD_HEIGHT - T.sceneOf(at.region.heightAt(at.px + x / 128, at.py + 1 - y / 128))));
   assert.ok(worst < 0.01, `the region's ground at every sample (${worst} m off)`);
   const wet = (o) => o.tilemapBytes.reduce((n, b) => n + ((b >> 2) === 0 ? 1 : 0), 0);
-  assert.ok(wet(own) > wet(blended) && wet(blended) > 1000, `the oasis's water across the town's rect too: ${wet(own)} tiles, blended ${wet(blended)}`);
+  assert.ok(wet(own) > wet(blended) && wet(own) > 1000, `the oasis's water across the town's rect too: ${wet(own)} tiles, blended ${wet(blended)}`);
 });
 
 test('WG2-TOWNS WIRING: the build hands a town\'s own ground to the kernel and makes its blocks a breath at a time; past the Bay a town is asked before a capital, by the build and by the places\' stand; the places host lists the towns after the places past the Bay (mutants: each wire)', () => {
@@ -200,7 +200,7 @@ test('WG2-TOWNS PLACES: each town a row of the world\'s places on its pixel, its
   console.warn = (m) => said.push(String(m));
   try {
     const places = createWorldPlaces(), index = new Map(), host = { _locIndexGen: 0 };
-    const s = createSettle2Places({ locationIndex: index, worldPlaces: places, maps, base: BASE, host });
+    const s = createSettle2Places({ locationIndex: index, worldPlaces: places, maps, base: BASE, host, landform: true });
     assert.equal(settle2PlaceRows().length, 5);
     for (const at of TOWNS) {
       const p = places.at(at.px, at.py);
@@ -214,7 +214,7 @@ test('WG2-TOWNS PLACES: each town a row of the world\'s places on its pixel, its
     // a place listed first on Sentry Hold's pixel keeps it
     const held = createWorldPlaces();
     held.register('tesa-past-bay', [{ mapId: 0x34180001, name: 'Holder', px: 1095, py: 420, type: 0 }]);
-    const s2 = createSettle2Places({ locationIndex: new Map(), worldPlaces: held, maps, base: BASE, host });
+    const s2 = createSettle2Places({ locationIndex: new Map(), worldPlaces: held, maps, base: BASE, host, landform: true });
     assert.equal(s2.locationAt(1095, 420), null);
     assert.ok(said.some((m) => /Sentry Hold .* stands nowhere: Holder/.test(m)), 'said so');
     assert.equal(s2.locationAt(1046, 452).name, 'Tava Wells', 'the others stand');

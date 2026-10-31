@@ -259,5 +259,158 @@
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
+  },
+  {
+    "name": "WG2TOWNS-gate-cut",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "if (off < 8 && t > -6 && t < len + 6) cut.push(",
+    "new": "if (off < 0 && t > -6 && t < len + 6) cut.push(",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-lintel",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "slab(mb, STONE, -o, f.clear, -d, o, f.tall, d, DARK);",
+    "new": "slab(mb, STONE, -o, 0, -d, o, f.tall, d, DARK);",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-family-solid",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false });",
+    "new": "registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false, solid: false });",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-dock-level",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "(water(p[0], p[1])?.surface ?? -Infinity) + 0.6)), bed",
+    "new": "(water(p[0], p[1])?.surface ?? -Infinity) - 0.6)), bed",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-piles",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "slab(mb, PLANK, x - 0.15, -deep - 0.5, z - 0.15,",
+    "new": "slab(mb, PLANK, x - 0.15, -1, z - 0.15,",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-platform-stair",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "    stair(mb, PLANK, f.piles, -hd - out, 1.4);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-tread",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "tread: 0.32, rise: 0.3,",
+    "new": "tread: 0.32, rise: 0.6,",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-platform-turn",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "at: f.at, z: f.level, dir: b.at.dir });",
+    "new": "at: f.at, z: f.level, dir: [0, 1] });",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-retaining-level",
+    "file": "src/world/settle2/settle2Features.js",
+    "old": "f.height), at: f.at, z: b.ground.level,",
+    "new": "f.height), at: f.at, z: b.ground.level + 1,",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-misc-turn",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "Math.round(((Math.atan2(-f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR)",
+    "new": "Math.round(((Math.atan2(f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR)",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-misc-height",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "YPos: -Math.round(f.h / GLOBAL_SCALE) + PROPS_OFFSET_Y,",
+    "new": "YPos: -Math.round(f.h / GLOBAL_SCALE),",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-features-unplaced",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "{ tile, closed, flats, models }",
+    "new": "{ tile, closed, flats }",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-crop-record",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "const STONE = 3, DIRT = 1, CROPS = 54;",
+    "new": "const STONE = 3, DIRT = 1, CROPS = 2;",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-ring-gap",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "hd = b.footprint[1] / 2 + PAD_MARGIN, g = 1.2;",
+    "new": "hd = b.footprint[1] / 2 + PAD_MARGIN, g = 0;",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-well-shut",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "if (f.kind === 'well') return [r(f.c, 1.3, 1.3)];",
+    "new": "if (f.kind === 'well') return [];",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-landforms-gate",
+    "file": "src/scenes/settle2Host.js",
+    "old": "  if (!landform) { _live = null; return { locationAt: () => null, peekAt: () => null }; }\n",
+    "new": "\n",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-landforms-read",
+    "file": "src/scenes/settle2Host.js",
+    "old": "host, landform = landformsOn() })",
+    "new": "host, landform = true })",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
   }
 ]
