@@ -112,8 +112,8 @@
   {
     "name": "PVP-FLAG-my-word-unheld",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (g.id === me()) { on = g.f === 1; paint(); } else",
-    "new": "if (g.id === me()) { paint(); } else",
+    "old": "        on = g.f === 1;\n        paint();",
+    "new": "        paint();",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "PVP-FLAG-the-lock-unstarted",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "fightAt = now(); wasLock = true;",
-    "new": "void now; wasLock = true;",
+    "old": "      fightAt = now();",
+    "new": "      void now;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "PVP-FLAG-the-field-unread",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (e.code !== 'CapsLock' || e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;",
-    "new": "if (e.code !== 'CapsLock' || e.repeat) return;",
+    "old": "      if (\n        e.code !== 'CapsLock' ||\n        e.repeat ||\n        el?.isContentEditable ||\n        /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')\n      )\n        return;",
+    "new": "      if (e.code !== 'CapsLock' || e.repeat) return;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "PVP-SKULL-the-gold-unread",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "(reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white')",
-    "new": "(reds.has(id) ? 'red' : 'white')",
+    "old": "  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);",
+    "new": "  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : 'white') : null);",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "PVP-SKULL-the-mask-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "      if (!k) return q && near",
-    "new": "      return q && near",
+    "old": "        if (!k) return q && near ? { ...q, near } : q;",
+    "new": "        return q && near ? { ...q, near } : q;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -470,8 +470,8 @@
   {
     "name": "PVP-FLAG-SPOT-back-on-the-decorate-button",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`, right: '8px', transform: 'none',",
-    "new": "top: '50%', right: '8px', transform: 'translateY(-50%)',",
+    "old": "      top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`,\n      right: '8px',\n      transform: 'none',",
+    "new": "      top: '50%',\n      right: '8px',\n      transform: 'translateY(-50%)',",
     "tests": [
       "test/net/pvpflag.test.js"
     ]

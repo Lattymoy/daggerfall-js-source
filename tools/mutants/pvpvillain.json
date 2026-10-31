@@ -218,8 +218,8 @@
   {
     "name": "PVP-VILLAIN-page-red-unread",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "(reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white')",
-    "new": "(peers.get(id) > now() ? 'gold' : 'white')",
+    "old": "  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);",
+    "new": "  const skullOf = (id) => (peers.has(id) ? (peers.get(id) > now() ? 'gold' : 'white') : null);",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PVP-VILLAIN-page-meter-unheard",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "    if (g?.k === 'vil') { villainy = g.n; paint(); return true; }   // PVP-VILLAIN: my meter, for the sheet\n",
-    "new": "",
+    "old": "    if (g?.k === 'vil') {\n      villainy = g.n;\n      paint();\n      return true;\n    } // PVP-VILLAIN: my meter, for the sheet\n    if (g?.k === 'bar') {",
+    "new": "    if (g?.k === 'bar') {",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PVP-VILLAIN-page-my-red",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "(on ? (isVillain(villainy) ? 'red' :",
-    "new": "(on ? (false ? 'red' :",
+    "old": "  const mySkull = () =>\n    on ? (isVillain(villainy) ? 'red' : now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null;",
+    "new": "  const mySkull = () => (on ? (false ? 'red' : now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null);",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]

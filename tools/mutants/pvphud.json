@@ -83,8 +83,8 @@
   {
     "name": "PVP-HUD-the-hud-unpainted",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "    hud?.draw({ kind, left: pvpAggroLeft(fightAt, now()), shown: here(), hits: hitLines });\n",
-    "new": "",
+    "old": "    hud?.draw({ kind, left: pvpAggroLeft(fightAt, now()), shown: here(), hits: hitLines });\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-HUD-the-end-unsaid",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (wasLock && !lock) { hitLines = []; sayLock(pvpLockOverText()); }",
-    "new": "if (wasLock && !lock) { hitLines = []; }",
+    "old": "      sayLock(pvpLockOverText());\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PVP-HUD-the-hits-kept-past-the-lock",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (wasLock && !lock) { hitLines = []; sayLock(pvpLockOverText()); }",
-    "new": "if (wasLock && !lock) { sayLock(pvpLockOverText()); }",
+    "old": "      hitLines = [];\n      sayLock(pvpLockOverText());",
+    "new": "      sayLock(pvpLockOverText());",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-HUD-the-end-said-twice",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "    wasLock = lock;\n",
-    "new": "",
+    "old": "    wasLock = lock;\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-HUD-the-hits-unkept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "      hitLines = pvpHitsAdd(hitLines, pvpHitLine(g, me(), nameOf));",
-    "new": "      hitLines = hitLines;",
+    "old": "      hitLines = pvpHitsAdd(hitLines, pvpHitLine(g, me(), nameOf)); // PVP-HUD: the last hits panel",
+    "new": "      hitLines = hitLines; // PVP-HUD: the last hits panel",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-HUD-a-stranger-named",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "noteName(p.id, shown?.name);",
-    "new": "noteName(p.id, p.name);",
+    "old": "        noteName(p.id, shown?.name); // PVP-HUD: the last hits name whom the layer names",
+    "new": "        noteName(p.id, p.name); // PVP-HUD: the last hits name whom the layer names",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-HUD-the-kill-unsaid",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "{ sayLock(pvpSlewText(nameOf(g.id))); return false; }",
-    "new": "{ return false; }",
+    "old": "      sayLock(pvpSlewText(nameOf(g.id)));\n      return false;",
+    "new": "      return false;",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-HUD-the-party-skull-kept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "...(party ? {} : { skull: k }),",
-    "new": "skull: k,",
+    "old": "        return { ...shown, ...(party ? {} : { skull: k }), ...(bar ? { bar } : {}), ...(near ? { near } : {}) }; // PVP-HUD: my party, green with its bar, no skull",
+    "new": "        return { ...shown, skull: k, ...(bar ? { bar } : {}), ...(near ? { near } : {}) }; // PVP-HUD: my party, green with its bar, no skull",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-HUD-the-drop-said-short",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "(on && pvpAggroLeft(fightAt, now()) > 0 ? sayLock : say)(why);",
-    "new": "say(why);",
+    "old": "      (on && pvpAggroLeft(fightAt, now()) > 0 ? sayLock : say)(why);",
+    "new": "      say(why);",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PVP-HUD-the-rest-line-static",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "      if (lockS()) registerPreventRestCondition(restLock, pvpRestLockText(lockS()));   // PVP-HUD: the seconds now\n",
-    "new": "",
+    "old": "      if (lockS()) registerPreventRestCondition(restLock, pvpRestLockText(lockS())); // PVP-HUD: the seconds now\n      if (!was) registerPreventRestCondition(rest, pvpRestText()); // the line in the language now",
+    "new": "      if (!was) registerPreventRestCondition(rest, pvpRestText()); // the line in the language now",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PVP-HUD-the-rest-lock-unasked",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "const restLock = () => pvpLimited() && lockS() > 0;",
-    "new": "const restLock = () => false;",
+    "old": "  const restLock = () => pvpLimited() && lockS() > 0;",
+    "new": "  const restLock = () => false;",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -274,6 +274,8 @@
     "file": "src/ui/pvpHud.js",
     "old": "top: `calc(50% - ${ringTop}px)`, right:",
     "new": "top: '50%', right:",
-    "tests": ["test/ui/pvphud.test.js"]
+    "tests": [
+      "test/ui/pvphud.test.js"
+    ]
   }
 ]

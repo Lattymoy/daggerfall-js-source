@@ -2,8 +2,8 @@
   {
     "name": "POTION-DOOR-stores-unlisted",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "    storeItems,   // POTION-DOOR",
-    "new": "    storeItems: () => [],   // POTION-DOOR",
+    "old": "    storeItems, // POTION-DOOR: the Stores' beside what is carried, at an alchemy station",
+    "new": "    storeItems: () => [], // POTION-DOOR: the Stores' beside what is carried, at an alchemy station",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "POTION-DOOR-away-unsaid",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "if (!d.station) return { classic: true, word: POTION_DOOR_WORDS.away() };",
-    "new": "if (!d.station) return null;",
+    "old": "      if (!d.station) return { classic: true, word: POTION_DOOR_WORDS.away() };",
+    "new": "      if (!d.station) return null;",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "POTION-DOOR-offline-said",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "      if (!d) return null;\n      if (!d.station)",
-    "new": "      if (!d) return { classic: true, word: POTION_DOOR_WORDS.away() };\n      if (!d.station)",
+    "old": "      if (!d) return null;",
+    "new": "      if (!d) return { classic: true, word: POTION_DOOR_WORDS.away() };",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "POTION-DOOR-failed-stores-spent",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "if (result.kind !== 'mixed') return stored ? { ok: false, failed: true } : null;",
-    "new": "if (result.kind !== 'mixed') return null;",
+    "old": "      if (result.kind !== 'mixed') return stored ? { ok: false, failed: true } : null; // the window's own \"potionFailed\"",
+    "new": "      if (result.kind !== 'mixed') return null; // the window's own \"potionFailed\"",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "POTION-DOOR-rank-unread",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "if (rank < potion.rank) return stored",
-    "new": "if (false) return stored",
+    "old": "      if (rank < potion.rank)",
+    "new": "      if (false)",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "POTION-DOOR-fee-unread",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "if (!stored && fee > totalGoldAmount(player)) return",
-    "new": "if (false) return",
+    "old": "      if (!stored && fee > totalGoldAmount(player)) return { classic: true, word: POTION_DOOR_WORDS.fee(fee) };",
+    "new": "      if (false) return { classic: true, word: POTION_DOOR_WORDS.fee(fee) };",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "POTION-DOOR-herb-group-lost",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "return keys.find((k) => PLANT_GROUPS[/** @type {'p1'|'p2'} */ (k.slice(0, 2))] === it.group) ?? keys[0];",
-    "new": "return keys[0];",
+    "old": "  if (keys.length > 1)\n    return keys.find((k) => PLANT_GROUPS[/** @type {'p1'|'p2'} */ (k.slice(0, 2))] === it.group) ?? keys[0];",
+    "new": "  if (keys.length > 1) return keys[0];",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "POTION-DOOR-stocked-pack-alone",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "stocked: () => carried().some(isIngredient) || storeItems().length > 0,",
-    "new": "stocked: () => carried().some(isIngredient),",
+    "old": "    stocked: () => carried().some(isIngredient) || storeItems().length > 0,",
+    "new": "    stocked: () => carried().some(isIngredient),",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "POTION-DOOR-words-away-station-unnamed",
     "file": "src/scenes/potionMakerHost.js",
-    "old": "At an alchemy station (an Alchemist\\'s, a Mages Guild hall or your own home) the potion maker brews it",
-    "new": "At an alchemy station the potion maker brews it",
+    "old": "      \"A potion mixed here earns no {profession} experience. At an alchemy station (an Alchemist's, a Mages Guild hall or your own home) the potion maker brews it from your Stores and what you carry, and it does.\",",
+    "new": "      'A potion mixed here earns no {profession} experience. At an alchemy station the potion maker brews it from your Stores and what you carry, and it does.',",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -203,7 +203,7 @@
     "name": "POTION-DOOR-X11b-the-item-where-the-index-goes",
     "file": "src/scenes/potionMakerHost.js",
     "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
-    "new": "      if (removeOne(list, list.find((it) => it.templateIndex === templateIndex), { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (\n        removeOne(\n          list,\n          list.find((it) => it.templateIndex === templateIndex),\n          { group, allowEnchantedItem: false },\n        )\n      )\n        return true;",
     "tests": [
       "test/systems/x11b.test.js"
     ]
@@ -212,7 +212,7 @@
     "name": "POTION-DOOR-X11b-the-spend-blind-to-the-group",
     "file": "src/scenes/potionMakerHost.js",
     "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
-    "new": "      if (removeOne(list, templateIndex, { group: list.find((it) => it.templateIndex === templateIndex)?.group, allowEnchantedItem: false })) return true;",
+    "new": "      if (\n        removeOne(list, templateIndex, {\n          group: list.find((it) => it.templateIndex === templateIndex)?.group,\n          allowEnchantedItem: false,\n        })\n      )\n        return true;",
     "tests": [
       "test/systems/x11b.test.js"
     ]

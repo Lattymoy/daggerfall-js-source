@@ -184,7 +184,7 @@
   {
     "name": "AUTOHOLD-the-piece-unnamed",
     "file": "src/scenes/realmHoldHost.js",
-    "old": "    const text = piecesLockedNotice(pieces.map((it) => itemLongName(it)), pieces.length + unfound);",
+    "old": "    const text = piecesLockedNotice(\n      pieces.map((it) => itemLongName(it)),\n      pieces.length + unfound,\n    );",
     "new": "    const text = piecesLockedNotice([], pieces.length + unfound);",
     "tests": [
       "test/server/autohold.test.js"
@@ -364,8 +364,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-set-unheard",
     "file": "src/scenes/realmHoldHost.js",
-    "old": "  session.onLockedKeys = (/** @type {string[]} */ keys) => setRealmLocked(keys);\n",
-    "new": "",
+    "old": "  session.onLockedKeys = (/** @type {string[]} */ keys) => setRealmLocked(keys);\n  session.onPiecesLocked = (/** @type {string[]} */ keys) => {",
+    "new": "  session.onPiecesLocked = (/** @type {string[]} */ keys) => {",
     "tests": [
       "test/server/autohold.test.js"
     ]

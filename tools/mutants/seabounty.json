@@ -715,8 +715,8 @@
   {
     "name": "SEA-BOUNTY-page-not-reread",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "    } finally { busy = false; nextAt = -Infinity; await read(); }",
-    "new": "    } finally { busy = false; }",
+    "old": "      nextAt = -Infinity;\n      await read();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "SEA-BOUNTY-page-unreserved",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "      reserve: () => deps.wallet?.(region)?.pay(n),\n",
-    "new": "",
+    "old": "        reserve: () => deps.wallet?.(region)?.pay(n),\n        call: (/** @type {any} */ at) =>",
+    "new": "        call: (/** @type {any} */ at) =>",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "SEA-BOUNTY-page-unbanked",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "if (Number.isSafeInteger(g) && g > 0) deps.wallet?.(region)?.bank(g); },",
-    "new": "},",
+    "old": "          if (Number.isSafeInteger(g) && g > 0) deps.wallet?.(region)?.bank(g);\n        },",
+    "new": "        },",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "SEA-BOUNTY-page-posted-words",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "bounty: gold(d.bounty) })));",
-    "new": "bounty: gold(n) })));",
+    "old": "              bounty: gold(d.bounty),",
+    "new": "              bounty: gold(n),",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -760,8 +760,8 @@
   {
     "name": "SEA-BOUNTY-page-not-busy",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "busy: busy || reading, line: actLine ?? readLine,",
-    "new": "busy: reading, line: actLine ?? readLine,",
+    "old": "      busy: busy || reading,",
+    "new": "      busy: reading,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

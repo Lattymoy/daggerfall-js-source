@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SEA-E1-board-retry-at-once",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "nextAt = now() + boardRetryMs(++fails); }",
-    "new": "nextAt = -Infinity; ++fails; }",
+    "old": "        nextAt = now() + boardRetryMs(++fails);",
+    "new": "        nextAt = -Infinity;\n        ++fails;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-SEA-E1-backoff-flat",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "Math.min(SEA_BOARD_FRESH_MS, SEA_BOARD_READ_RETRY_MS * 2 ** Math.max(0, fails - 1))",
-    "new": "SEA_BOARD_READ_RETRY_MS",
+    "old": "export const boardRetryMs = (/** @type {number} */ fails) =>\n  Math.min(SEA_BOARD_FRESH_MS, SEA_BOARD_READ_RETRY_MS * 2 ** Math.max(0, fails - 1));",
+    "new": "export const boardRetryMs = (/** @type {number} */ fails) => SEA_BOARD_READ_RETRY_MS;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SEA-E1-season-retry-at-once",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "nextAt = now() + Math.min(SEA_SEASON_FRESH_MS, SEA_SEASON_RETRY_MS * 2 ** fails++); }",
-    "new": "nextAt = -Infinity; }",
+    "old": "        nextAt = now() + Math.min(SEA_SEASON_FRESH_MS, SEA_SEASON_RETRY_MS * 2 ** fails++);",
+    "new": "        nextAt = -Infinity;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SEA-E7-the-read-over-the-act",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "line: actLine ?? readLine,",
-    "new": "line: readLine ?? actLine,",
+    "old": "      line: actLine ?? readLine,",
+    "new": "      line: readLine ?? actLine,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SEA-E7-refusal-kept",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "fails = 0; readLine = null; nextAt",
-    "new": "fails = 0; nextAt",
+    "old": "        readLine = null;\n        nextAt = now() + SEA_BOARD_FRESH_MS;",
+    "new": "        nextAt = now() + SEA_BOARD_FRESH_MS;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-SEA-E7-post-past-purse",
     "file": "src/scenes/seaBountyHost.js",
-    "old": "if (!(purseOf() >= n)) {",
-    "new": "if (false) {",
+    "old": "    if (!(purseOf() >= n)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-SEA-E4-checkpoint-unasked",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "checkpoint: () => { stood = deps.checkpoint?.() !== false; },",
-    "new": "checkpoint: () => { deps.checkpoint?.(); stood = true; },",
+    "old": "        stood = deps.checkpoint?.() !== false;",
+    "new": "        deps.checkpoint?.();\n        stood = true;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-SEA-E3-never-again",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "if (res?.ok || res?.unknown || !SEA_WRECK_TRANSIENT.includes(res?.error)) { settled(r, w); return; }",
-    "new": "{ settled(r, w); return; }",
+    "old": "          if (res?.ok || res?.unknown || !SEA_WRECK_TRANSIENT.includes(res?.error)) {",
+    "new": "          {",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-SEA-E2-storage-unkept",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "const keep = () => { try {",
-    "new": "const keep = () => { return; try {",
+    "old": "  const keep = () => {\n    try {",
+    "new": "  const keep = () => {\n    return;\n    try {",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-SEA-E2-expired-owed",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "if (!role || seen.has(c.r) || now() / 1000 >= c.e) return false;",
-    "new": "if (!role || seen.has(c.r)) return false;",
+    "old": "    if (!role || seen.has(c.r) || now() / 1000 >= c.e) return false;",
+    "new": "    if (!role || seen.has(c.r)) return false;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-SEA-B3-carry-leaves-it-shut",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "    if (w.role === 'captain') openSeaHold(w.c.u);\n",
-    "new": "",
+    "old": "    if (w.role === 'captain') openSeaHold(w.c.u);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

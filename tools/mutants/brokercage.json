@@ -149,8 +149,8 @@
   {
     "name": "BROKER-CAGE-the-word-never-says-c",
     "file": "src/scenes/riteHost.js",
-    "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
-    "new": "c = 0, k = s * 4 + f * 2 + c;",
+    "old": "      c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0,",
+    "new": "      c = 0,",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/net/gate/wb12d_rite_world.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "BROKER-CAGE-c-not-said-at-once",
     "file": "src/scenes/riteHost.js",
-    "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
-    "new": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2;",
+    "old": "      k = s * 4 + f * 2 + c;",
+    "new": "      k = s * 4 + f * 2;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ],
@@ -180,8 +180,8 @@
   {
     "name": "BROKER-CAGE-the-faithful-stood-again-after-it",
     "file": "src/scenes/riteHost.js",
-    "old": "    if (clearedHere()) return [];\n",
-    "new": "",
+    "old": "    if (clearedHere()) return [];\n    const mem = riteMemory(C.day),",
+    "new": "    const mem = riteMemory(C.day),",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C1-the-broken-word-not-the-summoners-fall-in-the-word",
     "file": "src/scenes/riteHost.js",
-    "old": "riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0)",
-    "new": "riteRosterFell(C.day, mem.slain, mem.fell)",
+    "old": "      c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0,",
+    "new": "      c = riteRosterFell(C.day, mem.slain, mem.fell) ? 1 : 0,",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C1-the-broken-word-not-the-summoners-fall-in-the-cage",
     "file": "src/scenes/riteHost.js",
-    "old": "riteRosterFell(day, mem.slain, mem.fell || brokenWords.has(k) ? 1 : 0)",
-    "new": "riteRosterFell(day, mem.slain, mem.fell)",
+    "old": "      return !!mem && riteRosterFell(day, mem.slain, mem.fell || brokenWords.has(k) ? 1 : 0);",
+    "new": "      return !!mem && riteRosterFell(day, mem.slain, mem.fell);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C6-own-eyes-where-the-relay-says-it",
     "file": "src/scenes/riteHost.js",
-    "old": "      if (!ownEyes) return false;\n",
-    "new": "",
+    "old": "      if (!ownEyes) return false;\n      const mem = riteSeen(day);",
+    "new": "      const mem = riteSeen(day);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -643,7 +643,7 @@
   {
     "name": "BROKER-CAGE-AUDIT-C13-copies-left-standing",
     "file": "src/scenes/riteHost.js",
-    "old": "      if (foes && C.ownLive && clearedHere()) { foes.drop(C.site); C.ownLive = 0; }",
+    "old": "      if (foes && C.ownLive && clearedHere()) {\n        foes.drop(C.site);\n        C.ownLive = 0;\n      }",
     "new": "",
     "tests": [
       "test/systems/brokercage.test.js"
@@ -761,8 +761,8 @@
   {
     "name": "MERGE-B01-retried-past-the-open-cage",
     "file": "src/scenes/riteHost.js",
-    "old": "if (C.pupLive || peerSprang(C.site) || clearedHere()) C.retry.length = 0;",
-    "new": "if (C.pupLive || peerSprang(C.site)) C.retry.length = 0;",
+    "old": "    if (C.pupLive || peerSprang(C.site) || clearedHere()) C.retry.length = 0;",
+    "new": "    if (C.pupLive || peerSprang(C.site)) C.retry.length = 0;",
     "tests": [
       "test/net/gate/release532_regressions.test.js"
     ]

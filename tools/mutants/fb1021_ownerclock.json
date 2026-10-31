@@ -101,8 +101,8 @@
   {
     "name": "OC-arrival-clock-kept",
     "file": "src/scenes/puppetLead.js",
-    "old": "    const dt = owned ? ownerTmDiffS(tm, L.tm) : nowS - L.at, dx = t[0] - L.x, dz = t[2] - L.z;",
-    "new": "    const dt = nowS - L.at, dx = t[0] - L.x, dz = t[2] - L.z;",
+    "old": "    const dt = owned ? ownerTmDiffS(tm, L.tm) : nowS - L.at,",
+    "new": "    const dt = nowS - L.at,",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OC-reach-unscaled",
     "file": "src/scenes/puppetLead.js",
-    "old": "  const d = Math.hypot(ox, oz), far = LEAD_DIST_MAX * (L.cap / LEAD_MAX_S);",
-    "new": "  const d = Math.hypot(ox, oz), far = LEAD_DIST_MAX;",
+    "old": "    far = LEAD_DIST_MAX * (L.cap / LEAD_MAX_S); // OWNER-CLOCK: as far as the cap is long",
+    "new": "    far = LEAD_DIST_MAX; // OWNER-CLOCK: as far as the cap is long",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OC-gap-taken-whole",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      if (owned) L.gap = dt;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      if (owned) L.gap = dt; // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OC-gap-never-forgets",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      if (owned) L.gap = Math.max(dt, L.gap);",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      if (owned) L.gap = Math.max(dt, L.gap); // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "OC-gap-off-the-arrival-clock",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "PL-frozen-clock-owned",
     "file": "src/scenes/puppetLead.js",
-    "old": "    const owned = tm != null && L.tm != null && tm !== L.tm;",
-    "new": "    const owned = tm != null && L.tm != null;",
+    "old": "    const owned = tm != null && L.tm != null && tm !== L.tm; // OWNER-CLOCK: both words say when - the owner's time between them; one moment twice (a clock that stopped) says nothing of it",
+    "new": "    const owned = tm != null && L.tm != null; // OWNER-CLOCK: both words say when - the owner's time between them; one moment twice (a clock that stopped) says nothing of it",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "PL-gap-outside-range",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;   // OWNER-CLOCK: the interval it keeps\n    }",
-    "new": "    }\n      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps\n    }",
+    "new": "    }\n    if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "PL-tm-not-kept",
     "file": "src/scenes/puppetLead.js",
-    "old": "L.at = nowS; L.tm = tm;",
-    "new": "L.at = nowS; if (tm != null) L.tm = tm;",
+    "old": "    L.tm = tm;",
+    "new": "    if (tm != null) L.tm = tm;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]

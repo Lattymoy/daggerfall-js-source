@@ -117,7 +117,7 @@ PVP-CAST-SKILL (2026-10-30: "it was ment to scale with skill"): before the crit,
 ## PVP-FLAG: in the open zone only a flagged player strikes
 
 "u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the button at the right edge
-(`pvpFlagHost.js:"export function createPvpFlagHost("`) puts the flag up at once from level 30, and takes it down at once
+(`pvpFlagHost.js:"export function createPvpFlagHost"`) puts the flag up at once from level 30, and takes it down at once
 unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30,"`).
 The zone word carries it; the referee holds the lock and says each flag to the room
 (`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`).
@@ -130,8 +130,8 @@ capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, 
 come next. A departure: DFU has no flag.
 
 "or i can flag anywerte": the flag is the zone's alone (PVP-FLAG-ZONE). Out of Cyrodiil, the open sea and their halls
-the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () => !!online()?.wildOk && !!zone();"`);
-a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = () => {"`).
+the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () =>"`);
+a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = ()"`).
 "left center or right center" (PVP-FLAG-SPOT): the button stands at the screen's right edge, just over its middle, clear of the Decorate button
 centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT = Object.freeze({ lift: 64, size: 36 });"`); flag down,
 it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
@@ -178,11 +178,11 @@ referee says each flagged fighter's bar to the room when it moves, in whole per 
 (`wildRef.js:"export function wildBarWords"`), off the zone's beat
 (`server/src/index.js:"_wildBarSay(st, now) {"`), and every bar to one entering. The referee knows a Shield spell as on
 or off, never its amount, so the strip is whole or gone. A flagged stranger, nameless in the 3D scene, still shows its
-skull and bar (`pvpFlagHost.js:"const shown = k && (!q ||"`).
+skull and bar (`pvpFlagHost.js:"const shown = k &&"`).
 
 "So a hidden player u only see the skull and hp bar", "They always have some body just fiant": a Chameleon or
 Invisible player whose skull is gold is drawn faint, with skull and bar and no name
-(`pvpFlagHost.js:"export const PVP_FIGHT_VEIL = Object.freeze({"`). A departure: DFU has no PvP.
+(`pvpFlagHost.js:"export const PVP_FIGHT_VEIL"`). A departure: DFU has no PvP.
 
 ## PVP-CONE: names near the crosshair
 
@@ -193,7 +193,7 @@ point carries its angle off the camera's forward (`remotePlayers.js:"off: nameOf
 eases the whole tag toward the cone's answer over 250 ms, so a tag never pops (`nameLayer.js:"tag.cone = nameConeStep("`).
 
 My party and my foe - a peer I struck or was struck by within the flag's lock - always show
-(`pvpFlagHost.js:"const foeOf = (id) =>"`), passed through the name mask the host already wore. The client draws it;
+(`pvpFlagHost.js:"const foeOf = (id)"`), passed through the name mask the host already wore. The client draws it;
 the relay sends every name as before. The classic bitmap face, which only headless probes draw, keeps every name. The
 Overworld's travel marks are left as they were. A departure: DFU has no player names.
 
@@ -207,7 +207,7 @@ nothing where the victim struck the killer, or one of its party, first in this f
 aggro's minute (`wildRef.js:"two inside PVP_FLAG.lockMs".."/** @type {any} */ st,"`; the party is the hub's word, `server/src/index.js:"async _wildVillainy(st, fall, now) {"`).
 No clock, no gold and no death lower it.
 
-At 5,000 the killer is a villain: a red skull (`pvpFlagHost.js:"const skullOf = (id) =>"`) and a flag the referee holds
+At 5,000 the killer is a villain: a red skull (`pvpFlagHost.js:"const skullOf = (id)"`) and a flag the referee holds
 up (`wildRef.js:"else if (isVillain(x.vi))"`). The referee counts a fall's points
 (`wildRef.js:"const vp = villainKillPoints"`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
 tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The top of the pause menu's
@@ -242,14 +242,14 @@ quest are the page's word, as the Renown they pay is. A departure: DFU has no Pv
 
 "when u get aggroed or flag up change speed levciataion all that jazz", "sleep need disable", "sleep spell as well": while
 my flag is up in the open zone (aggro is a flag up, its skull gold), the law holds me
-(`pvpRules.js:"export const pvpLimited = () =>"`, wired by `pvpRulesHost.js:"export function createPvpRulesHost("`).
+(`pvpRules.js:"export const pvpLimited = () =>"`, wired by `pvpRulesHost.js:"export function createPvpRulesHost"`).
 Levitate lifts nothing and is not cast; the fall it ends costs no health, once
 (`pvpRules.js:"export function pvpLevitateBarred() {"`, spent at `shared.js:"if (inOutdoorWater || takePvpFallSpare()) return;"`).
 The flag going up ends every PvE buff - Fortify, Shield, the Resists, the concealments, Jumping, Climbing, Slowfall, Free
 Action, Water Walking, Regenerate - a curse's and a duel's left whole
 (`pvpRules.js:"export function stripPvpBuffs(entity, edge) {"`).
 
-"Item buff no": a worn item's buff goes at each poll too, and the worn set is recast once the flag drops (`pvpRulesHost.js:"} else if (takePvpHeldTaken()) restartHeldEnchantments(entity);"`). While it is up none is cast on myself but Shield, the
+"Item buff no": a worn item's buff goes at each poll too, and the worn set is recast once the flag drops (`pvpRulesHost.js:"} else if (takePvpHeldTaken())"`). While it is up none is cast on myself but Shield, the
 fight's own (`pvpRules.js:"export function pvpSpellRefusal(sp, limited = pvpLimited()) {"`), and the rest window stays shut.
 
 The pace on foot and the jump are held to an unbuffed best, Speed and Running 100 and Jumping 100 with Athleticism
@@ -284,7 +284,7 @@ clears.
 
 Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost = (entity, slot) =>"`),
 a gold edge on the last cast, a shade that drains with the cast clock, grey when magicka is short, and a padlock while
-the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () => pvpAggroLeft(fightAt, now()),"`): the set cannot change then
+the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () =>"`): the set cannot change then
 (`quickslots.js:"if (!kept || frozen()) return false;"`). The classic skin has no hotbar: there a key whose slot holds a
 toolkit spell casts it. A departure: DFU has no PvP.
 
@@ -398,7 +398,7 @@ shield's block reads six attributes, and each of mine that beats the guard's own
 "they have 95 % resistance": a hunter takes 5% of every hit, at least 1, at the watch's one damage door
 (`cityGuards.js:"damage = hunterTaken(g.entity, damage);"`). It is no crime's watch, so the crime's clearing does not
 send it away; once I leave the streets, fall or am red no more, every hunter walks away
-(`pvpGuardsHost.js:"export function createPvpGuardsHost("`), as DFU's watch does at the location's edge.
+(`pvpGuardsHost.js:"export function createPvpGuardsHost"`), as DFU's watch does at the location's edge.
 
 "a villain can always take damage in a town": the streets keep no peace for a villain
 (`villainHunt.js:"export const peaceFor = "`). Red, my word on the zone stays 1 there, and a red body there is fair to
@@ -453,7 +453,7 @@ where the save left it. The relay says it, not the account service: no account c
 ## PVP-HUD: the combat lock, shown
 
 "do we show comag timer rong and cooldown flkag rinf?", "was in mock up": the approved mockup, client only
-(`pvpHud.js:"export function createPvpHud("`, wired by `pvpFlagHost.js:"if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud("`).
+(`pvpHud.js:"export function createPvpHud("`, wired by `pvpFlagHost.js:"if (doc.body && typeof doc.createElementNS === 'function')"`).
 The lock is PVP_FLAG.lockMs, 60 s for all. A red SVG ring round the flag button empties over it and fills again at each
 PvP blow, its seconds under it; a villain's ring is full (`pvpHud.js:"export function pvpRing("`). While the lock runs
 the next frame is asked, so the ring moves smoothly; out of it nothing runs. A small bronze banner top-centre says "In
@@ -461,8 +461,8 @@ combat" and the seconds. There is no "turning off" ring: the flag drops at once 
 
 The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S = 3;"`): the flag's own drop, a Portal
 Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a hold: in the lock the door and the pick refuse, flagged or
-not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
-asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () => {"`).
+not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock ="`,
+asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () =>"`).
 Log out in combat is the relay's, built apart.
 
 **PVP-PORTAL** (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): a

@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-WE-L4-4-the-feet-alone",
     "file": "src/scenes/raidSitesHost.js",
-    "old": "Number.isInteger(raid.py) ? townAtPixel(raid.px, raid.py) : null)",
-    "new": "Number.isInteger(raid.py) ? null : null)",
+    "old": "    (raid && Number.isInteger(raid.px) && Number.isInteger(raid.py) ? townAtPixel(raid.px, raid.py) : null) ??",
+    "new": "    (raid && Number.isInteger(raid.px) && Number.isInteger(raid.py) ? null : null) ??",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-WE-L4-3-the-edge-raw-cell",
     "file": "src/scenes/raidSitesHost.js",
-    "old": "?.cell ?? streetEdgeCell(t.nav, s.label, s.id, k);",
-    "new": "?.cell ?? [[Math.floor(t.nav.width / 2), t.nav.height - 2], [t.nav.width - 2, Math.floor(t.nav.height / 2)], [Math.floor(t.nav.width / 2), 1], [1, Math.floor(t.nav.height / 2)]][k];",
+    "old": "      const start = s.exits?.find((e) => e.side === SIDE_NAMES[k])?.cell ?? streetEdgeCell(t.nav, s.label, s.id, k);",
+    "new": "      const start =\n        s.exits?.find((e) => e.side === SIDE_NAMES[k])?.cell ??\n        [\n          [Math.floor(t.nav.width / 2), t.nav.height - 2],\n          [t.nav.width - 2, Math.floor(t.nav.height / 2)],\n          [Math.floor(t.nav.width / 2), 1],\n          [1, Math.floor(t.nav.height / 2)],\n        ][k];",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-WE-L4-8-the-pocket-a-square",
     "file": "src/scenes/raidSitesHost.js",
-    "old": "    if (id && size.get(id) >= min) return",
-    "new": "    if (id) return",
+    "old": "        if (id && size.get(id) >= min) return { label, id, square: [x, y], exits: null };",
+    "new": "        if (id) return { label, id, square: [x, y], exits: null };",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-WE-L4-8-the-places-unread",
     "file": "src/scenes/raidSitesHost.js",
-    "old": "    if (pl?.net && pl.square?.cell) return { label: pl.net, id: pl.netId, square: pl.square.cell, exits: pl.exits ?? null };\n",
-    "new": "",
+    "old": "    if (pl?.net && pl.square?.cell)\n      return { label: pl.net, id: pl.netId, square: pl.square.cell, exits: pl.exits ?? null };\n    if (!gridNets.has(t.nav)) gridNets.set(t.nav, gridStreets(t.nav));",
+    "new": "    if (!gridNets.has(t.nav)) gridNets.set(t.nav, gridStreets(t.nav));",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]

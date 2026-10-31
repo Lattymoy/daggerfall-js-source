@@ -303,8 +303,8 @@
   {
     "name": "QUAY-pool-never-leaves",
     "file": "src/scenes/quayPool.js",
-    "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q);",
-    "new": "      if (!h || h.harbour !== q.harbour) takeDown(q);",
+    "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q); // forgotten, found again (a new frame), or left behind",
+    "new": "      if (!h || h.harbour !== q.harbour) takeDown(q); // forgotten, found again (a new frame), or left behind",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "QUAY-pool-stale-harbour",
     "file": "src/scenes/quayPool.js",
-    "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q);",
-    "new": "      if (!h || far) takeDown(q);",
+    "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q); // forgotten, found again (a new frame), or left behind",
+    "new": "      if (!h || far) takeDown(q); // forgotten, found again (a new frame), or left behind",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "QUAY-pool-any-distance",
     "file": "src/scenes/quayPool.js",
-    "old": "        if (Math.hypot(h.harbour.mouth[0] - feet[0], h.harbour.mouth[1] - feet[2]) > QUAY_STAND_M) continue;",
-    "new": "",
+    "old": "        if (Math.hypot(h.harbour.mouth[0] - feet[0], h.harbour.mouth[1] - feet[2]) > QUAY_STAND_M) continue;\n        q = {",
+    "new": "        q = {",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "QUAY-pool-indoors",
     "file": "src/scenes/quayPool.js",
-    "old": "    if (deps.mode() !== 'exterior') { if (quays.size) destroyAll(); return; }",
-    "new": "",
+    "old": "    if (deps.mode() !== 'exterior') {\n      if (quays.size) destroyAll();\n      return;\n    }\n    const feet = deps.feet();",
+    "new": "    const feet = deps.feet();",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "QUAY-pool-no-retry-wait",
     "file": "src/scenes/quayPool.js",
-    "old": "    if (!b.plan) { b.retryAt = now() + QUAY_RETRY_S; return; }",
-    "new": "    if (!b.plan) { return; }",
+    "old": "      b.retryAt = now() + QUAY_RETRY_S;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "QUAY-pool-bucket-left",
     "file": "src/scenes/quayPool.js",
-    "old": "    try { deps.collider()?.removeBucket?.(b.bucket); } catch { /* the collider went with the scene */ }",
-    "new": "",
+    "old": "    try {\n      deps.collider()?.removeBucket?.(b.bucket);\n    } catch {\n      /* the collider went with the scene */\n    }\n    if (b.gpu) {",
+    "new": "    if (b.gpu) {",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "QUAY-pool-bucket-baked-fixed",
     "file": "src/scenes/quayPool.js",
-    "old": "if (b.stood && !b.dead) standCollider(b); }",
-    "new": "if (b.stood && b.dead) standCollider(b); }",
+    "old": "    for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b);",
+    "new": "    for (const q of quays.values()) for (const b of q.berths) if (b.stood && b.dead) standCollider(b);",
     "tests": [
       "test/systems/naval/quays.test.js"
     ],
@@ -367,7 +367,7 @@
   {
     "name": "QUAY-pool-lights-any-count",
     "file": "src/scenes/quayPool.js",
-    "old": "    return out.sort((a, b) => a.d - b.d).slice(0, QUAY_LIGHTS_MAX).map((o) => o.l);",
+    "old": "    return out\n      .sort((a, b) => a.d - b.d)\n      .slice(0, QUAY_LIGHTS_MAX)\n      .map((o) => o.l);",
     "new": "    return out.map((o) => o.l);",
     "tests": [
       "test/systems/naval/quays.test.js"
@@ -376,8 +376,8 @@
   {
     "name": "QUAY-pool-lights-far",
     "file": "src/scenes/quayPool.js",
-    "old": "        if (d <= QUAY_LIGHT_REACH) out.push({ d, l });",
-    "new": "        out.push({ d, l });",
+    "old": "          if (d <= QUAY_LIGHT_REACH) out.push({ d, l });",
+    "new": "          out.push({ d, l });",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -385,7 +385,7 @@
   {
     "name": "QUAY-pool-no-gangway",
     "file": "src/scenes/quayPool.js",
-    "old": "    if (gangwayGpu && !gangwayGpu.pending) for (const w of ways) { r.drawMesh(gangwayGpu, gangwayMatrix(w.foot, w.head), null); n++; }",
+    "old": "    if (gangwayGpu && !gangwayGpu.pending)\n      for (const w of ways) {\n        r.drawMesh(gangwayGpu, gangwayMatrix(w.foot, w.head), null);\n        n++;\n      }",
     "new": "",
     "tests": [
       "test/systems/naval/quays.test.js"
@@ -394,8 +394,8 @@
   {
     "name": "QUAY-gangway-flat",
     "file": "src/scenes/quayPool.js",
-    "old": "  const yaw = Math.atan2(dx, dz), pitch = -Math.atan2(dy, flat);",
-    "new": "  const yaw = Math.atan2(dx, dz), pitch = 0;",
+    "old": "    pitch = -Math.atan2(dy, flat);",
+    "new": "    pitch = 0;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]

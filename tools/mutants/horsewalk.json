@@ -236,8 +236,8 @@
   {
     "name": "HORSEWALK-saddle-host-unread",
     "file": "src/scenes/saddleHost.js",
-    "old": "walks: mode === 'Horse' && walking,",
-    "new": "walks: false,",
+    "old": "      walks: mode === 'Horse' && walking, // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does",
+    "new": "      walks: false, // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "HORSEWALK-saddle-reads-upkeep",
     "file": "src/scenes/saddleHost.js",
-    "old": "walks: mode === 'Horse' && walking,",
-    "new": "walks: mode === 'Horse' && !!upkeep.rideWalks?.(mode),",
+    "old": "      walks: mode === 'Horse' && walking, // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does",
+    "new": "      walks: mode === 'Horse' && !!upkeep.rideWalks?.(mode), // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

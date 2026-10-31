@@ -283,7 +283,7 @@
   {
     "name": "AUDIT-LWIII-killed-stands",
     "file": "src/scenes/roadStands.js",
-    "old": "        if (s.rec?.dead && !killed(s.rec)) { stands.delete(id); continue; }",
+    "old": "        if (s.rec?.dead && !killed(s.rec)) {\n          stands.delete(id);\n          continue;\n        }",
     "new": "",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"

@@ -65,8 +65,8 @@
   {
     "name": "SEAT-WORDS-the-page-not-asked-at-the-hold",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      if (line) say(line);\n      noteFirstUse('chapters');\n",
-    "new": "      if (line) say(line);\n",
+    "old": "      noteFirstUse('chapters');\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEAT-WORDS-the-page-not-asked-at-the-first-word",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');\n",
-    "new": "",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');\n      const line = standingLine(entityOf(), changes);",
+    "new": "      const line = standingLine(entityOf(), changes);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEAT-WORDS-the-page-for-a-stranger",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf()))",
-    "new": "if (first)",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (first) noteFirstUse('chapters');",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEAT-WORDS-the-first-word-gate",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf()))",
-    "new": "if (holdsRollMembership(entityOf()))",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (holdsRollMembership(entityOf())) noteFirstUse('chapters');",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEAT-WORDS-the-raw-book",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "Object.values(activeMemberships(entity) ?? {})",
-    "new": "Object.values(entity?.guildMemberships ?? {})",
+    "old": "    Object.values(activeMemberships(entity) ?? {})",
+    "new": "    Object.values(entity?.guildMemberships ?? {})",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STANDING-WORDS-the-moves-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);\n",
-    "new": "      const line = standingLine(entityOf(), changes);\n",
+    "old": "      if (line) say(line);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STANDING-WORDS-the-say-unguarded",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);\n",
-    "new": "      const line = standingLine(entityOf(), changes);\n      say(line);\n",
+    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);",
+    "new": "      const line = standingLine(entityOf(), changes);\n      say(line);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "STANDING-WORDS-the-entity-unread",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "standingLine(entityOf(), changes)",
-    "new": "standingLine(null, changes)",
+    "old": "      const line = standingLine(entityOf(), changes);",
+    "new": "      const line = standingLine(null, changes);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "STANDING-WORDS-the-item-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "    return c.owed > 0 ? t('chapters.standing.itemOwed'",
-    "new": "    return false ? t('chapters.standing.itemOwed'",
+    "old": "  if (c.delta) {\n    return c.owed > 0",
+    "new": "  if (c.delta) {\n    return false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "STANDING-WORDS-the-paid-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  return c.owed > 0 ? t('chapters.standing.paidOwed'",
-    "new": "  return false ? t('chapters.standing.paidOwed'",
+    "old": "  }\n  return c.owed > 0",
+    "new": "  }\n  return false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "STANDING-WORDS-the-sign",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0) }",
-    "new": "delta: String(c.delta ?? 0) }",
+    "old": "  const args = {\n    name: standingName(c.f),\n    now: c.now,\n    owed: c.owed,\n    paid: c.paid ?? 0,\n    delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0),\n  };",
+    "new": "  const args = { name: standingName(c.f), now: c.now, owed: c.owed, paid: c.paid ?? 0, delta: String(c.delta ?? 0) };",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "STANDING-WORDS-the-fold-gone",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  const named = moved.filter((c) => mine.has(c.f)).map(",
-    "new": "  const named = moved.map(",
+    "old": "  const named = moved.filter((c) => mine.has(c.f)).map((c) => standingItem(entity, c));",
+    "new": "  const named = moved.map((c) => standingItem(entity, c));",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "STANDING-WORDS-the-others-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  const list = others ? [...named, t(",
-    "new": "  const list = false ? [...named, t(",
+    "old": "  const list = others",
+    "new": "  const list = false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "STANDING-WORDS-the-empty-line",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  if (!moved.length) return null;\n",
-    "new": "",
+    "old": "  if (!moved.length) return null;\n  const mine = rollMembershipsOf(entity);",
+    "new": "  const mine = rollMembershipsOf(entity);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "LANE-E-RN-fold-mortal-book",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "Object.values(activeMemberships(entity) ?? {})",
-    "new": "Object.values(entity?.guildMemberships?.mortal ?? {})",
+    "old": "    Object.values(activeMemberships(entity) ?? {})",
+    "new": "    Object.values(entity?.guildMemberships?.mortal ?? {})",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -818,8 +818,8 @@
   {
     "name": "LANE-E-RN-twenty-two-unfiltered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": ".map((m) => rollFactionOfGuild(m?.guild)).filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)));",
-    "new": ".map((m) => rollFactionOfGuild(m?.guild)));",
+    "old": "  new Set(\n    Object.values(activeMemberships(entity) ?? {})\n      .map((m) => rollFactionOfGuild(m?.guild))\n      .filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)),\n  );",
+    "new": "  new Set(Object.values(activeMemberships(entity) ?? {}).map((m) => rollFactionOfGuild(m?.guild)));",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -830,8 +830,8 @@
   {
     "name": "LANE-E-RN-paid-filtered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": " || (Number.isSafeInteger(c?.paid) && c.paid !== 0));",
-    "new": ");",
+    "old": "  const moved = (changes ?? []).filter(\n    (c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),\n  );",
+    "new": "  const moved = (changes ?? []).filter((c) => Number.isSafeInteger(c?.delta) && c.delta !== 0);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -840,8 +840,8 @@
   {
     "name": "LANE-E-RN-loss-filtered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "(Number.isSafeInteger(c?.delta) && c.delta !== 0)",
-    "new": "(Number.isSafeInteger(c?.delta) && c.delta > 0)",
+    "old": "    (c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),",
+    "new": "    (c) => (Number.isSafeInteger(c?.delta) && c.delta > 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -850,8 +850,8 @@
   {
     "name": "LANE-E-RN-first-needs-a-move",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
-    "new": "if (first && changes.length && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (first && changes.length && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -860,8 +860,8 @@
   {
     "name": "LANE-E-RN-item-loss-as-paid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  if (c.delta) {\n",
-    "new": "  if (c.delta > 0) {\n",
+    "old": "  if (c.delta) {",
+    "new": "  if (c.delta > 0) {",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -1182,8 +1182,8 @@
   {
     "name": "PACE-II-the-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "{ name: standingName(f), owed: standingOwedOf(f) }",
-    "new": "{ name: standingName(f), owed: 0 }",
+    "old": "            { name: standingName(f), owed: standingOwedOf(f) },",
+    "new": "            { name: standingName(f), owed: 0 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1191,8 +1191,8 @@
   {
     "name": "PACE-II-the-full-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "        say(t('chapters.standing.full',",
-    "new": "        void (t('chapters.standing.full',",
+    "old": "        say(\n          t(\n            'chapters.standing.full',\n            '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',\n            { name: standingName(f), max: MAX_REPUTATION },\n          ),",
+    "new": "        void t(\n          'chapters.standing.full',\n          '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',\n          { name: standingName(f), max: MAX_REPUTATION },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1200,8 +1200,8 @@
   {
     "name": "NAMES-II-the-list-bare",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "{ list: listOf(list) }",
-    "new": "{ list: list.join(', ') }",
+    "old": "  return t('chapters.standing.line', 'Standing: {list}', { list: listOf(list) });",
+    "new": "  return t('chapters.standing.line', 'Standing: {list}', { list: list.join(', ') });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1209,8 +1209,8 @@
   {
     "name": "NAMES-II-zen",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  [D.Zenithar]: () => t('chapters.guild.zenithar', 'Temple of Zenithar'),\n",
-    "new": "",
+    "old": "  [D.Zenithar]: () => t('chapters.guild.zenithar', 'Temple of Zenithar'),\n  [O.Horn]: () => t('chapters.guild.horn', 'Host of the Horn'),",
+    "new": "  [O.Horn]: () => t('chapters.guild.horn', 'Host of the Horn'),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

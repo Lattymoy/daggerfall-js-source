@@ -534,8 +534,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-lights-off-the-plan",
     "file": "src/scenes/quayPool.js",
-    "old": "        b.lit = lanternLights(b.plan, seaY, pos).map(",
-    "new": "        b.lit = lanternLights(b.plan, seaY).map(",
+    "old": "          b.lit = lanternLights(b.plan, seaY, pos).map((p) => ({ x: p[0], y: p[1], z: p[2], range: QUAY_LIGHT_RANGE }));",
+    "new": "          b.lit = lanternLights(b.plan, seaY).map((p) => ({ x: p[0], y: p[1], z: p[2], range: QUAY_LIGHT_RANGE }));",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-lights-every-frame",
     "file": "src/scenes/quayPool.js",
-    "old": "      if (!b.lit || b.litY !== seaY || b.litAt[0] !== pos[0] || b.litAt[1] !== pos[1]) {",
-    "new": "      if (true) {",
+    "old": "        if (!b.lit || b.litY !== seaY || b.litAt[0] !== pos[0] || b.litAt[1] !== pos[1]) {",
+    "new": "        if (true) {",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-whole-pier-collided",
     "file": "src/scenes/quayPool.js",
-    "old": "    const c = b.model.collider ?? b.model;",
-    "new": "    const c = b.model;",
+    "old": "    const c = b.model.collider ?? b.model; // the solid part alone (world/quayModel.js - AUDIT SHIPYARDS L5-5)",
+    "new": "    const c = b.model; // the solid part alone (world/quayModel.js - AUDIT SHIPYARDS L5-5)",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

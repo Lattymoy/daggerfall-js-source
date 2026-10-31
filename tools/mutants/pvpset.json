@@ -164,8 +164,8 @@
   {
     "name": "PVP-SET-the-flag-lock-never-said",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "fightLeft: () => pvpAggroLeft(fightAt, now()),",
-    "new": "fightLeft: () => 0,",
+    "old": "    fightLeft: () => pvpAggroLeft(fightAt, now()),",
+    "new": "    fightLeft: () => 0,",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]

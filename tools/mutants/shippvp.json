@@ -1334,7 +1334,7 @@
   {
     "name": "SHIP-PVP-host-hold-kept",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "        const out = took.length ? deps.naval?.()?.pvp?.takeHold?.(w.c.u, took) ?? [] : [];",
+    "old": "        const out = took.length ? (deps.naval?.()?.pvp?.takeHold?.(w.c.u, took) ?? []) : [];",
     "new": "        const out = took.length ? took : [];",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -1343,8 +1343,8 @@
   {
     "name": "SHIP-PVP-host-since-unsaid",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "        const n = out.length || Math.max(0, Math.floor(Number(d.n) || 0));",
-    "new": "        const n = out.length;",
+    "old": "        const n = out.length || Math.max(0, Math.floor(Number(d.n) || 0)); // her record already without them: still said",
+    "new": "        const n = out.length; // her record already without them: still said",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1352,8 +1352,8 @@
   {
     "name": "SHIP-PVP-host-killer-rushes",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "at: role === 'killer' && live ? now() + SEA_WRECK_SLACK_S * 1000 : now(),",
-    "new": "at: now(),",
+    "old": "    due.set(c.r, {\n      rc,\n      c,\n      role,\n      at: role === 'killer' && live ? now() + SEA_WRECK_SLACK_S * 1000 : now(),\n      busy: false,\n    });",
+    "new": "    due.set(c.r, { rc, c, role, at: now(), busy: false });",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1361,8 +1361,8 @@
   {
     "name": "SHIP-PVP-host-killer-uncollected",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "    if (res?.ok && w.c.b === 1) await collectSeaPrizes(",
-    "new": "    if (false) await collectSeaPrizes(",
+    "old": "    if (res?.ok && w.c.b === 1)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1379,8 +1379,8 @@
   {
     "name": "SHIP-PVP-host-pack-unfilled",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "      for (const it of items) addItem((playerEntity.items ??= []), it);\n      if (items.length) say?.(t('sea.pvp.prizeTaken'",
-    "new": "      if (items.length) say?.(t('sea.pvp.prizeTaken'",
+    "old": "    call: (/** @type {any} */ at) => door.collect({ character: character(), realm: at }),\n    apply: (/** @type {any} */ a) => {\n      const items = Array.isArray(a?.data?.items) ? a.data.items : [];\n      for (const it of items) addItem((playerEntity.items ??= []), it);\n      if (items.length)\n        say?.(\n          t(",
+    "new": "    call: (/** @type {any} */ at) => door.collect({ character: character(), realm: at }),\n    apply: (/** @type {any} */ a) => {\n      const items = Array.isArray(a?.data?.items) ? a.data.items : [];\n      if (items.length)\n        say?.(\n          t(",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1397,8 +1397,8 @@
   {
     "name": "SHIP-PVP-host-strangers",
     "file": "src/scenes/seaWreckHost.js",
-    "old": "c.k === me ? 'killer' : null;",
-    "new": "'killer';",
+    "old": "    const role = c.f === me ? 'captain' : c.k === me ? 'killer' : null;",
+    "new": "    const role = c.f === me ? 'captain' : 'killer';",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

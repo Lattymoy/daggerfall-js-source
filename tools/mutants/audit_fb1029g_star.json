@@ -144,8 +144,8 @@
   {
     "name": "AFB-STAR-F5-rite-unsaid",
     "file": "src/scenes/riteHost.js",
-    "old": "transient: true, eventFoe: true }).then(landed",
-    "new": "transient: true }).then(landed",
+    "old": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true, eventFoe: true })",
+    "new": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true })",
     "tests": [
       "test/net/gate/wb12d_rite_host.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "AFB-STAR-F5-riteFoe-unstamped",
     "file": "src/scenes/riteHost.js",
-    "old": "f.entity.campId = camp; f.entity.eventFoe = true; }",
-    "new": "f.entity.campId = camp; }",
+    "old": "      f.entity.eventFoe = true;\n    } // STAR-MASTER-FLED: the rite's own - never a revenant, never \"Unquiet\"",
+    "new": "    } // STAR-MASTER-FLED: the rite's own - never a revenant, never \"Unquiet\"",
     "tests": [
       "test/net/gate/wb12d_rite_host.test.js"
     ],

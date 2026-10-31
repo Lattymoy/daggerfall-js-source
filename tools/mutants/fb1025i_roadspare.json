@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-FB1025i-D2-any-death-slain",
     "file": "src/scenes/roadStands.js",
-    "old": "if (s.kind === 'foe' && s.rec.killedBy === 'player') {",
-    "new": "if (s.kind === 'foe') {",
+    "old": "          if (s.kind === 'foe' && s.rec.killedBy === 'player') {",
+    "new": "          if (s.kind === 'foe') {",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-FB1025i-D2-other-unsaid",
     "file": "src/scenes/roadStands.js",
-    "old": "} else if (s.kind === 'foe') deps.killed(s.res, t);",
-    "new": "} else if (s.kind === 'foe') void 0;",
+    "old": "          } else if (s.kind === 'foe') deps.killed(s.res, t);",
+    "new": "          } else if (s.kind === 'foe') void 0;",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],

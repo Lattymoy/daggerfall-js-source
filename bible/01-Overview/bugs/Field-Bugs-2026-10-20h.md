@@ -804,7 +804,7 @@ fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) o
 judges every realm checkpoint headless with that law
 (`judge.js:"for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });"`), the
 verdict holds the character and adds a strike (`verdict.js:"  if (law > 0 || (until != null && until > nowS)) return 'law';"`),
-and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld = "`) by the template's name
+and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
 (`itemIds.js:"  const name = now === 'law' && why ? lawTemplate(why.t)?.name : null;"`). Reproduced word for word through
 the real Worker: "The realm is reviewing this character: it carries a Soul Trap the game could not have made. Trading is
 frozen until it is gone. Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a

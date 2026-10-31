@@ -460,8 +460,8 @@
   {
     "name": "AH-Q7-the-quays-on-a-movers-bucket",
     "file": "src/scenes/quayPool.js",
-    "old": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0));\n    b.stood = true;",
-    "new": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0), () => [b.berth.pos[0], deps.seaY(), b.berth.pos[1]]);\n    b.stood = true;",
+    "old": "    );",
+    "new": "      () => [b.berth.pos[0], deps.seaY(), b.berth.pos[1]],\n    );",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "AH-Q7-never-stood-again",
     "file": "src/scenes/quayPool.js",
-    "old": "  function offsetAll() { for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b); }",
-    "new": "  function offsetAll() { }",
+    "old": "  function offsetAll() {\n    for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b);\n  }",
+    "new": "  function offsetAll() {}",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "AH-Q9-the-gangway-left-pending",
     "file": "src/scenes/quayPool.js",
-    "old": "        try { gangwayGpu = r.createMesh(model); } catch { gangwayGpu = null; }",
-    "new": "        try { gangwayGpu = r.createMesh(model); } catch { /* left */ }",
+    "old": "            gangwayGpu = null;",
+    "new": "            /* left */",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -496,7 +496,7 @@
   {
     "name": "AH-Q9-the-gangway-never-freed",
     "file": "src/scenes/quayPool.js",
-    "old": "    if (gangwayGpu && !gangwayGpu.pending) { try { deps.renderer?.destroyMesh?.(gangwayGpu); } catch { /* the context went first */ } }",
+    "old": "    if (gangwayGpu && !gangwayGpu.pending) {\n      try {\n        deps.renderer?.destroyMesh?.(gangwayGpu);\n      } catch {\n        /* the context went first */\n      }\n    }",
     "new": "    void 0;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"

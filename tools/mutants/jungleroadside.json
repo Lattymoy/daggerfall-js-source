@@ -624,8 +624,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-lone-tree-kept",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "pairs.filter((p) => p.trees.every((t) => keep(t.x, t.z)));",
-    "new": "pairs.filter((p) => p.trees.some((t) => keep(t.x, t.z)));",
+    "old": "export const keptPairs = (pairs, keep) => pairs.filter((p) => p.trees.every((t) => keep(t.x, t.z)));",
+    "new": "export const keptPairs = (pairs, keep) => pairs.filter((p) => p.trees.some((t) => keep(t.x, t.z)));",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-half-at-the-anchor",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "pic.entry.centers.push([t.x, p.y, t.z]);",
-    "new": "pic.entry.centers.push([p.ax, p.y, p.az]);",
+    "old": "      pic.entry.centers.push([t.x, p.y, t.z]);",
+    "new": "      pic.entry.centers.push([p.ax, p.y, p.az]);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-halfs-turn-dropped",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "pic.entry.turn.push(p.turn);",
-    "new": "pic.entry.turn.push(0);",
+    "old": "      pic.entry.turn.push(p.turn);",
+    "new": "      pic.entry.turn.push(0);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-half-unheld",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "        door.acquire(pic.far);\n",
-    "new": "",
+    "old": "        door.acquire(pic.far);\n        handles.push(pic.far);",
+    "new": "        handles.push(pic.far);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "JUNGLE-ROADSIDE-its-wind-unwritten",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "        sway(pic.proto, t.record);\n",
-    "new": "",
+    "old": "        sway(pic.proto, t.record);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -669,8 +669,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-drawn-without-its-species-picture",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "pics.push((await speciesPic(t.species)) ? await half(p.kind, side) : null);",
-    "new": "pics.push(await half(p.kind, side));",
+    "old": "    for (const [side, t] of p.trees.entries())\n      pics.push((await speciesPic(t.species)) ? await half(p.kind, side) : null);",
+    "new": "    for (const [side, t] of p.trees.entries()) pics.push(await half(p.kind, side));",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -679,7 +679,7 @@
     "name": "JUNGLE-ROADSIDE-the-fallback-lost",
     "file": "src/scenes/roadsidePairs.js",
     "old": "      if (!whole) return;",
-    "new": "      if (!whole) { g.centers.pop(); g.own.pop(); return; }",
+    "new": "      if (!whole) {\n        g.centers.pop();\n        g.own.pop();\n        return;\n      }",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-tree-unmarked",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "      (g.spanned ??= new Set()).add(c);\n",
-    "new": "",
+    "old": "      (g.spanned ??= new Set()).add(c);\n      (g.spans ??= new Set()).add(pic.far);",
+    "new": "      (g.spans ??= new Set()).add(pic.far);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -696,8 +696,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-half-asked-past-the-seam",
     "file": "src/scenes/roadsidePairs.js",
-    "old": "halves.set(key, await pairPicture(door, kind, side));",
-    "new": "halves.set(key, await (async () => { const proto = door.pairProto(kind, side), far = proto ? await door.farPicture(proto) : null; return far ? { proto, far } : null; })());",
+    "old": "    if (!halves.has(key)) halves.set(key, await pairPicture(door, kind, side));",
+    "new": "    if (!halves.has(key))\n      halves.set(\n        key,\n        await (async () => {\n          const proto = door.pairProto(kind, side),\n            far = proto ? await door.farPicture(proto) : null;\n          return far ? { proto, far } : null;\n        })(),\n      );",
     "tests": [
       "test/world/naturepicture.test.js"
     ]

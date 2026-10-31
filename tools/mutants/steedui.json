@@ -137,8 +137,8 @@
   {
     "name": "STEEDUI-host-near",
     "file": "src/scenes/saddleHost.js",
-    "old": "return { ...upkeepReach(rt, !!rt), near: true, stabled: false };",
-    "new": "return { ...upkeepReach(rt, !!rt) };",
+    "old": "    return { ...upkeepReach(rt, !!rt), near: true, stabled: false };",
+    "new": "    return { ...upkeepReach(rt, !!rt) };",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "STEEDUI-host-foot",
     "file": "src/scenes/saddleHost.js",
-    "old": "if (rt) rt.handleQuickMountOrDismount(); else foot();",
-    "new": "if (rt) rt.handleQuickMountOrDismount();",
+    "old": "      else foot();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "STEEDUI-host-speed",
     "file": "src/scenes/saddleHost.js",
-    "old": "speed += (metres / dt - speed) * Math.min(1, dt / SADDLE_SPEED_TAU);",
-    "new": "speed = metres / dt;",
+    "old": "    speed += (metres / dt - speed) * Math.min(1, dt / SADDLE_SPEED_TAU);",
+    "new": "    speed = metres / dt;",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "STEEDUI-host-feed-lead",
     "file": "src/scenes/saddleHost.js",
-    "old": "feed: () => act('feed', shown?.horse?.feed ?? 0)",
-    "new": "feed: () => act('feed', 0)",
+    "old": "    feed: () => act('feed', shown?.horse?.feed ?? 0),",
+    "new": "    feed: () => act('feed', 0),",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]

@@ -477,8 +477,8 @@
   {
     "name": "ACHAP-CEILING-LINE",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.",
-    "new": "quests cannot raise your standing any further today.",
+    "old": "          t(\n            'chapters.standing.ceiling',\n            '{name}: quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.',\n            { name: standingName(f), owed: standingOwedOf(f) },\n          ),",
+    "new": "          t('chapters.standing.ceiling', '{name}: quests cannot raise your standing any further today.', {\n            name: standingName(f),\n            owed: standingOwedOf(f),\n          }),",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",

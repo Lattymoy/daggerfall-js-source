@@ -110,8 +110,8 @@
   {
     "name": "PVP-BAR-the-page-bar-unkept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (g?.k === 'bar') { bars.set(g.id, { h: g.h, s: g.s ?? 0 }); return true; }",
-    "new": "if (g?.k === 'bar') { return true; }",
+    "old": "      bars.set(g.id, { h: g.h, s: g.s ?? 0 });\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-BAR-the-page-blow-unread",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(",
-    "new": "for (const [id, hp, max] of g.h ?? []) if (max < 0) bars.set(",
+    "old": "      if (max > 0)",
+    "new": "      if (max < 0)",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-BAR-the-page-flag-down-kept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "else { peers.delete(g.id); bars.delete(g.id); }",
-    "new": "else { peers.delete(g.id); }",
+    "old": "        bars.delete(g.id);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-BAR-the-page-stranger-dropped",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "const shown = k && (!q ||",
-    "new": "if (!q) return q;\n      const shown = k && (!q ||",
+    "old": "        const shown = k && (!q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;",
+    "new": "        if (!q) return q;\n        const shown = k && (!q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "PVP-BAR-the-page-veil-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (k === 'gold' || k === 'red') return { kind: 'conceal', visual: PVP_FIGHT_VEIL };",
+    "old": "      if (k === 'gold' || k === 'red') return { kind: 'conceal', visual: PVP_FIGHT_VEIL };",
     "new": "",
     "tests": [
       "test/net/pvpbar.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "PVP-BAR-the-page-staff-veiled",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !k) return look;",
-    "new": "if (look?.kind === 'plain' || !k) return look;",
+    "old": "      if (look?.kind === 'plain' || (bits & 7) === 7 || !k) return look; // 7: a staff member inside its event's boss",
+    "new": "      if (look?.kind === 'plain' || !k) return look; // 7: a staff member inside its event's boss",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PVP-BAR-the-page-name-kept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;",
-    "new": "false) ? nameless(q ?? p) : q;",
+    "old": "        const shown = k && (!q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;",
+    "new": "        const shown = k && (!q || false) ? nameless(q ?? p) : q;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-BAR-the-page-bar-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "...(party ? {} : { skull: k }), ...(bar ? { bar } : {}),",
-    "new": "...(party ? {} : { skull: k }),",
+    "old": "        return { ...shown, ...(party ? {} : { skull: k }), ...(bar ? { bar } : {}), ...(near ? { near } : {}) }; // PVP-HUD: my party, green with its bar, no skull",
+    "new": "        return { ...shown, ...(party ? {} : { skull: k }), ...(near ? { near } : {}) }; // PVP-HUD: my party, green with its bar, no skull",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

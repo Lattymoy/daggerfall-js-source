@@ -560,8 +560,8 @@
   {
     "name": "SEA-SEASON-page-days-floor",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
-    "new": "daysLeft: Math.max(0, Math.floor((board.ends * 1000 - now()) / 86_400_000))",
+    "old": "      daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000)),",
+    "new": "      daysLeft: Math.max(0, Math.floor((board.ends * 1000 - now()) / 86_400_000)),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "SEA-SEASON-page-days-negative",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
-    "new": "daysLeft: Math.ceil((board.ends * 1000 - now()) / 86_400_000)",
+    "old": "    return {\n      asking: false,\n      ...board,\n      daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000)),\n      line,\n    };",
+    "new": "    return { asking: false, ...board, daysLeft: Math.ceil((board.ends * 1000 - now()) / 86_400_000), line };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "SEA-SEASON-page-refusal-unsaid",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "      else { line = { text: accountRefusalText(r?.error), warn: true }; nextAt",
-    "new": "      else { line = null; nextAt",
+    "old": "        line = { text: accountRefusalText(r?.error), warn: true };",
+    "new": "        line = null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "SEA-SEASON-page-unread-an-empty-season",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "    if (!board) return { asking: true,",
-    "new": "    if (!board) return { asking: false,",
+    "old": "        asking: true,",
+    "new": "        asking: false,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

@@ -290,8 +290,8 @@
   {
     "name": "A2-cabin-guest-stained",
     "file": "src/scenes/sailingCabin.js",
-    "old": "cabinRestyle(guest ? 0 : fleetShip(cabin.uid)?.cabin ?? 0)",
-    "new": "cabinRestyle(fleetShip(cabin.uid)?.cabin ?? 0)",
+    "old": "    restyle: cabinRestyle(guest ? 0 : (fleetShip(cabin.uid)?.cabin ?? 0)),",
+    "new": "    restyle: cabinRestyle(fleetShip(cabin.uid)?.cabin ?? 0),",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

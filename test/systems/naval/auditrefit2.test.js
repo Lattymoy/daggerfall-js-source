@@ -268,7 +268,7 @@ test('AUDIT 2 the boats\' word is said again for a name board shown or taken dow
   const rec = { b: [[2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]], n: ['Gull'] };
   assert.notEqual(csaRecordKey({ ...rec, p: [1] }), csaRecordKey(rec), 'her board: a new word');
   assert.notEqual(csaRecordKey({ b: rec.b, p: [1] }), csaRecordKey({ b: rec.b }));
-  assert.match(rd('src/scenes/sailingCabin.js'), /restyle: cabinRestyle\(guest \? 0 : fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)/);
+  assert.match(rd('src/scenes/sailingCabin.js'), /restyle: cabinRestyle\(guest \? 0 : \(fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)/);
   assert.match(hostText('src/scenes/worldModes.js'), /sailingCabinEntry\(blocks, saved, host\.sailingCabin\.fromNative, typeof visit\?\.cabinOwner === 'string'\)/);
   assert.match(rd('src/scenes/comeSailAway/comeSailAwayPool.js'), /const shown = boat\.GameObject\?\.activeSelf && boat\.MeshObject\?\.activeSelf \? plaqueNameOf\(boat\) : null;/);
 });

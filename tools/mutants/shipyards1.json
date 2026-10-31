@@ -516,8 +516,8 @@
   {
     "name": "PIERS-no-docks-mark",
     "file": "src/scenes/quayPool.js",
-    "old": "      out.push({ key: `docks:${q.key}`,",
-    "new": "      if (false) out.push({ key: `docks:${q.key}`,",
+    "old": "      out.push({\n        key: `docks:${q.key}`,\n        at: [b.berth.pos[0], seaY + QUAY_DECK_UP + DOCKS_MARK_LIFT, b.berth.pos[1]],\n        label: portPlaceName('docks', { townName: q.name }),\n        kind: 'yard docks',\n      });",
+    "new": "      if (false)\n        out.push({\n          key: `docks:${q.key}`,\n          at: [b.berth.pos[0], seaY + QUAY_DECK_UP + DOCKS_MARK_LIFT, b.berth.pos[1]],\n          label: portPlaceName('docks', { townName: q.name }),\n          kind: 'yard docks',\n        });",
     "tests": [
       "test/systems/shipyards1_found.test.js"
     ]

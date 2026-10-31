@@ -897,8 +897,8 @@
   {
     "name": "CABIN-visit-unstained",
     "file": "src/scenes/sailingCabin.js",
-    "old": "restyle: cabinRestyle(guest ? 0 : fleetShip(cabin.uid)?.cabin ?? 0) };",
-    "new": "restyle: null };",
+    "old": "  const hit = {\n    dfBlock,\n    recordIndex: 0,\n    door,\n    climateBase: 2,\n    season: 0,\n    sailingCabin: cabin,\n    restyle: cabinRestyle(guest ? 0 : (fleetShip(cabin.uid)?.cabin ?? 0)),\n  }; // CABIN-LOOK: her cabin stained as her captain chose",
+    "new": "  const hit = { dfBlock, recordIndex: 0, door, climateBase: 2, season: 0, sailingCabin: cabin, restyle: null }; // CABIN-LOOK: her cabin stained as her captain chose",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

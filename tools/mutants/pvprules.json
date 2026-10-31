@@ -173,8 +173,8 @@
   {
     "name": "PVP-RULES-zone-unread",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "setPvpLimitedSource(() => !!flag?.on() && !!zone());",
-    "new": "setPvpLimitedSource(() => !!flag?.on());",
+    "old": "  setPvpLimitedSource(() => !!flag?.on() && !!zone());",
+    "new": "  setPvpLimitedSource(() => !!flag?.on());",
     "tests": [
       "test/systems/wild/pvprules.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-RULES-ride-bar-unread",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "setRideBar(() => (pvpLimited() ? pvpRideText() : null), midScreen);",
-    "new": "setRideBar(() => null, midScreen);",
+    "old": "  setRideBar(() => (pvpLimited() ? pvpRideText() : null), midScreen);",
+    "new": "  setRideBar(() => null, midScreen);",
     "tests": [
       "test/systems/wild/pvprules.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PVP-RULES-rider-kept",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "if (isRiding(motor?.transportMode)) { rideFoot(); midScreen(pvpRideText()); }",
-    "new": "if (isRiding(motor?.transportMode)) { rideFoot(); }",
+    "old": "        midScreen(pvpRideText());\n      } // the owner: \"No horse u demoibt\"",
+    "new": "      } // the owner: \"No horse u demoibt\"",
     "tests": [
       "test/systems/wild/pvprules.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "PVP-RULES-recast-unasked",
     "file": "src/scenes/pvpRulesHost.js",
-    "old": "} else if (takePvpHeldTaken()) restartHeldEnchantments(entity);",
-    "new": "} else if (false) restartHeldEnchantments(entity);",
+    "old": "    } else if (takePvpHeldTaken()) restartHeldEnchantments(entity); // the flag down: the worn set's buffs come back, recast (no durability billed)",
+    "new": "    } else if (false) restartHeldEnchantments(entity); // the flag down: the worn set's buffs come back, recast (no durability billed)",
     "tests": [
       "test/systems/wild/pvprules.test.js"
     ]

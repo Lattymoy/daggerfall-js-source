@@ -296,8 +296,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-never-owed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    owe(row);   // GRAVE-PARTY: the cell hears it - my party's games lock the stone\n",
-    "new": "",
+    "old": "    owe(row); // GRAVE-PARTY: the cell hears it - my party's games lock the stone\n    const outcome = rollSearchOutcome({ graveyard: true });",
+    "new": "    const outcome = rollSearchOutcome({ graveyard: true });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -306,8 +306,8 @@
   {
     "name": "GRAVE-PARTY-the-book-not-read-at-the-stone",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    adopt(row);   // GRAVE-PARTY: the cell's word about this stone, read against my party now\n",
-    "new": "",
+    "old": "    adopt(row); // GRAVE-PARTY: the cell's word about this stone, read against my party now\n    if (searchCooldownLeft(key, now) > 0) {",
+    "new": "    if (searchCooldownLeft(key, now) > 0) {",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -316,8 +316,8 @@
   {
     "name": "GRAVE-PARTY-a-strangers-row-landed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    if (!searchKinOf(g[4])) return false;\n",
-    "new": "",
+    "old": "    if (!searchKinOf(g[4])) return false;\n    const now = worldMinutes();",
+    "new": "    const now = worldMinutes();",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -327,8 +327,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-unnamed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "searchToldBy(g[4], g[5]));",
-    "new": "null);",
+    "old": "    markSearched(\n      searchKey(`g${g[0]},${g[1]}`, String(g[2])),\n      sharedClockOn() ? Math.min(g[3], now) : now,\n      searchToldBy(g[4], g[5]),\n    );",
+    "new": "    markSearched(searchKey(`g${g[0]},${g[1]}`, String(g[2])), sharedClockOn() ? Math.min(g[3], now) : now, null);",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-says-the-old-words",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "if (searchCooldownLeft(key, now) > 0) { setMidScreenText(searchedText(key)); return true; }",
-    "new": "if (searchCooldownLeft(key, now) > 0) { setMidScreenText('You have already searched here.'); return true; }",
+    "old": "      setMidScreenText(searchedText(key));",
+    "new": "      setMidScreenText('You have already searched here.');",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "GRAVE-PARTY-the-frame-says-nothing",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    for (const r of online.sendOverworld('gr', [...owed.values()].map((o) => o.row))) owed.delete(`${r[0]},${r[1]}|${r[2]}`);",
-    "new": "",
+    "old": "    for (const r of online.sendOverworld(\n      'gr',\n      [...owed.values()].map((o) => o.row),\n    ))\n      owed.delete(`${r[0]},${r[1]}|${r[2]}`);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "AUDIT-G5-the-lens-names-nobody",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    selfName: () => host.online?.name || host.social?.name || null,",
-    "new": "    selfName: () => null,",
+    "old": "    selfName: () => host.online?.name || host.social?.name || null, // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps",
+    "new": "    selfName: () => null, // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],

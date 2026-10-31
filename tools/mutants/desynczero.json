@@ -57,8 +57,8 @@
   {
     "name": "DZ-lead-a-jump",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (s2 <= LEAD_SPEED_MAX * LEAD_SPEED_MAX) { L.vx = vx; L.vz = vz; }",
-    "new": "      L.vx = vx; L.vz = vz; void s2;",
+    "old": "      if (s2 <= LEAD_SPEED_MAX * LEAD_SPEED_MAX) {\n        L.vx = vx;\n        L.vz = vz;\n      }",
+    "new": "      L.vx = vx;\n      L.vz = vz;\n      void s2;",
     "tests": [
       "test/scenes/desynczero.test.js"
     ]

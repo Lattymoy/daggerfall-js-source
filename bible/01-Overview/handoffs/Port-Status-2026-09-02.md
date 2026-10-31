@@ -924,10 +924,10 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by RAID5 (2026-10-25).**
 
-- **`src/scenes/raidSitesHost.js:"FLAGGED: the fixed-city bench runs no raid"`** - the `?exterior` bench's town raids.
+- **`src/scenes/raidSitesHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's town raids.
   *`03-World/Raiding-Parties.md` RAID5: a raid's kinds stand at a town's square and along its streets, which the streaming
   host's built towns hold; the fixed-city bench runs no raid at all (RAID1). The day it runs one, the sentence goes.*
-- **`src/scenes/raidSitesHost.js:"FLAGGED: a raid is the street's, and stands nothing indoors"`** - the interiors' and the
+- **`src/scenes/raidSitesHost.js:"scenes/worldModes.js and"`** - the interiors' and the
   dungeons' raids. *`03-World/Raiding-Parties.md` RAID5: a raid is the street's (RAID1), so neither indoor host is handed a
   town's sites. The day a raid follows a player indoors, the sentence goes.*
 

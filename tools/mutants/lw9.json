@@ -299,8 +299,8 @@
   {
     "name": "LW9-halt",
     "file": "src/scenes/roadStands.js",
-    "old": "          const halt = distM <= DRAW_M ? deps.wanted?.(c.res, c.trip) ?? null : null;   // LW9: the law beyond the walls",
-    "new": "          const halt = null;   // LW9: the law beyond the walls",
+    "old": "          const halt = distM <= DRAW_M ? (deps.wanted?.(c.res, c.trip) ?? null) : null; // LW9: the law beyond the walls",
+    "new": "          const halt = null; // LW9: the law beyond the walls",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "LW9-AUDIT-F4-halt-friend",
     "file": "src/scenes/roadStands.js",
-    "old": "if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
-    "new": "if ((standing === 'hostile' || (halt && standing !== 'friend')) && distM <= DRAW_M) stand(c, 'foe', halt);",
+    "old": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
+    "new": "          if ((standing === 'hostile' || (halt && standing !== 'friend')) && distM <= DRAW_M) stand(c, 'foe', halt);",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]

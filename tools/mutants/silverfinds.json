@@ -820,8 +820,8 @@
   {
     "name": "SILVER-FINDS-grave-unasked",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "        silverFindAt('search', items);",
-    "new": "",
+    "old": "        silverFindAt('search', items); // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)",
+    "new": "        // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)",
     "why": "a headstone's find never holds silver",
     "tests": [
       "test/net/silverfinds_client.test.js"
