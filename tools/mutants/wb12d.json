@@ -3150,8 +3150,8 @@
   {
     "name": "AUDIT-WB12d-the-card-s-breaches",
     "file": "src/ui/brokerWindow.js",
-    "old": "'Paid from your account\\'s embers. Wear it here or on your account card.'],   // AUDIT",
-    "new": "'Paid from your account\\'s breaches closed. Wear it here or on your account card.'],   // AUDIT",
+    "old": "    \"Worn over your name in the breach's fire.\",\n    \"Paid from your account's embers. Wear it here or on your account card.\",",
+    "new": "    \"Worn over your name in the breach's fire.\",\n    \"Paid from your account's breaches closed. Wear it here or on your account card.\",",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]

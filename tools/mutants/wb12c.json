@@ -119,8 +119,8 @@
   {
     "name": "WB12c-handed-over-inside-the-hand-off",
     "file": "src/ui/bookDoor.js",
-    "old": "      if (bookFile) await null;",
-    "new": "      if (bookFile) void 0;",
+    "old": "        await null; // WB12c: after the pack's close, as a fetched file lands - never inside its hand-off (EB4)",
+    "new": "        void 0; // WB12c: after the pack's close, as a fetched file lands - never inside its hand-off (EB4)",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]

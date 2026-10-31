@@ -219,8 +219,8 @@
   {
     "name": "UI1-the-broker-unfitted",
     "file": "src/ui/brokerWindow.js",
-    "old": "requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.broker,",
-    "new": "requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.card,",
+    "old": "        box: SLOT_BOX.broker,",
+    "new": "        box: SLOT_BOX.card,",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]

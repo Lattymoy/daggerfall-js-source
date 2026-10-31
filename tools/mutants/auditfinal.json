@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-FINAL-F4-the-offer-drawn-for-nobody",
     "file": "src/ui/brokerWindow.js",
-    "old": "inventoryItemImage(item, wearer ?? undefined)",
-    "new": "inventoryItemImage(item)",
+    "old": "  const img = item ? inventoryItemImage(item, wearer ?? undefined) : null;",
+    "new": "  const img = item ? inventoryItemImage(item) : null;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]

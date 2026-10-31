@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-GROWTH-L4-4-captain-leave-words-dropped",
     "file": "src/ui/captainTreeWindow.js",
-    "old": "      unacceptedEsc: t('captain.sky.unacceptedLeave',",
-    "new": "      unacceptedEscX: t('captain.sky.unacceptedLeave',",
+    "old": "      unacceptedEsc: t(",
+    "new": "      unacceptedEscX: t(",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

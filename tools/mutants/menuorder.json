@@ -425,8 +425,8 @@
   {
     "name": "MENUORDER-refused-still-disabled",
     "file": "src/ui/brokerWindow.js",
-    "old": "  btn.setAttribute('aria-disabled', 'true');\n",
-    "new": "  btn.setAttribute('disabled', '');\n",
+    "old": "  btn.setAttribute('aria-disabled', 'true');",
+    "new": "  btn.setAttribute('disabled', '');",
     "tests": [
       "test/ui/menuorder.test.js",
       "test/systems/item/set7_broker.test.js"
@@ -435,8 +435,8 @@
   {
     "name": "MENUORDER-refused-no-title",
     "file": "src/ui/brokerWindow.js",
-    "old": "  btn.setAttribute('title', reason);\n  // AUDIT MENU-ORDER U15",
-    "new": "  // AUDIT MENU-ORDER U15",
+    "old": "  btn.setAttribute('title', reason);\n  // AUDIT MENU-ORDER U15: its name starts with the word it shows (WCAG's label in name - \"Need 5 more\", then whose and why)",
+    "new": "  // AUDIT MENU-ORDER U15: its name starts with the word it shows (WCAG's label in name - \"Need 5 more\", then whose and why)",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "MENUORDER-refused-untold",
     "file": "src/ui/brokerWindow.js",
-    "old": "    tell(reason);\n    if (held",
-    "new": "    if (held",
+    "old": "    tell(reason);\n    if (held && btn.isConnected === false && win && name)",
+    "new": "    if (held && btn.isConnected === false && win && name)",
     "tests": [
       "test/ui/menuorder.test.js",
       "test/systems/loot9_reforge.test.js"
@@ -454,8 +454,8 @@
   {
     "name": "MENUORDER-refused-row-picked",
     "file": "src/ui/brokerWindow.js",
-    "old": "    e?.stopPropagation?.();\n    // AUDIT MENU-ORDER U4",
-    "new": "    // AUDIT MENU-ORDER U4",
+    "old": "    e?.stopPropagation?.();\n    // AUDIT MENU-ORDER U4: the keys stay where the press was - a window that draws again on the word finds it by its name",
+    "new": "    // AUDIT MENU-ORDER U4: the keys stay where the press was - a window that draws again on the word finds it by its name",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "MENUORDER-insignia-refusal-pressable",
     "file": "src/ui/brokerWindow.js",
-    "old": "        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused);",
-    "new": "        if (false) refusePress(btn, BROKER_REFUSALS.stones, refused);",
+    "old": "        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused); // MENU-ORDER: pressed, it says why",
+    "new": "        if (false) refusePress(btn, BROKER_REFUSALS.stones, refused); // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -1046,8 +1046,8 @@
   {
     "name": "AUDITMO-U4-focus-dropped",
     "file": "src/ui/brokerWindow.js",
-    "old": ".find((b) => b.getAttribute('aria-label') === name)?.focus?.();",
-    "new": ".find((b) => b.getAttribute('aria-label') === name);",
+    "old": "      [...(win.querySelectorAll?.('[aria-disabled=\"true\"]') ?? [])]\n        .find((b) => b.getAttribute('aria-label') === name)\n        ?.focus?.();",
+    "new": "      [...(win.querySelectorAll?.('[aria-disabled=\"true\"]') ?? [])].find((b) => b.getAttribute('aria-label') === name);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

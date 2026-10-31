@@ -154,8 +154,8 @@
   {
     "name": "PVP-FLAG-CAPS-the-game-press-unread",
     "file": "src/ui/capsFix.js",
-    "old": "  if (by !== 'game' || ch.length !== 1",
-    "new": "  if (ch.length !== 1",
+    "old": "  if (by !== 'game' || ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase())\n    return false;",
+    "new": "  if (ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase()) return false;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -164,7 +164,7 @@
   {
     "name": "PVP-FLAG-CAPS-the-field-press-unheard",
     "file": "src/ui/capsFix.js",
-    "old": "  if (e.code === 'CapsLock') { noteCaps('field'); return false; }",
+    "old": "  if (e.code === 'CapsLock') {\n    noteCaps('field');\n    return false;\n  }",
     "new": "  if (e.code === 'CapsLock') return false;",
     "tests": [
       "test/net/pvpflag.test.js"

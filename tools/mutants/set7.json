@@ -191,8 +191,8 @@
   {
     "name": "SET7-a-refused-offers-buy-pressable",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (!s.ok) refusePress(buy, BROKER_REFUSALS[s.reason] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
-    "new": "",
+    "old": "      if (!s.ok) refusePress(buy, BROKER_REFUSALS[s.reason] ?? '', refused); // MENU-ORDER: pressed, it says why\n      row.append(frame, text, price, buy);",
+    "new": "      row.append(frame, text, price, buy);",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SET7-the-purse-miscounted",
     "file": "src/ui/brokerWindow.js",
-    "old": "purseText(brokerOfferState(null, state).have, deps.locked?.() ?? 0)",
-    "new": "purseText(brokerOfferState(null, state).have + (deps.locked?.() ?? 0), deps.locked?.() ?? 0)",
+    "old": "    purse.textContent = purseText(brokerOfferState(null, state).have, deps.locked?.() ?? 0);",
+    "new": "    purse.textContent = purseText(brokerOfferState(null, state).have + (deps.locked?.() ?? 0), deps.locked?.() ?? 0);",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SET7-the-hosts-refusal-unsaid",
     "file": "src/ui/brokerWindow.js",
-    "old": "{ ok: false, text: done?.text ?? BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' }",
-    "new": "{ ok: false, text: BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' }",
+    "old": "          : { ok: false, text: done?.text ?? BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' };",
+    "new": "          : { ok: false, text: BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' };",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SET7-a-listener-left-on-the-window",
     "file": "src/ui/brokerWindow.js",
-    "old": "      globalThis.removeEventListener('keydown', onKey, { capture: true });\n",
-    "new": "",
+    "old": "      globalThis.removeEventListener('keydown', onKey, { capture: true });\n      offOutside();",
+    "new": "      offOutside();",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SET7-done-while-the-window-stands",
     "file": "src/ui/brokerDoor.js",
-    "old": "    get done() { return fired; },",
-    "new": "    get done() { return fired || !!view; },",
+    "old": "      return fired;",
+    "new": "      return fired || !!view;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SET7-a-second-door-left-standing",
     "file": "src/ui/brokerDoor.js",
-    "old": "  if (typeof document === 'undefined') return null;\n  _open?.dispose();",
-    "new": "  if (typeof document === 'undefined') return null;",
+    "old": "  _open?.dispose();\n  let fired = false;",
+    "new": "  let fired = false;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "SET7-AUDIT-U1-no-sheet-on-classic",
     "file": "src/ui/brokerWindow.js",
-    "old": "  injectBrokerSkinStyle();\n",
-    "new": "",
+    "old": "  injectBrokerSkinStyle();\n  const nameOf = deps.nameOf ?? ((it) => String(it?.name ?? ''));",
+    "new": "  const nameOf = deps.nameOf ?? ((it) => String(it?.name ?? ''));",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "SET7-AUDIT-U1-the-plus-page-given-a-second-sheet",
     "file": "src/ui/brokerWindow.js",
-    "old": "  if (isEnhancedPlus() || doc.getElementById?.(BROKER_SKIN_STYLE_ID)",
-    "new": "  if (doc.getElementById?.(BROKER_SKIN_STYLE_ID)",
+    "old": "    isEnhancedPlus() ||\n    doc.getElementById?.(BROKER_SKIN_STYLE_ID) ||",
+    "new": "    doc.getElementById?.(BROKER_SKIN_STYLE_ID) ||",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "SET7-AUDIT-U1-a-sheet-laid-twice",
     "file": "src/ui/brokerWindow.js",
-    "old": " || [...(doc.head?.children ?? [])].some((c) => c.id === BROKER_SKIN_STYLE_ID)",
-    "new": "",
+    "old": "  if (\n    isEnhancedPlus() ||\n    doc.getElementById?.(BROKER_SKIN_STYLE_ID) ||\n    [...(doc.head?.children ?? [])].some((c) => c.id === BROKER_SKIN_STYLE_ID)\n  )\n    return;",
+    "new": "  if (isEnhancedPlus() || doc.getElementById?.(BROKER_SKIN_STYLE_ID)) return;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "SET7-AUDIT-U4-the-scroll-thrown-away",
     "file": "src/ui/brokerWindow.js",
-    "old": "    for (const c of [...list.children]) c.remove();",
-    "new": "    for (const c of [...list.children]) c.remove(); body.scrollTop = 0;",
+    "old": "    for (const o of offers) {",
+    "new": "    body.scrollTop = 0;\n    for (const o of offers) {",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "SET7-AUDIT-U10-rows-unreachable",
     "file": "src/ui/brokerWindow.js",
-    "old": "    row.setAttribute('tabindex', '0');\n",
-    "new": "",
+    "old": "    row.setAttribute('tabindex', '0');\n    row.onclick = pick;",
+    "new": "    row.onclick = pick;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "SET7-AUDIT-U10-a-key-on-the-buy-taken-by-the-row",
     "file": "src/ui/brokerWindow.js",
-    "old": "if (e.target === row && (e.key === 'Enter' || e.key === ' '))",
-    "new": "if (e.key === 'Enter' || e.key === ' ')",
+    "old": "      if (e.target === row && (e.key === 'Enter' || e.key === ' ')) {",
+    "new": "      if (e.key === 'Enter' || e.key === ' ') {",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "SET7-AUDIT-U6-the-article-doubled",
     "file": "src/ui/brokerWindow.js",
-    "old": "`Bought: ${name}, for ${stonesText(price)}.`",
-    "new": "`You buy the ${name} for ${stonesText(price)}.`",
+    "old": "export const BROKER_SOLD = (name, price) => `Bought: ${name}, for ${stonesText(price)}.`; // AUDIT SET U6: no article of its own - a Legendary's name brings one (\"The Warden\"), a Regalia piece's is a possessive",
+    "new": "export const BROKER_SOLD = (name, price) => `You buy the ${name} for ${stonesText(price)}.`; // AUDIT SET U6: no article of its own - a Legendary's name brings one (\"The Warden\"), a Regalia piece's is a possessive",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "SET7-AUDIT-U14-the-sale-unheard",
     "file": "src/ui/brokerWindow.js",
-    "old": "  noteLine.setAttribute('aria-live', 'polite');\n",
-    "new": "",
+    "old": "  noteLine.setAttribute('aria-live', 'polite');\n  title.append(el('h2', null, 'The Sigil Broker'), sub, noteLine);",
+    "new": "  title.append(el('h2', null, 'The Sigil Broker'), sub, noteLine);",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]

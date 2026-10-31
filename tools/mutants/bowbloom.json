@@ -38,8 +38,8 @@
   {
     "name": "BOW-BLOOM-the-field-of-view-unread",
     "file": "src/ui/bowBloomRing.js",
-    "old": ") / Math.tan(fov / 2));",
-    "new": ") / Math.tan(Math.PI / 6));",
+    "old": "  Math.round((2 * (height / 2) * Math.tan((deg * Math.PI) / 180)) / Math.tan(fov / 2));",
+    "new": "  Math.round((2 * (height / 2) * Math.tan((deg * Math.PI) / 180)) / Math.tan(Math.PI / 6));",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]

@@ -126,7 +126,7 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 (`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. The Portal Stone
 works anywhere in the zone, flagged or not (PVP-PORTAL, below; `portalStoneHost.js:"const teleportRefused = (to) =>"`), its
 arrival too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: true })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
-capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
+capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey"`). Skulls overhead
 come next. A departure: DFU has no flag.
 
 "or i can flag anywerte": the flag is the zone's alone (PVP-FLAG-ZONE). Out of Cyrodiil, the open sea and their halls

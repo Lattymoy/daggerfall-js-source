@@ -553,8 +553,8 @@
   {
     "name": "CT-page-meter-floor",
     "file": "src/ui/captainPage.js",
-    "old": "  return { now: Math.max(0, stars.xp - floor), max: Math.max(1, stars.next - floor),",
-    "new": "  return { now: Math.max(0, stars.xp), max: Math.max(1, stars.next),",
+    "old": "    now: Math.max(0, stars.xp - floor),\n    max: Math.max(1, stars.next - floor),",
+    "new": "    now: Math.max(0, stars.xp),\n    max: Math.max(1, stars.next),",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "CT-page-door-skipped",
     "file": "src/ui/captainPage.js",
-    "old": ": door ? door(() => open()) : open());",
-    "new": ": open());",
+    "old": "      b.onclick = () => (typeof growth === 'function' ? growth() : door ? door(() => open()) : open());",
+    "new": "      b.onclick = () => (typeof growth === 'function' ? growth() : open());",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ],
@@ -582,8 +582,8 @@
   {
     "name": "CT-win-points-unchecked",
     "file": "src/ui/captainTreeWindow.js",
-    "old": "  if (way.length > left) return t('captain.no.points',",
-    "new": "  if (false) return t('captain.no.points',",
+    "old": "  if (way.length > left)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

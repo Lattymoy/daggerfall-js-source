@@ -427,7 +427,7 @@
   {
     "name": "WB9g-the-wardrobe-never-asked",
     "file": "src/ui/brokerWindow.js",
-    "old": "  if (deps.insigniaLoad) Promise.resolve().then(() => deps.insigniaLoad()).catch(() => null).then(() => render());",
+    "old": "  if (deps.insigniaLoad)\n    Promise.resolve()\n      .then(() => deps.insigniaLoad())\n      .catch(() => null)\n      .then(() => render());",
     "new": "",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -436,8 +436,8 @@
   {
     "name": "WB9g-the-insignia-rows-unreachable",
     "file": "src/ui/brokerWindow.js",
-    "old": "        pressable(row, () => { pickedInsig = g.id; render({ reveal: true }); });",
-    "new": "        row.onclick = () => { pickedInsig = g.id; render({ reveal: true }); };",
+    "old": "        pressable(row, () => {\n          pickedInsig = g.id;\n          render({ reveal: true });\n        });",
+    "new": "        row.onclick = () => {\n          pickedInsig = g.id;\n          render({ reveal: true });\n        };",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

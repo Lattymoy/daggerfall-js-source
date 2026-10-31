@@ -287,8 +287,8 @@
   {
     "name": "SS4-the-broker-card-silent",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE));",
-    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE));",
+    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
+    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

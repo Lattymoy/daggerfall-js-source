@@ -505,8 +505,8 @@
   {
     "name": "EGE1-window-no-rows",
     "file": "src/ui/brokerWindow.js",
-    "old": "    if (pan.length) {\n      const head = el('li', 'broker-insignia-head broker-panoply-head');",
-    "new": "    if (false) {\n      const head = el('li', 'broker-insignia-head broker-panoply-head');",
+    "old": "    if (pan.length) {",
+    "new": "    if (false) {",
     "why": "the Panoply never drawn",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -525,8 +525,8 @@
   {
     "name": "EGE1-window-wares-mid-sale",
     "file": "src/ui/brokerWindow.js",
-    "old": " || pendingPan !== null || ",
-    "new": " || ",
+    "old": "  deps = { ...outer, insigniaBusy: () => !!outer.insigniaBusy?.() || pendingPan !== null || !!outer.panoply?.busy?.() };",
+    "new": "  deps = { ...outer, insigniaBusy: () => !!outer.insigniaBusy?.() || !!outer.panoply?.busy?.() };",
     "why": "a ware pressable while a Panoply piece is sold",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -535,8 +535,8 @@
   {
     "name": "EGE1-window-bought-unread",
     "file": "src/ui/brokerWindow.js",
-    "old": "bought: piece === id, spent: piece !== null",
-    "new": "bought: false, spent: piece !== null",
+    "old": "    bought: piece === id,",
+    "new": "    bought: false,",
     "why": "the week's piece not marked bought",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -545,8 +545,8 @@
   {
     "name": "EGE1-window-spent-unread",
     "file": "src/ui/brokerWindow.js",
-    "old": "bought: piece === id, spent: piece !== null",
-    "new": "bought: piece === id, spent: false",
+    "old": "    spent: piece !== null,",
+    "new": "    spent: false,",
     "why": "the rest still offered once the week's piece is bought",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"

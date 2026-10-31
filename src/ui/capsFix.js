@@ -6,19 +6,27 @@
 let by = /** @type {'game' | 'field' | null} */ (null);
 
 /** Caps Lock pressed: in the game (the flag's key) or in a text field. */
-export function noteCaps(where) { by = where; }
+export function noteCaps(where) {
+  by = where;
+}
 
 /** The chat field's keydown: a letter typed under the game's Caps Lock goes in as its other case. True if taken. */
 export function capsFixKey(e, field) {
-  if (e.code === 'CapsLock') { noteCaps('field'); return false; }
+  if (e.code === 'CapsLock') {
+    noteCaps('field');
+    return false;
+  }
   const ch = typeof e.key === 'string' ? e.key : '';
-  if (by !== 'game' || ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase()) return false;
+  if (by !== 'game' || ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase())
+    return false;
   if (!e.getModifierState?.('CapsLock')) return false;
   const flip = ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase();
-  const v = String(field.value ?? ''), a = field.selectionStart ?? v.length, b = field.selectionEnd ?? a;
+  const v = String(field.value ?? ''),
+    a = field.selectionStart ?? v.length,
+    b = field.selectionEnd ?? a;
   e.preventDefault();
   field.value = v.slice(0, a) + flip + v.slice(b);
   field.setSelectionRange?.(a + 1, a + 1);
-  if (globalThis.Event) field.dispatchEvent?.(new globalThis.Event('input', { bubbles: true }));   // the field's own listeners (the [ list) hear it
+  if (globalThis.Event) field.dispatchEvent?.(new globalThis.Event('input', { bubbles: true })); // the field's own listeners (the [ list) hear it
   return true;
 }

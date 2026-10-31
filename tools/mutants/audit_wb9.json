@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WB9-the-whole-word-in-the-row-sign",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? g.name : [...g.name][0] ?? ''",
-    "new": "g.name",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', g.name);",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WB9-the-card-sign-a-letter",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? g.name : [...g.name][0] ?? ''",
-    "new": "[...g.name][0] ?? ''",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', [...g.name][0] ?? '');",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WB9-the-letter-sized-as-the-word",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? 'insignia-word' : 'insignia-word mono'",
-    "new": "'insignia-word'",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', 'insignia-word', hero ? g.name : ([...g.name][0] ?? ''));",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-WB9-the-wares-pressable-mid-sale",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', '');",
-    "new": "",
+    "old": "      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', ''); // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is",
+    "new": "      // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-WB9-a-ware-sold-mid-sale-by-a-press",
     "file": "src/ui/brokerWindow.js",
-    "old": "        if (pendingInsig || deps.insigniaBusy?.()) return;\n",
-    "new": "",
+    "old": "        if (pendingInsig || deps.insigniaBusy?.()) return;\n        const done = deps.buy(o);",
+    "new": "        const done = deps.buy(o);",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

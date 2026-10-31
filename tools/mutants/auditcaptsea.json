@@ -1770,8 +1770,8 @@
   {
     "name": "ACS-L5-meter-floor",
     "file": "src/ui/captainPage.js",
-    "old": "const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
-    "new": "const floor = Number.isFinite(rank.at) ? rank.at : 0;",
+    "old": "  const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
+    "new": "  const floor = Number.isFinite(rank.at) ? rank.at : 0;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1779,8 +1779,8 @@
   {
     "name": "ACS-L5-meter-label",
     "file": "src/ui/captainPage.js",
-    "old": "label: `${nextRankOf(standing)?.wanting ?? 0} to ${next.title}` }",
-    "new": "label: `${next.at - floor} to ${next.title}` }",
+    "old": "    ? {\n        now: Math.max(0, standing - floor),\n        max: next.at - floor,\n        label: `${nextRankOf(standing)?.wanting ?? 0} to ${next.title}`,\n      }",
+    "new": "    ? { now: Math.max(0, standing - floor), max: next.at - floor, label: `${next.at - floor} to ${next.title}` }",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1797,8 +1797,8 @@
   {
     "name": "ACS-L10-page-words",
     "file": "src/ui/captainPage.js",
-    "old": "'Your notoriety in these waters is too high for any favors in its harbors.'",
-    "new": "'Its navy hunts you - its harbours keep no favours for you.'",
+    "old": "      row.append(el('span', 'hld-why', 'Your notoriety in these waters is too high for any favors in its harbors.')); // AUDIT CAPTAIN'S SEA L10: its navy hunts at twice it",
+    "new": "      row.append(el('span', 'hld-why', 'Its navy hunts you - its harbours keep no favours for you.')); // AUDIT CAPTAIN'S SEA L10: its navy hunts at twice it",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1815,8 +1815,8 @@
   {
     "name": "ACS-B15-words",
     "file": "src/ui/captainPage.js",
-    "old": "if (p.yard) out.push(`the shipwright's repairs and powder ${pc(p.yard)} off`);",
-    "new": "if (p.yard) out.push(`the shipwright ${pc(p.yard)} off`);",
+    "old": "  if (p.yard) out.push(`the shipwright's repairs and powder ${pc(p.yard)} off`); // AUDIT CAPTAIN'S SEA B15: his stores and grog are what they cost",
+    "new": "  if (p.yard) out.push(`the shipwright ${pc(p.yard)} off`); // AUDIT CAPTAIN'S SEA B15: his stores and grog are what they cost",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

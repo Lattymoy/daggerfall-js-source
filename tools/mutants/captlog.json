@@ -335,8 +335,8 @@
   {
     "name": "CL-meter-floor",
     "file": "src/ui/captainPage.js",
-    "old": "const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
-    "new": "const floor = Math.min(0, standing);",
+    "old": "  const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
+    "new": "  const floor = Math.min(0, standing);",
     "tests": [
       "test/systems/naval/captlog.test.js"
     ]
