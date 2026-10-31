@@ -190,7 +190,7 @@
     "name": "L10N3e-ui-bankWindow-188-Region",
     "file": "src/ui/bankWindow.js",
     "old": "    return Number.isInteger(i) ? getLocalizedRegionName(i, canonical) : canonical();",
-    "new": "    return Number.isInteger(i) ? (canonical)(i) : canonical();",
+    "new": "    return Number.isInteger(i) ? canonical(i) : canonical();",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_places.test.js",

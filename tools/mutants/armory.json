@@ -268,8 +268,8 @@
   {
     "name": "ARMORY-the-arrival-in-english",
     "file": "src/ui/accountFlow.js",
-    "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
-    "new": "",
+    "old": "        name: String(self.shopWaiting).startsWith('armory:')\n          ? armoryPieceName(String(self.shopWaiting).slice(7))\n          : (SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting),",
+    "new": "        name: SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting,",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

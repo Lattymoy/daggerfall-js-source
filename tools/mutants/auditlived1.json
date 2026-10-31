@@ -236,8 +236,8 @@
   {
     "name": "AUDITLIVED1-P-the-classic-parchment-gets-the-long-words",
     "file": "src/ui/bankWindow.js",
-    "old": "dueDateText?.(loanDueDate(a, r), { short: true })",
-    "new": "dueDateText?.(loanDueDate(a, r))",
+    "old": "      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // AUDIT LIVED1 P: the parchment's room",
+    "new": "      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // AUDIT LIVED1 P: the parchment's room",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]

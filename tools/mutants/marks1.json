@@ -161,8 +161,8 @@
   {
     "name": "MARKS1-18-the-counting-box-dismissed",
     "file": "src/ui/bankWindow.js",
-    "old": "    if (this.box?.waiting) return;   // MARKS1: the counting box stays until the service answers\n",
-    "new": "",
+    "old": "    if (this.box?.waiting) return; // MARKS1: the counting box stays until the service answers\n    const b = this.box;",
+    "new": "    const b = this.box;",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "MARKS1-19-sell-with-nothing-held",
     "file": "src/ui/bankWindow.js",
-    "old": "      return !!m && m.open() === true && (m.balance() ?? 0) > 0 && !m.pending()",
-    "new": "      return !!m && m.open() === true && !m.pending()",
+    "old": "      return (\n        !!m &&\n        m.open() === true &&\n        (m.balance() ?? 0) > 0 &&\n        !m.pending() &&\n        this.transactionType === TRANSACTION_TYPE.None &&\n        !this.box\n      );",
+    "new": "      return !!m && m.open() === true && !m.pending() && this.transactionType === TRANSACTION_TYPE.None && !this.box;",
     "tests": [
       "test/net/marks1.test.js"
     ]

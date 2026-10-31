@@ -337,8 +337,8 @@
   {
     "name": "WB9g-the-client-decides-the-aura",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
-    "new": "      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
+    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = {\n        ...(self.wardrobe ?? {}),\n        titles: r.data.titles,\n        title: r.data.title,\n        glyphs: r.data.glyphs,\n        ...glyphHalf(r.data),\n        ...auraHalf(r.data),\n      };\n      self.busy = false;\n      self.note = want",
+    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "WB9g-the-aura-refusal-writes-anyway",
     "file": "src/ui/accountFlow.js",
-    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));",
-    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) { self.wardrobe = { ...self.wardrobe, aura: want }; return refuse(accountRefusalText(r.error)); }",
+    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = {",
+    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) {\n        self.wardrobe = { ...self.wardrobe, aura: want };\n        return refuse(accountRefusalText(r.error));\n      }\n      self.wardrobe = {",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "WB9g-my-feet-never-told",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
-    "new": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
+    "old": "        : t('account.flow.auraRemoved', 'Aura removed.'); // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, {\n        glyphs: r.data.glyphs,\n        glyphsOff: r.data.glyphsOff,\n        aura: auraStated(r.data),\n        armory: armoryStated(r.data),\n        icon: iconStated(r.data),\n        secret: asked,\n      });\n      changed();",
+    "new": "        : t('account.flow.auraRemoved', 'Aura removed.'); // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

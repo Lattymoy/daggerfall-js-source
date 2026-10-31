@@ -186,8 +186,8 @@
   {
     "name": "B6-the-typing-named",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.codesFor = typeof r.data.handle === 'string' ? r.data.handle : v('handle');   // AUDIT RECOVERY-SET B6",
-    "new": "    self.codesFor = v('handle');   // AUDIT RECOVERY-SET B6",
+    "old": "    self.codesFor = typeof r.data.handle === 'string' ? r.data.handle : v('handle'); // AUDIT RECOVERY-SET B6: the row's own casing",
+    "new": "    self.codesFor = v('handle'); // AUDIT RECOVERY-SET B6: the row's own casing",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "C1-the-register-shown-one",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.recoveryCodes = codesOf(r.data);\n    self.codesFor",
-    "new": "    self.recoveryCodes = codesOf({ recoveryCode: r.data.recoveryCodes?.[0] });\n    self.codesFor",
+    "old": "    self.recoveryCodes = codesOf(r.data);",
+    "new": "    self.recoveryCodes = codesOf({ recoveryCode: r.data.recoveryCodes?.[0] });",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "B4-the-note-outlives-the-codes",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.note = ''; self.error = '';   // AUDIT RECOVERY-SET B4",
-    "new": "    // AUDIT RECOVERY-SET B4",
+    "old": "    self.note = '';\n    self.error = ''; // AUDIT RECOVERY-SET B4: \"Copied.\" belonged to the codes, not to the card after them",
+    "new": "    // AUDIT RECOVERY-SET B4: \"Copied.\" belonged to the codes, not to the card after them",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "C2-go-keeps-the-codes",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
-    "new": "    if (stage !== 'code') { self.codesFor = ''; }",
+    "old": "      self.recoveryCodes = null;\n      self.codesFor = '';",
+    "new": "      self.codesFor = '';",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "C9-an-empty-answer-shown",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (!codes.length) return refuse(accountRefusalText('server'));\n",
-    "new": "",
+    "old": "    if (!codes.length) return refuse(accountRefusalText('server'));\n    self.recoveryCodes = codes;",
+    "new": "    self.recoveryCodes = codes;",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]

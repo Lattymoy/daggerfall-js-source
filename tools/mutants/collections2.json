@@ -201,8 +201,8 @@
   {
     "name": "C2-the-note-names-the-key",
     "file": "src/ui/accountFlow.js",
-    "old": "{ what: TITLE_TEXT[want] ?? want }",
-    "new": "{ what: want }",
+    "old": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: TITLE_TEXT[want] ?? want })",
+    "new": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: want })",
     "tests": [
       "test/ui/collections2.test.js"
     ]

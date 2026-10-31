@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-LOOT-II-B6-the-handed-comparison-unread",
     "file": "src/ui/armourCard.js",
-    "old": "  const cmp = wear === undefined ? wearComparison(entity, item) : wear;\n  if (!cmp || !cmp.replaces.length) return null;",
-    "new": "  const cmp = wearComparison(entity, item);\n  if (!cmp || !cmp.replaces.length) return null;",
+    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
+    "new": "  if (!lootRarityOn()) return null;\n  const cmp = wearComparison(entity, item);",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-LOOT-II-B6-compared-with-the-ladder-off",
     "file": "src/ui/armourCard.js",
-    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined",
-    "new": "  const cmp = wear === undefined",
+    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
+    "new": "  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

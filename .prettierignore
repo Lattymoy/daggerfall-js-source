@@ -1699,8 +1699,12 @@
 !/src/tools/waterLab.js
 !/src/ui/
 /src/ui/*
+!/src/ui/accountFlow.js
+!/src/ui/actionText.js
 !/src/ui/arena/
 /src/ui/arena/*/
+!/src/ui/armoryText.js
+!/src/ui/armourCard.js
 !/src/ui/automap/
 /src/ui/automap/*
 !/src/ui/automap/automapCamera.js
@@ -1708,6 +1712,11 @@
 !/src/ui/automap/automapDoor.js
 !/src/ui/automap/automapMarkers.js
 !/src/ui/automap/automapText.js
+!/src/ui/bankWindow.js
+!/src/ui/barLoss.js
+!/src/ui/bitmapCanvas.js
+!/src/ui/bloodScreen.js
+!/src/ui/boatMarks.js
 !/src/ui/bounty/
 /src/ui/bounty/*/
 !/src/ui/card/

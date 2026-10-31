@@ -342,8 +342,8 @@
   {
     "name": "L10N3d2-ui-bankWindow-187-cannotCarryGold",
     "file": "src/ui/bankWindow.js",
-    "old": "      ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]",
-    "new": "      ? [{ text: CANNOT_CARRY_GOLD, center: true }]",
+    "old": "        ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]",
+    "new": "        ? [{ text: CANNOT_CARRY_GOLD, center: true }]",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"

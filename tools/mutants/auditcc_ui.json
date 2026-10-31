@@ -352,8 +352,8 @@
   {
     "name": "AUDITCC-UI-S6-the-hidden-power-counted",
     "file": "src/ui/armourCard.js",
-    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
-    "new": "affixes: [] }",
+    "old": "export const asKnown = (item) =>\n  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "export const asKnown = (item) => (itemIsIdentified(item) ? item : { ...item, affixes: [] });",
     "why": "the unknown Mantle's Mountain-Born counted: -85 to -53",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "AUDITCC-UI-S6-the-hidden-lines-counted",
     "file": "src/ui/armourCard.js",
-    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, imprint: null, gilded: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, legendary: null, imprint: null, gilded: null };",
     "why": "the unknown Mantle's lining counted",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "AUDITCC-UI-S6-the-imprint-kept",
     "file": "src/ui/armourCard.js",
-    "old": "legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, gilded: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, gilded: null };",
     "why": "a Rare's hidden imprint in the view",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "AUDITCC-UI-S6-the-gilding-kept",
     "file": "src/ui/armourCard.js",
-    "old": "legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, imprint: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null };",
     "why": "a Gilded's hidden id in the view",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "AUDITCC-UI-S6-known-read-as-unknown",
     "file": "src/ui/armourCard.js",
-    "old": "(itemIsIdentified(item) ? item :",
-    "new": "(false ? item :",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  false ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
     "why": "an identified piece's powers left out",
     "tests": [
       "test/systems/auditcc_ui.test.js"

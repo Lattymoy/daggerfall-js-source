@@ -1056,7 +1056,7 @@ each is a line here, findable by its tag.
   "dragging and dropping the left hand weapon to the right hand one or when empty should be possible in the
   inventory"): a hand's own panel is a drop target (`handIntent`, `enhancedInventory.js:"function handIntent"`).
   HANDS-COMPARE (the owner: "Damage comparison should now show left and right hand in the item info when hovering"): a
-  weapon's card sets it against each hand's (`armourCard.js:"comparison should now show left"`).
+  weapon's card sets it against each hand's (`armourCard.js:"comparison should"`).
 - HAND-DROP (FIELD BUGS 2026-10-29, #feature-feedback: "Dragging a weapon from the inventory to the L-Hand slot pushes
   the weapon that was previously there to the right hand and unequips what was your main weapon"): a pack piece dropped
   on a hand's panel goes in that hand and takes off only that hand's piece, in one equip act (`equipItem`'s `hand`,

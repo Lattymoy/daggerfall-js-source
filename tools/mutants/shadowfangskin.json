@@ -112,8 +112,8 @@
   {
     "name": "SFSKIN-wardrobe-glyphs-not-adopted",
     "file": "src/ui/accountFlow.js",
-    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), armory: armoryStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
-    "new": "kind: r.data.account?.kind, aura: auraStated(r.data.wardrobe), armory: armoryStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
+    "old": "      glyphs: r.data.wardrobe?.glyphs,\n      glyphsOff: r.data.wardrobe?.glyphsOff,\n      aura: auraStated(r.data.wardrobe),",
+    "new": "      aura: auraStated(r.data.wardrobe),",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ]

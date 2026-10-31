@@ -471,8 +471,8 @@
   {
     "name": "HOME1-the-bank-sells-online",
     "file": "src/ui/bankWindow.js",
-    "old": "      if (online) { this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; return; }\n",
-    "new": "",
+    "old": "      if (online) {\n        this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };\n        return;\n      }\n      const d = buyHouseDecision({",
+    "new": "      const d = buyHouseDecision({",
     "tests": [
       "test/server/home1.test.js"
     ]

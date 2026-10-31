@@ -362,7 +362,7 @@
   {
     "name": "PL-refresh-never-reads",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (!r || !r.ok || self.stage !== 'in' || secret() !== asked) return false;   // signed out, a blip, or another account since",
+    "old": "    if (!r || !r.ok || self.stage !== 'in' || secret() !== asked) return false; // signed out, a blip, or another account since",
     "new": "    return false;",
     "tests": [
       "test/server/patreon_link.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "PL-note-never-linked",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (self.patreonWaiting && self.patreon?.linked && (",
-    "new": "    if (false && self.patreonWaiting && self.patreon?.linked && (",
+    "old": "      self.patreonWaiting &&",
+    "new": "      false &&\n      self.patreonWaiting &&",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -382,7 +382,7 @@
   {
     "name": "PL-unlink-patches",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // the service's word whole: a tier's title gone with the link",
+    "old": "      self.wardrobe = {\n        ...(self.wardrobe ?? {}),\n        titles: r.data.titles,\n        title: r.data.title,\n        glyphs: r.data.glyphs,\n        ...glyphHalf(r.data),\n        ...auraHalf(r.data),\n      }; // the service's word whole: a tier's title gone with the link",
     "new": "      self.wardrobe = { ...(self.wardrobe ?? {}) };",
     "tests": [
       "test/server/patreon_link.test.js"

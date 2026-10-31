@@ -334,8 +334,8 @@
   {
     "name": "TEMPUI-the-wear-table-unsaid",
     "file": "src/ui/armourCard.js",
-    "old": "    worn: slotsThen,",
-    "new": "",
+    "old": "    worn: slotsThen, // TEMP-UI: the table the wear would leave - the card's temperature reads it (ui/temperatureCard.js)",
+    "new": "    // TEMP-UI: the table the wear would leave - the card's temperature reads it (ui/temperatureCard.js)",
     "why": "the card cannot read the wear's table",
     "tests": [
       "test/systems/survival/tempui.test.js"

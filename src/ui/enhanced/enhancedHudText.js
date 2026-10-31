@@ -50,7 +50,7 @@
 // ui/deathScreen.js:"const died = t('death.title', 'YOU HAVE DIED')".."font,", ui/restWindow.js:"rows = this.endLines", ui/saveWindow.js:"font, prompt, m,"+
 // (shadowText, eight sites), ui/travel/travelPopUp.js:"font, r.text ?? r",
 // ui/quest/questJournal.js:"font, line, m.ox + (lx + 1)", ui/messageBox.js:"for (const c of r.cells)"/ui/messageBox.js:"font, r.text, m," and
-// ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)"/ui/actionText.js:"if (drawMessageBox(renderer, m, font, box, opts))" (every ActionTextBox's parchment on the
+// ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)"ui/actionText.js:"if (drawMessageBox(renderer, m, font, box, opts))" (every ActionTextBox's parchment on the
 // classic skin). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face
 // cannot change without the metrics changing with it. (FONT3, 2026-10-02: that list is history - five of the seven

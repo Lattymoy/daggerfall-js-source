@@ -795,8 +795,8 @@
   {
     "name": "SHADOWCLOAK-the-cards-name-the-key",
     "file": "src/ui/accountFlow.js",
-    "old": "{ what: AURA_TEXT[want] ?? want }",
-    "new": "{ what: want }",
+    "old": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want })",
+    "new": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: want })",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

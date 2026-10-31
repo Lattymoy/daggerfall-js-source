@@ -81,8 +81,8 @@
   {
     "name": "RESTORE-A-the-window-offers-a-crossed-house",
     "file": "src/ui/bankWindow.js",
-    "old": "const crossed = this.hooks.crossedDeed?.('house');",
-    "new": "const crossed = null;",
+    "old": "    const crossed = this.hooks.crossedDeed?.('house');",
+    "new": "    const crossed = null;",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "RESTORE-A-the-window-offers-a-crossed-ship",
     "file": "src/ui/bankWindow.js",
-    "old": "const crossed = this.hooks.crossedDeed?.('ship');",
-    "new": "const crossed = null;",
+    "old": "      const crossed = this.hooks.crossedDeed?.('ship'); // RESTORE: nor a ship",
+    "new": "      const crossed = null; // RESTORE: nor a ship",
     "tests": [
       "test/systems/restore.test.js"
     ]

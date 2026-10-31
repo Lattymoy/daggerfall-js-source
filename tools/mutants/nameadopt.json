@@ -2,7 +2,7 @@
   {
     "name": "NAME-ADOPT-1-the-flow-never-adopts",
     "file": "src/ui/accountFlow.js",
-    "old": "    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), armory: armoryStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn",
+    "old": "    adoptIdentity(storage, {\n      name: r.data.account?.name,\n      kind: r.data.account?.kind,\n      glyphs: r.data.wardrobe?.glyphs,\n      glyphsOff: r.data.wardrobe?.glyphsOff,\n      aura: auraStated(r.data.wardrobe),\n      armory: armoryStated(r.data.wardrobe),\n      icon: iconStated(r.data.wardrobe),\n      secret: asked,\n    }); // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn",
     "new": "",
     "tests": [
       "test/net/nameadopt.test.js"

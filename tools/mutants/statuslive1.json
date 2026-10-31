@@ -11,8 +11,8 @@
   {
     "name": "every-message-box-stops-pausing-instead",
     "file": "src/ui/actionText.js",
-    "old": "  constructor(lines, { highlightColor = undefined, previousWindow = true, pauseWhileOpen = true, noticeHint = undefined, onClose = null } = {}) {",
-    "new": "  constructor(lines, { highlightColor = undefined, previousWindow = true, pauseWhileOpen = false, noticeHint = undefined, onClose = null } = {}) {",
+    "old": "      pauseWhileOpen = true,",
+    "new": "      pauseWhileOpen = false,",
     "tests": [
       "test/ui/statuslive.test.js"
     ]

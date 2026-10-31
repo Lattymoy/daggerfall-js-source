@@ -191,8 +191,8 @@
   {
     "name": "UI2-the-untrimmed-fit-trimmed",
     "file": "src/ui/bitmapCanvas.js",
-    "old": "const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
-    "new": "const b = opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA);",
+    "old": "  const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
+    "new": "  const b = opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

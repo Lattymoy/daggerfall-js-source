@@ -2356,8 +2356,8 @@
   {
     "name": "BLOOD2e-the-lens-is-uncapped",
     "file": "src/ui/bloodScreen.js",
-    "old": "      if (drops.length > SCREEN_DROPS_CAP) drops = drops.slice(drops.length - SCREEN_DROPS_CAP);\n",
-    "new": "",
+    "old": "      if (drops.length > SCREEN_DROPS_CAP) drops = drops.slice(drops.length - SCREEN_DROPS_CAP);\n      return n;",
+    "new": "      return n;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2374,8 +2374,8 @@
   {
     "name": "BLOOD2e-a-drop-never-dies",
     "file": "src/ui/bloodScreen.js",
-    "old": "      drops = drops.filter((d) => d.age < SCREEN_DROP_LIFE);\n",
-    "new": "",
+    "old": "      drops = drops.filter((d) => d.age < SCREEN_DROP_LIFE);\n      return drops.length;",
+    "new": "      return drops.length;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2392,8 +2392,8 @@
   {
     "name": "BLOOD2e-the-lens-draws-opaque",
     "file": "src/ui/bloodScreen.js",
-    "old": "          { blend: true, rotate:",
-    "new": "          { blend: false, rotate:",
+    "old": "          blend: true,",
+    "new": "          blend: false,",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2401,8 +2401,8 @@
   {
     "name": "BLOOD2e-the-lens-is-not-red",
     "file": "src/ui/bloodScreen.js",
-    "old": "          [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], a],",
-    "new": "          [1, 1, 1, a],",
+    "old": "        renderer.drawScreenQuad(tex, { x, y, w: px, h: px }, d.cell, [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], a], {",
+    "new": "        renderer.drawScreenQuad(tex, { x, y, w: px, h: px }, d.cell, [1, 1, 1, a], {",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2761,8 +2761,8 @@
   {
     "name": "AUDIT5-drops-off-the-screen",
     "file": "src/ui/bloodScreen.js",
-    "old": "          x: 0.1 + rng() * 0.8, y: 0.1 + rng() * 0.7,",
-    "new": "          x: rng(), y: rng(),",
+    "old": "          x: 0.1 + rng() * 0.8,\n          y: 0.1 + rng() * 0.7,",
+    "new": "          x: rng(),\n          y: rng(),",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

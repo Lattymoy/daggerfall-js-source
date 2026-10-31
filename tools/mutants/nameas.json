@@ -213,8 +213,8 @@
   {
     "name": "NAMEAS-the-choice-decided-locally",
     "file": "src/ui/accountFlow.js",
-    "old": "const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account';",
-    "new": "const nameAs = as;",
+    "old": "      const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account'; // the service's word, as a wear's answer is",
+    "new": "      const nameAs = as; // the service's word, as a wear's answer is",
     "tests": [
       "test/net/nameas_client.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "NAMEAS-the-same-choice-asked-again",
     "file": "src/ui/accountFlow.js",
-    "old": "    if ((self.account.nameAs ?? 'account') === as) return false;\n",
-    "new": "",
+    "old": "    if ((self.account.nameAs ?? 'account') === as) return false;\n    const asked = secret();",
+    "new": "    const asked = secret();",
     "tests": [
       "test/net/nameas_client.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "NAMEAS-a-refusal-stamped",
     "file": "src/ui/accountFlow.js",
-    "old": "      if (!r.ok) return refuse(accountRefusalText(r.error));\n      const nameAs = r.data?.nameAs",
-    "new": "      if (!r.ok) { adoptIdentity(storage, { nameAsAt: now(), secret: asked }); return refuse(accountRefusalText(r.error)); }\n      const nameAs = r.data?.nameAs",
+    "old": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account'; // the service's word, as a wear's answer is",
+    "new": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) {\n        adoptIdentity(storage, { nameAsAt: now(), secret: asked });\n        return refuse(accountRefusalText(r.error));\n      }\n      const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account'; // the service's word, as a wear's answer is",
     "tests": [
       "test/net/nameas_client.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "NAMEAS-the-stamp-not-forward",
     "file": "src/ui/accountFlow.js",
-    "old": "nameAsAt: Math.max(now(), Number.isSafeInteger(was) ? was + 1 : 0)",
-    "new": "nameAsAt: now()",
+    "old": "      adoptIdentity(storage, { nameAsAt: Math.max(now(), Number.isSafeInteger(was) ? was + 1 : 0), secret: asked }); // AUDIT B4: into the session that asked",
+    "new": "      adoptIdentity(storage, { nameAsAt: now(), secret: asked }); // AUDIT B4: into the session that asked",
     "tests": [
       "test/net/nameas_client.test.js"
     ]

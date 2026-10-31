@@ -2,7 +2,7 @@
   {
     "name": "ACC3c-1-the-client-decides-what-is-held",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // WB9g: the auras ride the same answer",
+    "old": "      self.wardrobe = {\n        ...(self.wardrobe ?? {}),\n        titles: r.data.titles,\n        title: r.data.title,\n        glyphs: r.data.glyphs,\n        ...glyphHalf(r.data),\n        ...auraHalf(r.data),\n      }; // WB9g: the auras ride the same answer",
     "new": "      self.wardrobe = { ...self.wardrobe, title: want };",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACC3c-2-the-refusal-writes-anyway",
     "file": "src/ui/accountFlow.js",
-    "old": "      const r = await ask(() => equipTitle(door(), want));\n      if (!r) return false;                 // `auth` already landed on `out`\n      if (!r.ok) return refuse(accountRefusalText(r.error));",
-    "new": "      const r = await ask(() => equipTitle(door(), want));\n      if (!r) return false;                 // `auth` already landed on `out`\n      if (!r.ok) { self.wardrobe = { ...self.wardrobe, title: want }; return refuse(accountRefusalText(r.error)); }",
+    "old": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      // THE SERVICE'S OWN ANSWER, whole: it describes the row AFTER",
+    "new": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) {\n        self.wardrobe = { ...self.wardrobe, title: want };\n        return refuse(accountRefusalText(r.error));\n      }\n      // THE SERVICE'S OWN ANSWER, whole: it describes the row AFTER",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ACC3c-6-the-wardrobe-outlives-the-account",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.account = null;\n    self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody",
-    "new": "    self.account = null;",
+    "old": "    self.wardrobe = null; // ACC3c: a wardrobe outliving its account is a title drawn for nobody\n    self.patreon = null;",
+    "new": "    self.patreon = null;",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],

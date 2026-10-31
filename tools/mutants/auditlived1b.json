@@ -960,8 +960,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-bank-enhanced-gets-short-words",
     "file": "src/ui/bankWindow.js",
-    "old": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '',",
-    "new": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '',",
+    "old": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // ...and the enhanced face's whole words",
+    "new": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // ...and the enhanced face's whole words",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]

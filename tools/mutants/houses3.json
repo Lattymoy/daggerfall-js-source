@@ -94,8 +94,8 @@
   {
     "name": "HOUSES3-no-next-offer",
     "file": "src/ui/bankWindow.js",
-    "old": "      this.box.onNo = () => this._offerHouse(offers, i + 1);\n",
-    "new": "",
+    "old": "      this.box.onNo = () => this._offerHouse(offers, i + 1);\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "HOUSES3-the-crossed-offered",
     "file": "src/ui/bankWindow.js",
-    "old": "      if (offers[i].crossed) continue;\n",
-    "new": "",
+    "old": "      if (offers[i].crossed) continue;\n      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });",
+    "new": "      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HOUSES3-the-first-sold-at-the-bank",
     "file": "src/ui/bankWindow.js",
-    "old": "this.box.onYes = () => this.hooks.sellHouse?.(i);",
-    "new": "this.box.onYes = () => this.hooks.sellHouse?.(0);",
+    "old": "      this.box.onYes = () => this.hooks.sellHouse?.(i);",
+    "new": "      this.box.onYes = () => this.hooks.sellHouse?.(0);",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "HOUSES3-escape-the-next",
     "file": "src/ui/bankWindow.js",
-    "old": "else if (code === 'Escape') this._dismissBox();",
-    "new": "else if (code === 'Escape') this._dismissBox(MB_BUTTONS.No);",
+    "old": "        else if (code === 'Escape') this._dismissBox(); // HOUSES-3: a close, never the No that offers the next house",
+    "new": "        else if (code === 'Escape') this._dismissBox(MB_BUTTONS.No); // HOUSES-3: a close, never the No that offers the next house",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]

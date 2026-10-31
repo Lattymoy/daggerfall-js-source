@@ -231,8 +231,8 @@
   {
     "name": "REALM0-window-daggerfall-words",
     "file": "src/ui/bankWindow.js",
-    "old": "        if (d.empireRegion != null) this._lines(",
-    "new": "        if (false) this._lines(",
+    "old": "        if (d.empireRegion != null)",
+    "new": "        if (false)",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "REALM0-garnish-silent",
     "file": "src/ui/bankWindow.js",
-    "old": "    if (taken > 0) this._lines(empireGarnishLines(taken));\n",
-    "new": "",
+    "old": "    if (taken > 0) this._lines(empireGarnishLines(taken));\n    return result;",
+    "new": "    return result;",
     "tests": [
       "test/systems/realm0.test.js"
     ]

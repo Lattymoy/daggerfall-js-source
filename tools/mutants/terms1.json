@@ -122,8 +122,8 @@
   {
     "name": "TERMS1-login-asks-on-the-form",
     "file": "src/ui/accountFlow.js",
-    "old": "  register: ['terms', 'privacy'],\n",
-    "new": "  register: ['terms', 'privacy'],\n  login: ['terms', 'privacy'],\n",
+    "old": "  register: ['terms', 'privacy'],\n});",
+    "new": "  register: ['terms', 'privacy'],\n  login: ['terms', 'privacy'],\n});",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "TERMS1-guest-row-opened-bare",
     "file": "src/ui/accountFlow.js",
-    "old": "openGuest(io, null, ACCEPTED)",
-    "new": "openGuest(io, null)",
+    "old": "      const made = await ask(() => openGuest(io, null, ACCEPTED));",
+    "new": "      const made = await ask(() => openGuest(io, null));",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TERMS1-name-sent-bare",
     "file": "src/ui/accountFlow.js",
-    "old": "register(door(), v('handle'), pw('password'), ACCEPTED)",
-    "new": "register(door(), v('handle'), pw('password'))",
+    "old": "    const r = await ask(() => register(door(), v('handle'), pw('password'), ACCEPTED));",
+    "new": "    const r = await ask(() => register(door(), v('handle'), pw('password')));",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TERMS1-ticks-carried-across-a-move",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.agreed = {};\n    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
-    "new": "    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
+    "old": "    self.agreed = {};\n    if (stage !== 'code') {",
+    "new": "    if (stage !== 'code') {",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],

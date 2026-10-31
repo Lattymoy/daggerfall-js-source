@@ -92,8 +92,8 @@
   {
     "name": "UI1-no-trim",
     "file": "src/ui/bitmapCanvas.js",
-    "old": "(x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA",
-    "new": "() => true",
+    "old": "  const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
+    "new": "  const b = trim ? opaqueBounds(w, h, () => true) : { x: 0, y: 0, w, h };",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "UI1-the-growth-smoothed",
     "file": "src/ui/bitmapCanvas.js",
-    "old": "paintedCanvas(bigW, bigH, false,",
-    "new": "paintedCanvas(bigW, bigH, true,",
+    "old": "  let cur = paintedCanvas(bigW, bigH, false, (c) => c.drawImage(src, b.x, b.y, b.w, b.h, 0, 0, bigW, bigH));",
+    "new": "  let cur = paintedCanvas(bigW, bigH, true, (c) => c.drawImage(src, b.x, b.y, b.w, b.h, 0, 0, bigW, bigH));",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]

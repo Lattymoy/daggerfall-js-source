@@ -52,8 +52,8 @@
   {
     "name": "HANDLE-EMAIL-signin-refused",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (fields.includes('handle') && !handleShapeOk(v('handle'))) return LOCAL_REFUSALS['handle-shape'];",
-    "new": "    if (fields.includes('handle') && !handleShapeOk(v('handle'))) return LOCAL_REFUSALS['handle-shape'];\n    if (fields.includes('handle') && handleLooksLikeEmail(v('handle'))) return 'refused';",
+    "old": "    if (fields.includes('code') && !v('code')) return LOCAL_REFUSALS['code-empty'];",
+    "new": "    if (fields.includes('handle') && handleLooksLikeEmail(v('handle'))) return 'refused';\n    if (fields.includes('code') && !v('code')) return LOCAL_REFUSALS['code-empty'];",
     "tests": [
       "test/net/handleemail.test.js"
     ],

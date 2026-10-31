@@ -367,8 +367,8 @@
   {
     "name": "LOOT18-the-chip-unsigned",
     "file": "src/ui/armourCard.js",
-    "old": "r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '='",
-    "new": "r.delta > 0 ? `${r.delta}` : r.delta < 0 ? `${-r.delta}` : '='",
+    "old": "            r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '=',",
+    "new": "            r.delta > 0 ? `${r.delta}` : r.delta < 0 ? `${-r.delta}` : '=',",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "LOOT18-new-unsaid",
     "file": "src/ui/armourCard.js",
-    "old": "    li.append(r.delta == null ? el('span', 'cmp-d new', 'new') :",
-    "new": "    li.append(r.delta == null ? el('span', 'cmp-d new', '') :",
+    "old": "        ? el('span', 'cmp-d new', 'new')",
+    "new": "        ? el('span', 'cmp-d new', '')",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "LOOT18-the-count-unsaid",
     "file": "src/ui/armourCard.js",
-    "old": "    if (r.resist) li.append(el('span', 'cmp-note', `${r.resist.now}% → ${r.resist.then}% counts`));\n",
-    "new": "",
+    "old": "    if (r.resist) li.append(el('span', 'cmp-note', `${r.resist.now}% → ${r.resist.then}% counts`));\n    ul.append(li);",
+    "new": "    ul.append(li);",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "LOOT18-the-lost-unlisted",
     "file": "src/ui/armourCard.js",
-    "old": "  for (const t of lines.lost) {\n    const li = el('li', 'cmp-line lost');",
-    "new": "  for (const t of []) {\n    const li = el('li', 'cmp-line lost');",
+    "old": "  for (const t of lines.lost) {",
+    "new": "  for (const t of []) {",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

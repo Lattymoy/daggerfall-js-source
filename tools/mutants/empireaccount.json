@@ -237,8 +237,8 @@
   {
     "name": "EMPIRE-ACCOUNT-window-shows-the-branch",
     "file": "src/ui/bankWindow.js",
-    "old": "      account: String(accountTotal(a, goldRegion(a, r))),",
-    "new": "      account: String(accountTotal(a, r)),",
+    "old": "      account: String(accountTotal(a, goldRegion(a, r))), // EMPIRE-ACCOUNT: online, the Empire's account at every branch",
+    "new": "      account: String(accountTotal(a, r)), // EMPIRE-ACCOUNT: online, the Empire's account at every branch",
     "tests": [
       "test/systems/empireaccount.test.js"
     ]
