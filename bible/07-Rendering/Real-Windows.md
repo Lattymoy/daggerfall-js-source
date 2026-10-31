@@ -71,7 +71,7 @@ street off the sky - and `renderer.uploadGlassMask(archive, record, mask)` (whit
 ## The switch
 Settings > Graphics > View distance & detail: Real windows - Full, Rooms only (no street pass), Off. A preset row:
 Low Off, Medium Rooms only, High and Ultra Full (High is how the game ships). Enhanced skin only; `?windows=` the
-kill door.
+kill door. The card's drawer holds Window light - On, Day only, Off - the light the glass throws (WINDOW-NIGHT, below).
 
 ## THE FOUR HOSTS
 - `src/scenes/exterior.js` - WIRED: asks rooms after its beginFrame; hands the modes its town as the street (and,
@@ -312,3 +312,34 @@ not move it. A release lets the free layers go with the rest (W7). The record is
 
 **Pins.** `test/render/lightreach.test.js` (LR1-LR9) and `test/render/audit_lightreach.test.js`; W6, W8, W18 and W20
 above moved, each marked PIN MOVED.
+
+## WINDOW-NIGHT (2026-10-31): the night tamed, and a part to choose
+
+A player, Discord #feature-feedback: "It gets way to bright at night for me. I still want to see outside but not be
+blasted by the light so it destroys the dark and light in the room during day and night. Before this update i didnt
+have this problem". Not a DFU member: the light is WL1's own.
+
+**What was wrong.** By night the moon lit through the glass at `WL_MOON_GAIN` 1, above the sun's 0.9, and every pane
+glowed at `WL_SKY_GAIN` 0.5 of the outside's ambient at every hour, about 28% of its noon glow. Against a room's own
+night ambient (`INTERIOR_NIGHT_AMBIENT`, 0.20 / 0.18 / 0.20), a full Masser's patch - the beam where it lands square
+and the glow at the glass, in luminance - added 4.2 times the ambient on the Enhanced lane and 1.6 times on the
+classic set. The one switch was the Real windows row, and its Off drops the view out too.
+
+**The gains.** The moon's gain is 0.3, a third of the sun's. By night (`_sunLight`'s `day` test) the panes glow at
+`WL_SKY_NIGHT_GAIN` 0.1, and the day keeps 0.5. The same patch, a full Masser at 21:00 through the pass's own lights
+on each lane's decode, now adds 1.1 times the room's ambient on the Enhanced lane (beam 0.89, glow 0.25) and 0.4 on
+the classic set (0.23, 0.16): a dim patch, the room's dark kept round it. The glow steps at the sun's setting, as the
+beam always has.
+
+**The part.** Window light (the pref `windowLight`, `realWindows.js` windowLightMode): On, the default, Day only and
+Off. The renderer's frame kind reads it (`renderer._wlKindOf`, `windowLight.js` wlKindFor). Off lights no window at
+any hour. Day only lights a building's glass while the sun is up (`wlSunUp`, the frame's own test) and never a street's
+lamp, which is a night's light. Neither drops the view out or the street's rooms: those are the Real windows row's.
+`?windowlight=off` stays the kill door.
+
+**THE FOUR HOSTS.** No host reads the part. `src/scenes/exterior.js`, `src/scenes/world.js` and
+`src/scenes/worldModes.js` - WIRED through the renderer's frame kind, unchanged. `src/scenes/dungeonContext.js` -
+FLAGGED: none, no window light.
+
+**Pins.** `test/render/windownight.test.js` (WN1-WN6); `tools/mutants/windownight.json` (14, all dead); WL1's
+kind mutant re-aimed by content.

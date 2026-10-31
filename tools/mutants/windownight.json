@@ -1,0 +1,144 @@
+[
+  {
+    "name": "WINDOW-NIGHT-moon-old-gain",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_MOON_GAIN = 0.3;",
+    "new": "export const WL_MOON_GAIN = 1;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The moon back above the sun: a full Masser's patch four times a room's ambient on the Enhanced lane."
+  },
+  {
+    "name": "WINDOW-NIGHT-moon-brighter",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_MOON_GAIN = 0.3;",
+    "new": "export const WL_MOON_GAIN = 0.45;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "Half again the moon: the patch past the bound against the room's ambient."
+  },
+  {
+    "name": "WINDOW-NIGHT-glow-old-gain",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_SKY_NIGHT_GAIN = 0.1;",
+    "new": "export const WL_SKY_NIGHT_GAIN = 0.5;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The panes glow by night as by day."
+  },
+  {
+    "name": "WINDOW-NIGHT-glow-day-gain-by-night",
+    "file": "src/render/windowLight.js",
+    "old": "ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;",
+    "new": "ks = WL_SKY_GAIN * fade;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The night's glow gain never read."
+  },
+  {
+    "name": "WINDOW-NIGHT-glow-swapped",
+    "file": "src/render/windowLight.js",
+    "old": "ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;",
+    "new": "ks = (day ? WL_SKY_NIGHT_GAIN : WL_SKY_GAIN) * fade;",
+    "tests": [
+      "test/render/windownight.test.js",
+      "test/render/wl1_windowlight.test.js"
+    ],
+    "note": "The day dimmed and the night lit."
+  },
+  {
+    "name": "WINDOW-NIGHT-off-ignored",
+    "file": "src/render/windowLight.js",
+    "old": "  if (!kind || light === 'off') return null;",
+    "new": "  if (!kind) return null;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "Off lights as On."
+  },
+  {
+    "name": "WINDOW-NIGHT-day-only-ignored",
+    "file": "src/render/windowLight.js",
+    "old": "  return light === 'day' && (kind === 'street' || !sunUp) ? null : kind;",
+    "new": "  return kind;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "Day only lights the night too."
+  },
+  {
+    "name": "WINDOW-NIGHT-day-only-street-kept",
+    "file": "src/render/windowLight.js",
+    "old": "  return light === 'day' && (kind === 'street' || !sunUp) ? null : kind;",
+    "new": "  return light === 'day' && !sunUp ? null : kind;",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "Day only keeps a lit room's lamp on the street whenever the last outside read had a sun."
+  },
+  {
+    "name": "WINDOW-NIGHT-sun-always-up",
+    "file": "src/render/windowLight.js",
+    "old": "export const wlSunUp = (o) => !!o && o.sunScale > 0 && o.sunDir[1] > 0.05;",
+    "new": "export const wlSunUp = (o) => !!o;",
+    "tests": [
+      "test/render/windownight.test.js",
+      "test/render/wl1_windowlight.test.js"
+    ],
+    "note": "Any outside read is day: Day only lights the moon, and the frame takes the sun under the horizon."
+  },
+  {
+    "name": "WINDOW-NIGHT-renderer-part-unread",
+    "file": "src/render/renderer.js",
+    "old": "    const light = windowLightMode();",
+    "new": "    const light = 'on';",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The frame's kind never asks the part."
+  },
+  {
+    "name": "WINDOW-NIGHT-renderer-view-out-lit",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._rwOutside) return wlKindFor('street', light, false);",
+    "new": "    if (this._rwOutside) return 'street';",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The view out's street lit under Off and Day only."
+  },
+  {
+    "name": "WINDOW-NIGHT-renderer-sun-blind",
+    "file": "src/render/renderer.js",
+    "old": "'inside', light, wlSunUp(this._wl?.outside));",
+    "new": "'inside', light, true);",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "Day only reads no sun: a building lit by the moon under it."
+  },
+  {
+    "name": "WINDOW-NIGHT-mode-unread",
+    "file": "src/render/realWindows.js",
+    "old": "  return v === 'day' || v === 'off' ? v : 'on';",
+    "new": "  return 'on';",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The pref never reaches the frame."
+  },
+  {
+    "name": "WINDOW-NIGHT-default-off-on",
+    "file": "src/systems/features.js",
+    "old": "key: 'windowLight', initial: 'on', online: 'player' }",
+    "new": "key: 'windowLight', initial: 'day', online: 'player' }",
+    "tests": [
+      "test/render/windownight.test.js"
+    ],
+    "note": "The part starts at Day only."
+  }
+]

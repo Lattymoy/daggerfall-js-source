@@ -706,7 +706,14 @@ export const FEATURES = Object.freeze([
       + 'out through them. Rooms only is lighter on your machine; Off is the classic flat glass.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]) }),   // RW1: render/realWindows.js realWindowsMode reads it
+    control: Object.freeze({
+      store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // RW1: render/realWindows.js realWindowsMode reads it
+      // WINDOW-NIGHT (Discord, a player: "I still want to see outside but not be blasted by the light"): the light the glass
+      // throws (WL1), a part of its own - Day only and Off keep the view out and the rooms (realWindows.js windowLightMode)
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'on', online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'windowLight', get label() { return t('features.realWindows.light', 'Window light'); },
+        tiers: Object.freeze([tier('on', () => t('features.realWindows.light.on', 'On')), tier('day', () => t('features.realWindows.light.day', 'Day only')), tier('off', OFF)]) })]),
+    }),
   }),
   // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
   // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE

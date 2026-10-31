@@ -52,6 +52,14 @@ export function realWindowsMode(search = globalThis.location?.search ?? '') {
   return v === 'rooms' || v === 'off' ? v : 'full';
 }
 
+/** WINDOW-NIGHT (Discord, a player: "I still want to see outside but not be blasted by the light"): the card's Window
+ *  light part, the pref `windowLight` - 'on' at every hour, 'day' while the sun is up, 'off' never. The view out and
+ *  the rooms stand under each; the renderer's frame kind reads it (windowLight.js wlKindFor). */
+export function windowLightMode() {
+  const v = getPref('windowLight');
+  return v === 'day' || v === 'off' ? v : 'on';
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // THE SUB-MESH'S MODE
 // ---------------------------------------------------------------------------------------------------------------

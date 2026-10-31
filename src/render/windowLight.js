@@ -53,8 +53,12 @@ export const WL_SUN_ANGLE = 0.0093;
 export const WL_SPILL_REACH = 6;
 export const WL_STOREY = 2.5;
 export const WL_SUN_GAIN = 0.9;
-export const WL_MOON_GAIN = 1;
+/** WINDOW-NIGHT (a player: "It gets way to bright at night for me"): the night's gains of their own - the moon's well
+ *  under the sun's, and the panes' glow a fifth of the day's. At 1 and 0.5 a full Masser's patch was four times a room's
+ *  ambient on the Enhanced lane; now about once (Real-Windows.md WINDOW-NIGHT). */
+export const WL_MOON_GAIN = 0.3;
 export const WL_SKY_GAIN = 0.5;
+export const WL_SKY_NIGHT_GAIN = 0.1;
 /** How far from the eye a lit window is gathered, the share of that where its light begins to fade, and how fast the
  *  cut follows the frame's own (a pool at the cut fades, never pops). */
 export const WL_GATHER = 72;
@@ -92,6 +96,14 @@ export const WL_ROW_CURTAIN = Object.freeze([ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN
 /** The kill door: `?windowlight=off` lights no window (the Real windows row's Off lights none either). */
 export function windowLightOn(search = globalThis.location?.search ?? '') {
   return pageParam('windowlight', search) !== 'off';
+}
+/** Is the sun up for a building's glass in `o` (the outside as setOutside kept it)? By night the moon is the key. */
+export const wlSunUp = (o) => !!o && o.sunScale > 0 && o.sunDir[1] > 0.05;
+/** WINDOW-NIGHT: a frame's kind under the Window light part (`light`: realWindows.js windowLightMode) - Off lights none,
+ *  Day only none while the sun is down (`sunUp`), and a street's light is a lit room's by night, so none under it. */
+export function wlKindFor(kind, light, sunUp) {
+  if (!kind || light === 'off') return null;
+  return light === 'day' && (kind === 'street' || !sunUp) ? null : kind;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -684,7 +696,7 @@ export class WindowLightPass {
   sunFor(eye, now, glass = () => 'glass') {
     const o = this.outside;
     if (!o) return null;
-    const dir = o.sunScale > 0 && o.sunDir[1] > 0.05 ? o.sunDir : o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
+    const dir = wlSunUp(o) ? o.sunDir : o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
     if (!dir) return null;
     const far = (b, i) => Math.hypot(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > WL_GATHER;
     const v = this._v;
@@ -727,7 +739,7 @@ export class WindowLightPass {
     this.stats.walked = 0; this.stats.built = 0;
     let gathered = 0;
     const o = this.outside;
-    const sunDir = o && o.sunScale > 0 && o.sunDir[1] > 0.05 ? o.sunDir : null;
+    const sunDir = wlSunUp(o) ? o.sunDir : null;
     const moonDir = !sunDir && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
     // the colours as the set lights in: decoded first, then scaled (the lane decodes a colour and multiplies its scale)
     const dec = (c) => (decode ? decode(c) : [c[0], c[1], c[2]]);
@@ -1092,7 +1104,7 @@ export class WindowLightPass {
     const l = this._lt;
     if (!this._aperture(c, null, l)) return null;
     const faces = !!dir && !!key && dir[0] * l.nf[0] + dir[1] * l.nf[1] + dir[2] * l.nf[2] < -0.02;
-    const kg = faces ? (day ? WL_SUN_GAIN : WL_MOON_GAIN) * fade : 0, ks = WL_SKY_GAIN * fade;
+    const kg = faces ? (day ? WL_SUN_GAIN : WL_MOON_GAIN) * fade : 0, ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;
     if (faces) set3(l.gobo, key[0] * kg, key[1] * kg, key[2] * kg); else set3(l.gobo, 0, 0, 0);
     set3(l.spill, sky[0] * ks, sky[1] * ks, sky[2] * ks);
     if (!(l.gobo[0] + l.gobo[1] + l.gobo[2] + l.spill[0] + l.spill[1] + l.spill[2] > 1e-4)) return null;
