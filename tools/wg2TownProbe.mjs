@@ -100,22 +100,26 @@ try {
     console.log(`${town.name}: ${w1.length} walkers on its pixel, ${moved.length} walked over 60 frames; ${w1.filter((p) => !p.inside).length} off its ground, ${w1.filter((p) => p.inBuilding).length} in a building`);
     if (w1.length < 3 || !moved.length) fail(`${town.name}: its walkers do not stand or walk`);
     if (w1.some((p) => !p.inside || p.inBuilding)) fail(`${town.name}: a walker off its streets`);
-    // every building a door, each its record's type, its floor on the region's ground before it
+    // every building a door, each its record's type, its floor over the ground as the stream samples the region (its
+    // kernel's samples the region's ground at every node - world/terrain/terrainSurface.js walkGroundAt between them)
     const doors = await ev(inTown(`
-      const out = [];
+      const S = await import('/src/world/terrain/terrainSurface.js'), D = 129, samples = new Float32Array(D * D), out = [];
+      for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) samples[x * D + y] = T.sceneOf(at.region.heightAt(tw.px + x / 128, tw.py + 1 - y / 128)) / T.WORLD_HEIGHT;
       for (const d of window.__doors()) {
         const b = at.town.buildings.find((x) => name(x) === d.block && x.slot[2] === d.record);
         if (!b) continue;
-        const data = JSON.parse(window.__buildingAt(d.i) ?? 'null'), fx = b.doors[0].x + b.doors[0].dir[0] * 0.3 / P, fy = b.doors[0].y + b.doors[0].dir[1] * 0.3 / P;
-        window.__player.warp(d.pos[0] + d.normal[0] * 0.3, d.pos[1], d.pos[2] + d.normal[2] * 0.3);
-        const ground = JSON.parse(window.__standing()).ground, want = T.sceneOf(b.doors[0].z) + 0.05 - T.sceneOf(at.region.heightAt(fx, fy));
-        out.push({ id: b.id, kind: b.ground.kind, type: b.type, read: data?.buildingType ?? null, lift: d.pos[1] - 1.25 - ground, want });
+        const data = JSON.parse(window.__buildingAt(d.i) ?? 'null'), q = [d.pos[0] + d.normal[0] * 0.3, d.pos[2] + d.normal[2] * 0.3];
+        window.__player.warp(q[0], d.pos[1], q[1]);
+        const ground = JSON.parse(window.__standing()).ground, floor = T.sceneOf(b.doors[0].z) + 0.05;
+        const sampled = S.walkGroundAt(samples, q[0] - t[0], q[1] - t[2]), fx = b.doors[0].x + b.doors[0].dir[0] * 0.3 / P, fy = b.doors[0].y + b.doors[0].dir[1] * 0.3 / P;
+        out.push({ id: b.id, kind: b.ground.kind, type: b.type, read: data?.buildingType ?? null, lift: d.pos[1] - 1.25 - ground, want: floor - sampled, exact: floor - T.sceneOf(at.region.heightAt(fx, fy)) });
       }
       return out;`), tw);
-    const ids = new Set(doors.map((d) => d.id)), plinths = doors.filter((d) => d.kind !== 'stilts'), off = plinths.filter((d) => Math.abs(d.lift - d.want) > 0.5), wrong = doors.filter((d) => d.read !== d.type);
-    console.log(`${town.name}: ${doors.length} doors for ${town.buildings} buildings (${ids.size} distinct); floor over its ground worst ${Math.max(0, ...plinths.map((d) => Math.abs(d.lift - d.want))).toFixed(2)} m off the region's; ${doors.filter((d) => d.kind === 'terrace').length} on pads, ${doors.length - plinths.length} on stilts`);
+    const ids = new Set(doors.map((d) => d.id)), plinths = doors.filter((d) => d.kind !== 'stilts'), off = plinths.filter((d) => Math.abs(d.lift - d.want) > 0.15), wrong = doors.filter((d) => d.read !== d.type);
+    const gap = (k) => Math.max(0, ...doors.filter((d) => d.kind === k).map((d) => Math.abs(d.lift - d.exact)));
+    console.log(`${town.name}: ${doors.length} doors for ${town.buildings} buildings (${ids.size} distinct); each floor over the stream's ground within ${Math.max(0, ...plinths.map((d) => Math.abs(d.lift - d.want))).toFixed(2)} m of the region's as sampled; ${doors.filter((d) => d.kind === 'terrace').length} on pads, ${doors.length - plinths.length} on stilts; the sampling's gap to the exact ground at a door: plinth ${gap('plinth').toFixed(2)} m, terrace ${gap('terrace').toFixed(2)} m`);
     if (ids.size < town.buildings || doors.length < town.buildings) fail(`${town.name}: ${ids.size} buildings with a door of ${town.buildings}`);
-    if (off.length) fail(`${town.name}: floors off the region's ground: ${off.slice(0, 4).map((d) => `${d.id} ${d.lift.toFixed(2)} for ${d.want.toFixed(2)}`).join('; ')}`);
+    if (off.length) fail(`${town.name}: floors off the region's ground as the stream samples it: ${off.slice(0, 4).map((d) => `${d.id} ${d.lift.toFixed(2)} for ${d.want.toFixed(2)}`).join('; ')}`);
     if (wrong.length) fail(`${town.name}: a door reads another building's type: ${wrong.slice(0, 4).map((d) => `${d.id} ${d.read} for ${d.type}`).join('; ')}`);
     // the photographs: over the town from its arrival, and its features where it has them
     await ev(([x, y, z]) => window.__pose(x, y + 45, z - 70, 0, -0.45), marker);
@@ -168,14 +172,19 @@ try {
       const tavern = at.town.buildings.find((b) => b.role === 'tavern'), d = window.__doors().find((x) => x.block === name(tavern) && x.record === tavern.slot[2]);
       if (!d) return { door: false };
       window.__pose(d.pos[0] + d.normal[0] * 1.5, d.pos[1] - 1.2, d.pos[2] + d.normal[2] * 1.5, Math.atan2(-d.normal[0], -d.normal[2]), -0.05);
+      window.__wg2Door = d;
       return { door: true, entered: await window.__enter() };`), tw);
     await frames(10);
     const inside = await ev(() => ({ mode: window.__mode?.() ?? null, building: JSON.parse(window.__building?.() ?? 'null') }));
     console.log(`${town.name}: the tavern's door`, JSON.stringify(entered), '->', JSON.stringify({ mode: inside.mode, building: inside.building }));
     if (!entered.door || !entered.entered || inside.mode !== 'interior' || inside.building?.type !== 15) fail(`${town.name}: the tavern's door did not open on a tavern`);
     await shot(`${town.id}-tavern`);
-    await ev(() => window.__exit?.());
-    await frames(6);
+    // and out by its street door, which its made interior stands where the building's is: inside it, facing it
+    await ev(() => { const d = window.__wg2Door; window.__pose(d.pos[0] - d.normal[0] * 1.4, d.pos[1] - 1.2, d.pos[2] - d.normal[2] * 1.4, Math.atan2(d.normal[0], d.normal[2]), -0.05); return window.__exit(); });
+    await frames(10);
+    const outside = await ev(() => window.__mode?.());
+    console.log(`${town.name}: out of the tavern by its street door ->`, outside);
+    if (outside === 'interior') fail(`${town.name}: the tavern's street door did not let the body out`);
   }
   if (errors.length) fail(`page errors: ${errors.slice(0, 3).join(' | ')}`);
   console.log('PASS in', secs(), 's');

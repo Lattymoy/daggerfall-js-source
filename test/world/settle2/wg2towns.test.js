@@ -226,10 +226,15 @@ test('WG2-TOWNS ARRIVAL: a town\'s grid is its whole pixel, so an arrival lands 
     const loc = synthesizeSettle2Location(at, BASE), base = T.settle2Base(at.town), blocks = [];
     for (let i = 0; i < 64; i++) blocks.push({ originX: (i % 8) * 102.4, originZ: Math.floor(i / 8) * 102.4, flats: collectBlockFlats(served(loc.exterior.exteriorData.blockNames[i]), 0) });
     const markers = locationStartMarkers(blocks);
-    assert.equal(markers.length, 1 + at.town.entrances.length, `${at.town.id}: its plaza and its ways in`);
+    assert.ok(markers.length >= 2 && markers.length <= 1 + at.town.entrances.length, `${at.town.id}: its plaza and its ways in`);
     for (const [x, y, z] of markers) {
-      const ground = T.sceneOf(at.region.heightAt(at.px + x / P, at.py + 1 - z / P)) - base;
+      const wx = at.px + x / P, wy = at.py + 1 - z / P, ground = T.sceneOf(at.region.heightAt(wx, wy)) - base;
       assert.ok(Math.abs(y - ground) < 0.2, `${at.town.id}: a marker on the ground (${y} for ${ground})`);
+      assert.equal(at.region.waterAt(wx, wy), null, `${at.town.id}: a marker over no water`);
+      for (const b of at.town.buildings) {
+        const dx = (wx - b.at.x) * P, dy = (wy - b.at.y) * P, n = b.at.dir, deck = b.ground.kind === 'stilts' ? 1.2 : 0;
+        assert.ok(!(Math.abs(dx * -n[1] + dy * n[0]) < b.footprint[0] / 2 + 1 && Math.abs(dx * n[0] + dy * n[1]) < b.footprint[1] / 2 + 1 + deck), `${at.town.id}: a marker under ${b.id}`);
+      }
     }
     for (const roll of [0.1, 0.4, 0.6, 0.9]) {
       const land = locationArrivalLanding(loc, { origin: [0, base, 0], startMarkers: markers, roll: () => roll });

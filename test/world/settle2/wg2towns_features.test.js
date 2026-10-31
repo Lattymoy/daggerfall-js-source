@@ -16,7 +16,7 @@ import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { STEP_OFFSET } from '../../../src/player/motor.js';
 import * as T from '../../../src/world/settle2/settle2Towns.js';
 import * as Bk from '../../../src/world/settle2/settle2Blocks.js';
-import { isShellId } from '../../../src/world/settle2/settle2Shell.js';
+import { isShellId, shellShapeOf } from '../../../src/world/settle2/settle2Shell.js';
 import { featureShapeOf, featureModel, isSettle2ModelId, settle2Features, FEATURE_M, wallId, gateId, retainingId, stairsId, propId, deckId } from '../../../src/world/settle2/settle2Features.js';
 import { createSettle2Places, SETTLE2_SOURCE } from '../../../src/scenes/settle2Host.js';
 
@@ -169,4 +169,24 @@ test('WG2-TOWNS LANDFORMS GATE: with the Landforms row off no town stands and no
   assert.match(rd('src/scenes/settle2Host.js'), /export function createSettle2Places\(\{ locationIndex, worldPlaces, maps, base, host, landform = landformsOn\(\) \}\) \{\n\s+if \(!landform\) \{ _live = null; return \{ locationAt: \(\) => null, peekAt: \(\) => null \}; \}/);
   assert.match(rd('src/scenes/world.js'), /const landform = landformsOn\(\);/, 'the world host\'s own read of the row');
   assert.doesNotMatch(rd('src/scenes/tamrielPlacesHost.js'), /createSettle2Places\([^)]*landform/, 'the places host hands it none of its own');
+});
+
+test('WG2-TOWNS FOOTINGS: a building\'s walls reach down to the lowest ground the stream draws under it - the region\'s at every node of the kernel\'s grid about its footprint - so no wall stands over a gap, a terrace\'s narrow pad and all (mutants: the footing\'s law)', () => {
+  let deep = 0;
+  for (const at of TOWNS) Bk.settle2TownRecords(at).forEach((r, i) => {
+    const b = at.town.buildings[i];
+    if (b.ground.kind === 'stilts') return;
+    const n = b.at.dir, t = [-n[1], n[0]], [w, d] = b.footprint;
+    let low = Infinity;
+    for (const [s, k] of [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]]) {
+      const x = b.at.x + (t[0] * s * w / 2 + n[0] * k * d / 2) / P, y = b.at.y + (t[1] * s * w / 2 + n[1] * k * d / 2) / P;
+      for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        const ni = Math.floor((x - at.px) * 128) + di, nj = Math.floor((at.py + 1 - y) * 128) + dj;
+        low = Math.min(low, at.region.heightAt(at.px + ni / 128, at.py + 1 - nj / 128));
+      }
+    }
+    assert.ok(b.at.z - shellShapeOf(r.shell).foot <= low, `${b.id}: its walls to ${b.at.z - shellShapeOf(r.shell).foot}, the drawn ground to ${low}`);
+    if (b.at.z - low > 0.8) deep++;
+  });
+  assert.ok(deep > 10, 'footings that go deeper than the half metre');
 });

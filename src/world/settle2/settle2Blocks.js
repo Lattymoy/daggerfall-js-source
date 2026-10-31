@@ -47,19 +47,20 @@ export function settle2SubRecordFrame(door, px, py, bx, by) {
   return { xPos: Math.round(u / GLOBAL_SCALE), zPos: Math.round(RMB_DIMENSION - v / GLOBAL_SCALE), yRotation: Math.round(-f * ROTATION_DIVISOR) };
 }
 
-/** A building's footing below its floor (metres): a terrace's pad is level under it; a plinth reaches the lowest ground
- *  under its corners, a stilt house's legs that and the ground before its stair. */
-function footOf(b, groundAt) {
-  const kind = b.ground?.kind ?? 'plinth';
-  if (kind === 'terrace') return 0.5;
-  const [w, d] = b.footprint, n = b.at.dir, t = [-n[1], n[0]], m = 1 / PX;
+/** A building's footing below its floor (metres): down to the lowest ground the stream draws under it - the region's at
+ *  every node of its kernel's grid (128 a pixel) about its footprint, which the drawn ground runs between - so neither a
+ *  plinth nor a terrace (its pad narrower than the grid can hold) shows a gap under its walls. */
+function footOf(b, groundAt, px, py) {
+  const [w, d] = b.footprint, n = b.at.dir, t = [-n[1], n[0]], xs = [], ys = [];
+  for (const [s, k] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { xs.push(b.at.x + (t[0] * s * w / 2 + n[0] * k * d / 2) / PX); ys.push(b.at.y + (t[1] * s * w / 2 + n[1] * k * d / 2) / PX); }
   let low = Infinity;
-  for (const [s, k] of [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 1 + 6 / d]]) {
-    const x = b.at.x + (t[0] * s * w / 2 + n[0] * k * d / 2) * m, y = b.at.y + (t[1] * s * w / 2 + n[1] * k * d / 2) * m, g = groundAt(x, y);
-    if (Number.isFinite(g) && g < low) low = g;
+  for (let i = Math.floor((Math.min(...xs) - px) * 128); i <= Math.ceil((Math.max(...xs) - px) * 128); i++) {
+    for (let j = Math.floor((py + 1 - Math.max(...ys)) * 128); j <= Math.ceil((py + 1 - Math.min(...ys)) * 128); j++) {
+      const g = groundAt(px + i / 128, py + 1 - j / 128);
+      if (Number.isFinite(g) && g < low) low = g;
+    }
   }
-  const below = Number.isFinite(low) ? b.at.z - low : 0;
-  return Math.max(0.5, kind === 'stilts' ? below : below + 0.3);
+  return Math.max(0.5, Number.isFinite(low) ? b.at.z - low + 0.3 : 0.5);
 }
 
 /**
@@ -72,7 +73,7 @@ export function settle2Record(at, b) {
   const { town, px, py } = at, [bx, by, rec] = b.slot, [w, d] = b.footprint, area = w * d;
   const key = hash32(SALT, town.ordinal, bx, by, rec), pool = settle2PoolOf(b.role, area), donor = fabricDonorOf(pool, key, area);
   const look = STYLE_LOOK[town.style] ?? STYLE_LOOK.imperial, wall = b.role === 'tavern' ? 2 : b.role === 'temple' ? 3 : look[0];
-  const stilts = b.ground?.kind === 'stilts', foot = stilts ? 0 : footOf(b, (x, y) => at.region.heightAt(x, y));   // a stilt house's legs its platform's
+  const stilts = b.ground?.kind === 'stilts', foot = stilts ? 0 : footOf(b, (x, y) => at.region.heightAt(x, y), px, py);   // a stilt house's legs its platform's
   const shell = shellModelId({ w, d, storeys: Math.max(1, b.storeys | 0), roof: look[1], wall, roofRec: look[2], foot, stilts });
   const door = b.doors[0] ?? { x: b.at.x + (b.at.dir[0] * d) / 2 / PX, y: b.at.y + (b.at.dir[1] * d) / 2 / PX, z: b.at.z, dir: b.at.dir };
   const factionId = b.role === 'temple' ? FABRIC_DONORS[donor].faction : b.role === 'guild' ? GUILD_FACTION_IDS.FightersGuild : 0;
@@ -103,10 +104,11 @@ function townPlan(at) {
     const rec = raised || r.kind === 'lane' ? DIRT : STONE, half = r.width / 2 + TILE / 4;
     for (let i = 0; i + 1 < r.pts.length; i++) segs.push({ a: L(r.pts[i][0], r.pts[i][1]), b: L(r.pts[i + 1][0], r.pts[i + 1][1]), half, rec });
   }
-  // its start markers: on its plaza and a few metres in from each way in, each at the region's ground over the plane
+  // its start markers: on its plaza and in from each way in, each the first spot on the way clear of every building (a
+  // stilt house's deck with it) and of the water, at the region's ground over the plane - an arrival's floor its own
   const base = settle2Base(town), ground = (x, y) => sceneOf(at.region.heightAt(x, y)) - base;
-  const ways = [[town.plaza.x + town.plaza.r / 3 / PX, town.plaza.y], ...town.entrances.map((e) => [e.at[0] - (e.dir[0] * 6) / PX, e.at[1] - (e.dir[1] * 6) / PX])];
-  const markers = ways.map(([x, y]) => [...L(x, y), ground(x, y)]);
+  const ways = [[[town.plaza.x, town.plaza.y], [1, 0], town.plaza.r / 3], ...town.entrances.map((e) => [e.at, [-e.dir[0], -e.dir[1]], 6])];
+  const markers = ways.map(([p, d, m0]) => clearSpot(at, p, d, m0)).filter(Boolean).map(([x, y]) => [...L(x, y), ground(x, y)]);
   // its features (settle2Features.js) - each a misc model at its anchor - its fields' crop ground, and the walkers kept off
   // a terrace's edge (but at its stair) and off the well and the stalls
   const feats = settle2Features(town, (x, y) => at.region.heightAt(x, y), (x, y) => at.region.waterAt(x, y));
@@ -116,6 +118,19 @@ function townPlan(at) {
   plan = { records, rects, segs, markers, features, fields, outline: town.footprint.map(([x, y]) => L(x, y)), plaza: { c: L(town.plaza.x, town.plaza.y), r: town.plaza.r }, raised };
   _plans.set(at.town, plan);
   return plan;
+}
+/** The first spot from `p` along `d` (map), `m0` metres on and then every two to forty, that stands clear of every
+ *  building by a stride and a half (a stilt house's deck out before its door with it) and over no water; or null. */
+function clearSpot(at, p, d, m0) {
+  const near = (x, y) => at.town.buildings.some((b) => {
+    const dx = (x - b.at.x) * PX, dy = (y - b.at.y) * PX, n = b.at.dir, deck = b.ground?.kind === 'stilts' ? 1.2 : 0;
+    return Math.abs(dx * -n[1] + dy * n[0]) < b.footprint[0] / 2 + 1.5 && Math.abs(dx * n[0] + dy * n[1]) < b.footprint[1] / 2 + 1.5 + deck;
+  });
+  for (let m = m0; m <= 40; m += 2) {
+    const x = p[0] + (d[0] * m) / PX, y = p[1] + (d[1] * m) / PX;
+    if (!near(x, y) && !at.region.waterAt(x, y)) return [x, y];
+  }
+  return null;
 }
 /** The walkers' grid shut under a feature (the town map's closed byte): a terrace's ring but its stair's gap, a well, a stall. */
 function closedAt(f, b) {

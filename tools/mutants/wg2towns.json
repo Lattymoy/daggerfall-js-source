@@ -254,8 +254,8 @@
   {
     "name": "WG2TOWNS-marker-height",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "const markers = ways.map(([x, y]) => [...L(x, y), ground(x, y)]);",
-    "new": "const markers = ways.map(([x, y]) => [...L(x, y), 0]);",
+    "old": ".filter(Boolean).map(([x, y]) => [...L(x, y), ground(x, y)]);",
+    "new": ".filter(Boolean).map(([x, y]) => [...L(x, y), 0]);",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -409,6 +409,24 @@
     "file": "src/scenes/settle2Host.js",
     "old": "host, landform = landformsOn() })",
     "new": "host, landform = true })",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-marker-clear",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "if (!near(x, y) && !at.region.waterAt(x, y)) return [x, y];",
+    "new": "return [x, y];",
+    "tests": [
+      "test/world/settle2/wg2towns.test.js"
+    ]
+  },
+  {
+    "name": "WG2TOWNS-footing-law",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "return Math.max(0.5, Number.isFinite(low) ? b.at.z - low + 0.3 : 0.5);",
+    "new": "return 0.5;",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
