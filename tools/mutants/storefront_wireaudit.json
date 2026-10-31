@@ -169,8 +169,8 @@
   {
     "name": "WIREAUDIT-6-the-floor-unsaid",
     "file": "src/net/wire.js",
-    "old": "its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
-    "new": "",
+    "old": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire, and its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
+    "new": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ]
