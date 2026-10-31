@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [px, py] = [Number(process.argv[2] ?? 1084), Number(process.argv[3] ?? 241)];
+const ORDINAL = Number(process.argv[2] ?? 1);   // a settlements.json row (1: Sahr Waters, Hammerfell)
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'scratch/settlement-world';
 mkdirSync(out, { recursive: true });
 const server = await createServer({ server: { port: 5241, strictPort: true }, logLevel: 'error' });
@@ -32,10 +32,22 @@ try {
   await until(() => (window.__frame ?? 0) > 5 && typeof window.__tesaJump === 'function', 300000);
   await page.mouse.click(640, 400);
   for (let i = 0; i < 20; i++) { await page.keyboard.press('Escape'); await frames(2); }
-  console.log('booted; jumping to', px, py);
+  // the settlement's pixel under the game's own fit (the same modules the game runs, through the dev server)
+  const where = await page.evaluate(async (o) => {
+    const places = await import('/src/world/settlement/settlementPlaces.js'), frame = await import('/src/world/tamriel/tamrielFrame.js');
+    const row = places.SETTLEMENT_ROWS[o];
+    return { name: row.name, pixel: places.settlementPixel(row), fit: frame.tamrielFit() };
+  }, ORDINAL);
+  const [px, py] = where.pixel;
+  console.log('booted; the game fits', JSON.stringify(where.fit), '- jumping to', where.name, 'at', px, py);
   await page.evaluate(([x, y]) => window.__tesaJump(x, y), [px, py]);
-  const view = await until(() => { const v = window.__settlementView?.(); return v?.length && v[0].ready >= v[0].meshes * 0.9 ? v : null; }, 600000);
-  if (!view) throw new Error('no settlement stood on the pixel');
+  let last = '';
+  const view = await until(() => { const v = window.__settlementView?.(); return v?.length && v[0].ready >= v[0].meshes * 0.9 ? v : null; }, 600000).catch(() => null)
+    ?? null;
+  if (!view) {
+    last = await page.evaluate(() => JSON.stringify({ hook: typeof window.__settlementView, view: window.__settlementView?.() ?? null, at: window.__currentPixel?.() })).catch((e) => e.message);
+    throw new Error(`no settlement stood on the pixel: ${last}`);
+  }
   const s = view[0];
   console.log(JSON.stringify({ name: s.name, buildings: s.buildings, meshes: `${s.ready}/${s.meshes}`, mid: s.mid.map((v) => +v.toFixed(1)) }));
   const shoot = async (name, x, y, z, yaw, pitch) => {
