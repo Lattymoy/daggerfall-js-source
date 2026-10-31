@@ -41,12 +41,12 @@ GRIPS = {
         '2-0': (46, 61), '2-1': (45, 57), '2-2': (41, 58), '2-3': (45, 60),
         '3-0': (47, 56), '3-1': (50, 57), '3-2': (60, 58), '3-3': (48, 56),
         '4-0': (45, 53), '4-1': (53, 52), '4-2': (58, 53), '4-3': (55, 55),
-        '5-0': (56, 26), '5-1': (52, 32), '5-2': (45, 65), '5-3': (91, 79), '5-4': (110, 76), '5-5': (102, 31),
+        '5-0': (56, 26), '5-1': (49, 35.5, 1), '5-2': (45, 65), '5-3': (91, 79), '5-4': (110, 76), '5-5': (102, 31),
         '6-0': (54, 27), '6-1': (55, 31), '6-2': (41, 63), '6-3': (58, 83), '6-4': (104, 84), '6-5': (90, 29),
         '7-0': (74, 28), '7-1': (63, 30), '7-2': (42, 61), '7-3': (47, 81), '7-4': (70, 69), '7-5': (65, 22),
         '8-0': (76, 25), '8-1': (66, 28), '8-2': (78, 53), '8-3': (38, 84), '8-4': (46, 74), '8-5': (42, 26),
-        '9-0': (61, 27), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
-        '10-0': (18, 44), '11-0': (24, 50), '12-0': (55, 47), '13-0': (86, 40), '14-0': (84, 46),
+        '9-0': (64.5, 24.5, 1), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
+        '10-0': (18, 44), '11-0': (24, 50), '12-0': (56, 45.5, 1), '13-0': (86, 40), '14-0': (84, 46),
         '15-0': (9, 58), '16-0': (29, 51), '17-0': (40.5, 55.5, 1), '18-0': (27, 48), '19-0': (44, 49),
     },
     'female': {
@@ -60,7 +60,7 @@ GRIPS = {
         '7-0': (74, 31), '7-1': (72, 30), '7-2': (53, 63), '7-3': (48, 77), '7-4': (84, 70), '7-5': (66, 26),
         '8-0': (90, 31), '8-1': (87, 32), '8-2': (70, 74), '8-3': (48, 82), '8-4': (56, 70), '8-5': (52, 27),
         '9-0': (65, 28), '9-1': (70, 39), '9-2': (67, 68), '9-3': (32, 64), '9-4': (15, 80), '9-5': (29, 35),
-        '10-0': (24, 48), '11-0': (42, 46), '12-0': (68, 44), '13-0': (94, 42), '14-0': (92, 46),
+        '10-0': (31, 46.5, 1), '11-0': (42, 46), '12-0': (68, 44), '13-0': (94, 42), '14-0': (92, 46),
         '15-0': (51, 73), '16-0': (57, 77), '17-0': (60, 82), '18-0': (64, 79), '19-0': (73, 78),
     },
 }
@@ -71,7 +71,12 @@ HEADS = {
 }
 # Hole px that are open air whatever their edge says (x0, y0, x1, y1 inclusive): a head out past the hand, over a dark
 # lining the fill would carry up into it. The tile's blue is 64 there, and the runtime clears them.
-AIR = {('female', '4-0'): [(76, 79, 93, 101)]}
+AIR = {('female', '4-0'): [(76, 79, 93, 101)], ('male', '4-0'): [(48, 57, 50, 60)],   # male: the leg's edge by the fist, a loincloth's green
+       ('male', '3-0'): [(52, 62, 56, 66)], ('male', '3-1'): [(54, 59, 56, 63)], ('male', '3-3'): [(58, 59, 59, 61)],   # the haft's stub off the fist
+       ('male', '19-0'): [(41, 40, 47, 52)]}   # the haft past the hip's edge: no hip there
+# Boxes where the trace left the hammer's haft: every px there that each outfit draws the same, skin aside, is the
+# hammer's - the body's own differs by outfit (2026-10-31, the shields' survey: male 5-3's butt below the fists).
+STEADY = {('male', '5-3'): [(86, 62, 95, 74), (83, 87, 93, 99)]}
 CUT = {('female', '1-1'): [(76, 83, 81, 90)], ('female', '5-1'): [(57, 34, 63, 41)]}
 EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62), (42, 62, 46, 64)],
          ('male', '1-2'): [(48, 64, 49, 66)], ('male', '1-3'): [(36, 61, 41, 63), (42, 61, 42, 61)],
@@ -79,18 +84,22 @@ EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62)
          ('female', '17-0'): [(63, 84, 70, 85), (59, 86, 64, 90)], ('female', '5-1'): [(59, 32, 62, 33)],
          ('female', '7-4'): [(95, 26, 100, 43)], ('female', '10-0'): [(25, 50, 32, 58)],
          ('male', '6-5'): [(89, 19, 74, 27, 2.0)], ('male', '16-0'): [(27, 57, 24, 66, 3.0), (27, 58, 34, 64, 2.5)],
-         ('male', '7-5'): [(59, 19, 66, 22), (42, 25, 52, 34)], ('male', '0-0'): [(2, 64, 11, 73)], ('male', '15-0'): [(1, 61, 11, 70)]}
+         ('male', '7-5'): [(59, 19, 66, 22), (42, 25, 52, 34)], ('male', '0-0'): [(2, 64, 11, 73)], ('male', '15-0'): [(1, 61, 11, 70)],
+         # the back idle's haft, its lit length over the hip (2026-10-31, the owner: "this glob of texture")
+         ('male', '19-0'): [(38.5, 41, 45.5, 45, 1.6)], ('female', '19-0'): [(72.5, 79.5, 76.5, 84, 1.2)]}
 # Back views, whose glove is as dark as the hammer's iron (and male 8-4, the head before a dark hood): the hammer is the
 # light px in the `lit` boxes, every px but skin in the `all` boxes (x0, y0, x1, y1 inclusive) and in the `seg` shaft
-# segments (x0, y0, x1, y1, half-width), round a grip and head read by eye.
+# segments (x0, y0, x1, y1, half-width), round a grip and head read by eye; in the `steady` boxes every px but skin each
+# outfit draws alike - the legs behind differ by outfit (2026-10-31, the owner: "this glob of texture where the hammer
+# was removed": the back walk's dark iron, its butt over the hip and its head's top beside the fingers, was left).
 HAND = {
-    ('male', '3-0'): dict(q=(49, 61), t=(55.5, 64), lit=[(43, 59, 52, 69)], all=[(52, 60, 59, 68), (7, 49, 14, 54)]),   # and a metal tip at the free wrist (2026-10-31)
+    ('male', '3-0'): dict(q=(49, 61), t=(55.5, 64), lit=[(43, 59, 52, 69)], all=[(52, 60, 59, 68), (7, 49, 14, 54)], steady=[(50, 62, 51, 64)]),   # and a metal tip at the free wrist (2026-10-31)
     ('male', '3-1'): dict(q=(52.5, 59), t=(57.5, 61.5), lit=[(47, 56, 55, 60)], all=[(54, 58, 61, 65)]),
-    ('male', '3-2'): dict(q=(62.5, 64), t=(67, 65), lit=[], all=[(63, 63, 71, 68)]),
+    ('male', '3-2'): dict(q=(62.5, 64), t=(67, 65), lit=[], all=[(63, 63, 71, 68)], steady=[(50, 57, 55, 60), (61, 62, 62, 63)]),
     ('male', '3-3'): dict(q=(57.5, 60), t=(62, 62.5), lit=[], all=[(58, 59, 67, 66)]),
-    ('male', '4-0'): dict(q=(51.5, 59), t=(56.5, 64.5), lit=[(44, 53, 56, 62)], all=[(52, 62, 61, 68)]),
+    ('male', '4-0'): dict(q=(51.5, 59), t=(56.5, 64.5), lit=[(44, 53, 56, 62)], all=[(52, 62, 61, 68)], steady=[(41, 56, 49, 65)]),
     ('male', '4-1'): dict(q=(57.5, 56.5), t=(61, 61.5), lit=[(47, 38, 52, 44), (54, 47, 59, 57)], all=[(58, 57, 64, 66)]),
-    ('male', '4-2'): dict(q=(65, 59.5), t=(64.5, 64), lit=[(61, 42, 70, 49), (63, 55, 67, 61)], all=[(60, 61, 70, 68)]),
+    ('male', '4-2'): dict(q=(65, 59.5), t=(64.5, 64), lit=[(61, 42, 70, 49), (63, 55, 67, 61)], all=[(60, 61, 70, 68)], steady=[(68, 55, 73, 62)]),
     ('male', '4-3'): dict(q=(56.5, 57), t=(60, 61.5), lit=[(46, 39, 51, 45), (52, 48, 58, 57)], all=[(56, 57, 64, 66)]),
     ('male', '9-4'): dict(q=(16, 76), t=(12, 57.5), lit=[], all=[(0, 48, 23, 66)], seg=[(14.5, 66, 16, 73.5, 1.3)]),
     ('female', '9-4'): dict(q=(17, 80), t=(12.5, 62), lit=[], all=[(2, 53, 23, 70)], seg=[(14, 70, 16.5, 77.5, 1.3)]),
@@ -107,28 +116,72 @@ HAND = {
     ('female', '4-2'): dict(q=(79, 90.5), t=(81, 95), lit=[(76, 88, 81, 92)], all=[(77, 92, 85, 99)]),
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
 }
+# THE ARMS' PASS (2026-10-31, the owner: "Comprehensive pass on the arms ensuring no leftover hammer texture"): what the
+# trace and the boxes above still left, read frame by frame on every chest family - `extra` as EXTRA, `air` as AIR, `all`
+# a HAND frame's own. A butt the plate legs shade their own way fails STEADY's every-outfit test; a piece between the
+# fists seeded the fill, which drew it back below them.
+ARMS = {
+    ('male', '1-3'): dict(extra=[(36, 62, 49, 67)], air=[(36, 62, 49, 67)]),   # the haft over the gap to the leg: the fill grew the leg into it
+    ('male', '2-0'): dict(extra=[(43, 61, 47, 66)], air=[(43, 62, 44, 66)]),   # the butt below the fist
+    ('male', '2-3'): dict(extra=[(42, 60, 47, 66)], air=[(42, 60, 43, 66)]),
+    ('male', '5-1'): dict(skin=[(45, 21, 50, 32)], air=[(45, 21, 50, 32)]),   # the thumb laid up the shaft, skin and all
+    ('male', '5-3'): dict(extra=[(86, 75, 90, 82), (87, 85, 87, 97, 1.7)]),   # between the fists, and the butt below them
+    ('male', '6-5'): dict(extra=[(60, 23, 73, 30)], air=[(60, 23, 69, 30)]),   # the butt past the segment's end, in the air
+    ('male', '8-4'): dict(all=[(59, 46, 61, 58)]),   # the shaft's lit edge beside the hood
+    ('male', '8-3'): dict(extra=[(26, 78, 29, 82)], air=[(26, 78, 29, 82)]),   # a plate chest's specks of the rim, off the fist
+    ('male', '9-0'): dict(extra=[(56, 22, 58, 24)], air=[(56, 22, 58, 24)]),   # and a chain chest's
+    # the chain and plate chests draw the haft longer, its butt out in the air below the hand
+    ('female', '1-1'): dict(extra=[(60, 88, 74, 93)], air=[(60, 88, 74, 93)]),
+    ('female', '1-2'): dict(extra=[(66, 89, 73, 97)], air=[(66, 89, 73, 97)]),
+    ('female', '1-3'): dict(extra=[(58, 87, 66, 96)], air=[(58, 87, 66, 96), (66, 87, 73, 92)]),
+    ('female', '2-0'): dict(extra=[(65, 93, 70, 97)], air=[(65, 93, 70, 97)]),   # the butt below the fist
+    ('female', '5-1'): dict(skin=[(56, 25, 62, 32)], air=[(56, 25, 62, 32)]),   # the thumb laid up the shaft, skin and all
+    ('female', '7-3'): dict(extra=[(57, 78, 61, 82), (45, 78, 48, 82)], air=[(57, 78, 61, 82), (45, 78, 48, 82)]),   # a speck of the haft in the air between the arms
+    ('female', '8-3'): dict(extra=[(43, 79, 47, 83)], air=[(43, 79, 47, 83)]),   # a chain chest's, off the hand
+    ('female', '17-0'): dict(extra=[(58, 86, 61, 89)], air=[(58, 86, 61, 89)]),   # a chain or plate chest's, off the hand
+    # a fist the trace took as a piece of the hammer left floating: kept, the weapon held in it (the placement audit)
+    ('female', '10-0'): dict(keep=[(29, 43, 34, 49)]),
+    ('female', '8-2'): dict(keep=[(58, 62, 65, 70)]),
+    ('male', '9-3'): dict(keep=[(28, 78, 35, 87)]),
+}
+# Frames whose chain or plate trace lost the hammer the leather one found (male 10-0 and 12-0: the head and the haft's
+# foot, black as the plate gauntlet beside them): that family takes the leather trace too, moved to where its own
+# picture draws the hammer (the best of +-3 px), skin aside.
+LIKE_LEATHER = {('male', '10-0'), ('male', '12-0')}
+SKIN = {_k: _v['skin'] for _k, _v in ARMS.items() if _v.get('skin')}
+KEEP = {_k: _v['keep'] for _k, _v in ARMS.items() if _v.get('keep')}   # a fist's skin, never the hammer's: no island taken
+HAND_MORE = {_k: _v['all'] for _k, _v in ARMS.items() if _v.get('all')}   # a HAND frame's, moved with its family's offset, not read for it   # boxes taken skin and all: a thumb up the haft
+# what any of the family's outfits draws there, not the reference's alone: a chain or plate helmet or legs draws its
+# own rim of the haft (female 1-1's bars below the hand)
+EXTRA_ANY = {_k: _v['extra'] for _k, _v in ARMS.items() if _v.get('extra')}
+for _k, _v in ARMS.items():
+    if _v.get('air'): AIR.setdefault(_k, []).extend(_v['air'])
 # Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
 # body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword
 # (TEXTURE.482, .481: the Archer, one render with the strips) instead: (grip, the head's place at the hammer's length, and
-# the blade's side: f before the body, b behind it, x hidden - a back view's, behind the arm: the pommel shows where the
-# butt was, as Daggerfall's back views show it - None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
-# leaves). The sword's own length is twice the hammer's, so the head's place is half way to its tip.
+# the blade's side: f before the body, b behind it, None as the art's hammer is; a sixth, the handle's; a seventh, its
+# width's share, `wx`, where the frame turns it edge on). The grip is the
+# fist's blade side (a front view's: the hand its fill leaves). The sword's own length is twice the hammer's, so the
+# head's place is half way to its tip. BACK-CARRY (2026-10-31, a player: "drawn claymore is visually not in character's
+# hand"): the back walk hung the blade forward, hidden, its grip and pommel below the fist - read as the hammer's stub.
+# It hangs down from the fist now, out with the arm's swing as the hammer's head hangs, before the body, edge on to the
+# eye; the handle behind.
 SHAFT = {
     ('male', '0-0'): (7, 66, 11.7, 58.6, 'f'), ('male', '0-1'): (6.5, 63, 9.7, 52.7, 'f'),
     ('male', '0-3'): (5, 63, 7.7, 52.7, 'f'), ('male', '2-2'): (37.5, 56.5, 11.2, 50.6, None),
     ('male', '3-0'): (46.1, 60.1, 20.3, 52.4, 'b'), ('male', '3-1'): (49.7, 57.8, 26.5, 47.9, 'b'),
     ('male', '3-2'): (59.9, 62.6, 43.5, 53.7, 'b'), ('male', '3-3'): (54.7, 58.9, 33.1, 50.5, 'b'),
-    ('male', '4-0'): (51.5, 59, 38.9, 45.2, 'x'), ('male', '4-1'): (57.5, 56.5, 46.8, 41.2, 'x'),
-    ('male', '4-2'): (65, 59.5, 67.1, 40.9, 'x'), ('male', '4-3'): (56.5, 57, 45.0, 42.2, 'x'),
+    ('male', '4-0'): (51.5, 59, 61.8, 74.6, 'f', 'b', 0.4), ('male', '4-1'): (57.5, 56.5, 66.9, 72.7, 'f', 'b', 0.4),
+    ('male', '4-2'): (65, 59.5, 69.7, 77.6, 'f', 'b', 0.4), ('male', '4-3'): (56.5, 57, 65.9, 73.2, 'f', 'b', 0.4),
     ('male', '15-0'): (10.5, 58.5, 18.6, 50.9, 'f'), ('male', '16-0'): (28, 54, 18.9, 44.1, 'f'),
     ('male', '18-0'): (26.9, 50.5, 8.3, 41.7, None),
     ('female', '0-0'): (50, 88, 44.2, 86.8, 'f'), ('female', '0-1'): (51, 82, 52.9, 71.3, 'f'),
     ('female', '0-2'): (52, 85, 54.1, 74.7, 'f'), ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
     ('female', '3-1'): (83.7, 89.4, 60.7, 80.3, 'b'), ('female', '3-2'): (64.5, 78.5, 48.3, 71.1, None),
-    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 92.6, 79.9, 'x'), ('female', '4-1'): (82, 88.5, 75.0, 74.5, 'x'),
-    ('female', '4-2'): (79, 90.5, 72.6, 76.2, 'x'), ('female', '4-3'): (81.5, 88.5, 77.0, 73.5, 'x'),
+    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 87.0, 105.7, 'f', 'b', 0.4), ('female', '4-1'): (82, 88.5, 89.0, 102.5, 'f', 'b', 0.4),
+    ('female', '4-2'): (79, 90.5, 85.4, 104.8, 'f', 'b', 0.4), ('female', '4-3'): (81.5, 88.5, 86.0, 103.5, 'f', 'b', 0.4),
     ('female', '15-0'): (49, 85.5, 53, 78.3, 'f'), ('female', '16-0'): (54, 78, 47, 69.4, 'f'),
-    ('female', '18-0'): (59.7, 77.7, 43.4, 69.8, None),
+    ('female', '18-0'): (59.7, 77.7, 41.9, 74.2, None),   # the art's own hammer's lean (the owner: "These look really wrong")
     ('female', '8-2'): (63, 68, 87.4, 69.4, 'b'),   # a swing's: the fist is out at the left, the hammer behind the body
 }
 # The free (left) hand that carries a bow in the walk and the idle - the shot's own bow hand: (x, y, in front of the
@@ -146,6 +199,84 @@ BOW_HAND = {
                '4-0': (44.0, 91.0, 0), '4-1': (39.8, 86.8, 0), '4-2': (43.4, 91.8, 0), '4-3': (39.2, 86.2, 0),
                '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1),
                '19-0': (40.0, 89.5, 0)},
+}
+# LAYERED-SHIELD: a shield-bearer swings one-handed. The free arm's outline in each swing frame it shows in, read by eye
+# on every chest ([(x, y), ...] each), taken out and filled at runtime (`sa`); a view plays only the frames whose sword
+# arm swings on its own side (layeredShield.js SHIELD_CUTS). From aside, the far hand where it shows behind the back: the
+# shield is before the body there.
+SHIELD_ARM = {
+    ('male', '5-0'): [[(54.5, 30.5), (56, 26), (59.5, 25.5), (62, 29), (66, 35), (70, 41), (73, 44.5), (84, 46), (93, 48.5), (94, 53.5), (78, 54), (68, 53), (63, 48), (60, 43), (57, 37)]],
+    ('male', '5-1'): [[(55, 36), (60, 34.5), (64, 38), (68, 43), (72, 47.5), (81, 46.5), (85, 45.8), (90, 46.5), (93, 48.5), (94, 50), (95, 57), (80, 57.5), (72, 56), (66, 52), (62, 47), (58, 42)]],
+    ('male', '5-2'): [[(99, 57), (99, 66), (90, 67.5), (81, 70.5), (73, 74), (62, 75), (51, 74.5), (50, 70.5), (57, 69.5), (63, 67), (70, 66), (78, 64.5), (85, 62), (88, 58)]],
+    ('male', '6-0'): [[(52, 24.5), (60, 24.5), (60.5, 29), (62.5, 34), (65.5, 39.5), (68.5, 44), (72, 43.5), (76, 42.6), (81, 42.6), (84, 43.6), (84.5, 46), (83, 47.5), (82, 51.5), (72, 51.5), (66, 50), (62, 45.5), (58.5, 41), (55, 36), (51.5, 31)]],
+    ('male', '6-1'): [[(52, 32), (56, 33), (60, 37), (64, 41.5), (68, 45), (76, 44.6), (78, 43.6), (83, 43.6), (86.5, 45.2), (88, 47), (89, 53), (75, 53.5), (66, 51), (61, 47), (56, 43), (51.5, 39.5), (50, 36)]],
+    ('male', '6-2'): [[(97, 53), (97, 63.5), (76, 64.2), (60, 64.2), (47, 65), (40, 67.5), (33, 66.5), (33, 61), (41, 59), (50, 56.5), (60, 56), (76, 55.5), (86, 54)]],
+    ('male', '6-3'): [[(97, 62), (97, 70), (89, 78), (81, 88), (79, 93), (69, 93), (69, 86), (77, 78), (85, 67), (91, 62)]],
+    ('male', '7-3'): [[(57, 60.5), (64.5, 59.5), (67.5, 63), (64.5, 70.5), (59, 75.5), (53, 80), (50, 85.5), (44, 85), (41.5, 81), (45.5, 76.5), (51.5, 71.5), (55.5, 65.5)]],
+    ('male', '2-2'): [[(68, 61.5), (76, 61.5), (76, 68.5), (68, 68.5)]],
+    ('male', '17-0'): [[(67, 56), (77, 55), (81.5, 58), (81.5, 66), (80, 72), (75, 73), (70, 72), (66, 66)]],
+    ('female', '2-0'): [[(97, 94), (106, 94), (106, 100), (97, 100)]],
+    ('female', '17-0'): [[(87, 85), (95, 84), (99.5, 88), (100.5, 95), (97.5, 102), (91, 102), (87, 96)]],
+    ('female', '5-0'): [[(64.5, 31.5), (68, 28), (71, 30), (75, 35), (79, 40), (81, 43.5), (90, 44), (96, 44), (102.5, 44.5), (102.5, 52), (95, 52), (94.5, 51), (85, 51.5), (79, 49), (75, 46.5), (70, 42), (66, 37.5)]],
+    ('female', '5-1'): [[(58, 34), (61, 32.5), (67, 33), (69, 37), (72, 40), (78, 43), (85, 45), (95, 45.5), (104, 46), (104, 53), (96, 53), (95, 51), (85, 51), (79, 49), (73, 47), (66, 44.5), (61, 41), (57.5, 38)]],
+    ('female', '5-2'): [[(64, 59.5), (72, 57.5), (82, 55.5), (88, 53.8), (100, 54.6), (102, 56), (102, 58.5), (94, 60), (85, 62.5), (76, 64.5), (68, 64.5), (64, 63.5)]],
+    ('female', '6-0'): [[(53, 32), (55, 30.5), (57.5, 33), (59.5, 37), (61.5, 41), (64, 43.5), (72, 44), (76, 46.5), (75, 50), (65, 50.5), (60, 48), (57, 44.5), (55, 40), (53.5, 36)]],
+    ('female', '6-1'): [[(47, 38), (51, 37.5), (55, 40.5), (59, 44), (63, 46.5), (72, 47), (75, 49.5), (73, 53), (62, 53), (57, 50.5), (53, 47), (49, 43.5), (46.5, 41)]],
+    ('female', '6-2'): [[(38, 61), (45, 58.6), (55, 56.4), (65, 55.8), (74, 56), (74, 59.5), (73, 61), (65, 62), (55, 63.5), (45, 65), (39, 66)]],
+    ('female', '6-3'): [[(68, 70), (74, 66), (80, 63.5), (82, 68), (78, 74), (73, 80), (66, 85), (61.5, 85), (62, 80)]],
+    ('female', '7-3'): [[(57.5, 85.5), (61.5, 81.5), (65.5, 78.5), (69.5, 75.5), (73.5, 71.5), (80, 67.5), (84.5, 69.5), (80.5, 75.5), (74.5, 80.5), (68.5, 85.5), (64.5, 90.5), (60, 93.5), (55.5, 91.5)]],
+}
+# What the hole's fill never copies (arm_sources): beside female 6-3's hole the face, which it drew a second of on the
+# chest, and the near arm.
+SHIELD_FILL_NOT = {
+    ('female', '6-3'): [[(50, 53.5), (67.5, 53.5), (67.5, 70.5), (50, 70.5)], [(48, 71), (62, 71), (62, 87), (48, 87)]],
+}
+# DONOR-FILL: where the free arm crossed the chest, the hole is the idle's own chest (`sd`: the idle, the shift to its
+# px from this frame's, and outlines it keeps to where the idle's waist sits otherwise), the fill only past it - the
+# inpaint drew noise over a chest of chain or plate it cannot know.
+SHIELD_DONOR = {
+    ('female', '6-3'): ('16-0', 1, -6),
+    ('male', '6-2'): ('16-0', -21, -33),
+    ('male', '6-3'): ('16-0', -25, -41, [[(50, 50), (110, 50), (110, 80.5), (50, 80.5)]]),
+}
+# The idle's free arm, which a front swing takes back (`sp`): its outline from under the shoulder to the hand.
+SHIELD_ARM_OF_IDLE = {
+    ('male', '15-0'): [[(46.5, 24), (53, 22.5), (55.5, 30), (57, 40), (57.5, 50), (57.5, 58), (57, 66), (55, 69.5), (51.5, 69.5), (50.5, 60), (48.5, 52), (47, 44), (45.5, 34)]],
+    ('male', '16-0'): [[(71.5, 24), (78, 21.5), (80.5, 30), (81.5, 42), (83.5, 52), (84.5, 62), (83, 68.5), (77, 69), (75, 60), (74, 50), (72.5, 40), (71, 32)]],
+    ('female', '15-0'): [[(82, 62.5), (87.5, 60), (89.5, 70), (88.5, 80), (90.5, 88), (90.5, 97), (86.5, 97.5), (85, 90), (83, 80), (81, 70)]],
+    ('female', '16-0'): [[(89, 64.5), (95.5, 61), (97.5, 70), (97.5, 80), (99.5, 88), (100.5, 97.5), (95, 99.5), (92, 92), (91, 82), (89, 72)]],
+}
+# The idle's shoulder over that arm (`ss`: the pauldron, or the hood's fall, and the arm under it), laid back where the
+# swing raised its own.
+SHIELD_SHOULDER_OF_IDLE = {
+    ('male', '15-0'): [[(42.5, 14.5), (47, 14.5), (51, 15.5), (53.5, 18.5), (53.5, 23), (46.5, 24), (42.5, 23.5)]],
+    ('female', '15-0'): [[(76.5, 48.5), (82, 48.5), (88.5, 49.5), (89.5, 51.5), (88, 54), (86.5, 56), (86.5, 62.2), (82, 62.5), (79.5, 62), (79.5, 56), (76.5, 56)]],
+}
+# From before, the swing's free arm comes out and the idle's goes back in its place, the shield in its hand (`sg`): the
+# idle, and the shift its arm hangs from this frame's shoulder by (the idle's px less this frame's); a fourth entry 1 lays
+# the idle's shoulder too (`ss`), where the swing's own went up with the arm and out with it. The shield's grip follows
+# the arm. The hole the swing's arm leaves is filled from the frame's own body (arm_sources, the hammer's inpaint).
+SHIELD_GRAFT = {
+    ('male', '5-0'): ('15-0', -38, -28), ('male', '5-1'): ('15-0', -39, -30, 1), ('male', '5-2'): ('15-0', -48, -35),
+    ('male', '6-0'): ('16-0', -11, -24), ('male', '6-1'): ('16-0', -11, -25), ('male', '6-2'): ('16-0', -17, -31),
+    ('male', '6-3'): ('16-0', -24, -37),
+    ('female', '5-0'): ('15-0', -8, 5, 1), ('female', '5-1'): ('15-0', -9, 4, 1), ('female', '5-2'): ('15-0', -14, 1),
+    ('female', '6-0'): ('16-0', 12, 10), ('female', '6-1'): ('16-0', 12, 8), ('female', '6-2'): ('16-0', 9, 3),
+    ('female', '6-3'): ('16-0', 4, -1),
+}
+SHIELD_ARM_FRAMES = {b: [rf for (bb, rf) in SHIELD_ARM if bb == b] for b in ('male', 'female')}
+# Where the shield's grip goes (`sh`): the free hand where BOW_HAND has it, or the grafted arm's; else read by eye - from
+# aside before the waist as the side walk holds it (the far arm's, behind the body), from behind at the body's left edge,
+# the hand flung out in a flinch. A third entry is the width share where the frame turns it otherwise.
+SHIELD_GRIP = {
+    'male': {'2-0': (45, 58), '2-1': (44, 56), '2-2': (43, 57), '2-3': (44, 56), '17-0': (49, 58), '18-0': (26, 62),
+             '10-0': (100, 64), '11-0': (62, 62), '12-0': (40, 66), '13-0': (14, 67), '14-0': (16, 65),
+             '7-0': (69, 69), '7-1': (68, 68), '7-2': (68, 72), '7-3': (60, 79), '7-4': (64, 74), '7-5': (68, 69),
+             '8-0': (55, 64), '8-1': (55, 64), '8-2': (50, 64), '9-0': (40, 64), '9-1': (40, 64), '9-2': (38, 66)},
+    'female': {'2-0': (71, 86), '2-1': (72, 84), '2-2': (71, 86), '2-3': (72, 84), '17-0': (69, 82), '18-0': (62, 90),
+               '3-2': (60, 92), '10-0': (98, 66), '11-0': (88, 58), '12-0': (48, 66), '13-0': (24, 63), '14-0': (28, 62),
+               '7-0': (72, 84), '7-1': (71, 84), '7-2': (72, 86), '7-3': (67, 90), '7-4': (71, 88), '7-5': (72, 86),
+               '8-0': (66, 78), '8-1': (66, 78), '8-2': (61, 80), '9-0': (38, 80), '9-1': (37, 80), '9-2': (34, 80)},
 }
 # The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views -
 # the near hand is the left: the bow is there. The back-3/4 idle and the female's 3-2 press that hand flat to the body
@@ -256,6 +387,24 @@ def trace(body, rf, fam, cap=16):
         vx, vy = sx1 - sx0, sy1 - sy0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
         tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
         m |= opq & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+    for x0, y0, x1, y1 in STEADY.get((body, rf), []): m |= stab & ~sk & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
+    for x0, y0, x1, y1 in SKIN.get((body, rf), []): m |= opq & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
+    drawn = (st[..., 3] > 0).any(axis=0)
+    for ex in EXTRA_ANY.get((body, rf), []):
+        sx0, sy0, sx1, sy1 = ex[:4]
+        if len(ex) == 4: m |= drawn & ~sk & (xx >= sx0) & (xx <= sx1) & (yy >= sy0) & (yy <= sy1); continue
+        vx, vy = sx1 - sx0, sy1 - sy0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
+        tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
+        m |= drawn & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+    if (body, rf) in LIKE_LEATHER and fam != 'leather':
+        g0 = trace(body, rf, 'leather', cap); R0, at = g0['L'], np.nonzero(g0['m'] & (g0['L'][..., 3] > 0))
+        best = (float('inf'), 0, 0)
+        for dy in range(-3, 4):
+            for dx in range(-3, 4):
+                Y, X = np.clip(at[0] + dy, 0, H - 1), np.clip(at[1] + dx, 0, W - 1)
+                c = (np.abs(L[Y, X, :3].astype(np.int32) - R0[at][:, :3].astype(np.int32)).sum(-1) + 765 * (L[Y, X, 3] == 0)).mean() + 2 * (abs(dx) + abs(dy))
+                if c < best[0]: best = (c, dx, dy)
+        m |= np.roll(g0['m'], (best[2], best[1]), (0, 1)) & opq & ~sk
     for x0, y0, x1, y1 in CUT.get((body, rf), []): m &= ~((xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     rest = opq & ~m                                               # a piece left floating is the hammer's too
     lab3, k3 = nd.label(rest, structure=K8)
@@ -268,6 +417,7 @@ def trace(body, rf, fam, cap=16):
     anyop = (st[..., 3] > 0).any(axis=0)
     for _ in range(2): m |= nd.binary_dilation(m, K8, 1) & disc & anyop & ~sk
     m |= nd.binary_fill_holes(m) & disc
+    for x0, y0, x1, y1 in KEEP.get((body, rf), []): m &= ~(sk & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     q = (px + ux * Q, py + uy * Q)
     # the face: the head reaches further on the spike's side
     vv = (hx - T[0]) * nx + (hy - T[1]) * ny
@@ -278,7 +428,7 @@ def trace(body, rf, fam, cap=16):
 def hand(body, rf, fam):
     """A HAND frame's hammer: its boxes over the family's reference picture."""
     h = HAND[(body, rf)]
-    _, L, st = stable(body, rf, fam); H, W = L.shape[:2]; opq = L[..., 3] > 0; sk = skin(L); s, v = hsv(L)
+    stab, L, st = stable(body, rf, fam); H, W = L.shape[:2]; opq = L[..., 3] > 0; sk = skin(L); s, v = hsv(L)
     yy, xx = np.mgrid[0:H, 0:W]
     def boxes(bs, ox=0, oy=0):
         b = np.zeros((H, W), bool)
@@ -294,7 +444,7 @@ def hand(body, rf, fam):
             c += 2 * (abs(dx) + abs(dy))
             if c < best[0]: best = (c, dx, dy)
     _, ox, oy = best
-    head = opq & ~sk & boxes(h['all'], ox, oy)
+    head = opq & ~sk & boxes(h['all'] + HAND_MORE.get((body, rf), []), ox, oy)
     for x0, y0, x1, y1, hw in h.get('seg', []):
         x0, y0, x1, y1 = x0 + ox, y0 + oy, x1 + ox, y1 + oy
         vx, vy = x1 - x0, y1 - y0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
@@ -309,7 +459,7 @@ def hand(body, rf, fam):
                 Rs = np.roll(R, (dy, dx), (0, 1))
                 near |= (np.abs(L[..., :3].astype(np.int32) - Rs[..., :3].astype(np.int32)).sum(-1) <= 45) & (Rs[..., 3] > 0)
         same &= near
-    m = head | (opq & ~sk & same & boxes(h['lit'], ox, oy) & (s < 0.3) & (v >= 0.2))
+    m = head | (opq & ~sk & same & boxes(h['lit'], ox, oy) & (s < 0.3) & (v >= 0.2)) | (stab & ~sk & boxes(h.get('steady', []), ox, oy))
     lab, k = nd.label(opq & ~m, structure=K8)                    # a speck the hammer leaves floating is its own
     if k > 1:
         sizes = nd.sum(opq & ~m, lab, range(1, k + 1)); big = int(np.argmax(sizes)) + 1
@@ -373,13 +523,15 @@ def exemplar(imgs, m, R=16, worst=220, mirror=False):
         cost = cost / len(imgs) + bad * 6
         if best is None or cost < best[0]: best = (cost, mode, a, dy)
     return [best[1], best[2], best[3]] if best and (mirror or best[0] <= worst) else 0
-def inpaint(imgs, m, bp, R=11, P=2):
+def inpaint(imgs, m, bp, R=11, P=2, nosrc=None):
     """Each body px of the hole, the px to copy it from (dx, dy): from the hole's edge in, the source whose neighbourhood
     best matches what is known round it over the family's outfits - a neighbour's own source kept where it is nearly as
-    good, so a patch carries on whole. Only a px every outfit draws, off the hole, is a source."""
+    good, so a patch carries on whole. Only a px every outfit draws, off the hole, is a source - and none in `nosrc`,
+    which is no guide either."""
     H, W = m.shape
     A = np.stack([im[..., :3].astype(np.float32) for im in imgs])
     src_ok = np.all([im[..., 3] > 0 for im in imgs], axis=0) & ~m
+    if nosrc is not None: src_ok &= ~nosrc
     known = src_ok.copy(); C = A.copy()
     off = np.zeros((H, W, 2), np.int16); has = np.zeros((H, W), bool)
     cy, cx = np.mgrid[-R:R + 1, -R:R + 1]; cdx, cdy = cx.ravel(), cy.ravel(); keep = (cdx != 0) | (cdy != 0); cdx, cdy = cdx[keep], cdy[keep]
@@ -411,6 +563,33 @@ def inpaint(imgs, m, bp, R=11, P=2):
         off[y, x] = (cdx[b], cdy[b]); has[y, x] = True; known[y, x] = True; C[:, y, x] = A[:, y + cdy[b], x + cdx[b]]
     return off, has
 
+
+
+def poly_mask(shape, polys):
+    """The px whose middles lie inside any of the outlines (even-odd), as the runtime's (layeredShield.js outlineMask)."""
+    H, W = shape; yy, xx = np.mgrid[0:H, 0:W]; px, py = xx + 0.5, yy + 0.5; m = np.zeros((H, W), bool)
+    for P in polys:
+        c = np.zeros((H, W), bool)
+        for i in range(len(P)):
+            (xi, yi), (xj, yj) = P[i], P[i - 1]
+            if yi == yj: continue
+            c ^= ((yi > py) != (yj > py)) & (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+        m |= c
+    return m
+def arm_sources(body, rf):
+    """LAYERED-SHIELD: the hole the free arm leaves (SHIELD_ARM), each body px's own source in the frame (inpaint over
+    the family's outfits, the hammer's hole no source), as the weapon strip's tiles: (dx, dy) + 128, blue 255."""
+    tiles = []; ham_all = np.array(Image.open(f'{V}/weapon/{body}/{rf}.png').convert('RGBA')); tw = ham_all.shape[1] // len(FAMS)
+    for k, fam in enumerate(FAMS):
+        _, L, st = stable(body, rf, fam); imgs = [st[i] for i in range(st.shape[0])]
+        ham = ham_all[:, k * tw:(k + 1) * tw, 3] > 0
+        arm = poly_mask(ham.shape, SHIELD_ARM[(body, rf)]) & np.any([im[..., 3] > 0 for im in imgs], axis=0)
+        nosrc = poly_mask(ham.shape, SHIELD_FILL_NOT[(body, rf)]) if (body, rf) in SHIELD_FILL_NOT else None
+        off, has = inpaint(imgs, arm | ham, body_side(L, arm) & ~ham, nosrc=nosrc)
+        tile = np.zeros(ham.shape + (4,), np.uint8)
+        tile[has, 0] = off[has, 0] + 128; tile[has, 1] = off[has, 1] + 128; tile[has, 2] = 255; tile[has, 3] = 255
+        tiles.append(tile)
+    return np.concatenate(tiles, axis=1)
 
 
 def depth(g, lo=LO, hi=HI):
@@ -484,16 +663,18 @@ def main(only=None):
         ln = round(float(np.percentile(lengths, 95)), 1)
         for rf, per in frames.items():   # Daggerfall's sword, where the hammer hides its shaft
             for fam, p in zip(FAMS, per):
-                p.pop('carry', None); p.pop('hang', None); p.pop('w', None)
+                p.pop('carry', None); p.pop('hang', None); p.pop('w', None); p.pop('wx', None)
                 if (body, rf) not in SHAFT: continue
-                gx, gy, ex, ey, blade = SHAFT[(body, rf)]
+                gx, gy, ex, ey, blade, *more = SHAFT[(body, rf)]
+                handle = more[:1]
+                if len(more) > 1: p['wx'] = more[1]
                 ox, oy = (p['q'][0] - HAND[(body, rf)]['q'][0], p['q'][1] - HAND[(body, rf)]['q'][1]) if (body, rf) in HAND else (0, 0)
                 p['w'] = [round(gx + ox, 1), round(gy + oy, 1), round(ex + ox, 1), round(ey + oy, 1)]
                 tiles = np.array(Image.open(f'{V}/weapon/{body}/{rf}.png').convert('RGBA')); tw = tiles.shape[1] // len(FAMS)
                 m = tiles[:, FAMS.index(fam) * tw:(FAMS.index(fam) + 1) * tw, 3] > 0
                 d = depth({'q': p['w'][:2], 't': p['w'][2:], 'm': m, 'L': stable(body, rf, fam)[1]})
                 d = d[:-LO - 3] + 'b' * 3 + d[-LO:]   # the fist closes over the handle
-                p['d'] = d if blade is None else d[:-LO] + blade * (HI + 1)
+                p['d'] = d if blade is None else (handle[0] * -LO if handle else d[:-LO]) + blade * (HI + 1)
         for rf, per in frames.items():   # the bow's hand, where a frame carries one
             for p in per:
                 p.pop('bow', None); p.pop('bowM', None)
@@ -517,6 +698,24 @@ def main(only=None):
                     hx, hy, front = free; vx, vy = (-ux, uy) if rec % 5 in (0, 4) else (ux, uy)
                     blade = 'x' if rec % 5 == 4 else 'f' if front else 'b'
                     p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
+        for rf in SHIELD_ARM_FRAMES[body]:   # LAYERED-SHIELD: the hole the free arm leaves, filled from the frame's own body
+            out = f'{V}/weapon/{body}/{rf}-arm.png'
+            if only is None or f'{body}:{rf}' in only or f'{body}:{rf}-arm' in only or not os.path.exists(out):
+                Image.fromarray(arm_sources(body, rf)).save(out, optimize=True); print(body, rf, 'arm sources')
+        for rf, per in frames.items():   # LAYERED-SHIELD: the free arm out of a swing (`sa`), the shield's grip (`sh`)
+            g = SHIELD_GRIP[body].get(rf) or BOW_HAND[body].get(rf, ())[:2]
+            gr = SHIELD_GRAFT.get((body, rf))
+            if gr:   # the grafted arm's hand
+                hx, hy = BOW_HAND[body][gr[0]][:2]; g = (round(hx - gr[1], 1), round(hy - gr[2], 1))
+            for p in per:
+                p.pop('sa', None); p.pop('sh', None); p.pop('sg', None); p.pop('sp', None); p.pop('ss', None); p.pop('sd', None)
+                if g: p['sh'] = [float(v) for v in g]
+                if (body, rf) in SHIELD_ARM: p['sa'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_ARM[(body, rf)]]
+                if gr: p['sg'] = [gr[0]] + [float(v) for v in gr[1:]]
+                dn = SHIELD_DONOR.get((body, rf))
+                if dn: p['sd'] = [dn[0], float(dn[1]), float(dn[2])] + ([[[[float(x), float(y)] for x, y in P] for P in dn[3]]] if len(dn) > 3 else [])
+                if (body, rf) in SHIELD_ARM_OF_IDLE: p['sp'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_ARM_OF_IDLE[(body, rf)]]
+                if (body, rf) in SHIELD_SHOULDER_OF_IDLE: p['ss'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_SHOULDER_OF_IDLE[(body, rf)]]
         for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
             rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
             prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest

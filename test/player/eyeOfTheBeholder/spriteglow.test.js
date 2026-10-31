@@ -3,6 +3,7 @@
 // walkers' lists of what they drew, the world picture's glow in the renderer (drawBillboardGlow, its field's world arm),
 // the shaders' bottom-up rows, and the wiring: the rig's hand, the aura host's last draw.
 import { test } from 'node:test';
+import { setModSetting } from '../../../src/systems/modSettings.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -269,7 +270,10 @@ test('BACK-HOLSTER GLOW (my sprite): sheathed, the weapon on its back glows - it
   assert.equal(viewFrom(off.b, 4, { handItem: SHOCK }).length, 0, 'the switch off');
 });
 
-test('AUDIT BACK-HOLSTER A5 (my sprite): the weapon drawn, its ready picture still uploading, the last picture stands - and the glow round it is keyed to it, in its pixels, never to the picture asked (mutants: keyed to the picture asked)', async () => {
+test('AUDIT BACK-HOLSTER A5 (my sprite): the weapon drawn, its ready picture still uploading, the last picture stands - and the glow round it is keyed to it, in its pixels, never to the picture asked (mutants: keyed to the picture asked)', async (t) => {
+  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
+  setModSetting('eye-of-the-beholder', 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting('eye-of-the-beholder', 'Graphics.TurnToView', 1));
   const { b, r } = await liveBody({}, false);   // standing from the first: the idle picture
   const bodies = () => r.batches.filter((x) => typeof x.archive === 'number');
   const sheathed = { handItem: SHOCK, sheathed: true, weaponReady: false };
@@ -389,7 +393,8 @@ test('LAYERED-GLOW (my sprite, the others): drawn, a worn-armour body\'s glow st
   assert.equal([...rr.textures.get(wg[0].key).colors].filter(Boolean).length, 30);
   // let go with the look: the body's picture and its weapon's - where one was uploaded
   for (const src of [read('src/player/eyeOfTheBeholder/eotbBody.js'), read('src/net/peer/peerRiders.js')]) {
-    assert.match(src, /evictHeld\(renderer, (?:k|key)\.replace\(':', '_'\)\)/, 'the weapon\'s picture goes with the body\'s');
+    // the release itself: the body's picture let go and its weapon's beside it (the retry's evictHeld is another door)
+    assert.match(src, /evictTexture\?\.\((?:k|key)\.replace\(':', '_'\)\);(?:\s*\/\/[^\n]*\n\s*|\s*)evictHeld\(renderer, (?:k|key)\.replace\(':', '_'\)\)/, 'the weapon\'s picture goes with the body\'s');
   }
   const gone = [];
   const kept = { textures: new Map([[`1700_a${HELD_SUFFIX}`, {}]]), evictTexture(k) { gone.push(k); this.textures.delete(k); } };

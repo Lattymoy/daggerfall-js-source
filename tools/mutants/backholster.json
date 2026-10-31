@@ -173,8 +173,8 @@
   {
     "name": "BACK-HOLSTER-the-origin-shift-misses-it",
     "file": "src/net/peer/peerRiders.js",
-    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
-    "new": "r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
+    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
+    "new": "r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
