@@ -430,8 +430,8 @@
   {
     "name": "LOOT9-popup-no-key",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;",
-    "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ';",
+    "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY; // LOOT9: the Reforge's row, its key F - the one sound below",
+    "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ'; // LOOT9: the Reforge's row, its key F - the one sound below",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

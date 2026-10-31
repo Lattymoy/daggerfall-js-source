@@ -92,8 +92,8 @@
   {
     "name": "AKG2-B7-sit",
     "file": "src/ui/gambitTableHud.js",
-    "old": "          if (online.canSit) out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: true, kind: 'primary' });",
-    "new": "",
+    "old": "          if (online.canSit)\n            out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: true, kind: 'primary' });\n        }",
+    "new": "        }",
     "tests": [
       "test/net/auditkg2_online.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AKG2-C4-board",
     "file": "src/ui/gamepadInput.js",
-    "old": "const boardUp = !overlay && !lb && !rb && !lootUp && !helmUp && !!hooks.board?.up?.();",
-    "new": "const boardUp = false;",
+    "old": "    const boardUp = !overlay && !lb && !rb && !lootUp && !helmUp && !!hooks.board?.up?.();",
+    "new": "    const boardUp = false;",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "AKG2-C6-decided",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const decided = !!game.decided || !!game.over;",
-    "new": "const decided = !!game.over;",
+    "old": "    const decided = !!game.decided || !!game.over;",
+    "new": "    const decided = !!game.over;",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "AKG2-C8-hazard",
     "file": "src/ui/gambitTableWords.js",
-    "old": "  if (x.hazard) lines.push(x.hazard);",
-    "new": "",
+    "old": "  if (x.hazard) lines.push(x.hazard); // AUDIT KG II C8: its cell's hazard (14.5)",
+    "new": "  // AUDIT KG II C8: its cell's hazard (14.5)",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "AKG2-C8-names",
     "file": "src/ui/gambitTableWords.js",
-    "old": "names: listOf(x.foes) }",
-    "new": "names: '' }",
+    "old": "      { n: x.foes.length, names: listOf(x.foes) },",
+    "new": "      { n: x.foes.length, names: '' },",
     "tests": [
       "test/systems/auditkg2_board.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "AKG2-D2-more",
     "file": "src/ui/gambitTableHud.js",
-    "old": "        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });\n        out.actions.push({ id: 'more', label: GAMBIT_PRESS.more, enabled: true, kind: 'quiet', strip: true, phone: true });",
-    "new": "        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });",
+    "old": "        out.actions.push({\n          id: 'more',\n          label: GAMBIT_PRESS.more,\n          enabled: true,\n          kind: 'quiet',\n          strip: true,\n          phone: true,\n        });\n      }",
+    "new": "      }",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js",
       "test/net/kg5_client.test.js"
@@ -545,8 +545,8 @@
   {
     "name": "AKG2-D3-more-chips",
     "file": "src/ui/gambitTableHud.js",
-    "old": "{ key: 'potionsMine', more: true,",
-    "new": "{ key: 'potionsMine',",
+    "old": "            key: 'potionsMine',\n            more: true,\n            text: watching",
+    "new": "            key: 'potionsMine',\n            text: watching",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "AKG2-D3-attr",
     "file": "src/ui/gambitTableHud.js",
-    "old": "          if (c.more) n.setAttribute('data-more', 'true');",
-    "new": "",
+    "old": "          if (c.more) n.setAttribute('data-more', 'true'); // AUDIT KG II D3: More's sheet's, not the phone's strip",
+    "new": "          // AUDIT KG II D3: More's sheet's, not the phone's strip",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "AKG2-D4-title",
     "file": "src/ui/gambitTableHud.js",
-    "old": "name: watching ? online.names?.[st.turn] ?? '' : name });",
-    "new": "name });",
+    "old": "        name: watching ? (online.names?.[st.turn] ?? '') : name,",
+    "new": "        name,",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "AKG2-D4-info",
     "file": "src/ui/gambitTableHud.js",
-    "old": "mine: !names && pc.side === 0, regular: names ? names[pc.side] ?? '' : regular,",
-    "new": "mine: pc.side === 0, regular,",
+    "old": "      lines: pieceInfoLines({\n        name,\n        mine: !names && pc.side === 0,\n        regular: names ? (names[pc.side] ?? '') : regular,\n        piece: pc,\n        foes,\n        hazard,\n      }),",
+    "new": "      lines: pieceInfoLines({ name, mine: pc.side === 0, regular, piece: pc, foes, hazard }),",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "AKG2-D5-pot",
     "file": "src/ui/gambitTableHud.js",
-    "old": "gold: watching ? watchGold(over, game.pot ?? 0, online.names ?? []) : resultGold(over, game.stake, name),",
-    "new": "gold: resultGold(over, game.stake, name),",
+    "old": "        gold: watching ? watchGold(over, game.pot ?? 0, online.names ?? []) : resultGold(over, game.stake, name), // AUDIT KG II B4 + D5: a watcher's gold is not in it - the pot's, said as the players'",
+    "new": "        gold: resultGold(over, game.stake, name), // AUDIT KG II B4 + D5: a watcher's gold is not in it - the pot's, said as the players'",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js",
       "test/net/auditkg2_online.test.js"
@@ -591,8 +591,8 @@
   {
     "name": "AKG2-D9-guide",
     "file": "src/ui/gambitTableHud.js",
-    "old": "paras: gambitGuide(p.online ? { gold: !!p.online.gold } : null) },",
-    "new": "paras: gambitGuide() },",
+    "old": "    guide: {\n      open: !!p.guideOpen,\n      head: GAMBIT_HEADS.guide,\n      paras: gambitGuide(p.online ? { gold: !!p.online.gold } : null),\n    },",
+    "new": "    guide: { open: !!p.guideOpen, head: GAMBIT_HEADS.guide, paras: gambitGuide() },",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "AKG2-D9-words",
     "file": "src/ui/gambitTableHud.js",
-    "old": "items: gambitWords(!!p.online) },",
-    "new": "items: gambitWords() },",
+    "old": "    words: { open: !!p.wordsOpen, head: GAMBIT_HEADS.words, items: gambitWords(!!p.online) },",
+    "new": "    words: { open: !!p.wordsOpen, head: GAMBIT_HEADS.words, items: gambitWords() },",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "AKG2-D14-first",
     "file": "src/ui/gambitTableHud.js",
-    "old": "        if (a.stakes) {   // KG6: the gold table's stake picks - AUDIT KG II D14",
-    "new": "        if (false) {   // KG6: the gold table's stake picks - AUDIT KG II D14",
+    "old": "        if (a.stakes) {",
+    "new": "        if (false) {",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "AKG2-D17-fill",
     "file": "src/ui/gambitTableHud.js",
-    "old": "out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: fillWhy });",
-    "new": "out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: null });",
+    "old": "    out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: fillWhy });",
+    "new": "    out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: null });",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -645,8 +645,8 @@
   {
     "name": "AKG2-D17-clear",
     "file": "src/ui/gambitTableHud.js",
-    "old": "why: army.length ? null : armyEmpty() });",
-    "new": "why: null });",
+    "old": "    out.actions.push({\n      id: 'clear',\n      label: GAMBIT_PRESS.clear,\n      enabled: army.length > 0,\n      why: army.length ? null : armyEmpty(),\n    });",
+    "new": "    out.actions.push({ id: 'clear', label: GAMBIT_PRESS.clear, enabled: army.length > 0, why: null });",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "AKG2-D18-label",
     "file": "src/ui/gambitTableHud.js",
-    "old": "label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18\n",
-    "new": "label: GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18\n",
+    "old": "    if (online.canBoard)\n      out.actions.push({ id: 'board', label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true }); // KG6; AUDIT KG II D18",
+    "new": "    if (online.canBoard) out.actions.push({ id: 'board', label: GAMBIT_ONLINE_PRESS.board, enabled: true }); // KG6; AUDIT KG II D18",
     "tests": [
       "test/net/iliac/auditkg2_panel.test.js"
     ]

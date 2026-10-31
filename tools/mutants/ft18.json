@@ -56,8 +56,8 @@
   {
     "name": "FPSCAP-the-counter-counts-the-screen",
     "file": "src/ui/fpsCounter.js",
-    "old": "    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }\n",
-    "new": "",
+    "old": "    if (frameCapSkip(now)) {\n      if (live && raf) handle = raf(tick);\n      return;\n    }\n    const prev = stamps.length ? stamps[stamps.length - 1] : null;",
+    "new": "    const prev = stamps.length ? stamps[stamps.length - 1] : null;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]

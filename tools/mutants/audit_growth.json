@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-GROWTH-L4-1-door-asks-nothing",
     "file": "src/ui/firmamentOver.js",
-    "old": "asks: () => { try { return !!o.view()?.back?.(); } catch { return false; } },",
-    "new": "asks: () => false,",
+    "old": "    asks: () => {\n      try {\n        return !!o.view()?.back?.();\n      } catch {\n        return false;\n      }\n    },",
+    "new": "    asks: () => false,",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ],

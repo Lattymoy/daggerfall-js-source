@@ -1086,8 +1086,8 @@
   {
     "name": "FP-paint-part-blind",
     "file": "src/ui/fleetPage.js",
-    "old": "  for (const part of s.paints ?? []) box.append(",
-    "new": "  for (const part of LIVERY_PARTS) box.append(",
+    "old": "  for (const part of s.paints ?? [])\n    box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));",
+    "new": "  for (const part of LIVERY_PARTS) box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1095,8 +1095,8 @@
   {
     "name": "FP-cabin-row-none",
     "file": "src/ui/fleetPage.js",
-    "old": "  if (s.cabin != null) {\n    box.append(paintSwatches(",
-    "new": "  if (false) {\n    box.append(paintSwatches(",
+    "old": "  if (s.cabin != null) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1104,8 +1104,8 @@
   {
     "name": "FP-paint-stripped",
     "file": "src/ui/fleetPage.js",
-    "old": "() => { _open = null; _paint = null; act('livery', chosen); }",
-    "new": "() => { _open = null; _paint = null; act('livery', null); }",
+    "old": "        act('livery', chosen);",
+    "new": "        act('livery', null);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1113,8 +1113,8 @@
   {
     "name": "FP-strip-none",
     "file": "src/ui/fleetPage.js",
-    "old": "  if (s.livery || s.cabin) acts.append(button(el, t('naval.paint.strip',",
-    "new": "  if (false) acts.append(button(el, t('naval.paint.strip',",
+    "old": "  if (s.livery || s.cabin)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1122,8 +1122,8 @@
   {
     "name": "FP-deck-uncounted",
     "file": "src/ui/fleetPage.js",
-    "old": "s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck')",
-    "new": "t('naval.deck.open', 'Deck')",
+    "old": "  acts.append(\n    button(\n      el,\n      s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'),\n      null,\n      () => act('deckPlan'),\n    ),\n  ); // DECK-PROPS: the plan of her deck, her fittings on it",
+    "new": "  acts.append(button(el, t('naval.deck.open', 'Deck'), null, () => act('deckPlan'))); // DECK-PROPS: the plan of her deck, her fittings on it",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1131,8 +1131,8 @@
   {
     "name": "FP-deck-elsewhere",
     "file": "src/ui/fleetPage.js",
-    "old": "t('naval.deck.open', 'Deck'), null, () => act('deckPlan')));",
-    "new": "t('naval.deck.open', 'Deck'), null, () => act('deck')));",
+    "old": "      () => act('deckPlan'),",
+    "new": "      () => act('deck'),",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1140,8 +1140,8 @@
   {
     "name": "FP-swatch-unchosen",
     "file": "src/ui/fleetPage.js",
-    "old": "  const set = (k, v) => { _paint = { ...d, [k]: v }; rerender(); };",
-    "new": "  const set = (k, v) => { rerender(); };",
+    "old": "    _paint = { ...d, [k]: v };\n    rerender();",
+    "new": "    rerender();",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1149,8 +1149,8 @@
   {
     "name": "FP-svg-strake",
     "file": "src/ui/fleetPage.js",
-    "old": "const strake = built ? rgbOf(l.strake, built[0]) : wood,",
-    "new": "const strake = built ? built[0] : wood,",
+    "old": "  const strake = built ? rgbOf(l.strake, built[0]) : wood,",
+    "new": "  const strake = built ? built[0] : wood,",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1158,8 +1158,8 @@
   {
     "name": "FP-svg-trim",
     "file": "src/ui/fleetPage.js",
-    "old": "trim = built ? rgbOf(l.accent, built[1]) : [196, 152, 62];",
-    "new": "trim = built ? built[1] : [196, 152, 62];",
+    "old": "    trim = built ? rgbOf(l.accent, built[1]) : [196, 152, 62];",
+    "new": "    trim = built ? built[1] : [196, 152, 62];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1167,8 +1167,8 @@
   {
     "name": "FP-svg-sail",
     "file": "src/ui/fleetPage.js",
-    "old": "const sail = rgbOf(l.sail, [214, 205, 180]), sails = hull !== 0;",
-    "new": "const sail = [214, 205, 180], sails = hull !== 0;",
+    "old": "  const sail = rgbOf(l.sail, [214, 205, 180]),",
+    "new": "  const sail = [214, 205, 180],",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1176,8 +1176,8 @@
   {
     "name": "FP-svg-rowboat-sail",
     "file": "src/ui/fleetPage.js",
-    "old": "const sail = rgbOf(l.sail, [214, 205, 180]), sails = hull !== 0;",
-    "new": "const sail = rgbOf(l.sail, [214, 205, 180]), sails = true;",
+    "old": "    sails = hull !== 0;",
+    "new": "    sails = true;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1185,8 +1185,8 @@
   {
     "name": "FP-svg-stain",
     "file": "src/ui/fleetPage.js",
-    "old": "const wood = stainOf ? oak.map(",
-    "new": "const wood = false ? oak.map(",
+    "old": "  const wood = stainOf ? oak.map((v, k) => Math.round(v * 0.38 + stainOf[k] * 0.62 * 0.9)) : oak;",
+    "new": "  const wood = false ? oak.map((v, k) => Math.round(v * 0.38 + stainOf[k] * 0.62 * 0.9)) : oak;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

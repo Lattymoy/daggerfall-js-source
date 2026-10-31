@@ -626,8 +626,8 @@
   {
     "name": "QUAY-fleet-page-made-fast-unsaid",
     "file": "src/ui/fleetPage.js",
-    "old": "    case 'here': return s.docked != null ? {",
-    "new": "    case 'here': return false ? {",
+    "old": "      return s.docked != null",
+    "new": "      return false",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "QUAY-fleet-page-away-unsaid",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
-    "new": "      if (false) return { state: 'Moored', tone: 'is-away',",
+    "old": "      if (s.docked != null)",
+    "new": "      if (false)",
     "tests": [
       "test/systems/naval/quays.test.js"
     ],

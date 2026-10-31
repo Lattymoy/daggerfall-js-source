@@ -587,8 +587,8 @@
   {
     "name": "AH-Q9-an-unnamed-quay-afloat",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
-    "new": "      if (s.docked) return { state: 'Moored', tone: 'is-away',",
+    "old": "      if (s.docked != null)",
+    "new": "      if (s.docked)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

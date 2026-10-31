@@ -56,8 +56,8 @@
   {
     "name": "WB13d-the-number-shown",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };\n",
-    "new": "",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };\n  // FIELD BUGS 2026-10-20f LANDED-WORD: a body whose room says what a blow LANDED (an Elite Breach's - scenes/eliteGates/egFight.js",
+    "new": "  // FIELD BUGS 2026-10-20f LANDED-WORD: a body whose room says what a blow LANDED (an Elite Breach's - scenes/eliteGates/egFight.js",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "WB13d-the-word-on-any-blow",
     "file": "src/ui/hitNumbers.js",
-    "old": "if (r.target?.warded) return",
-    "new": "if (r.target) return",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
+    "new": "  if (r.target) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]

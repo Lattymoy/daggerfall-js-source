@@ -221,8 +221,8 @@
   {
     "name": "AUDIT-TW-D6-the-card-table",
     "file": "src/ui/gambitTableWords.js",
-    "old": "'Legendary across Tamriel. Bring your best army.'",
-    "new": "'Legendary across the Iliac Bay. Bring your best army.'",
+    "old": "      return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across Tamriel. Bring your best army.');",
+    "new": "      return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across the Iliac Bay. Bring your best army.');",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

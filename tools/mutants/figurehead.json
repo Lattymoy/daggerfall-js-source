@@ -452,8 +452,8 @@
   {
     "name": "PG-button-every-hull",
     "file": "src/ui/fleetPage.js",
-    "old": "if (s.carvable) acts.append(button(el, t('naval.figurehead.open'",
-    "new": "if (true) acts.append(button(el, t('naval.figurehead.open'",
+    "old": "  if (s.carvable)",
+    "new": "  if (true)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "PG-never-shut",
     "file": "src/ui/fleetPage.js",
-    "old": "if (_open) carvingShut();",
-    "new": "if (false) carvingShut();",
+    "old": "  if (_open) carvingShut(); // FIGUREHEAD: a panel the page opened shuts the carving's",
+    "new": "  if (false) carvingShut(); // FIGUREHEAD: a panel the page opened shuts the carving's",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "PG-reset-kept",
     "file": "src/ui/fleetPage.js",
-    "old": "_flag = null; carvingShut(); }",
-    "new": "_flag = null; }",
+    "old": "  carvingShut();\n}",
+    "new": "}",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "PN-svg-gilt",
     "file": "src/ui/figureheadPanel.js",
-    "old": "const m = paintedCarving(id, paint | 0);",
-    "new": "const m = paintedCarving(id, 0);",
+    "old": "  const m = paintedCarving(id, paint | 0);",
+    "new": "  const m = paintedCarving(id, 0);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "PN-carve-none",
     "file": "src/ui/figureheadPanel.js",
-    "old": "const n = chosen; carvingShut(); act('figurehead', n);",
-    "new": "const n = chosen; carvingShut(); act('figurehead', 0);",
+    "old": "        act('figurehead', n);",
+    "new": "        act('figurehead', 0);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

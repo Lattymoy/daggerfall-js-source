@@ -2,8 +2,8 @@
   {
     "name": "UI1-no-snap",
     "file": "src/ui/iconFit.js",
-    "old": "(snap && whole / s >= SNAP)",
-    "new": "(snap && whole / s >= 1)",
+    "old": "  if (whole >= 1 && (Math.abs(whole - s) < 1e-9 || (snap && whole / s >= SNAP))) {",
+    "new": "  if (whole >= 1 && (Math.abs(whole - s) < 1e-9 || (snap && whole / s >= 1))) {",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "UI1-no-cap",
     "file": "src/ui/iconFit.js",
-    "old": "  const s = Math.min(boxDev / side, (cap > 0 ? cap : ICON_CAP) * r);",
-    "new": "  const s = boxDev / side;",
+    "old": "  const s = Math.min(boxDev / side, (cap > 0 ? cap : ICON_CAP) * r); // device pixels a source pixel",
+    "new": "  const s = boxDev / side; // device pixels a source pixel",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "UI1-a-zoomed-out-page-drawn-at-one",
     "file": "src/ui/iconFit.js",
-    "old": "const DPR_MIN = 0.5, DPR_MAX = 8;",
-    "new": "const DPR_MIN = 1, DPR_MAX = 8;",
+    "old": "const DPR_MIN = 0.5,",
+    "new": "const DPR_MIN = 1,",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "UI1-no-sharp-prescale",
     "file": "src/ui/iconFit.js",
-    "old": "prescale: s > 1 ? Math.ceil(s) : 1,",
-    "new": "prescale: 1,",
+    "old": "  return { prescale: s > 1 ? Math.ceil(s) : 1, outW, outH, smooth: true, cssW: outW / r, cssH: outH / r };",
+    "new": "  return { prescale: 1, outW, outH, smooth: true, cssW: outW / r, cssH: outH / r };",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "UI1-the-box-by-round",
     "file": "src/ui/iconFit.js",
-    "old": "Math.floor(box * r)",
-    "new": "Math.round(box * r)",
+    "old": "  const boxDev = Math.max(1, Math.floor(box * r));",
+    "new": "  const boxDev = Math.max(1, Math.round(box * r));",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "UI1-a-box-off-its-sheet",
     "file": "src/ui/iconFit.js",
-    "old": "  loot: 30,",
-    "new": "  loot: 32,",
+    "old": "  loot: 30, // a loot row's picture: a 38px tile in its frame",
+    "new": "  loot: 32, // a loot row's picture: a 38px tile in its frame",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "UI1-the-phones-grid-box-ignored",
     "file": "src/ui/iconFit.js",
-    "old": "(globalThis.matchMedia?.(PHONE_QUERY)?.matches ? SLOT_BOX.gridPhone : SLOT_BOX.grid)",
-    "new": "(SLOT_BOX.grid)",
+    "old": "export const gridBox = () => (globalThis.matchMedia?.(PHONE_QUERY)?.matches ? SLOT_BOX.gridPhone : SLOT_BOX.grid);",
+    "new": "export const gridBox = () => SLOT_BOX.grid;",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "UI1-the-desktops-worn-box-ignored",
     "file": "src/ui/iconFit.js",
-    "old": "globalThis.matchMedia?.(WIDE_QUERY)?.matches",
-    "new": "false",
+    "old": "  globalThis.matchMedia?.(WIDE_QUERY)?.matches\n    ? half\n      ? SLOT_BOX.wornHalfWide\n      : SLOT_BOX.wornWide\n    : half\n      ? SLOT_BOX.wornHalf\n      : SLOT_BOX.worn;",
+    "new": "  false ? (half ? SLOT_BOX.wornHalfWide : SLOT_BOX.wornWide) : half ? SLOT_BOX.wornHalf : SLOT_BOX.worn;",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-UI-A6-the-ratio-capped-at-four",
     "file": "src/ui/iconFit.js",
-    "old": "const DPR_MIN = 0.5, DPR_MAX = 8;",
-    "new": "const DPR_MIN = 0.5, DPR_MAX = 4;",
+    "old": "  DPR_MAX = 8; // AUDIT UI A6: 8, not 4 - a 3x phone at HUD scale 1.5 draws at 4.5, and 4 made it 1.125 too small",
+    "new": "  DPR_MAX = 4; // AUDIT UI A6: 8, not 4 - a 3x phone at HUD scale 1.5 draws at 4.5, and 4 made it 1.125 too small",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]

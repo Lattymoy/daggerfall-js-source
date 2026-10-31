@@ -106,8 +106,8 @@
   {
     "name": "N8-the-sdf-atlas-first-context-unhinted",
     "file": "src/ui/glyphFace.js",
-    "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true });",
-    "new": "    const ctx = canvas?.getContext('2d');",
+    "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload",
+    "new": "    const ctx = canvas?.getContext('2d'); // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]

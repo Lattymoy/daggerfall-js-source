@@ -101,8 +101,8 @@
   {
     "name": "RECORDS-title-centre",
     "file": "src/ui/hallOfRecords.js",
-    "old": "  const out = [{ formatting: RSC.JustifyCenter }, { formatting: RSC.FontPrefix, x: TITLE_FONT },",
-    "new": "  const out = [{ formatting: RSC.FontPrefix, x: TITLE_FONT },",
+    "old": "  const out = [\n    { formatting: RSC.JustifyCenter },\n    { formatting: RSC.FontPrefix, x: TITLE_FONT },\n    text(hallOfRecordsTitle(seat)),\n    nl(),\n    nl(),\n  ]; // the blank row puts the face and the centring back",
+    "new": "  const out = [{ formatting: RSC.FontPrefix, x: TITLE_FONT }, text(hallOfRecordsTitle(seat)), nl(), nl()]; // the blank row puts the face and the centring back",
     "tests": [
       "test/ui/season1_records.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RECORDS-heading-centre",
     "file": "src/ui/hallOfRecords.js",
-    "old": "if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
-    "new": "if (c.heading) out.push(text(upper(c.heading)), nl(), nl());",
+    "old": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
+    "new": "    if (c.heading) out.push(text(upper(c.heading)), nl(), nl());",
     "tests": [
       "test/ui/season1_records.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RECORDS-capital",
     "file": "src/ui/hallOfRecords.js",
-    "old": "text(upper(c.heading))",
-    "new": "text(c.heading)",
+    "old": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
+    "new": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(c.heading), nl(), nl());",
     "tests": [
       "test/ui/season1_records.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RECORDS-empty",
     "file": "src/ui/hallOfRecords.js",
-    "old": "if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
-    "new": "if (!chapters.length && !said.length) return out;",
+    "old": "  if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
+    "new": "  if (!chapters.length && !said.length) return out;",
     "tests": [
       "test/ui/season1_records.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RECORDS-pages",
     "file": "src/ui/hallOfRecords.js",
-    "old": "pageCount: 1, getPageTokens: () => tokens };",
-    "new": "pageCount: 0, getPageTokens: () => tokens };",
+    "old": "  return { title: hallOfRecordsTitle(seat), author: HALL_OF_RECORDS_AUTHOR, pageCount: 1, getPageTokens: () => tokens };",
+    "new": "  return { title: hallOfRecordsTitle(seat), author: HALL_OF_RECORDS_AUTHOR, pageCount: 0, getPageTokens: () => tokens };",
     "tests": [
       "test/ui/season1_records.test.js"
     ]

@@ -38,8 +38,8 @@
   {
     "name": "SPLIT-before-mislabelled",
     "file": "src/ui/fpsCounter.js",
-    "old": "before ${cpu.beforeMs.toFixed(1)}",
-    "new": "before ${cpu.inFrameMs.toFixed(1)}",
+    "old": "  return `\\nin frame ${cpu.inFrameMs.toFixed(1)}  before ${cpu.beforeMs.toFixed(1)}  stream ${cpu.streamMs.toFixed(1)}`;",
+    "new": "  return `\\nin frame ${cpu.inFrameMs.toFixed(1)}  before ${cpu.inFrameMs.toFixed(1)}  stream ${cpu.streamMs.toFixed(1)}`;",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SPLIT-line-not-printed",
     "file": "src/ui/fpsCounter.js",
-    "old": " + scriptSplitLine(cpu) + gpu",
-    "new": " + gpu",
+    "old": "            scriptSplitLine(cpu) +\n            gpu +",
+    "new": "            gpu +",
     "tests": [
       "test/systems/scriptsplit.test.js",
       "test/systems/perf1.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "SPLIT-probe-without-before",
     "file": "src/ui/fpsCounter.js",
-    "old": "scriptBeforeMs: cpu?.beforeMs ?? null",
-    "new": "scriptBeforeMs: null",
+    "old": "          scriptBeforeMs: cpu?.beforeMs ?? null,",
+    "new": "          scriptBeforeMs: null,",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]

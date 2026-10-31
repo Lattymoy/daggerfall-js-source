@@ -119,8 +119,8 @@
   {
     "name": "SC-art-no-division",
     "file": "src/ui/flagArt.js",
-    "old": "    + (divD ? `<path d=\"${divD}\" fill=\"${hexOf(f.field2)}\" clip-path=\"url(#${clip})\"/>` : '')",
-    "new": "",
+    "old": "    (divD ? `<path d=\"${divD}\" fill=\"${hexOf(f.field2)}\" clip-path=\"url(#${clip})\"/>` : '') +\n    (f.border",
+    "new": "    (f.border",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SC-art-no-border",
     "file": "src/ui/flagArt.js",
-    "old": "    + (f.border ? `<path d=\"${cloth}\" fill=\"none\" stroke=\"${hexOf(f.border)}\" stroke-width=\"${FLAG_BORDER_W * 2}\" clip-path=\"url(#${clip})\"/>` : '')",
-    "new": "",
+    "old": "    (f.border\n      ? `<path d=\"${cloth}\" fill=\"none\" stroke=\"${hexOf(f.border)}\" stroke-width=\"${FLAG_BORDER_W * 2}\" clip-path=\"url(#${clip})\"/>`\n      : '') +\n    (f.device",
+    "new": "    (f.device",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SC-page-hoist-unwired",
     "file": "src/ui/fleetPage.js",
-    "old": "() => { _open = null; _flag = null; act('colours', d); }, 'act primary'));",
-    "new": "() => { _open = null; _flag = null; }, 'act primary'));",
+    "old": "        act('colours', d);\n      },",
+    "new": "      },",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SC-page-guild-ungated",
     "file": "src/ui/fleetPage.js",
-    "old": "    armed ? null : t('naval.flag.noArms', 'Your guild has no arms, or you\\'re not in a guild.'), () => { if (armed) set('guild', !d.guild); }",
-    "new": "    null, () => { set('guild', !d.guild); }",
+    "old": "      armed ? null : t('naval.flag.noArms', \"Your guild has no arms, or you're not in a guild.\"),\n      () => {\n        if (armed) set('guild', !d.guild);",
+    "new": "      null,\n      () => {\n        set('guild', !d.guild);",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

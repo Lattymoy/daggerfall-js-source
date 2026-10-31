@@ -210,8 +210,8 @@
   {
     "name": "AUDITLOCK-C3-dpad-jumps",
     "file": "src/ui/gamepadInput.js",
-    "old": "const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);",
-    "new": "const to = spatialStep(cursor, dir);",
+    "old": "          const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);",
+    "new": "          const to = spatialStep(cursor, dir);",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDITLOCK-C3-x-quick-act",
     "file": "src/ui/gamepadInput.js",
-    "old": "try { if (!arm?.auto?.()) quickActApi()",
-    "new": "try { if (true) quickActApi()",
+    "old": "            if (!arm?.auto?.())\n              quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null);",
+    "new": "            if (true) quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null);",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDITLOCK-C3-window-prompts",
     "file": "src/ui/gamepadInput.js",
-    "old": "showPrompts(arm ? lockPrompts(",
-    "new": "showPrompts(false ? lockPrompts(",
+    "old": "        arm",
+    "new": "        false",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]

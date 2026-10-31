@@ -120,8 +120,8 @@
   {
     "name": "CP-duel-side-bare",
     "file": "src/ui/iliacTableHud.js",
-    "old": "el('span', 'duelside', m.sides?.[k] ?? (k ? 'them' : 'you'))",
-    "new": "el('span', 'side', m.sides?.[k] ?? (k ? 'them' : 'you'))",
+    "old": "            const word = el('span', 'duelside', m.sides?.[k] ?? (k ? 'them' : 'you'));",
+    "new": "            const word = el('span', 'side', m.sides?.[k] ?? (k ? 'them' : 'you'));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "CP-spell-takes-place",
     "file": "src/ui/iliacTableHud.js",
-    "old": "cardById(c.id)?.kind !== 'spell').length",
-    "new": "cardById(c.id)?.kind !== 'nothing').length",
+    "old": "        Math.max(0, hd.room - hd.sides[me].length - st.filter((c) => c.id && cardById(c.id)?.kind !== 'spell').length),",
+    "new": "        Math.max(\n          0,\n          hd.room - hd.sides[me].length - st.filter((c) => c.id && cardById(c.id)?.kind !== 'nothing').length,\n        ),",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "CP-committed-tone",
     "file": "src/ui/iliacTableHud.js",
-    "old": "online?.watching || view?.revealing || committed ? 'wait' : 'turn';",
-    "new": "online?.watching || view?.revealing ? 'wait' : 'turn';",
+    "old": "        : online?.seating || online?.waiting || (online && !view) || online?.watching || view?.revealing || committed",
+    "new": "        : online?.seating || online?.waiting || (online && !view) || online?.watching || view?.revealing",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "CP-concede-quiet",
     "file": "src/ui/iliacTableHud.js",
-    "old": "kind: concede ? 'warn' : 'quiet' });",
-    "new": "kind: 'quiet' });",
+    "old": "    actions.push({\n      id: 'stand',\n      label: concede ? 'Concede and stand' : 'Stand up',\n      enabled: true,\n      kind: concede ? 'warn' : 'quiet',\n    });",
+    "new": "    actions.push({ id: 'stand', label: concede ? 'Concede and stand' : 'Stand up', enabled: true, kind: 'quiet' });",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "CP-hand-twice",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? cardById(id) ?? null : null, h) : null);",
-    "new": "  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? cardById(id) ?? null : null, h * 2) : null);",
+    "old": "  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? (cardById(id) ?? null) : null, h) : null);",
+    "new": "  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? (cardById(id) ?? null) : null, h * 2) : null);",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "CP-iliac-fold-forgotten",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    const fold = el('span', 'fold', collapsed ? '+' : '−');",
-    "new": "    const fold = el('span', 'fold', collapsed ? '+' : '−'); root.className = 'dfiliac'; collapsed = false;",
+    "old": "    const say = () => {",
+    "new": "    root.className = 'dfiliac';\n    collapsed = false;\n    const say = () => {",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "CP-gems-spend",
     "file": "src/ui/iliacTableHud.js",
-    "old": "gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));",
-    "new": "gems.append(el('i', `gem${k < m.me.magicka ? ' lit' : ' spent'}`));",
+    "old": "            gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));",
+    "new": "            gems.append(el('i', `gem${k < m.me.magicka ? ' lit' : ' spent'}`));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "CP-gems-uncapped",
     "file": "src/ui/iliacTableHud.js",
-    "old": "k < Math.min(m.me.magicka, GEMS_MAX); k++",
-    "new": "k < m.me.magicka; k++",
+    "old": "          for (let k = 0; k < Math.min(m.me.magicka, GEMS_MAX); k++)\n            gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));",
+    "new": "          for (let k = 0; k < m.me.magicka; k++) gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "CP-backs-uncapped",
     "file": "src/ui/iliacTableHud.js",
-    "old": "k < Math.min(m.them.hand, BACKS_MAX); k++",
-    "new": "k < m.them.hand; k++",
+    "old": "        for (let k = 0; k < Math.min(m.them.hand, BACKS_MAX); k++) backs.append(el('i', 'mb'));",
+    "new": "        for (let k = 0; k < m.them.hand; k++) backs.append(el('i', 'mb'));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -291,7 +291,7 @@
   {
     "name": "CP-verdict-read-at-load",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  get won() { return t('cards.iliac.verdict.won', 'Victory'); },",
+    "old": "  get won() {\n    return t('cards.iliac.verdict.won', 'Victory');\n  },",
     "new": "  won: t('cards.iliac.verdict.won', 'Victory'),",
     "tests": [
       "test/ui/cardsplus.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "CP-head-in-english",
     "file": "src/ui/iliacTableHud.js",
-    "old": "body.append(section(t('cards.iliac.setup.deck', 'Your deck'), decks));",
-    "new": "body.append(section('Your deck', decks));",
+    "old": "        body.append(section(t('cards.iliac.setup.deck', 'Your deck'), decks));",
+    "new": "        body.append(section('Your deck', decks));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "CP-magicka-port-key",
     "file": "src/ui/iliacTableHud.js",
-    "old": "mana.append(el('span', '', localizedText('magicka', 'Magicka')), gems,",
-    "new": "mana.append(el('span', '', t('cards.iliac.track.magicka', 'Magicka')), gems,",
+    "old": "            el('span', '', localizedText('magicka', 'Magicka')),",
+    "new": "            el('span', '', t('cards.iliac.track.magicka', 'Magicka')),",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "CP-A1-pips-uncapped",
     "file": "src/ui/iliacTableHud.js",
-    "old": "for (let n = 1; n <= Math.min(m.turns, TRACK_MAX); n++) {",
-    "new": "for (let n = 1; n <= m.turns; n++) {",
+    "old": "        for (let n = 1; n <= Math.min(m.turns, TRACK_MAX); n++) {",
+    "new": "        for (let n = 1; n <= m.turns; n++) {",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "CP-A4-refocus-blind",
     "file": "src/ui/iliacTableHud.js",
-    "old": "return doc.activeElement === n; };",
-    "new": "return true; };",
+    "old": "      return doc.activeElement === n;",
+    "new": "      return true;",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "CP-A4-root-passes-space",
     "file": "src/ui/iliacTableHud.js",
-    "old": "if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();",
-    "new": "if (e.key === 'Tab') e.stopPropagation?.();",
+    "old": "    if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();",
+    "new": "    if (e.key === 'Tab') e.stopPropagation?.();",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "CP-A5-whole-track-lit",
     "file": "src/ui/iliacTableHud.js",
-    "old": "(n <= reached ? ' past' : '')",
-    "new": "' past'",
+    "old": "            el(\n              'i',\n              `pip${m.phase === 'over' ? (n <= reached ? ' past' : '') : n < m.turn ? ' past' : n === m.turn ? ' now' : ''}`,\n            ),",
+    "new": "            el('i', `pip${m.phase === 'over' ? ' past' : n < m.turn ? ' past' : n === m.turn ? ' now' : ''}`),",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "CP-A6-watcher-verdict",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  if (view && !(view.viewer >= 0)) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (view && !(view.viewer >= 0)) return null; // AUDIT CARDS-PLUS A6: a watcher's 'void' too - the end is the players'",
+    "new": "  if (false) return null; // AUDIT CARDS-PLUS A6: a watcher's 'void' too - the end is the players'",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "CP-A7-watcher-plates",
     "file": "src/ui/iliacTableHud.js",
-    "old": "${hd.lead && !m.spectator ? ` lead-${hd.lead}` : ''}",
-    "new": "${hd.lead ? ` lead-${hd.lead}` : ''}",
+    "old": "          const box = el(\n            'div',\n            `hold${hd.target ? ' target' : ''}${hd.lead && !m.spectator ? ` lead-${hd.lead}` : ''}`,\n          );",
+    "new": "          const box = el('div', `hold${hd.target ? ' target' : ''}${hd.lead ? ` lead-${hd.lead}` : ''}`);",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "CP-A-facedown-unveiled",
     "file": "src/ui/iliacTableHud.js",
-    "old": "${c.down && c.id ? ' down' : ''}",
-    "new": "",
+    "old": "    const n = el('span', `ic${cls ? ` ${cls}` : ''}${c.down && c.id ? ' down' : ''}`);",
+    "new": "    const n = el('span', `ic${cls ? ` ${cls}` : ''}`);",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "CP-E1-iliac-never-dresses",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  dressCardPanel(doc);   // CARDS-PLUS: the kit on the classic skin, the face on every skin\n",
-    "new": "",
+    "old": "  dressCardPanel(doc); // CARDS-PLUS: the kit on the classic skin, the face on every skin\n  const root = doc.createElement('div');",
+    "new": "  const root = doc.createElement('div');",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "CP-E2-ahead-never-lit",
     "file": "src/ui/iliacTableHud.js",
-    "old": "`pw${hd.lead === (k ? 'theirs' : 'mine') ? ' ahead' : ''}`",
-    "new": "`pw${false ? ' ahead' : ''}`",
+    "old": "            const pw = el('b', `pw${hd.lead === (k ? 'theirs' : 'mine') ? ' ahead' : ''}`, String(hd.power[k]));",
+    "new": "            const pw = el('b', `pw${false ? ' ahead' : ''}`, String(hd.power[k]));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "CP-E2-ahead-wrong-side",
     "file": "src/ui/iliacTableHud.js",
-    "old": "`pw${hd.lead === (k ? 'theirs' : 'mine') ? ' ahead' : ''}`",
-    "new": "`pw${hd.lead === (k ? 'mine' : 'theirs') ? ' ahead' : ''}`",
+    "old": "            const pw = el('b', `pw${hd.lead === (k ? 'theirs' : 'mine') ? ' ahead' : ''}`, String(hd.power[k]));",
+    "new": "            const pw = el('b', `pw${hd.lead === (k ? 'mine' : 'theirs') ? ' ahead' : ''}`, String(hd.power[k]));",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "CP-E3-iliac-kind-unpainted",
     "file": "src/ui/iliacTableHud.js",
-    "old": "        if (a.kind) b.dataset.kind = a.kind;",
-    "new": "        if (false) b.dataset.kind = a.kind;",
+    "old": "        if (a.kind) b.dataset.kind = a.kind; // CARDS-PLUS: the kit's primary, its blood-edged warn, a quiet press at the row's end",
+    "new": "        if (false) b.dataset.kind = a.kind; // CARDS-PLUS: the kit's primary, its blood-edged warn, a quiet press at the row's end",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "CP-E8-drawn-unrouted",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  get drawn() { return t('cards.iliac.verdict.drawn', 'A draw'); },",
-    "new": "  get drawn() { return 'A draw'; },",
+    "old": "    return t('cards.iliac.verdict.drawn', 'A draw');",
+    "new": "    return 'A draw';",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "CP-E12-watcher-tray",
     "file": "src/ui/iliacTableHud.js",
-    "old": "        if (!m.spectator) {\n          const tray",
-    "new": "        if (true) {\n          const tray",
+    "old": "        body.append(holds);\n        if (!m.spectator) {",
+    "new": "        body.append(holds);\n        if (true) {",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -705,8 +705,8 @@
   {
     "name": "CP-B9-staged-focus-hidden",
     "file": "src/ui/iliacTableHud.js",
-    "old": "\n.dfiliac .ic.staged:focus-visible{outline-style:solid;outline-offset:3px}",
-    "new": "",
+    "old": ".dfiliac .ic.staged:focus-visible{outline-style:solid;outline-offset:3px}\n.dfiliac .ic.down::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(8,10,16,.62) 0 3px,rgba(8,10,16,.28) 3px 6px);box-shadow:inset 0 0 0 1px #c9a24a}",
+    "new": ".dfiliac .ic.down::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(8,10,16,.62) 0 3px,rgba(8,10,16,.28) 3px 6px);box-shadow:inset 0 0 0 1px #c9a24a}",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]

@@ -49,8 +49,8 @@
   {
     "name": "KGSET-hud-title",
     "file": "src/ui/iliacTableHud.js",
-    "old": "title: card ? `${card.name} - ${cardRules(card)}` : '?',",
-    "new": "title: card ? `${card.name}` : '?',",
+    "old": "    title: card ? `${card.name} - ${cardRules(card)}` : '?',",
+    "new": "    title: card ? `${card.name}` : '?',",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]

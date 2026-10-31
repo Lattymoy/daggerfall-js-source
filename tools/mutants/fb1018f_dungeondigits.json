@@ -163,8 +163,8 @@
   {
     "name": "DUNGEON-DIGITS-L2-5-pad-door-silent",
     "file": "src/ui/gamepadInput.js",
-    "old": "  noteHostInput(hooks);   // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below\n",
-    "new": "",
+    "old": "  noteHostInput(hooks); // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below\n  if (!getPads && !hasGamepadApi()) return null;",
+    "new": "  if (!getPads && !hasGamepadApi()) return null;",
     "tests": [
       "test/ui/hud/fb1018f_dungeondigits.test.js",
       "test/ui/plus/fb1004e_padarrange.test.js"

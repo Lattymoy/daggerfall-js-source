@@ -379,8 +379,8 @@
   {
     "name": "ACS-C2-page-set",
     "file": "src/ui/fleetPage.js",
-    "old": "const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name)));",
-    "new": "const posts = postsOf(s.hands, new Set());",
+    "old": "  const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name))); // CAPT-CREW: each post's best holder aboard - the hand whose worth she sails on (AUDIT CAPTAIN'S SEA C2: none ashore with me)",
+    "new": "  const posts = postsOf(s.hands, new Set()); // CAPT-CREW: each post's best holder aboard - the hand whose worth she sails on (AUDIT CAPTAIN'S SEA C2: none ashore with me)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "ACS-C2-page-said",
     "file": "src/ui/fleetPage.js",
-    "old": "${h.ashore ? ' - ashore with you' : ''}",
-    "new": "",
+    "old": "    row.append(\n      el('span', 'hld-sub', `${handService(h, posts[h.role]?.name === h.name)}${h.ashore ? ' - ashore with you' : ''}`),\n    );",
+    "new": "    row.append(el('span', 'hld-sub', `${handService(h, posts[h.role]?.name === h.name)}`));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2007,8 +2007,8 @@
   {
     "name": "ACS-S2-pad-share",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (SHARE_ACTIONS.has(name)) { try { if (hooks.padAction?.(name)) return; }",
-    "new": "if (false) { try { if (hooks.padAction?.(name)) return; }",
+    "old": "      if (SHARE_ACTIONS.has(name)) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2025,8 +2025,8 @@
   {
     "name": "ACS-S3-helm-pass",
     "file": "src/ui/gamepadInput.js",
-    "old": "const glassTap = dpad[code]?.tap === 'Spyglass', glassHold",
-    "new": "const glassTap = false, glassHold",
+    "old": "        const glassTap = dpad[code]?.tap === 'Spyglass',",
+    "new": "        const glassTap = false,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2034,8 +2034,8 @@
   {
     "name": "ACS-S3-click-zoom",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (glassUp && zoomFresh) { P.glassZoom = true; try { hooks.glass.zoom?.(); }",
-    "new": "if (glassUp && zoomFresh) { P.glassZoom = true; try { void 0; }",
+    "old": "        hooks.glass.zoom?.();",
+    "new": "        void 0;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2043,8 +2043,8 @@
   {
     "name": "ACS-S3-click-kept",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (P.glassZoom) wanted.delete(GLASS_PAD_ZOOM);",
-    "new": "if (false) wanted.delete(GLASS_PAD_ZOOM);",
+    "old": "    if (P.glassZoom) wanted.delete(GLASS_PAD_ZOOM);",
+    "new": "    if (false) wanted.delete(GLASS_PAD_ZOOM);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

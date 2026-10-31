@@ -674,8 +674,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-screen-never-hidden",
     "file": "src/ui/freezeScreen.js",
-    "old": "root.hidden = !(u > 0);",
-    "new": "root.hidden = false;",
+    "old": "      root.hidden = !(u > 0);",
+    "new": "      root.hidden = false;",
     "why": "the screen stays after the lift",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"

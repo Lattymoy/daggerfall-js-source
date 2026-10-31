@@ -38,8 +38,8 @@
   {
     "name": "guild-popup-reads-per-draw",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "latchBoxRows(top, this.hooks.rows)",
-    "new": "(top.rows ?? this.hooks.rows?.(top.textId) ?? [])",
+    "old": "    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) {",
+    "new": "    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? (top.rows ?? this.hooks.rows?.(top.textId) ?? []) : null)) {",
     "tests": [
       "test/ui/messagebox.test.js",
       "test/ui/guildservicewindow.test.js",

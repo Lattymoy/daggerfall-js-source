@@ -155,8 +155,8 @@
   {
     "name": "TELL9-join-target",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS",
-    "new": "  if (l && now - l.at <= TAG_JOIN_MS",
+    "old": "  if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS && l.node?.isConnected) {",
+    "new": "  if (l && now - l.at <= TAG_JOIN_MS && l.node?.isConnected) {",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "TELL9-join-miss",
     "file": "src/ui/hitNumbers.js",
-    "old": "    _lastHit = node && r?.hit && !r.ineffective ? {",
-    "new": "    _lastHit = node ? {",
+    "old": "    _lastHit = node && r?.hit && !r.ineffective ? { target: r.target ?? null, node, at: Date.now() } : null; // TELL9: the door's word joins it",
+    "new": "    _lastHit = node ? { target: r.target ?? null, node, at: Date.now() } : null; // TELL9: the door's word joins it",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TELL9-word-unmounted",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (!registered || !text) return null;\n  return showNumber",
-    "new": "  if (!text) return null;\n  return showNumber",
+    "old": "  if (!registered || !text) return null;",
+    "new": "  if (!text) return null;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TELL9-tag-word-unread",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (!word) return null;   // unmounted",
-    "new": "  if (false) return null;   // unmounted",
+    "old": "  if (!word) return null; // unmounted: no number joined (`_lastHit` is the mounted hook's), and showWord draws none",
+    "new": "  if (false) return null; // unmounted: no number joined (`_lastHit` is the mounted hook's), and showWord draws none",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TELL9-tags-hold",
     "file": "src/ui/hitNumbers.js",
-    "old": "hold: 'Holds'",
-    "new": "hold: 'Hold'",
+    "old": "  hold: 'Holds',",
+    "new": "  hold: 'Hold',",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]

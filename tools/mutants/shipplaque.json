@@ -434,8 +434,8 @@
   {
     "name": "FP-always-show",
     "file": "src/ui/fleetPage.js",
-    "old": "() => act('plaque', !s.plaque)));",
-    "new": "() => act('plaque', true)));",
+    "old": "      () => act('plaque', !s.plaque),",
+    "new": "      () => act('plaque', true),",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "FP-unnamed-enabled",
     "file": "src/ui/fleetPage.js",
-    "old": "s.named ? null : t('naval.plaque.unnamed', 'Give the ship a name first.'), () => act('plaque'",
-    "new": "null, () => act('plaque'",
+    "old": "    button(\n      el,\n      s.plaque ? t('naval.plaque.hide', 'Hide name') : t('naval.plaque.show', 'Show name'),\n      s.named ? null : t('naval.plaque.unnamed', 'Give the ship a name first.'),\n      () => act('plaque', !s.plaque),",
+    "new": "    button(el, s.plaque ? t('naval.plaque.hide', 'Hide name') : t('naval.plaque.show', 'Show name'), null, () =>\n      act('plaque', !s.plaque),",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]

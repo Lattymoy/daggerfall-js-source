@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B1-every-find-a-gem",
     "file": "src/ui/haulCards.js",
-    "old": "sub: material(d.gem)?.family === 'gems' ? 'a gem' : null",
-    "new": "sub: 'a gem'",
+    "old": "      sub: material(d.gem)?.family === 'gems' ? 'a gem' : null,",
+    "new": "      sub: 'a gem',",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B2-head-the-firsts",
     "file": "src/ui/haulCards.js",
-    "old": "  main.latest = [...main.latest, 'head'];\n",
-    "new": "",
+    "old": "  main.latest = [...main.latest, 'head'];\n  if (d.motherlode) {",
+    "new": "  if (d.motherlode) {",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B3-gem-count-unread",
     "file": "src/ui/haulCards.js",
-    "old": "storesHaul(d.gem, came(d.gem, 1), { held: heldOf(carried ? d.gemCarried : d.gemStore),",
-    "new": "storesHaul(d.gem, came(d.gem, 1), { held: null,",
+    "old": "      held: heldOf(carried ? d.gemCarried : d.gemStore),",
+    "new": "      held: null,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B3-extra-count-unread",
     "file": "src/ui/haulCards.js",
-    "old": "{ held: heldOf(carried ? d.extraCarried : d.extraStore), where }",
-    "new": "{ held: null, where }",
+    "old": "    const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), {\n      held: heldOf(carried ? d.extraCarried : d.extraStore),\n      where,\n    });",
+    "new": "    const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), { held: null, where });",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B4-purse-dropped",
     "file": "src/ui/haulCards.js",
-    "old": "    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null;",
-    "new": "    main.balance = null;",
+    "old": "    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null; // AUDIT HAUL-CARDS B4: the purse, as the silver cards say it",
+    "new": "    main.balance = null; // AUDIT HAUL-CARDS B4: the purse, as the silver cards say it",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C3-tax-after-the-guild",
     "file": "src/ui/haulCards.js",
-    "old": "source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`",
-    "new": "source: `Contract - ${tag}${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}`",
+    "old": "      source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`,",
+    "new": "      source: `Contract - ${tag}${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}`,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-C7-tax-ungrouped",
     "file": "src/ui/haulCards.js",
-    "old": "` (${num(c.tax)} tax)`",
-    "new": "` (${c.tax} tax)`",
+    "old": "      source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`,",
+    "new": "      source: `Contract${c.tax > 0 ? ` (${c.tax} tax)` : ''} - ${tag}`,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

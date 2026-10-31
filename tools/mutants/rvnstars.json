@@ -767,8 +767,8 @@
   {
     "name": "RVN-STARS-stack-off",
     "file": "src/ui/firmamentOver.js",
-    "old": "      unregister = registerOverlay(closer);\n      return { ...view",
-    "new": "      return { ...view",
+    "old": "      unregister = registerOverlay(closer);\n      return {",
+    "new": "      return {",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "RVN-STARS-asked-never",
     "file": "src/ui/firmamentOver.js",
-    "old": "const closer = () => { if (view.tryClose() === false) unregister = registerOverlay(closer); };",
-    "new": "const closer = () => { view.destroy(); };",
+    "old": "        if (view.tryClose() === false) unregister = registerOverlay(closer);",
+    "new": "        view.destroy();",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]

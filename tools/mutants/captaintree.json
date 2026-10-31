@@ -535,8 +535,8 @@
   {
     "name": "RO-words-next-share",
     "file": "src/ui/fleetPage.js",
-    "old": "next: pc(r.next.share) }",
-    "new": "next: pc(r.share) }",
+    "old": "      next: pc(r.next.share),",
+    "new": "      next: pc(r.share),",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "RO-words-lock-unsaid",
     "file": "src/ui/fleetPage.js",
-    "old": "    lock: r.next.locked ? t('naval.refit.locked',",
-    "new": "    lock: false ? t('naval.refit.locked',",
+    "old": "    lock: r.next.locked ? t('naval.refit.locked', 'Needs captain level {level}.', { level: r.next.level }) : null,",
+    "new": "    lock: false ? t('naval.refit.locked', 'Needs captain level {level}.', { level: r.next.level }) : null,",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

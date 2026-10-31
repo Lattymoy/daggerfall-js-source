@@ -113,7 +113,7 @@
   {
     "name": "QS3-the-family-outlives-the-pad",
     "file": "src/ui/gamepadInput.js",
-    "old": "      setPadFamily(null);   // QS3: a glyph for a pad nobody is holding is a lie",
+    "old": "      setPadFamily(null); // QS3: a glyph for a pad nobody is holding is a lie",
     "new": "      /* QS3: a glyph for a pad nobody is holding is a lie */",
     "tests": [
       "test/systems/gamepad.test.js",

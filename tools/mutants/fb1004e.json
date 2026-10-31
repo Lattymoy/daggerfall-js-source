@@ -32,8 +32,8 @@
   {
     "name": "PADBINDS-the-unbound-action-dropped",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (!c) { try { hooks.padAction?.(name); }",
-    "new": "if (!c) { try { void name; }",
+    "old": "          hooks.padAction?.(name);",
+    "new": "          void name;",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PADARRANGE-LT-ignored",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE))",
-    "new": "if (false && edge(HOTBAR_ARRANGE_CODE))",
+    "old": "      if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE)) {",
+    "new": "      if (false && edge(HOTBAR_ARRANGE_CODE)) {",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "PADARRANGE-the-place-swallows-nothing",
     "file": "src/ui/gamepadInput.js",
-    "old": "      for (const c of P.placeTaken) swallowed.add(c);\n",
-    "new": "",
+    "old": "      for (const c of P.placeTaken) swallowed.add(c);\n      const free = (c) => edge(c) && !P.placeTaken.has(c);",
+    "new": "      const free = (c) => edge(c) && !P.placeTaken.has(c);",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PADARRANGE-the-row-of-tens-tabs-taken",
     "file": "src/ui/gamepadInput.js",
-    "old": "inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.();",
-    "new": "inHand = !!xbApi?.holding?.();",
+    "old": "        inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.();",
+    "new": "        inHand = !!xbApi?.holding?.();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],

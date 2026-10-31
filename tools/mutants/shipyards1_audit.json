@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-fleet-sends-to-a-store",
     "file": "src/ui/fleetPage.js",
-    "old": "'You don\\'t own a ship. Buy one at a port shipyard",
-    "new": "'You don\\'t own a ship. Buy one at a general store",
+    "old": "        \"You don't own a ship. Buy one at a port shipyard, or capture one by boarding. A ship you buy waits at the port where you bought it.\",",
+    "new": "        \"You don't own a ship. Buy one at a general store, or capture one by boarding. A ship you buy waits at the port where you bought it.\",",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

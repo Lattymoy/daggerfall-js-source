@@ -1227,8 +1227,8 @@
   {
     "name": "UI-II-F2-the-box-unfitted",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "layoutMessageBox(font, fitBoxRows(font, latchBoxRows(top, this.hooks.rows)), buttons);",
-    "new": "layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);",
+    "old": "      this._box = layoutMessageBox(font, fitBoxRows(font, latchBoxRows(top, this.hooks.rows)), buttons);",
+    "new": "      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

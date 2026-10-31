@@ -2,8 +2,8 @@
   {
     "name": "HAUL-CARDS-tier-3-rare",
     "file": "src/ui/haulCards.js",
-    "old": "export const TIER_RARITY = Object.freeze([null, null, null, 'magic',",
-    "new": "export const TIER_RARITY = Object.freeze([null, null, null, 'rare',",
+    "old": "export const TIER_RARITY = Object.freeze([null, null, null, 'magic', 'rare', 'legendary', 'artifact']);",
+    "new": "export const TIER_RARITY = Object.freeze([null, null, null, 'rare', 'rare', 'legendary', 'artifact']);",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HAUL-CARDS-tier-switch-unread",
     "file": "src/ui/haulCards.js",
-    "old": "(on && Number.isSafeInteger(tier) ? TIER_RARITY[tier]",
-    "new": "(Number.isSafeInteger(tier) ? TIER_RARITY[tier]",
+    "old": "  on && Number.isSafeInteger(tier) ? (TIER_RARITY[tier] ?? null) : null;",
+    "new": "  Number.isSafeInteger(tier) ? (TIER_RARITY[tier] ?? null) : null;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HAUL-CARDS-bar-floor",
     "file": "src/ui/haulCards.js",
-    "old": "Math.max(0, Math.min(1, (x - lo) / (hi - lo)))",
-    "new": "Math.max(0, Math.min(1, x / hi))",
+    "old": "  return hi > lo ? Math.max(0, Math.min(1, (x - lo) / (hi - lo))) : 1;",
+    "new": "  return hi > lo ? Math.max(0, Math.min(1, x / hi)) : 1;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HAUL-CARDS-held-gold-dropped",
     "file": "src/ui/haulCards.js",
-    "old": "Number(store.own ?? 0) + Number(store.bought ?? 0) + Number(store.gold ?? 0)",
-    "new": "Number(store.own ?? 0) + Number(store.bought ?? 0)",
+    "old": "  store && typeof store === 'object'\n    ? Number(store.own ?? 0) + Number(store.bought ?? 0) + Number(store.gold ?? 0)\n    : null;",
+    "new": "  store && typeof store === 'object' ? Number(store.own ?? 0) + Number(store.bought ?? 0) : null;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HAUL-CARDS-gem-dropped",
     "file": "src/ui/haulCards.js",
-    "old": "  if (d.gem) { const g = storesHaul(",
-    "new": "  if (false) { const g = storesHaul(",
+    "old": "  if (d.gem) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HAUL-CARDS-head-unsaid",
     "file": "src/ui/haulCards.js",
-    "old": "  main.head = head;\n",
-    "new": "  main.head = '';\n",
+    "old": "  main.head = head;",
+    "new": "  main.head = '';",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "HAUL-CARDS-lode-silver-off",
     "file": "src/ui/haulCards.js",
-    "old": "main.silver = Number.isSafeInteger(d.marks?.struck) && d.marks.struck > 0 ? d.marks.struck : 0;",
-    "new": "main.silver = 0;",
+    "old": "    main.silver = Number.isSafeInteger(d.marks?.struck) && d.marks.struck > 0 ? d.marks.struck : 0;",
+    "new": "    main.silver = 0;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HAUL-CARDS-lode-miners-off",
     "file": "src/ui/haulCards.js",
-    "old": "main.miners = Number.isSafeInteger(d.lode?.struck) ?",
-    "new": "main.miners = false ?",
+    "old": "    main.miners = Number.isSafeInteger(d.lode?.struck) ? `${d.lode.struck} / ${d.lode.strikers ?? 20} miners` : null;",
+    "new": "    main.miners = false ? `${d.lode.struck} / ${d.lode.strikers ?? 20} miners` : null;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HAUL-CARDS-lode-key-a-vein",
     "file": "src/ui/haulCards.js",
-    "old": "    main.key = `lode\\u0002${d.node ?? d.material}`;\n",
-    "new": "",
+    "old": "    main.key = `lode\\u0002${d.node ?? d.material}`;\n    main.lode = true;",
+    "new": "    main.lode = true;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "HAUL-CARDS-claim-bar-off",
     "file": "src/ui/haulCards.js",
-    "old": "source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true,",
-    "new": "source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: false,",
+    "old": "    combat: true,",
+    "new": "    combat: false,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "HAUL-CARDS-deed-an-account",
     "file": "src/ui/haulCards.js",
-    "old": "haul: 'silver', tone: 'treasury', count: deed.struck,",
-    "new": "haul: 'silver', count: deed.struck,",
+    "old": "      tone: 'treasury',\n      count: deed.struck,",
+    "new": "      count: deed.struck,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HAUL-CARDS-contract-tax-unsaid",
     "file": "src/ui/haulCards.js",
-    "old": "${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}",
-    "new": "",
+    "old": "      source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`,",
+    "new": "      source: `Contract - ${tag}`,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HAUL-CARDS-cap-unsaid",
     "file": "src/ui/haulCards.js",
-    "old": "combat: true, cappedText: haulCappedText() });",
-    "new": "combat: true, cappedText: null });",
+    "old": "    cappedText: haulCappedText(),",
+    "new": "    cappedText: null,",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "HAUL-CARDS-combat-fill",
     "file": "src/ui/haulCards.js",
-    "old": "{ text: l.bar ?? COMBAT_BAR_TEXT, fill: Math.max(0, Math.min(1, l.earned / l.max)),",
-    "new": "{ text: l.bar ?? COMBAT_BAR_TEXT, fill: 1,",
+    "old": "        ? {\n            text: l.bar ?? COMBAT_BAR_TEXT,\n            fill: Math.max(0, Math.min(1, l.earned / l.max)),\n            end: `${num(l.earned)} / ${num(l.max)}`,\n          }",
+    "new": "        ? { text: l.bar ?? COMBAT_BAR_TEXT, fill: 1, end: `${num(l.earned)} / ${num(l.max)}` }",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ],

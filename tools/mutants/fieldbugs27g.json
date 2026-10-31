@@ -11,8 +11,8 @@
   {
     "name": "STATION-ROWS-popup-duck",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "if (isServiceBox(r)) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
-    "new": "if (r?.rows) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
+    "old": "    // switch calls CloseWindow first).\n    if (isServiceBox(r)) {",
+    "new": "    // switch calls CloseWindow first).\n    if (r?.rows) {",
     "tests": [
       "test/ui/stationrows.test.js"
     ]

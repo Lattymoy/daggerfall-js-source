@@ -52,8 +52,8 @@
   {
     "name": "LANDED-screen-claim",
     "file": "src/ui/hitNumbers.js",
-    "old": "if (r.target?.landsByWord) return null;",
-    "new": "if (false) return null;",
+    "old": "  if (r.target?.landsByWord) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/net/eliteGates/fb1020f_landedword.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "LANDED-followup-claim",
     "file": "src/ui/hitNumbers.js",
-    "old": "if (!registered || !(n > 0) || target?.landsByWord) return null;",
-    "new": "if (!registered || !(n > 0)) return null;",
+    "old": "  if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "  if (!registered || !(n > 0)) return null;",
     "tests": [
       "test/net/eliteGates/fb1020f_landedword.test.js"
     ],

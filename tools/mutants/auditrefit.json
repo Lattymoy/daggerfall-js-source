@@ -113,8 +113,8 @@
   {
     "name": "AR-door-word-kept",
     "file": "src/ui/fleetPage.js",
-    "old": "if (ran === false && _said?.uid === s.uid) _said = null; ",
-    "new": "",
+    "old": "        if (ran === false && _said?.uid === s.uid) _said = null;\n        return ran;",
+    "new": "        return ran;",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

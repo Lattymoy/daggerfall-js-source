@@ -683,8 +683,8 @@
   {
     "name": "AUDIT625-D2-the-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "serpent: 'Serpent slain', eg:",
-    "new": "serpent: 'Breach closed', eg:",
+    "old": "  serpent: 'Serpent slain',",
+    "new": "  serpent: 'Breach closed',",
     "why": "a serpent's silver carded as a breach's",
     "note": "EG-E1 (PIN MOVED): a Redoubt's source beside the serpent's - re-aimed by content.",
     "tests": [

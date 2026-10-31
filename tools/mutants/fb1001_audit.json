@@ -120,8 +120,8 @@
   {
     "name": "PAD-PULSE-the-pad-says-no-repeat",
     "file": "src/ui/gamepadInput.js",
-    "old": "hooks.attack?.(dx, dy, true, first ? null : { repeat: true });",
-    "new": "hooks.attack?.(dx, dy, true);",
+    "old": "      hooks.attack?.(dx, dy, true, first ? null : { repeat: true });",
+    "new": "      hooks.attack?.(dx, dy, true);",
     "tests": [
       "test/systems/fb1001_audit.test.js"
     ]

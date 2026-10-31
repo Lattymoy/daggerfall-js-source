@@ -220,8 +220,8 @@
   {
     "name": "CC-fleet-holds",
     "file": "src/ui/fleetPage.js",
-    "old": "const worth = holds ? postWords(h.role, v.tier) : '';",
-    "new": "const worth = postWords(h.role, v.tier);",
+    "old": "  const worth = holds ? postWords(h.role, v.tier) : '';",
+    "new": "  const worth = postWords(h.role, v.tier);",
     "tests": [
       "test/systems/naval/captcrew.test.js"
     ]

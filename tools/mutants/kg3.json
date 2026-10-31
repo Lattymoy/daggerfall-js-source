@@ -176,8 +176,8 @@
   {
     "name": "KG3-P-next-arm-short",
     "file": "src/ui/gambitTableHud.js",
-    "old": "    else if (short) { next = 'short';",
-    "new": "    else if (short && !short) { next = 'short';",
+    "old": "    } else if (short) {",
+    "new": "    } else if (short && !short) {",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "KG3-P-next-enabled-early",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const ready = !!chosen && (forFun || (!short && stake > 0));",
-    "new": "const ready = !!chosen;",
+    "old": "    const ready = !!chosen && (forFun || (!short && stake > 0));",
+    "new": "    const ready = !!chosen;",
     "tests": [
       "test/systems/kg3_panel.test.js",
       "test/systems/kg3_host.test.js"
@@ -195,8 +195,8 @@
   {
     "name": "KG3-P-blunder-pct",
     "file": "src/ui/gambitTableWords.js",
-    "old": "const T = r.tier, blunder = pct(T.blunder);",
-    "new": "const T = r.tier, blunder = pct(T.blunder) + 1;",
+    "old": "    blunder = pct(T.blunder);",
+    "new": "    blunder = pct(T.blunder) + 1;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "KG3-P-never-blunders",
     "file": "src/ui/gambitTableWords.js",
-    "old": "    fields: blunder > 0\n",
-    "new": "    fields: blunder >= 0\n",
+    "old": "      blunder > 0",
+    "new": "      blunder >= 0",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "KG3-P-steps",
     "file": "src/ui/gambitTableHud.js",
-    "old": "Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1)",
-    "new": "Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key))",
+    "old": "  Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1);",
+    "new": "  Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key));",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "KG3-P-night-line",
     "file": "src/ui/gambitTableWords.js",
-    "old": "      : r.forFun ? t('cards.kingsGambit.regular.forFun'",
-    "new": "      : !r ? t('cards.kingsGambit.regular.forFun'",
+    "old": "      : r.forFun",
+    "new": "      : !r",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "KG3-P-purse-unread",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const why = gold > purse ? stakePurse(purse, gold)",
-    "new": "const why = gold < 0 ? stakePurse(purse, gold)",
+    "old": "    const why = gold > purse ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
+    "new": "    const why = gold < 0 ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "KG3-P-night-unread",
     "file": "src/ui/gambitTableHud.js",
-    "old": ": gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
-    "new": ": null;",
+    "old": "    const why = gold > purse ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
+    "new": "    const why = gold > purse ? stakePurse(purse, gold) : null;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "KG3-P-court",
     "file": "src/ui/gambitTableWords.js",
-    "old": "{ name: c.courts[2].name, crown: c.crown }",
-    "new": "{ name: c.courts[1].name, crown: c.crown }",
+    "old": "  return { name: c.courts[2].name, crown: c.crown };",
+    "new": "  return { name: c.courts[1].name, crown: c.crown };",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "KG3-P-king-numbers",
     "file": "src/ui/gambitTableWords.js",
-    "old": "{ level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk }",
-    "new": "{ level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk + 1 }",
+    "old": "    { level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk },",
+    "new": "    { level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk + 1 },",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "KG3-P-grid-order",
     "file": "src/ui/gambitTableHud.js",
-    "old": "return KG_ROSTER.slice().sort((a, b) => a.cost - b.cost ||",
-    "new": "return KG_ROSTER.slice().sort((a, b) => b.cost - a.cost ||",
+    "old": "      a.cost - b.cost ||",
+    "new": "      b.cost - a.cost ||",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "KG3-P-chips",
     "file": "src/ui/gambitTableWords.js",
-    "old": "t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.hp }),",
-    "new": "t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.atk }),",
+    "old": "  t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.hp }),",
+    "new": "  t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.atk }),",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "KG3-P-start-stake",
     "file": "src/ui/gambitTableHud.js",
-    "old": "label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun",
-    "new": "label: GAMBIT_PRESS.startFun",
+    "old": "        label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun,",
+    "new": "        label: GAMBIT_PRESS.startFun,",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "KG3-P-fallen",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const fallen = [0, 1].map((s) => (game.dealt?.[s] ?? 0) - st.pieces.filter((x) => x.side === s).length);",
-    "new": "const fallen = [0, 1].map(() => 0);",
+    "old": "      const fallen = [0, 1].map((s) => (game.dealt?.[s] ?? 0) - st.pieces.filter((x) => x.side === s).length);",
+    "new": "      const fallen = [0, 1].map(() => 0);",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "KG3-P-pip",
     "file": "src/ui/gambitTableHud.js",
-    "old": "{ key: 'actions', pips: st.turn === 0 ? st.actions : 0,",
-    "new": "{ key: 'actions', pips: KG_ACTIONS_PER_TURN,",
+    "old": "                pips: st.turn === 0 ? st.actions : 0,",
+    "new": "                pips: KG_ACTIONS_PER_TURN,",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "KG3-P-drink-refusal",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const why = sel.hp >= sel.maxHp ? refusalWords('full', { piece: names(sel.id) }) : st.potions[0] <= 0 ? refusalWords('potions') : null;",
-    "new": "const why = st.potions[0] <= 0 ? refusalWords('potions') : null;",
+    "old": "          const why =\n            sel.hp >= sel.maxHp\n              ? refusalWords('full', { piece: names(sel.id) })\n              : st.potions[0] <= 0\n                ? refusalWords('potions')\n                : null;",
+    "new": "          const why = st.potions[0] <= 0 ? refusalWords('potions') : null;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "KG3-P-armed-words",
     "file": "src/ui/gambitTableHud.js",
-    "old": "label: p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun",
-    "new": "label: staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun",
+    "old": "          label:\n            p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun,",
+    "new": "          label: staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun,",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "KG3-P-staged-press",
     "file": "src/ui/gambitTableHud.js",
-    "old": "{ id: 'move', label: GAMBIT_PRESS.moveHere,",
-    "new": "{ id: 'move', label: GAMBIT_PRESS.more,",
+    "old": "            : { id: 'move', label: GAMBIT_PRESS.moveHere, enabled: true, kind: 'primary', strip: true },",
+    "new": "            : { id: 'move', label: GAMBIT_PRESS.more, enabled: true, kind: 'primary', strip: true },",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "KG3-P-strip-mark-model",
     "file": "src/ui/gambitTableHud.js",
-    "old": "refusalWords('turn'), strip: true });",
-    "new": "refusalWords('turn'), strip: false });",
+    "old": "          why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'),\n          strip: true,",
+    "new": "          why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'),\n          strip: false,",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "KG3-P-info-side",
     "file": "src/ui/gambitTableWords.js",
-    "old": "    x.mine ? t('cards.kingsGambit.info.mine'",
-    "new": "    !x.mine ? t('cards.kingsGambit.info.mine'",
+    "old": "  const lines = [\n    x.mine",
+    "new": "  const lines = [\n    !x.mine",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "KG3-P-info-king-line",
     "file": "src/ui/gambitTableWords.js",
-    "old": "  if (p.king) lines.push(",
-    "new": "  if (!p) lines.push(",
+    "old": "  if (p.king)",
+    "new": "  if (!p)",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "KG3-P-ground-words",
     "file": "src/ui/gambitTableWords.js",
-    "old": "    default: return t('cards.kingsGambit.cell.floor', 'Open floor.');",
-    "new": "    default: return t('cards.kingsGambit.cell.water', 'Water: it cannot be crossed on foot, but ranged attacks pass over it.');",
+    "old": "      return t('cards.kingsGambit.cell.floor', 'Open floor.');",
+    "new": "      return t('cards.kingsGambit.cell.water', 'Water: it cannot be crossed on foot, but ranged attacks pass over it.');",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "KG3-P-gold-line",
     "file": "src/ui/gambitTableWords.js",
-    "old": "  if (over.by === 'void' || over.winner === null) return t('cards.kingsGambit.result.back'",
-    "new": "  if (!over) return t('cards.kingsGambit.result.back'",
+    "old": "  if (!stake) return t('cards.kingsGambit.result.fun', 'Played for fun. No gold changed hands.');\n  if (over.by === 'void' || over.winner === null)",
+    "new": "  if (!stake) return t('cards.kingsGambit.result.fun', 'Played for fun. No gold changed hands.');\n  if (!over)",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "KG3-P-fallen-crown",
     "file": "src/ui/gambitTableHud.js",
-    "old": "const fallenCrown = over.winner === 0 ? crowns[1] : over.winner === 1 ? crowns[0] : null;",
-    "new": "const fallenCrown = over.winner === 0 ? crowns[0] : over.winner === 1 ? crowns[1] : null;",
+    "old": "      const fallenCrown = over.winner === 0 ? crowns[1] : over.winner === 1 ? crowns[0] : null;",
+    "new": "      const fallenCrown = over.winner === 0 ? crowns[0] : over.winner === 1 ? crowns[1] : null;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "KG3-P-typed-number",
     "file": "src/ui/gambitTableWords.js",
-    "old": "{ cols: KG_COLS, rows: KG_ROWS }",
-    "new": "{ cols: KG_COLS, rows: 12 }",
+    "old": "    { cols: KG_COLS, rows: KG_ROWS },",
+    "new": "    { cols: KG_COLS, rows: 12 },",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "KG3-P-word-unsaid",
     "file": "src/ui/gambitTableWords.js",
-    "old": "    case 'cell': return t('cards.kingsGambit.refuse.cell'",
-    "new": "    case 'cells': return t('cards.kingsGambit.refuse.cell'",
+    "old": "    case 'cell':",
+    "new": "    case 'cells':",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "KG3-P-log-pattern",
     "file": "src/ui/gambitTableWords.js",
-    "old": "t('cards.kingsGambit.log.moveMine', 'Your {piece} moves.'",
-    "new": "t('cards.kingsGambit.log.moveMine', 'Your {piece} walks.'",
+    "old": "        ? t('cards.kingsGambit.log.moveMine', 'Your {piece} moves.', { piece: x.names(e.piece) })",
+    "new": "        ? t('cards.kingsGambit.log.moveMine', 'Your {piece} walks.', { piece: x.names(e.piece) })",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "KG3-P-log-side",
     "file": "src/ui/gambitTableWords.js",
-    "old": "  const mine = e.side === 0;\n  switch (e.t) {",
-    "new": "  const mine = e.side === 1;\n  switch (e.t) {",
+    "old": "  const mine = e.side === 0;",
+    "new": "  const mine = e.side === 1;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "KG3-P-log-kill",
     "file": "src/ui/gambitTableWords.js",
-    "old": "      if (e.killed) return mine ? t('cards.kingsGambit.log.killMine'",
-    "new": "      if (!e) return mine ? t('cards.kingsGambit.log.killMine'",
+    "old": "      const a = { name: x.regular, piece: x.names(e.piece), target: x.names(e.target), damage: e.damage };\n      if (e.killed)",
+    "new": "      const a = { name: x.regular, piece: x.names(e.piece), target: x.names(e.target), damage: e.damage };\n      if (!e)",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "KG3-P-king-in-sentence",
     "file": "src/ui/gambitTableWords.js",
-    "old": "(p.king ? kingShort(crowns[p.side]) : unitName(p.unit))",
-    "new": "(p.king ? kingName(crowns[p.side]) : unitName(p.unit))",
+    "old": "export const pieceName = (p, crowns) => (p.king ? kingShort(crowns[p.side]) : unitName(p.unit));",
+    "new": "export const pieceName = (p, crowns) => (p.king ? kingName(crowns[p.side]) : unitName(p.unit));",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "KG3-P-king-fall-title",
     "file": "src/ui/gambitTableWords.js",
-    "old": "t('cards.kingsGambit.result.kingFalls', '{name}, King of {crown}, falls.', crownKing(crown))",
-    "new": "t('cards.kingsGambit.result.kingFalls', '{name} falls.', crownKing(crown))",
+    "old": "  t('cards.kingsGambit.result.kingFalls', '{name}, King of {crown}, falls.', crownKing(crown));",
+    "new": "  t('cards.kingsGambit.result.kingFalls', '{name} falls.', crownKing(crown));",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "KG3-P-line-tone-end",
     "file": "src/ui/gambitTableHud.js",
-    "old": "phase === 'battle' ? 'wait' : '';",
-    "new": "phase === 'battle' ? 'wait' : out.result?.tone ?? '';",
+    "old": "        : '';",
+    "new": "        : (out.result?.tone ?? '');",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "KG3-P-points-plural",
     "file": "src/ui/gambitTableWords.js",
-    "old": "'An army of {points, plural, one {# point} other {# points}} - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time'",
-    "new": "'An army of {points} points - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time'",
+    "old": "            'An army of {points, plural, one {# point} other {# points}} - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time',",
+    "new": "            'An army of {points} points - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time',",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "KG3-P-root-stage",
     "file": "src/ui/gambitTableHud.js",
-    "old": "m?.phase === 'battle' ? 'dfgambit-battle' : ''",
-    "new": "m?.phase === 'battle' ? '' : ''",
+    "old": "    [\n      'dfgambit',\n      collapsed ? 'collapsed' : '',\n      m?.phase === 'battle' ? 'dfgambit-battle' : '',\n      m?.more ? 'dfgambit-more' : '',\n    ]",
+    "new": "    ['dfgambit', collapsed ? 'collapsed' : '', m?.phase === 'battle' ? '' : '', m?.more ? 'dfgambit-more' : '']",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "KG3-P-row-on",
     "file": "src/ui/gambitTableHud.js",
-    "old": "`dfgambit-regular${r.chosen ? ' on' : ''}`",
-    "new": "`dfgambit-regular`",
+    "old": "          const row = el('div', `dfgambit-regular${r.chosen ? ' on' : ''}`, null); // a chosen list row is the kit's .on",
+    "new": "          const row = el('div', `dfgambit-regular`, null); // a chosen list row is the kit's .on",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "KG3-P-chiprow-gone",
     "file": "src/ui/gambitTableHud.js",
-    "old": "      if (m.battle) {   // the turn's chips stand outside the body",
-    "new": "      if (!m) {   // the turn's chips stand outside the body",
+    "old": "      root.append(head);\n      if (m.battle) {",
+    "new": "      root.append(head);\n      if (!m) {",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "KG3-P-strip-mark-painted",
     "file": "src/ui/gambitTableHud.js",
-    "old": "        if (a.strip) b.setAttribute('data-strip', a.id);",
-    "new": "        if (!a) b.setAttribute('data-strip', a.id);",
+    "old": "        if (a.strip) b.setAttribute('data-strip', a.id); // the phone's strip shows it (14.7)",
+    "new": "        if (!a) b.setAttribute('data-strip', a.id); // the phone's strip shows it (14.7)",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "KG3-P-fold-forgotten",
     "file": "src/ui/gambitTableHud.js",
-    "old": "      lastModel = m;\n",
-    "new": "      lastModel = m; collapsed = false;\n",
+    "old": "      const key = JSON.stringify({ ...m, message: null });",
+    "new": "      collapsed = false;\n      const key = JSON.stringify({ ...m, message: null });",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "KG3-P-first-sight",
     "file": "src/ui/gambitTableHud.js",
-    "old": "  noteFirstUse('kings-gambit');",
-    "new": "  void 'kings-gambit';",
+    "old": "  noteFirstUse('kings-gambit'); // 14.5: the page's first sight inside the panel's own painter (TUT1)",
+    "new": "  void 'kings-gambit'; // 14.5: the page's first sight inside the panel's own painter (TUT1)",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "KG3-P-chrome",
     "file": "src/ui/gambitTableHud.js",
-    "old": "${cardPanelChromeCss('.dfgambit')}\n.dfgambit{left:50%",
-    "new": "${cardPanelChromeCss('.dfgambitx')}\n.dfgambit{left:50%",
+    "old": "${cardPanelChromeCss('.dfgambit')}",
+    "new": "${cardPanelChromeCss('.dfgambitx')}",
     "tests": [
       "test/systems/kg3_panel.test.js",
       "test/ui/cardsplus.test.js"
@@ -639,8 +639,8 @@
   {
     "name": "KG3-P-size-floor",
     "file": "src/ui/gambitTableHud.js",
-    "old": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:12px;",
-    "new": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:11px;",
+    "old": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:12px;border-width:1px;border-style:solid}",
+    "new": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:11px;border-width:1px;border-style:solid}",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "KG3-P-bare-word",
     "file": "src/ui/gambitTableHud.js",
-    "old": "c.append(el('span', `dfgambit-chip${cls}`, w)); return c; };",
-    "new": "c.append(el('span', `chip${cls}`, w)); return c; };",
+    "old": "    for (const w of words) c.append(el('span', `dfgambit-chip${cls}`, w));",
+    "new": "    for (const w of words) c.append(el('span', `chip${cls}`, w));",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -693,8 +693,8 @@
   {
     "name": "KG3-P-cursor-edge",
     "file": "src/ui/gambitTableHud.js",
-    "old": "return d ? [Math.max(0, Math.min(KG_COLS - 1, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
-    "new": "return d ? [Math.max(0, Math.min(KG_COLS, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
+    "old": "  return d ? [Math.max(0, Math.min(KG_COLS - 1, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
+    "new": "  return d ? [Math.max(0, Math.min(KG_COLS, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]
@@ -730,8 +730,8 @@
   {
     "name": "KG3-C-never-dressing",
     "file": "src/ui/gambitTableHud.js",
-    "old": "  dressCardPanel(doc);   // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
-    "new": "  void doc;   // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
+    "old": "  dressCardPanel(doc); // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
+    "new": "  void doc; // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -955,8 +955,8 @@
   {
     "name": "KG3-H-dpad",
     "file": "src/ui/gambitTableHud.js",
-    "old": "  [DPAD_CODES.left]: 'ArrowLeft', [DPAD_CODES.right]: 'ArrowRight', [DPAD_CODES.up]: 'ArrowUp', [DPAD_CODES.down]: 'ArrowDown',\n",
-    "new": "\n",
+    "old": "  [DPAD_CODES.left]: 'ArrowLeft',\n  [DPAD_CODES.right]: 'ArrowRight',\n  [DPAD_CODES.up]: 'ArrowUp',\n  [DPAD_CODES.down]: 'ArrowDown',\n});",
+    "new": "});",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]

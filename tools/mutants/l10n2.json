@@ -2,8 +2,8 @@
   {
     "name": "L10N2-face-rasterises-twice",
     "file": "src/ui/glyphFace.js",
-    "old": "    if (glyphs.has(code)) return true;\n",
-    "new": "",
+    "old": "    if (glyphs.has(code)) return true;\n    if (missing.has(code)) return false;",
+    "new": "    if (missing.has(code)) return false;",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N2-missing-forgotten",
     "file": "src/ui/glyphFace.js",
-    "old": "    if (missing.has(code)) return false;\n    if (!Number.isInteger(code)",
-    "new": "    if (!Number.isInteger(code)",
+    "old": "    if (missing.has(code)) return false;\n    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff || isControlCode(code)) {",
+    "new": "    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff || isControlCode(code)) {",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N2-controls-drawn",
     "file": "src/ui/glyphFace.js",
-    "old": "|| isControlCode(code)) { missing.add(code); return false; }",
-    "new": ") { missing.add(code); return false; }",
+    "old": "    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff || isControlCode(code)) {",
+    "new": "    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff) {",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N2-no-new-shelf",
     "file": "src/ui/glyphFace.js",
-    "old": "      if (p && p.x + w + PAD > page) { p.x = PAD; p.y += p.rowH + PAD; p.rowH = 0; }   // the next shelf\n",
-    "new": "",
+    "old": "      if (p && p.x + w + PAD > page) {\n        p.x = PAD;\n        p.y += p.rowH + PAD;\n        p.rowH = 0;\n      } // the next shelf\n      if (p && p.y + h + PAD > page) p = newPage(); // the next page",
+    "new": "      if (p && p.y + h + PAD > page) p = newPage(); // the next page",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "L10N2-no-new-page",
     "file": "src/ui/glyphFace.js",
-    "old": "      if (p && p.y + h + PAD > page) p = newPage();                                    // the next page\n",
-    "new": "",
+    "old": "      if (p && p.y + h + PAD > page) p = newPage(); // the next page\n      if (!p) {",
+    "new": "      if (!p) {",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "L10N2-shelf-height-kept",
     "file": "src/ui/glyphFace.js",
-    "old": "      p.rowH = Math.max(p.rowH, h);\n",
-    "new": "",
+    "old": "      p.rowH = Math.max(p.rowH, h);\n      p.dirty = true;",
+    "new": "      p.dirty = true;",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "L10N2-advance-in-texels",
     "file": "src/ui/glyphFace.js",
-    "old": "      code, advance: mt.width / k,",
-    "new": "      code, advance: mt.width,",
+    "old": "      advance: mt.width / k, // horizontalAdvance",
+    "new": "      advance: mt.width, // horizontalAdvance",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "L10N2-page-never-dirty",
     "file": "src/ui/glyphFace.js",
-    "old": "      p.dirty = true;\n",
-    "new": "",
+    "old": "      p.dirty = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "L10N2-old-copy-kept",
     "file": "src/ui/glyphFace.js",
-    "old": "      if (p.tex) renderer.releaseTexture?.('fnt', key);\n",
-    "new": "",
+    "old": "      if (p.tex) renderer.releaseTexture?.('fnt', key);\n      p.tex = renderer.uploadTexture('fnt', key, { width: page, height: page, colors }, { smooth: true, alpha: true });",
+    "new": "      p.tex = renderer.uploadTexture('fnt', key, { width: page, height: page, colors }, { smooth: true, alpha: true });",
     "tests": [
       "test/ui/l10n2.test.js"
     ]

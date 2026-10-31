@@ -661,8 +661,8 @@
   {
     "name": "SILVER-FINDS-card-source",
     "file": "src/ui/haulCards.js",
-    "old": "source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,",
-    "new": "source: FIND_SOURCE.pile,",
+    "old": "    source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,",
+    "new": "    source: FIND_SOURCE.pile,",
     "why": "every find found in the treasure",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -671,8 +671,8 @@
   {
     "name": "SILVER-FINDS-card-faucet",
     "file": "src/ui/haulCards.js",
-    "old": "const faucet = kind === 'gather' ? 'gather' : 'find';",
-    "new": "const faucet = 'find';",
+    "old": "  const faucet = kind === 'gather' ? 'gather' : 'find';",
+    "new": "  const faucet = 'find';",
     "why": "a harvest's find on the loot's bar",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -681,8 +681,8 @@
   {
     "name": "SILVER-FINDS-card-default-max",
     "file": "src/ui/haulCards.js",
-    "old": "max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,",
-    "new": "max: Number.isSafeInteger(t.max) ? t.max : 20,",
+    "old": "      ? {\n          earned: t.found,\n          max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,\n          text: FIND_BAR_TEXT[faucet],\n        }",
+    "new": "      ? { earned: t.found, max: Number.isSafeInteger(t.max) ? t.max : 20, text: FIND_BAR_TEXT[faucet] }",
     "why": "a harvest's day said against 20",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -691,8 +691,8 @@
   {
     "name": "SILVER-FINDS-card-lode-twice",
     "file": "src/ui/haulCards.js",
-    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
-    "new": "  { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "old": "  if (!d.motherlode) {",
+    "new": "  {",
     "why": "a Motherlode's silver found twice",
     "tests": [
       "test/net/silverfinds_client.test.js",
@@ -702,7 +702,7 @@
   {
     "name": "SILVER-FINDS-card-no-find",
     "file": "src/ui/haulCards.js",
-    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "old": "  if (!d.motherlode) {\n    const f = findHaul(d.marks, 'gather');\n    if (f) out.push(f);\n  }",
     "new": "",
     "why": "a harvest's find no card",
     "tests": [
@@ -713,8 +713,8 @@
   {
     "name": "SILVER-FINDS-card-bar-words",
     "file": "src/ui/haulCards.js",
-    "old": "text: l.bar ?? COMBAT_BAR_TEXT,",
-    "new": "text: COMBAT_BAR_TEXT,",
+    "old": "            text: l.bar ?? COMBAT_BAR_TEXT,",
+    "new": "            text: COMBAT_BAR_TEXT,",
     "why": "every bar the combat's",
     "tests": [
       "test/net/silverfinds_client.test.js"

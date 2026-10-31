@@ -112,8 +112,8 @@
   {
     "name": "GPU-TRAIL-fps-last-a-copy",
     "file": "src/ui/fpsCounter.js",
-    "old": "    last: () => last,",
-    "new": "    last: () => (last && { ...last }),",
+    "old": "    last: () => last, // GPU-TRAIL (render/gpuTrail.js): the last second's numbers, a new object each second - the crash trail's frames",
+    "new": "    last: () => last && { ...last }, // GPU-TRAIL (render/gpuTrail.js): the last second's numbers, a new object each second - the crash trail's frames",
     "tests": [
       "test/render/gputrail.test.js"
     ],

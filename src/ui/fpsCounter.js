@@ -56,8 +56,8 @@
 // The pure half (`fpsStats`) is executed by test/ui/enhanced/mwarms_fps.test.js;
 // the DOM half runs against the same stub document AUDIT 62 built.
 
-import { frameCpu, frameSampleAt } from '../systems/frameClock.js';   // PERF1: the hosts' script time; FB1018D HITCH-KEEP: one frame's
-import { frameCapSkip, frameCapFps } from '../systems/frameCap.js';   // FPS-CAP1: the frames the cap held back are not counted; PASS-COUNT: and the cap said
+import { frameCpu, frameSampleAt } from '../systems/frameClock.js'; // PERF1: the hosts' script time; FB1018D HITCH-KEEP: one frame's
+import { frameCapSkip, frameCapFps } from '../systems/frameCap.js'; // FPS-CAP1: the frames the cap held back are not counted; PASS-COUNT: and the cap said
 
 const PERIOD_MS = 1000;
 /** FB1018D HITCH-KEEP: a frame this long is a hitch - three of a 60 Hz screen's frames, seven of a 144's. */
@@ -79,20 +79,35 @@ export function hitchCount(stamps) {
  * hitch, in order
  */
 export function keptHitch(kept, now) {
-  let worst = null, count = 0;
-  for (const s of kept) { count += s.hitches; if (!worst || s.worstMs > worst.worstMs) worst = s; }
+  let worst = null,
+    count = 0;
+  for (const s of kept) {
+    count += s.hitches;
+    if (!worst || s.worstMs > worst.worstMs) worst = s;
+  }
   if (!worst) return null;
   const c = worst.cpu;
-  return { ms: worst.worstMs, agoS: Math.round((now - worst.at) / 1000), count,
-    scriptMs: c ? c.ms : null, inFrameMs: c ? c.inFrameMs : null, beforeMs: c ? c.beforeMs : null, streamMs: c ? c.streamMs : null };
+  return {
+    ms: worst.worstMs,
+    agoS: Math.round((now - worst.at) / 1000),
+    count,
+    scriptMs: c ? c.ms : null,
+    inFrameMs: c ? c.inFrameMs : null,
+    beforeMs: c ? c.beforeMs : null,
+    streamMs: c ? c.streamMs : null,
+  };
 }
 
 /** FB1018D HITCH-KEEP: the hitch lines from `keptHitch`'s answer - '' with none, the script's only with a clock, under
  *  it, `frame` SCRIPT-SPLIT's `in frame` (labels and numbers, as the draws line is). Pure. */
 export function hitchLine(h) {
   if (!h) return '';
-  return `\nhitch ${h.ms.toFixed(0)} ms  ${h.agoS} s ago  ${h.count} a minute`
-    + (h.scriptMs != null ? `\nscript ${h.scriptMs.toFixed(0)}  frame ${h.inFrameMs.toFixed(0)}  before ${h.beforeMs.toFixed(0)}  stream ${h.streamMs.toFixed(0)}` : '');
+  return (
+    `\nhitch ${h.ms.toFixed(0)} ms  ${h.agoS} s ago  ${h.count} a minute` +
+    (h.scriptMs != null
+      ? `\nscript ${h.scriptMs.toFixed(0)}  frame ${h.inFrameMs.toFixed(0)}  before ${h.beforeMs.toFixed(0)}  stream ${h.streamMs.toFixed(0)}`
+      : '')
+  );
 }
 
 /**
@@ -150,7 +165,11 @@ export function paceLine(lifted, cap) {
 /** PASS-COUNT: the draws line - the frame's own draws and binds, then the view out's and the shadow maps' where the second
  *  held any (each a per-frame mean). Pure. */
 export function drawsLine(draws, binds, view, shadow) {
-  return `\ndraws ${Math.round(draws)}  binds ${Math.round(binds)}` + (view >= 0.5 ? `  view ${Math.round(view)}` : '') + (shadow >= 0.5 ? `  shadow ${Math.round(shadow)}` : '');
+  return (
+    `\ndraws ${Math.round(draws)}  binds ${Math.round(binds)}` +
+    (view >= 0.5 ? `  view ${Math.round(view)}` : '') +
+    (shadow >= 0.5 ? `  shadow ${Math.round(shadow)}` : '')
+  );
 }
 
 /**
@@ -159,78 +178,151 @@ export function drawsLine(draws, binds, view, shadow) {
  * @param {{enabled: () => boolean, raf?: (fn) => number, stats?: () => any, info?: () => any}} opts
  * `info` (PERF-SCALE): the renderer's frameInfo - { gpu, world, canvas, dpr, scale, retro }.
  */
-export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null), stats = null, info = null } = {}) {
+export function mountFpsCounter({
+  enabled = () => true,
+  raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null,
+  stats = null,
+  info = null,
+} = {}) {
   const el = document.createElement('div');
   el.id = 'fps-counter';
   // AUDIT BRANCH-0925 PS-A4: capped at the window less its margins, and a long line WRAPS inside it - a Windows ANGLE
   // GPU name made an unwrapped box 728px wide, off a phone's left edge, cutting off the start of the "gpu" line
   // (tools/fpsCounterProbe.mjs measures it in Chromium)
-  el.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:9;padding:4px 8px;border-radius:8px;'
-    + 'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;'
-    + 'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;'
-    + '-webkit-user-select:none;user-select:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:right;display:none';
-  el.style.display = 'none';   // set on the property too: the cssText above is a string to a stub document
+  el.style.cssText =
+    'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:9;padding:4px 8px;border-radius:8px;' +
+    'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;' +
+    'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;' +
+    '-webkit-user-select:none;user-select:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:right;display:none';
+  el.style.display = 'none'; // set on the property too: the cssText above is a string to a stub document
   document.body.appendChild(el);
   let stamps = [];
   let shown = false;
-  let sumDraws = 0, sumBinds = 0, samples = 0;   // PERF3: the renderer's per-frame counts (beginFrame zeroes them), summed over the second
-  let sumView = 0, sumShadow = 0;   // PASS-COUNT: the view out's and the shadow maps'
-  let last = null;   // PERF9: the last second's numbers, for the probe
-  const kept = [];   // FB1018D HITCH-KEEP: the seconds of the last HITCH_KEEP_MS that held a hitch
-  let gapMs = 0, gapCpu = null;   // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the second's longest gap of HITCH_MS or more, and the script of the frame that opened it
+  let sumDraws = 0,
+    sumBinds = 0,
+    samples = 0; // PERF3: the renderer's per-frame counts (beginFrame zeroes them), summed over the second
+  let sumView = 0,
+    sumShadow = 0; // PASS-COUNT: the view out's and the shadow maps'
+  let last = null; // PERF9: the last second's numbers, for the probe
+  const kept = []; // FB1018D HITCH-KEEP: the seconds of the last HITCH_KEEP_MS that held a hitch
+  let gapMs = 0,
+    gapCpu = null; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the second's longest gap of HITCH_MS or more, and the script of the frame that opened it
   // FB1018D HITCH-KEEP: the page was put away (or shown again) since its last frame - the gap is no frame of the
   // player's. The browser sends visibilitychange both ways, and holds every animation frame between the two.
   let hid = false;
-  const onVisibility = () => { hid = true; };
+  const onVisibility = () => {
+    hid = true;
+  };
   if (typeof document.addEventListener === 'function') document.addEventListener('visibilitychange', onVisibility);
   // PERF-SCALE: the GPU and the frame's size ride the probe's read, asked for when it asks - never on a hidden tick
-  const described = () => { const i = info?.(); return i ? { gpu: i.gpu ?? null, world: i.world ?? null, canvas: i.canvas ?? null, dpr: i.dpr ?? null, scale: i.scale ?? null, retro: !!i.retro } : null; };
-  if (typeof globalThis.window !== 'undefined' && globalThis.window) globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);
+  const described = () => {
+    const i = info?.();
+    return i
+      ? {
+          gpu: i.gpu ?? null,
+          world: i.world ?? null,
+          canvas: i.canvas ?? null,
+          dpr: i.dpr ?? null,
+          scale: i.scale ?? null,
+          retro: !!i.retro,
+        }
+      : null;
+  };
+  if (typeof globalThis.window !== 'undefined' && globalThis.window)
+    globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);
   let handle = 0;
   let live = true;
   function tick(now) {
-    if (hid) { hid = false; stamps = []; sumDraws = 0; sumBinds = 0; samples = 0; sumView = 0; sumShadow = 0; gapMs = 0; gapCpu = null; }   // FB1018D HITCH-KEEP: a second starts at the first frame shown
+    if (hid) {
+      hid = false;
+      stamps = [];
+      sumDraws = 0;
+      sumBinds = 0;
+      samples = 0;
+      sumView = 0;
+      sumShadow = 0;
+      gapMs = 0;
+      gapCpu = null;
+    } // FB1018D HITCH-KEEP: a second starts at the first frame shown
     // FPS-CAP1: a callback the Frame Rate Cap held back drew nothing, so it is not a frame. The host asked the same
     // question with the same stamp (one decision per stamp, systems/frameCap.js), so this counts what the game drew.
-    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }
+    if (frameCapSkip(now)) {
+      if (live && raf) handle = raf(tick);
+      return;
+    }
     const prev = stamps.length ? stamps[stamps.length - 1] : null;
     stamps.push(now);
-    if (prev != null && now - prev >= HITCH_MS && now - prev > gapMs) { gapMs = now - prev; gapCpu = frameSampleAt(prev); }   // FB1018D HITCH-KEEP: asked while that frame's sample is the clock's newest
-    const st = stats?.();   // PERF3: one complete frame's counts, whichever side of the host's callback this tick fell
-    if (st) { sumDraws += st.draws; sumBinds += st.texBinds; sumView += st.viewDraws ?? 0; sumShadow += st.shadowDraws ?? 0; samples++; }
+    if (prev != null && now - prev >= HITCH_MS && now - prev > gapMs) {
+      gapMs = now - prev;
+      gapCpu = frameSampleAt(prev);
+    } // FB1018D HITCH-KEEP: asked while that frame's sample is the clock's newest
+    const st = stats?.(); // PERF3: one complete frame's counts, whichever side of the host's callback this tick fell
+    if (st) {
+      sumDraws += st.draws;
+      sumBinds += st.texBinds;
+      sumView += st.viewDraws ?? 0;
+      sumShadow += st.shadowDraws ?? 0;
+      samples++;
+    }
     const on = !!enabled();
-    if (on !== shown) { shown = on; el.style.display = on ? 'block' : 'none'; }
+    if (on !== shown) {
+      shown = on;
+      el.style.display = on ? 'block' : 'none';
+    }
     if (now - stamps[0] >= PERIOD_MS) {
-      {   // PERF9: computed every second whether or not the overlay shows; written only while it does
+      {
+        // PERF9: computed every second whether or not the overlay shows; written only while it does
         const { fps, meanMs, worstMs } = fpsStats(stamps);
-        const cpu = frameCpu();   // PERF1: null until a host has stamped a frame (the menu has none)
+        const cpu = frameCpu(); // PERF1: null until a host has stamped a frame (the menu has none)
         // PERF3: the renderer's draws and texture binds, averaged per frame
         // over the second - the GL call count is the CPU side of the GPU's
         // work, and the number the culls and the sort are meant to move.
-        const gpu = samples ? drawsLine(sumDraws / samples, sumBinds / samples, sumView / samples, sumShadow / samples) : '';
-        const i = on ? info?.() : null;   // PERF-SCALE: the GPU and the size, while shown
+        const gpu = samples
+          ? drawsLine(sumDraws / samples, sumBinds / samples, sumView / samples, sumShadow / samples)
+          : '';
+        const i = on ? info?.() : null; // PERF-SCALE: the GPU and the size, while shown
         const size = sizeLine(i);
         // FB1018D HITCH-KEEP: a second that held a hitch is kept for HITCH_KEEP_MS, its own frame's script beside it
         const hitches = hitchCount(stamps);
         if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });
         while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();
         const hitch = keptHitch(kept, now);
-        if (on) el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
-          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + scriptSplitLine(cpu) + gpu
-          + hitchLine(hitch)   // FB1018D HITCH-KEEP
-          + paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps())   // PASS-COUNT
-          + (i ? `\ngpu ${i.gpu ?? 'unknown'}` : '') + (size ? `\n${size}` : '');
+        if (on)
+          el.textContent =
+            `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}` +
+            (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') +
+            scriptSplitLine(cpu) +
+            gpu +
+            hitchLine(hitch) + // FB1018D HITCH-KEEP
+            paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps()) + // PASS-COUNT
+            (i ? `\ngpu ${i.gpu ?? 'unknown'}` : '') +
+            (size ? `\n${size}` : '');
         // PERF9: the same numbers for a probe (tools/perfProbe.mjs) - the
         // last second's, as an object, whether or not the overlay shows.
-        last = { fps, meanMs, worstMs, scriptMs: cpu?.meanMs ?? null, scriptWorstMs: cpu?.worstMs ?? null, draws: samples ? sumDraws / samples : null, binds: samples ? sumBinds / samples : null,
-          viewDraws: samples ? sumView / samples : null, shadowDraws: samples ? sumShadow / samples : null,   // PASS-COUNT
-          scriptInFrameMs: cpu?.inFrameMs ?? null, scriptBeforeMs: cpu?.beforeMs ?? null, scriptStreamMs: cpu?.streamMs ?? null,   // SCRIPT-SPLIT
-          hitch };   // FB1018D HITCH-KEEP: the minute's worst frame (keptHitch), or null
+        last = {
+          fps,
+          meanMs,
+          worstMs,
+          scriptMs: cpu?.meanMs ?? null,
+          scriptWorstMs: cpu?.worstMs ?? null,
+          draws: samples ? sumDraws / samples : null,
+          binds: samples ? sumBinds / samples : null,
+          viewDraws: samples ? sumView / samples : null,
+          shadowDraws: samples ? sumShadow / samples : null, // PASS-COUNT
+          scriptInFrameMs: cpu?.inFrameMs ?? null,
+          scriptBeforeMs: cpu?.beforeMs ?? null,
+          scriptStreamMs: cpu?.streamMs ?? null, // SCRIPT-SPLIT
+          hitch,
+        }; // FB1018D HITCH-KEEP: the minute's worst frame (keptHitch), or null
       }
       stamps = [now];
-      gapMs = 0; gapCpu = null;   // FB1018D HITCH-KEEP
-      sumDraws = 0; sumBinds = 0; samples = 0;   // PERF3
-      sumView = 0; sumShadow = 0;   // PASS-COUNT
+      gapMs = 0;
+      gapCpu = null; // FB1018D HITCH-KEEP
+      sumDraws = 0;
+      sumBinds = 0;
+      samples = 0; // PERF3
+      sumView = 0;
+      sumShadow = 0; // PASS-COUNT
     }
     if (live && raf) handle = raf(tick);
   }
@@ -238,10 +330,13 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
   return {
     el,
     tick,
-    last: () => last,   // GPU-TRAIL (render/gpuTrail.js): the last second's numbers, a new object each second - the crash trail's frames
+    last: () => last, // GPU-TRAIL (render/gpuTrail.js): the last second's numbers, a new object each second - the crash trail's frames
     dispose() {
-      live = false; if (handle && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(handle); el.remove();
-      if (typeof document.removeEventListener === 'function') document.removeEventListener('visibilitychange', onVisibility);   // FB1018D HITCH-KEEP
+      live = false;
+      if (handle && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(handle);
+      el.remove();
+      if (typeof document.removeEventListener === 'function')
+        document.removeEventListener('visibilitychange', onVisibility); // FB1018D HITCH-KEEP
     },
   };
 }

@@ -535,8 +535,8 @@
   {
     "name": "AC6-E3-button-pressable",
     "file": "src/ui/iliacTableHud.js",
-    "old": "enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null",
-    "new": "enabled: !committed && stagedRefusal(view, staged) === null",
+    "old": "      enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null,",
+    "new": "      enabled: !committed && stagedRefusal(view, staged) === null,",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "AC6-E9-why-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "actions, message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' ')",
-    "new": "actions, message: online?.error ? `${message} (${online.error})` : message",
+    "old": "    message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' '),",
+    "new": "    message: online?.error ? `${message} (${online.error})` : message,",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -625,7 +625,7 @@
   {
     "name": "AC6-E10-deals-for-nobody",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  const next = !online ? '' : online.full ? 'The next game starts in a moment.' : 'Waiting for another player to sit down.';",
+    "old": "  const next = !online\n    ? ''\n    : online.full\n      ? 'The next game starts in a moment.'\n      : 'Waiting for another player to sit down.';",
     "new": "  const next = online ? 'The next game starts in a moment.' : '';",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -645,8 +645,8 @@
   {
     "name": "AC6-E10-setup-says-no-end",
     "file": "src/ui/iliacTableHud.js",
-    "old": ": online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ')",
-    "new": ": online ? 'Sit down and wait for another player.'",
+    "old": "                  ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ')",
+    "new": "                  ? 'Sit down and wait for another player.'",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -717,8 +717,8 @@
   {
     "name": "AC6-E19-seating-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    : online?.seating ? 'Sitting down at the table...'",
-    "new": "    : false ? 'Sitting down at the table...'",
+    "old": "        online?.seating",
+    "new": "        false",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "AC6-E19-full-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "      : online && !view ? 'Both seats are taken. The game starts in a moment.'",
-    "new": "      : false ? 'Both seats are taken. The game starts in a moment.'",
+    "old": "          : online && !view",
+    "new": "          : false",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]

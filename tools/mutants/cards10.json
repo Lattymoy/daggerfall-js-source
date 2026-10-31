@@ -119,8 +119,8 @@
   {
     "name": "CARDS10-staging-room",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';\n",
-    "new": "",
+    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++)\n    if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "CARDS10-staging-spell",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    if (card.kind === 'spell') { if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell'; } else units[x.holding]++;",
+    "old": "    if (card.kind === 'spell') {\n      if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell';\n    } else units[x.holding]++;",
     "new": "    if (card.kind !== 'spell') units[x.holding]++;",
     "tests": [
       "test/systems/cards10_table.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "CARDS10-staging-discount",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  for (const fx of cardById(view.holdings[h].id)?.fx ?? []) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
+    "old": "  for (const fx of cardById(view.holdings[h].id)?.fx ?? [])\n    if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
     "new": "",
     "tests": [
       "test/systems/cards10_table.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "CARDS10-panel-words",
     "file": "src/ui/iliacTableHud.js",
-    "old": ": 'Pass this turn', enabled: !committed",
-    "new": ": 'Pass', enabled: !committed",
+    "old": "            : 'Pass this turn',",
+    "new": "            : 'Pass',",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "CARDS10-client-board-pinned",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  if (b.pinned) out.push('...', row(b.pinned));\n",
-    "new": "",
+    "old": "  if (b.pinned) out.push('...', row(b.pinned));\n  out.push(",
+    "new": "  out.push(",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]

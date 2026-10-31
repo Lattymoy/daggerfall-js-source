@@ -330,8 +330,8 @@
   {
     "name": "CHAP4D-HALL-SECTION",
     "file": "src/ui/hallOfRecords.js",
-    "old": "  if (said.length) {\n    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat))",
-    "new": "  if (false) {\n    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat))",
+    "old": "  if (said.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "CHAP4D-HALL-EMPTY",
     "file": "src/ui/hallOfRecords.js",
-    "old": "if (!chapters.length && !said.length) return",
-    "new": "if (!chapters.length) return",
+    "old": "  if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
+    "new": "  if (!chapters.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "CHAP4D-HALL-HEADING",
     "file": "src/ui/hallOfRecords.js",
-    "old": "`The Chapters of ${REGION_NAMES[seat?.region] ?? 'the Region'}`",
-    "new": "`The Chapters`",
+    "old": "export const hallOfRecordsChaptersTitle = (/** @type {any} */ seat) =>\n  `The Chapters of ${REGION_NAMES[seat?.region] ?? 'the Region'}`;",
+    "new": "export const hallOfRecordsChaptersTitle = (/** @type {any} */ seat) => `The Chapters`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "CHAP4D-HALL-LINES",
     "file": "src/ui/hallOfRecords.js",
-    "old": "return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, chapters.zero ?? null)).filter(Boolean);",
-    "new": "return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, null)).filter(Boolean);",
+    "old": "  return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, chapters.zero ?? null)).filter(Boolean);",
+    "new": "  return chapters.rows.map((/** @type {any} */ r) => chapterChronicleLine(r, null)).filter(Boolean);",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "CHAP4D-HALL-PASS",
     "file": "src/ui/hallOfRecords.js",
-    "old": "const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf, chapters);",
-    "new": "const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf);",
+    "old": "  const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf, chapters);",
+    "new": "  const tokens = hallOfRecordsTokens(seat, rows, zero, armsOf);",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]

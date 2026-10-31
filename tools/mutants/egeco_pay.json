@@ -575,8 +575,8 @@
   {
     "name": "EGE1-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "eg: 'Redoubt taken', get star() { return t('starfall.haul.source', 'Star held'); } });",
-    "new": "eg: 'Breach closed', get star() { return t('starfall.haul.source', 'Star held'); } });",
+    "old": "  eg: 'Redoubt taken',",
+    "new": "  eg: 'Breach closed',",
     "why": "a Redoubt's silver carded as a breach's",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"

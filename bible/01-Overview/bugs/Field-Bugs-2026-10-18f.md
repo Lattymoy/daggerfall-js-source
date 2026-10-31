@@ -193,7 +193,7 @@ game.
 FIXED. The hide door both branches already call (`dungeonContext.js:"hideHudText: () => hideHudTextSurfaces(hudText),"`)
 now tells the enhanced HUD what drawHud tells it under a window (`enhancedHud.js:"export function hideEnhancedHud() {"`),
 so the HUD and its bar hide and the keys belong to the window; the next frame of play gives them back. The pad's
-crossbar already stood down under every dungeon window (`gamepadInput.js:"    const xbOn = !overlay && crossbarInForce();"`,
+crossbar already stood down under every dungeon window (`gamepadInput.js:"const xbOn = !overlay"`,
 the dungeon's `overlayActive`); the bar's own gate now agrees with it (AUDIT FB1018f L2-7). THE FOUR HOSTS: `world.js`, `exterior.js` and worldModes' building arm draw the HUD every frame with the
 game's pause; the dungeon arm's window branch already calls the door (no line added); `dungeon.js` mounts the same
 context. Our own feature: DFU does not Update its HUD under a window (DaggerfallUI.cs:429-433).

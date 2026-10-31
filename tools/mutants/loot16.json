@@ -593,8 +593,8 @@
   {
     "name": "LOOT16-popup-no-key",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;",
-    "new": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === 'KeyQ';",
+    "old": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY; // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)",
+    "new": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === 'KeyQ'; // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -602,7 +602,7 @@
   {
     "name": "LOOT16-popup-key-over-dfu",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);",
+    "old": "    const hit = healKey\n      ? 'HealCurse'\n      : reforgeKey\n        ? 'Reforge'\n        : (firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null));",
     "new": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : liftKey ? 'Lift' : firstHotkey(buttons, code, e);",
     "tests": [
       "test/systems/loot16_curses.test.js"
@@ -611,8 +611,8 @@
   {
     "name": "LOOT16-popup-key-unrouted",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "      case 'Lift': this._lift(); return;   // LOOT16\n",
-    "new": "",
+    "old": "      case 'Lift':\n        this._lift();\n        return; // LOOT16\n      case 'HealCurse':",
+    "new": "      case 'HealCurse':",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

@@ -717,8 +717,8 @@
   {
     "name": "CSAL-pad-bumper",
     "file": "src/ui/gamepadInput.js",
-    "old": "const helmUp = !overlay && !lb && !rb && !lootUp && !!hooks.helm?.up?.();",
-    "new": "const helmUp = !overlay && !rb && !lootUp && !!hooks.helm?.up?.();",
+    "old": "    const helmUp = !overlay && !lb && !rb && !lootUp && !!hooks.helm?.up?.();",
+    "new": "    const helmUp = !overlay && !rb && !lootUp && !!hooks.helm?.up?.();",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "CSAL-pad-tap-after-hold",
     "file": "src/ui/gamepadInput.js",
-    "old": "          if (!st.fired) { if (glassTap) fireDpad('Spyglass', code); else hooks.helm?.gesture?.(dir, 'tap'); }",
-    "new": "          if (st.fired || !st.fired) { if (glassTap) fireDpad('Spyglass', code); else hooks.helm?.gesture?.(dir, 'tap'); }",
+    "old": "          if (!st.fired) {",
+    "new": "          if (st.fired || !st.fired) {",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -735,8 +735,8 @@
   {
     "name": "CSAL-pad-no-release",
     "file": "src/ui/gamepadInput.js",
-    "old": "          else if (st.held) hooks.helm?.gesture?.(dir, 'release');",
-    "new": "          else if (st.held && false) hooks.helm?.gesture?.(dir, 'release');",
+    "old": "          } else if (st.held) hooks.helm?.gesture?.(dir, 'release');",
+    "new": "          } else if (st.held && false) hooks.helm?.gesture?.(dir, 'release');",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -753,8 +753,8 @@
   {
     "name": "CSAL-pad-codes-leak",
     "file": "src/ui/gamepadInput.js",
-    "old": "        wanted.delete(code); swallowed.add(code);\n        const st = P.helm[code]",
-    "new": "        const st = P.helm[code]",
+    "old": "        wanted.delete(code);\n        swallowed.add(code);\n        const st = (P.helm[code] ??= { t: -1, fired: false, held: false });",
+    "new": "        const st = (P.helm[code] ??= { t: -1, fired: false, held: false });",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -771,8 +771,8 @@
   {
     "name": "CSAL-pad-bare-hold",
     "file": "src/ui/gamepadInput.js",
-    "old": "        if (now && !P.xbPrev.has(code)) { st.t = set === null && !lootUp && !helmUp && !boardUp ? 0 : -1; st.fired = false; }\n        if (st.t >= 0 && (set !== null || lootUp || helmUp || boardUp)) st.t = -1;",
-    "new": "        if (now && !P.xbPrev.has(code)) { st.t = set === null && !lootUp && !boardUp ? 0 : -1; st.fired = false; }\n        if (st.t >= 0 && (set !== null || lootUp || boardUp)) st.t = -1;",
+    "old": "          st.t = set === null && !lootUp && !helmUp && !boardUp ? 0 : -1;\n          st.fired = false;\n        }\n        if (st.t >= 0 && (set !== null || lootUp || helmUp || boardUp)) st.t = -1; // a bumper, a loot plaque, the helm or the board took the press",
+    "new": "          st.t = set === null && !lootUp && !boardUp ? 0 : -1;\n          st.fired = false;\n        }\n        if (st.t >= 0 && (set !== null || lootUp || boardUp)) st.t = -1; // a bumper, a loot plaque, the helm or the board took the press",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "CSAL-pad-prompts",
     "file": "src/ui/gamepadInput.js",
-    "old": "    else if (plus && P.helmUp && usingController) showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id));",
-    "new": "    else if (plus && P.helmUp && usingController && false) showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id));",
+    "old": "    else if (plus && P.helmUp && usingController)",
+    "new": "    else if (plus && P.helmUp && usingController && false)",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

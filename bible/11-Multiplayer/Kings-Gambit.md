@@ -1401,7 +1401,7 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/ui/fon
   (`test/scenes/inputmap.test.js`) refuse in a host; and that listener's `window.addEventListener('keydown'` stood above the
   host's own, so V4 (`test/systems/modalkeys.test.js`) and U43, which read the host's handler from its registration, read the
   cloth's instead. The keys are a window's own (ui/input.js's overlayAction is the precedent): the table and its reader
-  live in the panel (`gambitTableHud.js:"export const gambitBoardKey = (code) =>"`), both hosts ask it, and the cloth's
+  live in the panel (`gambitTableHud.js:"export const gambitBoardKey"`), both hosts ask it, and the cloth's
   three listeners are taken and let go as one list. The chat's claim is asked of every press key, not Enter's alone -
   the claim answers per press by ActivateCursor's binding, so a rebound open key is yielded wherever it lands.
 

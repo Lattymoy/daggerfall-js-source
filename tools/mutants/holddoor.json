@@ -101,8 +101,8 @@
   {
     "name": "HOLD-fleet-button-unshown",
     "file": "src/ui/fleetPage.js",
-    "old": "  if (s.hold) acts.append(button(el, 'Hold', null, () => act('hold')));",
-    "new": "  if (false) acts.append(button(el, 'Hold', null, () => act('hold')));",
+    "old": "  if (s.hold) acts.append(button(el, 'Hold', null, () => act('hold'))); // CARGO-ANYWHERE: her hold, wherever she lies",
+    "new": "  if (false) acts.append(button(el, 'Hold', null, () => act('hold'))); // CARGO-ANYWHERE: her hold, wherever she lies",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

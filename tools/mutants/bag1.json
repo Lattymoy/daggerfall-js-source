@@ -707,8 +707,8 @@
   {
     "name": "AUDIT2-BAG1-U6-the-services-count-on-the-card",
     "file": "src/ui/haulCards.js",
-    "old": "  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty,",
-    "new": "  const main = storesHaul(d.material, d.qty,",
+    "old": "  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty, {",
+    "new": "  const main = storesHaul(d.material, d.qty, {",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

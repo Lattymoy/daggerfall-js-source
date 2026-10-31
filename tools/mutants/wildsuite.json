@@ -31,8 +31,8 @@
   {
     "name": "WILDSUITE-HEAL-CURSE-hotkey-sounds-twice",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY;",
-    "new": "    if (this.hooks.healCurse && code === HEAL_CURSE_KEY) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return; }\n    const healKey = false;",
+    "old": "    const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY; // HEAL-CURSE: the temple's second row, its key H - ahead of every other, and the one sound below (AUDIT 26 D1)",
+    "new": "    if (this.hooks.healCurse && code === HEAL_CURSE_KEY) {\n      audio.playOneShot(SOUND.ButtonClick, 1);\n      this._healCurse();\n      return;\n    }\n    const healKey = false; // HEAL-CURSE: the temple's second row, its key H - ahead of every other, and the one sound below (AUDIT 26 D1)",
     "tests": [
       "test/ui/audit26_uiwindows.test.js"
     ],
@@ -41,8 +41,8 @@
   {
     "name": "WILDSUITE-HEAL-CURSE-row-clicks-silent",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return true; }",
-    "new": "if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { this._healCurse(); return true; }",
+    "old": "      audio.playOneShot(SOUND.ButtonClick, 1);\n      this._healCurse();",
+    "new": "      this._healCurse();",
     "tests": [
       "test/ui/audit26_uiwindows.test.js"
     ]

@@ -704,7 +704,7 @@ Every in-game DOM button, read from every module that builds one, by where it st
   - the `/unstuck` wait's Cancel (`world.js:"const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancel';"`).
 - ALREADY NEVER THE FOCUS: the family above.
 - OWN KEYBOARD BY DESIGN: the seated card tables. The Iliac and Gambit roots take the focus and stop Tab
-  (`iliacTableHud.js:"root.addEventListener('keydown', (e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });"`),
+  (`iliacTableHud.js:"root.addEventListener"`),
   and the card table's fold is `tabindex="0"`.
 
 FIXED.

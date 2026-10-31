@@ -288,8 +288,8 @@
   {
     "name": "AUDIT-GUILD2-G11-a-hole-the-first-colour-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "    ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
-    "new": "    ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>`",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>`",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT-GUILD2-G12-a-swatch-keyed-by-three",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  const key = h ? heraldryKey(h) : '';",
-    "new": "  const key = h ? `${h.field}/${h.border}/${h.device}` : '';",
+    "old": "  const key = h ? heraldryKey(h) : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
+    "new": "  const key = h ? `${h.field}/${h.border}/${h.device}` : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-first-colour-whole-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "    ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
-    "new": "    ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>${inPart(div.id, p, div.hex)}`",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>${inPart(div.id, p, div.hex)}`",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -513,8 +513,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-canvas",
     "file": "src/ui/heraldryArt.js",
-    "old": "inPart(p, fieldHex, comp, 'evenodd');",
-    "new": "inPart(p, fieldHex, comp, 'nonzero');",
+    "old": "      inPart(p, fieldHex, comp, 'evenodd');",
+    "new": "      inPart(p, fieldHex, comp, 'nonzero');",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -522,8 +522,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "\" clip-rule=\"evenodd\"/></clipPath>`;",
-    "new": "\"/></clipPath>`;",
+    "old": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\" clip-rule=\"evenodd\"/></clipPath>`;",
+    "new": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\"/></clipPath>`;",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "AUDIT2-GUILD2-G3-the-shield-on-the-banners-box",
     "file": "src/ui/heraldryArt.js",
-    "old": "  const divD = h.division ? divisionPath(h.division, SHIELD_BOX.w, SHIELD_BOX.h) : '';\n  const div = divD ? new P(divD) : null;",
-    "new": "  const divD = h.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';\n  const div = divD ? new P(divD) : null;",
+    "old": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, SHIELD_BOX.w, SHIELD_BOX.h) : '';",
+    "new": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]

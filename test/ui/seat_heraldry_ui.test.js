@@ -270,7 +270,7 @@ test('HERALDRY-SHOWN THE HALL OF RECORDS\' ROLL OF ARMS: the book reader draws t
   const w = rd('src/scenes/world.js');
   assert.match(w, /const w = st && seatBook \? await hallOfRecordsRead\(st\) : null;/);   // PIN MOVED (AUDIT CHAP4 C5): the board's door reads as the palace's
   assert.match(w, /return r\?\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle; (AUDIT CHAP4 C5) the one read
-  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null, chapters = null\) => createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf, chapters\)\);/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
+  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null, chapters = null\) =>\n\s*createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf, chapters\)\);/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
 });
 
 // ─── AUDIT HERALDRY H1-H4 ────────────────────────────────────────────

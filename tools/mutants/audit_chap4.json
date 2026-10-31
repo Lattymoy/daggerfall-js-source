@@ -601,8 +601,8 @@
   {
     "name": "AUDIT-CHAP4-T10-HALL-JUSTIFY",
     "file": "src/ui/hallOfRecords.js",
-    "old": "text(hallOfRecordsChaptersTitle(seat)), nl(), nl(), { formatting: RSC.JustifyLeft });",
-    "new": "text(hallOfRecordsChaptersTitle(seat)), nl(), nl());",
+    "old": "    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat)), nl(), nl(), {\n      formatting: RSC.JustifyLeft,\n    });",
+    "new": "    out.push({ formatting: RSC.JustifyCenter }, text(hallOfRecordsChaptersTitle(seat)), nl(), nl());",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

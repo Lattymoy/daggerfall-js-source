@@ -152,8 +152,8 @@
   {
     "name": "TURNED-BLOW-hud-word-dropped",
     "file": "src/ui/hitNumbers.js",
-    "old": "text: r.target.wardText || 'Warded', tag: null };",
-    "new": "text: 'Warded', tag: null };",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
+    "new": "  if (r.target?.warded) return { kind: 'warded', text: 'Warded', tag: null };",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
