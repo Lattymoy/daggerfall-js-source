@@ -271,8 +271,8 @@
   {
     "name": "PROF4-bed-double-pine",
     "file": "src/net/recipeLaw.js",
-    "old": "['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
-    "new": "['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
+    "old": "  ['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
+    "new": "  ['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "PROF4-heartwood-no-plank-taken",
     "file": "src/net/recipeLaw.js",
-    "old": "    p.n -= 1;\n",
-    "new": "    p.n -= 0;\n",
+    "old": "    p.n -= 1;",
+    "new": "    p.n -= 0;",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -338,8 +338,8 @@
   {
     "name": "PROF4-arrows-take-quality",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';",
-    "new": "r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish';",
+    "old": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "new": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "PROF4-joiner-marks",
     "file": "src/net/recipeLaw.js",
-    "old": "(r?.family === 'furniture' && spec100 === 'master-joiner');",
-    "new": "(r?.family === 'furniture' && spec100 === 'joiner');",
+    "old": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');",
+    "new": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'joiner');",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -678,12 +678,12 @@
   {
     "name": "PROF4-host-resin-unsaid",
     "file": "src/scenes/gatherHost.js",
-    "old": "  if (d.extra) { const n = Number(d.extraQty) || 1; goods.push(`${n > 1 ? `${n} ` : ''}${materialCountLabel(d.extra, n)}`); }\n",
+    "old": "  if (extra && !stored) goods.push(extra);\n",
     "new": "",
     "tests": [
       "test/systems/prof4_client.test.js"
     ],
-    "note": "GATHER-SAID (PIN MOVED): the Resin said in the goods' one line (gatherHost.js storesLine), re-aimed by content."
+    "note": "GATHER-SAID (PIN MOVED): the Resin said in the goods' one line (gatherHost.js storesLine), re-aimed by content. BUTCHER-STORES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "PROF4-furniture-worth-flat",

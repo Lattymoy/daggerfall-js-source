@@ -2,8 +2,8 @@
   {
     "name": "DEX-HIDES-the-bat-no-body",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat, DEX.Bat], null, 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat], null, 'food:meat', 'leather:cured'),",
+    "old": "[MOB.GiantBat, DEX.Bat]",
+    "new": "[MOB.GiantBat]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DEX-HIDES-the-mountain-lion-no-body",
     "file": "src/net/professionLaw.js",
-    "old": "    [MOB.SabertoothTiger, DEX.MountainLion],",
-    "new": "    [MOB.SabertoothTiger],",
+    "old": "[MOB.SabertoothTiger, DEX.MountainLion]",
+    "new": "[MOB.SabertoothTiger]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DEX-HIDES-the-blood-spider-no-body",
     "file": "src/net/professionLaw.js",
-    "old": "  hide(\n    'hide:spider',\n    659,\n    'Spider Silk',\n    3,\n    ICON_WRAPPINGS,\n    [MOB.Spider, DEX.BloodSpider],\n    'part:venom',\n    'food:meat',\n    null,\n  ),",
-    "new": "  hide('hide:spider', 659, 'Spider Silk', 3, ICON_WRAPPINGS, [MOB.Spider], 'part:venom', 'food:meat', null),",
+    "old": "[MOB.Spider, DEX.BloodSpider]",
+    "new": "[MOB.Spider]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DEX-HIDES-the-land-dreugh-no-body",
     "file": "src/net/professionLaw.js",
-    "old": "  hide(\n    'hide:dreugh',\n    663,\n    'Dreugh Shell',\n    5,\n    ICON_SCALES,\n    [MOB.Dreugh, DEX.LandDreugh],\n    null,\n    null,\n    'leather:hardened',\n  ),",
-    "new": "  hide('hide:dreugh', 663, 'Dreugh Shell', 5, ICON_SCALES, [MOB.Dreugh], null, null, 'leather:hardened'),",
+    "old": "[MOB.Dreugh, DEX.LandDreugh]",
+    "new": "[MOB.Dreugh]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DEX-HIDES-the-dog-no-pelt",
     "file": "src/net/professionLaw.js",
-    "old": "    [DEX.Wolf, DEX.SnowWolf, DEX.Dog],",
-    "new": "    [DEX.Wolf, DEX.SnowWolf],",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.SnowWolf]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DEX-HIDES-the-snow-wolf-no-pelt",
     "file": "src/net/professionLaw.js",
-    "old": "  hide(\n    'hide:wolf',\n    681,\n    'Wolf Pelt',\n    2,\n    ICON_HAIR,\n    [DEX.Wolf, DEX.SnowWolf, DEX.Dog],\n    'part:tooth',\n    'food:meat',\n    'leather:cured',\n  ),",
-    "new": "  hide('hide:wolf', 681, 'Wolf Pelt', 2, ICON_HAIR, [DEX.Wolf, DEX.Dog], 'part:tooth', 'food:meat', 'leather:cured'),",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.Dog]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DEX-HIDES-the-hell-hound-skinned",
     "file": "src/net/professionLaw.js",
-    "old": "    [DEX.Wolf, DEX.SnowWolf, DEX.Dog],",
-    "new": "    [DEX.Wolf, DEX.SnowWolf, DEX.Dog, 264],",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog, 264]",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DEX-HIDES-the-boar-no-tusk",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], null, 'food:meat', 'leather:cured'),",
+    "old": "[DEX.Boar], 'part:tooth',",
+    "new": "[DEX.Boar], null,",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DEX-HIDES-the-boar-hide-hardened",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], 'part:tooth', 'food:meat', 'leather:hardened'),",
+    "old": "[DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'",
+    "new": "[DEX.Boar], 'part:tooth', 'food:meat', 'leather:hardened'",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DEX-HIDES-the-mudcrab-tier-2",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 2, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),",
+    "old": "'Mudcrab Chitin', 1,",
+    "new": "'Mudcrab Chitin', 2,",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DEX-HIDES-the-mudcrab-no-meat",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, null, 'leather:cured'),",
+    "old": "[DEX.Mudcrab], null, 'food:meat',",
+    "new": "[DEX.Mudcrab], null, null,",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DEX-HIDES-the-mudcrab-a-pelt",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_HAIR, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),",
+    "old": "'Mudcrab Chitin', 1, ICON_SCALES,",
+    "new": "'Mudcrab Chitin', 1, ICON_HAIR,",
     "tests": [
       "test/net/fb1020h_dexhides.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-FB1021-L2-1-the-bear-hide-in-the-table-s-place",
     "file": "src/net/professionLaw.js",
-    "old": "    .sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE))",
-    "new": "    .sort((a, b) => a.tier - b.tier)",
+    "old": ".sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE))",
+    "new": ".sort((a, b) => a.tier - b.tier)",
     "tests": [
       "test/net/fb1020h_dexhides.test.js",
       "test/net/craft1_chain.test.js",

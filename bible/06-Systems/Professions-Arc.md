@@ -29,6 +29,14 @@ agree. On unconfirmed ground herbs and trees stay at tier 2 and veins at tier 3,
 witnesses. Each province past the Bay is rich in some node kinds and may stand its own ore; Cyrodiil is rich in all
 (`src/net/provinceNodes.js`).
 
+**Witnessed ground on the map.** Online, the held map washes confirmed ground in copper, the legend's "Witnessed
+ground", with a Ground switch in its key that is on by default and kept in the save (`src/ui/witnessMapMark.js`). The
+farthest zoom draws none, and the switch there says to zoom in. Once a UTC day the service lays the day's confirmed
+ground as tiles of 64 x 64 map pixels keyed by the world pixel, so a province and the sea past the Bay show as the Bay
+does (`server-account/src/witnessTiles.js`). The map reads the tiles in view (`POST /v1/prof/ground`) through the
+professions' book (`src/net/profBook.js` `askGround`). A pixel the player's own reads hear confirmed shows at once.
+Ground other players confirm today shows the next UTC day.
+
 **The acts.** Every harvest is played, and a clean act yields and pays more within a fixed bound:
 
 | Profession | Tool | Act |
@@ -46,10 +54,13 @@ bench, facet at the jeweller's bench, the pan at a fire.
 third of the day. Each stands two hours or until 20 characters have struck it; each striker gets ore and 10 Marks, once an account a
 day. Warnings come 10 minutes ahead (30 with Motherlode Sense).
 
-**Where materials go.** A harvest lands in the Materials Bag, else the pack, as an ordinary item. The service counts
-what it handed out, and only counted units can go into the **Stores**, a per-character inventory the account service
-keeps (5,000 of a material at most). A station draws from the Stores, the bag and the pack. A unit the service never
-counted is **loose**: a station may use it, but nothing made from it reaches a writ, guild Stores or the market.
+**Where materials go.** A harvest lands in the Materials Bag, else the pack, as an ordinary item. A skinned body's
+meat goes to the Stores, for a client that asks it so (`butcheryStores`, `server-account/src/professions.js`
+`harvestNode`). The service counts what it handed out, and only counted units can go into the **Stores**, a
+per-character inventory the account service keeps (5,000 of a material at most). At a station the Crafting page draws
+Put everything in and Your Stores over the station worked there. A station draws from the Stores, the bag and the pack.
+A unit the service never counted is **loose**: a station may use it, but nothing made from it reaches a writ, guild
+Stores or the market.
 
 **Stations.** A station is a shop counter (paid in gold), a station placed in the player's home or guild hall (free),
 or a caravan's station for its visitor:
@@ -70,6 +81,12 @@ held. If an input is missing, the station plans the refining chain from what is 
 (`chainPlan`), never down a tier. A craft rolls a quality (Crude, Standard, Fine, Superior, Masterwork) by the margin of
 rank over recipe; a clean act, a matching rank-50 choice, and Warforged, Heartwood or Hardened Leather each add a step.
 Superior is Magic and Masterwork is Rare in Loot Rarity. A crafted piece carries a provenance id the service signed.
+
+**The anvil's weapons.** The anvil makes every DFU melee weapon but the Staff (a carpenter's), and Roleplay &
+Realism: Items' Light Flail and Archer's Axe, in every metal (`src/net/recipeLaw.js` `WEAPON_PRODUCTS`). The Light
+Flail takes the Flail's 3 ingots, Copper and Cured Leather. The Archer's Axe takes 2 ingots, Copper and an Oak Plank.
+The anvil lists the two only while the mod's `newWeapons` class is registered (`src/ui/professions/profPages.js`
+`anvilMakes`), and online play always registers it (`src/systems/online/onlineLane.js`).
 
 **Temper and reforge.** Tempering raises a piece of Rare or below one quality step, up to Superior, for half its
 recipe's materials. Reforging (Enchanting 50) replaces one property of a Magic or Rare piece for 2 or 5 Arcane Essence,
@@ -145,6 +162,8 @@ beside them online. The professions are this game's own: online play needed a sk
 - `src/scenes/gatherHost.js`, `src/ui/professions/profPages.js`, `src/ui/professions/craftHall.js` - gathering in the
   world, the station pages, the Crafting page
 - `src/ui/nodeMarks.js`, `src/render/nodeGlint.js` - compass marks and the glint
+- `server-account/src/witnessTiles.js`, `src/net/witnessTileLaw.js`, `src/ui/witnessMapMark.js` - the witnessed ground's
+  tiles, their law and the held map's wash
 - `server-account/src/professions.js`, `server-account/src/market.js`, `server-account/src/marks.js` - the service
 - `test/net/prof1_service.test.js` .. `test/net/prof12_service.test.js` - each profession's law and service
 - `test/net/craft1_chain.test.js` .. `test/net/craft5_consumables.test.js` - the chain, patterns, five crafts, temper,
@@ -152,6 +171,9 @@ beside them online. The professions are this game's own: online play needed a sk
 - `test/net/masterart_law.test.js`, `test/net/perktrial.test.js`, `test/net/craftwrits_law.test.js`,
   `test/net/prof2b_motherlode.test.js`, `test/net/marks1.test.js`, `test/net/notice1.test.js`
 - `test/scenes/nodemarks.test.js`, `test/scenes/nodeglint.test.js`, `test/ui/professions/crafthall.test.js`
+- `test/net/smithrri.test.js`, `test/net/butcherstores.test.js`, `test/ui/professions/fb1029_benchstores.test.js`,
+  `test/ui/fb1031_witness.test.js`, `test/ui/witness_map.test.js` - the anvil's mod weapons, the meat to the Stores, the
+  bench's Stores bar, the witnessed ground
 
 ## Open
 

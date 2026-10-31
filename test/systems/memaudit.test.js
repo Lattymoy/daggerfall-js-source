@@ -56,7 +56,7 @@ test('MEM-AUDIT the static batch: the merge spends its inputs - the builder a ho
 
 test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): a proxy is a slot in its set\'s typed columns and a cell a slot in sorted typed lists, so 100,000 proxies a cell each cost under 64 B a proxy (~118 B as arrays held at their size, ~246 pushed from []); every proxy born with its mark, last of its keys (AUDIT C1/C2, P4) (mutants: a maker without the mark; tools/mutants/coverCompact.json holds the lists\' order)', () => {
   // every maker, fresh, the same keys in the same order - one shape a proxy (the index no longer reads `_mark`: cover.js COVER-COMPACT)
-  const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', '_mark'];
+  const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', 'nature', '_mark'];   // TRUNK-FOES: `nature`, the foes' clamp's word
   for (const p of [coverProxy([0, 0, 0], { w: 2, h: 2 }), ...coverProxies([0, 0, 0], { w: 2, h: 9 }, { tree: true }), ...jungleCover([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), COVER_KEYS, 'a cover proxy');
   for (const p of [...flatBodies(null, 504, 3, { w: 3, h: 9 }, [[0, 0, 0]], { tree: true }), jungleBody([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), BODY_KEYS, 'a body');
   // a proxy in a cell of its own: measured on the heap - 100,000 of them, as `add` leaves them (built, never waiting for a first read), their stores counted with the heap - in the measuring child

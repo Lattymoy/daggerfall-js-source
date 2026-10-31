@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-BAG1-put-everything-in-stops-at-a-refusal",
     "file": "src/ui/professions/profPages.js",
-    "old": "        else if (res?.kept) stop ??= res.text ?? null;",
-    "new": "        else if (true) stop ??= res?.text ?? null;",
+    "old": "      else if (res?.kept) stop ??= res.text ?? null;",
+    "new": "      else if (true) stop ??= res?.text ?? null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUDIT2-BAG1-U1-put-everything-asks-a-full-store",
     "file": "src/ui/professions/profPages.js",
-    "old": "        let room = storesRoomOf(book, r);",
-    "new": "        let room = Infinity;",
+    "old": "      let room = storesRoomOf(book, r);",
+    "new": "      let room = Infinity;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

@@ -122,11 +122,11 @@
 //   POST /v1/board/notice { subject, body, days } | /v1/board/notice/remove { id }       (a developer's)
 // PROF1, the professions - a registered account's character's, behind PROFESSIONS_OPEN (professions.js); `rid` the act's id:
 //   POST /v1/prof/state { character }                                  -> { tracks, today, taken, stores, writs, caps, hunt }   (PROF7: the account's hides today)
-//   POST /v1/prof/pixels { character, pixels: [[x, y]...] }            -> { pixels: [{ x, y, state, climate?, region? }] }
+//   POST /v1/prof/pixels { character, pixels: [[x, y]...] }            -> { pixels: [{ x, y, state, climate?, region? }] }   (WITNESS-MAP, AUDIT FB1031 W3: /v1/prof/ground { character, tiles: [[tx, ty]...] } -> { day, laid, tiles?: [[tx, ty, px]...] })
 //   POST /v1/prof/harvest { character, node, kind, climate, region, act, at, rid, foe? } -> { ok, material, qty, xp, track, today, store, gem?, extra?, extraQty?, hunt? } | { repeat, ... }   (PROF7: a body's `foe`, no ground)
 //        BAG1: { carry: true, held, heldKey?, seen? } lands the goods in the carried count - `held` what the bag and pack
 //        hold of `heldKey`, the count cut to it only when `seen` (the count the client last heard) is the service's own,
-//        decided once a request (prof_carried_gate) - and a Motherlode's strike (PROF2b) the same  -> { ..., carry, carried }
+//        decided once a request (prof_carried_gate) - and a Motherlode's strike (PROF2b) the same  -> { ..., carry, carried }   (BUTCHER-STORES: `butcheryStores`, a body's meat to the Stores)
 //   POST /v1/prof/spec { character, profession, rank, spec, rid }      -> { ok, track, marks?, balance? }
 //   POST /v1/prof/smelt { character, recipe, count, clean?, rid }      -> { ok, recipe, count, own, bought, xp, first?, clean?, track, stores } | { repeat, ... }   (PROF2; PROF4 the burns and saws; PROF7 the loom's cures and weave - a weave's `track` null; PROF11 the mason's bench's cut and mix - `clean` the chisel's, `first` its 500)
 //   POST /v1/prof/craft { character, recipe, clean, name?, heartwood?, dye?, cracked?, mint?, rid } -> { ok, recipe, quality, count, seed, maker, marked, xp, first, heartwood, dye, hand?, pieces, track, stores } | { repeat, ... }   (PROF3 the anvil; PROF4 the workbench; PROF7 the loom and a garment's `dye`; PROF11 the Sculptor's stone decor; PROF9 the fire's dishes and a dish's `hand`; PROF10 the jeweller's bench - a piece's `hand`, a Lapidary's `cracked` gem; JEWEL-KIN the `mint` its client mints, net/productRecord.js craftMintVersion)
@@ -288,7 +288,7 @@ import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
 import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a Broker sale asked after by its request id
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
-import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, discardFestival, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
 import { passOf, findPass, BATTLE_PASS_STATUS, unlockPass, buyPass } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's pass and a deed's find; PASS-PANELS: a track opened and an item bought
 import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
@@ -348,6 +348,7 @@ import {
 } from './writs.js';   // PROF6: guild writs, commissions and the guild Stores
 import { contractBoard, postContract, withdrawContract, contractPayStatements, contractPaysOf } from './contracts.js';   // SILVER-WAYS: guild contracts
 import { motherlodesRead, strikeMotherlode, isMotherlodeNode } from './motherlodes.js';   // PROF2b: the Motherlodes
+import { profGround } from './witnessTiles.js';   // AUDIT FB1031 W3: the held map's witnessed tiles
 import { marketRead, marketList, marketBuy, marketCancel, marketOrder, marketFill, marketUnorder, marketCollect, marketReport, marketRemove, marketAuction, marketBid, marketGoldCollect, marketVendor, marketVendors, marketMyVendors, marketRoad } from './market.js';   // PROF5: the market; PROF5b: its auctions; GOLD-MARKET: gold held collected; RPT1026-MARKET: the road alone
 import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
@@ -2193,6 +2194,7 @@ const service = {
         const act = {
           '/v1/prof/state': () => profState(ctx, who.player, env, body),
           '/v1/prof/pixels': () => profPixels(ctx, who.player, env, body),
+          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),   // WITNESS-MAP: the held map's witnessed ground, a day's tiles (witnessTiles.js)
           // PROF2b: a Motherlode is struck through the harvest's own route - its node names it (motherlodes.js)
           '/v1/prof/harvest': () => (isMotherlodeNode(body?.node) ? strikeMotherlode(ctx, who.player, env, body) : harvestNode(ctx, who.player, env, body)),
           '/v1/prof/motherlodes': () => motherlodesRead(ctx, who.player, env, body),   // PROF2b: today's three
@@ -2404,6 +2406,7 @@ const service = {
           '/v1/festival/offering/fill': async () => fillOffering(ctx, who.player, body, env),
           '/v1/festival/offering/take-in': async () => takeInOffering(ctx, who.player, body),
           '/v1/festival/offering/take': async () => takeFromOffering(ctx, who.player, body, env),
+          '/v1/festival/discard': async () => discardFestival(ctx, who.player, body),   // BOUND-DESTROY: cakes or bowls let go, any day
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();

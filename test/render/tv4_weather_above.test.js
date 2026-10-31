@@ -155,12 +155,15 @@ test('TV4 shadows: under the light rows the view now sees past the cloud shadow\
   }
 });
 
-test('TV4 far ring: under an exp fog the ring\'s nearest edge is already fog at the default grid - the gate that hides it hides nothing a traveller would see; under light weather (linear) it stands as ever', () => {
+// PIN MOVED (RED-MOUNTAIN-SEEN, FIELD FEEDBACK 2026-10-31): the reading stands - the ring's nearest edge is fog under
+// every exp row - and under a sky drawn clear the ring now stands in that fog's colour, its shape against the sky
+// (render/farRing.js ringFogOf; test/world/redmountain_seen.test.js)
+test('TV4 far ring: under an exp fog the ring\'s nearest edge is already fog at the default grid - the ring stands in the fog\'s colour, or not at all; under light weather (linear) it stands as ever', () => {
   const ringNear = LAND_VIEW_DEFAULT * PIXEL_METRES;
-  for (const w of ['rainy', 'snowy', 'heavy', 'sandstorm']) assert.ok(Math.exp(-FOG_SETTINGS[w].density * ringNear) < 1e-4, `${w}: fog at ${ringNear} m`);
+  for (const w of ['rainy', 'snowy', 'heavy', 'sandstorm', 'ashfall']) assert.ok(Math.exp(-FOG_SETTINGS[w].density * ringNear) < 1e-4, `${w}: fog at ${ringNear} m`);
   const farRing = rd('test/ui/farring.test.js');
-  assert.match(farRing, /exp fog \(weather\) hides the ring/, 'the gate stands, pinned where it was');
-  assert.match(rd('src/scenes/world.js'), /if \(farRing && fogNow\.mode === 'linear'\)/);
+  assert.match(farRing, /the fog row says how the ring stands/, 'the gate stands, pinned where it was');
+  assert.match(rd('src/scenes/world.js'), /if \(farRing && ringFogOf\(fogNow\)\)/);
 });
 
 test('TV4 lightning: a strike\'s column stands on the traveller\'s ground - from the raised eye its foot hung 448 m in the air', () => {

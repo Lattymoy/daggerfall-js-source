@@ -96,7 +96,7 @@ test('WALL-SHAFT: the street\'s and a building\'s flight (ArrowFlight) lands eve
 
 test('WALL-SHAFT: the dungeon\'s flight passes `swept` for a player\'s shaft, and sweeps from a start that carries its collider (mutants: the host unwired)', () => {
   const src = readFileSync(fileURLToPath(new URL('../../src/scenes/dungeonContext.js', import.meta.url)), 'utf8');
-  assert.match(src, /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len, !!m\.fromPlayer\);/);
+  assert.match(src, /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len, !!m\.fromPlayer, dungeonMissileBodies\(m, foes, playerFeet, playerHeight, m\.fromPlayer \? \[gateBossBody\(\), arenaRivalBody\(\), \.\.\.gateCrystalBodies\(\), \.\.\.gateHostBodies\(\)\] : null\)\);/);   // PIN MOVED (TRUNK-FOES): and the bodies it strikes - AUDIT FB1031 F2: this missile's own
   assert.match(src, /const _from = m\.fromPlayer \? sweepFrom\(m\.pos, collider\) : null;/);
 });
 

@@ -62,7 +62,8 @@ import { closeGuildWrits } from './writs.js';
 import { closeContracts } from './contracts.js';
 import { settleDueOnce } from './seatTurning.js';
 import { keepSeatFacts } from './townSeats.js'; // SEAT-FACTS: the seats' facts, kept once for the service
-import { motherlodesOf } from './motherlodes.js';
+import { motherlodesOf, confirmedGroundBefore } from './motherlodes.js';
+import { layWitnessTiles } from './witnessTiles.js'; // AUDIT FB1031 W3: the held map's tiles, once a day
 import { sweepBoard } from './board.js';
 import { safetyMinute, safetySweep } from './safetyClock.js'; // SAFE5 + SAFE8: the reviewer's reads and the moderators' cards; the hour's sweep
 import { sweepGuildNotes } from './guildBoard.js';
@@ -234,6 +235,9 @@ export const MINUTE_JOBS = Object.freeze([
       const day = utcDay(ctx.nowS);
       if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;
       const lodes = await motherlodesOf(ctx, day, { clock: true }); // LODE-HERD: the clock picks without the readers' claim
+      // AUDIT FB1031 W3 (witnessTiles.js): the held map's tiles, laid by the pick's own batch - or here, with a scan of their
+      // own, on a day picked before them (the deploy's); a laid day is one read
+      await layWitnessTiles(ctx, day, () => confirmedGroundBefore(ctx.db, day));
       lodesPicked = day;
       return lodes.length;
     },

@@ -2,8 +2,8 @@
   {
     "name": "SESSIONSIGN-pass-drops-handle",
     "file": "server-account/src/sessionPass.js",
-    "old": "      player: { id: c.p, handle: c.h ?? null, registered_at: c.r ?? null, muted_until: c.m ?? null }, // E6: a banned account was minted none",
-    "new": "      player: { id: c.p, handle: null, registered_at: c.r ?? null, muted_until: c.m ?? null }, // E6: a banned account was minted none",
+    "old": "handle: c.h ?? null,",
+    "new": "handle: null,",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SESSIONSIGN-pass-drops-registration",
     "file": "server-account/src/sessionPass.js",
-    "old": "      player: { id: c.p, handle: c.h ?? null, registered_at: c.r ?? null, muted_until: c.m ?? null }, // E6: a banned account was minted none",
-    "new": "      player: { id: c.p, handle: c.h ?? null, registered_at: null, muted_until: c.m ?? null }, // E6: a banned account was minted none",
+    "old": "registered_at: c.r ?? null,",
+    "new": "registered_at: null,",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SESSIONSIGN-pass-drops-mute",
     "file": "server-account/src/sessionPass.js",
-    "old": "      player: { id: c.p, handle: c.h ?? null, registered_at: c.r ?? null, muted_until: c.m ?? null }, // E6: a banned account was minted none",
-    "new": "      player: { id: c.p, handle: c.h ?? null, registered_at: c.r ?? null, muted_until: null }, // E6: a banned account was minted none",
+    "old": "muted_until: c.m ?? null }",
+    "new": "muted_until: null }",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SESSIONSIGN-mintable-binding-only",
     "file": "server-account/src/sessionPass.js",
-    "old": "export const passMintable = (/** @type {any} */ db, /** @type {any} */ binding) =>\n  db === binding || db?.[DB_FIRST_PRIMARY] === true;",
-    "new": "export const passMintable = (/** @type {any} */ db, /** @type {any} */ binding) => db === binding;",
+    "old": "db === binding || db?.[DB_FIRST_PRIMARY] === true",
+    "new": "db === binding",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SESSIONSIGN-believed-everywhere",
     "file": "server-account/src/sessionPass.js",
-    "old": "export const passRoute = (/** @type {string} */ path, /** @type {string} */ method) =>\n  PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path));",
-    "new": "export const passRoute = (/** @type {string} */ path, /** @type {string} */ method) => true;",
+    "old": "PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path))",
+    "new": "true",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SESSIONSIGN-checkpoint-not-hot",
     "file": "server-account/src/sessionPass.js",
-    "old": "export const passRoute = (/** @type {string} */ path, /** @type {string} */ method) =>\n  PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path));",
-    "new": "export const passRoute = (/** @type {string} */ path, /** @type {string} */ method) => PASS_PATH_SET.has(path);",
+    "old": "PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path))",
+    "new": "PASS_PATH_SET.has(path)",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SESSIONSIGN-secret-out-of-mac",
     "file": "server-account/src/sessionPass.js",
-    "old": "const macInput = (/** @type {string} */ body, /** @type {string} */ secret) =>\n  new TextEncoder().encode(`p1.${body}.${secret}`);",
-    "new": "const macInput = (/** @type {string} */ body, /** @type {string} */ secret) => new TextEncoder().encode(`p1.${body}`);",
+    "old": "new TextEncoder().encode(`p1.${body}.${secret}`)",
+    "new": "new TextEncoder().encode(`p1.${body}`)",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SESSIONSIGN-mac-unchecked",
     "file": "server-account/src/sessionPass.js",
-    "old": "    if (!(await subtle.verify('HMAC', key, mac, macInput(parts[1], secret)))) return null;\n    const c = JSON.parse(new TextDecoder().decode(body));",
-    "new": "    const c = JSON.parse(new TextDecoder().decode(body));",
+    "old": "if (!(await subtle.verify('HMAC', key, mac, macInput(parts[1], secret)))) return null;",
+    "new": "",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SESSIONSIGN-time-unread",
     "file": "server-account/src/sessionPass.js",
-    "old": "    if (!c || typeof c.p !== 'string' || !Number.isSafeInteger(c.x) || c.x - nowS <= PASS_RENEW_S) return null;",
-    "new": "    if (!c || typeof c.p !== 'string' || !Number.isSafeInteger(c.x) || false) return null;",
+    "old": "c.x - nowS <= PASS_RENEW_S) return null;",
+    "new": "false) return null;",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SESSIONSIGN-renewal-unread",
     "file": "server-account/src/sessionPass.js",
-    "old": "    if (!c || typeof c.p !== 'string' || !Number.isSafeInteger(c.x) || c.x - nowS <= PASS_RENEW_S) return null;",
-    "new": "    if (!c || typeof c.p !== 'string' || !Number.isSafeInteger(c.x) || c.x - nowS <= 0) return null;",
+    "old": "c.x - nowS <= PASS_RENEW_S) return null;",
+    "new": "c.x - nowS <= 0) return null;",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SESSIONSIGN-bound-unminted",
     "file": "server-account/src/sessionPass.js",
-    "old": "  return pass.length > PASS_MAX_CHARS ? null : pass; // E9: one that would never be believed is never handed",
-    "new": "  return pass; // E9: one that would never be believed is never handed",
+    "old": "return pass.length > PASS_MAX_CHARS ? null : pass;",
+    "new": "return pass;",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SESSIONSIGN-bound-unread",
     "file": "server-account/src/sessionPass.js",
-    "old": "  if (typeof pass !== 'string' || pass.length > PASS_MAX_CHARS || typeof secret !== 'string' || !secret) return null;",
-    "new": "  if (typeof pass !== 'string' || typeof secret !== 'string' || !secret) return null;",
+    "old": "pass.length > PASS_MAX_CHARS || ",
+    "new": "",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "SESSIONSIGN-key-without-service-key",
     "file": "server-account/src/sessionPass.js",
-    "old": "  if (!b64) return Promise.resolve(null);\n  _passKey = (async () => {",
-    "new": "  _passKey = (async () => {",
+    "old": "  if (!b64) return Promise.resolve(null);\n",
+    "new": "",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SESSIONSIGN-save-session-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (session != null && row.session_alive == null) return { error: 'auth' };\n  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)",
-    "new": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)",
+    "old": "  if (session != null && row.session_alive == null) return { error: 'auth' };\n",
+    "new": "",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SESSIONSIGN-beat-session-unsent",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id, sessionId)); // SESSION-SIGN E3: under its session",
-    "new": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id)); // SESSION-SIGN E3: under its session",
+    "old": "creditPlay(ctx, player.id, sessionId)",
+    "new": "creditPlay(ctx, player.id)",
     "tests": [
       "test/server/sessionsign.test.js"
     ],

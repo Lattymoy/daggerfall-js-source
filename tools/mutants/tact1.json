@@ -29,11 +29,12 @@
   {
     "name": "TACT1-inside-blocks",
     "file": "src/ai/cover.js",
-    "old": "  if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;",
-    "new": "",
+    "old": "  const startIn = ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top;",
+    "new": "  const startIn = false;",
     "tests": [
       "test/scenes/tact1.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT FB1031 F1): the start-inside law is the middle's now; unread, a ray from inside a crown meets its cap"
   },
   {
     "name": "TACT1-side-height-ignored",
@@ -47,8 +48,8 @@
   {
     "name": "TACT1-side-reach-ignored",
     "file": "src/ai/cover.js",
-    "old": "      if (s >= 0 && s <= maxDist) {",
-    "new": "      if (s >= 0) {",
+    "old": "      if (s >= 0 && s <= maxDist && s < best) {",
+    "new": "      if (s >= 0 && s < best) {",
     "tests": [
       "test/scenes/tact1.test.js"
     ]
@@ -83,8 +84,8 @@
   {
     "name": "TACT1-first-not-nearest",
     "file": "src/ai/cover.js",
-    "old": "            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
-    "new": "            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
+    "old": "            );\n            if (s < best) best = s;",
+    "new": "            );\n            if (s < best) return s;",
     "tests": [
       "test/scenes/tact1.test.js"
     ],
@@ -156,8 +157,8 @@
   {
     "name": "TACT1-arrow-through",
     "file": "src/combat/arrowFlight.js",
-    "old": "      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach),",
-    "new": "      const cs = c ? coverStep(Infinity, c.raycast(m.pos, unit, reach),",
+    "old": "coverDistance(c, m.pos, unit, reach, false, struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null)",
+    "new": "Infinity",
     "tests": [
       "test/scenes/tact1.test.js"
     ]
@@ -192,7 +193,7 @@
   {
     "name": "TACT1-bolt-through",
     "file": "src/scenes/hostMagic.js",
-    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
+    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach, false, holds), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
     "new": "  const cs = coverStep(Infinity, collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
     "tests": [
       "test/scenes/tact1.test.js"

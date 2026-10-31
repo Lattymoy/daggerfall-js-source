@@ -73,13 +73,13 @@ test('DAEDRIC-SMELT law: the heart is DFU\'s own - CreatureIngredients1 53, 500 
   assert.equal(materialKeyOfItem(setItemFields({ group: RITE_HEART.group, templateIndex: RITE_HEART.templateIndex })), HEART, 'the Gate\'s heart is the forge\'s');
 });
 
-test('DAEDRIC-SMELT law: the heart through the LOOSE door and never the market - only a station\'s put-in moves units the service never counted; the heart is the loose door\'s as a graded gem is (LOOSE_ONLY_KEYS), out of the catalogue, while the Daedric ingot is the catalogue\'s and its 27 anvil works are made, listed and commissioned (mutants: UNYIELDED the ingot\'s again; the heart off the loose door\'s list; looseOrder for every order)', () => {
+test('DAEDRIC-SMELT law: the heart through the LOOSE door and never the market - only a station\'s put-in moves units the service never counted; the heart is the loose door\'s as a graded gem is (LOOSE_ONLY_KEYS), out of the catalogue, while the Daedric ingot is the catalogue\'s and its 29 anvil works are made, listed and commissioned (mutants: UNYIELDED the ingot\'s again; the heart off the loose door\'s list; looseOrder for every order)', () => {
   assert.deepEqual(Object.keys(DEPOSIT_ORDERS).map((o) => [o, looseOrder(o)]), [['all', false], ['spend', false], ['work', true]]);
   assert.deepEqual([[...UNYIELDED], looseOnly(HEART)], [[], true], 'nothing waits on a yield; the heart is the loose door\'s');   // PIN MOVED (CLOTH-GEMS at the merge): UNYIELDED's no more
   const cat = new Set(marketCatalogue().map((m) => m.key));
   assert.deepEqual([cat.has(HEART), cat.has('ingot:daedric')], [false, true]);
   const daedric = RECIPES.filter((r) => r.inputs.some((i) => i.key === 'ingot:daedric'));
-  assert.equal(daedric.length, 27, 'the 27 anvil works that spend it');
+  assert.equal(daedric.length, 29, 'the 29 anvil works that spend it');   // PIN MOVED (SMITH-RRI): the Light Flail and the Archer's Axe
   const made = new Set(WORK_RECIPES.map((r) => r.out));
   for (const r of daedric) {
     assert.ok(r.inputs.every((i) => made.has(i.key) || material(i.key)), `${r.id}: every input has a home`);

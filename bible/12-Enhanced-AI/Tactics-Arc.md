@@ -16,8 +16,23 @@ answers Infinity.
 except the editor markers, animals, lights and treasure (`NOT_COVER_ARCHIVES`). Its proxy is an upright cylinder at its
 base; a tree is a trunk and a crown. The cover index rides the collider (`collider.cover`) but is never in it, so
 walking and the navmesh are unchanged. Cover is read by `canSeeTarget`, a foe's clear shot, every missile (an area
-spell bursts on it) and the watch's witness rays. A line of sight that ends in cover is not hidden by it. Hearing is
-not blocked. Every host stands cover: the streamed world, dungeons, interiors and the single-location host.
+spell bursts on it), the charge's lane and the watch's witness rays, all on one law. Hearing is not blocked. Every host
+stands cover: the streamed world, dungeons, interiors and the single-location host.
+
+**The middle.** A proxy's middle is where a line passes nearest its axis, where the flat's picture stands. A line with
+an end inside a proxy, either end, is stopped by it only where it crosses that middle inside the proxy: from inside at
+the middle, from outside where it enters. A body within `COVER_MIDDLE_GRACE` (0.35 m, a body's radius) of the middle
+counts as on its near side. So a body in cover in front of the middle sees and is seen, shoots and is shot, and one
+behind it does neither, both ways. A line to a body past the middle stops a grace short of the middle, so a foe's
+contact reach never strikes one whose own shot out is lost. A crown that holds nobody still stops a line.
+
+**A missile's bodies** (`src/systems/spellcast.js` `flightBodies`, `struckPoints`). A missile's step names the bodies
+its line would strike, and cover reads each as a line's end. Each flight lists only what it may strike: a foe's bolt
+the player alone, a foe's shaft the player and every foe but its shooter, the player's missiles their targets and marks
+(a duel's opponent, a party mate, a companion, the court's boss, a corpse prefab), never one the player's harm spares
+(a town defender, a shipmate) and never the player (`src/scenes/hostMagic.js` `missileBodies`,
+`src/combat/arrowFlight.js` `shaftBodies`, `dungeonMissileBodies` for the dungeon). A missile meets cover by touch
+(`coverStep`).
 
 **The brain** (`src/ai/tactics.js` `tacticsStep`, table `TACT`), for a foe that sees its target within `ENGAGE_RANGE`
 (14 m; a shooter within 51.2 m):
@@ -57,6 +72,7 @@ rides the foe stream; online, each client judges its own feet. On the arena's sa
 - A foe not hostile to the player standing between the crosshair and a door does not take the press
   (`src/player/mobileEnemyActivate.js`, `src/player/activate.js`).
 - The pushes sweep a body at its live height (`sweepHeight`), so a ducking foe passes under a lintel.
+- No foe stands in a trunk, a rock or a landmark (`keepFoesOffBodies`, `03-World/Player-Arc.md`).
 
 ## Rules
 
@@ -87,11 +103,15 @@ the switch on. DFU's quirk that a guard NPC facing a crime raises the watch what
 - `test/characters/enemy/tact4.test.js` - telegraphed blows
 - `test/characters/enemy/tact5_feedback.test.js` - no walking backwards, one kite, no circling archers
 - `test/scenes/audittact.test.js` - the audit's fixes across all four
+- `test/characters/fb1031_foes.test.js`, `test/characters/fb1031ii_cover.test.js` - cover's middle and what each
+  missile may strike
 - `tools/foeTelegraphProbe.mjs` - the ground mark in a real WebGL2 context
 
 ## Open
 
 - The player's other open moments (mid-swing recovery, casting, drinking) are not read by the brain.
 - Ranged foes do not seek a clear line around cover.
+- A player's shot leaves the bow hand (`PLAYER_ARROW_SIDE`, 0.15 m beside the body's axis) and meets cover by touch, so
+  a few lines are not two-way: a hand just inside a rock's rim while the body stands out, or a body at a crown's rim.
 - No table of see-through flats (fences, banners); the size floor decides.
 - Not yet looked at on a real install.

@@ -10,7 +10,7 @@
 //    kind may wear a CHARM (a piece of jewellery the player could wear - a wand is none: AUDIT RVN G2): a bear wears it
 //    on a cord.
 //  - A MELEE WEAPON. A foe's archery is its kind's flags (enemyMotor.js hasBowAttack), never its weapon, so a bow in a
-//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe.
+//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe, and RRI's two (AUDIT FB1031 C3).
 //  - BALANCED BY RANK. A sworn one bears what its rank has earned: the metal (GEAR.METAL_CAP - Silver at rank I up to
 //    Daedric at rank V) and the tier (GEAR.RARITY_CAP - Magic at rank I, Rare from rank II, Legendary from rank IV).
 //    An artifact, an Aetheric or a Gilded piece answers to the player alone.
@@ -42,6 +42,7 @@ import { rarityOf } from '../loot/lootRarity.js';
 import { computeEntityMods } from '../entityMods.js';
 import { t } from '../textManager.js'; // L10N4: the page's words through the text core
 import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { customItemClass } from '../roleplayRealismItems/rriItems.js'; // AUDIT FB1031 C3: the mod's two melee weapons (the anvil makes them)
 
 /** The slots, in the page's order: `key` the record's, `label` the page's, `slot` the equip table's (a charm's is
  *  whichever jewellery slot the piece takes - null here). */
@@ -176,12 +177,12 @@ export function armedKind(mobileType) {
   const isClass = isClassEnemyId(mobileType);
   return equipmentVariantFor(isClass ? mobileType - 128 : mobileType, isClass, () => 0) !== null;
 }
-/** A melee weapon (Dagger .. War Axe): what the weapon slot takes. */
+/** A melee weapon (Dagger .. War Axe, and RRI's Light Flail and Archer's Axe while registered): what the weapon slot takes. */
 export const meleeWeapon = (item) =>
   item?.group === 'Weapons' &&
   Number.isInteger(item.templateIndex) &&
-  item.templateIndex >= WEAPONS.Dagger &&
-  item.templateIndex <= WEAPONS.War_Axe;
+  ((item.templateIndex >= WEAPONS.Dagger && item.templateIndex <= WEAPONS.War_Axe) ||
+    customItemClass(item.templateIndex)?.group === 'Weapons');
 export const needsBothHands = (item) => !!item && item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both;
 /** The slot a piece goes to - 'weapon', an armour place, 'charm' - or null for one no sworn one wears. */
 export function gearKeyOf(item) {

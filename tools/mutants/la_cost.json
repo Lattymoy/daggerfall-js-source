@@ -200,8 +200,8 @@
   {
     "name": "LA-COST2-the-keys-in-first-seen-order",
     "file": "src/render/billboardKey.js",
-    "old": "    _order.sort(byKey);\n    let at = 0;",
-    "new": "    let at = 0;",
+    "old": "    _order.sort(byKey);\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "LA-COST2-the-slot-table-kept-between-passes",
     "file": "src/render/billboardKey.js",
-    "old": "  for (let s = 0; s < k; s++) _slot[_bucketKey[s]] = 0;\n  return list;",
-    "new": "  return list;",
+    "old": "  for (let s = 0; s < k; s++) _slot[_bucketKey[s]] = 0;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]

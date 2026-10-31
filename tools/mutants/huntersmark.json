@@ -464,11 +464,12 @@
   {
     "name": "HUNTERS-MARK-trophy-p-unchecked",
     "file": "src/net/decorLaw.js",
-    "old": "export const decorIsTrophy = (piece) =>\n  decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
-    "new": "export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE;",
+    "old": "export const decorIsTrophy = (piece) =>\n  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
+    "new": "export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "HUNTERS-MARK-trophy-stands",

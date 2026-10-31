@@ -22,8 +22,8 @@
   {
     "name": "CROPS-3-no-refusal",
     "file": "src/world/flatFields.js",
-    "old": "      if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue; // IsOverlapping: the plant is not sown",
-    "new": "      if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) {\n        /* sown all the same */\n      } // IsOverlapping: the plant is not sown",
+    "old": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue;",
+    "new": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) { /* sown all the same */ }",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CROPS-5-asked-off-the-foot",
     "file": "src/world/flatFields.js",
-    "old": "      if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue; // IsOverlapping: the plant is not sown",
-    "new": "      if (solid && solid(px, y + 1, pz, CROP_OVERLAP_RADIUS)) continue; // IsOverlapping: the plant is not sown",
+    "old": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue;",
+    "new": "if (solid && solid(px, y + 1, pz, CROP_OVERLAP_RADIUS)) continue;",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CROPS-6-taken-in-turn",
     "file": "src/world/flatFields.js",
-    "old": "      out.push({ archive, record: records[Math.floor(rnd() * records.length)], x: px, y, z: pz }); // GetRandomRecord",
-    "new": "      out.push({ archive, record: records[out.length % records.length], x: px, y, z: pz }); // GetRandomRecord",
+    "old": "out.push({ archive, record: records[Math.floor(rnd() * records.length)], x: px, y, z: pz });",
+    "new": "out.push({ archive, record: records[out.length % records.length], x: px, y, z: pz });",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CROPS-7-desert2-the-first-deserts",
     "file": "src/world/flatFields.js",
-    "old": "  if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [20]]; // FIELD BUGS 2026-10-04d CROPS: Desert2's own",
-    "new": "  if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [2]]; // FIELD BUGS 2026-10-04d CROPS: Desert2's own",
+    "old": "if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [20]];",
+    "new": "if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [2]];",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CROPS-9-cull-the-low-side",
     "file": "src/world/flatFields.js",
-    "old": "      if (x < box[0] - r || x > box[3] + r || y < box[1] - r || y > box[4] + r || z < box[2] - r || z > box[5] + r)",
-    "new": "      if (x < box[0] + r || x > box[3] + r || y < box[1] - r || y > box[4] + r || z < box[2] - r || z > box[5] + r)",
+    "old": "if (x < box[0] - r || x > box[3] + r ||",
+    "new": "if (x < box[0] + r || x > box[3] + r ||",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CROPS-10-corner-region",
     "file": "src/world/flatFields.js",
-    "old": "  if (d1 <= 0 && d2 <= 0) return at(ax, ay, az);",
-    "new": "  if (d1 <= 0 && d2 <= 0) return at(bx, by, bz);",
+    "old": "if (d1 <= 0 && d2 <= 0) return at(ax, ay, az);",
+    "new": "if (d1 <= 0 && d2 <= 0) return at(bx, by, bz);",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],

@@ -15,7 +15,11 @@ The port holds each class as a table of those virtuals (`RRI_CLASSES` in
 `src/systems/roleplayRealismItems/rriItems.js`), and each law site asks `customItemClass(templateIndex)` first. A class
 answers only while the mod and its own switch are on.
 
-- **Archer's Axe (513)** and **Light Flail (514)**: weapons with their own inventory art.
+- **Archer's Axe (513)** and **Light Flail (514)**: weapons with their own inventory art. The Smithing anvil makes both
+  at every metal (`src/net/recipeLaw.js` `WEAPON_PRODUCTS`): the Light Flail from 3 ingots, Copper and Cured Leather,
+  the Archer's Axe from 2 ingots, Copper and an Oak Plank. A made one mints through `weaponOfMaterial`, as a foe's
+  does. The anvil offers them only while `newWeapons` registers the class (`src/ui/professions/profPages.js`
+  `anvilMakes`), which online it always does. A sworn revenant wields them (`06-Systems/Revenants.md`).
 - **The chain set** (515-519): hauberk, chausses, spaulders, sollerets on the chainmail armour table; a plate material
   is named "Mail".
 - **The light set** (520-526): jerkin, cuisse, helmet, boots, gloves, vambraces on the leather table; a plate material
@@ -58,7 +62,8 @@ condition when sold.
 
 The mod uses `ItemHelper.RegisterCustomItem`, `ItemHelper.LoadItemTemplates`, `LootTables.DefaultLootTables`,
 `FormulaHelper` overrides (`IsItemStackable`, `CalculateCost`), item use handlers and the `OnLootSpawned` events. The
-port restates each as a table or a read-through at the matching site.
+port restates each as a table or a read-through at the matching site. Departure: the anvil's two recipes are the
+game's own, since neither the mod nor DFU forges a weapon.
 
 ## Code and tests
 
@@ -67,3 +72,4 @@ port restates each as a table or a read-through at the matching site.
 - `vendor/roleplay-realism-items/` - the mod's own files
 - `test/systems/rri1_items.test.js` - the fourteen items and their virtuals
 - `test/systems/rri2_realism.test.js` - the modules
+- `test/net/smithrri.test.js` - the two weapons at the anvil

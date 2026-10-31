@@ -29,8 +29,8 @@
   {
     "name": "DRAGON4-two-dragons-a-character",
     "file": "server-account/src/dragons.js",
-    "old": "       SELECT ?4, ?2, ?5, ?6, ?1, ?9, ?7 WHERE ?8 = 1 AND ${mine}\n         AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,",
-    "new": "       SELECT ?4, ?2, ?5, ?6, ?1, ?9, ?7 WHERE ?8 = 1 AND ${mine}`,",
+    "old": "\n         AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,",
+    "new": "`,",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DRAGON4-the-tame-untold-at-a-reclaim",
     "file": "server-account/src/dragons.js",
-    "old": "  const answer = { slain: int(count?.results?.[0]?.n), spoils, tamed: tameOf(mount?.results?.[0]) };",
-    "new": "  const answer = {\n    slain: int(count?.results?.[0]?.n),\n    spoils,\n    tamed: row?.results?.length ? tameOf(mount?.results?.[0]) : null,\n  };",
+    "old": "spoils, tamed: tameOf(mount?.results?.[0]) };",
+    "new": "spoils, tamed: row?.results?.length ? tameOf(mount?.results?.[0]) : null };",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DRAGON4-the-chance",
     "file": "server-account/src/dragons.js",
-    "old": "export const dragonTameRoll = (seed) => seededRng((seed ^ DRAGON_TAME_SALT) >>> 0)() < 1 / DRAGON_TAME_ONE_IN;",
-    "new": "export const dragonTameRoll = (seed) => seededRng((seed ^ DRAGON_TAME_SALT) >>> 0)() < 1 / 10;",
+    "old": "() < 1 / DRAGON_TAME_ONE_IN;",
+    "new": "() < 1 / 10;",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DRAGON4-a-tame-said-each-time",
     "file": "src/net/dragon/dragonClaims.js",
-    "old": "        if (tame && typeof tame.id === 'string' && !tamedSaid.has(tame.id)) {",
-    "new": "        if (tame && typeof tame.id === 'string') {",
+    "old": "if (tame && typeof tame.id === 'string' && !tamedSaid.has(tame.id)) {",
+    "new": "if (tame && typeof tame.id === 'string') {",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DRAGON4-the-legendarys-share",
     "file": "src/systems/dragon/dragonSpoils.js",
-    "old": "  if (dealt)\n    pieces.push(graded(spoilsBase(lv, rolls), rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));",
-    "new": "  if (dealt) pieces.push(graded(spoilsBase(lv, rolls), rolls() < 0.5 ? 'legendary' : 'rare', rolls));",
+    "old": "rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare'",
+    "new": "rolls() < 0.5 ? 'legendary' : 'rare'",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DRAGON4-the-hoard-never-given",
     "file": "src/scenes/dragonRewards.js",
-    "old": "    onSpoils: (entry) => grant(entry),",
-    "new": "    onSpoils: () => {},",
+    "old": "onSpoils: (entry) => grant(entry),",
+    "new": "onSpoils: () => {},",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]

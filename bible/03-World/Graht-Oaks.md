@@ -25,10 +25,12 @@ Bantha's jungle (`Bantha-Jungle.md`) stands its four storeys. The player meets t
 - **The storeys under them** keep off their feet (`grahtFootMask`): canopy trees, young trees, palms and roadside pairs
   off the whole foot; floor plants off the trunk.
 - **In the game** (`src/scenes/grahtHost.js`). The jungle host builds it past the Bay; the trees' host frames it. The
-  stand gives each tree player-collision bodies on the trunk and along each buttress (`grahtBodies`). The GPU objects
+  stand gives each tree collision bodies on the trunk and along each buttress (`grahtBodies`). The GPU objects
   are made on the build's slice clock the first time a tree stands. Each frame culls to the view, the fog's reach and
   the jungle's haze, picks a LOD and hands at most 24 instanced draws to the renderer's third tree slot. The nearest 24
-  trees cast into the sun's shadow maps. In the travel view a crown between the eye and the traveller is not drawn.
+  trees cast into the sun's shadow maps. Under the travel view every tree is drawn, and a crown between the eye and the
+  traveller is seen through by the trees' screen-door (`src/render/lowPolyTreesGlsl.js` `TREE_SEE`,
+  `07-Rendering/Low-Poly-Trees.md`). It still casts.
 - **Light under the canopy** is `src/world/jungle/jungleCanopy.js`'s, with the canopy's top at the crowns.
 
 ## Rules
@@ -37,8 +39,9 @@ Bantha's jungle (`Bantha-Jungle.md`) stands its four storeys. The player meets t
   Built for Valenwood, where the owner's call for a sky covered by trees stood; Vvardenfell has no canopy.
 - The crowns close about 93% of the sky overhead, with gaps for light. No far canopy fill is drawn.
 - No graht-oak stands in a town: trunks stand round it and crowns overhang its edge.
-- Collision is the player's only (the prop-bodies law): foes, peers, arrows and the camera pass through. No one climbs
-  them, and Logging cannot fell them.
+- Collision is the player's and the foes' (the prop-bodies law): a foe in a trunk or a buttress is put at its edge
+  (`src/characters/foeSpacing.js` `keepFoesOffBodies`). Peers, arrows and the camera pass through. No one climbs them,
+  and Logging cannot fell them.
 - `?graht=off` removes them offline (`grahtOaksOn`). Online they always stand. `?jungle=off` takes them with the
   jungle.
 - Only the world host is wired. The exterior bench is the Bay's map, where no canopy closes; interiors and dungeons

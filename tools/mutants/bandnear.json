@@ -1,0 +1,43 @@
+[
+  {
+    "name": "BAND-NEAR-back-to-140",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "export const BAND_STAND_M = 45;",
+    "new": "export const BAND_STAND_M = 140;",
+    "tests": [
+      "test/systems/travel/bandnear.test.js"
+    ],
+    "note": "The old stand-off: a pack stood past its own 60 m sight, and came on blind."
+  },
+  {
+    "name": "BAND-NEAR-past-sight",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "export const BAND_STAND_M = 45;",
+    "new": "export const BAND_STAND_M = 50;",
+    "tests": [
+      "test/systems/travel/bandnear.test.js"
+    ],
+    "note": "Its farthest member past the sight it stands in."
+  },
+  {
+    "name": "BAND-NEAR-inside-dfu-ring",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "export const BAND_STAND_M = 45;",
+    "new": "export const BAND_STAND_M = 25;",
+    "tests": [
+      "test/systems/travel/bandnear.test.js"
+    ],
+    "note": "Its nearest member inside DFU's own 10-20 m wilderness ring: landed on the traveller."
+  },
+  {
+    "name": "BAND-NEAR-view-down-takes-the-overworld-ring",
+    "file": "src/scenes/world.js",
+    "old": "contact: up ? BAND_CONTACT_M : BAND_STAND_M,",
+    "new": "contact: BAND_CONTACT_M,",
+    "tests": [
+      "test/systems/travel/bandnear.test.js",
+      "test/systems/travel/tv7_bands.test.js"
+    ],
+    "note": "With the view down the chase closes to the Overworld's 30 m: the journey stopped and the pack stood nearer than the stand-off."
+  }
+]

@@ -330,7 +330,7 @@ test('FAR-TREES the programs: a tree a point the side of its billboard at the pa
   assert.ok(TREES_VS.includes('gl_PointSize = clamp(px, 1.0, 64.0);'));
   for (const fs of [TREES_FS, TREES_LANE_FS]) {
     assert.ok(fs.includes('vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));') && fs.includes('if (tex.a < 0.5) discard;'));
-    assert.ok(fs.includes('floraLight(uAmbient, uSunColor, ringSun(), uMoonColor, uMoonScale)') && fs.includes('ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))'));
+    assert.ok(fs.includes('floraLight(uAmbient, uSunColor, ringSun(), uMoonColor, uMoonScale)') && fs.includes('ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))'));   // PIN MOVED (AUDIT FB1031 L2): a weather's own law
   }
   assert.ok(TREES_LANE_FS.includes('vec3 lit = elDecode(tex.rgb) * (') && TREES_LANE_FS.includes('elEncode(elTonemapRGB(lit * uELExposure * elAdapt()))'));
   assert.equal(treesFsFor(null), TREES_FS);
