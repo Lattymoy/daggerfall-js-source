@@ -26,12 +26,13 @@ Severity as in the first audit: **bug**, **risk**, **doc**, **test-gap**, **nit*
 | E10 | C4, C10 | doc | The first audit counted nine re-aimed records of `dragoncell.json` (eight) and fifteen dead (fourteen, one equivalent); D12 read as if it had changed A1-the-theatre-unchecked (DRAGON-CELL did). | Corrected. |
 | E11 | A5, C6 | test-gap | `dragonWatchSeed` was dead in the relay, and two records and a pin held only it. | Retired; its pin and records read `dragonOmenSeeds`. |
 | E12 | C3, C7 | test-gap | The D2 pin's far site lay in the dragon's own cell, so a faithful reorder of the reach check survived; its two records deleted rather than moved; the moved B1 pin's title said a battle holds no pose. | The far site in a cell no omen holds; both records faithful reorders; B1 retitled. |
-| E14 | - | test-gap | **The first audit's fake socket made three relay tests flaky.** It wrote `at` at connect, so under a parallel run a test's hello that came late was closed as "no hello" (GRANT3, EG-ZM, STAFF-PANEL5: each passes alone; on main, under the same load, none failed). | The fake writes no `at` again; the fight's tests age their own sockets (`test/dragonOmen.mjs` aged). |
 | E13 | C8, C9, C11, C12, C13, A4 | nit | Titles naming mutants no record held; "22 dead" where the audit retired two; the ledger's pins; two comments misplaced; the attachment's figures; the law row's replaced hash. | Records added, figures and notes written. |
+| E14 | - | test-gap | **The first audit's fake socket made three relay tests flaky.** It wrote `at` at connect, so under a parallel run a test's hello that came late was closed as "no hello" (GRANT3, EG-ZM, STAFF-PANEL5: each passes alone; on main, under the same load, none failed). | The fake writes no `at` again; the fight's tests age their own sockets (`test/dragonOmen.mjs` aged). |
 
 Still open, as the first audit left it: a quest's reveal by name. Closed after this audit: many sockets at once (D3), by
-DRAGON-BUDGET (the owner: "Do it"), an account's cells a watch on the hub; one reward a watch (D4), by DRAGON-EACH (the
-owner: "open up the rewards"), a kill keyed by watch, place and account.
+DRAGON-BUDGET (the owner: "Do it"), an account's cells a watch on the hub - guest accounts, which cost nothing, are
+AUDIT DRAGON-CELL III G3; one reward a watch (D4), by DRAGON-EACH (the owner: "open up the rewards"), a kill keyed by
+watch, place and account.
 
 Re-aimed by content and run, dead: AUDIT-DRAGON-the-cache-unbounded, DRAGON-CELL-the-cover-unread, seven of
 `dragoncellaudit.json` (the two D2 records as reorders), and DRAGON-HIDDEN-the-watch-unread and -the-bytes-shortened.

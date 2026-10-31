@@ -3,7 +3,12 @@
 -- (watch, account), so a second dragon slain in one watch paid nothing. A kill and its hoard are keyed (watch, place,
 -- account) now: `place` the dragon's cell (src/net/dragon/dragonLaw.js dragonPlaceOf), which the receipt signs; -1 a
 -- receipt from a relay before it, one a watch as before. A tame names its place, so the claim reads its own back.
--- Every row carried as it stood.
+-- Every row carried as it stood. Applied exactly once through the `d1_migrations` ledger, before the Worker that reads
+-- `place`; the column added first, so a run outside the ledger fails before it touches a row (AUDIT DRAGON-CELL III G13).
+ALTER TABLE dragon_mounts ADD COLUMN place INTEGER NOT NULL DEFAULT -1;
+DROP INDEX IF EXISTS idx_dragon_mount_watch;
+CREATE INDEX IF NOT EXISTS idx_dragon_mount_watch ON dragon_mounts (account, watch, place);
+
 CREATE TABLE dragon_kills_next (
   watch   INTEGER NOT NULL,
   place   INTEGER NOT NULL DEFAULT -1,
@@ -39,7 +44,3 @@ INSERT INTO dragon_spoils_next (watch, place, account, cid, at)
   SELECT watch, -1, account, cid, at FROM dragon_spoils;
 DROP TABLE dragon_spoils;
 ALTER TABLE dragon_spoils_next RENAME TO dragon_spoils;
-
-ALTER TABLE dragon_mounts ADD COLUMN place INTEGER NOT NULL DEFAULT -1;
-DROP INDEX IF EXISTS idx_dragon_mount_watch;
-CREATE INDEX IF NOT EXISTS idx_dragon_mount_watch ON dragon_mounts (account, watch, place);

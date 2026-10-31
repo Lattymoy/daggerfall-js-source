@@ -108,7 +108,7 @@ test('AUDIT DRAGON the hub\'s receipts: every expired one swept in its page, a l
   const idx = src('server/src/index.js');
   assert.match(idx, /const dragonRc = await sweepDragonReceipts\(this, now, cur\.get\('sweep:dragonrc'\) \?\? null, dead, SWEEP_PAGE\);/);
   assert.match(idx, /'sweep:dragonrc': dragonRc\.full \? dragonRc\.last : null,/);
-  assert.match(src('server/src/dragonFights.js'), /noRcpt: new Bounded\(HUB_KEEP_MAX\), stood: new WeakMap\(\), judged: new Map\(\), budget: new Map\(\) \}\);/);   // PIN MOVED (AUDIT DRAGON-CELL II E1): each socket's cell clock beside it; (DRAGON-BUDGET) and the cells judged
+  assert.match(src('server/src/dragonFights.js'), /noRcpt: new Bounded\(HUB_KEEP_MAX\), stood: new WeakMap\(\), judged: new Map\(\), refused: new Map\(\), asking: new Map\(\), budget: new Map\(\) \}\);/);   // PIN MOVED (AUDIT DRAGON-CELL II E1): each socket's cell clock beside it; (DRAGON-BUDGET) and the cells judged; (AUDIT DRAGON-CELL III G5) the budgets spent and the asks in flight
 });
 
 test('AUDIT DRAGON a kill whose receipts fail to mint is tried again at DRAGON_TELL_RETRY_MS, never left to the fight\'s end two hours on, and then said (mutants: no retry)', async () => {

@@ -43,18 +43,19 @@ test('DRAGON2 relay: THE JOIN - `in` from a pose near its site stands the fight 
   await withSky(async ({ r, tick, say, now }) => {
     const a = r.connect(), b = r.connect(), c = r.connect();
     await r.hello(a, 'peer-0001', at(60, 0)); await r.hello(b, 'peer-0002', at(2500, 0)); await r.hello(c, 'peer-0003', at(0, -4200));
+    await say(b, { k: 'ask', w: W });   // PIN MOVED (AUDIT DRAGON-CELL III G7): a watcher hears once its account is granted the fight's cell - it asked, as every screen does
     await say(a, IN());
     const st = words(a, 'st')[0];
     assert.deepEqual([st.w, st.b, st.ph, st.m], [W, 0, 1, DRAGON_TTK_S * dpsRef(20)]);
     assert.ok(fightIn(r).players['acct-peer-0001'], 'the account the token verified');
     assert.equal(r.store.get(FIGHT_AT).w, W, 'kept at once');
-    assert.equal(words(b).length + words(c).length, 0, 'the state went to its asker alone');
+    assert.equal(words(b).filter((m) => m.k !== 'omen').length + words(c).length, 0, 'the state went to its asker alone');
     assert.equal(r.alarm.at, now() + DRAGON_TICK_MS, 'the beat armed');
     await tick(Math.ceil(DRAGON_OPENING_MS / DRAGON_TICK_MS) + 40);
     const heard = words(a).filter((m) => m.k !== 'st');
     assert.ok(heard.some((m) => m.k === 'atk'), 'it struck after its opening');
     assert.ok(heard.every((m) => m.w === W && m.sx === SX && m.sz === SZ), 'every word names its fight');
-    assert.deepEqual(words(b).filter((m) => m.k !== 'st'), heard, 'a watcher in its sky heard every word');
+    assert.deepEqual(words(b).filter((m) => m.k !== 'st' && m.k !== 'omen'), heard, 'a watcher in its sky heard every word');
     assert.equal(words(c).length, 0, 'past DRAGON_FAN_R, nothing');
   });
 });

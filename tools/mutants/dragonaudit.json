@@ -85,12 +85,12 @@
   {
     "name": "AUDIT-DRAGON-the-cache-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap(), judged: new Map(), budget: new Map() });",
-    "new": "noRcpt: new Map(), stood: new WeakMap(), judged: new Map(), budget: new Map() });",
+    "old": "noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap(), judged: new Map(), refused: new Map(), asking: new Map(), budget: new Map() });",
+    "new": "noRcpt: new Map(), stood: new WeakMap(), judged: new Map(), refused: new Map(), asking: new Map(), budget: new Map() });",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT DRAGON-CELL II)."
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",

@@ -151,6 +151,7 @@ on:
       - "src/net/starfall/starfallLaw.js"
       - "src/net/serpent/serpentHoardLaw.js"
       - "src/net/dragon/dragonReceipt.js"
+      - "src/net/dragon/dragonLaw.js"
       - "src/systems/dragon/dragonMount.js"
       - "src/characters/dwarvenDragonId.js"
       - "src/net/arena/arenaReceipt.js"

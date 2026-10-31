@@ -258,11 +258,11 @@
   {
     "name": "DRAGON2-the-fan-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "  return Math.hypot(c.x, c.z) <= dragonBrain.DRAGON_FAN_R;\n",
-    "new": "  return true;\n",
+    "old": "  if (Math.hypot(c.x, c.z) > dragonBrain.DRAGON_FAN_R) return false;\n",
+    "new": "",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-an-older-game-fought",
@@ -303,12 +303,12 @@
   {
     "name": "DRAGON2-the-hub-told-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const p = dragonPlaceOf(f.sx, f.sz);",
-    "new": "  if (false) {\n    try {\n      const p = dragonPlaceOf(f.sx, f.sz);",
+    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const body = { w: f.w, ...(Number.isSafeInteger(f.p)",
+    "new": "  if (false) {\n    try {\n      const body = { w: f.w, ...(Number.isSafeInteger(f.p)",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-EACH)."
+    "note": "Re-aimed by content (DRAGON-EACH). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-the-hello-handed-nothing",

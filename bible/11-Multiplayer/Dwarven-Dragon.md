@@ -69,15 +69,17 @@ told the seed to every screen at the landing, and the seed named the pixel; now 
   judges a pose in a cell room (in a cell the socket covers) and in a battle; a private room and any other answers
   nothing. A socket not yet stood `DRAGON_TELL_DWELL_MS` (20 s) in the cell of its pose hears nothing. One that has is
   told a landed dragon's omen within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, and null otherwise, no
-  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. An account is judged in at most
-  `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch, all its sockets together, on the hub (DRAGON-BUDGET). The client asks again outside a told omen's reach, and after a null from another pixel, or the
-  same one a minute on. No secret, no dragon.
+  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. The client asks again outside a told omen's
+  reach, and after a null from another pixel, or the same one a minute on. No secret, no dragon.
+- **The budget.** An account is judged in at most `DRAGON_JUDGED_CELLS_MAX` (48) cells a watch, all its sockets
+  together, on the hub (DRAGON-BUDGET). An ask is charged every cell its pose could be told of, an `in` its site's cell.
+  A fight's words reach a passer-by only once its account is granted the fight's cell.
 - **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
   stand at once, three cells apart at least. Each pays: a kill is keyed by watch, place and account (DRAGON-EACH).
 - **The shiny.** One omen in `DRAGON_SHINY_ONE_IN` (20) is the Aetherbright. The fight, its receipt and the account's
   row carry it.
 - **The fight's site.** The relay holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a
-  watch, at a pixel's centre in the cell of an omen of that watch (`dragonCandidateOf`, `dragonSiteOk`). A forged site
+  dragon, at a pixel's centre in the cell of an omen of that watch (`dragonCandidateOf`, `dragonSiteOk`). A forged site
   within that stands a fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
 
 No line in chat and no ring on the map. The dragon is found by being seen.
@@ -491,21 +493,33 @@ The watch's own seed is retired. Relay world298, re-hashed in place again. Pinne
 `tools/mutants/dragoncellaudit2.json`, 12 dead.
 
 **DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3).** The wait made a sweep cost 20 s a
-cell a socket, and a client could open hundreds of sockets. A cell room now asks the hub before it judges an account in a
-cell it has not (`server/src/dragonFights.js` judged, the hub's dragonJudgeInternal at `DRAGON_INTERNAL_JUDGE`), and the
-hub grants an account `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch - a rider crosses a few an hour - so a sweep of the
-world's 24,500 ground cells is held to 24 an account, whatever its sockets. A room keeps a cell granted; a hub that fails
-refuses. The count lives with the hub's instance, which a sleep forgets. Relay world298, re-hashed in
-place. Pinned by `test/net/dragon/dragonbudget.test.js` (3); `tools/mutants/dragonbudget.json`, 9 dead.
+cell a socket, and a client could open hundreds of sockets. A room that judges a pose (a cell's or a battle's) now asks
+the hub before it judges an account in a cell it has not (`server/src/dragonFights.js` judged, the hub's
+dragonJudgeInternal at `DRAGON_INTERNAL_JUDGE`), and the hub grants an account `DRAGON_JUDGED_CELLS_MAX` cells a
+watch. A room keeps a cell granted; a hub that fails refuses. The count lives with the hub's instance,
+which a sleep forgets. Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragonbudget.test.js` (3);
+`tools/mutants/dragonbudget.json`, 9 dead. PINS MOVED: `dragonaudit_relay`'s state line; `dragoncell`'s and
+`dragoncellaudit`'s rooms aged; seven records re-aimed (AUDIT-DRAGON-the-cache-unbounded, D2's two, D6, E2's two, E3).
+AUDIT DRAGON-CELL III changed it: 24 cells became 48, each a pose could be told of (G4).
 
 **DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; acct231, migration 0203).** A
 kill was keyed by watch and account, so a second dragon in one watch paid nothing. The receipt now signs its dragon's
 place (`p`, its cell's number, `dragonLaw.js` dragonPlaceOf). The hub keeps an account's receipts of its newest watch,
 one a place (`dragonFights.js` keptOf), and the service keys the kill, the hoard and the tame by (watch, place,
 account). The client settles and spends one a dragon. A forged site has its cell's place, so it pays once. A receipt
-from before counts one a watch. Deploy the service first. Relay world298, re-hashed in place. Pinned by
-`test/net/dragon/dragoneach.test.js` (6); `tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct231 in nineteen
-files; the hub's keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep).
+from before counts one a watch. Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoneach.test.js` (6);
+`tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct231 in twenty test files and eleven mutant lists; the hub's
+keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep). Deploy order and
+rollback floors: AUDIT DRAGON-CELL III G2.
+
+**AUDIT DRAGON-CELL III (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-III.md`).** Three lanes
+read DRAGON-BUDGET and DRAGON-EACH cold. CI deploys the relay before the service, so a placed receipt counted by acct230
+could be paid again by acct231: a placed receipt is now refused where an older service counted its watch after it was
+minted. One charged cell told a 3x3 block, so an ask is charged each cell it could be told of (48 a watch). A full
+budget is kept in the room, a fight's words reach a passer-by only once granted its cell, an `in` is judged by its site's
+cell, and a node room holds two dragons. The account deploy now names `dragonLaw.js`. Open, put to the owner: guest
+accounts cost nothing, and a dragon in a cell with no ground. Pinned by `dragoncellaudit3.test.js` (8);
+`tools/mutants/dragoncellaudit3.json`, 29 dead.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
