@@ -106,11 +106,9 @@ export function blockOf(at) {
 }
 
 /**
- * THE ID BOOK: a settlement's buildings keep their ids across a regeneration. A generated building carries its `genKey`
- * (its district and plot); a regeneration that makes the same key on the same ground keeps the id and its slot, every
- * other building takes the next sequence and the next record of its block, and a retired id or record is never given
- * again. The slot [bx, by, record] is where the streamed world's location stands it, so a house's home key is the game's
- * own building key for it (talkTopics.js makeBuildingKey) - the key its door, its deed and the account service read.
+ * THE ID BOOK: ids and block slots kept across a regeneration - the same `genKey` on the same ground keeps both, every
+ * other building takes the next sequence and its block's next record, and a retired one is never given again. A house's
+ * home key is the game's building key for its slot (talkTopics.js makeBuildingKey), the key its door and deed read.
  * @param {string} settlement @param {number} mapId @param {Building[]} made
  * @param {{ next: number, byKey: Record<string, { id: string, x: number, y: number, slot: number[] }>, retired: string[], recs?: Record<string, number> }} [book]
  */

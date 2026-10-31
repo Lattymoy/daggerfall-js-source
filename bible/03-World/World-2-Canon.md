@@ -45,14 +45,28 @@ Daggerfall climate byte), `species.json` (each plant's needs), `provinces.json` 
 
 ## The bake
 
-`tools/wg2Bake.mjs <id|all>` writes `public/worldgen2/<id>.wg2.gz`. The file (`bakeCodec.js`) is `WG2B`, a header
+`tools/wg2Bake.mjs <id|all>` writes `public/worldgen2/<id>.wg2.gz`; `--doc <package>` bakes an editor's document in as
+the authored overrides, `--province <Key>` a province's tiles, `--lean` the runtime cut. The file (`bakeCodec.js`) is `WG2B`, a header
 length, a JSON header (spec, versions, canon print, rivers as their cells, lakes, falls, springs, resources) and planes
 quantised to fixed steps, then a byte and a climate a pixel. Its print is FNV-1a of the bytes. A bake is remade from its
 spec on any machine to the same print (`wg2_bakes.test.js`): a law that moves one re-bakes and commits both.
 
+The header also holds the region's towns (`regionBake.js` `bakeTowns`): made offline on the bake's own ground, minted,
+and refused whole on any validator problem, so every client stands the same records. A lean bake (`bakeCodec.js`
+`RUNTIME`) carries height, biome and lakes alone - the same ground at about a third of the bytes.
+
+## Tiles
+
+A province too large for one bake is cut on one lattice over the world (`tiling.js`, 128-pixel tiles anchored at the
+Bay's corner) into the tiles that hold its land, each baked over its core grown by its overlap. Where tiles overlap,
+the seam crossfades them: `regionSampler.js` `weight` is a product of the axes' eases, a partition of unity, and
+`gen2Ground.js` lays every region's share over the world's ground. Tiles of one tiling stand over each other's bands;
+anything else overlapping is refused, at install and in the manifest. All nine provinces make 628 tiles: about 11 s
+and 0.59 MB gzipped each, a third of that lean.
+
 ## The seam (WG-1)
 
-`gen2Ground.js` holds the installed bakes. `tamrielHeightByte` asks `gen2Byte` before the land rows,
+`gen2Ground.js` holds the installed bakes, fetched under the app's root (`scenes/gen2Host.js` `bakeUrl`). `tamrielHeightByte` asks `gen2Byte` before the land rows,
 `tamrielClimateAt` asks `gen2Climate` after them, the shaper's `landAt` takes `gen2Units`, and `terrainGen.js` paints
 `paintGen2Waters`. A region eases into the world's ground over `BLEND_PX` (8) inside its edge. The bakes ride the
 `tamriel` message to the terrain, roads and deep-water workers. A bake made on another fit is refused. With none
@@ -73,6 +87,14 @@ Rivers carry discharge from runoff (`hydrology.js` `runoff`, Budyko's shape), lo
 water to where evaporation meets inflow: brimful and spilling, a terminal lake, or a salt flat. A spring's pool is
 `POOL_PX` across. Channels are carved by the sampler from the courses (WG-6).
 
+Inside a closed hollow the water runs down the real ground to its floor, and the lake is one node of the network
+(`hydrology.js` `basinNet`, Kahn's order): no river crosses the flood's flat in a straight line. A flat the geology
+filled falls gently to its spill with a grain of its own (`geology.js` `FLAT_RISE`, `FLAT_GRAIN`).
+
+`continent.js` runs Tamriel's rain to the sea at the relief's grain. `regionInflow` lays the rivers that enter a region
+one cell inside its edge, and `downstreamOf` is the stages' hydrology reach: a change reaches its river to the mouth,
+never upstream.
+
 ## Plants
 
 `vegetation.js` `plantsIn` grows each species of the biomes present on its own jittered lattice, thinned by its grove
@@ -83,12 +105,17 @@ field, never past a need (`speciesProblems`); trees keep their spacing. The same
 A building (`settle/buildingRecord.js`) has an id, a role and the Daggerfall type the game reads, services, access, a
 place, a footprint, doors on the street side, an interior and, for a house, a home key. Legacy: `rmb:<mapId>:<key>@<layout>`
 from `rmbAdapter.js`, nothing moved. New: `<settlement>/b<seq>`; `mintIds` keeps an id across a regeneration when the
-same plot stands on the same ground, and never gives a retired one again. A settlement's map id lane is 0x342.
+same plot stands on the same ground, and never gives a retired one again. Each building keeps a block slot
+[bx, by, record] in its pixel's location, and a house's home key is the game's building key for it
+(`talkTopics.js` `makeBuildingKey`). A settlement's map id lane is 0x342. A town stands within one map pixel, and a
+terrace's pad (`padLaw.js`) is one law for the generator and the streamed ground.
 `settlementGen.js` makes a town in stages A to G; `settlementValidate.js` must answer nothing before it is saved.
 
 ## Editing and publishing
 
-An editor document is frozen data: layers of operations (`editLayers.js` `opProblems` names a bad one). Its ground
+An editor document is frozen data: layers of operations (`editLayers.js` `opProblems` names a bad one). A road eases
+the ground to its smoothed level across its width and shoulder; a hand-drawn river cuts a channel under a surface that
+never rises, and a bake with the document stands it as a river whatever it carries. Its ground
 changes are patches filed by 16-pixel tile. History is a stack of documents. A revision goes draft, review, staging,
 published (`revisions.js`); each gate is in `advance`. A publication retires the last; a rollback publishes the one
 before. `propertyGuard.js` refuses a change over a protected record. Packages carry a print and the bake they edit.
