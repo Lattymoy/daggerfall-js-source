@@ -52,8 +52,8 @@
   {
     "name": "GRANT-SLEEP-drain-posts-nothing",
     "file": "server/src/drainWindows.js",
-    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
-    "new": "  if (grants && (grants.timer || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
+    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());",
+    "new": "  if (grants && (grants.timer || grants.w?.tallies.size)) posts.push(room._grantFlush());",
     "tests": [
       "test/net/sleepcost.test.js"
     ],

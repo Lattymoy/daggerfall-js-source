@@ -3918,7 +3918,7 @@ A frame that goes first (FOES-FIRST's: a full frame on its sender's turn, an unh
 cannot take is HELD, and every held frame goes in its turn:
 
 - **One line, one turn a sender.** The held frames are served first come, first served
-  (`server/src/foesHold.js:"export function heldHead(hold) {"`); a sender's turn sends its first held frame, and the
+  (`server/src/foesHold.js:"export function heldHead"`); a sender's turn sends its first held frame, and the
   frames it holds behind it while the turn's own lengths come to FOES_TURN_BYTES (16 KiB: a full frame and a handover's
   small batches beside it); past that the rest take places at the back (`served`). No sender's frames, however many or
   however large, keep another's from their turn.
@@ -3962,7 +3962,7 @@ cannot take is HELD, and every held frame goes in its turn:
 - **Bounds, and room made fairly.** FOES_HELD_PER_SENDER (4) frames a sender a lane; FOES_HELD_BYTES_MAX (64 of the
   largest frame) a lane, counted in the TEXT the hold keeps - a held frame is kept as it came and parsed again at its
   turn. Past the bytes, room is made from the sender holding the most, each time the one holding the most now, while it
-  holds more than the frame's own sender will (`server/src/foesHold.js:"function roomFor(hold, mine, over) {"`): its
+  holds more than the frame's own sender will (`server/src/foesHold.js:"function roomFor"`): its
   newest frame that is no handover first, a handover only when it holds nothing else; else the frame is refused and
   nothing taken. A full frame whose words are FOES_STALE_MS old leaves the hold unsent. Every frame out of the hold
   unsent is counted gone, and dropped as FOES-FIRST counted it.

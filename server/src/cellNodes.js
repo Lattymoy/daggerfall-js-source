@@ -15,9 +15,31 @@
 // CELL_TREE_RETRY_MS, so a directory that is down costs each isolate one deadline, not each page.
 //
 // This lives outside index.js because every named export of the entrypoint is read as an entrypoint (relayScale.js).
-import { readTree, L0_TREE, seedTree, cellSeedOf, isL0Tree, leafOf, isNodeRoom, isCoarseNode, nodeLevelOf, nodeAt, coversCell, cellsOfNode } from '../../src/net/cellTree.js';
+import {
+  readTree,
+  L0_TREE,
+  seedTree,
+  cellSeedOf,
+  isL0Tree,
+  leafOf,
+  isNodeRoom,
+  isCoarseNode,
+  nodeLevelOf,
+  nodeAt,
+  coversCell,
+  cellsOfNode,
+} from '../../src/net/cellTree.js';
 import { relayCfgValue } from '../../src/net/relayCfg.js';
-import { isCellRoom, cellOfRoom, layerOf, layerName, LAYER_HEADER, CLOSE_SAME_ROOM, HALO_OF_PARAM, HALO_OF_MAX } from './relay.js';
+import {
+  isCellRoom,
+  cellOfRoom,
+  layerOf,
+  layerName,
+  LAYER_HEADER,
+  CLOSE_SAME_ROOM,
+  HALO_OF_PARAM,
+  HALO_OF_MAX,
+} from './relay.js';
 import { layerWalk, ROOM_CALL_MS } from './relayScale.js';
 
 /**
@@ -51,7 +73,8 @@ export const CELL_TELL_HEADER = 'x-df-cells-tell';
  *  older than the move (cellMoves.js). */
 export const MOVED_HEADER = 'x-df-moved';
 
-const json = (/** @type {any} */ body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+const json = (/** @type {any} */ body, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 /** The isolate's copy of the tree, `{ tree, at }` once one was read; and when the last ask failed. */
 let isolateCopy = /** @type {{ tree: any, at: number } | null} */ (null);
@@ -81,7 +104,9 @@ export async function cellTreeOf(env, now = Date.now()) {
   if (now - failedAt < CELL_TREE_RETRY_MS) return isolateCopy?.tree ?? null;
   try {
     const directory = env.ROOMS.get(env.ROOMS.idFromName(CELL_DIRECTORY));
-    const response = await directory.fetch(new Request(`https://relay.internal${CELL_INTERNAL_TREE}`, { signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+    const response = await directory.fetch(
+      new Request(`https://relay.internal${CELL_INTERNAL_TREE}`, { signal: AbortSignal.timeout(ROOM_CALL_MS) }),
+    );
     const tree = response.ok ? readTree(await response.json()) : null;
     if (tree) {
       isolateCopy = { tree, at: now };
@@ -122,11 +147,23 @@ export async function cellDoor(env, key, url, request) {
     const tree = await cellTreeOf(env);
     const node = cellNodeOf(tree, key);
     // the rooms the page holds already (`?of=`, its own first): a halo whose node one of them is in is that room's object
-    const held = String(url.searchParams.get(HALO_OF_PARAM) ?? '').split(';').slice(0, HALO_OF_MAX).filter((room) => room !== key && isCellRoom(room));
+    const held = String(url.searchParams.get(HALO_OF_PARAM) ?? '')
+      .split(';')
+      .slice(0, HALO_OF_MAX)
+      .filter((room) => room !== key && isCellRoom(room));
     if (held.some((room) => cellNodeOf(tree, room) === node)) return sameRoomAnswer();
     // A Headers lower-cases its names, as these are, so the Worker's word overwrites whatever the page sent under them.
-    const headers = { ...Object.fromEntries(request.headers), [NODE_HEADER]: node, [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '' };
-    const response = await layerWalk(env.ROOMS, node, new Request(request, { headers }), layerOf(url.searchParams.get('ly')));
+    const headers = {
+      ...Object.fromEntries(request.headers),
+      [NODE_HEADER]: node,
+      [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '',
+    };
+    const response = await layerWalk(
+      env.ROOMS,
+      node,
+      new Request(request, { headers }),
+      layerOf(url.searchParams.get('ly')),
+    );
     if (attempt || !movedAnswer(response)) return response;
     cellTreeCache.stale();
   }
@@ -146,7 +183,14 @@ export async function cellCall(env, cell, layer, path, body, deadlineMs = ROOM_C
     const tree = await cellTreeOf(env);
     // a node answers "moved" only to a caller in a moving tree
     const headers = { [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '' };
-    const response = await rooms.get(rooms.idFromName(layerName(cellNodeOf(tree, cell), layer))).fetch(new Request(`https://relay.internal${path}`, { method: 'POST', body: JSON.stringify(body), headers, signal: AbortSignal.timeout(deadlineMs) }));
+    const response = await rooms.get(rooms.idFromName(layerName(cellNodeOf(tree, cell), layer))).fetch(
+      new Request(`https://relay.internal${path}`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers,
+        signal: AbortSignal.timeout(deadlineMs),
+      }),
+    );
     if (attempt || !movedAnswer(response)) return response;
     cellTreeCache.stale();
   }
@@ -187,7 +231,7 @@ export function nodeHeard(room, request, key) {
   const level = /** @type {number} */ (nodeLevelOf(node));
   if (nodeAt(level, cell[0], cell[1]) !== node) return null;
   room._node = node;
-  room._cellTell = request.headers.get(CELL_TELL_HEADER) === '1';   // the tree moves: this object tells its count (cellMoves.js)
+  room._cellTell = request.headers.get(CELL_TELL_HEADER) === '1'; // the tree moves: this object tells its count (cellMoves.js)
   room._cellLy = layerOf(request.headers.get(LAYER_HEADER));
   return level > 0 ? node : null;
 }
@@ -240,4 +284,5 @@ export function junkOutsideCover(room, ws, attachment, cell) {
 export const atCover = (cover, cell) => (cover == null ? cell == null : coversCell(cover, cell));
 /** A cell's welcome's `cells` field - the fine cells the socket covers, `[x0, y0, x1, y1]` - for a cell's socket, and ''
  *  for any other room. @param {any} attachment */
-export const cellsWelcome = (attachment) => (isCellRoom(attachment?.key) ? `,"cells":${JSON.stringify(cellsOfNode(coverOf(attachment)))}` : '');
+export const cellsWelcome = (attachment) =>
+  isCellRoom(attachment?.key) ? `,"cells":${JSON.stringify(cellsOfNode(coverOf(attachment)))}` : '';

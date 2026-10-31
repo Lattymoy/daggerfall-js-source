@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-DRAGON-none-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
-    "new": "  for (const [k] of kept) { last = k; }",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k);",
+    "new": "  for (const [k] of kept) {\n    last = k;",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-DRAGON-the-live-one-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
-    "new": "  for (const [k] of kept) { last = k; dead.push(k); }",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k);",
+    "new": "  for (const [k] of kept) {\n    last = k;\n    dead.push(k);",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-DRAGON-no-retry",
     "file": "server/src/dragonFights.js",
-    "old": "    if (f.fell && !f.said) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
-    "new": "    if (false) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
+    "old": "    } // its remains told to who comes near, as its fight was\n    if (f.fell && !f.said)",
+    "new": "    } // its remains told to who comes near, as its fight was\n    if (false)",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DRAGON-the-cache-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "noRcpt: new Bounded(HUB_KEEP_MAX) });",
-    "new": "noRcpt: new Map() });",
+    "old": "    noRcpt: new Bounded(HUB_KEEP_MAX),",
+    "new": "    noRcpt: new Map(),",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]

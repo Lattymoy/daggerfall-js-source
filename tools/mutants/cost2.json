@@ -112,8 +112,8 @@
   {
     "name": "COST2-walk-other-name",
     "file": "server/src/cellNodes.js",
-    "old": "await layerWalk(env.ROOMS, node, new Request(request, { headers }),",
-    "new": "await layerWalk(env.ROOMS, key, new Request(request, { headers }),",
+    "old": "      node,",
+    "new": "      key,",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "COST2-node-header-page",
     "file": "server/src/cellNodes.js",
-    "old": "const headers = { ...Object.fromEntries(request.headers), [NODE_HEADER]: node, [CELL_TELL_HEADER]:",
-    "new": "const headers = { [NODE_HEADER]: node, ...Object.fromEntries(request.headers), [CELL_TELL_HEADER]:",
+    "old": "      ...Object.fromEntries(request.headers),\n      [NODE_HEADER]: node,",
+    "new": "      [NODE_HEADER]: node,\n      ...Object.fromEntries(request.headers),",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "COST2-directory-unasked",
     "file": "server/src/cellNodes.js",
-    "old": "    const tree = await cellTreeOf(env);\n    const node = cellNodeOf(tree, key);",
-    "new": "    const tree = null;\n    const node = cellNodeOf(tree, key);",
+    "old": "  for (let attempt = 0; ; attempt++) {\n    const tree = await cellTreeOf(env);\n    const node = cellNodeOf(tree, key);",
+    "new": "  for (let attempt = 0; ; attempt++) {\n    const tree = null;\n    const node = cellNodeOf(tree, key);",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "COST2-tree-unkept",
     "file": "server/src/cellNodes.js",
-    "old": "if (isolateCopy && now - isolateCopy.at < CELL_TREE_KEEP_MS) return isolateCopy.tree;",
-    "new": "if (isolateCopy && now - isolateCopy.at < 0) return isolateCopy.tree;",
+    "old": "  if (isolateCopy && now - isolateCopy.at < CELL_TREE_KEEP_MS) return isolateCopy.tree;",
+    "new": "  if (isolateCopy && now - isolateCopy.at < 0) return isolateCopy.tree;",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "COST2-fine-on-failure",
     "file": "server/src/cellNodes.js",
-    "old": "  failedAt = now;\n  return isolateCopy?.tree ?? null;",
-    "new": "  failedAt = now;\n  return null;",
+    "old": "  return isolateCopy?.tree ?? null;",
+    "new": "  return null;",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "COST2-retry-unpaced",
     "file": "server/src/cellNodes.js",
-    "old": "if (now - failedAt < CELL_TREE_RETRY_MS) return isolateCopy?.tree ?? null;",
-    "new": "if (now - failedAt < 0) return isolateCopy?.tree ?? null;",
+    "old": "  if (now - failedAt < CELL_TREE_RETRY_MS) return isolateCopy?.tree ?? null;",
+    "new": "  if (now - failedAt < 0) return isolateCopy?.tree ?? null;",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "COST2-halo-walked",
     "file": "server/src/cellNodes.js",
-    "old": "if (held.some((room) => cellNodeOf(tree, room) === node)) return sameRoomAnswer();",
-    "new": "if (false) return sameRoomAnswer();",
+    "old": "    if (held.some((room) => cellNodeOf(tree, room) === node)) return sameRoomAnswer();",
+    "new": "    if (false) return sameRoomAnswer();",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "COST2-other-node-refused",
     "file": "server/src/cellNodes.js",
-    "old": "if (held.some((room) => cellNodeOf(tree, room) === node)) return",
-    "new": "if (held.length) return",
+    "old": "    if (held.some((room) => cellNodeOf(tree, room) === node)) return sameRoomAnswer();",
+    "new": "    if (held.length) return sameRoomAnswer();",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "COST2-of-loose",
     "file": "server/src/cellNodes.js",
-    "old": ".filter((room) => room !== key && isCellRoom(room));",
-    "new": ".filter((room) => room !== key);",
+    "old": "      .filter((room) => room !== key && isCellRoom(room));",
+    "new": "      .filter((room) => room !== key);",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "COST2-of-one-room",
     "file": "server/src/cellNodes.js",
-    "old": ".split(';').slice(0, HALO_OF_MAX)",
-    "new": ".split(';').slice(0, 1)",
+    "old": "      .slice(0, HALO_OF_MAX)",
+    "new": "      .slice(0, 1)",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "COST2-of-unbounded",
     "file": "server/src/cellNodes.js",
-    "old": ".split(';').slice(0, HALO_OF_MAX)",
-    "new": ".split(';')",
+    "old": "      .slice(0, HALO_OF_MAX)\n      .filter((room) => room !== key && isCellRoom(room));",
+    "new": "      .filter((room) => room !== key && isCellRoom(room));",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "COST2-header-loose",
     "file": "server/src/cellNodes.js",
-    "old": "if (nodeAt(level, cell[0], cell[1]) !== node) return null;",
-    "new": "if (false) return null;",
+    "old": "  if (nodeAt(level, cell[0], cell[1]) !== node) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/server/cellnodes.test.js",
       "test/net/cellcover.test.js"
@@ -320,8 +320,8 @@
   {
     "name": "COST2-atCover-null",
     "file": "server/src/cellNodes.js",
-    "old": "(cover == null ? cell == null : coversCell(cover, cell))",
-    "new": "coversCell(cover, cell)",
+    "old": "export const atCover = (cover, cell) => (cover == null ? cell == null : coversCell(cover, cell));",
+    "new": "export const atCover = (cover, cell) => coversCell(cover, cell);",
     "tests": [
       "test/net/cellcover.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "COST2-level-unsaid",
     "file": "server/src/cellNodes.js",
-    "old": "{\n  const node = nodeOfRoom(room);\n  return node ? String(nodeLevelOf(node)) : '';\n}",
-    "new": "''",
+    "old": "export const cellLevelOf = (room) => {\n  const node = nodeOfRoom(room);\n  return node ? String(nodeLevelOf(node)) : '';\n};",
+    "new": "export const cellLevelOf = (room) => '';",
     "tests": [
       "test/server/cellnodes.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "COST2-unknown-handed",
     "file": "server/src/cellHandover.js",
-    "old": "  return 'block';\n};",
-    "new": "  return 'part';\n};",
+    "old": "  return 'block';",
+    "new": "  return 'part';",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "COST2-prefix-exact",
     "file": "server/src/cellHandover.js",
-    "old": "(pattern.endsWith(':') ? key.startsWith(pattern) : key === pattern)",
-    "new": "(key.startsWith(pattern))",
+    "old": "  for (const [pattern, kind] of KEY_CLASSES)\n    if (pattern.endsWith(':') ? key.startsWith(pattern) : key === pattern) return kind;",
+    "new": "  for (const [pattern, kind] of KEY_CLASSES) if (key.startsWith(pattern)) return kind;",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "COST2-clamp",
     "file": "server/src/cellHandover.js",
-    "old": "const clamp = (/** @type {[number, number] | null} */ pixel) => (pixel ? /** @type {[number, number]} */ ([Math.min(Math.max(pixel[0], square.x0), square.x1 - 1), Math.min(Math.max(pixel[1], square.y0), square.y1 - 1)]) : null);",
-    "new": "const clamp = (/** @type {[number, number] | null} */ pixel) => pixel;",
+    "old": "  const clamp = (/** @type {[number, number] | null} */ pixel) =>\n    pixel\n      ? /** @type {[number, number]} */ ([\n          Math.min(Math.max(pixel[0], square.x0), square.x1 - 1),\n          Math.min(Math.max(pixel[1], square.y0), square.y1 - 1),\n        ])\n      : null;",
+    "new": "  const clamp = (/** @type {[number, number] | null} */ pixel) => pixel;",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "COST2-rows-kept-behind",
     "file": "server/src/cellHandover.js",
-    "old": "  await storage.delete(OW_LEDGER_KEY);\n",
-    "new": "",
+    "old": "  await storage.delete(OW_LEDGER_KEY);\n  room._parks = null;",
+    "new": "  room._parks = null;",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "COST2-partial-let-go",
     "file": "server/src/cellHandover.js",
-    "old": "  if (failed.length) return { ok: false, failed };\n",
-    "new": "",
+    "old": "  if (failed.length) return { ok: false, failed };\n  if (!keep) await letGo(room, rows.parks);",
+    "new": "  if (!keep) await letGo(room, rows.parks);",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "COST2-blocked-handed",
     "file": "server/src/cellHandover.js",
-    "old": "  if (blocked.length && !force) return { ok: false, blocked };\n",
-    "new": "",
+    "old": "  if (blocked.length && !force) return { ok: false, blocked };\n  const orphaned = blocked.length ? { orphaned: blocked } : {};",
+    "new": "  const orphaned = blocked.length ? { orphaned: blocked } : {};",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "COST2-miss-asked-once",
     "file": "server/src/cellHandover.js",
-    "old": "if (!(await postOnce(target)) && !(await postOnce(target))) failed.push(target);",
-    "new": "if (!(await postOnce(target))) failed.push(target);",
+    "old": "  for (const target of targets) if (!(await postOnce(target)) && !(await postOnce(target))) failed.push(target);",
+    "new": "  for (const target of targets) if (!(await postOnce(target))) failed.push(target);",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "COST2-older-park-kept",
     "file": "server/src/cellHandover.js",
-    "old": "if (standing && (standing.at ?? 0) >= (record.at ?? 0)) continue;",
-    "new": "if (standing && (standing.at ?? 0) > (record.at ?? 0) + 1e12) continue;",
+    "old": "    if (standing && (standing.at ?? 0) >= (record.at ?? 0)) continue;",
+    "new": "    if (standing && (standing.at ?? 0) > (record.at ?? 0) + 1e12) continue;",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "COST2-take-not-idempotent",
     "file": "server/src/cellHandover.js",
-    "old": "    if (!(dungeons[key]?.[2] >= row[2])) {\n      dungeons[key] = row;\n      taken++;\n    }",
-    "new": "    {\n      dungeons[key] = row;\n      taken++;\n    }",
+    "old": "    if (!(dungeons[key]?.[2] >= row[2])) {",
+    "new": "    {",
     "tests": [
       "test/server/cellhandover.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "COST2-copy-dropped",
     "file": "server/src/cellHandover.js",
-    "old": "    if (keyClass(key) === 'copy' && (await storage.get(key)) === undefined) await storage.put(key, value);\n",
-    "new": "",
+    "old": "    if (keyClass(key) === 'copy' && (await storage.get(key)) === undefined) await storage.put(key, value);\n  }",
+    "new": "  }",
     "tests": [
       "test/server/cellhandover.test.js"
     ]

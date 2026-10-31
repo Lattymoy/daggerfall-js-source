@@ -430,7 +430,7 @@ A relay before world283 does not read `sf`, so it hears 0 there, as before
 "keep their body in game if they login in the window of cooldown": a fighter whose last socket in a room closes inside
 the lock of a PvP blow given or taken leaves its body in the zone until the lock runs out
 (`wildLinger.js:"export function lingerUntil"`). Peers keep its last pose, said again before their silence law hides it,
-and one who enters is shown it (`pvpLinger.js:"export async function lingerHello("`). Flagged players strike it by the
+and one who enters is shown it (`pvpLinger.js:"export async function lingerHello"`). Flagged players strike it by the
 referee's law (`server/src/index.js:"const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);"`); it moves and
 casts nothing, and a blow on it renews its lock, never past three minutes from the close. A kill is a normal PvP kill: the
 villain points, and a fall signed with its fallen away (`g` 1), so its killer carries the receipt at once and the
@@ -438,12 +438,12 @@ account service rolls the reward as for any kill. No account change was needed.
 
 The body goes as a normal leave when its lock runs out or its fall is signed (`wildLinger.js:"export function lingerOver"`).
 Its account's hello in that room takes it back, with the health the referee kept and no safe passage
-(`pvpLinger.js:"function lingerTaken("`); a hello in another room ends it at the room's next ask of the hub. A villain
+(`pvpLinger.js:"function lingerTaken"`); a hello in another room ends it at the room's next ask of the hub. A villain
 stays only when a blow fell in the lock. A close outside the lock, a hidden socket, or the room's last socket leaves at
 once. Relay world290. A departure: DFU has no PvP.
 
 PVP-LINGER-RISE ("So u respawn in town if u get killed and log back in?"): yes. A body slain while its player is away
-is kept in its room's storage for a week (`pvpLinger.js:"export async function lingerSlain("`). The player's next word
+is kept in its room's storage for a week (`pvpLinger.js:"export async function lingerSlain"`). The player's next word
 that it stands in the zone is a `down` word with `aw` 1 and its killer's name
 (`wildLinger.js:"export function lingerAwayWord"`): ten seconds on the death screen, or the referee's own wait if it is
 still down, then the zone's rise in the nearest town outside it, with no safe passage (PVP-DEATH). The screen says who

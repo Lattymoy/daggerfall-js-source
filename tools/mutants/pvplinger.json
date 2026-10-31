@@ -101,8 +101,8 @@
   {
     "name": "PVP-LINGER-end-stays-in-zone",
     "file": "server/src/pvpLinger.js",
-    "old": "  if (room._wildRef) { wildGone(room._wildRef, sub, now); room._wildLeaveCarry(rec.att, now); }\n",
-    "new": "",
+    "old": "  if (room._wildRef) {\n    wildGone(room._wildRef, sub, now);\n    room._wildLeaveCarry(rec.att, now);\n  }\n  room._fanBut(null, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "new": "  room._fanBut(null, JSON.stringify({ t: 'leave', id: rec.id }));",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-LINGER-taken-old-id-kept",
     "file": "server/src/pvpLinger.js",
-    "old": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));\n",
-    "new": "",
+    "old": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));\n}",
+    "new": "}",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-LINGER-taken-id-unmoved",
     "file": "server/src/pvpLinger.js",
-    "old": "  if (x) { x.id = b.id; x.lingerBack = true; }\n",
-    "new": "",
+    "old": "  if (x) {\n    x.id = b.id;\n    x.lingerBack = true;\n  }\n  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "new": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-LINGER-pose-unsaid",
     "file": "server/src/pvpLinger.js",
-    "old": "{ rec.saidAt = now; room._fanBut(null, JSON.stringify({ t: 'pose', id: rec.id, p: rec.att.pose })); }",
-    "new": "{ rec.saidAt = now; }",
+    "old": "      room._fanBut(null, JSON.stringify({ t: 'pose', id: rec.id, p: rec.att.pose }));\n    }",
+    "new": "    }",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-LINGER-elsewhere-unasked",
     "file": "server/src/pvpLinger.js",
-    "old": "if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at)",
-    "new": "if (false)",
+    "old": "      if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-LINGER-own-room-read-as-another",
     "file": "server/src/pvpLinger.js",
-    "old": "c.lr && c.lr !== rec.att.key && c.at > rec.at",
-    "new": "c.lr && c.at > rec.at",
+    "old": "      if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at) {",
+    "new": "      if (c && c.in === 1 && c.lr && c.at > rec.at) {",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-LINGER-body-unshown",
     "file": "server/src/pvpLinger.js",
-    "old": "  for (const rec of room._lingers?.values() ?? []) room._send(ws,",
-    "new": "  for (const rec of []) room._send(ws,",
+    "old": "  await lingerStep(room, now);\n  for (const rec of room._lingers?.values() ?? [])",
+    "new": "  await lingerStep(room, now);\n  for (const rec of [])",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-LINGER-RISE-word-unsaid",
     "file": "server/src/pvpLinger.js",
-    "old": "  if (mine) room._send(mine[0], JSON.stringify(word));\n",
-    "new": "",
+    "old": "  if (mine) room._send(mine[0], JSON.stringify(word));\n}",
+    "new": "}",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PVP-LINGER-RISE-said-twice",
     "file": "server/src/pvpLinger.js",
-    "old": "  book.delete(sub);\n  room.state.storage.delete(LINGER_AWAY.prefix + sub).catch(() => {});\n",
-    "new": "",
+    "old": "  book.delete(sub);\n  room.state.storage.delete(LINGER_AWAY.prefix + sub).catch(() => {});\n  const word = lingerAwayWord(rec, x, now),",
+    "new": "  const word = lingerAwayWord(rec, x, now),",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]

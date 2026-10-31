@@ -249,8 +249,8 @@
   {
     "name": "DRAGON2-the-state-fanned-to-all",
     "file": "server/src/dragonFights.js",
-    "old": "  say(room, ws, { ...DRAGON_SEAM.stateOf(f) });\n",
-    "new": "  fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);\n",
+    "old": "  say(room, ws, { ...DRAGON_SEAM.stateOf(f) });",
+    "new": "  fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "DRAGON2-the-fan-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "  return Math.hypot(c.x, c.z) <= dragonBrain.DRAGON_FAN_R;\n",
-    "new": "  return true;\n",
+    "old": "  return Math.hypot(c.x, c.z) <= dragonBrain.DRAGON_FAN_R;",
+    "new": "  return true;",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -276,7 +276,7 @@
   {
     "name": "DRAGON2-too-far-admitted",
     "file": "server/src/dragonFights.js",
-    "old": "  if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) { no('far'); return; }",
+    "old": "  if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) {\n    no('far');\n    return;\n  }",
     "new": "",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
@@ -285,8 +285,8 @@
   {
     "name": "DRAGON2-the-dead-striking",
     "file": "server/src/dragonFights.js",
-    "old": "const pose = a.pose && !a.pose.dd && own ? frameOf(f, a.pose) : null;",
-    "new": "const pose = a.pose && own ? frameOf(f, a.pose) : null;",
+    "old": "  const pose = a.pose && !a.pose.dd && own ? frameOf(f, a.pose) : null;",
+    "new": "  const pose = a.pose && own ? frameOf(f, a.pose) : null;",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "DRAGON2-a-receipt-to-one-who-earned-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "    if (!DRAGON_SEAM.earned(f, sub)) continue;\n",
-    "new": "",
+    "old": "    if (!DRAGON_SEAM.earned(f, sub)) continue;\n    const q = {",
+    "new": "    const q = {",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "DRAGON2-the-hub-told-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const body = { w: f.w,",
-    "new": "  if (false) {\n    try {\n      const body = { w: f.w,",
+    "old": "  if (rooms?.idFromName && rooms?.get) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]

@@ -193,8 +193,8 @@
   {
     "name": "DRAGON3-the-remains-untold",
     "file": "server/src/dragonFights.js",
-    "old": "    if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) { f.stSaidAt = now; fan(room, id, f, [DRAGON_SEAM.stateOf(f)]); }",
-    "new": "",
+    "old": "    if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) {\n      f.stSaidAt = now;\n      fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);\n    } // its remains told to who comes near, as its fight was",
+    "new": "    // its remains told to who comes near, as its fight was",
     "tests": [
       "test/net/dragon/dragon3_relay.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "DRAGON3-the-late-in-answered-gone-alone",
     "file": "server/src/dragonFights.js",
-    "old": "{ if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }",
-    "new": "{ if (!f?.rc?.[a.sub]) no('gone'); return; }",
+    "old": "    if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) });\n    if (!f?.rc?.[a.sub]) no('gone');",
+    "new": "    if (!f?.rc?.[a.sub]) no('gone');",
     "tests": [
       "test/net/dragon/dragon3_relay.test.js"
     ]

@@ -319,8 +319,8 @@
   {
     "name": "DLV3-room-cell-kept",
     "file": "server/src/delveRoom.js",
-    "old": "if (!isWorldRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { room._junk(ws); return; }",
-    "new": "if (typeof a.sub !== 'string' || !a.sub) { room._junk(ws); return; }",
+    "old": "  if (!isWorldRoom(a.key) || typeof a.sub !== 'string' || !a.sub) {",
+    "new": "  if (typeof a.sub !== 'string' || !a.sub) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "DLV3-room-plan-unknown-unasked",
     "file": "server/src/delveRoom.js",
-    "old": "if (!P) { room._send(ws, JSON.stringify({ t: 'dv', k: 'pl?' })); return; }",
-    "new": "if (!P) return;",
+    "old": "  if (!P) {\n    room._send(ws, JSON.stringify({ t: 'dv', k: 'pl?' }));\n    return;\n  } // a plan this room does not keep: said again",
+    "new": "  if (!P) return; // a plan this room does not keep: said again",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "DLV3-room-plan-own-hash",
     "file": "server/src/delveRoom.js",
-    "old": "if (delvePlanHash(sites) !== m.h) { room._junk(ws); return; }",
-    "new": "if (false) { room._junk(ws); return; }",
+    "old": "  if (delvePlanHash(sites) !== m.h) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "DLV3-room-plan-cap-over-stake",
     "file": "server/src/delveRoom.js",
-    "old": "const idle = [...dv.plans.values()].filter((q) => !atStake(q, now)).sort((x, y) => x.usedAt - y.usedAt)[0];",
-    "new": "const idle = [...dv.plans.values()].sort((x, y) => x.usedAt - y.usedAt)[0];",
+    "old": "      const idle = [...dv.plans.values()].filter((q) => !atStake(q, now)).sort((x, y) => x.usedAt - y.usedAt)[0];",
+    "new": "      const idle = [...dv.plans.values()].sort((x, y) => x.usedAt - y.usedAt)[0];",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "DLV3-room-plan-cap-unread",
     "file": "server/src/delveRoom.js",
-    "old": "if (dv.plans.size >= DELVE_PLANS_MAX) {",
-    "new": "if (false) {",
+    "old": "    if (dv.plans.size >= DELVE_PLANS_MAX) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "DLV3-room-ward-screen-unread",
     "file": "server/src/delveRoom.js",
-    "old": "inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now",
-    "new": "inWard: here, nowMs: now",
+    "old": "    const ctx = { party, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
+    "new": "    const ctx = { party, inWard: here, nowMs: now };",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "DLV3-room-ward-pose-unread",
     "file": "server/src/delveRoom.js",
-    "old": "inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now",
-    "new": "inWard: m.k !== 'w' || m.iw === 1, nowMs: now",
+    "old": "    const ctx = { party, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
+    "new": "    const ctx = { party, inWard: m.k !== 'w' || m.iw === 1, nowMs: now };",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "DLV3-room-wake-pose-unread",
     "file": "server/src/delveRoom.js",
-    "old": "const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
-    "new": "const wakes = m.k === 'w' && m.iw === 1 && now >= rec.rest;",
+    "old": "    const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
+    "new": "    const wakes = m.k === 'w' && m.iw === 1 && now >= rec.rest;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "DLV3-room-wake-screen-unread",
     "file": "server/src/delveRoom.js",
-    "old": "const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
-    "new": "const wakes = m.k === 'w' && here && now >= rec.rest;",
+    "old": "    const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
+    "new": "    const wakes = m.k === 'w' && here && now >= rec.rest;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "DLV3-room-wake-unrested",
     "file": "server/src/delveRoom.js",
-    "old": "const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
-    "new": "const wakes = m.k === 'w' && here && m.iw === 1;",
+    "old": "    const wakes = m.k === 'w' && here && m.iw === 1 && now >= rec.rest;",
+    "new": "    const wakes = m.k === 'w' && here && m.iw === 1;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "DLV3-room-level-token-outright",
     "file": "server/src/delveRoom.js",
-    "old": "? Math.min(m.lv, a.cl) : m.lv;",
-    "new": "? a.cl : m.lv;",
+    "old": "      const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? Math.min(m.lv, a.cl) : m.lv;",
+    "new": "      const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? a.cl : m.lv;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "DLV3-room-level-word-believed",
     "file": "server/src/delveRoom.js",
-    "old": "? Math.min(m.lv, a.cl) : m.lv;",
-    "new": "? m.lv : m.lv;",
+    "old": "      const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? Math.min(m.lv, a.cl) : m.lv;",
+    "new": "      const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? m.lv : m.lv;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "DLV3-room-stepped-by-party",
     "file": "server/src/delveRoom.js",
-    "old": "if (rec.led && rec.led.p !== DP.won) { const e = stepDelve(rec.led, now);",
-    "new": "if (rec.led && rec.led.p !== DP.won && acctOf(a) === rec.led.own) { const e = stepDelve(rec.led, now);",
+    "old": "  if (rec.led && rec.led.p !== DP.won) {",
+    "new": "  if (rec.led && rec.led.p !== DP.won && acctOf(a) === rec.led.own) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "DLV3-room-rest-dropped",
     "file": "server/src/delveRoom.js",
-    "old": "rec.rest = end?.rest ? now + end.rest : 0;",
-    "new": "rec.rest = 0;",
+    "old": "  rec.rest = end?.rest ? now + end.rest : 0;",
+    "new": "  rec.rest = 0;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "DLV3-room-respawn-late",
     "file": "server/src/delveRoom.js",
-    "old": "now >= rec.led.wonAt + respawnOf(site)) { rec.led = null;",
-    "new": "now > rec.led.wonAt + respawnOf(site) + 1) { rec.led = null;",
+    "old": "  if (rec.led?.p === DP.won && now >= rec.led.wonAt + respawnOf(site)) {",
+    "new": "  if (rec.led?.p === DP.won && now > rec.led.wonAt + respawnOf(site) + 1) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "DLV3-room-respawn-tier",
     "file": "server/src/delveRoom.js",
-    "old": "(site.tier === 'elite' ? DELVE_RESPAWN_ELITE_MS : DELVE_RESPAWN_MS)",
-    "new": "DELVE_RESPAWN_MS",
+    "old": "const respawnOf = (site) => (site.tier === 'elite' ? DELVE_RESPAWN_ELITE_MS : DELVE_RESPAWN_MS);",
+    "new": "const respawnOf = (site) => DELVE_RESPAWN_MS;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "DLV3-room-owner-asked",
     "file": "server/src/delveRoom.js",
-    "old": "  if (acct === led.own) return true;\n",
-    "new": "",
+    "old": "  if (acct === led.own) return true;\n  const key = `${acct}|${led.own}`,",
+    "new": "  const key = `${acct}|${led.own}`,",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "DLV3-room-silent-hub-a-no",
     "file": "server/src/delveRoom.js",
-    "old": "if (party == null) {",
-    "new": "if (false) {",
+    "old": "    if (party == null) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "DLV3-room-stranger-untold",
     "file": "server/src/delveRoom.js",
-    "old": "    if (!party) no(room, ws, DELVE_NO.party, m.i);\n",
-    "new": "",
+    "old": "    if (!party) no(room, ws, DELVE_NO.party, m.i);\n    const ctx = { party, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
+    "new": "    const ctx = { party, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "DLV3-room-stranger-counted",
     "file": "server/src/delveRoom.js",
-    "old": "const ctx = { party, inWard:",
-    "new": "const ctx = { party: true, inWard:",
+    "old": "    const ctx = { party, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
+    "new": "    const ctx = { party: true, inWard: here && (m.k !== 'w' || m.iw === 1), nowMs: now };",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "DLV3-room-save-moved-alone",
     "file": "server/src/delveRoom.js",
-    "old": "if (moved || now - (P.savedAt.get(site.i) ?? 0) >= DELVE_SAVE_MS) {",
-    "new": "if (moved) {",
+    "old": "  if (moved || now - (P.savedAt.get(site.i) ?? 0) >= DELVE_SAVE_MS) {",
+    "new": "  if (moved) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "DLV3-room-unmoved-unanswered",
     "file": "server/src/delveRoom.js",
-    "old": "if (!moved) { if (ws) room._send(ws, JSON.stringify(delveWordFor(P, site, rec, acct, now))); return; }",
-    "new": "if (!moved) return;",
+    "old": "  if (!moved) {\n    if (ws) room._send(ws, JSON.stringify(delveWordFor(P, site, rec, acct, now)));\n    return;\n  }",
+    "new": "  if (!moved) return;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "DLV3-room-unmoved-to-all",
     "file": "server/src/delveRoom.js",
-    "old": "if (!moved) { if (ws) room._send(ws, JSON.stringify(delveWordFor(P, site, rec, acct, now))); return; }",
-    "new": "if (false) { return; }",
+    "old": "  if (!moved) {\n    if (ws) room._send(ws, JSON.stringify(delveWordFor(P, site, rec, acct, now)));",
+    "new": "  if (false) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "DLV3-room-fan-unhelloed",
     "file": "server/src/delveRoom.js",
-    "old": "    if (!b.id) continue;\n",
-    "new": "",
+    "old": "    if (!b.id) continue;\n    if (said) room._send(s, said);",
+    "new": "    if (said) room._send(s, said);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "DLV3-room-events-to-speaker",
     "file": "server/src/delveRoom.js",
-    "old": "if (said) room._send(s, said);",
-    "new": "if (said && s === ws) room._send(s, said);",
+    "old": "    if (said) room._send(s, said);",
+    "new": "    if (said && s === ws) room._send(s, said);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "DLV3-room-earners-named",
     "file": "server/src/delveRoom.js",
-    "old": "delete o.earned; return o;",
-    "new": "return o;",
+    "old": "  delete o.earned;\n  return o;",
+    "new": "  return o;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "DLV3-room-order-always",
     "file": "server/src/delveRoom.js",
-    "old": "led?.kind === 'litany' && led.p === DP.show ? { or: [...led.order] } : {}",
-    "new": "led?.kind === 'litany' ? { or: [...led.order] } : {}",
+    "old": "  const or = led?.kind === 'litany' && led.p === DP.show ? { or: [...led.order] } : {}; // the order while it is shown, never after",
+    "new": "  const or = led?.kind === 'litany' ? { or: [...led.order] } : {}; // the order while it is shown, never after",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "DLV3-room-machine-any",
     "file": "server/src/delveRoom.js",
-    "old": "fm: led && delveFoeOwner(led, now) === acct ? 1 : 0",
-    "new": "fm: led ? 1 : 0",
+    "old": "    fm: led && delveFoeOwner(led, now) === acct ? 1 : 0,",
+    "new": "    fm: led ? 1 : 0,",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "DLV3-room-share-twice",
     "file": "server/src/delveRoom.js",
-    "old": "led.earned.includes(acct) && !rec.op.includes(acct) ? 1 : 0",
-    "new": "led.earned.includes(acct) ? 1 : 0",
+    "old": "    ea: led?.p === DP.won && led.earned.includes(acct) && !rec.op.includes(acct) ? 1 : 0,",
+    "new": "    ea: led?.p === DP.won && led.earned.includes(acct) ? 1 : 0,",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "DLV3-room-party-any",
     "file": "server/src/delveRoom.js",
-    "old": "pa: led && Object.hasOwn(led.a, acct) ? 1 : 0",
-    "new": "pa: led ? 1 : 0",
+    "old": "    pa: led && Object.hasOwn(led.a, acct) ? 1 : 0,",
+    "new": "    pa: led ? 1 : 0,",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "DLV3-room-flame-any",
     "file": "server/src/delveRoom.js",
-    "old": "led.fl === FLAME.carried && led.fc === acct ? -1",
-    "new": "led.fl === FLAME.carried ? -1",
+    "old": "  const hd = led?.kind === 'brazier' && led.fl === FLAME.carried && led.fc === acct ? -1 : j >= 0 ? j : -2; // -1 the flame, a weight's index, -2 nothing",
+    "new": "  const hd = led?.kind === 'brazier' && led.fl === FLAME.carried ? -1 : j >= 0 ? j : -2; // -1 the flame, a weight's index, -2 nothing",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "DLV3-room-weight-any",
     "file": "server/src/delveRoom.js",
-    "old": "t.s === WEIGHT.carried && t.by === acct",
-    "new": "t.s === WEIGHT.carried",
+    "old": "  const j = led ? led.wt.findIndex((t) => t.s === WEIGHT.carried && t.by === acct) : -1;",
+    "new": "  const j = led ? led.wt.findIndex((t) => t.s === WEIGHT.carried) : -1;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "DLV3-room-open-twice",
     "file": "server/src/delveRoom.js",
-    "old": "rec.led.earned.includes(acct) && !rec.op.includes(acct);",
-    "new": "rec.led.earned.includes(acct);",
+    "old": "  const ok = rec.led?.p === DP.won && rec.led.earned.includes(acct) && !rec.op.includes(acct);",
+    "new": "  const ok = rec.led?.p === DP.won && rec.led.earned.includes(acct);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "DLV3-room-open-any",
     "file": "server/src/delveRoom.js",
-    "old": "const ok = rec.led?.p === DP.won && rec.led.earned.includes(acct)",
-    "new": "const ok = rec.led?.p === DP.won",
+    "old": "  const ok = rec.led?.p === DP.won && rec.led.earned.includes(acct) && !rec.op.includes(acct);",
+    "new": "  const ok = rec.led?.p === DP.won && !rec.op.includes(acct);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "DLV3-room-accounts-prototype",
     "file": "server/src/delveRoom.js",
-    "old": "led.a = Object.assign(Object.create(null), led.a);",
-    "new": "led.a = Object.assign({}, led.a);",
+    "old": "  led.a = Object.assign(Object.create(null), led.a);",
+    "new": "  led.a = Object.assign({}, led.a);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "DLV3-room-memory-kept",
     "file": "server/src/delveRoom.js",
-    "old": "  room._dv = undefined;\n",
-    "new": "",
+    "old": "  room._dv = undefined;\n  const m = await room.state.storage.list({ prefix: 'dv:' });",
+    "new": "  const m = await room.state.storage.list({ prefix: 'dv:' });",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "DLV3-room-act-pose-unread",
     "file": "server/src/delveRoom.js",
-    "old": "{ a: DELVE_ACTS[m.a], j: m.j }, { ...ctx, pose });",
-    "new": "{ a: DELVE_ACTS[m.a], j: m.j }, { ...ctx, pose: [site.x, site.y, site.z] });",
+    "old": "    } else if (m.k === 'a') out = foldDelveAct(led, site, acct, { a: DELVE_ACTS[m.a], j: m.j }, { ...ctx, pose });",
+    "new": "    } else if (m.k === 'a')\n      out = foldDelveAct(led, site, acct, { a: DELVE_ACTS[m.a], j: m.j }, { ...ctx, pose: [site.x, site.y, site.z] });",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "DLV3-room-blow-pose-unread",
     "file": "server/src/delveRoom.js",
-    "old": "{ j: m.j, d: m.d, r: m.r, q: m.q }, { ...ctx, pose });",
-    "new": "{ j: m.j, d: m.d, r: m.r, q: m.q }, { ...ctx, pose: [site.x, site.y, site.z] });",
+    "old": "    else if (m.k === 'x') out = foldDelveHit(led, site, acct, { j: m.j, d: m.d, r: m.r, q: m.q }, { ...ctx, pose });",
+    "new": "    else if (m.k === 'x')\n      out = foldDelveHit(\n        led,\n        site,\n        acct,\n        { j: m.j, d: m.d, r: m.r, q: m.q },\n        { ...ctx, pose: [site.x, site.y, site.z] },\n      );",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1292,8 +1292,8 @@
   {
     "name": "DLV3-room-share-step-lost",
     "file": "server/src/delveRoom.js",
-    "old": "if (m.k === 'v') { if (moved) await settle(room, P, site, rec, ev, true, null, acct, now); await openShare(",
-    "new": "if (m.k === 'v') { await openShare(",
+    "old": "    if (moved) await settle(room, P, site, rec, ev, true, null, acct, now);\n    await openShare(room, P, ws, site, rec, acct, now);",
+    "new": "    await openShare(room, P, ws, site, rec, acct, now);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1301,8 +1301,8 @@
   {
     "name": "DLV3-room-hub-wait-unread",
     "file": "server/src/delveRoom.js",
-    "old": "    if (rec.led !== led) { await settle(room, P, site, rec, ev, moved, ws, acct, now); return; }\n",
-    "new": "",
+    "old": "    if (rec.led !== led) {\n      await settle(room, P, site, rec, ev, moved, ws, acct, now);\n      return;\n    }\n    if (party == null) {",
+    "new": "    if (party == null) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1310,8 +1310,8 @@
   {
     "name": "DLV3-room-kin-no-unkept",
     "file": "server/src/delveRoom.js",
-    "old": "if (had && now < had.until) return had.kin;",
-    "new": "if (false) return had.kin;",
+    "old": "  if (had && now < had.until) return had.kin;",
+    "new": "  if (false) return had.kin;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1328,8 +1328,8 @@
   {
     "name": "DLV3-room-two-in-a-hand",
     "file": "server/src/delveRoom.js",
-    "old": "const holdsAnother = (P, i, acct) => [...P.recs.entries()].some(",
-    "new": "const holdsAnother = (P, i, acct) => false && [...P.recs.entries()].some(",
+    "old": "  [...P.recs.entries()].some(([j, r]) => j !== i && r.led && r.led.p !== DP.won && r.led.own === acct);",
+    "new": "  false && [...P.recs.entries()].some(([j, r]) => j !== i && r.led && r.led.p !== DP.won && r.led.own === acct);",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1337,8 +1337,8 @@
   {
     "name": "DLV3-room-held-untold",
     "file": "server/src/delveRoom.js",
-    "old": "    if (wakes && holdsAnother(P, m.i, acct)) no(room, ws, DELVE_NO.held, m.i);\n",
-    "new": "",
+    "old": "    if (wakes && holdsAnother(P, m.i, acct)) no(room, ws, DELVE_NO.held, m.i);\n    if (!wakes || holdsAnother(P, m.i, acct)) {",
+    "new": "    if (!wakes || holdsAnother(P, m.i, acct)) {",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1346,8 +1346,8 @@
   {
     "name": "DLV3-room-plan-unnamed",
     "file": "server/src/delveRoom.js",
-    "old": "return { t: 'dv', k: 'dl', ph: P.h, i: site.i,",
-    "new": "return { t: 'dv', k: 'dl', i: site.i,",
+    "old": "  return { t: 'dv', k: 'dl', ph: P.h, i: site.i, ...rest, ...or, rs: restLeft(rec, site, now), me }; // `ph`: the state's own `h` is its pieces' health",
+    "new": "  return { t: 'dv', k: 'dl', i: site.i, ...rest, ...or, rs: restLeft(rec, site, now), me }; // `ph`: the state's own `h` is its pieces' health",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]

@@ -155,8 +155,8 @@
   {
     "name": "COST2B-every-room-the-directory",
     "file": "server/src/cellMoves.js",
-    "old": "isDirectory = id != null && directoryId != null && (typeof id.equals",
-    "new": "isDirectory = true || (typeof id.equals",
+    "old": "      isDirectory =\n        id != null &&\n        directoryId != null &&\n        (typeof id.equals === 'function' ? id.equals(directoryId) : id === directoryId);",
+    "new": "      isDirectory = true || (typeof id.equals === 'function' ? id.equals(directoryId) : id === directoryId);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "COST2B-var-unread",
     "file": "server/src/cellMoves.js",
-    "old": "law[field] = /^\\d{1,9}$/.test(text) ? Number(text) :",
-    "new": "law[field] = false ? Number(text) :",
+    "old": "    law[field] = /^\\d{1,9}$/.test(text)\n      ? Number(text)\n      : CELL_LAW_DEFAULT[/** @type {keyof typeof CELL_LAW_DEFAULT} */ (field)];",
+    "new": "    law[field] = false ? Number(text) : CELL_LAW_DEFAULT[/** @type {keyof typeof CELL_LAW_DEFAULT} */ (field)];",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "COST2B-merge-over-split-taken",
     "file": "server/src/cellMoves.js",
-    "old": "return law.mergeAt < law.splitAt ?",
-    "new": "return true ?",
+    "old": "  return law.mergeAt < law.splitAt ? /** @type {typeof CELL_LAW_DEFAULT} */ (law) : CELL_LAW_DEFAULT;",
+    "new": "  return true ? /** @type {typeof CELL_LAW_DEFAULT} */ (law) : CELL_LAW_DEFAULT;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "COST2B-count-told-in-a-fixed-tree",
     "file": "server/src/cellMoves.js",
-    "old": "if (!room._cellTell || !node ||",
-    "new": "if (!node ||",
+    "old": "  if (!room._cellTell || !node || now - (room._cellToldAt ?? -Infinity) < COUNT_TELL_MS) return;",
+    "new": "  if (!node || now - (room._cellToldAt ?? -Infinity) < COUNT_TELL_MS) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "COST2B-woken-node-forgotten",
     "file": "server/src/cellNodes.js",
-    "old": "for (const [, attachment] of room._all?.() ?? [])",
-    "new": "for (const [, attachment] of [])",
+    "old": "    for (const [, attachment] of room._all?.() ?? [])",
+    "new": "    for (const [, attachment] of [])",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "COST2B-count-told-every-frame",
     "file": "server/src/cellMoves.js",
-    "old": "now - (room._cellToldAt ?? -Infinity) < COUNT_TELL_MS) return;",
-    "new": "now - (room._cellToldAt ?? -Infinity) < 0) return;",
+    "old": "  if (!room._cellTell || !node || now - (room._cellToldAt ?? -Infinity) < COUNT_TELL_MS) return;",
+    "new": "  if (!room._cellTell || !node || now - (room._cellToldAt ?? -Infinity) < 0) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "COST2B-count-layer-unsaid",
     "file": "server/src/cellMoves.js",
-    "old": "ly: room._cellLy | 0, n: room._namedCount()",
-    "new": "ly: 0, n: room._namedCount()",
+    "old": "  const body = { node, ly: room._cellLy | 0, n: room._namedCount() };",
+    "new": "  const body = { node, ly: 0, n: room._namedCount() };",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "COST2B-stale-count-counted",
     "file": "server/src/cellMoves.js",
-    "old": "(now - report.at <= COUNT_STALE_MS ? report.n : 0)",
-    "new": "report.n",
+    "old": "    counts.set(report.node, (counts.get(report.node) ?? 0) + (now - report.at <= COUNT_STALE_MS ? report.n : 0));",
+    "new": "    counts.set(report.node, (counts.get(report.node) ?? 0) + report.n);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "COST2B-plan-over-a-plan",
     "file": "server/src/cellMoves.js",
-    "old": "if (isL0Tree(tree) || (await planOf(room))) return;",
-    "new": "if (isL0Tree(tree)) return;",
+    "old": "  if (isL0Tree(tree) || (await planOf(room))) return;",
+    "new": "  if (isL0Tree(tree)) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "COST2B-fixed-tree-moved",
     "file": "server/src/cellMoves.js",
-    "old": "if (isL0Tree(tree) || (await planOf(room))) return;",
-    "new": "if (await planOf(room)) return;",
+    "old": "  if (isL0Tree(tree) || (await planOf(room))) return;",
+    "new": "  if (await planOf(room)) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "COST2B-alarm-unset",
     "file": "server/src/cellMoves.js",
-    "old": "  await room.state.storage.setAlarm(now);\n",
-    "new": "",
+    "old": "  await room.state.storage.setAlarm(now);\n  console.log(`[cells] ${move.kind} planned: ${move.from.join(' ')} -> ${move.to.join(' ')}`);",
+    "new": "  console.log(`[cells] ${move.kind} planned: ${move.from.join(' ')} -> ${move.to.join(' ')}`);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "COST2B-stage-1-lets-go",
     "file": "server/src/cellMoves.js",
-    "old": "roomPost(room.env), Date.now(), { keep: true }));",
-    "new": "roomPost(room.env), Date.now(), { keep: false }));",
+    "old": "    return json(await handOver(room, to, roomPost(room.env), Date.now(), { keep: true }));",
+    "new": "    return json(await handOver(room, to, roomPost(room.env), Date.now(), { keep: false }));",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "COST2B-tree-uncommitted",
     "file": "server/src/cellMoves.js",
-    "old": "await storage.put({ [CELL_TREE_KEY]: next, [CELL_PLAN_KEY]: room._cellPlan });",
-    "new": "await storage.put({ [CELL_PLAN_KEY]: room._cellPlan });",
+    "old": "    await storage.put({ [CELL_TREE_KEY]: next, [CELL_PLAN_KEY]: room._cellPlan });",
+    "new": "    await storage.put({ [CELL_PLAN_KEY]: room._cellPlan });",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "COST2B-sockets-left-open",
     "file": "server/src/cellMoves.js",
-    "old": "      socket.close(CLOSE_REPARTITION, 'cells moved');\n",
-    "new": "",
+    "old": "      socket.close(CLOSE_REPARTITION, 'cells moved');\n    } catch {",
+    "new": "    } catch {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "COST2B-close-code",
     "file": "server/src/cellMoves.js",
-    "old": "socket.close(CLOSE_REPARTITION, 'cells moved')",
-    "new": "socket.close(1011, 'cells moved')",
+    "old": "      socket.close(CLOSE_REPARTITION, 'cells moved');",
+    "new": "      socket.close(1011, 'cells moved');",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "COST2B-layers-unasked",
     "file": "server/src/cellMoves.js",
-    "old": "    for (let layer = 0; layer < LAYERS_MAX; layer++) {\n      const name = layerName(node, layer);",
-    "new": "    for (let layer = 0; layer < 1; layer++) {\n      const name = layerName(node, layer);",
+    "old": "    for (let layer = 0; layer < LAYERS_MAX; layer++) {",
+    "new": "    for (let layer = 0; layer < 1; layer++) {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "COST2B-empty-layer-marked",
     "file": "server/src/cellMoves.js",
-    "old": "if (layer === 0 || sockets.length) {",
-    "new": "if (true) {",
+    "old": "  if (layer === 0 || sockets.length) {",
+    "new": "  if (true) {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "COST2B-move-uncounted",
     "file": "server/src/cellMoves.js",
-    "old": "  room._metrics.c.cellMoves++;\n",
-    "new": "",
+    "old": "  room._metrics.c.cellMoves++;\n  room._metricsTick(true);",
+    "new": "  room._metricsTick(true);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "COST2B-blocked-move-made",
     "file": "server/src/cellMoves.js",
-    "old": "const next = blocked.length || failed.length ? null : treeAfter(",
-    "new": "const next = failed.length ? null : treeAfter(",
+    "old": "    const next = blocked.length || failed.length ? null : treeAfter(await directoryTree(room, now), plan);",
+    "new": "    const next = failed.length ? null : treeAfter(await directoryTree(room, now), plan);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "COST2B-blocked-node-uncooled",
     "file": "server/src/cellMoves.js",
-    "old": "      for (const node of plan.from) directory.cool[node] = now + MOVE_COOLDOWN_MS;\n",
-    "new": "",
+    "old": "      for (const node of plan.from) directory.cool[node] = now + MOVE_COOLDOWN_MS;\n      room._metrics.c.cellBlocked++;",
+    "new": "      room._metrics.c.cellBlocked++;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "COST2B-blocked-uncounted",
     "file": "server/src/cellMoves.js",
-    "old": "      room._metrics.c.cellBlocked++;\n",
-    "new": "",
+    "old": "      room._metrics.c.cellBlocked++;\n      room._metricsTick(true);",
+    "new": "      room._metricsTick(true);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "COST2B-close-unanswered-taken-as-made",
     "file": "server/src/cellMoves.js",
-    "old": "  if (failed.length) {\n    await storage.setAlarm(now + CLOSE_RETRY_MS);",
-    "new": "  if (false) {\n    await storage.setAlarm(now + CLOSE_RETRY_MS);",
+    "old": "  if (failed.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "COST2B-moved-mark-unread",
     "file": "server/src/cellMoves.js",
-    "old": "if (await movedNow(room, now)) {",
-    "new": "if (false) {",
+    "old": "  if (await movedNow(room, now)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "COST2B-moved-mark-for-ever",
     "file": "server/src/cellMoves.js",
-    "old": "if (now - room._cellMoved < MOVED_KEEP_MS) return true;",
-    "new": "if (true) return true;",
+    "old": "  if (now - room._cellMoved < MOVED_KEEP_MS) return true;",
+    "new": "  if (true) return true;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "COST2B-moved-mark-read-for-a-fixed-tree",
     "file": "server/src/cellMoves.js",
-    "old": "  if (request.headers.get(CELL_TELL_HEADER) !== '1') return null;\n",
-    "new": "",
+    "old": "  if (request.headers.get(CELL_TELL_HEADER) !== '1') return null;\n  const key = path.startsWith('/room/') ? roomOf(path) : null;",
+    "new": "  const key = path.startsWith('/room/') ? roomOf(path) : null;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "COST2B-no-pull",
     "file": "server/src/cellMoves.js",
-    "old": "  if (isSocket) await cellPull(room, request, /** @type {string} */ (key), now);\n",
-    "new": "",
+    "old": "  if (isSocket) await cellPull(room, request, /** @type {string} */ (key), now);\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "COST2B-pulled-again",
     "file": "server/src/cellMoves.js",
-    "old": "if (room._cellPulled.has(key) || now <",
-    "new": "if (now <",
+    "old": "  if (room._cellPulled.has(key) || now < (room._cellPullAt.get(key) ?? -Infinity)) return;",
+    "new": "  if (now < (room._cellPullAt.get(key) ?? -Infinity)) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "COST2B-pulled-rows-left-behind",
     "file": "server/src/cellMoves.js",
-    "old": "    if (rowCount) await cellObject.fetch(post(CELL_INTERNAL_FORGET, {}));\n",
-    "new": "",
+    "old": "    if (rowCount) await cellObject.fetch(post(CELL_INTERNAL_FORGET, {}));\n  } catch (error) {",
+    "new": "  } catch (error) {",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "COST2B-a-layer-pulls",
     "file": "server/src/cellMoves.js",
-    "old": " || layerOf(request.headers.get(LAYER_HEADER)) !== 0) return;",
-    "new": ") return;",
+    "old": "  if (!isCoarseNode(node) || !nodeHoldsCell(node, key) || layerOf(request.headers.get(LAYER_HEADER)) !== 0) return;",
+    "new": "  if (!isCoarseNode(node) || !nodeHoldsCell(node, key)) return;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "COST2B-cell-door-open",
     "file": "server/src/cellMoves.js",
-    "old": "isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW)",
-    "new": "false",
+    "old": "export const cellDoorShut = (room, socket, hello) =>\n  isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW);",
+    "new": "export const cellDoorShut = (room, socket, hello) => false;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "COST2B-cell-door-shut-at-L0",
     "file": "server/src/cellMoves.js",
-    "old": "isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW)",
-    "new": "!(hello.cv >= CELL_HELLO_LAW)",
+    "old": "export const cellDoorShut = (room, socket, hello) =>\n  isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW);",
+    "new": "export const cellDoorShut = (room, socket, hello) => !(hello.cv >= CELL_HELLO_LAW);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "COST2B-take-leaves-the-mark",
     "file": "server/src/cellHandover.js",
-    "old": "  if (room._cellMoved !== null) {\n    await storage.delete(CELL_MOVED_KEY);\n    room._cellMoved = null;\n  }\n",
-    "new": "",
+    "old": "  if (room._cellMoved !== null) {\n    await storage.delete(CELL_MOVED_KEY);\n    room._cellMoved = null;\n  }\n  const keptParks = room._parks ? await room._parks : null;",
+    "new": "  const keptParks = room._parks ? await room._parks : null;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "COST2B-close-blocked-by-a-late-key",
     "file": "server/src/cellHandover.js",
-    "old": "if (blocked.length && !force) return { ok: false, blocked };",
-    "new": "if (blocked.length) return { ok: false, blocked };",
+    "old": "  if (blocked.length && !force) return { ok: false, blocked };",
+    "new": "  if (blocked.length) return { ok: false, blocked };",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "COST2B-no-second-walk",
     "file": "server/src/cellNodes.js",
-    "old": "    const response = await layerWalk(env.ROOMS, node, new Request(request, { headers }), layerOf(url.searchParams.get('ly')));\n    if (attempt || !movedAnswer(response)) return response;",
-    "new": "    const response = await layerWalk(env.ROOMS, node, new Request(request, { headers }), layerOf(url.searchParams.get('ly')));\n    if (true) return response;",
+    "old": "      layerOf(url.searchParams.get('ly')),\n    );\n    if (attempt || !movedAnswer(response)) return response;\n    cellTreeCache.stale();",
+    "new": "      layerOf(url.searchParams.get('ly')),\n    );\n    if (true) return response;\n    cellTreeCache.stale();",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "COST2B-walked-past-twice",
     "file": "server/src/cellNodes.js",
-    "old": "    const response = await layerWalk(env.ROOMS, node, new Request(request, { headers }), layerOf(url.searchParams.get('ly')));\n    if (attempt || !movedAnswer(response)) return response;",
-    "new": "    const response = await layerWalk(env.ROOMS, node, new Request(request, { headers }), layerOf(url.searchParams.get('ly')));\n    if (attempt > 1 || !movedAnswer(response)) return response;",
+    "old": "      layerOf(url.searchParams.get('ly')),\n    );\n    if (attempt || !movedAnswer(response)) return response;\n    cellTreeCache.stale();",
+    "new": "      layerOf(url.searchParams.get('ly')),\n    );\n    if (attempt > 1 || !movedAnswer(response)) return response;\n    cellTreeCache.stale();",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "COST2B-kept-tree-dropped",
     "file": "server/src/cellNodes.js",
-    "old": "  stale: () => {\n    if (isolateCopy) isolateCopy.at = -Infinity;\n    failedAt = -Infinity;\n  },",
-    "new": "  stale: () => {\n    isolateCopy = null;\n    failedAt = -Infinity;\n  },",
+    "old": "    if (isolateCopy) isolateCopy.at = -Infinity;",
+    "new": "    isolateCopy = null;",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "COST2B-tell-unsaid",
     "file": "server/src/cellNodes.js",
-    "old": "[NODE_HEADER]: node, [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '' };",
-    "new": "[NODE_HEADER]: node, [CELL_TELL_HEADER]: '' };",
+    "old": "    const headers = {\n      ...Object.fromEntries(request.headers),\n      [NODE_HEADER]: node,\n      [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '',\n    };",
+    "new": "    const headers = { ...Object.fromEntries(request.headers), [NODE_HEADER]: node, [CELL_TELL_HEADER]: '' };",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "COST2B-tell-the-pages",
     "file": "server/src/cellNodes.js",
-    "old": "[NODE_HEADER]: node, [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '' };",
-    "new": "[NODE_HEADER]: node };",
+    "old": "    const headers = {\n      ...Object.fromEntries(request.headers),\n      [NODE_HEADER]: node,\n      [CELL_TELL_HEADER]: tree && !isL0Tree(tree) ? '1' : '',\n    };",
+    "new": "    const headers = { ...Object.fromEntries(request.headers), [NODE_HEADER]: node };",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "COST2B-call-to-the-fine-key",
     "file": "server/src/cellNodes.js",
-    "old": "rooms.idFromName(layerName(cellNodeOf(tree, cell), layer))",
-    "new": "rooms.idFromName(layerName(cell, layer))",
+    "old": "    const response = await rooms.get(rooms.idFromName(layerName(cellNodeOf(tree, cell), layer))).fetch(",
+    "new": "    const response = await rooms.get(rooms.idFromName(layerName(cell, layer))).fetch(",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "COST2B-call-without-a-deadline",
     "file": "server/src/cellNodes.js",
-    "old": "headers, signal: AbortSignal.timeout(deadlineMs) }));",
-    "new": "headers }));",
+    "old": "    const response = await rooms.get(rooms.idFromName(layerName(cellNodeOf(tree, cell), layer))).fetch(\n      new Request(`https://relay.internal${path}`, {\n        method: 'POST',\n        body: JSON.stringify(body),\n        headers,\n        signal: AbortSignal.timeout(deadlineMs),\n      }),\n    );",
+    "new": "    const response = await rooms\n      .get(rooms.idFromName(layerName(cellNodeOf(tree, cell), layer)))\n      .fetch(new Request(`https://relay.internal${path}`, { method: 'POST', body: JSON.stringify(body), headers }));",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "COST2B-call-not-walked-past-a-move",
     "file": "server/src/cellNodes.js",
-    "old": "signal: AbortSignal.timeout(deadlineMs) }));\n    if (attempt || !movedAnswer(response)) return response;",
-    "new": "signal: AbortSignal.timeout(deadlineMs) }));\n    if (true) return response;",
+    "old": "      }),\n    );\n    if (attempt || !movedAnswer(response)) return response;\n    cellTreeCache.stale();",
+    "new": "      }),\n    );\n    if (true) return response;\n    cellTreeCache.stale();",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "COST2B-seed-unread",
     "file": "server/src/cellNodes.js",
-    "old": "  if (!seed) return L0_TREE;\n",
-    "new": "",
+    "old": "  if (!seed) return L0_TREE;\n  if (room._cellTree === undefined) room._cellTree = readTree(await room.state.storage.get(CELL_TREE_KEY));",
+    "new": "  if (room._cellTree === undefined) room._cellTree = readTree(await room.state.storage.get(CELL_TREE_KEY));",
     "tests": [
       "test/server/cellnodes.test.js",
       "test/server/cellmoves.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "COST2B-stored-tree-over-the-setting",
     "file": "server/src/cellNodes.js",
-    "old": "const seed = cellSeedOf(relayCfgValue(await room._relayCfgOf(), room.env, 'cellSeed')) ?? 0;",
-    "new": "const seed = 2;",
+    "old": "  const seed = cellSeedOf(relayCfgValue(await room._relayCfgOf(), room.env, 'cellSeed')) ?? 0;",
+    "new": "  const seed = 2;",
     "tests": [
       "test/server/cellnodes.test.js",
       "test/server/cellmoves.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "COST2B-unreadable-tree-kept",
     "file": "server/src/cellNodes.js",
-    "old": "  if (!room._cellTree) {\n    room._cellTree = seedTree(seed);",
-    "new": "  if (room._cellTree === undefined) {\n    room._cellTree = seedTree(seed);",
+    "old": "  if (!room._cellTree) {",
+    "new": "  if (room._cellTree === undefined) {",
     "tests": [
       "test/server/cellnodes.test.js"
     ]

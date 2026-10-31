@@ -50,8 +50,8 @@
   {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
     "file": "server/src/dragonFights.js",
-    "old": "say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });",
-    "new": "say(room, ws, { k: 'omen', w: m.w, s: m.w });",
+    "old": "  say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });",
+    "new": "  say(room, ws, { k: 'omen', w: m.w, s: m.w });",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]
