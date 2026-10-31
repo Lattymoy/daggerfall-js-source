@@ -96,10 +96,10 @@ export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
 /**
  * TRUNK-FOES (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Jungle trees need better or more collision, enemies just
  * hide in them it sucks."): a foe standing in a NATURE body (world/propBodies.js - a trunk, a rock, a landmark) is put
- * at its edge along the line from its middle, as the player's clamp puts the feet (player/bodyClamp.js keepOffBodies),
- * at once: a walk into a trunk slides round it. Through the collider, and never off an edge (spaceFoes' law). A made
- * thing's body holds no foe: its path through a street or a dungeon is a navmesh's that knows no body. Answers how many
- * moved. @param skip (f, i) => true for a body that is not moved
+ * at its edge along the line from its middle as the player's feet are (player/bodyClamp.js), at once, and round it where
+ * its way lies past it (AUDIT FB1031 F4) - through the collider, never off an edge. A made thing's body holds no foe
+ * (AUDIT FB1031 F5): no foe's steering reads a body (no street pool has a navmesh, a room's and a dungeon's know none),
+ * and one pushed off a barrel in a street's corner would stand there. Answers how many moved; `skip` as spaceFoes'.
  */
 export function keepFoesOffBodies(foes, collider, skip = spacingSkips) {
   const cover = collider?.cover;
@@ -113,8 +113,13 @@ export function keepFoesOffBodies(foes, collider, skip = spacingSkips) {
       if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return;   // over its head, or under its feet
       const R = it.r + rad, dx = feet[0] - cx, dz = feet[2] - cz, d = Math.hypot(dx, dz);
       if (d >= R) return;
-      const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0;
-      if (nudge(ai, nx * (R - d), nz * (R - d), R, collider)) moved++;   // to its edge in one frame
+      const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0, push = R - d;
+      // AUDIT FB1031 F4: where the push meets the foe's way to its destination head on, as far again along the edge to
+      // the side that lies on (a fixed side dead on the line, as spaceFoes splits two in one spot) - the push alone held
+      // one walking at a trunk's middle on the spot for good
+      const dest = ai.destination, wx = dest ? dest[0] - feet[0] : 0, wz = dest ? dest[2] - feet[2] : 0;
+      const side = wx * nx + wz * nz < 0 ? (wz * nx - wx * nz < 0 ? -push : push) : 0;
+      if (nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider)) moved++;   // to its edge in one frame
     });
   }
   return moved;

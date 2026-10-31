@@ -42,10 +42,11 @@ test('BAND-NEAR BN2 host run: WITH THE VIEW DOWN A CHASE STOPS THE JOURNEY AT TH
       bandMake: () => ({ mobileTypes: [1, 2] }), bandPeerChase: () => null, playerAfloat: () => false, owSaySpent: () => {},
       journeyMet: () => { at.met.push(c.dist); return null; }, wildBands: { step: () => ({ alerted: false }) }, wildStealth: () => 50,
       wildFoes: { alert: () => {} }, exteriorFoes: { noticedPlayer: () => {}, encounterRoom: () => Infinity },
+      cam: { yaw: Math.PI / 4 }, fieldOfView: () => 0.5,   // AUDIT FB1031 B1 (PIN MOVED): a view turned off its bearing
       _standCampEncounter: (hit) => { at.stood.push([hit.minDistance, hit.maxDistance]); return { foes: Promise.resolve([]) }; },
     };
     const f = new Function('d', 'law', 'PACK_SPACING', `const { ${Object.keys(d).join(', ')} } = d;
-      const { bandChaseStep, bandSight, BAND_CONTACT_M, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_TRIES, BAND_STAND_RETRY_MS, BANDS_WIRE_MAX } = law;
+      const { bandChaseStep, bandSight, bandStandBearing, BAND_CONTACT_M, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_TRIES, BAND_STAND_RETRY_MS, BANDS_WIRE_MAX } = law;
       const NATIVE_PER_M = ${NATIVE_PER_M}, PACK_ALERT_RADIUS = PACK_SPACING * 2; let _bandClock = 0;
       const campMembers = (t) => t, bandYaw = () => 0, bandSpend = (id) => _bandSpent.add(id), bandDrop = () => {}, performance = { now: () => 0 };
       ${cut('bandRoom')} ${cut('bandStand')} ${cut('bandFrame')} return bandFrame;`)(d, law, PACK_SPACING);

@@ -4084,3 +4084,15 @@ from above is still never met in play.
 
 **Pins.** `test/systems/travel/bandnear.test.js` (BN1-BN2); the B2 host run's literal 140 in
 `test/systems/travel/tv7_bands.test.js`, re-aimed to the constant (PIN MOVED); `tools/mutants/bandnear.json` (4).
+
+**AUDIT FB1031 B1 - never stood in the view.** bandStand stood a band on its own bearing (campAnchorSpot's
+`bearingDegrees` 0), past CAMP-FAR's rule: with the camera facing the way the band came, every anchor stood in the view
+39-51 m off and popped up mid-screen (2,000 of 2,000 in a 65-degree view). Now it keeps its bearing only outside the
+view; inside it the band stands just outside the view's edge on its own side, CAMP-FAR's FOV plus 0-4 degrees
+(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false) {"`, called in place in
+`world.js` bandStand, so the host does not grow). Under the Overworld a band still stands where it was watched coming
+(OW5b B2). It reads the camera, never the place: every province's.
+
+Pins `test/characters/fb1031_foes.test.js` (B1: the lifted bandStand on the real campAnchorSpot), `tools/mutants/fb1031_foes.json`.
+PIN MOVED: the lifted bandStand runs in `tv7_bands.test.js`, `bandnear.test.js` and `wildalertfix.test.js` hand it a
+camera turned off every bearing they try, so each keeps its own.

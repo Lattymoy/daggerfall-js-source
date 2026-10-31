@@ -63,33 +63,42 @@ export function coverProxies(base, size, { tree = false } = {}) {
 }
 
 /** The first distance along a unit ray from `o` (in the cylinder's frame) at which it meets the upright cylinder
- *  { c: base, r, h, lift }, within `maxDist`; Infinity for none. A ray that STARTS inside a proxy is not blocked by it
- *  (a foe in a thicket still sees out of it, an arrow loosed from beside a trunk still flies). AUDIT TACT B2: and a
- *  SIGHT ray (`endAt`, its length) that ENDS inside one is not either - the law is two-way: one in a crown sees out of it AND
- *  is seen in it, never the one-way hiding place it was. A felled tree (FELLED) and a person (`c.noCover`) are no
- *  cover at all. */
+ *  { c: base, r, h, lift }, within `maxDist`; Infinity for none. From outside a ray meets its side. AUDIT FB1031 F1: a
+ *  ray with an end inside it meets it at its MIDDLE (COVER_MIDDLE_GRACE) - a ray that STARTS inside, there; a SIGHT
+ *  ray (`endAt`, its length) that ENDS inside in front of the middle (AUDIT TACT B2) not at all. A felled tree (FELLED)
+ *  and a person (`c.noCover`) are no cover at all. */
 export function rayCylinder(o, d, cyl, maxDist, endAt = null) {
   return rayUpright(o, d, cyl.c, cyl.r, cyl.h, cyl.lift ?? 0, maxDist, endAt);
 }
+/** AUDIT FB1031 F1: A PROXY'S MIDDLE - where a ray passes nearest its axis, where the flat's picture stands. A body in a
+ *  proxy on the far side of its middle from another is behind it both ways (unseen and blind, unshot and shooting
+ *  nothing); on the near side it sees and is seen both ways. A hold opened the whole proxy, and a clamp leaves a body
+ *  inside a wide flat's cover or a low crown: one pressed behind a rock or a young tree's trunk was shot through it.
+ *  Within this of the middle (a body's own radius, motor.js CAPSULE_RADIUS) a body is at it: the near side for both. */
+export const COVER_MIDDLE_GRACE = 0.35;
 /** COVER-COMPACT: rayCylinder over a proxy's own numbers - the index's columns ask it with no object a proxy. TRUNK-FOES:
  *  `holds` the points (flat x, y, z, in the cylinder's frame) of the bodies a missile's line strikes - a proxy holding one
- *  is not in front of it: one in a crown shoots out of it AND is shot in it, as the sight law (AUDIT TACT B2) sees. */
+ *  in front of its middle (AUDIT FB1031 F1) is not in front of it, as the sight law sees. */
 function rayUpright(o, d, c0, r, h, lift, maxDist, endAt, holds = null, nHolds = 0) {
   if (FELLED.has(c0) || c0.noCover) return Infinity;
-  const cx = c0[0], cy = c0[1] + lift, cz = c0[2], top = cy + h;
-  for (let k = 0; k < nHolds; k += 3) {
-    const hx = holds[k] - cx, hz = holds[k + 2] - cz, hy = holds[k + 1];
-    if (hx * hx + hz * hz <= r * r && hy >= cy && hy <= top) return Infinity;
-  }
+  const cx = c0[0], cy = c0[1] + lift, cz = c0[2], top = cy + h, rr = r * r;
   const ox = o[0] - cx, oz = o[2] - cz;
-  if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;
+  const a = d[0] * d[0] + d[2] * d[2];
+  const behind = (a > 1e-12 ? -(ox * d[0] + oz * d[2]) / a : Infinity) + COVER_MIDDLE_GRACE;   // AUDIT FB1031 F1: past its middle (a ray straight up or down crosses none)
   if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut
     const ex = ox + d[0] * endAt, ey = o[1] + d[1] * endAt, ez = oz + d[2] * endAt;
-    if (ex * ex + ez * ez <= r * r && ey >= cy && ey <= top) return Infinity;
+    if (ex * ex + ez * ez <= rr && ey >= cy && ey <= top && !(endAt > behind)) return Infinity;
+  }
+  for (let k = 0; k < nHolds; k += 3) {
+    const hx = holds[k] - cx, hz = holds[k + 2] - cz, hy = holds[k + 1];
+    if (hx * hx + hz * hz <= rr && hy >= cy && hy <= top && !(((hx - ox) * d[0] + (hz - oz) * d[2]) / a > behind)) return Infinity;
+  }
+  if (ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top) {   // from inside: met at its middle, where that lies ahead
+    const mid = behind - COVER_MIDDLE_GRACE, y = o[1] + d[1] * mid;
+    return mid > COVER_MIDDLE_GRACE && mid <= maxDist && y >= cy && y <= top ? mid : Infinity;
   }
   let best = Infinity;
   // the side
-  const a = d[0] * d[0] + d[2] * d[2];
   if (a > 1e-12) {
     const b = ox * d[0] + oz * d[2], c = ox * ox + oz * oz - r * r;
     const disc = b * b - a * c;

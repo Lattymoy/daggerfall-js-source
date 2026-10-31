@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS, sweepFrom, flightBodies, struckPoints } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS, sweepFrom, struckPoints } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
@@ -160,6 +160,20 @@ export function techniquePierces(m, ref) {
   (t.struck ??= []).push(ref);
   return t.struck.length < t.pierce;
 }
+/** AUDIT FB1031 F2: the bodies shaft `m` may strike, and no other (TRUNK-FOES' cover law reads them - a body it flies
+ *  through held cover open for it). A drawn one any body; a foe's me (`meetsMe`) and every foe but its shooter
+ *  (`meetsFoes`: DoCollision stops it on whatever it meets); mine the foes but a defender, a shipmate and a body its
+ *  technique passes - never me. The tests in ArrowFlight.update read the same. */
+export function shaftBodies(m, foeTargets, playerFeet, playerHeight, meetsMe, meetsFoes) {
+  const out = [];
+  for (const t of (m.visual || meetsFoes) ? foeTargets ?? [] : []) {
+    if (!t?.feet || t.ref?.dead || (!m.visual && t.ref === m.shooterFoe)) continue;
+    if (!m.visual && m.fromPlayer && (sparedByPlayer(t.ref) || (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))))) continue;
+    out.push({ feet: t.feet, height: t.ref?.ai?.height });   // the foe's capsule as the sweep below meets it
+  }
+  if (playerFeet && (m.visual || (m.enemy && meetsMe))) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });
+  return out;
+}
 /** AUDIT TECH1: A PIERCING SHAFT IS ONE SHAFT to a referee that counts blows by their sequence (net/arena/arenaBrain.js refBlow -
  *  ARENA4b: "each shaft its own blow", a swing through three bodies one). `q` the sequence the lane has just taken for
  *  this body (one past the last); answers the one it is struck under - the sequence its first body took, while that is
@@ -244,7 +258,7 @@ export class ArrowFlight {
 
   update(dt, { playerFeet = null, playerHeight = CAPSULE_HEIGHT, onPlayerHit = null, foeTargets = null, onFoeHit = null,
     onPlayerArrowHitFoe = null, boxTargets = null, onPlayerArrowHitBox = null } = {}) {
-    let live = 0, struckBy = null;
+    let live = 0;
     const c = typeof this._collider === 'function' ? this._collider() : this._collider;
     if (this._loot) pruneStuckArrows(this._loot);   // STUCK-ARROWS: a taken shaft's pile goes
     for (const m of this.arrows) {
@@ -276,7 +290,7 @@ export class ArrowFlight {
       const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb
       const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
       // TACT1: a tree, a crate - cover stops a shaft; AUDIT TACT B5: by touch, the bodies before it tested first
-      if (c?.cover?.on() && !struckBy) struckBy = flightBodies(foeTargets?.map((t) => t.ref), playerFeet, playerHeight);   // TRUNK-FOES: the bodies it may strike, once a frame
+      const struckBy = c?.cover?.on() ? shaftBodies(m, foeTargets, playerFeet, playerHeight, !!onPlayerHit, !!(m.enemy ? onFoeHit : m.fromPlayer && onPlayerArrowHitFoe)) : null;   // TRUNK-FOES: the bodies it may strike (AUDIT FB1031 F2: this shaft's own)
       const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach, false, struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), !!m.fromPlayer) : null;   // WALL-SHAFT: a player's shaft is swept (SHAFT-SWEEP), so a wall is met by touch and a foe before it first
       if (cs && Number.isFinite(cs.stop)) { this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
       const adv = cs ? step * cs.advance : step;

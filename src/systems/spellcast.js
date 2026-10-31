@@ -447,12 +447,24 @@ export function missileReach(dir, step) {
   return { unit: len === 1 ? dir : [dir[0] / len, dir[1] / len, dir[2] / len], reach: step * len + MISSILE_COLLIDER_RADIUS };
 }
 
-/** TRUNK-FOES: the bodies a flight may strike - the live foes' controllers (each foe's `ai`) and the player's capsule. */
+/** TRUNK-FOES: the bodies a flight may strike - the live foes' controllers (each foe's `ai`) and the player's capsule
+ *  (none for `playerFeet` null). AUDIT FB1031 F2: each flight hands the ones its missile may strike, and no other. */
 export function flightBodies(foes, playerFeet, playerHeight) {
   const out = [];
   for (const f of foes ?? []) if (f && !f.dead && f.ai?.feet) out.push(f.ai);
   if (playerFeet) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });
   return out;
+}
+/** AUDIT FB1031 F2: the bodies a dungeon missile `m` may strike, and no other (dungeonContext.js's flight: both sides'
+ *  shafts, the foes' spells, a peer's drawn ones) - a body it flies through held cover open for it. A drawn one stops on
+ *  any body; mine on a foe but a companion and one my technique struck, never me; a foe's shaft on me and every foe but
+ *  its shooter; a foe's spell on the foe it was loosed at while that stands, else on me (never at a peer's word). */
+export function dungeonMissileBodies(m, foes, playerFeet, playerHeight) {
+  if (m.visual) return flightBodies(foes, playerFeet, playerHeight);
+  if (m.fromPlayer) return flightBodies(foes?.filter((f) => f.companion == null && !m.technique?.struck?.includes(f)), null, playerHeight);
+  if (m.arrow) return flightBodies(foes?.filter((f) => f !== m.shooterFoe), playerFeet, playerHeight);
+  if (m.aimFoe && !m.aimFoe.dead) return flightBodies([m.aimFoe], null, playerHeight);
+  return flightBodies(null, m.aimFoe?.isPeer ? null : playerFeet, playerHeight);
 }
 const _at = [0, 0, 0];
 /** TRUNK-FOES: where the line of a missile at `pos` along the unit `unit` strikes each of `bodies` (flightBodies') - the

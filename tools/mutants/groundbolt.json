@@ -227,7 +227,7 @@
   {
     "name": "GROUNDBOLT-AUDIT-C6-dungeon-a-second-law",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, flightBodies(foes, playerFeet, playerHeight));",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight));",
     "new": "      const _cs = { stop: collider.raycast(m.pos, _unit, reach), advance: 1 };",
     "tests": [
       "test/scenes/groundbolt.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "GROUNDBOLT-AUDIT-D3-sky-past-my-ground",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, flightBodies(foes(), playerFeet, playerHeight));",
-    "new": "      const _cs = m.sky ? { stop: Infinity, advance: 1 } : flightStop(collider, m.pos, _unit, reach, step * _len, false, flightBodies(foes(), playerFeet, playerHeight));",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));",
+    "new": "      const _cs = m.sky ? { stop: Infinity, advance: 1 } : flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));",
     "tests": [
       "test/world/sunbaby2_phases.test.js"
     ]

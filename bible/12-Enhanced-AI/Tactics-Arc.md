@@ -132,7 +132,9 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
 
 - **The proxy** - `ai/cover.js`: a flat at least 1.2 m tall and 0.5 m wide is cover (not the editor's markers 199, the
   animals 201, the lights 210 or treasure 216); its proxy an upright cylinder of 0.35 x its drawn width in radius and
-  0.9 x its drawn height, at its BASE. A ray that starts inside one is not stopped by it (a foe in a thicket sees out).
+  0.9 x its drawn height, at its BASE. A ray that starts inside one is not stopped by it (a foe in a thicket sees out) -
+  since AUDIT FB1031 F1, the way it faces: a ray with an end in a proxy meets it at its middle (`03-World/Player-Arc.md`
+  TRUNK-FOES).
 - **The index** rides the collider (`collider.cover`, `createCoverIndex`), never in it: walking, the navmesh and every
   ground probe are unchanged. Sets are keyed like buckets and leave with them (`Collider.removeBucket`); a set's points
   are the batches' own base arrays by reference in its frame, so a recentre moves them and a felled tree sinks its own.

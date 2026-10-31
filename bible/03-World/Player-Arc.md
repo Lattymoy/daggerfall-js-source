@@ -2510,15 +2510,39 @@ a low crown shot out, and the player's arrows and spells did not reach it.
 lone foe too: the street's and the interior's pools, the watch, the dungeon). A foe whose feet stand in a NATURE body
 (`nature`: a tree or a still nature flat, the jungle's trunks, Valenwood's graht-oaks, the landmarks past the Bay) is put
 at its edge along the line from its middle in that frame, through the collider and never off an edge (FOE-SPACING's
-`nudge`). A made thing's body (a barrel, a statue, a cart) holds no foe: a street's or a dungeon's path is a navmesh's
-that knows no body, and a foe held at a barrel in a corridor would stand there. Each set keeps its bodies' box, so a foe
-asks only the sets near it: 30 foes over 121 pixels' 363,000 bodies, 0.09 ms a frame.
+`nudge`). A made thing's body (a barrel, a statue, a cart) holds no foe (AUDIT FB1031 F5, below). Each set keeps its
+bodies' box, so a foe asks only the sets near it: 30 foes over 121 pixels' 363,000 bodies, 0.09 ms a frame.
 
 **The missile** (`systems/spellcast.js` `flightBodies`, `struckPoints`; `ai/cover.js` `holds`). A step names the bodies
 its line would strike (missileHitsCapsule's law at its nearest pass: the live foes and the player), and a proxy that
 holds one is no wall in front of it - AUDIT TACT B2's two-way sight law, for a shot. The arrows (`arrowFlight.js`) and
 the one bolt law (`hostMagic.js` `flightStop`, the dungeon's too) pass them. A crown that holds nobody still stops a
-shot, and a trunk in front of a foe still shields it.
+shot.
+
+**AUDIT FB1031 F1 - the middle.** A hold opened a proxy whole, and a clamp leaves a body's axis at its body's edge:
+inside the cover of a flat drawn wider than its foot (35 nature records of ARENA2's climate archives - 504.19, a rock:
+foot 0.68 m, cover 1.29 m) and a young tree's low crown. A foe pressed behind the rock or a young banyan's trunk was
+shot through it, and a foe's arrow and bolt hit me pressed behind the rock. Now a ray with an end in a proxy -
+its start, a sight ray's end, a struck body's point - meets it at its MIDDLE, where the ray passes nearest its axis
+(`cover.js:"export const COVER_MIDDLE_GRACE = 0.35;"`, a body's radius about it). Near side of the middle, a body
+sees and is seen, shoots and is shot; behind it, neither. No pair is one-way.
+
+**AUDIT FB1031 F2, F3 - what a missile may strike.** Each flight lists only that (`hostMagic.js` `missileBodies`,
+`arrowFlight.js` `shaftBodies`, `spellcast.js` `dungeonMissileBodies`): a foe's bolt the player alone, a foe's shaft
+the player and every foe but its shooter, mine my own targets and marks - a duel's, a mate's, my companion's, the
+court's boss - never a defender, never the shooter. A foe in a crown had held it open for a foe's bolt at me, my own
+body for my shot out of one, and a duel opponent in a crown shot me while my spells stopped on it.
+
+**AUDIT FB1031 F4-F6.** F4: where the push meets a foe's way to its destination head on, it steps as far again along
+the edge toward that side (a fixed side dead on the line): a rat walking at a banyan's middle reaches the player in
+4.2 s, where it stood at the trunk for good. F5: a made thing holds no foe because no foe's steering reads a body - a
+street's pools have no navmesh, a room's and a dungeon's know none - and one pushed off a barrel in a street's corner
+would stand there (this said a street's path was a navmesh's). F6: the clamp's over-the-head half, the hold's span and
+the line ahead are pinned.
+
+Pins `test/characters/fb1031_foes.test.js`, `tools/mutants/fb1031_foes.json` (40, all dead). PIN MOVED: the old index's
+fixture asks the live ray law (`test/ai/fixtures/coverIndexBefore.mjs`), the flight call's source pins (tact1,
+groundbolt, wallshaft, roadh_tail), nine mutant records re-aimed by content.
 
 Pinned by `test/characters/trunkfoes.test.js` (a foe in a banyan's trunk at its edge in one frame, alone or in a pack;
 the Bay's trees and rocks, a graht-oak and a Hist out, a barrel and a statue not; the edge; the real encounter pool;

@@ -29,11 +29,12 @@
   {
     "name": "TACT1-inside-blocks",
     "file": "src/ai/cover.js",
-    "old": "  if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;",
-    "new": "\n",
+    "old": "  if (ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top) {   // from inside: met at its middle, where that lies ahead",
+    "new": "  if (false) {   // from inside: met at its middle, where that lies ahead",
     "tests": [
       "test/scenes/tact1.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT FB1031 F1): the start-inside law is the middle's now; unread, a ray from inside a crown meets its cap"
   },
   {
     "name": "TACT1-side-height-ignored",

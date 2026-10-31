@@ -1521,6 +1521,20 @@ export function createPlayerMagic({
     m.dead = true;
   }
 
+  /** AUDIT FB1031 F2, F3: the bodies `m` may strike, and no other - the list flightStop's cover law reads (a body it flies
+   *  through held cover open for it: a foe in a crown for a foe's bolt at me, a town defender for mine). A foe's strikes me
+   *  alone, never a shipmate's; mine my targets (never one sparedByPlayer, never me) and the marks its flags meet - a
+   *  mate's, my companion's, my duel's at a person's capsule, the court's boss at his own; a peer's drawn one any body. */
+  function missileBodies(m, playerFeet, playerHeight) {
+    const person = (feet, height) => ({ ai: { feet, height: height ?? CAPSULE_HEIGHT, radius: PLAYER_BODY_RADIUS } });
+    if (m.visual) return flightBodies([...foes(), ...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height))], playerFeet, playerHeight);
+    const byFoe = m.fromPlayer === false;
+    if (byFoe) return flightBodies(null, isShipmate(m.casterFoe) ? null : playerFeet, playerHeight);
+    const people = m.ally ? allyMarksFor(m.spell, false).concat(companionMarksFor(m.spell, false)) : [];
+    if (m.duel) people.push(...duelMarksFor(m.spell));
+    return flightBodies([...playerTargets(), ...people.map((p) => person(p.ai.feet, p.ai.height)), ...((m.boss ?? m.duel) ? bossMarksFor(m.spell) : [])], null, playerHeight);
+  }
+
   /** PLAYER spell missile flight: lifespan, the wall raycast (an
    *  AreaAtRange payload explodes AT THE IMPACT POINT - AUDIT 23
    *  magic-2, DaggerfallMissile.cs:399-402), advance, and the
@@ -1562,7 +1576,7 @@ export function createPlayerMagic({
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, flightBodies(foes(), playerFeet, playerHeight));   // GROUND-BOLT: a wall, cover or the ground outdoors (AUDIT B1: the last two by touch); TRUNK-FOES: never short of a body in cover
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));   // GROUND-BOLT: a wall, cover or the ground outdoors (AUDIT B1: the last two by touch); TRUNK-FOES: never short of a body in cover (AUDIT FB1031 F2: one it may strike)
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)

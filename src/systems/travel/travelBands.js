@@ -58,6 +58,15 @@ export const BAND_STAND_MIN_M = 18;
  *  this often (ms), this many times, before the band is lost - never spent unstood on the first refusal. */
 export const BAND_STAND_RETRY_MS = 1500;
 export const BAND_STAND_TRIES = 5;
+/** AUDIT FB1031 B1: where a band met with the view down stands round the traveller - its own bearing `yaw` (radians)
+ *  while that lies outside the camera's view, else just outside the view's edge on its own side (a fixed side dead
+ *  ahead), as CAMP-FAR stands a camp: FOV plus 0..4 degrees (campEncounters.js campAnchorSpot, whose 2-degree jitter
+ *  either way this allows for). At its own bearing every band stood mid-screen. Under the Overworld (`seen`) it stands
+ *  where it was watched coming (AUDIT OW5b B2). Answers campAnchorSpot's `yawRad` and `bearingDegrees`. */
+export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false) {
+  const edge = fovDegrees + 2, off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
+  return seen || Math.abs(off) >= edge ? { yawRad: yaw, bearingDegrees: 0 } : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
+}
 /** The bands the host is asked about: the cells within this many map pixels of the traveller. */
 export const BAND_REACH_PX = 6;
 const PIXEL_NATIVE = 32768;

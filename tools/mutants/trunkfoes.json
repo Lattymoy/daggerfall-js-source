@@ -44,8 +44,8 @@
   {
     "name": "TRUNK-FOES-the-push-past-the-edge-rule",
     "file": "src/characters/foeSpacing.js",
-    "old": "      if (nudge(ai, nx * (R - d), nz * (R - d), R, collider)) moved++;",
-    "new": "      if (collider.move(feet, nx * (R - d), 0, nz * (R - d), tall, true)) moved++;",
+    "old": "      if (nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider)) moved++;",
+    "new": "      if (collider.move(feet, nx * push - nz * side, 0, nz * push + nx * side, tall, true)) moved++;",
     "tests": ["test/characters/trunkfoes.test.js"]
   },
   {
@@ -107,7 +107,7 @@
   {
     "name": "TRUNK-FOES-the-holds-unread",
     "file": "src/ai/cover.js",
-    "old": "    if (hx * hx + hz * hz <= r * r && hy >= cy && hy <= top) return Infinity;\n",
+    "old": "    if (hx * hx + hz * hz <= rr && hy >= cy && hy <= top && !(((hx - ox) * d[0] + (hz - oz) * d[2]) / a > behind)) return Infinity;\n",
     "new": "",
     "tests": ["test/characters/trunkfoes.test.js"]
   },
@@ -170,14 +170,14 @@
   {
     "name": "TRUNK-FOES-the-bolt-s-bodies-none",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, flightBodies(foes(), playerFeet, playerHeight));",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));",
     "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false);",
     "tests": ["test/scenes/tact1.test.js"]
   },
   {
     "name": "TRUNK-FOES-the-dungeon-s-bolt-s-bodies-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, flightBodies(foes, playerFeet, playerHeight));",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight));",
     "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);",
     "tests": ["test/scenes/tact1.test.js"]
   }

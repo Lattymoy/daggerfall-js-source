@@ -342,8 +342,8 @@ whole 22 m tree by its foot's shade), and the door uploads nothing on a frame wi
 **No foe hides in a tree** (TRUNK-FOES, FIELD FEEDBACK 2026-10-31: "Jungle trees need better or more collision, enemies
 just hide in them it sucks."). A jungle trunk's body keeps a foe out as it keeps the player: a foe that walks or stands
 in one is put at its edge in that frame (`characters/foeSpacing.js` `keepFoesOffBodies`). A missile is not stopped by a
-trunk or a crown that a body its line strikes stands in - a young banyan's or flame tree's crown begins at 1.1-1.9 m, a
-chest's height. The bodies are the species', so every jungle holds them: the Bay's, Cyrodiil's and Blackwood's, and
+trunk or a crown that a body its line strikes stands in, in front of its middle - a young banyan's or flame tree's
+crown begins at 1.1-1.9 m, a chest's height - and one behind the middle is shielded (AUDIT FB1031 F1). The bodies are the species', so every jungle holds them: the Bay's, Cyrodiil's and Blackwood's, and
 Valenwood's under its graht-oaks (`Player-Arc.md` TRUNK-FOES).
 
 **A large tree gathering spot** (JUNGLE-WOODS, 2026-10-19, the owner: "The forest region we recently implemented should
