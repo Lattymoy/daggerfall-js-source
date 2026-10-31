@@ -122,11 +122,50 @@ const SNOW = {
 const LAB_HEAD = `#version 300 es
 precision highp float;
 `;
+/** Nearby building AABBs the lab rain hides under (WET1c shelter). */
+export const SHELTER_MAX = 24;
+export const SHELTER_REACH_M = 48;
+
+/**
+ * Pack nearby building AABBs into `xzOut` (minx,minz,maxx,maxz × N) and `yOut` (max y × N) for the lab shelter cull.
+ * Answers how many were written. Pure aside from writing the arrays.
+ * @param {Float32Array} xzOut @param {Float32Array} yOut
+ * @param {Array<{ aabb?: { min: number[], max: number[] } }>} buildings
+ * @param {number[]|Float32Array} eye
+ */
+export function packShelters(xzOut, yOut, buildings, eye) {
+  if (!xzOut?.length || !yOut?.length || !eye) return 0;
+  const reach2 = SHELTER_REACH_M * SHELTER_REACH_M;
+  /** @type {{ aabb: { min: number[], max: number[] }, d2: number }[]} */
+  const near = [];
+  for (const b of buildings ?? []) {
+    const box = b?.aabb;
+    if (!box?.min || !box?.max) continue;
+    const cx = (box.min[0] + box.max[0]) * 0.5, cz = (box.min[2] + box.max[2]) * 0.5;
+    const d2 = (cx - eye[0]) ** 2 + (cz - eye[2]) ** 2;
+    if (d2 > reach2) continue;
+    near.push({ aabb: box, d2 });
+  }
+  near.sort((a, b) => a.d2 - b.d2);
+  const cap = Math.min(SHELTER_MAX, (xzOut.length / 4) | 0, yOut.length | 0);
+  let n = 0;
+  for (; n < near.length && n < cap; n++) {
+    const { min, max } = near[n].aabb;
+    const o = n * 4;
+    xzOut[o] = min[0]; xzOut[o + 1] = min[2]; xzOut[o + 2] = max[0]; xzOut[o + 3] = max[2];
+    yOut[n] = max[1];
+  }
+  return n;
+}
+
 export const LAB_WX_VS = LAB_HEAD + `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
 uniform float uTime, uKind, uBox, uFall;
 uniform vec2 uWindV, uWindOff;
+uniform int uShelterN;
+uniform vec4 uShelterXZ[${SHELTER_MAX}];
+uniform float uShelterY[${SHELTER_MAX}];
 out float vT; out float vSeed;
 void main(){
   vSeed = aSeed.w;
@@ -156,6 +195,14 @@ void main(){
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   p.y -= uTime * fall;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
+  // WET1c: under a building AABB (porch, room, eaves) the drop is gone - depth alone cannot hide rain in open sky under a roof
+  for (int i = 0; i < ${SHELTER_MAX}; i++) {
+    if (i >= uShelterN) break;
+    vec4 b = uShelterXZ[i];
+    if (p.x >= b.x && p.x <= b.z && p.z >= b.y && p.z <= b.w && p.y < uShelterY[i] + 0.4) {
+      vT = 0.0; gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return;
+    }
+  }
   // PROTO-14 (7, Mac: the particles show upright at the start instead
   // of coming down). The streak was oriented from a velocity whose
   // horizontal part is the wind - and the billboard's side vector came
@@ -464,7 +511,13 @@ export class PrecipitationRenderer {
     const lp = buildProgram(gl, LAB_WX_VS, LAB_WX_FS);
     this.labProgram = lp;
     this.lab = {};
-    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff']) this.lab[u] = gl.getUniformLocation(lp, u);
+    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uShelterN', 'uShelterXZ', 'uShelterY']) this.lab[u] = gl.getUniformLocation(lp, u);
+    // shelter buffers may already hold this frame's pack (setShelters before the first drawLab)
+    if (!this._shelterXZ) {
+      this._shelterXZ = new Float32Array(SHELTER_MAX * 4);
+      this._shelterY = new Float32Array(SHELTER_MAX);
+      this._shelterN = 0;
+    }
     // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
     // own xorshift so the scatter is the lab's scatter
     const n = LAB_COUNTS.rain;
@@ -481,6 +534,16 @@ export class PrecipitationRenderer {
     gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
     gl.bindVertexArray(null);
     this.labVao = vao;
+  }
+
+  /**
+   * WET1c: buildings whose AABB hides rain under a roof or wall. Call before drawFall while it rains.
+   * @param {Array<{ aabb?: { min: number[], max: number[] } }>} buildings
+   * @param {number[]|Float32Array} eye
+   */
+  setShelters(buildings, eye) {
+    if (!this._shelterXZ) { this._shelterXZ = new Float32Array(SHELTER_MAX * 4); this._shelterY = new Float32Array(SHELTER_MAX); }
+    this._shelterN = packShelters(this._shelterXZ, this._shelterY, buildings, eye);
   }
 
   /** RAIN-CLOCK: the seconds the drawing frame hands its program - the
@@ -632,7 +695,13 @@ export class PrecipitationRenderer {
     gl.uniform1f(L.uFall, LAB_FALL[mode] ?? LAB_FALL.rain);
     gl.uniform2fv(L.uWindV, this.windV);
     gl.uniform2fv(L.uWindOff, this.windUpload());   // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
+    gl.uniform1i(L.uShelterN, this._shelterN | 0);   // WET1c: rain under a roof
+    if (this._shelterN > 0) {
+      gl.uniform4fv(L.uShelterXZ, this._shelterXZ);
+      gl.uniform1fv(L.uShelterY, this._shelterY);
+    }
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.DEPTH_TEST);   // walls and roofs occlude; an open 2D run left this off and rain drew through
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.labVao);

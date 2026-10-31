@@ -9,7 +9,7 @@
 // the tile array (uTileArr) for a neighbour's picture where the fragment draws one. `uRoadEdge` is the switch, a frame's
 // (renderer.js `roadEdges`, roadEdgesOn below): 0 draws every tile as DFU does - the classic skin, the kill door. It is
 // declared after the program's ROT and TRANS tables, which it turns a neighbour's picture by.
-import { ROAD_EDGE, ROAD_EDGE_WET, ROAD_PAVING } from '../world/road/roadEdge.js';
+import { ROAD_EDGE, ROAD_EDGE_WET, ROAD_PAVING, ROAD_RECORDS } from '../world/road/roadEdge.js';
 import { GROUND_RECORD_LIMIT } from '../world/terrain/terrainTiles.js';
 import { pageParam } from '../systems/pageQuery.js';   // the kill door
 import { isEnhanced } from '../systems/uiSkin.js';   // the skin
@@ -60,6 +60,7 @@ export function roadEdgeGlsl(decode = '') {
 uniform float uRoadEdge;   // 0: every tile its own, as DFU draws it
 const highp uvec2 RE_WET = uvec2(${ROAD_EDGE_WET[0]}u, ${ROAD_EDGE_WET[1]}u);   // the records that carry water, 0-31 and 32-63
 bool reRoad(highp uint d) { return (d >> 2u) == ${ROAD_PAVING}u; }   // the paving: its edge tiles are the ground's side
+bool reStone(highp uint d) { highp uint r = d >> 2u; return r == ${ROAD_RECORDS[0]}u || r == ${ROAD_RECORDS[1]}u || r == ${ROAD_RECORDS[2]}u; }   // WET1d: paving + its edges
 bool reTakes(highp uint d) { highp uint r = d >> 2u; return r < ${GROUND_RECORD_LIMIT}u && (((r < 32u ? (RE_WET.x >> r) : (RE_WET.y >> (r - 32u))) & 1u) == 0u); }
 ${EDGE_NOISE_GLSL}float reWander(vec2 p) {
   return ${ROAD_EDGE.wander.map((o, k) => `${f(o.amp)} * (2.0 * reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u) - 1.0)`).join(' + ')};
@@ -72,6 +73,23 @@ vec3 reTexel(highp uint d, highp ivec2 c, vec2 p, vec2 dux, vec2 duy) {
   l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));
   int t = int(d & 3u);
   return ${decode}(textureGrad(uTileArr, vec3(ROT[t] * l + TRANS[t], float(d >> 2u)), ROT[t] * dux, ROT[t] * duy).rgb);
+}
+// WET1d: the stones' share at p (0 soil .. 1 paving/edges), smeared by the same corner law the picture edge uses
+float roadAmt(highp uint data, vec2 p) {
+  bool ra = reStone(data);
+  if (uRoadEdge <= 0.0) return ra ? 1.0 : 0.0;
+  highp ivec2 c = clamp(ivec2(floor(p)), ivec2(0), ivec2(127));
+  vec2 fr = p - vec2(c);
+  highp ivec2 sg = ivec2(fr.x < 0.5 ? -1 : 1, fr.y < 0.5 ? -1 : 1);
+  highp ivec2 cb = c + ivec2(sg.x, 0), cc = c + ivec2(0, sg.y), cd = c + sg;
+  bool rb = reStone(reCell(cb)), rc = reStone(reCell(cc)), rd = reStone(reCell(cd));
+  if (ra == rb && ra == rc && ra == rd) return ra ? 1.0 : 0.0;
+  vec2 k = floor(p + 0.5);
+  vec2 s = p - (k - 0.5);
+  float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;
+  float wya = float(c.y) == k.y ? s.y : 1.0 - s.y, wyc = float(cc.y) == k.y ? s.y : 1.0 - s.y;
+  float lin = (ra ? wxa * wya : 0.0) + (rb ? wxb * wya : 0.0) + (rc ? wxa * wyc : 0.0) + (rd ? wxb * wyc : 0.0);
+  return smoothstep(${f(0.5 - s)}, ${f(0.5 + s)}, lin + reWander(p));
 }
 vec3 roadEdge(vec3 own, highp uint data, vec2 p, vec2 gx, vec2 gy, int t) {
   if (uRoadEdge <= 0.0 || !reTakes(data)) return own;

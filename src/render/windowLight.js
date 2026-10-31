@@ -11,6 +11,7 @@ import { buildLightClusterBoxes, LC_BOX, createClusterSpace, CLUSTER_X, CLUSTER_
 import { roomSeedBits, roomLitAt, curtainBitsOf, roomCurtained, curtainEdges, ROOM_CURTAIN_EDGE } from '../world/windowRoomArt.js';
 import { pageParam } from '../systems/pageQuery.js';
 import { WL_REC, APERTURE_CELL_REC, windowAperturesOf } from './windowApertures.js';
+import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js';   // WET1d: how soft a window is in a puddle
 
 export { WL_REC, windowAperturesOf };
 
@@ -309,8 +310,9 @@ const f = (x) => { const s = Number(x).toFixed(6).replace(/0+$/, ''); return s.e
  *  `clusters` whether the program declares LC1's grid itself (the classic set: the lane's EL_CLUSTER_GLSL already does).
  *  winLit(wp, n, isFlat, flatSun): what the frame's window lights add at a point (a flat passes no normal and its sun
  *  map's word, read once a quad - LA-COST3's vBBSunVis).
- * @param {{ atten?: string, shadow?: boolean | 'flat', clusters?: boolean }} [opts] */
-export function windowLightGlsl({ atten = 'wlClassicAtten(rl, r)', shadow = false, clusters = false } = {}) {
+ *  `wetGlint` the wet ground's mirror of the glass (needs AIR_CONTACT_GLSL above - the enhanced lane only).
+ * @param {{ atten?: string, shadow?: boolean | 'flat', clusters?: boolean, wetGlint?: boolean }} [opts] */
+export function windowLightGlsl({ atten = 'wlClassicAtten(rl, r)', shadow = false, clusters = false, wetGlint = false } = {}) {
   return `
 // WL1: WINDOW LIGHT (render/windowLight.js)
 layout(std140) uniform WinLights { vec4 uWinL[${WL_MAX_LIGHTS * WL_VEC4}]; };
@@ -423,6 +425,88 @@ vec3 winLit(vec3 wp, vec3 n, float isFlat, float flatSun) {
   }
   return acc;
 }
+${wetGlint ? `// WET1d: the glass itself in wet ground at wp - mirror ray into the aperture's mask (a row of panes is the mask, not
+// one lamp), V toward the eye; pw tightens the lobe. Occlusion marches the previous depth along the ray past a bush
+// (contactShadow's 0.6 m is too short for a shrub between the puddle and the pane). Needs AIR_CONTACT_GLSL above.
+float winGlintOcc(vec3 wp, vec3 n, vec3 dir, float dist) {
+  float len = min(dist, 10.0);
+  if (len < 0.08) return 1.0;
+  vec3 start = wp + n * ${f(0.02)};
+  vec4 c0 = uPrevVP * vec4(start, 1.0);
+  if (c0.w <= 0.0) return 1.0;
+  vec2 uv0 = c0.xy / c0.w * 0.5 + 0.5;
+  if (uv0.x < 0.0 || uv0.x > 1.0 || uv0.y < 0.0 || uv0.y > 1.0) return 1.0;
+  vec4 dc = uPrevVP * vec4(dir * (len / 8.0), 0.0);
+  float occ = 0.0;
+  for (int s = 1; s <= 8; s++) {
+    vec4 c = c0 + dc * float(s);
+    if (c.w <= 0.0) break;
+    vec2 uv = c.xy / c.w * 0.5 + 0.5;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) break;
+    float z = texture(uPrevDepth, prevDepthUV(uv)).r * 2.0 - 1.0;
+    float behind = c.w - uPrevProjInfo.w / (z + uPrevProjInfo.z);
+    occ = max(occ, smoothstep(0.02, 0.1, behind) * (1.0 - smoothstep(0.6, 1.2, behind)));
+  }
+  return mix(1.0, ${f(0.15)}, occ);
+}
+// scatter 0 = stones/road, 1 = soil - soil always softens more than paving at the same distance
+vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) {
+  if (uWinOn == 0) return vec3(0.0);
+  ivec2 tc = clamp(ivec2((gl_FragCoord.xy - uClusterRect.xy) * uClusterRect.zw), ivec2(0), ivec2(${CLUSTER_X - 1}, ${CLUSTER_Y - 1}));
+  int zc = clamp(int(log(max((dot(uCamFwd.xyz, wp) + uCamFwd.w) * uClusterZ.x, 1.0)) * uClusterZ.y), 0, ${CLUSTER_Z - 1});
+  highp uvec2 cell = texelFetch(uClusterGrid, ivec2(tc.x + tc.y * ${CLUSTER_X}, zc + ${WL_GRID_ROW}), 0).rg;
+  int cnt = int(cell.y);
+  vec3 R = reflect(-V, n);
+  if (R.y < 0.02) return vec3(0.0);
+  float soil = clamp(scatter, 0.0, 1.0);
+  vec3 acc = vec3(0.0);
+  for (int j = 0; j < ${WL_MAX_LIGHTS}; j++) {
+    if (j >= cnt) break;
+    highp int at = ${WL_LIST_BASE} + int(cell.x) + j;
+    int i = int(texelFetch(uClusterList, ivec2(at & ${CLUSTER_LIST_W - 1}, at >> ${Math.log2(CLUSTER_LIST_W)}), 0).r) * ${WL_VEC4};
+    vec4 c0 = uWinL[i], c3 = uWinL[i + 3], c5 = uWinL[i + 5];
+    if ((int(c5.w + 0.5) >> 8) != 0) continue;   // lamp panes only
+    float dn = dot(R, c3.xyz);
+    if (dn >= -1e-3) continue;   // ray into the wall or past the glass
+    float t = -dot(wp - c0.xyz, c3.xyz) / dn;
+    if (t < 0.05 || t > c0.w) continue;
+    float winD = length(c0.xyz - uCamPos);
+    float blur = clamp(smoothstep(${f(WIN_GLINT_NEAR_M)}, ${f(WIN_GLINT_FAR_M)}, winD) + soil * 0.7, 0.0, 1.0);
+    float fade = 1.0 - smoothstep(${f(WIN_GLINT_FAR_M)}, ${f(WIN_GLINT_FADE_M)}, winD);
+    if (fade < 0.02) continue;
+    float pwSoft = mix(pw, max(pw * 0.45, 80.0), blur);
+    vec3 hit = wp + R * t;
+    vec4 c1 = uWinL[i + 1], c2 = uWinL[i + 2], c4 = uWinL[i + 4];
+    vec3 w = hit - c0.xyz;
+    float a = dot(w, c1.xyz), b = dot(w, c2.xyz);
+    float ax = abs(a), bx = abs(b);
+    // soil: falloff from the centre even up close; road keeps a tighter pane (+25% soft vs the first stone dial)
+    float softIn = mix(mix(0.33, 0.0, blur), 0.0, soil * 0.85);
+    float softOut = mix(mix(0.65, 0.95, blur), mix(0.7, 1.0, blur), soil);
+    float soft = (1.0 - smoothstep(softIn, softOut, ax)) * (1.0 - smoothstep(softIn, softOut, bx));
+    if (soft < 0.02) continue;
+    float lod = mix(${f(WIN_GLINT_LOD0)}, ${f(WIN_GLINT_LOD1)}, blur) + soil * 1.8;
+    float layer = float(int(c5.w + 0.5) & 255);
+    float tap = mix(0.005, 0.03, blur) + soil * 0.025;
+    vec2 uv = vec2(c1.w + a * c3.w, c2.w + b * c4.w);
+    float m = (
+      textureLod(uWinMask, vec3(uv, layer), lod).r
+      + textureLod(uWinMask, vec3(uv + vec2(tap, 0.0), layer), lod).r
+      + textureLod(uWinMask, vec3(uv - vec2(tap, 0.0), layer), lod).r
+      + textureLod(uWinMask, vec3(uv + vec2(0.0, tap), layer), lod).r
+      + textureLod(uWinMask, vec3(uv - vec2(0.0, tap), layer), lod).r
+    ) * 0.2;
+    if (m <= 0.02) continue;
+    vec3 H = normalize(R + V);
+    float vh = 1.0 - clamp(dot(V, H), 0.0, 1.0);
+    float lobe = pow(max(dot(n, H), 0.0), pwSoft) * (0.04 + 0.96 * vh * vh * vh * vh * vh);
+    float gain = mix(1.0, 0.4, blur) * mix(1.0, 0.55, soil) * fade;
+    acc += c5.rgb * (m * soft * lobe * gain * winGlintOcc(wp, n, R, t) / (1.0 + 0.04 * t));
+  }
+  return acc;
+}
+` : `vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) { return vec3(0.0); }
+`}
 `;
 }
 

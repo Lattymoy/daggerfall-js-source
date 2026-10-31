@@ -6248,6 +6248,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         precip.windV[0] = wd.windV[0]; precip.windV[1] = wd.windV[1];
         precip.windOff[0] += wd.step[0]; precip.windOff[1] += wd.step[1];
       }
+      precip.setShelters?.(staticBuildings, eye32);   // WET1c: no fall under a roof
       precip.drawFall(precipShown, proj, view, eye32, camRight, now / 1000);   // PRECIP1: at the air's snow share
       renderer.markForeignPass();   // EV6: so did the rain
     }

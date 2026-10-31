@@ -10,7 +10,7 @@ import {
 } from '../../../src/systems/weather/wetness.js';
 import { EL_TERRAIN_FS, EL_MESH_FS } from '../../../src/render/enhancedLighting.js';
 import { snowTerrainFs } from '../../../src/render/snowfallGlsl.js';
-import { RIPPLE_RATE, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE } from '../../../src/render/wetGlsl.js';
+import { RIPPLE_RATE, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE, PUDDLE_DARK, PUDDLE_GLOSS, PUDDLE_SHEEN_SOIL, PUDDLE_STRETCH, WIN_GLINT_LOD0 } from '../../../src/render/wetGlsl.js';
 import { LAB_WX_FS } from '../../../src/render/precipitation.js';
 import { Renderer } from '../../../src/render/renderer.js';
 
@@ -106,4 +106,31 @@ test('WET1b: soil stays matte, a road sheens, a puddle mirrors, and the puddle e
   assert.ok(EL_TERRAIN_FS.includes('wetGlossGround(wetW, road)') && EL_TERRAIN_FS.includes('elSpecK'));
   assert.ok(!EL_MESH_FS.includes('wetGlossGround(wetW'), 'a wall is not a road');
   assert.match(LAB_WX_FS, /smoothstep\(0\.0,0\.35,vT\) \* 0\.22/);
+});
+
+test('WET1d: a puddle is dark water with a point of each lamp and lit window in it; soil stays matte', () => {
+  assert.ok(PUDDLE_DARK <= 0.25, 'a lamp\'s diffuse pool on the water reads as matte stone');
+  assert.ok(PUDDLE_GLOSS >= 4000, 'a tall Blinn column needs a tight lobe and a stretch squeeze');
+  assert.ok(PUDDLE_STRETCH >= 5, 'squeeze along the view on the ground shortens the lamp streak');
+  assert.ok(WIN_GLINT_LOD0 >= 0.5, 'stone panes scatter a quarter more than the first dial');
+  assert.ok(WET_SHEEN_SOIL <= WET_SHEEN_ROAD / 10, 'soil sheen is a tenth of a road\'s');
+  assert.ok(PUDDLE_SHEEN_SOIL <= 0.15, 'a soil puddle is damp, not glass');
+  assert.ok(EL_TERRAIN_FS.includes('elWetPow = mix('), 'the ground tightens the lobe in a puddle');
+  assert.ok(EL_TERRAIN_FS.includes('road = roadAmt(data, unwrapped)'), 'soil↔stones smear at the paving\'s edge');
+  assert.ok(EL_TERRAIN_FS.includes('soilK = mix(0.1, 1.0, road)'), 'soil\'s lamp and window glints are a tenth');
+  assert.ok(EL_TERRAIN_FS.includes('winGlint(vWorldPos, n, wetV, elWetPow, soilScatter)'), 'a lit window glints in the puddle');
+  assert.ok(EL_TERRAIN_FS.includes('soilScatter = (1.0 - road) * 0.4'), 'soil scatters more than stone, lightly');
+  assert.ok(EL_TERRAIN_FS.includes('reflect(-V, n)'), 'the glass is mirrored, not the lamp');
+  assert.ok(EL_TERRAIN_FS.includes('winGlintOcc('), 'a bush between the puddle and the pane hides it');
+  assert.ok(EL_TERRAIN_FS.includes('length(c0.xyz - uCamPos)'), 'blur follows distance to the window, not the puddle underfoot');
+  assert.ok(EL_TERRAIN_FS.includes('softIn') && EL_TERRAIN_FS.includes('fade'), 'far dissolves the hard square, not only the lattice');
+  assert.ok(EL_TERRAIN_FS.includes('mix(0.33, 0.0, blur)'), 'stone softIn is a quarter wider');
+  assert.ok(EL_TERRAIN_FS.includes('PUDDLE_STRETCH') || EL_TERRAIN_FS.includes('exp(-a * a / t2'), 'lamp streak is squeezed along the view');
+  assert.ok(!EL_MESH_FS.includes('winGlint(vWorldPos'), 'a wall is not a puddle');
+});
+
+test('WET1c: rain runs down a roof and off its face, not down a wall or the ground', () => {
+  assert.ok(EL_MESH_FS.includes('roofRunoff(wetAlbedo'), 'the building shader runs it');
+  assert.ok(EL_MESH_FS.includes('smoothstep(0.4, 0.72, n.y) * uWet.w'), 'only an upward face, and only while rain falls');
+  assert.ok(!EL_TERRAIN_FS.includes('roofRunoff(wetAlbedo'), 'the ground is puddles, not a roof');
 });
