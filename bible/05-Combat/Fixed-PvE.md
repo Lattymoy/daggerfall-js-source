@@ -323,3 +323,6 @@ Elite, three for a boss, five for a raid boss. The corpse's roll ladders all of 
 OVER-GEAR (the owner's pick, 2026-10-31: "Cut gear past 10 levels over"): a template foe 10 or more levels under the
 character it rolls for drops no gear, only its gold and supplies, so a high character gains nothing farming a starter
 zone (`pveDropGear.js` `stripOverGear`). The gate is the character's real level, Mentor Mode's or not.
+
+CLOTH-DROPS (the owner, 2026-10-31: "cloaks", "that works"): a person (a class body) carries a piece of clothing 30% of
+the time, of any kind, and one in four of them is a cloak. A ranked foe's extra pieces may be clothing too.

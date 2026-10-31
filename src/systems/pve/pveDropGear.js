@@ -2,15 +2,26 @@
 // FIXED-PVE TEMPLATE-DROPS (bible/05-Combat/Fixed-PvE.md section 20): the gear pveDrops.js names, minted as Daggerfall
 // mints a random piece (ItemBuilder.CreateRandomWeapon, CreateRandomArmor, CreateRandomJewellery) at the foe's level.
 // The corpse's roll ladders it after. Ledger A (FIXED-PVE).
-import { createRandomWeapon, createRandomArmor, createRandomJewellery } from '../loot/loot.js';
-import { setItemFields, mintCondition, isAmmunition } from '../item/itemTemplates.js';
+import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomClothing } from '../loot/loot.js';
+import { setItemFields, mintCondition, isAmmunition, ITEM_TEMPLATES } from '../item/itemTemplates.js';
 import { templateGearKinds, OVER_GEAR_LEVELS } from './pveDrops.js';
+
+/** CLOTH-DROPS: the cloaks of each clothing group (ItemTemplates: Casual and Formal Cloak). */
+const CLOAKS = Object.freeze({ MensClothing: [154, 155], WomensClothing: [191, 192] });
+/** A clothing piece (ItemBuilder.CreateRandomClothing), made a cloak when `cloak`: its dye kept, its variant one the cloak has. */
+function clothPiece(entity, cloak, rolls) {
+  const c = createRandomClothing(entity?.gender === 'female' || (entity?.gender == null && rolls() < 0.5) ? 'female' : 'male', rolls);
+  if (!cloak) return c;
+  const pick = CLOAKS[c.group][Math.min(1, Math.floor(rolls() * 2))];
+  return { ...c, templateIndex: pick, variant: c.variant % Math.max(1, ITEM_TEMPLATES[pick]?.variants ?? 1) };
+}
 
 /** Push template foe `entity`'s own gear onto its `entity.items`; answers the pieces. @param {any} entity @param {() => number} rolls */
 export function addTemplateGear(entity, rolls = Math.random) {
   const level = Math.max(1, Number(entity?.level) | 0), out = [];
   for (const kind of templateGearKinds(entity, rolls)) {
-    const raw = kind === 'jewel' ? createRandomJewellery(rolls) : kind === 'weapon' ? createRandomWeapon(level, rolls) : createRandomArmor(level, rolls);
+    const raw = kind === 'jewel' ? createRandomJewellery(rolls) : kind === 'weapon' ? createRandomWeapon(level, rolls)
+      : kind === 'armor' ? createRandomArmor(level, rolls) : clothPiece(entity, kind === 'cloak', rolls);
     if (raw && !isAmmunition(raw)) out.push(mintCondition(setItemFields(raw)));
   }
   if (out.length) (entity.items ??= []).push(...out);

@@ -11,6 +11,9 @@ import { SPECIES } from './pveSpecies.js';
 export const DROP_JEWEL = Object.freeze({ caster: 0.5, other: 0.15 });
 /** The share of creature (no class body) template foes that carry a weapon or a piece of armour. */
 export const DROP_CREATURE_GEAR = 0.3;
+/** CLOTH-DROPS (the owner, 2026-10-31: "cloaks", "that works"): the share of people (a class body) that carry a piece of
+ *  clothing, and the share of a clothing piece that is a cloak. */
+export const DROP_CLOTH = Object.freeze({ people: 0.3, cloak: 0.25 });
 /** The pieces of any kind a ranked foe carries past those, by its category. */
 export const DROP_RANK_PIECES = Object.freeze({ normal: 0, strong: 1, elite: 2, champion: 2, boss: 3, raidBoss: 5 });
 
@@ -23,15 +26,21 @@ export function templateDropSource(entity, base) {
   return { ...base, tier: Math.max(1, Number(entity.level) | 0), boss: spellRanked(entity) };
 }
 
-/** The kinds of gear template foe `entity` carries past its table, drawn on `rolls`: 'jewel', 'weapon' or 'armor'.
+/** The kinds of gear template foe `entity` carries past its table, drawn on `rolls`: 'jewel', 'weapon', 'armor', 'cloth'
+ *  or 'cloak'.
  *  None for any other foe. @param {any} entity @param {() => number} rolls */
 export function templateGearKinds(entity, rolls = Math.random) {
   if (!entity?.pveTemplate) return [];
   const body = bodyOf(entity.mobileType), out = [];
   if (rolls() < (body?.casts ? DROP_JEWEL.caster : DROP_JEWEL.other)) out.push('jewel');
   if (body?.kind !== 'class' && rolls() < DROP_CREATURE_GEAR) out.push(rolls() < 0.5 ? 'weapon' : 'armor');
+  const cloth = () => (rolls() < DROP_CLOTH.cloak ? 'cloak' : 'cloth');
+  if (body?.kind === 'class' && rolls() < DROP_CLOTH.people) out.push(cloth());
   const extra = entity.eliteFoe ? Math.max(DROP_RANK_PIECES.elite, DROP_RANK_PIECES[entity.pveCategory] ?? 0) : DROP_RANK_PIECES[entity.pveCategory] ?? 0;
-  for (let i = 0; i < extra; i++) out.push(['jewel', 'weapon', 'armor'][Math.min(2, Math.floor(rolls() * 3))]);
+  for (let i = 0; i < extra; i++) {
+    const k = ['jewel', 'weapon', 'armor', 'cloth'][Math.min(3, Math.floor(rolls() * 4))];
+    out.push(k === 'cloth' ? cloth() : k);
+  }
   return out;
 }
 
