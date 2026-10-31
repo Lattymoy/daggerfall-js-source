@@ -259,8 +259,16 @@ try {
   );
   const cold = await draw({ kit: 'aaaa0', eye: FRONT, kindle: 0, pts: [crownTop, chest, shin] });
   check('nothing at all before it kindles', cold.lit === 0 && cold.drawn === 0, `${cold.lit} lit, ${cold.drawn} drawn`);
-  const beast = await draw({ kit: 'aaaa0', eye: FRONT, torn: 1, pts: [crownTop] });
-  check('nothing on a beast', beast.lit === 0, `${beast.lit} lit`);
+  const beast = await draw({ kit: 'aaaa0', eye: FRONT, torn: 1, pts: [crownTop, chest, shin] });
+  await shot('rig_beast_dagonfire_front');
+  check(
+    'WOLF-KIT turned beast: the crown off, the heart and the stride still worn',
+    beast.px[0] < bare.px[0] + 30 &&
+      beast.px[1] > bare.px[1] + 90 &&
+      beast.px[2] > bare.px[2] + 60 &&
+      beast.drawn === 3,
+    `${beast.px.join(', ')}, drawn ${beast.drawn}`,
+  );
   const e = await draw({
     kit: 'bbbb0',
     eye: FRONT,

@@ -47,8 +47,8 @@
   {
     "name": "LOOT9-shard-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "LOOT9-salvage-magic-two",
     "file": "src/systems/reforge.js",
-    "old": "export const SALVAGE_SHARDS = Object.freeze({ magic: 1, rare: 3, legendary: 8, exalted: 15 });",
-    "new": "export const SALVAGE_SHARDS = Object.freeze({ magic: 2, rare: 3, legendary: 8, exalted: 15 });",
+    "old": "magic: 1, rare: 3, legendary: 8, exalted: 15",
+    "new": "magic: 2, rare: 3, legendary: 8, exalted: 15",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "LOOT9-exalted-as-legendary",
     "file": "src/systems/reforge.js",
-    "old": "  if (t === 'legendary') return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
-    "new": "  if (t === 'legendary') return SALVAGE_SHARDS.legendary;",
+    "old": "return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
+    "new": "return SALVAGE_SHARDS.legendary;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "LOOT9-dfu-magic-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  const t = item?.rarity;",
-    "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);",
+    "old": "  const t = item?.rarity;\n  if (t === 'legendary')",
+    "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);\n  if (t === 'legendary')",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "LOOT9-aetheric-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === 'aetheric') return 'aetheric';",
-    "new": "",
+    "old": "  if (item.rarity === 'aetheric') return 'aetheric';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "LOOT9-quest-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.questItem) return 'quest';",
-    "new": "",
+    "old": "  if (item.questItem) return 'quest';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "LOOT9-bound-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (isBound(item)) return 'bound';",
-    "new": "",
+    "old": "  if (isBound(item)) return 'bound';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "LOOT9-locked-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (isLocked(item)) return 'locked';\n  return null;",
-    "new": "  return null;",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "LOOT9-salvage-gives-nothing",
     "file": "src/systems/reforge.js",
-    "old": "  addItem(items, welkyndShards(shards));\n  return { ok: true, shards };",
-    "new": "  return { ok: true, shards };",
+    "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
+    "new": "  items.splice(items.indexOf(item), 1);",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "LOOT9-spend-when-short",
     "file": "src/systems/reforge.js",
-    "old": "  if (shardsHeld(items) < n) return false;",
-    "new": "",
+    "old": "  if (shardsHeld(items) < n) return false;\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "LOOT9-unknown-reforged",
     "file": "src/systems/reforge.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';",
-    "new": "",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LOOT9-any-line",
     "file": "src/systems/reforge.js",
-    "old": "  if (!lines.includes(index)) return 'line';",
-    "new": "",
+    "old": "  if (!lines.includes(index)) return 'line';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "LOOT9-short-of-shards",
     "file": "src/systems/reforge.js",
-    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';",
-    "new": "",
+    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "LOOT9-short-of-gold",
     "file": "src/systems/reforge.js",
-    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';",
-    "new": "",
+    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n",
+    "new": "\n",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LOOT9-no-gold-paid",
     "file": "src/systems/reforge.js",
-    "old": "  deductGold(player, price.gold);\n  noteAct('piece-reforged'); // QL11: a piece reforged - paid, its line replaced",
-    "new": "  noteAct('piece-reforged'); // QL11: a piece reforged - paid, its line replaced",
+    "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
+    "new": "  spendShards(player.items, price.shards);",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "LOOT9-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  reforged: int({ min: 0, max: 15 }), // LOOT9 (bible/06-Systems/Loot-Arc.md section 11): the one line the Reforge had rolled again (its index) - REFORGE-REPLACE: an old piece's, read as one reforge taken (lootRarity.js reforgeCount), never a lock; a reforge folds it into `reforges`",
-    "new": "  reforgedX: int({ min: 0, max: 15 }), // LOOT9 (bible/06-Systems/Loot-Arc.md section 11): the one line the Reforge had rolled again (its index) - REFORGE-REPLACE: an old piece's, read as one reforge taken (lootRarity.js reforgeCount), never a lock; a reforge folds it into `reforges`",
+    "old": "  reforged: int({ min: 0, max: 15 }),",
+    "new": "  reforgedX: int({ min: 0, max: 15 }),",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "LOOT9-popup-no-key",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY; // LOOT9: the Reforge's row, its key F - the one sound below",
-    "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ'; // LOOT9: the Reforge's row, its key F - the one sound below",
+    "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;",
+    "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ';",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

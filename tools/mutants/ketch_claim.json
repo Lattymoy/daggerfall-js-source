@@ -83,11 +83,12 @@
   {
     "name": "KTR-the-cards-without-the-voyages",
     "file": "server-account/src/index.js",
-    "old": "stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
-    "new": "stars: await starRecordOf(ctx, who.player.id), renown:",
+    "old": "stars, ketch, renown, marks }",
+    "new": "stars, renown, marks }",
     "tests": [
       "test/server/ketch_claim.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "KTR-a-knock-with-no-session",

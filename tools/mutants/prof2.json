@@ -109,8 +109,8 @@
   {
     "name": "PROF2-12-wayrest-loses-its-seat",
     "file": "src/net/kingdomLaw.js",
-    "old": "  wayrest: Object.freeze({\n    id: 'wayrest',\n    name: 'Wayrest',\n    regions: regions(23, 33, 34, 35, 36, 37, 5, 38, 39, 40, 57),\n  }),",
-    "new": "  wayrest: Object.freeze({ id: 'wayrest', name: 'Wayrest', regions: regions(33, 34, 35, 36, 37, 5, 38, 39, 40, 57) }),",
+    "old": "regions: regions(23, 33, 34,",
+    "new": "regions: regions(33, 34,",
     "tests": [
       "test/net/prof2_law.test.js",
       "test/net/prof2_client.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "PROF2-15-origin-rounds-down",
     "file": "src/net/professionLaw.js",
-    "old": "    if (!inp.catalyst) b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
-    "new": "    if (!inp.catalyst) b = Math.max(b, Math.floor(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "old": "b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "new": "b = Math.max(b, Math.floor(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
     "tests": [
       "test/net/prof2_law.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "PROF2-30-clean-with-one-glint",
     "file": "src/systems/mineAct.js",
-    "old": "      return { strikes: st.strikes, glints: st.glints, clean: !gentle && st.glints === st.strikes };",
-    "new": "      return { strikes: st.strikes, glints: st.glints, clean: !gentle && st.glints > 0 };",
+    "old": "clean: !gentle && st.glints === st.strikes };",
+    "new": "clean: !gentle && st.glints > 0 };",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "PROF2-37-ingots-undyed",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  // PROF3: a Repair Kit's picture is the Warhammer's, dyed by the metal it mends (the item's `kitMetal`, profTemplates.js kitDye)",
-    "new": "  // PROF3: a Repair Kit's picture is the Warhammer's, dyed by the metal it mends (the item's `kitMetal`, profTemplates.js kitDye)",
+    "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n",
+    "new": "",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "DAEDRIC-SMELT-heart-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "const LOOSE = new Map([...GRADED_GEMS, DAEDRA_HEART].map((m) => [m.key, m])); // PROF7: the hides, leathers, cloth and a body's DFU parts; PROF8: the sea's Pearl; AUDIT-SEATS: the Siege-cracked Gem; PROF11: the bench's Mortar; SEAT2b part two: the Ram Kit; PROF12: the Apothecaries' sixteen and Arcane Essence; DAEDRIC-SMELT: the Daedra's Heart",
-    "new": "const LOOSE = new Map(GRADED_GEMS.map((m) => [m.key, m])); // PROF7: the hides, leathers, cloth and a body's DFU parts; PROF8: the sea's Pearl; AUDIT-SEATS: the Siege-cracked Gem; PROF11: the bench's Mortar; SEAT2b part two: the Ram Kit; PROF12: the Apothecaries' sixteen and Arcane Essence; DAEDRIC-SMELT: the Daedra's Heart",
+    "old": "const LOOSE = new Map([...GRADED_GEMS, DAEDRA_HEART].map((m) => [m.key, m]));",
+    "new": "const LOOSE = new Map(GRADED_GEMS.map((m) => [m.key, m]));",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/daedricsmelt_service.test.js"
@@ -468,8 +468,8 @@
   {
     "name": "DAEDRIC-SMELT-a-chain-plans-it",
     "file": "src/net/chainLaw.js",
-    "old": "  !!r && !r.spec && !r.embers && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
-    "new": "  !!r && !r.spec && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
+    "old": "!!r && !r.spec && !r.embers && r.inputs.every(",
+    "new": "!!r && !r.spec && r.inputs.every(",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/craft1_chain.test.js"
@@ -627,8 +627,8 @@
   {
     "name": "DEEP-OPEN-card-dungeons-the-surface",
     "file": "src/ui/oreMapTip.js",
-    "old": "    t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) }),",
-    "new": "    t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(table) }),",
+    "old": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) })",
+    "new": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(table) })",
     "tests": [
       "test/net/deepopen.test.js",
       "test/ui/fb1011_oremap.test.js"

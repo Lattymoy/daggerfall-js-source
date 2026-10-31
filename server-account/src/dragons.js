@@ -40,8 +40,11 @@ export async function dragonSlainOf({ db }, playerId) {
 }
 /** An account's own dragons, for its own card and its claim: `{ slain, tamed }`. */
 export async function dragonRecordOf({ db }, playerId) {
-  const m = await db.prepare('SELECT COUNT(*) AS n FROM dragon_mounts WHERE account = ?1').bind(playerId).first();
-  return { ...(await dragonSlainOf({ db }, playerId)), tamed: int(m?.n) };
+  const [m, slain] = await Promise.all([
+    db.prepare('SELECT COUNT(*) AS n FROM dragon_mounts WHERE account = ?1').bind(playerId).first(),
+    dragonSlainOf({ db }, playerId),
+  ]); // AURA-FAST
+  return { ...slain, tamed: int(m?.n) };
 }
 /** An account's tamed dragons: `[{ id, character, look, watch }]` - the mount's provenance (DRAGON5). */
 export async function dragonMountsOf({ db }, playerId) {

@@ -30,8 +30,8 @@
   {
     "name": "C8-binder-tradeable",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -100,8 +100,8 @@
   {
     "name": "C8-two-binders",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  if (binderOf(entity.items)) return 0;\n  addItem(entity.items, mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }]));",
-    "new": "  addItem(entity.items, mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }]));",
+    "old": "  if (binderOf(entity.items)) return 0;\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -114,8 +114,8 @@
   {
     "name": "C8-gift-every-load",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  if ((Number.isSafeInteger(entity.binderGift) ? entity.binderGift : 0) >= BINDER_GIFT) return 0;\n  entity.binderGift = BINDER_GIFT;",
-    "new": "  entity.binderGift = BINDER_GIFT;",
+    "old": "  if ((Number.isSafeInteger(entity.binderGift) ? entity.binderGift : 0) >= BINDER_GIFT) return 0;\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -128,8 +128,8 @@
   {
     "name": "C8-no-starter-deck",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  addItem(entity.items, mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }]));",
-    "new": "  addItem(entity.items, mintBinder([]));",
+    "old": "mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }])",
+    "new": "mintBinder([])",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -156,8 +156,8 @@
   {
     "name": "C8-decks-mutated",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  binder.decks = decks;",
-    "new": "  if (Array.isArray(binder.decks)) binder.decks.splice(0, binder.decks.length, ...decks);\n  else binder.decks = decks;",
+    "old": "  decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };\n  binder.decks = decks;",
+    "new": "  decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };\n  if (Array.isArray(binder.decks)) binder.decks.splice(0, binder.decks.length, ...decks); else binder.decks = decks;",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",

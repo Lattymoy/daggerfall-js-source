@@ -93,20 +93,22 @@
   {
     "name": "RAID4-account-without-raids",
     "file": "server-account/src/index.js",
-    "old": "raids: await raidRecordOf(ctx, who.player.id), ",
-    "new": "",
+    "old": "nowS), duels, gates, raids, serpents,",
+    "new": "nowS), duels, gates, serpents,",
     "tests": [
       "test/net/raid4_rewards.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "RAID4-inspect-without-raids",
     "file": "server-account/src/index.js",
-    "old": ", raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonSlainOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
-    "new": ", serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonSlainOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
+    "old": "...duels, gates, raids, serpents,",
+    "new": "...duels, gates, serpents,",
     "tests": [
       "test/net/raid4_rewards.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "RAID4-route-unlisted",

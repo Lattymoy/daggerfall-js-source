@@ -52,8 +52,8 @@
   {
     "name": "WALLET1-is-wallet-group",
     "file": "src/systems/walletItem.js",
-    "old": "export const isWalletItem = (/** @type {any} */ item) =>\n  item?.templateIndex === WALLET_TEMPLATE && item?.group === 'UselessItems2';",
-    "new": "export const isWalletItem = (/** @type {any} */ item) => item?.templateIndex === WALLET_TEMPLATE;",
+    "old": "item?.templateIndex === WALLET_TEMPLATE && item?.group === 'UselessItems2';",
+    "new": "item?.templateIndex === WALLET_TEMPLATE;",
     "why": "any group's 580 read as a wallet",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "WALLET1-holds-no-letters",
     "file": "src/systems/walletItem.js",
-    "old": "export const WALLET_HOLDS = Object.freeze([LETTER_OF_CREDIT_TEMPLATE, SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
-    "new": "export const WALLET_HOLDS = Object.freeze([SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
+    "old": "Object.freeze([LETTER_OF_CREDIT_TEMPLATE, SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
+    "new": "Object.freeze([SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
     "why": "the letters of credit left on the pages",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "WALLET1-holds-anything",
     "file": "src/systems/walletItem.js",
-    "old": "export const walletHolds = (/** @type {any} */ item) => !!item && WALLET_HOLDS.includes(item.templateIndex);",
-    "new": "export const walletHolds = (/** @type {any} */ item) => !!item;",
+    "old": "!!item && WALLET_HOLDS.includes(item.templateIndex);",
+    "new": "!!item;",
     "why": "the wallet holds every piece (the Portal Stone, itself)",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "WALLET1-gift-mark-unread",
     "file": "src/systems/walletItem.js",
-    "old": "  if ((Number.isSafeInteger(entity.walletGift) ? entity.walletGift : 0) >= WALLET_GIFT) return 0;\n  entity.walletGift = WALLET_GIFT;",
-    "new": "  entity.walletGift = WALLET_GIFT;",
+    "old": "  if ((Number.isSafeInteger(entity.walletGift) ? entity.walletGift : 0) >= WALLET_GIFT) return 0;\n",
+    "new": "",
     "why": "a character marked as given one given one again",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "WALLET1-silver-nonsense",
     "file": "src/systems/walletItem.js",
-    "old": "    return Number.isSafeInteger(n) && n >= 0 ? n : null;",
-    "new": "    return n;",
+    "old": "return Number.isSafeInteger(n) && n >= 0 ? n : null;",
+    "new": "return n;",
     "why": "a reader's nonsense believed",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "WALLET1-silver-negative",
     "file": "src/systems/walletItem.js",
-    "old": "    return Number.isSafeInteger(n) && n >= 0 ? n : null;",
-    "new": "    return Number.isSafeInteger(n) ? n : null;",
+    "old": "return Number.isSafeInteger(n) && n >= 0 ? n : null;",
+    "new": "return Number.isSafeInteger(n) ? n : null;",
     "why": "a negative balance counted",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "WALLET1-silver-reader-unread",
     "file": "src/systems/walletItem.js",
-    "old": "    const n = _silver?.() ?? null;",
-    "new": "    const n = null;",
+    "old": "const n = _silver?.() ?? null;",
+    "new": "const n = null;",
     "why": "the host's silver never read",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "WALLET1-contents-worn",
     "file": "src/systems/walletItem.js",
-    "old": "  const held = (Array.isArray(items) ? items : []).filter((it) => walletHolds(it) && !isEquipped(it));",
-    "new": "  const held = (Array.isArray(items) ? items : []).filter((it) => walletHolds(it));",
+    "old": ".filter((it) => walletHolds(it) && !isEquipped(it));",
+    "new": ".filter((it) => walletHolds(it));",
     "why": "a worn crystal counted in the wallet and taken off the doll's",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "WALLET1-contents-stacks",
     "file": "src/systems/walletItem.js",
-    "old": "  const count = (t) =>\n    held.reduce((n, it) => n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0);",
-    "new": "  const count = (t) => held.reduce((n, it) => n + (it.templateIndex === t ? 1 : 0), 0);",
+    "old": "n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0)",
+    "new": "n + (it.templateIndex === t ? 1 : 0)",
     "why": "a stack counted as one",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "WALLET1-letters-gold",
     "file": "src/systems/walletItem.js",
-    "old": "    letters: {\n      count: letters.length,\n      gold: letters.reduce((g, it) => g + Math.max(0, Math.trunc(Number(it.value) || 0)), 0),\n    },",
-    "new": "    letters: { count: letters.length, gold: letters.reduce((g, it) => g, 0) },",
+    "old": "g + Math.max(0, Math.trunc(Number(it.value) || 0))",
+    "new": "g",
     "why": "the letters worth nothing",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "WALLET1-gold-unread",
     "file": "src/systems/walletItem.js",
-    "old": "    gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),",
-    "new": "    gold: 0,",
+    "old": "gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),",
+    "new": "gold: 0,",
     "why": "the purse's gold never counted",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "WALLET1-lines-none",
     "file": "src/systems/walletItem.js",
-    "old": "  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });",
-    "new": "  ) => ({ key, label, figure: num(n), none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });",
+    "old": "figure: n ? num(n) : 'none', none: !n",
+    "new": "figure: num(n), none: !n",
     "why": "nothing held said as 0",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -222,7 +222,7 @@
   {
     "name": "WALLET1-use-unregistered",
     "file": "src/systems/walletItem.js",
-    "old": "registerItemUseHandler(WALLET_TEMPLATE, (item) => ({ kind: 'wallet', item }));\n",
+    "old": "registerItemUseHandler(WALLET_TEMPLATE, (item) => ({ kind: 'wallet', item }));",
     "new": "",
     "why": "the wallet's Use DFU's 'nothing happens'",
     "tests": [
@@ -232,8 +232,8 @@
   {
     "name": "WALLET1-bound-put-pack-only",
     "file": "src/systems/item/itemBound.js",
-    "old": "  isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));",
-    "new": "  isBound(item) && !BOUND_KEEPS.includes(kind);",
+    "old": "isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));",
+    "new": "isBound(item) && !BOUND_KEEPS.includes(kind);",
     "why": "the law lets a pack-only piece into the wagon and the storage",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "WALLET1-pack-only-unread",
     "file": "src/systems/item/itemBound.js",
-    "old": "export const isPackOnly = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.packOnly === true;",
-    "new": "export const isPackOnly = (/** @type {any} */ item) => false;",
+    "old": "templateByIndex(item?.templateIndex)?.packOnly === true;",
+    "new": "false;",
     "why": "no piece is pack-only",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "WALLET1-pack-only-words",
     "file": "src/systems/item/itemBound.js",
-    "old": "export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} stays in your pack.`;",
-    "new": "export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} is bound to you.`;",
+    "old": "`${name || 'That'} stays in your pack.`",
+    "new": "`${name || 'That'} is bound to you.`",
     "why": "the refusal in another piece's words",
     "tests": [
       "test/systems/wallet1.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "WALLET1-realm-blind",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "why": "the realm's trade service takes a wallet",
     "tests": [
       "test/systems/wallet1.test.js",
@@ -313,8 +313,8 @@
   {
     "name": "WALLET1-page-wallet-misc",
     "file": "src/ui/packPages.js",
-    "old": "  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE))\n    return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
-    "new": "  if (VALUABLES.has(g) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
+    "old": "if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems'",
+    "new": "if (VALUABLES.has(g) || (g === 'MiscItems'",
     "why": "the wallet off Valuables",
     "tests": [
       "test/systems/wallet1.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "WALLET1-hotbar-silent",
     "file": "src/systems/quickslots.js",
-    "old": "    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));\n    refreshWalletSilver();",
-    "new": "    refreshWalletSilver();",
+    "old": "    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));\n",
+    "new": "",
     "why": "a wallet pressed on the hotbar says nothing",
     "tests": [
       "test/systems/wallet1.test.js"

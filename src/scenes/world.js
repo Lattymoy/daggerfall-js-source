@@ -1176,6 +1176,7 @@ import { setItemFields, mintCondition } from '../systems/item/itemTemplates.js';
 import { registerItemUseHandler } from '../systems/item/itemTemplates.js';   // CSA-H: the boat items' UseItem on the item-use door
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAway/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
+import { createMusicBoxScore } from '../systems/musicBox.js';   // MUSIC-BOX: a house's music box holds the music in its room
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
@@ -1226,6 +1227,7 @@ import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): a dungeon's window holds its foes offline alone
 import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createPortalBookHost } from './portalBookHost.js'; import { isPortalBook } from '../systems/gate/gateSpoils.js';   // PORTAL-BOOK: the kept house doors
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
@@ -11939,7 +11941,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const packDoors = {
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
-    openPortal: (item, list) => openPortalStone(item, list),   // PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
+    openPortal: (item, list) => (isPortalBook(item) ? portalBook.open() : openPortalStone(item, list)),   // PORTAL-BOOK: the book's window; PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
     // U42: USING the Spellbook item opens the book
     // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
     // the slot, so this bypasses toggleSpellbook's already-open guard
@@ -15156,7 +15158,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+  const { openPortalStone, portalArrive, portalHoldNow, openToSpot } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
     _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
     hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
     worldMoveBusy,
@@ -15168,6 +15170,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
+    get modes() { return modes; }, get campToScene() { return campToScene; },   // PORTAL-BOOK: the landing at a kept door
+  });
+  const portalBook = createPortalBookHost({   // PORTAL-BOOK (scenes/portalBookHost.js): the Portal Book's window
+    townTalk, playerEntity, mode: _mode, house: () => modes?.portalBookHere?.() ?? null, pixel: () => playerTravelPixel(),
+    townName: (px) => portalGates.destOf(px.x, px.y)?.name ?? null, campToWire: (p) => campToWire(p),
+    openToSpot: (spot) => openToSpot(spot), saved: () => saveSoon.changed(),
   });
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
@@ -18547,7 +18555,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const auraHost = createAuraHost({
     renderer, online: () => online, travelActive: () => !!travelView?.active, quiet: () => !!egClient?.quiet?.(), player: () => player, camYaw: () => cam.yaw,
     spawned: () => playerSpawned, beast: () => !!liveLycanthropy(playerEntity)?.isTransformed, veiled: (id) => _veils.has(id), toScene: (shown) => onlineToScene(shown),
-    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
+    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0, remotePlayers?.spriteRecordOf(d.id)) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
   });
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
@@ -22635,6 +22643,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
   let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
   const _hourScore = createHourScore();
+  const musicBoxScore = createMusicBoxScore({ music, here: (id) => modes?.musicBoxHere?.(id) === true });   // MUSIC-BOX (systems/musicBox.js): last of the scores, before the director
   const _spireScore = createSpireScoreHost({ music, now: () => Date.now() + _sharedOffsetMs });   // EG-G2: the Spire's score holds the music before the Hour's (systems/eliteGates/egScore.js)
   const sdScoreWhere = () => {
     if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
@@ -30149,7 +30158,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
     const frameMusic = () => {   // PERF-V8 (AUDIT SOUNDSCAPE: the sea's score in the chain put the host's frame past three quarters of the ceiling)
-    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),

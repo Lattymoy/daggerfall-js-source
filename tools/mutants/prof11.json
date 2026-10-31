@@ -2,8 +2,8 @@
   {
     "name": "PROF11-mortar-tier-one",
     "file": "src/net/professionLaw.js",
-    "old": "export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, null);",
-    "new": "export const MORTAR = made('stone:mortar', 'stone', 1, 675, 'Mortar', ICON_LODESTONE, null);",
+    "old": "made('stone:mortar', 'stone', 2, 675,",
+    "new": "made('stone:mortar', 'stone', 1, 675,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "PROF11-mortar-another-template",
     "file": "src/net/professionLaw.js",
-    "old": "export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, null);",
-    "new": "export const MORTAR = made('stone:mortar', 'stone', 2, 676, 'Mortar', ICON_LODESTONE, null);",
+    "old": "made('stone:mortar', 'stone', 2, 675,",
+    "new": "made('stone:mortar', 'stone', 2, 676,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "PROF11-mortar-dyed",
     "file": "src/net/professionLaw.js",
-    "old": "export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, null);",
-    "new": "export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, 'Iron');",
+    "old": "'Mortar', ICON_LODESTONE, null);",
+    "new": "'Mortar', ICON_LODESTONE, 'Iron');",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -60,7 +60,7 @@
   {
     "name": "PROF11-mortar-template-never-written",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "registerCustomTemplates(MASONRY_TEMPLATE_ROWS);\n",
+    "old": "registerCustomTemplates(MASONRY_TEMPLATE_ROWS);",
     "new": "",
     "tests": [
       "test/systems/prof11_client.test.js"
@@ -100,8 +100,8 @@
   {
     "name": "PROF11-quarryman-one-to-two",
     "file": "src/net/professionLaw.js",
-    "old": "const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per: 2, rank: 50 });",
-    "new": "const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per: 1, rank: 50 });",
+    "old": "spec: 'quarryman', per: 2, rank: 50 });",
+    "new": "spec: 'quarryman', per: 1, rank: 50 });",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -111,8 +111,8 @@
   {
     "name": "PROF11-quarryman-at-100",
     "file": "src/net/professionLaw.js",
-    "old": "const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per: 2, rank: 50 });",
-    "new": "const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per: 2, rank: 100 });",
+    "old": "spec: 'quarryman', per: 2, rank: 50 });",
+    "new": "spec: 'quarryman', per: 2, rank: 100 });",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "PROF11-work-at-the-workbench",
     "file": "src/net/professionLaw.js",
-    "old": "    ...recipe(id, out, inputs, { station: 'mason', xp: 'masonry', ...opts }),",
-    "new": "    ...recipe(id, out, inputs, { station: 'workbench', xp: 'masonry', ...opts }),",
+    "old": "recipe(id, out, inputs, { station: 'mason', xp: 'masonry', ...opts })",
+    "new": "recipe(id, out, inputs, { station: 'workbench', xp: 'masonry', ...opts })",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "PROF11-work-raises-smithing",
     "file": "src/net/professionLaw.js",
-    "old": "    ...recipe(id, out, inputs, { station: 'mason', xp: 'masonry', ...opts }),",
-    "new": "    ...recipe(id, out, inputs, { station: 'mason', xp: 'smithing', ...opts }),",
+    "old": "recipe(id, out, inputs, { station: 'mason', xp: 'masonry', ...opts })",
+    "new": "recipe(id, out, inputs, { station: 'mason', xp: 'smithing', ...opts })",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -161,8 +161,8 @@
   {
     "name": "PROF11-cut-one-to-one",
     "file": "src/net/professionLaw.js",
-    "old": "  masonWork('cut:stone', CUT_STONE.key, [[ROUGH_STONE.key, CUT_RATIO]], ROUGH_STONE.tier, { more: QUARRYMAN }),",
-    "new": "  masonWork('cut:stone', CUT_STONE.key, [[ROUGH_STONE.key, 1]], ROUGH_STONE.tier, { more: QUARRYMAN }),",
+    "old": "[[ROUGH_STONE.key, CUT_RATIO]]",
+    "new": "[[ROUGH_STONE.key, 1]]",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -172,8 +172,8 @@
   {
     "name": "PROF11-cut-at-cut-stone-tier",
     "file": "src/net/professionLaw.js",
-    "old": "  masonWork('cut:stone', CUT_STONE.key, [[ROUGH_STONE.key, CUT_RATIO]], ROUGH_STONE.tier, { more: QUARRYMAN }),",
-    "new": "  masonWork('cut:stone', CUT_STONE.key, [[ROUGH_STONE.key, CUT_RATIO]], CUT_STONE.tier, { more: QUARRYMAN }),",
+    "old": "CUT_RATIO]], ROUGH_STONE.tier,",
+    "new": "CUT_RATIO]], CUT_STONE.tier,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -246,8 +246,8 @@
   {
     "name": "PROF11-builder-locked-again",
     "file": "src/net/professionLaw.js",
-    "old": "      spec('builder', 'Builder', 'Fortification projects need 10% less stone.'),",
-    "new": "      spec('builder', 'Builder', 'Fortification projects need 10% less stone.', 'SEAT2b'),",
+    "old": "spec('builder', 'Builder', 'Fortification projects need 10% less stone.')",
+    "new": "spec('builder', 'Builder', 'Fortification projects need 10% less stone.', 'SEAT2b')",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -256,8 +256,8 @@
   {
     "name": "PROF11-fortifier-locked-again",
     "file": "src/net/professionLaw.js",
-    "old": "      spec('fortifier', 'Fortifier', \"Once a Season a seat's Walls skip their drop on capture.\"),",
-    "new": "      spec('fortifier', 'Fortifier', \"Once a Season a seat's Walls skip their drop on capture.\", 'SEAT2b'),",
+    "old": "\"Once a Season a seat's Walls skip their drop on capture.\")",
+    "new": "\"Once a Season a seat's Walls skip their drop on capture.\", 'SEAT2b')",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "PROF11-builder-rounds-down",
     "file": "src/net/professionLaw.js",
-    "old": "  return builder ? Math.ceil((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
-    "new": "  return builder ? Math.floor((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
+    "old": "return builder ? Math.ceil((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
+    "new": "return builder ? Math.floor((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "PROF11-builder-ignored",
     "file": "src/net/professionLaw.js",
-    "old": "  return builder ? Math.ceil((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
-    "new": "  return need;",
+    "old": "return builder ? Math.ceil((need * (100 - BUILDER_STONE_OFF_PCT)) / 100) : need;",
+    "new": "return need;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "PROF11-builder-any-need",
     "file": "src/net/professionLaw.js",
-    "old": "  if (!Number.isSafeInteger(need) || need <= 0) return 0;",
-    "new": "  if (need <= 0) return 0;",
+    "old": "  if (!Number.isSafeInteger(need) || need <= 0) return 0;\n  return builder",
+    "new": "  if (need <= 0) return 0;\n  return builder",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "PROF11-builder-cuts-every-material",
     "file": "src/net/professionLaw.js",
-    "old": "  for (const [key, n] of Object.entries(needs ?? {}))\n    out[key] = minedMaterial(key)?.family === 'stone' ? fortificationStone(n, builder) : n;",
-    "new": "  for (const [key, n] of Object.entries(needs ?? {})) out[key] = fortificationStone(n, builder);",
+    "old": "out[key] = minedMaterial(key)?.family === 'stone' ? fortificationStone(n, builder) : n;",
+    "new": "out[key] = fortificationStone(n, builder);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "PROF11-fortifier-any-count",
     "file": "src/net/professionLaw.js",
-    "old": "export const fortifierReady = (saves = 0) =>\n  (Number.isSafeInteger(saves) ? saves : FORTIFIER_SAVES_A_SEASON) < FORTIFIER_SAVES_A_SEASON;",
-    "new": "export const fortifierReady = (saves = 0) => saves < FORTIFIER_SAVES_A_SEASON;",
+    "old": "(Number.isSafeInteger(saves) ? saves : FORTIFIER_SAVES_A_SEASON) < FORTIFIER_SAVES_A_SEASON",
+    "new": "saves < FORTIFIER_SAVES_A_SEASON",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "PROF11-fortifier-saves-nothing",
     "file": "src/net/professionLaw.js",
-    "old": "  if (t === 0) return { tier: 0, saved: false };\n  if (fortifier === true && fortifierReady(saves)) return { tier: t, saved: true };",
-    "new": "  if (fortifier === true && fortifierReady(saves)) return { tier: t, saved: true };",
+    "old": "  if (t === 0) return { tier: 0, saved: false };\n",
+    "new": "",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "PROF11-decor-model-its-template",
     "file": "src/net/recipeLaw.js",
-    "old": "  STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.model ?? null;",
-    "new": "  STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.templateIndex ?? null;",
+    "old": "?.model ?? null;",
+    "new": "?.templateIndex ?? null;",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "PROF11-decor-one-mortar",
     "file": "src/net/recipeLaw.js",
-    "old": "        Object.freeze({ key: MORTAR.key, n: d.mortar }),",
-    "new": "        Object.freeze({ key: MORTAR.key, n: 1 }),",
+    "old": "Object.freeze({ key: MORTAR.key, n: d.mortar })",
+    "new": "Object.freeze({ key: MORTAR.key, n: 1 })",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "PROF11-sculptor-at-50",
     "file": "src/net/recipeLaw.js",
-    "old": "  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
-    "new": "  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[50] === r.spec);",
+    "old": "(!r.spec || specs?.[100] === r.spec)",
+    "new": "(!r.spec || specs?.[50] === r.spec)",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -507,8 +507,8 @@
   {
     "name": "PROF11-sculptor-unasked",
     "file": "src/net/recipeLaw.js",
-    "old": "export const recipeOpen = (r, rank, specs = null) =>\n  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
-    "new": "export const recipeOpen = (r, rank, specs = null) => !!r && !r.later && rank >= r.rank && true;",
+    "old": "(!r.spec || specs?.[100] === r.spec)",
+    "new": "true",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -535,7 +535,7 @@
   {
     "name": "PROF11-decor-rows-never-written",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "registerCustomTemplates(STONE_DECOR_ROWS);\n",
+    "old": "registerCustomTemplates(STONE_DECOR_ROWS);",
     "new": "",
     "tests": [
       "test/systems/prof11_client.test.js"
@@ -544,8 +544,8 @@
   {
     "name": "PROF11-stonework-unlisted",
     "file": "src/net/marketLaw.js",
-    "old": "  Object.freeze(['stonework', 'Stonework']),\n  // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each",
-    "new": "  // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each",
+    "old": "  Object.freeze(['stonework', 'Stonework']),\n",
+    "new": "",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof5_law.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "PROF11-stone-not-delivered",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "export const isFurnishing = (item) =>\n  item?.group === 'Furniture' &&\n  (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
-    "new": "export const isFurnishing = (item) => item?.group === 'Furniture' && FURNITURE_TEMPLATES.includes(item?.templateIndex);",
+    "old": " || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
+    "new": ");",
     "tests": [
       "test/systems/prof11_client.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "PROF11-stone-given-looks",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "  if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null; // PROF11: a carving stands as its own model",
-    "new": "  if (FURNISH_PILLOWS.has(t)) return null; // PROF11: a carving stands as its own model",
+    "old": "if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null;",
+    "new": "if (FURNISH_PILLOWS.has(t)) return null;",
     "tests": [
       "test/systems/prof11_client.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "PROF11-chisel-band-strength-alone",
     "file": "src/net/recipeLaw.js",
-    "old": "export const chiselBand = ({ strength, endurance }) => actBand(Math.trunc((strength + endurance) / 2));",
-    "new": "export const chiselBand = ({ strength, endurance }) => actBand(Math.trunc((strength + strength) / 2));",
+    "old": "actBand(Math.trunc((strength + endurance) / 2));",
+    "new": "actBand(Math.trunc((strength + strength) / 2));",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "PROF11-chisel-carving-any-furniture",
     "file": "src/net/recipeLaw.js",
-    "old": "export const chiselStrikes = (r) => (r?.family === 'stonework' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes);",
-    "new": "export const chiselStrikes = (r) => (r?.kind === 'furniture' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes);",
+    "old": "(r?.family === 'stonework' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes)",
+    "new": "(r?.kind === 'furniture' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes)",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "PROF11-chisel-master-past-100",
     "file": "src/net/recipeLaw.js",
-    "old": "  (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
-    "new": "  (rank > PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "old": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "new": "(rank > PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "PROF11-chisel-band-ignored",
     "file": "src/net/recipeLaw.js",
-    "old": "export const chiselMarkS = (rank, band = 1) =>\n  (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
-    "new": "export const chiselMarkS = (rank, band = 1) => (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS);",
+    "old": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "new": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "PROF11-xp-clean-a-quarter",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);",
-    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);",
+    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);\n  return xp;\n}",
+    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);\n  return xp;\n}",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -744,8 +744,8 @@
   {
     "name": "PROF11-xp-any-units",
     "file": "src/net/recipeLaw.js",
-    "old": "  let xp = CRAFT_XP_PER_TIER * masonTier(rank) * (Number.isSafeInteger(units) && units > 0 ? units : 0);",
-    "new": "  let xp = CRAFT_XP_PER_TIER * masonTier(rank) * units;",
+    "old": "(Number.isSafeInteger(units) && units > 0 ? units : 0)",
+    "new": "(units)",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -771,8 +771,8 @@
   {
     "name": "PROF11-act-one-move-a-frame",
     "file": "src/systems/chiselAct.js",
-    "old": "      while (st.markLeft <= 0) {",
-    "new": "      if (st.markLeft <= 0) {",
+    "old": "while (st.markLeft <= 0) {",
+    "new": "if (st.markLeft <= 0) {",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "PROF11-act-lead-unbounded",
     "file": "src/systems/chiselAct.js",
-    "old": "      const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "      const l = Math.max(0, Number(lead) || 0);",
+    "old": "const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "const l = Math.max(0, Number(lead) || 0);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "PROF11-act-judged-at-the-frame",
     "file": "src/systems/chiselAct.js",
-    "old": "      const marked = l >= st.markLeft ? st.next : st.mark;",
-    "new": "      const marked = st.mark;",
+    "old": "const marked = l >= st.markLeft ? st.next : st.mark;",
+    "new": "const marked = st.mark;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "PROF11-act-no-mallet-fall",
     "file": "src/systems/chiselAct.js",
-    "old": "      if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
-    "new": "      if (st.done) return null;",
+    "old": "if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "new": "if (st.done) return null;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "PROF11-act-strikes-after-the-end",
     "file": "src/systems/chiselAct.js",
-    "old": "      if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
-    "new": "      if (at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "old": "if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "new": "if (at - st.lastAt < CHISEL_ACT.gapS) return null;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -834,8 +834,8 @@
   {
     "name": "PROF11-act-short-clean",
     "file": "src/systems/chiselAct.js",
-    "old": "      return { strikes: st.strikes.length, hits, clean: st.strikes.length >= st.need && hits === st.strikes.length };",
-    "new": "      return { strikes: st.strikes.length, hits, clean: hits === st.strikes.length };",
+    "old": "clean: st.strikes.length >= st.need && hits === st.strikes.length",
+    "new": "clean: hits === st.strikes.length",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "PROF11-act-chisel-at-the-edge",
     "file": "src/systems/chiselAct.js",
-    "old": "    at: Math.floor(lines / 2),",
-    "new": "    at: 0,",
+    "old": "at: Math.floor(lines / 2),",
+    "new": "at: 0,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -871,8 +871,8 @@
   {
     "name": "PROF11-act-any-tick",
     "file": "src/systems/chiselAct.js",
-    "old": "      if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
-    "new": "      if (st.done) return;",
+    "old": "if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
+    "new": "if (st.done) return;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -1215,8 +1215,8 @@
   {
     "name": "PROF11-svc-first-500-for-a-smelt",
     "file": "src/net/recipeLaw.js",
-    "old": "for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
-    "new": "for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
+    "old": "if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
+    "new": "if (firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
     "tests": [
       "test/net/prof11_service.test.js",
       "test/net/prof3_law.test.js"

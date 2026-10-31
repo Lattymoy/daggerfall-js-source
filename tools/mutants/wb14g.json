@@ -2,8 +2,8 @@
   {
     "name": "WB14g-the-chained-knight-s-bit",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const receiptPortents = (f) => portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
-    "new": "export const receiptPortents = (f) => portentBits(f?.pt ?? []);",
+    "old": "portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0))",
+    "new": "portentBits(f?.pt ?? [])",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB14g-the-night-s-bits-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const receiptPortents = (f) => portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
-    "new": "export const receiptPortents = (f) => 0 * portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0));",
+    "old": "export const receiptPortents = (f) => portentBits(",
+    "new": "export const receiptPortents = (f) => 0 * portentBits(",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB14g-a-p-past-every-bit",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'))\n    return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
-    "new": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.x !== 'rite')) return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
+    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
+    "new": "c.p >= 1 && c.x !== 'rite'",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB14g-a-p-on-the-rite-s-ember",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'))\n    return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
-    "new": "  if (c.p !== undefined && !(Number.isInteger(c.p) && c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX)) return false; // WB14g: optional - a plain night's, and one minted before it, carry none; a rite's ember never",
+    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
+    "new": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB14g-a-p-of-0-written",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "  ...(p > 0 ? { p } : {}),",
-    "new": "  ...(p !== undefined ? { p } : {}),",
+    "old": "...(p > 0 ? { p } : {})",
+    "new": "...(p !== undefined ? { p } : {})",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WB14g-a-portent-receipt-at-the-plain-odds",
     "file": "server-account/src/eg.js",
-    "old": "      .bind(\n        player.id,\n        c.d,\n        drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0,\n        EG_KEY_PITY,\n      ); // WB14g: a portent night's at the rite's",
-    "new": "      .bind(player.id, c.d, drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY); // WB14g: a portent night's at the rite's",
+    "old": "c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS",
+    "new": "c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "WB14g-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct230'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
-    "new": "export const ACCOUNT_VERSION = 'acct159'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "old": "export const ACCOUNT_VERSION = 'acct232'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "new": "export const ACCOUNT_VERSION = 'acct159'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ],

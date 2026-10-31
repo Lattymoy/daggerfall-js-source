@@ -168,7 +168,7 @@ test('HUNTERS-MARK THE GATHERED LOG AND THE COLLECTIONS PAGE\'S PARTS: a fish lo
   const species = speciesOfHaul(node, 231);
   assert.deepEqual(gatheredOf('fish')[species.templateIndex], { n: 1, day: 20724 }, 'once, on the haul key\'s day');
   // the parts
-  assert.deepEqual(GATHERED_PARTS.map(([id]) => id), ['trophies', 'fish', 'annals']);
+  assert.deepEqual(GATHERED_PARTS.map(([id]) => id), ['trophies', 'fish', 'tunes', 'annals']);   // PIN MOVED (MUSIC-BOX): the Tunes, the character's third
   assert.deepEqual(gatheredCount('trophies', null), { held: 1, total: TROPHY_BEASTS.length });
   assert.deepEqual(partCount('fish', null), { held: 1, total: PASSIVE_FISH_SPECIES.length }, 'the page\'s tile reads the part');
   assert.deepEqual(gatheredCount('annals', null), { held: null, total: EG_ANNALS.length }, 'the account not read');

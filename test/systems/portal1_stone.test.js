@@ -772,7 +772,7 @@ test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s se
   assert.match(pc, /const sale = buyPortalStones\(entity\.items, n\);\n\s*if \(!sale\.ok\) \{\n\s*say\(portalStoneRefusalText\(entity\.items, sale\.reason\)\);\n\s*return false;\n\s*\}/, 'the sale the law\'s, refused in words');
   const w = read('src/scenes/world.js');
   const doors = cut(w, '  const packDoors = {', '\n  };\n');
-  assert.match(doors, /openPortal: \(item, list\) => openPortalStone\(item, list\),/, 'the pack\'s door (the interior\'s pack is this host\'s)');
+  assert.match(doors, /openPortal: \(item, list\) => \(isPortalBook\(item\) \? portalBook\.open\(\) : openPortalStone\(item, list\)\),/, 'the pack\'s door (the interior\'s pack is this host\'s)');   // PIN MOVED (PORTAL-BOOK): a book opens its window
   assert.match(w, /onEnter: \(g\) => portalArrive\(g\),\n\s+onRefused: \(hold\) => townTalk\.say\(PORTAL_HOLD_TEXT\[hold\]\),/);
   assert.match(w, /destOf: \(x, y\) => \{\n[\s\S]{0,900}?\n\s+const s = travelLocationSummaryAt\(mapDict, x, y\);\n\s+const loc = s \? maps\.getLocation\(s\.regionIndex, s\.mapIndex\) : null;\n\s+return loc\?\.name \? \{ pixel: \{ x, y \}, name: loc\.name \} : null;/, 'a destination named off this map, a nameless one refused');
   assert.match(w, /if \(cell\) \{ const rk = raidWireWord\(\), ro = raidObjWord\(\); if \(rk\) frame\.rk = rk; if \(ro\) frame\.ro = ro; \} if \(cell\) portalWord\(frame, full\);/, 'my portal on my foes frame, the line\'s last word (PIN MOVED, RAID5: the raids\' objective word beside theirs)');

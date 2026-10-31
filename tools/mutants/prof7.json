@@ -51,8 +51,8 @@
   {
     "name": "PROF7-bear-no-tooth",
     "file": "src/net/professionLaw.js",
-    "old": "  hide('hide:bear', 657, 'Bear Hide', 2, ICON_HAIR, [MOB.GrizzlyBear], 'part:tooth', 'food:meat', 'leather:cured'),",
-    "new": "  hide('hide:bear', 657, 'Bear Hide', 2, ICON_HAIR, [MOB.GrizzlyBear], null, 'food:meat', 'leather:cured'),",
+    "old": "[MOB.GrizzlyBear], 'part:tooth',",
+    "new": "[MOB.GrizzlyBear], null,",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -71,8 +71,8 @@
   {
     "name": "PROF7-dragonling-alternate-unskinned",
     "file": "src/net/professionLaw.js",
-    "old": "    [MOB.Dragonling, MOB.DragonlingAlternate],",
-    "new": "    [MOB.Dragonling],",
+    "old": "[MOB.Dragonling, MOB.DragonlingAlternate]",
+    "new": "[MOB.Dragonling]",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "PROF7-cure-one-hide",
     "file": "src/net/professionLaw.js",
-    "old": "      recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]], {",
-    "new": "      recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 1]], {",
+    "old": "[[h.key, 2]],",
+    "new": "[[h.key, 1]],",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "PROF7-weave-two-silk",
     "file": "src/net/professionLaw.js",
-    "old": "  recipe('weave:silk', SILK.key, [['hide:spider', 3]], { station: 'loom', xp: null }),",
-    "new": "  recipe('weave:silk', SILK.key, [['hide:spider', 2]], { station: 'loom', xp: null }),",
+    "old": "[['hide:spider', 3]]",
+    "new": "[['hide:spider', 2]]",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "PROF7-a-hide-held-back",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'hide:bear']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'hide:bear']);",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "PROF7-trace-three-plus",
     "file": "src/net/professionLaw.js",
-    "old": "export const tracePoints = (tier) => Math.max(TRACE_ACT.minPoints, Math.min(TRACE_ACT.maxPoints, 4 + (tier | 0)));",
-    "new": "export const tracePoints = (tier) => Math.max(TRACE_ACT.minPoints, Math.min(TRACE_ACT.maxPoints, 3 + (tier | 0)));",
+    "old": "Math.min(TRACE_ACT.maxPoints, 4 + (tier | 0))",
+    "new": "Math.min(TRACE_ACT.maxPoints, 3 + (tier | 0))",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/systems/prof7_client.test.js"
@@ -225,8 +225,8 @@
   {
     "name": "PROF7-broke-as-a-tool",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "  `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} broke.`; // PROF7: a tool not Foraging's by its own name (the Skinning Knife)",
-    "new": "  `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? 'tool'} broke.`; // PROF7: a tool not Foraging's by its own name (the Skinning Knife)",
+    "old": "?.name ?? name ?? 'tool'} broke.`;",
+    "new": "?.name ?? 'tool'} broke.`;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "PROF7-leatherworker-armour",
     "file": "src/net/recipeLaw.js",
-    "old": "    (spec50 === 'leatherworker' && r.family === 'leather')",
-    "new": "    (spec50 === 'leatherworker' && r.family === 'armour')",
+    "old": "(spec50 === 'leatherworker' && r.family === 'leather')",
+    "new": "(spec50 === 'leatherworker' && r.family === 'armour')",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "PROF7-tailor-furnishings",
     "file": "src/net/recipeLaw.js",
-    "old": "    (spec50 === 'tailor' && r.family === 'clothing') ||",
-    "new": "    (spec50 === 'tailor' && r.family === 'furnishings') ||",
+    "old": "(spec50 === 'tailor' && r.family === 'clothing')",
+    "new": "(spec50 === 'tailor' && r.family === 'furnishings')",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "PROF7-hardened-no-step",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
-    "new": "  if (r.metal === WARFORGED || r.leather === CURED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
+    "old": "r.leather === HARDENED_LEATHER.key ||",
+    "new": "r.leather === CURED_LEATHER.key ||",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "PROF7-dye-on-undyed",
     "file": "src/net/recipeLaw.js",
-    "old": "  dye == null\n    ? true\n    : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
-    "new": "  dye == null ? true : !!r && r.kind === 'garment' && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
+    "old": "r.kind === 'garment' && r.dyes === true && Number.isInteger(dye)",
+    "new": "r.kind === 'garment' && Number.isInteger(dye)",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -555,8 +555,8 @@
   {
     "name": "PROF7-boots-no-leather",
     "file": "src/net/recipeLaw.js",
-    "old": "        inputs: [\n          [c.key, GARMENT_BOLTS[/** @type {string} */ (size)]],\n          ...(size === 'b' ? [[CURED_LEATHER.key, 1]] : []),\n        ],",
-    "new": "        inputs: [[c.key, GARMENT_BOLTS[/** @type {string} */ (size)]], ...[]],",
+    "old": "...(size === 'b' ? [[CURED_LEATHER.key, 1]] : [])",
+    "new": "...[]",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -601,8 +601,8 @@
   {
     "name": "PROF7-knife-two-ingots",
     "file": "src/net/recipeLaw.js",
-    "old": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]]),",
-    "new": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 2, [[PINE, 1]]),",
+    "old": "SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]])",
+    "new": "SKINNING_KNIFE.templateIndex, 2, [[PINE, 1]])",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "PROF7-stitch-band-agility",
     "file": "src/net/recipeLaw.js",
-    "old": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + speed) / 2));",
-    "new": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + agility) / 2));",
+    "old": "actBand(Math.trunc((agility + speed) / 2))",
+    "new": "actBand(Math.trunc((agility + agility) / 2))",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -656,8 +656,8 @@
   {
     "name": "PROF7-record-u-anything",
     "file": "src/net/productRecord.js",
-    "old": "  if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false; // PROF7: a garment's dye, of its ten",
-    "new": "  // PROF7: a garment's dye, of its ten",
+    "old": "  if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false;",
+    "new": "",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "PROF7-record-u-unwritten",
     "file": "src/net/productRecord.js",
-    "old": "    ...(u == null ? {} : { u }),",
-    "new": "    ...{},",
+    "old": "...(u == null ? {} : { u })",
+    "new": "...{}",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -729,8 +729,8 @@
   {
     "name": "PROF7-stitch-short-clean",
     "file": "src/systems/stitchAct.js",
-    "old": "      return {\n        stitches: st.stitches.length,\n        hits,\n        clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length,\n      };",
-    "new": "      return { stitches: st.stitches.length, hits, clean: !gentle && hits === st.stitches.length };",
+    "old": "clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length",
+    "new": "clean: !gentle && hits === st.stitches.length",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "PROF7-slowrot-unmarked",
     "file": "src/systems/professions/profItems.js",
-    "old": "    if (slowRot === true) item.slowRot = true;\n    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
-    "new": "    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
+    "old": "    if (slowRot === true) item.slowRot = true;\n",
+    "new": "",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "PROF7-silk-heavy",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "const hideWeight = (m) =>\n  m.key === 'hide:spider' || m.key === 'hide:harpy' ? 0.25 : m.key.startsWith('cloth:') ? 0.5 : 1;",
-    "new": "const hideWeight = (m) => (m.key === 'hide:harpy' ? 0.25 : m.key.startsWith('cloth:') ? 0.5 : 1);",
+    "old": "m.key === 'hide:spider' || m.key === 'hide:harpy' ? 0.25",
+    "new": "m.key === 'hide:harpy' ? 0.25",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -1003,8 +1003,8 @@
   {
     "name": "PROF7-garment-variant-zero",
     "file": "src/systems/smithItems.js",
-    "old": "      variant: (seed >>> 0) % variants,",
-    "new": "      variant: 0,",
+    "old": "variant: (seed >>> 0) % variants,",
+    "new": "variant: 0,",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -1070,7 +1070,7 @@
   {
     "name": "PROF7-no-loom-station",
     "file": "src/net/decorLaw.js",
-    "old": "  'loom',\n  'mason',",
+    "old": "  'music',\n  'loom',\n  'mason',",
     "new": "  'mason',",
     "tests": [
       "test/net/prof7_law.test.js",

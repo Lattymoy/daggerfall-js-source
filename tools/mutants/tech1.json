@@ -11,8 +11,8 @@
   {
     "name": "TECH1-any-armour-a-fist",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  if (item.group === 'Armor') return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;",
-    "new": "  if (item.group === 'Armor') return 'handToHand';",
+    "old": "return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;",
+    "new": "return 'handToHand';",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "TECH1-a-band-moved",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  rare: Object.freeze([15, 30]),",
-    "new": "  rare: Object.freeze([15, 31]),",
+    "old": "rare: Object.freeze([15, 30])",
+    "new": "rare: Object.freeze([15, 31])",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "TECH1-a-chance-moved",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 300, legendary: 450 });",
-    "new": "export const TECHNIQUE_PER_MILLE = Object.freeze({ magic: 120, rare: 301, legendary: 450 });",
+    "old": "rare: 300, legendary: 450",
+    "new": "rare: 301, legendary: 450",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "TECH1-the-card-off-the-value",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  const m = techniqueMult(t.base, value);",
-    "new": "  const m = t.base;",
+    "old": "  const m = techniqueMult(t.base, value);\n",
+    "new": "  const m = t.base;\n",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "TECH1-a-duel-struck",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "export const playerBody = (foe) => !!foe && (foe.rival != null || foe.duel === true);",
-    "new": "export const playerBody = (foe) => !!foe && foe.rival != null;",
+    "old": "(foe.rival != null || foe.duel === true)",
+    "new": "(foe.rival != null)",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "TECH1-the-lane-any-width",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "    return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;",
-    "new": "    return along >= -0.5 && along <= L.len + r;",
+    "old": "return along >= -0.5 && along <= L.len + r && across <= L.halfW + r;",
+    "new": "return along >= -0.5 && along <= L.len + r;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "TECH1-the-arc-all-round",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  return cos >= Math.cos(/** @type {number} */ (blow.arc));",
-    "new": "  return true;",
+    "old": "return cos >= Math.cos(/** @type {number} */ (blow.arc));",
+    "new": "return true;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "TECH1-the-level-unread",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;",
-    "new": "  const level = (y) => true;",
+    "old": "const level = (y) => !blow.feet || Math.abs(y - blow.feet[1]) <= TECH_REACH_UP;",
+    "new": "const level = (y) => true;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "TECH1-through-the-wall",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  if (!blow || !sight?.losClear) return false;",
-    "new": "  if (!blow) return false;",
+    "old": "if (!blow || !sight?.losClear) return false;",
+    "new": "if (!blow) return false;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "TECH1-the-wounded-share",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  if (blow?.wounded > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));",
-    "new": "  if (false) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));",
+    "old": "  if (blow?.wounded > 0) m +=",
+    "new": "  if (false) m +=",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -280,8 +280,8 @@
   {
     "name": "TECH1-a-miss-lands",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "export const scaleBlowDamage = (damage, mult) => (damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage);",
-    "new": "export const scaleBlowDamage = (damage, mult) => Math.max(1, Math.round(damage * mult));",
+    "old": "(damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage)",
+    "new": "Math.max(1, Math.round(damage * mult))",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "TECH1-the-to-hit-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit; // the technique's own term beside the swing's",
-    "new": "      // the technique's own term beside the swing's",
+    "old": "      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;",
+    "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "TECH1-the-swing-weight-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled; // TECH1: a miss stays a miss",
-    "new": "      const blow = rolled; // TECH1: a miss stays a miss",
+    "old": "      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled;",
+    "new": "      const blow = rolled;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "TECH1-the-blow-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;",
-    "new": "      if (!playerMeleeCanHit(dist, inView, losClear)) continue;",
+    "old": "if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;",
+    "new": "if (!playerMeleeCanHit(dist, inView, losClear)) continue;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "TECH1-awake-in-a-duel",
     "file": "src/combat/techniques.js",
-    "old": "  if (sigilDueling()) return DUEL_TEXT; // TECH law 3: never at a player - every power that sleeps in a duel, or a bout between players, sleeps",
-    "new": "  // TECH law 3: never at a player - every power that sleeps in a duel, or a bout between players, sleeps",
+    "old": "  if (sigilDueling()) return DUEL_TEXT;",
+    "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "TECH1-awake-with-the-ladder-off",
     "file": "src/combat/techniques.js",
-    "old": "  if (!hand.signature && !lootRarityOn()) return LADDER_OFF_TEXT; // Loot-II law 6: off is DFU exactly - a found line sleeps (MARTIAL3: a path's signature is no found line)",
-    "new": "  // Loot-II law 6: off is DFU exactly - a found line sleeps (MARTIAL3: a path's signature is no found line)",
+    "old": "  if (!hand.signature && !lootRarityOn()) return LADDER_OFF_TEXT;",
+    "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "TECH1-the-step-unclamped",
     "file": "src/combat/techniques.js",
-    "old": "  const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;",
-    "new": "  const step = Number.isFinite(dt) && dt > 0 ? dt : 0;",
+    "old": "const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;",
+    "new": "const step = Number.isFinite(dt) && dt > 0 ? dt : 0;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "TECH1-the-hold-unread",
     "file": "src/combat/techniques.js",
-    "old": "    if (!a.loosed && !ctx.holding && ((pw.machine?.state === 'Idle' && a.t > 0.05) || a.t > SWING_GIVE_UP_S))\n      endAct(pw);",
-    "new": "    if (!a.loosed && ((pw.machine?.state === 'Idle' && a.t > 0.05) || a.t > SWING_GIVE_UP_S)) endAct(pw);",
+    "old": "if (!a.loosed && !ctx.holding && (",
+    "new": "if (!a.loosed && (",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "TECH1-the-strike-on-landing-only",
     "file": "src/combat/techniques.js",
-    "old": "    if (!a.struck && (landed || a.time - a.t <= hitAt || a.t > a.time + 0.6)) {",
-    "new": "    if (!a.struck && (landed || a.t > a.time + 0.6)) {",
+    "old": "if (!a.struck && (landed || a.time - a.t <= hitAt || a.t > a.time + 0.6)) {",
+    "new": "if (!a.struck && (landed || a.t > a.time + 0.6)) {",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "TECH1-the-turn-unmade",
     "file": "src/combat/techniques.js",
-    "old": "      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane)\n        ctx.door?.face?.(a.foe.ai?.feet ?? null, a.target?.point ?? null);",
-    "new": "      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane) void 0;",
+    "old": "ctx.door?.face?.(a.foe.ai?.feet ?? null, a.target?.point ?? null);",
+    "new": "void 0;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "TECH1-the-corpse-kit-untechniqued",
     "file": "src/systems/foeLootCap.js",
-    "old": "  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
-    "new": "  // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
+    "old": "  techniquePass(kit, opts.rolls ?? Math.random);",
+    "new": "",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "TECH1-AUDIT-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct230'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
-    "new": "export const ACCOUNT_VERSION = 'acct107'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "old": "export const ACCOUNT_VERSION = 'acct232'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "new": "export const ACCOUNT_VERSION = 'acct107'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ],
@@ -688,8 +688,8 @@
   {
     "name": "TECH1-AUDIT-the-turn-from-mid-dash",
     "file": "src/combat/techniques.js",
-    "old": "      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane)\n        ctx.door?.face?.(a.foe.ai?.feet ?? null, a.target?.point ?? null);",
-    "new": "      if (a.foe && a.hand.tech.mech === 'dash' && !a.lane) ctx.door?.face?.(a.foe.ai?.feet ?? null);",
+    "old": "ctx.door?.face?.(a.foe.ai?.feet ?? null, a.target?.point ?? null);",
+    "new": "ctx.door?.face?.(a.foe.ai?.feet ?? null);",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "TECH1-AUDIT-the-target-unread",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "  if (blow.target && foe !== blow.target) return false;\n  const arc = blow.target ? 'all' : blow.arc;",
-    "new": "  const arc = blow.target ? 'all' : blow.arc;",
+    "old": "  if (blow.target && foe !== blow.target) return false;\n",
+    "new": "",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "TECH1-AUDIT-the-apex-unused",
     "file": "src/combat/techniques.js",
-    "old": "  const apex = target.apex ?? (t.mech === 'leap' ? t.apex : DASH_APEX); // AUDIT TECH1: the apex that fits the room (aimFor)",
-    "new": "  const apex = t.mech === 'leap' ? t.apex : DASH_APEX; // AUDIT TECH1: the apex that fits the room (aimFor)",
+    "old": "  const apex = target.apex ?? (t.mech === 'leap' ? t.apex : DASH_APEX);",
+    "new": "  const apex = t.mech === 'leap' ? t.apex : DASH_APEX;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -769,8 +769,8 @@
   {
     "name": "TECH1-AUDIT-the-clock-under-paralysis",
     "file": "src/combat/techniques.js",
-    "old": "  if (ctx.paralyzed && (a.kind === 'swing' || a.kind === 'shot')) return;\n  a.t += dt;",
-    "new": "  a.t += dt;",
+    "old": "  if (ctx.paralyzed && (a.kind === 'swing' || a.kind === 'shot')) return;\n",
+    "new": "",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -859,8 +859,8 @@
   {
     "name": "TECH1-AUDIT-the-last-of-the-body",
     "file": "src/combat/techniques.js",
-    "old": "  if ((ctx.entity.fatigue ?? 0) <= techniqueFatigue(hand.tech) + SWING_FATIGUE_COST) return TIRED_TEXT;",
-    "new": "  if ((ctx.entity.fatigue ?? 0) < techniqueFatigue(hand.tech)) return TIRED_TEXT;",
+    "old": "<= techniqueFatigue(hand.tech) + SWING_FATIGUE_COST) return TIRED_TEXT;",
+    "new": "< techniqueFatigue(hand.tech)) return TIRED_TEXT;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -904,8 +904,8 @@
   {
     "name": "TECH1-AUDIT-the-pick-unfiltered",
     "file": "src/combat/techniques.js",
-    "old": "    if (!f || f.dead || !f.ai?.feet || playerBody(f) || f.companion != null || friendlyProtected(f)) continue; // AUDIT TECH1: never an ally, a companion, a foe at peace",
-    "new": "    if (!f || f.dead || !f.ai?.feet || playerBody(f)) continue; // AUDIT TECH1: never an ally, a companion, a foe at peace",
+    "old": "|| f.companion != null || friendlyProtected(f)) continue;",
+    "new": ") continue;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -1021,8 +1021,8 @@
   {
     "name": "TECH1-AUDIT-the-word-left-off",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (told) li.append(el('span', 'reforge-detail', told));\n      if (may.includes(i)) {",
-    "new": "      if (may.includes(i)) {",
+    "old": "      if (told) li.append(el('span', 'reforge-detail', told));\n",
+    "new": "",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]

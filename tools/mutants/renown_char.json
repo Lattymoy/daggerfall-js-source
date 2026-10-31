@@ -11,11 +11,12 @@
   {
     "name": "RENOWN-CHAR-the-card-sends-one-track",
     "file": "server-account/src/index.js",
-    "old": "renown: await renownTracksOf(ctx, who.player.id),",
-    "new": "renown: await renownTracksOf(ctx, who.player.id, 1),",
+    "old": "renownTracksOf(ctx, who.player.id), marksCardOf",
+    "new": "renownTracksOf(ctx, who.player.id, 1), marksCardOf",
     "tests": [
       "test/server/renown_char.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "RENOWN-CHAR-the-founding-asks-the-best",

@@ -4,17 +4,20 @@
 // 3E 398 the account keeps (the wardrobe's `annals`, server-account/src/index.js). Each lists the whole set, held or
 // not, and says how the rest is had. A horse's coats are no part: the stable keeps the horses a character has now, never
 // the coats it has owned, so such a list would forget a coat sold.
+// MUSIC-BOX (2026-10-31): and the Tunes - every song a music box can play, its sheet read or not (systems/musicBox.js).
 import { t, getLocalizedItemName } from '../../systems/textManager.js';
 import { gatheredOf } from '../../systems/hunt/gatheredLog.js';
 import { TROPHY_BEASTS, trophyBeastName } from '../../systems/hunt/trophies.js';
 import { PASSIVE_FISH_SPECIES } from '../../world/passiveFish.js';
 import { EG_ANNALS, EG_ANNALS_FOUND } from '../../net/eliteGates/egAnnals.js';
 import { wordPair } from './wardrobeCatalogue.js';
+import { MUSIC_TUNES, tunesHeard, tuneCount, tuneName } from '../../systems/musicBox.js'; // MUSIC-BOX: the Tunes part
 
-/** The parts, in the switch's order after the codex and the cards: the character's two, then the account's. */
+/** The parts, in the switch's order after the codex and the cards: the character's three, then the account's. */
 export const GATHERED_PARTS = Object.freeze([
   wordPair('trophies', () => t('coll.part.trophies', 'Trophies')),
   wordPair('fish', () => t('coll.part.fish', 'Fish')),
+  wordPair('tunes', () => t('coll.part.tunes', 'Tunes')), // MUSIC-BOX: the songs a music box can play
   wordPair('annals', () => t('coll.part.annals', 'Annals')),
 ]);
 export const isGatheredPart = (/** @type {string} */ id) => GATHERED_PARTS.some(([k]) => k === id);
@@ -35,6 +38,7 @@ export function gatheredCount(/** @type {string} */ id, /** @type {any} */ wardr
     const keys = trophyKeys();
     return { held: keys.filter((k) => have[k]).length, total: keys.length };
   }
+  if (id === 'tunes') return tuneCount();
   if (id === 'fish') {
     const have = gatheredOf('fish');
     return {
@@ -111,6 +115,33 @@ export function drawGatheredPart(detail, { el, divider }, id, wardrobe) {
             ? t('coll.fish.row', '{n} hauls · first on {date}', { n: row.n, date: dateOf(row.day) })
             : t('coll.fish.none', 'Not caught yet'),
           !!row,
+        ),
+      );
+    }
+  } else if (id === 'tunes') {
+    const have = tunesHeard();
+    const n = tuneCount();
+    detail.append(divider(t('coll.tunes.head', 'Tunes - {n} of {total} songs', { n: n.held, total: n.total })));
+    detail.append(
+      el(
+        'p',
+        'coll-acct',
+        t(
+          'coll.tunes.how',
+          'Foes sometimes drop sheet music. Use a sheet to add its tune. Make a placed piece a Music box in your house to play them.',
+        ),
+      ),
+    );
+    for (const x of MUSIC_TUNES) {
+      const day = have[x.key];
+      list.append(
+        line(
+          el,
+          tuneName(x.key),
+          day != null
+            ? t('coll.tunes.row', 'Learned on {date}', { date: dateOf(day) })
+            : t('coll.tunes.none', 'Not found yet'),
+          day != null,
         ),
       );
     }

@@ -205,12 +205,12 @@
   {
     "name": "WB9g-the-view-says-no-purse",
     "file": "server-account/src/index.js",
-    "old": "purse: await insigniaPurse(ctx, who.player), annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK",
-    "new": "annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK",
+    "old": "nowS), purse, annals:",
+    "new": "nowS), annals:",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
-    "note": "SEAT1c (PIN MOVED): re-aimed by content."
+    "note": "SEAT1c (PIN MOVED): re-aimed by content. AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "WB9g-an-unheld-aura-a-400",

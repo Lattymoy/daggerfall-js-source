@@ -47,6 +47,12 @@ export const ARMORY_HEAD = Object.freeze({
 /** Every rate whole over AURA_CLOCK_PERIOD. Pure. */
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
+/** WOLF-KIT (2026-10-30, mob: "the feet chest and arm and hand cosmetic ... on werewolf form", "like the weapon glow on
+ *  claws"): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
+ *  (armoryPose.js ARMORY_BEAST_FIT). The head's crown and halo stay off the wolf's muzzle, and its weapon piece is the
+ *  claws' own glow already (systems/weaponGlow.js fistGlow). */
+export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);
+
 /** A draw's mesh: a tube round a segment, camera-facing cards, a decal on a surface. */
 const TUBE = 0, CARDS = 1, DECAL = 2;
 /** A piece's index in ARMORY_PIECES - its program's constant. */
@@ -604,27 +610,29 @@ export function armoryDraws(key, w, eye, near, right = null) {
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = add(chest, fwd, -(pose.card ? 0.24 : 0.27) * s), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face
+    else { const back = add(chest, fwd, -(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
       const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064);
       if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
-      const { sh, el, k } = u, wa = pt(`wa${u.side}`);
+      const a = pose.arm > 0 ? pose.arm : 1;   // WOLF-KIT: the wolf's arms wider
+      const { sh, el } = u, k = u.k * a, wa = pt(`wa${u.side}`);
       if (key === 'ashbound') {
         tube(0, sh, el, 0.065 * k, 0.056 * k);
-        if (full) tube(0, el, wa, 0.054, 0.046);
+        if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);
         cards(1, 8, sh, full ? wa : el, UP, [0.06 * s * k, 0]);
       } else {
         // a band's flames rise off it: each tube runs from its lower edge up the arm
         const d = unit(sub(el, sh)), mid = u.mid ?? u.along(0.45);
         tube(0, add(mid, d, 0.03 * k * s), add(mid, d, -0.08 * k * s), 0.062 * k, 0.066 * k);
         cards(1, 8, add(mid, d, 0.03 * k * s), add(mid, d, -0.03 * k * s), d, [0.07 * k * s, 0], 0, 1, speed);
-        if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056, 0.06); }
+        if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056 * a, 0.06 * a); }
       }
     }
   } else if (key === 'cinderstride' || key === 'eternalgreaves') {
     for (const side of ['L', 'R']) {
-      const ft = add(pt(`ft${side}`), UP, -0.06 * s), kn = pt(`kn${side}`);
+      // WOLF-KIT: a wolf stands on its toes - its greaves on the long shank from the hock down, not over the hock
+      const hock = pt(`ft${side}`), ft = pose.hock ? [hock[0], at[1] + 0.1 * s, hock[2]] : add(hock, UP, -0.06 * s), kn = pose.hock ? hock : pt(`kn${side}`);
       tube(0, ft, kn, 0.088, 0.07);
       cards(key === 'cinderstride' ? 2 : 1, 8, ft, kn, UP, [0.08 * s, 0], 0, 1, key === 'cinderstride' ? 0.4 + 0.6 * speed : speed);
     }
@@ -835,7 +843,7 @@ export class ArmoryRenderer {
         let P0 = null;
         for (const w of list) {
           if (w._pieces[slot] !== key) continue;
-          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 ? 0 : 1);
+          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1);   // WOLF-KIT: turned beast, the body's pieces stay on the 3D wolf - never on the paperdoll's
           if (!(kindle > 0) || w.atHead) continue;
           const draws = armoryDraws(key, w, eye, !(w._d > ARMORY_DETAIL_M), right);
           if (!draws.length) continue;

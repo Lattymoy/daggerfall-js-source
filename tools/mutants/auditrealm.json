@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-REALM-F1-the-stone-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/auditrealm.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "AUDIT-REALM-F2-a-room-pile-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    for (const pile of scene?.droppedPiles ?? []) out.push(...lists(pile?.items));\n    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));",
-    "new": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));",
+    "old": "    for (const pile of scene?.droppedPiles ?? []) out.push(...lists(pile?.items));\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-REALM-F2-a-storage-piece-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));\n  }",
-    "new": "  }",
+    "old": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-REALM-F2-the-stashes-never-taken",
     "file": "src/systems/realmCustoms.js",
-    "old": "  for (const list of stashedItemLists(snap)) takeFrom(list);\n  for (const a of [...accounts].sort((x, y) => (y?.accountGold ?? 0) - (x?.accountGold ?? 0))) {",
-    "new": "  for (const a of [...accounts].sort((x, y) => (y?.accountGold ?? 0) - (x?.accountGold ?? 0))) {",
+    "old": "  for (const list of stashedItemLists(snap)) takeFrom(list);\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-REALM-F2-the-stashes-after-the-purse",
     "file": "src/systems/realmCustoms.js",
-    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list); // BAG1: the bag's materials too",
-    "new": "  for (const list of [\n    ...stashedItemLists(snap).reverse(),\n    ...lists(snap.wagonItems, snap.bagItems, snap.items),\n  ].reverse())\n    takeFrom(list); // BAG1: the bag's materials too",
+    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);",
+    "new": "  for (const list of [...stashedItemLists(snap).reverse(), ...lists(snap.wagonItems, snap.bagItems, snap.items)].reverse()) takeFrom(list);",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "AUDIT-REALM-L3F2-customs-spends-its-own-account-only",
     "file": "server-account/src/realm.js",
-    "old": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),",
-    "new": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ? AND player = ?').bind(origin, playerId),",
+    "old": "db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),",
+    "new": "db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ? AND player = ?').bind(origin, playerId),",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-REALM-L3F2-a-spent-census-says-never",
     "file": "server-account/src/realm.js",
-    "old": "  if (counted?.spent) return 'customs-already';\n  if (!counted) {",
-    "new": "  if (!counted) {",
+    "old": "  if (counted?.spent) return 'customs-already';\n",
+    "new": "",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-house-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
-    "new": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "old": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-guild-place-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
-    "new": "    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
+    "old": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-renown-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
-    "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "old": "    db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-REALM-L1F7-a-guildmaster-deleted-under-members",
     "file": "server-account/src/realm.js",
-    "old": "  if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };\n  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
-    "new": "  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
+    "old": "  if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "AUDIT-REALM-L2F6-the-session-kept",
     "file": "src/net/tradeSession.js",
-    "old": "        this._ticket?.abandon?.();\n        this._finish(",
-    "new": "        this._finish(",
+    "old": "        this._ticket?.abandon?.();\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

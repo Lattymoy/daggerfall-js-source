@@ -38,8 +38,8 @@
   {
     "name": "PORTAL1-stone-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -284,7 +284,7 @@
   {
     "name": "PORTAL1-wire-carries-anything",
     "file": "src/systems/portalStone.js",
-    "old": "  return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };",
+    "old": "  return {\n    i: r.i,\n    p: [r.p[0], r.p[1], r.p[2]],\n    d: [r.d[0], r.d[1]],\n    r: r.r,\n    ...(r.a !== undefined ? { a: [r.a[0], r.a[1], r.a[2]] } : {}),\n  };",
     "new": "  return r;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -392,7 +392,7 @@
   {
     "name": "PORTAL1-pool-nameless-kept",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (!r || !dest) return false;",
+    "old": "    if (!r || !named) return false;",
     "new": "    if (!r) return false;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -500,8 +500,8 @@
   {
     "name": "PORTAL1-row-key-without-a-row",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal(); // PORTAL1",
-    "new": "    if (code === PORTAL_ROW_KEY) this._portal(); // PORTAL1",
+    "old": "    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal();",
+    "new": "    if (code === PORTAL_ROW_KEY) this._portal();",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "PORTAL1-repair-row-on-the-art",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)) {",
-    "new": "    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H - 9), vx, vy)) {",
+    "old": "inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)",
+    "new": "inRect(portalRowRect(REPAIR_PANEL_H - 9), vx, vy)",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "PORTAL1-hotbar-door-ignored",
     "file": "src/systems/quickslots.js",
-    "old": "    if (hooks.openPortal(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };",
-    "new": "    hooks.openPortal(res.item ?? r.item, pack);",
+    "old": "    if (hooks.openPortal(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };\n",
+    "new": "    hooks.openPortal(res.item ?? r.item, pack);\n",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "PORTAL1-frame-not-owed",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });\n    host._foesFullAt = -Infinity;",
-    "new": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });",
+    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name, ...(pick.at ? { at: pick.at, yaw: pick.yaw, mapId: pick.mapId } : {}) });   // PORTAL-BOOK: and a kept house's door\n    host._foesFullAt = -Infinity;",
+    "new": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name, ...(pick.at ? { at: pick.at, yaw: pick.yaw, mapId: pick.mapId } : {}) });   // PORTAL-BOOK: and a kept house's door",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -718,8 +718,8 @@
   {
     "name": "PORTAL1-arrival-forgets-the-team",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
-    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
+    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); else if (g.dest.at) landAtDoor(g.dest); }",
+    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); else if (g.dest.at) landAtDoor(g.dest); }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -952,8 +952,8 @@
   {
     "name": "PORTAL-BULK-count-unbounded",
     "file": "src/scenes/portalCounter.js",
-    "old": "      const n = parseSplitAmount(text, max);",
-    "new": "      const n = parseSplitAmount(text, Infinity);",
+    "old": "const n = parseSplitAmount(text, max);",
+    "new": "const n = parseSplitAmount(text, Infinity);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "PORTAL-BULK-one-stone-asks-the-field",
     "file": "src/scenes/portalCounter.js",
-    "old": "    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
-    "new": "    const flow = new ServiceFlowWindow([count(max)]);",
+    "old": "new ServiceFlowWindow([max === 1 ? offer(1) : count(max)])",
+    "new": "new ServiceFlowWindow([count(max)])",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -980,7 +980,7 @@
     "name": "PORTAL-BULK-no-buys",
     "file": "src/scenes/portalCounter.js",
     "old": "    onNo: () => null,",
-    "new": "    onNo: () => {\n      buy(n);\n      return null;\n    },",
+    "new": "    onNo: () => { buy(n); return null; },",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -997,8 +997,8 @@
   {
     "name": "PORTAL-BULK-host-row-unwired",
     "file": "src/scenes/shopRows.js",
-    "old": "      ...(isShop(/** @type {number} */ (buildingType))\n        ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } }\n        : {}),",
-    "new": "      ...(isShop(/** @type {number} */ (buildingType)) ? { portal: { label: PORTAL_TEXT.row, onBuy: () => {} } } : {}),",
+    "old": "onBuy: () => portalCounter.ask() }",
+    "new": "onBuy: () => {} }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

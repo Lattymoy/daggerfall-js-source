@@ -128,20 +128,22 @@
   {
     "name": "SD9B-the-cards-without-the-hours",
     "file": "server-account/src/index.js",
-    "old": "sds: await sdRecordOf(ctx, who.player.id), ",
-    "new": "",
+    "old": "dragons, sds, stars, ketch, renown, marks }",
+    "new": "dragons, stars, ketch, renown, marks }",
     "tests": [
       "test/server/sd9b_claim.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "SD9B-the-inspect-card-without",
     "file": "server-account/src/index.js",
-    "old": ", sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
-    "new": ", stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
+    "old": "dragons, sds, stars, ketch }",
+    "new": "dragons, stars, ketch }",
     "tests": [
       "test/server/sd9b_claim.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "SD9B-every-refusal-a-400",

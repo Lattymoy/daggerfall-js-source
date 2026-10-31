@@ -65,8 +65,8 @@
   {
     "name": "WB7-the-wraths-warning-dropped",
     "file": "src/systems/gate/gateScore.js",
-    "old": "  if (Number.isFinite(s.wrathAt) && s.wrathAt - now <= SCORE_WRATH_WARN_MS) return GATE_SONGS.war3;\n  return s.phase >= 3 ? GATE_SONGS.war3 : s.phase === 2 ? GATE_SONGS.war2 : GATE_SONGS.war1;",
-    "new": "  return s.phase >= 3 ? GATE_SONGS.war3 : s.phase === 2 ? GATE_SONGS.war2 : GATE_SONGS.war1;",
+    "old": "  if (Number.isFinite(s.wrathAt) && s.wrathAt - now <= SCORE_WRATH_WARN_MS) return GATE_SONGS.war3;\n",
+    "new": "",
     "tests": [
       "test/systems/gate/wb7_boss_audio.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB7-music-over-the-wrath",
     "file": "src/systems/gate/gateScore.js",
-    "old": "  if (s.wrath != null) return SCORE_SILENCE; // the Wrath has landed: nothing plays over it",
-    "new": "  if (false) return SCORE_SILENCE; // the Wrath has landed: nothing plays over it",
+    "old": "  if (s.wrath != null) return SCORE_SILENCE;",
+    "new": "  if (false) return SCORE_SILENCE;",
     "tests": [
       "test/systems/gate/wb7_boss_audio.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB7-the-archive-asked-for-a-made-song",
     "file": "src/systems/music.js",
-    "old": "    let song = this._made.get(name) ?? null; // WB7: a song made in code answers for its own name",
-    "new": "    let song = null; // WB7: a song made in code answers for its own name",
+    "old": "    let song = this._made.get(name) ?? null;",
+    "new": "    let song = null;",
     "tests": [
       "test/systems/gate/wb7_boss_audio.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WB7-the-director-fed-over-the-court",
     "file": "src/scenes/world.js",
-    "old": "    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
-    "new": "    if (!hourScoreFrame() && (!gateScoreFrame() || true) && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
+    "old": "    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({",
+    "new": "    if (!hourScoreFrame() && (!gateScoreFrame() || true) && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({",
     "tests": [
       "test/systems/gate/wb7_boss_audio.test.js"
     ]

@@ -17,6 +17,7 @@
 // Not a DFU member. Ledger A (EVENT-TIP).
 import { raidActive, raidKey, raidTypeName } from '../systems/raidingParties.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
+import { raidKillsX } from '../systems/raidKinds.js'; // RAID-BANNER
 
 /** The bay, when a caller does not say. */
 const BAY = Object.freeze({ width: MAP_WIDTH, height: MAP_HEIGHT });
@@ -81,8 +82,9 @@ export function raidMapMarks(raids, nowMinutes, { regionName = () => '', localTi
     // FIELD BUGS 2026-10-11g RAID-WORD: at a raid relay the town's count is the ledger's (every defender's deaths, its
     // target the day's roll of 15 to 25), not this machine's share - "20 kills, and nothing pops up" read a share
     const led = typeof relay === 'function' ? relay(raidKey(r)) : null;
-    const killed = Number.isInteger(led?.n) ? led.n : r.killed;
-    const target = Number.isInteger(led?.tg) && led.tg > 0 ? led.tg : r.attackAmount;
+    const x = raidKillsX(r); // RAID-BANNER: a Standard's count in deaths
+    const killed = (Number.isInteger(led?.n) ? led.n : r.killed) * x;
+    const target = (Number.isInteger(led?.tg) && led.tg > 0 ? led.tg : r.attackAmount) * x;
     if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);
     const local = typeof localTime === 'function' ? localTime(r.endMinute) : null;
     lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);

@@ -62,7 +62,7 @@ export function createPortalGates({
    *  pool); an Elite Breach's call's pool keeps none (`eventGround` false - its portal is the way into the event). */
   const offGround = (p) => eventGround && !!eventGroundAt(p);
   const fx = createPortalSet({ renderer, audio, now });
-  /** @type {{ id: string, owner: string | null, native: number[], dest: { pixel: { x: number, y: number }, name: string }, until: number, fx: any, was: boolean | null, grounded: boolean }[]} */
+  /** @type {{ id: string, owner: string | null, native: number[], dest: { pixel: { x: number, y: number }, name: string, at?: number[] }, until: number, fx: any, was: boolean | null, grounded: boolean }[]} */
   const gates = [];
   let _seq = 0;
   let _lastTick = null,
@@ -108,8 +108,9 @@ export function createPortalGates({
   function applyOwner(owner, raw, from = null) {
     if (owner == null || !from) return false;
     const r = validPortalRecord(raw);
-    const dest = r ? destOf(r.d[0], r.d[1]) : null;
-    if (!r || !dest) return false;
+    const named = r ? destOf(r.d[0], r.d[1]) : null;
+    if (!r || !named) return false;
+    const dest = r.a ? { ...named, at: r.a } : named; // PORTAL-BOOK: a kept house's door, the step's landing
     if (across(toScene(r.p), from) > PORTAL_PEER_REACH) return false;
     if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here
     const old = gates.find((g) => g.owner === owner);
@@ -205,6 +206,8 @@ export function createPortalGates({
     tick,
     wireRecord,
     forgetSteps,
+    /** PORTAL-BOOK: a map pixel's place as this pool names a destination (the host's `destOf`), or null. */
+    destOf,
     /** The vortexes, drawn with the street's flats. */
     batches: () => {
       const more = _also?.();

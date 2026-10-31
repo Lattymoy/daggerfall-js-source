@@ -164,8 +164,8 @@
   {
     "name": "BR5-overhaul-by-the-game",
     "file": "src/systems/overhauls.js",
-    "old": "      textureOption('classic', 'Classic', {\n        by: 'The original game',",
-    "new": "      textureOption('classic', 'Classic', {\n        by: 'Daggerfall',",
+    "old": "by: 'The original game',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
+    "new": "by: 'Daggerfall',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "BR5-leveling-title-the-game",
     "file": "src/ui/levelingChoice.js",
-    "old": "      title: 'Classic',",
-    "new": "      title: 'Daggerfall',",
+    "old": "title: 'Classic',",
+    "new": "title: 'Daggerfall',",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "BR5-cross-line-the-game",
     "file": "src/systems/realmCustoms.js",
-    "old": "  after: 'Online, this character levels the classic way, by its skills.',",
-    "new": "  after: 'Online, this character levels the Daggerfall way, by its skills.',",
+    "old": "after: 'Online, this character levels the classic way, by its skills.',",
+    "new": "after: 'Online, this character levels the Daggerfall way, by its skills.',",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "BR5-instead-the-game",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "  'Enhancements/AdvancedClimbing': \"You get the original game's climbing.\",",
-    "new": "  'Enhancements/AdvancedClimbing': \"You get Daggerfall's climbing.\",",
+    "old": "\"You get the original game's climbing.\"",
+    "new": "\"You get Daggerfall's climbing.\"",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "BR5-foot-shelf-the-game",
     "file": "src/ui/skinCard.js",
-    "old": "  Object.freeze({ label: 'Original classes', from: EOTB_FOOT_SET_COUNT, to: Infinity }),",
-    "new": "  Object.freeze({ label: 'Daggerfall classes', from: EOTB_FOOT_SET_COUNT, to: Infinity }),",
+    "old": "label: 'Original classes'",
+    "new": "label: 'Daggerfall classes'",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "BR5-land-tier-the-game",
     "file": "src/world/landView.js",
-    "old": "  [3, 'Classic (3)'],",
-    "new": "  [3, 'Daggerfall\\u2019s (3)'],",
+    "old": "[3, 'Classic (3)']",
+    "new": "[3, 'Daggerfall\\u2019s (3)']",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "BR5-mod-switch-the-game",
     "file": "src/systems/modSettings.js",
-    "old": "            'See your shield in first person, which the original game never shows. It is drawn in its own metal, ' +",
-    "new": "            'See your shield in first person, which classic Daggerfall never shows. It is drawn in its own metal, ' +",
+    "old": "which the original game never shows.",
+    "new": "which classic Daggerfall never shows.",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "BR5-kofi-moved",
     "file": "src/ui/supportAsks.js",
-    "old": "    url: 'https://ko-fi.com/daggerfallonline',",
-    "new": "    url: 'https://ko-fi.com/dfoonline',",
+    "old": "url: 'https://ko-fi.com/daggerfallonline'",
+    "new": "url: 'https://ko-fi.com/dfoonline'",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "BR5-screenshot-old-name",
     "file": "src/ui/screenshot.js",
-    "old": "  return `dfo-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;",
-    "new": "  return `daggerfall-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;",
+    "old": "return `dfo-${d.getFullYear()}",
+    "new": "return `daggerfall-${d.getFullYear()}",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "BR5-loading-shot-old-name",
     "file": "src/ui/shotsPane.js",
-    "old": "  a.download = `dfo-shot-${s.id}.jpg`;",
-    "new": "  a.download = `daggerfall-shot-${s.id}.jpg`;",
+    "old": "a.download = `dfo-shot-${s.id}.jpg`;",
+    "new": "a.download = `daggerfall-shot-${s.id}.jpg`;",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "BR5-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct230'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
-    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "old": "export const ACCOUNT_VERSION = 'acct232'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
+    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: \"portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)\"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: \"an overhaul to the ingame shop menu ... Portal effects ... and kill effects\"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: \"a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items\"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).",
     "tests": [
       "test/server/legacy7_service.test.js",
       "test/server/founder5.test.js"

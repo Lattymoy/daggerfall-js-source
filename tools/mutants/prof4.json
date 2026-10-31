@@ -78,8 +78,8 @@
   {
     "name": "PROF4-lumberjack-one",
     "file": "src/net/professionLaw.js",
-    "old": "  Math.max(3, (tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 2 : 0));",
-    "new": "  Math.max(3, (tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 1 : 0));",
+    "old": "(tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 2 : 0));",
+    "new": "(tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 1 : 0));",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "PROF4-linen-held-back",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:linen']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:linen']);",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "PROF4-logs-template-off",
     "file": "src/net/professionLaw.js",
-    "old": "  WOODS.map((w, i) => made(`log:${w.id}`, 'wood', w.tier, 635 + i, `${w.name} Log`, ICON_TWIGS, null)),",
-    "new": "  WOODS.map((w, i) => made(`log:${w.id}`, 'wood', w.tier, 636 + i, `${w.name} Log`, ICON_TWIGS, null)),",
+    "old": "made(`log:${w.id}`, 'wood', w.tier, 635 + i,",
+    "new": "made(`log:${w.id}`, 'wood', w.tier, 636 + i,",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "PROF4-plank-undyed",
     "file": "src/net/professionLaw.js",
-    "old": "  WOODS.map((w, i) => made(`plank:${w.id}`, 'wood', w.tier, 645 + i, `${w.name} Plank`, ICON_STAFF, 'Iron')),",
-    "new": "  WOODS.map((w, i) => made(`plank:${w.id}`, 'wood', w.tier, 645 + i, `${w.name} Plank`, ICON_STAFF, null)),",
+    "old": "`${w.name} Plank`, ICON_STAFF, 'Iron')",
+    "new": "`${w.name} Plank`, ICON_STAFF, null)",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "PROF4-heartwood-tier-3",
     "file": "src/net/professionLaw.js",
-    "old": "export const HEARTWOOD = made('wood:heartwood', 'wood', 4, 654, 'Heartwood', ICON_TWIGS, null);",
-    "new": "export const HEARTWOOD = made('wood:heartwood', 'wood', 3, 654, 'Heartwood', ICON_TWIGS, null);",
+    "old": "export const HEARTWOOD = made('wood:heartwood', 'wood', 4,",
+    "new": "export const HEARTWOOD = made('wood:heartwood', 'wood', 3,",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "PROF4-bed-double-pine",
     "file": "src/net/recipeLaw.js",
-    "old": "  ['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
-    "new": "  ['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
+    "old": "['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
+    "new": "['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "PROF4-heartwood-no-plank-taken",
     "file": "src/net/recipeLaw.js",
-    "old": "    p.n -= 1;",
-    "new": "    p.n -= 0;",
+    "old": "    p.n -= 1;\n",
+    "new": "    p.n -= 0;\n",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -338,8 +338,8 @@
   {
     "name": "PROF4-arrows-take-quality",
     "file": "src/net/recipeLaw.js",
-    "old": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
-    "new": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "old": "r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';",
+    "new": "r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish';",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "PROF4-joiner-marks",
     "file": "src/net/recipeLaw.js",
-    "old": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');",
-    "new": "  quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'joiner');",
+    "old": "(r?.family === 'furniture' && spec100 === 'master-joiner');",
+    "new": "(r?.family === 'furniture' && spec100 === 'joiner');",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -417,8 +417,8 @@
   {
     "name": "PROF4-record-arrows-quality",
     "file": "src/net/productRecord.js",
-    "old": "    (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
-    "new": "    (r.kind === 'kit' ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
+    "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
+    "new": "(r.kind === 'kit' ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -558,8 +558,8 @@
   {
     "name": "PROF4-chop-clean-any-cut",
     "file": "src/systems/chopAct.js",
-    "old": "      return { chops: st.chops, cuts: st.cuts, clean: !gentle && st.cuts === st.chops };",
-    "new": "      return { chops: st.chops, cuts: st.cuts, clean: !gentle && st.cuts > 0 };",
+    "old": "clean: !gentle && st.cuts === st.chops };",
+    "new": "clean: !gentle && st.cuts > 0 };",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "PROF4-plane-press-anywhere",
     "file": "src/systems/planeAct.js",
-    "old": "      if (st.done || st.cancelled || st.planing || !(x <= PLANE_ACT.headX)) return false;",
-    "new": "      if (st.done || st.cancelled || st.planing) return false;",
+    "old": "if (st.done || st.cancelled || st.planing || !(x <= PLANE_ACT.headX)) return false;",
+    "new": "if (st.done || st.cancelled || st.planing) return false;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "PROF4-masterwork-joiner-flag",
     "file": "src/systems/smithItems.js",
-    "old": "    if (marked === true && q !== MASTERWORK) item.marked = true; // a Master Joiner's (a Masterwork's mark is its own)",
-    "new": "    if (marked === true) item.marked = true; // a Master Joiner's (a Masterwork's mark is its own)",
+    "old": "    if (marked === true && q !== MASTERWORK) item.marked = true;",
+    "new": "    if (marked === true) item.marked = true;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "PROF4-marked-article",
     "file": "src/systems/smithItems.js",
-    "old": "  const one = marked ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;",
-    "new": "  const one = false ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;",
+    "old": "  const one = marked ? name : `",
+    "new": "  const one = false ? name : `",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -815,7 +815,7 @@
   {
     "name": "PROF4-no-workbench-station",
     "file": "src/net/decorLaw.js",
-    "old": "  'workbench',\n  'cooking',",
+    "old": "  'workbench',\n  'cooking',\n  'music',",
     "new": "  'cooking',",
     "tests": [
       "test/ui/homestations.test.js",

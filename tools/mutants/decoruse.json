@@ -65,8 +65,8 @@
   {
     "name": "DECORUSE-the-mode-unread",
     "file": "src/systems/decor/decorUse.js",
-    "old": "    if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
-    "new": "    if (camps.usable?.() !== false) camps.activate('hearth:', 'grab');",
+    "old": "camps.activate('hearth:', mode());",
+    "new": "camps.activate('hearth:', 'grab');",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DECORUSE-the-bed-unpressed",
     "file": "src/systems/decor/decorUse.js",
-    "old": "  else if (decorBed(piece)) bed();\n  else return false;",
-    "new": "  else return false;",
+    "old": "  else if (decorBed(piece)) bed();\n",
+    "new": "",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "DECORUSE-no-cooking-station",
     "file": "src/net/decorLaw.js",
-    "old": "  'cooking',\n  'loom',",
+    "old": "  'cooking',\n  'music',\n  'loom',",
     "new": "  'loom',",
     "tests": [
       "test/systems/decor/decoruse.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "DECORUSE-its-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "  cooking: 50_000,",
+    "old": "  cooking: 50_000,\n  music: 5_000,",
     "new": "  cooking: 5_000,",
     "tests": [
       "test/systems/decor/decoruse.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "AUDITDECOR-D2-the-stores-door-unasked",
     "file": "src/systems/decor/decorUse.js",
-    "old": "  if (piece?.station === COOKING_STATION && !piece.storage && stores()) return true; // AUDIT DECOR-USE D2",
-    "new": "  if (false) return true; // AUDIT DECOR-USE D2",
+    "old": "  if (piece?.station === COOKING_STATION && !piece.storage && stores()) return true;",
+    "new": "  if (false) return true;",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDITDECOR-D4-the-fireplaces-unread",
     "file": "src/systems/decor/decorUse.js",
-    "old": "  if (piece.model != null) return IIL_FIREPLACE_MODELS.has(classicModelIdOf(piece.model)); // AUDIT DECOR-USE D4",
-    "new": "  if (piece.model != null) return false; // AUDIT DECOR-USE D4",
+    "old": "  if (piece.model != null) return IIL_FIREPLACE_MODELS.has(classicModelIdOf(piece.model));",
+    "new": "  if (piece.model != null) return false;",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDITDECOR-D6-the-braziers-gate-unread",
     "file": "src/systems/decor/decorUse.js",
-    "old": "    if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
-    "new": "    if (true) camps.activate('hearth:', mode());",
+    "old": "if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
+    "new": "if (true) camps.activate('hearth:', mode());",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
