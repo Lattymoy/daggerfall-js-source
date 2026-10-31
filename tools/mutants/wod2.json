@@ -165,8 +165,8 @@
   {
     "name": "the-trees-ignore-the-site",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    locationRect: wodResult?.locationRect ?? locationRect,",
-    "new": "    locationRect,",
+    "old": "    locationRect: wodResult?.locationRect ?? locationRect ?? settlement?.rect ?? null,",
+    "new": "    locationRect: locationRect ?? settlement?.rect ?? null,",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]

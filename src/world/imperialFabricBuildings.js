@@ -397,15 +397,16 @@ const MADE_RECORDS = Object.freeze(['header', 'block3dObjectRecords', 'blockFlat
  * scene's layout, a quest's mount - and `cast` is its donor's, which a walk over the city's buildings reads instead (its
  * people's names and its quest markers, in the donor's frame: the questor pool, a quest's site search - thousands of
  * buildings a slice, none of them made). The same object for the same building and BLOCKS.BSA while it is kept.
- * @param {{ key: number, pool: string, donor: number, party?: number, plot: { q: number[][], h: number }, door: { at: number[], n: number[] } }} b
+ * @param {{ key: number, pool: string, donor: number, party?: number, plot: { q: number[][], h: number }, door: { at: number[], n: number[] }, cacheKey?: string }} b
  * @param {any} blocksFile
  */
 export function fabricBuildingInterior(b, blocksFile) {
   const host = blocksFile ?? NO_FILE;
   let byKey = _built.get(host);
   if (!byKey) { byKey = new Map(); _built.set(host, byKey); }
-  let out = byKey.get(b.key);
-  if (out) { byKey.delete(b.key); byKey.set(b.key, out); return out; }
+  const k = b.cacheKey ?? b.key;   // RMB-CONTRACTS RMBC4: a settlement's building files under its own name, never an Imperial plot's hash
+  let out = byKey.get(k);
+  if (out) { byKey.delete(k); byKey.set(k, out); return out; }
   const cast = donorInterior(blocksFile, FABRIC_DONORS[b.donor]);
   /** @type {any} */
   let made = null;
@@ -413,7 +414,7 @@ export function fabricBuildingInterior(b, blocksFile) {
   out = { made: true, cast };
   for (const k of MADE_RECORDS) Object.defineProperty(out, k, { get: () => record()[k], enumerable: true });
   out = Object.freeze(out);
-  byKey.set(b.key, out);
+  byKey.set(k, out);
   if (byKey.size > BUILT_KEEP) byKey.delete(byKey.keys().next().value);
   return out;
 }

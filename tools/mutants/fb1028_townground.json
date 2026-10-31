@@ -1,449 +1,449 @@
 [
- {
-  "name": "FB1028-the-sea-never-lifted",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
-  "new": "      if (e === 0 || (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx])))) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-grade-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
-  "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
- },
- {
-  "name": "FB1028-the-least-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const cone = Math.min(1, off > 0 ? easeCone(d) * grade / off : 1);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the smoothstep unread on the land. Re-aimed by content (AUDIT FB1028 A2-A3): the smoothstep unread - the cone alone, no twelve samples at the least."
- },
- {
-  "name": "FB1028-the-reach-off-the-blended",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]);",
-  "new": "      const off = Math.abs(target - heightmapData[idx]);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the departure off the blended samples. Re-aimed by content (AUDIT FB1028 A2-A3): the departure read off the blended samples."
- },
- {
-  "name": "FB1028-the-edge-share-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
-  "new": "      const s = run > 0 ? 1 - kept : 1;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the edge share unread."
- },
- {
-  "name": "FB1028-the-edge-row-blended",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it\n",
-  "new": "",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-inside-eased-at-the-edge",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
-  "new": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : Math.min(1, e / SHAPE_EDGE_TILES);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): TS2's last four samples eased whatever stands there."
- },
- {
-  "name": "FB1028-the-band-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
-  "new": "    const edge = false;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-band-its-least-alone",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
-  "new": "    const edge = e < SHAPE_EDGE_TILES;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-band-no-least",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
-  "new": "    const edge = e < Math.abs(level - side) / grade;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-band-its-own-tile",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
-  "new": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - at(x, y)) / grade);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-CROP-the-fields-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "  const field = townShapeField(fields ? occ.map((v, i) => v | fields[i]) : occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
-  "new": "  const field = townShapeField(occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-CROP-the-fields-walled-in",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
-  "new": "  const occ = walled ? townRound(fields ? padded.map((v, i) => v | fields[i]) : padded, PW, PH).inside : padded;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-CROP-the-fields-off-the-box",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], SHAPE_PAD)",
-  "new": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], 0)",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-CROP-the-half-range-unread",
-  "file": "src/world/townShape.js",
-  "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-  "new": "        const hx = f.noise * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-CROP-the-rows-unflipped",
-  "file": "src/world/townShape.js",
-  "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-  "new": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = -r.zPos;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-bake-unbumped",
-  "file": "src/world/deepWater/deepWatersBakeCache.js",
-  "old": "export const BAKE_GENERATOR_VERSION = 5;",
-  "new": "export const BAKE_GENERATOR_VERSION = 2;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): BAKE_GENERATOR_VERSION 4."
- },
- {
-  "name": "FB1028-the-isles-fields-packed-none",
-  "file": "src/world/etherWatersBake.js",
-  "old": "fields = b.fields ? pack(b.fields) : null;",
-  "new": "fields = null;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-isles-fields-unpacked-none",
-  "file": "src/world/etherWatersBake.js",
-  "old": "fields: basis.fields ? unpack(basis.fields) : null,",
-  "new": "fields: null,",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-isles-key-blind-to-fields",
-  "file": "src/world/etherWatersBake.js",
-  "old": ":${fields?.join(',') ?? ''}`;",
-  "new": "`;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-kept-id-packed-none",
-  "file": "src/world/terrain/groundTilesKept.js",
-  "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-  "new": "r[i * 3 + 2] = -1;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js",
-   "test/world/terrain/fv_groundtiles.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-kept-id-unpacked-none",
-  "file": "src/world/terrain/groundTilesKept.js",
-  "old": "records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });",
-  "new": "records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js",
-   "test/world/terrain/fv_groundtiles.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-kept-flat-an-id",
-  "file": "src/world/terrain/groundTilesKept.js",
-  "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-  "new": "r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js",
-   "test/world/terrain/fv_groundtiles.test.js"
-  ]
- },
- {
-  "name": "FB1028-the-ground-law-unmoved",
-  "file": "src/net/wire.js",
-  "old": "export const GROUND_LAW = 5;",
-  "new": "export const GROUND_LAW = 2;",
-  "tests": [
-   "test/net/fb1017f_groundgate.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): GROUND_LAW 4."
- },
- {
-  "name": "AUDIT-FB1028-A3-each-reach-its-own",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const cone = 1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade)));",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): FB1028's law on the land too. FB1028's law: each sample's reach off its own height, the pit on the hill's flank."
- },
- {
-  "name": "AUDIT-FB1028-A3-the-cone-in-the-sea",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));",
-  "new": "      const shore = 1;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): round 1's law: the cone in a port's sea. round 1's law: the cone under the level kept a port's sea low further out, the ground past a jetty's end over its deck."
- },
- {
-  "name": "AUDIT-FB1028-A3-the-depth-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
-  "new": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / SHAPE_BLEND_TILES)));",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the sea's ease its twelve samples alone, whatever its depth. under the level the ease its twelve samples alone, whatever the depth."
- },
- {
-  "name": "AUDIT-FB1028-A2-the-band-run-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));",
-  "new": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, d);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "FB1028's seam: the margin at the level to the edge's last sample but one."
- },
- {
-  "name": "AUDIT-FB1028-A2-the-stood-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
-  "new": "    if (!mask[tx + ty * D]) continue;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "every sample of the town's ground taken for stood: the run starts at its last one."
- },
- {
-  "name": "AUDIT-FB1028-A2-the-overhang-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
-  "new": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 0) continue;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "a building's own tiles alone stood: a model's foot a tile over (Aldwall Rock's 323) eased under it."
- },
- {
-  "name": "AUDIT-FB1028-A2-the-run-to-the-band",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));",
-  "new": "      const run = Math.max(d, band - e);",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js"
-  ],
-  "note": "the run over the whole band, the stood samples eased too."
- },
- {
-  "name": "AUDIT-FB1028-A2A3-the-ground-law-unmoved",
-  "file": "src/net/wire.js",
-  "old": "export const GROUND_LAW = 5;",
-  "new": "export const GROUND_LAW = 3;",
-  "tests": [
-   "test/net/fb1017f_groundgate.test.js"
-  ],
-  "note": "the print reads the town cell the new ease moved."
- },
- {
-  "name": "AUDIT-FB1028-A2A3-the-bake-unbumped",
-  "file": "src/world/deepWater/deepWatersBakeCache.js",
-  "old": "export const BAKE_GENERATOR_VERSION = 5;",
-  "new": "export const BAKE_GENERATOR_VERSION = 3;",
-  "tests": [
-   "test/world/terrain/fb1028_townground.test.js",
-   "test/world/audittesa3e1.test.js"
-  ],
-  "note": "a bake kept under the old ease read as today's."
- },
- {
-  "name": "FB1028-frame-stamp-at-3",
-  "file": "src/world/terrain/terrainSampler.js",
-  "old": "export const GROUND_FRAME_LAW = 5;",
-  "new": "export const GROUND_FRAME_LAW = 3;",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-town-move-by-law-3",
-  "file": "src/scenes/groundFrameHost.js",
-  "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
-  "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
- },
- {
-  "name": "FB1028-frame-town-move-past-the-bay-alone",
-  "file": "src/scenes/groundFrameHost.js",
-  "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
-  "new": "!(frame >= TOWN_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z, meet) : 0)",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
- },
- {
-  "name": "FB1028-frame-town-move-unhanded",
-  "file": "src/scenes/groundFrameHost.js",
-  "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
-  "new": "movedAt: groundMovedAt, meetMovedAt });",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-before-read-as-today",
-  "file": "src/world/landforms.js",
-  "old": "  if (blendShapedBefore(was, shapeWas, ground, hDim) === null)",
-  "new": "  if (blendLocationTerrain(was, avg, locationRect, hDim, ground) === null)",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-move-sign",
-  "file": "src/world/landforms.js",
-  "old": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);",
-  "new": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (was[i] - v) * MAX_TERRAIN_HEIGHT);",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-before-reach-not-12",
-  "file": "src/world/terrain/townBlendBefore.js",
-  "old": "const BLEND_TILES = 12, EDGE_TILES = 4;",
-  "new": "const BLEND_TILES = 17, EDGE_TILES = 4;",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-before-fields-kept",
-  "file": "src/world/terrain/townBlendBefore.js",
-  "old": "outlineOfBasis({ ...shape.basis, fields: null }, seed)",
-  "new": "outlineOfBasis(shape.basis, seed)",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-before-sea-lifted",
-  "file": "src/world/terrain/townBlendBefore.js",
-  "old": "    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n",
-  "new": "",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-frame-before-edge-unfaded",
-  "file": "src/world/terrain/townBlendBefore.js",
-  "old": "    s *= edge * edge * (3 - 2 * edge);",
-  "new": "",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- },
- {
-  "name": "FB1028-print-the-ease-twelve-samples",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
-  "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
-  "tests": [
-   "test/net/fb1017f_groundgate.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
- },
- {
-  "name": "FB1028-print-the-edge-share-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
-  "new": "      const s = run > 0 ? 1 - kept : 1;",
-  "tests": [
-   "test/net/fb1017f_groundgate.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the edge share unread."
- },
- {
-  "name": "FB1028-print-the-edge-band-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
-  "new": "    const edge = e < SHAPE_EDGE_TILES;",
-  "tests": [
-   "test/net/fb1017f_groundgate.test.js"
-  ]
- },
- {
-  "name": "AUDIT-FB1028-a-record-on-todays-ground-moved",
-  "file": "src/scenes/groundFrameHost.js",
-  "old": "return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;",
-  "new": "return d;",
-  "tests": [
-   "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
- }
+  {
+    "name": "FB1028-the-sea-never-lifted",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
+    "new": "      if (e === 0 || (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx])))) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-grade-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+    "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
+  },
+  {
+    "name": "FB1028-the-least-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+    "new": "      const cone = Math.min(1, off > 0 ? easeCone(d) * grade / off : 1);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the smoothstep unread on the land. Re-aimed by content (AUDIT FB1028 A2-A3): the smoothstep unread - the cone alone, no twelve samples at the least."
+  },
+  {
+    "name": "FB1028-the-reach-off-the-blended",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const off = Math.abs(level - ground[idx]);",
+    "new": "      const off = Math.abs(target - heightmapData[idx]);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the departure off the blended samples. Re-aimed by content (AUDIT FB1028 A2-A3): the departure read off the blended samples."
+  },
+  {
+    "name": "FB1028-the-edge-share-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
+    "new": "      const s = run > 0 ? 1 - kept : 1;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the edge share unread."
+  },
+  {
+    "name": "FB1028-the-edge-row-blended",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-inside-eased-at-the-edge",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
+    "new": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : Math.min(1, e / SHAPE_EDGE_TILES);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): TS2's last four samples eased whatever stands there."
+  },
+  {
+    "name": "FB1028-the-band-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+    "new": "    const edge = false;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-band-its-least-alone",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+    "new": "    const edge = e < SHAPE_EDGE_TILES;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-band-no-least",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+    "new": "    const edge = e < Math.abs(level - side) / grade;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-band-its-own-tile",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+    "new": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - at(x, y)) / grade);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-CROP-the-fields-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  const field = townShapeField(fields ? occ.map((v, i) => v | fields[i]) : occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
+    "new": "  const field = townShapeField(occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-CROP-the-fields-walled-in",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
+    "new": "  const occ = walled ? townRound(fields ? padded.map((v, i) => v | fields[i]) : padded, PW, PH).inside : padded;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-CROP-the-fields-off-the-box",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], SHAPE_PAD)",
+    "new": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], 0)",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-CROP-the-half-range-unread",
+    "file": "src/world/townShape.js",
+    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+    "new": "        const hx = f.noise * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-CROP-the-rows-unflipped",
+    "file": "src/world/townShape.js",
+    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+    "new": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = -r.zPos;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-bake-unbumped",
+    "file": "src/world/deepWater/deepWatersBakeCache.js",
+    "old": "export const BAKE_GENERATOR_VERSION = 5;",
+    "new": "export const BAKE_GENERATOR_VERSION = 2;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): BAKE_GENERATOR_VERSION 4."
+  },
+  {
+    "name": "FB1028-the-isles-fields-packed-none",
+    "file": "src/world/etherWatersBake.js",
+    "old": "fields = b.fields ? pack(b.fields) : null;",
+    "new": "fields = null;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-isles-fields-unpacked-none",
+    "file": "src/world/etherWatersBake.js",
+    "old": "fields: basis.fields ? unpack(basis.fields) : null,",
+    "new": "fields: null,",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-isles-key-blind-to-fields",
+    "file": "src/world/etherWatersBake.js",
+    "old": ":${fields?.join(',') ?? ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-kept-id-packed-none",
+    "file": "src/world/terrain/groundTilesKept.js",
+    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "r[i * 3 + 2] = -1;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js",
+      "test/world/terrain/fv_groundtiles.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-kept-id-unpacked-none",
+    "file": "src/world/terrain/groundTilesKept.js",
+    "old": "records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });",
+    "new": "records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js",
+      "test/world/terrain/fv_groundtiles.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-kept-flat-an-id",
+    "file": "src/world/terrain/groundTilesKept.js",
+    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js",
+      "test/world/terrain/fv_groundtiles.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-the-ground-law-unmoved",
+    "file": "src/net/wire.js",
+    "old": "export const GROUND_LAW = 5;",
+    "new": "export const GROUND_LAW = 2;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): GROUND_LAW 4."
+  },
+  {
+    "name": "AUDIT-FB1028-A3-each-reach-its-own",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+    "new": "      const cone = 1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade)));",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): FB1028's law on the land too. FB1028's law: each sample's reach off its own height, the pit on the hill's flank."
+  },
+  {
+    "name": "AUDIT-FB1028-A3-the-cone-in-the-sea",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));",
+    "new": "      const shore = 1;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): round 1's law: the cone in a port's sea. round 1's law: the cone under the level kept a port's sea low further out, the ground past a jetty's end over its deck."
+  },
+  {
+    "name": "AUDIT-FB1028-A3-the-depth-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+    "new": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / SHAPE_BLEND_TILES)));",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the sea's ease its twelve samples alone, whatever its depth. under the level the ease its twelve samples alone, whatever the depth."
+  },
+  {
+    "name": "AUDIT-FB1028-A2-the-band-run-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));",
+    "new": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, d);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "FB1028's seam: the margin at the level to the edge's last sample but one."
+  },
+  {
+    "name": "AUDIT-FB1028-A2-the-stood-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
+    "new": "    if (!mask[tx + ty * D]) continue;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "every sample of the town's ground taken for stood: the run starts at its last one."
+  },
+  {
+    "name": "AUDIT-FB1028-A2-the-overhang-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
+    "new": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 0) continue;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "a building's own tiles alone stood: a model's foot a tile over (Aldwall Rock's 323) eased under it."
+  },
+  {
+    "name": "AUDIT-FB1028-A2-the-run-to-the-band",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));",
+    "new": "      const run = Math.max(d, band - e);",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js"
+    ],
+    "note": "the run over the whole band, the stood samples eased too."
+  },
+  {
+    "name": "AUDIT-FB1028-A2A3-the-ground-law-unmoved",
+    "file": "src/net/wire.js",
+    "old": "export const GROUND_LAW = 5;",
+    "new": "export const GROUND_LAW = 3;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "note": "the print reads the town cell the new ease moved."
+  },
+  {
+    "name": "AUDIT-FB1028-A2A3-the-bake-unbumped",
+    "file": "src/world/deepWater/deepWatersBakeCache.js",
+    "old": "export const BAKE_GENERATOR_VERSION = 5;",
+    "new": "export const BAKE_GENERATOR_VERSION = 3;",
+    "tests": [
+      "test/world/terrain/fb1028_townground.test.js",
+      "test/world/audittesa3e1.test.js"
+    ],
+    "note": "a bake kept under the old ease read as today's."
+  },
+  {
+    "name": "FB1028-frame-stamp-at-3",
+    "file": "src/world/terrain/terrainSampler.js",
+    "old": "export const GROUND_FRAME_LAW = 6;",
+    "new": "export const GROUND_FRAME_LAW = 3;",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-town-move-by-law-3",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+    "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
+  },
+  {
+    "name": "FB1028-frame-town-move-past-the-bay-alone",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+    "new": "!(frame >= TOWN_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z, meet) : 0)",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
+  },
+  {
+    "name": "FB1028-frame-town-move-unhanded",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt });",
+    "new": "movedAt: groundMovedAt, meetMovedAt, padsMovedAt });",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-before-read-as-today",
+    "file": "src/world/landforms.js",
+    "old": "  if (blendShapedBefore(was, shapeWas, ground, hDim) === null)",
+    "new": "  if (blendLocationTerrain(was, avg, locationRect, hDim, ground) === null)",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-move-sign",
+    "file": "src/world/landforms.js",
+    "old": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);",
+    "new": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (was[i] - v) * MAX_TERRAIN_HEIGHT);",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-before-reach-not-12",
+    "file": "src/world/terrain/townBlendBefore.js",
+    "old": "const BLEND_TILES = 12, EDGE_TILES = 4;",
+    "new": "const BLEND_TILES = 17, EDGE_TILES = 4;",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-before-fields-kept",
+    "file": "src/world/terrain/townBlendBefore.js",
+    "old": "outlineOfBasis({ ...shape.basis, fields: null }, seed)",
+    "new": "outlineOfBasis(shape.basis, seed)",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-before-sea-lifted",
+    "file": "src/world/terrain/townBlendBefore.js",
+    "old": "    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-frame-before-edge-unfaded",
+    "file": "src/world/terrain/townBlendBefore.js",
+    "old": "    s *= edge * edge * (3 - 2 * edge);",
+    "new": "",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-print-the-ease-twelve-samples",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+    "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
+  },
+  {
+    "name": "FB1028-print-the-edge-share-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;",
+    "new": "      const s = run > 0 ? 1 - kept : 1;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the edge share unread."
+  },
+  {
+    "name": "FB1028-print-the-edge-band-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+    "new": "    const edge = e < SHAPE_EDGE_TILES;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1028-a-record-on-todays-ground-moved",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;",
+    "new": "return d;",
+    "tests": [
+      "test/world/terrain/fb1028_townground_frame.test.js"
+    ]
+  }
 ]

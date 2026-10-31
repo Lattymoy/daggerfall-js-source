@@ -289,8 +289,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "&& !landform) return y + relief + town(y + relief) + meet;",
-    "new": "&& !landform) return y + town(y) + meet;",
+    "old": "&& !landform) return y + relief + town(y + relief) + meet + pads;",
+    "new": "&& !landform) return y + town(y) + meet + pads;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -328,8 +328,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
-    "new": "movedAt: null, townMovedAt, meetMovedAt });",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt });",
+    "new": "movedAt: null, townMovedAt, meetMovedAt, padsMovedAt });",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"

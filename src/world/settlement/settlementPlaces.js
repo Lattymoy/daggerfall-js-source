@@ -10,6 +10,8 @@ import { worldPixelKey } from '../worldWide/worldGrid.js';
 
 /** The settlements' lane of map ids (world/worldWide/worldLanes.js: the countryside 0x300-0x33f, lairs 0x340, capitals 0x341). */
 export const SETTLEMENT_LANE = 0x342;
+/** The registry's name for this list (world/worldWide/worldPlaces.js registerLive). */
+export const SETTLEMENTS_SOURCE = 'settlements';
 /** Raised when a row's shape changes. */
 export const SETTLEMENTS_DATA_VERSION = 1;
 /** A settlement's map id by its ordinal: the lane, the made-place flag (its low 20 bits past every Bay pixel's), the ordinal. */

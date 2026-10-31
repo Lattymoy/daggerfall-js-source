@@ -92,8 +92,11 @@ test('RMBC5 the published settlements: one in each province past the Bay, inputs
     assert.ok(Object.keys(row.ledger.keys).length > 5 && row.ledger.next > MINTED_KEY_MIN, `${row.name}'s ledger`);
   }
   assert.deepEqual(settlementPlaceRows().map((r) => r.mapId), SETTLEMENT_ROWS.map((r) => settlementPlaceId(r.ordinal)));
-  setTamrielFit({ ox: -500, oy: -300, ppu: 18.75 });   // a fit that sets Sumurset's point on the Bay: no settlement there
-  for (const row of SETTLEMENT_ROWS) { const [px, py] = settlementPixel(row); if (inBay(px, py)) assert.equal(settlementOnPixel(px, py), null); }
+  const r0 = SETTLEMENT_ROWS[0];   // a fit that sets the first settlement's point on the Bay's pixel 500,250: none stands there
+  setTamrielFit({ ox: r0.at[0] * 18.75 - 500.5, oy: r0.at[1] * 18.75 - 250.5, ppu: 18.75 });
+  assert.deepEqual(settlementPixel(r0), [500, 250]);
+  assert.equal(settlementOnPixel(500, 250), null);
+  assert.ok(!settlementPlaceRows().some((r) => r.mapId === settlementPlaceId(r0.ordinal)), 'nor on the registry');
   setTamrielFit(null);
 });
 

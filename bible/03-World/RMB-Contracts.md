@@ -52,10 +52,11 @@ Each is dated, says what was decided and why, and names what it costs.
   and its key. Generated buildings take its open ground (TS3's dropped cells, the land past its walls) in a mixed plan,
   as the specification's 6.1 allows. Generated settlements go first where no home stands (its Phase 6). The ledger's
   protected keys hold it. Cost: the clone towns past the Bay keep their borrowed layouts until a mixed plan grows them.
-- **RD-10 (2026-10-31) A plan is made once and served as data.** `Math.sin` and `Math.cos` may differ in their last bit
-  between engines. A plan the toolchain makes in Node and serves as data is the same for every client, and its print
-  proves it. Clients never regenerate gameplay geometry. The generator rounds every point to the centimetre, so a re-run
-  elsewhere almost always agrees as well. Cost: a new settlement ships through publication (RMBC6), not as a seed.
+- **RD-10 (2026-10-31, revised at RMBC3) Inputs are published; every client lays out.** RMBC2 decided a plan would be
+  made once and served as data. RMBC3 found the ground past the Bay is traced from the player's own map picture
+  (TMAP00I0.IMG, `03-World/Tamriel.md`), so a plan's heights are derived from game data and cannot ship. A settlement is
+  published as its inputs alone (RD-16), and each client lays it out on its own ground with arithmetic every engine
+  rounds alike (RD-13). Cost: the layout runs on every client, in its terrain worker.
 - **RD-11 (2026-10-31) Two layouts, one geometry; the land decides.** A ring town wraps a square; a row town follows an
   arc round a hillside or along a shore. Both are cut in one polar frame, so one set of cells, links and plots serves
   both, and a straight row is an arc of a large circle. An archetype names its layout, or `auto` reads the ground: a hill
@@ -64,6 +65,28 @@ Each is dated, says what was decided and why, and names what it costs.
 - **RD-12 (2026-10-31) A site that does not suit says so.** The generator reports its fit: the buildings it stood and its
   deepest cut. A site too wet or too steep for the archetype answers `ok: false`, so the slice that places settlements
   picks another site instead of shipping a poor town. Cost: none.
+- **RD-13 (2026-10-31) The same answer on every engine.** `Math.sin`, `cos`, `atan2` and `hypot` may differ in their last
+  bit between browsers. `exactMath.js` builds them from `+`, `-`, `*`, `/` and `Math.sqrt`, which IEEE 754 rounds
+  exactly, in a fixed order, to about 1e-15. The generator reads no other. Golden prints pin three plans bit for bit; a
+  change that moves one is a new `GENERATOR_VERSION`. Cost: a few slower trigonometric calls a layout.
+- **RD-14 (2026-10-31) Pads are geometry; the terrain sits under them.** The terrain's vertices are 6.4 m apart, coarser
+  than a street, so terraces drawn by the terrain alone would slope across every rim. A pad is drawn and walked as its
+  own paving or deck. The terrain is carved to stand under every cut pad within one cell's diagonal, so no triangle rises
+  through, and eases back to the land over 28 m. Cost: a retaining wall's face is a model, not terrain.
+- **RD-15 (2026-10-31) The worker lays it out; the host dresses it.** The layout (sites, cells, terraces) is split from
+  the dressing (streets, plots, buildings, keys). The terrain worker runs the layout on the pixel's natural ground,
+  carves, and hands the layout back with the pixel; the main thread dresses that same layout. Ground and buildings come
+  from one computation. Cost: the layout's modules must stay worker-safe (`world/` and `formats/` alone).
+- **RD-16 (2026-10-31) One settlement a province, on land no place holds.** `settlements.json` publishes nine, one in
+  each province past the Bay, each searched by `tools/settlementSites.mjs` on the player's own files: the province's
+  land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that is `ok`. A row fixes
+  the structure its ground chose (layout, centre, shore) and its key ledger, so every client lays the same cells. Its map
+  ids are their own lane, `0x342`. A location on the pixel always wins (RD-9). Cost: Cyrodiil's rivers are not yet water,
+  so its settlement is a village until the WORLD 2.0 hydrology stands them.
+- **RD-17 (2026-10-31) Buildings past RMB, from the fabric's kit.** A building is the Imperial City fabric's mesher over
+  its footprint (`buildPlot`), in its style's walls and roof; its door is the fabric's door model on its front wall; its
+  rooms are the fabric's generated interior, filed under its place and key. Nothing is written as an RMB block. Its door
+  hands the game a record carrying its minted key. Cost: the fabric's kit shapes every settlement until its own exists.
 
 ## RMBC0 - what stands (AUDITED, 2026-10-31)
 
@@ -212,29 +235,71 @@ mine needs a slope and the fort a hill; on the marsh only the styles that build 
 stands each one on a pixel of the Bay's own ground that suits it, the river town on a coast found in WOODS.WLD, and all
 six keep the contract and fit. The pictures stay in `scratch/` (a render of the player's ground is game data).
 
+## RMBC3 - the ground (BUILT, 2026-10-31)
+
+`exactMath.js` makes the generator exact on every engine (RD-13). The generator is split (RD-15): `settlementLayout.js`
+lays out stages A to C, worker-safe, and `settlementGen.js` dresses a layout with stages D to G; a layout passed as plain
+records dresses to the same plan, pinned. `settlementGround.js` carves (RD-14). `settlementStand.js` is the worker's
+step: on a pixel no location holds and a settlement does (`settlementOnPixel`), `terrainGen.js` `generatePixelTerrain`
+lays the settlement out on its natural samples after the roads and the sites, carves its pads in, keeps its trees off
+its ground (the nature's clearing rect) and returns `settlement` with the pixel. `pixelBuild.js` puts it on the built
+entry. The worker's graph is still `world/` and `formats/` alone, 86 modules (`tamriel2.test.js`).
+
+The ground moved, so the frame's law did too: `GROUND_FRAME_LAW` 6 and `PADS_FRAME_LAW` 6 (`terrainSampler.js`). A record
+written before stands where the carve put the ground: `landforms.js` `settlementMovedField` and `groundFrameHost.js`
+`padsMovedAt`, none on a pixel a location holds. Six pins of the old law moved with it. The wire's `GROUND_LAW` and the
+relay's version move at the merge of main, so their numbers are current (THE FOUR HOSTS below).
+
+## RMBC4 - the buildings stood (BUILT, 2026-10-31)
+
+`settlementModels.js` makes a dressed settlement models (RD-17): `groundModel` paves each cut pad at its height with a
+retaining wall down its rim, decks each raised pad on posts, and lays each link as a stair, ramp or bridge between its
+pads' heights; `buildingPiece` stands a building with `buildPlot` in its style's walls, roof and pitch (now a style's
+data), its front its street's, its door the fabric's door model turned to face its street; `buildingInterior` is its
+rooms (`fabricBuildingInterior`, which now takes a `cacheKey`, so a settlement's building never files under an
+Imperial plot's hash); `buildingRecord` is what its door hands the game. Their model ids run from 7,600,000, 4,096 a
+settlement, past the Imperial City's.
+
+`scenes/settlementHost.js` is the streaming world's pool on the yards' shape. It installs the model family once, dresses
+each built pixel's layout, asks the pipeline for the meshes, draws them at the pixel's translation, files the ground and
+the buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with
+its record (`settlement`) and its rooms (a `dfBlock` of its own, never a BLOCKS.BSA record). `world.js` wires it in
+twelve logical lines; `buildingDataForDoor` answers a door with no location pixel by the record it carries.
+
+## RMBC5 - the sites (BUILT, 2026-10-31)
+
+`settlementPlaces.js` reads `settlements.json` (RD-16): each row's pixel is its picture point under the fit now, so a
+settlement keeps to its land whatever the fit; none stands on the Bay. `tamrielPlacesHost.js` registers them after the
+places past the Bay, so a town of theirs keeps its pixel; they carry no location index, so no raid picks one. The nine:
+Corvel Keep (High Rock, a fort), Sahr Waters (Hammerfell, an oasis), Kolvar's Cut (Skyrim, a mine), Velas Rest
+(Morrowind), Aleth Quay (Sumurset, a river town on its shore), Thorn Canopy (Valenwood, on decks), Tasha's Bend
+(Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford (Cyrodiil). A seed the search tried laid a pad 3 cm
+past its footprint: the outline now keeps the farther of two near points, and a sweep of 2,400 plans keeps the contract.
+
 ## Next slices
 
-- **RMBC3 the ground.** The terrain kernel stands a plan's pads, cut and filled, instead of one flat height, with
-  `GROUND_FRAME_LAW` 6 and a moved field.
-- **RMBC4 the buildings stood.** Procedural exteriors made by style, the streaming world's buildings read through the
-  plan, the decoders listed above asking `rmbPartsOfKey`, and each door leading to its building's generated room.
-- **RMBC5 the sites.** Settlements placed past the Bay on ground no home stands on, from the environment the WORLD 2.0
-  terrain arc builds, each site kept only where its fit is `ok`.
-- **RMBC6 publication.** The plan, its ledger and its print served as world data, and the protected keys checked before
-  a revision goes out.
+- **RMBC6 publication and the online check.** A plan's print said in the room's hello, so two clients that disagree are
+  told; the protected keys asked of the account service before a revision changes a published row.
+- **RMBC7 homes in a settlement.** A settlement's houses for sale once the decoders listed in RMBC0 ask
+  `rmbPartsOfKey` and read a minted key's building from its plan (yards, listings, quest markers).
+- **RMBC8 the editor's seam.** The WORLD 2.0 editor reads and writes a row's `params` and `fix`, and regenerates a
+  district by its anchors.
 
 ## THE FOUR HOSTS (Home.md)
 
-No host is wired. `scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` read no
-plan. FLAGGED here by name: RMBC3 and RMBC4 wire the streaming world first, and the fixed-city bench and the interior
-host follow.
+`scenes/world.js` WIRED: the host built, framed, drawn and dropped, its doors in `doorTargets`, its records answered by
+`buildingDataForDoor`. `scenes/worldModes.js` WIRED through those two seams, with no line of its own: a settlement's
+door opens its rooms as a block's door does. `scenes/exterior.js` FLAGGED: the fixed-city bench streams no pixel, so it
+stands no settlement. `scenes/dungeonContext.js` FLAGGED: a dungeon stands no street. The wire's `GROUND_LAW` is FLAGGED
+until the merge of main moves it with the relay's version.
 
 ## The whole of Tamriel
 
 A plan is keyed by its place's map id from the registry and its origin is bounded by `worldPixelOk`. Nothing reads
 MAPS.BSA's rows. Every pin holds a Hammerfell case beside the Bay's: a terraced village in the contract's tests, a
 Hammerfell town's lane in the ledger's, and the Daggerfall city's layout cloned under a Hammerfell id in the corpus.
-The generator has a style for every theatre and is pinned in each, past the Bay and on it.
+The generator has a style for every theatre and is pinned in each, past the Bay and on it. The published settlements
+stand one in each of the nine provinces; the Bay's ground is left to DFU's places (RD-9).
 
 ## Pins and mutants
 
@@ -243,7 +308,9 @@ The generator has a style for every theatre and is pinned in each, past the Bay 
 `tools/mutants/rmbc1.json`: 51 mutants, 51 dead. The first run left two alive, a self-crossing ring with an area and an
 edge across a notch, and the geometry pin was added for both. `tools/mutants/rmbc2.json`: 34 mutants, 34 dead. Its
 first run left the deck's floor alive (no pin pulled a deck toward its ground), and a town whose gate stands on the low
-side now does.
+side now does; the split's run left the dressing's seed alive, and a pin now dresses one layout with two seeds.
+`rmbc3_exact.test.js` (4), `rmbc3_ground.test.js` (6) and `rmbc4_stand.test.js` (7) pin RMBC3 to RMBC5;
+`tools/mutants/rmbc3.json` and `rmbc4.json` hold their mutants.
 
 ## Port-Ledger
 

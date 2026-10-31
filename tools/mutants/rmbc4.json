@@ -1,0 +1,146 @@
+[
+  {
+    "name": "RMBC4-ear-convex-gone",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "      if (cross(a, b, c) <= 1e-9) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-ear-test-gone",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "      if (idx.some((j) => { const p = ring[j]; return p !== a && p !== b && p !== c && pointInRing(p, ear); })) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-pad-height-flat",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));",
+    "new": "const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum]));",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-wall-short",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "const low = raised ? y - DECK_RIM : y - WALL_DROP;",
+    "new": "const low = raised ? y - DECK_RIM : y - 1;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-door-unturned",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "const e = b.entrances[0], ry = e.facing + 180;",
+    "new": "const e = b.entrances[0], ry = e.facing;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-building-grounded",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "model: mb.build(), frame: trs(cx, floor, cn, 0, 0, 0),",
+    "new": "model: mb.build(), frame: trs(cx, 0, cn, 0, 0, 0),",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-record-key",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "nameSeed: b.nameSeed, buildingKey: b.key, hasInterior: true,",
+    "new": "nameSeed: b.nameSeed, buildingKey: b.key + 1, hasInterior: true,",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-model-run",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "export const SETTLEMENT_MODEL_RUN = 4096;",
+    "new": "export const SETTLEMENT_MODEL_RUN = 2048;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-stand-gone",
+    "file": "src/scenes/settlementHost.js",
+    "old": "        if (!stood.has(key)) stand(p, key);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-takedown-gone",
+    "file": "src/scenes/settlementHost.js",
+    "old": "      for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-doors-gone",
+    "file": "src/scenes/settlementHost.js",
+    "old": "      if (exterior()) for (const s of stood.values()) out.push(...scene(s).doors);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-feet-ignored",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-world-doors-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    })), ...(settlements?.doorTargets() ?? [])],",
+    "new": "    })), ...([])],",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-world-record-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (!hit?.pixelKey) return hit?.settlement ?? null;",
+    "new": "      if (!hit?.pixelKey) return null;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-pixel-layout-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      settlement,   // RMB-CONTRACTS RMBC4:",
+    "new": "      settlementGone: settlement,   // RMB-CONTRACTS RMBC4:",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RMBC4-registry-unasked",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  if (worldPlaces) worldPlaces.registerLive(SETTLEMENTS_SOURCE,",
+    "new": "  if (false) worldPlaces.registerLive(SETTLEMENTS_SOURCE,",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  }
+]

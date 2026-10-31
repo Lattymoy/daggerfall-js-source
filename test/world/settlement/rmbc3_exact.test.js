@@ -25,7 +25,7 @@ test('RMBC3 exact math: within 2e-15 of Math across turns either way, the quarte
 });
 
 test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (mutant: one put back)', () => {
-  for (const f of ['settlementGen.js', 'settlementGeometry.js', 'settlementContract.js']) {
+  for (const f of ['settlementGen.js', 'settlementLayout.js', 'settlementGeometry.js', 'settlementContract.js', 'settlementGround.js']) {
     assert.doesNotMatch(readFileSync(new URL(`../../../src/world/settlement/${f}`, import.meta.url), 'utf8'), /Math\.(sin|cos|tan|atan2?|hypot|exp|pow|log)\(/, f);
   }
 });

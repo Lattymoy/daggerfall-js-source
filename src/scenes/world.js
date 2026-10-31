@@ -336,7 +336,8 @@ import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forget
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
 import { createMonuments } from './lefayMonumentHost.js';   // LEFAY1: the monuments - Julian LeFay's in Gothway Garden, Patrick Stewart's by the White-Gold Tower - and the flowers laid at them
-import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
+import { createMerchantYards } from './merchantYardsHost.js';
+import { createSettlementHost } from './settlementHost.js';   // RMB-CONTRACTS RMBC4: the settlements past the Bay, stood off their pixels' layouts   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
 import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' Festival in the streets - the Hearth Offerings, the Wyrd Sister's window, the festival's doors
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
 import { createShipyardHost } from './shipyardHost.js';   // SHIPYARDS: the shipmaster's window's host half
@@ -1839,6 +1840,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let poiFeed = null;   // POI-2: the approved set they are read from (poi/poiFeed.js) - the editor's drafts laid over it (POI-3)
   let poiEditor = null;   // POI-3: the editor in the world (scenes/poiEditorHost.js) - `?editor` alone, a builder's; read late (the frame)
   let poiEditorLeave = null;   // AUDIT POI E14: its door out (mountPoiEditor's exit) - a death leaves it, read late as the editor is
+  let settlements = null;   // RMB-CONTRACTS RMBC4: the settlements (scenes/settlementHost.js), made beside the yards; read late as they are
   let merchantYards = null;   // MERCHANT-YARDS: the towns' Stables and Wagon Yards (scenes/merchantYardsHost.js), made beside the monument; read late as it is
   let portHost = null;   // SHIPYARDS: the port towns' shipyards and lighthouses (scenes/portHost.js), made beside the yards; read late as they are
   let witches = null;   // WITCH1: the Witches' Festival in the streets (scenes/witchesHost.js), made before the modes host; read late as it is
@@ -13322,6 +13324,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     lefay?.destroyAll();   // LEFAY1: and the monuments - each stood again the next frame that finds its place built
     poiHost?.destroyAll();   // POI-2: and the POIs - stood again the next frame off the new anchor
     merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards - stood again the next frame, in the new frame
+    settlements?.destroyAll();   // RMB-CONTRACTS RMBC4: and the settlements, stood again off the built pixels
     portHost?.destroyAll();   // SHIPYARDS: and the shipyards and lighthouses, the same
     wardenShows?.destroyAll();   // WARDEN1: and a throw in flight - its team set down where it landed
     riteHost?.destroyAll();   // WB12d: and the faithful's circle - its faithful went with the live pools; it stands again the next frame
@@ -15178,6 +15181,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (a flower in the air lands nowhere: thrown before the restore - AUDIT LEFAY1 B1)
         poiHost?.destroyAll();   // POI-2: and the POIs - their colliders down, stood again off the loaded world
         merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards, their colliders down, stood again off the loaded world
+        settlements?.destroyAll();   // RMB-CONTRACTS RMBC4: and the settlements
         portHost?.destroyAll(); closeShipyard();   // SHIPYARDS: and the shipyards and lighthouses, and the shipmaster's window over a world gone
         // SHIPYARDS: stood again at once off the loaded world, the player already where the save stood them - the frame
         // steps the player before its pools stand, so a save made on a lighthouse's gallery found no floor for a frame
@@ -24473,6 +24477,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     mend: () => mendAtYard(),   // WAGONS4: the Wagon Yard's wright
     bench: () => openYardBench(),   // CARP-YARD: the joinery's workbench
   });
+  // RMB-CONTRACTS RMBC4: THE SETTLEMENTS (scenes/settlementHost.js) - each where its pixel's worker laid it out (`p.settlement`)
+  settlements = createSettlementHost({ renderer, pipeline, collider: () => collider, built: () => built.values(), translation: (px, py, out) => state.pixelTranslation(px, py, out),
+    blocksFile: () => blocks, feet: () => (walkMode && playerSpawned ? player.feetAt() : null), exterior: () => _mode() === 'exterior' });
   /** CARP-YARD (bible/03-World/Merchant-Yards.md CARP-YARD): THE JOINERY'S WORKBENCH PRESSED - the Crafting page (CRAFT-HALL;
    *  the Stores page until then), landed on the workbench's section, as a home's workbench opens it (worldModes
    *  useDecorStation: the page's own gate, forgeOffered); where the page is not (offline, the switch shut) the bench says
@@ -28756,10 +28763,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // So the bag is the pipeline, as `dungeon.js` has always handed it. `arch` and `palette` ride along because
     // `createDataPipeline` takes them as inputs and returns only the palette.
     pipeline: { ...pipeline, arch, palette },   // PORTRAIT1: THE WHOLE PIPELINE, as the standalone ?dungeon scene has always handed it (dungeon.js) - see the note above
-    doorTargets: () => buildingDoors.map((e) => ({
+    doorTargets: () => [...buildingDoors.map((e) => ({
       ...e, door: shiftedDoor(e), localDoor: e.door,   // AUDIT 68 S22: the pixel-local door rides the hit - it is the block INSTANCE's, which the world one no longer says
       ...arenaDoorTarget(e),   // ARENA1: the colosseum's stair goes down to the undercroft, never into the castle
-    })),
+    })), ...(settlements?.doorTargets() ?? [])],   // RMB-CONTRACTS RMBC4: and the settlements' doors (their records ride the hit)
     // CRUX1: THE DOORLESS DUNGEON START - the player's own pixel's
     // location, when it has a dungeon, in the shape a door hit has
     // (what tryEnterDungeon reads: the location, the climate base, the
@@ -28917,7 +28924,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // origin); the name matches the directory only while the topics
     // pixel is the door's pixel (else '' - the window shows Shelves).
     buildingDataForDoor: (hit) => {
-      if (!hit?.pixelKey) return null;
+      if (!hit?.pixelKey) return hit?.settlement ?? null;   // RMB-CONTRACTS RMBC4: a settlement's door carries its building's record (no RMB block, no location)
       const dfLoc = locationIndex.get(hit.pixelKey);
       const p = built.get(hit.pixelKey);
       if (!dfLoc || !p?.locBlocks || !p.locOrigin) return null;
@@ -32738,7 +32745,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
     try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: each monument stood where its place is built, its flowers in flight and laid
     try { poiEditor?.frame(); poiHost?.frame(); } catch (e) { console.warn('[poi] host', e?.message ?? e); }   // POI-3: the editor's drafts laid over the feed first   // POI-2: the approved POIs on the built pixels - stood, placed, collided; the feed asked each minute
-    try { merchantYards?.frame(); } catch (e) { console.warn('[yards] the yards', e?.message ?? e); }   // MERCHANT-YARDS: each town's Stable and Wagon Yard stood where it is built
+    try { merchantYards?.frame(); } catch (e) { console.warn('[yards] the yards', e?.message ?? e); }
+    try { settlements?.frame(); } catch (e) { console.warn('[settlements]', e?.message ?? e); }   // RMB-CONTRACTS RMBC4: each settlement stood where it is built   // MERCHANT-YARDS: each town's Stable and Wagon Yard stood where it is built
     portFrame();   // SHIPYARDS: each port town's shipyard and lighthouse stood where it is built, before the lights (its lamp)
     witches?.frame();   // WITCH1: the town underfoot's Hearth Offerings stood, before the lights (their lanterns)
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
@@ -32847,7 +32855,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
     lefay?.draw(renderer);   // LEFAY1: the monuments
-    merchantYards?.draw(renderer, yardCull);   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show; PERF-YARD (AUDIT 15): the street's view test
+    merchantYards?.draw(renderer, yardCull);
+    settlements?.draw(renderer);   // RMB-CONTRACTS RMBC4: the settlements' ground, buildings and doors   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show; PERF-YARD (AUDIT 15): the street's view test
     poiHost?.draw(renderer, yardCull);   // POI-2: the approved POIs' opaque parts, by the street's view test
     portHost?.draw(renderer, yardCull);   // SHIPYARDS: the shipyards' timber and the lighthouses' stone, by the street's view test as the yards are
     if (_mode() === 'exterior') wardenShows?.draw(renderer);   // WARDEN1: a wagon on a guard's shoulders, or in the air

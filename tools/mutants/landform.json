@@ -275,8 +275,8 @@
   {
     "name": "LANDFORM-restand-scale-only",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
-    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief) + meet;",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet + pads;",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief) + meet + pads;",
     "tests": [
       "test/systems/landform.test.js"
     ],

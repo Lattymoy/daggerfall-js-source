@@ -1,0 +1,146 @@
+[
+  {
+    "name": "RMBC3-sin-quarter",
+    "file": "src/world/settlement/exactMath.js",
+    "old": "return q === 0 ? sinCore(r) : q === 1 ? cosCore(r) :",
+    "new": "return q === 0 ? sinCore(r) : q === 1 ? -cosCore(r) :",
+    "tests": [
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-sin-term",
+    "file": "src/world/settlement/exactMath.js",
+    "old": "  for (let n = 1; n <= 8; n++) { t = (-t * x2) / ((2 * n) * (2 * n + 1)); s += t; }",
+    "new": "  for (let n = 1; n <= 6; n++) { t = (-t * x2) / ((2 * n) * (2 * n + 1)); s += t; }",
+    "tests": [
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-atan-halving",
+    "file": "src/world/settlement/exactMath.js",
+    "old": "  for (let i = 0; i < 2; i++) { y /= 1 + Math.sqrt(1 + y * y); k *= 2; }",
+    "new": "  for (let i = 0; i < 0; i++) { y /= 1 + Math.sqrt(1 + y * y); k *= 2; }",
+    "tests": [
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-engine-sin-back",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * dsin(u)),",
+    "new": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * Math.sin(u)),",
+    "tests": [
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-arc-step",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "export const ARC_STEP = 8;",
+    "new": "export const ARC_STEP = 9;",
+    "tests": [
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-reach-cell",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "export const PAD_REACH = 6.4 * Math.SQRT2;",
+    "new": "export const PAD_REACH = 3;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-carve-not-min",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "    if (d <= PAD_REACH) low = Math.min(low, datum + pad.y - PAD_CLEAR);",
+    "new": "    if (d <= PAD_REACH) low = datum + pad.y - PAD_CLEAR;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-deck-carved",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "  if (on && on.base === 'raised') return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-no-ease",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "  return carve + (natural - carve) * smooth((bd - PAD_REACH) / GROUND_EASE);",
+    "new": "  return carve;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-lane-moved",
+    "file": "src/world/settlement/settlementPlaces.js",
+    "old": "export const SETTLEMENT_LANE = 0x342;",
+    "new": "export const SETTLEMENT_LANE = 0x341;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-lane-unflagged",
+    "file": "src/world/settlement/settlementPlaces.js",
+    "old": "=== SETTLEMENT_LANE && (Number(id) & 0x80000) !== 0;",
+    "new": "=== SETTLEMENT_LANE;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-bay-guard-gone",
+    "file": "src/world/settlement/settlementPlaces.js",
+    "old": "      if (!inBay(x, y)) _byPixel.set(worldPixelKey(x, y), row);",
+    "new": "      _byPixel.set(worldPixelKey(x, y), row);",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-stand-unasked",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
+    "new": "  const settlement = null;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-location-loses",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
+    "new": "  const settlement = standSettlementGround(px, py, samples);",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-pads-move-dropped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "return y + relief + town(y + relief) + meet + pads;",
+    "new": "return y + relief + town(y + relief) + meet;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "RMBC3-pads-move-stamped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "!(frame >= PADS_FRAME_LAW) ? padsMovedAt(x, z) : 0;",
+    "new": "!(frame >= 99) ? padsMovedAt(x, z) : 0;",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  }
+]
