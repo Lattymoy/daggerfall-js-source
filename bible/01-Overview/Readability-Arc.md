@@ -79,7 +79,7 @@ the owner's to call.
 | LEGIBLE 1 | The ceiling counts logical lines, so it is blind to layout | shipped (below) |
 | LEGIBLE 1b | Testing.md's file table closed; the suite counts itself | shipped (below) |
 | LEGIBLE 2 | The syntax-tree comparison that proves a mechanical change, and the carrier that moves mutant records and cites through one | shipped (below) |
-| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | the tool and the pilot folder shipped (below); a quiet window per further folder |
+| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | the tool, the pilot and the rollout shipped (below); 548 files aside, a window for each |
 | LEGIBLE 4 | Lint that holds the line: one statement per line, no comma sequences, a ratchet on new short names | shipped (below; the short names with LEGIBLE 5's glossary) |
 | LEGIBLE 5 | The glossary (`Glossary.md`) and the renames, one abbreviation per slice (`dw`, `csa`, `wod`, `lpt`, ...), by the language service and carried like the formatter | the glossary and the short names' ratchet shipped (below); each rename a quiet window per abbreviation |
 | LEGIBLE 6 | Comments: a register of every tag and the page that records it, then tag-led comments rewritten as reasons, file by file | - |
@@ -262,6 +262,28 @@ autonomy"* - the two decisions this page left to the owner, the dependency and t
 
 The next folder is the same three commands, in a window the owner calls. A folder's tests that match source text by
 regular expression are not carried; the pilot's 19 test files passed unchanged.
+
+## LEGIBLE 3b - the rollout (2026-10-31)
+
+The owner, the same session: *"Finish the not done"*. The tree was formatted folder by folder, each in its own
+commit with its pins carried, and main merged in over it.
+
+- **Coverage.** 3,268 of 3,816 code files (`src/`, `server/src/`, `server-account/src/`, `tools/`, `scripts/`) are on
+  `tools/formatted.json`. A folder whose files did not all carry lists the ones that did, file by file.
+- **The proof.** Each commit ran `node tools/carryPins.mjs --transform tools/format.mjs <files> --write`, then
+  `node tools/sameProgram.mjs` against the pre-format copies: every file the same program.
+- **The text pins.** A test that reads a source's text by regular expression is not a mutant record.
+  `tools/carryTextPins.mjs` carries such a pin token by token. 139 files whose pins it could not carry were taken
+  back to their old text, with their records.
+
+**Set aside.** The twelve files with more than 400 records each: `world.js`, `worldModes.js`, `dungeonContext.js`,
+`navalHost.js`, `exteriorFoes.js`, `comeSailAway.js`, `revenant.js`, `egBrain.js`, `wire.js`, `online.js`,
+`renderer.js` and `server/src/index.js`. A host's ceiling is in logical lines, so formatting moves no
+ceiling. These need a quiet window on main of their own: a branch open across one stales most of its records. The
+other aside files are ones whose mutant record or cite the carrier could not move.
+
+**The relay.** 148 of the relay's 181 files are formatted, so its bytes changed though its program did not:
+world298 (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
 
 ## LEGIBLE 4 - lint that holds the line (2026-10-30)
 
