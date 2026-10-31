@@ -1367,11 +1367,7 @@
 !/src/systems/thunderlock.js
 !/src/systems/timeScale.js
 !/src/systems/town/
-/src/systems/town/*
-!/src/systems/town/townEcon.js
-!/src/systems/town/townPopulation.js
-!/src/systems/town/townSeats.js
-!/src/systems/town/townWatch.js
+/src/systems/town/*/
 !/src/systems/traceAct.js
 !/src/systems/tradeModes.js
 !/src/systems/tradePack.js
