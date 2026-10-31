@@ -407,7 +407,7 @@
   {
     "name": "DLV1-a-plate-said-not-stood",
     "file": "src/net/delve/delveLaw.js",
-    "old": "w.st !== plate || ",
+    "old": "w.st === plate && ",
     "new": "",
     "tests": [
       "test/net/delve/dlv1_law.test.js"

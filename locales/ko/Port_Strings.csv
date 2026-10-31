@@ -8456,6 +8456,7 @@ shop.who.for,"구매품은 {name} 계정으로 들어가며, 그 계정의 모�
 shop.who.guest,"게스트 계정은 구매할 수 없습니다. 먼저 프로필에서 사용자 이름을 추가하세요."
 shop.who.out,"구매하려면 프로필에서 로그인하세요."
 shop.who.reading,"계정을 읽는 중…"
+shop.who.unread,"상점을 읽을 수 없습니다. 온라인일 때 다시 여세요."
 shop.yourName,"내 이름"
 skillswap.done,"{inn}이(가) 이제 {out} 대신 {group} 기술입니다."
 skillswap.refuse.career,"바꿀 직업이 없습니다."
