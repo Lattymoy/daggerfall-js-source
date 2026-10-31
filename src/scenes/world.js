@@ -142,7 +142,8 @@ import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a t
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
 import { rumareSeaPixel } from '../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's - its ports' shore, its voyages' water
-import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
+import { createWorldLanes, onWorldSea, bayLaneWater } from './naval/worldLanes.js';   // The Bay's packet lanes and the sea's past it, one book
+import { createKernelSea } from '../world/water/kernelSea.js';   // the lanes' and raiders' sea the ground the game builds
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -227,7 +228,7 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, sayShareRefusal, syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } from '../systems/quest/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/map/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
-import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrain/terrainHelper.js';   // AUDIT 58 F4
+import { dilateCoastalClimate, smoothLocationNeighbourhood, undilatedClimateIndex } from '../world/terrain/terrainHelper.js';   // AUDIT 58 F4; the lanes' sea the file's own climate
 import { registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 // EM4: the skin fork. The classic skin keeps DFU's rotating town map
 // whole; the enhanced one gets the held sheet with the town's plan
@@ -541,7 +542,7 @@ import { canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: t
 import { routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { planRouteSliced as planRoute, planJourney } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the journeys' plans a slice of cells at a time
 import { tvMooredDry, tvSeaAsk } from '../systems/travel/seaAsk.js';   // OWS2's two asks of the planner (PLAN-SLICES: out of the host)
-import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
+import { createSeaHelm, seaHelmStep, seaHelmLook, seaNoWay, seaClock, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // The journey's hand on the helm
 import { createLoadGovernor, unbuiltAround, unbuiltCount, travellerPace } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
@@ -549,7 +550,7 @@ import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/tra
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
 import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
-import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
+import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE, setSeaLegKernel } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { drawRouteRuns, drawOwnRun } from '../systems/travel/roadLine.js';   // ROAD-FOLLOW: the drawn route on the roads' curves past the Bay
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, bandStandBearing, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
@@ -780,7 +781,7 @@ import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: t
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
+import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP, squareCornersAll } from '../world/terrain/terrainSampler.js';   // The sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed, gridGround } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader, locationFootprintRect } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -3862,7 +3863,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _bandSpentAt = [];        // TV7b: the bands spent HERE, newest first - said on my frames so the others spend them too
   let tvPlates = { at: null, list: [] };   // TV2: the known places about the traveller, rebuilt on a pixel change - AUDIT DEEP T2-4: and emptied by a load (above its readers: BOOT-TDZ)
   const tvRaid = { list: [], at: -Infinity, chase: new Map(), spent: new Set(), clock: 0, life: -1, peer: new Map(), spentAt: [] };   // OWS3: Warm Ashes' raiders about the traveller, and the chases (BOOT-TDZ: a load ends them); OW6: a peer's chases heard, and my spent ones said
-  const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, best: Infinity, bestS: 0, legAt: -1, wasLive: false };   // OWS2: the crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
+  const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, ...seaClock(), legAt: -1, wasLive: false };   // The crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
   let travelView = null;   // TV1: assigned beside the look gate, read by the cursor toggle's guard and the frame (BOOT-TDZ)
   let travelAsked = 1;   // TV2 (AUDIT TV A2): the rate Travel Options itself last asked the clock for - its ground's (RATE-LAW; it was the spinner), or its own cap (the ring walk's x15, an interrupt's x1) - the one the travel view's governor may hold under, and hands back
   const travellerBook = createTravellerBook();   // TV3: the region's travellers (BOOT-TDZ: read by the map, the view and the chat's links)
@@ -8581,13 +8582,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  the draft asked when it sounds (shipLife.js draftOf - hull 2's off the keel of the galleon that stands). */
   const navalIsWater = (x, z, hull = 0) => {
     const p = csaPixelAt(x, z);
-    if (!p) return false;
+    if (!p) return null;   // ground not yet built - unknown, never land a water grid keeps (shipLife.js)
     const t = csaTerrainOf(p);
     if (!p.deepWaters && csaTileMapIndexAtPosition([x, 0, z], t) !== 0) return false;
     if (!p.deepWaters) return true;
     const floor = surfaceAt(x, z);
     return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));
   };
+  navalIsWater.tile = () => ({ size: TERRAIN_SIZE / 128, x0: state.compensation[0], z0: state.compensation[2] });   // the built ground's tiles (comeSailAway.js tileMapIndexAtPosition), a water grid's lines asked of each
   /** A port town within a pixel of the player (the merchantmen's and the navies' water, navalDirector.js PORT_WEIGHTS). */
   let _navalPortAt = null;   // { key, near } - the answer for the pixel it was asked at
   const navalNearPort = () => {
@@ -28399,6 +28401,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
   // bytes where TAMRIEL2 streams the land beyond the Bay - `woods` is its composed reader then, the sea past the frame
   const tvWater = (px, py) => (!woods.isTamrielGround && !woods.etherLaw?.(px, py) && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;   // AUDIT CAPTAIN'S SEA G5: the Eltheric Ocean's isles land, whatever the continent's switch says
+  const kernelSea = createKernelSea(() => woods);   // the kernel's sea at a native point (world/water/kernelSea.js) - the lanes' and the raiders'
+  setSeaLegKernel(kernelSea, tvWater);   // a journey's sailed legs mended round the kernel's land (systems/travel/seaLegsMend.js)
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;
   /** `roads` (TO-ROADS x OW-PATH): by the roads whatever the Path switch says - the map's first-person pick (tvMapForcesRoads). */
@@ -28553,9 +28557,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // its cliff (a rise of 60 against the law's 16: the lag and the fall Mac hit); a place's own pixel stays exempt
     let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });   // DRAGON6: flown straight on the dragon
     if (!plan && !wnet && roadNet) { wnet = roadNet; plan = planRoute(from, pix, { roads: wnet.roads ?? null, tracks: wnet.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk }); if (plan) townTalk.say(TRAVEL_PATH_TEXT.fellBack); }   // OW-PATH
-    if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }
     const dry = water ? null : tvMooredDry(seaAsk ? means : null, plan, () => planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door }));   // AUDIT OW5 S3
     if (dry) { plan = dry; seaAsk = null; }
+    if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }   // asked after the plan on foot (seaAsk.js tvMooredDry)
     let legs = tvJoinedLegs(from, plan, roads, door || water ? null : n);   // OW-TOWN-ROUND: round the towns at both ends (AUDIT UPDATE T3: never a spot on the sea - its crossing is the sea's)
     // AUDIT OW5 S4: a spot on the sea in the traveller's own pixel, from afloat - the planner's one pixel is no step, so the
     // route had no leg at all: the crossing read its kind as land, landed the boat mid-sea and packed it from under the
@@ -28602,7 +28606,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const TV_SEA_LANE_M = 5;       // AUDIT SHIPS A2: the water kept either side of her beam on the mark's line
   const TV_SEA_ASHORE_M = 60;    // how far from the landed boat the traveller may step ashore
   const TV_SEA_BEACH_M = 10;     // a landfall's shore this near, the boat all but stopped: the landfall, beached or not
-  const TV_SEA_NO_WAY_S = 180;   // game seconds a sea leg may go without coming 20 m nearer its mark before it stops
   /** A scene point's water by the law Come Sail Away reads its boats' nodes with (the built ground's tile map, or Iliac
    *  Puddle No More's height under its line); ground not built is not water. */
   function tvSeaWaterAt(x, z) {
@@ -28691,7 +28694,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  the boat!"); any other stands it down. */
   function tvSeaBegin(means, kinds) {
     tvSeaRelease();
-    tvSea.phase = null; tvSea.boat = null; tvSea.best = Infinity; tvSea.bestS = 0; tvSea.legAt = -1;
+    tvSea.phase = null; tvSea.boat = null; Object.assign(tvSea, seaClock()); tvSea.legAt = -1;
     tvSea.helm = createSeaHelm();
     tvSea.means = means && (crossesWater(kinds) || means.start === 'sea') ? means : null;
     if (tvSea.means?.how === 'moored') csaCall(() => csaRuntime.StartSailing(tvSea.means.boat));
@@ -28807,7 +28810,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!landfall && csaRuntime.IsBeached(boat)) { tvSeaStop(TRAVEL_VIEW_TEXT.aground); return; }
     const gs = dt * worldTimeScale();   // the game's seconds, as the boat's own clock runs
     const dist = Math.hypot(mark[0] - p[0], mark[2] - p[2]);
-    if (dist < tvSea.best - 20) { tvSea.best = dist; tvSea.bestS = 0; } else if ((tvSea.bestS += gs) > TV_SEA_NO_WAY_S) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }
+    if (seaNoWay(tvSea, dist, gs)) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }   // the way back from a detour counts (seaHelm.js)
     const w = s.windVectorCurrent ?? [0, 0, 0];
     // her lane: from her bow and either beam (her nodes - the points the runtime stops her on), and the lane she would
     // sail to the mark - her beam's breadth and TV_SEA_LANE_M either side of its line
@@ -28857,7 +28860,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!travelView?.active && !tvOwnsJourneys() && !csaHoldsTimeScale() && worldTimeScale() !== (tvHeld ?? travelAsked)) setWorldTimeScale(tvHeld ?? travelAsked);
     const leg = route.legs[Math.min(route.i, route.legs.length - 1)] ?? null;
     const kind = leg?.kind ?? 'open';
-    if (route.i !== tvSea.legAt) { tvSea.legAt = route.i; tvSea.best = Infinity; tvSea.bestS = 0; }
+    if (route.i !== tvSea.legAt) { tvSea.legAt = route.i; Object.assign(tvSea, seaClock()); }
     if (tvSea.phase === 'landing') {   // the mod's disembark holds the traveller at the helm a second: then ashore
       if (csaRuntime.state.disembarking == null && !csaRuntime.isSailing()) tvSeaAshore();
       return;
@@ -29547,7 +29550,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it all was water: a raider sailed off the world). */
   const tvRaidSea = (x, z) => {
     const px = Math.floor(x / RAID_NATIVE_PIXEL), py = 499 - Math.floor(z / RAID_NATIVE_PIXEL);
-    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);   // WW3
+    return onWorldSea(px, py, tamrielLand) && squareCornersAll(tvWater, px, py) && kernelSea(x, z);   // WW3; its square's four corners (SEA-SQUARE); O3: and the kernel's own ground there
   };
   /** The raiders about the traveller at the shared clock, read again each TV_RAID_LIST_MS. */
   function travelViewRaiders() {
@@ -29688,12 +29691,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  climate, so the towns on a lake run their packets on it - the lake harbours' own traffic, which stays (Mac,
    *  2026-10-15: the lake harbours are kept). The serpent's site asks a 3 x 3 of it, which no lake of the real map holds
    *  (none in 3,650 days); a reader that means the open sea asks `openSea`. */
-  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;
+  const laneOpen = bayLaneWater(tvWater, (px, py) => (inBay(px, py) ? undilatedClimateIndex(maps, px, py) : maps.getClimateIndex(px, py)) === CLIMATES.Ocean);   // its square's four corners, CLIMATE.PAK's own climate (scenes/naval/worldLanes.js)
   const laneOpenNative = (x, z) => { if (!(x >= 0 && z >= 0 && x < 1000 * RAID_NATIVE_PIXEL && z < 500 * RAID_NATIVE_PIXEL)) return false; const p = pixelOfNative(x, z); return laneOpen(p.x, p.y); };
   // WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S LANES (scenes/naval/worldLanes.js) - the Bay's, between its ports
   // over its water, as they always were; and the sea's past it, between the world's ports (world/worldWide/worldPorts.js)
   // over the continent's sea where its land stands - one book of both, each lane's way kept once
-  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand });
+  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand, kernel: kernelSea });   // the kernel's sea
   _lanesReady = true;   // BOOT-TDZ II: every binding the lanes read stands from here (raidNowMs above it)
   /** The lanes of the whole world - every client's the same: the Bay's, then the ones past it. */
   function laneNet() { return worldLanes.all(); }
