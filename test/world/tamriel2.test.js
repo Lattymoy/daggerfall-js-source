@@ -318,6 +318,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
   // PIN MOVED (FB1029 GROUND): 75 - ACROSS-EDGE's meet (world/terrain/townMeet.js) and ROAD-DRY's lift (world/road/roadDry.js), both pure
   // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
-  // PIN MOVED (SKYRIM-FLORA): 78 - Skyrim's plant catalog (world/tamriel/skyrimFlora.js), asked by the Lands table, pure
+  // Skyrim's plant catalog (world/tamriel/skyrimFlora.js) sits on the Lands table; bump when that import lands.
   assert.ok(seen.size > 20 && seen.size < 79, `${seen.size} modules`);
 });
