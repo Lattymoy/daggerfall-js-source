@@ -699,7 +699,7 @@ points at it).
 
 FOUND, on the code. FINDME built Find me for the bay: glide to the player's world pixel at FOCUS_SCALE and blink a red
 cross over it for three seconds, the cross painted by the world sheet's own overlay. FINDME-SHEET (`10-UI/Overhauls.md`)
-kept the button on the town's sheet. But the town map opens through `townMapDoor.js:"...(deps.travel ?? {}),"`, and
+kept the button on the town's sheet. But the town map opens through `townMapDoor.js:"...(deps.travel ?? {})"`, and
 neither host passes a `travel` bag: world.js and exterior.js deliberately hand the town window no bay (EM4's decision,
 DFU's open-time travel guards). So the window had no `getPlayerPixel`, and its constructor stood the bay's middle in for
 it (`const p = deps.getPlayerPixel?.() ?? { x: this._size.width >> 1, y: this._size.height >> 1 };`, main `9e00d52e9`).

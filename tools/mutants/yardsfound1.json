@@ -137,8 +137,8 @@
   {
     "name": "YARDS-FOUND-the-door-lays-none",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "if (deps.yards?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.yards) };",
-    "new": "void yardTownBlocks;",
+    "old": "  if (deps.yards?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.yards) };",
+    "new": "  void yardTownBlocks;",
     "tests": [
       "test/systems/yardsfound1.test.js"
     ]

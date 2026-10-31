@@ -20,8 +20,8 @@
   {
     "name": "MWMAP1-the-town-door-drops-the-holder",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "      holder: deps.holder ?? null,",
-    "new": "      holder: null,",
+    "old": "      holder: deps.holder ?? null, // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weapon/weaponRig.js sheetHolderOf)",
+    "new": "      holder: null, // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weapon/weaponRig.js sheetHolderOf)",
     "tests": [
       "test/ui/town/mwmap1.test.js"
     ]

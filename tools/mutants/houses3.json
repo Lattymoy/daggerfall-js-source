@@ -193,8 +193,8 @@
   {
     "name": "HOUSES3-marks-the-first-alone",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "const bought = new Set(regionDeedsOf(houses, regionIndex).filter(",
-    "new": "const bought = new Set(regionDeedsOf(houses, regionIndex).slice(0, 1).filter(",
+    "old": "      .filter((d) => Number.isFinite(Number(d.mapId)) && Number(d.mapId) >>> 0 === id)",
+    "new": "      .slice(0, 1)\n      .filter((d) => Number.isFinite(Number(d.mapId)) && Number(d.mapId) >>> 0 === id)",
     "tests": [
       "test/systems/houses3.test.js"
     ]

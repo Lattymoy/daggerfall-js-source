@@ -137,8 +137,8 @@
   {
     "name": "D23A-town-door-drops-party",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "    party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n",
-    "new": "",
+    "old": "    party: deps.townParty ?? null, // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n    homes: deps.townHomes ?? null, // TOWN-MARKS: the player housing, by building key",
+    "new": "    homes: deps.townHomes ?? null, // TOWN-MARKS: the player housing, by building key",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]

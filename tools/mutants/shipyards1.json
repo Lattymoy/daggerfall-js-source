@@ -579,8 +579,8 @@
   {
     "name": "SHIPYARDS-FOUND-the-door-lays-no-port",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) };",
-    "new": "  if (false) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) };",
+    "old": "  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) }; // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way",
+    "new": "  if (false) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) }; // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way",
     "tests": [
       "test/systems/shipyards1_found.test.js"
     ]

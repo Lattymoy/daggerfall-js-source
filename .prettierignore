@@ -1684,6 +1684,12 @@
 /src/ui/touch/*
 !/src/ui/touch/touchDevice.js
 !/src/ui/touch/touchGestures.js
+!/src/ui/town/
+/src/ui/town/*
+!/src/ui/town/imperialSheet.js
+!/src/ui/town/townMapDoor.js
+!/src/ui/town/townMapMarks.js
+!/src/ui/town/townQuarters.js
 !/src/ui/tradeDoor.js
 !/src/ui/transportWindow.js
 !/src/ui/tutorialPopup.js
