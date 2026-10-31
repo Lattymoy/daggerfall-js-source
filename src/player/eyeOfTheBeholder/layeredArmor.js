@@ -158,8 +158,9 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
   // turned over (the picture flipped), from aside its cut run backwards. AUDIT: a shot is the striking hand's gun's
   const left = table === 'AttackMelee' && look?.strike === 'L' && !!look?.offhand, square = offset === 0 || offset === 4;
   const striking = left ? look.offhand : look?.weapon, gun = table === 'AttackMelee' && isGunCode(striking);
-  // LAYERED-SHIELD: on the free arm in every frame but the loose's, never beside a pair nor a bow; its swing is one-handed
-  const shield = pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) ? pieces.shield : null;
+  // LAYERED-SHIELD: on the free arm in every frame but the loose's, never beside a pair nor a bow; its swing is one-handed.
+  // BACK-SHIELD: sheathed, it is on the back (eotbBackShield.js), not the arm
+  const shield = pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield : null;
   const cut = table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? (shield && shieldCutOf(striking, offset)) || swingCutOf(striking, left && !square) : null;
   const stage = table === 'AttackSpell' ? Math.min(fc, 3) : null;   // SPELL-BURST: the cast's, frame for frame - a shield's from behind holds the throw
   const f = gun ? Math.min(shield ? SHIELD_GUN[offset] : GUN_FIRE_FRAME, n - 1)   // LAYERED-WEAPONS: a shot, from the hip

@@ -282,6 +282,15 @@ glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks
 fills (`withoutShield`). A bare walk's twin is the armed one, unturned, so the shield keeps its arm. Verified by
 `test/player/eyeOfTheBeholder/layered_shield.test.js` and `tools/mutants/layered_shield.json` (34 mutants, all dead).
 
+**The shield on the back** (BACK-SHIELD, the owner, 2026-10-31: "Implement the shield holstered on the back. The weapon
+should sit behind the shield"). Sheathed, the shield leaves the arm (the look's `sheathed`: my rig's, a walker's `wd` 0)
+and hangs on the back as a card of its own by the holster's law (`eotbBackShield.js`, `BACK_SHIELD`): upright on the
+spine, its top over the shoulders, 8 cm farther out than the sheathed weapon. From behind it lies over the weapon; from
+before both are behind the body's card. Its face from behind, its inside turned round from before, its width turned
+with the body (`BACK_SHIELD_SQUEEZE`, edge on from aside). My body and every layered walker carry it (`drawBackShield`,
+`slingBackShield`), listed for the redraw over the aura; a class skin none. Verified by
+`test/player/eyeOfTheBeholder/backshield.test.js` and `tools/mutants/back_shield.json` (19, 18 dead, 1 equivalent).
+
 ## The art - the doctrine's third exception
 
 The strips are drawn from Daggerfall's own sprites (the caped class sprites 1540 and 1541, the enemy frames of

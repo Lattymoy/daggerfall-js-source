@@ -39,11 +39,11 @@ export function layeredWeaponOf(item) {
 }
 /** LAYERED-DUAL: what a layered body's hands hold, for its look - a pair's right weapon (`weapon`), its left (`offhand`)
  *  and the hand whose blow is in flight (`strike`); else the hand in use's weapon. SPELL-BURST: a cast's element (`cast`)
- *  and a weapon kept beside the spell (`spellHand`). `s` the rig's state: heldWeapon, and pairRight, pairLeft,
- *  pairStrike where the hands hold a pair; castElement, spellHand. */
+ *  and a weapon kept beside the spell (`spellHand`); BACK-SHIELD: sheathed. `s` the rig's state: heldWeapon, and
+ *  pairRight, pairLeft, pairStrike where the hands hold a pair; castElement, spellHand, sheathed. */
 export function layeredHands(s) {
   const held = s?.pairRight && s?.pairLeft ? { weapon: layeredWeaponOf(s.pairRight), offhand: layeredWeaponOf(s.pairLeft), strike: s.pairStrike ?? null } : { weapon: layeredWeaponOf(s?.heldWeapon) };
-  return { ...held, ...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {}), ...(s?.spellHand ? { spellHand: true } : {}) };
+  return { ...held, ...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {}), ...(s?.spellHand ? { spellHand: true } : {}), ...(s?.sheathed ? { sheathed: true } : {}) };
 }
 export const isBowCode = (code) => typeof code === 'string' && BOWS.has(code.slice(0, 2));
 

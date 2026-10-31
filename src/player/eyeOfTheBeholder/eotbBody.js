@@ -54,9 +54,9 @@ import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // A
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, ridersReady, decodeSprite } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
-import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
+import { isLayeredKey, decodeLayered, outfitOfSlots, outfitPieces, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
-import { withoutShield } from './layeredShield.js';   // LAYERED-SHIELD: the body's marks are read without the shield it carries
+import { withoutShield, loadShieldPicture } from './layeredShield.js';   // LAYERED-SHIELD: the body's marks are read without the shield it carries
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
@@ -72,6 +72,7 @@ import {
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
 import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldGlowPx, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
 import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from './eotbQuiver.js';   // QUIVER: a bow's quiver on the back
+import { createBackShieldArt, backShieldSeen, BACK_SHIELD } from './eotbBackShield.js';   // BACK-SHIELD: a sheathed layered body's shield on its back
 import { ammoCountFor } from '../../systems/inventory.js';   // QUIVER: arrows in it, with no rig to say
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
@@ -231,7 +232,7 @@ const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / 
 
 const handWeapon = () => { try { return equipTableOf(playerEntity)?.[HOLSTER_HAND_SLOT] ?? null; } catch { return null; } };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
@@ -327,6 +328,10 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   const quiver = createSpriteHolster(SELF_OWNER);
   const quiverArt = createQuiverArt(() => renderer, loadQuiver);
   const dropQuiver = () => { dropSpriteHolster(quiver, renderer); unlist(quiver); };
+  // ── BACK-SHIELD: sheathed, a layered body's shield on its back, over the weapon (eotbBackShield.js) ─
+  const backShield = createSpriteHolster(SELF_OWNER);
+  const backShieldArt = createBackShieldArt(() => renderer, loadBackShield);
+  const dropBackShield = () => { dropSpriteHolster(backShield, renderer); unlist(backShield); };
   /** Arrows for `item`: the rig's word, else the pack's. */
   const arrowsNow = (item) => (last.hasAmmo !== undefined ? !!last.hasAmmo : ammoCountFor(playerEntity?.items, item) > 0);
   /** The weapon in the hand in use - the rig's, else the equip table's right hand (the pins hand theirs in). */
@@ -358,6 +363,17 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     mintSpriteHolster(quiver, renderer).conceal = material();
     renderer.drawBillboards(quiver.list, quiver.right, quiver.up);
     backList.push(quiver);
+    return true;
+  }
+  /** BACK-SHIELD: the worn shield on a layered body's back - by drawHolster's gates (sheathed, alive, in your own form). */
+  function drawBackShield(camRight) {
+    const lk = cfg.wornArmour && activeFlag && !died && !last.died && !last.transformed && last.sheathed ? lookNow() : null;
+    const code = lk ? outfitPieces(lk.outfit)?.shield : null;
+    const art = code && shown ? backShieldSeen(backShieldArt.ensure(code, lk.gender === 'female' ? 'female' : 'male'), shown.orientation) : null;
+    if (!art || !hangSpriteHolster(backShield, figure, shown.orientation, cam.feet, cam.pos, camRight, art, BACK_SHIELD)) { dropBackShield(); return false; }
+    mintSpriteHolster(backShield, renderer).conceal = material();
+    renderer.drawBillboards(backShield.list, backShield.right, backShield.up);
+    backList.push(backShield);
     return true;
   }
   /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
@@ -488,11 +504,12 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     outfitUp = now;
     if (had == null) return;
     const plain = String(lk.outfit ?? '').replace(/~\d/, '');   // LAYERED-SHIELD: a shield stays in it
+    const slung = (o) => o.replace(/\^[a-z][a-z0-9]/, '');   // BACK-SHIELD: sheathed, the frames are drawn without it
     // LAYERED-WEAPONS: an outfit's pictures stand in every hand the weapon held now shows - empty, the weapon, the art's own
     const hands = new Set([undefined, '0', lk.weapon ?? undefined]), pair = new Set([lk.weapon, lk.offhand].filter(Boolean));
     const stands = (archive, code) => {
       const [worn, cast] = String(code).split('@'), held = cast?.replace(/!\d\d?$/, ''), [a, b] = String(held).split('+');   // LAYERED-DUAL: a pair's, either way round; AUDIT: a cast's frames with its hands
-      return layered && archive === s.archive && (worn === lk.outfit || worn === plain) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));
+      return layered && archive === s.archive && [lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? ''))) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));
     };
     for (const k of [...tex.keys()]) {
       const i = k.indexOf(':'), archive = Number(k.slice(0, i));
@@ -1015,7 +1032,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     toggle(active, fp = false) {
       FP = !!fp;
       activeFlag = !!active;
-      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
+      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
       if (activeFlag) initialize();
       return activeFlag;
     },
@@ -1024,7 +1041,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     torchDefault,
     /** HT-WAIST: another body has the frame (mwView's Morrowind lane) - the sprite's lantern, its batch and the
      *  light point it wrote, stand down, so the Morrowind body's hip is lit from its own hook. */
-    standDown() { dropLantern(); dropHolster(); dropQuiver(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
+    standDown() { dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
     /** HORSE-FACE: the floating origin moved the world under the feet - they move with it, so the shift is no placing. */
     rebase(delta) {
       if (!delta || !cam.feet) return;
@@ -1089,7 +1106,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;
       figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;
       if (!renderer || !activeFlag || !shown) return false;
-      if (!cfg.graphic) { dropLantern(); dropHolster(); dropQuiver(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
+      if (!cfg.graphic) { dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
       if (feet) cam.feet = feet;
       if (Number.isFinite(yaw)) cam.yaw = yaw;
       if (eye && !FP) cam.pos = eye;
@@ -1148,6 +1165,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs
       if (grow === 1) drawHolster(camRight); else dropHolster();   // BACK-HOLSTER: the weapon on the back, after the body (OW-BIG's rule too)
       if (grow === 1) drawQuiver(camRight); else dropQuiver();   // QUIVER: and a bow's quiver
+      if (grow === 1) drawBackShield(camRight); else dropBackShield();   // BACK-SHIELD: and a sheathed shield, over the weapon
       // BACK-HOLSTER GLOW: drawn, the weapon's glow - in third person, on foot, alive, in your own form; LAYERED-GLOW:
       // round a worn-armour body's weapon alone, else the whole sprite
       const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();
@@ -1191,6 +1209,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
       holster: { drawn: holsterDrawn, batch: !!holster.batch, mirror: holster.mirror, h: holster.h, w: holster.w, up: [...holster.up], mid: [...holster.mid] },   // BACK-HOLSTER
       quiver: { drawn: backList.includes(quiver), archive: quiver.archive, mirror: quiver.mirror, h: quiver.h, w: quiver.w, up: [...quiver.up], mid: [...quiver.mid], origin: [...quiver.origin] },   // QUIVER
+      backShield: { drawn: backList.includes(backShield), archive: backShield.archive, mirror: backShield.mirror, h: backShield.h, w: backShield.w, mid: [...backShield.mid] },   // BACK-SHIELD
       glows: glowList.map((g) => ({ key: g.key, look: g.glow?.look ?? null, level: g.glow?.level ?? null, w: g.w, h: g.h, art: [...g.art], origin: [...g.origin], right: [...g.right], up: [...g.up] })),   // BACK-HOLSTER GLOW
     }),
     settings: () => cfg,

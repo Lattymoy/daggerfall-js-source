@@ -72,8 +72,8 @@
  {
   "name": "LAYERED-SHIELD-shield-beside-bow",
   "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": " && !isBowCode(look?.weapon) ? pieces.shield",
-  "new": " ? pieces.shield",
+  "old": " && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield",
+  "new": " && !look?.sheathed ? pieces.shield",
   "tests": [
    "test/player/eyeOfTheBeholder/layered_shield.test.js"
   ],
