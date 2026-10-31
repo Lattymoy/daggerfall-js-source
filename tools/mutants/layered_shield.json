@@ -358,5 +358,45 @@
    "test/player/eyeOfTheBeholder/layered_shield.test.js"
   ],
   "why": "a second pauldron over the frame's own (female 5-2)"
+ },
+ {
+  "name": "DONOR-FILL-never",
+  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+  "old": "if (arm && hand.donor) fillFromDonor(res, arm, hand.donor);",
+  "new": "",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the chest the arm crossed left to the inpaint's noise"
+ },
+ {
+  "name": "DONOR-FILL-shift-backwards",
+  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+  "old": "X = x + dx, Y = y + dy;\n    if (donor.within",
+  "new": "X = x - dx, Y = y - dy;\n    if (donor.within",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the idle's px from the wrong place"
+ },
+ {
+  "name": "DONOR-FILL-past-outlines",
+  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+  "old": "if (donor.within && !donor.within.some((P) => inPolygon(x + 0.5, y + 0.5, P))) continue;",
+  "new": "",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "male 6-3's idle waist laid over the crouch"
+ },
+ {
+  "name": "DONOR-FILL-air-filled",
+  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+  "old": "if (!hole[i] || !out.data[i * 4 + 3]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
+  "new": "if (!hole[i]) continue;\n    const x = i % w, y = (i / w) | 0, X = x + dx",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the arm's open air given the idle's body"
  }
 ]

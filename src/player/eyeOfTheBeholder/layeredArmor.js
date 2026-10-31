@@ -29,7 +29,7 @@ import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 import { drawSpellBurst } from './layeredSpell.js';   // SPELL-BURST: the cast's spell in its hands
-import { layeredShieldOf, SHIELD_SLOT, shieldPictureOf, loadShieldPicture, shieldPictureExpected, removeShieldArm, graftArm, outlineMask, drawLayeredShield, padFrame, shieldCutOf, SHIELD_CAST, SHIELD_GUN } from './layeredShield.js';   // LAYERED-SHIELD: the shield on the free arm
+import { layeredShieldOf, SHIELD_SLOT, shieldPictureOf, loadShieldPicture, shieldPictureExpected, removeShieldArm, fillFromDonor, graftArm, outlineMask, drawLayeredShield, padFrame, shieldCutOf, SHIELD_CAST, SHIELD_GUN } from './layeredShield.js';   // LAYERED-SHIELD: the shield on the free arm
 import { artBowPx, bowFrom, LOOSE_BOW_FROM, heldPictureExpected, weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
@@ -397,7 +397,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, shieldPic?:any, graft?:any, armFrom?:Int32Array, cm?:number, swing?:boolean, frame?:number, mirror?:boolean, throwFr?:any}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, shieldPic?:any, graft?:any, donor?:any, armFrom?:Int32Array, cm?:number, swing?:boolean, frame?:number, mirror?:boolean, throwFr?:any}|null} [weapon] LAYERED-WEAPONS: the frame's rig
  * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
@@ -418,6 +418,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
     else if (hand && held) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
     // LAYERED-SHIELD: a swing frame's free arm comes out - the sword arm swings alone
     const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;
+    if (arm && hand.donor) fillFromDonor(res, arm, hand.donor);   // DONOR-FILL: the chest the arm crossed, the idle's own
     const laid = arm && hand.graft ? graftArm(res, hand.graft) : null;   // from before, the idle's arm back, the shield in its hand
     const art = hand && held && !takeOut ? out.slice() : null;   // LAYERED-GLOW: the art's own hammer, before the cloak
     if (cloak && pieces?.cloak != null) {
@@ -558,6 +559,13 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
         const img = await decodeLayered(`LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
         weapon.graft = { img, arm: outlineMask(img, sg[3] && Array.isArray(idle.ss) ? [...idle.sp, ...idle.ss] : idle.sp), at: [sg[1], sg[2]] };
       } catch { /* the arm taken out, none back */ }
+    }
+    const sd = weapon && pieces.shield && Array.isArray(fr.sa) && Array.isArray(fr.sd) ? fr.sd : null;   // DONOR-FILL
+    if (sd) {
+      try {
+        const img = sd[0] === sg?.[0] && weapon.graft ? weapon.graft.img : await decodeLayered(`LA:${body}:${combo}:${sd[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
+        weapon.donor = { img, at: [sd[1], sd[2]], within: Array.isArray(sd[3]) ? sd[3] : null };
+      } catch { /* the fill alone */ }
     }
     // AUDIT: a picture not had yet (its load timed out) draws the shape meanwhile - the stores decode the frame again
     const late = (pic, c, expected) => !pic && !!c && c !== '0' && expected(c, body);

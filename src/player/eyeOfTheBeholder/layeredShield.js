@@ -228,6 +228,22 @@ export function removeShieldArm(out, polys, from = null) {
   }
   return m;
 }
+/** DONOR-FILL: the hole the free arm left on the chest, in place, from the idle's own chest (`donor`: the idle's
+ *  picture, the shift `at` to its px from this frame's, and the outlines `within` it keeps to, if any): each body px of
+ *  `hole` the donor px it lands on, where the donor has one. The px it fills, counted. */
+export function fillFromDonor(out, hole, donor) {
+  const w = out.width, D = donor.img, [dx, dy] = donor.at;
+  let n = 0;
+  for (let i = 0; i < hole.length; i++) {
+    if (!hole[i] || !out.data[i * 4 + 3]) continue;
+    const x = i % w, y = (i / w) | 0, X = x + dx, Y = y + dy;
+    if (donor.within && !donor.within.some((P) => inPolygon(x + 0.5, y + 0.5, P))) continue;
+    if (X < 0 || Y < 0 || X >= D.width || Y >= D.height || !D.data[(Y * D.width + X) * 4 + 3]) continue;
+    out.data.set(D.data.subarray((Y * D.width + X) * 4, (Y * D.width + X) * 4 + 4), i * 4);
+    n++;
+  }
+  return n;
+}
 /** A graft's arm (`from`: the idle's picture, its arm's px, the shift `at` it hangs from this frame's shoulder by) laid
  *  over a frame, in place. The px it covers, 1 each. */
 export function graftArm(out, from) {

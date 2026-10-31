@@ -1001,3 +1001,20 @@ test('SHEETS a flinch holds the bow in the hammer\'s fist; a frame drawn before 
   // a cast's frames are the outfit's with its hands: kept when another outfit goes
   assert.match(bodySrc, /held = cast\?\.replace\(\/!\\d\\d\?\$\/, ''\)/);   // PIN MOVED (LAYERED-SHIELD): and a cast's stage
 });
+
+test('IRON-LEFT (the owner, 2026-10-31: "this glob of texture where the hammer was removed"): the back views leave none of the hammer\'s dark iron', { skip: !PNG && 'no pngjs' }, async () => {
+  // where the iron was, a px each outfit draws alike (the hammer's - the legs behind differ) is never left as the art drew it
+  const skin = (r, g, b) => r > 110 && r > g && g > b && r - b > 40;
+  for (const [body, rf, [x0, y0, x1, y1]] of [['male', '4-0', [41, 56, 49, 65]], ['male', '4-2', [68, 55, 73, 62]], ['male', '3-2', [50, 57, 55, 60]],
+    ['male', '19-0', [38, 40, 45, 43]], ['female', '19-0', [72, 79, 77, 84]]]) {
+    const a = await decodeLayered(`LA:${body}:leather_chain_leather:${rf}:lcl`, decodePng, opts), b = await decodeLayered(`LA:${body}:leather_chain_plate:${rf}:lcp1`, decodePng, opts);
+    const empty = await decodeLayered(`LA:${body}:leather_chain_leather:${rf}:lcl@0`, decodePng, opts);
+    let left = 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const i = (y * a.width + x) * 4, px = [...a.data.subarray(i, i + 4)];
+      if (!px[3] || skin(px[0], px[1], px[2]) || !px.every((v, c) => v === b.data[i + c])) continue;
+      if (px.every((v, c) => v === empty.data[i + c])) left++;
+    }
+    assert.equal(left, 0, `${body} ${rf}: the hammer's iron left (${left} px)`);
+  }
+});

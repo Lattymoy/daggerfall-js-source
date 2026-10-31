@@ -121,6 +121,13 @@ is at the shaft's foot. The boxes are read on the leather chest's picture; anoth
 draws 8-4 and 9-4 three pixels lower). A light pixel in a walk is the hammer's only where the leather chest draws it
 too, so a chain or plate sleeve stays.
 
+**The iron left** (2026-10-31, the owner: "Theres still this global of texture where the hammer was removed"). Light
+pixels alone left the hammer's dark iron: male 4-0's butt over the hip, 4-2's head beside the fingers, the back-3/4
+walk's haft off the fist, and the back idle's lit haft (19-0, both bodies) over the hip. `steady` boxes take every
+pixel but skin each outfit draws alike there - the legs behind differ by outfit, the hammer does not - and `EXTRA`
+segments the idle's haft. Where the haft crossed open air past the hip or the fist, `AIR` keeps the fill from growing
+the body (male 3-0, 3-1, 3-3, 4-0 and 19-0).
+
 **Taking it out.** Each hammer pixel takes the side of the nearest pixels outside it - at its edge, the side most of
 them are on, so a butt poking past the fist into the air goes with the air: open air is cleared, a pixel the body was
 behind is filled. Each such pixel copies its own source, written into the mask's colour (`fillFrom`): the builder fills
@@ -291,6 +298,13 @@ lays the idle's shoulder as well (`ss`: the pauldron, or the hood's fall, and th
 own shoulder: its outline stops under the pauldron, which it had cut in two. Male 6-0 and 6-1 take the free upper
 arm out too: its highlights, left beside the outline, were copied into the chest. Female 6-3's fill drew a second
 face on the chest from the one beside its hole: the face and the near arm are no source there (SHIELD_FILL_NOT).
+
+**The chest it crossed** (DONOR-FILL, the owner, 2026-10-31: "Still seems really rough"). The inpaint fills a hole from
+the frame's own px; across a chest of chain or plate it drew noise, and a smooth blend drew a smudge. Where the free arm
+crossed the chest from three quarters (female 6-3, male 6-2 and 6-3) the hole is the idle's own chest (`sd`: the idle of
+its view in the same outfit, the shift to its px, set by eye from the heads; `fillFromDonor`), the graft laid over it.
+Male 6-3 crouches, so the idle's waist would sit high: its outline keeps to the chest above it, the fill below. Female
+5-2's donor showed a bright chest the swing keeps in shadow, and male 5-2's the idle's hanging hand: both keep the fill.
 
 **What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
 glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield
