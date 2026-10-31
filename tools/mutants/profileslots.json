@@ -74,8 +74,8 @@
   {
     "name": "PROFILE-SLOTS-the-sprites-offset-unmirrored",
     "file": "src/ui/profileBody.js",
-    "old": "shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1)",
-    "new": "shift: xml.x / xml.scale",
+    "old": "    shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1),",
+    "new": "    shift: xml.x / xml.scale,",
     "tests": [
       "test/ui/profileslots.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "PROFILE-SLOTS-the-mw-body-with-no-camera",
     "file": "src/ui/profileBody.js",
-    "old": "frame: (/** @type {any} */ bones) => stageCameraOfBones(head, bones, width / height) }",
-    "new": "frame: () => null }",
+    "old": "          r =\n            arm?.stage?.({\n              width,\n              height,\n              names: STAGE_BONES,\n              frame: (/** @type {any} */ bones) => stageCameraOfBones(head, bones, width / height),\n            }) ?? null;",
+    "new": "          r = arm?.stage?.({ width, height, names: STAGE_BONES, frame: () => null }) ?? null;",
     "tests": [
       "test/ui/profileslots.test.js"
     ]

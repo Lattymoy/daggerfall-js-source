@@ -486,5 +486,5 @@ test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACR
   // every reader hands the record's scale over (the world's body, a peer's, the profile's stage)
   for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(px, width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);
   assert.match(rd('src/render/characterStage.js'), /art: shown\.art,\n\s*\}/);
-  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\) \};/);
+  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\),\n\s*\};/);
 });

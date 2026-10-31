@@ -102,8 +102,8 @@
   {
     "name": "peer-menu-five-face-dropped",
     "file": "src/ui/socialMenu.js",
-    "old": "export const SOCIAL_MENU_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
-    "new": "export const SOCIAL_MENU_CSS = `\n",
+    "old": "${PIXELIFY_FIVE_FACE}\n.dfpeer { position: fixed; left: 50%; top: 52%; transform: translate(-50%, 0); z-index: 6; display: none;",
+    "new": ".dfpeer { position: fixed; left: 50%; top: 52%; transform: translate(-50%, 0); z-index: 6; display: none;",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]

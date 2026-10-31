@@ -137,7 +137,7 @@
   {
     "name": "ACT-MENU-refused-verb-listed-as-offered",
     "file": "src/ui/socialMenu.js",
-    "old": "    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));",
+    "old": "    .map((r) =>\n      r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null },\n    );",
     "new": "    .map((r) => ({ id: r.key, label: r.label }));",
     "tests": [
       "test/systems/disc7.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "ACT-MENU-refused-verb-sent",
     "file": "src/ui/socialMenu.js",
-    "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal:",
-    "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal:",
+    "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };",
+    "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };",
     "tests": [
       "test/systems/disc7.test.js"
     ]

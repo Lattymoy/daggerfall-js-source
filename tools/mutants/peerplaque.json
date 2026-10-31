@@ -67,8 +67,8 @@
   {
     "name": "PEER-PLAQUE1-refused-acts-dropped",
     "file": "src/ui/socialMenu.js",
-    "old": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)\n",
-    "new": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act && r.enabled)\n",
+    "old": "    .filter((r) => r.act)",
+    "new": "    .filter((r) => r.act && r.enabled)",
     "tests": [
       "test/player/peerplaque.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "PEER-PLAQUE1-trade-label-ignored",
     "file": "src/ui/socialMenu.js",
-    "old": "label: tradeLabel || 'Trade'",
-    "new": "label: 'Trade'",
+    "old": "      label: tradeLabel || 'Trade',",
+    "new": "      label: 'Trade',",
     "tests": [
       "test/player/peerplaque.test.js"
     ]

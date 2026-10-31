@@ -362,8 +362,8 @@
   {
     "name": "DUEL1-no-decline-row",
     "file": "src/ui/socialMenu.js",
-    "old": "  if (canDeclineDuel) rows.push({ key: 'duel-decline', label: 'Decline duel', enabled: true, why: null, act: { k: 'duel.decline', peer: peerId } });\n",
-    "new": "",
+    "old": "  if (canDeclineDuel)\n    rows.push({\n      key: 'duel-decline',\n      label: 'Decline duel',\n      enabled: true,\n      why: null,\n      act: { k: 'duel.decline', peer: peerId },\n    });\n  rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });",
+    "new": "  rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });",
     "tests": [
       "test/server/duel_record.test.js"
     ]

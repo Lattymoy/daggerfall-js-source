@@ -385,8 +385,8 @@
   {
     "name": "INS-menu-row-missing",
     "file": "src/ui/socialMenu.js",
-    "old": "  if (canInspect !== undefined) rows.unshift({",
-    "new": "  if (false) rows.unshift({",
+    "old": "  if (canInspect !== undefined)",
+    "new": "  if (false)",
     "tests": [
       "test/ui/inspect1.test.js"
     ],
@@ -395,8 +395,8 @@
   {
     "name": "INS-menu-row-always",
     "file": "src/ui/socialMenu.js",
-    "old": "  if (canInspect !== undefined) rows.unshift({",
-    "new": "  if (true) rows.unshift({",
+    "old": "  if (canInspect !== undefined)",
+    "new": "  if (true)",
     "tests": [
       "test/ui/inspect1.test.js"
     ],

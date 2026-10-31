@@ -427,8 +427,8 @@
   {
     "name": "C1-menu-sheet-in-the-panel-namespace",
     "file": "src/ui/socialMenu.js",
-    "old": ".dfpeer-card { pointer-events: auto;",
-    "new": ".dfsocial-card { pointer-events: auto;",
+    "old": ".dfpeer-card { pointer-events: auto; background: rgba(14, 16, 19, .9); border: 1px solid var(--iron, #2b323b); border-radius: 6px;",
+    "new": ".dfsocial-card { pointer-events: auto; background: rgba(14, 16, 19, .9); border: 1px solid var(--iron, #2b323b); border-radius: 6px;",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]

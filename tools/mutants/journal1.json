@@ -506,8 +506,8 @@
   {
     "name": "JRN-row-always-drawn",
     "file": "src/ui/socialMenu.js",
-    "old": "  if (canReadPage) rows.unshift({ key: 'page'",
-    "new": "  if (canReadPage !== undefined) rows.unshift({ key: 'page'",
+    "old": "  if (canReadPage)",
+    "new": "  if (canReadPage !== undefined)",
     "tests": [
       "test/net/journal1.test.js"
     ],
@@ -516,8 +516,8 @@
   {
     "name": "JRN-row-the-wrong-act",
     "file": "src/ui/socialMenu.js",
-    "old": "act: { k: 'page.read', peer: peerId } });",
-    "new": "act: { k: 'profile.inspect', peer: peerId } });",
+    "old": "      act: { k: 'page.read', peer: peerId },",
+    "new": "      act: { k: 'profile.inspect', peer: peerId },",
     "tests": [
       "test/net/journal1.test.js"
     ],

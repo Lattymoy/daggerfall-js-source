@@ -1951,6 +1951,8 @@
 !/src/ui/professions/profHud.js
 !/src/ui/professions/profReticle.js
 !/src/ui/professions/profStationStyle.js
+!/src/ui/profileBadge.js
+!/src/ui/profileBody.js
 !/src/ui/profileIcons.js
 !/src/ui/profileWindow.js
 !/src/ui/provinceMap.js
@@ -1985,8 +1987,11 @@
 !/src/ui/sigilCard.js
 !/src/ui/sigilRune.js
 !/src/ui/skinCard.js
+!/src/ui/socialMenu.js
+!/src/ui/socketWells.js
 !/src/ui/spell/
 /src/ui/spell/*/
+!/src/ui/spellbookDoor.js
 !/src/ui/starfall/
 /src/ui/starfall/*/
 !/src/ui/superDungeon/

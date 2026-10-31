@@ -581,8 +581,8 @@
   {
     "name": "GEM3-the-wells-ignore-the-switch",
     "file": "src/ui/socketWells.js",
-    "old": "  if (!lootRarityOn()) return null;\n  const list = socketsOf(item);\n  if (!list.length) return null;",
-    "new": "  const list = socketsOf(item);\n  if (!list.length) return null;",
+    "old": "  if (!lootRarityOn()) return null;\n  const list = socketsOf(item);",
+    "new": "  const list = socketsOf(item);",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
