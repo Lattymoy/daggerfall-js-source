@@ -406,7 +406,7 @@ const HARDCODED = {
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
   'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS (bible/03-World/World-Wide.md): Cyrodiil's ruler, Uriel Septim VII - a proper name, Daggerfall's own Emperor (TEXT.RSC), a faction's name and its key
-  'src/systems/features.js': 120,   // AUDIT TAMRIEL-WIDE D1: -8, the two Tamriel rows routed. RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
+  'src/systems/features.js': 119,   // AUDIT TAMRIEL-WIDE D1: -8, the two Tamriel rows routed. RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's

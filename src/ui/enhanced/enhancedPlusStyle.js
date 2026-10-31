@@ -2417,6 +2417,7 @@ ${ARENA_WINDOW_CSS}
 /* ── LOOT18: A JUNK PIECE (systems/item/itemJunk.js) - its picture dimmed and greyed wherever it is drawn; the card says it in
    words, in the lock's line style without the padlock, muted. */
 .pack-shell [data-junk] .tile > *, .trade-shell [data-junk] .tile > *, .ptrade-shell [data-junk] .tile > * { opacity: 0.5; filter: grayscale(0.7); }
+.pack-shell [data-left] .tile > * { opacity: 0.5; filter: grayscale(0.7); }   /* QUICK-LOOT-WINDOW: a piece the take-all would leave, in a container's window */
 .card .junkline, .pack-shell .card p.junkline { color: #a89f88; }
 /* WILD-INSURE (net/wild/wildInsureBook.js): an insured piece's card says so in the lock's line style, in the green the
    comparison block reads as better */

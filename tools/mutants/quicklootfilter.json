@@ -1,0 +1,155 @@
+[
+  {
+    "name": "QUICK-LOOT-FILTER-a-box-defaults-off",
+    "file": "src/systems/features.js",
+    "old": "...QL_MATERIAL_BOXES.map((name) => qlPref(`quickLootMat_${name}`, true)),",
+    "new": "...QL_MATERIAL_BOXES.map((name) => qlPref(`quickLootMat_${name}`, false)),",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-the-common-box-binds-every-tier",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return getPref(QL_MATERIAL_COMMON) === true ? tier === 'common' : true;",
+    "new": "return true;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-a-quest-item-left",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "  if (!item || item.questItem) return false;\n  const list = skipList();",
+    "new": "  if (!item) return false;\n  const list = skipList();",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-exact-read-as-contains",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return e.mode === 'exact' ? n === t :",
+    "new": "return e.mode === 'exact' ? n.includes(t) :",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-a-body-with-one-taken-piece-hidden",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return getPref(QL_HIDE_DULL) === true && items.every(leaves);",
+    "new": "return getPref(QL_HIDE_DULL) === true && items.some(leaves);",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-the-seam-unregistered",
+    "file": "src/systems/quickLoot.js",
+    "old": "setTakeAllLeaves(takeAllLeaves);",
+    "new": "",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-the-pick-skip-unread",
+    "file": "src/player/activate.js",
+    "old": "const live = targets.some((t) => t?.skip) ? targets.filter((t) => !t?.skip?.()) : targets;",
+    "new": "const live = targets;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-the-take-walks-the-full-list",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return quickLootActive() && getPref(QL_HIDE_LEFT) === true ? items.filter((it) => !_leaves(it)) : items;",
+    "new": "return items;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-empty-over-a-full-pile",
+    "file": "src/systems/worldHover.js",
+    "old": "const allLeft = empty && hoverItems(held).length > 0;",
+    "new": "const allLeft = false;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-hoverHidden-ignores-the-row",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "  if (!quickLootActive()) return false;\n  if (keyIn",
+    "new": "  if (keyIn",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-hoverVisible-ignores-the-row",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "return quickLootActive() && getPref(QL_HIDE_LEFT) === true",
+    "new": "return getPref(QL_HIDE_LEFT) === true",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-quantified-group-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "if (closedGroup && (c === '*'",
+    "new": "if (false && (c === '*'",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-backreference-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "if (/[1-9k]/.test(text[i + 1] ?? '')) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-regex-lookaround-allowed",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "!(text[i + 2] === ':' || (text[i + 2] === '<' && text[i + 3] !== '=' && text[i + 3] !== '!'))) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-name-not-cut",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "test(String(name).slice(0, NAME_MATCH_MAX))",
+    "new": "test(String(name))",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-dungeon-body-skip-never-true",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "({ body: true, skip: () => bodyHidden(key, contents(key)) })",
+    "new": "({ body: true, skip: () => false })",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-FILTER-dungeon-body-list-read-once",
+    "file": "src/systems/quickLootFilter.js",
+    "old": "({ body: true, skip: () => bodyHidden(key, contents(key)) })",
+    "new": "({ body: true, skip: ((l) => () => bodyHidden(key, l))(contents(key)) })",
+    "tests": [
+      "test/systems/quicklootfilter.test.js"
+    ]
+  }
+]

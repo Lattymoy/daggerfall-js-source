@@ -1,0 +1,74 @@
+[
+  {
+    "name": "QUICK-LOOT-WINDOW-the-filter-unasked",
+    "file": "src/systems/quickLoot.js",
+    "old": "const take = items.filter((it) => !takeAllLeaves(it));",
+    "new": "const take = [...items];",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-the-count-off",
+    "file": "src/systems/quickLoot.js",
+    "old": "return { take, left: items.length - take.length };",
+    "new": "return { take, left: 0 };",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-quick-loot-off-still-filters",
+    "file": "src/systems/quickLoot.js",
+    "old": "if (!quickLootOn()) return { take: [...items], left: 0 };",
+    "new": "",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-the-key-answered-on-a-repeat",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (e.repeat || remote?.kind !== 'container' || !quickLootOn()) return false;",
+    "new": "if (remote?.kind !== 'container' || !quickLootOn()) return false;",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-the-key-answered-in-a-text-field",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return false;\n  if (!eventActions(e).includes('QuickLootAll')) return false;",
+    "new": "if (!eventActions(e).includes('QuickLootAll')) return false;",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-the-arm-below-the-guard",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (containerTakeAllKey(e)) return;\n  if (e.metaKey || e.ctrlKey || e.altKey) return;",
+    "new": "  if (e.metaKey || e.ctrlKey || e.altKey) return;\n  if (containerTakeAllKey(e)) return;",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-a-wagons-take-all-filtered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "taking && remote?.kind === 'container' ? takeAllSplit(rows)",
+    "new": "taking ? takeAllSplit(rows)",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-WINDOW-the-dim-dropped",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (from === 'remote' && remote?.kind === 'container' && leftByFilter(item)) row.dataset.left = '';",
+    "new": "",
+    "tests": [
+      "test/ui/lootwindow.test.js"
+    ]
+  }
+]

@@ -25,7 +25,9 @@
 // skin gate can stay above ensure() where it belongs.
 import { rarityAttr } from './loot/lootRarity.js';   // LR1: a pile's rows wear their tier
 import { isPersonalLoot } from './roomLoot.js';   // PARTY-LOOT: a row that is this player's own (their bonus), told apart from the room's base
+import { hoverHidden, hoverVisible } from './quickLootFilter.js';   // QUICK-LOOT-FILTER: a body or a piece the filter leaves draws no plaque
 import { itemNameParts } from './item/itemInfo.js';   // RF6: ResolveItemLongName's name part (LR1: an unidentified item reads as its template on the plaque too)
+import { t } from './textManager.js';   // QUICK-LOOT-FILTER: the one new line the plaque says, in the player's language
 
 /** How many rows the plaque shows at once. FIELD BUGS 2026-10-11g LOOT-SCROLL ("Can't scroll loot pile / corpse": "I
  *  can't scroll the item list with mouse wheel ... I can still take items from list one by one to get to the bottom of
@@ -84,6 +86,8 @@ export const keyPreviews = (key) => typeof key === 'string' && PREVIEW_KEYS.some
  * foes: two readers, one sweep.
  */
 export const hoverItems = (items) => (items ?? []).filter(Boolean);
+/** QUICK-LOOT-FILTER: the rows an ITEMISED pile's list shows and its take walks - with the filter's hide-left switch on, not the pieces the take-all would leave (a cupboard's glance is no such pile, and shows all). */
+const visibleItems = (items) => hoverVisible(hoverItems(items));
 
 /** WHICH item a row is, or null past the end. `row` is an index into
  *  the rows, bounded by `max` as well as the pile's length - the take
@@ -91,7 +95,7 @@ export const hoverItems = (items) => (items ?? []).filter(Boolean);
  *  plaque's window is only what is drawn of them). */
 export function hoverItemAt(items, row, max = HOVER_MAX) {
   if (!Number.isInteger(row) || row < 0 || row >= max) return null;
-  return hoverItems(items)[row] ?? null;
+  return visibleItems(items)[row] ?? null;   // QUICK-LOOT-FILTER: the row the player sees is the piece the take moves - one walk
 }
 
 /** The lines a pile shows: name, a count when a stack, and the ITEM
@@ -106,8 +110,8 @@ export function hoverItemAt(items, row, max = HOVER_MAX) {
  *  the boundary that matters - who may MUTATE a container - is
  *  untouched. `frameSignature` deliberately does not fold it in: a
  *  reference is not something a player can see change. */
-export function hoverLines(items, max = HOVER_MAX) {
-  const rows = hoverItems(items).map((it) => ({
+export function hoverLines(items, max = HOVER_MAX, itemised = false) {
+  const rows = (itemised ? visibleItems(items) : hoverItems(items)).map((it) => ({
     name: itemNameParts(it).name || 'Something',   // RF6: the long name's name part - a potion its %po, a soul trap its soul; LR1: unidentified is the bare template (the resolver already answers a template-less item its own name)
     stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
     rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
@@ -295,8 +299,12 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
     if (!named?.title) return null;
     // LOOT-SCROLL: EVERY row - the selection and the take index the whole pile; the plaque draws HOVER_MAX of them at a
     // time (plaqueWindow), so the wheel reaches what the "and N more" tail used to hide
-    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null, Infinity);
-    return frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);
+    const held = contents?.(key) ?? null;
+    if (held && hoverHidden(key, hoverItems(held))) return null;   // QUICK-LOOT-FILTER: an empty body, one with nothing the filter takes, a piece it would leave - no plaque
+    const { shown, rest, empty } = hoverLines(held, Infinity, true);
+    // QUICK-LOOT-FILTER: a pile whose every piece the list hides is not an EMPTY one - it says so, and not "Empty"
+    const allLeft = empty && hoverItems(held).length > 0;
+    return frame(key, 'items', named.title, allLeft ? [...(named.subs ?? []), t('hover.nothingYouTake', 'Nothing you take')] : named.subs ?? [], shown, rest, empty && !allLeft);
   }
   const named = name?.(key, hit) ?? null;
   // A key the ladder has no word for draws NOTHING. That is the mod's

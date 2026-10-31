@@ -80,6 +80,7 @@ import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../playe
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, corpseTextureOf, tickCorpseMarkers, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
+import { bodyHidden } from '../systems/quickLootFilter.js';   // QUICK-LOOT-FILTER: a body the filter hides is out of the pick
 import { createStreetCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / AUDIT DEX D11: a mod's corpse prefab - the pool's reach
 import { rollCorpseKit, savedSummon, restoredSummon } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door; AUDIT RPT1026 F4: a summon's mark through a save
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
@@ -2013,7 +2014,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
   };
   function lootTargets() {
-    return corpseLootTargets(foes, 'foeCorpse', corpseLens);
+    return corpseLootTargets(foes, 'foeCorpse', corpseLens, (key) => bodyHidden(key, hoverContents(key)));   // QUICK-LOOT-FILTER: out of the pick when its plaque is down, by the list the plaque reads
   }
   /** WORLD-HOVER: what the plaque calls one of these bodies, off the
    *  SAME entry list and the same key vocabulary the targets are minted

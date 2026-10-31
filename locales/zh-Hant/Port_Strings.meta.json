@@ -1464,6 +1464,56 @@
   "tr": "91006eb555e3",
   "by": "claude-in-session"
  },
+ "features.quickLoot.groupHide": {
+  "en": "7a72853e8edd",
+  "tr": "6f5bd9e9d84e",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupMaterial": {
+  "en": "70c47e25da2e",
+  "tr": "5f5ef1b696ed",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupRarity": {
+  "en": "f47449013ba8",
+  "tr": "4b3c764385a9",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupSkip": {
+  "en": "892e0f8216df",
+  "tr": "a6d7c1c3ecd4",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideDrops": {
+  "en": "8532b17fecce",
+  "tr": "6053fd7f1e32",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideDull": {
+  "en": "ff465e9b543a",
+  "tr": "8caed9f5a09c",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideEmpty": {
+  "en": "80b318aaa41c",
+  "tr": "1578ef53e848",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideLeft": {
+  "en": "0bfc8186cdfd",
+  "tr": "9b9ea0d95ac2",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.matCommon": {
+  "en": "3070c395e260",
+  "tr": "f8fa635e6ac8",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.note": {
+  "en": "d7c75ddeb431",
+  "tr": "2c8ab6f9fd3c",
+  "by": "claude-in-session"
+ },
  "features.tamrielLand.note": {
   "en": "c4201ee9109a",
   "tr": "e03bae9c66ed",
@@ -1842,6 +1892,11 @@
  "home.mute.undone": {
   "en": "5b03bedff4c8",
   "tr": "f8beddc1baf5",
+  "by": "claude-in-session"
+ },
+ "hover.nothingYouTake": {
+  "en": "6b90f7bf11b8",
+  "tr": "49415bd1c4cc",
   "by": "claude-in-session"
  },
  "input.action.pvpFlag": {
@@ -3137,6 +3192,41 @@
  "menu.autoUpdates.note": {
   "en": "4541de510f7f",
   "tr": "4154a9355d6d",
+  "by": "claude-in-session"
+ },
+ "menu.features.filters": {
+  "en": "48a0e3c9a8cf",
+  "tr": "b34e16d6bd95",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipAdd": {
+  "en": "61cc55aa0453",
+  "tr": "2cd9e6ce817d",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipContains": {
+  "en": "33e15d008d51",
+  "tr": "f896fb3776bb",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipExact": {
+  "en": "0cae74747ce9",
+  "tr": "b771d2077d29",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipPlaceholder": {
+  "en": "3318251a51da",
+  "tr": "465f7fea4707",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipRegex": {
+  "en": "6e6819357612",
+  "tr": "b07ad55db650",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipRemove": {
+  "en": "e963907dac5c",
+  "tr": "2f752c005ec5",
   "by": "claude-in-session"
  },
  "menu.home.back": {

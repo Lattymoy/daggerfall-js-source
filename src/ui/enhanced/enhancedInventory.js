@@ -165,6 +165,7 @@ import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from '../domRepaint.js';
 import { virtualRows } from '../virtualRows.js';   // VIRT: a long list draws the rows on screen
 import { landingTiles } from './landingTiles.js';   // VIRT: a picture into its tile, not a repaint
+import { takeAllSplit, leftByFilter, quickLootOn, QUICK_LOOT_LEFT } from '../../systems/quickLoot.js';   // QUICK-LOOT-WINDOW: this window's Take all and rows follow the loot filter
 import { overlayAction, eventActions } from '../input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
@@ -1862,9 +1863,12 @@ function shownFilter() {
 function bulkMove(dir) {
   notice = null;
   const taking = dir === 'take';
-  const shown = taking
+  const rows = taking
     ? filterStore(remote.items, shownFilter(), storeNameOf)
     : (model.tabs.find((x) => x.tab === tab)?.items ?? []);
+  // QUICK-LOOT-WINDOW: a container's Take all (a body, a crate, a pile) leaves what the quick-loot filter would leave, as the key over the
+  // plaque does - a wagon's, a chest's own and a bag's stores are the player's own: every row
+  const { take: shown, left } = taking && remote?.kind === 'container' ? takeAllSplit(rows) : { take: rows, left: 0 };
   const from = taking ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []);
   const to = taking ? (deps.items?.() ?? []) : remoteTarget(deps, sessionState());
   const cap = !taking && remote?.kind === 'container' ? CONTAINER_LIST_CAP : null;
@@ -1923,7 +1927,7 @@ function bulkMove(dir) {
     return;
   }
   if (moved) audio.playOneShot(sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
-  if (why) notice = why;
+  if (why || left) notice = [why, left ? QUICK_LOOT_LEFT(left) : ''].filter(Boolean).join(' ');   // QUICK-LOOT-WINDOW: and how many the filter kept
   picked = null;
   refresh();
   render();
@@ -2865,6 +2869,7 @@ function itemRow(item, from = 'local') {
   const chosen = choosing && salvageSel.has(item);
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}${chosen ? ' salvpick' : choosing && salvageRefusal(item) ? ' salvno' : ''}`);
   if (choosing) row.setAttribute('aria-pressed', String(chosen));
+  if (from === 'remote' && remote?.kind === 'container' && leftByFilter(item)) row.dataset.left = '';   // QUICK-LOOT-WINDOW: a piece the take-all would leave is dimmed, as a junk piece is
   markItemFrame(row, item);   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules); RARITY-UI: and the icon's frame; SIGIL-UI: the rune
   const wasPicked = picked === item && side === from;
   // UI1: the grid's plate (the pack's own) or the loot window's row picture - each surface's box (ui/iconFit.js)
@@ -4590,7 +4595,18 @@ function fatePickAt(id) {
   render();
   if (id) host?.querySelector?.('.fate-confirm')?.scrollIntoView?.({ block: 'nearest' });
 }
+/** QUICK-LOOT-WINDOW: the take-everything key, with a container's window open, is the window's Take all - through the loot filter.
+ *  Asked ahead of onKey's modifier guard: the key may BE a modifier (Control, Command), whose own press carries its flag. */
+function containerTakeAllKey(e) {
+  if (e.repeat || remote?.kind !== 'container' || !quickLootOn()) return false;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return false;
+  if (!eventActions(e).includes('QuickLootAll')) return false;
+  e.preventDefault(); e.stopPropagation(); bulkMove('take');
+  return true;
+}
 function onKey(e) {
+  if (containerTakeAllKey(e)) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;

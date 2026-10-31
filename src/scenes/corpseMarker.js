@@ -284,7 +284,7 @@ export function playRareDrop(audio, pos, items) {
  * player has already emptied has been DISABLED by then and is gone
  * from this list.
  */
-export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf = null }) {
+export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf = null }, skipOf = null) {
   const targets = [];
   entries.forEach((e, i) => {
     if (!isCorpse(e) || e.corpseDisabled) return;
@@ -316,6 +316,8 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
       // pile of these (player/lootStack.js) and reads no key's prefix to
       // know one.
       body: true,
+      // QUICK-LOOT-FILTER: a body whose plaque the filter keeps down is out of the pick too (activate.js pickActivatableHit) - the host's word (`skipOf(key, entry)`: quickLootFilter.js bodyHidden over its own list), so this module imports nothing of the loot's
+      ...(skipOf ? { skip: () => skipOf(`${keyPrefix}:${id}`, e) } : {}),
     });
   });
   return targets;
