@@ -7457,6 +7457,7 @@ realm.locked.named,"Riget har låst din »{name}«: det fandt den samme genstand
 realm.locked.one,"Riget har låst en af dine genstande: det fandt den samme genstand et andet sted også. Den bliver hos dig og kan ikke handles, sælges, smides eller opbevares, hvor andre kan tage den. Dine andre genstande og din handel påvirkes ikke."
 realm.locked.refusal,"»{name}« er låst af riget, fordi den samme genstand blev fundet et andet sted også. Den bliver hos dig og kan ikke smides, handles, sælges eller opbevares, hvor andre kan tage den."
 realm.locked.trade,"En genstand, som riget har låst, kan ikke handles."
+realm.private,"Du er på en privat server. For at tage en onlinefigur med skal du først bruge »Kopier til offline« på den og derefter indlæse kopien. Din onlinefigur forbliver uændret."
 realm.roll.stopped,"Riget hører ikke din anseelse hos laugene i denne session. Det, du optjener nu, gemmes i dit gemte spil, og riget tager imod det, næste gang du spiller denne karakter online."
 realm.stranded,"Denne enhed har gemt et spil med denne karakter, som ikke nåede riget, og karakteren er siden blevet spillet et andet sted. Det gemte spil kan rumme fremskridt, du ikke har nu. Det er lagt til side på denne enhed og spilles ikke."
 realm.strandedWayBack,"For at beholde det skal du gendanne det fra denne karakters felt ved Online-døren."

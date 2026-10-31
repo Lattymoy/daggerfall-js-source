@@ -7457,6 +7457,7 @@ realm.locked.named,"Tărâmul ți-a blocat piesa „{name}”: a găsit aceeași
 realm.locked.one,"Tărâmul ți-a blocat una dintre piese: a găsit aceeași piesă și în altă parte. Rămâne la tine și nu poate fi schimbată, vândută, aruncată sau depozitată unde o pot lua alții. Celelalte piese ale tale și schimburile tale nu sunt afectate."
 realm.locked.refusal,"„{name}” este blocată de tărâm pentru că aceeași piesă a fost găsită și în altă parte. Rămâne la tine și nu poate fi aruncată, schimbată, vândută sau depozitată unde o pot lua alții."
 realm.locked.trade,"O piesă blocată de tărâm nu poate fi schimbată."
+realm.private,"Ești pe un server privat. Ca să aduci un personaj online, folosește mai întâi „Copiază offline” pe el, apoi încarcă copia. Personajul tău online rămâne neschimbat."
 realm.roll.stopped,"Tărâmul nu îți aude reputația la bresle în această sesiune. Ce câștigi acum rămâne în salvarea ta, iar tărâmul îl primește data viitoare când joci online acest personaj."
 realm.stranded,"Acest dispozitiv a păstrat o salvare a acestui personaj care nu a ajuns pe tărâm, iar personajul a fost jucat de atunci în altă parte. Salvarea poate conține progres pe care acum nu îl ai. Este pusă deoparte pe acest dispozitiv și nu se joacă."
 realm.strandedWayBack,"Ca s-o păstrezi, recupereaz-o din caseta acestui personaj de la ușa Online."

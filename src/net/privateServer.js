@@ -13,9 +13,6 @@ export function privateServer(shell = /** @type {any} */ (globalThis).daggerShel
   return url && url.startsWith('ws://') ? { url } : null;
 }
 
-/** What the title menu says when a realm character is opened on a private server. */
-export const PRIVATE_REALM_REFUSED = 'You are on a private server. To bring an online character, use Copy to offline on it first, then load the copy. Your online character stays as it is.';
-
 let running = false;
 /** @type {null | (() => Promise<string|null>)} */
 let runMinter = null;

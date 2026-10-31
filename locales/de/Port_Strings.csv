@@ -7457,6 +7457,7 @@ realm.locked.named,"Das Reich hat dein Stück „{name}“ gesperrt: Es hat dass
 realm.locked.one,"Das Reich hat eines deiner Stücke gesperrt: Es hat dasselbe Stück auch woanders gefunden. Es bleibt bei dir und kann nicht gehandelt, verkauft, fallen gelassen oder dort gelagert werden, wo andere es nehmen können. Deine anderen Stücke und dein Handel sind nicht betroffen."
 realm.locked.refusal,"„{name}“ ist vom Reich gesperrt, weil dasselbe Stück auch woanders gefunden wurde. Es bleibt bei dir und kann nicht fallen gelassen, gehandelt, verkauft oder dort gelagert werden, wo andere es nehmen können."
 realm.locked.trade,"Ein Stück, das das Reich gesperrt hat, kann nicht gehandelt werden."
+realm.private,"Du bist auf einem privaten Server. Um einen Online-Charakter mitzunehmen, nutze zuerst „Nach offline kopieren“ bei ihm und lade dann die Kopie. Dein Online-Charakter bleibt unverändert."
 realm.roll.stopped,"Das Reich hört dein Ansehen bei den Gilden in dieser Sitzung nicht. Was du jetzt verdienst, bleibt in deinem Spielstand, und das Reich übernimmt es, wenn du diesen Charakter das nächste Mal online spielst."
 realm.stranded,"Dieses Gerät hat einen Spielstand dieses Charakters behalten, der das Reich nicht erreicht hat, und der Charakter wurde seitdem woanders gespielt. Dieser Spielstand kann Fortschritt enthalten, den du jetzt nicht hast. Er ist auf diesem Gerät beiseitegelegt und wird nicht gespielt."
 realm.strandedWayBack,"Um ihn zu behalten, stelle ihn über die Kachel dieses Charakters an der Online-Tür wieder her."

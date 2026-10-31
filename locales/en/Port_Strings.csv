@@ -7457,6 +7457,7 @@ realm.locked.named,"The realm has locked your {name}: it found the same piece so
 realm.locked.one,"The realm has locked one of your pieces: it found the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where others can take it. Your other pieces and your trading are not affected."
 realm.locked.refusal,"{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it."
 realm.locked.trade,"A piece the realm locked cannot be traded."
+realm.private,"You are on a private server. To bring an online character, use Copy to offline on it first, then load the copy. Your online character stays as it is."
 realm.roll.stopped,"The realm is not hearing your guild standing in this session. What you earn now is kept in your save, and the realm takes it the next time you play this character online."
 realm.stranded,"This device kept a save of this character that did not reach the realm, and the character was played somewhere else since. That save may hold progress you do not have now. It is set aside on this device, not played."
 realm.strandedWayBack,"To keep it, recover it from this character’s tile at the Online door."

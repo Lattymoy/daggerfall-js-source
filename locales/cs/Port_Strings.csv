@@ -7457,6 +7457,7 @@ realm.locked.named,"Říše zamkla tvůj kus „{name}“: stejný kus našla i 
 realm.locked.one,"Říše zamkla jeden z tvých kusů: stejný kus našla i jinde. Zůstává u tebe a nelze ho vyměnit, prodat, zahodit ani uložit tam, kde si ho mohou vzít jiní. Tvých ostatních kusů ani obchodování se to netýká."
 realm.locked.refusal,"„{name}“ je zamčený říší, protože stejný kus byl nalezen i jinde. Zůstává u tebe a nelze ho zahodit, vyměnit, prodat ani uložit tam, kde si ho mohou vzít jiní."
 realm.locked.trade,"Kus zamčený říší nelze vyměnit."
+realm.private,"Jsi na soukromém serveru. Chceš-li přinést online postavu, nejprve na ní použij „Kopírovat do offline“ a pak načti kopii. Tvoje online postava zůstane beze změny."
 realm.roll.stopped,"Říše v této relaci neslyší tvé postavení u cechů. Co teď získáš, zůstává v tvém uložení a říše si to převezme, až budeš tuto postavu příště hrát online."
 realm.stranded,"Toto zařízení uchovalo uložení této postavy, které se nedostalo do říše, a postava se od té doby hrála jinde. To uložení může obsahovat postup, který teď nemáš. Je odložené na tomto zařízení a nehraje se."
 realm.strandedWayBack,"Pokud si ho chceš ponechat, obnov ho z dlaždice této postavy u dveří Online."

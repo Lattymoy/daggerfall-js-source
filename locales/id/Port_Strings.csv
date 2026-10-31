@@ -7457,6 +7457,7 @@ realm.locked.named,"Ranah telah mengunci {name} milikmu: ranah menemukan benda y
 realm.locked.one,"Ranah telah mengunci salah satu bendamu: ranah menemukan benda yang sama di tempat lain juga. Benda itu tetap bersamamu dan tidak bisa diperdagangkan, dijual, dibuang, atau disimpan di tempat yang bisa diambil orang lain. Benda-bendamu yang lain dan perdaganganmu tidak terpengaruh."
 realm.locked.refusal,"{name} dikunci oleh ranah karena benda yang sama ditemukan di tempat lain juga. Benda itu tetap bersamamu dan tidak bisa dibuang, diperdagangkan, dijual, atau disimpan di tempat yang bisa diambil orang lain."
 realm.locked.trade,"Benda yang dikunci oleh ranah tidak bisa diperdagangkan."
+realm.private,"Kamu berada di server pribadi. Untuk membawa karakter daring, gunakan dulu ""Salin ke luring"" padanya, lalu muat salinannya. Karakter daringmu tetap seperti semula."
 realm.roll.stopped,"Ranah tidak mendengar kedudukanmu di serikat-serikat pada sesi ini. Yang kamu peroleh sekarang disimpan di simpananmu, dan ranah menerimanya saat berikutnya kamu memainkan karakter ini secara daring."
 realm.stranded,"Perangkat ini menyimpan simpanan karakter ini yang tidak sampai ke ranah, dan karakter itu sejak itu dimainkan di tempat lain. Simpanan itu mungkin berisi kemajuan yang tidak kamu miliki sekarang. Simpanan itu disisihkan di perangkat ini dan tidak dimainkan."
 realm.strandedWayBack,"Untuk mempertahankannya, pulihkan dari kartu karakter ini di pintu Daring."

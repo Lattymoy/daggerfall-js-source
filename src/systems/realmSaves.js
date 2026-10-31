@@ -49,7 +49,7 @@
 // for the save as stored and opens it here.
 // ═══════════════════════════════════════════════════════════════════
 
-import { PRIVATE_REALM_REFUSED, privateRunOn } from '../net/privateServer.js';
+import { privateRunOn } from '../net/privateServer.js';
 import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1Bookmark, sessionPassFor, noteSessionPass, forgetSessionPass, passKeptThrough } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark; SESSION-SIGN: the checkpoint carries the session's pass
 import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realm/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
@@ -1107,7 +1107,7 @@ export function realmRefusalText(/** @type {string} */ error) {
   if (error === 'too-large') return 'This character\'s save is too big for the realm. The realm keeps the last save it accepted.';   // AUDIT REALM2 C8
   if (error === 'customs-load-once') return 'Load this character once offline, then it can be brought online.';
   if (error === 'test-room') return 'A Test Room character plays offline only.';
-  if (error === 'private') return PRIVATE_REALM_REFUSED;   // net/privateServer.js: a realm character on a private server
+  if (error === 'private') return t('realm.private', 'You are on a private server. To bring an online character, use Copy to offline on it first, then load the copy. Your online character stays as it is.');   // net/privateServer.js
   if (error === 'no-room') return 'This device has no room for another save. Delete one, then copy again.';
   if (error === 'unknown') return 'The realm did not answer about a trade in progress. Join again to see how it ended.';   // REALM P2.1
   return accountRefusalText(error);

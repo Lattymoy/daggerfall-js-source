@@ -7457,6 +7457,7 @@ realm.locked.named,"Riket har låst gjenstanden din «{name}»: det fant den sam
 realm.locked.one,"Riket har låst en av gjenstandene dine: det fant den samme gjenstanden et annet sted også. Den blir hos deg og kan ikke byttes, selges, slippes eller lagres der andre kan ta den. De andre gjenstandene dine og handelen din påvirkes ikke."
 realm.locked.refusal,"«{name}» er låst av riket fordi den samme gjenstanden ble funnet et annet sted også. Den blir hos deg og kan ikke slippes, byttes, selges eller lagres der andre kan ta den."
 realm.locked.trade,"En gjenstand riket har låst, kan ikke byttes."
+realm.private,"Du er på en privat server. For å ta med en nettfigur, bruk først «Kopier til offline» på den, og last deretter inn kopien. Nettfiguren din forblir uendret."
 realm.roll.stopped,"Riket hører ikke omdømmet ditt hos laugene i denne økten. Det du tjener nå, holdes i det lagrede spillet ditt, og riket tar imot det neste gang du spiller denne karakteren online."
 realm.stranded,"Denne enheten har tatt vare på et lagret spill med denne karakteren som ikke nådde riket, og karakteren har siden blitt spilt et annet sted. Det lagrede spillet kan inneholde fremgang du ikke har nå. Det er lagt til side på denne enheten og spilles ikke."
 realm.strandedWayBack,"For å beholde det, gjenopprett det fra denne karakterens rute ved Online-døren."

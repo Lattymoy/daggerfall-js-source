@@ -3063,6 +3063,7 @@ quest.remain.hours,"{h, plural, one {# godzina} few {# godziny} many {# godzin} 
 quest.remain.hoursMin,"{h, plural, one {# godzina} few {# godziny} many {# godzin} other {# godziny}} {m} min"
 quest.remain.left,"Pozostało: {time}"
 quest.remain.min,"{m} min"
+realm.private,"Jesteś na serwerze prywatnym. Aby przenieść postać online, najpierw użyj na niej „Kopiuj do offline”, a potem wczytaj kopię. Twoja postać online pozostaje bez zmian."
 realm.roll.stopped,"Królestwo nie słyszy w tej sesji twojej pozycji w gildiach. To, co teraz zdobędziesz, zostaje w twoim zapisie, a królestwo przejmie to, gdy następnym razem zagrasz tą postacią online."
 realm.stranded,"To urządzenie zachowało zapis tej postaci, który nie dotarł do królestwa, a postać była od tego czasu grana gdzie indziej. Ten zapis może zawierać postępy, których teraz nie masz. Został odłożony na tym urządzeniu i nie jest grany."
 realm.strandedWayBack,"Aby go zachować, odzyskaj go z kafelka tej postaci przy drzwiach Online."

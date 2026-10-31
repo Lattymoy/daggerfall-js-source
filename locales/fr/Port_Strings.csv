@@ -7457,6 +7457,7 @@ realm.locked.named,"Le royaume a verrouillé votre objet « {name} » : il a aus
 realm.locked.one,"Le royaume a verrouillé l’un de vos objets : il a aussi trouvé le même objet ailleurs. Il reste avec vous et ne peut être ni échangé, ni vendu, ni lâché, ni entreposé là où d’autres pourraient le prendre. Vos autres objets et vos échanges ne sont pas concernés."
 realm.locked.refusal,"« {name} » est verrouillé par le royaume, car le même objet a aussi été trouvé ailleurs. Il reste avec vous et ne peut être ni lâché, ni échangé, ni vendu, ni entreposé là où d’autres pourraient le prendre."
 realm.locked.trade,"Un objet verrouillé par le royaume ne peut pas être échangé."
+realm.private,"Vous êtes sur un serveur privé. Pour amener un personnage en ligne, utilisez d'abord « Copier hors ligne » sur lui, puis chargez la copie. Votre personnage en ligne reste inchangé."
 realm.roll.stopped,"Le royaume n’entend pas votre réputation auprès des guildes pendant cette session. Ce que vous gagnez maintenant est gardé dans votre sauvegarde, et le royaume le reçoit la prochaine fois que vous jouez ce personnage en ligne."
 realm.stranded,"Cet appareil a gardé une sauvegarde de ce personnage qui n'a pas atteint le royaume, et le personnage a depuis été joué ailleurs. Cette sauvegarde peut contenir une progression que vous n'avez pas maintenant. Elle est mise de côté sur cet appareil et n'est pas jouée."
 realm.strandedWayBack,"Pour la conserver, récupérez-la depuis la tuile de ce personnage à la porte En ligne."
