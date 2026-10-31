@@ -135,7 +135,7 @@ export const GROUND_TOUCH_M = 0.02;
 /**
  * AUDIT GROUND-BOLT B1: WHERE A MISSILE'S STEP STOPS, AND HOW FAR IT GOES - the one law of the two flights (this
  * engine's and dungeonContext.js's), as `{ stop, advance }`: `stop` a distance along the unit ray (Infinity: none),
- * `advance` the share of the step to fly. A wall (the mesh ray) stops it at the step's whole reach - DaggerfallMissile
+ * `advance` the share of the step to fly. A wall stops it at the step's whole reach (`swept`: by touch) - DaggerfallMissile
  * .cs:337-339's cast for displacement + ColliderRadius. Cover (TACT1) and the terrain are met BY TOUCH (AUDIT TACT B5's
  * law): a missile stops on one only once its own radius touches it, and short of that it flies only as far as the
  * touch, so the bodies are tested there first. The ground at the whole reach ate a bolt aimed at a foe's feet - the
@@ -143,9 +143,9 @@ export const GROUND_TOUCH_M = 0.02;
  * `reach` the step's reach along the unit ray, `stepLen` the step's length on it (so the radius is reach - stepLen).
  * @param {any} collider @param {number[]} pos @param {number[]} unit @param {number} reach @param {number} stepLen
  */
-export function flightStop(collider, pos, unit, reach, stepLen) {
+export function flightStop(collider, pos, unit, reach, stepLen, swept = false) {
   const radius = reach - stepLen;
-  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen);
+  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);   // WALL-SHAFT: `swept`, the bodies tested along the step - a wall met by touch too
   const g = groundHit(pos, unit, Math.min(reach, cs.stop), collider);
   if (!(g < cs.stop)) return cs;   // no ground in reach, or a wall or cover met first
   if (g <= radius + GROUND_TOUCH_M) return { stop: g, advance: 1 };

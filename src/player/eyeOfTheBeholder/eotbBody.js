@@ -55,6 +55,7 @@ import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, sprite
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
+import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
@@ -68,7 +69,9 @@ import {
   createSpriteHolster, createHolsterArt, loadHolsterPicture, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, HOLSTER_HAND_SLOT, SELF_OWNER,
 } from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
-import { myWeaponGlow, createSpriteGlow, setSpriteGlow } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from './eotbQuiver.js';   // QUIVER: a bow's quiver on the back
+import { ammoCountFor } from '../../systems/inventory.js';   // QUIVER: arrows in it, with no rig to say
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -187,6 +190,10 @@ export function bodyState(s = {}) {
     sheathed: s.sheathed ?? !s.weaponReady,
     spellcasting: !!s.spellcasting,
     usingBow: !!s.usingBow,
+    heldWeapon: s.heldWeapon ?? null,   // LAYERED-WEAPONS: the item in the hand in use (weaponRig's eotbState)
+    pairRight: s.pairRight ?? null, pairLeft: s.pairLeft ?? null, pairStrike: s.pairStrike ?? null,   // LAYERED-DUAL: a pair's two and the hand striking
+    castElement: Number.isInteger(s.castElement) ? s.castElement : null, spellHand: !!s.spellHand,   // SPELL-BURST: the cast's element, the spell hand
+    toolInHand: !!s.toolInHand,   // AUDIT: a gathering act's tool in the hands (the weapon, sheathed, stays on the back)
     attacking: !!s.attacking,
     swingN: Number.isInteger(s.swingN) ? s.swingN : null,   // AUDIT PRE-MERGE 0929 S1: the rig's blow count, or none named
     castPlaying: !!s.castPlaying,
@@ -212,6 +219,7 @@ export function bodyState(s = {}) {
     hipLantern: !!s.hipLantern,   // HT-WAIST: a lit lantern hangs at the waist (weaponRig's eotbState)
     handItem: s.handItem,   // BACK-HOLSTER: the weapon in the hand in use (weaponRig's eotbState), null for a bare fist - unsaid, the equip table's
     handWraps: s.handWraps ?? null,   // BACK-HOLSTER GLOW: a bare fist's Hand Wraps
+    hasAmmo: s.hasAmmo,   // QUIVER: arrows for the hand's bow (weaponRig's eotbState) - unsaid, the pack's
   };
 }
 
@@ -221,7 +229,7 @@ const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / 
 
 const handWeapon = () => { try { return equipTableOf(playerEntity)?.[HOLSTER_HAND_SLOT] ?? null; } catch { return null; } };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, holsterItem = null, glowOn = undefined } = {}) {
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
@@ -292,6 +300,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batchRec = null;
   let batchSize = null, batchPx = 0, batchPxW = 0, batchArt = 1;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel; BACK-HOLSTER GLOW: its art scale
   let batchMarks = null;   // ARMORY: where the body stands in that picture (render/armoryPose.js spriteMarks), read at its upload
+  let batchHeld = null;   // LAYERED-GLOW: the weapon's own px in that picture (eotbGlow.js heldOf), null for none of its own
+  let batchHeldOff = null, batchPair = null;   // AUDIT: a pair's second weapon's px, and the hand on the line ('R'/'L')
   let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
   let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
@@ -308,12 +318,19 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   const holster = createSpriteHolster(SELF_OWNER);
   const holsterArt = createHolsterArt(() => renderer, loadHolster);
   let holsterDrawn = false;
-  const holsterList = [holster], noHolsters = Object.freeze([]);
-  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; };
+  const backList = [];   // OVER THE AURA: what hangs on the back this frame - the weapon, the quiver
+  const unlist = (l) => { const i = backList.indexOf(l); if (i >= 0) backList.splice(i, 1); };
+  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; unlist(holster); };
+  // ── QUIVER: a bow's quiver on the back, sheathed or drawn (eotbQuiver.js) ─
+  const quiver = createSpriteHolster(SELF_OWNER);
+  const quiverArt = createQuiverArt(() => renderer, loadQuiver);
+  const dropQuiver = () => { dropSpriteHolster(quiver, renderer); unlist(quiver); };
+  /** Arrows for `item`: the rig's word, else the pack's. */
+  const arrowsNow = (item) => (last.hasAmmo !== undefined ? !!last.hasAmmo : ammoCountFor(playerEntity?.items, item) > 0);
   /** The weapon in the hand in use - the rig's, else the equip table's right hand (the pins hand theirs in). */
   const handItemNow = () => (holsterItem ? holsterItem() : last.handItem !== undefined ? last.handItem : handWeapon());
   // BACK-HOLSTER GLOW: the glows this body drew this frame - its back's weapon and, drawn, the whole sprite (eotbGlow.js)
-  const glowList = [], backGlow = createSpriteGlow(SELF_OWNER), handGlow = createSpriteGlow(SELF_OWNER);
+  const glowList = [], backGlow = createSpriteGlow(SELF_OWNER), handGlow = createSpriteGlow(SELF_OWNER), offGlow = createSpriteGlow(SELF_OWNER);
   const glowNow = (item, wraps = null) => myWeaponGlow(item, glowOn ?? undefined, wraps);
   /** Draw the weapon on the sprite's back: alive, in your own form, sheathed, a weapon that rides the back, its picture
    *  up and the body drawn this frame - on foot and in third person, where alone `figure` stands. After the body, so the
@@ -325,8 +342,20 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     mintSpriteHolster(holster, renderer).conceal = material();
     renderer.drawBillboards(holster.list, holster.right, holster.up);
     holsterDrawn = true;
+    backList.push(holster);
     const look = material() ? null : glowNow(item);   // a concealed body's weapon glows for nobody
     if (look) glowList.push(setSpriteGlow(backGlow, holster.archive, holster.mirror ? 1 : 0, look, holster.origin, holster.right, holster.up, holster.w, holster.h, holster.cellW, holster.cellH));
+    return true;
+  }
+  /** QUIVER: a bow's quiver on the back - by drawHolster's gates but the sheath (it stays while the bow is drawn), with
+   *  arrows while there are arrows. */
+  function drawQuiver(camRight) {
+    const item = activeFlag && !died && !last.died && !last.transformed ? handItemNow() : null;
+    const art = quiverRidesWith(item) ? quiverArt.ensure(arrowsNow(item)) : null;
+    if (!art || !shown || !hangSpriteHolster(quiver, figure, shown.orientation, cam.feet, cam.pos, camRight, art, BACK_QUIVER)) { dropQuiver(); return false; }
+    mintSpriteHolster(quiver, renderer).conceal = material();
+    renderer.drawBillboards(quiver.list, quiver.right, quiver.up);
+    backList.push(quiver);
     return true;
   }
   /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
@@ -418,6 +447,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     // PEER-ART (FIELD BUGS 2026-10-22d): a texture let go under this key by the peers' store (net/peer/peerRiders.js - a
     // peer's outfit or horse look can be mine too) is uploaded again
     if (have && !(have instanceof Promise) && renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }
+    // AUDIT: a frame drawn before its weapon's picture came is decoded again (the picture is asked for again)
+    if (have && !(have instanceof Promise) && have.retryAt != null && clock() >= have.retryAt) { tex.delete(cacheKey(s)); decoded.delete(s.key); evictHeld(renderer, cacheKey(s).replace(':', '_')); have = undefined; }
     if (have && !(have instanceof Promise)) return have;
     if (have !== undefined) return null;                // in flight, or failed
     if (!urlFor(s.key)) { tex.set(cacheKey(s), null); return null; }
@@ -432,7 +463,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, img.held, width, height, s.mirror), heldOff: heldOf(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
@@ -449,18 +480,24 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   function releaseOutfits(s, lk) {
     const layered = isLayeredKey(s.key);
     if (!layered && lk.outfit) return;
-    const now = layered ? `${s.archive}|${lk.outfit}` : null;
+    const now = layered ? `${s.archive}|${lk.outfit}|${lk.weapon ?? ''}|${lk.offhand ?? ''}` : null;
     if (now === outfitUp) return;
     const had = outfitUp;
     outfitUp = now;
     if (had == null) return;
     const plain = String(lk.outfit ?? '').split('~')[0];
-    const stands = (archive, code) => layered && archive === s.archive && (code === lk.outfit || code === plain);
+    // LAYERED-WEAPONS: an outfit's pictures stand in every hand the weapon held now shows - empty, the weapon, the art's own
+    const hands = new Set([undefined, '0', lk.weapon ?? undefined]), pair = new Set([lk.weapon, lk.offhand].filter(Boolean));
+    const stands = (archive, code) => {
+      const [worn, cast] = String(code).split('@'), held = cast?.replace(/!\d$/, ''), [a, b] = String(held).split('+');   // LAYERED-DUAL: a pair's, either way round; AUDIT: a cast's frames with its hands
+      return layered && archive === s.archive && (worn === lk.outfit || worn === plain) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));
+    };
     for (const k of [...tex.keys()]) {
       const i = k.indexOf(':'), archive = Number(k.slice(0, i));
       if (!LAYERED_ARCHIVES.has(archive) || stands(archive, k.slice(i + 1).split('_')[0])) continue;
       tex.delete(k);
       renderer?.evictTexture?.(k.replace(':', '_'));   // the cache's `archive:rec` is the renderer's `archive_rec`
+      evictHeld(renderer, k.replace(':', '_'));   // LAYERED-GLOW: and its weapon's picture
     }
     for (const k of [...decoded.keys()]) {
       const p = isLayeredKey(k) ? k.split(':') : null;
@@ -474,7 +511,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  spriteFor here asked for the werewolf, and a wereboar saw the wolf
    *  on themselves while the others (net/peer/peerRiders.js, off the pose's
    *  `wb`) draw the boar. The look is the settings plus the live form. */
-  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)) : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
+  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? { ...wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)), ...(isAnimating?.hands ?? layeredHands(last)) } : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
   /** PR-WW1: the form the lycan tables were last fetched for */
   let preloadedForm = null;
   /** COATS1: the look the mounted tables were last fetched in */
@@ -567,7 +604,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  first yield at once, so the first frame paints in the same
    *  LateUpdate. */
   function startClip(table, frames, interval, { freeze = false, kind = 'forward' } = {}) {
-    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run' };
+    // AUDIT: the hands as the clip starts, for all of it - the cast's element and spell hand outlast the rig's cast, and
+    // a pair's next blow begins before this one's last frame
+    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run', hands: cfg.wornArmour ? layeredHands(last) : null };
     if (kind === 'hold') {
       // IL_5fa5-IL_5fcb: animFrameCurrent = n - 1, then the loop
       // decrements before it paints - `frames` is that draw order
@@ -770,7 +809,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
         frameTimer = 0;
       } else frameTimer += dt;
     }
-    stateCurrent = chooseTable({ ...last, readyStance: cfg.readyStance });
+    stateCurrent = chooseTable({ ...last, sheathed: last.sheathed && !last.toolInHand, readyStance: cfg.readyStance });   // AUDIT: a gathering act's tool held ready
     if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER
     if (isAnimating && !animating) animating = true;
     else if (!isAnimating && animating) animating = false;
@@ -924,7 +963,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      *  has not got (render/auraRing.js auraSpriteBones). */
     figure() { return figure; },
     /** BACK-HOLSTER, OVER THE AURA: the weapon on the back drawn this frame, as a list (eotbHolster.js redrawHolstersOver). */
-    holstersDrawn() { return holsterDrawn ? holsterList : noHolsters; },
+    holstersDrawn() { return backList; },
     /** BACK-HOLSTER GLOW: the glows drawn on this sprite this frame (eotbGlow.js drawSpriteGlows, the aura host's last). */
     glowsDrawn() { return glowList; },
     /** SPRITE-FACE (2026-10-05): THE WAY THE FRAME LAST DRAWN FACES - { yaw, turn }: `yaw` the facing its picture shows
@@ -974,7 +1013,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     toggle(active, fp = false) {
       FP = !!fp;
       activeFlag = !!active;
-      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
+      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
       if (activeFlag) initialize();
       return activeFlag;
     },
@@ -983,7 +1022,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     torchDefault,
     /** HT-WAIST: another body has the frame (mwView's Morrowind lane) - the sprite's lantern, its batch and the
      *  light point it wrote, stand down, so the Morrowind body's hip is lit from its own hook. */
-    standDown() { dropLantern(); dropHolster(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
+    standDown() { dropLantern(); dropHolster(); dropQuiver(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
     /** HORSE-FACE: the floating origin moved the world under the feet - they move with it, so the shift is no placing. */
     rebase(delta) {
       if (!delta || !cam.feet) return;
@@ -1044,9 +1083,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
     draw(canvas, { eye, feet, yaw, face: faceNow = null } = {}) {
       face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;
-      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0;
+      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;
       if (!renderer || !activeFlag || !shown) return false;
-      if (!cfg.graphic) { dropLantern(); dropHolster(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
+      if (!cfg.graphic) { dropLantern(); dropHolster(); dropQuiver(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
       if (feet) cam.feet = feet;
       if (Number.isFinite(yaw)) cam.yaw = yaw;
       if (eye && !FP) cam.pos = eye;
@@ -1074,7 +1113,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
           batch.noShadow = grow > 1;   // AUDIT OW5 R2: OW-BIG's giant casts NOTHING - selfCard off was never that (render/shadowPass.js: it only keeps the card out of the lamps' maps when it is not the player's own; the sun's cascades drew the tenfold card, a fifty-metre shadow at a low sun, and the lamps' maps baked it)
           batchRec = key;
         }
-        batchSize = size; batchPx = up.h; batchPxW = up.w; batchArt = spriteArtScale(s.archive, s.record); batchMarks = up.marks ?? null;
+        batchSize = size; batchPx = up.h; batchPxW = up.w; batchArt = spriteArtScale(s.archive, s.record); batchMarks = up.marks ?? null; batchHeld = up.held ?? null;
+        batchHeldOff = up.heldOff ?? null; batchPair = s.pair ?? null;   // AUDIT: a pair's second weapon, and whose is on the line
       }
       if (!batch) return false;                 // nothing up yet: the last sprite stays until one is
       const c = place();
@@ -1103,11 +1143,19 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       else if (cfg.visibility === 1) renderer.recordShadowBillboards?.([batch], camRight, bbUp);
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs
       if (grow === 1) drawHolster(camRight); else dropHolster();   // BACK-HOLSTER: the weapon on the back, after the body (OW-BIG's rule too)
-      // BACK-HOLSTER GLOW: drawn, the weapon's glow round the whole sprite - in third person, on foot, alive, in your own form
-      const drawn = grow === 1 && !FP && !last.sheathed && !last.riding && !last.transformed && !died && !last.died && !material();
-      const look = drawn ? glowNow(handItemNow(), last.handWraps) : null;
+      if (grow === 1) drawQuiver(camRight); else dropQuiver();   // QUIVER: and a bow's quiver
+      // BACK-HOLSTER GLOW: drawn, the weapon's glow - in third person, on foot, alive, in your own form; LAYERED-GLOW:
+      // round a worn-armour body's weapon alone, else the whole sprite
+      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();
+      // AUDIT: a pair glows each weapon in its own hand's colours - the line's (`batchPair`) and the other
+      const lineItem = batchPair === 'L' ? last.pairLeft : batchPair === 'R' ? last.pairRight : handItemNow();
+      const look = drawn ? glowNow(lineItem, last.handWraps) : null;
       // AUDIT BACK-HOLSTER A5: the picture STANDING - a frame still decoding draws the last one, and so does its glow
-      if (look) glowList.push(setSpriteGlow(handGlow, batch.archive, batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
+      const held = look ? heldGlowRecord(renderer, batch.archive, batch.record, batchHeld, batchPxW, batchPx) : null;
+      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
+      const offLook = drawn && batchPair ? glowNow(batchPair === 'L' ? last.pairRight : last.pairLeft) : null;
+      const off = offLook ? heldGlowRecord(renderer, batch.archive, batch.record, batchHeldOff, batchPxW, batchPx, OFF_SUFFIX) : null;
+      if (off) glowList.push(setSpriteGlow(offGlow, batch.archive, off, offLook, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
       return true;
     },
 
@@ -1138,6 +1186,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       material: material(), placed: place(),
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
       holster: { drawn: holsterDrawn, batch: !!holster.batch, mirror: holster.mirror, h: holster.h, w: holster.w, up: [...holster.up], mid: [...holster.mid] },   // BACK-HOLSTER
+      quiver: { drawn: backList.includes(quiver), archive: quiver.archive, mirror: quiver.mirror, h: quiver.h, w: quiver.w, up: [...quiver.up], mid: [...quiver.mid], origin: [...quiver.origin] },   // QUIVER
       glows: glowList.map((g) => ({ key: g.key, look: g.glow?.look ?? null, level: g.glow?.level ?? null, w: g.w, h: g.h, art: [...g.art], origin: [...g.origin], right: [...g.right], up: [...g.up] })),   // BACK-HOLSTER GLOW
     }),
     settings: () => cfg,

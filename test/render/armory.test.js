@@ -458,8 +458,8 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.match(w, /const insigniaRows = \(\) => INSIGNIA\.map\(\(o\) => insigniaRowOf\(o, _insignia\)\);/, 'the Broker\'s rows, every kind\'s, the module\'s too');
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
   const h = rd('src/scenes/auraHost.js');
-  assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
-  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn');
+  assert.match(h, /const vw = renderer\._view, right = vw \? cardRightOf\(renderer\._proj, vw\) : null;/, 'ARMORY-MIRROR (PIN MOVED): the card\'s right, the draw\'s (ArmoryRenderer.draw) - the view\'s first row is the screen\'s left');
+  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? cardRightOf\(renderer\._proj, vw\) : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn; ARMORY-MIRROR (PIN MOVED): along the card\'s right');
   assert.match(h, /peerPose\(d\.id, w, layers\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');   // CAPE-CARD (PIN MOVED): posed off the sprite layers' list
 });
 

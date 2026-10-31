@@ -54,14 +54,13 @@ export const holsterItemOfLook = (items, left = false) => (Array.isArray(items)
   ? items.find((it) => it?.equipSlot === (left ? HOLSTER_LEFT_SLOT : HOLSTER_HAND_SLOT)) ?? null : null);
 
 /**
- * A weapon picture stood upright: its long axis (the opaque pixels' principal axis) turned to the vertical, the widest
- * end on top, resampled at the sprites' pixel size (EOTB_FIGURE.mpp over PAPERDOLL_MPP source pixels a texel; a texel
- * takes its opaque samples' mean where three of nine are opaque). `img` and the answer are color32 RGBA bytes, row 0
- * the bottom. `mirror` is the same columns reversed. `w` and `h` are the quad in metres on a figure the sets' size.
- * Null with fewer than four opaque pixels. Pure.
+ * A weapon picture's long axis (the straight line through the most opaque pixels), the widest end toward +s: its mean
+ * (mx, my), the axis u and the across r (u turned a quarter clockwise), the opaque pixels' extents along (s0..s1) and
+ * across (w0..w1), and `rho`, the line's offset along its normal (nx, ny) from the mean. Null with fewer than four
+ * opaque pixels. Pure (LAYERED-WEAPONS holds the same picture in the hand, layeredWeapon.js heldPicture).
  * @param {{width:number,height:number,colors:ArrayLike<number>}} img
  */
-export function uprightWeaponPicture(img) {
+export function weaponPictureAxis(img) {
   const W = img?.width | 0, H = img?.height | 0, src = img?.colors;
   if (!(W > 0) || !(H > 0) || !src || src.length < W * H * 4) return null;
   let n = 0, mx = 0, my = 0;
@@ -108,6 +107,21 @@ export function uprightWeaponPicture(img) {
     if (r < w0) w0 = r;
     if (r > w1) w1 = r;
   }
+  return { mx, my, ux, uy, rx, ry, s0, s1, w0, w1, nx: COS[a], ny: SIN[a], rho: (best % (2 * R + 1)) - R };
+}
+
+/**
+ * A weapon picture stood upright: its long axis (the opaque pixels' principal axis) turned to the vertical, the widest
+ * end on top, resampled at the sprites' pixel size (EOTB_FIGURE.mpp over PAPERDOLL_MPP source pixels a texel; a texel
+ * takes its opaque samples' mean where three of nine are opaque). `img` and the answer are color32 RGBA bytes, row 0
+ * the bottom. `mirror` is the same columns reversed. `w` and `h` are the quad in metres on a figure the sets' size.
+ * Null with fewer than four opaque pixels. Pure.
+ * @param {{width:number,height:number,colors:ArrayLike<number>}} img
+ */
+export function uprightWeaponPicture(img) {
+  const ax = weaponPictureAxis(img);
+  if (!ax) return null;
+  const W = img.width | 0, H = img.height | 0, src = img.colors, { mx, my, ux, uy, rx, ry, s0, s1, w0, w1 } = ax;
   const step = EOTB_FIGURE.mpp / PAPERDOLL_MPP;
   const oh = Math.max(1, Math.ceil((s1 - s0 + 1) / step)), ow = Math.max(1, Math.ceil((w1 - w0 + 1) / step));
   const out = new Uint8Array(ow * oh * 4), mirror = new Uint8Array(ow * oh * 4);
@@ -216,23 +230,25 @@ export function createSpriteHolster(owner = null) {
 
 /**
  * Where the weapon hangs this frame, written into `l`: `fig` the sprite as drawn (eotbBody figure() / peerRiders
- * figureOf: its quad's foot over the feet `base`, its metres a pixel `mpp`, its `marks` and its offset along the
- * view's right `shift`), `view` the eight-way view it is painted in, `feet` and `eye` in the world, `camRight` the
- * view's right, `art` the picture's quad in metres on a figure the sets' size. Answers `l`, or null when it cannot hang
- * (no figure, no line of sight). Pure but for `l`.
- */
-export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art) {
+ * figureOf: its quad's foot over the feet `base`, its metres a pixel `mpp`, its `marks`, its offset along the view's
+ * right `shift`), `view` its eight-way view, `feet` and `eye` in the world, `camRight` the view's right, `art` the
+ * picture's quad in metres on a figure the sets' size, `B` the hang (BACK_HOLSTER; eotbQuiver.js BACK_QUIVER). Answers
+ * `l`, or null when it cannot hang (no figure, no line of sight). Pure but for `l`.
+ * @param {any} l @param {any} fig @param {number} view @param {any} feet @param {any} eye @param {any} camRight @param {any} art
+ * @param {{ tilt: number, back: number, clear: number, over: number, nudge: number, side?: number }} [B] */
+export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art, B = BACK_HOLSTER) {
   if (!fig || !(fig.mpp > 0) || !Number.isInteger(view) || !eye || !art) return null;
   const toEye = [eye[0] - feet[0], 0, eye[2] - feet[2]];
   const yaw = portrayedYaw(view, toEye);
   if (yaw === null) return null;
-  const B = BACK_HOLSTER, m = fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), k = m / EOTB_FIGURE.mpp;
+  const m = fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), k = m / EOTB_FIGURE.mpp;
   const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;   // the picture's forward, and its right
   const L = art.h * k, st = Math.sin(B.tilt), ct = Math.cos(B.tilt);
   const rec = RECORD_OFFSETS[((view % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS];
   // the line's middle: on the painted body's middle across the card (the cape's law), behind the body - from the side
-  // just past its painted back, as deep as the picture draws it - its upper end over the shoulders
-  const across = auraSpriteAcross(fig), half = fig.marks?.chestHalf;
+  // just past its painted back, as deep as the picture draws it - its upper end over the shoulders; QUIVER: `side` toward
+  // the body's right, as the view sees it (its depth unmoved, so the card still covers it from the side)
+  const across = auraSpriteAcross(fig) + (B.side ?? 0) * k * (rx * camRight[0] + rz * camRight[2]), half = fig.marks?.chestHalf;
   const back = rec === 2 && Number.isFinite(half) ? half * fig.mpp + B.clear * k : B.back * k;
   const nudge = (rec >= 3 ? B.nudge : -B.nudge) * k;
   const top = fig.base + EOTB_FIGURE.shoulder * m + B.over * L * ct;

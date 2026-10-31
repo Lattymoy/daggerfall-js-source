@@ -208,12 +208,26 @@ fields keep their own list (`GLOW_WORLD_FIELDS_MAX`, 256), apart from the first-
 nowhere, a hair toward the eye, so the body's card hides it where the card stands in front; culling off for its quad.
 
 **On a sprite** (`player/eyeOfTheBeholder/eotbGlow.js`). Sheathed, the weapon on the back wears its glow; drawn, the
-glow stands round the WHOLE sprite - its weapon is painted into the picture, with nothing to tell it from the hand,
-and the owner chose that over none. My sprite asks `meshGlow` (law 5's arcane included: a paper-doll picture has no
+glow stands round the weapon in the hand. A skin's weapon is painted into its picture, with nothing to tell it from the
+hand, so a skin's glow stands round the WHOLE sprite. My sprite asks `meshGlow` (law 5's arcane included: a paper-doll picture has no
 enchanted sheet, as a Morrowind model has none) for the rig's hand in use, and a bare fist its Hand Wraps, else the
 kit's piece. A walker's is its look's `glow` word, a bare fist its kit's (`peer.ak`). None concealed, in the saddle, as
 a beast, at a gathering act or under the Overworld's grown body. Each owner lists its glows under its wearer's id;
 `scenes/auraHost.js` draws a wearer's over its own aura and under a nearer one, and a body wearing none before the auras.
+
+**Round the weapon** (LAYERED-GLOW, 2026-10-30, the owner: "ensure all third person weapons get the glow on equip (a
+prior change kinda did this but for the whole body)"). A worn-armour body draws its own weapon (`04-Characters/
+Layered-Gearing.md`), so the compose keeps the weapon's pixels (`layeredArmor.js` heldPx: those its drawing changed;
+the iron warhammer's, the art's own). The stores keep them sparse with the picture (`heldOf`: its rows, its mirror),
+and the glow uploads them once as the weapon's own picture, the sprite's size, under the sprite's record and `#w`
+(`heldGlowRecord`). The outline stands round that picture on the body's quad. A frame that hides the weapon (a back
+view's blade) glows not at all.
+
+**Which px** (AUDIT, 2026-10-31). Empty hands glow not at all: a held mask of none. The iron warhammer
+keeps its code, so its glow is the art's hammer. The loose's own bow, which no rig takes out, is its thin px (`artBowPx`:
+the limbs and string, in pieces of six or more). A pair's second weapon is its own picture (`2` in the mask, `#o`), and
+each glows its own hand's item (`s.pair` says which hand is on the line). Hand Wraps keep the whole sprite. The weapon's
+pictures go with the body's (`releaseOutfits`, the peers' `sweep`, `evictHeld` both).
 
 ## Online
 

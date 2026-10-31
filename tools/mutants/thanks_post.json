@@ -101,11 +101,12 @@
   {
     "name": "THANKS-POST-one-arm",
     "file": "src/render/armoryPass.js",
-    "old": "    for (const side of ['L', 'R']) {\n      const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`), lat = sub(sh, chest);",
-    "new": "    for (const side of ['L']) {\n      const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`), lat = sub(sh, chest);",
+    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
+    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
     "tests": [
       "test/server/thanks_post.test.js"
-    ]
+    ],
+    "note": "Merge of main (re-aimed by content): the spurs on ARMORY-MIRROR's upperArm"
   },
   {
     "name": "THANKS-POST-spurs-into-the-body",
