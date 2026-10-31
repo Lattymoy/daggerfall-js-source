@@ -67,8 +67,8 @@
   {
     "name": "AUDITREST2-F2-the-probe-counts-the-wings",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "wanted: layoutFireCount(blocks, elite)",
-    "new": "wanted: layoutFireCount(blocks.filter((b) => !b.layout.castleBlock), elite)",
+    "old": "    wanted: layoutFireCount(blocks, elite),",
+    "new": "    wanted: layoutFireCount(\n      blocks.filter((b) => !b.layout.castleBlock),\n      elite,\n    ),",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDITREST2-F6-the-probe-reads-raw",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "dfMeshToModel(patchSeams(id, arch.getMesh(index)),",
-    "new": "dfMeshToModel(arch.getMesh(index),",
+    "old": "      cache.set(\n        id,\n        index === -1 ? null : dfMeshToModel(patchSeams(id, arch.getMesh(index)), () => ({ width: 1, height: 1 })),\n      );",
+    "new": "      cache.set(id, index === -1 ? null : dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]

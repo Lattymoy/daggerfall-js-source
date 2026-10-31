@@ -85,7 +85,7 @@
   {
     "name": "RELAYLOAD-drawing-shared",
     "file": "tools/d1Load.mjs",
-    "old": "if (!rows.length) return `${head}No points in the window.\\n`;",
+    "old": "  if (!rows.length) return `${head}No points in the window.\\n`;",
     "new": "",
     "tests": [
       "test/server/relayload.test.js"

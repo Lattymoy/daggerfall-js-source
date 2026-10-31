@@ -149,8 +149,8 @@
   {
     "name": "FIRST-BUDGET-pace-unclean-pan",
     "file": "tools/craftPace.mjs",
-    "old": "cookXp(rank, { clean: true })",
-    "new": "cookXp(rank)",
+    "old": "      xp: (rank) => (r.kind === 'dish' ? cookXp(rank, { clean: true }) : craftXp(r.tier, rank)),",
+    "new": "      xp: (rank) => (r.kind === 'dish' ? cookXp(rank) : craftXp(r.tier, rank)),",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "FIRST-BUDGET-pace-cloth-bought",
     "file": "tools/craftPace.mjs",
-    "old": "first: firstOf(flat, track, firstCraftXp(r, true), firstCraftPays(r, true)),",
-    "new": "first: firstOf(flat, track, firstCraftXp(r), firstCraftPays(r)),",
+    "old": "      first: firstOf(flat, track, firstCraftXp(r, true), firstCraftPays(r, true)), // CLOTH-GEMS: the units his own",
+    "new": "      first: firstOf(flat, track, firstCraftXp(r), firstCraftPays(r)), // CLOTH-GEMS: the units his own",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -178,8 +178,8 @@
   {
     "name": "FIRST-BUDGET-floor-dropped",
     "file": "tools/craftPace.mjs",
-    "old": "let lo = FIRST_MAKE_FLOOR, hi = FIRST_MAKE_FLOOR;",
-    "new": "let lo = 1, hi = 1;",
+    "old": "    let lo = FIRST_MAKE_FLOOR,\n      hi = FIRST_MAKE_FLOOR;",
+    "new": "    let lo = 1,\n      hi = 1;",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "FIRST-BUDGET-bisection-off-by-one",
     "file": "tools/craftPace.mjs",
-    "old": "    out[track] = hi;\n",
-    "new": "    out[track] = lo;\n",
+    "old": "    out[track] = hi;",
+    "new": "    out[track] = lo;",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],

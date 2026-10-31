@@ -120,8 +120,8 @@
   {
     "name": "AUDITRESTPARTY-C6-the-probe-hangs-the-lift-in-the-dungeon",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "cls === 'move' || cls === 'specialDoor' ? `act:${bi}:${p.position}` : 'dungeon'",
-    "new": "'dungeon'",
+    "old": "      col.addMesh(\n        cls === 'move' || cls === 'specialDoor' ? `act:${bi}:${p.position}` : 'dungeon',\n        m.positions,\n        m.indices,\n        multiply(om, p.matrix),\n      );",
+    "new": "      col.addMesh('dungeon', m.positions, m.indices, multiply(om, p.matrix));",
     "tests": [
       "test/world/auditrestparty_fires.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDITRESTPARTY-C6-the-probe-reads-a-fire-at-its-centre",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "foot: size ? f.y - size.h / 2 : undefined,",
-    "new": "foot: undefined,",
+    "old": "        return {\n          x: f.x + b.originX,\n          y: f.y,\n          z: f.z + b.originZ,\n          foot: size ? f.y - size.h / 2 : undefined,\n          w: size?.w,\n          h: size?.h,\n        };",
+    "new": "        return { x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: undefined, w: size?.w, h: size?.h };",
     "tests": [
       "test/world/auditrestparty_fires.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDITRESTPARTY-C6-the-probe-keeps-clear-of-every-door-face",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const plan",
-    "new": "  const { existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const doors = blocks.flatMap((b) => (b.layout.exitDoors ?? []).map((d) => [d.matrix[12] + b.originX, d.matrix[13], d.matrix[14] + b.originZ]));\n  const plan",
+    "old": "  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));",
+    "new": "  const { existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const doors = blocks.flatMap((b) =>\n    (b.layout.exitDoors ?? []).map((d) => [d.matrix[12] + b.originX, d.matrix[13], d.matrix[14] + b.originZ]),\n  );",
     "tests": [
       "test/world/auditrestparty_fires.test.js"
     ],

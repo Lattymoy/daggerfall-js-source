@@ -111,8 +111,8 @@
   {
     "name": "CUSTOMS-PASS-tool-takes-a-flag-as-a-name",
     "file": "tools/customsPass.mjs",
-    "old": "    if (a.startsWith('--')) return { usage: USAGE };\n",
-    "new": "",
+    "old": "    if (a.startsWith('--')) return { usage: USAGE };\n    words.push(...a.trim().split(/\\s+/).filter(Boolean));",
+    "new": "    words.push(...a.trim().split(/\\s+/).filter(Boolean));",
     "tests": [
       "test/server/customspass.test.js"
     ]
