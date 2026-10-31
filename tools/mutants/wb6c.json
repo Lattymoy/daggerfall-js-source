@@ -47,8 +47,8 @@
   {
     "name": "WB6c-the-promise-before-the-fire-has-closed",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
-    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
+    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) {",
+    "new": "    if (phase === 'closing' && seconds(t) >= 0) {",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB6c-no-hold-for-the-first-frames",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }",
-    "new": "      if (phase === 'shut') { open(t, VEIL_FRONT_IN); kick(); }",
+    "old": "        wait = VEIL_OPEN_WAIT_TICKS;\n        drawnAt = drawnN;",
+    "new": "        open(t, VEIL_FRONT_IN);",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB6c-the-loop-left-running",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (phase === 'idle' || !canvas) { if (canvas) canvas.style.display = 'none'; return; }",
-    "new": "    if (phase === 'idle' || !canvas) { if (canvas) canvas.style.display = 'none'; }",
+    "old": "      if (canvas) canvas.style.display = 'none';\n      return;\n    }",
+    "new": "      if (canvas) canvas.style.display = 'none';\n    }",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB6c-the-watchdog-dropped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      } else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);",
-    "new": "      } else if (false) open(t, VEIL_FRONT_IN);",
+    "old": "      } else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN); // a build that never answered: open on what stands",
+    "new": "      } else if (false) open(t, VEIL_FRONT_IN); // a build that never answered: open on what stands",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB6c-opened-before-it-shut-answers-true",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      else if (phase === 'closing') { open(t, current(t).front); settle(false); kick(); }",
-    "new": "      else if (phase === 'closing') { open(t, current(t).front); settle(true); kick(); }",
+    "old": "        settle(false);",
+    "new": "        settle(true);",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB6c-a-page-with-no-webgl2-asked-again",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    broken = true;\n",
-    "new": "",
+    "old": "    broken = true;\n    canvas?.remove?.();",
+    "new": "    canvas?.remove?.();",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB6c-silent-as-it-closes",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "        cue('close');\n",
-    "new": "",
+    "old": "        cue('close');\n        kick();",
+    "new": "        kick();",
     "tests": [
       "test/ui/gate/wb6c_gate_veil.test.js"
     ]

@@ -325,8 +325,8 @@
   {
     "name": "WB14e-counted-on-the-bar",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "else if (a.k !== HOST.tithe) others++; }",
-    "new": "else others++; }",
+    "old": "    else if (a.k !== HOST.tithe) others++;",
+    "new": "    else others++;",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]

@@ -512,8 +512,8 @@
   {
     "name": "WB14d-one-track",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "  const halves = S ? [HALF.blade, HALF.flame].map(",
-    "new": "  const halves = S && false ? [HALF.blade, HALF.flame].map(",
+    "old": "  const halves = S\n    ? [HALF.blade, HALF.flame].map((b) => ({\n        name: halfName(b, P, boss.name),\n        frac: S.m > 0 ? Math.max(0, Math.min(1, S.h[b] / S.m)) : 0,\n        state: halfState(s, b, now),\n        kneels: (S.kn[b] | 0) > 0,\n        warded: now < (b === HALF.flame ? S.fl.sh : s.shieldUntil),\n        color: b === HALF.flame ? css(emberColor(P)) : '',\n      }))\n    : null;",
+    "new": "  const halves =\n    S && false\n      ? [HALF.blade, HALF.flame].map((b) => ({\n          name: halfName(b, P, boss.name),\n          frac: S.m > 0 ? Math.max(0, Math.min(1, S.h[b] / S.m)) : 0,\n          state: halfState(s, b, now),\n          kneels: (S.kn[b] | 0) > 0,\n          warded: now < (b === HALF.flame ? S.fl.sh : s.shieldUntil),\n          color: b === HALF.flame ? css(emberColor(P)) : '',\n        }))\n      : null;",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "WB14d-the-blade-s-blow-called-in-the-flame-s-court",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "  const C = flameMine && flame ? flame : s, PC = C === s ? P : profileOf(C);",
-    "new": "  const C = s, PC = P;",
+    "old": "  const C = flameMine && flame ? flame : s,\n    PC = C === s ? P : profileOf(C);",
+    "new": "  const C = s,\n    PC = P;",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "WB14d-the-last-mark-at-a-third",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "marks: sunders(s) ? [PHASE_AT[0], SUNDER_LAST] : [...PHASE_AT],",
-    "new": "marks: [...PHASE_AT],",
+    "old": "    marks: sunders(s) ? [PHASE_AT[0], SUNDER_LAST] : [...PHASE_AT],",
+    "new": "    marks: [...PHASE_AT],",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "WB14d-a-kneel-said-as-his-stun",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "now < (s.stunUntil ?? 0) && !s.sd) callout =",
-    "new": "now < (s.stunUntil ?? 0)) callout =",
+    "old": "  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0) && !s.sd)",
+    "new": "  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0))",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]

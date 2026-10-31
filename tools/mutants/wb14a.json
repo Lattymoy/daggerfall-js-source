@@ -305,8 +305,8 @@
   {
     "name": "WB14a-the-order-the-default",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside",
-    "new": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside",
+    "old": "    warn: peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
+    "new": "    warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "WB14a-the-white-never-fading",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0;",
-    "new": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 : 0;",
+    "old": "    blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0; // WB14a",
+    "new": "    blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 : 0; // WB14a",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]

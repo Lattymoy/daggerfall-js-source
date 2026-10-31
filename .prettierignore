@@ -1539,6 +1539,15 @@
 !/src/ui/gambitTableHud.js
 !/src/ui/gambitTableWords.js
 !/src/ui/gamepadInput.js
+!/src/ui/gate/
+/src/ui/gate/*
+!/src/ui/gate/gateBanner.js
+!/src/ui/gate/gateBossBar.js
+!/src/ui/gate/gateDamageChart.js
+!/src/ui/gate/gateGroundView.js
+!/src/ui/gate/gateMapMark.js
+!/src/ui/gate/gateMarksView.js
+!/src/ui/gate/gateVeil.js
 !/src/ui/gfxPrepBar.js
 !/src/ui/glyphFace.js
 !/src/ui/guild/

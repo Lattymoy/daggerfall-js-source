@@ -526,8 +526,8 @@
   {
     "name": "SD11D-the-hearts-head-ignored",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "(crystals === DAMAGE_CHART_TEXT.head[6] ? DAMAGE_CHART_TEXT.head : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c)))",
-    "new": "(DAMAGE_CHART_TEXT.head)",
+    "old": "          : h)(\n      crystals === DAMAGE_CHART_TEXT.head[6]\n        ? DAMAGE_CHART_TEXT.head\n        : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c)),\n    ),",
+    "new": "          : h)(DAMAGE_CHART_TEXT.head),",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "SD11D-a-junk-theme-kept",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null,",
-    "new": "theme,",
+    "old": "    theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null, // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's",
+    "new": "    theme, // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "SD11D-the-key-blind-to-the-head",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "key: `${crystals}:${dm.length}:",
-    "new": "key: `${dm.length}:",
+    "old": "    key: `${crystals}:${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,",
+    "new": "    key: `${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "SD11D-the-brass-never-drawn",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "else pass.draw(w, h, (t - began) / 1000, current(t), m !== undefined ? VEIL_THEMES.brass : theme);",
-    "new": "else pass.draw(w, h, (t - began) / 1000, current(t));",
+    "old": "      else pass.draw(w, h, (t - began) / 1000, current(t), m !== undefined ? VEIL_THEMES.brass : theme);",
+    "new": "      else pass.draw(w, h, (t - began) / 1000, current(t));",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "SD11D-the-fires-cues",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "for (const c of (theme === VEIL_THEMES.brass ? VEIL_BRASS_CUES : VEIL_CUES)[name]) {",
-    "new": "for (const c of VEIL_CUES[name]) {",
+    "old": "    for (const c of (theme === VEIL_THEMES.brass ? VEIL_BRASS_CUES : VEIL_CUES)[name]) {",
+    "new": "    for (const c of VEIL_CUES[name]) {",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "SD11D-a-look-changed-mid-step",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts);",
-    "new": "      takeLook(look, opts);",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
+    "new": "      takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]

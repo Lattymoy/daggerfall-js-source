@@ -237,8 +237,8 @@
   {
     "name": "GATE-HEAL-the-column-always",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "const healed = dm.some((r) => r.hl !== undefined);",
-    "new": "const healed = true;",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = true; // GATE-HEAL: someone healed another in it",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "GATE-HEAL-the-column-never",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "const healed = dm.some((r) => r.hl !== undefined);",
-    "new": "const healed = false;",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = false; // GATE-HEAL: someone healed another in it",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "GATE-HEAL-the-cell-unwritten",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "  r.cells[9].textContent = m.heal ?? '';",
-    "new": "",
+    "old": "  r.cells[9].textContent = m.heal ?? ''; // GATE-HEAL",
+    "new": "  // GATE-HEAL",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]

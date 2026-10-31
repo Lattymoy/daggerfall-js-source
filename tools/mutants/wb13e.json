@@ -193,8 +193,8 @@
   {
     "name": "WB13e-the-bar-never-pulsing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "low: !s.fell && frac > 0 && frac < LOW_HEALTH,",
-    "new": "low: false,",
+    "old": "    low: !s.fell && frac > 0 && frac < LOW_HEALTH, // WB13e: the bar pulses",
+    "new": "    low: false, // WB13e: the bar pulses",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]

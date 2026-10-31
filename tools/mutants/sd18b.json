@@ -74,8 +74,8 @@
   {
     "name": "SD18B-the-card-the-tables'-signs",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "  r.icon.innerHTML = markIconHtml(m, 20);",
-    "new": "  r.icon.innerHTML = markIconSvg(m.id, 20);",
+    "old": "  r.icon.innerHTML = markIconHtml(m, 20); // SD18b: the Hour's own signs",
+    "new": "  r.icon.innerHTML = markIconSvg(m.id, 20); // SD18b: the Hour's own signs",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD18B-own-signs-unfilled",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "  const paint = m.fill ? 'fill=\"currentColor\"' : 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';\n  return `<svg viewBox=\"0 0 24 24\" width=\"${size}\" height=\"${size}\" aria-hidden=\"true\"><path ${paint} d=\"${m.path}\"/></svg>`;",
-    "new": "  const paint = 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';\n  return `<svg viewBox=\"0 0 24 24\" width=\"${size}\" height=\"${size}\" aria-hidden=\"true\"><path ${paint} d=\"${m.path}\"/></svg>`;",
+    "old": "  const paint = m.fill\n    ? 'fill=\"currentColor\"'\n    : 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';",
+    "new": "  const paint = 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';",
     "tests": [
       "test/net/superDungeon/sd18b_seen.test.js"
     ]

@@ -101,8 +101,8 @@
   {
     "name": "AUDWB-D5-the-veil-counts-its-ticks",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    frameDrawn() { hostCounts = true; drawnN++; },",
-    "new": "    frameDrawn() { drawnN++; },",
+    "old": "      hostCounts = true;\n      drawnN++;",
+    "new": "      drawnN++;",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDWB-D5-the-old-places-frames-counted",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }",
-    "new": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; kick(); }",
+    "old": "        drawnAt = drawnN;\n        kick();",
+    "new": "        kick();",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDWB-D6-the-flash-a-frame-late",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      draw(t);   // AUDIT WB D6",
-    "new": "      // AUDIT WB D6",
+    "old": "      draw(t); // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers",
+    "new": "      // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]

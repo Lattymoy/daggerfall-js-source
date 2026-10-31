@@ -197,8 +197,8 @@
   {
     "name": "AUDIT-STAR-U3-bar-ward-unread",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "model.warded ? model.wardedText ?? BOSS_BAR_TEXT.warded",
-    "new": "model.warded ? BOSS_BAR_TEXT.warded",
+    "old": "        ? (model.wardedText ?? BOSS_BAR_TEXT.warded)",
+    "new": "        ? BOSS_BAR_TEXT.warded",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]

@@ -286,8 +286,8 @@
   {
     "name": "WB8c-the-callout-the-table-s-name",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "{ text: PC.atk[A.key].name, color: css(attackColor(A, PC)), t:",
-    "new": "{ text: A.name, color: css(attackColor(A, PC)), t:",
+    "old": "          text: PC.atk[A.key].name,",
+    "new": "          text: A.name,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "WB8c-an-empty-trials-line-shown",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "parts.marks.style.display = view ? '' : 'none';",
-    "new": "parts.marks.style.display = '';",
+    "old": "    parts.marks.style.display = view ? '' : 'none';",
+    "new": "    parts.marks.style.display = '';",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]

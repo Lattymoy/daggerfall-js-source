@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-WB14-TEXT-8-the-rows-frozen",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "get name() { return p.name; }, get text() { return p.line; }, get tip() { return p.tip; } }",
-    "new": "name: p.name, text: p.line, tip: p.tip }",
+    "old": "        return Object.freeze({\n          kind: 'portent',\n          id,\n          get name() {\n            return p.name;\n          },\n          get text() {\n            return p.line;\n          },\n          get tip() {\n            return p.tip;\n          },\n        });",
+    "new": "        return Object.freeze({ kind: 'portent', id, name: p.name, text: p.line, tip: p.tip });",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-WB14-TEXT-15-a-wave-before-any",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "s.vg[0] < 2 ? (s.vg[1] > 0 ?",
-    "new": "s.vg[0] < 2 ? (true ?",
+    "old": "        ? s.vg[1] > 0",
+    "new": "        ? true",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

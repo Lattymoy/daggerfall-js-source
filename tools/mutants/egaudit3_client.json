@@ -499,8 +499,8 @@
   {
     "name": "EGA3C-veil-opening-look-kept",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts);",
-    "new": "      if (phase === 'idle') takeLook(look, opts);",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
+    "new": "      if (phase === 'idle') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]

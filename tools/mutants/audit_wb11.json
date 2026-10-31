@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-WB11-U1-the-long-tip",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "legion: 'Stop the Atronachs. Break the Ward-Bearers.',",
-    "new": "legion: 'Cut down the Imps off whoever stands far from him, stop each Atronach before it reaches him, and break his Ward-Bearers to break his ward.',",
+    "old": "  legion: 'Stop the Atronachs. Break the Ward-Bearers.', // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)",
+    "new": "  legion:\n    'Cut down the Imps off whoever stands far from him, stop each Atronach before it reaches him, and break his Ward-Bearers to break his ward.', // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-WB11-D7-the-foot-uncounted",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "host: (n) => `His host: ${n}`,",
-    "new": "host: (n) => 'His host',",
+    "old": "  host: (n) => `His host: ${n}`,",
+    "new": "  host: (n) => 'His host',",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]

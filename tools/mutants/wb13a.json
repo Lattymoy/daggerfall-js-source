@@ -186,8 +186,8 @@
   {
     "name": "WB13a-the-grounds-warning-over-a-blow",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
-    "new": "warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : null",
+    "old": "    warn: peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
+    "new": "    warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : null,",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "WB13a-the-rim-flat-through-the-wind-up",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "PERIL_EDGE[0] + (PERIL_EDGE[1] - PERIL_EDGE[0]) * t * t",
-    "new": "PERIL_EDGE[0]",
+    "old": "  const rise = peril ? (peril.now ? PERIL_EDGE_NOW : PERIL_EDGE[0] + (PERIL_EDGE[1] - PERIL_EDGE[0]) * t * t) : 0;",
+    "new": "  const rise = peril ? (peril.now ? PERIL_EDGE_NOW : PERIL_EDGE[0]) : 0;",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]

@@ -110,8 +110,8 @@
   {
     "name": "SS-the-veil-warm-builds-it-whole",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (!begin()) return false;\n      void warmPrograms(",
-    "new": "      if (!build()) return false;\n      void warmPrograms(",
+    "old": "      if (!begin()) return false;",
+    "new": "      if (!build()) return false;",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

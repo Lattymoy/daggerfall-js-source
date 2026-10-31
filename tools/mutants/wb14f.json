@@ -265,8 +265,8 @@
   {
     "name": "WB14f-the-gaolers-counted-his-host",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "else if (a.k === HOST.gaoler) gaolers++; ",
-    "new": "",
+    "old": "    else if (a.k === HOST.gaoler) gaolers++;\n    else if (a.k !== HOST.tithe) others++;",
+    "new": "    else if (a.k !== HOST.tithe) others++;",
     "tests": [
       "test/net/gate/wb14f_captive.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "WB14f-the-ward-said-after-it-is-spent",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now) ? BOSS_BAR_TEXT.ward()",
-    "new": "s.cp?.f > 0 ? BOSS_BAR_TEXT.ward()",
+    "old": "          : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now)",
+    "new": "          : !s.fell && s.wrath == null && s.cp?.f > 0",
     "tests": [
       "test/net/gate/wb14f_captive.test.js"
     ]

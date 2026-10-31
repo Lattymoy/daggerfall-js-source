@@ -11,8 +11,8 @@
   {
     "name": "SD20E-T1-nowrap-back",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; }",
-    "new": "white-space: nowrap; }",
+    "old": "  width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; }",
+    "new": "  white-space: nowrap; }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD20E-T3-the-banner-never-brass",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';",
-    "new": "const cls = 'wb-gate-banner';",
+    "old": "  const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';",
+    "new": "  const cls = 'wb-gate-banner';",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD20E-T3-the-brass-never-taken-off",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "if (cls !== shownCls) { shownCls = cls; node.className = cls; }",
-    "new": "if (cls !== shownCls && look === 'brass') { shownCls = cls; node.className = cls; }",
+    "old": "  if (cls !== shownCls) {",
+    "new": "  if (cls !== shownCls && look === 'brass') {",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD20E-T3-the-class-unput",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`;",
-    "new": "const mode = model.mode;",
+    "old": "  const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`; // AUDIT SD III (T3): the Hour's card in its own brass",
+    "new": "  const mode = model.mode; // AUDIT SD III (T3): the Hour's card in its own brass",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD20E-T3-the-omens-red",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "look === 'brass' ? '#e8c060' : '#ffb27a'",
-    "new": "'#ffb27a'",
+    "old": "  r.icon.style.color =\n    m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : look === 'brass' ? '#e8c060' : '#ffb27a';",
+    "new": "  r.icon.style.color = m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : '#ffb27a';",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD20E-T2-the-chevron-on-the-plate",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }\n",
-    "new": "",
+    "old": "@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }\n`;",
+    "new": "`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD20E-T10-the-bar-deaf-to-it",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen :",
-    "new": "model.fallen ? BOSS_BAR_TEXT.fallen :",
+    "old": "    ? (model.fallenText ?? BOSS_BAR_TEXT.fallen)",
+    "new": "    ? BOSS_BAR_TEXT.fallen",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

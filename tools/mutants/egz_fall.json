@@ -614,8 +614,8 @@
   {
     "name": "EGZO-no-depth-buffer",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "antialias: false, depth: true, stencil: false",
-    "new": "antialias: false, depth: false, stencil: false",
+    "old": "        depth: true,",
+    "new": "        depth: false,",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "EGZO-a-slice-in-the-shutting-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!shuts) fallSlice();",
-    "new": "fallSlice();",
+    "old": "    if (!shuts) fallSlice(); // EG-ZO: a slice of the fall's underside a tick - never in the tick whose end runs the step's own work",
+    "new": "    fallSlice(); // EG-ZO: a slice of the fall's underside a tick - never in the tick whose end runs the step's own work",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "EGZO-every-slice-in-one-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!fall.parts.done) { fall.parts.step(); return; }",
-    "new": "while (!fall.parts.done) fall.parts.step();",
+    "old": "    if (!fall.parts.done) {\n      fall.parts.step();\n      return;\n    }",
+    "new": "    while (!fall.parts.done) fall.parts.step();",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "EGZO-kept-past-the-veil",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (phase === 'idle') fallFree();",
-    "new": "",
+    "old": "    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
+    "new": "    // EG-ZO: and the fall's underside with it",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGZO-kept-past-another-look",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (egMode() !== EG_STAIR_MODE.fall) { fallFree(); return; }",
-    "new": "if (egMode() !== EG_STAIR_MODE.fall) { return; }",
+    "old": "      fallFree();\n      return;",
+    "new": "      return;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "EGZO-another-bands-fall-kept",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (fall?.band === egBand) return;",
-    "new": "if (fall) return;",
+    "old": "    if (fall?.band === egBand) return;",
+    "new": "    if (fall) return;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -668,7 +668,7 @@
   {
     "name": "EGZO-kept-past-the-destroy",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "fallFree();   // EG-ZO: the fall's underside before the pass that drew it",
+    "old": "      fallFree(); // EG-ZO: the fall's underside before the pass that drew it",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "EGZO-a-failed-upload-tried-each-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!fall.under) fall.failed = true;",
-    "new": "",
+    "old": "    if (!fall.under) fall.failed = true;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGZO-the-camera-off-the-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egFallCamera(s, w / h, fallCam)",
-    "new": "egFallCamera(0, w / h, fallCam)",
+    "old": "    const cam = m === EG_STAIR_MODE.fall ? egFallCamera(s, w / h, fallCam) : null;",
+    "new": "    const cam = m === EG_STAIR_MODE.fall ? egFallCamera(0, w / h, fallCam) : null;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "EGZO-the-underside-never-handed",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "under: fall?.under ?? null",
-    "new": "under: null",
+    "old": "      egPass.draw(w, h, s, v, { mode: m, band: egBand, cam, under: fall?.under ?? null });",
+    "new": "      egPass.draw(w, h, s, v, { mode: m, band: egBand, cam, under: null });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -704,7 +704,7 @@
   {
     "name": "EGZO-the-fall-never-taken",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "fallTake();   // EG-ZO: a fall keeps or starts its underside; any other look frees it",
+    "old": "    fallTake(); // EG-ZO: a fall keeps or starts its underside; any other look frees it",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"

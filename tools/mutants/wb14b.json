@@ -65,8 +65,8 @@
   {
     "name": "WB14b-the-card-row-missing",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "  const portents = portentRowsOf(pt);   // WB14b",
-    "new": "  const portents = portentRowsOf(null);   // WB14b",
+    "old": "  const portents = portentRowsOf(pt); // WB14b: and the night's portents, each its sign, name, line and tip",
+    "new": "  const portents = portentRowsOf(null); // WB14b: and the night's portents, each its sign, name, line and tip",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]

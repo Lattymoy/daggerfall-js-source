@@ -300,8 +300,8 @@
   {
     "name": "WB11-the-bearers-uncounted",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "&& bearers > 0 && now < s.shieldUntil && !callout) callout =",
-    "new": "&& bearers > 99 && now < s.shieldUntil && !callout) callout =",
+    "old": "  if (!s.fell && s.wrath == null && bearers > 0 && now < s.shieldUntil && !callout)",
+    "new": "  if (!s.fell && s.wrath == null && bearers > 99 && now < s.shieldUntil && !callout)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "WB11-the-column-for-every-court",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "  const hosted = dm.some((r) => r.a !== undefined);",
-    "new": "  const hosted = true;",
+    "old": "  const hosted = dm.some((r) => r.a !== undefined); // WB11c: his host stood in this court",
+    "new": "  const hosted = true; // WB11c: his host stood in this court",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]

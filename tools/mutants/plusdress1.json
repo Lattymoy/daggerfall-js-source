@@ -56,8 +56,8 @@
   {
     "name": "PLUS-DRESS-the-paint-back-inline",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "  const part = (cls, tag = 'div') => { const n = doc.createElement(tag); n.className = cls; return n; };",
-    "new": "  const part = (cls, tag = 'div') => { const n = doc.createElement(tag); n.className = cls; n.style.cssText = 'pointer-events:none'; return n; };",
+    "old": "    return n;",
+    "new": "    n.style.cssText = 'pointer-events:none';\n    return n;",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLUS-DRESS-the-bar-sheet-never-in",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "    st.textContent = BOSS_BAR_CSS;\n    (doc.head ?? doc.body)?.append(st);",
-    "new": "    st.textContent = BOSS_BAR_CSS;",
+    "old": "    (doc.head ?? doc.body)?.append(st);\n    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)",
+    "new": "    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]

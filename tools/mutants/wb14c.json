@@ -247,8 +247,8 @@
   {
     "name": "WB14c-the-bar-silent",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "    host: !s.fell && s.wrath == null && s.vg && s.vg[0] < 2 ?",
-    "new": "    host: false ?",
+    "old": "    host:\n      !s.fell && s.wrath == null && s.vg && s.vg[0] < 2\n        ? s.vg[1] > 0\n          ? BOSS_BAR_TEXT.vanguard(BOSS_BAR_TEXT.stages()[s.vg[0]], s.vg[1], VG_STAGES[s.vg[0]].waves.length)\n          : BOSS_BAR_TEXT.vanguardHolds(BOSS_BAR_TEXT.stages()[s.vg[0]]) // AUDIT WB14 (TEXT-15): no wave counted before one has risen\n        : !s.fell && s.wrath == null && gaolers > 0\n          ? BOSS_BAR_TEXT.gaolers(gaolers) // WB14f: the Captive's gaolers, then his ward over the court\n          : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now)\n            ? BOSS_BAR_TEXT.ward()\n            : !s.fell && s.wrath == null && others > 0\n              ? BOSS_BAR_TEXT.host(others)\n              : null, // WB11c: the rest of his host standing; WB14c: his Vanguard's progress in its place",
+    "new": "    host: false\n      ? s.vg[1] > 0\n        ? BOSS_BAR_TEXT.vanguard(BOSS_BAR_TEXT.stages()[s.vg[0]], s.vg[1], VG_STAGES[s.vg[0]].waves.length)\n        : BOSS_BAR_TEXT.vanguardHolds(BOSS_BAR_TEXT.stages()[s.vg[0]]) // AUDIT WB14 (TEXT-15): no wave counted before one has risen\n      : !s.fell && s.wrath == null && gaolers > 0\n        ? BOSS_BAR_TEXT.gaolers(gaolers) // WB14f: the Captive's gaolers, then his ward over the court\n        : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now)\n          ? BOSS_BAR_TEXT.ward()\n          : !s.fell && s.wrath == null && others > 0\n            ? BOSS_BAR_TEXT.host(others)\n            : null, // WB11c: the rest of his host standing; WB14c: his Vanguard's progress in its place",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]

@@ -200,8 +200,8 @@
   {
     "name": "EVENT-TIP-the-map-drops-the-ring's-card",
     "file": "src/ui/gate/gateMapMark.js",
-    "old": ", phase: String(m.phase ?? ''), tip: readTip(m.tip) };",
-    "new": ", phase: String(m.phase ?? '') };",
+    "old": "    tip: readTip(m.tip),\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/eventtip.test.js"
     ]

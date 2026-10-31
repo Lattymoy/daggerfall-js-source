@@ -164,8 +164,8 @@
   {
     "name": "SD26-T4-the-line-under-the-card",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
-    "new": "",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n/* WB13c: beside the party's frames where the screen holds both, never over them */",
+    "new": "/* WB13c: beside the party's frames where the screen holds both, never over them */",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD26-T4-the-line-under-the-chart",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
-    "new": "",
+    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n.wb-dmg-title { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #ff8a4a; text-align: center; }",
+    "new": ".wb-dmg-title { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #ff8a4a; text-align: center; }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD26-T6-the-hour-on-dagons-plate",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
-    "new": "background: rgba(60,42,8,0.9); }",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD26-T6-the-call-in-the-gates-cream",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; ",
-    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { ",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD26-T6-the-omens-the-gates-orange",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "m.color : theme === 'brass' ? '#e8c060' : '#ffb27a';",
-    "new": "m.color : '#ffb27a';",
+    "old": "  c.icon.style.color = m.kind === 'aspect' ? m.color : theme === 'brass' ? '#e8c060' : '#ffb27a'; // AUDIT SD IV (T6): the omens' signs in the Hour's brass, as its card's (gateMarksView.js writeRow)",
+    "new": "  c.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a'; // AUDIT SD IV (T6): the omens' signs in the Hour's brass, as its card's (gateMarksView.js writeRow)",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD26-T6-the-look-unread-by-the-row",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
-    "new": "if (marksKey !== shown.marks) {",
+    "old": "  if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
+    "new": "  if (marksKey !== shown.marks) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD26-T6-the-last-minute-the-gates-red",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n",
-    "new": "",
+    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n/* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \\`theme\\`, ui/serpentBar.js) */",
+    "new": "/* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \\`theme\\`, ui/serpentBar.js) */",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]

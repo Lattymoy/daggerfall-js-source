@@ -218,8 +218,8 @@
   {
     "name": "WB4-the-callout-after-the-landing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "let callout = !s.fell && A && tel && !tel.over ?",
-    "new": "let callout = !s.fell && A && tel ?",
+    "old": "    !s.fell && A && tel && !tel.over",
+    "new": "    !s.fell && A && tel",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WB4-the-countdown-always",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "toWrath <= WRATH_WARN_MS ?",
-    "new": "toWrath <= Infinity ?",
+    "old": "    wrath:\n      !s.fell && s.wrath == null && toWrath <= WRATH_WARN_MS ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,",
+    "new": "    wrath: !s.fell && s.wrath == null && toWrath <= Infinity ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]

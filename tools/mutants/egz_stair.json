@@ -452,8 +452,8 @@
   {
     "name": "EGZ-the-veil-on-the-fire-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const pace = () => (egMode() === undefined ? 1 : phase === 'closing' ? VEIL_CLOSE_S / EG_STAIR_VEIL.close : phase === 'opening' ? VEIL_OPEN_S / EG_STAIR_VEIL.open : 1);",
-    "new": "const pace = () => 1;",
+    "old": "  const pace = () =>\n    egMode() === undefined\n      ? 1\n      : phase === 'closing'\n        ? VEIL_CLOSE_S / EG_STAIR_VEIL.close\n        : phase === 'opening'\n          ? VEIL_OPEN_S / EG_STAIR_VEIL.open\n          : 1;",
+    "new": "  const pace = () => 1;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZ-the-veil-opens-on-the-fire-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "phase === 'opening' ? VEIL_OPEN_S / EG_STAIR_VEIL.open : 1);",
-    "new": "1);",
+    "old": "  const pace = () =>\n    egMode() === undefined\n      ? 1\n      : phase === 'closing'\n        ? VEIL_CLOSE_S / EG_STAIR_VEIL.close\n        : phase === 'opening'\n          ? VEIL_OPEN_S / EG_STAIR_VEIL.open\n          : 1;",
+    "new": "  const pace = () => (egMode() === undefined ? 1 : phase === 'closing' ? VEIL_CLOSE_S / EG_STAIR_VEIL.close : 1);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGZ-the-recover-at-the-fire-pace",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "phase = 'closing'; at = t - (u * VEIL_CLOSE_S * 1000) / pace();",
-    "new": "phase = 'closing'; at = t - u * VEIL_CLOSE_S * 1000;",
+    "old": "        at = t - (u * VEIL_CLOSE_S * 1000) / pace(); // EG-ZE: at the stair's pace for a stair",
+    "new": "        at = t - u * VEIL_CLOSE_S * 1000; // EG-ZE: at the stair's pace for a stair",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -479,7 +479,7 @@
   {
     "name": "EGZ-the-stair-silent",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
+    "old": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-the-chime-off-its-note",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
-    "new": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, 1);",
+    "old": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
+    "new": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, 1);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-the-fall-without-its-wind",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (egMode() === EG_STAIR_MODE.fall) play(",
-    "new": "if (false) play(",
+    "old": "    if (egMode() === EG_STAIR_MODE.fall)\n      play(VEIL_EG_CUES.fall.clip, VEIL_EG_CUES.fall.volume, VEIL_EG_CUES.fall.pitch);",
+    "new": "    if (false) play(VEIL_EG_CUES.fall.clip, VEIL_EG_CUES.fall.volume, VEIL_EG_CUES.fall.pitch);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-the-veil-fall-hold-dropped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
-    "new": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
+    "old": "      const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
+    "new": "      const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-the-hall-left-standing",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (phase === 'idle') labelShow(0);   // EG-ZE: the hall's label goes with the veil\n",
-    "new": "",
+    "old": "    if (phase === 'idle') labelShow(0); // EG-ZE: the hall's label goes with the veil\n    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
+    "new": "    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-the-hall-kept-past-the-veil",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egPass = null; labelEl?.remove?.(); labelEl = null;",
-    "new": "egPass = null;",
+    "old": "      egPass = null;\n      labelEl?.remove?.();\n      labelEl = null; // EG-ZE",
+    "new": "      egPass = null; // EG-ZE",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -542,7 +542,7 @@
   {
     "name": "EGZ-the-stair-smooth",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (canvas.style.imageRendering !== 'pixelated') canvas.style.imageRendering = 'pixelated';",
+    "old": "    if (canvas.style.imageRendering !== 'pixelated') canvas.style.imageRendering = 'pixelated';",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-the-stair-at-the-fire-scale",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_EG_SCALE))",
-    "new": "const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_SCALE))",
+    "old": "    const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_EG_SCALE)),",
+    "new": "    const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_SCALE)),",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-the-band-ignored",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egBand = Math.max(0, Math.min(3, (opts?.band ?? 0) | 0));",
-    "new": "egBand = 0;",
+    "old": "    egBand = Math.max(0, Math.min(3, (opts?.band ?? 0) | 0));",
+    "new": "    egBand = 0;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-the-label-never-taken",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egLabel = typeof opts?.label === 'string' ? opts.label : '';",
-    "new": "egLabel = '';",
+    "old": "    egLabel = typeof opts?.label === 'string' ? opts.label : '';",
+    "new": "    egLabel = '';",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-the-fire-draws-the-stair",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (egMode() !== undefined && egDraw(t)) return;   // EG-ZE: the Spire's stair, its own pass\n",
-    "new": "",
+    "old": "    if (egMode() !== undefined && egDraw(t)) return; // EG-ZE: the Spire's stair, its own pass\n    labelShow(0);",
+    "new": "    labelShow(0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGZ-the-stair-in-the-fire-cues",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (egMode() !== undefined) { egCue(name); return; }   // EG-ZE: the stair's own\n",
-    "new": "",
+    "old": "    if (egMode() !== undefined) {\n      egCue(name);\n      return;\n    } // EG-ZE: the stair's own\n    const m = hourMode();",
+    "new": "    const m = hourMode();",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]

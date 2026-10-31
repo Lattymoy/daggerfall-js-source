@@ -110,8 +110,8 @@
   {
     "name": "ASS-the-veil-warm-only-starts",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      void warmPrograms([{ start: () => veilReady ?? (() => true), run: () => { build(); }, need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
-    "new": "",
+    "old": "      void warmPrograms(\n        [\n          {\n            start: () => veilReady ?? (() => true),\n            run: () => {\n              build();\n            },\n            need: () => !pass && !broken && !!veilGl,\n          },\n        ],\n        { alive: () => !broken && !!veilGl },\n      ); // a veil destroyed meanwhile is never built again",
+    "new": "      // a veil destroyed meanwhile is never built again",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ASS-the-veil-built-after-destroy",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
-    "new": "need: () => !pass && !broken }], { alive: () => !broken });",
+    "old": "            need: () => !pass && !broken && !!veilGl,\n          },\n        ],\n        { alive: () => !broken && !!veilGl },",
+    "new": "            need: () => !pass && !broken,\n          },\n        ],\n        { alive: () => !broken },",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
