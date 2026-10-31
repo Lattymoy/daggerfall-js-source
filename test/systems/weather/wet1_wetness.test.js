@@ -10,7 +10,8 @@ import {
 } from '../../../src/systems/weather/wetness.js';
 import { EL_TERRAIN_FS, EL_MESH_FS } from '../../../src/render/enhancedLighting.js';
 import { snowTerrainFs } from '../../../src/render/snowfallGlsl.js';
-import { RIPPLE_RATE } from '../../../src/render/wetGlsl.js';
+import { RIPPLE_RATE, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE } from '../../../src/render/wetGlsl.js';
+import { LAB_WX_FS } from '../../../src/render/precipitation.js';
 import { Renderer } from '../../../src/render/renderer.js';
 
 const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} vs ${b}`);
@@ -97,4 +98,12 @@ test('WET1 the renderer: setWet stores and moves the frame stamp on a change alo
   const src = readFileSync(new URL('../../../src/render/renderer.js', import.meta.url), 'utf8');
   const begin = src.slice(src.indexOf('  beginFrame(proj, view, lightDir, opts = null) {'), src.indexOf('this._frameStamp++;   // PERF3'));
   assert.ok(begin.includes('this._wet?.fill(0);'), 'an interior or a dungeon never inherits the street\'s wet');
+});
+
+test('WET1b: soil stays matte, a road sheens, a puddle mirrors, and the puddle edge is wide', () => {
+  assert.ok(WET_SHEEN_SOIL < WET_SHEEN_ROAD && WET_SHEEN_ROAD < 0.4);
+  assert.ok(PUDDLE_EDGE >= 0.2, 'a narrow step draws a line around the puddle');
+  assert.ok(EL_TERRAIN_FS.includes('wetGlossGround(wetW, road)') && EL_TERRAIN_FS.includes('elSpecK'));
+  assert.ok(!EL_MESH_FS.includes('wetGlossGround(wetW'), 'a wall is not a road');
+  assert.match(LAB_WX_FS, /smoothstep\(0\.0,0\.35,vT\) \* 0\.22/);
 });

@@ -7,11 +7,15 @@ import { glslFloat } from './airPass.js';
 import { SNOW_TILE_M } from './snowCoverGlsl.js';
 
 /** How dark a soaked surface's albedo goes (ground, then walls), and a puddle's on top of it. */
-export const WET_DARK = 0.6;
+export const WET_DARK = 0.55;
 export const WET_WALL_DARK = 0.8;
-export const PUDDLE_DARK = 0.7;
-/** A soaked surface's gloss next to a puddle's 1 - a sheen, not a mirror. */
-export const WET_SHEEN = 0.35;
+export const PUDDLE_DARK = 0.45;   // WET1b: darker glass under the glint (was 0.7 - read as matte stone)
+/** A wall's gloss. Ground splits: soil almost matte, a road a dull sheen, a puddle a mirror (wetGlossGround). */
+export const WET_SHEEN = 0.4;
+export const WET_SHEEN_SOIL = 0.04;
+export const WET_SHEEN_ROAD = 0.22;
+/** How wide the puddle's edge is, in the noise's 0..1 - a hard step read as a drawn line. */
+export const PUDDLE_EDGE = 0.22;
 /** Puddles: the flat they need (n.y), their noise salt, and how far their face's threshold falls at a full fill. */
 export const PUDDLE_FLAT = Object.freeze([0.96, 0.995]);
 export const PUDDLE_SALT = 0x50554444;   // 'PUDD'
@@ -21,9 +25,9 @@ export const PUDDLE_SPREAD = 0.45;
 export const RIPPLE_CELL_M = 0.5;
 export const RIPPLE_RATE = 1;
 export const RIPPLE_NEAR_M = 30;
-export const RIPPLE_SLOPE = 0.35;
+export const RIPPLE_SLOPE = 0.55;   // WET1b: rings catch the lamps
 /** The most of the sky a wet surface shows. */
-export const WET_SKY_MAX = 0.85;
+export const WET_SKY_MAX = 0.9;
 
 const f = glslFloat;
 
@@ -46,6 +50,11 @@ vec3 wetAlbedo(vec3 a, vec2 w, float dark) { return a * mix(1.0, dark, w.x) * mi
 // a wall takes half the rain a roof does, and stands no puddle
 vec2 wetWall(vec3 n) { return vec2(uWet.x * mix(0.5, 1.0, max(n.y, 0.0)), 0.0); }
 float wetGloss(vec2 w) { return max(w.x * ${f(WET_SHEEN)}, w.y); }
+// soil stays matte, a road takes a dull sheen, a puddle takes the mirror - the edge fades with the puddle
+float wetGlossGround(vec2 w, float road) {
+  float sheen = mix(${f(WET_SHEEN_SOIL)}, ${f(WET_SHEEN_ROAD)}, road) * w.x;
+  return mix(sheen, 1.0, w.y);
+}
 // a puddle's face is level, and rings where drops fall near the eye
 vec3 wetNormal(vec3 n, vec2 w, vec2 m, float dist) {
   if (w.y <= 0.0) return n;
@@ -60,10 +69,11 @@ vec3 wetSunGlint(vec3 n, vec3 V, float sunVis, float gloss) {
   float s = mix(24.0, 256.0, gloss);
   return uSunColor * (uSunScale * sunVis * gloss * pow(max(dot(n, H), 0.0), s) * (s + 2.0) / 8.0 * wetFresnel(dot(V, H)));
 }
-// the sky in the wet, on the finished display colour
+// the sky in the wet, on the finished display colour - fog alone is black at night, so the ambient rides with it
 vec3 wetSky(vec3 col, vec3 n, vec3 V, float gloss) {
   if (gloss <= 0.0) return col;
-  return mix(col, uFogColor, min(wetFresnel(dot(n, V)) * gloss, ${f(WET_SKY_MAX)}));
+  vec3 mir = max(uFogColor, uAmbient);
+  return mix(col, mir, min(wetFresnel(dot(n, V)) * gloss, ${f(WET_SKY_MAX)}));
 }
 `;
 
@@ -79,7 +89,7 @@ vec2 wetGround(vec2 local, vec3 n, float snow, float fw) {
     float a = clamp(2.0 - 2.0 * fw, 0.0, 1.0);
     float p = mix(0.5, 0.6 * snowNoise(lt, 1, ${PUDDLE_SALT}u) + 0.4 * snowNoise(lt, 4, ${PUDDLE_SALT + 1}u), a);
     float th = 1.0 - ${f(PUDDLE_SPREAD)} * uWet.y;
-    pud = smoothstep(th, th + 0.06, p) * smoothstep(${f(PUDDLE_FLAT[0])}, ${f(PUDDLE_FLAT[1])}, n.y) * (1.0 - snow);
+    pud = smoothstep(th - ${f(PUDDLE_EDGE)} * 0.35, th + ${f(PUDDLE_EDGE)}, p) * smoothstep(${f(PUDDLE_FLAT[0])}, ${f(PUDDLE_FLAT[1])}, n.y) * (1.0 - snow);
   }
   return vec2(wet, pud);
 }

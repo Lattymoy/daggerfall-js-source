@@ -423,6 +423,7 @@ float wetFresnel(float vdoth) {
 }
 // LA-COST4: the glint's lobe, x^EL_SPEC_GLOSS by repeated squaring (powChainGlsl) - no pow() per light
 ${powChainGlsl('elSpecLobe', EL_SPEC_GLOSS)}
+float elSpecK = 1.0;   // WET1b: the ground turns this down in the rain; every other caller leaves it
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
@@ -454,6 +455,7 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + V);
     float spec = elSpecLobe(max(dot(n, H), 0.0)) * ${EL_SPEC_STRENGTH};
+    spec *= elSpecK;   // WET1b: 1 everywhere but wet ground
     float att = sh * elAttenuation(d, uPointLights[i].w);
     acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
     if (wet > 0.0) {
@@ -1080,12 +1082,15 @@ void main() {
   ${waterBedMix((t) => `elDecode(${t})`)}
   vec2 wetAt = vec2(snowC, max(length(gx), length(gy)));   // WET1: the decode's snow and footprint (render/snowfallGlsl.js declares its own)
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
+  float road = (layer == 46 || layer == 47 || layer == 55) ? 1.0 : 0.0;   // WET1b: OnPathTile - snowTerrainFs sets its own
   vec3 n = normalize(vNormal);
   vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y);   // WET1: render/wetGlsl.js
-  float wetG = wetGloss(wetW);
+  float wetG = wetGlossGround(wetW, road);
   vec3 wetV = normalize(uCamPos - vWorldPos);
   tex = wetAlbedo(tex, wetW, ${glslFloat(WET_DARK)});
   n = wetNormal(n, wetW, vLocalXZ, distance(uCamPos, vWorldPos));
+  // the stone's own highlight is one lobe on every tile; in the rain a puddle keeps a tight glint and drops that lobe
+  elSpecK = mix(1.0, mix(0.22, 0.5, road) * (1.0 - wetW.y) + 0.06 * wetW.y, step(0.02, wetW.x));
   // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
   // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
   // CANNOT REACH. This was one flat product, and GLSL evaluates every
@@ -1104,7 +1109,7 @@ void main() {
   vec3 wetGlint;
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLitWet(vWorldPos, n, wetG, wetGlint) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
-  lit += wetGlint + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
+  lit += wetGlint * mix(1.0, 3.0, wetW.y) + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);   // WET1b: the lamp, tight, in the puddle
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
   outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG);   // WET1: the sky in the wet
 }`;

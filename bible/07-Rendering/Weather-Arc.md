@@ -1565,5 +1565,10 @@ street wet and with `?wet=off`: Sentinel at noon in rain differed by 7.66 a chan
 by 6.86, and a night's sprinkle (rain 0.04) by 0.86, as its law says. In Daggerfall and Wayrest on the boot's late-autumn
 date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay.
 
+**WET1b (2026-10-31).** A puddle, a road and soil were one highlight: the stone's lobe (`elSpecK`, left at 1 off the
+rain) plus one sheen. In the rain soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull
+sheen, and a puddle drops that lobe and keeps a tight lamp glint. The puddle's edge is PUDDLE_EDGE wide, not a line.
+The lab's rain streaks fade to 0.22 alpha. The sky mix takes the ambient with the fog, so a night puddle is not black.
+
 **Not yet.** The wet shows the sky, not the world: a puddle mirrors no tower until a screen-space reflection pass
 lands. Nothing knows what is roofed, so a porch's floor wets as the street does. Meshes take no puddles.

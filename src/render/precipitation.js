@@ -197,8 +197,8 @@ out vec4 o;
 void main(){
   if (uKind < 0.5) {
     // a drop is bright at its head and fades along the streak
-    float a = smoothstep(0.0,0.35,vT) * 0.42;
-    o = vec4(vec3(0.72,0.78,0.86), a);
+    float a = smoothstep(0.0,0.35,vT) * 0.22;   // WET1b: less needle, more veil
+    o = vec4(vec3(0.68,0.74,0.82), a);
   } else {
     o = vec4(vec3(0.94,0.96,1.0), 0.72);
   }

@@ -245,6 +245,7 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   dd = (dd + (sqrt(dd) - dd) * 0.25) * uSnowDarkening;
   vec3 tex = albedo * (1.0 - dd * (1.0 - remain));
   vec2 wetAt = vec2(1.0, 0.0);   // WET1: the mod's snow is never wet ground (EL_TERRAIN_FS reads it past the decode)
+  float road = 0.0;   // WET1b: the snow variant has no tile record left to call a road
 `;
 
 /** The fragment's own declarations: the law (the blanket's path test with it), the far mask and the albedo. */
