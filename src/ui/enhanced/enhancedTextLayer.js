@@ -28,17 +28,21 @@ export const TEXT_LAYER_FIT = 0.9;
 /** @type {Map<string, { root: any, nodes: any[], doc: any }>} */
 const layers = new Map();
 
-const css = (c) => `rgba(${Math.round((c?.[0] ?? 1) * 255)}, ${Math.round((c?.[1] ?? 1) * 255)}, ${Math.round((c?.[2] ?? 1) * 255)}, ${c?.[3] ?? 1})`;
+const css = (c) =>
+  `rgba(${Math.round((c?.[0] ?? 1) * 255)}, ${Math.round((c?.[1] ?? 1) * 255)}, ${Math.round((c?.[2] ?? 1) * 255)}, ${c?.[3] ?? 1})`;
 
 /**
  * Draw `items` on the layer `id`. Each item: { text, x, y, cell } in the canvas's device pixels (x, y the bitmap
  * line's top-left, `cell` its height - fixedHeight x scale), `color` and `shadow` as [r, g, b, a] in 0..1, and
  * `shadowPos` [dx, dy] in device pixels. Lines beyond the list are hidden, not removed.
  */
-export function drawEnhancedTextLayer(id, items, canvas, doc = (typeof document === 'undefined' ? null : document)) {
+export function drawEnhancedTextLayer(id, items, canvas, doc = typeof document === 'undefined' ? null : document) {
   if (!doc) return null;
   let layer = layers.get(id);
-  if (layer && layer.doc !== doc) { layer.root.remove?.(); layer = null; }   // AUDIT FONT3 F5: a layer belongs to the document it was built in
+  if (layer && layer.doc !== doc) {
+    layer.root.remove?.();
+    layer = null;
+  } // AUDIT FONT3 F5: a layer belongs to the document it was built in
   if (!layer) {
     if (!doc.getElementById(STYLE_ID)) {
       const style = doc.createElement('style');
@@ -59,12 +63,19 @@ export function drawEnhancedTextLayer(id, items, canvas, doc = (typeof document 
   layer.root.style.display = '';
   items.forEach((it, i) => {
     let n = layer.nodes[i];
-    if (!n) { n = doc.createElement('div'); n.className = 'etl-line'; layer.root.append(n); layer.nodes[i] = n; }
+    if (!n) {
+      n = doc.createElement('div');
+      n.className = 'etl-line';
+      layer.root.append(n);
+      layer.nodes[i] = n;
+    }
     if (n.textContent !== it.text) n.textContent = it.text;
-    const sx = (it.shadowPos?.[0] ?? 0) / dpr, sy = (it.shadowPos?.[1] ?? 0) / dpr;
-    n.style.cssText = `transform: translate(${(it.x / dpr).toFixed(1)}px, ${(it.y / dpr).toFixed(1)}px);`
-      + `font-size: ${((it.cell * TEXT_LAYER_FIT) / dpr).toFixed(1)}px; color: ${css(it.color)};`
-      + (sx || sy ? `text-shadow: ${sx.toFixed(1)}px ${sy.toFixed(1)}px 0 ${css(it.shadow)};` : '');
+    const sx = (it.shadowPos?.[0] ?? 0) / dpr,
+      sy = (it.shadowPos?.[1] ?? 0) / dpr;
+    n.style.cssText =
+      `transform: translate(${(it.x / dpr).toFixed(1)}px, ${(it.y / dpr).toFixed(1)}px);` +
+      `font-size: ${((it.cell * TEXT_LAYER_FIT) / dpr).toFixed(1)}px; color: ${css(it.color)};` +
+      (sx || sy ? `text-shadow: ${sx.toFixed(1)}px ${sy.toFixed(1)}px 0 ${css(it.shadow)};` : '');
   });
   for (let i = items.length; i < layer.nodes.length; i++) layer.nodes[i].style.display = 'none';
   return layer.root;
@@ -73,5 +84,5 @@ export function drawEnhancedTextLayer(id, items, canvas, doc = (typeof document 
 /** Take the layer `id` down (its window went). Safe off a document and on a layer never drawn. */
 export function hideEnhancedTextLayer(id) {
   const layer = layers.get(id);
-  if (layer && layer.root.style.display !== 'none') layer.root.style.display = 'none';   // AUDIT FONT3 F1: called every frame by a host's guard
+  if (layer && layer.root.style.display !== 'none') layer.root.style.display = 'none'; // AUDIT FONT3 F1: called every frame by a host's guard
 }

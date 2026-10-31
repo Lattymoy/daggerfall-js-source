@@ -391,8 +391,8 @@
   {
     "name": "ARMORY-the-set-worn-a-piece-at-a-time",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "else if (w.kind === 'armory' && setOf(w)) fl.wearArmoryKit?.(",
-    "new": "else if (false) fl.wearArmoryKit?.(",
+    "old": "    else if (w.kind === 'armory' && setOf(w))",
+    "new": "    else if (false)",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "ARMORY-the-set-worn-with-a-piece-off",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "return armoryWarePieces(w.key).every((k) => kit[",
-    "new": "return armoryWarePieces(w.key).some((k) => kit[",
+    "old": "    return armoryWarePieces(w.key).every((k) => kit[armoryPieceOf(k)?.slot ?? ''] === k);",
+    "new": "    return armoryWarePieces(w.key).some((k) => kit[armoryPieceOf(k)?.slot ?? ''] === k);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

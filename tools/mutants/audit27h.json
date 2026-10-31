@@ -340,8 +340,8 @@
   {
     "name": "H1-stale-editor-acts-press",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "const live = (fn) => (...a) => (w.editor === ed ? fn(...a) : undefined);",
-    "new": "const live = (fn) => fn;",
+    "old": "  const live =\n    (fn) =>\n    (...a) =>\n      w.editor === ed ? fn(...a) : undefined;",
+    "new": "  const live = (fn) => fn;",
     "tests": [
       "test/ui/enhanced/audit27h.test.js"
     ]

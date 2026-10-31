@@ -390,8 +390,8 @@
   {
     "name": "HOLD-STEP-view-no-setter",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "set: live((v) => ed.setValue(field, v)),",
-    "new": "set: undefined,",
+    "old": "    set: live((v) => ed.setValue(field, v)),",
+    "new": "    set: undefined,",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]

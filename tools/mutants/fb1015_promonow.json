@@ -83,8 +83,8 @@
   {
     "name": "PROMO-NOW-the-line-not-drawn",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "      blocks: [...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []), { type: 'actions', ",
-    "new": "      blocks: [{ type: 'actions', ",
+    "old": "        ...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []),\n        {",
+    "new": "        {",
     "tests": [
       "test/systems/guild/fb1015_promonow.test.js"
     ]

@@ -269,6 +269,6 @@ test('SILVER-FINDS every host\'s loot door asks (THE FOUR HOSTS): the dungeon\'s
 
 test('SILVER-FINDS the Bank\'s card: the day\'s finds beside the combat\'s - found in loot against 20, found gathering against 30; the combat row names the serpents (mutants: a count unsaid; the maxes)', () => {
   const p = src('src/ui/enhanced/enhancedPorts.js');
-  assert.match(p, /\['Found in loot today', `\$\{\(w\.hooks\.marks\.today\(\)\?\.found \?\? 0\)\} of \$\{w\.hooks\.marks\.today\(\)\?\.findMax \?\? MARKS_FAUCETS\.find\.perDay\}`\],/);
-  assert.match(p, /\['Found gathering today', `\$\{\(w\.hooks\.marks\.today\(\)\?\.gathered \?\? 0\)\} of \$\{w\.hooks\.marks\.today\(\)\?\.gatherMax \?\? MARKS_FAUCETS\.gather\.perDay\}`\],/);
+  assert.match(p, /\[\n\s*'Found in loot today',\n\s*`\$\{w\.hooks\.marks\.today\(\)\?\.found \?\? 0\} of \$\{w\.hooks\.marks\.today\(\)\?\.findMax \?\? MARKS_FAUCETS\.find\.perDay\}`,\n\s*\],/);
+  assert.match(p, /\[\n\s*'Found gathering today',\n\s*`\$\{w\.hooks\.marks\.today\(\)\?\.gathered \?\? 0\} of \$\{w\.hooks\.marks\.today\(\)\?\.gatherMax \?\? MARKS_FAUCETS\.gather\.perDay\}`,\n\s*\],/);
 });

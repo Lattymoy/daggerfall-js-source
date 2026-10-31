@@ -38,8 +38,8 @@
   {
     "name": "SILVER-the-bank-rate-old",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "`${MARKS_BANK.goldPerMark} gold for each silver`",
-    "new": "`${MARKS_BANK.goldPerMark} gold a Drake`",
+    "old": "                    ['The Bank pays', `${MARKS_BANK.goldPerMark} gold for each silver`],",
+    "new": "                    ['The Bank pays', `${MARKS_BANK.goldPerMark} gold a Drake`],",
     "tests": [
       "test/net/silver.test.js"
     ]

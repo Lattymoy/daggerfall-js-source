@@ -227,8 +227,8 @@
   {
     "name": "HORSEWALK-saddle-panel-unread",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "saddleGait(s.mode, s.speed, s.galloping, s.walks)",
-    "new": "saddleGait(s.mode, s.speed, s.galloping)",
+    "old": "  const gait = [saddleGait(s.mode, s.speed, s.galloping, s.walks), saddleSpeedText(s.speed)]\n    .filter(Boolean)\n    .join(' · ');",
+    "new": "  const gait = [saddleGait(s.mode, s.speed, s.galloping), saddleSpeedText(s.speed)].filter(Boolean).join(' · ');",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

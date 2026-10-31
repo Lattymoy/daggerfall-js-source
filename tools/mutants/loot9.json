@@ -439,8 +439,8 @@
   {
     "name": "LOOT9-plus-face-no-row",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "        ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []),",
-    "new": "        ...([]),",
+    "old": "            ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []), // LOOT9: the Mages Guild's Reforge, beside its Identify",
+    "new": "            ...[], // LOOT9: the Mages Guild's Reforge, beside its Identify",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

@@ -8,10 +8,25 @@
 // What is held and what is on sale are the account read's (ui/accountFlow.js `shop`); a purchase lands on its own.
 import { SHOP_WARES, SHOP_CATEGORIES, SHOP_CATEGORY_KIND, shopPriceText, shopWareById } from '../../net/shopLaw.js';
 import { TERMS_URL } from '../../net/legalLaw.js';
-import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_TEXT, AURA_TEXT, AURA_PAINT } from '../playerBadge.js';
+import {
+  titleBadge,
+  paintTitle,
+  glyphBadges,
+  glyphSvgNode,
+  TITLE_TEXT,
+  AURA_TEXT,
+  AURA_PAINT,
+} from '../playerBadge.js';
 import { GLYPH_LABEL } from './enhancedAccount.js';
 import { t, intlLocale } from '../../systems/textManager.js';
-import { armoryPieceOf, armoryKitPieces, armoryKitOf, armoryLineKit, armoryWarePieces, ARMORY_SETS } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces, sold in a section of their own
+import {
+  armoryPieceOf,
+  armoryKitPieces,
+  armoryKitOf,
+  armoryLineKit,
+  armoryWarePieces,
+  ARMORY_SETS,
+} from '../../net/armoryLaw.js'; // ARMORY: the Aura Armory's pieces, sold in a section of their own
 import { ARMORY_LOOK, ARMORY_SET_LOOK, armoryPieceName, armorySlotName } from '../armoryText.js';
 
 /** Each category's tab, in the player's language. */
@@ -22,23 +37,46 @@ export const SHOP_CATEGORY_TEXT = Object.freeze({
   armory: () => t('shop.cat.armory', 'Aura Armory'),
 });
 /** Each kind's word on its panel. */
-const KIND_TEXT = Object.freeze({ title: () => t('shop.kind.title', 'Title'), glyph: () => t('shop.kind.glyph', 'Glyph'), aura: () => t('shop.kind.aura', 'Aura'), armory: () => t('shop.kind.armory', 'Aura Armory') });
+const KIND_TEXT = Object.freeze({
+  title: () => t('shop.kind.title', 'Title'),
+  glyph: () => t('shop.kind.glyph', 'Glyph'),
+  aura: () => t('shop.kind.aura', 'Aura'),
+  armory: () => t('shop.kind.armory', 'Aura Armory'),
+});
 /** ARMORY: the line a set ware gives whole, or null for any other ware. */
-const setOf = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (w.key)] ?? null : null);
+const setOf = (/** @type {{ kind: string, key: string }} */ w) =>
+  w.kind === 'armory' ? (ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (w.key)] ?? null) : null;
 /** A ware's kind as its panel says it - an armory piece's with its slot, a set's with its count. */
-const kindText = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? `${KIND_TEXT.armory()} · ${setOf(w) ? t('shop.armory.setOf', 'a set of {n}', { n: armoryWarePieces(w.key).length }) : armorySlotName(armoryPieceOf(w.key)?.slot ?? '')}` : KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]());
+const kindText = (/** @type {{ kind: string, key: string }} */ w) =>
+  w.kind === 'armory'
+    ? `${KIND_TEXT.armory()} · ${setOf(w) ? t('shop.armory.setOf', 'a set of {n}', { n: armoryWarePieces(w.key).length }) : armorySlotName(armoryPieceOf(w.key)?.slot ?? '')}`
+    : KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]();
 /** Each ware in a sentence: what it looks like. */
 export const SHOP_LOOK = Object.freeze({
-  'title:genesis': () => t('shop.look.genesis', 'A title set on a plate of blue-violet fire that burns behind its letters, over your name.'),
-  'glyph:origin': () => t('shop.look.origin', 'A dragon coiled round on itself, biting its tail, a spark burning at its heart. Light runs round its scales.'),
-  'aura:eternal': () => t('shop.look.eternal', 'A cape of blue-violet fire on your back. It flows as you move, and wisps of flame trail behind you.'),
+  'title:genesis': () =>
+    t('shop.look.genesis', 'A title set on a plate of blue-violet fire that burns behind its letters, over your name.'),
+  'glyph:origin': () =>
+    t(
+      'shop.look.origin',
+      'A dragon coiled round on itself, biting its tail, a spark burning at its heart. Light runs round its scales.',
+    ),
+  'aura:eternal': () =>
+    t(
+      'shop.look.eternal',
+      'A cape of blue-violet fire on your back. It flows as you move, and wisps of flame trail behind you.',
+    ),
   // ARMORY: a piece's own words (ui/armoryText.js), one home for every face that says them
   ...Object.fromEntries(Object.entries({ ...ARMORY_LOOK, ...ARMORY_SET_LOOK }).map(([k, f]) => [`armory:${k}`, f])),
 });
 /** A ware's name, as every face says it (the title's and the aura's English, the glyph's label). */
 export const shopWareName = (/** @type {{ kind: string, key: string }} */ w) =>
-  (w.kind === 'title' ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (w.key)] : w.kind === 'aura' ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (w.key)]
-    : w.kind === 'armory' ? armoryPieceName(w.key) : GLYPH_LABEL[/** @type {keyof typeof GLYPH_LABEL} */ (w.key)]) ?? w.key;
+  (w.kind === 'title'
+    ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (w.key)]
+    : w.kind === 'aura'
+      ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (w.key)]
+      : w.kind === 'armory'
+        ? armoryPieceName(w.key)
+        : GLYPH_LABEL[/** @type {keyof typeof GLYPH_LABEL} */ (w.key)]) ?? w.key;
 
 /** A WARE'S NAME IN ITS OWN PAINT, for a line that names it (the mailbox's receipt): a title on its flame, a glyph's
  *  drawing before its label, an aura in its title's paint. Null for an id that is no ware. */
@@ -53,7 +91,21 @@ export function shopWareTag(/** @type {Document} */ doc, /** @type {unknown} */ 
     const g = glyphBadges({ glyphs: [w.key] })[0];
     const art = g ? glyphSvgNode(doc, g, 'sh-waretag-glyph', 1.8) : null;
     if (art) tag.append(art);
-  } else paintTitle(word, titleBadge({ title: w.kind === 'title' ? w.key : AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (w.kind === 'armory' ? armoryPieceOf(w.key)?.line ?? 'eternal' : w.key)] }), w.kind === 'title');   // ARMORY: a piece in its line's aura's paint
+  } else
+    paintTitle(
+      word,
+      titleBadge({
+        title:
+          w.kind === 'title'
+            ? w.key
+            : AURA_PAINT[
+                /** @type {keyof typeof AURA_PAINT} */ (
+                  w.kind === 'armory' ? (armoryPieceOf(w.key)?.line ?? 'eternal') : w.key
+                )
+              ],
+      }),
+      w.kind === 'title',
+    ); // ARMORY: a piece in its line's aura's paint
   tag.append(word);
   return tag;
 }
@@ -78,22 +130,33 @@ export function shopWareState(flow, ware) {
 export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key: string }} */ w) {
   const wd = flow?.wardrobe;
   if (!wd) return false;
-  if (w.kind === 'glyph') return Array.isArray(wd.glyphs) && wd.glyphs.includes(w.key) && !(Array.isArray(wd.glyphsOff) && wd.glyphsOff.includes(w.key));
-  if (w.kind === 'armory') { const kit = armoryKitPieces(wd.armory); return armoryWarePieces(w.key).every((k) => kit[armoryPieceOf(k)?.slot ?? ''] === k); }   // ARMORY: worn in its slot - a set, every piece of it
+  if (w.kind === 'glyph')
+    return (
+      Array.isArray(wd.glyphs) &&
+      wd.glyphs.includes(w.key) &&
+      !(Array.isArray(wd.glyphsOff) && wd.glyphsOff.includes(w.key))
+    );
+  if (w.kind === 'armory') {
+    const kit = armoryKitPieces(wd.armory);
+    return armoryWarePieces(w.key).every((k) => kit[armoryPieceOf(k)?.slot ?? ''] === k);
+  } // ARMORY: worn in its slot - a set, every piece of it
   return wd[w.kind] === w.key;
 }
 /** The line under the panels: who a purchase is for, or why nothing can be bought. Pure. */
 export function shopWhoText(/** @type {any} */ flow) {
   if (!flow || flow.stage === 'loading') return t('shop.who.reading', 'Reading your account...');
   if (flow.stage !== 'in') return t('shop.who.out', 'Sign in from your profile to buy.');
-  if (!flow.account?.handle) return t('shop.who.guest', 'A guest account cannot buy. Add a username from your profile first.');
+  if (!flow.account?.handle)
+    return t('shop.who.guest', 'A guest account cannot buy. Add a username from your profile first.');
   if (!flow.shop?.on) return t('shop.who.closed', 'The shop does not take payments yet.');
-  return t('shop.who.for', 'Purchases go to the account {name}, for every character on it.', { name: flow.account.handle });
+  return t('shop.who.for', 'Purchases go to the account {name}, for every character on it.', {
+    name: flow.account.handle,
+  });
 }
 
 /** The gem: the button at the end of the row of marks. */
 export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) {
-  injectShopStyle(doc);   // its place in the row is the sheet's - before the window was ever opened
+  injectShopStyle(doc); // its place in the row is the sheet's - before the window was ever opened
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-shopmark';
@@ -146,16 +209,30 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   // THE DISCLAIMER, first and whole, before any ware - the owner's "strict disclaimer"
   const proceeds = el('aside', 'sh-proceeds');
   proceeds.setAttribute('role', 'note');
-  proceeds.append(el('strong', 'sh-proceeds-main', t('shop.proceeds', 'All proceeds go to the costs of developing DFO Online.')), el('span', 'sh-proceeds-sub', t('shop.cosmetic', 'Every item is cosmetic. It gives no power in the game.')));   // net/shopLaw.js SHOP_PROCEEDS, SHOP_COSMETIC - a pin holds them equal
+  proceeds.append(
+    el('strong', 'sh-proceeds-main', t('shop.proceeds', 'All proceeds go to the costs of developing DFO Online.')),
+    el('span', 'sh-proceeds-sub', t('shop.cosmetic', 'Every item is cosmetic. It gives no power in the game.')),
+  ); // net/shopLaw.js SHOP_PROCEEDS, SHOP_COSMETIC - a pin holds them equal
   const tabs = el('div', 'sh-tabs');
   tabs.setAttribute('role', 'tablist');
   tabs.setAttribute('aria-label', t('shop.cats', 'Categories'));
   // the strip's keys (the WAI-ARIA tabs pattern): an arrow steps to the next category, Home and End to the first and last
   tabs.addEventListener?.('keydown', (/** @type {KeyboardEvent} */ e) => {
-    const i = SHOP_CATEGORIES.indexOf(cat), n = SHOP_CATEGORIES.length;
-    const to = e.key === 'ArrowRight' ? (i + 1) % n : e.key === 'ArrowLeft' ? (i + n - 1) % n : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : -1;
+    const i = SHOP_CATEGORIES.indexOf(cat),
+      n = SHOP_CATEGORIES.length;
+    const to =
+      e.key === 'ArrowRight'
+        ? (i + 1) % n
+        : e.key === 'ArrowLeft'
+          ? (i + n - 1) % n
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? n - 1
+              : -1;
     if (to < 0) return;
-    e.preventDefault?.(); e.stopPropagation?.();
+    e.preventDefault?.();
+    e.stopPropagation?.();
     pick(SHOP_CATEGORIES[to]);
   });
   const panels = el('div', 'sh-panels');
@@ -165,16 +242,27 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   const foot = el('div', 'sh-foot');
   const who = el('span', 'sh-who');
   const terms = /** @type {HTMLAnchorElement} */ (el('a', 'sh-terms', t('shop.terms', 'Terms of Service')));
-  terms.href = TERMS_URL; terms.target = '_blank'; terms.rel = 'noopener';
-  const paid = el('span', 'sh-paid', t('shop.stripe', 'Payments are taken by Stripe. Prices are in US dollars, and Stripe can show your own currency and ways to pay. No card details reach the game.'));
+  terms.href = TERMS_URL;
+  terms.target = '_blank';
+  terms.rel = 'noopener';
+  const paid = el(
+    'span',
+    'sh-paid',
+    t(
+      'shop.stripe',
+      'Payments are taken by Stripe. Prices are in US dollars, and Stripe can show your own currency and ways to pay. No card details reach the game.',
+    ),
+  );
   foot.append(who, paid, terms);
   body.append(head, proceeds, tabs, panels, say, foot);
   win.append(body);
 
-  let cat = SHOP_CATEGORIES.includes(/** @type {any} */ (keep.cat)) ? /** @type {string} */ (keep.cat) : SHOP_CATEGORIES[0];
+  let cat = SHOP_CATEGORIES.includes(/** @type {any} */ (keep.cat))
+    ? /** @type {string} */ (keep.cat)
+    : SHOP_CATEGORIES[0];
   /** @type {Array<{ stop: () => void }>} the panels' live previews, let go when the panels are drawn again */
   let live = [];
-  let liveGen = 0;   // a preview that lands after its panels were drawn again (or the window went) is let go at once
+  let liveGen = 0; // a preview that lands after its panels were drawn again (or the window went) is let go at once
   /** @type {Map<string, any>} each drawn panel's parts, by ware */
   let drawn = new Map();
   /** @type {Map<string, HTMLButtonElement>} */
@@ -184,11 +272,19 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   const nameText = () => f()?.account?.handle || t('shop.yourName', 'Your Name');
   const f = () => flow();
 
-  const stopLive = () => { for (const p of live) p.stop(); live = []; liveGen++; };
+  const stopLive = () => {
+    for (const p of live) p.stop();
+    live = [];
+    liveGen++;
+  };
   /** A ware's picture, live: the title on its flame over a name, the glyph large and beside a name, the aura on its stage. */
   const stageOf = (/** @type {any} */ w) => {
     const stage = el('div', 'sh-stage sh-stage-' + w.kind);
-    const nameEl = () => { const n = el('div', 'sh-tagname', nameText()); names.push(n); return n; };
+    const nameEl = () => {
+      const n = el('div', 'sh-tagname', nameText());
+      names.push(n);
+      return n;
+    };
     if (w.kind === 'title') {
       const big = paintTitle(el('div', 'sh-bigtitle', shopWareName(w)), titleBadge({ title: w.key }));
       const tag = el('div', 'sh-nametag');
@@ -208,14 +304,29 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       canvas.setAttribute('aria-hidden', 'true');
       stage.append(canvas);
       const gen = liveGen;
-      const armory = w.kind === 'armory';   // ARMORY: a piece on the stand-in, worn alone
-      globalThis.requestAnimationFrame?.(() => {   // once the canvas has its size in the page
+      const armory = w.kind === 'armory'; // ARMORY: a piece on the stand-in, worn alone
+      globalThis.requestAnimationFrame?.(() => {
+        // once the canvas has its size in the page
         if (!canvas.isConnected || gen !== liveGen) return;
-        preview(canvas, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null).catch(() => null).then((p) => {
-          if (p && gen === liveGen) { live.push(p); return; }
-          p?.stop();
-          if (!p && gen === liveGen) stage.append(el('p', 'sh-nogl', armory ? t('shop.noPreviewArmory', 'This device cannot show the piece here.') : t('shop.noPreview', 'This device cannot show the aura here.')));
-        });
+        preview(canvas, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null)
+          .catch(() => null)
+          .then((p) => {
+            if (p && gen === liveGen) {
+              live.push(p);
+              return;
+            }
+            p?.stop();
+            if (!p && gen === liveGen)
+              stage.append(
+                el(
+                  'p',
+                  'sh-nogl',
+                  armory
+                    ? t('shop.noPreviewArmory', 'This device cannot show the piece here.')
+                    : t('shop.noPreview', 'This device cannot show the aura here.'),
+                ),
+              );
+          });
       });
     }
     return stage;
@@ -235,7 +346,10 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       nameline.append(el('h4', 'sh-name', shopWareName(w)), el('span', 'sh-kind', kindText(w)));
       const look = el('p', 'sh-look', SHOP_LOOK[/** @type {keyof typeof SHOP_LOOK} */ (w.id)]?.() ?? '');
       const tags = el('ul', 'sh-tags');
-      tags.append(el('li', 'sh-tag sh-tag-pre', t('shop.tag.preAlpha', 'Pre-alpha only')), el('li', 'sh-tag', t('shop.tag.account', 'Every character on your account')));
+      tags.append(
+        el('li', 'sh-tag sh-tag-pre', t('shop.tag.preAlpha', 'Pre-alpha only')),
+        el('li', 'sh-tag', t('shop.tag.account', 'Every character on your account')),
+      );
       const buyrow = el('div', 'sh-buyrow');
       const price = el('span', 'sh-price', shopPriceText(w.cents, intlLocale()));
       const state = el('span', 'sh-state');
@@ -255,14 +369,18 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       const tb = button('sh-tab', '', () => pick(c));
       tb.id = `sh-tab-${c}`;
       tb.setAttribute('role', 'tab');
-      tb.append(el('span', 'sh-tabname', SHOP_CATEGORY_TEXT[/** @type {keyof typeof SHOP_CATEGORY_TEXT} */ (c)]()), el('span', 'sh-tabcount', String(n)));
+      tb.append(
+        el('span', 'sh-tabname', SHOP_CATEGORY_TEXT[/** @type {keyof typeof SHOP_CATEGORY_TEXT} */ (c)]()),
+        el('span', 'sh-tabcount', String(n)),
+      );
       tabs.append(tb);
       tabOf.set(c, tb);
     }
   };
   const pick = (/** @type {string} */ c) => {
     if (c === cat) return;
-    cat = c; keep.cat = c;
+    cat = c;
+    keep.cat = c;
     buildPanels();
     draw();
     tabOf.get(c)?.focus?.();
@@ -273,21 +391,38 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (!fl || fl.busy) return;
     if (w.kind === 'title') fl.equip?.(w.key);
     else if (w.kind === 'aura') fl.wearAura?.(w.key);
-    else if (w.kind === 'armory' && setOf(w)) fl.wearArmoryKit?.(shopWorn(fl, w) ? null : armoryLineKit(setOf(w)));   // ARMORY: a set, all its pieces at once
-    else if (w.kind === 'armory') fl.wearArmory?.(armoryPieceOf(w.key)?.slot, w.key);   // ARMORY: in its slot
+    else if (w.kind === 'armory' && setOf(w))
+      fl.wearArmoryKit?.(shopWorn(fl, w) ? null : armoryLineKit(setOf(w))); // ARMORY: a set, all its pieces at once
+    else if (w.kind === 'armory')
+      fl.wearArmory?.(armoryPieceOf(w.key)?.slot, w.key); // ARMORY: in its slot
     else fl.toggleGlyph?.(w.key);
   };
   const actFor = (/** @type {any} */ w, /** @type {any} */ st) => {
     if (st.state === 'held') {
-      const words = w.kind === 'glyph' ? (st.worn ? t('shop.hide', 'Hide') : t('shop.show', 'Show')) : (st.worn ? t('shop.takeOff', 'Take off') : t('shop.wear', 'Wear'));
+      const words =
+        w.kind === 'glyph'
+          ? st.worn
+            ? t('shop.hide', 'Hide')
+            : t('shop.show', 'Show')
+          : st.worn
+            ? t('shop.takeOff', 'Take off')
+            : t('shop.wear', 'Wear');
       const b = button('sh-wear', words, () => wear(w));
       if (f()?.busy) b.setAttribute('aria-disabled', 'true');
       return b;
     }
     if (st.state === 'buy') {
       const a = /** @type {HTMLAnchorElement} */ (el('a', 'act sh-buy', t('shop.buy', 'Buy')));
-      a.href = st.buy; a.target = '_blank'; a.rel = 'noopener';
-      a.setAttribute('aria-label', t('shop.buyLabel', 'Buy {name} for {price}', { name: shopWareName(w), price: shopPriceText(w.cents, intlLocale()) }));
+      a.href = st.buy;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.setAttribute(
+        'aria-label',
+        t('shop.buyLabel', 'Buy {name} for {price}', {
+          name: shopWareName(w),
+          price: shopPriceText(w.cents, intlLocale()),
+        }),
+      );
       a.addEventListener('click', () => f()?.shopOpened?.(w.id));
       return a;
     }
@@ -317,10 +452,17 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
         d.act?.remove?.();
         d.act = actFor(w, st);
         d.actKey = key;
-        if (d.act) { d.buyrow.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); }
+        if (d.act) {
+          d.buyrow.append(d.act);
+          if (had) d.act.focus?.({ preventScroll: true });
+        }
       }
     }
-    for (const [c, tb] of tabOf) { tb.setAttribute('aria-selected', c === cat ? 'true' : 'false'); tb.tabIndex = c === cat ? 0 : -1; tb.classList.toggle('on', c === cat); }
+    for (const [c, tb] of tabOf) {
+      tb.setAttribute('aria-selected', c === cat ? 'true' : 'false');
+      tb.tabIndex = c === cat ? 0 : -1;
+      tb.classList.toggle('on', c === cat);
+    }
     const shown = nameText();
     for (const n of names) if (n.textContent !== shown) n.textContent = shown;
     const whoText = shopWhoText(fl);
@@ -335,33 +477,60 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   draw();
   // BACK FROM THE BROWSER, the account is read again - a payment that landed shows here (the account card's way)
   const view = doc.defaultView;
-  const onFocus = () => { const fl = f(); if (win.isConnected && fl?.stage === 'in') Promise.resolve(fl.refresh?.()).catch(() => {}); };
+  const onFocus = () => {
+    const fl = f();
+    if (win.isConnected && fl?.stage === 'in') Promise.resolve(fl.refresh?.()).catch(() => {});
+  };
   view?.addEventListener?.('focus', onFocus);
   if (focus) globalThis.requestAnimationFrame?.(() => tabOf.get(cat)?.focus?.({ preventScroll: true }));
   return {
     root: win,
     draw,
     close,
-    stop: () => { stopLive(); view?.removeEventListener?.('focus', onFocus); },
+    stop: () => {
+      stopLive();
+      view?.removeEventListener?.('focus', onFocus);
+    },
   };
 }
 
 /** An aura's stage, its module loaded on the first ask - ARMORY: a weapon piece alone on the blade's (weapon glow law 7). */
-export const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
-  const look = g?.armoryWeaponStage(kit);
-  if (g && look) return import('../../render/weaponPiecePreview.js').then((m) => m.startWeaponPiecePreview(canvas, g.glowSpec(look, g.ARMORY_LEVEL)));
-  return import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
-});
+export const loadAuraPreview = (
+  /** @type {HTMLCanvasElement} */ canvas,
+  /** @type {string|null} */ aura,
+  /** @type {string|null} */ kit = null,
+) =>
+  (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
+    const look = g?.armoryWeaponStage(kit);
+    if (g && look)
+      return import('../../render/weaponPiecePreview.js').then((m) =>
+        m.startWeaponPiecePreview(canvas, g.glowSpec(look, g.ARMORY_LEVEL)),
+      );
+    return import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
+  });
 
 /** The gem, painted as the row's other marks are: twelve pixels, crisp - a cut stone in the Genesis fire's colours. */
 const GEM_ROWS = Object.freeze([
-  '...DDDDDD...', '..DLLHVVLD..', '.DLHHVVVVLD.', 'DGGGGGGGGGGD', 'DVLVVBVVBVLD', '.DVVBVVBVVD.',
-  '..DVVBBVVD..', '...DVBBVD...', '....DVVD....', '.....DD.....',
+  '...DDDDDD...',
+  '..DLLHVVLD..',
+  '.DLHHVVVVLD.',
+  'DGGGGGGGGGGD',
+  'DVLVVBVVBVLD',
+  '.DVVBVVBVVD.',
+  '..DVVBBVVD..',
+  '...DVBBVD...',
+  '....DVVD....',
+  '.....DD.....',
 ]);
 const GEM_INK = Object.freeze({ D: '#2a1580', L: '#d6b8ff', H: '#f4eeff', V: '#8f5bff', B: '#3f63ff', G: '#b593ff' });
 const gemSvg = () => {
   const rects = [];
-  GEM_ROWS.forEach((row, y) => [...row].forEach((ch, x) => { const ink = /** @type {any} */ (GEM_INK)[ch]; if (ink) rects.push(`<rect x='${x}' y='${y + 1}' width='1' height='1' fill='${ink.replace('#', '%23')}'/>`); }));
+  GEM_ROWS.forEach((row, y) =>
+    [...row].forEach((ch, x) => {
+      const ink = /** @type {any} */ (GEM_INK)[ch];
+      if (ink) rects.push(`<rect x='${x}' y='${y + 1}' width='1' height='1' fill='${ink.replace('#', '%23')}'/>`);
+    }),
+  );
   return `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'>${rects.join('')}</svg>")`;
 };
 

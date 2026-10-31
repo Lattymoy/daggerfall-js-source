@@ -11,8 +11,8 @@
   {
     "name": "HUD-SADDLE-the-builds-placing-dropped",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "    placeHudPieces(doc);   // HUD-SADDLE:",
-    "new": "    // HUD-SADDLE:",
+    "old": "    placeHudPieces(doc); // HUD-SADDLE: where the player moved it (or turned it off) from its first frame - not at the next sweep",
+    "new": "    // HUD-SADDLE: where the player moved it (or turned it off) from its first frame - not at the next sweep",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HUD-SADDLE-the-preview-mounted-as-the-live-panel",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  const p = build(doc);\n  paintSaddle(doc, p, {},",
-    "new": "  const p = build(doc); p.root.id = ENHANCED_SADDLE_ID;\n  paintSaddle(doc, p, {},",
+    "old": "  const p = build(doc);\n  paintSaddle(",
+    "new": "  const p = build(doc);\n  p.root.id = ENHANCED_SADDLE_ID;\n  paintSaddle(",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HUD-SADDLE-the-preview-never-a-fingers",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true",
-    "new": "touch: false, mouseFree: true",
+    "old": "  paintSaddle(\n    doc,\n    p,\n    {},\n    { saddle: SADDLE_PREVIEW, touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true, open: true },\n    {},\n  );",
+    "new": "  paintSaddle(doc, p, {}, { saddle: SADDLE_PREVIEW, touch: false, mouseFree: true, open: true }, {});",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]

@@ -1236,8 +1236,8 @@
   {
     "name": "UI-II-F1-the-well-unscrolled",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "rows: needs, scroll: true }",
-    "new": "rows: needs }",
+    "old": "        ...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []),",
+    "new": "        ...(needs ? [{ type: 'text', rows: needs }] : []),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js",
       "test/systems/guild/fb1015_promonow.test.js"

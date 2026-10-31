@@ -40,8 +40,8 @@
   {
     "name": "UICALM-hello-forever",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "(state.since ?? Infinity) < SADDLE_HELLO_MS ? 'hello' : 'none'",
-    "new": "'hello'",
+    "old": "  return (state.since ?? Infinity) < SADDLE_HELLO_MS ? 'hello' : 'none';",
+    "new": "  return 'hello';",
     "tests": [
       "test/ui/enhanced/uicalm.test.js"
     ]

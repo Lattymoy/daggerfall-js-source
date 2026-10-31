@@ -356,8 +356,8 @@
   {
     "name": "LOST-SPOILS-claim-all-never-down",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "      if (b.busy || b.claimingAll) all.disabled = true;\n",
-    "new": "",
+    "old": "      if (b.busy || b.claimingAll) all.disabled = true;\n      row.append(all);",
+    "new": "      row.append(all);",
     "tests": [
       "test/net/lostspoils_client.test.js"
     ],

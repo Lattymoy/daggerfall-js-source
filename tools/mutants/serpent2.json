@@ -428,8 +428,8 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']",
-    "new": "['gate', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']",
+    "old": "  'serpent',\n  'super',",
+    "new": "  'super',",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],

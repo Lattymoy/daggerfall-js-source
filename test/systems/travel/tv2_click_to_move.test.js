@@ -520,7 +520,7 @@ test('TV2 readout: the route line moves to its first point, lines through the re
   // PIN MOVED (AUDIT OW5 G1): the words say WHY - the load, or AUDIT OW4 J5's walk on the ground until the view rises
   assert.equal(TRAVEL_HELD_TEXT(20, 40), 'Held to ×20 of ×40 while the land loads');
   assert.equal(TRAVEL_HELD_TEXT(1, 20, 'ground'), 'Held to ×1 of ×20 until the Overworld rises');
-  assert.match(rd('src/ui/enhanced/enhancedTravelControl.js'), /const why = held != null \? TRAVEL_HELD_TEXT\(held, accel, state\.heldWhy\) : '';\n\s*if \(parts\.accel && last\.accelTitle !== why\) \{ last\.accelTitle = why; parts\.accel\.title = why; \}/);   // RATE-LAW: every hold said, the enemies' too (ENEMY-PACE's stepper is gone)
+  assert.match(rd('src/ui/enhanced/enhancedTravelControl.js'), /const why = held != null \? TRAVEL_HELD_TEXT\(held, accel, state\.heldWhy\) : '';\n\s*if \(parts\.accel && last\.accelTitle !== why\) \{\n\s*last\.accelTitle = why;\n\s*parts\.accel\.title = why;\n\s*\}/);   // RATE-LAW: every hold said, the enemies' too (ENEMY-PACE's stepper is gone)
 });
 
 // ── THE WORLD HOST'S WIRING ─────────────────────────────────────────────────────────────────────────────────────────

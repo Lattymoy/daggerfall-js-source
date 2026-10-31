@@ -624,8 +624,8 @@
   {
     "name": "AUF-L5M5-saddle-dom-ignores-show",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  if (show === 'none') return;\n",
-    "new": "",
+    "old": "  if (show === 'none') return;\n  last.place = ((last.place ?? -1) + 1) % SADDLE_PLACE_EVERY;",
+    "new": "  last.place = ((last.place ?? -1) + 1) % SADDLE_PLACE_EVERY;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ],
@@ -635,8 +635,8 @@
   {
     "name": "AUF-L5M5-saddle-dataset-full",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "parts.root.dataset.show = show;",
-    "new": "parts.root.dataset.show = 'full';",
+    "old": "    parts.root.dataset.show = show;",
+    "new": "    parts.root.dataset.show = 'full';",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "AUF-L5M5-toggle-not-kept",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  setPref(SADDLE_OPEN_PREF, { open: next, mode });\n",
-    "new": "",
+    "old": "  setPref(SADDLE_OPEN_PREF, { open: next, mode });\n  return next;",
+    "new": "  return next;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUF-L5M5-open-default-up",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "typeof v.open === 'boolean' ? v.open : mode === 'always';",
-    "new": "typeof v.open === 'boolean' ? v.open : true;",
+    "old": "  return v && typeof v === 'object' && v.mode === mode && typeof v.open === 'boolean' ? v.open : mode === 'always';",
+    "new": "  return v && typeof v === 'object' && v.mode === mode && typeof v.open === 'boolean' ? v.open : true;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "AUF-L5M5-hello-no-key-name",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "saddleHello(s, state.keyOf?.(SADDLE_PANEL_ACTION) ?? '')",
-    "new": "saddleHello(s, '')",
+    "old": "  const said =\n    show === 'note' ? saddleNote(s) : show === 'hello' ? saddleHello(s, state.keyOf?.(SADDLE_PANEL_ACTION) ?? '') : '';",
+    "new": "  const said = show === 'note' ? saddleNote(s) : show === 'hello' ? saddleHello(s, '') : '';",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "AUF-L4M1-press-outlives-choice",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "v && typeof v === 'object' && v.mode === mode && typeof v.open === 'boolean'",
-    "new": "v && typeof v === 'object' && typeof v.open === 'boolean'",
+    "old": "  return v && typeof v === 'object' && v.mode === mode && typeof v.open === 'boolean' ? v.open : mode === 'always';",
+    "new": "  return v && typeof v === 'object' && typeof v.open === 'boolean' ? v.open : mode === 'always';",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -698,7 +698,7 @@
   {
     "name": "AUF-L4M2-finger-on-the-compass",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  if (last.place === 0) { if (state.touch) placeTouch(doc, parts, last); else placeBar(doc, parts, last); }",
+    "old": "  if (last.place === 0) {\n    if (state.touch) placeTouch(doc, parts, last);\n    else placeBar(doc, parts, last);\n  }",
     "new": "  if (last.place === 0 && !state.touch) placeBar(doc, parts, last);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"

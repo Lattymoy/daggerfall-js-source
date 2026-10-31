@@ -597,8 +597,8 @@
   {
     "name": "AUDITLIVED1B-U4-the-offline-card-relabelled",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "[empire ? 'Loan due' : 'Loan due by', L.loanByFull ?? L.loanBy]",
-    "new": "['Loan due', L.loanByFull ?? L.loanBy]",
+    "old": "            [empire ? 'Loan due' : 'Loan due by', L.loanByFull ?? L.loanBy], // AUDIT LIVED1b U4 (O1): AUDIT LIVED1 S's \"Loan due\" is the online row's (a time left, not a date) - offline the row reads a date, as it always did",
+    "new": "            ['Loan due', L.loanByFull ?? L.loanBy], // AUDIT LIVED1b U4 (O1): AUDIT LIVED1 S's \"Loan due\" is the online row's (a time left, not a date) - offline the row reads a date, as it always did",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -1005,8 +1005,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-ports-loan-row-short-words",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "[empire ? 'Loan due' : 'Loan due by', L.loanByFull ?? L.loanBy]",
-    "new": "[empire ? 'Loan due' : 'Loan due by', L.loanBy]",
+    "old": "            [empire ? 'Loan due' : 'Loan due by', L.loanByFull ?? L.loanBy], // AUDIT LIVED1b U4 (O1): AUDIT LIVED1 S's \"Loan due\" is the online row's (a time left, not a date) - offline the row reads a date, as it always did",
+    "new": "            [empire ? 'Loan due' : 'Loan due by', L.loanBy], // AUDIT LIVED1b U4 (O1): AUDIT LIVED1 S's \"Loan due\" is the online row's (a time left, not a date) - offline the row reads a date, as it always did",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]

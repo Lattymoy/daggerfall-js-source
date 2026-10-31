@@ -818,8 +818,8 @@
   {
     "name": "f1-enhanced-mount-torn-down-with-bar",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "  if (!state.showing && !junctionOnly) { hideEnhancedTravelControl(); return null; }",
-    "new": "  if (!state.showing) { hideEnhancedTravelControl(); return null; }",
+    "old": "  if (!state.showing && !junctionOnly) {",
+    "new": "  if (!state.showing) {",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

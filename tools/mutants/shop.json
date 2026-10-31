@@ -164,8 +164,8 @@
   {
     "name": "SHOP-buy-to-a-guest",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null };\n",
-    "new": "",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null };\n  if (!flow.shop) return { state: 'closed', buy: null };",
+    "new": "  if (!flow.shop) return { state: 'closed', buy: null };",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SHOP-buy-off-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (row && !row.sale) return { state: 'gone', buy: null };\n",
-    "new": "",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null };\n  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null };",
+    "new": "  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null };",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SHOP-tabs-without-keys",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  tabs.addEventListener?.('keydown', (",
-    "new": "  tabs.addEventListener?.('keyup-never', (",
+    "old": "  tabs.addEventListener?.('keydown', (/** @type {KeyboardEvent} */ e) => {",
+    "new": "  tabs.addEventListener?.('keyup-never', (/** @type {KeyboardEvent} */ e) => {",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SHOP-tabs-unwrapped",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "e.key === 'ArrowRight' ? (i + 1) % n :",
-    "new": "e.key === 'ArrowRight' ? Math.min(i + 1, n - 1) :",
+    "old": "        ? (i + 1) % n",
+    "new": "        ? Math.min(i + 1, n - 1)",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

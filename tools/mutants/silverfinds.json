@@ -870,8 +870,8 @@
   {
     "name": "SILVER-FINDS-bank-rows",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "            ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS\n",
-    "new": "",
+    "old": "                      'Found in loot today',\n                      `${w.hooks.marks.today()?.found ?? 0} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`,\n                    ], // SILVER-FINDS\n                    [\n                      'Found gathering today',",
+    "new": "                      'Found gathering today',",
     "why": "the Bank never says the day's finds",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -880,8 +880,8 @@
   {
     "name": "SILVER-FINDS-bank-serpents",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "['From gates, raids, serpents and the Spire today',",
-    "new": "['From gates and raids today',",
+    "old": "                      'From gates, raids, serpents and the Spire today',",
+    "new": "                      'From gates and raids today',",
     "why": "the serpents unnamed under the cap they share",
     "note": "EG-E1 (PIN MOVED): the Bank's card names the Spire's Redoubts beside them - re-aimed by content.",
     "tests": [

@@ -109,5 +109,5 @@ test('F2 F5 F6 F9 F10 F11: one press per dialog or list; Escape puts the menu aw
 
 test('F7 F8: the gauntlet stands down where a controller hid the pointer; the bank\'s Cancel no longer names a key that closes the bank', () => {
   assert.match(CURSOR_CSS, /html:not\(\.plus-nocursor\) canvas\[style\*="cursor: none"\] \{ cursor: none !important; \}/);
-  assert.match(rd('src/ui/enhanced/enhancedPorts.js'), /\{ label: 'Cancel', act: \(\) => \{ w\.transactionType = TRANSACTION_TYPE\.None; w\.value = ''; \} \}\]/);
+  assert.match(rd('src/ui/enhanced/enhancedPorts.js'), /\{\n\s*label: 'Cancel',\n\s*act: \(\) => \{\n\s*w\.transactionType = TRANSACTION_TYPE\.None;\n\s*w\.value = '';\n\s*\},\n\s*\},\n\s*\]/);
 });

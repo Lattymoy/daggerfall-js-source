@@ -258,8 +258,8 @@
   {
     "name": "EGZM-button-never-drawn",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "        if (TIMER_DOOR_TEXT[r.door]) {",
-    "new": "        if (false) {",
+    "old": "          if (TIMER_DOOR_TEXT[r.door]) {",
+    "new": "          if (false) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "EGZM-press-past-the-caller",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (typeof fn === 'function') door(fn); });",
-    "new": "if (typeof fn === 'function') fn(); });",
+    "old": "              if (typeof fn === 'function') door(fn);",
+    "new": "              if (typeof fn === 'function') fn();",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "EGZM-press-with-no-door",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (typeof fn === 'function') door(fn); });",
-    "new": "door(fn); });",
+    "old": "              if (typeof fn === 'function') door(fn);",
+    "new": "              door(fn);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "EGZM-shape-blind-to-the-door",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "r.where, r.detail, r.door ?? null])])]);",
-    "new": "r.where, r.detail])])]);",
+    "old": "      shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail, r.door ?? null])]),",
+    "new": "      shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail])]),",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ],

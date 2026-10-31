@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-PLAINUI-U-press-dead",
     "file": "src/ui/enhanced/enhancedTalk.js",
-    "old": "    r.onclick = () => { regardOpen = !regardOpen; render(); };",
-    "new": "    r.onclick = () => {};",
+    "old": "    r.onclick = () => {\n      regardOpen = !regardOpen;\n      render();\n    }; // a press says what it means - a finger has no hover",
+    "new": "    r.onclick = () => {}; // a press says what it means - a finger has no hover",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-PLAINUI-U-open-kept-across-mounts",
     "file": "src/ui/enhanced/enhancedTalk.js",
-    "old": "  lastLogCount = -1; lastTopicsKey = null; regardOpen = false;",
-    "new": "  lastLogCount = -1; lastTopicsKey = null;",
+    "old": "  regardOpen = false;\n  render();",
+    "new": "  render();",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]

@@ -1455,8 +1455,8 @@
   {
     "name": "AUDIT-PROF-541-J3-port-own-rows-only",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "items: enchantRows(w, shown.powers) }",
-    "new": "items: enchantRows(w, w.powers) }",
+    "old": "                      items: enchantRows(w, shown.powers),",
+    "new": "                      items: enchantRows(w, w.powers),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1464,8 +1464,8 @@
   {
     "name": "AUDIT-PROF-541-J3-kept-row-removable",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "act: forced || kept ? null",
-    "new": "act: forced ? null",
+    "old": "      act: forced || kept ? null : () => w._removeRow(e),",
+    "new": "      act: forced ? null : () => w._removeRow(e),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1473,8 +1473,8 @@
   {
     "name": "AUDIT-PROF-541-J3-kept-row-loud",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "muted: forced || kept,",
-    "new": "muted: forced,",
+    "old": "      muted: forced || kept,",
+    "new": "      muted: forced,",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

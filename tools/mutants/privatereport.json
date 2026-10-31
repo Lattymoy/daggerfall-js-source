@@ -242,7 +242,7 @@
   {
     "name": "PRIVREP-the-doors-gone",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    else { drawList(b); reportDoors(b); }",
+    "old": "    else {\n      drawList(b);\n      reportDoors(b);\n    }",
     "new": "    else drawList(b);",
     "tests": [
       "test/net/private_reports_client.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "PRIVREP-the-inbox-door-for-everyone",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (b.reports) doors.append(",
-    "new": "    if (true) doors.append(",
+    "old": "    if (b.reports)",
+    "new": "    if (true)",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -613,8 +613,8 @@
   {
     "name": "PRIVREP-the-counter-in-utf16-units",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "count.textContent = `${charsOf(body.value)} / ${REPORT_WORDS_MAX}`;",
-    "new": "count.textContent = `${body.value.length} / ${REPORT_WORDS_MAX}`;",
+    "old": "    count.textContent = `${charsOf(body.value)} / ${REPORT_WORDS_MAX}`;",
+    "new": "    count.textContent = `${body.value.length} / ${REPORT_WORDS_MAX}`;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -623,8 +623,8 @@
   {
     "name": "PRIVREP-the-focus-left-after-a-send",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "const at = said.ok ? subject :",
-    "new": "const at = said.ok ? null :",
+    "old": "    const at = said.ok\n      ? subject",
+    "new": "    const at = said.ok\n      ? null",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -633,8 +633,8 @@
   {
     "name": "PRIVREP-the-old-pane-saying-the-send",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "if (!last || root.isConnected === false) return null;",
-    "new": "if (!last) return null;",
+    "old": "    if (!last || root.isConnected === false) return null;",
+    "new": "    if (!last) return null;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -643,8 +643,8 @@
   {
     "name": "PRIVREP-read-never-said-to-the-reporter",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "(p.read ? t('report.state.read', 'Read by the developers') : t('report.state.sent', 'Sent'))",
-    "new": "t('report.state.sent', 'Sent')",
+    "old": "  p.state === 'open'\n    ? p.read\n      ? t('report.state.read', 'Read by the developers')\n      : t('report.state.sent', 'Sent')\n    : reportStateText(p.state);",
+    "new": "  p.state === 'open' ? t('report.state.sent', 'Sent') : reportStateText(p.state);",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -653,8 +653,8 @@
   {
     "name": "PRIVREP-the-button-never-shown",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "more.hidden = !(rows && desk.inboxMore[which]);",
-    "new": "more.hidden = true;",
+    "old": "    more.hidden = !(rows && desk.inboxMore[which]);",
+    "new": "    more.hidden = true;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -663,7 +663,7 @@
   {
     "name": "PRIVREP-a-failed-look-silent-over-a-list",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "if (desk.inboxError && rows) k.tell(k.refusal(desk.inboxError));",
+    "old": "    if (desk.inboxError && rows) k.tell(k.refusal(desk.inboxError));",
     "new": "",
     "tests": [
       "test/net/private_reports_client.test.js"
@@ -673,8 +673,8 @@
   {
     "name": "PRIVREP-the-closes-live-while-one-is-out",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "      n.disabled = busy;\n      return n;",
-    "new": "      n.disabled = false;\n      return n;",
+    "old": "      n.disabled = busy;",
+    "new": "      n.disabled = false;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -683,8 +683,8 @@
   {
     "name": "PRIVREP-the-focus-after-a-close-left-to-fall",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "        k.focus(res.ok ? (state === 'open' ? 'close-fixed' : 'close-open') : `close-${state}`);\n",
-    "new": "",
+    "old": "            k.focus(res.ok ? (state === 'open' ? 'close-fixed' : 'close-open') : `close-${state}`);\n          }),",
+    "new": "          }),",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -693,8 +693,8 @@
   {
     "name": "PRIVREP-my-list-looked-at-once-a-sitting",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "  desk.loadMine().catch(() => {});   // AUDIT PRIVATE-REPORT CLI-5",
-    "new": "  // AUDIT PRIVATE-REPORT CLI-5",
+    "old": "  desk.loadMine().catch(() => {}); // AUDIT PRIVATE-REPORT CLI-5: looked at each time the form opens - a report read or closed since says so",
+    "new": "  // AUDIT PRIVATE-REPORT CLI-5: looked at each time the form opens - a report read or closed since says so",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -703,8 +703,8 @@
   {
     "name": "PRIVREP-the-open-tab-a-states-word",
     "file": "src/ui/enhanced/enhancedReport.js",
-    "old": "t('report.tabOpenCount', 'Open ({n})', { n })",
-    "new": "t('report.tabOpen', 'Open')",
+    "old": "    openTab.textContent = n ? t('report.tabOpenCount', 'Open ({n})', { n }) : t('report.tabOpen', 'Open');",
+    "new": "    openTab.textContent = n ? t('report.tabOpen', 'Open') : t('report.tabOpen', 'Open');",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -713,8 +713,8 @@
   {
     "name": "PRIVREP-the-landing-taking-the-focus-from-a-field",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "      if (a && win.contains?.(a)) return;\n",
-    "new": "",
+    "old": "      if (a && win.contains?.(a)) return;\n      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`);",
+    "new": "      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`);",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -723,8 +723,8 @@
   {
     "name": "PRIVREP-the-landing-on-the-first-kind-whatever-the-draft",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`)",
-    "new": "focusKey('kind-exploit')",
+    "old": "      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`);",
+    "new": "      if (keep.view === 'report') focusKey('kind-exploit');",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -733,8 +733,8 @@
   {
     "name": "PRIVREP-the-focus-to-the-windows-close",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "() => go('inbox', { which: 'open', focus: 'tab-open' })",
-    "new": "() => go('inbox', { which: 'open' })",
+    "old": "            () => go('inbox', { which: 'open', focus: 'tab-open' }),",
+    "new": "            () => go('inbox', { which: 'open' }),",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -743,8 +743,8 @@
   {
     "name": "PRIVREP-no-key-for-the-repaint",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "n.setAttribute('data-focus', `pm-${key}`); ",
-    "new": "",
+    "old": "    n.setAttribute('data-focus', `pm-${key}`);\n    return n;",
+    "new": "    return n;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],

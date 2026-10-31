@@ -355,8 +355,8 @@
   {
     "name": "EMPIRE-ACCOUNT-the-report-a-branch",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "const gold = goldRegion(w.accounts ?? [], w.region), one = empire && gold === EMPIRE_ACCOUNT_REGION;",
-    "new": "const gold = goldRegion(w.accounts ?? [], w.region), one = false;",
+    "old": "      one = empire && gold === EMPIRE_ACCOUNT_REGION;",
+    "new": "      one = false;",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "EMPIRE-ACCOUNT-the-report-lists-the-empire-again",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "(i !== gold && a?.accountGold > 0 ?",
-    "new": "(i !== w.region && a?.accountGold > 0 ?",
+    "old": "      i !== gold && a?.accountGold > 0",
+    "new": "      i !== w.region && a?.accountGold > 0",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ]

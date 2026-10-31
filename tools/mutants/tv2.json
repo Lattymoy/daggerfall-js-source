@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-DEEP-X6-the-reason-unshown",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "parts.accel.title = why;",
-    "new": "parts.accel.title = '';",
+    "old": "    parts.accel.title = why;",
+    "new": "    parts.accel.title = '';",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

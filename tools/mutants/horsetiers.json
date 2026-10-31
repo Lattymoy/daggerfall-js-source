@@ -155,8 +155,8 @@
   {
     "name": "HORSE-TIERS-the-chip-red-on-boons",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "return h.hungerCosts === false && tone === 'low' ? 'warn' : tone; };",
-    "new": "return tone; };",
+    "old": "  return h.hungerCosts === false && tone === 'low' ? 'warn' : tone;",
+    "new": "  return tone;",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

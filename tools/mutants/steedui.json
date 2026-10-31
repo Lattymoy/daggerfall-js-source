@@ -2,8 +2,8 @@
   {
     "name": "STEEDUI-gait-standing",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (!Number.isFinite(speed) || /** @type {number} */ (speed) < STANDING_MPS) return 'Standing';",
-    "new": "if (!Number.isFinite(speed)) return 'Standing';",
+    "old": "  if (!Number.isFinite(speed) || /** @type {number} */ (speed) < STANDING_MPS) return 'Standing';",
+    "new": "  if (!Number.isFinite(speed)) return 'Standing';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STEEDUI-gait-cart-gallops",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (mode === 'Horse' && galloping) return 'Galloping';",
-    "new": "if (galloping) return 'Galloping';",
+    "old": "  if (mode === 'Horse' && galloping) return 'Galloping';",
+    "new": "  if (galloping) return 'Galloping';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STEEDUI-kmh",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "* 3.6)} km/h",
-    "new": "* 3)} km/h",
+    "old": "  Number.isFinite(speed) ? `${Math.round(Math.max(0, /** @type {number} */ (speed)) * 3.6)} km/h` : '';",
+    "new": "  Number.isFinite(speed) ? `${Math.round(Math.max(0, /** @type {number} */ (speed)) * 3)} km/h` : '';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STEEDUI-breath-low",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "h.breath < SADDLE_BREATH_LOW ||",
-    "new": "h.breath < 0 ||",
+    "old": "      const low = h.winded || h.breath < SADDLE_BREATH_LOW || h.hungerKey === 'starving';",
+    "new": "      const low = h.winded || h.breath < 0 || h.hungerKey === 'starving';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STEEDUI-bond-share",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "(h.bond - (h.tierAt ?? 0)) / span",
-    "new": "h.bond / h.next.at",
+    "old": "    const share = h.next ? (span > 0 ? (h.bond - (h.tierAt ?? 0)) / span : 0) : 1;",
+    "new": "    const share = h.next ? (span > 0 ? h.bond / h.next.at : 0) : 1;",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STEEDUI-load-over",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "tone: share > 1 ? 'low'",
-    "new": "tone: share > 2 ? 'low'",
+    "old": "      tone: share > 1 ? 'low' : share > 0.85 ? 'warn' : 'ok',",
+    "new": "      tone: share > 2 ? 'low' : share > 0.85 ? 'warn' : 'ok',",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STEEDUI-feed-full",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": ": h.full ? 'Full. It will not eat yet' : '';",
-    "new": ": '';",
+    "old": "    const why = !s.near ? 'Your horse is not here' : h.full ? 'Full. It will not eat yet' : '';",
+    "new": "    const why = !s.near ? 'Your horse is not here' : '';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STEEDUI-kit-shown",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (s.wagon && s.wagon.kitWorks) {",
-    "new": "if (s.wagon) {",
+    "old": "  if (s.wagon && s.wagon.kitWorks) {",
+    "new": "  if (s.wagon) {",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STEEDUI-mount-key",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "action: s.hcc ? SADDLE_ACTIONS.mount : null",
-    "new": "action: SADDLE_ACTIONS.mount",
+    "old": "  out.push({\n    act: 'dismount',\n    label: s.mode === 'Cart' ? 'Climb down' : 'Dismount',\n    action: s.hcc ? SADDLE_ACTIONS.mount : null,\n  });",
+    "new": "  out.push({ act: 'dismount', label: s.mode === 'Cart' ? 'Climb down' : 'Dismount', action: SADDLE_ACTIONS.mount });",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "STEEDUI-hint-order",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (h?.winded) return",
-    "new": "if (h?.winded && !state.touch) return",
+    "old": "  if (h?.winded) return 'Winded. Ease off and let it breathe';",
+    "new": "  if (h?.winded && !state.touch) return 'Winded. Ease off and let it breathe';",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "STEEDUI-covered",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (state.covered) {",
-    "new": "if (false) {",
+    "old": "  if (state.covered) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "STEEDUI-rebuilt-every-frame",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (last.sig !== sig) { last.sig = sig;",
-    "new": "if (true) { last.sig = sig;",
+    "old": "  if (last.sig !== sig) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STEEDUI-dark-presses",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "if (n.disabled) return;",
-    "new": "if (false) return;",
+    "old": "      if (n.disabled) return;",
+    "new": "      if (false) return;",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "STEEDUI-focus-kept",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "      e.preventDefault?.();\n      n.blur?.();\n      if (n.disabled) return;\n      hooks[b.act]?.();",
-    "new": "      e.preventDefault?.();\n      if (n.disabled) return;\n      hooks[b.act]?.();",
+    "old": "      n.blur?.();\n      if (n.disabled) return;",
+    "new": "      if (n.disabled) return;",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]

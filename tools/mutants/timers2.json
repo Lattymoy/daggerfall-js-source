@@ -47,8 +47,8 @@
   {
     "name": "TIMERS2-the-badge-on-a-coming-row",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (r.live) clock.append(el('span', 'tm-badge'",
-    "new": "clock.append(el('span', 'tm-badge'",
+    "old": "          if (r.live) clock.append(el('span', 'tm-badge', t('timers.now', 'Now')));",
+    "new": "          clock.append(el('span', 'tm-badge', t('timers.now', 'Now')));",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TIMERS2-the-head-count-unsaid",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (g.live) h.append(",
-    "new": "if (false) h.append(",
+    "old": "        if (g.live) h.append(el('span', 'tm-section-live', t('timers.underWay', '{n} under way', { n: g.live })));",
+    "new": "        if (false) h.append(el('span', 'tm-section-live', t('timers.underWay', '{n} under way', { n: g.live })));",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "TIMERS2-the-press-ignored",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "            showing = id; shownGroup = id; draw();",
+    "old": "            showing = id;\n            shownGroup = id;\n            draw();",
     "new": "            draw();",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "TIMERS2-the-choice-forgotten",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "            showing = id; shownGroup = id; draw();",
-    "new": "            showing = id; draw();",
+    "old": "            shownGroup = id;\n            draw();",
+    "new": "            draw();",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TIMERS2-an-emptied-group-left-showing-nothing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "    if (showing !== 'all' && !groups.some((g) => g.id === showing)) { showing = 'all'; shownGroup = 'all'; }\n",
-    "new": "",
+    "old": "    if (showing !== 'all' && !groups.some((g) => g.id === showing)) {\n      showing = 'all';\n      shownGroup = 'all';\n    }\n    const counts = [",
+    "new": "    const counts = [",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TIMERS2-a-bar-with-no-clock",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (groups.length) {",
-    "new": "if (true) {",
+    "old": "      if (groups.length) {",
+    "new": "      if (true) {",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TIMERS2-the-focus-lost-in-the-rebuild",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "      if (had) /** @type {any} */ (chips.get(had) ?? chips.get('all'))?.b?.focus?.({ preventScroll: true });\n",
-    "new": "",
+    "old": "      if (had) /** @type {any} */ (chips.get(had) ?? chips.get('all'))?.b?.focus?.({ preventScroll: true });\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-TIMERS2-M3-the-counts-left-stale",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "    if (count.textContent !== String(n)) count.textContent = String(n);\n",
-    "new": "",
+    "old": "    if (count.textContent !== String(n)) count.textContent = String(n);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-TIMERS2-M3-the-focus-dropped",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "(chips.get(had) ?? chips.get('all'))?.b?.focus?.",
-    "new": "(chips.get(had))?.b?.focus?.",
+    "old": "      if (had) /** @type {any} */ (chips.get(had) ?? chips.get('all'))?.b?.focus?.({ preventScroll: true });",
+    "new": "      if (had) /** @type {any} */ (chips.get(had))?.b?.focus?.({ preventScroll: true });",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-TIMERS2-M4-the-fall-back-forgotten",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "{ showing = 'all'; shownGroup = 'all'; }",
-    "new": "{ showing = 'all'; }",
+    "old": "      shownGroup = 'all';\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-TIMERS2-M5-close-takes-it-every-draw",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "globalThis.requestAnimationFrame?.(() => { if (!win.contains?.(doc.activeElement)) close.focus?.({ preventScroll: true }); });",
-    "new": "globalThis.requestAnimationFrame?.(() => { close.focus?.({ preventScroll: true }); });",
+    "old": "      if (!win.contains?.(doc.activeElement)) close.focus?.({ preventScroll: true });",
+    "new": "      close.focus?.({ preventScroll: true });",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ],
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT-TIMERS2-L8-the-mark-not-in-the-name",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "${live ? `, ${t('timers.underWay', '{n} under way', { n: live })}` : ''}`);",
-    "new": "`);",
+    "old": "    b.setAttribute(\n      'aria-label',\n      `${timerGroupChip(id)} ${n}${live ? `, ${t('timers.underWay', '{n} under way', { n: live })}` : ''}`,\n    );",
+    "new": "    b.setAttribute('aria-label', `${timerGroupChip(id)} ${n}`);",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-TIMERS2-L8-now-on-a-coming-door-row",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (r.live) clock.append(el('span', 'tm-badge'",
-    "new": "if (r.live || r.door) clock.append(el('span', 'tm-badge'",
+    "old": "          if (r.live) clock.append(el('span', 'tm-badge', t('timers.now', 'Now')));",
+    "new": "          if (r.live || r.door) clock.append(el('span', 'tm-badge', t('timers.now', 'Now')));",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]

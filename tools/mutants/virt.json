@@ -301,7 +301,7 @@
   {
     "name": "AUDIT-VIRT-the-still-waiting-tiles-thrown-away",
     "file": "src/ui/enhanced/landingTiles.js",
-    "old": "      if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
+    "old": "      if (!fresh.classList.contains('has-icon')) continue; // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
     "new": "      void 0;",
     "tests": [
       "test/systems/virt_pack.test.js"

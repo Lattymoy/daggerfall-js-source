@@ -680,7 +680,7 @@ shared machine allowed. It stands on the code path above and the measured Chromi
 window (`townTalk.js:"if ((e.key === 'Enter' || e.key === ' ') && isDomControlTarget(e.target)) return true;"`).
 
 The family. Earlier fixes each wrote the rule out for themselves, and no helper held it:
-- STEED-UI's saddle and helm panels (`enhancedSaddle.js:"// AUDIT STEED-UI: a button never keeps the keyboard's focus"`);
+- STEED-UI's saddle and helm panels (`enhancedSaddle.js:"AUDIT STEED-UI: a"`);
 - the held map's filters (`heldMap.js:"// NEVER THE FOCUS - out of the tab order"`) and the wild map's buttons;
 - the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;   // never the focus"`);
 - the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1; //"`).
@@ -700,7 +700,7 @@ Every in-game DOM button, read from every module that builds one, by where it st
   - the arena session's button (`arenaSessionButton.js:"members, Make Red"`);
   - the siege readout's Claim, Close and Leave;
   - the journey panel's Map, Camp and Exit (a window over it hides it:
-    `enhancedTravelControl.js:"if (last.covered !== true) { last.covered = true;"`);
+    `enhancedTravelControl.js:"if (last.covered !== true)"`);
   - the `/unstuck` wait's Cancel (`world.js:"const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancel';"`).
 - ALREADY NEVER THE FOCUS: the family above.
 - OWN KEYBOARD BY DESIGN: the seated card tables. The Iliac and Gambit roots take the focus and stop Tab
@@ -820,7 +820,7 @@ priced it (5,000 gold to sell, 5,625 to buy at quality 10) in 52-78 ms, and move
 by double click; the trade between players drew all 152 rows. Filling a gem writes no value (SoulTrap.cs:158 writes only
 the soul), its picture is the template's, virtualRows' aim loop is bounded
 (`virtualRows.js:"for (let pass = 0; pass < AIM_PASSES && steer(); pass++)"`), and a landing pass walks the waiting
-tiles once (`landingTiles.js:"export function landingTiles(draw, { alive = () => true, later = nextFrame } = {}) {"`).
+tiles once (`landingTiles.js:"export function landingTiles"`).
 
 TRADE-WHOLE (found on the way). The trade between players writes the giver's offer for the wire through validLootList,
 and since AUDIT INT that clamp drops a piece the law refuses and keeps the rest

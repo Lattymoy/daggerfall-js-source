@@ -110,8 +110,8 @@
   {
     "name": "WAGON-TIERS-the-chip-red-on-boons",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "return w.wearSlows === false && tone === 'low' ? 'warn' : tone; };",
-    "new": "return tone; };",
+    "old": "  return w.wearSlows === false && tone === 'low' ? 'warn' : tone;",
+    "new": "  return tone;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WAGON-TIERS-the-note-on-boons",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing') && w.wearSlows !== false) return 'wagon';",
-    "new": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing')) return 'wagon';",
+    "old": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing') && w.wearSlows !== false) return 'wagon'; // WAGON-TIERS: on Boons its wear takes nothing",
+    "new": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing')) return 'wagon'; // WAGON-TIERS: on Boons its wear takes nothing",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]

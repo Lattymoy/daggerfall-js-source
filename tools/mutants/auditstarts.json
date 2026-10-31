@@ -160,8 +160,8 @@
   {
     "name": "AUDIT-STARTS-U3-plus-row-picks",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "    node.onclick = () => owner.pressIndex(i);",
-    "new": "    node.onclick = () => owner.pickIndex(i);",
+    "old": "    node.onclick = () => owner.pressIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
+    "new": "    node.onclick = () => owner.pickIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-STARTS-P3-plus-row-presses-the-cursor",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "    node.onclick = () => owner.pressIndex(i);",
-    "new": "    node.onclick = () => owner.pressIndex(owner.cursor);",
+    "old": "    node.onclick = () => owner.pressIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
+    "new": "    node.onclick = () => owner.pressIndex(owner.cursor); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "AUDIT-STARTS-P3-plus-face-kept-for-a-new-page",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "  if (face && face.owner !== owner) releaseStartChoiceFace(face.owner);\n",
-    "new": "",
+    "old": "  if (face && face.owner !== owner) releaseStartChoiceFace(face.owner);\n  if (!face) face = buildFace(doc, owner);",
+    "new": "  if (!face) face = buildFace(doc, owner);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

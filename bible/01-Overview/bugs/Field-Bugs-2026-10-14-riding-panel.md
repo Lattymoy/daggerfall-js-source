@@ -36,7 +36,7 @@ FIXED.
 - **Placed from its first frame**: the panel is built anew each time its rider mounts (`hideEnhancedSaddle` takes it
   down at the dismount, a door, the skin), and the editor's sweep runs on a 250 ms clock (PERF-HUD1). So the builder asks
   for a sweep the moment it puts the panel on the page, through the leaf MOVED-NOTICE built for the notice stack
-  (`enhancedSaddle.js:"placeHudPieces(doc);   // HUD-SADDLE"`): a moved panel never stands a frame at the sheet's place,
+  (`enhancedSaddle.js:"placeHudPieces(doc)"`): a moved panel never stands a frame at the sheet's place,
   and one turned off never shows. The leaf, not `ui/hud/hudLayout.js` itself - the editor's previews reach the gate's, the
   party's and the codex's hosts.
 - **A preview while nobody rides** (HUD-PREVIEW's law, Mac: "show in unlocked mode all notification popups and everything

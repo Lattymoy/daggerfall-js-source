@@ -224,7 +224,7 @@ test('ET1 panel: a bottom rectangle over the world, the pixel frame, no art, and
     assert.ok(src.includes(`'${name}'`), `${name} is pressed by name`);
   }
   assert.match(src, /t\.selected \? model\.useTopic\(t\.i\) : model\.selectTopic\(t\.i\)/, 'a press selects, a press on the lit row uses - no double-tap on a phone');
-  assert.match(src, /if \(model\?\.done\) \{ relock\(\); onExit\(\); return; \}/, 'goodbye relocks INSIDE the gesture (MAC1)');
+  assert.match(src, /if \(model\?\.done\) \{\n\s*relock\(\);\n\s*onExit\(\);\n\s*return;\n\s*\}/, 'goodbye relocks INSIDE the gesture (MAC1)');
   assert.match(src, /ctx\.putImageData\(new ImageData\(px\.rgba, px\.w, px\.h\), 0, 0\);/, 'the portrait is the classic\'s own pixels');
   const talk = read('src/ui/native/nativeTalk.js');
   assert.match(talk, /rgba: new Uint8ClampedArray\(c32\.colors\.buffer\)/, 'kept beside the texture: one decode, two faces');

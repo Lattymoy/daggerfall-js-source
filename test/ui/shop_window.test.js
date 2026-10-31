@@ -282,7 +282,7 @@ test('SHOP: a receipt\'s head keeps its ware - one of the shop\'s, nothing else 
   assert.equal(shopWareTag(doc, 'glyph:origin').children.length, 2, 'the glyph\'s drawing before its label');
   assert.equal(shopWareTag(doc, 'nope'), null);
   const post = rd('src/ui/enhanced/enhancedPost.js');
-  assert.ok(post.includes("} else if (p.ware) {   // SHOP: a receipt") && post.includes("} else if (head.ware) {   // SHOP: the receipt's ware"));
+  assert.ok(post.includes("} else if (p.ware) {\n        // SHOP: a receipt") && post.includes("} else if (head.ware) {\n      // SHOP: the receipt's ware"));
 });
 
 // ── THE CATALOGUE ─────────────────────────────────────────────────────

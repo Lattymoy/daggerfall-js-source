@@ -9887,7 +9887,7 @@ description of the effect (1512: "Duration: Instantaneous. Chance:
 N/A"). The words go through the text core (`spellbook.effect.duration`,
 `.chance`, `.magnitude`, drafted in-session for every language), so the
 file's hard-coded count falls by one. The guild's Buy Spells in its
-Enhanced Plus face reads the same words (enhancedPorts.js:"function effectRowsOf(w, sp) {")
+Enhanced Plus face reads the same words (enhancedPorts.js:"function effectRowsOf")
 and is fixed by the same change.
 
 THE OTHER READERS, checked: the hotbar's tip says a spell's name and
@@ -20660,7 +20660,7 @@ already keeps.
   asks - AUDIT GROWTH LANE2-3's law) at the press, never kept from the draw. 660px wide (the timers' window is 560px -
   W15: the record had read as the timers' width) so a line wraps less; every door a 44px target (U10); a narrow screen's
   clock under its title (U7); on a phone a door under its words; a short screen's window within it.
-- **The source** (`enhancedSeason.js:"export function seasonSource(hooks, { opening = false } = {}) {"`): the hourglass's own
+- **The source** (`enhancedSeason.js:"export function seasonSource"`): the hourglass's own
   read (`hooks.timers` - the relay's clock, the seats' word and zero; its service read asked at the opening alone, R1)
   under the laurel's reads (`hooks.season`); none without a clock (offline, or before the relay's clock is heard), so no
   laurel then.

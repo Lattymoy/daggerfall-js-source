@@ -113,8 +113,8 @@
   {
     "name": "SERVERPOST-throw-away-beside-a-waiting-gift",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!head.item || head.claimed) foot.append(keyed(button('pm-throw',",
-    "new": "    foot.append(keyed(button('pm-throw',",
+    "old": "    if (!head.item || head.claimed)\n      foot.append(\n        keyed(\n          button('pm-throw', 'Throw away', () => throwOne(head.id)),\n          'throw',\n        ),\n      );",
+    "new": "    foot.append(\n      keyed(\n        button('pm-throw', 'Throw away', () => throwOne(head.id)),\n        'throw',\n      ),\n    );",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "SERVERPOST-the-second-press-sent",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!b || b.busy) return;",
-    "new": "    if (!b) return;",
+    "old": "    if (!b || b.busy) return; // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence",
+    "new": "    if (!b) return; // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "SERVERPOST-the-line-wiped-on-reopen",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!again) tell('');",
-    "new": "    tell('');",
+    "old": "    if (!again) tell(''); // reopened by a rebuild, the line it said stays said",
+    "new": "    tell(''); // reopened by a rebuild, the line it said stays said",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "SERVERPOST-the-focus-dropped",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said\n    focusTo = 'back';",
-    "new": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said",
+    "old": "    focusTo = 'back';\n    draw(true);",
+    "new": "    draw(true);",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],

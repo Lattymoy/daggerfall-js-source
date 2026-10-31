@@ -59,7 +59,7 @@ test('SILVER-WAYS the lines: a counted claim says its strike, a guild deed it co
   assert.equal(b.state.balance, 50, 'the balance the last strike answered');
   b.claimLines({ marks: { struck: 30, balance: 80, combat: { earned: 130, max: 150 } } }, 'raid');
   assert.deepEqual([b.state.today.combat, b.state.today.combatMax], [130, 150], 'the day\'s combat silver as the strike said it');
-  assert.match(src('src/ui/enhanced/enhancedPorts.js'), /\['From gates, raids, serpents and the Spire today', `\$\{\(w\.hooks\.marks\.today\(\)\?\.combat \?\? 0\)\} of \$\{w\.hooks\.marks\.today\(\)\?\.combatMax \?\? MARKS_COMBAT\.perDay\}`\],/, 'the Bank\'s card says it (PIN MOVED, SERPENT-SET: the serpents\' under the same cap, named; PIN MOVED, EG-E1: and the Spire\'s Redoubts\')');
+  assert.match(src('src/ui/enhanced/enhancedPorts.js'), /\[\n\s*'From gates, raids, serpents and the Spire today',\n\s*`\$\{w\.hooks\.marks\.today\(\)\?\.combat \?\? 0\} of \$\{w\.hooks\.marks\.today\(\)\?\.combatMax \?\? MARKS_COMBAT\.perDay\}`,\n\s*\],/, 'the Bank\'s card says it (PIN MOVED, SERPENT-SET: the serpents\' under the same cap, named; PIN MOVED, EG-E1: and the Spire\'s Redoubts\')');
   assert.equal(MARKS_TEXT.contract(12, null), 'A guild pays you 12 silver under its contract.');
 });
 
