@@ -54,15 +54,16 @@ function arena2DevServer() {
   // AUDIT 68 X2: a FILE, not merely a path that exists - the name rule
   // admits `BOOKS`, `.` and `..`, and a directory's EISDIR killed the server.
   const isFile = (p) => statSync(p, { throwIfNoEntry: false })?.isFile() === true;
-  // MOUNTED TWICE (U60). dataSource fetches `./arena2/*` RELATIVE to its
+  // MOUNTED thrice (U60 + SKYRIM-FLORA). dataSource fetches `./arena2/*` RELATIVE to its
   // document, so with the game at /play/ the browser asks for
-  // /play/arena2/*; the probes' direct imports still fetch /arena2/*.
-  // Same handler, both doors - a dev server that answered one and not
+  // /play/arena2/*; the flora lab at /2d-playground/ asks /2d-playground/arena2/*;
+  // the probes' direct imports still fetch /arena2/*.
+  // Same handler, every door - a dev server that answered one and not
   // the other is the mixed-case bug above in a new coat.
   return {
     name: 'arena2-dev-server',
     configureServer(server) {
-      for (const mount of ['/arena2', '/play/arena2']) server.middlewares.use(mount, (req, res, next) => {
+      for (const mount of ['/arena2', '/play/arena2', '/2d-playground/arena2']) server.middlewares.use(mount, (req, res, next) => {
         const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
         // Flat directory only - no separators, no traversal.
         if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
