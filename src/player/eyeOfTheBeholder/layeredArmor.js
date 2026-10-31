@@ -29,7 +29,7 @@ import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 import { drawSpellBurst } from './layeredSpell.js';   // SPELL-BURST: the cast's spell in its hands
-import { layeredShieldOf, SHIELD_SLOT, shieldPictureOf, loadShieldPicture, shieldPictureExpected, removeShieldArm, graftArm, outlineMask, drawShield, padFrame, shieldCutOf, SHIELD_CAST, SHIELD_GUN } from './layeredShield.js';   // LAYERED-SHIELD: the shield on the free arm
+import { layeredShieldOf, SHIELD_SLOT, shieldPictureOf, loadShieldPicture, shieldPictureExpected, removeShieldArm, graftArm, outlineMask, drawLayeredShield, padFrame, shieldCutOf, SHIELD_CAST, SHIELD_GUN } from './layeredShield.js';   // LAYERED-SHIELD: the shield on the free arm
 import { artBowPx, bowFrom, LOOSE_BOW_FROM, heldPictureExpected, weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
@@ -424,7 +424,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
       if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, unionOf(unionOf(hand && takeOut ? hand.mask : null, arm), laid));
     }
     // LAYERED-SHIELD: the shield, before the weapon - which passes before it, or behind it where it is behind the body
-    const drawn = hand && shield && hand.shieldPic && Array.isArray(hand.fr.sh) ? drawShield(res, hand.fr.sh, hand.shieldPic, hand.view, hand.cm ?? 0.6) : null;
+    const drawn = hand && shield && hand.shieldPic && Array.isArray(hand.fr.sh) ? drawLayeredShield(res, hand.fr.sh, hand.shieldPic, hand.view, hand.cm ?? 0.6) : null;
     if (drawn) res.shield = drawn.drawn;   // ARMORY: the body's marks are read without it
     if (hand && takeOut && held !== '0') {
       const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null;   // SWING-CUTS: a thrust's blade forward

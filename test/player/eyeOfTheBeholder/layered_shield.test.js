@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  layeredShieldOf, shieldItemOf, SHIELD_SLOT, shieldPicture, drawShield, padFrame, removeShieldArm, SHIELD_VIEWS, SHIELD_CUTS,
+  layeredShieldOf, shieldItemOf, SHIELD_SLOT, shieldPicture, drawLayeredShield, padFrame, removeShieldArm, SHIELD_VIEWS, SHIELD_CUTS,
   SHIELD_CAST, SHIELD_GUN, shieldCutOf, shieldPictureOf, withoutShield, outlineMask, graftArm,
 } from '../../../src/player/eyeOfTheBeholder/layeredShield.js';
 import { SWING_CUTS, swingKindOf, weaponRigOf, BARE_TWINS } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
@@ -146,24 +146,24 @@ test('the picture: its face as drawn, its inside boards and straps, the grip at 
 test('drawn: over the body from the front, in open air only from behind and turned round, squeezed by the view', () => {
   const P = shieldPicture(card(20, 20), 'r1');
   const front = canvas(40, 40, [10, 10, 29, 29]);
-  drawShield(front, [20, 20], P, 0, 1);
+  drawLayeredShield(front, [20, 20], P, 0, 1);
   assert.deepEqual(at(front, 15, 20), [200, 0, 0, 255], 'its face over the body');
   assert.deepEqual(at(front, 25, 20), [0, 0, 200, 255]);
-  const over = canvas(40, 40, [10, 10, 29, 29]), { drawn } = drawShield(over, [20, 20], P, 0, 1);
+  const over = canvas(40, 40, [10, 10, 29, 29]), { drawn } = drawLayeredShield(over, [20, 20], P, 0, 1);
   assert.deepEqual([drawn[20 * 40 + 20], drawn[20 * 40 + 11], drawn[5 * 40 + 20]], [0, 0, 0], 'the body it covers is still the body\'s outline');
   assert.equal(drawn[20 * 40 + 30] || drawn[20 * 40 + 9] || drawn[9 * 40 + 20], 0, 'a 20 px picture at a px a px');
   const back = canvas(40, 40, [15, 0, 24, 39]);
-  drawShield(back, [20, 20], P, 4, 1);
+  drawLayeredShield(back, [20, 20], P, 4, 1);
   assert.deepEqual(at(back, 20, 20), [90, 90, 90, 255], 'the body before it');
   assert.equal(at(back, 12, 20)[3], 255, 'its inside in the air beside');
   assert.notDeepEqual(at(back, 12, 20), [200, 0, 0, 255]);
   // from behind, turned round: a picture with only its left half drawn falls right of the grip
   const half = card(20, 20);
   for (let y = 0; y < 20; y++) for (let x = 10; x < 20; x++) half.colors[(y * 20 + x) * 4 + 3] = 0;
-  const H = shieldPicture(half, 'r1'), seen = (view) => { const c = canvas(60, 40); drawShield(c, [30, 20], H, view, 1); return [at(c, 25, 20)[3], at(c, 35, 20)[3]]; };
+  const H = shieldPicture(half, 'r1'), seen = (view) => { const c = canvas(60, 40); drawLayeredShield(c, [30, 20], H, view, 1); return [at(c, 25, 20)[3], at(c, 35, 20)[3]]; };
   assert.deepEqual(seen(0), [255, 0]);
   assert.deepEqual(seen(4), [0, 255]);
-  const wide = (view) => { const c = canvas(60, 40); drawShield(c, [30, 20], P, view, 1); let n = 0; for (let x = 0; x < 60; x++) if (at(c, x, 20)[3]) n++; return n; };
+  const wide = (view) => { const c = canvas(60, 40); drawLayeredShield(c, [30, 20], P, view, 1); let n = 0; for (let x = 0; x < 60; x++) if (at(c, x, 20)[3]) n++; return n; };
   assert.ok(wide(0) > wide(1) && wide(1) > wide(2), 'turned from the eye, narrower');
   assert.equal(SHIELD_VIEWS[0].face && SHIELD_VIEWS[1].face && SHIELD_VIEWS[0].over, true);
   assert.equal([2, 3, 4].some((v) => SHIELD_VIEWS[v].face || SHIELD_VIEWS[v].over), false);
@@ -171,7 +171,7 @@ test('drawn: over the body from the front, in open air only from behind and turn
 
 test('a shield past the canvas widens it on both sides and above, so the body stands where it was; its held px too', () => {
   const P = shieldPicture(card(20, 20), 'r1'), img = canvas(30, 30, [10, 5, 19, 29]);
-  const { drawn, spill } = drawShield(img, [2, 4], P, 0, 1);
+  const { drawn, spill } = drawLayeredShield(img, [2, 4], P, 0, 1);
   assert.ok(spill.length > 0 && drawn[4 * 30 + 2] === 1);
   img.held = new Uint8Array(30 * 30); img.held[29 * 30 + 15] = 1; img.shield = drawn;
   const out = padFrame(img, spill);

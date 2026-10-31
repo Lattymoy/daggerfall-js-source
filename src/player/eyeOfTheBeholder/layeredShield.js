@@ -108,7 +108,7 @@ export const SHIELD_VIEWS = Object.freeze([
  * @param {{width:number,height:number,data:Uint8Array}} out @param {number[]} sh @param {any} P shieldPicture's
  * @param {number} view 0..4 @param {number} cm @returns {{drawn:Uint8Array, spill:number[]}}
  */
-export function drawShield(out, sh, P, view, cm) {
+export function drawLayeredShield(out, sh, P, view, cm) {
   const w = out.width, h = out.height, d = out.data, spill = [], drawn = new Uint8Array(w * h);
   const V = SHIELD_VIEWS[Math.max(0, Math.min(4, view | 0))], kx = cm * (sh[2] ?? V.squeeze), ky = cm;
   const img = V.face ? P.face : P.inside, W = P.width, H = P.height;
@@ -136,7 +136,7 @@ export function drawShield(out, sh, P, view, cm) {
   return { drawn, spill };
 }
 /**
- * A composed frame on a canvas wide and tall enough for what fell off it (drawShield's `spill`): as much more on each
+ * A composed frame on a canvas wide and tall enough for what fell off it (drawLayeredShield's `spill`): as much more on each
  * side, the more above - the sprite stands on its feet at its middle, so the body stays where it was. Its `held` and
  * `shield` masks too.
  * @param {{width:number,height:number,data:Uint8Array,held?:Uint8Array,shield?:Uint8Array}} img @param {number[]} spill
