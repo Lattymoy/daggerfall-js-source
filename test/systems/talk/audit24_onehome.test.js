@@ -42,7 +42,6 @@ const HOMONYMS = new Map([
   ['templateFor', 'a visual-preset lookup vs the item-template lookup'],
   ['ARMOR_MATERIAL', 'enemyEquipment carries the three-member mint subset; armorMaterials the full ItemEnums enum'],
   ['armorArchive', 'the material->archive number vs the paperdoll art filename'],
-  ['heldOf', 'a held weapon\'s pixels in a sprite (LAYERED-GLOW, eotbGlow.js) vs what a pack holds of a material (materialsBag.js)'],   // main's two, met at STOREFRONT's merge of main at e7e951ba3
   // AUDIT 68 S05-paperdoll-template-copy: ITEM_TEMPLATES left this list -
   // characters/paperdoll re-exports systems/itemTemplates' one table now.
   ['ITEM_GROUPS', 'equipRules carries the ItemGroups ENUM; loot carries the group->template-index lists'],
@@ -191,8 +190,7 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // above; their modules export nothing else the galleon's do. 44 at GROUND-BOLT (#1195, fixed at CREW-TRADE's merge of main,
   // where main's deploy had gone red on it), the same deliberate edit: groundAt and groundHit, two things each, recorded
   // in HOMONYMS above. 47 at the merge of main into TESA (the Arena arc), the same deliberate edit: regionOf, arenaStanding
-  // and levelOf, two things each, recorded in HOMONYMS above. 48 at STOREFRONT's merge of main at e7e951ba3: main's
-  // LAYERED-GLOW heldOf beside the materials bag's, two things, recorded in HOMONYMS above.
+  // and levelOf, two things each, recorded in HOMONYMS above.
   const files = walk('src/');
   const decl = new Map();
   for (const f of files) {
@@ -203,8 +201,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 48,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 48):\n  `
+  assert.ok(dupes.length <= 47,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 47):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 
