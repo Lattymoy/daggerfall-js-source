@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { isMain } from './lib/isMain.mjs';
 import { commentsOf, cleanText, historyLines } from './commentRules.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -146,7 +147,7 @@ function walk(p, out = []) {
   return out;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const paths = args.filter((a) => !a.startsWith('--')).map((p) => relative(ROOT, join(process.cwd(), p)));
   const relay = args.includes('--relay') ? new Set() : await relayFiles();

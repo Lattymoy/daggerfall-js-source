@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isMain } from './lib/isMain.mjs';
 import { historyLines } from './commentRules.mjs';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -42,7 +43,7 @@ export function verdict(now, base) {
   return { over, lower };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const now = measure();
   const total = Object.values(now).reduce((a, b) => a + b, 0);
   if (process.argv.includes('--lower')) {
