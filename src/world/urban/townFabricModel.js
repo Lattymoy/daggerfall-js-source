@@ -3,7 +3,7 @@
 // URBANIZER U3 (bible/03-World/Urban-Fabric.md section 5) - A TOWN'S FABRIC MADE: one model of the town's own over its
 // blocks (world/urban/townFabric.js plans it), in the location's metres (x east, z north, its ground y 0):
 //   - its MAIN STREETS laid in the style's setts (URBAN_KINDS.setts) between kerbs, its PAVEMENTS of flags FABRIC_PAVE_Y
-//     over them, each kerb's face where a pavement meets anything but a house;
+//     over them, each kerb's face where a pavement meets anything but a house, a prop's bare ground or a pavement;
 //   - a city's SIDE STREETS (Daggerfall's road tiles) in its cobbles - a hamlet's keep Daggerfall's own ground;
 //   - its YARDS closed by Daggerfall's own fence (ARCH3D 41206: its rails between their posts, stretched along each run of
 //     fence as TS4's walls are along their line - world/townWalls.js townWallModel) or by a low wall of the style's with a
@@ -30,6 +30,25 @@ export const FABRIC_PIECES = Object.freeze({ fence: 41206, crate: 41818 });
  *  stairs"), so the town's people cross it and a kerb never shuts a street to them. */
 export const FABRIC_ROAD_Y = 0.0;
 export const FABRIC_PAVE_Y = 0.08;
+/** AUDIT PROP-GROUND: the land under the town - the location's origin stands 2 x 0.025 m over the ground TS2 flattens
+ *  (scenes/pixelBuild.js locLocal), where Daggerfall's flats stand. */
+export const FABRIC_LAND_Y = -0.05;
+/** AUDIT PROP-GROUND: what the model lays on a cell - nothing, a face at FABRIC_ROAD_Y (setts, cobbles), flags. */
+export const FABRIC_FACE = Object.freeze({ none: 0, road: 1, flags: 2 });
+
+/**
+ * AUDIT PROP-GROUND: THE FACE EACH CELL IS LAID WITH - the one law the model lays by and a flat is stood on
+ * (world/urban/townFabricStand.js fabricLift): a cell's kind, or a prop's cell's `under`; setts where the style lays a
+ * carriageway, cobbles on a city's side streets, flags on every pavement.
+ * @param {{ W: number, H: number, kind: Uint8Array, under: Uint8Array }} plan @param {string} style @param {boolean} [cobbles]
+ * @returns {{ faces: Uint8Array, surf: Uint8Array }} `surf` each cell's kind as laid
+ */
+export function fabricFaces(plan, style, cobbles = false) {
+  const st = URBAN_STYLES[style] ?? URBAN_STYLES.imperial, K = FABRIC_KIND, F = FABRIC_FACE;
+  const surf = Uint8Array.from(plan.kind, (k, i) => (k === K.built && plan.under[i]) || k);
+  const faces = Uint8Array.from(surf, (k) => (k === K.pave ? F.flags : (k === K.main && st.carriage) || (k === K.side && cobbles && st.side) ? F.road : F.none));
+  return { faces, surf };
+}
 /** A yard's low wall (the walled styles'): its height, its thickness, its coping's overhang and depth, a gate pillar's
  *  side and height. A dead end's wall: its height and thickness. */
 export const FABRIC_WALL = Object.freeze({ h: 1.5, t: 0.36, coping: 0.07, copingH: 0.08, pillar: 0.56, pillarH: 1.9 });
@@ -204,26 +223,31 @@ export function* townFabricSteps(plan, style, { cobbles = false, classicModel = 
       mb.quad(tex, [x0 * C, yy, z0 * C], [x1 * C, yy, z0 * C], [x1 * C, yy, z1 * C], [x0 * C, yy, z1 * C], UP);
     }
   };
-  const of = (k) => { const m = new Uint8Array(n); for (let i = 0; i < n; i++) if (plan.kind[i] === k) m[i] = 1; return m; };
+  // PROP-GROUND: a prop's clearance laid in the surface round it (world/urban/townFabric.js propGround)
+  const { faces, surf } = fabricFaces(plan, style, cobbles), F = FABRIC_FACE;
+  const of = (k, f) => { const m = new Uint8Array(n); for (let i = 0; i < n; i++) if (surf[i] === k && faces[i] === f) m[i] = 1; return m; };
   // the main streets: setts between the kerbs (none on the planks' styles - their forest floor between two boardwalks)
-  if (st.carriage) flat(setts, of(K.main), FABRIC_ROAD_Y);
-  if (cobbles && st.side) flat(cobble, of(K.side), FABRIC_ROAD_Y);
-  const pave = of(K.pave);
+  flat(setts, of(K.main, F.road), FABRIC_ROAD_Y);
+  flat(cobble, of(K.side, F.road), FABRIC_ROAD_Y);
+  const pave = of(K.pave, F.flags);
   flat(flags, pave, FABRIC_PAVE_Y);
-  // each kerb's face: a pavement's edge onto anything but a house or another pavement
-  const kerbs = [];
+  // each kerb's face: a pavement's edge onto anything but a house, a prop's bare ground or another pavement - down to the
+  // face laid past it, or to the land where none is (AUDIT PROP-GROUND: its foot had hung 5 cm over the land)
+  const kerbs = [[], []];
   for (let i = 0; i < n; i++) {
     if (!pave[i]) continue;
     const x = i % W, z = (i - x) / W;
     [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz], dir) => {
-      const nx = x + dx, nz = z + dz, j = nz * W + nx;
-      if (nx >= 0 && nz >= 0 && nx < W && nz < H && (pave[j] || plan.kind[j] === K.built)) return;
-      kerbs.push({ inner: i, outer: j, dir });
+      const nx = x + dx, nz = z + dz, j = nz * W + nx, inside = nx >= 0 && nz >= 0 && nx < W && nz < H;
+      if (inside && (pave[j] || surf[j] === K.built)) return;
+      kerbs[inside && faces[j] === F.road ? 0 : 1].push({ inner: i, outer: j, dir });
     });
   }
-  for (const run of runsOf(kerbs)) {
-    const s = runSegment(run, W), [ox, oz] = s.out, dy = runLift(run);
-    mb.quad(flags, [s.a[0], FABRIC_ROAD_Y + dy, s.a[1]], [s.b[0], FABRIC_ROAD_Y + dy, s.b[1]], [s.b[0], FABRIC_PAVE_Y + dy, s.b[1]], [s.a[0], FABRIC_PAVE_Y + dy, s.a[1]], [ox, 0, oz]);
+  for (const [k, foot] of [[0, FABRIC_ROAD_Y], [1, FABRIC_LAND_Y]]) {
+    for (const run of runsOf(kerbs[k])) {
+      const s = runSegment(run, W), [ox, oz] = s.out, dy = runLift(run);
+      mb.quad(flags, [s.a[0], foot + dy, s.a[1]], [s.b[0], foot + dy, s.b[1]], [s.b[0], FABRIC_PAVE_Y + dy, s.b[1]], [s.a[0], FABRIC_PAVE_Y + dy, s.a[1]], [ox, 0, oz]);
+    }
   }
   yield 'streets';
   // the yards' fences or walls, and the pillars at their gates

@@ -1,0 +1,372 @@
+[
+ {
+  "name": "PG-the-prop-over-a-house",
+  "file": "src/world/urban/townFabric.js",
+  "old": "          if (!built[i]) prop[i] = 1;   // PROP-GROUND: a building's byte or the water first",
+  "new": "          prop[i] = 1;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-furniture-unread",
+  "file": "src/world/urban/townFabric.js",
+  "old": " else if (FURNITURE.has(a) && !WATER.has(rec)) prop[i] = 1; continue; }",
+  "new": " continue; }",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-furniture-on-the-water",
+  "file": "src/world/urban/townFabric.js",
+  "old": "else if (FURNITURE.has(a) && !WATER.has(rec)) prop[i] = 1;",
+  "new": "else if (FURNITURE.has(a)) prop[i] = 1;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-plate-unread",
+  "file": "src/world/urban/townFabric.js",
+  "old": "        if (!r.plate) continue;   // AUDIT PROP-GROUND: a foot plate's cells (FOOT_FACED.road), the block's metres",
+  "new": "        continue;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-plate-first-come",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  for (let i = 0; i < n; i++) if (bare[i]) prop[i] = 0;   // AUDIT PROP-GROUND: whichever record marked it first",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-flagless-unread",
+  "file": "src/world/urban/townFabric.js",
+  "old": "          if (FACED_FLAGS.has(r.id)) flagless[i] = 1;",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-house-a-source",
+  "file": "src/world/urban/townFabric.js",
+  "old": "const faces = near(i).filter((j) => kind[j] !== K.built).map((j) => faceOf(kind[j]));",
+  "new": "const faces = near(i).filter((j) => !isProp(j)).map((j) => faceOf(kind[j]));",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-tie-the-flags",
+  "file": "src/world/urban/townFabric.js",
+  "old": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);",
+  "new": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.pave, FABRIC_KIND.main, FABRIC_KIND.side, 0]);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-none-before-a-street",
+  "file": "src/world/urban/townFabric.js",
+  "old": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);",
+  "new": "const UNDER_ORDER = Object.freeze([0, FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave]);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X2-cobbles-before-setts",
+  "file": "src/world/urban/townFabric.js",
+  "old": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);",
+  "new": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.side, FABRIC_KIND.main, FABRIC_KIND.pave, 0]);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X11-flags-before-cobbles",
+  "file": "src/world/urban/townFabric.js",
+  "old": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);",
+  "new": "const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.pave, FABRIC_KIND.side, 0]);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-walk-one-step-deep",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  for (let d = 2; layer.length; d++) {",
+  "new": "  for (let d = 2; false; d++) {",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X4-every-step-nearer",
+  "file": "src/world/urban/townFabric.js",
+  "old": "filter((k) => depth[k] === d - 1)",
+  "new": "filter((k) => depth[k] > 0)",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-lines-unrun",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  propLines(g, kind, under, isProp);",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-line-one-end",
+  "file": "src/world/urban/townFabric.js",
+  "old": "return a && b && a.face === b.face ? { face: a.face, span: a.d + b.d } : null;",
+  "new": "return a ? { face: a.face, span: a.d } : null;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-longer-line",
+  "file": "src/world/urban/townFabric.js",
+  "old": "pick = row.span === col.span ? null : row.span < col.span ? row : col;",
+  "new": "pick = row.span === col.span ? null : row.span > col.span ? row : col;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-building-an-end",
+  "file": "src/world/urban/townFabric.js",
+  "old": "return kind[j] === K.built || kind[j] === K.off ? null : { face: faceOf(kind[j]), d };",
+  "new": "return { face: faceOf(kind[j]), d };",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-flagless-flags",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  for (let i = 0; i < n; i++) if (isProp(i) && flagless(i) && under[i] === K.pave) under[i] = K.main;",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-kerb-law-unlaid",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  for (let i = 0; i < n; i++) if (may(i) && eff[i] === K.main && (other[i] || nearHouse[i] <= FABRIC.pave)) eff[i] = K.pave;",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-house-no-kerb",
+  "file": "src/world/urban/townFabric.js",
+  "old": "(other[i] || nearHouse[i] <= FABRIC.pave)) eff[i] = K.pave;",
+  "new": "(other[i])) eff[i] = K.pave;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-ring-unlaid",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  for (let i = 0; i < n; i++) if (may(i) && eff[i] !== K.main && eff[i] !== K.pave && ring[i]) eff[i] = K.pave;",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X8b-the-ring-past-cobbles",
+  "file": "src/world/urban/townFabric.js",
+  "old": "if (may(i) && eff[i] !== K.main && eff[i] !== K.pave && ring[i]) eff[i] = K.pave;",
+  "new": "if (may(i) && eff[i] !== K.main && eff[i] !== K.pave && eff[i] !== K.side && ring[i]) eff[i] = K.pave;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-slab-law-unrun",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  paveWalks(g, eff, walk, may);",
+  "new": "",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-slab-law-unbound",
+  "file": "src/world/urban/townFabric.js",
+  "old": "        const fill = between.find((i) => can(i) && kind[i] === K.main) ?? between.find((i) => can(i) && kind[i] === K.open);",
+  "new": "        const fill = between.find((i) => kind[i] === K.main) ?? between.find((i) => kind[i] === K.open);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-dropped-slab-bare",
+  "file": "src/world/urban/townFabric.js",
+  "old": "    under[i] = cob && cob >= sides.filter((j) => eff[j] !== K.side && eff[j] !== K.main && eff[j] !== K.pave).length ? K.side : 0;",
+  "new": "    under[i] = 0;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-plan-under-unlaid",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  const under = propGround(g, kind, { walk: onWalk, nearHouse });",
+  "new": "  const under = new Uint8Array(g.W * g.H);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-walks-unpassed",
+  "file": "src/world/urban/townFabric.js",
+  "old": "  const under = propGround(g, kind, { walk: onWalk, nearHouse });",
+  "new": "  const under = propGround(g, kind, { nearHouse });",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-model-under-unread",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "  const surf = Uint8Array.from(plan.kind, (k, i) => (k === K.built && plan.under[i]) || k);",
+  "new": "  const surf = Uint8Array.from(plan.kind);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X1-the-cobbles-off-the-kind",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "  flat(cobble, of(K.side, F.road), FABRIC_ROAD_Y);",
+  "new": "  flat(cobble, Uint8Array.from(plan.kind, (k, i) => (k === K.side && faces[i] === F.road ? 1 : 0)), FABRIC_ROAD_Y);",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-kerb-off-the-plan-kind",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "(pave[j] || surf[j] === K.built)) return;",
+  "new": "(pave[j] || plan.kind[j] === K.built)) return;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-X6-a-kerb-onto-cobbles-hung",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "kerbs[inside && faces[j] === F.road ? 0 : 1]",
+  "new": "kerbs[inside && surf[j] === K.main && faces[j] === F.road ? 0 : 1]",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-every-kerb-foot-hung",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "  for (const [k, foot] of [[0, FABRIC_ROAD_Y], [1, FABRIC_LAND_Y]]) {",
+  "new": "  for (const [k, foot] of [[0, FABRIC_ROAD_Y], [1, FABRIC_ROAD_Y]]) {",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-planks-setts",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "(k === K.main && st.carriage)",
+  "new": "(k === K.main)",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-hamlet-cobbles",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "(k === K.side && cobbles && st.side)",
+  "new": "(k === K.side && st.side)",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-lift-unread",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "  if (!fabric?.faces) return 0;",
+  "new": "  return 0;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-lift-faces-swapped",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "return f === FABRIC_FACE.road ? FABRIC_ROAD_Y - FABRIC_LAND_Y : f === FABRIC_FACE.flags ? FABRIC_PAVE_Y - FABRIC_LAND_Y : 0;",
+  "new": "return f === FABRIC_FACE.flags ? FABRIC_ROAD_Y - FABRIC_LAND_Y : f === FABRIC_FACE.road ? FABRIC_PAVE_Y - FABRIC_LAND_Y : 0;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-kept-faces-a-hamlet",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "faces: fabricFaces(plan, style, cobbles).faces",
+  "new": "faces: fabricFaces(plan, style, false).faces",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-plate-unturned",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "    const wx = m[0] * x + m[8] * z + m[12], wz = m[2] * x + m[10] * z + m[14];",
+  "new": "    const wx = x + m[12], wz = z + m[14];",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-the-model-id-unread",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "id: r.modelIdNum, plate: footPlate(r) })),",
+  "new": "plate: footPlate(r) })),",
+  "tests": [
+   "test/world/urban/propground.test.js",
+   "test/world/urban/urban3_stand.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-flat-unlifted",
+  "file": "src/scenes/pixelBuild.js",
+  "old": "locLocal[1] + flat.y + off : blockY + flat.y + lift;",
+  "new": "locLocal[1] + flat.y + off : blockY + flat.y;",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ },
+ {
+  "name": "PG-a-staticnpc-unlifted",
+  "file": "src/scenes/pixelBuild.js",
+  "old": "            y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),",
+  "new": "            y: blockY + npc.y,",
+  "tests": [
+   "test/world/urban/propground.test.js"
+  ]
+ }
+]

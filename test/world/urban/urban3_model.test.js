@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cellRects, runSegment, pieceAlong, townFabricModel, FABRIC_PIECES, FABRIC_ROAD_Y, FABRIC_PAVE_Y, FABRIC_WALL, FABRIC_DEAD_WALL, FABRIC_PILE } from '../../../src/world/urban/townFabricModel.js';
+import { cellRects, runSegment, pieceAlong, townFabricModel, FABRIC_PIECES, FABRIC_ROAD_Y, FABRIC_PAVE_Y, FABRIC_LAND_Y, FABRIC_WALL, FABRIC_DEAD_WALL, FABRIC_PILE } from '../../../src/world/urban/townFabricModel.js';
 import { FABRIC_KIND as K, edgeRuns } from '../../../src/world/urban/townFabric.js';
 import { URBAN_ARCHIVE, URBAN_STYLE_KEYS, URBAN_KINDS, URBAN_ART } from '../../../src/world/urban/urbanRecords.js';
 import { MeshBuilder } from '../../../src/world/detStandIns.js';
@@ -77,7 +77,8 @@ function plan() {
   for (let x = 6; x < 12; x++) (x === 8 || x === 9 ? gates : fences).push({ inner: 6 * W + x, outer: 5 * W + x, dir: 3 });
   for (let z = 6; z < 8; z++) fences.push({ inner: z * W + 6, outer: z * W + 5, dir: 1 });
   const walls = [{ inner: 1 * W + 0, outer: 1 * W - 1, dir: 1 }];
-  return { W, H, kind, fences, gates, walls, dead: [[1 * W]], props: [{ kind: 'woodpile', cell: 6 * W + 11, dir: 3 }], shut: new Uint8Array(W * H), paths: [], ends: [], centre: -1, counts: {} };
+  // PIN MOVED (AUDIT PROP-GROUND): `under` as planSteps mints it - no prop here, none laid
+  return { W, H, kind, under: new Uint8Array(W * H), fences, gates, walls, dead: [[1 * W]], props: [{ kind: 'woodpile', cell: 6 * W + 11, dir: 3 }], shut: new Uint8Array(W * H), paths: [], ends: [], centre: -1, counts: {} };
 }
 const faces = (m, archive, record) => {
   const sm = m.subMeshes.find((s) => s.textureArchive === archive && s.textureRecord === record);
@@ -100,9 +101,11 @@ test('URBANIZER U3 the model\'s streets: setts over every main cell at FABRIC_RO
   assert.ok(Math.abs(sum(tops) - 24 * C * C) < 1e-3, 'every pavement cell');
   // kerbs: the south pavement's north edge onto the road and its south edge onto the open ground, the north pavement's south
   // edge onto the road and its north edge onto the yard's fence row and the open ground (12 cells each), and the grid's two
-  // ends (four cells) - never the north pavement's... the houses stand on row 0, not beside a pavement
-  const kerbArea = sum(sides);
-  assert.ok(Math.abs(kerbArea - (12 * 4 + 4) * C * FABRIC_PAVE_Y) < 1e-3, `the kerbs' faces (${kerbArea.toFixed(3)})`);
+  // ends (four cells) - never the north pavement's... the houses stand on row 0, not beside a pavement. PIN MOVED (AUDIT
+  // PROP-GROUND): a kerb runs down to the face laid past it (the setts, the cobbled side street - 25) or to the land (27)
+  const kerbArea = sum(sides), kerb = (road, land) => C * (road * (FABRIC_PAVE_Y - FABRIC_ROAD_Y) + land * (FABRIC_PAVE_Y - FABRIC_LAND_Y));
+  assert.ok(Math.abs(kerbArea - kerb(25, 27)) < 1e-3, `the kerbs' faces (${kerbArea.toFixed(3)})`);
+  assert.ok(sides.every((t) => t.every((v) => [FABRIC_ROAD_Y, FABRIC_PAVE_Y, FABRIC_LAND_Y].some((y) => Math.abs(v[1] - y) < 1e-6))), 'each from a face or the land');
   assert.ok(Math.abs(sum(cobbles) - C * C) < 1e-3, 'a city\'s side street cobbled');
   assert.equal(faces(townFabricModel(p, 'granite', { cobbles: false }), URBAN_ARCHIVE, k + URBAN_KINDS.cobbles).length, 0, 'a hamlet\'s not');
   const kp = URBAN_STYLE_KEYS.indexOf('planks') * 8;
@@ -112,7 +115,7 @@ test('URBANIZER U3 the model\'s streets: setts over every main cell at FABRIC_RO
   q.kind[1 * q.W + 5] = K.pave; q.kind[1 * q.W + 3] = K.open;
   const mq = townFabricModel(q, 'granite', fenced);
   const kerbsQ = faces(mq, URBAN_ARCHIVE, k + URBAN_KINDS.flags).filter((t) => !t.every((v) => Math.abs(v[1] - FABRIC_PAVE_Y) < 1e-6));
-  assert.ok(Math.abs(sum(kerbsQ) - kerbArea - C * FABRIC_PAVE_Y) < 1e-3, 'the new cell\'s two open sides, not its side on the house - and the pavement it joins loses the kerb it had onto it');
+  assert.ok(Math.abs(sum(kerbsQ) - kerb(24, 29)) < 1e-3, 'the new cell\'s two open sides, not its side on the house - and the pavement it joins loses the kerb it had onto it (a hamlet\'s side street unlaid: to the land)');
   // a walker's step is clear where its ray at its foot plus 0.1 m meets nothing (characters/mobile/mobilePerson.js _clear,
   // its feet on the town's ground - the setts' face): a kerb at or over that would shut every pavement to the town's people
   const step = Number(/const ty = this\.groundY\(x, z\) \+ ([\d.]+);/.exec(readFileSync(new URL('../../../src/characters/mobile/mobilePerson.js', import.meta.url), 'utf8'))?.[1]);
