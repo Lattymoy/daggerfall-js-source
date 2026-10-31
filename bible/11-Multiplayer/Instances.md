@@ -60,8 +60,8 @@ never kept.
 
 - Who may enter: you and your party (Mac). Where: quests' dungeons and buildings, Privateer's Hold, and building
   interiors (Mac); a guild's castle (the owner, `bible/11-Multiplayer/Domains.md`).
-- What it remembers: kept per owner under the half-hour respawn, until its quest ends (Mac). A quest that ends never
-  keys its room again.
+- What it remembers: kept per owner under the half-hour respawn. A quest that ends never keys its owner's room again,
+  but a partner's room whose quest has ended is still offered while its owner is in the party.
 - A quest's dungeon is whole inside its instance; there is no smaller-dungeon hotfix outside it (Mac).
 - Privateer's Hold: online a character leaves its public room for good (HOLD-ONCE); its instance is entered any time.
   The new game's start is the Hold's public room, never asked (`holdOpen`).
@@ -89,8 +89,6 @@ DFU has one player and no rooms, so it has no instances. Offline the game builds
 ## Open
 
 - Two members who both choose Your instance in the same second stand in two rooms; the popup reads its rows once.
-- A partner's room whose quest has ended is still offered while its owner is in my party; the page cannot see the
-  owner's quest.
 - Instances at every dungeon: one row of `instanceOffer` away, not chosen.
 - Public re-laid dungeons can still seal an area from their entrance; no reachability pass covers them.
 - A dungeon death still wakes outside the door; waking inside the instance is the owner's call.

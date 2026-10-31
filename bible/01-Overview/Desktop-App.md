@@ -189,8 +189,6 @@ All Chromium switches go on before the app is ready.
 - Patch notes never give the loot gate's numbers (LOOT-GATE, Dudey).
 - Players never install each release by hand: the game updates by the per-file channel (Mac).
 - The macOS app and the portable exe update themselves where they can (the owner).
-- The forced update ends by restarting the app, not reloading the page, because a reload can play the same copy
-  (the owner).
 - Forced updates are off by default; the player turns them on (the owner).
 - The launcher opens on every launch and waits for Play (Mac).
 - Saves move between the website and the app (Mac).

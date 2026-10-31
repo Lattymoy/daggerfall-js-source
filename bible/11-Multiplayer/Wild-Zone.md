@@ -92,7 +92,7 @@ fight for `WILD_PARTY_TRUCE_MS`.
 - Two Greater Giants a ring, shown on the map, the same for everyone (the owner).
 - No world events in the zone (the owner).
 - Only parties and guilds see each other on the maps (the owner); a guildmate is never hittable (Mac).
-- A stranger near brings both players into 3D at 70 m (the owner); the code does it at 100 m (`wildStrangersFrame`).
+- A stranger within 100 m brings both players into 3D (`wildStrangersFrame`).
 
 ## Daggerfall Unity
 

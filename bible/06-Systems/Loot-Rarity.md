@@ -63,8 +63,7 @@ tooltip lists the tier, each affix and the enchantment. A body with a Rare or be
 
 - On by default; the ladder is the game's own (Mac).
 - Replace, don't layer: one ladder over DFU's magic items, never a second roll on them.
-- The source sets the odds, never the player (Mac). LOOT-GATE (Dudey) departs from it for Rare and Legendary; its
-  numbers are never published.
+- LOOT-GATE (Dudey): Rare and Legendary are held back by the roller's level; its numbers are never published.
 - Shops and quest rewards do not roll (Mac).
 - One roll per item, ever.
 - No new rung, no band above the Legendary, no line past the Legendary band's top without the owner's word

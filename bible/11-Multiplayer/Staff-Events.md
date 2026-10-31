@@ -80,11 +80,11 @@ may stage one in any province's town, Cyrodiil's included.
 
 ## Rules
 
-- Admins only; scaled by monster count, kinds, meter and boss, staged on a town or an area (mob).
-- The mini boss is one enlarged version of the event's monsters, with a yellow glow in place of the elite's blue (mob).
-- Players never see the meter; staff do (mob).
-- Every mini boss is very hard for players and cannot be stun-locked; only an event's mini boss, no other foe (mob).
-- The reward is Dagon's way without Dagon's gear; `STAFF_SPOILS_TABLE` is the one place to tune it (mob).
+- Admins only; scaled by monster count, kinds, meter and boss, staged on a town or an area.
+- The mini boss is one enlarged version of the event's monsters, with a yellow glow in place of the elite's blue.
+- Players never see the meter; staff do.
+- Every mini boss is very hard for players and cannot be stun-locked; only an event's mini boss, no other foe.
+- The reward is Dagon's way without Dagon's gear; `STAFF_SPOILS_TABLE` is the one place to tune it.
 - An event, a hub word and a relay older than `STAFF_EVENT_RELAY_MIN` never meet: the game sends `sev` only past it.
 
 ## Daggerfall Unity

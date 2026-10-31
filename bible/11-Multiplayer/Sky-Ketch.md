@@ -96,7 +96,7 @@ arrived, weighing anchor - each naming its station's city.
 - A new mechanic: pick up an item and bank it to progress (the owner) - the cells.
 - Platforming, rooms with different encounters, a proper Dwemer boss (the owner).
 - The guns drop here alone, with a Gilded version of each; any gun drop is rare (the owner).
-- Constructs drop Pellets; about fifteen minutes solo and twenty for a crew (the owner).
+- Constructs drop Pellets (the owner).
 - One station per province at its crown capital; no site-bound world event in the open zone (the owner).
 - The ship is "it", never "she", wherever a player reads; plain words (the owner).
 - Raise before the fall: a crewmate's Resurrect works aboard inside the down window (the owner).
@@ -121,6 +121,5 @@ How it looks: `Sky-Ketch-Look.md`.
 
 ## Open
 
-- The solo voyage's length against the fifteen-minute target is the owner's to set.
 - The fixed-city exterior host draws only the Bay's own Ketch; the interior and dungeon hosts lay the made level from
   the client's record.

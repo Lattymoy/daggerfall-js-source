@@ -107,8 +107,8 @@ small, eight or fewer never more than medium, and the main story stays whole. A 
 - A Way Through opens for everyone in the Hollow once someone has entered the Hour (the owner).
 - The first group to break an Abyss Dungeon holds the title **Hour's First** and the aura **The First Hour**, granted by
   name (`HOURS_FIRST_HANDLES`) (Mac).
-- The relay setting `sdCollapse` (`src/net/relayCfg.js`) restores the law where the first kill collapses the Hollow for
-  everyone; off by default.
+- The relay setting `sdCollapse` (`src/net/relayCfg.js`) makes the first kill collapse the Hollow for everyone; off by
+  default.
 - The relay mints an `sd:` object only for a slot its hub record holds open; a hub that does not answer is busy, never
   "closed".
 - The Brass Remnant reuses the gate's modules through seams whose default is the gate's own behaviour

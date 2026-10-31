@@ -33,11 +33,9 @@ Laws for any change to this lane's shaders or GL:
    (`src/render/renderer.js` `_use`, `_bindVao`, `markForeignPass`) and its draw counter.
 4. A report that cannot be reproduced here gets a URL kill switch, and is not fixed until Mac sees it fixed (Mac).
 5. Every surface noise frequency is a whole number of cycles per tile, per axis, so a periodic noise does not seam.
-6. Winter is not a texture (Mac): snow accumulates on whatever ground is there, deforms underfoot and melts, with a
-   per-climate warmth deciding how much stays. The code follows the first and last parts: the snowpack
-   (`Biome-Precipitation.md`) lays snow where it fell and has not melted. It draws that snow by blending each fragment
-   toward its climate's winter tile in the cover's share, not as a field over the summer ground. Tracks in snow are the
-   Snowfall mod's surface (`src/systems/snowfall.js`), laid by the ground's cover.
+6. The snowpack (`Biome-Precipitation.md`) lays snow where it fell and has not melted. It is drawn by blending each
+   fragment toward its climate's winter tile in the cover's share. Tracks in snow are the Snowfall mod's surface
+   (`src/systems/snowfall.js`), laid by the ground's cover.
 7. The grass shaders are the prototype's (`grass-proto.html`) verbatim, sliced out and compared at test time; the game
    adds only where a blade may stand (grass tiles, not roads or water, not in winter) (Mac).
 

@@ -79,7 +79,7 @@ The water's bed mixes summer and winter masks by the cover.
 
 - Each biome has its own precipitation, truly dynamic, with seamless transitions in the ground and everything else
   (the owner).
-- Winter is not a texture (Mac): snow lies where it fell and has not melted.
+- Snow lies where it fell and has not melted.
 - Pure in place and event minute: the air, the weather map and the pack are the same on every client, offline and
   online. Nothing is sent.
 - `src/scenes/world.js` wires the air's map, the snow host, the ground draws, the re-skin, the grass, the feet and

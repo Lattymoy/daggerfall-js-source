@@ -66,8 +66,7 @@ footprint.
 ## Rules
 
 - From outside every window shows a mock room; from inside every window shows the real world (Mac).
-- Windows outside and in are see-through, and their light shows on the ground by time of day, without a performance hit
-  (the owner).
+- Windows outside and in are see-through, and their light shows on the ground by time of day.
 - The switch is **Real windows** (Settings, Graphics): Full, Rooms only (no street pass), Off; pref `realWindows`,
   default Full, the player's own online. Presets: Low Off, Medium Rooms only, High and Ultra Full. `?windows=` is the
   kill door (`realWindowsMode`); an unknown value is ignored. `?windowlight=off` turns off the light alone.

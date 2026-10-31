@@ -47,10 +47,10 @@ Every rule below is a departure from DFU, named for that reason.
   `src/systems/quest/questStamps.js`).
 - **A trip deadline is measured when its clock starts**, from where the player stands, including the way back to an
   at-home questor (`clock.js` `startTimer`).
-- **Every quest may be abandoned and reclaimed** (Mac). Abandon sets the quest aside whole (`machine.js`
+- **Abandon and reclaim.** Abandon sets the quest aside whole (`machine.js`
   `shelveQuest`), and its clocks stop; Reclaim, in the pause window's Quests tab, brings it back as it was
   (`reclaimQuest`). The backbone, the opener, the curse and the start quests are never set aside (`PROTECTED_QUESTS`).
-  The chronicle's Abandon button leaves out the main story (Dudey). An abandoned quest's item may be dropped, but never
+  The chronicle's Abandon button leaves out the main story. An abandoned quest's item may be dropped, but never
   sold, and never one the quest made permanent.
 - **Restart** throws a quest away and starts it again from its own script, choosing its remote sites afresh
   (`restartQuest`, `restartRefusal`). A failed main-story step whose story did not go on may be started again

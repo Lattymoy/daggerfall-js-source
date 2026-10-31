@@ -69,8 +69,8 @@ magicka when used; a Varla Stone (tier `VARLA_STONE_TIER` 10) restores every wor
 ## Rules
 
 - Go all in, as detailed as possible (Mac).
-- The source sets the odds, never the player; scrying tells where, never makes a find likelier.
-- Shops and quest rewards do not roll. A craft reaches Rare at most. Loot never enters the Stores.
+- Scrying tells where, never makes a find likelier.
+- Shops and quest rewards do not roll. Loot never enters the Stores.
 - Off is DFU exactly: with the `loot-rarity` row off, no garment rolls, no curse, socket, hone, scrying, compare or
   luck lean.
 - No dead lines: every affix and power has a live reader, and a line whose reader is switched off says so.

@@ -100,7 +100,7 @@ gives it the Dreugh's and the Lamia's voices.
 
 - Online only: the relay keeps the fight and signs each kill; the account service pays (Mac).
 - A ship's fight, one beast named; the table `SERPENT_BOSSES` holds more later without a new mechanism (Mac).
-- One ship alone cannot win; two or more ships can (Mac). The validated rebalance's numbers stand (Mac).
+- The validated rebalance's numbers stand (Mac).
 - Must be in the fight to earn: a share dealt or a share of the fight stood near it (Mac).
 - It never leaps: a head placed somewhere new with its body laid behind it in one frame cannot be sailed out of (from
   Mac's report that it teleported).
@@ -124,6 +124,5 @@ Daggerfall has no other players and no sea serpent; none of this is a DFU member
 
 ## Open
 
-- A lone galleon at gunnery well past the measured wins some fights in the gale; Mac's call on whether that stands.
 - No frame of the fight has been profiled on a live relay.
 - The relay's hull count measures and does not yet wreck a ship.

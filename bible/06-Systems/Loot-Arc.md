@@ -54,9 +54,8 @@ setting; with it off, loot is Daggerfall Unity's. Later loot work is in `bible/0
 
 ## Rules
 
-- The source sets the odds, never the player (Mac). See Open for the level gate and Renown.
 - Shops and quest rewards do not roll. The Reforge works on a piece the player owns; nothing is rolled for sale (Mac).
-- A craft reaches Rare at most; an imprinted Rare stays Rare (Mac; `bible/06-Systems/Professions-Arc.md`).
+- An imprinted Rare stays Rare (`06-Systems/Professions-Arc.md`).
 - Loot never enters the Stores; the shard is a bound pack item (Mac).
 - A set works online only, never in a duel. Affixes and Legendary powers work offline and online, and never on a player
   (Mac; `bible/11-Multiplayer/Sigil-Sets.md`).
@@ -89,10 +88,3 @@ keeps a share of what it made.
 - `src/scenes/lootLines.js` - the lines of light
 - `test/systems/rf2_spawnloot.test.js` - the plain-foe keep
 - `test/systems/loot/foxstack.test.js` - a Legendary counts once
-
-## Open
-
-- LOOT-GATE (Dudey) holds Rare and Legendary back by the roller's level, and Renown scales the plain-foe buff by the
-  roller's Renown. Both move odds by the player, against Mac's "the source sets the odds"; awaiting Mac's ruling.
-- A Master crafter makes a Legendary-tier piece with no record or power (`src/net/masterLaw.js`, MASTER-ART), against
-  Mac's "a craft reaches Rare at most"; awaiting Mac's ruling.

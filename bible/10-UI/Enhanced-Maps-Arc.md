@@ -65,9 +65,7 @@ Daggerfall blocks. A capital's closed byte (`CAPITAL_CLOSED_BYTE`) paints nothin
   town map not from inside (Mac).
 - The automap is 2D and floor based (Mac); the 3D sheet is the default view of it (`10-UI/Dungeon-Map-3D.md`).
 - Keep our own version of classic's colored buildings, and enhance the location names (Mac).
-- Mark player housing on the town plan, on the building, no bigger than the player's caret (Mac). Mac also asked for
-  the Notice Boards to be marked; a town's board is a panel under the compass, not a thing in the street, so the
-  plan marks none.
+- Mark player housing on the town plan, on the building, no bigger than the player's caret (Mac).
 - A trader's house is blue on the town plan (Mac).
 - A sheet lays no word under the tab strip or the thumbs; colors on the plan come from classic's data, measured to
   stay apart on the parchment.

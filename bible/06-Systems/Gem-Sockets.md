@@ -60,7 +60,7 @@ piece. Gem lines stay in `affixes`, marked with their gem.
 - **A piece's gems give at most one Rare line of a kind**: gems of one kind together read no more than the top of that
   kind's Rare band (fire 6, leech 7, damage 25, an attribute 10). The card shows each gem's number and says when the cap
   bites.
-- **The source sets the odds**; **shops do not roll** graded gems; **off is DFU exactly** (with the `loot-rarity` row
+- **Shops do not roll** graded gems; **off is DFU exactly** (with the `loot-rarity` row
   off there are no sockets and no graded finds); **a seed's draws stay its seed's** (every new draw comes after the old).
 - **A socket is a place, filled where the weapon is**, by the player; only extracting whole needs the Reforge.
 
