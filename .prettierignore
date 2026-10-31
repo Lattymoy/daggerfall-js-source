@@ -628,6 +628,7 @@
 !/src/render/farTrees.js
 !/src/render/flatAnimation.js
 !/src/render/foeTelegraph.js
+!/src/render/fogGlsl.js
 !/src/render/frustum.js
 !/src/render/gambitTableDraw.js
 !/src/render/gate/
@@ -642,6 +643,7 @@
 !/src/render/groundEdgeGlsl.js
 !/src/render/hazeGlsl.js
 !/src/render/heatHaze.js
+!/src/render/horizonHaze.js
 !/src/render/idleTurn.js
 !/src/render/iliacCardFaces.js
 !/src/render/iliacTableDraw.js

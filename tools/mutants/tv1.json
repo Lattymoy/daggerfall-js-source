@@ -52,8 +52,8 @@
   {
     "name": "TV1-fog-from-the-camera",
     "file": "src/render/fogGlsl.js",
-    "old": "  float d = length(worldPos - focusOrigin());",
-    "new": "  float d = length(worldPos - uCamPos);",
+    "old": "  float d = length(worldPos - focusOrigin());   // TV1: the traveller's eye under the travel view, the camera otherwise",
+    "new": "  float d = length(worldPos - uCamPos);   // TV1: the traveller's eye under the travel view, the camera otherwise",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
