@@ -25,7 +25,7 @@
 // ('AttackMeleeLycan' at LYCAN_TICK, the mob's strike DISC12 showed). The hand-off is unchanged: until the art is up
 // (or when it failed, or the build has none) `isRiding` stays false and remotePlayers' DISC12 enemy sprite stands for
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
-import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, RANGED_TICK, SPELL_TICK } from '../../player/eyeOfTheBeholder/eotbBillboard.js';
+import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, ORIENTATIONS, LYCAN_TICK, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, RANGED_TICK, SPELL_TICK } from '../../player/eyeOfTheBeholder/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
@@ -51,6 +51,7 @@ import { peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a walker 
 import { gatherActOf, peerGatherTool, peerGatherSwing } from './peerGather.js';   // PEER-ACTS: a walker at a gathering act
 import { peerWeaponOf, peerHandsOf } from './peerBodies.js';   // LAYERED-WEAPONS: the weapon in the hand the peer uses (LAYERED-DUAL: or its pair)
 import { layeredWeaponOf, layeredHands } from '../../player/eyeOfTheBeholder/layeredWeapon.js';
+import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from '../../player/eyeOfTheBeholder/layeredWarm.js';   // ATTACK-WARM
 import { withoutShield, loadShieldPicture } from '../../player/eyeOfTheBeholder/layeredShield.js';   // LAYERED-SHIELD: a walker's marks without its shield
 
 /** The table a riding pose shows: standing, walking, galloping (EOTB's three mounted tables). */
@@ -462,6 +463,9 @@ export function viewerLayered() {
   try { return !!modSetting('eye-of-the-beholder', 'Enabled') && (modSetting('eye-of-the-beholder', 'Graphics.LayeredGear') ?? 0) > 0; } catch { return false; }   // not vendored: no sprite body
 }
 
+/** ATTACK-WARM: the most walker frames waiting to be composed - a crowd's arrival asks no more. */
+export const WARM_QUEUE_MAX = 960;
+
 export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true, clock = () => Date.now(), art = null, layeredAll = viewerLayered } = {}) {
   const store = art ?? createEotbArt({ renderer, urlFor, decode, clock });
   const layer = figureLayer(store);
@@ -472,6 +476,15 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
   const slung = [];
   /** BACK-HOLSTER GLOW: and their glows - on the back, and round a walker whose weapon is drawn */
   const glows = [];
+  /** ATTACK-WARM (layeredWarm.js): a walker's drawn weapon's swing, composed a few a frame before its blow - its cast
+   *  is left to play as it comes (every walker carries one), and a sheathed walker's to its drawing */
+  const warmQueue = /** @type {ReturnType<typeof warmFramesOf>} */ ([]);
+  const warmWalker = (r, look) => {
+    const sig = look.sheathed ? null : warmSigOf(look);
+    if (sig === r.warmSig) return;
+    r.warmSig = sig;
+    if (sig && warmQueue.length < WARM_QUEUE_MAX) warmQueue.push(...warmFramesOf({ ...look, cast: undefined }, frameCount, ORIENTATIONS));
+  };
 
   /** The pose's own standing table (EOTB chooseTable, the mod's default ReadyStance - the sender's is not on the wire). */
   const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });   // CLIMB5: on the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one
@@ -547,6 +560,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       // where it wears none
       const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...(r.shot?.hands ?? walkerHeld(peer.look, pose)) } : null;
       const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: set });   // LAYERED-WEAPONS: a flinch keeps the weapon
+      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });   // ATTACK-WARM
       if (!s) continue;
       faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
       const g = grow ? grow(feet) : 1;   // OW-PEERS: grown under the Overworld, as the traveller is
@@ -558,6 +572,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn, feet, view, eye, right);   // BACK-SHIELD
       if (g === 1) glowInHand(r, peer, pose, right);   // BACK-HOLSTER GLOW
     }
+    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));   // ATTACK-WARM
     layer.sweep(seen);
   }
 

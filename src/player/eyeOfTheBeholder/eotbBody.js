@@ -56,6 +56,7 @@ import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP:
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, outfitPieces, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
+import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from './layeredWarm.js';   // ATTACK-WARM: a look's clips composed before they play
 import { withoutShield, loadShieldPicture } from './layeredShield.js';   // LAYERED-SHIELD: the body's marks are read without the shield it carries
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
@@ -565,6 +566,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const lk = lookNow();
     for (const [table, o, f] of horseQueue.splice(0, HORSE_PRELOAD_A_FRAME)) ensure(spriteFor(table, o, f, lk));
   }
+  /** ATTACK-WARM (layeredWarm.js): the layered look the clips were last queued for, and the frames still to ask. */
+  let warmSig = null, warmQueue = /** @type {ReturnType<typeof warmFramesOf>} */ ([]);
+  function warmLayered() {
+    const lk = lookNow(), sig = warmSigOf(lk);
+    if (sig !== warmSig) { warmSig = sig; warmQueue = warmFramesOf(lk, frameCount, ORIENTATIONS); }
+    for (const [table, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) ensure(spriteFor(table, o, f, look));
+  }
   /** [IL] `InitializeTextures`: every frame of every table of the
    *  archives the settings pick, fetched up front - the mod's whole
    *  load, spread over the seconds a browser needs. PR-WW1: the lycan
@@ -761,8 +769,10 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     orientationChosen = o;   // SPRITE-FLICKER
     if (o !== lastOrientation || force || forceOrient || !shown) {
       forceOrient = false;
-      // ATTACK-MOVE: a turn mid-clip turns the clip's own frame, not the stance's
-      if (isAnimating) updateBillboard(frameCurrent, o, isAnimating.table); else updateBillboardDelayed(frameCurrent, o, stateCurrent);
+      // ATTACK-MOVE: a turn mid-clip turns the clip's own frame, not the stance's. ATTACK-TURN: the frame shown, not
+      // frameCurrent - the walk's clock moves that on under the clip, so a turn showed the walk's frame of the swing
+      if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);
+      else updateBillboardDelayed(frameCurrent, o, stateCurrent);
     }
     // [IL] TorchOffset (IL_47df-IL_48bd), third person only: Selfie (2)
     // parks PlayerTorch half way from the head to the camera; Billboard
@@ -1086,6 +1096,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (renderer && last.lycanthropyType !== preloadedForm) preload(true);   // PR-WW1: a curse caught (or changed) fetches its own beast
       if (renderer && last.horseLook !== preloadedLook) preloadHorse();   // COATS1: a look chosen fetches its mounted tables whole, as a set chosen does
       stepHorseQueue();   // AUDIT COATS3D A6: a few a frame
+      if (renderer && cfg.wornArmour) warmLayered();   // ATTACK-WARM: a weapon or piece changed - its clips composed before a blow
       fell = false;
       const was = cam.feet;
       if (state.feet) cam.feet = state.feet;

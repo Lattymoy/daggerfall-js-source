@@ -12,6 +12,9 @@ import { createEotbBody, bodyState } from '../../../src/player/eyeOfTheBeholder/
 import { createEotbCamera, eotbCamera } from '../../../src/player/eyeOfTheBeholder/eotbCamera.js';
 import { ARCHIVE_FOOT, ARCHIVE_HORSE, frameTime, TABLE_FRAMES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
+import { createWeapon } from '../../../src/combat/enemyEquipment.js';
+import { WEAPONS } from '../../../src/characters/weapons.js';
+import { warmFramesOf, warmSigOf, LAYERED_WARM_A_FRAME } from '../../../src/player/eyeOfTheBeholder/layeredWarm.js';
 
 const MOD = 'eye-of-the-beholder';
 // PIN MOVED (LAYERED-GEAR-ON: Layered Gearing is on by default, the owner 2026-10-19): these pins are Eye of the
@@ -592,4 +595,73 @@ test('ATTACK-MOVE (a player, 2026-10-31: "attack animations do not play properly
   assert.ok(b.state().clip, 'still swinging');
   assert.notEqual(b.state().shown.orientation, before, 'the swing turned with the eye');
   assert.equal(b.state().shown.table, 'AttackMelee');
+});
+
+test('ATTACK-TURN (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"): a swing, a cast and a loose steered on the move show their own frame every tick - a turn repainted the walk clock\'s frame', async () => {
+  const cases = [
+    { pre: { sheathed: false }, start: { attacking: true, swingN: 1 }, on: (i) => ({ sheathed: false, attacking: i < 20, swingN: 1 }) },
+    { pre: { sheathed: true }, start: { castPlaying: true }, on: (i) => ({ sheathed: true, castPlaying: i < 10 }) },
+    { pre: { sheathed: false, usingBow: true }, start: { attacking: true, usingBow: true }, on: (i) => ({ sheathed: false, usingBow: true, attacking: i < 5 }) },
+  ];
+  for (const c of cases) {
+    const { b } = await liveBody();
+    ticks(b, 30, walk(c.pre));
+    b.tick(1 / 60, walk({ ...c.pre, ...c.start }));
+    const clip = b.state().clip;
+    assert.ok(clip, 'the clip started');
+    let n = 0, turned = 0;
+    const wrong = [];
+    for (let i = 0; i < 400 && b.state().clip; i++) {
+      const o = b.state().shown.orientation;
+      b.tick(1 / 60, walk({ ...c.on(i), yaw: i * 0.15 }));   // steered round as it plays
+      const s = b.state();
+      if (!s.clip) break;
+      n++;
+      if (s.shown.orientation !== o) turned++;
+      if (s.shown.table !== clip.table || s.shown.frame !== s.clip.frames[s.clip.i]) wrong.push(`${s.shown.table}:${s.shown.frame} at ${s.clip.frames[s.clip.i]}`);
+    }
+    assert.ok(n > 6 && turned > 2, `${clip.table}: ${n} frames, ${turned} turns`);
+    assert.deepEqual(wrong, [], `${clip.table}: every tick shows the clip's own frame`);
+  }
+});
+
+test('ATTACK-WARM (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"): a weapon taken up has its swing composed in every view before a blow - a frame not composed yet left the walk\'s on screen', async () => {
+  setModSetting(MOD, 'Graphics.LayeredGear', 1);
+  try {
+    const asked = new Set();
+    const { b } = await liveBody({ urlFor: (k) => k, decode: async (k) => { asked.add(k); return { width: 4, height: 6, colors: new Uint32Array(24) }; } });
+    const sword = createWeapon(WEAPONS.Longsword, 0, () => 0.5), dagger = createWeapon(WEAPONS.Dagger, 0, () => 0.5);
+    const swing = (code) => [...asked].filter((k) => k.startsWith('LA:') && k.includes(`@${code}`));
+    ticks(b, 40, walk({ sheathed: false, heldWeapon: sword }));
+    const swordKeys = swing('ls0').length;
+    asked.clear();
+    // the dagger taken up, sheathed: still walking, no blow yet - its swing is asked for meanwhile
+    ticks(b, 1, walk({ sheathed: true, heldWeapon: dagger }));
+    const n = 8 * 6;   // every view of the six-frame swing
+    ticks(b, Math.ceil(n / LAYERED_WARM_A_FRAME) + 2, walk({ sheathed: true, heldWeapon: dagger }));
+    const dg = swing('dg0');
+    assert.ok(dg.length >= 6, `the dagger's swing asked for before it plays: ${dg.length} pictures`);
+    assert.ok(!swing('ls0').length, 'the sword gone, none of its');
+    assert.ok(swordKeys > 0, 'the sword had been asked for as it was drawn');
+  } finally { resetSettings(); }
+});
+
+test('ATTACK-WARM: the frames a look queues - its swing (each hand\'s for a pair), a bow\'s loose, a readied cast - drawn, every view', () => {
+  const fc = (t) => ({ AttackMelee: 6, AttackRanged: 5, AttackSpell: 5 }[t] ?? 4);
+  const base = { wornArmour: true, gender: 'male', outfit: 'lll' };
+  assert.equal(warmSigOf({ outfit: 'lll' }), null, 'no layered body, nothing');
+  assert.notEqual(warmSigOf({ ...base, weapon: 'ls0' }), warmSigOf({ ...base, weapon: 'dg0' }), 'a weapon changed is a new look');
+  assert.notEqual(warmSigOf({ ...base, weapon: 'ls0' }), warmSigOf({ ...base, outfit: 'clc', weapon: 'ls0' }), 'a piece changed is a new look');
+  assert.equal(warmSigOf({ ...base, weapon: 'ls0', sheathed: true }), warmSigOf({ ...base, weapon: 'ls0' }), 'drawing it is not');
+  const one = warmFramesOf({ ...base, weapon: 'ls0', sheathed: true }, fc, 8);
+  assert.equal(one.length, 48);
+  assert.deepEqual([...new Set(one.map((x) => x[0]))], ['AttackMelee']);
+  assert.ok(one.every((x) => !('sheathed' in x[3])), 'as it plays: drawn');
+  assert.deepEqual([...new Set(one.map((x) => x[1]))], [0, 1, 2, 3, 4, 5, 6, 7]);
+  const pair = warmFramesOf({ ...base, weapon: 'ls0', offhand: 'dg0', strike: 'R' }, fc, 8);
+  assert.equal(pair.length, 96);
+  assert.deepEqual([...new Set(pair.map((x) => x[3].strike))], ['R', 'L'], 'each hand\'s blow');
+  assert.deepEqual([...new Set(warmFramesOf({ ...base, weapon: 'lb0' }, fc, 8).map((x) => x[0]))], ['AttackRanged']);
+  assert.deepEqual([...new Set(warmFramesOf({ ...base, weapon: null, cast: 2 }, fc, 8).map((x) => x[0]))], ['AttackMelee', 'AttackSpell']);
+  assert.deepEqual(warmFramesOf({ ...base, wornArmour: false }, fc, 8), []);
 });

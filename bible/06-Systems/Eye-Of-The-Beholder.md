@@ -1185,6 +1185,20 @@ repaints the clip's own frame at the new view. A peer's walker already rested it
 **Pins.** `test/player/eyeOfTheBeholder/eotb_body.test.js` ATTACK-MOVE (every frame of a swing on the move, the eye
 swung round mid-swing, is the swing, turned with the eye; the walk after it); `tools/mutants/attackmove.json`. Not verified in a browser.
 
+**ATTACK-TURN** (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"). A turn mid-clip repainted
+`frameCurrent`, which the walk's clock moves on under the clip. Steered on the move, 24 of a swing's 59 ticks showed the
+walk's frame number of the swing - most often its first. A turn now repaints the frame shown.
+
+**ATTACK-WARM.** Each layered outfit and each pair of hands is its own set of composed frames, and the body draws one
+only once it is composed: until then the last stays (`draw`). `preload` composes all when the body attaches, but a
+weapon or a piece changed later composed its swing as it played, and the walk's frame held through the blow.
+`layeredWarm.js` queues a new look's clips - the swing, each hand's for a pair, the loose, a readied cast - drawn, in
+every view, `LAYERED_WARM_A_FRAME` a frame. A walker's drawn weapon's swing is queued too (`peerRiders.js`,
+`WARM_QUEUE_MAX`); a sheathed one waits for its drawing. The port's own: the mod has no layered body.
+
+**Pins.** `eotb_body.test.js` ATTACK-TURN (a swing, a cast and a loose steered on the move show their own frame every
+tick) and ATTACK-WARM; `test/net/layered_peers.test.js` ATTACK-WARM; `tools/mutants/attackmove.json` (11, all dead).
+
 ## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
 
 Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate
