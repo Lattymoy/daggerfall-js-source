@@ -195,21 +195,13 @@ export function outlineMask(img, polys) {
   return m;
 }
 /** Take the free arm out of a frame, in place: the body px inside the rig's outlines (`polys`), filled as a hammer's hole
- *  is (layeredWeapon.js removeWeapon, the smooth blend) - from a graft's idle torso where it has one (`from`: its picture,
- *  its arm, the shift `fill`) - but a filled px no path of filled px joins to the body is open air, and a scrap of the
- *  arm's edge left floating beside the hole (ARM_SCRAP px at most) goes with it. The px taken out, 1 each. */
+ *  is (layeredWeapon.js removeWeapon): each from its own source in the frame where the rig has one (`from`, fillFrom's
+ *  of the `-arm` strip), else the smooth blend - but a filled px no path of filled px joins to the body is open air, and a
+ *  scrap of the arm's edge left floating beside the hole (ARM_SCRAP px at most) goes with it. The px taken out, 1 each. */
 export function removeShieldArm(out, polys, from = null) {
   const w = out.width, h = out.height, m = outlineMask(out, polys);
-  removeWeapon(out, m, 0);
+  removeWeapon(out, m, 0, from && from.length === w * h ? from : null);
   const d = out.data, n = w * h;
-  if (from) {
-    const R = from.img, [fx, fy] = from.fill;
-    for (let i = 0; i < n; i++) {
-      if (!m[i] || !d[i * 4 + 3]) continue;
-      const X = (i % w) + fx, Y = ((i / w) | 0) + fy, j = Y * R.width + X;
-      if (X >= 0 && Y >= 0 && X < R.width && Y < R.height && R.data[j * 4 + 3] && !from.arm[j]) d.set(R.data.subarray(j * 4, j * 4 + 4), i * 4);
-    }
-  }
   const piece = new Int32Array(n).fill(-1), sizes = [], near = [];
   const each = (i, fn) => { const x = i % w, y = (i / w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h) fn(Y * w + X); } };
   for (let i0 = 0; i0 < n; i0++) {   // the body's own px in 8-joined pieces: each one's size, and does it touch the hole?

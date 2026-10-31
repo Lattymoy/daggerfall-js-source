@@ -273,9 +273,11 @@ stage (`!03`, `SHIELD_CAST`); a shot too (`SHIELD_GUN`).
 
 **The arm put back** (the owner, 2026-10-31: "Its rough. You need to really go deep"). From before, the arm taken out
 left the shield floating on the chest. Each front swing frame now takes the idle's free arm back (the rig's `sg`): the
-idle of its view is composed in the same outfit, its torso fills the hole (not its arm), and its arm (`sp`) is laid from
-this frame's shoulder (`graftArm`), the shield in its hand where the idle and the walk hold it. The far hand that shows
-behind the back from aside (male 2-2 and 17-0, female 2-0 and 17-0) comes out, as the shield is before the body there.
+idle of its view composed in the same outfit, its arm (`sp`) laid from this frame's shoulder (`graftArm`), the shield in
+its hand where the idle and the walk hold it. The hole the swing's arm leaves is filled from the frame's own body, as
+the hammer's is: the builder's inpaint over each chest family's outfits (`arm_sources`, `weapon/<body>/<rf>-arm.png`).
+The idle's torso did not serve: the female chain and plate show skin at the neck the swing's turned chest does not.
+The far hand that shows behind the back from aside (male 2-2 and 17-0, female 2-0 and 17-0) comes out too.
 
 **What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
 glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield

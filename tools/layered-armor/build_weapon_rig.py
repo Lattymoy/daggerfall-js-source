@@ -184,18 +184,17 @@ SHIELD_ARM_OF_IDLE = {
     ('female', '16-0'): [[(89, 64.5), (95.5, 61), (97.5, 70), (97.5, 80), (99.5, 88), (100.5, 97.5), (95, 99.5), (92, 92), (91, 82), (89, 72)]],
 }
 # From before, the swing's free arm comes out and the idle's goes back in its place, the shield in its hand (`sg`): the
-# idle, the shift its torso fills the hole from (the best match round the hole, on the leather outfit), and the shift its
-# arm hangs from this frame's shoulder by (each the idle's px less this frame's). The shield's grip follows the arm.
+# idle, and the shift its arm hangs from this frame's shoulder by (the idle's px less this frame's). The shield's grip
+# follows the arm. The hole the swing's arm leaves is filled from the frame's own body (arm_sources, the hammer's inpaint).
 SHIELD_GRAFT = {
-    ('male', '5-0'): ('15-0', -31, -15, -38, -28), ('male', '5-1'): ('15-0', -31, -17, -39, -30),
-    ('male', '5-2'): ('15-0', -38, -34, -48, -35), ('male', '6-0'): ('16-0', -11, -12, -11, -24),
-    ('male', '6-1'): ('16-0', -11, -16, -11, -25), ('male', '6-2'): ('16-0', -21, -23, -17, -31),
-    ('male', '6-3'): ('16-0', -24, -37, -24, -37),
-    ('female', '5-0'): ('15-0', -10, 16, -8, 5), ('female', '5-1'): ('15-0', -15, 5, -9, 4),
-    ('female', '5-2'): ('15-0', -15, 10, -14, 1), ('female', '6-0'): ('16-0', 9, 17, 12, 10),
-    ('female', '6-1'): ('16-0', 6, 14, 12, 8), ('female', '6-2'): ('16-0', 5, 9, 9, 3),
-    ('female', '6-3'): ('16-0', 2, -7, 4, -1),
+    ('male', '5-0'): ('15-0', -38, -28), ('male', '5-1'): ('15-0', -39, -30), ('male', '5-2'): ('15-0', -48, -35),
+    ('male', '6-0'): ('16-0', -11, -24), ('male', '6-1'): ('16-0', -11, -25), ('male', '6-2'): ('16-0', -17, -31),
+    ('male', '6-3'): ('16-0', -24, -37),
+    ('female', '5-0'): ('15-0', -8, 5), ('female', '5-1'): ('15-0', -9, 4), ('female', '5-2'): ('15-0', -14, 1),
+    ('female', '6-0'): ('16-0', 12, 10), ('female', '6-1'): ('16-0', 12, 8), ('female', '6-2'): ('16-0', 9, 3),
+    ('female', '6-3'): ('16-0', 4, -1),
 }
+SHIELD_ARM_FRAMES = {b: [rf for (bb, rf) in SHIELD_ARM if bb == b] for b in ('male', 'female')}
 # Where the shield's grip goes (`sh`): the free hand where BOW_HAND has it, or the grafted arm's; else read by eye - from
 # aside before the waist as the side walk holds it (the far arm's, behind the body), from behind at the body's left edge,
 # the hand flung out in a flinch. A third entry is the width share where the frame turns it otherwise.
@@ -476,6 +475,32 @@ def inpaint(imgs, m, bp, R=11, P=2):
 
 
 
+def poly_mask(shape, polys):
+    """The px whose middles lie inside any of the outlines (even-odd), as the runtime's (layeredShield.js outlineMask)."""
+    H, W = shape; yy, xx = np.mgrid[0:H, 0:W]; px, py = xx + 0.5, yy + 0.5; m = np.zeros((H, W), bool)
+    for P in polys:
+        c = np.zeros((H, W), bool)
+        for i in range(len(P)):
+            (xi, yi), (xj, yj) = P[i], P[i - 1]
+            if yi == yj: continue
+            c ^= ((yi > py) != (yj > py)) & (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+        m |= c
+    return m
+def arm_sources(body, rf):
+    """LAYERED-SHIELD: the hole the free arm leaves (SHIELD_ARM), each body px's own source in the frame (inpaint over
+    the family's outfits, the hammer's hole no source), as the weapon strip's tiles: (dx, dy) + 128, blue 255."""
+    tiles = []; ham_all = np.array(Image.open(f'{V}/weapon/{body}/{rf}.png').convert('RGBA')); tw = ham_all.shape[1] // len(FAMS)
+    for k, fam in enumerate(FAMS):
+        _, L, st = stable(body, rf, fam); imgs = [st[i] for i in range(st.shape[0])]
+        ham = ham_all[:, k * tw:(k + 1) * tw, 3] > 0
+        arm = poly_mask(ham.shape, SHIELD_ARM[(body, rf)]) & np.any([im[..., 3] > 0 for im in imgs], axis=0)
+        off, has = inpaint(imgs, arm | ham, body_side(L, arm) & ~ham)
+        tile = np.zeros(ham.shape + (4,), np.uint8)
+        tile[has, 0] = off[has, 0] + 128; tile[has, 1] = off[has, 1] + 128; tile[has, 2] = 255; tile[has, 3] = 255
+        tiles.append(tile)
+    return np.concatenate(tiles, axis=1)
+
+
 def depth(g, lo=LO, hi=HI):
     (qx, qy), (tx, ty), m, L = g['q'], g['t'], g['m'], g['L']; H, W = m.shape
     D = math.hypot(tx - qx, ty - qy) or 1.0; ux, uy = (tx - qx) / D, (ty - qy) / D; nx, ny = -uy, ux
@@ -580,11 +605,15 @@ def main(only=None):
                     hx, hy, front = free; vx, vy = (-ux, uy) if rec % 5 in (0, 4) else (ux, uy)
                     blade = 'x' if rec % 5 == 4 else 'f' if front else 'b'
                     p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
+        for rf in SHIELD_ARM_FRAMES[body]:   # LAYERED-SHIELD: the hole the free arm leaves, filled from the frame's own body
+            out = f'{V}/weapon/{body}/{rf}-arm.png'
+            if only is None or f'{body}:{rf}' in only or f'{body}:{rf}-arm' in only or not os.path.exists(out):
+                Image.fromarray(arm_sources(body, rf)).save(out, optimize=True); print(body, rf, 'arm sources')
         for rf, per in frames.items():   # LAYERED-SHIELD: the free arm out of a swing (`sa`), the shield's grip (`sh`)
             g = SHIELD_GRIP[body].get(rf) or BOW_HAND[body].get(rf, ())[:2]
             gr = SHIELD_GRAFT.get((body, rf))
             if gr:   # the grafted arm's hand
-                hx, hy = BOW_HAND[body][gr[0]][:2]; g = (round(hx - gr[3], 1), round(hy - gr[4], 1))
+                hx, hy = BOW_HAND[body][gr[0]][:2]; g = (round(hx - gr[1], 1), round(hy - gr[2], 1))
             for p in per:
                 p.pop('sa', None); p.pop('sh', None); p.pop('sg', None); p.pop('sp', None)
                 if g: p['sh'] = [float(v) for v in g]

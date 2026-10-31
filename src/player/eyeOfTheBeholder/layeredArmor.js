@@ -397,7 +397,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, shieldPic?:any, graft?:any, cm?:number, swing?:boolean, frame?:number, mirror?:boolean, throwFr?:any}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, shieldPic?:any, graft?:any, armFrom?:Int32Array, cm?:number, swing?:boolean, frame?:number, mirror?:boolean, throwFr?:any}|null} [weapon] LAYERED-WEAPONS: the frame's rig
  * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
@@ -417,7 +417,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
     if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);
     else if (hand && held) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
     // LAYERED-SHIELD: a swing frame's free arm comes out - the sword arm swings alone
-    const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.graft ?? null) : null;
+    const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;
     const laid = arm && hand.graft ? graftArm(res, hand.graft) : null;   // from before, the idle's arm back, the shield in its hand
     const art = hand && held && !takeOut ? out.slice() : null;   // LAYERED-GLOW: the art's own hammer, before the cloak
     if (cloak && pieces?.cloak != null) {
@@ -546,12 +546,16 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     if (weapon && pieces.weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
     if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt);   // LAYERED-DUAL
     if (weapon && pieces.shield) weapon.shieldPic = await shieldPictureOf(pieces.shield, body, shieldArt);   // LAYERED-SHIELD
-    // LAYERED-SHIELD: a front swing takes the idle's free arm back (the rig's `sg`) - the idle composed in this outfit
+    // LAYERED-SHIELD: the hole the free arm leaves filled from the frame's own body (the `-arm` strip); a front swing
+    // takes the idle's free arm back (the rig's `sg`) - the idle composed in this outfit
+    if (weapon && pieces.shield && Array.isArray(fr.sa)) {
+      try { const au = weaponUrlOf(`weapon/${body}/${rf}-arm`); if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]); } catch { /* the blend alone */ }
+    }
     const sg = weapon && pieces.shield ? fr.sg : null, idle = Array.isArray(sg) ? weaponRigOf(body, sg[0], pieces.top[0]) : null;
     if (idle?.sp) {
       try {
         const img = await decodeLayered(`LA:${body}:${combo}:${sg[0]}:${pieces.head}${pieces.top}${pieces.legs}@0`, decodePng, { fetchUrl, urlOf, cloakUrlOf, hoodFixUrlOf, weaponUrlOf, picture: pictureOf, heldArt, shieldArt });
-        weapon.graft = { img, arm: outlineMask(img, idle.sp), fill: [sg[1], sg[2]], at: [sg[3], sg[4]] };
+        weapon.graft = { img, arm: outlineMask(img, idle.sp), at: [sg[1], sg[2]] };
       } catch { /* the arm taken out, none back */ }
     }
     // AUDIT: a picture not had yet (its load timed out) draws the shape meanwhile - the stores decode the frame again

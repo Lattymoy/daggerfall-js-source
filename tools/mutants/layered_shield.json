@@ -132,7 +132,7 @@
  {
   "name": "LAYERED-SHIELD-arm-stays",
   "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": "const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.graft ?? null) : null;",
+  "old": "const arm = hand && shield && Array.isArray(hand.fr.sa) ? removeShieldArm(res, hand.fr.sa, hand.armFrom ?? null) : null;",
   "new": "const arm = null;",
   "tests": [
    "test/player/eyeOfTheBeholder/layered_shield.test.js"
@@ -290,26 +290,6 @@
   "why": "from before, the shield-bearer's left arm stays gone"
  },
  {
-  "name": "LAYERED-SHIELD-fill-blend-only",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "  if (from) {\n    const R = from.img",
-  "new": "  if (false) {\n    const R = from.img",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the arm's hole a smear where the idle's torso was to hand"
- },
- {
-  "name": "LAYERED-SHIELD-fill-takes-arm",
-  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
-  "old": "R.data[j * 4 + 3] && !from.arm[j]) d.set",
-  "new": "R.data[j * 4 + 3]) d.set",
-  "tests": [
-   "test/player/eyeOfTheBeholder/layered_shield.test.js"
-  ],
-  "why": "the idle's own arm copied into the chest"
- },
- {
   "name": "LAYERED-SHIELD-graft-unshifted",
   "file": "src/player/eyeOfTheBeholder/layeredShield.js",
   "old": "const j = y * R.width + x, X = x - ax, Y = y - ay;",
@@ -338,5 +318,25 @@
    "test/player/eyeOfTheBeholder/layered_shield.test.js"
   ],
   "why": "three quarters before takes the front idle's arm"
+ },
+ {
+  "name": "LAYERED-SHIELD-arm-sources-unused",
+  "file": "src/player/eyeOfTheBeholder/layeredShield.js",
+  "old": "removeWeapon(out, m, 0, from && from.length === w * h ? from : null);",
+  "new": "removeWeapon(out, m, 0, null);",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the arm's hole a smear where the frame's own body was to hand"
+ },
+ {
+  "name": "LAYERED-SHIELD-arm-strip-never-fetched",
+  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+  "old": "if (au) weapon.armFrom = fillFrom(await pictureOf(au), pieces.top[0]);",
+  "new": "if (au) weapon.armFrom = undefined;",
+  "tests": [
+   "test/player/eyeOfTheBeholder/layered_shield.test.js"
+  ],
+  "why": "the arm's sources never read"
  }
 ]
