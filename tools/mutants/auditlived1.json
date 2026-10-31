@@ -553,8 +553,8 @@
   {
     "name": "AUDITLIVED1-T7-kitchen-hours",
     "file": "src/ui/tavernWindow.js",
-    "old": "hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60)",
-    "new": "hour: Math.trunc((((now) % 1440) + 1440) % 1440 / 60)",
+    "old": "      hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
+    "new": "      hour: Math.trunc((((now % 1440) + 1440) % 1440) / 60),",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUDITLIVED1-T7-meal-holiday",
     "file": "src/ui/tavernWindow.js",
-    "old": "gameMinutes: h.worldNow?.() ?? now });",
-    "new": "gameMinutes: now });",
+    "old": "            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar",
+    "new": "            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]

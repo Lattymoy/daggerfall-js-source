@@ -33,7 +33,10 @@ function rowsPath(rows) {
   let d = '';
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length;) {
-      if (row[x] !== '#') { x++; continue; }
+      if (row[x] !== '#') {
+        x++;
+        continue;
+      }
       const from = x;
       while (x < row.length && row[x] === '#') x++;
       d += `M${from} ${y}h${x - from}v1h${from - x}z`;
@@ -44,8 +47,9 @@ function rowsPath(rows) {
 const GLYPH_PATH = rowsPath(TECHNIQUE_GLYPH_ROWS);
 
 /** The glyph in the text's colour (`currentColor`) - the block's, which the sheet tints and lights. */
-export const TECHNIQUE_GLYPH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">'
-  + `<path fill="currentColor" d="${GLYPH_PATH}"/></svg>`;
+export const TECHNIQUE_GLYPH_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">' +
+  `<path fill="currentColor" d="${GLYPH_PATH}"/></svg>`;
 
 /** The glyph a TILE wears (the HUD's chip): the same pixels in `colour` with the kit's black outline drawn in - the
  *  sigil rune's tile law (ui/sigilRune.js SIGIL_RUNE_TILE_SVG: a masked glyph's shadow is clipped by its own mask). One
@@ -56,8 +60,9 @@ export function techniqueGlyphTileSrc(colour = TECHNIQUE_GLYPH_BLUE) {
   const c = /^#[0-9a-f]{6}$/i.test(String(colour ?? '')) ? String(colour).toLowerCase() : TECHNIQUE_GLYPH_BLUE;
   let src = _tiles.get(c);
   if (!src) {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 18 18" shape-rendering="crispEdges">'
-      + `<path fill="${c}" stroke="#050608" stroke-width="2" paint-order="stroke" d="${GLYPH_PATH}"/></svg>`;
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 18 18" shape-rendering="crispEdges">' +
+      `<path fill="${c}" stroke="#050608" stroke-width="2" paint-order="stroke" d="${GLYPH_PATH}"/></svg>`;
     src = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     _tiles.set(c, src);
   }

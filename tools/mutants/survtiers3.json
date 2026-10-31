@@ -382,8 +382,8 @@
   {
     "name": "SURVTIERS3-the-classic-window-drops-the-waking",
     "file": "src/ui/tavernWindow.js",
-    "old": "        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];",
-    "new": "        return [{ rows: line(r.text) }];",
+    "old": "        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking",
+    "new": "        return [{ rows: line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]

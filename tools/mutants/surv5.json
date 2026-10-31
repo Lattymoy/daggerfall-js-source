@@ -119,8 +119,8 @@
   {
     "name": "SURV5-the-tavern-serves-the-mod-off",
     "file": "src/ui/tavernWindow.js",
-    "old": "    if (survivalOn() && typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5",
-    "new": "    if (typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5",
+    "old": "    if (survivalOn() && typeof h.climateIndex === 'function') {",
+    "new": "    if (typeof h.climateIndex === 'function') {",
     "tests": [
       "test/systems/survival/surv5_ui.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SURV5-the-blackout-leaves-you-limber",
     "file": "src/ui/tavernWindow.js",
-    "old": "          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price\n",
-    "new": "",
+    "old": "          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules); // the night on the boards is a rough one (SURV4), at the tier's price\n          h.advanceMinutes?.(b.minutes);",
+    "new": "          h.advanceMinutes?.(b.minutes);",
     "tests": [
       "test/systems/survival/surv5_ui.test.js"
     ]

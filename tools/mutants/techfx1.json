@@ -655,8 +655,8 @@
   {
     "name": "TECHFX1-AUDIT-the-world-word-uncached",
     "file": "src/ui/techniqueKeyWord.js",
-    "old": "if (_store !== b || _rev !== rev || _pad !== pad) {",
-    "new": "if (true) {",
+    "old": "  if (_store !== b || _rev !== rev || _pad !== pad) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]

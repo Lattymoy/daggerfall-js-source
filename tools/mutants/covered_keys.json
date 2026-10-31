@@ -83,8 +83,8 @@
   {
     "name": "CK-the-tavern-door-names-no-window",
     "file": "src/ui/tavernDoor.js",
-    "old": "  hooks.owner = overlay;",
-    "new": "",
+    "old": "  hooks.owner = overlay; // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
+    "new": "  // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

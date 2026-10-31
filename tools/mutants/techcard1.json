@@ -102,8 +102,8 @@
   {
     "name": "TECHCARD-the-press-said-for-a-hold",
     "file": "src/ui/techniqueCard.js",
-    "old": "      : v.aims ? `Hold ${keyWord}",
-    "new": "      : !v.aims ? `Hold ${keyWord}",
+    "old": "          : v.aims",
+    "new": "          : !v.aims",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "TECHCARD-no-key-said-as-bound",
     "file": "src/ui/techniqueCard.js",
-    "old": "    box.append(el('p', 'tech-press', !keyWord",
-    "new": "    box.append(el('p', 'tech-press', false",
+    "old": "        !keyWord",
+    "new": "        false",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "TECHCARD-the-power-off-its-base",
     "file": "src/ui/techniqueCard.js",
-    "old": "on its ${pct(v.base)} base hit",
-    "new": "on its ${pct(v.mult)} base hit",
+    "old": "        `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.base)} base hit: ${pct(v.mult)} of a normal hit.`,",
+    "new": "        `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.mult)} base hit: ${pct(v.mult)} of a normal hit.`,",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "TECHCARD-the-band-unsaid",
     "file": "src/ui/techniqueCard.js",
-    "old": "  if (v.band) { roll.append(",
-    "new": "  if (false) { roll.append(",
+    "old": "  if (v.band) {",
+    "new": "  if (false) {",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "TECHCARD-the-recovery-unexplained",
     "file": "src/ui/techniqueCard.js",
-    "old": "  every.title = `Ready again ${v.cooldown} seconds after a use`;\n",
-    "new": "",
+    "old": "  every.title = `Ready again ${v.cooldown} seconds after a use`;\n  const price = el('span', 'tech-price');",
+    "new": "  const price = el('span', 'tech-price');",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "FINALAUDIT-the-world-word-pad-blind",
     "file": "src/ui/techniqueKeyWord.js",
-    "old": " || _rev !== rev || _pad !== pad) {",
-    "new": " || _rev !== rev) {",
+    "old": "  if (_store !== b || _rev !== rev || _pad !== pad) {",
+    "new": "  if (_store !== b || _rev !== rev) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]

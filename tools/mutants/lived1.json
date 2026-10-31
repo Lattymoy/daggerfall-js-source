@@ -214,8 +214,8 @@
   {
     "name": "LIVED1-the-tavern-calendar-is-the-characters",
     "file": "src/ui/tavernWindow.js",
-    "old": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
-    "new": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(now) },",
+    "old": "      date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
+    "new": "      date: { dayOfYear: dayOfYearFromMinutes(now) },",
     "tests": [
       "test/systems/lived1.test.js"
     ]

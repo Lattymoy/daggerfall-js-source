@@ -2012,6 +2012,12 @@
 !/src/ui/talkDoor.js
 !/src/ui/talkWindow.js
 !/src/ui/tamrielTiles.js
+!/src/ui/targetIconPanel.js
+!/src/ui/tavernDoor.js
+!/src/ui/tavernWindow.js
+!/src/ui/techniqueCard.js
+!/src/ui/techniqueGlyph.js
+!/src/ui/techniqueKeyWord.js
 !/src/ui/teleportPopUp.js
 !/src/ui/temperatureCard.js
 !/src/ui/textFont.js

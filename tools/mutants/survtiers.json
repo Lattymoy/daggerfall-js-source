@@ -586,8 +586,8 @@
   {
     "name": "SURVTIERS-window-asks-the-house-before-the-gold",
     "file": "src/ui/tavernWindow.js",
-    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];",
-    "new": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
+    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];",
+    "new": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
     "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
     "tests": [
       "test/systems/survival/survtiers.test.js"
