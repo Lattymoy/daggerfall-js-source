@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L2-2-single-click-uses",
     "file": "src/ui/listPicker.js",
-    "old": "          if (wasDouble) this._use();",
-    "new": "          this._use();",
+    "old": "          if (wasDouble) this._use(); // MouseDoubleClick; :687-688 stamps unconditionally, so nothing is cleared",
+    "new": "          this._use(); // MouseDoubleClick; :687-688 stamps unconditionally, so nothing is cleared",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],

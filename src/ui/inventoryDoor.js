@@ -36,15 +36,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js'; // PX28: Tab puts it away
 import { NativeInventoryWindow, inventoryArtLoaded } from './native/nativeInventory.js';
 import { closeSession, holdChestSave } from '../systems/inventorySession.js';
-import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
-import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: GetSuppressInventory, in the window itself
-import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox, the refusal's voice
-import { ChoiceWindow } from './talkWindow.js';   // REVENANT-FATE: the classic skin's keyed box
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js'; // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
+import { racialSuppressInventory } from '../systems/lycanthropy.js'; // DISC10-E L3: GetSuppressInventory, in the window itself
+import { messageBox } from '../systems/notify.js'; // DISC10-E L3: DaggerfallUI.MessageBox, the refusal's voice
+import { ChoiceWindow } from './talkWindow.js'; // REVENANT-FATE: the classic skin's keyed box
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export { inventoryArtLoaded };
 
@@ -75,11 +75,20 @@ export function createInventoryWindow(deps = {}) {
   // window has no room for one, so there it is a keyed box - its name, its plea, K kill, S spare, Esc leave it
   // AUDIT (2026-10-02): before the beast's refusal - it refuses the pack, never the judgement (the classic box always
   // came first; the enhanced skin's loot window was refused in beast form)
-  if (deps.fate) { noteFirstUse('revenants'); noteFirstUse('companions'); }   // TUT1: a beaten revenant's judgement - and the oath a spared one swears
-  if (deps.fate) return isEnhanced() && typeof document !== 'undefined' ? enhancedInventoryOverlay(deps) : classicFateWindow(deps.fate);
+  if (deps.fate) {
+    noteFirstUse('revenants');
+    noteFirstUse('companions');
+  } // TUT1: a beaten revenant's judgement - and the oath a spared one swears
+  if (deps.fate)
+    return isEnhanced() && typeof document !== 'undefined'
+      ? enhancedInventoryOverlay(deps)
+      : classicFateWindow(deps.fate);
   const sup = racialSuppressInventory(deps.entity);
-  if (sup) { messageBox(sup.text); return null; }
-  noteFirstUse(deps.loot && !deps.loot.playerOwned ? 'loot' : 'inventory');   // TUT1: a pile or a body is the loot page; the pack (and a store of the player's own) the inventory's
+  if (sup) {
+    messageBox(sup.text);
+    return null;
+  }
+  noteFirstUse(deps.loot && !deps.loot.playerOwned ? 'loot' : 'inventory'); // TUT1: a pile or a body is the loot page; the pack (and a store of the player's own) the inventory's
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather
   // than getting a special case written for it.
@@ -100,9 +109,17 @@ export function createInventoryWindow(deps = {}) {
 function classicFateWindow(fate) {
   // AUDIT (2026-10-02): the details ride the box's wrapped lines (an option's label is never wrapped - a Spare's whole
   // sentence ran off the screen), and a choice it cannot take says why instead of vanishing
-  const lines = [fate.name, fate.sub ?? '', '', fate.plea?.speech ? `"${fate.plea.speech}"` : (fate.plea?.body ?? ''), '',
-    ...fate.options.map((o) => `${o.label}: ${o.detail}`)].filter((l, i, a) => l !== '' || (i > 0 && a[i - 1] !== ''));
-  const options = fate.options.filter((o) => !o.disabled).map((o) => ({ code: `Key${o.key}`, label: `${o.key} - ${o.label}`, action: () => fate.choose(o.id) }));
+  const lines = [
+    fate.name,
+    fate.sub ?? '',
+    '',
+    fate.plea?.speech ? `"${fate.plea.speech}"` : (fate.plea?.body ?? ''),
+    '',
+    ...fate.options.map((o) => `${o.label}: ${o.detail}`),
+  ].filter((l, i, a) => l !== '' || (i > 0 && a[i - 1] !== ''));
+  const options = fate.options
+    .filter((o) => !o.disabled)
+    .map((o) => ({ code: `Key${o.key}`, label: `${o.key} - ${o.label}`, action: () => fate.choose(o.id) }));
   options.push({ code: 'Escape', label: 'Esc - Leave it kneeling', action: () => {} });
   return new ChoiceWindow({ lines, options });
 }
@@ -136,7 +153,7 @@ function enhancedInventoryOverlay(deps) {
   // without it.
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden;overflow:clip';
   document.body.append(host);
-  let unregister = () => {};   // PX28: Tab must be able to put the pack away
+  let unregister = () => {}; // PX28: Tab must be able to put the pack away
   const gate = { saving: false, saved: false };
 
   const close = () => {
@@ -149,7 +166,7 @@ function enhancedInventoryOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not be true while the DOM is up
+    fired = true; // last: `done` must not be true while the DOM is up
     // OnPop, through the module the classic window uses: the session's
     // dropped items mint their world flat and the container releases.
     // AUDIT 17e F28's law is the second half of that - a host that
@@ -165,14 +182,30 @@ function enhancedInventoryOverlay(deps) {
 
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the view's own capture keydown owns the keyboard */ },
-    click() { /* the view is a fixed opaque div; pointers never get here */ },
-    wheel() { /* the view scrolls itself */ },
-    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this screen moves on a clock */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the view's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the view is a fixed opaque div; pointers never get here */
+    },
+    wheel() {
+      /* the view scrolls itself */
+    },
+    hover() {
+      /* the view has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this screen moves on a clock */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
   };
 
   // MW-D36: the pack takes the Morrowind arm module by dynamic import
@@ -184,11 +217,18 @@ function enhancedInventoryOverlay(deps) {
   // that is off, not a screen that failed.
   // COVERED-KEYS: `owner` is the window the pack's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
-    load: () => Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
+    load: () =>
+      Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
       view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: overlay });
     },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      host.remove();
+      fired = true;
+    },
+    label: 'inventory',
   });
 
   return overlay;

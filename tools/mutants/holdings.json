@@ -74,8 +74,8 @@
   {
     "name": "HOLD-the-stable-words-classic",
     "file": "src/ui/holdingsPages.js",
-    "old": "    else horse = { state: 'Stabled', tone: 'is-away',",
-    "new": "    else horse = { state: 'With you', tone: 'is-away',",
+    "old": "      horse = {\n        state: 'Stabled',",
+    "new": "      horse = {\n        state: 'With you',",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]

@@ -107,7 +107,7 @@ test('UI-CALM the windows read: the quiet ink a step lighter and the type floor 
   assert.match(rd('src/ui/enhanced/enhancedStyle.js'), /applyPlusTheme\(doc\);   \/\/ PLUS2: the stored colour\n    injectUiCalmStyle\(doc\);/);
   const hold = rd('src/ui/holdingsPages.js');
   assert.match(hold, /const colours = choices\.map\(\(name\) => LOOK_SWATCHES\[name\] \?\? null\);\n  if \(colours\.every\(Boolean\)\) \{/);
-  assert.match(hold, /if \(_lookOpen === 'horse'\) for \(const row of m\.look\.rows\) extra\.push\(choiceRow\(/);
+  assert.match(hold, /if \(_lookOpen === 'horse'\)\n\s*for \(const row of m\.look\.rows\)\n\s*extra\.push\(choiceRow\(/);
   assert.match(rd('src/ui/enhanced/enhancedChargen.js'), /stagePrimary = \{ label: left > 0 \? `\$\{left\} left to spend` : 'Begin your life',/);
   assert.deepEqual(CLASS_WAYS.map(([w, names]) => [w, names.length]), [['Magic', 6], ['Stealth', 6], ['Combat', 6]]);
   assert.deepEqual(['Mage', 'Thief', 'Knight', 'Custom'].map(classWayOf), ['Magic', 'Stealth', 'Combat', null]);

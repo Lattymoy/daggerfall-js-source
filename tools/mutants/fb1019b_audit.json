@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-1019-L6-13-online-pool-words",
     "file": "src/ui/levelingChoice.js",
-    "old": "        online ? t('leveling.classic.poolOnline',",
-    "new": "        false ? t('leveling.classic.poolOnline',",
+    "old": "        online",
+    "new": "        false",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

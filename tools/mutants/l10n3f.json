@@ -290,8 +290,8 @@
   {
     "name": "L10N3f-invert",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('invert', 'Invert')",
-    "new": "'Invert'",
+    "old": "      return gameSettingsText('invert', 'Invert');",
+    "new": "      return 'Invert';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "L10N3f-movementH",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('movementH', 'Movement H.')",
-    "new": "'Movement H.'",
+    "old": "      return gameSettingsText('movementH', 'Movement H.');",
+    "new": "      return 'Movement H.';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "L10N3f-movementV",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('movementV', 'Movement V.')",
-    "new": "'Movement V.'",
+    "old": "      return gameSettingsText('movementV', 'Movement V.');",
+    "new": "      return 'Movement V.';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "L10N3f-cameraH",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('cameraH', 'Camera H.')",
-    "new": "'Camera H.'",
+    "old": "      return gameSettingsText('cameraH', 'Camera H.');",
+    "new": "      return 'Camera H.';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "L10N3f-cameraV",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('cameraV', 'Camera V.')",
-    "new": "'Camera V.'",
+    "old": "      return gameSettingsText('cameraV', 'Camera V.');",
+    "new": "      return 'Camera V.';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "L10N3f-leftClickString",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('leftClickString', 'Left-Click')",
-    "new": "'Left-Click'",
+    "old": "      return gameSettingsText('leftClickString', 'Left-Click');",
+    "new": "      return 'Left-Click';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "L10N3f-middleClickString",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('middleClickString', 'Middle-Click')",
-    "new": "'Middle-Click'",
+    "old": "      return gameSettingsText('middleClickString', 'Middle-Click');",
+    "new": "      return 'Middle-Click';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "L10N3f-rightClickString",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('rightClickString', 'Right-Click')",
-    "new": "'Right-Click'",
+    "old": "      return gameSettingsText('rightClickString', 'Right-Click');",
+    "new": "      return 'Right-Click';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "L10N3f-backString",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('backString', 'Back')",
-    "new": "'Back'",
+    "old": "      return gameSettingsText('backString', 'Back');",
+    "new": "      return 'Back';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "L10N3f-lookSensitivity",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('lookSensitivity', 'Look Sensitivity')",
-    "new": "'Look Sensitivity'",
+    "old": "      return gameSettingsText('lookSensitivity', 'Look Sensitivity');",
+    "new": "      return 'Look Sensitivity';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "L10N3f-uiMouseSensitivity",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('uiMouseSensitivity', 'UI Mouse Sensitivity')",
-    "new": "'UI Mouse Sensitivity'",
+    "old": "      return gameSettingsText('uiMouseSensitivity', 'UI Mouse Sensitivity');",
+    "new": "      return 'UI Mouse Sensitivity';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "L10N3f-maximumMovementThreshold",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('maximumMovementThreshold', 'Maximum Movement Threshold')",
-    "new": "'Maximum Movement Threshold'",
+    "old": "      return gameSettingsText('maximumMovementThreshold', 'Maximum Movement Threshold');",
+    "new": "      return 'Maximum Movement Threshold';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "L10N3f-deadzone",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('deadzone', 'Deadzone')",
-    "new": "'Deadzone'",
+    "old": "      return gameSettingsText('deadzone', 'Deadzone');",
+    "new": "      return 'Deadzone';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "L10N3f-enableController",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('enableController', 'Enable Controller')",
-    "new": "'Enable Controller'",
+    "old": "    return gameSettingsText('enableController', 'Enable Controller');",
+    "new": "    return 'Enable Controller';",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "L10N3f-configureJoystickControls",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('configureJoystickControls', TITLE)",
-    "new": "TITLE",
+    "old": "    const title = gameSettingsText('configureJoystickControls', TITLE); // L10N3f: GetText (:128)",
+    "new": "    const title = TITLE; // L10N3f: GetText (:128)",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "L10N3f-continue",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "gameSettingsText('continue', 'CONTINUE')",
-    "new": "'CONTINUE'",
+    "old": "    const cont = gameSettingsText('continue', 'CONTINUE'); // L10N3f: GetText (:133)",
+    "new": "    const cont = 'CONTINUE'; // L10N3f: GetText (:133)",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]

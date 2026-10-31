@@ -218,8 +218,8 @@
   {
     "name": "WAGON-STABLED-the-card-calls-a-horse-beside-you-stabled",
     "file": "src/ui/holdingsPages.js",
-    "old": "    else if (!v.horseStabled) horse = beside;\n",
-    "new": "",
+    "old": "    else if (!v.horseStabled) horse = beside;\n    else",
+    "new": "    else",
     "tests": [
       "test/systems/horse/fb1015_wagonstabled.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WAGON-STABLED-the-card-calls-a-wagon-beside-you-stabled",
     "file": "src/ui/holdingsPages.js",
-    "old": "    else if (!v.wagonStabled) wagon = beside;\n",
-    "new": "",
+    "old": "    else if (!v.wagonStabled) wagon = beside;\n    else",
+    "new": "    else",
     "tests": [
       "test/systems/horse/fb1015_wagonstabled.test.js"
     ]

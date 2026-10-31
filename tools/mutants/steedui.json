@@ -200,8 +200,8 @@
   {
     "name": "STEEDUI-stable-bond-to-go",
     "file": "src/ui/holdingsPages.js",
-    "old": "h.next ? `${h.next.at - Math.floor(h.bond)} to ${h.next.name}` : 'Whole'",
-    "new": "h.next ? `${h.next.at} to ${h.next.name}` : 'Whole'",
+    "old": "  r.append(el('span', 'hld-mn', h.next ? `${h.next.at - Math.floor(h.bond)} to ${h.next.name}` : 'Whole'));",
+    "new": "  r.append(el('span', 'hld-mn', h.next ? `${h.next.at} to ${h.next.name}` : 'Whole'));",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "STEEDUI-stable-mend-price",
     "file": "src/ui/holdingsPages.js",
-    "old": "export const mendLine = (w) => (w.mend > 0 ?",
-    "new": "export const mendLine = (w) => (false ?",
+    "old": "  w.mend > 0",
+    "new": "  false",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]

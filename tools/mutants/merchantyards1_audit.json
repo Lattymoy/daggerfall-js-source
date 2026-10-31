@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-MERCHANT-YARDS-Y6-every-town",
     "file": "src/ui/holdingsPages.js",
-    "old": "A city\\'s or town\\'s Stable sells horses to ride, and its Wagon Yard carts and wagons",
-    "new": "Every city and town has a Stable that sells horses to ride, and a Wagon Yard that sells carts and wagons",
+    "old": "        \"You own no horse and no wagon. A city's or town's Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.\",",
+    "new": "        'You own no horse and no wagon. Every city and town has a Stable that sells horses to ride, and a Wagon Yard that sells carts and wagons to carry more than you can.',",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]

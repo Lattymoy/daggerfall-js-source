@@ -371,8 +371,8 @@
   {
     "name": "CARD-FIT-U5-host-a-scroller",
     "file": "src/ui/inventoryDoor.js",
-    "old": "background:transparent;overflow:hidden;overflow:clip';",
-    "new": "background:transparent;overflow:hidden';",
+    "old": "  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden;overflow:clip';",
+    "new": "  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';",
     "tests": [
       "test/ui/enhanced/cardfit.test.js"
     ]

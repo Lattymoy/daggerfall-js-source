@@ -164,8 +164,8 @@
   {
     "name": "HORSE-TIERS-the-stable-chip-red-on-boons",
     "file": "src/ui/holdingsPages.js",
-    "old": "(care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : HUNGER_TONE[h.hungerKey] ?? '')",
-    "new": "(HUNGER_TONE[h.hungerKey] ?? '')",
+    "old": "export const hungerTone = (h, care) =>\n  care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : (HUNGER_TONE[h.hungerKey] ?? '');",
+    "new": "export const hungerTone = (h, care) => HUNGER_TONE[h.hungerKey] ?? '';",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HORSE-TIERS-boons-said-in-hards-words",
     "file": "src/ui/holdingsPages.js",
-    "old": "(care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey]",
-    "new": "HUNGER_LINE[h.hungerKey]",
+    "old": "    : ((care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');",
+    "new": "    : (HUNGER_LINE[h.hungerKey] ?? '');",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

@@ -74,7 +74,7 @@ test('PORT0: inside the classic scope the enhanced boxes stand down (the classic
 
 test('PORT3: the list hands its draw to the enhanced list under the enhanced skin only', () => {
   const src = read('src/ui/listPicker.js');
-  assert.match(src, /typeof document !== 'undefined' && isEnhancedPlus\(\)[\s\S]{0,300}drawEnhancedPicker\(this, renderer, canvas/);
+  assert.match(src, /typeof document !== 'undefined' &&\n\s*isEnhancedPlus\(\) &&\n\s*\(\(this\._font = this\.pickerFont \?\? font\),\n\s*this\._clampScroll\(\),\n\s*drawEnhancedPicker\(this, renderer, canvas/);
 });
 
 test('PORT4: every service window is ported at its one construction site', () => {

@@ -11908,7 +11908,7 @@ the guard from either file) go red.
 
 The `listPicker.js` edit is line-neutral by construction: the hover
 docstring was rewritten to the same six lines, so the four files and
-the Ledger row that cite `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` and `listPicker.js:"release() { this.scrollBar.draggingThumb"` keep their
+the Ledger row that cite `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` and `listPicker.js:"release() {"` keep their
 numbers.
 
 **THE COUNT SWEEP (review round, same date).** Raising the roster from

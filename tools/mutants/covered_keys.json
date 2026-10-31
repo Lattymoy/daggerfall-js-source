@@ -65,8 +65,8 @@
   {
     "name": "CK-the-pack-door-names-no-window",
     "file": "src/ui/inventoryDoor.js",
-    "old": "owner: overlay }",
-    "new": "owner: null }",
+    "old": "      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: overlay });",
+    "new": "      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: null });",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

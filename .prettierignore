@@ -1826,6 +1826,7 @@
 !/src/ui/heraldryArt.js
 !/src/ui/heraldrySwatch.js
 !/src/ui/hitNumbers.js
+!/src/ui/holdingsPages.js
 !/src/ui/homeTransferWindow.js
 !/src/ui/horizontalSlider.js
 !/src/ui/horseNameTooltip.js
@@ -1850,6 +1851,9 @@
 !/src/ui/iliacTableHud.js
 !/src/ui/ink/
 /src/ui/ink/*/
+!/src/ui/inkRaster.js
+!/src/ui/inputMessageBox.js
+!/src/ui/interiorLoadMark.js
 !/src/ui/intro/
 /src/ui/intro/*
 !/src/ui/intro/introBuild.js
@@ -1862,11 +1866,13 @@
 !/src/ui/intro/set/
 /src/ui/intro/set/*/
 !/src/ui/intro/titleHeld.js
+!/src/ui/inventoryDoor.js
 !/src/ui/item/
 /src/ui/item/*
 !/src/ui/item/itemIconColor32.js
 !/src/ui/item/itemIconUrl.js
 !/src/ui/item/itemMakerWindow.js
+!/src/ui/joystickControlsWindow.js
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/legacy/
@@ -1874,6 +1880,8 @@
 !/src/ui/legacy/legacyModelChoice.js
 !/src/ui/levelUp/
 /src/ui/levelUp/*/
+!/src/ui/levelingChoice.js
+!/src/ui/listPicker.js
 !/src/ui/map/
 /src/ui/map/*/
 !/src/ui/menu/

@@ -128,8 +128,8 @@
   {
     "name": "WAGON-TIERS-the-bar-red-on-boons",
     "file": "src/ui/holdingsPages.js",
-    "old": "(w.wearSlows === false && w.stateKey === 'failing' ? WAGON_METER_TONE.rickety : WAGON_METER_TONE[w.stateKey] ?? 'verdigris')",
-    "new": "(WAGON_METER_TONE[w.stateKey] ?? 'verdigris')",
+    "old": "export const wagonMeterTone = (w) =>\n  w.wearSlows === false && w.stateKey === 'failing'\n    ? WAGON_METER_TONE.rickety\n    : (WAGON_METER_TONE[w.stateKey] ?? 'verdigris');",
+    "new": "export const wagonMeterTone = (w) => WAGON_METER_TONE[w.stateKey] ?? 'verdigris';",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WAGON-TIERS-boons-in-hards-words",
     "file": "src/ui/holdingsPages.js",
-    "old": "const advice = w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey) ? WAGON_ADVICE_BOONS[w.stateKey]",
-    "new": "const advice = false ? WAGON_ADVICE_BOONS[w.stateKey]",
+    "old": "  const advice =\n    w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey)\n      ? WAGON_ADVICE_BOONS[w.stateKey] // WAGON-TIERS: Boons says no slowness, and the boon\n      : w.stateKey === 'failing'\n        ? 'Failing. Its team pulls it at its slowest.'\n        : w.stateKey === 'rickety'\n          ? 'Rickety. Its team pulls it more slowly.'\n          : w.stateKey === 'worn'\n            ? 'Worn. A Wagon Yard can repair it.'\n            : 'Sound.';",
+    "new": "  const advice = false\n    ? WAGON_ADVICE_BOONS[w.stateKey] // WAGON-TIERS: Boons says no slowness, and the boon\n    : w.stateKey === 'failing'\n      ? 'Failing. Its team pulls it at its slowest.'\n      : w.stateKey === 'rickety'\n        ? 'Rickety. Its team pulls it more slowly.'\n        : w.stateKey === 'worn'\n          ? 'Worn. A Wagon Yard can repair it.'\n          : 'Sound.';",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WAGON-TIERS-the-boon-unsaid",
     "file": "src/ui/holdingsPages.js",
-    "old": "  get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },",
-    "new": "",
+    "old": "  get sound() {\n    return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.');\n  }, // Mac: \"Sound wagon rolls faster\"",
+    "new": "  // Mac: \"Sound wagon rolls faster\"",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]

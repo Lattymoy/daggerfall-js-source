@@ -52,8 +52,8 @@
   {
     "name": "L10N3d2-ui-joystickControlsWindow-391-multipleAssignments",
     "file": "src/ui/joystickControlsWindow.js",
-    "old": "      const said = localizedText('multipleAssignments', MULTIPLE_ASSIGNMENTS);   // :452",
-    "new": "      const said = MULTIPLE_ASSIGNMENTS;   // :452",
+    "old": "      const said = localizedText('multipleAssignments', MULTIPLE_ASSIGNMENTS); // :452",
+    "new": "      const said = MULTIPLE_ASSIGNMENTS; // :452",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_settings.test.js"

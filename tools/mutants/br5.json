@@ -174,8 +174,8 @@
   {
     "name": "BR5-leveling-title-the-game",
     "file": "src/ui/levelingChoice.js",
-    "old": "title: 'Classic',",
-    "new": "title: 'Daggerfall',",
+    "old": "      title: 'Classic',",
+    "new": "      title: 'Daggerfall',",
     "tests": [
       "test/ui/brand.test.js"
     ],

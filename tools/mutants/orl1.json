@@ -398,8 +398,8 @@
   {
     "name": "the-question-defaults-to-the-mod",
     "file": "src/ui/levelingChoice.js",
-    "old": "      id: LEVELING_CLASSIC,\n      title: 'Classic',",
-    "new": "      id: LEVELING_VIRTUE,\n      title: 'Classic',",
+    "old": "      id: LEVELING_CLASSIC,",
+    "new": "      id: LEVELING_VIRTUE,",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ],
@@ -417,8 +417,8 @@
   {
     "name": "the-question-loses-the-raw-key-codes",
     "file": "src/ui/levelingChoice.js",
-    "old": "    confirm: 'confirm', Enter: 'confirm', NumpadEnter: 'confirm', KeyE: 'confirm',",
-    "new": "    confirm: 'confirm',",
+    "old": "    Enter: 'confirm',\n    NumpadEnter: 'confirm',\n    KeyE: 'confirm',\n    'char:1': 'one',",
+    "new": "    'char:1': 'one',",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/audit17f.test.js"
@@ -427,8 +427,8 @@
   {
     "name": "an-unknown-key-answers-the-question",
     "file": "src/ui/levelingChoice.js",
-    "old": "      default: break;   // every other key is inert: this screen has no way out but an answer",
-    "new": "      default: this.answer(this.options[this.cursor].id); break;",
+    "old": "        break; // every other key is inert: this screen has no way out but an answer",
+    "new": "        this.answer(this.options[this.cursor].id);\n        break;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "the-questions-up-arm-is-dropped",
     "file": "src/ui/levelingChoice.js",
-    "old": "    up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',",
-    "new": "    down: 'down', ArrowDown: 'down',",
+    "old": "    up: 'up',\n    ArrowUp: 'up',\n    down: 'down',",
+    "new": "    down: 'down',",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/legacychoice.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "the-question-paints-from-the-canvas-origin-again",
     "file": "src/ui/levelingChoice.js",
-    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
-    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "old": "    const at = (text, x, y, colour) => drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "    const at = (text, x, y, colour) => drawText(renderer, font, text, x * s, y * s, s, colour);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "the-question-centres-on-the-canvas-instead-of-the-game-area",
     "file": "src/ui/levelingChoice.js",
-    "old": "      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
-    "new": "      at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
+    "old": "    const centre = (text, y, colour) => at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
+    "new": "    const centre = (text, y, colour) => at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "the-option-hit-box-goes-back-to-a-literal-height",
     "file": "src/ui/levelingChoice.js",
-    "old": "  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
-    "new": "  CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
+    "old": "export const choiceHeight = (opt) => CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
+    "new": "export const choiceHeight = (opt) => CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "the-question-swallows-the-click-again",
     "file": "src/ui/levelingChoice.js",
-    "old": "    const i = choiceAtNative(vx, vy, this.options, this.tops);\n    if (i < 0) return false;",
-    "new": "    const i = -1;\n    if (i < 0) return false;",
+    "old": "    if (this._fired || this._faced) return false;\n    const i = choiceAtNative(vx, vy, this.options, this.tops);",
+    "new": "    if (this._fired || this._faced) return false;\n    const i = -1;",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/legacychoice.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "both-digits-answer-with-the-same-system",
     "file": "src/ui/levelingChoice.js",
-    "old": "      case 'two': this.pickIndex(1, false); break;",
-    "new": "      case 'two': this.pickIndex(0, false); break;",
+    "old": "        this.pickIndex(1, false);",
+    "new": "        this.pickIndex(0, false);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]

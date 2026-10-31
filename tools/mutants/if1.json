@@ -268,8 +268,8 @@
   {
     "name": "enhanced-close-silent",
     "file": "src/ui/inventoryDoor.js",
-    "old": "    immersiveFootsteps.onInventoryClose(deps.entity ?? null);",
-    "new": "",
+    "old": "    immersiveFootsteps.onInventoryClose(deps.entity ?? null);\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/if1_immersivefootsteps.test.js"
     ]

@@ -878,8 +878,8 @@
   {
     "name": "AUF-L4L6-stepper-spills",
     "file": "src/ui/holdingsPages.js",
-    "old": ".px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto minmax(0, 1fr) auto; }",
-    "new": ".px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto auto 1fr auto; }",
+    "old": "@media (max-width: 480px) { .px-sys .hld-pick { grid-template-columns: 1fr; gap: 4px; } .px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto minmax(0, 1fr) auto; } .px-sys .hld-pick:has(.hld-step) .hld-picklabel { grid-column: 1 / -1; } .px-sys .hld-stepname { min-width: 0; overflow-wrap: anywhere; } }   /* AUDIT UICALM-FIRM1 L4 L6: the name gives way, the › stays on the card */",
+    "new": "@media (max-width: 480px) { .px-sys .hld-pick { grid-template-columns: 1fr; gap: 4px; } .px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto auto 1fr auto; } .px-sys .hld-pick:has(.hld-step) .hld-picklabel { grid-column: 1 / -1; } .px-sys .hld-stepname { min-width: 0; overflow-wrap: anywhere; } }   /* AUDIT UICALM-FIRM1 L4 L6: the name gives way, the › stays on the card */",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
